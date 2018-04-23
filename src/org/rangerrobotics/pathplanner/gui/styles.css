@@ -1,0 +1,94 @@
+* {
+    -background: #cccccc;
+    -tabBg: #212121;
+    -tabAccent: #FF3500;
+    -buttonText: #eeeeee;
+    -gray: #606060;
+    -text: #ffffff;
+    -statusGreen: #4caf50;
+    -statusYellow: #ffeb3b;
+    -statusRed: #f44335;
+}
+
+.jfx-button{
+    -fx-padding: 0.2em 0.2em;
+    -fx-font-size: 20px;
+    -jfx-button-type: RAISED;
+    -fx-background-color: rgb(77, 102, 204);
+    -fx-pref-width: 100;
+    -fx-text-fill: -buttonText;
+}
+
+.prompt-text{
+    -fx-font-size: 18px;
+    -fx-text-fill: -text;
+}
+
+.jfx-text-field{
+    -fx-font-size: 18px;
+    -fx-text-fill: #000000;
+}
+
+.jfx-dialog{
+    -fx-background-color: #22222277;
+}
+
+.dialog-background{
+    -fx-background-color: -background;
+}
+
+.jfx-tab-pane{
+    -fx-background-color: -background;
+}
+
+.jfx-tab-pane .tab-header-background{
+    -fx-background-color: -tabBg;
+}
+
+.jfx-tab-pane .tab-header-area .jfx-rippler{
+    -jfx-rippler-fill: -tabAccent;
+}
+
+.jfx-tab-pane .tab-selected-line{
+    -fx-background-color: -tabAccent;
+}
+
+.jfx-snackbar-content:info .jfx-snackbar-toast{
+    -fx-font-size: 18px;
+    -fx-text-fill: -text;
+}
+
+.jfx-snackbar-content:success .jfx-snackbar-toast{
+    -fx-font-size: 18px;
+    -fx-text-fill: -statusGreen;
+}
+
+.jfx-snackbar-content:error .jfx-snackbar-toast{
+    -fx-font-size: 18px;
+    -fx-text-fill: -statusRed;
+}
+
+.jfx-snackbar-action{
+    visibility: hidden;
+}
+
+.animated-thumb{
+    visibility: hidden;
+}
+
+.tree-table-view{
+    -fx-background-color: #212121;
+}
+
+.tree-table-view .jfx-text-field{
+    -fx-background-color: transparent;
+}
+
+.tree-table-view .menu-item:focused {
+    -fx-background-color: #ff0000;
+
+}
+
+.tree-table-view .menu-item .label {
+    -fx-padding: 5 0 5 0;
+}

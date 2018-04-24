@@ -21,6 +21,7 @@ import javafx.scene.paint.Color;
 import org.rangerrobotics.pathplanner.geometry.Util;
 import org.rangerrobotics.pathplanner.geometry.Vector2;
 
+import java.util.ArrayList;
 import java.util.function.Function;
 
 public class MainScene {
@@ -35,7 +36,7 @@ public class MainScene {
     private static JFXTreeTableColumn<Waypoint, Double> speedCol = new JFXTreeTableColumn<>("Speed");
     private static ObservableList<Waypoint> waypoints;
     private static Canvas canvas;
-    private static Vector2[] testPoints = new Vector2[]{new Vector2(20, 20), new Vector2(170, 20), new Vector2(50, 200), new Vector2(200, 200)};
+    private static ArrayList<Vector2> points = new ArrayList<>();
 
     public static Scene getScene(){
         if(scene == null){
@@ -45,6 +46,11 @@ public class MainScene {
     }
 
     private static void createScene(){
+        points.add(new Vector2(20, 20));
+        points.add(new Vector2(170, 20));
+        points.add(new Vector2(50, 200));
+        points.add(new Vector2(200, 200));
+
         root = new StackPane();
         layout = new JFXTabPane();
         Tab genTab = new Tab();
@@ -61,6 +67,10 @@ public class MainScene {
         genTabLayout.setLeft(genLeft);
 
         canvas = new Canvas(400, 400);
+        canvas.setOnMouseDragged(event -> {
+            System.out.println("X: " + event.getX() + ", Y: " + event.getY());
+            //TODO: Move points on canvas, update curve
+        });
         drawCurve(canvas.getGraphicsContext2D());
         genTabLayout.setRight(canvas);
 
@@ -75,23 +85,22 @@ public class MainScene {
     }
 
     private static void drawCurve(GraphicsContext g){
-        g.setFill(Color.RED);
-//        g.setStroke(Color.BLACK);
-        for(Vector2 p : testPoints){
-            g.fillOval(p.x, p.y, 5, 5);
-        }
-
-        g.setStroke(Color.BLACK);
-        g.setLineWidth(1);
-        g.strokeLine(testPoints[0].x, testPoints[0].y, testPoints[1].x, testPoints[1].y);
-        g.strokeLine(testPoints[2].x, testPoints[2].y, testPoints[3].x, testPoints[3].y);
-
-        g.setStroke(Color.BLUE);
+        g.setStroke(Color.color(0, 0.95, 0));
         g.setLineWidth(3);
         for(double d = 0.01; d <= 1; d += 0.01){
-            Vector2 p0 = Util.cubicCurve(testPoints[0], testPoints[1], testPoints[2], testPoints[3], d);
-            Vector2 p1 = Util.cubicCurve(testPoints[0], testPoints[1], testPoints[2], testPoints[3], d + 0.01);
+            Vector2 p0 = Util.cubicCurve(points.get(0), points.get(1), points.get(2), points.get(3), d);
+            Vector2 p1 = Util.cubicCurve(points.get(0), points.get(1), points.get(2), points.get(3), d + 0.01);
             g.strokeLine(p0.x, p0.y, p1.x, p1.y);
+        }
+
+        g.setStroke(Color.color(0.1, 0.1, 0.1));
+        g.setLineWidth(2);
+        g.strokeLine(points.get(0).x, points.get(0).y, points.get(1).x, points.get(1).y);
+        g.strokeLine(points.get(2).x, points.get(2).y, points.get(3).x, points.get(3).y);
+
+        g.setFill(Color.RED);
+        for(Vector2 p : points){
+            g.fillOval(p.x - 8, p.y - 8, 16, 16);
         }
     }
 

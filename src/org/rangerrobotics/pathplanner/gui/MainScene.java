@@ -20,6 +20,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.rangerrobotics.pathplanner.geometry.Util;
 import org.rangerrobotics.pathplanner.geometry.Vector2;
+import org.rangerrobotics.pathplanner.io.KeyboardInput;
 
 import java.util.ArrayList;
 import java.util.function.Function;
@@ -49,6 +50,9 @@ public class MainScene {
         points.add(new Vector2(170, 20));
         points.add(new Vector2(50, 200));
         points.add(new Vector2(200, 200));
+//        points.add(new Vector2(250, 200));
+//        points.add(new Vector2(150, 100));
+//        points.add(new Vector2(200, 50));
 
         root = new StackPane();
         layout = new JFXTabPane();
@@ -67,9 +71,15 @@ public class MainScene {
 
         canvas = new Canvas(400, 400);
         canvas.setOnMousePressed(event -> {
-            System.out.println("Pressed X: " + event.getX() + ", Y: " + event.getY());
+            //TODO: fix this
+            System.out.println(KeyboardInput.isShiftPressed());
+            if(KeyboardInput.isShiftPressed()){
+                points.add(new Vector2(event.getX() - 50, event.getY() - 50));
+                points.add(new Vector2(event.getX(), event.getY()));
+                points.add(new Vector2(event.getX() + 50, event.getY() + 50));
+                updateCanvas();
+            }
             for(int i = 0; i < points.size(); i++){
-                System.out.println((Math.pow(event.getX() - points.get(i).getX() + 8, 2) + (Math.pow(event.getY() - points.get(i).getY() + 8, 2))));
                 if((Math.pow(event.getX() - points.get(i).getX(), 2) + (Math.pow(event.getY() - points.get(i).getY(), 2))) <= Math.pow(8, 2)){
                     pointDragIndex = i;
                     System.out.println(pointDragIndex);
@@ -80,8 +90,6 @@ public class MainScene {
             pointDragIndex = -1;
         });
         canvas.setOnMouseDragged(event -> {
-            System.out.println("Dragged X: " + event.getX() + ", Y: " + event.getY());
-            //TODO: Move points on canvas, update curve
             if(pointDragIndex != -1){
                 if(event.getX() >= 0 && event.getY() >= 0 && event.getX() <= canvas.getWidth() && event.getY() <= canvas.getHeight()) {
                     points.get(pointDragIndex).setX(Math.round(event.getX()));
@@ -91,7 +99,7 @@ public class MainScene {
             }
         });
         drawCurve(canvas.getGraphicsContext2D());
-        genTabLayout.setRight(canvas);
+        genTabLayout.setCenter(canvas);
 
         genTab.setContent(genTabLayout);
 
@@ -104,22 +112,26 @@ public class MainScene {
     }
 
     private static void drawCurve(GraphicsContext g){
-        g.setStroke(Color.color(0, 0.95, 0));
-        g.setLineWidth(3);
-        for(double d = 0.01; d <= 1; d += 0.01){
-            Vector2 p0 = Util.cubicCurve(points.get(0), points.get(1), points.get(2), points.get(3), d);
-            Vector2 p1 = Util.cubicCurve(points.get(0), points.get(1), points.get(2), points.get(3), d + 0.01);
-            g.strokeLine(p0.getX(), p0.getY(), p1.getX(), p1.getY());
-        }
+        g.setFill(Color.WHITE);
+        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        for(int i = 0; i < points.size() - 1; i += 3){
+            g.setStroke(Color.color(0, 0.95, 0));
+            g.setLineWidth(3);
+            for(double d = 0.01; d <= 1; d += 0.01){
+                Vector2 p0 = Util.cubicCurve(points.get(i), points.get(i + 1), points.get(i + 2), points.get(i + 3), d);
+                Vector2 p1 = Util.cubicCurve(points.get(i), points.get(i + 1), points.get(i + 2), points.get(i + 3), d + 0.01);
+                g.strokeLine(p0.getX(), p0.getY(), p1.getX(), p1.getY());
+            }
 
-        g.setStroke(Color.color(0.1, 0.1, 0.1));
-        g.setLineWidth(2);
-        g.strokeLine(points.get(0).getX(), points.get(0).getY(), points.get(1).getX(), points.get(1).getY());
-        g.strokeLine(points.get(2).getX(), points.get(2).getY(), points.get(3).getX(), points.get(3).getY());
+            g.setStroke(Color.color(0.1, 0.1, 0.1));
+            g.setLineWidth(2);
+            g.strokeLine(points.get(i).getX(), points.get(i).getY(), points.get(i + 1).getX(), points.get(i + 1).getY());
+            g.strokeLine(points.get(i + 2).getX(), points.get(i + 2).getY(), points.get(i + 3).getX(), points.get(i + 3).getY());
 
-        g.setFill(Color.RED);
-        for(Vector2 p : points){
-            g.fillOval(p.getX() - 8, p.getY() - 8, 16, 16);
+            g.setFill(Color.RED);
+            for(Vector2 p : points){
+                g.fillOval(p.getX() - 8, p.getY() - 8, 16, 16);
+            }
         }
     }
 

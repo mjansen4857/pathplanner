@@ -54,14 +54,27 @@ public class Path {
 
             if(correspondingControlIndex >= 0 && correspondingControlIndex < points.size()) {
                 //Maintain distances from anchor
-//                double dst = Vector2.subtract(points.get(anchorIndex), points.get(correspondingControlIndex)).getMagnitude();
-//                Vector2 dir = Vector2.subtract(points.get(anchorIndex), newPos).normalized();
-//
-//                points.set(correspondingControlIndex, Vector2.add(points.get(anchorIndex), Vector2.multiply(dir, dst)));
+                double dst = Vector2.subtract(points.get(anchorIndex), points.get(correspondingControlIndex)).getMagnitude();
+                Vector2 dir = Vector2.subtract(points.get(anchorIndex), newPos).normalized();
+
+                points.set(correspondingControlIndex, Vector2.add(points.get(anchorIndex), Vector2.multiply(dir, dst)));
 
                 //Same distances from anchor
-                Vector2 d = Vector2.subtract(newPos, points.get(anchorIndex));
-                points.set(correspondingControlIndex, Vector2.subtract(points.get(anchorIndex), d));
+//                Vector2 d = Vector2.subtract(newPos, points.get(anchorIndex));
+//                points.set(correspondingControlIndex, Vector2.subtract(points.get(anchorIndex), d));
+            }
+        }
+    }
+
+    public void deleteSegment(int anchorIndex){
+        if(anchorIndex % 3 == 0 && numSegments() > 1){
+            if(anchorIndex == 0){
+                points.remove(0, 3);
+
+            }else if(anchorIndex == points.size() - 1){
+                points.remove(anchorIndex - 2, anchorIndex + 1);
+            }else{
+                points.remove(anchorIndex - 1, anchorIndex + 2);
             }
         }
     }

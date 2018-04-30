@@ -73,8 +73,16 @@ public class MainScene {
 
         canvas = new Canvas(400, 400);
         canvas.setOnMousePressed(event -> {
-
             if(event.getButton() == MouseButton.SECONDARY){
+                for (int i = 0; i < path.numPoints(); i++) {
+                    if ((Math.pow(event.getX() - path.get(i).getX(), 2) + (Math.pow(event.getY() - path.get(i).getY(), 2))) <= Math.pow(8, 2)) {
+                        if(i % 3 == 0 && path.numSegments() > 1) {
+                            path.deleteSegment(i);
+                            updateCanvas();
+                        }
+                        return;
+                    }
+                }
                 path.addSegment(new Vector2(event.getX(), event.getY()));
                 updateCanvas();
             }else if(event.getButton() == MouseButton.PRIMARY) {
@@ -88,15 +96,26 @@ public class MainScene {
         canvas.setOnMouseReleased(event -> {
             pointDragIndex = -1;
         });
+        canvas.setOnMouseMoved(event -> {
+            if(event.getButton() == MouseButton.NONE){
+                for (int i = 0; i < path.numPoints(); i++) {
+                    if ((Math.pow(event.getX() - path.get(i).getX(), 2) + (Math.pow(event.getY() - path.get(i).getY(), 2))) <= Math.pow(8, 2)) {
+                        updateCanvas(i);
+                        return;
+                    }
+                }
+                updateCanvas(-1);
+            }
+        });
         canvas.setOnMouseDragged(event -> {
             if(pointDragIndex != -1){
                 if(event.getX() >= 0 && event.getY() >= 0 && event.getX() <= canvas.getWidth() && event.getY() <= canvas.getHeight()) {
                     path.movePoint(pointDragIndex, new Vector2(event.getX(), event.getY()));
-                    updateCanvas();
+                    updateCanvas(pointDragIndex);
                 }
             }
         });
-        drawCurve(canvas.getGraphicsContext2D());
+        drawCurve(canvas.getGraphicsContext2D(), -1);
         genTabLayout.setCenter(canvas);
 
         genTab.setContent(genTabLayout);
@@ -109,11 +128,11 @@ public class MainScene {
         scene.getStylesheets().add("org/rangerrobotics/pathplanner/gui/styles.css");
     }
 
-    private static void drawCurve(GraphicsContext g){
+    private static void drawCurve(GraphicsContext g, int highlightedPoint){
         g.setFill(Color.color(0.35, 0.35, 0.35));
         g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        g.setStroke(Color.color(0, 0.95, 0));
         g.setLineWidth(3);
+        g.setStroke(Color.color(0, 0.95, 0));
         for(int i = 0; i < path.numSegments(); i ++){
             Vector2[] points = path.getPointsInSegment(i);
             for(double d = 0.01; d <= 1; d += 0.01){
@@ -130,8 +149,14 @@ public class MainScene {
             g.strokeLine(points[0].getX(), points[0].getY(), points[1].getX(), points[1].getY());
             g.strokeLine(points[2].getX(), points[2].getY(), points[3].getX(), points[3].getY());
         }
-        g.setFill(Color.RED);
-        for(Vector2 p : path.points){
+
+        for(int i = 0; i < path.numPoints(); i++){
+            if(i == highlightedPoint){
+                g.setFill(Color.YELLOW);
+            }else{
+                g.setFill(Color.RED);
+            }
+            Vector2 p = path.get(i);
             g.fillOval(p.getX() - 8, p.getY() - 8, 16, 16);
         }
     }
@@ -162,8 +187,12 @@ public class MainScene {
     }
 
     private static void updateCanvas(){
+        updateCanvas(-1);
+    }
+
+    private static void updateCanvas(int highlightedPoint){
         canvas.getGraphicsContext2D().clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawCurve(canvas.getGraphicsContext2D());
+        drawCurve(canvas.getGraphicsContext2D(), highlightedPoint);
     }
 
     private static <T> void setupCellValueFactory(JFXTreeTableColumn<Vector2, T> column, Function<Vector2, ObservableValue<T>> mapper){

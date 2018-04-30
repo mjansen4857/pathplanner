@@ -4,7 +4,6 @@ import javafx.application.Application;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.rangerrobotics.pathplanner.gui.MainScene;
-import org.rangerrobotics.pathplanner.io.KeyboardInput;
 
 public class PathPlanner extends Application {
 
@@ -14,7 +13,6 @@ public class PathPlanner extends Application {
 
     @Override
     public void start(Stage stage){
-        KeyboardInput.init();
         stage.setTitle("Path Planner GUI");
         stage.getIcons().add(new Image(getClass().getResourceAsStream("32.png")));
         stage.getIcons().add(new Image(getClass().getResourceAsStream("64.png")));

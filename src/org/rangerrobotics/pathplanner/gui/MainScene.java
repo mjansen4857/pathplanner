@@ -14,15 +14,14 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.rangerrobotics.pathplanner.geometry.Util;
 import org.rangerrobotics.pathplanner.geometry.Vector2;
-import org.rangerrobotics.pathplanner.io.KeyboardInput;
 
-import java.util.ArrayList;
 import java.util.function.Function;
 
 public class MainScene {
@@ -46,10 +45,10 @@ public class MainScene {
 
     private static void createScene(){
         points = FXCollections.observableArrayList();
-        points.add(new Vector2(20, 20));
-        points.add(new Vector2(170, 20));
-        points.add(new Vector2(50, 200));
-        points.add(new Vector2(200, 200));
+        points.add(new Vector2(20, 20, true));
+        points.add(new Vector2(170, 20, false));
+        points.add(new Vector2(50, 200, false));
+        points.add(new Vector2(200, 200, true));
 //        points.add(new Vector2(250, 200));
 //        points.add(new Vector2(150, 100));
 //        points.add(new Vector2(200, 50));
@@ -71,18 +70,17 @@ public class MainScene {
 
         canvas = new Canvas(400, 400);
         canvas.setOnMousePressed(event -> {
-            //TODO: fix this
-            System.out.println(KeyboardInput.isShiftPressed());
-            if(KeyboardInput.isShiftPressed()){
-                points.add(new Vector2(event.getX() - 50, event.getY() - 50));
-                points.add(new Vector2(event.getX(), event.getY()));
-                points.add(new Vector2(event.getX() + 50, event.getY() + 50));
+
+            if(event.getButton() == MouseButton.SECONDARY){
+                points.add(new Vector2(Math.round(event.getX() - 50), Math.round(event.getY() - 50), false));
+                points.add(new Vector2(Math.round(event.getX() + 50), Math.round(event.getY() + 50), false));
+                points.add(new Vector2(event.getX(), event.getY(), true));
                 updateCanvas();
-            }
-            for(int i = 0; i < points.size(); i++){
-                if((Math.pow(event.getX() - points.get(i).getX(), 2) + (Math.pow(event.getY() - points.get(i).getY(), 2))) <= Math.pow(8, 2)){
-                    pointDragIndex = i;
-                    System.out.println(pointDragIndex);
+            }else if(event.getButton() == MouseButton.PRIMARY) {
+                for (int i = 0; i < points.size(); i++) {
+                    if ((Math.pow(event.getX() - points.get(i).getX(), 2) + (Math.pow(event.getY() - points.get(i).getY(), 2))) <= Math.pow(8, 2)) {
+                        pointDragIndex = i;
+                    }
                 }
             }
         });
@@ -92,8 +90,18 @@ public class MainScene {
         canvas.setOnMouseDragged(event -> {
             if(pointDragIndex != -1){
                 if(event.getX() >= 0 && event.getY() >= 0 && event.getX() <= canvas.getWidth() && event.getY() <= canvas.getHeight()) {
-                    points.get(pointDragIndex).setX(Math.round(event.getX()));
-                    points.get(pointDragIndex).setY(Math.round(event.getY()));
+                    double dx = event.getX() - points.get(pointDragIndex).getX();
+                    double dy = event.getY() - points.get(pointDragIndex).getY();
+                    Vector2 d = new Vector2(dx,  dy, false);
+                    points.set(pointDragIndex, Vector2.add(points.get(pointDragIndex), d));
+                    if(points.get(pointDragIndex).isAnchorPoint){
+                        points.set(pointDragIndex - 1, Vector2.add(points.get(pointDragIndex - 1), d));
+                        if(pointDragIndex < points.size() - 1){
+                            points.set(pointDragIndex + 1, Vector2.add(points.get(pointDragIndex + 1), d));
+                        }
+                    }
+//                    points.get(pointDragIndex).setX(Math.round(event.getX()));
+//                    points.get(pointDragIndex).setY(Math.round(event.getY()));
                     updateCanvas();
                 }
             }

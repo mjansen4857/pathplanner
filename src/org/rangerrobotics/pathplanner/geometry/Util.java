@@ -18,9 +18,6 @@ public class Util {
     }
 
     public static void main(String[] args){
-        Vector2 p1 = new Vector2(100, 100);
-        Vector2 p2 = new Vector2(200, 200);
-        Vector2 lerped = lerp(p1, p2, 0.5);
-        System.out.println("X: " + lerped.x + ", Y: " + lerped.y);
+
     }
 }

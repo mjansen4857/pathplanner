@@ -19,6 +19,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import org.rangerrobotics.pathplanner.geometry.Path;
 import org.rangerrobotics.pathplanner.geometry.Util;
 import org.rangerrobotics.pathplanner.geometry.Vector2;
 
@@ -32,7 +33,8 @@ public class MainScene {
     private static JFXTreeTableView<Vector2> waypointTable = new JFXTreeTableView<>();
     private static JFXTreeTableColumn<Vector2, Double> xCol = new JFXTreeTableColumn<>("X Position");
     private static JFXTreeTableColumn<Vector2, Double> yCol = new JFXTreeTableColumn<>("Y Position");
-    private static ObservableList<Vector2> points;
+//    private static ObservableList<Vector2> points;
+    private static Path path;
     private static Canvas canvas;
     private static int pointDragIndex = -1;
 
@@ -44,11 +46,12 @@ public class MainScene {
     }
 
     private static void createScene(){
-        points = FXCollections.observableArrayList();
-        points.add(new Vector2(20, 20, true));
-        points.add(new Vector2(170, 20, false));
-        points.add(new Vector2(50, 200, false));
-        points.add(new Vector2(200, 200, true));
+        path = new Path();
+//        points = FXCollections.observableArrayList();
+//        points.add(new Vector2(20, 20, true));
+//        points.add(new Vector2(170, 20, false));
+//        points.add(new Vector2(50, 200, false));
+//        points.add(new Vector2(200, 200, true));
 //        points.add(new Vector2(250, 200));
 //        points.add(new Vector2(150, 100));
 //        points.add(new Vector2(200, 50));
@@ -72,13 +75,11 @@ public class MainScene {
         canvas.setOnMousePressed(event -> {
 
             if(event.getButton() == MouseButton.SECONDARY){
-                points.add(new Vector2(Math.round(event.getX() - 50), Math.round(event.getY() - 50), false));
-                points.add(new Vector2(Math.round(event.getX() + 50), Math.round(event.getY() + 50), false));
-                points.add(new Vector2(event.getX(), event.getY(), true));
+                path.addSegment(new Vector2(event.getX(), event.getY()));
                 updateCanvas();
             }else if(event.getButton() == MouseButton.PRIMARY) {
-                for (int i = 0; i < points.size(); i++) {
-                    if ((Math.pow(event.getX() - points.get(i).getX(), 2) + (Math.pow(event.getY() - points.get(i).getY(), 2))) <= Math.pow(8, 2)) {
+                for (int i = 0; i < path.numPoints(); i++) {
+                    if ((Math.pow(event.getX() - path.get(i).getX(), 2) + (Math.pow(event.getY() - path.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         pointDragIndex = i;
                     }
                 }
@@ -90,18 +91,7 @@ public class MainScene {
         canvas.setOnMouseDragged(event -> {
             if(pointDragIndex != -1){
                 if(event.getX() >= 0 && event.getY() >= 0 && event.getX() <= canvas.getWidth() && event.getY() <= canvas.getHeight()) {
-                    double dx = event.getX() - points.get(pointDragIndex).getX();
-                    double dy = event.getY() - points.get(pointDragIndex).getY();
-                    Vector2 d = new Vector2(dx,  dy, false);
-                    points.set(pointDragIndex, Vector2.add(points.get(pointDragIndex), d));
-                    if(points.get(pointDragIndex).isAnchorPoint){
-                        points.set(pointDragIndex - 1, Vector2.add(points.get(pointDragIndex - 1), d));
-                        if(pointDragIndex < points.size() - 1){
-                            points.set(pointDragIndex + 1, Vector2.add(points.get(pointDragIndex + 1), d));
-                        }
-                    }
-//                    points.get(pointDragIndex).setX(Math.round(event.getX()));
-//                    points.get(pointDragIndex).setY(Math.round(event.getY()));
+                    path.movePoint(pointDragIndex, new Vector2(event.getX(), event.getY()));
                     updateCanvas();
                 }
             }
@@ -120,26 +110,29 @@ public class MainScene {
     }
 
     private static void drawCurve(GraphicsContext g){
-        g.setFill(Color.WHITE);
+        g.setFill(Color.color(0.35, 0.35, 0.35));
         g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        for(int i = 0; i < points.size() - 1; i += 3){
-            g.setStroke(Color.color(0, 0.95, 0));
-            g.setLineWidth(3);
+        g.setStroke(Color.color(0, 0.95, 0));
+        g.setLineWidth(3);
+        for(int i = 0; i < path.numSegments(); i ++){
+            Vector2[] points = path.getPointsInSegment(i);
             for(double d = 0.01; d <= 1; d += 0.01){
-                Vector2 p0 = Util.cubicCurve(points.get(i), points.get(i + 1), points.get(i + 2), points.get(i + 3), d);
-                Vector2 p1 = Util.cubicCurve(points.get(i), points.get(i + 1), points.get(i + 2), points.get(i + 3), d + 0.01);
+                Vector2 p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
+                Vector2 p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
                 g.strokeLine(p0.getX(), p0.getY(), p1.getX(), p1.getY());
             }
+        }
+        g.setStroke(Color.BLACK);
+        for(int i = 0; i < path.numSegments(); i++){
+            Vector2[] points = path.getPointsInSegment(i);
 
-            g.setStroke(Color.color(0.1, 0.1, 0.1));
             g.setLineWidth(2);
-            g.strokeLine(points.get(i).getX(), points.get(i).getY(), points.get(i + 1).getX(), points.get(i + 1).getY());
-            g.strokeLine(points.get(i + 2).getX(), points.get(i + 2).getY(), points.get(i + 3).getX(), points.get(i + 3).getY());
-
-            g.setFill(Color.RED);
-            for(Vector2 p : points){
-                g.fillOval(p.getX() - 8, p.getY() - 8, 16, 16);
-            }
+            g.strokeLine(points[0].getX(), points[0].getY(), points[1].getX(), points[1].getY());
+            g.strokeLine(points[2].getX(), points[2].getY(), points[3].getX(), points[3].getY());
+        }
+        g.setFill(Color.RED);
+        for(Vector2 p : path.points){
+            g.fillOval(p.getX() - 8, p.getY() - 8, 16, 16);
         }
     }
 
@@ -161,7 +154,7 @@ public class MainScene {
             updateCanvas();
         });
 
-        final TreeItem<Vector2> root = new RecursiveTreeItem<>(points, RecursiveTreeObject::getChildren);
+        final TreeItem<Vector2> root = new RecursiveTreeItem<>(path.points, RecursiveTreeObject::getChildren);
         waypointTable.setRoot(root);
         waypointTable.setShowRoot(false);
         waypointTable.setEditable(true);

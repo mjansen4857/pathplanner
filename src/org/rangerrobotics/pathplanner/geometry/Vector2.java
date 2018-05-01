@@ -4,22 +4,22 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.beans.property.SimpleDoubleProperty;
 
 public class Vector2 extends RecursiveTreeObject<Vector2>{
-    public SimpleDoubleProperty x;
-    public SimpleDoubleProperty y;
+    private double x;
+    private double y;
     private double magnitude;
 
     public Vector2(double x, double y){
-        this.x = new SimpleDoubleProperty(x);
-        this.y = new SimpleDoubleProperty(y);
+        this.x = x;
+        this.y = y;
         this.magnitude = Math.sqrt((x*x) + (y*y));
     }
 
     public double getX() {
-        return x.get();
+        return x;
     }
 
     public double getY() {
-        return y.get();
+        return y;
     }
 
     public double getMagnitude(){

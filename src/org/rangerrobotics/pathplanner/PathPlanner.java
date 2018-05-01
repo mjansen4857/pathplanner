@@ -13,7 +13,7 @@ public class PathPlanner extends Application {
 
     @Override
     public void start(Stage stage){
-        stage.setTitle("Path Planner GUI");
+        stage.setTitle("PathPlanner GUI");
         stage.getIcons().add(new Image(getClass().getResourceAsStream("32.png")));
         stage.getIcons().add(new Image(getClass().getResourceAsStream("64.png")));
         stage.getIcons().add(new Image(getClass().getResourceAsStream("128.png")));

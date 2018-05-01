@@ -17,7 +17,9 @@ public class Util {
         return lerp(p0, p1, t);
     }
 
-    public static void main(String[] args){
-
+    public static double slope(Vector2 a, Vector2 b){
+        double dy = a.getY() - b.getY();
+        double dx = a.getX() - b.getX();
+        return dy/dx;
     }
 }

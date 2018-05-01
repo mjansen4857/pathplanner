@@ -3,10 +3,10 @@ package org.rangerrobotics.pathplanner.geometry;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class Path {
+public class CurvyBoi {
     public ObservableList<Vector2> points;
 
-    public Path(){
+    public CurvyBoi(){
         this.points = FXCollections.observableArrayList();
         points.add(new Vector2(20, 20));
         points.add(new Vector2(170, 20));
@@ -22,15 +22,15 @@ public class Path {
         return points.size();
     }
 
-    public int numSegments(){
+    public int numSplines(){
         return ((points.size() - 4) / 3) + 1;
     }
 
-    public Vector2[] getPointsInSegment(int i){
+    public Vector2[] getPointsInSpline(int i){
         return new Vector2[]{points.get(i * 3), points.get(i * 3 + 1), points.get(i * 3 + 2), points.get(i * 3 + 3)};
     }
 
-    public void addSegment(Vector2 anchorPos){
+    public void addSpline(Vector2 anchorPos){
         points.add(Vector2.subtract(Vector2.multiply(points.get(points.size() - 1), 2), points.get(points.size() - 2)));
         points.add(Vector2.multiply(Vector2.add(points.get(points.size() - 1), new Vector2(anchorPos.getX(), anchorPos.getY())), 0.5));
         points.add(new Vector2(anchorPos.getX(), anchorPos.getY()));
@@ -66,8 +66,8 @@ public class Path {
         }
     }
 
-    public void deleteSegment(int anchorIndex){
-        if(anchorIndex % 3 == 0 && numSegments() > 1){
+    public void deleteSpline(int anchorIndex){
+        if(anchorIndex % 3 == 0 && numSplines() > 1){
             if(anchorIndex == 0){
                 points.remove(0, 3);
 
@@ -77,5 +77,25 @@ public class Path {
                 points.remove(anchorIndex - 1, anchorIndex + 2);
             }
         }
+    }
+
+    public SegmentGroup join(double step){
+        System.out.println("Joining splines...");
+        long start = System.currentTimeMillis();
+        SegmentGroup s = new SegmentGroup();
+        for(int i = 0; i < numSplines(); i++){
+            Vector2[] points = getPointsInSpline(i);
+            for(double d = 0; d <= 1.0; d += step){
+                Vector2 p = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
+                Segment seg = new Segment();
+                seg.x = p.getX();
+                seg.y = p.getY();
+                s.add(seg);
+            }
+        }
+        System.out.println("    Num segments per spline: " + s.s.size() / numSplines());
+        System.out.println("    Total Segments: " + s.s.size());
+        System.out.println("DONE IN: " + (System.currentTimeMillis() - start) + "ms");
+        return s;
     }
 }

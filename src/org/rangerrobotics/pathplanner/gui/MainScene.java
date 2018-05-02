@@ -6,16 +6,15 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import org.rangerrobotics.pathplanner.Path;
 import org.rangerrobotics.pathplanner.RobotPath;
-import org.rangerrobotics.pathplanner.geometry.CurvyBoi;
-import org.rangerrobotics.pathplanner.geometry.SegmentGroup;
+import org.rangerrobotics.pathplanner.geometry.PlannedPath;
 import org.rangerrobotics.pathplanner.geometry.Util;
 import org.rangerrobotics.pathplanner.geometry.Vector2;
 
@@ -24,7 +23,7 @@ public class MainScene {
     private static StackPane root;
     private static JFXTabPane layout;
     private static JFXSnackbar snackbar;
-    public static CurvyBoi curvyBoi;
+    public static PlannedPath plannedPath;
     private static Canvas canvas;
     private static int pointDragIndex = -1;
 
@@ -36,46 +35,49 @@ public class MainScene {
     }
 
     private static void createScene(){
-        curvyBoi = new CurvyBoi();
+        plannedPath = new PlannedPath();
 
         root = new StackPane();
         layout = new JFXTabPane();
-        Tab genTab = new Tab();
-        genTab.setText("Path");
-        Tab outTab = new Tab();
-        outTab.setText("Output");
+        Tab genTab = new Tab("Path");
+        Tab outTab = new Tab("Output");
+        Tab aboutTab = new Tab("About");
 
         BorderPane genTabLayout = new BorderPane();
         JFXButton test = new JFXButton("Generate");
         test.setOnAction(action -> {
-            //TEST FINALIZE PATH
             new Thread(() -> {
-                SegmentGroup s = curvyBoi.join(0.000005);
-                Path path = new Path(s);
-                RobotPath bot = new RobotPath(path);
+                long start = System.currentTimeMillis();
+                RobotPath robotPath = new RobotPath(plannedPath);
+                System.out.println("FINISHED! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " s");
+                System.out.println("LEFT:\n" + robotPath.left.toString());
+                System.out.println("RIGHT:\n" + robotPath.right.toString());
             }).start();
         });
-//        VBox genLeft = new VBox(10);
-//        genLeft.getChildren().addAll(new Label("Henlo"), test);
-//        genTabLayout.setLeft(genLeft);
+
+        BorderPane outputTabLayout = new BorderPane();
+        outputTabLayout.setCenter(new Label("Put output stuff here"));
+
+        BorderPane aboutTabLayout = new BorderPane();
+        aboutTabLayout.setCenter(new Label("Put things here"));
 
         canvas = new Canvas(800, 507);
         canvas.setOnMousePressed(event -> {
             if(event.getButton() == MouseButton.SECONDARY){
-                for (int i = 0; i < curvyBoi.numPoints(); i++) {
-                    if ((Math.pow(event.getX() - curvyBoi.get(i).getX(), 2) + (Math.pow(event.getY() - curvyBoi.get(i).getY(), 2))) <= Math.pow(8, 2)) {
-                        if(i % 3 == 0 && curvyBoi.numSplines() > 1) {
-                            curvyBoi.deleteSpline(i);
+                for (int i = 0; i < plannedPath.numPoints(); i++) {
+                    if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
+                        if(i % 3 == 0 && plannedPath.numSplines() > 1) {
+                            plannedPath.deleteSpline(i);
                             updateCanvas();
                         }
                         return;
                     }
                 }
-                curvyBoi.addSpline(new Vector2(event.getX(), event.getY()));
+                plannedPath.addSpline(new Vector2(event.getX(), event.getY()));
                 updateCanvas();
             }else if(event.getButton() == MouseButton.PRIMARY) {
-                for (int i = 0; i < curvyBoi.numPoints(); i++) {
-                    if ((Math.pow(event.getX() - curvyBoi.get(i).getX(), 2) + (Math.pow(event.getY() - curvyBoi.get(i).getY(), 2))) <= Math.pow(8, 2)) {
+                for (int i = 0; i < plannedPath.numPoints(); i++) {
+                    if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         pointDragIndex = i;
                     }
                 }
@@ -86,8 +88,8 @@ public class MainScene {
         });
         canvas.setOnMouseMoved(event -> {
             if(event.getButton() == MouseButton.NONE){
-                for (int i = 0; i < curvyBoi.numPoints(); i++) {
-                    if ((Math.pow(event.getX() - curvyBoi.get(i).getX(), 2) + (Math.pow(event.getY() - curvyBoi.get(i).getY(), 2))) <= Math.pow(8, 2)) {
+                for (int i = 0; i < plannedPath.numPoints(); i++) {
+                    if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         updateCanvas(i);
                         return;
                     }
@@ -98,7 +100,7 @@ public class MainScene {
         canvas.setOnMouseDragged(event -> {
             if(pointDragIndex != -1){
                 if(event.getX() >= 0 && event.getY() >= 0 && event.getX() <= canvas.getWidth() && event.getY() <= canvas.getHeight()) {
-                    curvyBoi.movePoint(pointDragIndex, new Vector2(event.getX(), event.getY()));
+                    plannedPath.movePoint(pointDragIndex, new Vector2(event.getX(), event.getY()));
                     updateCanvas(pointDragIndex);
                 }
             }
@@ -110,10 +112,13 @@ public class MainScene {
         bottom.getChildren().addAll(test);
         genTabLayout.setCenter(canvas);
         genTabLayout.setBottom(bottom);
-
         genTab.setContent(genTabLayout);
 
-        layout.getTabs().addAll(genTab, outTab);
+        outTab.setContent(outputTabLayout);
+
+        aboutTab.setContent(aboutTabLayout);
+
+        layout.getTabs().addAll(genTab, outTab, aboutTab);
         root.getChildren().add(layout);
         snackbar = new JFXSnackbar(root);
 
@@ -126,8 +131,8 @@ public class MainScene {
         g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
         g.setLineWidth(3);
         g.setStroke(Color.color(0, 0.95, 0));
-        for(int i = 0; i < curvyBoi.numSplines(); i ++){
-            Vector2[] points = curvyBoi.getPointsInSpline(i);
+        for(int i = 0; i < plannedPath.numSplines(); i ++){
+            Vector2[] points = plannedPath.getPointsInSpline(i);
             for(double d = 0.01; d <= 1; d += 0.01){
                 Vector2 p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
                 Vector2 p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
@@ -135,22 +140,29 @@ public class MainScene {
             }
         }
         g.setStroke(Color.BLACK);
-        for(int i = 0; i < curvyBoi.numSplines(); i++){
-            Vector2[] points = curvyBoi.getPointsInSpline(i);
+        for(int i = 0; i < plannedPath.numSplines(); i++){
+            Vector2[] points = plannedPath.getPointsInSpline(i);
 
             g.setLineWidth(2);
             g.strokeLine(points[0].getX(), points[0].getY(), points[1].getX(), points[1].getY());
             g.strokeLine(points[2].getX(), points[2].getY(), points[3].getX(), points[3].getY());
         }
 
-        for(int i = 0; i < curvyBoi.numPoints(); i++){
+        for(int i = 0; i < plannedPath.numPoints(); i++){
+            g.setStroke(Color.BLACK);
+            g.setLineWidth(4);
             if(i == highlightedPoint){
                 g.setFill(Color.YELLOW);
-            }else{
+            }else if(i == 0){
+                g.setFill(Color.GREEN);
+            }else if(i == plannedPath.numPoints() - 1){
                 g.setFill(Color.RED);
+            }else{
+                g.setFill(Color.WHITE);
             }
-            Vector2 p = curvyBoi.get(i);
-            g.fillOval(p.getX() - 8, p.getY() - 8, 16, 16);
+            Vector2 p = plannedPath.get(i);
+            g.strokeOval(p.getX() - 6, p.getY() - 6, 12, 12);
+            g.fillOval(p.getX() - 6, p.getY() - 6, 12, 12);
         }
     }
 

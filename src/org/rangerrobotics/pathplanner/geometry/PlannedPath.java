@@ -3,10 +3,10 @@ package org.rangerrobotics.pathplanner.geometry;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
-public class CurvyBoi {
+public class PlannedPath {
     public ObservableList<Vector2> points;
 
-    public CurvyBoi(){
+    public PlannedPath(){
         this.points = FXCollections.observableArrayList();
         points.add(new Vector2(20, 20));
         points.add(new Vector2(170, 20));

@@ -19,6 +19,11 @@
     -fx-text-fill: -buttonText;
 }
 
+.label{
+    -fx-font-size: 20px;
+    -fx-text-fill: -text;
+}
+
 .prompt-text{
     -fx-font-size: 18px;
     -fx-text-fill: -text;

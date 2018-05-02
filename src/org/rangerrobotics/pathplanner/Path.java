@@ -33,8 +33,8 @@ public class Path {
 
     private void makeScaledLists(){
         for(int i = 0; i < inGroup.s.size(); i++){
-            x.add((inGroup.s.get(i).x-MainScene.curvyBoi.get(0).getX())/pixelsPerFoot);
-            y.add((inGroup.s.get(i).y-MainScene.curvyBoi.get(0).getY())/pixelsPerFoot);
+            x.add((inGroup.s.get(i).x-MainScene.plannedPath.get(0).getX())/pixelsPerFoot);
+            y.add((inGroup.s.get(i).y-MainScene.plannedPath.get(0).getY())/pixelsPerFoot);
         }
     }
 

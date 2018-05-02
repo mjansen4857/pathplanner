@@ -2,6 +2,7 @@ package org.rangerrobotics.pathplanner;
 
 import org.rangerrobotics.pathplanner.geometry.Segment;
 import org.rangerrobotics.pathplanner.geometry.SegmentGroup;
+import org.rangerrobotics.pathplanner.geometry.PlannedPath;
 
 import java.util.ArrayList;
 
@@ -15,13 +16,13 @@ public class RobotPath {
     private Path path;
     private SegmentGroup pathSegments;
     private SegmentGroup timeSegments = new SegmentGroup();
-    private SegmentGroup left = new SegmentGroup();
-    private SegmentGroup right = new SegmentGroup();
+    public SegmentGroup left = new SegmentGroup();
+    public SegmentGroup right = new SegmentGroup();
 
-    public RobotPath(Path path){
+    public RobotPath(PlannedPath plannedPath){
+        this.path = new Path(plannedPath.join(0.000005));
         System.out.println("Calculating Robot Data...");
         long start = System.currentTimeMillis();
-        this.path = path;
         pathSegments = path.group;
         calculateSecondDerivative();
         calculateMaxVelocity();

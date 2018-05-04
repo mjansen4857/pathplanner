@@ -8,10 +8,12 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
+import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import org.rangerrobotics.pathplanner.RobotPath;
 import org.rangerrobotics.pathplanner.geometry.PlannedPath;
@@ -26,6 +28,7 @@ public class MainScene {
     public static PlannedPath plannedPath;
     private static Canvas canvas;
     private static int pointDragIndex = -1;
+    private static boolean isCtrlPressed = false;
 
     public static Scene getScene(){
         if(scene == null){
@@ -35,8 +38,6 @@ public class MainScene {
     }
 
     private static void createScene(){
-        plannedPath = new PlannedPath();
-
         root = new StackPane();
         layout = new JFXTabPane();
         Tab genTab = new Tab("Path");
@@ -44,8 +45,8 @@ public class MainScene {
         Tab aboutTab = new Tab("About");
 
         BorderPane genTabLayout = new BorderPane();
-        JFXButton test = new JFXButton("Generate");
-        test.setOnAction(action -> {
+        JFXButton generateButton = new JFXButton("Generate");
+        generateButton.setOnAction(action -> {
             new Thread(() -> {
                 long start = System.currentTimeMillis();
                 RobotPath robotPath = new RobotPath(plannedPath);
@@ -54,6 +55,7 @@ public class MainScene {
                 System.out.println("RIGHT:\n" + robotPath.right.toString());
             }).start();
         });
+        generateButton.getStyleClass().addAll("button-raised");
 
         BorderPane outputTabLayout = new BorderPane();
         outputTabLayout.setCenter(new Label("Put output stuff here"));
@@ -67,8 +69,10 @@ public class MainScene {
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         if(i % 3 == 0 && plannedPath.numSplines() > 1) {
-                            plannedPath.deleteSpline(i);
-                            updateCanvas();
+                            if(isCtrlPressed) {
+                                plannedPath.deleteSpline(i);
+                                updateCanvas();
+                            }
                         }
                         return;
                     }
@@ -78,7 +82,30 @@ public class MainScene {
             }else if(event.getButton() == MouseButton.PRIMARY) {
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
-                        pointDragIndex = i;
+                        if(isCtrlPressed){
+                            BorderPane dialogPane = new BorderPane();
+                            dialogPane.setPrefSize(350, 300);
+
+                            HBox dialogBottom = new HBox();
+                            dialogBottom.setAlignment(Pos.BOTTOM_RIGHT);
+                            JFXButton dialogButton = new JFXButton("Accept");
+                            dialogButton.getStyleClass().addAll("button-flat");
+                            dialogButton.setPadding(new Insets(10));
+                            dialogBottom.getChildren().addAll(dialogButton);
+
+                            VBox dialogCenter = new VBox();
+                            dialogCenter.setAlignment(Pos.TOP_LEFT);
+                            Label dialogLabel = new Label("Test");
+                            dialogLabel.setPadding(new Insets(0, 0, 50, 0));
+                            dialogCenter.getChildren().addAll(dialogLabel);
+
+                            dialogPane.setBottom(dialogBottom);
+                            dialogPane.setCenter(dialogCenter);
+                            JFXDialog dialog = new JFXDialog(root, dialogPane, JFXDialog.DialogTransition.CENTER);
+                            dialog.show();
+                        }else {
+                            pointDragIndex = i;
+                        }
                     }
                 }
             }
@@ -105,11 +132,12 @@ public class MainScene {
                 }
             }
         });
-        draw(canvas.getGraphicsContext2D(), -1);
+        plannedPath = new PlannedPath(new Vector2(canvas.getWidth()/2, canvas.getHeight()/2));
+        updateCanvas();
         HBox bottom = new HBox();
         bottom.setPadding(new Insets(10));
         bottom.setAlignment(Pos.CENTER);
-        bottom.getChildren().addAll(test);
+        bottom.getChildren().addAll(generateButton);
         genTabLayout.setCenter(canvas);
         genTabLayout.setBottom(bottom);
         genTab.setContent(genTabLayout);
@@ -124,6 +152,17 @@ public class MainScene {
 
         scene = new Scene(root, 800, 600);
         scene.getStylesheets().add("org/rangerrobotics/pathplanner/gui/styles.css");
+
+        scene.setOnKeyPressed(event -> {
+            if(event.getCode() == KeyCode.CONTROL){
+                isCtrlPressed = true;
+            }
+        });
+        scene.setOnKeyReleased(event -> {
+            if(event.getCode() == KeyCode.CONTROL){
+                isCtrlPressed = false;
+            }
+        });
     }
 
     private static void draw(GraphicsContext g, int highlightedPoint){

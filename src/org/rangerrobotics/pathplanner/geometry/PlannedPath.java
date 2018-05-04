@@ -2,16 +2,22 @@ package org.rangerrobotics.pathplanner.geometry;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import org.rangerrobotics.pathplanner.gui.MainScene;
 
 public class PlannedPath {
     public ObservableList<Vector2> points;
 
-    public PlannedPath(){
+    public PlannedPath(Vector2 center){
         this.points = FXCollections.observableArrayList();
-        points.add(new Vector2(20, 20));
-        points.add(new Vector2(170, 20));
-        points.add(new Vector2(50, 200));
-        points.add(new Vector2(200, 200));
+        points.add(new Vector2(center.getX() - 100, center.getY() - 100));
+        points.add(new Vector2(center.getX() + 50, center.getY() - 100));
+        points.add(new Vector2(center.getX() - 50, center.getY() + 100));
+        points.add(new Vector2(center.getX() + 100, center.getY() + 100));
+
+//        points.add(new Vector2(20, 20));
+//        points.add(new Vector2(170, 20));
+//        points.add(new Vector2(50, 200));
+//        points.add(new Vector2(200, 200));
     }
 
     public Vector2 get(int i){

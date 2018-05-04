@@ -10,13 +10,25 @@
     -statusRed: #f44335;
 }
 
-.jfx-button{
+.jfx-dialog .label{
+    -fx-text-fill: #000000;
+}
+
+.button-raised{
     -fx-padding: 0.2em 0.2em;
     -fx-font-size: 20px;
     -jfx-button-type: RAISED;
     -fx-background-color: rgb(77, 102, 204);
     -fx-pref-width: 100;
     -fx-text-fill: -buttonText;
+}
+
+.button-flat{
+    -fx-padding: 0.2em 0em;
+    -fx-font-size: 20px;
+    -jfx-button-type: FLAT;
+    -fx-pref-width: 100;
+    -fx-text-fill: rgb(11, 144, 224);
 }
 
 .label{

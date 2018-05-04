@@ -14,7 +14,7 @@ public class Path {
     private ArrayList<Double> y = new ArrayList<>();
     private ArrayList<Double> l = new ArrayList<>();
     private SegmentGroup inGroup;
-    private int pixelsPerFoot = 24;
+    public static int pixelsPerFoot = 24;
     public SegmentGroup group = new SegmentGroup();
 
     public Path(SegmentGroup s){

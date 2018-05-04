@@ -1,6 +1,8 @@
 package org.rangerrobotics.pathplanner.gui;
 
 import com.jfoenix.controls.*;
+import com.jfoenix.validation.DoubleValidator;
+import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -15,6 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import org.rangerrobotics.pathplanner.Path;
 import org.rangerrobotics.pathplanner.RobotPath;
 import org.rangerrobotics.pathplanner.geometry.PlannedPath;
 import org.rangerrobotics.pathplanner.geometry.Util;
@@ -83,25 +86,65 @@ public class MainScene {
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         if(isCtrlPressed){
+                            final JFXDialog dialog = new JFXDialog();
                             BorderPane dialogPane = new BorderPane();
                             dialogPane.setPrefSize(350, 300);
 
+                            VBox dialogCenter = new VBox(20);
+                            dialogCenter.setAlignment(Pos.TOP_LEFT);
+                            dialogCenter.setPadding(new Insets(5, 8, 5, 8));
+                            Label dialogHeading = new Label("Anchor Point Configuration");
+                            dialogHeading.getStyleClass().addAll("dialog-heading");
+                            dialogHeading.setPadding(new Insets(0, 0, 10, 0));
+
+                            HBox xPositionContainer = new HBox(20);
+                            xPositionContainer.setAlignment(Pos.CENTER);
+                            Label xPositionLabel = new Label("X Position (ft):");
+                            xPositionLabel.getStyleClass().addAll("text-field-label");
+                            JFXTextField xPositionTxtField = new JFXTextField();
+                            xPositionTxtField.setValidators(new DoubleValidator());
+                            xPositionTxtField.setAlignment(Pos.CENTER);
+                            xPositionTxtField.setText("" + plannedPath.get(i).getX() / Path.pixelsPerFoot);
+                            xPositionContainer.getChildren().addAll(xPositionLabel, xPositionTxtField);
+
+                            HBox yPositionContainer = new HBox(20);
+                            yPositionContainer.setAlignment(Pos.CENTER);
+                            Label yPositionLabel = new Label("Y Position (ft):");
+                            yPositionLabel.getStyleClass().addAll("text-field-label");
+                            JFXTextField yPositionTxtField = new JFXTextField();
+                            yPositionTxtField.setValidators(new DoubleValidator());
+                            yPositionTxtField.setAlignment(Pos.CENTER);
+                            yPositionTxtField.setText("" + plannedPath.get(i).getY() / Path.pixelsPerFoot);
+                            yPositionContainer.getChildren().addAll(yPositionLabel, yPositionTxtField);
+
+                            HBox angleContainer = new HBox(20);
+                            angleContainer.setAlignment(Pos.CENTER);
+                            Label angleLabel = new Label("Angle (deg):  ");
+                            angleLabel.getStyleClass().addAll("text-field-label");
+                            JFXTextField angleTxtField = new JFXTextField();
+                            angleTxtField.setValidators(new DoubleValidator());
+                            angleTxtField.setAlignment(Pos.CENTER);
+                            angleTxtField.setText("");
+                            angleContainer.getChildren().addAll(angleLabel, angleTxtField);
+
+                            dialogCenter.getChildren().addAll(dialogHeading, xPositionContainer, yPositionContainer, angleContainer);
+
                             HBox dialogBottom = new HBox();
+                            dialogBottom.setPadding(new Insets(0, 3, 2, 0));
                             dialogBottom.setAlignment(Pos.BOTTOM_RIGHT);
-                            JFXButton dialogButton = new JFXButton("Accept");
+                            JFXButton dialogButton = new JFXButton("ACCEPT");
                             dialogButton.getStyleClass().addAll("button-flat");
                             dialogButton.setPadding(new Insets(10));
+                            dialogButton.setOnAction(action -> {
+                                dialog.close();
+                            });
                             dialogBottom.getChildren().addAll(dialogButton);
-
-                            VBox dialogCenter = new VBox();
-                            dialogCenter.setAlignment(Pos.TOP_LEFT);
-                            Label dialogLabel = new Label("Test");
-                            dialogLabel.setPadding(new Insets(0, 0, 50, 0));
-                            dialogCenter.getChildren().addAll(dialogLabel);
 
                             dialogPane.setBottom(dialogBottom);
                             dialogPane.setCenter(dialogCenter);
-                            JFXDialog dialog = new JFXDialog(root, dialogPane, JFXDialog.DialogTransition.CENTER);
+                            dialog.setDialogContainer(root);
+                            dialog.setContent(dialogPane);
+                            dialog.setTransitionType(JFXDialog.DialogTransition.CENTER);
                             dialog.show();
                         }else {
                             pointDragIndex = i;

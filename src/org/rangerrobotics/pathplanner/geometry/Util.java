@@ -22,4 +22,23 @@ public class Util {
         double dx = a.getX() - b.getX();
         return dy/dx;
     }
+
+    public static Vector2 closestPointOnLine(Vector2 lineStart, Vector2 lineEnd, Vector2 p){
+        double dx = lineEnd.getX() - lineStart.getX();
+        double dy = lineEnd.getY() - lineStart.getY();
+
+        if(dx == 0 && dy == 0) throw new IllegalArgumentException("Line start and end points are equal!");
+
+        double t = ((p.getX() - lineStart.getX()) * dx + (p.getY() - lineStart.getY()) * dy) / (dx * dx + dy * dy);
+
+        Vector2 closestPoint;
+        if(t < 0){
+            closestPoint = lineStart;
+        }else if(t > 1){
+            closestPoint = lineEnd;
+        }else{
+            closestPoint = lerp(lineStart, lineEnd, t);
+        }
+        return closestPoint;
+    }
 }

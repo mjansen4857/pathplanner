@@ -32,6 +32,7 @@ public class MainScene {
     private static Canvas canvas;
     private static int pointDragIndex = -1;
     private static boolean isCtrlPressed = false;
+    private static boolean isShiftPressed = false;
 
     public static Scene getScene(){
         if(scene == null){
@@ -198,7 +199,20 @@ public class MainScene {
         canvas.setOnMouseDragged(event -> {
             if(pointDragIndex != -1){
                 if(event.getX() >= 0 && event.getY() >= 0 && event.getX() <= canvas.getWidth() && event.getY() <= canvas.getHeight()) {
-                    plannedPath.movePoint(pointDragIndex, new Vector2(event.getX(), event.getY()));
+                    if(isShiftPressed && pointDragIndex % 3 != 0){
+                        int controlIndex = pointDragIndex;
+                        boolean nextIsAnchor = (controlIndex + 1) % 3 == 0;
+                        int anchorIndex = (nextIsAnchor) ? controlIndex + 1 : controlIndex - 1;
+                        Vector2 lineStart = plannedPath.get(anchorIndex);
+                        Vector2 lineEnd = Vector2.add(plannedPath.get(controlIndex), Vector2.subtract(plannedPath.get(controlIndex), plannedPath.get(anchorIndex)));
+                        Vector2 p = new Vector2(event.getX(), event.getY());
+                        Vector2 newPoint = Util.closestPointOnLine(lineStart, lineEnd, p);
+                        if(newPoint.getX() - lineStart.getX() != 0 || newPoint.getY() - lineStart.getY() != 0){
+                            plannedPath.movePoint(controlIndex, newPoint);
+                        }
+                    }else{
+                        plannedPath.movePoint(pointDragIndex, new Vector2(event.getX(), event.getY()));
+                    }
                     updateCanvas(pointDragIndex);
                 }
             }
@@ -228,11 +242,15 @@ public class MainScene {
         scene.setOnKeyPressed(event -> {
             if(event.getCode() == KeyCode.CONTROL){
                 isCtrlPressed = true;
+            }else if(event.getCode() == KeyCode.SHIFT){
+                isShiftPressed = true;
             }
         });
         scene.setOnKeyReleased(event -> {
             if(event.getCode() == KeyCode.CONTROL){
                 isCtrlPressed = false;
+            }else if(event.getCode() == KeyCode.SHIFT){
+                isShiftPressed = false;
             }
         });
     }

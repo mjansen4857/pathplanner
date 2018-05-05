@@ -82,10 +82,10 @@ public class MainScene {
                 }
                 plannedPath.addSpline(new Vector2(event.getX(), event.getY()));
                 updateCanvas();
-            }else if(event.getButton() == MouseButton.PRIMARY) {
+            }else if(event.getButton() == MouseButton.PRIMARY || event.getButton() == MouseButton.MIDDLE) {
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
-                        if(isCtrlPressed){
+                        if((isCtrlPressed || event.getButton() == MouseButton.MIDDLE) && i % 3 == 0){
                             final JFXDialog dialog = new JFXDialog();
                             BorderPane dialogPane = new BorderPane();
                             dialogPane.setPrefSize(350, 300);
@@ -124,7 +124,16 @@ public class MainScene {
                             JFXTextField angleTxtField = new JFXTextField();
                             angleTxtField.setValidators(new DoubleValidator());
                             angleTxtField.setAlignment(Pos.CENTER);
-                            angleTxtField.setText("");
+                            Vector2 anchor = plannedPath.get(i);
+                            Vector2 control;
+                            if(i == plannedPath.numPoints() - 1){
+//                                control = plannedPath.get(i - 1);
+                                control = Vector2.subtract(anchor, Vector2.subtract(plannedPath.get(i - 1), anchor));
+                            }else{
+                                control = plannedPath.get(i + 1);
+                            }
+                            double angle = Math.toDegrees(Math.atan2(control.getY() - anchor.getY(), control.getX() - anchor.getX()));
+                            angleTxtField.setText("" + angle);
                             angleContainer.getChildren().addAll(angleLabel, angleTxtField);
 
                             dialogCenter.getChildren().addAll(dialogHeading, xPositionContainer, yPositionContainer, angleContainer);
@@ -135,7 +144,26 @@ public class MainScene {
                             JFXButton dialogButton = new JFXButton("ACCEPT");
                             dialogButton.getStyleClass().addAll("button-flat");
                             dialogButton.setPadding(new Insets(10));
+                            final int anchorIndex = i;
                             dialogButton.setOnAction(action -> {
+                                if(xPositionTxtField.validate() && yPositionTxtField.validate() && angleTxtField.validate() && (Double.parseDouble(angleTxtField.getText()) >= -180 && Double.parseDouble(angleTxtField.getText()) <= 180)){
+                                    plannedPath.movePoint(anchorIndex, new Vector2(Double.parseDouble(xPositionTxtField.getText()) * Path.pixelsPerFoot, Double.parseDouble(yPositionTxtField.getText()) * Path.pixelsPerFoot));
+                                    double theta = Math.toRadians(Double.parseDouble(angleTxtField.getText()));
+                                    double h = Vector2.subtract(anchor, control).getMagnitude();
+                                    double o = Math.sin(theta) * h;
+                                    double a = Math.cos(theta) * h;
+                                    int controlIndex;
+                                    if(anchorIndex == plannedPath.numPoints() - 1){
+                                        controlIndex = anchorIndex - 1;
+                                        plannedPath.movePoint(controlIndex, Vector2.subtract(plannedPath.get(anchorIndex), new Vector2(a, o)));
+                                    }else{
+                                        controlIndex = anchorIndex + 1;
+                                        plannedPath.movePoint(controlIndex, Vector2.add(plannedPath.get(anchorIndex), new Vector2(a, o)));
+                                    }
+                                    updateCanvas();
+                                }else{
+                                    showSnackbarMessage("Invalid Inputs!", "error");
+                                }
                                 dialog.close();
                             });
                             dialogBottom.getChildren().addAll(dialogButton);
@@ -192,6 +220,7 @@ public class MainScene {
         layout.getTabs().addAll(genTab, outTab, aboutTab);
         root.getChildren().add(layout);
         snackbar = new JFXSnackbar(root);
+        snackbar.setPrefWidth(800);
 
         scene = new Scene(root, 800, 600);
         scene.getStylesheets().add("org/rangerrobotics/pathplanner/gui/styles.css");
@@ -258,10 +287,10 @@ public class MainScene {
     }
 
     public static void showSnackbarMessage(String message, String type){
-        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type));
+        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, "", 3500, false, null));
     }
 
-    public static void showSnackbarWithButton(String message, String type){
-        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, "", 1000, true, event -> snackbar.close()));
-    }
+//    public static void showSnackbarWithButton(String message, String type){
+//        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, "OK", 1000, true, event -> snackbar.close()));
+//    }
 }

@@ -71,19 +71,26 @@
     -fx-background-color: -tabAccent;
 }
 
+.jfx-snackbar-content {
+    -fx-background-color: #323232;
+}
+
 .jfx-snackbar-content:info .jfx-snackbar-toast{
-    -fx-font-size: 18px;
+    -fx-font-size: 24px;
     -fx-text-fill: -text;
+    -fx-alignment: CENTER;
 }
 
 .jfx-snackbar-content:success .jfx-snackbar-toast{
-    -fx-font-size: 18px;
+    -fx-font-size: 24px;
     -fx-text-fill: -statusGreen;
+    -fx-alignment: CENTER;
 }
 
 .jfx-snackbar-content:error .jfx-snackbar-toast{
-    -fx-font-size: 18px;
+    -fx-font-size: 24px;
     -fx-text-fill: -statusRed;
+    -fx-alignment: CENTER;
 }
 
 .jfx-snackbar-action{

@@ -1,11 +1,13 @@
-package org.rangerrobotics.pathplanner.geometry;
+package org.rangerrobotics.pathplanner.generation;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import org.rangerrobotics.pathplanner.gui.MainScene;
 
 public class PlannedPath {
     public ObservableList<Vector2> points;
+    public static int pixelsPerFoot = 20;
+    public static int xPixelOffset = 53;
+    public static int yPixelOffset = 4;
 
     public PlannedPath(Vector2 center){
         this.points = FXCollections.observableArrayList();
@@ -13,11 +15,6 @@ public class PlannedPath {
         points.add(new Vector2(center.getX() + 50, center.getY() - 100));
         points.add(new Vector2(center.getX() - 50, center.getY() + 100));
         points.add(new Vector2(center.getX() + 100, center.getY() + 100));
-
-//        points.add(new Vector2(20, 20));
-//        points.add(new Vector2(170, 20));
-//        points.add(new Vector2(50, 200));
-//        points.add(new Vector2(200, 200));
     }
 
     public Vector2 get(int i){
@@ -59,15 +56,10 @@ public class PlannedPath {
             int anchorIndex = (nextIsAnchor) ? i + 1 : i - 1;
 
             if(correspondingControlIndex >= 0 && correspondingControlIndex < points.size()) {
-                //Maintain distances from anchor
                 double dst = Vector2.subtract(points.get(anchorIndex), points.get(correspondingControlIndex)).getMagnitude();
                 Vector2 dir = Vector2.subtract(points.get(anchorIndex), newPos).normalized();
 
                 points.set(correspondingControlIndex, Vector2.add(points.get(anchorIndex), Vector2.multiply(dir, dst)));
-
-                //Same distances from anchor
-//                Vector2 d = Vector2.subtract(newPos, points.get(anchorIndex));
-//                points.set(correspondingControlIndex, Vector2.subtract(points.get(anchorIndex), d));
             }
         }
     }

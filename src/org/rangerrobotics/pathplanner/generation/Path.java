@@ -1,9 +1,5 @@
-package org.rangerrobotics.pathplanner;
+package org.rangerrobotics.pathplanner.generation;
 
-import org.rangerrobotics.pathplanner.geometry.Segment;
-import org.rangerrobotics.pathplanner.geometry.SegmentGroup;
-import org.rangerrobotics.pathplanner.geometry.Util;
-import org.rangerrobotics.pathplanner.geometry.Vector2;
 import org.rangerrobotics.pathplanner.gui.MainScene;
 
 import java.util.ArrayList;
@@ -14,7 +10,6 @@ public class Path {
     private ArrayList<Double> y = new ArrayList<>();
     private ArrayList<Double> l = new ArrayList<>();
     private SegmentGroup inGroup;
-    public static int pixelsPerFoot = 24;
     public SegmentGroup group = new SegmentGroup();
 
     public Path(SegmentGroup s){
@@ -33,8 +28,8 @@ public class Path {
 
     private void makeScaledLists(){
         for(int i = 0; i < inGroup.s.size(); i++){
-            x.add((inGroup.s.get(i).x-MainScene.plannedPath.get(0).getX())/pixelsPerFoot);
-            y.add((inGroup.s.get(i).y-MainScene.plannedPath.get(0).getY())/pixelsPerFoot);
+            x.add((inGroup.s.get(i).x-MainScene.plannedPath.get(0).getX() - PlannedPath.xPixelOffset)/PlannedPath.pixelsPerFoot);
+            y.add((inGroup.s.get(i).y-MainScene.plannedPath.get(0).getY() - PlannedPath.yPixelOffset)/PlannedPath.pixelsPerFoot);
         }
     }
 

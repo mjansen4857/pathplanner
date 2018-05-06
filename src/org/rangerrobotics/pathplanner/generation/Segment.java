@@ -1,4 +1,4 @@
-package org.rangerrobotics.pathplanner.geometry;
+package org.rangerrobotics.pathplanner.generation;
 
 public class Segment {
     public double x, heading, y, pos, vel, acc, dydx, d2ydx2, jerk, dt, time, dx;

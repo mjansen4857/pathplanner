@@ -1,4 +1,4 @@
-package org.rangerrobotics.pathplanner.geometry;
+package org.rangerrobotics.pathplanner.generation;
 
 import java.util.ArrayList;
 

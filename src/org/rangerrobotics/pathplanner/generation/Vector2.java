@@ -1,7 +1,6 @@
-package org.rangerrobotics.pathplanner.geometry;
+package org.rangerrobotics.pathplanner.generation;
 
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import javafx.beans.property.SimpleDoubleProperty;
 
 public class Vector2 extends RecursiveTreeObject<Vector2>{
     private double x;

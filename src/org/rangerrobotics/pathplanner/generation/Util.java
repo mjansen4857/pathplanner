@@ -1,4 +1,4 @@
-package org.rangerrobotics.pathplanner.geometry;
+package org.rangerrobotics.pathplanner.generation;
 
 public class Util {
     public static Vector2 lerp (Vector2 a, Vector2 b, double t){

@@ -1,17 +1,13 @@
-package org.rangerrobotics.pathplanner;
-
-import org.rangerrobotics.pathplanner.geometry.Segment;
-import org.rangerrobotics.pathplanner.geometry.SegmentGroup;
-import org.rangerrobotics.pathplanner.geometry.PlannedPath;
+package org.rangerrobotics.pathplanner.generation;
 
 import java.util.ArrayList;
 
 public class RobotPath {
-    private double maxAcc = 8;
-    private double maxDcc = 20;
-    private double maxVel = 12;
-    double maxJerk = 100;
-    private double width = 2;
+    public static double maxAcc = 8;
+    public static double maxDcc = 20;
+    public static double maxVel = 12;
+    public static double maxJerk = 100;
+    public static double width = 2;
     private double segmentTime = 0.01;
     private Path path;
     private SegmentGroup pathSegments;
@@ -20,7 +16,7 @@ public class RobotPath {
     public SegmentGroup right = new SegmentGroup();
 
     public RobotPath(PlannedPath plannedPath){
-        this.path = new Path(plannedPath.join(0.000005));
+        this.path = new Path(plannedPath.join(0.00001));
         System.out.println("Calculating Robot Data...");
         long start = System.currentTimeMillis();
         pathSegments = path.group;
@@ -163,8 +159,8 @@ public class RobotPath {
             ArrayList<Segment> lg = left.s;
             left.s.add(l);
             l = left.s.get(i);
-            l.x = s.x - width / 2 * Math.sin(Math.atan(s.dydx));
-            l.y = s.y + width / 2 * Math.cos(Math.atan(s.dydx));
+            l.x = s.x + width / 2 * Math.sin(Math.atan(s.dydx));
+            l.y = s.y - width / 2 * Math.cos(Math.atan(s.dydx));
 
             if(i != 0){
                 double dp = Math.sqrt((l.x - lg.get(i - 1).x)
@@ -182,8 +178,8 @@ public class RobotPath {
             ArrayList<Segment> rg = right.s;
             right.s.add(r);
             r = right.s.get(i);
-            r.x = s.x + width / 2 * Math.sin(Math.atan(s.dydx));
-            r.y = s.y - width / 2 * Math.cos(Math.atan(s.dydx));
+            r.x = s.x - width / 2 * Math.sin(Math.atan(s.dydx));
+            r.y = s.y + width / 2 * Math.cos(Math.atan(s.dydx));
 
             if (i != 0) {
                 double dp = Math.sqrt((r.x - rg.get(i - 1).x)

@@ -2,7 +2,6 @@ package org.rangerrobotics.pathplanner.gui;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.validation.DoubleValidator;
-import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -10,6 +9,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
@@ -17,11 +17,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import org.rangerrobotics.pathplanner.Path;
-import org.rangerrobotics.pathplanner.RobotPath;
-import org.rangerrobotics.pathplanner.geometry.PlannedPath;
-import org.rangerrobotics.pathplanner.geometry.Util;
-import org.rangerrobotics.pathplanner.geometry.Vector2;
+import org.rangerrobotics.pathplanner.generation.RobotPath;
+import org.rangerrobotics.pathplanner.generation.PlannedPath;
+import org.rangerrobotics.pathplanner.generation.Util;
+import org.rangerrobotics.pathplanner.generation.Vector2;
 
 public class MainScene {
     private static Scene scene = null;
@@ -33,6 +32,8 @@ public class MainScene {
     private static int pointDragIndex = -1;
     private static boolean isCtrlPressed = false;
     private static boolean isShiftPressed = false;
+    private static Image field;
+    private static Vector2 lastMousePos = new Vector2(0, 0);
 
     public static Scene getScene(){
         if(scene == null){
@@ -42,6 +43,7 @@ public class MainScene {
     }
 
     private static void createScene(){
+        field = new Image(MainScene.class.getResourceAsStream("field.png"));
         root = new StackPane();
         layout = new JFXTabPane();
         Tab genTab = new Tab("Path");
@@ -67,7 +69,7 @@ public class MainScene {
         BorderPane aboutTabLayout = new BorderPane();
         aboutTabLayout.setCenter(new Label("Put things here"));
 
-        canvas = new Canvas(800, 507);
+        canvas = new Canvas(800, 547);
         canvas.setOnMousePressed(event -> {
             if(event.getButton() == MouseButton.SECONDARY){
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
@@ -105,7 +107,7 @@ public class MainScene {
                             JFXTextField xPositionTxtField = new JFXTextField();
                             xPositionTxtField.setValidators(new DoubleValidator());
                             xPositionTxtField.setAlignment(Pos.CENTER);
-                            xPositionTxtField.setText("" + plannedPath.get(i).getX() / Path.pixelsPerFoot);
+                            xPositionTxtField.setText("" + (plannedPath.get(i).getX() - PlannedPath.xPixelOffset) / PlannedPath.pixelsPerFoot);
                             xPositionContainer.getChildren().addAll(xPositionLabel, xPositionTxtField);
 
                             HBox yPositionContainer = new HBox(20);
@@ -115,7 +117,7 @@ public class MainScene {
                             JFXTextField yPositionTxtField = new JFXTextField();
                             yPositionTxtField.setValidators(new DoubleValidator());
                             yPositionTxtField.setAlignment(Pos.CENTER);
-                            yPositionTxtField.setText("" + plannedPath.get(i).getY() / Path.pixelsPerFoot);
+                            yPositionTxtField.setText("" + (plannedPath.get(i).getY() - PlannedPath.yPixelOffset) / PlannedPath.pixelsPerFoot);
                             yPositionContainer.getChildren().addAll(yPositionLabel, yPositionTxtField);
 
                             HBox angleContainer = new HBox(20);
@@ -128,7 +130,6 @@ public class MainScene {
                             Vector2 anchor = plannedPath.get(i);
                             Vector2 control;
                             if(i == plannedPath.numPoints() - 1){
-//                                control = plannedPath.get(i - 1);
                                 control = Vector2.subtract(anchor, Vector2.subtract(plannedPath.get(i - 1), anchor));
                             }else{
                                 control = plannedPath.get(i + 1);
@@ -148,7 +149,7 @@ public class MainScene {
                             final int anchorIndex = i;
                             dialogButton.setOnAction(action -> {
                                 if(xPositionTxtField.validate() && yPositionTxtField.validate() && angleTxtField.validate() && (Double.parseDouble(angleTxtField.getText()) >= -180 && Double.parseDouble(angleTxtField.getText()) <= 180)){
-                                    plannedPath.movePoint(anchorIndex, new Vector2(Double.parseDouble(xPositionTxtField.getText()) * Path.pixelsPerFoot, Double.parseDouble(yPositionTxtField.getText()) * Path.pixelsPerFoot));
+                                    plannedPath.movePoint(anchorIndex, new Vector2((Double.parseDouble(xPositionTxtField.getText()) * PlannedPath.pixelsPerFoot) + PlannedPath.xPixelOffset, (Double.parseDouble(yPositionTxtField.getText()) * PlannedPath.pixelsPerFoot) + PlannedPath.yPixelOffset));
                                     double theta = Math.toRadians(Double.parseDouble(angleTxtField.getText()));
                                     double h = Vector2.subtract(anchor, control).getMagnitude();
                                     double o = Math.sin(theta) * h;
@@ -175,7 +176,7 @@ public class MainScene {
                             dialog.setContent(dialogPane);
                             dialog.setTransitionType(JFXDialog.DialogTransition.CENTER);
                             dialog.show();
-                        }else {
+                        }else if(event.getButton() != MouseButton.MIDDLE){
                             pointDragIndex = i;
                         }
                     }
@@ -190,10 +191,18 @@ public class MainScene {
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         updateCanvas(i);
+                        lastMousePos = new Vector2(event.getX(), event.getY());
                         return;
                     }
                 }
-                updateCanvas(-1);
+                for (int i = 0; i < plannedPath.numPoints(); i++) {
+                    if ((Math.pow(lastMousePos.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(lastMousePos.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
+                        updateCanvas(-1);
+                        lastMousePos = new Vector2(event.getX(), event.getY());
+                        return;
+                    }
+                }
+                lastMousePos = new Vector2(event.getX(), event.getY());
             }
         });
         canvas.setOnMouseDragged(event -> {
@@ -236,7 +245,7 @@ public class MainScene {
         snackbar = new JFXSnackbar(root);
         snackbar.setPrefWidth(800);
 
-        scene = new Scene(root, 800, 600);
+        scene = new Scene(root, 800, 640);
         scene.getStylesheets().add("org/rangerrobotics/pathplanner/gui/styles.css");
 
         scene.setOnKeyPressed(event -> {
@@ -258,14 +267,22 @@ public class MainScene {
     private static void draw(GraphicsContext g, int highlightedPoint){
         g.setFill(Color.color(0.35, 0.35, 0.35));
         g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        g.drawImage(field, 0, 0);
         g.setLineWidth(3);
         g.setStroke(Color.color(0, 0.95, 0));
         for(int i = 0; i < plannedPath.numSplines(); i ++){
             Vector2[] points = plannedPath.getPointsInSpline(i);
-            for(double d = 0.01; d <= 1; d += 0.01){
+            for(double d = 0; d <= 1; d += 0.01){
                 Vector2 p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
                 Vector2 p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
-                g.strokeLine(p0.getX(), p0.getY(), p1.getX(), p1.getY());
+                double angle = Math.atan2(p1.getY() - p0.getY(), p1.getX() - p0.getX());
+                Vector2 p0L = new Vector2(p0.getX() + (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() - (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p0R = new Vector2(p0.getX() - (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() + (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p1L = new Vector2(p1.getX() + (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() - (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p1R = new Vector2(p1.getX() - (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() + (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+
+                g.strokeLine(p0L.getX(), p0L.getY(), p1L.getX(), p1L.getY());
+                g.strokeLine(p0R.getX(), p0R.getY(), p1R.getX(), p1R.getY());
             }
         }
         g.setStroke(Color.BLACK);
@@ -305,10 +322,6 @@ public class MainScene {
     }
 
     public static void showSnackbarMessage(String message, String type){
-        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, "", 3500, false, null));
+        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, null, 3500, false, null));
     }
-
-//    public static void showSnackbarWithButton(String message, String type){
-//        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, "OK", 1000, true, event -> snackbar.close()));
-//    }
 }

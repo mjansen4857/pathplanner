@@ -1,5 +1,5 @@
 * {
-    -background: rgb(89, 89, 89);
+    -background: #eeeeee;
     -tabBg: #212121;
     -tabAccent: #FF3500;
     -buttonText: #eeeeee;
@@ -17,7 +17,7 @@
 }
 
 .text-field-label{
-    -fx-font-size: 16px;
+    -fx-font-size: 20px;
     -fx-text-fill: #000000;
 }
 
@@ -51,8 +51,8 @@
     -fx-background-color: #22222277;
 }
 
-.dialog-background{
-    -fx-background-color: -background;
+.dark-bg{
+    -fx-background-color: rgb(89, 89, 89);
 }
 
 .jfx-tab-pane{
@@ -95,25 +95,4 @@
 
 .jfx-snackbar-action{
     visibility: hidden;
-}
-
-.animated-thumb{
-    visibility: hidden;
-}
-
-.tree-table-view{
-    -fx-background-color: #212121;
-}
-
-.tree-table-view .jfx-text-field{
-    -fx-background-color: transparent;
-}
-
-.tree-table-view .menu-item:focused {
-    -fx-background-color: #ff0000;
-
-}
-
-.tree-table-view .menu-item .label {
-    -fx-padding: 5 0 5 0;
 }

@@ -26,6 +26,9 @@ public class MainScene {
     private static Scene scene = null;
     private static StackPane root;
     private static JFXTabPane layout;
+    private static Tab pathTab = new Tab("Path");
+    private static Tab settingsTab = new Tab("Settings");
+    private static Tab aboutTab = new Tab("About");
     private static JFXSnackbar snackbar;
     public static PlannedPath plannedPath;
     private static Canvas canvas;
@@ -46,11 +49,8 @@ public class MainScene {
         field = new Image(MainScene.class.getResourceAsStream("field.png"));
         root = new StackPane();
         layout = new JFXTabPane();
-        Tab genTab = new Tab("Path");
-        Tab outTab = new Tab("Output");
-        Tab aboutTab = new Tab("About");
 
-        BorderPane genTabLayout = new BorderPane();
+        BorderPane pathTabLayout = new BorderPane();
         JFXButton generateButton = new JFXButton("Generate");
         generateButton.setOnAction(action -> {
             new Thread(() -> {
@@ -62,23 +62,183 @@ public class MainScene {
             }).start();
         });
         generateButton.getStyleClass().addAll("button-raised");
+        pathTabLayout.getStyleClass().add("dark-bg");
 
-        BorderPane outputTabLayout = new BorderPane();
-        outputTabLayout.setCenter(new Label("Put output stuff here"));
+        setupSettingsTab();
 
         BorderPane aboutTabLayout = new BorderPane();
         aboutTabLayout.setCenter(new Label("Put things here"));
+        aboutTab.setContent(aboutTabLayout);
 
-        canvas = new Canvas(800, 547);
+        setupCanvas();
+
+        HBox bottom = new HBox();
+        bottom.setPadding(new Insets(10));
+        bottom.setAlignment(Pos.CENTER);
+        bottom.getChildren().addAll(generateButton);
+        pathTabLayout.setCenter(canvas);
+        pathTabLayout.setBottom(bottom);
+        pathTab.setContent(pathTabLayout);
+
+        layout.getTabs().addAll(pathTab, settingsTab, aboutTab);
+        root.getChildren().add(layout);
+        snackbar = new JFXSnackbar(root);
+        snackbar.setPrefWidth(800);
+
+        scene = new Scene(root, 800, 740);
+        scene.getStylesheets().add("org/rangerrobotics/pathplanner/gui/styles.css");
+
+        scene.setOnKeyPressed(event -> {
+            if(event.getCode() == KeyCode.CONTROL){
+                isCtrlPressed = true;
+            }else if(event.getCode() == KeyCode.SHIFT){
+                isShiftPressed = true;
+            }
+        });
+        scene.setOnKeyReleased(event -> {
+            if(event.getCode() == KeyCode.CONTROL){
+                isCtrlPressed = false;
+            }else if(event.getCode() == KeyCode.SHIFT){
+                isShiftPressed = false;
+            }
+        });
+    }
+
+    private static void draw(GraphicsContext g, int highlightedPoint){
+//        g.setFill(Color.color(0.35, 0.35, 0.35));
+        g.setFill(Color.color(133/255., 132/255., 141/255.));
+        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        g.drawImage(field, 0, 50);
+        g.setLineWidth(3);
+        g.setStroke(Color.color(0, 0.95, 0));
+        for(int i = 0; i < plannedPath.numSplines(); i ++){
+            Vector2[] points = plannedPath.getPointsInSpline(i);
+            for(double d = 0; d <= 1; d += 0.01){
+                Vector2 p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
+                Vector2 p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
+                double angle = Math.atan2(p1.getY() - p0.getY(), p1.getX() - p0.getX());
+                Vector2 p0L = new Vector2(p0.getX() + (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() - (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p0R = new Vector2(p0.getX() - (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() + (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p1L = new Vector2(p1.getX() + (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() - (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p1R = new Vector2(p1.getX() - (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() + (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+
+                g.strokeLine(p0L.getX(), p0L.getY(), p1L.getX(), p1L.getY());
+                g.strokeLine(p0R.getX(), p0R.getY(), p1R.getX(), p1R.getY());
+            }
+        }
+        g.setStroke(Color.BLACK);
+        for(int i = 0; i < plannedPath.numSplines(); i++){
+            Vector2[] points = plannedPath.getPointsInSpline(i);
+
+            g.setLineWidth(2);
+            g.strokeLine(points[0].getX(), points[0].getY(), points[1].getX(), points[1].getY());
+            g.strokeLine(points[2].getX(), points[2].getY(), points[3].getX(), points[3].getY());
+        }
+
+        for(int i = 0; i < plannedPath.numPoints(); i++){
+            g.setStroke(Color.BLACK);
+            g.setLineWidth(4);
+            if(i == highlightedPoint){
+                g.setFill(Color.YELLOW);
+            }else if(i == 0){
+                g.setFill(Color.GREEN);
+            }else if(i == plannedPath.numPoints() - 1){
+                g.setFill(Color.RED);
+            }else{
+                g.setFill(Color.WHITE);
+            }
+            Vector2 p = plannedPath.get(i);
+            g.strokeOval(p.getX() - 6, p.getY() - 6, 12, 12);
+            g.fillOval(p.getX() - 6, p.getY() - 6, 12, 12);
+        }
+    }
+
+    private static void updateCanvas(){
+        updateCanvas(-1);
+    }
+
+    private static void updateCanvas(int highlightedPoint){
+        canvas.getGraphicsContext2D().clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        draw(canvas.getGraphicsContext2D(), highlightedPoint);
+    }
+
+    public static void showSnackbarMessage(String message, String type){
+        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, null, 3500, false, null));
+    }
+
+    private static void setupSettingsTab(){
+        BorderPane settingsTabLayout = new BorderPane();
+        VBox settingsLeft = new VBox(20);
+        settingsLeft.setPadding(new Insets(0, 0, 0, 10));
+
+        HBox maxV = new HBox(20);
+        maxV.setAlignment(Pos.CENTER_LEFT);
+        Label maxVLabel = new Label("Max Velocity:");
+        maxVLabel.getStyleClass().add("text-field-label");
+        JFXTextField maxVTxt = new JFXTextField();
+        maxVTxt.setText("" + RobotPath.maxVel);
+        maxVTxt.setValidators(new DoubleValidator());
+        maxVTxt.setAlignment(Pos.CENTER);
+        maxV.getChildren().addAll(maxVLabel, maxVTxt);
+        settingsLeft.getChildren().add(maxV);
+
+        HBox maxAcc = new HBox(20);
+        maxAcc.setAlignment(Pos.CENTER_LEFT);
+        Label maxAccLabel = new Label("Max Acceleration:");
+        maxAccLabel.getStyleClass().add("text-field-label");
+        JFXTextField maxAccTxt = new JFXTextField();
+        maxAccTxt.setText("" + RobotPath.maxAcc);
+        maxAccTxt.setValidators(new DoubleValidator());
+        maxAccTxt.setAlignment(Pos.CENTER);
+        maxAcc.getChildren().addAll(maxAccLabel, maxAccTxt);
+        settingsLeft.getChildren().add(maxAcc);
+
+        HBox maxDcc = new HBox(20);
+        maxDcc.setAlignment(Pos.CENTER_LEFT);
+        Label maxDccLabel = new Label("Max Deceleration:");
+        maxDccLabel.getStyleClass().add("text-field-label");
+        JFXTextField maxDccTxt = new JFXTextField();
+        maxDccTxt.setText("" + RobotPath.maxDcc);
+        maxDccTxt.setValidators(new DoubleValidator());
+        maxDccTxt.setAlignment(Pos.CENTER);
+        maxDcc.getChildren().addAll(maxDccLabel, maxDccTxt);
+        settingsLeft.getChildren().add(maxDcc);
+
+        HBox wheelbaseWidth = new HBox(20);
+        wheelbaseWidth.setAlignment(Pos.CENTER_LEFT);
+        Label wheelbaseWidthLabel = new Label("Wheelbase Width:");
+        wheelbaseWidthLabel.getStyleClass().add("text-field-label");
+        JFXTextField wheelbaseWidthTxt = new JFXTextField();
+        wheelbaseWidthTxt.setText("" + RobotPath.wheelbaseWidth);
+        wheelbaseWidthTxt.setValidators(new DoubleValidator());
+        wheelbaseWidthTxt.setAlignment(Pos.CENTER);
+        wheelbaseWidth.getChildren().addAll(wheelbaseWidthLabel, wheelbaseWidthTxt);
+        settingsLeft.getChildren().add(wheelbaseWidth);
+
+        HBox timestep = new HBox(20);
+        timestep.setAlignment(Pos.CENTER_LEFT);
+        Label timestepLabel = new Label("Delta Time:");
+        timestepLabel.getStyleClass().add("text-field-label");
+        JFXTextField timestepTxt = new JFXTextField();
+        timestepTxt.setText("" + RobotPath.segmentTime);
+        timestepTxt.setValidators(new DoubleValidator());
+        timestepTxt.setAlignment(Pos.CENTER);
+        timestep.getChildren().addAll(timestepLabel, timestepTxt);
+        settingsLeft.getChildren().add(timestep);
+
+        settingsTabLayout.setLeft(settingsLeft);
+        settingsTab.setContent(settingsTabLayout);
+    }
+
+    private static void setupCanvas(){
+        canvas = new Canvas(800, 647);
         canvas.setOnMousePressed(event -> {
             if(event.getButton() == MouseButton.SECONDARY){
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         if(i % 3 == 0 && plannedPath.numSplines() > 1) {
-                            if(isCtrlPressed) {
-                                plannedPath.deleteSpline(i);
-                                updateCanvas();
-                            }
+                            plannedPath.deleteSpline(i);
+                            updateCanvas();
                         }
                         return;
                     }
@@ -102,7 +262,7 @@ public class MainScene {
 
                             HBox xPositionContainer = new HBox(20);
                             xPositionContainer.setAlignment(Pos.CENTER);
-                            Label xPositionLabel = new Label("X Position (ft):");
+                            Label xPositionLabel = new Label("X Position:");
                             xPositionLabel.getStyleClass().addAll("text-field-label");
                             JFXTextField xPositionTxtField = new JFXTextField();
                             xPositionTxtField.setValidators(new DoubleValidator());
@@ -112,7 +272,7 @@ public class MainScene {
 
                             HBox yPositionContainer = new HBox(20);
                             yPositionContainer.setAlignment(Pos.CENTER);
-                            Label yPositionLabel = new Label("Y Position (ft):");
+                            Label yPositionLabel = new Label("Y Position:");
                             yPositionLabel.getStyleClass().addAll("text-field-label");
                             JFXTextField yPositionTxtField = new JFXTextField();
                             yPositionTxtField.setValidators(new DoubleValidator());
@@ -122,7 +282,7 @@ public class MainScene {
 
                             HBox angleContainer = new HBox(20);
                             angleContainer.setAlignment(Pos.CENTER);
-                            Label angleLabel = new Label("Angle (deg):  ");
+                            Label angleLabel = new Label("Angle:");
                             angleLabel.getStyleClass().addAll("text-field-label");
                             JFXTextField angleTxtField = new JFXTextField();
                             angleTxtField.setValidators(new DoubleValidator());
@@ -204,6 +364,7 @@ public class MainScene {
                 }
                 lastMousePos = new Vector2(event.getX(), event.getY());
             }
+            lastMousePos = new Vector2(event.getX(), event.getY());
         });
         canvas.setOnMouseDragged(event -> {
             if(pointDragIndex != -1){
@@ -228,100 +389,5 @@ public class MainScene {
         });
         plannedPath = new PlannedPath(new Vector2(canvas.getWidth()/2, canvas.getHeight()/2));
         updateCanvas();
-        HBox bottom = new HBox();
-        bottom.setPadding(new Insets(10));
-        bottom.setAlignment(Pos.CENTER);
-        bottom.getChildren().addAll(generateButton);
-        genTabLayout.setCenter(canvas);
-        genTabLayout.setBottom(bottom);
-        genTab.setContent(genTabLayout);
-
-        outTab.setContent(outputTabLayout);
-
-        aboutTab.setContent(aboutTabLayout);
-
-        layout.getTabs().addAll(genTab, outTab, aboutTab);
-        root.getChildren().add(layout);
-        snackbar = new JFXSnackbar(root);
-        snackbar.setPrefWidth(800);
-
-        scene = new Scene(root, 800, 640);
-        scene.getStylesheets().add("org/rangerrobotics/pathplanner/gui/styles.css");
-
-        scene.setOnKeyPressed(event -> {
-            if(event.getCode() == KeyCode.CONTROL){
-                isCtrlPressed = true;
-            }else if(event.getCode() == KeyCode.SHIFT){
-                isShiftPressed = true;
-            }
-        });
-        scene.setOnKeyReleased(event -> {
-            if(event.getCode() == KeyCode.CONTROL){
-                isCtrlPressed = false;
-            }else if(event.getCode() == KeyCode.SHIFT){
-                isShiftPressed = false;
-            }
-        });
-    }
-
-    private static void draw(GraphicsContext g, int highlightedPoint){
-        g.setFill(Color.color(0.35, 0.35, 0.35));
-        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        g.drawImage(field, 0, 0);
-        g.setLineWidth(3);
-        g.setStroke(Color.color(0, 0.95, 0));
-        for(int i = 0; i < plannedPath.numSplines(); i ++){
-            Vector2[] points = plannedPath.getPointsInSpline(i);
-            for(double d = 0; d <= 1; d += 0.01){
-                Vector2 p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
-                Vector2 p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
-                double angle = Math.atan2(p1.getY() - p0.getY(), p1.getX() - p0.getX());
-                Vector2 p0L = new Vector2(p0.getX() + (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() - (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-                Vector2 p0R = new Vector2(p0.getX() - (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() + (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-                Vector2 p1L = new Vector2(p1.getX() + (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() - (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-                Vector2 p1R = new Vector2(p1.getX() - (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() + (RobotPath.width/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-
-                g.strokeLine(p0L.getX(), p0L.getY(), p1L.getX(), p1L.getY());
-                g.strokeLine(p0R.getX(), p0R.getY(), p1R.getX(), p1R.getY());
-            }
-        }
-        g.setStroke(Color.BLACK);
-        for(int i = 0; i < plannedPath.numSplines(); i++){
-            Vector2[] points = plannedPath.getPointsInSpline(i);
-
-            g.setLineWidth(2);
-            g.strokeLine(points[0].getX(), points[0].getY(), points[1].getX(), points[1].getY());
-            g.strokeLine(points[2].getX(), points[2].getY(), points[3].getX(), points[3].getY());
-        }
-
-        for(int i = 0; i < plannedPath.numPoints(); i++){
-            g.setStroke(Color.BLACK);
-            g.setLineWidth(4);
-            if(i == highlightedPoint){
-                g.setFill(Color.YELLOW);
-            }else if(i == 0){
-                g.setFill(Color.GREEN);
-            }else if(i == plannedPath.numPoints() - 1){
-                g.setFill(Color.RED);
-            }else{
-                g.setFill(Color.WHITE);
-            }
-            Vector2 p = plannedPath.get(i);
-            g.strokeOval(p.getX() - 6, p.getY() - 6, 12, 12);
-            g.fillOval(p.getX() - 6, p.getY() - 6, 12, 12);
-        }
-    }
-
-    private static void updateCanvas(){
-        updateCanvas(-1);
-    }
-
-    private static void updateCanvas(int highlightedPoint){
-        canvas.getGraphicsContext2D().clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        draw(canvas.getGraphicsContext2D(), highlightedPoint);
-    }
-
-    public static void showSnackbarMessage(String message, String type){
-        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, null, 3500, false, null));
     }
 }

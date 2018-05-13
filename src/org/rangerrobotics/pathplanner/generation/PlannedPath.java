@@ -7,7 +7,7 @@ public class PlannedPath {
     public ObservableList<Vector2> points;
     public static int pixelsPerFoot = 20;
     public static int xPixelOffset = 53;
-    public static int yPixelOffset = 54;
+    public static int yPixelOffset = 83;
 
     public PlannedPath(Vector2 center){
         this.points = FXCollections.observableArrayList();

@@ -21,6 +21,7 @@ import org.rangerrobotics.pathplanner.generation.RobotPath;
 import org.rangerrobotics.pathplanner.generation.PlannedPath;
 import org.rangerrobotics.pathplanner.generation.Util;
 import org.rangerrobotics.pathplanner.generation.Vector2;
+import org.rangerrobotics.pathplanner.io.FileManager;
 
 public class MainScene {
     private static final int WIDTH = 1174;
@@ -29,7 +30,6 @@ public class MainScene {
     private static StackPane root;
     private static JFXTabPane layout;
     private static Tab pathTab = new Tab("Path");
-    private static Tab settingsTab = new Tab("Settings");
     private static Tab aboutTab = new Tab("About");
     private static JFXSnackbar snackbar;
     public static PlannedPath plannedPath;
@@ -49,6 +49,7 @@ public class MainScene {
     }
 
     private static void createScene(){
+        FileManager.loadRobotSettings();
         field = new Image(MainScene.class.getResourceAsStream("field.png"));
         root = new StackPane();
         layout = new JFXTabPane();
@@ -57,7 +58,7 @@ public class MainScene {
         StackPane generateContainer = new StackPane();
         generateContainer.setPrefWidth(WIDTH/2);
         generateContainer.setAlignment(Pos.BOTTOM_RIGHT);
-        JFXButton generateButton = new JFXButton("Generate Path");
+        JFXButton generateButton = new JFXButton("Generate & Save");
         generateButton.setOnAction(action -> {
             new Thread(() -> {
                 long start = System.currentTimeMillis();
@@ -75,13 +76,12 @@ public class MainScene {
         configContainer.setPrefWidth(WIDTH/2);
         configContainer.setAlignment(Pos.BOTTOM_LEFT);
         configButton.setOnAction(action -> {
-
+            RobotConfigDialog dialog = new RobotConfigDialog(root);
+            dialog.show();
         });
         configButton.getStyleClass().add("button-raised");
         configContainer.getChildren().add(configButton);
         pathTabLayout.getStyleClass().add("dark-bg");
-
-        setupSettingsTab();
 
         BorderPane aboutTabLayout = new BorderPane();
         aboutTabLayout.setCenter(new Label("Put things here"));
@@ -94,10 +94,9 @@ public class MainScene {
         bottom.getChildren().addAll(configContainer, generateContainer);
         pathTabCenter.getChildren().add(bottom);
         pathTabLayout.setCenter(pathTabCenter);
-//        pathTabLayout.setBottom(bottom);
         pathTab.setContent(pathTabLayout);
 
-        layout.getTabs().addAll(pathTab, settingsTab, aboutTab);
+        layout.getTabs().addAll(pathTab, aboutTab);
         root.getChildren().add(layout);
         snackbar = new JFXSnackbar(root);
         snackbar.setPrefWidth(WIDTH);
@@ -181,70 +180,6 @@ public class MainScene {
 
     public static void showSnackbarMessage(String message, String type){
         snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, null, 3500, false, null));
-    }
-
-    private static void setupSettingsTab(){
-        BorderPane settingsTabLayout = new BorderPane();
-        VBox settingsLeft = new VBox(20);
-        settingsLeft.setPadding(new Insets(0, 0, 0, 10));
-
-        HBox maxV = new HBox(20);
-        maxV.setAlignment(Pos.CENTER_LEFT);
-        Label maxVLabel = new Label("Max Velocity:");
-        maxVLabel.getStyleClass().add("text-field-label");
-        JFXTextField maxVTxt = new JFXTextField();
-        maxVTxt.setText("" + RobotPath.maxVel);
-        maxVTxt.setValidators(new DoubleValidator());
-        maxVTxt.setAlignment(Pos.CENTER);
-        maxV.getChildren().addAll(maxVLabel, maxVTxt);
-        settingsLeft.getChildren().add(maxV);
-
-        HBox maxAcc = new HBox(20);
-        maxAcc.setAlignment(Pos.CENTER_LEFT);
-        Label maxAccLabel = new Label("Max Acceleration:");
-        maxAccLabel.getStyleClass().add("text-field-label");
-        JFXTextField maxAccTxt = new JFXTextField();
-        maxAccTxt.setText("" + RobotPath.maxAcc);
-        maxAccTxt.setValidators(new DoubleValidator());
-        maxAccTxt.setAlignment(Pos.CENTER);
-        maxAcc.getChildren().addAll(maxAccLabel, maxAccTxt);
-        settingsLeft.getChildren().add(maxAcc);
-
-        HBox maxDcc = new HBox(20);
-        maxDcc.setAlignment(Pos.CENTER_LEFT);
-        Label maxDccLabel = new Label("Max Deceleration:");
-        maxDccLabel.getStyleClass().add("text-field-label");
-        JFXTextField maxDccTxt = new JFXTextField();
-        maxDccTxt.setText("" + RobotPath.maxDcc);
-        maxDccTxt.setValidators(new DoubleValidator());
-        maxDccTxt.setAlignment(Pos.CENTER);
-        maxDcc.getChildren().addAll(maxDccLabel, maxDccTxt);
-        settingsLeft.getChildren().add(maxDcc);
-
-        HBox wheelbaseWidth = new HBox(20);
-        wheelbaseWidth.setAlignment(Pos.CENTER_LEFT);
-        Label wheelbaseWidthLabel = new Label("Wheelbase Width:");
-        wheelbaseWidthLabel.getStyleClass().add("text-field-label");
-        JFXTextField wheelbaseWidthTxt = new JFXTextField();
-        wheelbaseWidthTxt.setText("" + RobotPath.wheelbaseWidth);
-        wheelbaseWidthTxt.setValidators(new DoubleValidator());
-        wheelbaseWidthTxt.setAlignment(Pos.CENTER);
-        wheelbaseWidth.getChildren().addAll(wheelbaseWidthLabel, wheelbaseWidthTxt);
-        settingsLeft.getChildren().add(wheelbaseWidth);
-
-        HBox timestep = new HBox(20);
-        timestep.setAlignment(Pos.CENTER_LEFT);
-        Label timestepLabel = new Label("Delta Time:");
-        timestepLabel.getStyleClass().add("text-field-label");
-        JFXTextField timestepTxt = new JFXTextField();
-        timestepTxt.setText("" + RobotPath.segmentTime);
-        timestepTxt.setValidators(new DoubleValidator());
-        timestepTxt.setAlignment(Pos.CENTER);
-        timestep.getChildren().addAll(timestepLabel, timestepTxt);
-        settingsLeft.getChildren().add(timestep);
-
-        settingsTabLayout.setLeft(settingsLeft);
-        settingsTab.setContent(settingsTabLayout);
     }
 
     private static void setupCanvas(){

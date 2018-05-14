@@ -8,7 +8,7 @@ public class RobotPath {
     public static double maxDcc = 20;
     public static double maxJerk = 100;
     public static double wheelbaseWidth = 2;
-    public static double segmentTime = 0.01;
+    public static double timeStep = 0.01;
     private Path path;
     private SegmentGroup pathSegments;
     private SegmentGroup timeSegments = new SegmentGroup();
@@ -125,7 +125,7 @@ public class RobotPath {
             if(p.get(i).time > segmentTime(segNum)){
                 timeSegments.s.add(p.get(i));
                 timeSegments.s.get(timeSegments.s.size() - 1).dt = timeSegments.s.get(timeSegments.s.size() - 1).time - timeSegments.s.get(timeSegments.s.size() - 2).time;
-                if(Math.abs(p.get(i).time - segmentTime(segNum)) > this.segmentTime + 0.00005){
+                if(Math.abs(p.get(i).time - segmentTime(segNum)) > this.timeStep + 0.00005){
                     numMessySeg++;
                 }
                 segNum++;
@@ -202,6 +202,6 @@ public class RobotPath {
     }
 
     private double segmentTime(int segNum){
-        return segNum * segmentTime;
+        return segNum * timeStep;
     }
 }

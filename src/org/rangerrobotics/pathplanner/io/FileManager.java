@@ -9,7 +9,9 @@ public class FileManager {
 
     public static void saveRobotSettings(){
         robotSettingsDir.getParentFile().mkdirs();
-        try (PrintWriter out = new PrintWriter(new File(robotSettingsDir, "robot.txt"))){
+        File settingsFile = new File(robotSettingsDir, "robot.txt");
+        settingsFile.getParentFile().mkdirs();
+        try (PrintWriter out = new PrintWriter(settingsFile)){
             out.println(RobotPath.maxVel);
             out.println(RobotPath.maxAcc);
             out.println(RobotPath.maxDcc);

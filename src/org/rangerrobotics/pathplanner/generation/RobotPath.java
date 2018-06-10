@@ -1,14 +1,10 @@
 package org.rangerrobotics.pathplanner.generation;
 
+import org.rangerrobotics.pathplanner.Preferences;
+
 import java.util.ArrayList;
 
 public class RobotPath {
-    public static double maxVel = 14;
-    public static double maxAcc = 10;
-    public static double maxDcc = 20;
-    public static double maxJerk = 100;
-    public static double wheelbaseWidth = 2;
-    public static double timeStep = 0.01;
     private Path path;
     private SegmentGroup pathSegments;
     private SegmentGroup timeSegments = new SegmentGroup();
@@ -48,10 +44,10 @@ public class RobotPath {
         System.out.println("    Calculating Maximum Possible Velocity Along Curve...");
         for(int i = 0; i < path.group.s.size(); i++){
             double r = radiusOfCurve(pathSegments.s.get(i));
-            double vMaxCurve = Math.sqrt(maxAcc * r);
-            double bigR = r + wheelbaseWidth / 2;
-            double vMaxWheel = (r / bigR) * maxVel;
-            pathSegments.s.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, maxVel));
+            double vMaxCurve = Math.sqrt(Preferences.maxAcc * r);
+            double bigR = r + Preferences.wheelbaseWidth / 2;
+            double vMaxWheel = (r / bigR) * Preferences.maxVel;
+            pathSegments.s.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, Preferences.maxVel));
         }
     }
 
@@ -69,7 +65,7 @@ public class RobotPath {
             double v0 = p.get(i - 1).vel;
             double dx = p.get(i - 1).dx;
             if(dx != 0){
-                double vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * maxAcc * dx));
+                double vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * Preferences.maxAcc * dx));
                 double v = Math.min(vMax, p.get(i).vel);
                 if(Double.isNaN(v)){
                     v = p.get(i - 1).vel;
@@ -83,8 +79,8 @@ public class RobotPath {
         for(int i = p.size() - 2; i > 1; i--){
             double v0 = p.get(i + 1).vel;
             double dx = p.get(i + 1).dx;
-            double vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * maxDcc * dx));
-            p.get(i).vel = Math.min((Double.isNaN(vMax) ? maxVel : vMax), p.get(i).vel);
+            double vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * Preferences.maxDcc * dx));
+            p.get(i).vel = Math.min((Double.isNaN(vMax) ? Preferences.maxVel : vMax), p.get(i).vel);
         }
         for(int i = 1; i < p.size(); i++){
             double v = p.get(i).vel;
@@ -125,7 +121,7 @@ public class RobotPath {
             if(p.get(i).time > segmentTime(segNum)){
                 timeSegments.s.add(p.get(i));
                 timeSegments.s.get(timeSegments.s.size() - 1).dt = timeSegments.s.get(timeSegments.s.size() - 1).time - timeSegments.s.get(timeSegments.s.size() - 2).time;
-                if(Math.abs(p.get(i).time - segmentTime(segNum)) > this.timeStep + 0.00005){
+                if(Math.abs(p.get(i).time - segmentTime(segNum)) > Preferences.timeStep + 0.00005){
                     numMessySeg++;
                 }
                 segNum++;
@@ -159,8 +155,8 @@ public class RobotPath {
             ArrayList<Segment> lg = left.s;
             left.s.add(l);
             l = left.s.get(i);
-            l.x = s.x + wheelbaseWidth / 2 * Math.sin(Math.atan(s.dydx));
-            l.y = s.y - wheelbaseWidth / 2 * Math.cos(Math.atan(s.dydx));
+            l.x = s.x + Preferences.wheelbaseWidth / 2 * Math.sin(Math.atan(s.dydx));
+            l.y = s.y - Preferences.wheelbaseWidth / 2 * Math.cos(Math.atan(s.dydx));
 
             if(i != 0){
                 double dp = Math.sqrt((l.x - lg.get(i - 1).x)
@@ -178,8 +174,8 @@ public class RobotPath {
             ArrayList<Segment> rg = right.s;
             right.s.add(r);
             r = right.s.get(i);
-            r.x = s.x - wheelbaseWidth / 2 * Math.sin(Math.atan(s.dydx));
-            r.y = s.y + wheelbaseWidth / 2 * Math.cos(Math.atan(s.dydx));
+            r.x = s.x - Preferences.wheelbaseWidth / 2 * Math.sin(Math.atan(s.dydx));
+            r.y = s.y + Preferences.wheelbaseWidth / 2 * Math.cos(Math.atan(s.dydx));
 
             if (i != 0) {
                 double dp = Math.sqrt((r.x - rg.get(i - 1).x)
@@ -202,6 +198,6 @@ public class RobotPath {
     }
 
     private double segmentTime(int segNum){
-        return segNum * timeStep;
+        return segNum * Preferences.timeStep;
     }
 }

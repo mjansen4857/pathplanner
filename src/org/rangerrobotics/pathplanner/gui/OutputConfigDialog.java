@@ -8,6 +8,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.rangerrobotics.pathplanner.Preferences;
+import org.rangerrobotics.pathplanner.io.FileManager;
 
 public class OutputConfigDialog extends JFXDialog {
     public OutputConfigDialog(StackPane root){
@@ -21,59 +23,60 @@ public class OutputConfigDialog extends JFXDialog {
         dialogHeading.getStyleClass().addAll("dialog-heading");
         dialogHeading.setPadding(new Insets(0, 0, 10, 0));
 
-        HBox name = new HBox(20);
-        name.setAlignment(Pos.CENTER);
+        HBox nameBox = new HBox(20);
+        nameBox.setAlignment(Pos.CENTER);
         Label nameLabel = new Label("Path Name:");
         nameLabel.getStyleClass().add("input-label");
         JFXTextField nameTxt = new JFXTextField();
         nameTxt.setPromptText("Enter Name");
         nameTxt.setAlignment(Pos.CENTER);
-        name.getChildren().addAll(nameLabel, nameTxt);
+        nameBox.getChildren().addAll(nameLabel, nameTxt);
 
-        HBox value1 = new HBox(20);
-        value1.setAlignment(Pos.CENTER);
+        HBox value1Box = new HBox(20);
+        value1Box.setAlignment(Pos.CENTER);
         Label value1Label = new Label("Value 1:");
         value1Label.getStyleClass().add("input-label");
-        JFXComboBox<Label> value1Combo = new JFXComboBox<>();
-        value1Combo.getItems().addAll(new Label("Position"), new Label("Velocity"), new Label("Acceleration"), new Label("None"));
-        value1Combo.setPromptText("Select Value");
-        value1.getChildren().addAll(value1Label, value1Combo);
+        JFXComboBox<String> value1Combo = new JFXComboBox<>();
+        value1Combo.setValue(Preferences.outputValue1);
+        value1Combo.getItems().addAll("Position", "Velocity", "Acceleration");
+        value1Box.getChildren().addAll(value1Label, value1Combo);
 
-        HBox value2 = new HBox(20);
-        value2.setAlignment(Pos.CENTER);
+        HBox value2Box = new HBox(20);
+        value2Box.setAlignment(Pos.CENTER);
         Label value2Label = new Label("Value 2:");
         value2Label.getStyleClass().add("input-label");
-        JFXComboBox<Label> value2Combo = new JFXComboBox<>();
-        value2Combo.getItems().addAll(new Label("Position"), new Label("Velocity"), new Label("Acceleration"), new Label("None"));
-        value2Combo.setPromptText("Select Value");
-        value2.getChildren().addAll(value2Label, value2Combo);
+        JFXComboBox<String> value2Combo = new JFXComboBox<>();
+        value2Combo.setValue(Preferences.outputValue2);
+        value2Combo.getItems().addAll("Position", "Velocity", "Acceleration", "None");
+        value2Box.getChildren().addAll(value2Label, value2Combo);
 
-        HBox value3 = new HBox(20);
-        value3.setAlignment(Pos.CENTER);
+        HBox value3Box = new HBox(20);
+        value3Box.setAlignment(Pos.CENTER);
         Label value3Label = new Label("Value 3:");
         value3Label.getStyleClass().add("input-label");
-        JFXComboBox<Label> value3Combo = new JFXComboBox<>();
-        value3Combo.getItems().addAll(new Label("Position"), new Label("Velocity"), new Label("Acceleration"), new Label("None"));
-        value3Combo.setPromptText("Select Value");
-        value3.getChildren().addAll(value3Label, value3Combo);
+        JFXComboBox<String> value3Combo = new JFXComboBox<>();
+        value3Combo.setValue(Preferences.outputValue3);
+        value3Combo.getItems().addAll("Position", "Velocity", "Acceleration", "None");
+        value3Box.getChildren().addAll(value3Label, value3Combo);
 
-        HBox format = new HBox(20);
-        format.setAlignment(Pos.CENTER);
+        HBox formatBox = new HBox(20);
+        formatBox.setAlignment(Pos.CENTER);
         Label formatLabel = new Label("Output Format:");
         formatLabel.getStyleClass().add("input-label");
-        JFXComboBox<Label> formatCombo = new JFXComboBox<>();
-        formatCombo.getItems().addAll(new Label("Text File"), new Label("CSV File"), new Label("Java Array"), new Label("C++ Array"));
+        JFXComboBox<String> formatCombo = new JFXComboBox<>();
+        formatCombo.setValue(Preferences.outputFormat);
+        formatCombo.getItems().addAll("Text File", "CSV File", "Java Array", "C++ Array");
         formatCombo.setPromptText("Select Format");
-        format.getChildren().addAll(formatLabel, formatCombo);
+        formatBox.getChildren().addAll(formatLabel, formatCombo);
 
-        HBox reversed = new HBox(20);
-        reversed.setAlignment(Pos.CENTER);
+        HBox reversedBox = new HBox(20);
+        reversedBox.setAlignment(Pos.CENTER);
         Label reversedLabel = new Label("Reversed:");
         reversedLabel.getStyleClass().add("input-label");
         JFXCheckBox reversedCheck = new JFXCheckBox();
-        reversed.getChildren().addAll(reversedLabel, reversedCheck);
+        reversedBox.getChildren().addAll(reversedLabel, reversedCheck);
 
-        dialogCenter.getChildren().addAll(dialogHeading, name, value1, value2, value3, format, reversed);
+        dialogCenter.getChildren().addAll(dialogHeading, nameBox, value1Box, value2Box, value3Box, formatBox, reversedBox);
 
         HBox dialogBottom = new HBox();
         dialogBottom.setPadding(new Insets(0, 3, 2, 0));
@@ -82,6 +85,11 @@ public class OutputConfigDialog extends JFXDialog {
         dialogButton.getStyleClass().addAll("button-flat");
         dialogButton.setPadding(new Insets(10));
         dialogButton.setOnAction(action -> {
+            Preferences.outputValue1 = value1Combo.getValue();
+            Preferences.outputValue2 = value2Combo.getValue();
+            Preferences.outputValue3 = value2Combo.getValue();
+            Preferences.outputFormat = formatCombo.getValue();
+            FileManager.saveRobotSettings();
             this.close();
         });
         dialogBottom.getChildren().add(dialogButton);

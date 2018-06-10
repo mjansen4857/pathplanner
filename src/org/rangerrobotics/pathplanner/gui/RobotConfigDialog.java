@@ -11,7 +11,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.rangerrobotics.pathplanner.generation.RobotPath;
+import org.rangerrobotics.pathplanner.Preferences;
 import org.rangerrobotics.pathplanner.io.FileManager;
 
 public class RobotConfigDialog extends JFXDialog {
@@ -32,7 +32,7 @@ public class RobotConfigDialog extends JFXDialog {
         Label maxVLabel = new Label("Max Velocity:");
         maxVLabel.getStyleClass().add("input-label");
         JFXTextField maxVTxt = new JFXTextField();
-        maxVTxt.setText("" + RobotPath.maxVel);
+        maxVTxt.setText("" + Preferences.maxVel);
         maxVTxt.setValidators(new DoubleValidator());
         maxVTxt.setAlignment(Pos.CENTER);
         maxV.getChildren().addAll(maxVLabel, maxVTxt);
@@ -42,7 +42,7 @@ public class RobotConfigDialog extends JFXDialog {
         Label maxAccLabel = new Label("Max Acceleration:");
         maxAccLabel.getStyleClass().add("input-label");
         JFXTextField maxAccTxt = new JFXTextField();
-        maxAccTxt.setText("" + RobotPath.maxAcc);
+        maxAccTxt.setText("" + Preferences.maxAcc);
         maxAccTxt.setValidators(new DoubleValidator());
         maxAccTxt.setAlignment(Pos.CENTER);
         maxAcc.getChildren().addAll(maxAccLabel, maxAccTxt);
@@ -52,7 +52,7 @@ public class RobotConfigDialog extends JFXDialog {
         Label maxDccLabel = new Label("Max Deceleration:");
         maxDccLabel.getStyleClass().add("input-label");
         JFXTextField maxDccTxt = new JFXTextField();
-        maxDccTxt.setText("" + RobotPath.maxDcc);
+        maxDccTxt.setText("" + Preferences.maxDcc);
         maxDccTxt.setValidators(new DoubleValidator());
         maxDccTxt.setAlignment(Pos.CENTER);
         maxDcc.getChildren().addAll(maxDccLabel, maxDccTxt);
@@ -62,7 +62,7 @@ public class RobotConfigDialog extends JFXDialog {
         Label wheelbaseWidthLabel = new Label("Wheelbase Width:");
         wheelbaseWidthLabel.getStyleClass().add("input-label");
         JFXTextField wheelbaseWidthTxt = new JFXTextField();
-        wheelbaseWidthTxt.setText("" + RobotPath.wheelbaseWidth);
+        wheelbaseWidthTxt.setText("" + Preferences.wheelbaseWidth);
         wheelbaseWidthTxt.setValidators(new DoubleValidator());
         wheelbaseWidthTxt.setAlignment(Pos.CENTER);
         wheelbaseWidth.getChildren().addAll(wheelbaseWidthLabel, wheelbaseWidthTxt);
@@ -72,7 +72,7 @@ public class RobotConfigDialog extends JFXDialog {
         Label timestepLabel = new Label("Time Step:");
         timestepLabel.getStyleClass().add("input-label");
         JFXTextField timestepTxt = new JFXTextField();
-        timestepTxt.setText("" + RobotPath.timeStep);
+        timestepTxt.setText("" + Preferences.timeStep);
         timestepTxt.setValidators(new DoubleValidator());
         timestepTxt.setAlignment(Pos.CENTER);
         timestep.getChildren().addAll(timestepLabel, timestepTxt);
@@ -87,11 +87,11 @@ public class RobotConfigDialog extends JFXDialog {
         dialogButton.setPadding(new Insets(10));
         dialogButton.setOnAction(action -> {
             if(maxVTxt.validate() && maxAccTxt.validate() && maxDccTxt.validate() && wheelbaseWidthTxt.validate() && timestepTxt.validate()){
-                RobotPath.maxVel = Double.parseDouble(maxVTxt.getText());
-                RobotPath.maxAcc = Double.parseDouble(maxAccTxt.getText());
-                RobotPath.maxDcc = Double.parseDouble(maxDccTxt.getText());
-                RobotPath.wheelbaseWidth = Double.parseDouble(wheelbaseWidthTxt.getText());
-                RobotPath.timeStep = Double.parseDouble(timestepTxt.getText());
+                Preferences.maxVel = Double.parseDouble(maxVTxt.getText());
+                Preferences.maxAcc = Double.parseDouble(maxAccTxt.getText());
+                Preferences.maxDcc = Double.parseDouble(maxDccTxt.getText());
+                Preferences.wheelbaseWidth = Double.parseDouble(wheelbaseWidthTxt.getText());
+                Preferences.timeStep = Double.parseDouble(timestepTxt.getText());
                 FileManager.saveRobotSettings();
                 MainScene.updateCanvas();
             }else{

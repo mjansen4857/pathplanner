@@ -1,7 +1,6 @@
 package org.rangerrobotics.pathplanner.io;
 
-import org.rangerrobotics.pathplanner.generation.RobotPath;
-
+import org.rangerrobotics.pathplanner.Preferences;
 import java.io.*;
 
 public class FileManager {
@@ -12,11 +11,15 @@ public class FileManager {
         File settingsFile = new File(robotSettingsDir, "robot.txt");
         settingsFile.getParentFile().mkdirs();
         try (PrintWriter out = new PrintWriter(settingsFile)){
-            out.println(RobotPath.maxVel);
-            out.println(RobotPath.maxAcc);
-            out.println(RobotPath.maxDcc);
-            out.println(RobotPath.wheelbaseWidth);
-            out.print(RobotPath.timeStep);
+            out.println(Preferences.maxVel);
+            out.println(Preferences.maxAcc);
+            out.println(Preferences.maxDcc);
+            out.println(Preferences.wheelbaseWidth);
+            out.println(Preferences.timeStep);
+            out.println(Preferences.outputValue1);
+            out.println(Preferences.outputValue2);
+            out.println(Preferences.outputValue3);
+            out.print(Preferences.outputFormat);
         }catch (FileNotFoundException e){
             e.printStackTrace();
         }
@@ -25,11 +28,15 @@ public class FileManager {
     public static void loadRobotSettings(){
         if(robotSettingsDir.exists()){
             try (BufferedReader in = new BufferedReader(new FileReader(new File(robotSettingsDir, "robot.txt")))){
-                RobotPath.maxVel = Double.parseDouble(in.readLine());
-                RobotPath.maxAcc = Double.parseDouble(in.readLine());
-                RobotPath.maxDcc = Double.parseDouble(in.readLine());
-                RobotPath.wheelbaseWidth = Double.parseDouble(in.readLine());
-                RobotPath.timeStep = Double.parseDouble(in.readLine());
+                Preferences.maxVel = Double.parseDouble(in.readLine());
+                Preferences.maxAcc = Double.parseDouble(in.readLine());
+                Preferences.maxDcc = Double.parseDouble(in.readLine());
+                Preferences.wheelbaseWidth = Double.parseDouble(in.readLine());
+                Preferences.timeStep = Double.parseDouble(in.readLine());
+                Preferences.outputValue1 = in.readLine();
+                Preferences.outputValue2 = in.readLine();
+                Preferences.outputValue3 = in.readLine();
+                Preferences.outputFormat = in.readLine();
             }catch (IOException e){
                 e.printStackTrace();
             }

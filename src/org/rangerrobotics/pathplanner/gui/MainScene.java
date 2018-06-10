@@ -1,7 +1,6 @@
 package org.rangerrobotics.pathplanner.gui;
 
 import com.jfoenix.controls.*;
-import com.jfoenix.validation.DoubleValidator;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -15,9 +14,8 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import org.rangerrobotics.pathplanner.generation.RobotPath;
+import org.rangerrobotics.pathplanner.Preferences;
 import org.rangerrobotics.pathplanner.generation.PlannedPath;
 import org.rangerrobotics.pathplanner.generation.Util;
 import org.rangerrobotics.pathplanner.generation.Vector2;
@@ -135,10 +133,10 @@ public class MainScene {
                 Vector2 p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
                 Vector2 p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
                 double angle = Math.atan2(p1.getY() - p0.getY(), p1.getX() - p0.getX());
-                Vector2 p0L = new Vector2(p0.getX() + (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() - (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-                Vector2 p0R = new Vector2(p0.getX() - (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() + (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-                Vector2 p1L = new Vector2(p1.getX() + (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() - (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-                Vector2 p1R = new Vector2(p1.getX() - (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() + (RobotPath.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p0L = new Vector2(p0.getX() + (Preferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() - (Preferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p0R = new Vector2(p0.getX() - (Preferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() + (Preferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p1L = new Vector2(p1.getX() + (Preferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() - (Preferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p1R = new Vector2(p1.getX() - (Preferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() + (Preferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
 
                 g.strokeLine(p0L.getX(), p0L.getY(), p1L.getX(), p1L.getY());
                 g.strokeLine(p0R.getX(), p0R.getY(), p1R.getX(), p1R.getY());

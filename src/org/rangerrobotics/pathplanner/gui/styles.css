@@ -1,7 +1,8 @@
 * {
     -background: #eeeeee;
-    -primary: #3F51B5;
-    -accent: #ffffff;
+    -accent: #3F51B5;
+    -tabLine: #ffffff;
+    -ripple: #03A9F4;
     -buttonText: #eeeeee;
     -gray: #606060;
     -text: #ffffff;
@@ -10,13 +11,32 @@
     -statusRed: #f44335;
 }
 
+.jfx-check-box{
+    -jfx-checked-color: -accent;
+}
+
+.jfx-combo-box{
+    -jfx-focus-color: -accent;
+    -jfx-unfocus-color: -accent;
+    -fx-font-size: 18px;
+}
+
+.combo-box-popup .list-view .jfx-list-cell:selected,
+.combo-box-popup .list-view .jfx-list-cell:hover{
+    -fx-background-color: -accent;
+}
+
+.combo-box-popup .list-view .jfx-list-cell .jfx-rippler {
+    -jfx-rippler-fill: -ripple;
+}
+
 .dialog-heading{
     -fx-font-size: 20px;
     -fx-text-fill: #000000;
     -fx-font-weight: BOLD;
 }
 
-.text-field-label{
+.input-label{
     -fx-font-size: 20px;
     -fx-text-fill: #000000;
 }
@@ -25,15 +45,23 @@
     -fx-padding: 0.2em 0.4em;
     -fx-font-size: 20px;
     -jfx-button-type: RAISED;
-    -fx-background-color: -primary;
+    -fx-background-color: -accent;
     -fx-text-fill: -buttonText;
+}
+
+.button-raised .jfx-rippler{
+    -jfx-rippler-fill: -ripple;
 }
 
 .button-flat{
     -fx-font-size: 15px;
     -jfx-button-type: FLAT;
-    -fx-text-fill: -primary;
+    -fx-text-fill: -accent;
     -fx-font-weight: BOLD;
+}
+
+.button-flat .jfx-rippler{
+    -jfx-rippler-fill: #424242;
 }
 
 .prompt-text{
@@ -44,6 +72,7 @@
 .jfx-text-field{
     -fx-font-size: 18px;
     -fx-text-fill: #000000;
+    -jfx-focus-color: -accent;
 }
 
 .jfx-dialog{
@@ -59,15 +88,15 @@
 }
 
 .jfx-tab-pane .tab-header-background{
-    -fx-background-color: -primary;
+    -fx-background-color: -accent;
 }
 
 .jfx-tab-pane .tab-header-area .jfx-rippler{
-    -jfx-rippler-fill: -primary;
+    -jfx-rippler-fill: -accent;
 }
 
 .jfx-tab-pane .tab-selected-line{
-    -fx-background-color: -accent;
+    -fx-background-color: -tabLine;
 }
 
 .jfx-snackbar-content {

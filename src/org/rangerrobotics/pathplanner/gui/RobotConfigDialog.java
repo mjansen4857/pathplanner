@@ -18,7 +18,7 @@ public class RobotConfigDialog extends JFXDialog {
     public RobotConfigDialog(StackPane root){
         super();
         BorderPane dialogPane = new BorderPane();
-        dialogPane.setPrefSize(420, 400);
+        dialogPane.setPrefWidth(440);
 
         VBox dialogCenter = new VBox(20);
         dialogCenter.setAlignment(Pos.TOP_LEFT);
@@ -30,7 +30,7 @@ public class RobotConfigDialog extends JFXDialog {
         HBox maxV = new HBox(20);
         maxV.setAlignment(Pos.CENTER);
         Label maxVLabel = new Label("Max Velocity:");
-        maxVLabel.getStyleClass().add("text-field-label");
+        maxVLabel.getStyleClass().add("input-label");
         JFXTextField maxVTxt = new JFXTextField();
         maxVTxt.setText("" + RobotPath.maxVel);
         maxVTxt.setValidators(new DoubleValidator());
@@ -40,7 +40,7 @@ public class RobotConfigDialog extends JFXDialog {
         HBox maxAcc = new HBox(20);
         maxAcc.setAlignment(Pos.CENTER);
         Label maxAccLabel = new Label("Max Acceleration:");
-        maxAccLabel.getStyleClass().add("text-field-label");
+        maxAccLabel.getStyleClass().add("input-label");
         JFXTextField maxAccTxt = new JFXTextField();
         maxAccTxt.setText("" + RobotPath.maxAcc);
         maxAccTxt.setValidators(new DoubleValidator());
@@ -50,7 +50,7 @@ public class RobotConfigDialog extends JFXDialog {
         HBox maxDcc = new HBox(20);
         maxDcc.setAlignment(Pos.CENTER);
         Label maxDccLabel = new Label("Max Deceleration:");
-        maxDccLabel.getStyleClass().add("text-field-label");
+        maxDccLabel.getStyleClass().add("input-label");
         JFXTextField maxDccTxt = new JFXTextField();
         maxDccTxt.setText("" + RobotPath.maxDcc);
         maxDccTxt.setValidators(new DoubleValidator());
@@ -60,7 +60,7 @@ public class RobotConfigDialog extends JFXDialog {
         HBox wheelbaseWidth = new HBox(20);
         wheelbaseWidth.setAlignment(Pos.CENTER);
         Label wheelbaseWidthLabel = new Label("Wheelbase Width:");
-        wheelbaseWidthLabel.getStyleClass().add("text-field-label");
+        wheelbaseWidthLabel.getStyleClass().add("input-label");
         JFXTextField wheelbaseWidthTxt = new JFXTextField();
         wheelbaseWidthTxt.setText("" + RobotPath.wheelbaseWidth);
         wheelbaseWidthTxt.setValidators(new DoubleValidator());
@@ -70,7 +70,7 @@ public class RobotConfigDialog extends JFXDialog {
         HBox timestep = new HBox(20);
         timestep.setAlignment(Pos.CENTER);
         Label timestepLabel = new Label("Time Step:");
-        timestepLabel.getStyleClass().add("text-field-label");
+        timestepLabel.getStyleClass().add("input-label");
         JFXTextField timestepTxt = new JFXTextField();
         timestepTxt.setText("" + RobotPath.timeStep);
         timestepTxt.setValidators(new DoubleValidator());

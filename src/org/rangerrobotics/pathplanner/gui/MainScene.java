@@ -60,13 +60,15 @@ public class MainScene {
         generateContainer.setAlignment(Pos.BOTTOM_RIGHT);
         JFXButton generateButton = new JFXButton("Generate & Save");
         generateButton.setOnAction(action -> {
-            new Thread(() -> {
-                long start = System.currentTimeMillis();
-                RobotPath robotPath = new RobotPath(plannedPath);
-                System.out.println("FINISHED! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " s");
-                System.out.println("LEFT:\n" + robotPath.left.toString());
-                System.out.println("RIGHT:\n" + robotPath.right.toString());
-            }).start();
+            OutputConfigDialog dialog = new OutputConfigDialog(root);
+            dialog.show();
+//            new Thread(() -> {
+//                long start = System.currentTimeMillis();
+//                RobotPath robotPath = new RobotPath(plannedPath);
+//                System.out.println("FINISHED! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " s");
+//                System.out.println("LEFT:\n" + robotPath.left.toString());
+//                System.out.println("RIGHT:\n" + robotPath.right.toString());
+//            }).start();
         });
         generateButton.getStyleClass().add("button-raised");
         generateContainer.getChildren().add(generateButton);

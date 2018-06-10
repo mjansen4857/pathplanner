@@ -1,7 +1,7 @@
 * {
     -background: #eeeeee;
-    -tabBg: #212121;
-    -tabAccent: #FF3500;
+    -primary: #3F51B5;
+    -accent: #ffffff;
     -buttonText: #eeeeee;
     -gray: #606060;
     -text: #ffffff;
@@ -25,14 +25,14 @@
     -fx-padding: 0.2em 0.4em;
     -fx-font-size: 20px;
     -jfx-button-type: RAISED;
-    -fx-background-color: rgb(77, 102, 204);
+    -fx-background-color: -primary;
     -fx-text-fill: -buttonText;
 }
 
 .button-flat{
     -fx-font-size: 15px;
     -jfx-button-type: FLAT;
-    -fx-text-fill: #03A9F4;
+    -fx-text-fill: -primary;
     -fx-font-weight: BOLD;
 }
 
@@ -59,15 +59,15 @@
 }
 
 .jfx-tab-pane .tab-header-background{
-    -fx-background-color: -tabBg;
+    -fx-background-color: -primary;
 }
 
 .jfx-tab-pane .tab-header-area .jfx-rippler{
-    -jfx-rippler-fill: -tabAccent;
+    -jfx-rippler-fill: -primary;
 }
 
 .jfx-tab-pane .tab-selected-line{
-    -fx-background-color: -tabAccent;
+    -fx-background-color: -accent;
 }
 
 .jfx-snackbar-content {

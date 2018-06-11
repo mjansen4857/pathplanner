@@ -91,8 +91,8 @@ public class PlannedPath {
                 s.add(seg);
             }
         }
-        System.out.println("    Num segments per spline: " + s.s.size() / numSplines());
-        System.out.println("    Total Segments: " + s.s.size());
+        System.out.println("    Num segments per spline: " + s.segments.size() / numSplines());
+        System.out.println("    Total Segments: " + s.segments.size());
         System.out.println("DONE IN: " + (System.currentTimeMillis() - start) + "ms");
         return s;
     }

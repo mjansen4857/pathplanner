@@ -5,6 +5,7 @@ import org.rangerrobotics.pathplanner.Preferences;
 import java.util.ArrayList;
 
 public class RobotPath {
+    public static RobotPath generatedPath = null;
     private Path path;
     private SegmentGroup pathSegments;
     private SegmentGroup timeSegments = new SegmentGroup();
@@ -23,37 +24,38 @@ public class RobotPath {
         recalculateValues();
         splitLeftRight();
         System.out.println("DONE IN: " + (System.currentTimeMillis() - start) + " ms");
+        generatedPath = this;
     }
 
     private void calculateSecondDerivative(){
-        System.out.println("    Finding Second Derivative of " + pathSegments.s.size() + " Segments...");
-        for(int i = 0; i < pathSegments.s.size(); i++){
+        System.out.println("    Finding Second Derivative of " + pathSegments.segments.size() + " Segments...");
+        for(int i = 0; i < pathSegments.segments.size(); i++){
             if(i == 0){
-                pathSegments.s.get(i).d2ydx2 = 0;
+                pathSegments.segments.get(i).d2ydx2 = 0;
             }else{
-                double d2 = pathSegments.s.get(i).dydx;
-                double d1 = pathSegments.s.get(i - 1).dydx;
-                double t2 = pathSegments.s.get(i).x;
-                double t1 = pathSegments.s.get(i - 1).x;
-                pathSegments.s.get(i).d2ydx2 = ((d2 - d1) / (t2 - t1));
+                double d2 = pathSegments.segments.get(i).dydx;
+                double d1 = pathSegments.segments.get(i - 1).dydx;
+                double t2 = pathSegments.segments.get(i).x;
+                double t1 = pathSegments.segments.get(i - 1).x;
+                pathSegments.segments.get(i).d2ydx2 = ((d2 - d1) / (t2 - t1));
             }
         }
     }
 
     private void calculateMaxVelocity(){
         System.out.println("    Calculating Maximum Possible Velocity Along Curve...");
-        for(int i = 0; i < path.group.s.size(); i++){
-            double r = radiusOfCurve(pathSegments.s.get(i));
+        for(int i = 0; i < path.group.segments.size(); i++){
+            double r = radiusOfCurve(pathSegments.segments.get(i));
             double vMaxCurve = Math.sqrt(Preferences.maxAcc * r);
             double bigR = r + Preferences.wheelbaseWidth / 2;
             double vMaxWheel = (r / bigR) * Preferences.maxVel;
-            pathSegments.s.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, Preferences.maxVel));
+            pathSegments.segments.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, Preferences.maxVel));
         }
     }
 
     private void calculateVelocity(){
         System.out.println("    Calculating Velocities...");
-        ArrayList<Segment> p = pathSegments.s;
+        ArrayList<Segment> p = pathSegments.segments;
         for(int i = 1; i < p.size(); i++){
             if(p.get(i).dx == 0){
                 p.remove(i);
@@ -111,16 +113,16 @@ public class RobotPath {
         System.out.println("    Time Dividing Segments...");
         int segNum = 0;
         int numMessySeg = 0;
-        ArrayList<Segment> p = pathSegments.s;
+        ArrayList<Segment> p = pathSegments.segments;
         for(int i = 0; i < p.size(); i++){
             if(i == 0){
-                timeSegments.s.add(p.get(0));
+                timeSegments.segments.add(p.get(0));
                 segNum++;
             }
 
             if(p.get(i).time > segmentTime(segNum)){
-                timeSegments.s.add(p.get(i));
-                timeSegments.s.get(timeSegments.s.size() - 1).dt = timeSegments.s.get(timeSegments.s.size() - 1).time - timeSegments.s.get(timeSegments.s.size() - 2).time;
+                timeSegments.segments.add(p.get(i));
+                timeSegments.segments.get(timeSegments.segments.size() - 1).dt = timeSegments.segments.get(timeSegments.segments.size() - 1).time - timeSegments.segments.get(timeSegments.segments.size() - 2).time;
                 if(Math.abs(p.get(i).time - segmentTime(segNum)) > Preferences.timeStep + 0.00005){
                     numMessySeg++;
                 }
@@ -129,17 +131,17 @@ public class RobotPath {
         }
         System.out.println("        Divided into " + segNum + " Segments, with " + numMessySeg + " Messy Segments.");
         System.out.println("        STATS:");
-        System.out.println("          Time: " + timeSegments.s.get(timeSegments.s.size() - 1).time + " s");
-        System.out.println("          Distance: " + timeSegments.s.get(timeSegments.s.size() - 1).pos + " ft");
-        System.out.println("          Average Velocity: " + (timeSegments.s.get(timeSegments.s.size() - 1).pos / timeSegments.s.get(timeSegments.s.size() - 1).time) + " ft/s");
+        System.out.println("          Time: " + timeSegments.segments.get(timeSegments.segments.size() - 1).time + " segments");
+        System.out.println("          Distance: " + timeSegments.segments.get(timeSegments.segments.size() - 1).pos + " ft");
+        System.out.println("          Average Velocity: " + (timeSegments.segments.get(timeSegments.segments.size() - 1).pos / timeSegments.segments.get(timeSegments.segments.size() - 1).time) + " ft/segments");
     }
 
     private void recalculateValues(){
         System.out.println("    Verifying Values...");
-        for(int i = 0; i < timeSegments.s.size(); i++){
+        for(int i = 0; i < timeSegments.segments.size(); i++){
             if(i != 0){
-                Segment now = timeSegments.s.get(i);
-                Segment past = timeSegments.s.get(i - 1);
+                Segment now = timeSegments.segments.get(i);
+                Segment past = timeSegments.segments.get(i - 1);
                 now.vel = (now.pos - past.pos) / (now.time - past.time);
                 now.acc = (now.vel - past.vel) / (now.time - past.time);
             }
@@ -148,13 +150,13 @@ public class RobotPath {
 
     private void splitLeftRight(){
         System.out.println("    Splitting Left and Right Robot Paths...");
-        for(int i = 0; i < timeSegments.s.size(); i++){
+        for(int i = 0; i < timeSegments.segments.size(); i++){
             //left
-            Segment s = timeSegments.s.get(i);
+            Segment s = timeSegments.segments.get(i);
             Segment l = new Segment();
-            ArrayList<Segment> lg = left.s;
-            left.s.add(l);
-            l = left.s.get(i);
+            ArrayList<Segment> lg = left.segments;
+            left.segments.add(l);
+            l = left.segments.get(i);
             l.x = s.x + Preferences.wheelbaseWidth / 2 * Math.sin(Math.atan(s.dydx));
             l.y = s.y - Preferences.wheelbaseWidth / 2 * Math.cos(Math.atan(s.dydx));
 
@@ -171,9 +173,9 @@ public class RobotPath {
             }
             //right
             Segment r = new Segment();
-            ArrayList<Segment> rg = right.s;
-            right.s.add(r);
-            r = right.s.get(i);
+            ArrayList<Segment> rg = right.segments;
+            right.segments.add(r);
+            r = right.segments.get(i);
             r.x = s.x - Preferences.wheelbaseWidth / 2 * Math.sin(Math.atan(s.dydx));
             r.y = s.y + Preferences.wheelbaseWidth / 2 * Math.cos(Math.atan(s.dydx));
 

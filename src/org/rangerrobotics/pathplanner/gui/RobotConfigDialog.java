@@ -94,10 +94,10 @@ public class RobotConfigDialog extends JFXDialog {
                 Preferences.timeStep = Double.parseDouble(timestepTxt.getText());
                 FileManager.saveRobotSettings();
                 MainScene.updateCanvas();
+                this.close();
             }else{
                 MainScene.showSnackbarMessage("Invalid Inputs!", "error");
             }
-            this.close();
         });
         dialogBottom.getChildren().addAll(dialogButton);
 

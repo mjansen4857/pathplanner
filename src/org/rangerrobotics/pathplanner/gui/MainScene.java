@@ -17,6 +17,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import org.rangerrobotics.pathplanner.Preferences;
 import org.rangerrobotics.pathplanner.generation.PlannedPath;
+import org.rangerrobotics.pathplanner.generation.RobotPath;
 import org.rangerrobotics.pathplanner.generation.Util;
 import org.rangerrobotics.pathplanner.generation.Vector2;
 import org.rangerrobotics.pathplanner.io.FileManager;
@@ -63,7 +64,7 @@ public class MainScene {
 //            new Thread(() -> {
 //                long start = System.currentTimeMillis();
 //                RobotPath robotPath = new RobotPath(plannedPath);
-//                System.out.println("FINISHED! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " s");
+//                System.out.println("FINISHED! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " segments");
 //                System.out.println("LEFT:\n" + robotPath.left.toString());
 //                System.out.println("RIGHT:\n" + robotPath.right.toString());
 //            }).start();

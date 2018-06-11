@@ -27,9 +27,9 @@ public class Path {
     }
 
     private void makeScaledLists(){
-        for(int i = 0; i < inGroup.s.size(); i++){
-            x.add((inGroup.s.get(i).x-MainScene.plannedPath.get(0).getX() - PlannedPath.xPixelOffset)/PlannedPath.pixelsPerFoot);
-            y.add((inGroup.s.get(i).y-MainScene.plannedPath.get(0).getY() - PlannedPath.yPixelOffset)/PlannedPath.pixelsPerFoot);
+        for(int i = 0; i < inGroup.segments.size(); i++){
+            x.add((inGroup.segments.get(i).x-MainScene.plannedPath.get(0).getX() - PlannedPath.xPixelOffset)/PlannedPath.pixelsPerFoot);
+            y.add((inGroup.segments.get(i).y-MainScene.plannedPath.get(0).getY() - PlannedPath.yPixelOffset)/PlannedPath.pixelsPerFoot);
         }
     }
 
@@ -65,11 +65,11 @@ public class Path {
             seg.pos = l.get(s);
             seg.dydx = derivative(s, s2);
             if(i != 0){
-                seg.dx = seg.pos - group.s.get(group.s.size() - 1).pos;
+                seg.dx = seg.pos - group.segments.get(group.segments.size() - 1).pos;
             }
-            group.s.add(seg);
+            group.segments.add(seg);
         }
-        System.out.println("Created " + group.s.size() + " Segments. Time: " + (System.currentTimeMillis() - start) + " ms");
+        System.out.println("Created " + group.segments.size() + " Segments. Time: " + (System.currentTimeMillis() - start) + " ms");
     }
 
     private double derivative(int t1, int t2){

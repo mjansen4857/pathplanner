@@ -10,5 +10,6 @@ public class Preferences {
     public static String outputValue1 = "Position";
     public static String outputValue2 = "Velocity";
     public static String outputValue3 = "Acceleration";
-    public static String outputFormat = "Text File";
+    public static String outputFormat = "CSV File";
+    public static String destinationPath = "none";
 }

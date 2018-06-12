@@ -50,9 +50,9 @@ public class FileManager {
 
         try (PrintWriter out = new PrintWriter(leftFile)){
             if(reversed){
-                out.print(RobotPath.generatedPath.right.format(true));
+                out.print(RobotPath.generatedPath.right.formatCSV(true));
             }else{
-                out.print(RobotPath.generatedPath.left.format(false));
+                out.print(RobotPath.generatedPath.left.formatCSV(false));
             }
         }catch (FileNotFoundException e){
             e.printStackTrace();
@@ -60,9 +60,9 @@ public class FileManager {
 
         try (PrintWriter out = new PrintWriter(rightFile)){
             if(reversed){
-                out.print(RobotPath.generatedPath.left.format(true));
+                out.print(RobotPath.generatedPath.left.formatCSV(true));
             }else{
-                out.print(RobotPath.generatedPath.right.format(false));
+                out.print(RobotPath.generatedPath.right.formatCSV(false));
             }
         }catch (FileNotFoundException e){
             e.printStackTrace();

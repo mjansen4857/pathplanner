@@ -13,6 +13,10 @@ import org.rangerrobotics.pathplanner.Preferences;
 import org.rangerrobotics.pathplanner.generation.RobotPath;
 import org.rangerrobotics.pathplanner.io.FileManager;
 
+import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+
 public class OutputConfigDialog extends JFXDialog {
     public OutputConfigDialog(StackPane root){
         BorderPane dialogPane = new BorderPane();
@@ -103,6 +107,28 @@ public class OutputConfigDialog extends JFXDialog {
                 }).start();
                 if(formatCombo.getValue().equals("CSV File")){
                     FileManager.savePathFiles(nameTxt.getText(), reversedCheck.isSelected());
+                }else if(formatCombo.getValue().equals("Java Array")){
+                    while(RobotPath.generatedPath == null){
+                        try {
+                            Thread.sleep(10);
+                        }catch (InterruptedException e){
+                            e.printStackTrace();
+                        }
+                    }
+                    String leftArray;
+                    String rightArray;
+                    if(reversedCheck.isSelected()){
+                        leftArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Left", true);
+                        rightArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Right", true);
+                    }else{
+                        leftArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Left", false);
+                        rightArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Right", false);
+                    }
+
+                    StringSelection selection = new StringSelection(leftArray + "\n\n    " + rightArray);
+                    Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                    clipboard.setContents(selection, selection);
+                    MainScene.showSnackbarMessage("Arrays copied to clipboard!", "success");
                 }
             }else{
                 MainScene.showSnackbarMessage("A path name is required!", "error");

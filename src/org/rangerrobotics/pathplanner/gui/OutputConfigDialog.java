@@ -103,11 +103,11 @@ public class OutputConfigDialog extends JFXDialog {
                 new Thread(() -> {
                     long start = System.currentTimeMillis();
                     RobotPath.generatedPath = new RobotPath(MainScene.plannedPath);
-                    System.out.println("Generation Finished! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " segments");
+                    System.out.println("Generation Finished! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " seconds");
                 }).start();
                 if(formatCombo.getValue().equals("CSV File")){
                     FileManager.savePathFiles(nameTxt.getText(), reversedCheck.isSelected());
-                }else if(formatCombo.getValue().equals("Java Array")){
+                }else if(formatCombo.getValue().equals("Java Array") || formatCombo.getValue().equals("C++ Array")){
                     while(RobotPath.generatedPath == null){
                         try {
                             Thread.sleep(10);
@@ -117,12 +117,22 @@ public class OutputConfigDialog extends JFXDialog {
                     }
                     String leftArray;
                     String rightArray;
-                    if(reversedCheck.isSelected()){
-                        leftArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Left", true);
-                        rightArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Right", true);
+                    if(formatCombo.getValue().equals("Java Array")) {
+                        if (reversedCheck.isSelected()) {
+                            leftArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Left", true);
+                            rightArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Right", true);
+                        } else {
+                            leftArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Left", false);
+                            rightArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Right", false);
+                        }
                     }else{
-                        leftArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Left", false);
-                        rightArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Right", false);
+                        if (reversedCheck.isSelected()) {
+                            leftArray = RobotPath.generatedPath.right.formatCppArray(nameTxt.getText() + "Left", true);
+                            rightArray = RobotPath.generatedPath.left.formatCppArray(nameTxt.getText() + "Right", true);
+                        } else {
+                            leftArray = RobotPath.generatedPath.left.formatCppArray(nameTxt.getText() + "Left", false);
+                            rightArray = RobotPath.generatedPath.right.formatCppArray(nameTxt.getText() + "Right", false);
+                        }
                     }
 
                     StringSelection selection = new StringSelection(leftArray + "\n\n    " + rightArray);

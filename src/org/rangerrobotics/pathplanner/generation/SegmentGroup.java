@@ -37,6 +37,25 @@ public class SegmentGroup {
         }
     }
 
+    public String formatCppArray(String arrayName, boolean reverse){
+        //TODO: Add configuration for tab sizes, bracket placement, keywords, etc
+        if(Preferences.outputValue2.equals("None") && Preferences.outputValue3.equals("None")){
+            String str = "double " + arrayName + "[] = {\n";
+            for(int i = 0; i < segments.size(); i++){
+                str += "        " + formatSegment(i, reverse)  + ((i < segments.size() - 1) ? ",\n" : "\n");
+            }
+            str += "    }";
+            return str;
+        }else{
+            String str = "double " + arrayName + "[][] = {\n";
+            for(int i = 0; i < segments.size(); i++){
+                str += "        {" + formatSegment(i, reverse) + "}" + ((i < segments.size() - 1) ? ",\n" : "\n");
+            }
+            str += "    }";
+            return str;
+        }
+    }
+
     public String formatSegment(int index, boolean reverse){
         String str = "";
         Segment s = segments.get(index);

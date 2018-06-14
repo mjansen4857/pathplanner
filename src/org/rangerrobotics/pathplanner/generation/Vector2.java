@@ -1,8 +1,6 @@
 package org.rangerrobotics.pathplanner.generation;
 
-import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-
-public class Vector2 extends RecursiveTreeObject<Vector2>{
+public class Vector2 {
     private double x;
     private double y;
     private double magnitude;

@@ -98,6 +98,7 @@ public class GenerateDialog extends JFXDialog {
             Preferences.outputValue2 = value2Combo.getValue();
             Preferences.outputValue3 = value3Combo.getValue();
             Preferences.outputFormat = formatCombo.getValue();
+            Preferences.currentPathName = nameTxt.getText();
             FileManager.saveRobotSettings();
             if(nameTxt.validate()){
                 this.close();

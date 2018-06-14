@@ -131,9 +131,9 @@ public class RobotPath {
         }
         System.out.println("        Divided into " + segNum + " Segments, with " + numMessySeg + " Messy Segments.");
         System.out.println("        STATS:");
-        System.out.println("          Time: " + timeSegments.segments.get(timeSegments.segments.size() - 1).time + " segments");
+        System.out.println("          Time: " + timeSegments.segments.get(timeSegments.segments.size() - 1).time + " seconds");
         System.out.println("          Distance: " + timeSegments.segments.get(timeSegments.segments.size() - 1).pos + " ft");
-        System.out.println("          Average Velocity: " + (timeSegments.segments.get(timeSegments.segments.size() - 1).pos / timeSegments.segments.get(timeSegments.segments.size() - 1).time) + " ft/segments");
+        System.out.println("          Average Velocity: " + (timeSegments.segments.get(timeSegments.segments.size() - 1).pos / timeSegments.segments.get(timeSegments.segments.size() - 1).time) + " ft/s");
     }
 
     private void recalculateValues(){

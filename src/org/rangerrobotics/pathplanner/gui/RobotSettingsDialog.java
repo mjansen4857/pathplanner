@@ -14,8 +14,8 @@ import javafx.scene.layout.VBox;
 import org.rangerrobotics.pathplanner.Preferences;
 import org.rangerrobotics.pathplanner.io.FileManager;
 
-public class RobotConfigDialog extends JFXDialog {
-    public RobotConfigDialog(StackPane root){
+public class RobotSettingsDialog extends JFXDialog {
+    public RobotSettingsDialog(StackPane root){
         super();
         BorderPane dialogPane = new BorderPane();
         dialogPane.setPrefWidth(440);
@@ -23,9 +23,8 @@ public class RobotConfigDialog extends JFXDialog {
         VBox dialogCenter = new VBox(20);
         dialogCenter.setAlignment(Pos.TOP_LEFT);
         dialogCenter.setPadding(new Insets(5, 8, 5, 8));
-        Label dialogHeading = new Label("Robot Configuration");
+        Label dialogHeading = new Label("Robot Settings");
         dialogHeading.getStyleClass().addAll("dialog-heading");
-        dialogHeading.setPadding(new Insets(0, 0, 10, 0));
 
         HBox maxV = new HBox(20);
         maxV.setAlignment(Pos.CENTER);

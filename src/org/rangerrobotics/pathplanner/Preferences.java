@@ -11,5 +11,7 @@ public class Preferences {
     public static String outputValue2 = "Velocity";
     public static String outputValue3 = "Acceleration";
     public static String outputFormat = "CSV File";
-    public static String destinationPath = "none";
+    public static String lastGenerateDir = "none";
+    public static String lastPathDir = "none";
+    public static String currentPathName = "path";
 }

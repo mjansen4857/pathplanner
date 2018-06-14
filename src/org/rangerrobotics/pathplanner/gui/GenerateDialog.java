@@ -17,23 +17,24 @@ import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 
-public class OutputConfigDialog extends JFXDialog {
-    public OutputConfigDialog(StackPane root){
+public class GenerateDialog extends JFXDialog {
+
+    public GenerateDialog(StackPane root){
         BorderPane dialogPane = new BorderPane();
         dialogPane.setPrefWidth(400);
 
         VBox dialogCenter = new VBox(20);
         dialogCenter.setAlignment(Pos.TOP_LEFT);
         dialogCenter.setPadding(new Insets(5, 8, 5, 8));
-        Label dialogHeading = new Label("Output Configuration");
+        Label dialogHeading = new Label("Output Settings");
         dialogHeading.getStyleClass().addAll("dialog-heading");
-        dialogHeading.setPadding(new Insets(0, 0, 10, 0));
 
         HBox nameBox = new HBox(20);
         nameBox.setAlignment(Pos.CENTER);
         Label nameLabel = new Label("Path Name:");
         nameLabel.getStyleClass().add("input-label");
         JFXTextField nameTxt = new JFXTextField();
+        nameTxt.setText(Preferences.currentPathName);
         nameTxt.setValidators(new RequiredFieldValidator());
         nameTxt.setPromptText("Enter Name");
         nameTxt.setAlignment(Pos.CENTER);
@@ -106,7 +107,7 @@ public class OutputConfigDialog extends JFXDialog {
                     System.out.println("Generation Finished! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " seconds");
                 }).start();
                 if(formatCombo.getValue().equals("CSV File")){
-                    FileManager.savePathFiles(nameTxt.getText(), reversedCheck.isSelected());
+                    FileManager.saveGeneratedPath(nameTxt.getText(), reversedCheck.isSelected());
                 }else if(formatCombo.getValue().equals("Java Array") || formatCombo.getValue().equals("C++ Array")){
                     while(RobotPath.generatedPath == null){
                         try {
@@ -145,7 +146,6 @@ public class OutputConfigDialog extends JFXDialog {
             }
         });
         dialogBottom.getChildren().add(dialogButton);
-
         dialogPane.setBottom(dialogBottom);
         dialogPane.setCenter(dialogCenter);
         this.setDialogContainer(root);

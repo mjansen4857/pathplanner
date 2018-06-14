@@ -5,7 +5,6 @@
     -ripple: #03A9F4;
     -buttonText: #eeeeee;
     -gray: #606060;
-    -text: #ffffff;
     -statusGreen: #4caf50;
     -statusYellow: #ffeb3b;
     -statusRed: #f44335;
@@ -64,11 +63,6 @@
     -jfx-rippler-fill: #424242;
 }
 
-.prompt-text{
-    -fx-font-size: 18px;
-    -fx-text-fill: -text;
-}
-
 .jfx-text-field{
     -fx-font-size: 18px;
     -fx-text-fill: #000000;
@@ -105,7 +99,7 @@
 
 .jfx-snackbar-content:info .jfx-snackbar-toast{
     -fx-font-size: 24px;
-    -fx-text-fill: -text;
+    -fx-text-fill:#ffffff;
     -fx-alignment: CENTER;
 }
 

@@ -6,7 +6,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -17,7 +16,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import org.rangerrobotics.pathplanner.Preferences;
 import org.rangerrobotics.pathplanner.generation.PlannedPath;
-import org.rangerrobotics.pathplanner.generation.RobotPath;
 import org.rangerrobotics.pathplanner.generation.Util;
 import org.rangerrobotics.pathplanner.generation.Vector2;
 import org.rangerrobotics.pathplanner.io.FileManager;
@@ -54,45 +52,35 @@ public class MainScene {
         layout = new JFXTabPane();
 
         BorderPane pathTabLayout = new BorderPane();
-        StackPane generateContainer = new StackPane();
-        generateContainer.setPrefWidth(WIDTH/2);
-        generateContainer.setAlignment(Pos.BOTTOM_RIGHT);
-        JFXButton generateButton = new JFXButton("Generate & Save");
-        generateButton.setOnAction(action -> {
-            OutputConfigDialog dialog = new OutputConfigDialog(root);
-            dialog.show();
-//            new Thread(() -> {
-//                long start = System.currentTimeMillis();
-//                RobotPath robotPath = new RobotPath(plannedPath);
-//                System.out.println("FINISHED! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " segments");
-//                System.out.println("LEFT:\n" + robotPath.left.toString());
-//                System.out.println("RIGHT:\n" + robotPath.right.toString());
-//            }).start();
-        });
-        generateButton.getStyleClass().add("button-raised");
-        generateContainer.getChildren().add(generateButton);
 
-        JFXButton configButton = new JFXButton("Config Robot");
-        StackPane configContainer = new StackPane();
-        configContainer.setPrefWidth(WIDTH/2);
-        configContainer.setAlignment(Pos.BOTTOM_LEFT);
-        configButton.setOnAction(action -> {
-            RobotConfigDialog dialog = new RobotConfigDialog(root);
-            dialog.show();
-        });
-        configButton.getStyleClass().add("button-raised");
-        configContainer.getChildren().add(configButton);
-        pathTabLayout.getStyleClass().add("dark-bg");
-
-        BorderPane aboutTabLayout = new BorderPane();
-        aboutTabLayout.setCenter(new Label("Put things here"));
-        aboutTab.setContent(aboutTabLayout);
+        aboutTab.setContent(new AboutTab());
 
         setupCanvas();
 
-        HBox bottom = new HBox(10);
+        HBox bottom = new HBox(640);
         bottom.setPadding(new Insets(10));
-        bottom.getChildren().addAll(configContainer, generateContainer);
+
+        HBox bottomLeft = new HBox(10);
+        bottomLeft.setAlignment(Pos.BOTTOM_LEFT);
+        JFXButton saveButton = new JFXButton("Save Path");
+        saveButton.setOnAction(action -> FileManager.savePath());
+        saveButton.getStyleClass().add("button-raised");
+        JFXButton loadButton = new JFXButton("Load Path");
+        loadButton.setOnAction(action -> FileManager.loadPath());
+        loadButton.getStyleClass().add("button-raised");
+        bottomLeft.getChildren().addAll(saveButton, loadButton);
+
+        HBox bottomRight = new HBox(10);
+        bottomRight.setAlignment(Pos.BOTTOM_RIGHT);
+        JFXButton settingsButton = new JFXButton("Robot Settings");
+        settingsButton.setOnAction(action -> new RobotSettingsDialog(root).show());
+        settingsButton.getStyleClass().add("button-raised");
+        JFXButton generateButton = new JFXButton("Generate Path");
+        generateButton.setOnAction(action -> new GenerateDialog(root).show());
+        generateButton.getStyleClass().add("button-raised");
+        bottomRight.getChildren().addAll(settingsButton, generateButton);
+
+        bottom.getChildren().addAll(bottomLeft, bottomRight);
         pathTabCenter.getChildren().add(bottom);
         pathTabLayout.setCenter(pathTabCenter);
         pathTab.setContent(pathTabLayout);
@@ -122,7 +110,6 @@ public class MainScene {
     }
 
     private static void draw(GraphicsContext g, int highlightedPoint){
-//        g.setFill(Color.color(0.35, 0.35, 0.35));
         g.setFill(Color.color(133/255., 132/255., 141/255.));
         g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
         g.drawImage(field, 0, 79);

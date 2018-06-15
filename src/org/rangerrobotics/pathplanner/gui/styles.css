@@ -3,8 +3,6 @@
     -accent: #3F51B5;
     -tabLine: #ffffff;
     -ripple: #03A9F4;
-    -buttonText: #eeeeee;
-    -gray: #606060;
     -statusGreen: #4caf50;
     -statusYellow: #ffeb3b;
     -statusRed: #f44335;
@@ -45,7 +43,7 @@
     -fx-font-size: 20px;
     -jfx-button-type: RAISED;
     -fx-background-color: -accent;
-    -fx-text-fill: -buttonText;
+    -fx-text-fill: #eeeeee;
 }
 
 .button-raised .jfx-rippler{
@@ -73,10 +71,6 @@
     -fx-background-color: #22222277;
 }
 
-.dark-bg{
-    -fx-background-color: rgb(89, 89, 89);
-}
-
 .jfx-tab-pane{
     -fx-background-color: -background;
 }
@@ -86,7 +80,7 @@
 }
 
 .jfx-tab-pane .tab-header-area .jfx-rippler{
-    -jfx-rippler-fill: -accent;
+    -jfx-rippler-fill: -ripple;
 }
 
 .jfx-tab-pane .tab-selected-line{
@@ -113,8 +107,4 @@
     -fx-font-size: 24px;
     -fx-text-fill: -statusRed;
     -fx-alignment: CENTER;
-}
-
-.jfx-snackbar-action{
-    visibility: hidden;
 }

@@ -1,8 +1,9 @@
 # PathPlanner
 ## Working With Paths
-![Path Tab](https://i.imgur.com/GSbfCEO.png)
+![Path Tab](https://i.imgur.com/1xVIxBf.png)
+
 ---
-Paths consist of two types of points: anchor and control points. Anchor points are points that *anchor* the path. They are points that the path will pass directly through. Control points are points that are attached to each anchor point. Control points can be used to fine-tune the curve of a path by pulling the path towards it. Anchor points, as well as their corresponding control points, can be added by right clicking anywhere on the field. They can be removed by right clicking on the anchor point that you wish to remove. Any point on the path can be moved by dragging it around, or you can middle-click or ctrl + click on any anchor point to enter a position or change the angle manually. When you are done editing the path, it can be saved when the path is generated to open and edit it later.
+Paths consist of two types of points: anchor and control points. Anchor points are points that *anchor* the path. They are points that the path will pass directly through. Control points are points that are attached to each anchor point. Control points can be used to fine-tune the curve of a path by pulling the path towards it. Anchor points, as well as their corresponding control points, can be added by right clicking anywhere on the field. They can be removed by right clicking on the anchor point that you wish to remove. Any point on the path can be moved by dragging it around, or you can middle-click or ctrl + click on any anchor point to enter a position or change the angle manually. When you are done editing the path, it can be saved and other paths can be loaded with the buttons in the bottom left corner. Your robot settings can be updated or the path can be generated for use on the robot with the buttons in the bottom right corner.
 
 ---
 ## Robot Configuration Variables

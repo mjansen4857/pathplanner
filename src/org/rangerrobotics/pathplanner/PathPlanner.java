@@ -20,9 +20,7 @@ public class PathPlanner extends Application {
     public void start(Stage stage){
         mStage = stage;
         mStage.setTitle("PathPlanner");
-        mStage.getIcons().add(new Image(getClass().getResourceAsStream("32.png")));
-        mStage.getIcons().add(new Image(getClass().getResourceAsStream("64.png")));
-        mStage.getIcons().add(new Image(getClass().getResourceAsStream("128.png")));
+        mStage.getIcons().add(new Image(getClass().getResourceAsStream("icon.png")));
 
         mStage.setOnCloseRequest(event -> {
             event.consume();

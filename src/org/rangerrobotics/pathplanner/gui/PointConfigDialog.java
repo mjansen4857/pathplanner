@@ -30,7 +30,7 @@ public class PointConfigDialog extends JFXDialog {
         HBox xPositionContainer = new HBox(20);
         xPositionContainer.setAlignment(Pos.CENTER);
         Label xPositionLabel = new Label("X Position:");
-        xPositionLabel.getStyleClass().addAll("text-field-label");
+        xPositionLabel.getStyleClass().addAll("input-label");
         JFXTextField xPositionTxtField = new JFXTextField();
         xPositionTxtField.setValidators(new DoubleValidator());
         xPositionTxtField.setAlignment(Pos.CENTER);
@@ -40,7 +40,7 @@ public class PointConfigDialog extends JFXDialog {
         HBox yPositionContainer = new HBox(20);
         yPositionContainer.setAlignment(Pos.CENTER);
         Label yPositionLabel = new Label("Y Position:");
-        yPositionLabel.getStyleClass().addAll("text-field-label");
+        yPositionLabel.getStyleClass().addAll("input-label");
         JFXTextField yPositionTxtField = new JFXTextField();
         yPositionTxtField.setValidators(new DoubleValidator());
         yPositionTxtField.setAlignment(Pos.CENTER);
@@ -50,7 +50,7 @@ public class PointConfigDialog extends JFXDialog {
         HBox angleContainer = new HBox(20);
         angleContainer.setAlignment(Pos.CENTER);
         Label angleLabel = new Label("Angle:");
-        angleLabel.getStyleClass().addAll("text-field-label");
+        angleLabel.getStyleClass().addAll("input-label");
         JFXTextField angleTxtField = new JFXTextField();
         angleTxtField.setValidators(new DoubleValidator());
         angleTxtField.setAlignment(Pos.CENTER);

@@ -22,3 +22,4 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * **Value 1, 2, and 3:** The output values for the path in order. Value choices are: position, velocity, acceleration, time, and none
 * **Output Format:** The format that the path is output to. Options are CSV file, Java array, or C++ array. CSV files are saved to a chosen location and arrays are copied to the clipboard
 * **Reversed:** Should the robot drive backwards
+* Settings default to last used values

@@ -61,7 +61,7 @@ public class FileManager {
         }catch (IOException e){
             e.printStackTrace();
         }
-        MainScene.updateCanvas();
+        MainScene.updatePathCanvas();
     }
 
     public static void saveGeneratedPath(String name, boolean reversed){

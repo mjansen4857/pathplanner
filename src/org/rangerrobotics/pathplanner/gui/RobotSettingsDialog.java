@@ -92,7 +92,7 @@ public class RobotSettingsDialog extends JFXDialog {
                 Preferences.wheelbaseWidth = Double.parseDouble(wheelbaseWidthTxt.getText());
                 Preferences.timeStep = Double.parseDouble(timestepTxt.getText());
                 FileManager.saveRobotSettings();
-                MainScene.updateCanvas();
+                MainScene.updatePathCanvas();
                 this.close();
             }else{
                 MainScene.showSnackbarMessage("Invalid Inputs!", "error");

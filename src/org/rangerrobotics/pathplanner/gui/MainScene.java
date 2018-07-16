@@ -22,7 +22,7 @@ import org.rangerrobotics.pathplanner.io.FileManager;
 
 public class MainScene {
     private static final int WIDTH = 1200;
-    private static final int HEIGT = 800;
+    private static final int HEIGHT = 800;
     private static Scene scene = null;
     private static StackPane root;
     private static JFXTabPane layout;
@@ -30,7 +30,7 @@ public class MainScene {
     private static Tab aboutTab = new Tab("About");
     private static JFXSnackbar snackbar;
     public static PlannedPath plannedPath;
-    private static Canvas canvas;
+    private static Canvas pathCanvas;
     private static StackPane pathTabCenter;
     private static int pointDragIndex = -1;
     private static boolean isCtrlPressed = false;
@@ -90,7 +90,7 @@ public class MainScene {
         snackbar = new JFXSnackbar(root);
         snackbar.setPrefWidth(WIDTH);
 
-        scene = new Scene(root, WIDTH, HEIGT);
+        scene = new Scene(root, WIDTH, HEIGHT);
         scene.getStylesheets().add("org/rangerrobotics/pathplanner/gui/styles.css");
 
         scene.setOnKeyPressed(event -> {
@@ -109,8 +109,7 @@ public class MainScene {
         });
     }
 
-    private static void draw(GraphicsContext g, int highlightedPoint){
-        g.drawImage(field, 0, 80);
+    private static void drawPath(GraphicsContext g, int highlightedPoint){
         g.setLineWidth(3);
         g.setStroke(Color.color(0, 0.95, 0));
         for(int i = 0; i < plannedPath.numSplines(); i ++){
@@ -155,13 +154,13 @@ public class MainScene {
         }
     }
 
-    public static void updateCanvas(){
-        updateCanvas(-1);
+    public static void updatePathCanvas(){
+        updatePathCanvas(-1);
     }
 
-    public static void updateCanvas(int highlightedPoint){
-        canvas.getGraphicsContext2D().clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        draw(canvas.getGraphicsContext2D(), highlightedPoint);
+    public static void updatePathCanvas(int highlightedPoint){
+        pathCanvas.getGraphicsContext2D().clearRect(0, 0, pathCanvas.getWidth(), pathCanvas.getHeight());
+        drawPath(pathCanvas.getGraphicsContext2D(), highlightedPoint);
     }
 
     public static void showSnackbarMessage(String message, String type){
@@ -170,20 +169,20 @@ public class MainScene {
 
     private static void setupCanvas(){
         pathTabCenter = new StackPane();
-        canvas = new Canvas(WIDTH, HEIGT - 35);
+        pathCanvas = new Canvas(WIDTH, HEIGHT - 35);
         pathTabCenter.setOnMousePressed(event -> {
             if(event.getButton() == MouseButton.SECONDARY){
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         if(i % 3 == 0 && plannedPath.numSplines() > 1) {
                             plannedPath.deleteSpline(i);
-                            updateCanvas();
+                            updatePathCanvas();
                         }
                         return;
                     }
                 }
                 plannedPath.addSpline(new Vector2(event.getX(), event.getY()));
-                updateCanvas();
+                updatePathCanvas();
             }else if(event.getButton() == MouseButton.PRIMARY || event.getButton() == MouseButton.MIDDLE) {
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
@@ -204,14 +203,14 @@ public class MainScene {
             if(event.getButton() == MouseButton.NONE){
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
-                        updateCanvas(i);
+                        updatePathCanvas(i);
                         lastMousePos = new Vector2(event.getX(), event.getY());
                         return;
                     }
                 }
                 for (int i = 0; i < plannedPath.numPoints(); i++) {
                     if ((Math.pow(lastMousePos.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(lastMousePos.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
-                        updateCanvas(-1);
+                        updatePathCanvas(-1);
                         lastMousePos = new Vector2(event.getX(), event.getY());
                         return;
                     }
@@ -222,7 +221,7 @@ public class MainScene {
         });
         pathTabCenter.setOnMouseDragged(event -> {
             if(pointDragIndex != -1){
-                if(event.getX() >= 0 && event.getY() >= 0 && event.getX() <= canvas.getWidth() && event.getY() <= canvas.getHeight()) {
+                if(event.getX() >= 0 && event.getY() >= 0 && event.getX() <= pathCanvas.getWidth() && event.getY() <= pathCanvas.getHeight()) {
                     if(isShiftPressed && pointDragIndex % 3 != 0){
                         int controlIndex = pointDragIndex;
                         boolean nextIsAnchor = (controlIndex + 1) % 3 == 0;
@@ -237,12 +236,14 @@ public class MainScene {
                     }else{
                         plannedPath.movePoint(pointDragIndex, new Vector2(event.getX(), event.getY()));
                     }
-                    updateCanvas(pointDragIndex);
+                    updatePathCanvas(pointDragIndex);
                 }
             }
         });
-        plannedPath = new PlannedPath(new Vector2(canvas.getWidth()/2, canvas.getHeight()/2));
-        updateCanvas();
-        pathTabCenter.getChildren().add(canvas);
+        plannedPath = new PlannedPath(new Vector2(pathCanvas.getWidth()/2, pathCanvas.getHeight()/2));
+        updatePathCanvas();
+        Canvas fieldCanvas = new Canvas(WIDTH, HEIGHT - 35);
+        fieldCanvas.getGraphicsContext2D().drawImage(field, 0, 80);
+        pathTabCenter.getChildren().addAll(fieldCanvas, pathCanvas);
     }
 }

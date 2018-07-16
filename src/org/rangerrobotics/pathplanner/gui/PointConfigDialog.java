@@ -89,7 +89,7 @@ public class PointConfigDialog extends JFXDialog {
                     controlIndex = anchorIndex + 1;
                     MainScene.plannedPath.movePoint(controlIndex, Vector2.add(MainScene.plannedPath.get(anchorIndex), new Vector2(a, o)));
                 }
-                MainScene.updateCanvas();
+                MainScene.updatePathCanvas();
             }else{
                 MainScene.showSnackbarMessage("Invalid Inputs!", "error");
             }

@@ -110,10 +110,6 @@ public class MainScene {
     }
 
     private static void draw(GraphicsContext g, int highlightedPoint){
-//        g.setFill(Color.color(133/255., 132/255., 141/255.));
-//        g.setFill(Color.color(66/255., 66/255., 66/255.));
-//        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         g.drawImage(field, 0, 80);
         g.setLineWidth(3);
         g.setStroke(Color.color(0, 0.95, 0));

@@ -5,9 +5,9 @@ import javafx.collections.ObservableList;
 
 public class PlannedPath {
     public ObservableList<Vector2> points;
-    public static double pixelsPerFoot = 20.3;//old = 20
-    public static int xPixelOffset = 53;//old = 53
-    public static int yPixelOffset = 106;//old = 83
+    public static double pixelsPerFoot = 20.3;
+    public static int xPixelOffset = 53;
+    public static int yPixelOffset = 106;
 
     public PlannedPath(Vector2 center){
         this.points = FXCollections.observableArrayList();

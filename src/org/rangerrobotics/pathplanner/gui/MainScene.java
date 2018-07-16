@@ -21,8 +21,8 @@ import org.rangerrobotics.pathplanner.generation.Vector2;
 import org.rangerrobotics.pathplanner.io.FileManager;
 
 public class MainScene {
-    private static final int WIDTH = 1174;
-    private static final int HEIGT = 740;
+    private static final int WIDTH = 1200;
+    private static final int HEIGT = 800;
     private static Scene scene = null;
     private static StackPane root;
     private static JFXTabPane layout;
@@ -47,7 +47,7 @@ public class MainScene {
 
     private static void createScene(){
         FileManager.loadRobotSettings();
-        field = new Image(MainScene.class.getResourceAsStream("field.png"));
+        field = new Image(MainScene.class.getResourceAsStream("field18.png"));
         root = new StackPane();
         layout = new JFXTabPane();
 
@@ -57,7 +57,7 @@ public class MainScene {
 
         setupCanvas();
 
-        HBox bottom = new HBox(640);
+        HBox bottom = new HBox(663);
         bottom.setPadding(new Insets(10));
 
         HBox bottomLeft = new HBox(10);
@@ -110,9 +110,11 @@ public class MainScene {
     }
 
     private static void draw(GraphicsContext g, int highlightedPoint){
-        g.setFill(Color.color(133/255., 132/255., 141/255.));
-        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        g.drawImage(field, 0, 79);
+//        g.setFill(Color.color(133/255., 132/255., 141/255.));
+//        g.setFill(Color.color(66/255., 66/255., 66/255.));
+//        g.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        g.drawImage(field, 0, 80);
         g.setLineWidth(3);
         g.setStroke(Color.color(0, 0.95, 0));
         for(int i = 0; i < plannedPath.numSplines(); i ++){
@@ -172,7 +174,7 @@ public class MainScene {
 
     private static void setupCanvas(){
         pathTabCenter = new StackPane();
-        canvas = new Canvas(WIDTH, 705);
+        canvas = new Canvas(WIDTH, HEIGT - 35);
         pathTabCenter.setOnMousePressed(event -> {
             if(event.getButton() == MouseButton.SECONDARY){
                 for (int i = 0; i < plannedPath.numPoints(); i++) {

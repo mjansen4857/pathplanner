@@ -111,7 +111,7 @@ public class MainScene {
 
     private static void drawPath(GraphicsContext g, int highlightedPoint){
         g.setLineWidth(3);
-        g.setStroke(Color.color(0, 0.95, 0));
+        g.setStroke(Color.web("eeeeee"));
         for(int i = 0; i < plannedPath.numSplines(); i ++){
             Vector2[] points = plannedPath.getPointsInSpline(i);
             for(double d = 0; d <= 1; d += 0.01){
@@ -140,13 +140,13 @@ public class MainScene {
             g.setStroke(Color.BLACK);
             g.setLineWidth(4);
             if(i == highlightedPoint){
-                g.setFill(Color.YELLOW);
+                g.setFill(Color.web("ffeb3b"));
             }else if(i == 0){
-                g.setFill(Color.GREEN);
+                g.setFill(Color.web("388e3c"));
             }else if(i == plannedPath.numPoints() - 1){
-                g.setFill(Color.RED);
+                g.setFill(Color.web("d32f2f"));
             }else{
-                g.setFill(Color.WHITE);
+                g.setFill(Color.web("eeeeee"));
             }
             Vector2 p = plannedPath.get(i);
             g.strokeOval(p.getX() - 6, p.getY() - 6, 12, 12);

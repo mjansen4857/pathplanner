@@ -1,4 +1,4 @@
-package org.rangerrobotics.pathplanner.gui;
+package org.rangerrobotics.pathplanner.gui.dialog;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialog;
@@ -9,13 +9,13 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.rangerrobotics.pathplanner.Preferences;
+import org.rangerrobotics.pathplanner.gui.MainScene;
+import org.rangerrobotics.pathplanner.gui.PathEditor;
 import org.rangerrobotics.pathplanner.io.FileManager;
 
 public class RobotSettingsDialog extends JFXDialog {
-    public RobotSettingsDialog(StackPane root){
+    public RobotSettingsDialog(PathEditor editor){
         super();
         BorderPane dialogPane = new BorderPane();
         dialogPane.setPrefWidth(440);
@@ -31,7 +31,7 @@ public class RobotSettingsDialog extends JFXDialog {
         Label maxVLabel = new Label("Max Velocity:");
         maxVLabel.getStyleClass().add("input-label");
         JFXTextField maxVTxt = new JFXTextField();
-        maxVTxt.setText("" + Preferences.maxVel);
+        maxVTxt.setText("" + editor.pathPreferences.maxVel);
         maxVTxt.setValidators(new DoubleValidator());
         maxVTxt.setAlignment(Pos.CENTER);
         maxV.getChildren().addAll(maxVLabel, maxVTxt);
@@ -41,7 +41,7 @@ public class RobotSettingsDialog extends JFXDialog {
         Label maxAccLabel = new Label("Max Acceleration:");
         maxAccLabel.getStyleClass().add("input-label");
         JFXTextField maxAccTxt = new JFXTextField();
-        maxAccTxt.setText("" + Preferences.maxAcc);
+        maxAccTxt.setText("" + editor.pathPreferences.maxAcc);
         maxAccTxt.setValidators(new DoubleValidator());
         maxAccTxt.setAlignment(Pos.CENTER);
         maxAcc.getChildren().addAll(maxAccLabel, maxAccTxt);
@@ -51,7 +51,7 @@ public class RobotSettingsDialog extends JFXDialog {
         Label maxDccLabel = new Label("Max Deceleration:");
         maxDccLabel.getStyleClass().add("input-label");
         JFXTextField maxDccTxt = new JFXTextField();
-        maxDccTxt.setText("" + Preferences.maxDcc);
+        maxDccTxt.setText("" + editor.pathPreferences.maxDcc);
         maxDccTxt.setValidators(new DoubleValidator());
         maxDccTxt.setAlignment(Pos.CENTER);
         maxDcc.getChildren().addAll(maxDccLabel, maxDccTxt);
@@ -61,7 +61,7 @@ public class RobotSettingsDialog extends JFXDialog {
         Label wheelbaseWidthLabel = new Label("Wheelbase Width:");
         wheelbaseWidthLabel.getStyleClass().add("input-label");
         JFXTextField wheelbaseWidthTxt = new JFXTextField();
-        wheelbaseWidthTxt.setText("" + Preferences.wheelbaseWidth);
+        wheelbaseWidthTxt.setText("" + editor.pathPreferences.wheelbaseWidth);
         wheelbaseWidthTxt.setValidators(new DoubleValidator());
         wheelbaseWidthTxt.setAlignment(Pos.CENTER);
         wheelbaseWidth.getChildren().addAll(wheelbaseWidthLabel, wheelbaseWidthTxt);
@@ -71,7 +71,7 @@ public class RobotSettingsDialog extends JFXDialog {
         Label timestepLabel = new Label("Time Step:");
         timestepLabel.getStyleClass().add("input-label");
         JFXTextField timestepTxt = new JFXTextField();
-        timestepTxt.setText("" + Preferences.timeStep);
+        timestepTxt.setText("" + editor.pathPreferences.timeStep);
         timestepTxt.setValidators(new DoubleValidator());
         timestepTxt.setAlignment(Pos.CENTER);
         timestep.getChildren().addAll(timestepLabel, timestepTxt);
@@ -86,13 +86,13 @@ public class RobotSettingsDialog extends JFXDialog {
         dialogButton.setPadding(new Insets(10));
         dialogButton.setOnAction(action -> {
             if(maxVTxt.validate() && maxAccTxt.validate() && maxDccTxt.validate() && wheelbaseWidthTxt.validate() && timestepTxt.validate()){
-                Preferences.maxVel = Double.parseDouble(maxVTxt.getText());
-                Preferences.maxAcc = Double.parseDouble(maxAccTxt.getText());
-                Preferences.maxDcc = Double.parseDouble(maxDccTxt.getText());
-                Preferences.wheelbaseWidth = Double.parseDouble(wheelbaseWidthTxt.getText());
-                Preferences.timeStep = Double.parseDouble(timestepTxt.getText());
-                FileManager.saveRobotSettings();
-                MainScene.updatePathCanvas();
+                editor.pathPreferences.maxVel = Double.parseDouble(maxVTxt.getText());
+                editor.pathPreferences.maxAcc = Double.parseDouble(maxAccTxt.getText());
+                editor.pathPreferences.maxDcc = Double.parseDouble(maxDccTxt.getText());
+                editor.pathPreferences.wheelbaseWidth = Double.parseDouble(wheelbaseWidthTxt.getText());
+                editor.pathPreferences.timeStep = Double.parseDouble(timestepTxt.getText());
+                FileManager.saveRobotSettings(editor);
+                editor.updatePathCanvas();
                 this.close();
             }else{
                 MainScene.showSnackbarMessage("Invalid Inputs!", "error");
@@ -102,7 +102,7 @@ public class RobotSettingsDialog extends JFXDialog {
 
         dialogPane.setBottom(dialogBottom);
         dialogPane.setCenter(dialogCenter);
-        this.setDialogContainer(root);
+        this.setDialogContainer(editor);
         this.setContent(dialogPane);
         this.setTransitionType(JFXDialog.DialogTransition.CENTER);
     }

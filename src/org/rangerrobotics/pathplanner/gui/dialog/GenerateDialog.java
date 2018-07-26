@@ -1,4 +1,4 @@
-package org.rangerrobotics.pathplanner.gui;
+package org.rangerrobotics.pathplanner.gui.dialog;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.validation.RequiredFieldValidator;
@@ -7,10 +7,10 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.rangerrobotics.pathplanner.Preferences;
 import org.rangerrobotics.pathplanner.generation.RobotPath;
+import org.rangerrobotics.pathplanner.gui.MainScene;
+import org.rangerrobotics.pathplanner.gui.PathEditor;
 import org.rangerrobotics.pathplanner.io.FileManager;
 
 import java.awt.*;
@@ -19,7 +19,7 @@ import java.awt.datatransfer.StringSelection;
 
 public class GenerateDialog extends JFXDialog {
 
-    public GenerateDialog(StackPane root){
+    public GenerateDialog(PathEditor editor){
         BorderPane dialogPane = new BorderPane();
         dialogPane.setPrefWidth(400);
 
@@ -34,7 +34,7 @@ public class GenerateDialog extends JFXDialog {
         Label nameLabel = new Label("Path Name:");
         nameLabel.getStyleClass().add("input-label");
         JFXTextField nameTxt = new JFXTextField();
-        nameTxt.setText(Preferences.currentPathName);
+        nameTxt.setText(editor.pathPreferences.currentPathName);
         nameTxt.setValidators(new RequiredFieldValidator());
         nameTxt.setPromptText("Enter Name");
         nameTxt.setAlignment(Pos.CENTER);
@@ -45,7 +45,7 @@ public class GenerateDialog extends JFXDialog {
         Label value1Label = new Label("Value 1:");
         value1Label.getStyleClass().add("input-label");
         JFXComboBox<String> value1Combo = new JFXComboBox<>();
-        value1Combo.setValue(Preferences.outputValue1);
+        value1Combo.setValue(editor.pathPreferences.outputValue1);
         value1Combo.getItems().addAll("Position", "Velocity", "Acceleration", "Time");
         value1Box.getChildren().addAll(value1Label, value1Combo);
 
@@ -54,7 +54,7 @@ public class GenerateDialog extends JFXDialog {
         Label value2Label = new Label("Value 2:");
         value2Label.getStyleClass().add("input-label");
         JFXComboBox<String> value2Combo = new JFXComboBox<>();
-        value2Combo.setValue(Preferences.outputValue2);
+        value2Combo.setValue(editor.pathPreferences.outputValue2);
         value2Combo.getItems().addAll("Position", "Velocity", "Acceleration", "Time", "None");
         value2Box.getChildren().addAll(value2Label, value2Combo);
 
@@ -63,7 +63,7 @@ public class GenerateDialog extends JFXDialog {
         Label value3Label = new Label("Value 3:");
         value3Label.getStyleClass().add("input-label");
         JFXComboBox<String> value3Combo = new JFXComboBox<>();
-        value3Combo.setValue(Preferences.outputValue3);
+        value3Combo.setValue(editor.pathPreferences.outputValue3);
         value3Combo.getItems().addAll("Position", "Velocity", "Acceleration", "Time", "None");
         value3Box.getChildren().addAll(value3Label, value3Combo);
 
@@ -72,7 +72,7 @@ public class GenerateDialog extends JFXDialog {
         Label formatLabel = new Label("Output Format:");
         formatLabel.getStyleClass().add("input-label");
         JFXComboBox<String> formatCombo = new JFXComboBox<>();
-        formatCombo.setValue(Preferences.outputFormat);
+        formatCombo.setValue(editor.pathPreferences.outputFormat);
         formatCombo.getItems().addAll("CSV File", "Java Array", "C++ Array");
         formatCombo.setPromptText("Select Format");
         formatBox.getChildren().addAll(formatLabel, formatCombo);
@@ -94,21 +94,21 @@ public class GenerateDialog extends JFXDialog {
         dialogButton.setPadding(new Insets(10));
         dialogButton.setOnAction(action -> {
             RobotPath.generatedPath = null;
-            Preferences.outputValue1 = value1Combo.getValue();
-            Preferences.outputValue2 = value2Combo.getValue();
-            Preferences.outputValue3 = value3Combo.getValue();
-            Preferences.outputFormat = formatCombo.getValue();
-            Preferences.currentPathName = nameTxt.getText();
-            FileManager.saveRobotSettings();
+            editor.pathPreferences.outputValue1 = value1Combo.getValue();
+            editor.pathPreferences.outputValue2 = value2Combo.getValue();
+            editor.pathPreferences.outputValue3 = value3Combo.getValue();
+            editor.pathPreferences.outputFormat = formatCombo.getValue();
+            editor.pathPreferences.currentPathName = nameTxt.getText();
+            FileManager.saveRobotSettings(editor);
             if(nameTxt.validate()){
                 this.close();
                 new Thread(() -> {
                     long start = System.currentTimeMillis();
-                    RobotPath.generatedPath = new RobotPath(MainScene.plannedPath);
+                    RobotPath.generatedPath = new RobotPath(editor);
                     System.out.println("Generation Finished! Total Time: " + ((double)(System.currentTimeMillis() - start)) / 1000 + " seconds");
                 }).start();
                 if(formatCombo.getValue().equals("CSV File")){
-                    FileManager.saveGeneratedPath(nameTxt.getText(), reversedCheck.isSelected());
+                    FileManager.saveGeneratedPath(nameTxt.getText(), reversedCheck.isSelected(), editor);
                 }else if(formatCombo.getValue().equals("Java Array") || formatCombo.getValue().equals("C++ Array")){
                     while(RobotPath.generatedPath == null){
                         try {
@@ -121,19 +121,19 @@ public class GenerateDialog extends JFXDialog {
                     String rightArray;
                     if(formatCombo.getValue().equals("Java Array")) {
                         if (reversedCheck.isSelected()) {
-                            leftArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Left", true);
-                            rightArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Right", true);
+                            leftArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Left", true, editor);
+                            rightArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Right", true, editor);
                         } else {
-                            leftArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Left", false);
-                            rightArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Right", false);
+                            leftArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Left", false, editor);
+                            rightArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Right", false, editor);
                         }
                     }else{
                         if (reversedCheck.isSelected()) {
-                            leftArray = RobotPath.generatedPath.right.formatCppArray(nameTxt.getText() + "Left", true);
-                            rightArray = RobotPath.generatedPath.left.formatCppArray(nameTxt.getText() + "Right", true);
+                            leftArray = RobotPath.generatedPath.right.formatCppArray(nameTxt.getText() + "Left", true, editor);
+                            rightArray = RobotPath.generatedPath.left.formatCppArray(nameTxt.getText() + "Right", true, editor);
                         } else {
-                            leftArray = RobotPath.generatedPath.left.formatCppArray(nameTxt.getText() + "Left", false);
-                            rightArray = RobotPath.generatedPath.right.formatCppArray(nameTxt.getText() + "Right", false);
+                            leftArray = RobotPath.generatedPath.left.formatCppArray(nameTxt.getText() + "Left", false, editor);
+                            rightArray = RobotPath.generatedPath.right.formatCppArray(nameTxt.getText() + "Right", false, editor);
                         }
                     }
 
@@ -149,7 +149,7 @@ public class GenerateDialog extends JFXDialog {
         dialogBottom.getChildren().add(dialogButton);
         dialogPane.setBottom(dialogBottom);
         dialogPane.setCenter(dialogCenter);
-        this.setDialogContainer(root);
+        this.setDialogContainer(editor);
         this.setContent(dialogPane);
         this.setTransitionType(JFXDialog.DialogTransition.CENTER);
     }

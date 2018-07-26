@@ -32,32 +32,32 @@ public class PathPlanner extends Application {
         mStage.show();
     }
 
-    public static File chooseOutputFolder(){
+    public static File chooseOutputFolder(PathPreferences pathPreferences){
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Destination Folder...");
-        if(!Preferences.lastGenerateDir.equals("none")) {
-            chooser.setInitialDirectory(new File(Preferences.lastGenerateDir));
+        if(!pathPreferences.lastGenerateDir.equals("none")) {
+            chooser.setInitialDirectory(new File(pathPreferences.lastGenerateDir));
         }
         return chooser.showDialog(mStage);
     }
 
-    public static File chooseSaveFile(){
+    public static File chooseSaveFile(PathPreferences pathPreferences){
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Save as...");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PATH files (*.path)", "*.path"));
-        chooser.setInitialFileName(Preferences.currentPathName);
-        if(!Preferences.lastPathDir.equals("none")) {
-            chooser.setInitialDirectory(new File(Preferences.lastPathDir));
+        chooser.setInitialFileName(pathPreferences.currentPathName);
+        if(!pathPreferences.lastPathDir.equals("none")) {
+            chooser.setInitialDirectory(new File(pathPreferences.lastPathDir));
         }
         return chooser.showSaveDialog(mStage);
     }
 
-    public static File chooseLoadFile(){
+    public static File chooseLoadFile(PathPreferences pathPreferences){
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Open path...");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PATH files (*.path)", "*.path"));
-        if(!Preferences.lastPathDir.equals("none")) {
-            chooser.setInitialDirectory(new File(Preferences.lastPathDir));
+        if(!pathPreferences.lastPathDir.equals("none")) {
+            chooser.setInitialDirectory(new File(pathPreferences.lastPathDir));
         }
         return chooser.showOpenDialog(mStage);
     }

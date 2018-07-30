@@ -5,7 +5,9 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -30,35 +32,50 @@ public class PathEditor extends StackPane {
     public PathPreferences pathPreferences;
 
     public PathEditor(String year){
-        this.field = new Image(MainScene.class.getResourceAsStream("res/field" + year + ".png"));
+        this.field = new Image(this.getClass().getResourceAsStream("res/field" + year + ".png"));
         this.pathPreferences = FileManager.loadRobotSettings(year);
 
         setupCanvas();
 
         BorderPane layout = new BorderPane();
 
-        HBox bottom = new HBox(663);
+        HBox bottom = new HBox(965);
         bottom.setPadding(new Insets(10));
 
-        HBox bottomLeft = new HBox(10);
+        HBox bottomLeft = new HBox(5);
         bottomLeft.setAlignment(Pos.BOTTOM_LEFT);
-        JFXButton saveButton = new JFXButton("Save Path");
+        JFXButton saveButton = new JFXButton();
+        saveButton.setTooltip(new Tooltip("Save Path"));
+        saveButton.getStyleClass().add("icon-button");
+        saveButton.setGraphic(new ImageView(new Image(this.getClass().getResourceAsStream("res/save.png"))));
         saveButton.setOnAction(action -> FileManager.savePath(this));
-        saveButton.getStyleClass().add("button-raised");
-        JFXButton loadButton = new JFXButton("Load Path");
+        JFXButton loadButton = new JFXButton();
+        loadButton.setTooltip(new Tooltip("Load Path"));
+        loadButton.getStyleClass().add("icon-button");
+        loadButton.setGraphic(new ImageView(new Image(this.getClass().getResourceAsStream("res/load.png"))));
         loadButton.setOnAction(action -> FileManager.loadPath(this));
-        loadButton.getStyleClass().add("button-raised");
         bottomLeft.getChildren().addAll(saveButton, loadButton);
 
-        HBox bottomRight = new HBox(10);
+        HBox bottomRight = new HBox(5);
         bottomRight.setAlignment(Pos.BOTTOM_RIGHT);
-        JFXButton settingsButton = new JFXButton("Robot Settings");
+        JFXButton settingsButton = new JFXButton();
+        settingsButton.setTooltip(new Tooltip("Robot Settings"));
+        settingsButton.getStyleClass().add("icon-button");
+        settingsButton.setGraphic(new ImageView(new Image(this.getClass().getResourceAsStream("res/settings.png"))));
         settingsButton.setOnAction(action -> new RobotSettingsDialog(this).show());
-        settingsButton.getStyleClass().add("button-raised");
-        JFXButton generateButton = new JFXButton("Generate Path");
+        JFXButton generateButton = new JFXButton();
+        generateButton.setTooltip(new Tooltip("Generate Path"));
         generateButton.setOnAction(action -> new GenerateDialog(this).show());
-        generateButton.getStyleClass().add("button-raised");
-        bottomRight.getChildren().addAll(settingsButton, generateButton);
+        generateButton.getStyleClass().add("icon-button");
+        generateButton.setGraphic(new ImageView(new Image(this.getClass().getResourceAsStream("res/generate.png"))));
+        JFXButton previewButton = new JFXButton();
+        previewButton.setTooltip(new Tooltip("Preview Path"));
+        previewButton.setOnAction(action -> {
+
+        });
+        previewButton.getStyleClass().add("icon-button");
+        previewButton.setGraphic(new ImageView(new Image(this.getClass().getResourceAsStream("res/preview.png"))));
+        bottomRight.getChildren().addAll(settingsButton, generateButton, previewButton);
 
         bottom.getChildren().addAll(bottomLeft, bottomRight);
         center.getChildren().add(bottom);

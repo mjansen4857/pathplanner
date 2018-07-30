@@ -8,6 +8,20 @@
     -statusRed: #f44335;
 }
 
+.tooltip{
+    -fx-font-size: 16px;
+    -fx-padding: 0.2em 0.6em;
+}
+
+.icon-button{
+    -fx-background-color: transparent;
+    -fx-padding: 0em 0em;
+}
+
+.icon-button .jfx-rippler{
+    -jfx-rippler-fill: #eeeeee;
+}
+
 .jfx-check-box{
     -jfx-checked-color: -accent;
 }

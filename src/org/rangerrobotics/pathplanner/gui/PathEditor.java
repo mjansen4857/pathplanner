@@ -1,8 +1,10 @@
 package org.rangerrobotics.pathplanner.gui;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.animation.AnimationTimer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Tooltip;
@@ -13,14 +15,15 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
 import org.rangerrobotics.pathplanner.PathPreferences;
-import org.rangerrobotics.pathplanner.generation.PlannedPath;
-import org.rangerrobotics.pathplanner.generation.Util;
-import org.rangerrobotics.pathplanner.generation.Vector2;
+import org.rangerrobotics.pathplanner.generation.*;
 import org.rangerrobotics.pathplanner.gui.dialog.GenerateDialog;
 import org.rangerrobotics.pathplanner.gui.dialog.PointConfigDialog;
 import org.rangerrobotics.pathplanner.gui.dialog.RobotSettingsDialog;
 import org.rangerrobotics.pathplanner.io.FileManager;
+
+import java.util.ArrayList;
 
 public class PathEditor extends StackPane {
     public PlannedPath plannedPath;
@@ -71,7 +74,36 @@ public class PathEditor extends StackPane {
         JFXButton previewButton = new JFXButton();
         previewButton.setTooltip(new Tooltip("Preview Path"));
         previewButton.setOnAction(action -> {
-
+            pathCanvas.getGraphicsContext2D().clearRect(0,  0, pathCanvas.getWidth(), pathCanvas.getHeight());
+            pathCanvas.getGraphicsContext2D().setStroke(Color.web("eeeeee"));
+            pathCanvas.getGraphicsContext2D().setLineWidth(3);
+            final RobotPath previewPath = new RobotPath(this);
+            final ArrayList<Segment> leftSegments = previewPath.left.segments;
+            final ArrayList<Segment> rightSegments = previewPath.right.segments;
+            new Thread(() -> {
+                int pointIndex = 1;
+                long startTime = System.currentTimeMillis();
+                while(true){
+                    double t = (System.currentTimeMillis() - startTime) / 1000.0;
+                    if(leftSegments.get(pointIndex).time <= t){
+                        double lastLeftX = (leftSegments.get(pointIndex - 1).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
+                        double lastLeftY = (leftSegments.get(pointIndex - 1).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
+                        double lastRightX = (rightSegments.get(pointIndex - 1).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
+                        double lastRightY = (rightSegments.get(pointIndex - 1).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
+                        double currentLeftX = (leftSegments.get(pointIndex - 1).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
+                        double currentLeftY = (leftSegments.get(pointIndex - 1).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
+                        double currentRightX = (rightSegments.get(pointIndex - 1).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
+                        double currentRightY = (rightSegments.get(pointIndex - 1).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
+                        pathCanvas.getGraphicsContext2D().strokeLine(lastLeftX, lastLeftY, currentLeftX, currentLeftY);
+                        pathCanvas.getGraphicsContext2D().strokeLine(lastRightX, lastRightY, currentRightX, currentRightY);
+                        pointIndex++;
+                    }
+                    if(pointIndex >= leftSegments.size() - 1){
+                        updatePathCanvas();
+                        break;
+                    }
+                }
+            }).start();
         });
         previewButton.getStyleClass().add("icon-button");
         previewButton.setGraphic(new ImageView(new Image(this.getClass().getResourceAsStream("res/preview.png"))));

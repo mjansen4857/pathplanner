@@ -18,8 +18,10 @@ public class RobotPath {
     private double maxJerk;
     private double wheelbaseWidth;
     private double timeStep;
+    public Vector2 firstPointPixels;
 
     public RobotPath(PathEditor editor){
+        this.firstPointPixels = editor.plannedPath.get(0);
         this.path = new Path(editor.plannedPath.join(0.00001), editor);
         this.maxVel = editor.pathPreferences.maxVel;
         this.maxAcc = editor.pathPreferences.maxAcc;
@@ -63,6 +65,9 @@ public class RobotPath {
             double bigR = r + wheelbaseWidth / 2;
             double vMaxWheel = (r / bigR) * maxVel;
             pathSegments.segments.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, maxVel));
+            System.out.println(Math.min(vMaxCurve, Math.min(vMaxWheel, maxVel)));
+            //TODO: fix this
+//            pathSegments.segments.get(i).vel = Math.min(vMaxWheel, maxVel);
         }
     }
 
@@ -211,7 +216,9 @@ public class RobotPath {
     private double radiusOfCurve(Segment s){
         double c = s.dydx * s.dydx;
         double b = Math.pow((c + 1), 1.5);
-        return b / Math.abs(s.d2ydx2);
+        double ret = b / Math.abs(s.d2ydx2);
+//        System.out.println("Radius: " + ret);
+        return ret;
     }
 
     private double segmentTime(int segNum){

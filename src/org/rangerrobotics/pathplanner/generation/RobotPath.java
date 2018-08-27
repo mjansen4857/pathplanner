@@ -2,6 +2,9 @@ package org.rangerrobotics.pathplanner.generation;
 
 import org.rangerrobotics.pathplanner.gui.PathEditor;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class RobotPath {
@@ -65,9 +68,6 @@ public class RobotPath {
             double bigR = r + wheelbaseWidth / 2;
             double vMaxWheel = (r / bigR) * maxVel;
             pathSegments.segments.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, maxVel));
-            System.out.println(Math.min(vMaxCurve, Math.min(vMaxWheel, maxVel)));
-            //TODO: fix this
-//            pathSegments.segments.get(i).vel = Math.min(vMaxWheel, maxVel);
         }
     }
 
@@ -82,11 +82,20 @@ public class RobotPath {
         }
         p.get(0).vel = 0;
         double time = 0;
+        File thingFile = new File(new File(System.getProperty("user.home") + "/.PathPlanner"), "thing.txt");
+        PrintWriter out = null;
+        try {
+            out = new PrintWriter((thingFile));
+        }catch (FileNotFoundException e){
+            e.printStackTrace();
+        }
         for(int i = 1; i < p.size(); i++){
             double v0 = p.get(i - 1).vel;
             double dx = p.get(i - 1).dx;
-            if(dx != 0){
+            if(dx >= 0.0000000001){
                 double vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * maxAcc * dx));
+                //TODO: fix turn around
+                out.println(vMax + " - " + dx);
                 double v = Math.min(vMax, p.get(i).vel);
                 if(Double.isNaN(v)){
                     v = p.get(i - 1).vel;

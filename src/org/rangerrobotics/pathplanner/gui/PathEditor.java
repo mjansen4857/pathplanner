@@ -104,6 +104,8 @@ public class PathEditor extends StackPane {
                     }
                 }
             }).start();
+            double totalTime = leftSegments.get(leftSegments.size() - 1).time;
+            MainScene.showSnackbarMessage("Driving Time: " + Math.round(totalTime*10)/10.0 + "s", "info", (int)(totalTime * 1000));
         });
         previewButton.getStyleClass().add("icon-button");
         previewButton.setGraphic(new ImageView(new Image(this.getClass().getResourceAsStream("res/preview.png"))));

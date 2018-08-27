@@ -70,4 +70,8 @@ public class MainScene {
     public static void showSnackbarMessage(String message, String type){
         snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, null, 3500, false, null));
     }
+
+    public static void showSnackbarMessage(String message, String type, int timeout){
+        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, null, timeout, false, null));
+    }
 }

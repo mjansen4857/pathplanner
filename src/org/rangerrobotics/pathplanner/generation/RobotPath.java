@@ -62,26 +62,6 @@ public class RobotPath {
 
     private void calculateMaxVelocity(){
         System.out.println("    Calculating Maximum Possible Velocity Along Curve...");
-        for(int i = 0; i < path.group.segments.size(); i++){
-            double r = radiusOfCurve(pathSegments.segments.get(i));
-            double vMaxCurve = Math.sqrt(maxAcc * r);
-            double bigR = r + wheelbaseWidth / 2;
-            double vMaxWheel = (r / bigR) * maxVel;
-            pathSegments.segments.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, maxVel));
-        }
-    }
-
-    private void calculateVelocity(){
-        System.out.println("    Calculating Velocities...");
-        ArrayList<Segment> p = pathSegments.segments;
-        //TODO: fix this
-        for(int i = 1; i < p.size(); i++){
-            if(p.get(i).dx == 0){
-                p.remove(i);
-            }
-        }
-        p.get(0).vel = 0;
-        double time = 0;
         File thingFile = new File(new File(System.getProperty("user.home") + "/.PathPlanner"), "thing.txt");
         PrintWriter out = null;
         try {
@@ -89,13 +69,31 @@ public class RobotPath {
         }catch (FileNotFoundException e){
             e.printStackTrace();
         }
+        for(int i = 0; i < path.group.segments.size(); i++){
+            double r = radiusOfCurve(pathSegments.segments.get(i));
+            if(Double.isInfinite(r) || Double.isNaN(r)){
+                pathSegments.segments.get(i).vel = maxVel;
+            }else {
+                double vMaxCurve = Math.sqrt(maxAcc * r);
+                double bigR = r + wheelbaseWidth / 2;
+                double vMaxWheel = (r / bigR) * maxVel;
+                out.println("r: " + r + " vMaxCurve: " + vMaxCurve + " bigR: " + bigR + " vMaxWheel: " + vMaxWheel);
+                pathSegments.segments.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, maxVel));
+            }
+        }
+    }
+
+    private void calculateVelocity(){
+        System.out.println("    Calculating Velocities...");
+        ArrayList<Segment> p = pathSegments.segments;
+        p.get(0).vel = 0;
+        double time = 0;
         for(int i = 1; i < p.size(); i++){
             double v0 = p.get(i - 1).vel;
             double dx = p.get(i - 1).dx;
             if(dx >= 0.0000000001){
                 double vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * maxAcc * dx));
                 //TODO: fix turn around
-                out.println(vMax + " - " + dx);
                 double v = Math.min(vMax, p.get(i).vel);
                 if(Double.isNaN(v)){
                     v = p.get(i - 1).vel;

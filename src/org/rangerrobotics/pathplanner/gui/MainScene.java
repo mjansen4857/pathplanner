@@ -17,8 +17,6 @@ public class MainScene {
     private static Tab tab18 = new Tab("2018 - Power Up");
     private static Tab tab19 = new Tab("2019 - Deep Space");
     private static JFXSnackbar snackbar;
-    public static boolean isCtrlPressed = false;
-    public static boolean isShiftPressed = false;
     private static GeneralPreferences generalPreferences;
 
     public static Scene getScene(){
@@ -50,21 +48,6 @@ public class MainScene {
 
         scene = new Scene(root, WIDTH, HEIGHT);
         scene.getStylesheets().add("org/rangerrobotics/pathplanner/gui/res/styles.css");
-
-        scene.setOnKeyPressed(event -> {
-            if(event.getCode() == KeyCode.CONTROL){
-                isCtrlPressed = true;
-            }else if(event.getCode() == KeyCode.SHIFT){
-                isShiftPressed = true;
-            }
-        });
-        scene.setOnKeyReleased(event -> {
-            if(event.getCode() == KeyCode.CONTROL){
-                isCtrlPressed = false;
-            }else if(event.getCode() == KeyCode.SHIFT){
-                isShiftPressed = false;
-            }
-        });
     }
 
     public static void showSnackbarMessage(String message, String type){

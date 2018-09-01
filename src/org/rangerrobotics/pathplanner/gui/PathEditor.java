@@ -131,8 +131,8 @@ public class PathEditor extends StackPane {
             }else if(event.getButton() == MouseButton.SECONDARY || event.getButton() == MouseButton.MIDDLE){
                 for(int i = 0; i < plannedPath.numPoints(); i++){
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
-                        if(i % 3 == 0 && plannedPath.numSplines() > 1) {
-                            if(MainScene.isCtrlPressed || event.getButton() == MouseButton.MIDDLE) {
+                        if(i % 3 == 0) {
+                            if((event.isControlDown() || event.getButton() == MouseButton.MIDDLE) && plannedPath.numSplines() > 1) {
                                 plannedPath.deleteSpline(i);
                                 updatePathCanvas();
                             }else{
@@ -143,7 +143,7 @@ public class PathEditor extends StackPane {
                         return;
                     }
                 }
-                if(!MainScene.isCtrlPressed && !MainScene.isShiftPressed && event.getButton() != MouseButton.MIDDLE){
+                if(!event.isControlDown() && !event.isShiftDown() && event.getButton() != MouseButton.MIDDLE){
                     plannedPath.addSpline(new Vector2(event.getX(), event.getY()));
                     updatePathCanvas();
                 }
@@ -175,7 +175,7 @@ public class PathEditor extends StackPane {
         center.setOnMouseDragged(event -> {
             if(pointDragIndex != -1){
                 if(event.getX() >= 0 && event.getY() >= 0 && event.getX() <= pathCanvas.getWidth() && event.getY() <= pathCanvas.getHeight()) {
-                    if(MainScene.isShiftPressed && pointDragIndex % 3 != 0){
+                    if(event.isShiftDown() && pointDragIndex % 3 != 0){
                         int controlIndex = pointDragIndex;
                         boolean nextIsAnchor = (controlIndex + 1) % 3 == 0;
                         int anchorIndex = (nextIsAnchor) ? controlIndex + 1 : controlIndex - 1;

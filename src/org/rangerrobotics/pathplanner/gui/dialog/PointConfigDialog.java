@@ -7,6 +7,7 @@ import com.jfoenix.validation.DoubleValidator;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -72,6 +73,7 @@ public class PointConfigDialog extends JFXDialog {
         dialogBottom.setPadding(new Insets(0, 3, 2, 0));
         dialogBottom.setAlignment(Pos.BOTTOM_RIGHT);
         JFXButton dialogButton = new JFXButton("ACCEPT");
+        dialogButton.setDefaultButton(true);
         dialogButton.getStyleClass().addAll("button-flat");
         dialogButton.setPadding(new Insets(10));
         final int anchorIndex = configIndex;

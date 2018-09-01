@@ -84,6 +84,7 @@ public class RobotSettingsDialog extends JFXDialog {
         JFXButton dialogButton = new JFXButton("ACCEPT");
         dialogButton.getStyleClass().addAll("button-flat");
         dialogButton.setPadding(new Insets(10));
+        dialogButton.setDefaultButton(true);
         dialogButton.setOnAction(action -> {
             if(maxVTxt.validate() && maxAccTxt.validate() && maxDccTxt.validate() && wheelbaseWidthTxt.validate() && timestepTxt.validate()){
                 editor.pathPreferences.maxVel = Double.parseDouble(maxVTxt.getText());

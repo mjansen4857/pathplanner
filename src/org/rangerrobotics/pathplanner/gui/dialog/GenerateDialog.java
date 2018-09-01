@@ -92,6 +92,7 @@ public class GenerateDialog extends JFXDialog {
         JFXButton dialogButton = new JFXButton("GENERATE");
         dialogButton.getStyleClass().addAll("button-flat");
         dialogButton.setPadding(new Insets(10));
+        dialogButton.setDefaultButton(true);
         dialogButton.setOnAction(action -> {
             RobotPath.generatedPath = null;
             editor.pathPreferences.outputValue1 = value1Combo.getValue();

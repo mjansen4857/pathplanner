@@ -62,22 +62,35 @@ public class RobotPath {
 
     private void calculateMaxVelocity(){
         System.out.println("    Calculating Maximum Possible Velocity Along Curve...");
-        File thingFile = new File(new File(System.getProperty("user.home") + "/.PathPlanner"), "thing.txt");
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter((thingFile));
-        }catch (FileNotFoundException e){
-            e.printStackTrace();
-        }
         for(int i = 0; i < path.group.segments.size(); i++){
-            double r = radiusOfCurve(pathSegments.segments.get(i));
+            Segment a;
+            Segment b;
+            Segment c;
+            if(i == 0){
+                a = pathSegments.segments.get(i);
+                b = pathSegments.segments.get(i + 1);
+                c = pathSegments.segments.get(i + 2);
+            }else if(i == path.group.segments.size() - 1){
+                a = pathSegments.segments.get(i - 2);
+                b = pathSegments.segments.get(i - 1);
+                c = pathSegments.segments.get(i);
+            }else{
+                a = pathSegments.segments.get(i - 1);
+                b = pathSegments.segments.get(i);
+                c = pathSegments.segments.get(i + 1);
+            }
+            double ab = Math.sqrt((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
+            double bc = Math.sqrt((c.x-b.x)*(c.x-b.x) + (b.y-c.y)*(b.y-c.y));
+            double ac = Math.sqrt((c.x-a.x)*(c.x-a.x) + (c.y-a.y)*(c.y-a.y));
+            double p = (ab+bc+ac)/2;
+            double area = Math.sqrt(p*(p-ab)*(p-bc)*(p-ac));
+            double r = (ab+bc+ac)/(4*area);
             if(Double.isInfinite(r) || Double.isNaN(r)){
                 pathSegments.segments.get(i).vel = maxVel;
             }else {
                 double vMaxCurve = Math.sqrt(maxAcc * r);
                 double bigR = r + wheelbaseWidth / 2;
                 double vMaxWheel = (r / bigR) * maxVel;
-                out.println("r: " + r + " vMaxCurve: " + vMaxCurve + " bigR: " + bigR + " vMaxWheel: " + vMaxWheel);
                 pathSegments.segments.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, maxVel));
             }
         }
@@ -93,7 +106,6 @@ public class RobotPath {
             double dx = p.get(i - 1).dx;
             if(dx >= 0.0000000001){
                 double vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * maxAcc * dx));
-                //TODO: fix turn around
                 double v = Math.min(vMax, p.get(i).vel);
                 if(Double.isNaN(v)){
                     v = p.get(i - 1).vel;
@@ -218,14 +230,6 @@ public class RobotPath {
                 r.dydx = s.dydx;
             }
         }
-    }
-
-    private double radiusOfCurve(Segment s){
-        double c = s.dydx * s.dydx;
-        double b = Math.pow((c + 1), 1.5);
-        double ret = b / Math.abs(s.d2ydx2);
-//        System.out.println("Radius: " + ret);
-        return ret;
     }
 
     private double segmentTime(int segNum){

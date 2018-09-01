@@ -122,28 +122,30 @@ public class PathEditor extends StackPane {
         center = new StackPane();
         pathCanvas = new Canvas(MainScene.WIDTH, MainScene.HEIGHT - 35);
         center.setOnMousePressed(event -> {
-            if(event.getButton() == MouseButton.SECONDARY){
-                for (int i = 0; i < plannedPath.numPoints(); i++) {
+            if(event.getButton() == MouseButton.PRIMARY){
+                for(int i = 0; i < plannedPath.numPoints(); i++){
+                    if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
+                        pointDragIndex = i;
+                    }
+                }
+            }else if(event.getButton() == MouseButton.SECONDARY || event.getButton() == MouseButton.MIDDLE){
+                for(int i = 0; i < plannedPath.numPoints(); i++){
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         if(i % 3 == 0 && plannedPath.numSplines() > 1) {
-                            plannedPath.deleteSpline(i);
-                            updatePathCanvas();
+                            if(MainScene.isCtrlPressed || event.getButton() == MouseButton.MIDDLE) {
+                                plannedPath.deleteSpline(i);
+                                updatePathCanvas();
+                            }else{
+                                PointConfigDialog dialog = new PointConfigDialog(this, i);
+                                dialog.show();
+                            }
                         }
                         return;
                     }
                 }
-                plannedPath.addSpline(new Vector2(event.getX(), event.getY()));
-                updatePathCanvas();
-            }else if(event.getButton() == MouseButton.PRIMARY || event.getButton() == MouseButton.MIDDLE) {
-                for (int i = 0; i < plannedPath.numPoints(); i++) {
-                    if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
-                        if((MainScene.isCtrlPressed || event.getButton() == MouseButton.MIDDLE) && i % 3 == 0){
-                            PointConfigDialog dialog = new PointConfigDialog(this, i);
-                            dialog.show();
-                        }else if(event.getButton() != MouseButton.MIDDLE){
-                            pointDragIndex = i;
-                        }
-                    }
+                if(!MainScene.isCtrlPressed && !MainScene.isShiftPressed && event.getButton() != MouseButton.MIDDLE){
+                    plannedPath.addSpline(new Vector2(event.getX(), event.getY()));
+                    updatePathCanvas();
                 }
             }
         });

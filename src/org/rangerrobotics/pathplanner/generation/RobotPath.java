@@ -35,7 +35,6 @@ public class RobotPath {
         System.out.println("Calculating Robot Data...");
         long start = System.currentTimeMillis();
         pathSegments = path.group;
-        calculateSecondDerivative();
         calculateMaxVelocity();
         calculateVelocity();
         splitGroupByTime();
@@ -43,21 +42,6 @@ public class RobotPath {
         splitLeftRight();
         System.out.println("DONE IN: " + (System.currentTimeMillis() - start) + " ms");
         generatedPath = this;
-    }
-
-    private void calculateSecondDerivative(){
-        System.out.println("    Finding Second Derivative of " + pathSegments.segments.size() + " Segments...");
-        for(int i = 0; i < pathSegments.segments.size(); i++){
-            if(i == 0){
-                pathSegments.segments.get(i).d2ydx2 = 0;
-            }else{
-                double d2 = pathSegments.segments.get(i).dydx;
-                double d1 = pathSegments.segments.get(i - 1).dydx;
-                double t2 = pathSegments.segments.get(i).x;
-                double t1 = pathSegments.segments.get(i - 1).x;
-                pathSegments.segments.get(i).d2ydx2 = ((d2 - d1) / (t2 - t1));
-            }
-        }
     }
 
     private void calculateMaxVelocity(){
@@ -130,10 +114,10 @@ public class RobotPath {
             time = (Double.isNaN(time)) ? 0 : time;
             p.get(i).time = time;
         }
-        //TODO: fix this
         for(int i = 1; i < p.size(); i++){
             double dt = p.get(i).time - p.get(i - 1).time;
             if(dt == 0 || Double.isInfinite(dt)){
+                System.out.println("============NOT USELESS=================");
                 p.remove(i);
             }
         }

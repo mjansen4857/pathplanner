@@ -102,7 +102,16 @@
 }
 
 .jfx-snackbar-content {
-    -fx-background-color: #424242;
+    -fx-background-color: #00000000;
+}
+
+.jfx-snackbar-action{
+    -fx-padding: 0.2em 0.4em;
+    -fx-font-size: 20px;
+    -jfx-button-type: FLAT;
+    -fx-background-color: -accent;
+    -fx-text-fill: #eeeeee;
+
 }
 
 .jfx-snackbar-content:info .jfx-snackbar-toast{

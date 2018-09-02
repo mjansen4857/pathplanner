@@ -1,12 +1,18 @@
 package org.rangerrobotics.pathplanner.gui;
 
 import com.jfoenix.controls.*;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.StackPane;
 import org.rangerrobotics.pathplanner.GeneralPreferences;
 import org.rangerrobotics.pathplanner.io.FileManager;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.net.URI;
+import java.net.URL;
 
 public class MainScene {
     public static final int WIDTH = 1200;
@@ -44,7 +50,6 @@ public class MainScene {
 
         root.getChildren().add(tabs);
         snackbar = new JFXSnackbar(root);
-        snackbar.setPrefWidth(WIDTH);
 
         scene = new Scene(root, WIDTH, HEIGHT);
         scene.getStylesheets().add("org/rangerrobotics/pathplanner/gui/res/styles.css");
@@ -56,5 +61,19 @@ public class MainScene {
 
     public static void showSnackbarMessage(String message, String type, int timeout){
         snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, type, null, timeout, false, null));
+    }
+
+    public static void showUpdateSnackbar(String message){
+        snackbar.enqueue(new JFXSnackbar.SnackbarEvent(message, "success", "Download", -1, true, event -> {
+            try{
+                URI githubLink =  new URL("https://github.com/mjansen4857/PathPlanner/releases").toURI();
+                Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
+                if(desktop != null && desktop.isSupported(Desktop.Action.BROWSE)){
+                    desktop.browse(githubLink);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }));
     }
 }

@@ -132,7 +132,7 @@ public class PathEditor extends StackPane {
                 for(int i = 0; i < plannedPath.numPoints(); i++){
                     if ((Math.pow(event.getX() - plannedPath.get(i).getX(), 2) + (Math.pow(event.getY() - plannedPath.get(i).getY(), 2))) <= Math.pow(8, 2)) {
                         if(i % 3 == 0) {
-                            if((event.isControlDown() || event.getButton() == MouseButton.MIDDLE) && plannedPath.numSplines() > 1) {
+                            if((event.isShortcutDown() || event.getButton() == MouseButton.MIDDLE) && plannedPath.numSplines() > 1) {
                                 plannedPath.deleteSpline(i);
                                 updatePathCanvas();
                             }else{
@@ -143,7 +143,7 @@ public class PathEditor extends StackPane {
                         return;
                     }
                 }
-                if(!event.isControlDown() && !event.isShiftDown() && event.getButton() != MouseButton.MIDDLE){
+                if(!event.isShortcutDown() && !event.isShiftDown() && event.getButton() != MouseButton.MIDDLE){
                     plannedPath.addSpline(new Vector2(event.getX(), event.getY()));
                     updatePathCanvas();
                 }

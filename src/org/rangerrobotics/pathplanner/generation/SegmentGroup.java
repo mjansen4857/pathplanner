@@ -19,7 +19,6 @@ public class SegmentGroup {
     }
 
     public String formatJavaArray(String arrayName, boolean reverse, PathEditor editor){
-        //TODO: Add configuration for tab sizes, bracket placement, keywords, etc
         if(editor.pathPreferences.outputValue2.equals("None") && editor.pathPreferences.outputValue3.equals("None")){
             String str = "public static double[] " + arrayName + " = new double[] {\n";
             for(int i = 0; i < segments.size(); i++){
@@ -38,7 +37,6 @@ public class SegmentGroup {
     }
 
     public String formatCppArray(String arrayName, boolean reverse, PathEditor editor){
-        //TODO: Add configuration for tab sizes, bracket placement, keywords, etc
         if(editor.pathPreferences.outputValue2.equals("None") && editor.pathPreferences.outputValue3.equals("None")){
             String str = "double " + arrayName + "[] = {\n";
             for(int i = 0; i < segments.size(); i++){
@@ -57,7 +55,6 @@ public class SegmentGroup {
     }
 
     public String formatPythonArray(String arrayName, boolean reverse, PathEditor editor){
-        //TODO: Add conventions config
         if(editor.pathPreferences.outputValue2.equals("None") && editor.pathPreferences.outputValue3.equals("None")){
             String str = arrayName + " = [";
             for(int i = 0; i < segments.size(); i++){

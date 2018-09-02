@@ -56,6 +56,23 @@ public class SegmentGroup {
         }
     }
 
+    public String formatPythonArray(String arrayName, boolean reverse, PathEditor editor){
+        //TODO: Add conventions config
+        if(editor.pathPreferences.outputValue2.equals("None") && editor.pathPreferences.outputValue3.equals("None")){
+            String str = arrayName + " = [";
+            for(int i = 0; i < segments.size(); i++){
+                str += formatSegment(i, reverse, editor) + ((i < segments.size() - 1) ? ",\n    " : "]");
+            }
+            return str;
+        }else{
+            String str = arrayName + " = [";
+            for(int i = 0; i < segments.size(); i++){
+                str += "[" + formatSegment(i, reverse,  editor) + ((i < segments.size() - 1) ? "],\n    " : "]]");
+            }
+            return str;
+        }
+    }
+
     public String formatSegment(int index, boolean reverse, PathEditor editor){
         String str = "";
         Segment s = segments.get(index);

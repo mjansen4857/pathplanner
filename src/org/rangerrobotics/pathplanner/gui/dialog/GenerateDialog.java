@@ -73,7 +73,7 @@ public class GenerateDialog extends JFXDialog {
         formatLabel.getStyleClass().add("input-label");
         JFXComboBox<String> formatCombo = new JFXComboBox<>();
         formatCombo.setValue(editor.pathPreferences.outputFormat);
-        formatCombo.getItems().addAll("CSV File", "Java Array", "C++ Array");
+        formatCombo.getItems().addAll("CSV File", "Java Array", "C++ Array", "Python Array");
         formatCombo.setPromptText("Select Format");
         formatBox.getChildren().addAll(formatLabel, formatCombo);
 
@@ -110,7 +110,7 @@ public class GenerateDialog extends JFXDialog {
                 }).start();
                 if(formatCombo.getValue().equals("CSV File")){
                     FileManager.saveGeneratedPath(nameTxt.getText(), reversedCheck.isSelected(), editor);
-                }else if(formatCombo.getValue().equals("Java Array") || formatCombo.getValue().equals("C++ Array")){
+                }else if(formatCombo.getValue().equals("Java Array") || formatCombo.getValue().equals("C++ Array") || formatCombo.getValue().equals("Python Array")){
                     while(RobotPath.generatedPath == null){
                         try {
                             Thread.sleep(10);
@@ -128,7 +128,7 @@ public class GenerateDialog extends JFXDialog {
                             leftArray = RobotPath.generatedPath.left.formatJavaArray(nameTxt.getText() + "Left", false, editor);
                             rightArray = RobotPath.generatedPath.right.formatJavaArray(nameTxt.getText() + "Right", false, editor);
                         }
-                    }else{
+                    }else if(formatCombo.getValue().equals("C++ Array")){
                         if (reversedCheck.isSelected()) {
                             leftArray = RobotPath.generatedPath.right.formatCppArray(nameTxt.getText() + "Left", true, editor);
                             rightArray = RobotPath.generatedPath.left.formatCppArray(nameTxt.getText() + "Right", true, editor);
@@ -136,9 +136,19 @@ public class GenerateDialog extends JFXDialog {
                             leftArray = RobotPath.generatedPath.left.formatCppArray(nameTxt.getText() + "Left", false, editor);
                             rightArray = RobotPath.generatedPath.right.formatCppArray(nameTxt.getText() + "Right", false, editor);
                         }
+                    }else{
+                        if(reversedCheck.isSelected()){
+                            leftArray = RobotPath.generatedPath.right.formatPythonArray(nameTxt.getText() + "_left", true, editor);
+                            rightArray = RobotPath.generatedPath.left.formatPythonArray(nameTxt.getText() + "_right", true, editor);
+                        }else{
+                            leftArray = RobotPath.generatedPath.left.formatPythonArray(nameTxt.getText() + "_left", false, editor);
+                            rightArray = RobotPath.generatedPath.right.formatPythonArray(nameTxt.getText() + "_right", false, editor);
+                        }
                     }
-
                     StringSelection selection = new StringSelection(leftArray + "\n\n    " + rightArray);
+                    if(formatCombo.getValue().equals("Python Array")){
+                        selection = new StringSelection(leftArray + "\n\n" + rightArray);
+                    }
                     Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                     clipboard.setContents(selection, selection);
                     MainScene.showSnackbarMessage("Arrays copied to clipboard!", "success");

@@ -46,29 +46,16 @@ public class RobotPath {
 
     private void calculateMaxVelocity(){
         System.out.println("    Calculating Maximum Possible Velocity Along Curve...");
-        for(int i = 0; i < path.group.segments.size(); i++){
-            Segment a;
-            Segment b;
-            Segment c;
+        for(int i = 0; i < pathSegments.segments.size(); i++){
+            double r;
             if(i == 0){
-                a = pathSegments.segments.get(i);
-                b = pathSegments.segments.get(i + 1);
-                c = pathSegments.segments.get(i + 2);
+                r = calculateCurveRadius(i, i + 1, i + 2);
             }else if(i == path.group.segments.size() - 1){
-                a = pathSegments.segments.get(i - 2);
-                b = pathSegments.segments.get(i - 1);
-                c = pathSegments.segments.get(i);
+                r = calculateCurveRadius(i - 2, i - 1, i);
             }else{
-                a = pathSegments.segments.get(i - 1);
-                b = pathSegments.segments.get(i);
-                c = pathSegments.segments.get(i + 1);
+                r = calculateCurveRadius(i - 1, i, i + 1);
             }
-            double ab = Math.sqrt((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
-            double bc = Math.sqrt((c.x-b.x)*(c.x-b.x) + (b.y-c.y)*(b.y-c.y));
-            double ac = Math.sqrt((c.x-a.x)*(c.x-a.x) + (c.y-a.y)*(c.y-a.y));
-            double p = (ab+bc+ac)/2;
-            double area = Math.sqrt(p*(p-ab)*(p-bc)*(p-ac));
-            double r = (ab+bc+ac)/(4*area);
+
             if(Double.isInfinite(r) || Double.isNaN(r)){
                 pathSegments.segments.get(i).vel = maxVel;
             }else {
@@ -78,6 +65,19 @@ public class RobotPath {
                 pathSegments.segments.get(i).vel = Math.min(vMaxCurve, Math.min(vMaxWheel, maxVel));
             }
         }
+    }
+
+    private double calculateCurveRadius(int i1, int i2, int i3){
+        Segment a = pathSegments.segments.get(i1);
+        Segment b = pathSegments.segments.get(i2);
+        Segment c = pathSegments.segments.get(i3);
+        double ab = Math.sqrt((b.x-a.x)*(b.x-a.x) + (b.y-a.y)*(b.y-a.y));
+        double bc = Math.sqrt((c.x-b.x)*(c.x-b.x) + (b.y-c.y)*(b.y-c.y));
+        double ac = Math.sqrt((c.x-a.x)*(c.x-a.x) + (c.y-a.y)*(c.y-a.y));
+        double p = (ab+bc+ac)/2;
+        double area = Math.sqrt(p*(p-ab)*(p-bc)*(p-ac));
+        double r = (ab+bc+ac)/(4*area);
+        return r;
     }
 
     private void calculateVelocity(){

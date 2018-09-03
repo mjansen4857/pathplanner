@@ -76,7 +76,7 @@ public class RobotPath {
         double ac = Math.sqrt((c.x-a.x)*(c.x-a.x) + (c.y-a.y)*(c.y-a.y));
         double p = (ab+bc+ac)/2;
         double area = Math.sqrt(p*(p-ab)*(p-bc)*(p-ac));
-        double r = (ab+bc+ac)/(4*area);
+        double r = (ab*bc*ac)/(4*area);
         return r;
     }
 

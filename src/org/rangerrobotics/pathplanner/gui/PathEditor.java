@@ -81,21 +81,32 @@ public class PathEditor extends StackPane {
             final ArrayList<Segment> leftSegments = previewPath.left.segments;
             final ArrayList<Segment> rightSegments = previewPath.right.segments;
             new Thread(() -> {
-                int pointIndex = 1;
+                int pointIndex = 0;
                 long startTime = System.currentTimeMillis();
                 while(true){
                     double t = (System.currentTimeMillis() - startTime) / 1000.0;
                     if(leftSegments.get(pointIndex).time <= t){
-                        double lastLeftX = (leftSegments.get(pointIndex - 1).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
-                        double lastLeftY = (leftSegments.get(pointIndex - 1).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
-                        double lastRightX = (rightSegments.get(pointIndex - 1).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
-                        double lastRightY = (rightSegments.get(pointIndex - 1).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
-                        double currentLeftX = (leftSegments.get(pointIndex - 1).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
-                        double currentLeftY = (leftSegments.get(pointIndex - 1).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
-                        double currentRightX = (rightSegments.get(pointIndex - 1).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
-                        double currentRightY = (rightSegments.get(pointIndex - 1).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
-                        pathCanvas.getGraphicsContext2D().strokeLine(lastLeftX, lastLeftY, currentLeftX, currentLeftY);
-                        pathCanvas.getGraphicsContext2D().strokeLine(lastRightX, lastRightY, currentRightX, currentRightY);
+                        double leftX = (leftSegments.get(pointIndex).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
+                        double leftY = (leftSegments.get(pointIndex).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
+                        double rightX = (rightSegments.get(pointIndex).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
+                        double rightY = (rightSegments.get(pointIndex).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
+                        double angle = Math.atan2(leftY - rightY, leftX - rightX);
+                        double halfLength = pathPreferences.robotLength/2;
+                        double backLeftX =  (leftX + halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
+                        double backLeftY =  (leftY - halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
+                        double frontLeftX = (leftX - halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
+                        double frontLeftY = (leftY + halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
+                        double backRightX =  (rightX + halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
+                        double backRightY =  (rightY - halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
+                        double frontRightX = (rightX - halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
+                        double frontRightY = (rightY + halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
+                        pathCanvas.getGraphicsContext2D().clearRect(0, 0, pathCanvas.getWidth(), pathCanvas.getHeight());
+                        pathCanvas.getGraphicsContext2D().strokeLine(leftX, leftY, backLeftX, backLeftY);
+                        pathCanvas.getGraphicsContext2D().strokeLine(leftX, leftY, frontLeftX, frontLeftY);
+                        pathCanvas.getGraphicsContext2D().strokeLine(rightX, rightY, backRightX, backRightY);
+                        pathCanvas.getGraphicsContext2D().strokeLine(rightX, rightY, frontRightX, frontRightY);
+                        pathCanvas.getGraphicsContext2D().strokeLine(backLeftX, backLeftY, backRightX, backRightY);
+                        pathCanvas.getGraphicsContext2D().strokeLine(frontLeftX, frontLeftY, frontRightX, frontRightY);
                         pointIndex++;
                     }
                     if(pointIndex >= leftSegments.size() - 1){

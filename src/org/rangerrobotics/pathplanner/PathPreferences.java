@@ -7,6 +7,7 @@ public class PathPreferences {
     public double maxDcc = 5;
     public double maxJerk = 100;
     public double wheelbaseWidth = 2;
+    public double robotLength = 3;
     public double timeStep = 0.01;
     public String outputValue1 = "Position";
     public String outputValue2 = "Velocity";

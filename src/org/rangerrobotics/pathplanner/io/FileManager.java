@@ -140,6 +140,7 @@ public class FileManager {
             out.println(editor.pathPreferences.maxAcc);
             out.println(editor.pathPreferences.maxDcc);
             out.println(editor.pathPreferences.wheelbaseWidth);
+            out.println(editor.pathPreferences.robotLength);
             out.println(editor.pathPreferences.timeStep);
             out.println(editor.pathPreferences.outputValue1);
             out.println(editor.pathPreferences.outputValue2);
@@ -162,6 +163,7 @@ public class FileManager {
                 p.maxAcc = Double.parseDouble(in.readLine());
                 p.maxDcc = Double.parseDouble(in.readLine());
                 p.wheelbaseWidth = Double.parseDouble(in.readLine());
+                p.robotLength =  Double.parseDouble(in.readLine());
                 p.timeStep = Double.parseDouble(in.readLine());
                 p.outputValue1 = in.readLine();
                 p.outputValue2 = in.readLine();

@@ -66,6 +66,16 @@ public class RobotSettingsDialog extends JFXDialog {
         wheelbaseWidthTxt.setAlignment(Pos.CENTER);
         wheelbaseWidth.getChildren().addAll(wheelbaseWidthLabel, wheelbaseWidthTxt);
 
+        HBox robotLength = new HBox(20);
+        robotLength.setAlignment(Pos.CENTER);
+        Label robotLengthLabel = new Label("Robot Length:");
+        robotLengthLabel.getStyleClass().add("input-label");
+        JFXTextField robotLengthTxt = new JFXTextField();
+        robotLengthTxt.setText("" + editor.pathPreferences.robotLength);
+        robotLengthTxt.setValidators(new DoubleValidator());
+        robotLengthTxt.setAlignment(Pos.CENTER);
+        robotLength.getChildren().addAll(robotLengthLabel, robotLengthTxt);
+
         HBox timestep = new HBox(20);
         timestep.setAlignment(Pos.CENTER);
         Label timestepLabel = new Label("Time Step:");
@@ -76,7 +86,7 @@ public class RobotSettingsDialog extends JFXDialog {
         timestepTxt.setAlignment(Pos.CENTER);
         timestep.getChildren().addAll(timestepLabel, timestepTxt);
 
-        dialogCenter.getChildren().addAll(dialogHeading, maxV, maxAcc, maxDcc, wheelbaseWidth, timestep);
+        dialogCenter.getChildren().addAll(dialogHeading, maxV, maxAcc, maxDcc, wheelbaseWidth, robotLength, timestep);
 
         HBox dialogBottom = new HBox();
         dialogBottom.setPadding(new Insets(0, 3, 2, 0));
@@ -91,6 +101,7 @@ public class RobotSettingsDialog extends JFXDialog {
                 editor.pathPreferences.maxAcc = Double.parseDouble(maxAccTxt.getText());
                 editor.pathPreferences.maxDcc = Double.parseDouble(maxDccTxt.getText());
                 editor.pathPreferences.wheelbaseWidth = Double.parseDouble(wheelbaseWidthTxt.getText());
+                editor.pathPreferences.robotLength = Double.parseDouble(robotLengthTxt.getText());
                 editor.pathPreferences.timeStep = Double.parseDouble(timestepTxt.getText());
                 FileManager.saveRobotSettings(editor);
                 editor.updatePathCanvas();

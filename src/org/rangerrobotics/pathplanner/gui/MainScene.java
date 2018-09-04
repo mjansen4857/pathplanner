@@ -1,16 +1,13 @@
 package org.rangerrobotics.pathplanner.gui;
 
 import com.jfoenix.controls.*;
-import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.StackPane;
 import org.rangerrobotics.pathplanner.GeneralPreferences;
 import org.rangerrobotics.pathplanner.io.FileManager;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.net.URI;
 import java.net.URL;
 

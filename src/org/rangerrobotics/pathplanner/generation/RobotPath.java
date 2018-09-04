@@ -2,9 +2,6 @@ package org.rangerrobotics.pathplanner.generation;
 
 import org.rangerrobotics.pathplanner.gui.PathEditor;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class RobotPath {

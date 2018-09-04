@@ -1,10 +1,8 @@
 package org.rangerrobotics.pathplanner.gui;
 
 import com.jfoenix.controls.JFXButton;
-import javafx.animation.AnimationTimer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Tooltip;
@@ -15,7 +13,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
 import org.rangerrobotics.pathplanner.PathPreferences;
 import org.rangerrobotics.pathplanner.generation.*;
 import org.rangerrobotics.pathplanner.gui.dialog.GenerateDialog;

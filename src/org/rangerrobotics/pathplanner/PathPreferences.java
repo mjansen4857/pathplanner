@@ -1,7 +1,6 @@
 package org.rangerrobotics.pathplanner;
 
 public class PathPreferences {
-    public String year = "";
     public double maxVel = 8;
     public double maxAcc = 5;
     public double maxDcc = 5;

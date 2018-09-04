@@ -1,6 +1,8 @@
 package org.rangerrobotics.pathplanner.io;
 
 import javafx.collections.ObservableList;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.rangerrobotics.pathplanner.GeneralPreferences;
 import org.rangerrobotics.pathplanner.PathPlanner;
 import org.rangerrobotics.pathplanner.PathPreferences;
@@ -12,14 +14,15 @@ import org.rangerrobotics.pathplanner.gui.PathEditor;
 import java.io.*;
 
 public class FileManager {
-    //TODO: convert to JSON
     private static File robotSettingsDir = new File(System.getProperty("user.home") + "/.PathPlanner");
 
     public static void saveGeneralSettings(GeneralPreferences generalPreferences){
         robotSettingsDir.mkdirs();
         File settingsFile = new File(robotSettingsDir, "general.txt");
+        JSONObject jo = new JSONObject();
+        jo.put("tabIndex", generalPreferences.tabIndex);
         try (PrintWriter out = new PrintWriter(settingsFile)){
-            out.print(generalPreferences.tabIndex);
+            out.print(jo.toJSONString());
         }catch (FileNotFoundException e){
             e.printStackTrace();
         }
@@ -29,9 +32,11 @@ public class FileManager {
         if(robotSettingsDir.exists()){
             try (BufferedReader in = new BufferedReader(new FileReader(new File(robotSettingsDir, "general.txt")))){
                 GeneralPreferences p = new GeneralPreferences();
-                p.tabIndex = Integer.parseInt(in.readLine());
+                JSONObject jo = (JSONObject) new JSONParser().parse(in.readLine());
+                //Java thinks that this number is a long, even though it is 1 digit. So, it must be cast to a long and then you can get the int value
+                p.tabIndex = ((Long) jo.get("tabIndex")).intValue();
                 return p;
-            }catch (IOException e){
+            }catch (Exception e){
                 e.printStackTrace();
             }
         }
@@ -133,51 +138,52 @@ public class FileManager {
 
     public static void saveRobotSettings(PathEditor editor){
         robotSettingsDir.mkdirs();
-        File settingsFile = new File(robotSettingsDir, "robot" + editor.pathPreferences.year + ".txt");
+        File settingsFile = new File(robotSettingsDir, "robot" + editor.year + ".txt");
+        PathPreferences p = editor.pathPreferences;
+        JSONObject jo = new JSONObject();
+        jo.put("maxVel", p.maxVel);
+        jo.put("maxAcc", p.maxAcc);
+        jo.put("maxDcc", p.maxDcc);
+        jo.put("wheelbaseWidth", p.wheelbaseWidth);
+        jo.put("robotLength", p.robotLength);
+        jo.put("timeStep", p.timeStep);
+        jo.put("outputValue1", p.outputValue1);
+        jo.put("outputValue2", p.outputValue2);
+        jo.put("outputValue3", p.outputValue3);
+        jo.put("outputFormat", p.outputFormat);
+        jo.put("lastGenerateDir", p.lastGenerateDir);
+        jo.put("lastPathDir", p.lastPathDir);
+
         try (PrintWriter out = new PrintWriter(settingsFile)){
-            out.println(editor.pathPreferences.year);
-            out.println(editor.pathPreferences.maxVel);
-            out.println(editor.pathPreferences.maxAcc);
-            out.println(editor.pathPreferences.maxDcc);
-            out.println(editor.pathPreferences.wheelbaseWidth);
-            out.println(editor.pathPreferences.robotLength);
-            out.println(editor.pathPreferences.timeStep);
-            out.println(editor.pathPreferences.outputValue1);
-            out.println(editor.pathPreferences.outputValue2);
-            out.println(editor.pathPreferences.outputValue3);
-            out.println(editor.pathPreferences.outputFormat);
-            out.println(editor.pathPreferences.lastGenerateDir);
-            out.print(editor.pathPreferences.lastPathDir);
+            out.print(jo.toJSONString());
         }catch (FileNotFoundException e){
             e.printStackTrace();
         }
     }
 
-    public static PathPreferences loadRobotSettings(String year){
+    public static PathPreferences loadRobotSettings(int year){
         if(robotSettingsDir.exists()){
             try (BufferedReader in = new BufferedReader(new FileReader(new File(robotSettingsDir, "robot" + year + ".txt")))){
                 PathPreferences p = new PathPreferences();
-                in.readLine();
-                p.year = year;
-                p.maxVel = Double.parseDouble(in.readLine());
-                p.maxAcc = Double.parseDouble(in.readLine());
-                p.maxDcc = Double.parseDouble(in.readLine());
-                p.wheelbaseWidth = Double.parseDouble(in.readLine());
-                p.robotLength =  Double.parseDouble(in.readLine());
-                p.timeStep = Double.parseDouble(in.readLine());
-                p.outputValue1 = in.readLine();
-                p.outputValue2 = in.readLine();
-                p.outputValue3 = in.readLine();
-                p.outputFormat = in.readLine();
-                p.lastGenerateDir = in.readLine();
-                p.lastPathDir = in.readLine();
+                JSONObject jo = (JSONObject) new JSONParser().parse(in.readLine()) ;
+                p.maxVel = (double) jo.get("maxVel");
+                p.maxAcc = (double) jo.get("maxAcc");
+                p.maxDcc = (double) jo.get("maxDcc");
+                p.wheelbaseWidth = (double) jo.get("wheelbaseWidth");
+                p.robotLength =  (double) jo.get("robotLength");
+                p.timeStep = (double) jo.get("timeStep");
+                p.outputValue1 = (String) jo.get("outputValue1");
+                p.outputValue2 = (String) jo.get("outputValue2");
+                p.outputValue3 = (String) jo.get("outputValue3");
+                p.outputFormat = (String) jo.get("outputFormat");
+                p.lastGenerateDir = (String) jo.get("lastGenerateDir");
+                p.lastPathDir = (String) jo.get("lastPathDir");
                 return p;
-            }catch (IOException e){
+            }catch (Exception e){
                 e.printStackTrace();
             }
         }
         PathPreferences p = new PathPreferences();
-        p.year = year;
         return p;
     }
 }

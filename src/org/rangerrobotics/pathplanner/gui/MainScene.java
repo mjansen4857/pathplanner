@@ -35,8 +35,8 @@ public class MainScene {
         root = new StackPane();
 
         tabs = new JFXTabPane();
-        tab18.setContent(new PathEditor("18"));
-        tab19.setContent(new PathEditor("19"));
+        tab18.setContent(new PathEditor(18));
+        tab19.setContent(new PathEditor(19));
         tabs.getTabs().addAll(tab18, tab19);
         tabs.getSelectionModel().selectedIndexProperty().addListener((ov, from, to) -> {
             int currentTab = to.intValue();

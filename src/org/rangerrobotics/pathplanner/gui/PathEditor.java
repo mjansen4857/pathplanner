@@ -30,8 +30,10 @@ public class PathEditor extends StackPane {
     private Image field;
     private Vector2 lastMousePos = new Vector2(0, 0);
     public PathPreferences pathPreferences;
+    public int year;
 
-    public PathEditor(String year){
+    public PathEditor(int year){
+        this.year = year;
         this.field = new Image(this.getClass().getResourceAsStream("res/field" + year + ".png"));
         this.pathPreferences = FileManager.loadRobotSettings(year);
 

@@ -9,12 +9,20 @@ public class PlannedPath {
     public static int xPixelOffset = 53;
     public static int yPixelOffset = 106;
 
-    public PlannedPath(Vector2 center){
+    public PlannedPath(int year){
         this.points = FXCollections.observableArrayList();
-        points.add(new Vector2(center.getX() - 100, center.getY() - 100));
-        points.add(new Vector2(center.getX() + 50, center.getY() - 100));
-        points.add(new Vector2(center.getX() - 50, center.getY() + 100));
-        points.add(new Vector2(center.getX() + 100, center.getY() + 100));
+        if(year == 18) {
+            points.add(new Vector2(1.5 * pixelsPerFoot + xPixelOffset, 13.6 * pixelsPerFoot + yPixelOffset));
+            points.add(new Vector2(7.5 * pixelsPerFoot + xPixelOffset, 13.6 * pixelsPerFoot + yPixelOffset));
+            points.add(new Vector2(5 * pixelsPerFoot + xPixelOffset, 9 * pixelsPerFoot + yPixelOffset));
+            points.add(new Vector2(10 * pixelsPerFoot + xPixelOffset, 9 * pixelsPerFoot + yPixelOffset));
+        }else if(year == 19){
+            //TODO: update on kickoff
+            points.add(new Vector2(1.5 * pixelsPerFoot + xPixelOffset, 13.6 * pixelsPerFoot + yPixelOffset));
+            points.add(new Vector2(7.5 * pixelsPerFoot + xPixelOffset, 13.6 * pixelsPerFoot + yPixelOffset));
+            points.add(new Vector2(5 * pixelsPerFoot + xPixelOffset, 9 * pixelsPerFoot + yPixelOffset));
+            points.add(new Vector2(10 * pixelsPerFoot + xPixelOffset, 9 * pixelsPerFoot + yPixelOffset));
+        }
     }
 
     public Vector2 get(int i){

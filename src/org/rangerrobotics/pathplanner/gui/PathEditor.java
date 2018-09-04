@@ -89,23 +89,8 @@ public class PathEditor extends StackPane {
                         double leftY = (leftSegments.get(pointIndex).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
                         double rightX = (rightSegments.get(pointIndex).x * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getX() + PlannedPath.xPixelOffset;
                         double rightY = (rightSegments.get(pointIndex).y * PlannedPath.pixelsPerFoot) + previewPath.firstPointPixels.getY() + PlannedPath.yPixelOffset;
-                        double angle = Math.atan2(leftY - rightY, leftX - rightX);
-                        double halfLength = pathPreferences.robotLength/2;
-                        double backLeftX =  (leftX + halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
-                        double backLeftY =  (leftY - halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
-                        double frontLeftX = (leftX - halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
-                        double frontLeftY = (leftY + halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
-                        double backRightX =  (rightX + halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
-                        double backRightY =  (rightY - halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
-                        double frontRightX = (rightX - halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
-                        double frontRightY = (rightY + halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
                         pathCanvas.getGraphicsContext2D().clearRect(0, 0, pathCanvas.getWidth(), pathCanvas.getHeight());
-                        pathCanvas.getGraphicsContext2D().strokeLine(leftX, leftY, backLeftX, backLeftY);
-                        pathCanvas.getGraphicsContext2D().strokeLine(leftX, leftY, frontLeftX, frontLeftY);
-                        pathCanvas.getGraphicsContext2D().strokeLine(rightX, rightY, backRightX, backRightY);
-                        pathCanvas.getGraphicsContext2D().strokeLine(rightX, rightY, frontRightX, frontRightY);
-                        pathCanvas.getGraphicsContext2D().strokeLine(backLeftX, backLeftY, backRightX, backRightY);
-                        pathCanvas.getGraphicsContext2D().strokeLine(frontLeftX, frontLeftY, frontRightX, frontRightY);
+                        drawRobotPerimeter(new Vector2(leftX, leftY), new Vector2(rightX, rightY));
                         pointIndex++;
                     }
                     if(pointIndex >= leftSegments.size() - 1){
@@ -126,6 +111,25 @@ public class PathEditor extends StackPane {
         layout.setCenter(center);
 
         this.getChildren().add(layout);
+    }
+
+    private void drawRobotPerimeter(Vector2 left, Vector2 right){
+        double angle = Math.atan2(left.getY() - right.getY(), left.getX() - right.getX());
+        double halfLength = pathPreferences.robotLength/2;
+        double backLeftX =  (left.getX() + halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
+        double backLeftY =  (left.getY() - halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
+        double frontLeftX = (left.getX() - halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
+        double frontLeftY = (left.getY() + halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
+        double backRightX =  (right.getX() + halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
+        double backRightY =  (right.getY() - halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
+        double frontRightX = (right.getX() - halfLength*PlannedPath.pixelsPerFoot*Math.sin(angle));
+        double frontRightY = (right.getY() + halfLength*PlannedPath.pixelsPerFoot*Math.cos(angle));
+        pathCanvas.getGraphicsContext2D().strokeLine(left.getX(), left.getY(), backLeftX, backLeftY);
+        pathCanvas.getGraphicsContext2D().strokeLine(left.getX(), left.getY(), frontLeftX, frontLeftY);
+        pathCanvas.getGraphicsContext2D().strokeLine(right.getX(), right.getY(), backRightX, backRightY);
+        pathCanvas.getGraphicsContext2D().strokeLine(right.getX(), right.getY(), frontRightX, frontRightY);
+        pathCanvas.getGraphicsContext2D().strokeLine(backLeftX, backLeftY, backRightX, backRightY);
+        pathCanvas.getGraphicsContext2D().strokeLine(frontLeftX, frontLeftY, frontRightX, frontRightY);
     }
 
     private void setupCanvas(){
@@ -203,7 +207,7 @@ public class PathEditor extends StackPane {
                 }
             }
         });
-        plannedPath = new PlannedPath(new Vector2(pathCanvas.getWidth()/2, pathCanvas.getHeight()/2));
+        plannedPath = new PlannedPath(year);
         updatePathCanvas();
         Canvas fieldCanvas = new Canvas(MainScene.WIDTH, MainScene.HEIGHT - 35);
         fieldCanvas.getGraphicsContext2D().drawImage(field, 0, 80);
@@ -219,10 +223,10 @@ public class PathEditor extends StackPane {
                 Vector2 p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
                 Vector2 p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
                 double angle = Math.atan2(p1.getY() - p0.getY(), p1.getX() - p0.getX());
-                Vector2 p0L = new Vector2(p0.getX() + (pathPreferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() - (pathPreferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-                Vector2 p0R = new Vector2(p0.getX() - (pathPreferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() + (pathPreferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-                Vector2 p1L = new Vector2(p1.getX() + (pathPreferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() - (pathPreferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
-                Vector2 p1R = new Vector2(p1.getX() - (pathPreferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() + (pathPreferences.wheelbaseWidth /2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p0L = new Vector2(p0.getX() + (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() - (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p0R = new Vector2(p0.getX() - (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p0.getY() + (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p1L = new Vector2(p1.getX() + (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() - (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 p1R = new Vector2(p1.getX() - (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.sin(angle)), p1.getY() + (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
 
                 g.strokeLine(p0L.getX(), p0L.getY(), p1L.getX(), p1L.getY());
                 g.strokeLine(p0R.getX(), p0R.getY(), p1R.getX(), p1R.getY());
@@ -238,17 +242,29 @@ public class PathEditor extends StackPane {
         }
 
         for(int i = 0; i < plannedPath.numPoints(); i++){
-            g.setStroke(Color.BLACK);
-            g.setLineWidth(4);
-            if(i == highlightedPoint){
-                g.setFill(Color.web("ffeb3b"));
-            }else if(i == 0){
+            g.setLineWidth(3);
+            if(i == 0){
+                double angle = Math.atan2(plannedPath.get(i + 1).getY() - plannedPath.get(i).getY(), plannedPath.get(i + 1).getX() - plannedPath.get(i).getX());
+                Vector2 l = new Vector2(plannedPath.get(i).getX() + (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.sin(angle)),  plannedPath.get(i).getY() - (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 r = new Vector2(plannedPath.get(i).getX() - (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.sin(angle)),  plannedPath.get(i).getY() + (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
                 g.setFill(Color.web("388e3c"));
+                g.setStroke(Color.web("388e3c"));
+                drawRobotPerimeter(l, r);
             }else if(i == plannedPath.numPoints() - 1){
+                double angle = Math.atan2(plannedPath.get(i - 1).getY() - plannedPath.get(i).getY(), plannedPath.get(i - 1).getX() - plannedPath.get(i).getX());
+                Vector2 l = new Vector2(plannedPath.get(i).getX() + (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.sin(angle)),  plannedPath.get(i).getY() - (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
+                Vector2 r = new Vector2(plannedPath.get(i).getX() - (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.sin(angle)),  plannedPath.get(i).getY() + (pathPreferences.wheelbaseWidth/2*PlannedPath.pixelsPerFoot*Math.cos(angle)));
                 g.setFill(Color.web("d32f2f"));
+                g.setStroke(Color.web("d32f2f"));
+                drawRobotPerimeter(l, r);
             }else{
                 g.setFill(Color.web("eeeeee"));
             }
+            if(i == highlightedPoint){
+                g.setFill(Color.web("ffeb3b"));
+            }
+            g.setStroke(Color.BLACK);
+            g.setLineWidth(4);
             Vector2 p = plannedPath.get(i);
             g.strokeOval(p.getX() - 6, p.getY() - 6, 12, 12);
             g.fillOval(p.getX() - 6, p.getY() - 6, 12, 12);

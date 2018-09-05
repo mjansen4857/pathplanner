@@ -5,6 +5,7 @@
       <element id="module-output" name="PathPlanner" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jfoenix-8.0.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/GitHubAPI.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/json-simple-1.1.1.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

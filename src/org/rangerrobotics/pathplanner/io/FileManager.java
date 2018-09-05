@@ -30,7 +30,7 @@ public class FileManager {
 
     public static GeneralPreferences loadGeneralSettings(){
         if(robotSettingsDir.exists()){
-            try (BufferedReader in = new BufferedReader(new FileReader(new File(robotSettingsDir, "general.txt")))){
+            try (BufferedReader in = new BufferedReader(new FileReader(new File(robotSettingsDir, "general.json")))){
                 GeneralPreferences p = new GeneralPreferences();
                 JSONObject jo = (JSONObject) new JSONParser().parse(in.readLine());
                 //Java thinks that this number is a long, even though it is 1 digit. So, it must be cast to a long and then you can get the int value
@@ -138,7 +138,7 @@ public class FileManager {
 
     public static void saveRobotSettings(PathEditor editor){
         robotSettingsDir.mkdirs();
-        File settingsFile = new File(robotSettingsDir, "robot" + editor.year + ".txt");
+        File settingsFile = new File(robotSettingsDir, "robot" + editor.year + ".json");
         PathPreferences p = editor.pathPreferences;
         JSONObject jo = new JSONObject();
         jo.put("maxVel", p.maxVel);
@@ -163,7 +163,7 @@ public class FileManager {
 
     public static PathPreferences loadRobotSettings(int year){
         if(robotSettingsDir.exists()){
-            try (BufferedReader in = new BufferedReader(new FileReader(new File(robotSettingsDir, "robot" + year + ".txt")))){
+            try (BufferedReader in = new BufferedReader(new FileReader(new File(robotSettingsDir, "robot" + year + ".json")))){
                 PathPreferences p = new PathPreferences();
                 JSONObject jo = (JSONObject) new JSONParser().parse(in.readLine()) ;
                 p.maxVel = (double) jo.get("maxVel");

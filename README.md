@@ -1,6 +1,7 @@
 # PathPlanner
 ![Path Editor](https://i.imgur.com/ELUBEW3.png)
-Path Planner is a motion profile generator for FRC robots created by team 3015. Every path allows for manual tuning of robot position and curve radius at every point. Path Planner can handle more complex paths than other generators because it will slow down the robot as it heads into a turn instead of going through it as fast as possible. Path Planner has a tab-based layout in which every tab has it's own path editor for different FRC games. Each tab can support different robot settings so you can generate paths for different games just by switching tabs. Inspiration came from [Vannaka's Generator](https://github.com/vannaka/Motion_Profile_Generator). We used it during the 2018 season but struggled to create complex paths that the robot could follow accurately due to the high speed turns. The generation code was taken from an older, unfinished generator and fixed/modified. I can't find it on GitHub anymore :( The program should work on Windows, Mac OS, and Linux.
+## What makes PathPlanner different?
+Path Planner is a motion profile generator for FRC robots created by team 3015. Every path allows for manual tuning of the robot position and the curve radius at every point. It allows you to create the perfect path for your robot quicker and easier than other generators. Path Planner can handle more complex paths than other generators because it will slow down the robot as it heads into a turn instead of going through it as fast as possible. Path Planner has a tab-based layout in which every tab has it's own path editor for different FRC games, sou you can easily edit paths for previous robots if needed. Each tab can support different robot settings so you can generate paths for different games just by switching tabs. Inspiration came from [Vannaka's Generator](https://github.com/vannaka/Motion_Profile_Generator). We used it during the 2018 season but struggled to create complex paths that the robot could follow accurately due to the high speed turns. The generation code was taken from an older, unfinished generator and fixed/modified. I can't find it on GitHub anymore :( The program should work on Windows, Mac OS, and Linux.
 
 ## Working With Paths
 ![Point Configuration](https://i.imgur.com/dxrpN8w.png)
@@ -14,7 +15,8 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * **Wheelbase Width:** The width of the robot's drive train in ft, used for splitting the left and right paths.
 * **Robot Length:** The length of the robot. This is used to draw the robot in the path preview and at the start/end points of the path
 * **Time Step:** The amount of time between each point in a profile in seconds
-* Settings default to last used values for the current game
+
+**Settings default to last used values for the current game**
 
 ## Output Configuration Variables
 ![Output Config Vars](https://i.imgur.com/HrsIVQA.png)
@@ -22,4 +24,5 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * **Value 1, 2, and 3:** The output values for the path in order. Value choices are: position, velocity, acceleration, time, and none
 * **Output Format:** The format that the path is output to. Options are CSV file, Java array, or C++ array. CSV files are saved to a chosen location and arrays are copied to the clipboard
 * **Reversed:** Should the robot drive backwards
-* Settings default to last used values for the current game
+
+**Settings default to last used values for the current game**

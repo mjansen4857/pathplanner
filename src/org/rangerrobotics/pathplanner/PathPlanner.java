@@ -14,7 +14,7 @@ import java.io.IOException;
 
 public class PathPlanner extends Application {
     private static Stage mStage;
-    public static final String VERSION =  "v0.11";
+    public static final String VERSION =  "v0.11.1";
 
     public static void main(String[] args){
         launch(args);

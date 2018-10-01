@@ -18,7 +18,7 @@ public class FileManager {
 
     public static void saveGeneralSettings(GeneralPreferences generalPreferences){
         robotSettingsDir.mkdirs();
-        File settingsFile = new File(robotSettingsDir, "general.txt");
+        File settingsFile = new File(robotSettingsDir, "general.json");
         JSONObject jo = new JSONObject();
         jo.put("tabIndex", generalPreferences.tabIndex);
         try (PrintWriter out = new PrintWriter(settingsFile)){

@@ -5,6 +5,7 @@ import javafx.scene.image.Image;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.rangerrobotics.pathplanner.gui.MainScene;
@@ -40,11 +41,29 @@ public class PathPlanner extends Application {
                 GitHub github = GitHub.connectAnonymously();
                 GHRepository repo = github.getRepository("mjansen4857/PathPlanner");
                 String lastReleaseVersion = repo.getLatestRelease().getTagName().substring(1);
+                int num = StringUtils.countMatches(lastReleaseVersion,  '.');
                 int major = Integer.parseInt(lastReleaseVersion.substring(0, lastReleaseVersion.indexOf(".")));
-                int minor = Integer.parseInt(lastReleaseVersion.substring(lastReleaseVersion.indexOf(".") + 1));
+                int minor;
+                int patch;
+                if(num == 2){
+                    minor = Integer.parseInt(lastReleaseVersion.substring(lastReleaseVersion.indexOf(".") + 1, lastReleaseVersion.lastIndexOf(".")));
+                    patch = Integer.parseInt(lastReleaseVersion.substring(lastReleaseVersion.lastIndexOf(".") + 1));
+                }else{
+                    minor = Integer.parseInt(lastReleaseVersion.substring(lastReleaseVersion.indexOf(".") + 1));
+                    patch = 0;
+                }
+                int thisNum = StringUtils.countMatches(VERSION, '.');
                 int thisMajor = Integer.parseInt(VERSION.substring(1, VERSION.indexOf(".")));
-                int thisMinor = Integer.parseInt(VERSION.substring(VERSION.indexOf(".") + 1));
-                if(major > thisMajor || (major == thisMajor && minor > thisMinor)){
+                int thisMinor;
+                int thisPatch;
+                if(thisNum == 2){
+                    thisMinor = Integer.parseInt(VERSION.substring(VERSION.indexOf(".") + 1, VERSION.lastIndexOf(".")));
+                    thisPatch = Integer.parseInt(VERSION.substring(VERSION.lastIndexOf(".") + 1));
+                }else{
+                    thisMinor = Integer.parseInt(VERSION.substring(VERSION.indexOf(".") + 1));
+                    thisPatch = 0;
+                }
+                if(major > thisMajor || minor > thisMinor || patch > thisPatch){
                     MainScene.showUpdateSnackbar("PathPlanner v" + lastReleaseVersion + " is now available!");
                 }
             }catch(IOException e){

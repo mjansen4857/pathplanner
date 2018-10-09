@@ -14,7 +14,7 @@ public class RobotPath {
     private double maxVel;
     private double maxAcc;
     private double maxDcc;
-    //TODO: add jerk calculations
+    //TODO: add jerk calculations. At least output a jerk value
     private double maxJerk;
     private double wheelbaseWidth;
     private double timeStep;

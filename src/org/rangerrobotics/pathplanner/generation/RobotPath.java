@@ -14,7 +14,6 @@ public class RobotPath {
     private double maxVel;
     private double maxAcc;
     private double maxDcc;
-    //TODO: add jerk calculations
     private double maxJerk;
     private double wheelbaseWidth;
     private double timeStep;
@@ -114,6 +113,7 @@ public class RobotPath {
         for(int i = 1; i < p.size(); i++){
             double dt = p.get(i).time - p.get(i - 1).time;
             if(dt == 0 || Double.isInfinite(dt)){
+                System.err.println("BEEP: " + p.get(i).time + ", " + i);
                 p.remove(i);
             }
         }
@@ -126,6 +126,15 @@ public class RobotPath {
                 p.get(i).acc = dv / dt;
             }
         }
+
+//        for(int i = 1; i < p.size(); i++){
+//            double dt = p.get(i).time - p.get(i - 1).time;
+//            double a = p.get(i - 1).acc + (maxJerk*dt);
+//            double v = p.get(i - 1).vel + (p.get(i - 1).acc*dt) + (0.5 * maxJerk * (dt*dt));
+//            p.get(i).acc = a;
+//            p.get(i).vel = v;
+//            p.get(i).jerk = maxJerk;
+//        }
     }
 
     private void splitGroupByTime(){

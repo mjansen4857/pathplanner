@@ -14,7 +14,6 @@ public class RobotPath {
     private double maxVel;
     private double maxAcc;
     private double maxDcc;
-    private double maxJerk;
     private double wheelbaseWidth;
     private double timeStep;
     public Vector2 firstPointPixels;
@@ -25,7 +24,6 @@ public class RobotPath {
         this.maxVel = editor.pathPreferences.maxVel;
         this.maxAcc = editor.pathPreferences.maxAcc;
         this.maxDcc = editor.pathPreferences.maxDcc;
-        this.maxJerk = editor.pathPreferences.maxJerk;
         this.wheelbaseWidth = editor.pathPreferences.wheelbaseWidth;
         this.timeStep = editor.pathPreferences.timeStep;
         System.out.println("Calculating Robot Data...");
@@ -126,15 +124,6 @@ public class RobotPath {
                 p.get(i).acc = dv / dt;
             }
         }
-
-//        for(int i = 1; i < p.size(); i++){
-//            double dt = p.get(i).time - p.get(i - 1).time;
-//            double a = p.get(i - 1).acc + (maxJerk*dt);
-//            double v = p.get(i - 1).vel + (p.get(i - 1).acc*dt) + (0.5 * maxJerk * (dt*dt));
-//            p.get(i).acc = a;
-//            p.get(i).vel = v;
-//            p.get(i).jerk = maxJerk;
-//        }
     }
 
     private void splitGroupByTime(){
@@ -169,9 +158,10 @@ public class RobotPath {
         for(int i = 0; i < timeSegments.segments.size(); i++){
             if(i != 0){
                 Segment now = timeSegments.segments.get(i);
-                Segment past = timeSegments.segments.get(i - 1);
-                now.vel = (now.pos - past.pos) / (now.time - past.time);
-                now.acc = (now.vel - past.vel) / (now.time - past.time);
+                Segment last = timeSegments.segments.get(i - 1);
+                double dt = now.time - last.time;
+                now.vel = (now.pos - last.pos) / dt;
+                now.acc = (now.vel - last.vel) / dt;
             }
         }
     }

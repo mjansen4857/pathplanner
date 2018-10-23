@@ -1,7 +1,7 @@
 package org.rangerrobotics.pathplanner.generation;
 
 public class Segment {
-    public double x, heading, y, pos, vel, acc, dydx, jerk, dt, time, dx;
+    public double x, heading, y, pos, vel, acc, dydx, dt, time, dx;
 
     public Segment(){
         this.x = 0;
@@ -11,7 +11,6 @@ public class Segment {
         this.vel = 0;
         this.acc = 0;
         this.dydx = 0;
-        this.jerk = 0;
         this.dt = 0;
         this.time = 0;
         this.dx = 0;

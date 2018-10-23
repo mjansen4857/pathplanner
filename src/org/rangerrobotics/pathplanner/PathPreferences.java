@@ -4,7 +4,6 @@ public class PathPreferences {
     public double maxVel = 8;
     public double maxAcc = 5;
     public double maxDcc = 5;
-    public double maxJerk = 100;
     public double wheelbaseWidth = 2;
     public double robotLength = 3;
     public double timeStep = 0.01;

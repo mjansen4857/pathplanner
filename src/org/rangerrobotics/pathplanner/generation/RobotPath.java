@@ -111,7 +111,6 @@ public class RobotPath {
         for(int i = 1; i < p.size(); i++){
             double dt = p.get(i).time - p.get(i - 1).time;
             if(dt == 0 || Double.isInfinite(dt)){
-                System.err.println("BEEP: " + p.get(i).time + ", " + i);
                 p.remove(i);
             }
         }

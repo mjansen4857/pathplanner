@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class PathPlanner extends Application {
     private static Stage mStage;
-    public static final String VERSION =  "v0.11.1";
+    public static final String VERSION =  "v0.11.2";
 
     public static void main(String[] args){
         launch(args);
@@ -76,7 +76,10 @@ public class PathPlanner extends Application {
         DirectoryChooser chooser = new DirectoryChooser();
         chooser.setTitle("Select Destination Folder...");
         if(!pathPreferences.lastGenerateDir.equals("none")) {
-            chooser.setInitialDirectory(new File(pathPreferences.lastGenerateDir));
+            File file = new File(pathPreferences.lastGenerateDir);
+            if(file.exists()) {
+                chooser.setInitialDirectory(file);
+            }
         }
         return chooser.showDialog(mStage);
     }
@@ -87,7 +90,10 @@ public class PathPlanner extends Application {
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PATH files (*.path)", "*.path"));
         chooser.setInitialFileName(pathPreferences.currentPathName);
         if(!pathPreferences.lastPathDir.equals("none")) {
-            chooser.setInitialDirectory(new File(pathPreferences.lastPathDir));
+            File file = new File(pathPreferences.lastPathDir);
+            if(file.exists()) {
+                chooser.setInitialDirectory(file);
+            }
         }
         return chooser.showSaveDialog(mStage);
     }
@@ -97,7 +103,10 @@ public class PathPlanner extends Application {
         chooser.setTitle("Open path...");
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PATH files (*.path)", "*.path"));
         if(!pathPreferences.lastPathDir.equals("none")) {
-            chooser.setInitialDirectory(new File(pathPreferences.lastPathDir));
+            File file = new File(pathPreferences.lastPathDir);
+            if(file.exists()) {
+                chooser.setInitialDirectory(file);
+            }
         }
         return chooser.showOpenDialog(mStage);
     }

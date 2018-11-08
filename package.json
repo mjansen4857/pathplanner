@@ -1,6 +1,6 @@
 {
   "name": "pathplanner",
-  "version": "1.0.0",
+  "version": "0.12.0",
   "description": "A simple yet powerful motion profile generator for FRC robots",
   "main": "main.js",
   "scripts": {

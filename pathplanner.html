@@ -1,0 +1,165 @@
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title>PathPlanner</title>
+	<link rel="stylesheet" href="materialize/css/materialize.min.css">
+	<script>
+		window.$ = window.jQuery = require('jquery');
+	</script>
+	<script src="materialize/js/materialize.min.js"></script>
+	<script src="js/util.js"></script>
+	<script src="js/preferences.js"></script>
+	<script src="js/planned_path.js"></script>
+	<script src="js/path_editor.js"></script>
+	<script src="js/pathplanner.js"></script>
+	<link rel="stylesheet" href="./pathplanner.css">
+</head>
+
+<body>
+	<nav class="indigo">
+		<div class="nav-wrapper">
+			<ul class="left" id="windowButtonsLeft">
+				<li><a id="windowSettings" class="modal-trigger tooltipped" href="#settings" data-position="right" data-tooltip="Settings"><i
+						 id="settingsIcon" class="material-icons">settings</i></a></li>
+			</ul>
+			<a class="brand-logo center">FRC PathPlanner</a>
+			<ul class="right" id="windowButtonsRight">
+				<li><a id="windowMin"><i id="minIcon" class="material-icons">minimize</i></a></li>
+				<li><a id="windowClose"><i id="closeIcon" class="material-icons">close</i></a></li>
+			</ul>
+		</div>
+	</nav>
+
+	<canvas id="canvas" width="1200" height="700"></canvas>
+
+	<div class="fixed-action-btn right" id="actions">
+		<a class="btn-floating btn-large indigo z-depth-2">
+			<i class="large material-icons">add</i>
+		</a>
+		<ul>
+			<li><a id="savePathBtn" class="btn-floating waves-effect waves-light tooltipped blue" data-position="left"
+				 data-tooltip="Save Path"><i class="material-icons">save</i></a></li>
+			<li><a id="openPathBtn" class="btn-floating waves-effect waves-light tooltipped blue" data-position="left"
+				 data-tooltip="Open Path"><i class="material-icons">folder_open</i></a></li>
+			<li><a id="generatePathBtn" class="btn-floating waves-effect waves-light tooltipped red darken-3" data-position="left"
+				 data-tooltip="Generate Path"><i class="material-icons">publish</i></a></li>
+			<li><a id="previewPathBtn" class="btn-floating waves-effect waves-light tooltipped red darken-3" data-position="left"
+				 data-tooltip="Preview Path"><i class="material-icons">play_arrow</i></a></li>
+		</ul>
+	</div>
+
+	<div id="settings" class="modal modal-fixed-footer">
+		<div class="modal-content">
+			<h4>Robot Settings</h4>
+			<div class="row">
+				<form class="col s12">
+					<div class="row">
+						<div class="col s6 input-field">
+							<input id="robotMaxV" type="number" required step="0.01">
+							<label for="robotMaxV">Max Velocity</label>
+						</div>
+						<div class="col s6 input-field">
+							<input id="robotMaxAcc" type="number" required step="0.01">
+							<label for="robotMaxAcc">Max Acceleration</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s6 input-field">
+							<input id="robotMu" type="number" required step="0.0001">
+							<label for="robotMu">Coefficient of Friction</label>
+						</div>
+						<div class="col s6 input-field">
+							<input id="robotTimeStep" type="number" required step="0.001">
+							<label for="robotTimeStep">Time Step</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s6 input-field">
+							<input id="robotWidth" type="number" required step="0.01">
+							<label for="robotWidth">Wheelbase Width</label>
+						</div>
+						<div class="col s6 input-field">
+							<input id="robotLength" type="number" required step="0.01">
+							<label for="robotLength">Robot Length</label>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<a id="settingsConfirm" class="waves-effect indigo-text btn-flat">Confirm</a>
+		</div>
+	</div>
+
+	<div id="pointConfig" class="modal modal-fixed-footer">
+		<div class="modal-content">
+			<h4>Point Configuration</h4>
+			<div class="row">
+				<form class="col s12">
+					<div class="row">
+						<div class="col s12 input-field">
+							<input id="pointX" type="number" required step="0.0001">
+							<label for="pointX">X Position</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s12 input-field">
+							<input id="pointY" type="number" required step="0.0001">
+							<label for="pointY">Y Position</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s12 input-field">
+							<input id="pointAngle" type="number" required step="0.0001">
+							<label for="pointAngle">Angle</label>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<a id="pointConfigConfirm" class="waves-effect indigo-text btn-flat">Confirm</a>
+		</div>
+	</div>
+
+	<div id="generateModal" class="modal modal-fixed-footer">
+		<div class="modal-content">
+			<h4>Generate Path</h4>
+			<div class="row">
+				<form class="col s12">
+					<div class="row">
+						<div class="col s12 input-field">
+							<input id="pathName" type="text" required>
+							<label for="pathName">Path Name</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s12 input-field">
+							<select id="outputFormat">
+								<option value="1" selected>CSV File</option>
+								<option value="2">Java Array</option>
+								<option value="3">C++ Array</option>
+								<option value="4">Python Array</option>
+							</select>
+							<label>Output Format</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s12">
+							<label>
+								<input id="reversed" class="filled-in" type="checkbox">
+								<span>Reversed</span>
+							</label>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<a id="generateModalConfirm" class="waves-effect indigo-text btn-flat">Generate</a>
+		</div>
+	</div>
+</body>
+
+</html>

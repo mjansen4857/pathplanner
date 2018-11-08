@@ -1,5 +1,2 @@
-/out
-/.idea/dictionaries
-/.idea/uiDesigner.xml
-/.idea/vcs.xml
-/.idea/workspace.xml
+/node_modules
+/dist

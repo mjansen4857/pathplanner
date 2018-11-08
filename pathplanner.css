@@ -1,0 +1,107 @@
+@font-face {
+	font-family: 'Material Icons';
+	font-style: normal;
+	font-weight: 400;
+	src: url(./fonts/MaterialIcons.woff2) format('woff2');
+}
+
+@font-face {
+	font-family: 'Roboto';
+	font-style: normal;
+	font-weight: 400;
+	src: url(./fonts/Roboto-Regular.ttf) format('truetype');
+}
+  
+.material-icons {
+	font-family: 'Material Icons';
+	font-weight: normal;
+	font-style: normal;
+	font-size: 24px;
+	line-height: 1;
+	letter-spacing: normal;
+	text-transform: none;
+	display: inline-block;
+	white-space: nowrap;
+	word-wrap: normal;
+	direction: ltr;
+	-webkit-font-feature-settings: 'liga';
+	font-feature-settings: 'liga';
+	-webkit-font-smoothing: antialiased;
+}
+
+body {
+	overflow-x: hidden;
+	background-color: #424242;
+	font-family: 'Roboto', sans-serif !important;
+	font-weight: bold !important;
+}
+
+nav .nav-wrapper ul li a{
+	height: 45px !important;
+}
+
+nav .nav-wrapper ul li a i{
+	height: 45px !important;
+}
+
+a:focus{
+	outline: none;
+}
+
+#minIcon{
+	position: relative;
+	top: -15px;
+}
+
+#closeIcon{
+	position: relative;
+	top: -9px;
+}
+
+#settingsIcon{
+	position: relative;
+	top: -9px;
+}
+
+.brand-logo{
+	top: -9px !important;
+	font-size: 24px !important;
+}
+
+nav {
+	height: 45px;
+	-webkit-app-region: drag;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	font-weight: normal !important;
+}
+
+#windowButtonsRight{
+	-webkit-app-region: no-drag;
+}
+
+#windowButtonsLeft{
+	-webkit-app-region: no-drag;
+}
+
+.modal {
+	width: 35% !important;
+	height: 60% !important;
+}
+
+.tab{
+	width: 50% !important;
+}
+
+.tabs{
+	overflow: hidden;
+}
+
+.modal-content{
+	overflow: hidden !important;
+}
+
+input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

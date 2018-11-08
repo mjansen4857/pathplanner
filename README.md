@@ -25,3 +25,18 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * **Reversed:** Should the robot drive backwards
 
 **Settings default to last used values**
+
+## Install on MacOS and Linux
+* Install [Node.js](https://nodejs.org)
+* Download and unzip this repository
+* Run the following in the root directory of this project:
+
+`npm install`
+
+`npm install -g electron-packager`
+
+MacOS: `electron-packager . pathplanner --overwrite --platform=darwin --arch=x64 --icon=res/img/icon.icns --out=dist`
+
+Linux: `electron-packager . pathplanner --overwrite --platform=linux --arch=x64 --icon=res/img/icon.png --out=dist`
+
+The built application will be located in the dist folder

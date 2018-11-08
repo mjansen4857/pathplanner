@@ -33,7 +33,6 @@ ipc.on('generate-path', function (event, data) {
 
 function generateAndSendSegments(points, preferences) {
 	ipc.send('generating');
-	log.info('hi');
 	var robotPath = new RobotPath(points, preferences);
 	ipc.send('preview-segments', {
 		left: robotPath.left.segments,
@@ -88,7 +87,6 @@ function generateAndSave(points, preferences, reverse) {
 	});
 	if (filename != undefined) {
 		filename = filename[0];
-		// filename = filename.replace(/\\/g, '/');
 		ipc.send('update-last-generate-dir', filename);
 		log.info(filename);
 
@@ -284,7 +282,6 @@ class RobotPath {
 				segNum++;
 			}
 		}
-		// this.pathSegments.segments = p;
 		log.info('        Divided into: ' + segNum + ' segments, with ' + numMessySeg + ' messy segments.');
 		log.info('        Stats:');
 		log.info('            Time: ' + this.timeSegments.segments[this.timeSegments.segments.length - 1].time + 's');

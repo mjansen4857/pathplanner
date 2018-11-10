@@ -29,7 +29,7 @@
        DisplayName="PathPlanner"
        Square150x150Logo="assets\PathPlanner.150x150.png"
        Square44x44Logo="assets\PathPlanner.44x44.png"
-       Description="A">
+       Description="A simple yet powerful motion profile generator for FRC robots">
       </uap:VisualElements>
     </Application>
   </Applications>

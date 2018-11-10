@@ -88,6 +88,7 @@ $(document).ready(function () {
 	document.getElementById('generateModalConfirm').addEventListener('click', (event) => {
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputFormat = document.getElementById('outputFormat').selectedIndex;
+		preferences.includeHeading = document.getElementById('includeHeading').checked;
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -104,6 +105,7 @@ $(document).ready(function () {
 		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
 		document.getElementById('pathName').value = preferences.currentPathName;
 		document.getElementById('outputFormat').selectedIndex = preferences.outputFormat;
+		document.getElementById('includeHeading').checked = preferences.includeHeading;
 
 		M.updateTextFields();
 		$('select').formSelect();

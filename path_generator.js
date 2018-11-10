@@ -46,27 +46,27 @@ function generateAndCopy(points, preferences, reverse) {
 	var out;
 	if (preferences.p_outputFormat == 1) {
 		if (reverse) {
-			out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse) + '\n\n    ' +
-				robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse);
+			out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n    ' +
+				robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
 		} else {
-			out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse) + '\n\n    ' +
-				robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse);
+			out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n    ' +
+				robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
 		}
 	} else if (preferences.p_outputFormat == 2) {
 		if (reverse) {
-			out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse) + '\n\n    ' +
-				robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse);
+			out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n    ' +
+				robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
 		} else {
-			out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse) + '\n\n    ' +
-				robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse);
+			out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n    ' +
+				robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
 		}
 	} else if (preferences.p_outputFormat == 3) {
 		if (reverse) {
-			out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse) + '\n\n' +
+			out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n' +
 				robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse);
 		} else {
-			out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse) + '\n\n' +
-				robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse);
+			out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n' +
+				robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
 		}
 	}
 	clipboard.writeText(out);
@@ -95,11 +95,11 @@ function generateAndSave(points, preferences, reverse) {
 		var outL = '';
 		var outR = '';
 		if (reverse) {
-			outL = robotPath.right.formatCSV(reverse);
-			outR = robotPath.left.formatCSV(reverse);
+			outL = robotPath.right.formatCSV(reverse, preferences.p_includeHeading);
+			outR = robotPath.left.formatCSV(reverse, preferences.p_includeHeading);
 		} else {
-			outL = robotPath.left.formatCSV(reverse);
-			outR = robotPath.right.formatCSV(reverse);
+			outL = robotPath.left.formatCSV(reverse, preferences.p_includeHeading);
+			outR = robotPath.right.formatCSV(reverse, preferences.p_includeHeading);
 		}
 
 		fs.writeFileSync(filename + '/' + preferences.currentPathName + '_left.csv', outL, 'utf8');
@@ -454,10 +454,10 @@ class SegmentGroup {
 		this.segments = [];
 	}
 
-	formatCSV(reverse) {
+	formatCSV(reverse, includeHeading) {
 		var str = '';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += this.formatSegment(i, reverse);
+			str += this.formatSegment(i, reverse, includeHeading);
 			if (i < this.segments.length - 1) {
 				str += '\n';
 			}
@@ -465,36 +465,36 @@ class SegmentGroup {
 		return str;
 	}
 
-	formatJavaArray(arrayName, reverse) {
+	formatJavaArray(arrayName, reverse, includeHeading) {
 		var str = 'public static double[][] ' + arrayName + ' = new double[][] {\n';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += '        {' + this.formatSegment(i, reverse) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+			str += '        {' + this.formatSegment(i, reverse, includeHeading) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
 		}
 		str += '    }';
 		return str;
 	}
 
-	formatCppArray(arrayName, reverse) {
+	formatCppArray(arrayName, reverse, includeHeading) {
 		var str = 'double ' + arrayName + '[][] = {\n';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += '        {' + this.formatSegment(i, reverse) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+			str += '        {' + this.formatSegment(i, reverse, includeHeading) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
 		}
 		str += '    }';
 		return str;
 	}
 
-	formatPythonArray(arrayName, reverse) {
+	formatPythonArray(arrayName, reverse, includeHeading) {
 		var str = arrayName + ' = [\n';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += '    [' + this.formatSegment(i, reverse) + ((i < this.segments.length - 1) ? '],\n' : ']]');
+			str += '    [' + this.formatSegment(i, reverse, includeHeading) + ((i < this.segments.length - 1) ? '],\n' : ']]');
 		}
 		return str;
 	}
 
-	formatSegment(index, reverse) {
+	formatSegment(index, reverse, includeHeading) {
 		var s = this.segments[index];
 		var n = (reverse) ? -1 : 1;
-		return (Math.round(s.pos * 10000) / 10000 * n) + ',' + (Math.round(s.vel * 10000) / 10000 * n) + ',' + (Math.round(s.acc * 10000) / 10000 * n);
+		return (Math.round(s.pos * 10000) / 10000 * n) + ',' + (Math.round(s.vel * 10000) / 10000 * n) + ',' + (Math.round(s.acc * 10000) / 10000 * n) + ((includeHeading) ? (',' + (Math.round(s.heading * 10000) / 10000)) : '');
 	}
 
 	add(seg) {

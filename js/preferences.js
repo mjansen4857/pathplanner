@@ -13,6 +13,7 @@ class Preferences{
 		this.p_outputFormat = store.get('outputFormat', 0);
 		this.p_lastGenerateDir = store.get('lastGenerateDir', 'none');
 		this.p_lastPathDir = store.get('lastPathDir', 'none');
+		this.p_includeHeading = store.get('includeHeading', false);
 		this.currentPathName = "path";
 	}
 
@@ -50,6 +51,10 @@ class Preferences{
 
 	get lastPathDir(){
 		return this.p_lastPathDir;
+	}
+
+	get includeHeading(){
+		return this.p_includeHeading;
 	}
 
 	set maxVel(value){
@@ -95,5 +100,10 @@ class Preferences{
 	set lastPathDir(value){
 		store.set('lastPathDir', value);
 		this.p_lastPathDir = value;
+	}
+
+	set includeHeading(value){
+		store.set('includeHeading', value);
+		this.p_includeHeading = value;
 	}
 }

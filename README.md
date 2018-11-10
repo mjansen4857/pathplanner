@@ -1,4 +1,9 @@
 # PathPlanner
+## Installation:
+* **Windows:** Install from the [Microsoft Store]() or download [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
+* **Linux:** Install from [Snapcraft](https://snapcraft.io/pathplanner) or download [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
+* **MacOS:** I'm not paying $99/year for an Apple Developer account so download [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
+
 ![Path Editor](https://i.imgur.com/uiFUST6.png)
 ## What makes PathPlanner different?
 PathPlanner is a motion profile generator for FRC robots created by team 3015. Every path allows for manual tuning of the robot position and the curve radius at every point. It allows you to create the perfect path for your robot quicker and easier than other generators. Path Planner can handle more complex paths than other generators because it will slow down the robot as it heads into a turn instead of going through it as fast as possible. Inspiration came from [Vannaka's Generator](https://github.com/vannaka/Motion_Profile_Generator) which uses [Jaci's PathFinder](https://github.com/JacisNonsense/Pathfinder). We used it during the 2018 season but struggled to create complex paths that the robot could follow accurately due to the high speed turns. The program should work on Windows, Mac OS, and Linux. A new update will be released whenever a major problem is fixed or if I've made changes and don't know what to add or fix anymore. ¯\\\_(ツ)\_/¯
@@ -26,17 +31,23 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 
 **Settings default to last used values**
 
-## Install on MacOS and Linux
+## How to build manually:
 * Install [Node.js](https://nodejs.org)
 * Download and unzip this repository
 * Run the following in the root directory of this project:
+  * `npm install`
 
-`npm install`
+  * `npm install -g electron-packager`
+  
+  * Windows: 
+  
+      `electron-packager . pathplanner --overwrite --platform=win32 --arch=x64 --icon=build/icon.ico --out=dist`
 
-`npm install -g electron-packager`
+  * MacOS: 
+  
+      `electron-packager . pathplanner --overwrite --platform=darwin --arch=x64 --icon=build/icon.icns --out=dist`
 
-MacOS: `electron-packager . pathplanner --overwrite --platform=darwin --arch=x64 --icon=res/img/icon.icns --out=dist`
-
-Linux: `electron-packager . pathplanner --overwrite --platform=linux --arch=x64 --icon=res/img/icon.png --out=dist`
-
-The built application will be located in the dist folder
+  * Linux: 
+  
+      `electron-packager . pathplanner --overwrite --platform=linux --arch=x64 --icon=build/icon.png --out=dist`
+* The built application will be located in the dist folder

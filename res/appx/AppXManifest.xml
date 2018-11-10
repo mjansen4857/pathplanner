@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+  <Identity Name="39956MichaelJansen.PathPlanner"
+    ProcessorArchitecture="x64"
+    Publisher="CN=2DF9861F-6D68-40A5-BCD2-A0BC837334E3"
+    Version="0.12.0.0" />
+  <Properties>
+    <DisplayName>PathPlanner</DisplayName>
+    <PublisherDisplayName>Michael Jansen</PublisherDisplayName>
+    <Description>A simple yet powerful motion profile generator for FRC robots</Description>
+    <Logo>assets\PathPlanner.50x50.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.14316.0" MaxVersionTested="10.0.14316.0" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+  <Applications>
+    <Application Id="PathPlanner" Executable="app\PathPlanner.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+       BackgroundColor="#e6e6e6"
+       DisplayName="PathPlanner"
+       Square150x150Logo="assets\PathPlanner.150x150.png"
+       Square44x44Logo="assets\PathPlanner.44x44.png"
+       Description="A">
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+</Package>

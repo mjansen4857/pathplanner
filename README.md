@@ -1,6 +1,6 @@
 # PathPlanner
 ## Installation:
-* **Windows:** Install from the [Microsoft Store]() or download [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
+* **Windows:** Install from the [Microsoft Store](https://www.microsoft.com/store/apps/9P7HKZQPJH8Q) or download [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
 * **Linux:** Install from [Snapcraft](https://snapcraft.io/pathplanner) or download [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
 * **MacOS:** I'm not paying $99/year for an Apple Developer account so download [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
 

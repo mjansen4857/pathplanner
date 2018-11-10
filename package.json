@@ -4,7 +4,8 @@
   "description": "A simple yet powerful motion profile generator for FRC robots",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build-snap": "build --linux snap"
   },
   "repository": {
     "type": "git",
@@ -17,7 +18,8 @@
   },
   "homepage": "https://github.com/mjansen4857/PathPlanner#readme",
   "devDependencies": {
-    "electron": "^3.0.6"
+    "electron": "^3.0.6",
+    "electron-builder": "^20.33.2"
   },
   "dependencies": {
     "electron-log": "^2.2.17",

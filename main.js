@@ -12,7 +12,24 @@ log.transports.file.maxSize = 10 * 1024 * 1024;
 log.transports.file.file = homeDir + '/.PathPlanner/log.txt';
 log.transports.console.format = '[{m}/{d}][{h}:{i}:{s}] [{level}] {text}';
 
+const ua = require('universal-analytics');
+const uuid = require('uuid');
+const {JSONStorage} = require('node-localstorage');
+const nodeStorage = new JSONStorage(app.getPath('userData'));
+const userId = nodeStorage.getItem('userId') || uuid();
+nodeStorage.setItem('userId', userId);
+const usr = ua('UA-130095148-1', userId);
+
 let win;
+
+function trackEvent(category, action, label, value){
+    usr.event(category, action, label, value).send();
+}
+global.trackEvent = trackEvent;
+
+function trackAppLaunch(){
+    usr.screenview({cd: 'PathPlanner', an: 'pathplanner', av:app.getVersion()}).send();
+}
 
 function createWindow(){
 	win = new BrowserWindow({width: 1200, height: 745, icon: 'build/icon.png', frame: false, resizable: false});
@@ -23,6 +40,8 @@ function createWindow(){
 	win.on('closed', () => {
 		win = null;
 	});
+
+	trackAppLaunch();
 }
 
 app.on('ready', function(){
@@ -52,6 +71,7 @@ autoUpdater.on('update-downloaded', (info) => {
 
 ipc.on('quit-and-install', (event, data) => {
 	autoUpdater.quitAndInstall();
+	trackEvent('User Interaction', 'Install Update')
 });
 
 ipc.on('generate', function(event, data){

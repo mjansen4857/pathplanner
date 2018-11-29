@@ -8,11 +8,13 @@ const {
 	clipboard
 } = require('electron');
 const {
-	dialog
+	dialog,
+	getGlobal
 } = require('electron').remote;
 const homeDir = require('os').homedir();
 const log = require('electron-log');
 const fs = require('fs');
+const trackEvent = getGlobal('trackEvent');
 
 ipc.on('generate-path', function (event, data) {
 	try {
@@ -24,6 +26,7 @@ ipc.on('generate-path', function (event, data) {
 			generateAndCopy(data.points, data.preferences, data.reverse);
 		}
 	} catch (err) {
+		trackEvent('Error', 'Generate Error');
 		log.error(err);
 	} finally {
 		var window = remote.getCurrentWindow();
@@ -41,6 +44,7 @@ function generateAndSendSegments(points, preferences) {
 }
 
 function generateAndCopy(points, preferences, reverse) {
+	trackEvent('Generation', 'Generate and Copy', undefined, parseInt(preferences.p_outputFormat));
 	ipc.send('generating');
 	var robotPath = new RobotPath(points, preferences);
 	var out;
@@ -74,6 +78,7 @@ function generateAndCopy(points, preferences, reverse) {
 }
 
 function generateAndSave(points, preferences, reverse) {
+	trackEvent('Generation', 'Generate and Save');
 	var filePath = preferences.p_lastGenerateDir;
 	if (filePath == 'none') {
 		filePath = homeDir;
@@ -109,7 +114,7 @@ function generateAndSave(points, preferences, reverse) {
 }
 
 function join(points, step) {
-	log.info('Joining splines... ');
+	log.info('    Joining splines... ');
 	var start = new Date().getTime();
 	var s = new SegmentGroup();
 	var numSplines = ((points.length - 4) / 3) + 1;
@@ -123,14 +128,16 @@ function join(points, step) {
 			s.add(seg);
 		}
 	}
-	log.info('    Num segments per spline: ' + (s.segments.length / numSplines));
-	log.info('    Total segments: ' + s.segments.length);
-	log.info('DONE IN: ' + (new Date().getTime() - start) + 'ms');
+	log.info('        Num segments per spline: ' + (s.segments.length / numSplines));
+	log.info('        Total segments: ' + s.segments.length);
+	log.info('    DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	return s;
 }
 
 class RobotPath {
 	constructor(points, preferences) {
+		log.info('Generating path...');
+		var start = new Date().getTime();
 		this.firstPointPixels = points[0];
 		this.path = new Path(join(points, 0.00001), points[0]);
 		this.pathSegments = this.path.group;
@@ -142,15 +149,15 @@ class RobotPath {
 		this.mu = preferences.p_mu;
 		this.wheelbaseWidth = preferences.p_wheelbaseWidth;
 		this.timeStep = preferences.p_timeStep;
-		log.info('Calculating path data...');
-		var start = new Date().getTime();
 		this.calculateMaxVelocity();
 		this.calculateVelocity();
 		this.splitGroupByTime();
 		this.recalculateValues();
 		this.calculateHeading();
 		this.splitLeftRight();
-		log.info('DONE IN: ' + (new Date().getTime() - start) + 'ms');
+		var time = new Date().getTime() - start;
+		log.info('DONE IN: ' + time + 'ms');
+		trackEvent('Generation', 'Generate', undefined, time);
 	}
 
 	calculateMaxVelocity() {

@@ -1,7 +1,8 @@
 var pathEditor;
 const {
 	BrowserWindow,
-	dialog
+	dialog,
+	getGlobal
 } = require('electron').remote;
 const {
 	remote
@@ -10,6 +11,7 @@ const homeDir = require('os').homedir();
 const fs = require('fs');
 const ipc = require('electron').ipcRenderer;
 const log = require('electron-log');
+const trackEvent = getGlobal('trackEvent');
 
 var preferences = new Preferences();
 
@@ -85,9 +87,16 @@ $(document).ready(function () {
 	document.getElementById('robotLength').addEventListener('keyup', onSettingsEnter);
 	document.getElementById('robotLength').value = preferences.robotLength;
 
-	document.getElementById('settingsConfirm').addEventListener('click', (event) => onSettingsConfirm());
-	document.getElementById('pointConfigConfirm').addEventListener('click', (event) => pathEditor.pointConfigOnConfirm());
+	document.getElementById('settingsConfirm').addEventListener('click', (event) => {
+		trackEvent('User Interaction', 'Settings Confirm');
+		onSettingsConfirm();
+	});
+	document.getElementById('pointConfigConfirm').addEventListener('click', (event) => {
+		trackEvent('User Interaction', 'Point Confirm');
+		pathEditor.pointConfigOnConfirm();
+	});
 	document.getElementById('generateModalConfirm').addEventListener('click', (event) => {
+		trackEvent('User Interaction', 'Generate Confirm')
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputFormat = document.getElementById('outputFormat').selectedIndex;
 		preferences.includeHeading = document.getElementById('includeHeading').checked;
@@ -101,8 +110,14 @@ $(document).ready(function () {
 		generateDialog.close();
 	});
 
-	document.getElementById('savePathBtn').addEventListener('click', (event) => savePath());
-	document.getElementById('openPathBtn').addEventListener('click', (event) => openPath());
+	document.getElementById('savePathBtn').addEventListener('click', (event) => {
+		trackEvent('User Interaction', 'Save Path');
+		savePath();
+	});
+	document.getElementById('openPathBtn').addEventListener('click', (event) => {
+		trackEvent('User Interaction', 'Open Path');
+		openPath();
+	});
 	document.getElementById('generatePathBtn').addEventListener('click', (event) => {
 		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
 		document.getElementById('pathName').value = preferences.currentPathName;
@@ -114,6 +129,7 @@ $(document).ready(function () {
 		generateDialog.open();
 	});
 	document.getElementById('previewPathBtn').addEventListener('click', (event) => {
+		trackEvent('User Interaction', 'Preview Path');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			preferences: preferences,

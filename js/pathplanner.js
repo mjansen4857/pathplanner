@@ -37,6 +37,8 @@ $(document).ready(function () {
 			e.preventDefault();
 	});
 
+	ipc.send('request-version');
+
 	var field = new Image();
 	field.onload = () => {
 		pathEditor = new PathEditor(field);
@@ -254,3 +256,19 @@ ipc.on('generating', function (event, data) {
 		displayLength: 6000
 	});
 });
+
+ipc.on('update-ready', function(event, data){
+	M.toast({html:'Ready to install updates! <a class="btn waves-effect indigo" onclick="notifyUpdates()" style="margin-left:20px !important;">Restart</a>', displayLength:Infinity});
+});
+
+ipc.on('downloading-update', function(event, data){
+	M.toast({html:'Downloading pathplanner v' + data + '...', displayLength:5000})
+});
+
+ipc.on('app-version', function(event, data){
+	document.getElementById('title').innerText = 'PathPlanner v' + data;
+});
+
+function notifyUpdates(){
+	ipc.send('quit-and-install');
+}

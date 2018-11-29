@@ -5,12 +5,21 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build-snap": "build --linux snap"
+    "publish-wl": "build --win --linux -p always",
+    "publish-all": "build --win --linux --mac -p always",
+    "publish-win": "build --win -p always",
+    "publish-mac": "build --mac -p always",
+    "publish-linux": "build --linux -p always",
+    "build-win": "build --win",
+    "build-mac": "build --mac dir",
+    "build-linux": "build --linux tar.gz"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mjansen4857/PathPlanner.git"
+  "build": {
+    "appId": "org.rangerrobotics.pathplanner",
+    "productName": "PathPlanner",
+    "artifactName": "pathplanner-${os}.${ext}"
   },
+  "repository": "https://github.com/mjansen4857/PathPlanner.git",
   "author": "Michael Jansen",
   "license": "MIT",
   "bugs": {
@@ -24,6 +33,7 @@
   "dependencies": {
     "electron-log": "^2.2.17",
     "electron-store": "^2.0.0",
+    "electron-updater": "^4.0.4",
     "jquery": "^3.3.1"
   }
 }

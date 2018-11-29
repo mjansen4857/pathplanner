@@ -23,11 +23,12 @@ const usr = ua('UA-130095148-1', userId);
 let win;
 
 function trackEvent(category, action, label, value){
-    usr.event(category, action, label, value).send();
+	usr.event(category, action, label, value).send();
+	trackScreen();
 }
 global.trackEvent = trackEvent;
 
-function trackAppLaunch(){
+function trackScreen(){
     usr.screenview({cd: 'PathPlanner', an: 'pathplanner', av:app.getVersion()}).send();
 }
 
@@ -41,7 +42,7 @@ function createWindow(){
 		win = null;
 	});
 
-	trackAppLaunch();
+	trackScreen();
 }
 
 app.on('ready', function(){

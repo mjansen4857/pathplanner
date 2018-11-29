@@ -36,18 +36,16 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * Download and unzip this repository
 * Run the following in the root directory of this project:
   * `npm install`
-
-  * `npm install -g electron-packager`
   
   * Windows: 
   
-      `electron-packager . pathplanner --overwrite --platform=win32 --arch=x64 --icon=build/icon.ico --out=dist`
+      `npm run build-win`
 
   * MacOS: 
   
-      `electron-packager . pathplanner --overwrite --platform=darwin --arch=x64 --icon=build/icon.icns --out=dist`
+      `npm run build-mac`
 
   * Linux: 
   
-      `electron-packager . pathplanner --overwrite --platform=linux --arch=x64 --icon=build/icon.png --out=dist`
+      `npm run build-linux`
 * The built application will be located in the dist folder

@@ -3,6 +3,7 @@
 * **Windows:** Download the installer from [here](https://github.com/mjansen4857/PathPlanner/releases/latest). When prompted by windows defender, allow the installer to run.
 * **Linux:** Download the tar.gz file [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
 * **MacOS:** Download [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
+* **This app collects anonymous data on feature usage, generation errors, and processing time**
 
 ## What makes PathPlanner different?
 ![Path Editor](https://i.imgur.com/uiFUST6.png)

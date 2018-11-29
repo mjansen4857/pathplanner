@@ -17,7 +17,15 @@
   "build": {
     "appId": "org.rangerrobotics.pathplanner",
     "productName": "PathPlanner",
-    "artifactName": "pathplanner-${os}.${ext}"
+    "artifactName": "pathplanner-${os}.${ext}",
+    "publish": {
+      "mac": {
+        "target": "zip"
+      },
+      "linux": {
+        "target": "tar.gz"
+      }
+    }
   },
   "repository": "https://github.com/mjansen4857/PathPlanner.git",
   "author": "Michael Jansen",

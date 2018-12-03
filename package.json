@@ -12,7 +12,8 @@
     "publish-linux": "build --linux -p always",
     "build-win": "build --win",
     "build-mac": "build --mac dir",
-    "build-linux": "build --linux tar.gz"
+    "build-linux": "build --linux tar.gz",
+    "build-linux-snap": "build --linux snap"
   },
   "build": {
     "appId": "org.rangerrobotics.pathplanner",

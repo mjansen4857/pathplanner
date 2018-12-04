@@ -16,6 +16,7 @@ const ua = require('universal-analytics');
 const uuid = require('uuid');
 const {JSONStorage} = require('node-localstorage');
 const nodeStorage = new JSONStorage(app.getPath('userData'));
+const newUser = !nodeStorage.getItem('userId');
 const userId = nodeStorage.getItem('userId') || uuid();
 nodeStorage.setItem('userId', userId);
 const usr = ua('UA-130095148-1', userId);
@@ -24,12 +25,11 @@ let win;
 
 function trackEvent(category, action, label, value){
 	usr.event(category, action, label, value).send();
-	trackScreen();
 }
 global.trackEvent = trackEvent;
 
 function trackScreen(){
-    usr.screenview({cd: 'PathPlanner', an: 'pathplanner', av:app.getVersion()}).send();
+	usr.screenview({cd: 'PathPlanner', an: 'pathplanner', av:app.getVersion()}).send();
 }
 
 function createWindow(){
@@ -43,6 +43,9 @@ function createWindow(){
 	});
 
 	trackScreen();
+	if(newUser){
+		trackEvent('New User', os.platform());
+	}
 }
 
 app.on('ready', function(){

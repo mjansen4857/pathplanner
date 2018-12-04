@@ -37,17 +37,11 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * Run the following in the root directory of this project:
   * `npm install`
   
-  * Windows: 
-  
-      `npm run build-win`
+  * Windows: `npm run build-win`
 
-  * MacOS: 
-  
-      `npm run build-mac`
+  * MacOS: `npm run build-mac`
 
-  * Linux: 
-  
-      `npm run build-linux`
+  * Linux: `npm run build-linux`
 * The built application will be located in the dist folder
 
 **This app collects anonymous data on feature usage, generation errors, and processing time. [Privacy Policy](https://mjansen4857.github.io/privacy)**

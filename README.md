@@ -1,6 +1,6 @@
 # PathPlanner
 ## Installation:
-* **Windows:** Download the installer from [here](https://github.com/mjansen4857/PathPlanner/releases/latest). When prompted by windows defender, allow the installer to run.
+* **Windows:** Install from the [Microsoft Store](https://www.microsoft.com/store/apps/9P7HKZQPJH8Q) or download the installer from [here](https://github.com/mjansen4857/PathPlanner/releases/latest). When prompted by windows defender, allow the installer to run.
 * **Linux:** Install from [Snapcraft](https://snapcraft.io/pathplanner) or download the tar.gz file [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
 * **MacOS:** Download [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
 

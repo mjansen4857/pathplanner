@@ -2,7 +2,7 @@
 [<img src="https://mjansen4857.github.io/microsoft_store.svg" height="64">](https://microsoft.com/store/apps/9P7HKZQPJH8Q?ocid=badge)
 &nbsp;&nbsp;[<img src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" height="64">](https://snapcraft.io/pathplanner)
 
-Windows and linux verisons can be installed from the Microsoft Store and Snapcraft respectively, or they can be downloaded, along with the MacOS version [here](https://github.com/mjansen4857/PathPlanner/releases/latest)
+Windows, MacOS, and Linux versions can be downloaded [here](https://github.com/mjansen4857/PathPlanner/releases/latest), or they can be installed from the Microsoft Store and Snapcraft badges above.
 
 ## What makes PathPlanner different?
 ![Path Editor](https://i.imgur.com/uiFUST6.png)

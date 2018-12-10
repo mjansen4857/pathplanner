@@ -1,10 +1,9 @@
 const {app, BrowserWindow} = require('electron');
 const ipc = require('electron').ipcMain;
 const log = require('electron-log');
-const fs = require('fs');
 const homeDir = require('os').homedir();
 const {autoUpdater} = require('electron-updater');
-var os = require('os');
+const os = require('os');
 
 log.transports.file.level = 'info';
 log.transports.file.format = '[{m}/{d}/{y} {h}:{i}:{s}] [{level}] {text}';

@@ -168,19 +168,16 @@ function savePath() {
 			extensions: ['path']
 		}]
 	}, (filename, bookmark) => {
-		// filename = filename.replace(/\\/g, '/');
 		var delim = '\\';
 		if(filename.lastIndexOf(delim) == -1) delim = '/';
 		preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
 		preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
 		var points = pathEditor.plannedPath.points;
-		var output = '';
+		var fixedPoints = [];
 		for (var i = 0; i < points.length; i++) {
-			output += (Math.round((points[i].x - xPixelOffset) / pixelsPerFoot * 100) / 100 + ',' + Math.round((points[i].y - yPixelOffset) / pixelsPerFoot * 100) / 100);
-			if (i < points.length - 1) {
-				output += '\n';
-			}
+			fixedPoints[i] = [Math.round((points[i].x - xPixelOffset) / pixelsPerFoot * 100) / 100, Math.round((points[i].y - yPixelOffset) / pixelsPerFoot * 100) / 100];
 		}
+		var output = JSON.stringify({points: fixedPoints});
 		fs.writeFile(filename, output, 'utf8', (err) => {
 			if (err) {
 				log.error(err);
@@ -217,16 +214,14 @@ function openPath() {
 		if(filename.lastIndexOf(delim) == -1) delim = '/';
 		preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
 		preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
-		console.log(filename);
 		fs.readFile(filename, 'utf8', (err, data) => {
 			if (err) {
 				log.error(err);
 			} else {
-				var lines = data.split('\n');
-				var points = [];
-				for (var i = 0; i < lines.length; i++) {
-					var coords = lines[i].split(',');
-					points.push(new Vector2((parseFloat(coords[0]) * pixelsPerFoot) + xPixelOffset, (parseFloat(coords[1]) * pixelsPerFoot) + yPixelOffset));
+				var json = JSON.parse(data);
+				var points = json.points;
+				for (var i = 0; i < points.length; i++) {
+					points[i] = new Vector2(points[i][0]*pixelsPerFoot + xPixelOffset, points[i][1]*pixelsPerFoot + yPixelOffset);
 				}
 				pathEditor.plannedPath.points = points;
 				pathEditor.update();

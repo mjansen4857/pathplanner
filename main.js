@@ -19,6 +19,8 @@ const newUser = !nodeStorage.getItem('userId');
 const userId = nodeStorage.getItem('userId') || uuid();
 nodeStorage.setItem('userId', userId);
 const usr = ua('UA-130095148-1', userId);
+const Client = require('ssh2-sftp-client');
+const sftp = new Client();
 
 let win;
 
@@ -82,6 +84,39 @@ ipc.on('generate', function(event, data){
 	var worker = new BrowserWindow({show: false});
 	worker.loadFile('generate.html');
 	worker.on('ready-to-show', () => worker.webContents.send('generate-path', data));
+});
+
+ipc.on('deploy-segments', function (event, data) {
+	log.info('Connecting to robot...');
+	win.webContents.send('connecting');
+	sftp.connect({
+		host: 'roborio-' + data.team + '-frc.local',
+		username: 'lvuser',
+		readyTimeout: 5000
+	}).then(() => {
+		log.info('Uploading files...');
+		win.webContents.send('uploading');
+		let upload = function(){
+			sftp.put(Buffer.from(data.left), data.path + '/' + data.name + '_left.csv').then((response) => {
+				log.info(response);
+				sftp.put(Buffer.from(data.right), data.path + '/' + data.name + '_right.csv').then((response) => {
+					log.info(response);
+				}).then(() => {
+					win.webContents.send('uploaded', data.name);
+					sftp.end();
+				});
+			});
+		};
+		sftp.mkdir(data.path, true).then(() => {
+			upload();
+		}).catch(() => {
+			upload();
+		});
+	}).catch((err) => {
+		log.error(err);
+		win.webContents.send('connect-failed');
+		sftp.end();
+	});
 });
 
 ipc.on('request-version', function(event, data){

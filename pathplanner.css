@@ -88,7 +88,17 @@ nav {
 	-webkit-app-region: no-drag;
 }
 
-.modal {
+#settings {
+	width: 35% !important;
+	height: 70% !important;
+}
+
+#pointConfig {
+	width: 35% !important;
+	height: 60% !important;
+}
+
+#generateModal {
 	width: 35% !important;
 	height: 60% !important;
 }

@@ -20,6 +20,8 @@ ipc.on('generate-path', function (event, data) {
 	try {
 		if (data.preview) {
 			generateAndSendSegments(data.points, data.preferences);
+		}else if(data.deploy){
+			generateAndDeploy(data.points, data.preferences, data.reverse);
 		} else if (data.preferences.p_outputFormat == 0) {
 			generateAndSave(data.points, data.preferences, data.reverse);
 		} else {
@@ -40,6 +42,27 @@ function generateAndSendSegments(points, preferences) {
 	ipc.send('preview-segments', {
 		left: robotPath.left.segments,
 		right: robotPath.right.segments
+	});
+}
+
+function generateAndDeploy(points, preferences, reverse) {
+	ipc.send('generating');
+	var robotPath = new RobotPath(points, preferences);
+	var outL = '';
+	var outR = '';
+	if (reverse) {
+		outL = robotPath.right.formatCSV(reverse, preferences.p_includeHeading);
+		outR = robotPath.left.formatCSV(reverse, preferences.p_includeHeading);
+	} else {
+		outL = robotPath.left.formatCSV(reverse, preferences.p_includeHeading);
+		outR = robotPath.right.formatCSV(reverse, preferences.p_includeHeading);
+	}
+	ipc.send('deploy-segments', {
+		left: outL,
+		right: outR,
+		name: preferences.currentPathName,
+		team: preferences.p_teamNumber,
+		path: preferences.p_rioPathLocation
 	});
 }
 

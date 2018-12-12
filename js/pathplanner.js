@@ -86,6 +86,10 @@ $(document).ready(function () {
 	document.getElementById('robotWidth').value = preferences.wheelbaseWidth;
 	document.getElementById('robotLength').addEventListener('keyup', onSettingsEnter);
 	document.getElementById('robotLength').value = preferences.robotLength;
+	document.getElementById('teamNumber').addEventListener('keyup', onSettingsEnter);
+	document.getElementById('teamNumber').value = preferences.teamNumber;
+	document.getElementById('rioPathLocation').addEventListener('keyup', onSettingsEnter);
+	document.getElementById('rioPathLocation').value = preferences.rioPathLocation;
 
 	document.getElementById('settingsConfirm').addEventListener('click', (event) => {
 		trackEvent('User Interaction', 'Settings Confirm');
@@ -96,7 +100,7 @@ $(document).ready(function () {
 		pathEditor.pointConfigOnConfirm();
 	});
 	document.getElementById('generateModalConfirm').addEventListener('click', (event) => {
-		trackEvent('User Interaction', 'Generate Confirm')
+		trackEvent('User Interaction', 'Generate Confirm');
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputFormat = document.getElementById('outputFormat').selectedIndex;
 		preferences.includeHeading = document.getElementById('includeHeading').checked;
@@ -105,6 +109,21 @@ $(document).ready(function () {
 			points: pathEditor.plannedPath.points,
 			preferences: preferences,
 			reverse: reversed
+		});
+		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
+		generateDialog.close();
+	});
+	document.getElementById('generateModalDeploy').addEventListener('click', (event) => {
+		trackEvent('User Interaction', 'Deploy');
+		preferences.currentPathName = document.getElementById('pathName').value;
+		preferences.outputFormat = document.getElementById('outputFormat').selectedIndex;
+		preferences.includeHeading = document.getElementById('includeHeading').checked;
+		var reversed = document.getElementById('reversed').checked;
+		ipc.send('generate', {
+			points: pathEditor.plannedPath.points,
+			preferences: preferences,
+			reverse: reversed,
+			deploy: true
 		});
 		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
 		generateDialog.close();
@@ -147,6 +166,8 @@ function onSettingsConfirm() {
 	preferences.timeStep = document.getElementById('robotTimeStep').value;
 	preferences.wheelbaseWidth = document.getElementById('robotWidth').value;
 	preferences.robotLength = document.getElementById('robotLength').value;
+	preferences.teamNumber = document.getElementById('teamNumber').value;
+	preferences.rioPathLocation = document.getElementById('rioPathLocation').value;
 	M.Modal.getInstance(document.getElementById('settings')).close();
 }
 
@@ -278,6 +299,22 @@ ipc.on('downloading-update', function(event, data){
 
 ipc.on('app-version', function(event, data){
 	document.getElementById('title').innerText = 'PathPlanner v' + data;
+});
+
+ipc.on('connecting', function (event, data) {
+	M.toast({html: 'Connecting to robot...', displayLength: 6000});
+});
+
+ipc.on('uploading', function (event, data) {
+	M.toast({html: 'Uploading paths...', displayLength: 6000});
+});
+
+ipc.on('uploaded', function (event, data) {
+	M.toast({html: 'Path: ' + data + ' uploaded to robot!', displayLength: 6000});
+});
+
+ipc.on('connect-failed', function (event, data) {
+	M.toast({html: '<span style="color: #d32f2f !important;">Failed to connect to robot!</span>', displayLength: 6000});
 });
 
 function notifyUpdates(){

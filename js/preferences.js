@@ -14,6 +14,8 @@ class Preferences{
 		this.p_lastGenerateDir = store.get('lastGenerateDir', 'none');
 		this.p_lastPathDir = store.get('lastPathDir', 'none');
 		this.p_includeHeading = store.get('includeHeading', false);
+		this.p_teamNumber = store.get('teamNumber', 3015);
+		this.p_rioPathLocation = store.get('rioPathLocation', '/home/lvuser/paths');
 		this.currentPathName = "path";
 	}
 
@@ -55,6 +57,14 @@ class Preferences{
 
 	get includeHeading(){
 		return this.p_includeHeading;
+	}
+
+	get teamNumber(){
+		return this.p_teamNumber;
+	}
+
+	get rioPathLocation(){
+		return this.p_rioPathLocation;
 	}
 
 	set maxVel(value){
@@ -105,5 +115,15 @@ class Preferences{
 	set includeHeading(value){
 		store.set('includeHeading', value);
 		this.p_includeHeading = value;
+	}
+
+	set teamNumber(value){
+		store.set('teamNumber', value);
+		this.p_teamNumber = value;
+	}
+
+	set rioPathLocation(value){
+		store.set('rioPathLocation', value);
+		this.p_rioPathLocation = value;
 	}
 }

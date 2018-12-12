@@ -84,6 +84,16 @@
 							<label for="robotLength">Robot Length</label>
 						</div>
 					</div>
+					<div class="row">
+						<div class="col s6 input-field">
+							<input id="teamNumber" type="number" required step="1">
+							<label for="teamNumber">Team Number</label>
+						</div>
+						<div class="col s6 input-field">
+							<input id="rioPathLocation" type="text" required>
+							<label for="rioPathLocation">RoboRIO Path Location</label>
+						</div>
+					</div>
 				</form>
 			</div>
 		</div>
@@ -165,7 +175,8 @@
 			</div>
 		</div>
 		<div class="modal-footer">
-			<a id="generateModalConfirm" class="waves-effect indigo-text btn-flat">Generate</a>
+			<a id="generateModalDeploy" class="waves-effect indigo-text btn-flat left">Deploy to Robot</a>
+			<a id="generateModalConfirm" class="waves-effect indigo-text btn-flat right">Generate</a>
 		</div>
 	</div>
 </body>

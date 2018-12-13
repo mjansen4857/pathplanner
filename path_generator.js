@@ -22,7 +22,7 @@ ipc.on('generate-path', function (event, data) {
 			generateAndSendSegments(data.points, data.preferences);
 		}else if(data.deploy){
 			generateAndDeploy(data.points, data.preferences, data.reverse);
-		} else if (data.preferences.p_outputFormat == 0) {
+		} else if (data.preferences.p_outputType == 0) {
 			generateAndSave(data.points, data.preferences, data.reverse);
 		} else {
 			generateAndCopy(data.points, data.preferences, data.reverse);
@@ -51,11 +51,11 @@ function generateAndDeploy(points, preferences, reverse) {
 	var outL = '';
 	var outR = '';
 	if (reverse) {
-		outL = robotPath.right.formatCSV(reverse, preferences.p_includeHeading);
-		outR = robotPath.left.formatCSV(reverse, preferences.p_includeHeading);
+		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
+		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
 	} else {
-		outL = robotPath.left.formatCSV(reverse, preferences.p_includeHeading);
-		outR = robotPath.right.formatCSV(reverse, preferences.p_includeHeading);
+		outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
+		outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
 	}
 	ipc.send('deploy-segments', {
 		left: outL,
@@ -67,33 +67,33 @@ function generateAndDeploy(points, preferences, reverse) {
 }
 
 function generateAndCopy(points, preferences, reverse) {
-	trackEvent('Generation', 'Generate and Copy', undefined, parseInt(preferences.p_outputFormat));
+	trackEvent('Generation', 'Generate and Copy', undefined, parseInt(preferences.p_outputType));
 	ipc.send('generating');
 	var robotPath = new RobotPath(points, preferences);
 	var out;
-	if (preferences.p_outputFormat == 1) {
+	if (preferences.p_outputType == 1) {
 		if (reverse) {
-			out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n    ' +
-				robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
+			out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
+				robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
 		} else {
-			out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n    ' +
-				robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
+			out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
+				robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
 		}
-	} else if (preferences.p_outputFormat == 2) {
+	} else if (preferences.p_outputType == 2) {
 		if (reverse) {
-			out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n    ' +
-				robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
+			out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
+				robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
 		} else {
-			out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n    ' +
-				robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
+			out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
+				robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
 		}
-	} else if (preferences.p_outputFormat == 3) {
+	} else if (preferences.p_outputType == 3) {
 		if (reverse) {
-			out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n' +
+			out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n' +
 				robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse);
 		} else {
-			out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_includeHeading) + '\n\n' +
-				robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_includeHeading);
+			out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n' +
+				robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
 		}
 	}
 	clipboard.writeText(out);
@@ -123,11 +123,11 @@ function generateAndSave(points, preferences, reverse) {
 		var outL = '';
 		var outR = '';
 		if (reverse) {
-			outL = robotPath.right.formatCSV(reverse, preferences.p_includeHeading);
-			outR = robotPath.left.formatCSV(reverse, preferences.p_includeHeading);
+			outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
+			outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
 		} else {
-			outL = robotPath.left.formatCSV(reverse, preferences.p_includeHeading);
-			outR = robotPath.right.formatCSV(reverse, preferences.p_includeHeading);
+			outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
+			outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
 		}
 
 		fs.writeFileSync(filename + '/' + preferences.currentPathName + '_left.csv', outL, 'utf8');
@@ -484,10 +484,10 @@ class SegmentGroup {
 		this.segments = [];
 	}
 
-	formatCSV(reverse, includeHeading) {
+	formatCSV(reverse, format) {
 		var str = '';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += this.formatSegment(i, reverse, includeHeading);
+			str += this.formatSegment(i, reverse, format);
 			if (i < this.segments.length - 1) {
 				str += '\n';
 			}
@@ -495,36 +495,40 @@ class SegmentGroup {
 		return str;
 	}
 
-	formatJavaArray(arrayName, reverse, includeHeading) {
+	formatJavaArray(arrayName, reverse, format) {
 		var str = 'public static double[][] ' + arrayName + ' = new double[][] {\n';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += '        {' + this.formatSegment(i, reverse, includeHeading) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+			str += '        {' + this.formatSegment(i, reverse, format) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
 		}
 		str += '    }';
 		return str;
 	}
 
-	formatCppArray(arrayName, reverse, includeHeading) {
+	formatCppArray(arrayName, reverse, format) {
 		var str = 'double ' + arrayName + '[][] = {\n';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += '        {' + this.formatSegment(i, reverse, includeHeading) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+			str += '        {' + this.formatSegment(i, reverse, format) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
 		}
 		str += '    }';
 		return str;
 	}
 
-	formatPythonArray(arrayName, reverse, includeHeading) {
+	formatPythonArray(arrayName, reverse, format) {
 		var str = arrayName + ' = [\n';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += '    [' + this.formatSegment(i, reverse, includeHeading) + ((i < this.segments.length - 1) ? '],\n' : ']]');
+			str += '    [' + this.formatSegment(i, reverse, format) + ((i < this.segments.length - 1) ? '],\n' : ']]');
 		}
 		return str;
 	}
 
-	formatSegment(index, reverse, includeHeading) {
+	formatSegment(index, reverse, format) {
 		var s = this.segments[index];
 		var n = (reverse) ? -1 : 1;
-		return (Math.round(s.pos * 10000) / 10000 * n) + ',' + (Math.round(s.vel * 10000) / 10000 * n) + ',' + (Math.round(s.acc * 10000) / 10000 * n) + ((includeHeading) ? (',' + (Math.round(s.heading * 10000) / 10000)) : '');
+		var ret = format.replace(/p/g, (Math.round(s.pos * 10000) / 10000 * n));
+		ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
+		ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());
+		ret = ret.replace(/h/g, (Math.round(s.heading * 10000) / 10000 * n).toString());
+		return ret;
 	}
 
 	add(seg) {

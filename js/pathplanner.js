@@ -102,8 +102,13 @@ $(document).ready(function () {
 	document.getElementById('generateModalConfirm').addEventListener('click', (event) => {
 		trackEvent('User Interaction', 'Generate Confirm');
 		preferences.currentPathName = document.getElementById('pathName').value;
-		preferences.outputFormat = document.getElementById('outputFormat').selectedIndex;
-		preferences.includeHeading = document.getElementById('includeHeading').checked;
+		preferences.outputType = document.getElementById('outputType').selectedIndex;
+		var format = document.getElementById('outputFormat').value;
+		if(!format.match(/^[pvah](?:,[pvah])*$/g)){
+			M.toast({html: '<span style="color: #d32f2f !important;">Invalid output format!</span>', displayLength: 5000});
+			return;
+		}
+		preferences.outputFormat = format;
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -116,8 +121,13 @@ $(document).ready(function () {
 	document.getElementById('generateModalDeploy').addEventListener('click', (event) => {
 		trackEvent('User Interaction', 'Deploy');
 		preferences.currentPathName = document.getElementById('pathName').value;
-		preferences.outputFormat = document.getElementById('outputFormat').selectedIndex;
-		preferences.includeHeading = document.getElementById('includeHeading').checked;
+		preferences.outputType = document.getElementById('outputType').selectedIndex;
+		var format = document.getElementById('outputFormat').value.toLowerCase();
+		if(!format.match(/^[pvah](?:,[pvah])*$/g)){
+			M.toast({html: '<span style="color: #d32f2f !important;">Invalid output format!</span>', displayLength: 5000});
+			return;
+		}
+		preferences.outputFormat = format;
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -140,8 +150,8 @@ $(document).ready(function () {
 	document.getElementById('generatePathBtn').addEventListener('click', (event) => {
 		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
 		document.getElementById('pathName').value = preferences.currentPathName;
-		document.getElementById('outputFormat').selectedIndex = preferences.outputFormat;
-		document.getElementById('includeHeading').checked = preferences.includeHeading;
+		document.getElementById('outputType').selectedIndex = preferences.outputType;
+		document.getElementById('outputFormat').value = preferences.outputFormat;
 
 		M.updateTextFields();
 		$('select').formSelect();
@@ -160,13 +170,13 @@ $(document).ready(function () {
 });
 
 function onSettingsConfirm() {
-	preferences.maxVel = document.getElementById('robotMaxV').value;
-	preferences.maxAcc = document.getElementById('robotMaxAcc').value;
-	preferences.mu = document.getElementById('robotMu').value;
-	preferences.timeStep = document.getElementById('robotTimeStep').value;
-	preferences.wheelbaseWidth = document.getElementById('robotWidth').value;
-	preferences.robotLength = document.getElementById('robotLength').value;
-	preferences.teamNumber = document.getElementById('teamNumber').value;
+	preferences.maxVel = parseFloat(document.getElementById('robotMaxV').value);
+	preferences.maxAcc = parseFloat(document.getElementById('robotMaxAcc').value);
+	preferences.mu = parseFloat(document.getElementById('robotMu').value);
+	preferences.timeStep = parseFloat(document.getElementById('robotTimeStep').value);
+	preferences.wheelbaseWidth = parseFloat(document.getElementById('robotWidth').value);
+	preferences.robotLength = parseFloat(document.getElementById('robotLength').value);
+	preferences.teamNumber = parseFloat(document.getElementById('teamNumber').value);
 	preferences.rioPathLocation = document.getElementById('rioPathLocation').value;
 	M.Modal.getInstance(document.getElementById('settings')).close();
 }

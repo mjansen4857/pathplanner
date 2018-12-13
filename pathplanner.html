@@ -146,13 +146,19 @@
 					</div>
 					<div class="row">
 						<div class="col s12 input-field">
-							<select id="outputFormat">
+							<select id="outputType">
 								<option value="1" selected>CSV File</option>
 								<option value="2">Java Array</option>
 								<option value="3">C++ Array</option>
 								<option value="4">Python Array</option>
 							</select>
-							<label>Output Format</label>
+							<label>Output Type</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s12 input-field">
+							<input id="outputFormat" type="text" required>
+							<label for="outputFormat">Output Format</label>
 						</div>
 					</div>
 					<div class="row">
@@ -160,14 +166,6 @@
 							<label>
 								<input id="reversed" class="filled-in" type="checkbox">
 								<span>Reversed</span>
-							</label>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col">
-							<label>
-								<input id="includeHeading" class="filled-in" type="checkbox">
-								<span>Include Heading</span>
 							</label>
 						</div>
 					</div>

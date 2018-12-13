@@ -10,10 +10,10 @@ class Preferences{
 		this.p_wheelbaseWidth = store.get('wheelbaseWidth', 2.0);
 		this.p_robotLength = store.get('robotLength', 3.0);
 		this.p_timeStep = store.get('timeStep', 0.01);
-		this.p_outputFormat = store.get('outputFormat', 0);
+		this.p_outputType = store.get('outputType', 0);
+		this.p_outputFormat = store.get('outputFormat', 'P,V,A,H');
 		this.p_lastGenerateDir = store.get('lastGenerateDir', 'none');
 		this.p_lastPathDir = store.get('lastPathDir', 'none');
-		this.p_includeHeading = store.get('includeHeading', false);
 		this.p_teamNumber = store.get('teamNumber', 3015);
 		this.p_rioPathLocation = store.get('rioPathLocation', '/home/lvuser/paths');
 		this.currentPathName = "path";
@@ -43,6 +43,10 @@ class Preferences{
 		return this.p_timeStep;
 	}
 
+	get outputType(){
+		return this.p_outputType;
+	}
+
 	get outputFormat(){
 		return this.p_outputFormat;
 	}
@@ -53,10 +57,6 @@ class Preferences{
 
 	get lastPathDir(){
 		return this.p_lastPathDir;
-	}
-
-	get includeHeading(){
-		return this.p_includeHeading;
 	}
 
 	get teamNumber(){
@@ -97,6 +97,11 @@ class Preferences{
 		this.p_timeStep = value;
 	}
 
+	set outputType(value){
+		store.set('outputType', value);
+		this.p_outputType = value;
+	}
+
 	set outputFormat(value){
 		store.set('outputFormat', value);
 		this.p_outputFormat = value;
@@ -110,11 +115,6 @@ class Preferences{
 	set lastPathDir(value){
 		store.set('lastPathDir', value);
 		this.p_lastPathDir = value;
-	}
-
-	set includeHeading(value){
-		store.set('includeHeading', value);
-		this.p_includeHeading = value;
 	}
 
 	set teamNumber(value){

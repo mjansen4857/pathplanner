@@ -67,6 +67,10 @@ a:focus{
 	background-color: #c62828;
 }
 
+.input-field{
+	margin-bottom: -10px !important;
+}
+
 .brand-logo{
 	top: -9px !important;
 	font-size: 24px !important;
@@ -90,17 +94,17 @@ nav {
 
 #settings {
 	width: 35% !important;
-	height: 70% !important;
+	height: 62% !important;
 }
 
 #pointConfig {
 	width: 35% !important;
-	height: 60% !important;
+	height: 50% !important;
 }
 
 #generateModal {
 	width: 35% !important;
-	height: 60% !important;
+	height: 55% !important;
 }
 
 .tab{

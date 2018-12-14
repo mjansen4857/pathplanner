@@ -24,9 +24,9 @@ const Client = require('ssh2-sftp-client');
 const sftp = new Client();
 const unhandled = require('electron-unhandled');
 unhandled({logger: log.error, showDialog: true});
+const is = require('electron-is');
 
 let win;
-const doUpdates = true;
 
 /**
  * Track an event in google analytics
@@ -69,19 +69,21 @@ function createWindow(){
 // When the app is ready, create the window and check for updates if on windows
 app.on('ready', function(){
 	createWindow();
-	if(doUpdates) {
-        if (os.platform() == 'win32') {
-            autoUpdater.checkForUpdates();
-        } else {
-            const github = require('octonode').client();
-            var repo = github.repo('mjansen4857/PathPlanner');
-            repo.releases((err, body, headers) => {
-                if (semver.gt(semver.clean(body[0].tag_name), app.getVersion())) {
-                    win.webContents.send('gh-update', body[0].tag_name);
-                }
-            });
-        }
-    }
+	if (is.production()) {
+		if (is.windows()) {
+			if (!is.windowsStore()) autoUpdater.checkForUpdates();
+		} else {
+			const github = require('octonode').client();
+			var repo = github.repo('mjansen4857/PathPlanner');
+			repo.releases((err, body, headers) => {
+				if(body) {
+					if (semver.gt(semver.clean(body[0].tag_name), app.getVersion())) {
+						win.webContents.send('gh-update', body[0].tag_name);
+					}
+				}
+			});
+		}
+	}
 });
 
 // Quit the app when all windows are closed

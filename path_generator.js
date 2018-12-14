@@ -1,21 +1,13 @@
-const {
-	Util,
-	Vector2
-} = require('./js/util.js');
+const {Util, Vector2} = require('./js/util.js');
 const ipc = require('electron').ipcRenderer;
-const {
-	remote,
-	clipboard
-} = require('electron');
-const {
-	dialog,
-	getGlobal
-} = require('electron').remote;
+const {remote, clipboard} = require('electron');
+const {dialog, getGlobal} = require('electron').remote;
 const homeDir = require('os').homedir();
 const log = require('electron-log');
 const fs = require('fs');
 const trackEvent = getGlobal('trackEvent');
 
+// Generate the path when the main process requests it
 ipc.on('generate-path', function (event, data) {
 	try {
 		if (data.preview) {
@@ -36,6 +28,11 @@ ipc.on('generate-path', function (event, data) {
 	}
 });
 
+/**
+ * Generate the path and send the segments back for a preview
+ * @param points The path points
+ * @param preferences The robot preferences
+ */
 function generateAndSendSegments(points, preferences) {
 	ipc.send('generating');
 	var robotPath = new RobotPath(points, preferences);
@@ -45,6 +42,12 @@ function generateAndSendSegments(points, preferences) {
 	});
 }
 
+/**
+ * Generate the path and upload the files to the roborio
+ * @param points The path points
+ * @param preferences The robot preferences
+ * @param reverse Should the robot drive backwards
+ */
 function generateAndDeploy(points, preferences, reverse) {
 	ipc.send('generating');
 	var robotPath = new RobotPath(points, preferences);
@@ -66,6 +69,12 @@ function generateAndDeploy(points, preferences, reverse) {
 	});
 }
 
+/**
+ * Generate the path and copy the output arrays to the clipboard
+ * @param points The path points
+ * @param preferences The robot preferences
+ * @param reverse Should the robot drive backwards
+ */
 function generateAndCopy(points, preferences, reverse) {
 	trackEvent('Generation', 'Generate and Copy', undefined, parseInt(preferences.p_outputType));
 	ipc.send('generating');
@@ -100,6 +109,12 @@ function generateAndCopy(points, preferences, reverse) {
 	ipc.send('copied-to-clipboard', preferences.currentPathName);
 }
 
+/**
+ * Generate the path and save the files
+ * @param points The path points
+ * @param preferences The robot preferences
+ * @param reverse Should the robot drive backwards
+ */
 function generateAndSave(points, preferences, reverse) {
 	trackEvent('Generation', 'Generate and Save');
 	var filePath = preferences.p_lastGenerateDir;
@@ -136,6 +151,12 @@ function generateAndSave(points, preferences, reverse) {
 	}
 }
 
+/**
+ * Creates a segment group of many points on the curve from the list of anchor and control points
+ * @param points The path points
+ * @param step The step to use to interpolate the curve
+ * @returns The points on the curve
+ */
 function join(points, step) {
 	log.info('    Joining splines... ');
 	var start = new Date().getTime();
@@ -183,6 +204,9 @@ class RobotPath {
 		trackEvent('Generation', 'Generate', undefined, time);
 	}
 
+    /**
+	 * Calculate the max velocity of the robot along every point on the curve
+     */
 	calculateMaxVelocity() {
 		log.info('    Calculating max velocity on curve...');
 		var start = new Date().getTime();
@@ -206,6 +230,13 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
+    /**
+	 * Helper method to calculate the curve radius anywhere on the path, given 3 points
+     * @param i0 Point 1 index
+     * @param i1 Point 2 index
+     * @param i2 Point 3 index
+     * @returns The curve radius
+     */
 	calculateCurveRadius(i0, i1, i2) {
 		var a = this.pathSegments.segments[i0];
 		var b = this.pathSegments.segments[i1];
@@ -225,6 +256,9 @@ class RobotPath {
 		return r + (this.wheelbaseWidth / 2);
 	}
 
+    /**
+	 * Calculate the position, velocity, acceleration, etc at every point on the curve
+     */
 	calculateVelocity() {
 		log.info('    Calculating velocity...');
 		var start = new Date().getTime();
@@ -291,6 +325,9 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
+    /**
+	 * Split the generated path into a list of points at the correct time interval
+     */
 	splitGroupByTime() {
 		log.info('    Splitting segments by time...');
 		var start = new Date().getTime();
@@ -320,6 +357,9 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
+    /**
+	 * Calculate the heading of the robot at every point on the path
+     */
 	calculateHeading() {
 		log.info('    Calculating robot heading...');
 		var start = new Date().getTime();
@@ -341,6 +381,9 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
+    /**
+	 * Split the path into a left and right path for each side of the robot
+     */
 	splitLeftRight() {
 		log.info('    Splitting left and right robot paths...');
 		var start = new Date().getTime();
@@ -391,6 +434,9 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
+    /**
+	 * Recalculate all the values for validation
+     */
 	recalculateValues() {
 		log.info('    Verifying values...');
 		var start = new Date().getTime();
@@ -404,6 +450,11 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
+    /**
+	 * Get the time for a segment
+     * @param segNum The index of the segment
+     * @returns The time
+     */
 	segmentTime(segNum) {
 		return segNum * this.timeStep;
 	}
@@ -421,6 +472,9 @@ class Path {
 		this.makePath();
 	}
 
+    /**
+	 * Make the pre-generation path
+     */
 	makePath() {
 		var start = new Date().getTime();
 		log.info('Generating path...');
@@ -430,6 +484,9 @@ class Path {
 		log.info('DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
+    /**
+	 * Make x and y lists and convert the values from pixels to feet
+     */
 	makeScaledLists() {
 		for (var i = 0; i < this.inGroup.segments.length; i++) {
 			this.x.push((this.inGroup.segments[i].x - this.p0.x) / Util.pixelsPerFoot);
@@ -437,6 +494,9 @@ class Path {
 		}
 	}
 
+    /**
+	 * Calculate the length of the path
+     */
 	calculateLength() {
 		log.info('    Calculating length...');
 		var start = new Date().getTime();
@@ -455,6 +515,9 @@ class Path {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms. Length: ' + this.length + 'ft');
 	}
 
+    /**
+	 * Create a segment for ech point on the path
+     */
 	createSegments() {
 		log.info('    Calculating segments...');
 		var start = new Date().getTime();
@@ -483,7 +546,7 @@ class SegmentGroup {
 	constructor() {
 		this.segments = [];
 	}
-
+	
 	formatCSV(reverse, format) {
 		var str = '';
 		for (var i = 0; i < this.segments.length; i++) {

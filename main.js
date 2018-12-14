@@ -22,6 +22,8 @@ nodeStorage.setItem('userId', userId);
 const usr = ua('UA-130095148-1', userId);
 const Client = require('ssh2-sftp-client');
 const sftp = new Client();
+const unhandled = require('electron-unhandled');
+unhandled({logger: log.error, showDialog: true});
 
 let win;
 const doUpdates = true;

@@ -6,6 +6,8 @@ const fs = require('fs');
 const ipc = require('electron').ipcRenderer;
 const log = require('electron-log');
 const trackEvent = getGlobal('trackEvent');
+const unhandled = require('electron-unhandled');
+unhandled({logger: log.error, showDialog: true});
 
 var preferences = new Preferences();
 
@@ -39,7 +41,7 @@ $(document).ready(function () {
 	field.onload = () => {
 		pathEditor = new PathEditor(field);
 		pathEditor.update();
-	}
+	};
 	field.src = 'res/img/field18.png';
 
 	document.getElementById('windowMin').addEventListener('click', (event) => {
@@ -57,13 +59,13 @@ $(document).ready(function () {
 		if (event.keyCode == 13) {
 			document.getElementById('pointConfigConfirm').click();
 		}
-	}
+	};
 	var onSettingsEnter = (event) => {
 		event.preventDefault();
 		if (event.keyCode == 13) {
 			document.getElementById('settingsConfirm').click();
 		}
-	}
+	};
 
 	document.getElementById('pointX').addEventListener('keyup', onPointConfigEnter);
 	document.getElementById('pointY').addEventListener('keyup', onPointConfigEnter);

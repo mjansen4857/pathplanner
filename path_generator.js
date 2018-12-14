@@ -6,6 +6,8 @@ const homeDir = require('os').homedir();
 const log = require('electron-log');
 const fs = require('fs');
 const trackEvent = getGlobal('trackEvent');
+const unhandled = require('electron-unhandled');
+unhandled({logger: log.error, showDialog: true});
 
 // Generate the path when the main process requests it
 ipc.on('generate-path', function (event, data) {

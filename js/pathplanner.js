@@ -1,12 +1,6 @@
 var pathEditor;
-const {
-	BrowserWindow,
-	dialog,
-	getGlobal
-} = require('electron').remote;
-const {
-	remote
-} = require('electron');
+const {BrowserWindow, dialog, getGlobal} = require('electron').remote;
+const {shell} = require('electron');
 const homeDir = require('os').homedir();
 const fs = require('fs');
 const ipc = require('electron').ipcRenderer;
@@ -326,6 +320,14 @@ ipc.on('uploaded', function (event, data) {
 ipc.on('connect-failed', function (event, data) {
 	M.toast({html: '<span style="color: #d32f2f !important;">Failed to connect to robot!</span>', displayLength: 6000});
 });
+
+ipc.on('gh-update', function (event, data) {
+    M.toast({html:'PathPlanner ' + data + ' is available to download! <a class="btn waves-effect indigo" onclick="openRepo()" style="margin-left:20px !important;">Download</a>', displayLength:Infinity});
+});
+
+function openRepo() {
+    shell.openExternal('https://github.com/mjansen4857/PathPlanner/releases/latest');
+}
 
 function notifyUpdates(){
 	ipc.send('quit-and-install');

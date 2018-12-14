@@ -4,6 +4,7 @@ const log = require('electron-log');
 const homeDir = require('os').homedir();
 const {autoUpdater} = require('electron-updater');
 const os = require('os');
+const semver = require('semver');
 
 log.transports.file.level = 'info';
 log.transports.file.format = '[{m}/{d}/{y} {h}:{i}:{s}] [{level}] {text}';
@@ -23,6 +24,7 @@ const Client = require('ssh2-sftp-client');
 const sftp = new Client();
 
 let win;
+const doUpdates = true;
 
 /**
  * Track an event in google analytics
@@ -65,9 +67,19 @@ function createWindow(){
 // When the app is ready, create the window and check for updates if on windows
 app.on('ready', function(){
 	createWindow();
-	if(os.platform() == 'win32'){
-		autoUpdater.checkForUpdates();
-	}
+	if(doUpdates) {
+        if (os.platform() == 'win32') {
+            autoUpdater.checkForUpdates();
+        } else {
+            const github = require('octonode').client();
+            var repo = github.repo('mjansen4857/PathPlanner');
+            repo.releases((err, body, headers) => {
+                if (semver.gt(semver.clean(body[0].tag_name), app.getVersion())) {
+                    win.webContents.send('gh-update', body[0].tag_name);
+                }
+            });
+        }
+    }
 });
 
 // Quit the app when all windows are closed

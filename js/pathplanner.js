@@ -8,6 +8,8 @@ const log = require('electron-log');
 const trackEvent = getGlobal('trackEvent');
 const unhandled = require('electron-unhandled');
 unhandled({logger: log.error, showDialog: true});
+const hotkeys = require('hotkeys-js');
+const is = require('electron-is');
 
 var preferences = new Preferences();
 
@@ -29,6 +31,13 @@ $(document).ready(function () {
 	$('.tooltipped').tooltip();
 	$('.modal').modal();
 	$('select').formSelect();
+
+	if(is.macOS()){
+		document.getElementById('savePathBtn').setAttribute('data-tooltip', 'Save Path (⌘+S)');
+		document.getElementById('openPathBtn').setAttribute('data-tooltip', 'Open Path (⌘+O)');
+		document.getElementById('generatePathBtn').setAttribute('data-tooltip', 'Generate Path (⌘+G)');
+		document.getElementById('previewPathBtn').setAttribute('data-tooltip', 'Preview Path (⌘+P)');
+	}
 
 	$('form').on('keydown', 'input[type=number]', function (e) {
 		if (e.which == 38 || e.which == 40)
@@ -139,7 +148,15 @@ $(document).ready(function () {
 		trackEvent('User Interaction', 'Save Path');
 		savePath();
 	});
+	hotkeys('ctrl+s', () => {
+		trackEvent('User Interaction', 'Save Path');
+		savePath();
+	});
 	document.getElementById('openPathBtn').addEventListener('click', (event) => {
+		trackEvent('User Interaction', 'Open Path');
+		openPath();
+	});
+	hotkeys('ctrl+o', () => {
 		trackEvent('User Interaction', 'Open Path');
 		openPath();
 	});
@@ -153,7 +170,44 @@ $(document).ready(function () {
 		$('select').formSelect();
 		generateDialog.open();
 	});
+	hotkeys('ctrl+g', () => {
+		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
+		document.getElementById('pathName').value = preferences.currentPathName;
+		document.getElementById('outputType').selectedIndex = preferences.outputType;
+		document.getElementById('outputFormat').value = preferences.outputFormat;
+
+		M.updateTextFields();
+		$('select').formSelect();
+		generateDialog.open();
+	});
+	hotkeys('ctrl+shift+g', () => {
+		trackEvent('User Interaction', 'Generate Confirm');
+		var reversed = document.getElementById('reversed').checked;
+		ipc.send('generate', {
+			points: pathEditor.plannedPath.points,
+			preferences: preferences,
+			reverse: reversed
+		});
+	});
+	hotkeys('ctrl+shift+d', () => {
+		trackEvent('User Interaction', 'Deploy');
+		var reversed = document.getElementById('reversed').checked;
+		ipc.send('generate', {
+			points: pathEditor.plannedPath.points,
+			preferences: preferences,
+			reverse: reversed,
+			deploy: true
+		});
+	});
 	document.getElementById('previewPathBtn').addEventListener('click', (event) => {
+		trackEvent('User Interaction', 'Preview Path');
+		ipc.send('generate', {
+			points: pathEditor.plannedPath.points,
+			preferences: preferences,
+			preview: true
+		});
+	});
+	hotkeys('ctrl+p', () => {
 		trackEvent('User Interaction', 'Preview Path');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -195,26 +249,28 @@ function savePath() {
 			extensions: ['path']
 		}]
 	}, (filename, bookmark) => {
-		var delim = '\\';
-		if(filename.lastIndexOf(delim) == -1) delim = '/';
-		preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
-		preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
-		var points = pathEditor.plannedPath.points;
-		var fixedPoints = [];
-		for (var i = 0; i < points.length; i++) {
-			fixedPoints[i] = [Math.round((points[i].x - xPixelOffset) / pixelsPerFoot * 100) / 100, Math.round((points[i].y - yPixelOffset) / pixelsPerFoot * 100) / 100];
-		}
-		var output = JSON.stringify({points: fixedPoints});
-		fs.writeFile(filename, output, 'utf8', (err) => {
-			if (err) {
-				log.error(err);
-			} else {
-				M.toast({
-					html: 'Path: "' + preferences.currentPathName + '" saved!',
-					displayLength: 6000
-				});
+		if(filename) {
+			var delim = '\\';
+			if (filename.lastIndexOf(delim) == -1) delim = '/';
+			preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
+			preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
+			var points = pathEditor.plannedPath.points;
+			var fixedPoints = [];
+			for (var i = 0; i < points.length; i++) {
+				fixedPoints[i] = [Math.round((points[i].x - xPixelOffset) / pixelsPerFoot * 100) / 100, Math.round((points[i].y - yPixelOffset) / pixelsPerFoot * 100) / 100];
 			}
-		});
+			var output = JSON.stringify({points: fixedPoints});
+			fs.writeFile(filename, output, 'utf8', (err) => {
+				if (err) {
+					log.error(err);
+				} else {
+					M.toast({
+						html: 'Path: "' + preferences.currentPathName + '" saved!',
+						displayLength: 6000
+					});
+				}
+			});
+		}
 	});
 }
 
@@ -235,29 +291,31 @@ function openPath() {
 		}],
 		properties: ['openFile']
 	}, (filePaths, bookmarks) => {
-		var filename = filePaths[0];
-		// filename = filename.replace(/\\/g, '/');
-		var delim = '\\';
-		if(filename.lastIndexOf(delim) == -1) delim = '/';
-		preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
-		preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
-		fs.readFile(filename, 'utf8', (err, data) => {
-			if (err) {
-				log.error(err);
-			} else {
-				var json = JSON.parse(data);
-				var points = json.points;
-				for (var i = 0; i < points.length; i++) {
-					points[i] = new Vector2(points[i][0]*pixelsPerFoot + xPixelOffset, points[i][1]*pixelsPerFoot + yPixelOffset);
+		if(filename) {
+			var filename = filePaths[0];
+			// filename = filename.replace(/\\/g, '/');
+			var delim = '\\';
+			if (filename.lastIndexOf(delim) == -1) delim = '/';
+			preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
+			preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
+			fs.readFile(filename, 'utf8', (err, data) => {
+				if (err) {
+					log.error(err);
+				} else {
+					var json = JSON.parse(data);
+					var points = json.points;
+					for (var i = 0; i < points.length; i++) {
+						points[i] = new Vector2(points[i][0] * pixelsPerFoot + xPixelOffset, points[i][1] * pixelsPerFoot + yPixelOffset);
+					}
+					pathEditor.plannedPath.points = points;
+					pathEditor.update();
+					M.toast({
+						html: 'Path: "' + preferences.currentPathName + '" loaded!',
+						displayLength: 6000
+					});
 				}
-				pathEditor.plannedPath.points = points;
-				pathEditor.update();
-				M.toast({
-					html: 'Path: "' + preferences.currentPathName + '" loaded!',
-					displayLength: 6000
-				});
-			}
-		});
+			});
+		}
 	});
 }
 

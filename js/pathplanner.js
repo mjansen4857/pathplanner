@@ -148,7 +148,7 @@ $(document).ready(function () {
 		trackEvent('User Interaction', 'Save Path');
 		savePath();
 	});
-	hotkeys('ctrl+s', () => {
+	hotkeys('ctrl+s,command+s', () => {
 		trackEvent('User Interaction', 'Save Path');
 		savePath();
 	});
@@ -156,7 +156,7 @@ $(document).ready(function () {
 		trackEvent('User Interaction', 'Open Path');
 		openPath();
 	});
-	hotkeys('ctrl+o', () => {
+	hotkeys('ctrl+o,command+o', () => {
 		trackEvent('User Interaction', 'Open Path');
 		openPath();
 	});
@@ -170,7 +170,7 @@ $(document).ready(function () {
 		$('select').formSelect();
 		generateDialog.open();
 	});
-	hotkeys('ctrl+g', () => {
+	hotkeys('ctrl+g,command+g', () => {
 		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
 		document.getElementById('pathName').value = preferences.currentPathName;
 		document.getElementById('outputType').selectedIndex = preferences.outputType;
@@ -180,7 +180,7 @@ $(document).ready(function () {
 		$('select').formSelect();
 		generateDialog.open();
 	});
-	hotkeys('ctrl+shift+g', () => {
+	hotkeys('ctrl+shift+g,command+shift+g', () => {
 		trackEvent('User Interaction', 'Generate Confirm');
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
@@ -189,7 +189,7 @@ $(document).ready(function () {
 			reverse: reversed
 		});
 	});
-	hotkeys('ctrl+shift+d', () => {
+	hotkeys('ctrl+shift+d,command+shift+d', () => {
 		trackEvent('User Interaction', 'Deploy');
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
@@ -207,7 +207,7 @@ $(document).ready(function () {
 			preview: true
 		});
 	});
-	hotkeys('ctrl+p', () => {
+	hotkeys('ctrl+p,command+p', () => {
 		trackEvent('User Interaction', 'Preview Path');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,

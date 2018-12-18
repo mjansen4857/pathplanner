@@ -1,4 +1,9 @@
 class PathEditor {
+	/**
+	 * Constructs a path editor which is used to edit the point locations for generating
+	 * a path
+	 * @param image The background image
+	 */
 	constructor(image) {
 		this.canvas = document.getElementById('canvas');
 		this.plannedPath = new PlannedPath();
@@ -13,6 +18,8 @@ class PathEditor {
 			x: 0,
 			y: 0
 		};
+		// Handle all mouse interactions with the points
+		// (Add, delete, drag, etc.)
 		this.canvas.addEventListener('mousemove', (evt) => {
 			var mousePos = getMousePos(this.canvas, evt);
 			if (evt.buttons == 0) {
@@ -104,11 +111,17 @@ class PathEditor {
 		this.canvas.addEventListener('mouseup', (evt) => this.pointDragIndex = -1);
 	}
 
+	/**
+	 * Clear the canvas
+	 */
 	clear() {
 		var g = this.canvas.getContext('2d');
 		g.clearRect(0, 0, this.canvas.width, this.canvas.height);
 	}
 
+	/**
+	 * Draw the canvas. This draws the background image and the path/points
+	 */
 	draw() {
 		var g = this.canvas.getContext('2d');
 
@@ -195,6 +208,11 @@ class PathEditor {
 		}
 	}
 
+	/**
+	 * Helper method to draw the outline of a robot
+	 * @param left The left-middle point of the robot
+	 * @param right The right-middle point of the robot
+	 */
 	drawRobotPerimeter(left, right) {
 		var g = this.canvas.getContext('2d');
 		var angle = Math.atan2(left.y - right.y, left.x - right.x);
@@ -216,6 +234,9 @@ class PathEditor {
 		g.stroke();
 	}
 
+	/**
+	 * Update the canvas
+	 */
 	update() {
 		if (!this.previewing) {
 			this.clear();
@@ -223,6 +244,11 @@ class PathEditor {
 		}
 	}
 
+	/**
+	 * Run a path preview
+	 * @param leftSegments The generated path for the left side
+	 * @param rightSegments The generated path for the right side
+	 */
 	previewPath(leftSegments, rightSegments) {
 		var i = 0;
 		this.previewing = true;
@@ -246,6 +272,9 @@ class PathEditor {
 		}, preferences.timeStep * 1000);
 	}
 
+	/**
+	 * Method called when a point is manually changed. This updates that point
+	 */
 	pointConfigOnConfirm() {
 		if (this.updatePoint != -1) {
 			var xPos = parseFloat(document.getElementById('pointX').value);
@@ -278,10 +307,6 @@ class PathEditor {
 			M.Modal.getInstance(document.getElementById('pointConfig')).close();
 		}
 	}
-
-	// settingsOnConfirm(){
-	// 	M.Modal.getInstance(document.getElementById('settings')).close();
-	// }
 }
 
 function getMousePos(canvas, evt) {

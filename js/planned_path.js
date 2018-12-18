@@ -1,34 +1,65 @@
 class PlannedPath {
+	/**
+	 * Construct a path which holds an array of points. The initial path
+	 * will be a simple path from the middle of the wall to the left switch
+	 */
 	constructor() {
-		this.points = new Array();
+		this.points = [];
 		this.points.push(new Vector2(1.5 * pixelsPerFoot + xPixelOffset, 13.6 * pixelsPerFoot + yPixelOffset));
 		this.points.push(new Vector2(7.5 * pixelsPerFoot + xPixelOffset, 13.6 * pixelsPerFoot + yPixelOffset));
 		this.points.push(new Vector2(5 * pixelsPerFoot + xPixelOffset, 9 * pixelsPerFoot + yPixelOffset));
 		this.points.push(new Vector2(10 * pixelsPerFoot + xPixelOffset, 9 * pixelsPerFoot + yPixelOffset));
 	}
 
+	/**
+	 * Get a point in the path
+	 * @param i The index of the point
+	 * @returns {Vector2} The point
+	 */
 	get(i) {
 		return this.points[i];
 	}
 
+	/**
+	 * Get the number of points in the path
+	 * @returns {number} The number of splines
+	 */
 	numPoints() {
 		return this.points.length;
 	}
 
+	/**
+	 * Get the number of splines in the path
+	 * @returns {number} The number of splines
+	 */
 	numSplines() {
 		return ((this.points.length - 4) / 3) + 1;
 	}
 
+	/**
+	 * Get the points in a spline
+	 * @param i The index of the spline
+	 * @returns {*[]} The points in the spline
+	 */
 	getPointsInSpline(i) {
-		return new Array(this.points[i * 3], this.points[i * 3 + 1], this.points[i * 3 + 2], this.points[i * 3 + 3]);
+		return [this.points[i * 3], this.points[i * 3 + 1], this.points[i * 3 + 2], this.points[i * 3 + 3]];
 	}
 
+	/**
+	 * Add a new spline to the path
+	 * @param anchorPos The position of the new anchor point
+	 */
 	addSpline(anchorPos) {
 		this.points.push(Vector2.subtract(Vector2.multiply(this.points[this.points.length - 1], 2), this.points[this.points.length - 2]));
 		this.points.push(Vector2.multiply(Vector2.add(this.points[this.points.length - 1], new Vector2(anchorPos.x, anchorPos.y)), 0.5))
 		this.points.push(new Vector2(anchorPos.x, anchorPos.y));
 	}
 
+	/**
+	 * Move a point in the path
+	 * @param i The index of the point to move
+	 * @param newPos The new position of the point
+	 */
 	movePoint(i, newPos) {
 		var deltaMove = Vector2.subtract(newPos, this.points[i]);
 		this.points[i] = newPos;
@@ -53,6 +84,10 @@ class PlannedPath {
 		}
 	}
 
+	/**
+	 * Delete a spline from the path
+	 * @param anchorIndex The index of the anchor point in the spline
+	 */
 	deleteSpline(anchorIndex) {
 		if (anchorIndex % 3 == 0 && this.numSplines() > 1) {
 			if (anchorIndex == 0) {

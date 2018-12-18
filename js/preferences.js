@@ -2,6 +2,10 @@ const Store = require('electron-store');
 const home = require('os').homedir();
 const store = new Store({name: 'settings', cwd: home + '/.PathPlanner'});
 
+/**
+ * A class to store references to app and robot preferences.
+ * When a preference is changed, the value is also updated in system storage.
+ */
 class Preferences{
 	constructor(){
 		this.p_maxVel = store.get('maxVel', 8.0);

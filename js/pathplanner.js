@@ -13,6 +13,7 @@ const is = require('electron-is');
 
 var preferences = new Preferences();
 
+// Set up some materialize stuff
 document.addEventListener('DOMContentLoaded', function () {
 	var actionElems = document.querySelectorAll('.fixed-action-btn');
 	var actionInstances = M.FloatingActionButton.init(actionElems, {
@@ -32,6 +33,7 @@ $(document).ready(function () {
 	$('.modal').modal();
 	$('select').formSelect();
 
+	// Update tooltips if user is on mac
 	if(is.macOS()){
 		document.getElementById('savePathBtn').setAttribute('data-tooltip', 'Save Path (⌘+S)');
 		document.getElementById('openPathBtn').setAttribute('data-tooltip', 'Open Path (⌘+O)');
@@ -39,6 +41,7 @@ $(document).ready(function () {
 		document.getElementById('previewPathBtn').setAttribute('data-tooltip', 'Preview Path (⌘+P)');
 	}
 
+	// Prevent arrow keys from incrementing numbers in input fields
 	$('form').on('keydown', 'input[type=number]', function (e) {
 		if (e.which == 38 || e.which == 40)
 			e.preventDefault();
@@ -46,6 +49,7 @@ $(document).ready(function () {
 
 	ipc.send('request-version');
 
+	// Load the field image and create the path editor
 	var field = new Image();
 	field.onload = () => {
 		pathEditor = new PathEditor(field);
@@ -53,16 +57,19 @@ $(document).ready(function () {
 	};
 	field.src = 'res/img/field18.png';
 
+	// Minimize the window when the minimize button is pressed
 	document.getElementById('windowMin').addEventListener('click', (event) => {
 		var window = BrowserWindow.getFocusedWindow();
 		window.minimize();
 	});
 
+	// Close the window when the close button is pressed
 	document.getElementById('windowClose').addEventListener('click', (event) => {
 		var window = BrowserWindow.getFocusedWindow();
 		window.close();
 	});
 
+	// Press the confirm button when enter is pressed in a dialog
 	var onPointConfigEnter = (event) => {
 		event.preventDefault();
 		if (event.keyCode == 13) {
@@ -76,6 +83,7 @@ $(document).ready(function () {
 		}
 	};
 
+	// Add the enter key listener to text fields/set their initial value
 	document.getElementById('pointX').addEventListener('keyup', onPointConfigEnter);
 	document.getElementById('pointY').addEventListener('keyup', onPointConfigEnter);
 	document.getElementById('pointAngle').addEventListener('keyup', onPointConfigEnter);
@@ -96,6 +104,7 @@ $(document).ready(function () {
 	document.getElementById('rioPathLocation').addEventListener('keyup', onSettingsEnter);
 	document.getElementById('rioPathLocation').value = preferences.rioPathLocation;
 
+	// Set the listeners for the confirm buttons
 	document.getElementById('settingsConfirm').addEventListener('click', (event) => {
 		trackEvent('User Interaction', 'Settings Confirm');
 		onSettingsConfirm();
@@ -144,6 +153,7 @@ $(document).ready(function () {
 		generateDialog.close();
 	});
 
+	// Set the listeners for action buttons and add their hotkeys
 	document.getElementById('savePathBtn').addEventListener('click', (event) => {
 		trackEvent('User Interaction', 'Save Path');
 		savePath();
@@ -216,9 +226,13 @@ $(document).ready(function () {
 		});
 	});
 
+	// Update the labels for the textfields since their contents were set in code
 	M.updateTextFields();
 });
 
+/**
+ * Update preferences when the settings are changed
+ */
 function onSettingsConfirm() {
 	preferences.maxVel = parseFloat(document.getElementById('robotMaxV').value);
 	preferences.maxAcc = parseFloat(document.getElementById('robotMaxAcc').value);
@@ -231,6 +245,9 @@ function onSettingsConfirm() {
 	M.Modal.getInstance(document.getElementById('settings')).close();
 }
 
+/**
+ * Save the current path to a file
+ */
 function savePath() {
 	var path = preferences.lastPathDir;
 
@@ -274,6 +291,9 @@ function savePath() {
 	});
 }
 
+/**
+ * Open a path from a file
+ */
 function openPath() {
 	var path = preferences.lastPathDir;
 
@@ -385,10 +405,16 @@ ipc.on('gh-update', function (event, data) {
     M.toast({html:'PathPlanner ' + data + ' is available to download! <a class="btn waves-effect indigo" onclick="openRepo()" style="margin-left:20px !important;">Download</a>', displayLength:Infinity});
 });
 
+/**
+ * Open the github repo in the browser
+ */
 function openRepo() {
     shell.openExternal('https://github.com/mjansen4857/PathPlanner/releases/latest');
 }
 
+/**
+ * Inform the main process that the user wants to update
+ */
 function notifyUpdates(){
 	ipc.send('quit-and-install');
 }

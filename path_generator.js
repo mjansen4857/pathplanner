@@ -185,7 +185,7 @@ class RobotPath {
 		log.info('Generating path...');
 		var start = new Date().getTime();
 		this.firstPointPixels = points[0];
-		this.path = new Path(join(points, 0.00001), points[0]);
+		this.path = new Path(join(points, 0.00001), points[0], preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
 		this.pathSegments = this.path.group;
 		this.timeSegments = new SegmentGroup();
 		this.left = new SegmentGroup();
@@ -463,7 +463,7 @@ class RobotPath {
 }
 
 class Path {
-	constructor(s, p0) {
+	constructor(s, p0, pixelsPerUnit) {
 		this.length = 0.0;
 		this.p0 = p0;
 		this.x = [];
@@ -471,16 +471,16 @@ class Path {
 		this.l = [];
 		this.inGroup = s;
 		this.group = new SegmentGroup();
-		this.makePath();
+		this.makePath(pixelsPerUnit);
 	}
 
     /**
 	 * Make the pre-generation path
      */
-	makePath() {
+	makePath(pixelsPerUnit) {
 		var start = new Date().getTime();
 		log.info('Generating path...');
-		this.makeScaledLists();
+		this.makeScaledLists(pixelsPerUnit);
 		this.calculateLength();
 		this.createSegments();
 		log.info('DONE IN: ' + (new Date().getTime() - start) + 'ms');
@@ -489,10 +489,10 @@ class Path {
     /**
 	 * Make x and y lists and convert the values from pixels to feet
      */
-	makeScaledLists() {
+	makeScaledLists(pixelsPerUnit) {
 		for (var i = 0; i < this.inGroup.segments.length; i++) {
-			this.x.push((this.inGroup.segments[i].x - this.p0.x) / Util.pixelsPerFoot);
-			this.y.push((this.inGroup.segments[i].y - this.p0.y) / Util.pixelsPerFoot);
+			this.x.push((this.inGroup.segments[i].x - this.p0.x) / pixelsPerUnit);
+			this.y.push((this.inGroup.segments[i].y - this.p0.y) / pixelsPerUnit);
 		}
 	}
 

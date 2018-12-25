@@ -103,6 +103,7 @@ $(document).ready(function () {
 	document.getElementById('teamNumber').value = preferences.teamNumber;
 	document.getElementById('rioPathLocation').addEventListener('keyup', onSettingsEnter);
 	document.getElementById('rioPathLocation').value = preferences.rioPathLocation;
+	document.getElementById('useMetric').checked = preferences.useMetric;
 
 	// Set the listeners for the confirm buttons
 	document.getElementById('settingsConfirm').addEventListener('click', (event) => {
@@ -242,6 +243,8 @@ function onSettingsConfirm() {
 	preferences.robotLength = parseFloat(document.getElementById('robotLength').value);
 	preferences.teamNumber = parseFloat(document.getElementById('teamNumber').value);
 	preferences.rioPathLocation = document.getElementById('rioPathLocation').value;
+	preferences.useMetric = document.getElementById('useMetric').checked;
+	pathEditor.update();
 	M.Modal.getInstance(document.getElementById('settings')).close();
 }
 
@@ -274,7 +277,7 @@ function savePath() {
 			var points = pathEditor.plannedPath.points;
 			var fixedPoints = [];
 			for (var i = 0; i < points.length; i++) {
-				fixedPoints[i] = [Math.round((points[i].x - xPixelOffset) / pixelsPerFoot * 100) / 100, Math.round((points[i].y - yPixelOffset) / pixelsPerFoot * 100) / 100];
+				fixedPoints[i] = [Math.round((points[i].x - xPixelOffset) / ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) * 100) / 100, Math.round((points[i].y - yPixelOffset) / ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) * 100) / 100];
 			}
 			var output = JSON.stringify({points: fixedPoints});
 			fs.writeFile(filename, output, 'utf8', (err) => {
@@ -325,7 +328,7 @@ function openPath() {
 					var json = JSON.parse(data);
 					var points = json.points;
 					for (var i = 0; i < points.length; i++) {
-						points[i] = new Vector2(points[i][0] * pixelsPerFoot + xPixelOffset, points[i][1] * pixelsPerFoot + yPixelOffset);
+						points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + xPixelOffset, points[i][1] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + yPixelOffset);
 					}
 					pathEditor.plannedPath.points = points;
 					pathEditor.update();

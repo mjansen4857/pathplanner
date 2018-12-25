@@ -20,6 +20,7 @@ class Preferences{
 		this.p_lastPathDir = store.get('lastPathDir', 'none');
 		this.p_teamNumber = store.get('teamNumber', 3015);
 		this.p_rioPathLocation = store.get('rioPathLocation', '/home/lvuser/paths');
+		this.p_useMetric = store.get('useMetric', false);
 		this.currentPathName = "path";
 	}
 
@@ -69,6 +70,10 @@ class Preferences{
 
 	get rioPathLocation(){
 		return this.p_rioPathLocation;
+	}
+
+	get useMetric(){
+		return this.p_useMetric;
 	}
 
 	set maxVel(value){
@@ -129,5 +134,10 @@ class Preferences{
 	set rioPathLocation(value){
 		store.set('rioPathLocation', value);
 		this.p_rioPathLocation = value;
+	}
+
+	set useMetric(value){
+		store.set('useMetric', value);
+		this.p_useMetric = value;
 	}
 }

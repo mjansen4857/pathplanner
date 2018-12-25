@@ -1,5 +1,6 @@
 // Numbers used for converting from pixels to feet and vice versa
 const pixelsPerFoot = 20.3;
+const pixelsPerMeter = pixelsPerFoot / 0.3048;
 const xPixelOffset = 54;
 const yPixelOffset = 76;
 
@@ -162,3 +163,4 @@ module.exports.Util = Util;
 module.exports.Util.xPixelOffset = xPixelOffset;
 module.exports.Util.yPixelOffset = yPixelOffset;
 module.exports.Util.pixelsPerFoot = pixelsPerFoot;
+module.exports.Util.pixelsPerMeter = pixelsPerMeter;

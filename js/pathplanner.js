@@ -279,7 +279,7 @@ function savePath() {
 			for (var i = 0; i < points.length; i++) {
 				fixedPoints[i] = [Math.round((points[i].x - xPixelOffset) / ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) * 100) / 100, Math.round((points[i].y - yPixelOffset) / ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) * 100) / 100];
 			}
-			var output = JSON.stringify({points: fixedPoints});
+			var output = JSON.stringify({points: fixedPoints, reversed: document.getElementById('reversed').checked});
 			fs.writeFile(filename, output, 'utf8', (err) => {
 				if (err) {
 					log.error(err);
@@ -314,8 +314,8 @@ function openPath() {
 		}],
 		properties: ['openFile']
 	}, (filePaths, bookmarks) => {
+		var filename = filePaths[0];
 		if(filename) {
-			var filename = filePaths[0];
 			// filename = filename.replace(/\\/g, '/');
 			var delim = '\\';
 			if (filename.lastIndexOf(delim) == -1) delim = '/';
@@ -327,6 +327,7 @@ function openPath() {
 				} else {
 					var json = JSON.parse(data);
 					var points = json.points;
+					document.getElementById('reversed').checked = json.reversed;
 					for (var i = 0; i < points.length; i++) {
 						points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + xPixelOffset, points[i][1] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + yPixelOffset);
 					}

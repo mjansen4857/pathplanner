@@ -112,6 +112,14 @@ class PathEditor {
 	}
 
 	/**
+	 * Update the field image
+	 * @param image The image to use
+	 */
+	updateImage(image){
+		this.image = image;
+	}
+
+	/**
 	 * Clear the canvas
 	 */
 	clear() {

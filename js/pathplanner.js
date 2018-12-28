@@ -31,7 +31,6 @@ $(document).ready(function () {
 	$('.tabs').tabs();
 	$('.tooltipped').tooltip();
 	$('.modal').modal();
-	$('select').formSelect();
 
 	// Update tooltips if user is on mac
 	if(is.macOS()){
@@ -55,7 +54,7 @@ $(document).ready(function () {
 		pathEditor = new PathEditor(field);
 		pathEditor.update();
 	};
-	field.src = 'res/img/field18.png';
+	field.src = 'res/img/field' + preferences.gameYear + '.png';
 
 	// Minimize the window when the minimize button is pressed
 	document.getElementById('windowMin').addEventListener('click', (event) => {
@@ -103,7 +102,9 @@ $(document).ready(function () {
 	document.getElementById('teamNumber').value = preferences.teamNumber;
 	document.getElementById('rioPathLocation').addEventListener('keyup', onSettingsEnter);
 	document.getElementById('rioPathLocation').value = preferences.rioPathLocation;
-	document.getElementById('useMetric').checked = preferences.useMetric;
+	document.getElementById('units').value = preferences.useMetric ? 'metric' : 'imperial';
+	document.getElementById('gameYear').value = preferences.gameYear;
+	$('select').formSelect();
 
 	// Set the listeners for the confirm buttons
 	document.getElementById('settingsConfirm').addEventListener('click', (event) => {
@@ -243,7 +244,17 @@ function onSettingsConfirm() {
 	preferences.robotLength = parseFloat(document.getElementById('robotLength').value);
 	preferences.teamNumber = parseFloat(document.getElementById('teamNumber').value);
 	preferences.rioPathLocation = document.getElementById('rioPathLocation').value;
-	preferences.useMetric = document.getElementById('useMetric').checked;
+	preferences.useMetric = document.getElementById('units').value == 'metric';
+	const gameYear = document.getElementById('gameYear').value;
+	if(preferences.gameYear != gameYear){
+		var field = new Image();
+		field.onload = () => {
+			pathEditor.updateImage(field);
+			pathEditor.update();
+		};
+		field.src = 'res/img/field' + gameYear + '.png';
+	}
+	preferences.gameYear = gameYear;
 	pathEditor.update();
 	M.Modal.getInstance(document.getElementById('settings')).close();
 }

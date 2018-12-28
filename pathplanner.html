@@ -56,6 +56,32 @@
 				<form class="col s12">
 					<div class="row">
 						<div class="col s6 input-field">
+							<input id="teamNumber" type="number" required step="1">
+							<label for="teamNumber">Team Number</label>
+						</div>
+						<div class="col s6 input-field">
+							<input id="rioPathLocation" type="text" required>
+							<label for="rioPathLocation">RoboRIO Path Location</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s6 input-field">
+							<select id="units">
+								<option value="imperial" selected>Imperial</option>
+								<option value="metric">Metric</option>
+							</select>
+							<label for="units">Units</label>
+						</div>
+						<div class="col s6 input-field">
+							<select id="gameYear">
+								<option value="18" selected>2018 - Power Up</option>
+								<option value="19">2019 - Deep Space</option>
+							</select>
+							<label for="gameYear">Game Year</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s6 input-field">
 							<input id="robotMaxV" type="number" required step="0.01">
 							<label for="robotMaxV">Max Velocity</label>
 						</div>
@@ -82,24 +108,6 @@
 						<div class="col s6 input-field">
 							<input id="robotLength" type="number" required step="0.01">
 							<label for="robotLength">Robot Length</label>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col s6 input-field">
-							<input id="teamNumber" type="number" required step="1">
-							<label for="teamNumber">Team Number</label>
-						</div>
-						<div class="col s6 input-field">
-							<input id="rioPathLocation" type="text" required>
-							<label for="rioPathLocation">RoboRIO Path Location</label>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col s6">
-							<label>
-								<input id="useMetric" class="filled-in" type="checkbox">
-								<span>Use Metric Units</span>
-							</label>
 						</div>
 					</div>
 				</form>
@@ -148,19 +156,19 @@
 				<form class="col s12">
 					<div class="row">
 						<div class="col s12 input-field">
-							<input id="pathName" type="text" required>
-							<label for="pathName">Path Name</label>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col s12 input-field">
 							<select id="outputType">
 								<option value="1" selected>CSV File</option>
 								<option value="2">Java Array</option>
 								<option value="3">C++ Array</option>
 								<option value="4">Python Array</option>
 							</select>
-							<label>Output Type</label>
+							<label for="outputType">Output Type</label>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col s12 input-field">
+							<input id="pathName" type="text" required>
+							<label for="pathName">Path Name</label>
 						</div>
 					</div>
 					<div class="row">
@@ -170,10 +178,11 @@
 						</div>
 					</div>
 					<div class="row">
-						<div class="col">
+						<div class="col switch reversed-switch">
 							<label>
-								<input id="reversed" class="filled-in" type="checkbox">
-								<span>Reversed</span>
+								<input id="reversed" type="checkbox">
+								<span class="lever"></span>
+								Reversed Output
 							</label>
 						</div>
 					</div>

@@ -71,6 +71,46 @@ a:focus{
 	margin-bottom: -10px !important;
 }
 
+.input-field input:focus {
+	border-bottom: 1px solid #3f51b5 !important;
+	box-shadow: 0 1px 0 0 #3f51b5 !important;
+}
+
+.input-field input:focus + label {
+	color: #3f51b5 !important;
+	font-weight: normal !important;
+}
+
+.input-field label {
+	color: #737373 !important;
+	font-weight: normal !important;
+}
+
+.reversed-switch{
+	margin-top: 5px !important;
+	margin-left: -20px !important;
+}
+
+.switch label{
+	color: #737373 !important;
+	font-size: 16px !important;
+	font-weight: normal !important;
+}
+
+.switch label input[type=checkbox]:checked+.lever {
+	background-color: #7986cb;
+}
+
+.switch label input[type=checkbox]:checked+.lever:after {
+	background-color: #3f51b5;
+}
+
+ul.dropdown-content.select-dropdown li span {
+	color: #202020 !important;
+	font-size: 14px !important;
+	font-weight: normal !important;
+}
+
 .brand-logo{
 	top: -9px !important;
 	font-size: 24px !important;
@@ -94,7 +134,7 @@ nav {
 
 #settings {
 	width: 35% !important;
-	height: 65% !important;
+	height: 70% !important;
 }
 
 #pointConfig {

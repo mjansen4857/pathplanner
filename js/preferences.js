@@ -21,6 +21,7 @@ class Preferences{
 		this.p_teamNumber = store.get('teamNumber', 3015);
 		this.p_rioPathLocation = store.get('rioPathLocation', '/home/lvuser/paths');
 		this.p_useMetric = store.get('useMetric', false);
+		this.p_gameYear = store.get('gameYear', '18');
 		this.currentPathName = "path";
 	}
 
@@ -74,6 +75,10 @@ class Preferences{
 
 	get useMetric(){
 		return this.p_useMetric;
+	}
+
+	get gameYear(){
+		return this.p_gameYear;
 	}
 
 	set maxVel(value){
@@ -139,5 +144,10 @@ class Preferences{
 	set useMetric(value){
 		store.set('useMetric', value);
 		this.p_useMetric = value;
+	}
+
+	set gameYear(value){
+		store.set('gameYear', value);
+		this.p_gameYear = value;
 	}
 }

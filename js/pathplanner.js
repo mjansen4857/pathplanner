@@ -325,9 +325,8 @@ function openPath() {
 		}],
 		properties: ['openFile']
 	}, (filePaths, bookmarks) => {
-		var filename = filePaths[0];
-		if(filename) {
-			// filename = filename.replace(/\\/g, '/');
+		if(filePaths) {
+			var filename = filePaths[0];
 			var delim = '\\';
 			if (filename.lastIndexOf(delim) == -1) delim = '/';
 			preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));

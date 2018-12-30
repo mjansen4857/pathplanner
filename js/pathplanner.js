@@ -232,8 +232,8 @@ $(document).ready(function () {
 	M.updateTextFields();
 
 	// Request the opened file if the app was opened using a .path file
-	if(is.production() && (is.windows() || is.linux())){
-		ipc.send('request-opened-file');
+	if(is.production()){
+		ipc.send('ready-for-file');
 	}
 });
 
@@ -429,22 +429,11 @@ ipc.on('gh-update', function (event, data) {
 });
 
 ipc.on('opened-file', function (event, data) {
-	handleOpen(data);
-});
-
-// Helper function to wait for when the app can handle opening a file
-function handleOpen(path) {
-	if(path){
-		if(pathEditor) {
-			trackEvent('User Interaction', 'Associated File');
-			loadFile(path);
-		}else{
-			setTimeout(() => {
-				handleOpen(path);
-			}, 10);
-		}
+	if(data){
+		trackEvent('User Interaction', 'Associated File');
+		loadFile(data);
 	}
-}
+});
 
 /**
  * Open the github repo in the browser

@@ -25,6 +25,7 @@ const sftp = new Client();
 const unhandled = require('electron-unhandled');
 unhandled({logger: log.error, showDialog: true});
 const is = require('electron-is');
+var macFile;
 
 let win;
 
@@ -190,21 +191,15 @@ ipc.on('generating', function(event, data){
 });
 
 // Send the path to the .path file that was opened with double click
-ipc.on('request-opened-file', function (event, data) {
-	win.webContents.send('opened-file', process.argv[1]);
-});
-
-// Do the same as above, but for MacOS
-app.on('open-file', (event, path) => {
-	handleMacFile(path);
-});
-
-function handleMacFile(path) {
-	if(win){
-		win.webContents.send('opened-file', path);
+ipc.on('ready-for-file', function (event, data) {
+	if(is.windows()){
+		win.webContents.send('opened-file', process.argv[1]);
 	}else{
-		setTimeout(() => {
-			handleMacFile(path);
-		}, 10);
+		win.webContents.send('opened-file', macFile);
 	}
-}
+});
+
+// Save the path to a variable for mac
+app.on('open-file', (event, path) => {
+	macFile = path;
+});

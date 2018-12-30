@@ -192,7 +192,7 @@ ipc.on('generating', function(event, data){
 
 // Send the path to the .path file that was opened with double click
 ipc.on('ready-for-file', function (event, data) {
-	if(is.windows()){
+	if(!is.macOS()){
 		win.webContents.send('opened-file', process.argv[1]);
 	}else{
 		win.webContents.send('opened-file', macFile);

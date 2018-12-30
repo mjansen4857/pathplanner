@@ -24,7 +24,17 @@
   </Capabilities>
   <Applications>
     <Application Id="PathPlanner" Executable="app\PathPlanner.exe" EntryPoint="Windows.FullTrustApplication">
-      <uap:VisualElements
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name=".path">
+			<uap:Logo>assets\PathPlanner.150x150.png</uap:Logo>
+            <uap:SupportedFileTypes>
+              <uap:FileType>.path</uap:FileType>
+            </uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+	  <uap:VisualElements
        BackgroundColor="#e6e6e6"
        DisplayName="PathPlanner"
        Square150x150Logo="assets\PathPlanner.150x150.png"

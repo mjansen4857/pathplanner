@@ -19,6 +19,14 @@
     "appId": "org.rangerrobotics.pathplanner",
     "productName": "PathPlanner",
     "artifactName": "pathplanner-${os}.${ext}",
+    "fileAssociations": {
+      "ext": "path",
+      "name": ".path"
+    },
+    "protocols": {
+      "name": "PathPlanner File URL",
+      "schemes": ["pathplanner"]
+    },
     "mac": {
       "target": "zip"
     },

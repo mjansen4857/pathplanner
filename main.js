@@ -188,3 +188,13 @@ ipc.on('preview-segments', function(event, data){
 ipc.on('generating', function(event, data){
 	win.webContents.send('generating', data);
 });
+
+// Send the path to the .path file that was opened with double click
+ipc.on('request-opened-file', function (event, data) {
+	win.webContents.send('opened-file', process.argv[1]);
+});
+
+// Do the same as above, but for MacOS
+app.on('open-file', (event, path) => {
+	win.webContents.send('opened-file', path);
+});

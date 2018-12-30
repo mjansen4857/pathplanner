@@ -230,6 +230,11 @@ $(document).ready(function () {
 
 	// Update the labels for the textfields since their contents were set in code
 	M.updateTextFields();
+
+	// Request the opened file if the app was opened using a .path file
+	if(is.production() && (is.windows() || is.linux())){
+		ipc.send('request-opened-file');
+	}
 });
 
 /**
@@ -327,27 +332,31 @@ function openPath() {
 	}, (filePaths, bookmarks) => {
 		if(filePaths) {
 			var filename = filePaths[0];
-			var delim = '\\';
-			if (filename.lastIndexOf(delim) == -1) delim = '/';
-			preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
-			preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
-			fs.readFile(filename, 'utf8', (err, data) => {
-				if (err) {
-					log.error(err);
-				} else {
-					var json = JSON.parse(data);
-					var points = json.points;
-					document.getElementById('reversed').checked = json.reversed;
-					for (var i = 0; i < points.length; i++) {
-						points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + xPixelOffset, points[i][1] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + yPixelOffset);
-					}
-					pathEditor.plannedPath.points = points;
-					pathEditor.update();
-					M.toast({
-						html: 'Path: "' + preferences.currentPathName + '" loaded!',
-						displayLength: 6000
-					});
-				}
+			loadFile(filename);
+		}
+	});
+}
+
+function loadFile(filename){
+	var delim = '\\';
+	if (filename.lastIndexOf(delim) == -1) delim = '/';
+	preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
+	preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
+	fs.readFile(filename, 'utf8', (err, data) => {
+		if (err) {
+			log.error(err);
+		} else {
+			var json = JSON.parse(data);
+			var points = json.points;
+			document.getElementById('reversed').checked = json.reversed;
+			for (var i = 0; i < points.length; i++) {
+				points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + xPixelOffset, points[i][1] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + yPixelOffset);
+			}
+			pathEditor.plannedPath.points = points;
+			pathEditor.update();
+			M.toast({
+				html: 'Path: "' + preferences.currentPathName + '" loaded!',
+				displayLength: 6000
 			});
 		}
 	});
@@ -418,6 +427,24 @@ ipc.on('connect-failed', function (event, data) {
 ipc.on('gh-update', function (event, data) {
     M.toast({html:'PathPlanner ' + data + ' is available to download! <a class="btn waves-effect indigo" onclick="openRepo()" style="margin-left:20px !important;">Download</a>', displayLength:Infinity});
 });
+
+ipc.on('opened-file', function (event, data) {
+	handleOpen(data);
+});
+
+// Helper function to wait for when the app can handle opening a file
+function handleOpen(path) {
+	if(path){
+		if(pathEditor) {
+			trackEvent('User Interaction', 'Associated File');
+			loadFile(path);
+		}else{
+			setTimeout(() => {
+				handleOpen(path);
+			}, 10);
+		}
+	}
+}
 
 /**
  * Open the github repo in the browser

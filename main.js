@@ -196,5 +196,15 @@ ipc.on('request-opened-file', function (event, data) {
 
 // Do the same as above, but for MacOS
 app.on('open-file', (event, path) => {
-	win.webContents.send('opened-file', path);
+	handleMacFile(path);
 });
+
+function handleMacFile(path) {
+	if(win){
+		win.webContents.send('opened-file', path);
+	}else{
+		setTimeout(() => {
+			handleMacFile(path);
+		}, 10);
+	}
+}

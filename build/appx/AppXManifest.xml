@@ -11,7 +11,7 @@
     <DisplayName>PathPlanner</DisplayName>
     <PublisherDisplayName>Michael Jansen</PublisherDisplayName>
     <Description>A simple yet powerful motion profile generator for FRC robots</Description>
-    <Logo>assets\PathPlanner.50x50.png</Logo>
+    <Logo>assets\PathPlanner.150x150.png</Logo>
   </Properties>
   <Resources>
     <Resource Language="en-us" />
@@ -35,10 +35,10 @@
         </uap:Extension>
       </Extensions>
 	  <uap:VisualElements
-       BackgroundColor="#e6e6e6"
+	   BackgroundColor="transparent"
        DisplayName="PathPlanner"
        Square150x150Logo="assets\PathPlanner.150x150.png"
-       Square44x44Logo="assets\PathPlanner.44x44.png"
+	   Square44x44Logo="assets\PathPlanner.44x44.png"
        Description="A simple yet powerful motion profile generator for FRC robots">
       </uap:VisualElements>
     </Application>

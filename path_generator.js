@@ -251,7 +251,7 @@ class RobotPath {
 		var r = (ab * bc * ac) / (4 * area);
 		// things get weird where 2 splines meet, and will give a very small radius
 		// therefore, ignore those points
-		if (i2 % (1/joinStep) == 0) {
+		if (i2 % Math.round(1/joinStep) == 0) {
 			r = this.calculateCurveRadius(i0 - 1, i0, i1);
 		}
 		// Return radius on outside of curve

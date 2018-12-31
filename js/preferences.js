@@ -151,3 +151,5 @@ class Preferences{
 		this.p_gameYear = value;
 	}
 }
+
+module.exports.Preferences = Preferences;

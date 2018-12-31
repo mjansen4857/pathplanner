@@ -1,3 +1,5 @@
+const {Vector2, Util} = require('./util.js');
+
 class PlannedPath {
 	/**
 	 * Construct a path which holds an array of points. The initial path
@@ -5,10 +7,10 @@ class PlannedPath {
 	 */
 	constructor() {
 		this.points = [];
-		this.points.push(new Vector2(1.5 * pixelsPerFoot + xPixelOffset, 13.6 * pixelsPerFoot + yPixelOffset));
-		this.points.push(new Vector2(7.5 * pixelsPerFoot + xPixelOffset, 13.6 * pixelsPerFoot + yPixelOffset));
-		this.points.push(new Vector2(5 * pixelsPerFoot + xPixelOffset, 9 * pixelsPerFoot + yPixelOffset));
-		this.points.push(new Vector2(10 * pixelsPerFoot + xPixelOffset, 9 * pixelsPerFoot + yPixelOffset));
+		this.points.push(new Vector2(1.5 * Util.pixelsPerFoot + Util.xPixelOffset, 13.6 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.points.push(new Vector2(7.5 * Util.pixelsPerFoot + Util.xPixelOffset, 13.6 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.points.push(new Vector2(5 * Util.pixelsPerFoot + Util.xPixelOffset, 9 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.points.push(new Vector2(10 * Util.pixelsPerFoot + Util.xPixelOffset, 9 * Util.pixelsPerFoot + Util.yPixelOffset));
 	}
 
 	/**
@@ -100,3 +102,5 @@ class PlannedPath {
 		}
 	}
 }
+
+module.exports.PlannedPath = PlannedPath;

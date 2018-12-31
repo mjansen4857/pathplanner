@@ -1,4 +1,3 @@
-var pathEditor;
 const {BrowserWindow, dialog, getGlobal} = require('electron').remote;
 const {shell} = require('electron');
 const homeDir = require('os').homedir();
@@ -10,8 +9,12 @@ const unhandled = require('electron-unhandled');
 unhandled({logger: log.error, showDialog: true});
 const hotkeys = require('hotkeys-js');
 const is = require('electron-is');
+const {Preferences} = require('./js/preferences.js');
+const {Vector2, Util} = require('./js/util.js');
+const {PathEditor} = require('./js/path_editor.js');
 
-var preferences = new Preferences();
+let pathEditor;
+global.preferences = new Preferences();
 
 // Set up some materialize stuff
 document.addEventListener('DOMContentLoaded', function () {
@@ -293,7 +296,7 @@ function savePath() {
 			var points = pathEditor.plannedPath.points;
 			var fixedPoints = [];
 			for (var i = 0; i < points.length; i++) {
-				fixedPoints[i] = [Math.round((points[i].x - xPixelOffset) / ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) * 100) / 100, Math.round((points[i].y - yPixelOffset) / ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) * 100) / 100];
+				fixedPoints[i] = [Math.round((points[i].x - Util.xPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100, Math.round((points[i].y - Util.yPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100];
 			}
 			var output = JSON.stringify({points: fixedPoints, reversed: document.getElementById('reversed').checked});
 			fs.writeFile(filename, output, 'utf8', (err) => {
@@ -350,7 +353,7 @@ function loadFile(filename){
 			var points = json.points;
 			document.getElementById('reversed').checked = json.reversed;
 			for (var i = 0; i < points.length; i++) {
-				points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + xPixelOffset, points[i][1] * ((preferences.useMetric) ? pixelsPerMeter : pixelsPerFoot) + yPixelOffset);
+				points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.xPixelOffset, points[i][1] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.yPixelOffset);
 			}
 			pathEditor.plannedPath.points = points;
 			pathEditor.update();

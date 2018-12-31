@@ -8,6 +8,7 @@ const fs = require('fs');
 const trackEvent = getGlobal('trackEvent');
 const unhandled = require('electron-unhandled');
 unhandled({logger: log.error, showDialog: true});
+const joinStep = 0.00001;
 
 // Generate the path when the main process requests it
 ipc.on('generate-path', function (event, data) {
@@ -184,8 +185,7 @@ class RobotPath {
 	constructor(points, preferences) {
 		log.info('Generating path...');
 		var start = new Date().getTime();
-		this.firstPointPixels = points[0];
-		this.path = new Path(join(points, 0.00001), points[0], preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
+		this.path = new Path(join(points, joinStep), points[0], preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
 		this.pathSegments = this.path.group;
 		this.timeSegments = new SegmentGroup();
 		this.left = new SegmentGroup();
@@ -251,7 +251,7 @@ class RobotPath {
 		var r = (ab * bc * ac) / (4 * area);
 		// things get weird where 2 splines meet, and will give a very small radius
 		// therefore, ignore those points
-		if (i2 % 100000 == 0) {
+		if (i2 % (1/joinStep) == 0) {
 			r = this.calculateCurveRadius(i0 - 1, i0, i1);
 		}
 		// Return radius on outside of curve
@@ -285,7 +285,7 @@ class RobotPath {
 		log.info('1: ' + (new Date().getTime() - start1) + 'ms');
 		var start2 = new Date().getTime();
 		p[p.length - 1].vel = 0;
-		for (var i = p.length - 2; i > 1; i--) {
+		for (i = p.length - 2; i > 1; i--) {
 			var v0 = p[i + 1].vel;
 			var dx = p[i + 1].dx;
 			var vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * this.maxAcc * dx));

@@ -2,16 +2,14 @@ const {app, BrowserWindow} = require('electron');
 const ipc = require('electron').ipcMain;
 const log = require('electron-log');
 const homeDir = require('os').homedir();
-const {autoUpdater} = require('electron-updater');
-const os = require('os');
-const semver = require('semver');
-
 log.transports.file.level = 'info';
 log.transports.file.format = '[{m}/{d}/{y} {h}:{i}:{s}] [{level}] {text}';
 log.transports.file.maxSize = 10 * 1024 * 1024;
 log.transports.file.file = homeDir + '/.PathPlanner/log.txt';
 log.transports.console.format = '[{m}/{d}][{h}:{i}:{s}] [{level}] {text}';
-
+const {autoUpdater} = require('electron-updater');
+const os = require('os');
+const semver = require('semver');
 const ua = require('universal-analytics');
 const uuid = require('uuid');
 const {JSONStorage} = require('node-localstorage');
@@ -25,8 +23,7 @@ const sftp = new Client();
 const unhandled = require('electron-unhandled');
 unhandled({logger: log.error, showDialog: true});
 const is = require('electron-is');
-var macFile;
-
+let macFile = 1;
 let win;
 
 /**
@@ -39,6 +36,7 @@ let win;
 function trackEvent(category, action, label, value){
 	usr.event(category, action, label, value).send();
 }
+
 global.trackEvent = trackEvent;
 
 /**
@@ -75,7 +73,7 @@ app.on('ready', function(){
 			if (!is.windowsStore()) autoUpdater.checkForUpdates();
 		} else {
 			const github = require('octonode').client();
-			var repo = github.repo('mjansen4857/PathPlanner');
+			const repo = github.repo('mjansen4857/PathPlanner');
 			repo.releases((err, body, headers) => {
 				if(body) {
 					if (semver.gt(semver.clean(body[0].tag_name), app.getVersion())) {

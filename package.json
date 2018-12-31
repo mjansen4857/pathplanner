@@ -25,14 +25,22 @@
     },
     "protocols": {
       "name": "PathPlanner File URL",
-      "schemes": ["pathplanner"]
+      "schemes": [
+        "pathplanner"
+      ]
     },
     "mac": {
       "target": "zip"
     },
     "linux": {
       "target": "tar.gz"
-    }
+    },
+    "files": [
+      "**/*",
+      "!build${/*}",
+      "!dist${/*}",
+      "!res/psd${/*}"
+    ]
   },
   "repository": "https://github.com/mjansen4857/PathPlanner.git",
   "author": "Michael Jansen",

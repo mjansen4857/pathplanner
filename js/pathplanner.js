@@ -89,6 +89,7 @@ $(document).ready(function () {
 	document.getElementById('pointX').addEventListener('keyup', onPointConfigEnter);
 	document.getElementById('pointY').addEventListener('keyup', onPointConfigEnter);
 	document.getElementById('pointAngle').addEventListener('keyup', onPointConfigEnter);
+	document.getElementById('pointVelocity').addEventListener('keyup', onPointConfigEnter);
 	document.getElementById('robotMaxV').addEventListener('keyup', onSettingsEnter);
 	document.getElementById('robotMaxV').value = preferences.maxVel;
 	document.getElementById('robotMaxAcc').addEventListener('keyup', onSettingsEnter);
@@ -131,6 +132,7 @@ $(document).ready(function () {
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
+			velocities: pathEditor.plannedPath.velocities,
 			preferences: preferences,
 			reverse: reversed
 		});
@@ -150,6 +152,7 @@ $(document).ready(function () {
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
+			velocities: pathEditor.plannedPath.velocities,
 			preferences: preferences,
 			reverse: reversed,
 			deploy: true
@@ -200,6 +203,7 @@ $(document).ready(function () {
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
+			velocities: pathEditor.plannedPath.velocities,
 			preferences: preferences,
 			reverse: reversed
 		});
@@ -209,6 +213,7 @@ $(document).ready(function () {
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
+			velocities: pathEditor.plannedPath.velocities,
 			preferences: preferences,
 			reverse: reversed,
 			deploy: true
@@ -218,6 +223,7 @@ $(document).ready(function () {
 		trackEvent('User Interaction', 'Preview Path');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
+			velocities: pathEditor.plannedPath.velocities,
 			preferences: preferences,
 			preview: true
 		});
@@ -226,6 +232,7 @@ $(document).ready(function () {
 		trackEvent('User Interaction', 'Preview Path');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
+			velocities: pathEditor.plannedPath.velocities,
 			preferences: preferences,
 			preview: true
 		});
@@ -244,7 +251,11 @@ $(document).ready(function () {
  * Update preferences when the settings are changed
  */
 function onSettingsConfirm() {
+	const oldVel = preferences.maxVel;
 	preferences.maxVel = parseFloat(document.getElementById('robotMaxV').value);
+	if(preferences.maxVel != oldVel){
+		pathEditor.updateVelocities(oldVel, preferences.maxVel);
+	}
 	preferences.maxAcc = parseFloat(document.getElementById('robotMaxAcc').value);
 	preferences.mu = parseFloat(document.getElementById('robotMu').value);
 	preferences.timeStep = parseFloat(document.getElementById('robotTimeStep').value);
@@ -298,7 +309,7 @@ function savePath() {
 			for (var i = 0; i < points.length; i++) {
 				fixedPoints[i] = [Math.round((points[i].x - Util.xPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100, Math.round((points[i].y - Util.yPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100];
 			}
-			var output = JSON.stringify({points: fixedPoints, reversed: document.getElementById('reversed').checked});
+			var output = JSON.stringify({points: fixedPoints, velocities: pathEditor.plannedPath.velocities, reversed: document.getElementById('reversed').checked});
 			fs.writeFile(filename, output, 'utf8', (err) => {
 				if (err) {
 					log.error(err);
@@ -356,6 +367,14 @@ function loadFile(filename){
 				points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.xPixelOffset, points[i][1] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.yPixelOffset);
 			}
 			pathEditor.plannedPath.points = points;
+			var velocities = json.velocities;
+			if(!velocities){
+				velocities = [];
+				for(var i = 0; i < pathEditor.plannedPath.numSplines() + 1; i++){
+					velocities.push(preferences.maxVel);
+				}
+			}
+			pathEditor.plannedPath.velocities = velocities;
 			pathEditor.update();
 			M.toast({
 				html: 'Path: "' + preferences.currentPathName + '" loaded!',

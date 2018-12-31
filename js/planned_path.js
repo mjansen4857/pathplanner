@@ -11,6 +11,9 @@ class PlannedPath {
 		this.points.push(new Vector2(7.5 * Util.pixelsPerFoot + Util.xPixelOffset, 13.6 * Util.pixelsPerFoot + Util.yPixelOffset));
 		this.points.push(new Vector2(5 * Util.pixelsPerFoot + Util.xPixelOffset, 9 * Util.pixelsPerFoot + Util.yPixelOffset));
 		this.points.push(new Vector2(10 * Util.pixelsPerFoot + Util.xPixelOffset, 9 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.velocities = [];
+		this.velocities.push(preferences.maxVel);
+		this.velocities.push(preferences.maxVel);
 	}
 
 	/**
@@ -55,6 +58,7 @@ class PlannedPath {
 		this.points.push(Vector2.subtract(Vector2.multiply(this.points[this.points.length - 1], 2), this.points[this.points.length - 2]));
 		this.points.push(Vector2.multiply(Vector2.add(this.points[this.points.length - 1], new Vector2(anchorPos.x, anchorPos.y)), 0.5))
 		this.points.push(new Vector2(anchorPos.x, anchorPos.y));
+		this.velocities.push(preferences.maxVel);
 	}
 
 	/**
@@ -99,6 +103,38 @@ class PlannedPath {
 			} else {
 				this.points.splice(anchorIndex - 1, 3);
 			}
+			this.velocities.splice(this.anchorIndexToVelocity(anchorIndex));
+		}
+	}
+
+	/**
+	 * Update a custom velocity
+	 * @param anchorIndex The index of the point to update
+	 * @param vel The new velocity
+	 */
+	updateVelocity(anchorIndex, vel){
+		this.velocities[this.anchorIndexToVelocity(anchorIndex)] = vel;
+	}
+
+	/**
+	 * Get a velocity for an anchor point
+	 * @param anchorIndex The anchor index
+	 * @returns {number} The velocity
+	 */
+	getVelocity(anchorIndex){
+		return this.velocities[this.anchorIndexToVelocity(anchorIndex)];
+	}
+
+	/**
+	 * Convert an anchor point index to its corresponding velocity index
+	 * @param anchorIndex The anchor index
+	 * @returns {number} The velocity index
+	 */
+	anchorIndexToVelocity(anchorIndex){
+		if(anchorIndex == 0){
+			return 0;
+		}else{
+			return ((anchorIndex - 3) / 3) + 1;
 		}
 	}
 }

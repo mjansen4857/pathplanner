@@ -97,6 +97,12 @@ class PathEditor {
 								}
 								var angle = Math.round(Math.atan2(control.y - anchor.y, control.x - anchor.x) * (180 / Math.PI) * 10000) / 10000;
 								document.getElementById('pointAngle').value = angle;
+								document.getElementById('pointVelocity').value = this.plannedPath.getVelocity(this.updatePoint);
+								if(this.updatePoint == 0 || this.updatePoint == this.plannedPath.points.length - 1){
+									document.getElementById('pointVelocity').disabled = true;
+								}else{
+									document.getElementById('pointVelocity').disabled = false;
+								}
 								M.updateTextFields();
 								pointConfigDialog.open();
 							}
@@ -112,6 +118,21 @@ class PathEditor {
 			}
 		});
 		this.canvas.addEventListener('mouseup', (evt) => this.pointDragIndex = -1);
+	}
+
+	/**
+	 * Update all point velocities that are one value to another.
+	 * Used when the robot max velocity is changed so point velocities
+	 * that are the max should be updated as well
+	 * @param oldValue
+	 * @param newValue
+	 */
+	updateVelocities(oldValue, newValue){
+		for(var i = 0; i < this.plannedPath.velocities.length; i++){
+			if(this.plannedPath.velocities[i] == oldValue || this.plannedPath.velocities[i] > newValue){
+				this.plannedPath.velocities[i] = newValue;
+			}
+		}
 	}
 
 	/**
@@ -291,6 +312,8 @@ class PathEditor {
 			var xPos = parseFloat(document.getElementById('pointX').value);
 			var yPos = parseFloat(document.getElementById('pointY').value);
 			var angle = parseFloat(document.getElementById('pointAngle').value);
+			var velocity = Math.max(parseFloat(document.getElementById('pointVelocity').value), (preferences.useMetric) ? 1*0.3048 : 1);
+			this.plannedPath.updateVelocity(this.updatePoint, Math.min(velocity, preferences.maxVel));
 
 			var controlIndex;
 			if (this.updatePoint == this.plannedPath.points.length - 1) {

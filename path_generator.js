@@ -14,13 +14,13 @@ const joinStep = 0.00001;
 ipc.on('generate-path', function (event, data) {
 	try {
 		if (data.preview) {
-			generateAndSendSegments(data.points, data.preferences);
+			generateAndSendSegments(data.points, data.velocities, data.preferences);
 		}else if(data.deploy){
-			generateAndDeploy(data.points, data.preferences, data.reverse);
+			generateAndDeploy(data.points, data.velocities, data.preferences, data.reverse);
 		} else if (data.preferences.p_outputType == 0) {
-			generateAndSave(data.points, data.preferences, data.reverse);
+			generateAndSave(data.points, data.velocities, data.preferences, data.reverse);
 		} else {
-			generateAndCopy(data.points, data.preferences, data.reverse);
+			generateAndCopy(data.points, data.velocities, data.preferences, data.reverse);
 		}
 	} catch (err) {
 		trackEvent('Error', 'Generate Error');
@@ -34,11 +34,12 @@ ipc.on('generate-path', function (event, data) {
 /**
  * Generate the path and send the segments back for a preview
  * @param points The path points
+ * @param velocities The path velocities
  * @param preferences The robot preferences
  */
-function generateAndSendSegments(points, preferences) {
+function generateAndSendSegments(points, velocities, preferences) {
 	ipc.send('generating');
-	var robotPath = new RobotPath(points, preferences);
+	var robotPath = new RobotPath(points, velocities, preferences);
 	ipc.send('preview-segments', {
 		left: robotPath.left.segments,
 		right: robotPath.right.segments
@@ -48,12 +49,13 @@ function generateAndSendSegments(points, preferences) {
 /**
  * Generate the path and upload the files to the roborio
  * @param points The path points
+ * @param velocities The path velocities
  * @param preferences The robot preferences
  * @param reverse Should the robot drive backwards
  */
-function generateAndDeploy(points, preferences, reverse) {
+function generateAndDeploy(points, velocities, preferences, reverse) {
 	ipc.send('generating');
-	var robotPath = new RobotPath(points, preferences);
+	var robotPath = new RobotPath(points, velocities, preferences);
 	var outL = '';
 	var outR = '';
 	if (reverse) {
@@ -75,13 +77,14 @@ function generateAndDeploy(points, preferences, reverse) {
 /**
  * Generate the path and copy the output arrays to the clipboard
  * @param points The path points
+ * @param velocities The path velocities
  * @param preferences The robot preferences
  * @param reverse Should the robot drive backwards
  */
-function generateAndCopy(points, preferences, reverse) {
+function generateAndCopy(points, velocities, preferences, reverse) {
 	trackEvent('Generation', 'Generate and Copy', undefined, parseInt(preferences.p_outputType));
 	ipc.send('generating');
-	var robotPath = new RobotPath(points, preferences);
+	var robotPath = new RobotPath(points, velocities, preferences);
 	var out;
 	if (preferences.p_outputType == 1) {
 		if (reverse) {
@@ -115,10 +118,11 @@ function generateAndCopy(points, preferences, reverse) {
 /**
  * Generate the path and save the files
  * @param points The path points
+ * @param velocities The path velocities
  * @param preferences The robot preferences
  * @param reverse Should the robot drive backwards
  */
-function generateAndSave(points, preferences, reverse) {
+function generateAndSave(points, velocities, preferences, reverse) {
 	trackEvent('Generation', 'Generate and Save');
 	var filePath = preferences.p_lastGenerateDir;
 	if (filePath == 'none') {
@@ -137,7 +141,7 @@ function generateAndSave(points, preferences, reverse) {
 		log.info(filename);
 
 		ipc.send('generating');
-		var robotPath = new RobotPath(points, preferences);
+		var robotPath = new RobotPath(points, velocities, preferences);
 		var outL = '';
 		var outR = '';
 		if (reverse) {
@@ -182,10 +186,11 @@ function join(points, step) {
 }
 
 class RobotPath {
-	constructor(points, preferences) {
+	constructor(points, velocities, preferences) {
 		log.info('Generating path...');
 		var start = new Date().getTime();
 		this.path = new Path(join(points, joinStep), points[0], preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
+		this.velocities = velocities;
 		this.pathSegments = this.path.group;
 		this.timeSegments = new SegmentGroup();
 		this.left = new SegmentGroup();
@@ -223,10 +228,32 @@ class RobotPath {
 			}
 			if (!isFinite(r) || isNaN(r)) {
 				this.pathSegments.segments[i].vel = this.maxVel;
+
+				const numSegments = Math.round(1/joinStep);
+				if(i % numSegments >= numSegments - Math.round(numSegments/4)){
+					const index = i + (numSegments - (i % numSegments));
+					const velIndex = ((index - numSegments) / numSegments) + 1;
+					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
+				}else if(i % numSegments <= Math.round(numSegments/4)){
+					const index = i - (i % numSegments);
+					const velIndex = ((index - numSegments) / numSegments) + 1;
+					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
+				}
 			} else {
 				// Calculate max velocity on curve given the coefficient of friction between wheels and carpet
 				var maxVCurve = Math.sqrt(this.mu * 9.8 * r);
 				this.pathSegments.segments[i].vel = Math.min(maxVCurve, this.maxVel);
+
+				const numSegments = Math.round(1/joinStep);
+				if(i % numSegments >= numSegments - Math.round(numSegments/4)){
+					const index = i + (numSegments - (i % numSegments));
+					const velIndex = ((index - numSegments) / numSegments) + 1;
+					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
+				}else if(i % numSegments <= Math.round(numSegments/4)){
+					const index = i - (i % numSegments);
+					const velIndex = ((index - numSegments) / numSegments) + 1;
+					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
+				}
 			}
 		}
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');

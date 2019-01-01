@@ -6,7 +6,7 @@
   <Identity Name="39956MichaelJansen.PathPlanner"
     ProcessorArchitecture="x64"
     Publisher="CN=2DF9861F-6D68-40A5-BCD2-A0BC837334E3"
-    Version="0.13.0.0" />
+    Version="0.14.0.0" />
   <Properties>
     <DisplayName>PathPlanner</DisplayName>
     <PublisherDisplayName>Michael Jansen</PublisherDisplayName>

@@ -23,7 +23,7 @@ const sftp = new Client();
 const unhandled = require('electron-unhandled');
 unhandled({logger: log.error, showDialog: true});
 const is = require('electron-is');
-let macFile = 1;
+let macFile;
 let win;
 
 /**

@@ -24,8 +24,8 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * **RoboRIO Path Location:** The folder on the RoboRIO that you would like the generated paths uploaded to.
 * **Units:** The units to use for generation. (Imperial or Metric)
 * **Game Year:** The game year to use for the field image.
-* **Max Velocity:** Maximum velocity of the robot.
-* **Max Acceleration:** Maximum acceleration of the robot.
+* **Max Velocity:** Maximum velocity of the robot (units/second).
+* **Max Acceleration:** Maximum acceleration of the robot (units/second<sup>2</sup>).
 * **Coefficient of Friction:** The coeficcient of friction between the robot wheels and the floor. This is used to determine the max robot velocity in a curve. Andymark lists the coefficient of friction for most of their wheels on their website. Otherwise, you can try to calculate it yourself, or just tune this value until you find something that works.
 * **Time Step:** The amount of time between each point in a profile in seconds.
 * **Wheelbase Width:** The width of the robot's drive train, used for splitting the left and right paths.

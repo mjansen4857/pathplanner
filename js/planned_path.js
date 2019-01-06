@@ -9,8 +9,8 @@ class PlannedPath {
 		this.points = [];
 		this.points.push(new Vector2(5.5 * Util.pixelsPerFoot + Util.xPixelOffset, 10.0 * Util.pixelsPerFoot + Util.yPixelOffset));
 		this.points.push(new Vector2(10.5 * Util.pixelsPerFoot + Util.xPixelOffset, 10.0 * Util.pixelsPerFoot + Util.yPixelOffset));
-		this.points.push(new Vector2(19.0 * Util.pixelsPerFoot + Util.xPixelOffset, 10.5 * Util.pixelsPerFoot + Util.yPixelOffset));
-		this.points.push(new Vector2(19.0 * Util.pixelsPerFoot + Util.xPixelOffset, 4.5 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.points.push(new Vector2(19.175 * Util.pixelsPerFoot + Util.xPixelOffset, 10.5 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.points.push(new Vector2(19.175 * Util.pixelsPerFoot + Util.xPixelOffset, 4.5 * Util.pixelsPerFoot + Util.yPixelOffset));
 		this.velocities = [];
 		this.velocities.push(preferences.maxVel);
 		this.velocities.push(preferences.maxVel);

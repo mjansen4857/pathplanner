@@ -1,8 +1,8 @@
 // Numbers used for converting from pixels to feet and vice versa
-const pixelsPerFoot = 20.3;
+const pixelsPerFoot = 20.15;
 const pixelsPerMeter = pixelsPerFoot / 0.3048;
-const xPixelOffset = 54;
-const yPixelOffset = 76;
+const xPixelOffset = 56;
+const yPixelOffset = 78;
 
 class Vector2{
 	/**

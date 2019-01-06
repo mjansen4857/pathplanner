@@ -18,10 +18,10 @@ class Preferences{
 		this.p_outputFormat = store.get('outputFormat', 'P,V,A,H');
 		this.p_lastGenerateDir = store.get('lastGenerateDir', 'none');
 		this.p_lastPathDir = store.get('lastPathDir', 'none');
-		this.p_teamNumber = store.get('teamNumber', 3015);
+		this.p_teamNumber = store.get('teamNumber', 0);
 		this.p_rioPathLocation = store.get('rioPathLocation', '/home/lvuser/paths');
 		this.p_useMetric = store.get('useMetric', false);
-		this.p_gameYear = store.get('gameYear', '18');
+		this.p_gameYear = store.get('gameYear', '19');
 		this.currentPathName = "path";
 	}
 

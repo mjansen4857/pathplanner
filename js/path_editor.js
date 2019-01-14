@@ -307,7 +307,10 @@ class PathEditor {
 			var xPos = parseFloat(document.getElementById('pointX').value);
 			var yPos = parseFloat(document.getElementById('pointY').value);
 			var angle = parseFloat(document.getElementById('pointAngle').value);
-			var velocity = Math.max(parseFloat(document.getElementById('pointVelocity').value), (preferences.useMetric) ? 1*0.3048 : 1);
+            var velocity = Math.max(parseFloat(document.getElementById('pointVelocity').value), (preferences.useMetric) ? 1*0.3048 : 1);
+			if(!velocity){
+				velocity = preferences.maxVel;
+			}
 			this.plannedPath.updateVelocity(this.updatePoint, Math.min(velocity, preferences.maxVel));
 
 			var controlIndex;

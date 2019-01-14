@@ -98,11 +98,6 @@ class PathEditor {
 								var angle = Math.round(Math.atan2(control.y - anchor.y, control.x - anchor.x) * (180 / Math.PI) * 10000) / 10000;
 								document.getElementById('pointAngle').value = angle;
 								document.getElementById('pointVelocity').value = this.plannedPath.getVelocity(this.updatePoint);
-								if(this.updatePoint == 0 || this.updatePoint == this.plannedPath.points.length - 1){
-									document.getElementById('pointVelocity').disabled = true;
-								}else{
-									document.getElementById('pointVelocity').disabled = false;
-								}
 								M.updateTextFields();
 								pointConfigDialog.open();
 							}

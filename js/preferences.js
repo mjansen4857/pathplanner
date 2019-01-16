@@ -19,7 +19,7 @@ class Preferences{
 		this.p_lastGenerateDir = store.get('lastGenerateDir', 'none');
 		this.p_lastPathDir = store.get('lastPathDir', 'none');
 		this.p_teamNumber = store.get('teamNumber', 0);
-		this.p_rioPathLocation = store.get('rioPathLocation', '/home/lvuser/paths');
+		this.p_rioPathLocation = store.get('deployLocation', '/home/lvuser/deploy/paths');
 		this.p_useMetric = store.get('useMetric', false);
 		this.p_gameYear = store.get('gameYear', '19');
 		this.currentPathName = "path";
@@ -137,7 +137,7 @@ class Preferences{
 	}
 
 	set rioPathLocation(value){
-		store.set('rioPathLocation', value);
+		store.set('deployLocation', value);
 		this.p_rioPathLocation = value;
 	}
 

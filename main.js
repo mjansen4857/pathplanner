@@ -16,7 +16,7 @@ const {JSONStorage} = require('node-localstorage');
 const nodeStorage = new JSONStorage(app.getPath('userData'));
 const newUser = !nodeStorage.getItem('userId');
 const userId = nodeStorage.getItem('userId') || uuid();
-nodeStorage.setItem('userId', userId);
+if(newUser) nodeStorage.setItem('userId', userId);
 const usr = ua('UA-130095148-1', userId);
 const Client = require('ssh2-sftp-client');
 const sftp = new Client();

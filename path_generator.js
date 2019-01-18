@@ -616,7 +616,9 @@ class SegmentGroup {
 	formatSegment(index, reverse, format) {
 		var s = this.segments[index];
 		var n = (reverse) ? -1 : 1;
-		var ret = format.replace(/p/g, (Math.round(s.pos * 10000) / 10000 * n));
+		var ret = format.replace(/x/g, (Math.round(s.x * 10000) / 10000 * n).toString());
+		ret = ret.replace(/y/g, (Math.round(s.y * 10000) / 10000 * n).toString());
+		ret = ret.replace(/p/g, (Math.round(s.pos * 10000) / 10000 * n).toString());
 		ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
 		ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());
 		ret = ret.replace(/h/g, (Math.round(s.heading * 10000) / 10000 * n).toString());

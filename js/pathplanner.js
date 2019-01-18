@@ -124,7 +124,7 @@ $(document).ready(function () {
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputType = document.getElementById('outputType').selectedIndex;
 		var format = document.getElementById('outputFormat').value.toLowerCase();
-		if(!format.match(/^[pvah](?:,[pvah])*$/g)){
+		if(!format.match(/^[xypvah](?:,[xypvah])*$/g)){
 			M.toast({html: '<span style="color: #d32f2f !important;">Invalid output format!</span>', displayLength: 5000});
 			return;
 		}

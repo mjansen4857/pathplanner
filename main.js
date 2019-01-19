@@ -16,7 +16,6 @@ const {JSONStorage} = require('node-localstorage');
 const {Preferences} = require('./js/preferences.js');
 const preferences = new Preferences();
 const nodeStorage = new JSONStorage(app.getPath('userData'));
-const newUser = !nodeStorage.getItem('userId') && !preferences.uid;
 const userId = preferences.uid || nodeStorage.getItem('userId') || uuid();
 preferences.uid = userId;
 const usr = ua('UA-130095148-1', userId);

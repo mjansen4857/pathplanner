@@ -13,10 +13,12 @@ const semver = require('semver');
 const ua = require('universal-analytics');
 const uuid = require('uuid');
 const {JSONStorage} = require('node-localstorage');
+const {Preferences} = require('./js/preferences.js');
+const preferences = new Preferences();
 const nodeStorage = new JSONStorage(app.getPath('userData'));
-const newUser = !nodeStorage.getItem('userId');
-const userId = nodeStorage.getItem('userId') || uuid();
-if(newUser) nodeStorage.setItem('userId', userId);
+const newUser = !nodeStorage.getItem('userId') && !preferences.uid;
+const userId = preferences.uid || nodeStorage.getItem('userId') || uuid();
+preferences.uid = userId;
 const usr = ua('UA-130095148-1', userId);
 const Client = require('ssh2-sftp-client');
 const sftp = new Client();
@@ -60,9 +62,7 @@ function createWindow(){
 	});
 
 	trackScreen();
-	if(newUser){
-		trackEvent('New User', os.platform());
-	}
+	trackEvent('OS', os.platform());
 }
 
 // When the app is ready, create the window and check for updates if on windows

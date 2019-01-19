@@ -25,6 +25,10 @@ class Preferences{
 		this.currentPathName = "path";
 	}
 
+	get uid(){
+		return store.get('uid');
+	}
+
 	get maxVel(){
 		return this.p_maxVel;
 	}
@@ -79,6 +83,10 @@ class Preferences{
 
 	get gameYear(){
 		return this.p_gameYear;
+	}
+
+	set uid(value){
+		store.set('uid', value);
 	}
 
 	set maxVel(value){

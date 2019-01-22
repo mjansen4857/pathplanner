@@ -12,6 +12,10 @@ const is = require('electron-is');
 const {Preferences} = require('./js/preferences.js');
 const {Vector2, Util} = require('./js/util.js');
 const {PathEditor} = require('./js/path_editor.js');
+const showdown = require('showdown');
+const semver = require('semver');
+const github = require('octonode').client();
+const repo = github.repo('mjansen4857/PathPlanner');
 
 let pathEditor;
 global.preferences = new Preferences();
@@ -159,6 +163,10 @@ $(document).ready(function () {
 		});
 		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
 		generateDialog.close();
+	});
+	document.getElementById('changesClose').addEventListener('click', (event) => {
+        var changesModal = M.Modal.getInstance(document.getElementById('changesModal'));
+        changesModal.close();
 	});
 
 	// Set the listeners for action buttons and add their hotkeys
@@ -428,6 +436,32 @@ ipc.on('downloading-update', function(event, data){
 
 ipc.on('app-version', function(event, data){
 	document.getElementById('title').innerText = 'PathPlanner v' + data;
+    if(is.production()){
+        if(!is.windows()){
+            repo.releases((err, body, headers) => {
+                if(body) {
+                    if (semver.gt(semver.clean(body[0].tag_name), data)) {
+                        M.toast({html:'PathPlanner ' + body[0].tag_name + ' is available to download! <a class="btn waves-effect indigo" onclick="openRepo()" style="margin-left:20px !important;">Download</a>', displayLength:Infinity});
+                    }
+                }
+            });
+        }
+        if(preferences.lastRunVersion && semver.gt(data, preferences.lastRunVersion)){
+            repo.releases((err, body, headers) => {
+                if(body) {
+                    var changesModal = M.Modal.getInstance(document.getElementById('changesModal'));
+                    var converter = new showdown.Converter();
+                    var changes = body[0].body;
+                    changes = changes.substr(changes.indexOf('\n') + 1);
+                    var html = converter.makeHtml(changes);
+                    html = html.replace('<ul>', '<ul class="browser-default">');
+                    document.getElementById('changesText').innerHTML = html;
+                    changesModal.open();
+                }
+            });
+        }
+        preferences.lastRunVersion = data;
+    }
 });
 
 ipc.on('connecting', function (event, data) {
@@ -444,10 +478,6 @@ ipc.on('uploaded', function (event, data) {
 
 ipc.on('connect-failed', function (event, data) {
 	M.toast({html: '<span style="color: #d32f2f !important;">Failed to connect to robot!</span>', displayLength: 6000});
-});
-
-ipc.on('gh-update', function (event, data) {
-    M.toast({html:'PathPlanner ' + data + ' is available to download! <a class="btn waves-effect indigo" onclick="openRepo()" style="margin-left:20px !important;">Download</a>', displayLength:Infinity});
 });
 
 ipc.on('opened-file', function (event, data) {

@@ -70,16 +70,6 @@ app.on('ready', function(){
 	if (is.production()) {
 		if (is.windows()) {
 			if (!is.windowsStore()) autoUpdater.checkForUpdates();
-		} else {
-			const github = require('octonode').client();
-			const repo = github.repo('mjansen4857/PathPlanner');
-			repo.releases((err, body, headers) => {
-				if(body) {
-					if (semver.gt(semver.clean(body[0].tag_name), app.getVersion())) {
-						win.webContents.send('gh-update', body[0].tag_name);
-					}
-				}
-			});
 		}
 	}
 });

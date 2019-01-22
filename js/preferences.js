@@ -25,6 +25,10 @@ class Preferences{
 		this.currentPathName = "path";
 	}
 
+	get lastRunVersion(){
+		return store.get('version');
+	}
+
 	get uid(){
 		return store.get('uid');
 	}
@@ -83,6 +87,10 @@ class Preferences{
 
 	get gameYear(){
 		return this.p_gameYear;
+	}
+
+	set lastRunVersion(value){
+		store.set('version', value);
 	}
 
 	set uid(value){

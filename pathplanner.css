@@ -147,6 +147,11 @@ nav {
 	height: 55% !important;
 }
 
+#changesModal li{
+	font-weight: normal;
+	font-size: 16px;
+}
+
 .tab{
 	width: 50% !important;
 }

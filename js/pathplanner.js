@@ -16,6 +16,8 @@ const showdown = require('showdown');
 const semver = require('semver');
 const github = require('octonode').client();
 const repo = github.repo('mjansen4857/PathPlanner');
+const SimpleUndo = require('simple-undo');
+let history;
 
 let pathEditor;
 global.preferences = new Preferences();
@@ -58,7 +60,9 @@ $(document).ready(function () {
 	// Load the field image and create the path editor
 	var field = new Image();
 	field.onload = () => {
-		pathEditor = new PathEditor(field);
+		pathEditor = new PathEditor(field, saveHistory);
+		history = new SimpleUndo({maxLength: 10, provider: pathSerializer});
+		history.save();
 		pathEditor.update();
 	};
 	field.src = 'res/img/field' + preferences.gameYear + '.png';
@@ -122,6 +126,7 @@ $(document).ready(function () {
 	document.getElementById('pointConfigConfirm').addEventListener('click', (event) => {
 		trackEvent('User Interaction', 'Point Confirm');
 		pathEditor.pointConfigOnConfirm();
+		history.save();
 	});
 	document.getElementById('generateModalConfirm').addEventListener('click', (event) => {
 		trackEvent('User Interaction', 'Generate Confirm');
@@ -244,6 +249,14 @@ $(document).ready(function () {
 			preferences: preferences,
 			preview: true
 		});
+	});
+	hotkeys('ctrl+z,command+z', () => {
+		trackEvent('User Interaction', 'Undo');
+		history.undo(handleUndoRedo);
+	});
+	hotkeys('ctrl+y,command+y', () => {
+		trackEvent('User Interaction', 'Redo');
+		history.redo(handleUndoRedo);
 	});
 
 	// Update the labels for the textfields since their contents were set in code
@@ -486,6 +499,22 @@ ipc.on('opened-file', function (event, data) {
 		loadFile(data);
 	}
 });
+
+function pathSerializer(done){
+	done(JSON.stringify({points: pathEditor.plannedPath.points}));
+}
+
+function handleUndoRedo(serialized){
+	var object = JSON.parse(serialized);
+	if(object) {
+        pathEditor.plannedPath.points = object.points;
+        pathEditor.update();
+    }
+}
+
+function saveHistory() {
+	history.save();
+}
 
 /**
  * Open the github repo in the browser

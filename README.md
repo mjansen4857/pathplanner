@@ -31,6 +31,8 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 | Ctrl + Shift + G                          | Generate Path with Last Used Settings |
 | Ctrl + Shift + D                          | Deploy Generated Path to Robot        |
 | Ctrl + P                                  | Preview Path                          |
+| Ctrl + Z                                  | Undo                                  |
+| Ctrl + Y                                  | Redo                                  |
 
 ## Settings
 <img align="right" width="400" src="https://i.imgur.com/PWDXw2K.png" alt="Robot Settings" />

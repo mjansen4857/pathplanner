@@ -65,6 +65,7 @@
     "octonode": "^0.9.5",
     "semver": "^5.6.0",
     "showdown": "^1.9.0",
+    "simple-undo": "^1.0.2",
     "ssh2-sftp-client": "^2.4.2",
     "universal-analytics": "^0.4.20",
     "uuid": "^3.3.2"

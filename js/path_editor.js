@@ -6,8 +6,9 @@ class PathEditor {
 	 * Constructs a path editor which is used to edit the point locations for generating
 	 * a path
 	 * @param image The background image
+	 * @param saveHistory The function to save to the undo/redo history
 	 */
-	constructor(image) {
+	constructor(image, saveHistory) {
 		this.canvas = document.getElementById('canvas');
 		this.plannedPath = new PlannedPath();
 		this.image = image;
@@ -21,6 +22,7 @@ class PathEditor {
 			x: 0,
 			y: 0
 		};
+		this.saveHistory = saveHistory;
 		// Handle all mouse interactions with the points
 		// (Add, delete, drag, etc.)
 		this.canvas.addEventListener('mousemove', (evt) => {
@@ -83,6 +85,7 @@ class PathEditor {
 							if (((evt.getModifierState('Control') || evt.getModifierState('Meta'))) && this.plannedPath.numSplines() > 1) {
 								this.plannedPath.deleteSpline(i);
 								this.update();
+								this.saveHistory();
 							} else {
 								var pointConfigDialog = M.Modal.getInstance(document.getElementById('pointConfig'));
 								this.updatePoint = i;
@@ -109,10 +112,16 @@ class PathEditor {
 					this.plannedPath.addSpline(new Vector2(mousePos.x, mousePos.y));
 					this.highlightedPoint = this.plannedPath.points.length - 1;
 					this.update();
+					this.saveHistory();
 				}
 			}
 		});
-		this.canvas.addEventListener('mouseup', (evt) => this.pointDragIndex = -1);
+		this.canvas.addEventListener('mouseup', (evt) => {
+			if(this.pointDragIndex != -1){
+				this.saveHistory();
+			}
+			this.pointDragIndex = -1;
+        });
 	}
 
 	/**

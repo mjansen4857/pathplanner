@@ -459,7 +459,7 @@ ipc.on('app-version', function(event, data){
                 }
             });
         }
-        if(preferences.lastRunVersion && semver.gt(data, preferences.lastRunVersion)){
+        if(semver.gt(data, preferences.lastRunVersion)){
             repo.releases((err, body, headers) => {
                 if(body) {
                     var changesModal = M.Modal.getInstance(document.getElementById('changesModal'));

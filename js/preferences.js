@@ -26,7 +26,7 @@ class Preferences{
 	}
 
 	get lastRunVersion(){
-		return store.get('version');
+		return store.get('version', '0.0.0');
 	}
 
 	get uid(){

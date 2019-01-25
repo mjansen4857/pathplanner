@@ -225,8 +225,8 @@ class PathEditor {
 				this.drawRobotPerimeter(l, r);
 			} else if (i == points.length - 1) {
 				var angle = Math.atan2(points[i - 1].y - points[i].y, points[i - 1].x - points[i].x);
-				var l = new Vector2(points[i].x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
-				var r = new Vector2(points[i].x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+				var l = new Vector2(points[i].x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+				var r = new Vector2(points[i].x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
 				g.fillStyle = "#d32f2f";
 				g.strokeStyle = "#d32f2f";
 				this.drawRobotPerimeter(l, r);

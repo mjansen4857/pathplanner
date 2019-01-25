@@ -132,8 +132,8 @@ $(document).ready(function () {
 		trackEvent('User Interaction', 'Generate Confirm');
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputType = document.getElementById('outputType').selectedIndex;
-		var format = document.getElementById('outputFormat').value.toLowerCase();
-		if(!format.match(/^[xypvaht](?:,[xypvaht])*$/g)){
+		var format = document.getElementById('outputFormat').value;
+		if(!format.match(/^[xypvahtSs](?:,[xypvahtSs])*$/g)){
 			M.toast({html: '<span style="color: #d32f2f !important;">Invalid output format!</span>', displayLength: 5000});
 			return;
 		}
@@ -153,8 +153,8 @@ $(document).ready(function () {
 		trackEvent('User Interaction', 'Deploy');
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputType = document.getElementById('outputType').selectedIndex;
-		var format = document.getElementById('outputFormat').value.toLowerCase();
-		if(!format.match(/^[xypvaht](?:,[xypvaht])*$/g)){
+		var format = document.getElementById('outputFormat').value;
+		if(!format.match(/^[xypvahtSs](?:,[xypvahtSs])*$/g)){
 			M.toast({html: '<span style="color: #d32f2f !important;">Invalid output format!</span>', displayLength: 5000});
 			return;
 		}

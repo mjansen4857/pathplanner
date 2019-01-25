@@ -59,13 +59,13 @@ function generateAndDeploy(points, velocities, preferences, reverse) {
 	var robotPath = new RobotPath(points, velocities, preferences);
 	var outL = '';
 	var outR = '';
-	var outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat);
+	var outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
 	if (reverse) {
-		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
-		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
+		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
 	} else {
-		outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
-		outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
+		outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+		outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
 	}
 	ipc.send('deploy-segments', {
 		left: outL,
@@ -92,38 +92,38 @@ function generateAndCopy(points, velocities, preferences, reverse) {
 	if (preferences.p_outputType == 1) {
 		if(preferences.p_splitPath) {
 			if (reverse) {
-				out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
-					robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+				out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
+					robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			} else {
-				out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
-					robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+				out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
+					robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			}
 		}else{
-			out = robotPath.timeSegments.formatJavaArray(preferences.currentPathName, reverse, preferences.p_outputFormat);
+			out = robotPath.timeSegments.formatJavaArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep);
 		}
 	} else if (preferences.p_outputType == 2) {
 		if(preferences.p_splitPath) {
 			if (reverse) {
-				out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
-					robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+				out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
+					robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			} else {
-				out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
-					robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+				out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
+					robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			}
 		}else{
-			out = robotPath.timeSegments.formatCppArray(preferences.currentPathName, reverse, preferences.p_outputFormat);
+			out = robotPath.timeSegments.formatCppArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep);
 		}
 	} else if (preferences.p_outputType == 3) {
 		if(preferences.p_splitPath) {
 			if (reverse) {
-				out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n' +
-					robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse);
+				out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n' +
+					robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			} else {
-				out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n' +
-					robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+				out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n' +
+					robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			}
 		}else{
-			out = robotPath.timeSegments.formatPythonArray(preferences.currentPathName, reverse, preferences.p_outputFormat);
+			out = robotPath.timeSegments.formatPythonArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep);
 		}
 	}
 	clipboard.writeText(out);
@@ -161,17 +161,17 @@ function generateAndSave(points, velocities, preferences, reverse) {
 			var outL = '';
 			var outR = '';
 			if (reverse) {
-				outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
-				outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
+				outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			} else {
-				outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
-				outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
+				outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			}
 
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_left.csv', outL, 'utf8');
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_right.csv', outR, 'utf8');
 		}else{
-			var out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat);
+			var out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '.csv', out, 'utf8');
 		}
 		ipc.send('files-saved', preferences.currentPathName);
@@ -596,10 +596,10 @@ class SegmentGroup {
 		this.segments = [];
 	}
 	
-	formatCSV(reverse, format) {
+	formatCSV(reverse, format, step) {
 		var str = '';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += this.formatSegment(i, reverse, format);
+			str += this.formatSegment(i, reverse, format, step);
 			if (i < this.segments.length - 1) {
 				str += '\n';
 			}
@@ -607,33 +607,33 @@ class SegmentGroup {
 		return str;
 	}
 
-	formatJavaArray(arrayName, reverse, format) {
+	formatJavaArray(arrayName, reverse, format, step) {
 		var str = 'public static double[][] ' + arrayName + ' = new double[][] {\n';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += '        {' + this.formatSegment(i, reverse, format) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+			str += '        {' + this.formatSegment(i, reverse, format, step) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
 		}
 		str += '    }';
 		return str;
 	}
 
-	formatCppArray(arrayName, reverse, format) {
+	formatCppArray(arrayName, reverse, format, step) {
 		var str = 'double ' + arrayName + '[][] = {\n';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += '        {' + this.formatSegment(i, reverse, format) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+			str += '        {' + this.formatSegment(i, reverse, format, step) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
 		}
 		str += '    }';
 		return str;
 	}
 
-	formatPythonArray(arrayName, reverse, format) {
+	formatPythonArray(arrayName, reverse, format, step) {
 		var str = arrayName + ' = [\n';
 		for (var i = 0; i < this.segments.length; i++) {
-			str += '    [' + this.formatSegment(i, reverse, format) + ((i < this.segments.length - 1) ? '],\n' : ']]');
+			str += '    [' + this.formatSegment(i, reverse, format, step) + ((i < this.segments.length - 1) ? '],\n' : ']]');
 		}
 		return str;
 	}
 
-	formatSegment(index, reverse, format) {
+	formatSegment(index, reverse, format, step) {
 		var s = this.segments[index];
 		var n = (reverse) ? -1 : 1;
 		var ret = format.replace(/x/g, (Math.round(s.x * 10000) / 10000 * n).toString());
@@ -642,7 +642,9 @@ class SegmentGroup {
 		ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
 		ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());
 		ret = ret.replace(/h/g, (Math.round(s.heading * 10000) / 10000 * n).toString());
-		ret = ret.replace(/t/g, (Math.round(s.time * 10000) / 10000 * n).toString());
+		ret = ret.replace(/t/g, (Math.round(s.time * 10000) / 10000).toString());
+		ret = ret.replace(/S/g, step.toString());
+		ret = ret.replace(/s/g, (step * 1000).toString());
 		return ret;
 	}
 

@@ -53,9 +53,11 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 
 * **Output Type:** The output type. Options are CSV file, Java array, C++ array, or Python array. CSV files are saved to a chosen location and arrays are copied to the clipboard.
 * **Path Name:** The name of the path. Underscores are assumed for CSV files and Python arrays while camel case is assumed for Java and C++ arrays
-* **Output Format:** The format to use for the output of the generation. This should consist of one or more of the following, separated by a comma: x (X coordinate), y (Y coordinate), p (Position), v (Velocity), a (Acceleration), h (Heading in Degrees), t (time). For example, a CSV file with format of p,v,a will output files where each line in the files is:
+* **Output Format:** The format to use for the output of the generation. This should consist of one or more of the following, separated by a comma: x (X Coordinate), y (Y Coordinate), p (Position), v (Velocity), a (Acceleration), h (Heading in Degrees), t (Time Elapsed), S (Time Step in Seconds), s (Time Step in Milliseconds). For example, a CSV file with format of p,v,a will output files where each line in the files is:
 
     `{position},{velocity},{acceleration}`
+    
+    **This field is case sensitive.**
 * **Reversed Output:** Should the robot drive backwards
 * **Split Path:** Should the generated path be split into two paths for each side of the drive train
 

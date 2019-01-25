@@ -44,6 +44,7 @@ function generateAndSendSegments(points, velocities, preferences) {
 		left: robotPath.left.segments,
 		right: robotPath.right.segments
 	});
+	log.info(robotPath.left.segments[100].vel + ', ' + robotPath.right.segments[100].vel);
 }
 
 /**
@@ -425,8 +426,8 @@ class RobotPath {
 			var cos_angle = Math.cos(seg.heading * (Math.PI/180));
 			var sin_angle = Math.sin(seg.heading * (Math.PI/180));
 
-			left.x = seg.x - (w * sin_angle);
-			left.y = seg.y + (w * cos_angle);
+			left.x = seg.x + (w * sin_angle);
+			left.y = seg.y - (w * cos_angle);
 			left.heading = seg.heading;
 			left.dydx = seg.dydx;
 			left.dt = seg.dt;
@@ -441,8 +442,8 @@ class RobotPath {
 				left.acc = (left.vel - last.vel) / seg.dt;
 			}
 
-			right.x = seg.x + (w * sin_angle);
-			right.y = seg.y - (w * cos_angle);
+			right.x = seg.x - (w * sin_angle);
+			right.y = seg.y + (w * cos_angle);
 			right.heading = seg.heading;
 			right.dydx = seg.dydx;
 			right.dt = seg.dt;

@@ -123,15 +123,24 @@ ipc.on('deploy-segments', function (event, data) {
 		win.webContents.send('uploading');
 		// Helper function to upload both path files
 		let upload = function(){
-			sftp.put(Buffer.from(data.left), data.path + '/' + data.name + '_left.csv').then((response) => {
-				log.info(response);
-				sftp.put(Buffer.from(data.right), data.path + '/' + data.name + '_right.csv').then((response) => {
-					log.info(response);
-				}).then(() => {
-					win.webContents.send('uploaded', data.name);
-					sftp.end();
+			if(preferences.splitPath) {
+                sftp.put(Buffer.from(data.left), data.path + '/' + data.name + '_left.csv').then((response) => {
+                    log.info(response);
+                    sftp.put(Buffer.from(data.right), data.path + '/' + data.name + '_right.csv').then((response) => {
+                        log.info(response);
+                    }).then(() => {
+                        win.webContents.send('uploaded', data.name);
+                        sftp.end();
+                    });
+                });
+            }else{
+                sftp.put(Buffer.from(data.center), data.path + '/' + data.name + '.csv').then((response) => {
+                    log.info(response);
+                }).then(() => {
+                    win.webContents.send('uploaded', data.name);
+                    sftp.end();
 				});
-			});
+			}
 		};
 		// Make the destination folder and upload files if it doesn't exist, otherwise just upload files
 		sftp.mkdir(data.path, true).then(() => {

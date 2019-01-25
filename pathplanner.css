@@ -87,7 +87,12 @@ a:focus{
 }
 
 .reversed-switch{
-	margin-top: 5px !important;
+	margin-top: -7px !important;
+	margin-left: -20px !important;
+}
+
+.split-switch{
+	margin-top: -15px !important;
 	margin-left: -20px !important;
 }
 
@@ -144,7 +149,7 @@ nav {
 
 #generateModal {
 	width: 35% !important;
-	height: 55% !important;
+	height: 57% !important;
 }
 
 #changesModal li{

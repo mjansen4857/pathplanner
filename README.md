@@ -49,14 +49,15 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * **Robot Length:** The length of the robot from bumper to bumper. This is used to draw the robot in the path preview and at the start/end points of the path.
 
 ## Path Generation
-<img align="right" width="400" src="https://i.imgur.com/R9vmVyo.png" alt="Path Generation" />
+<img align="right" width="400" src="https://i.imgur.com/NGzXr75.png" alt="Path Generation" />
 
 * **Output Type:** The output type. Options are CSV file, Java array, C++ array, or Python array. CSV files are saved to a chosen location and arrays are copied to the clipboard.
 * **Path Name:** The name of the path. Underscores are assumed for CSV files and Python arrays while camel case is assumed for Java and C++ arrays
 * **Output Format:** The format to use for the output of the generation. This should consist of one or more of the following, separated by a comma: x (X coordinate), y (Y coordinate), p (Position), v (Velocity), a (Acceleration), h (Heading in Degrees), t (time). For example, a CSV file with format of p,v,a will output files where each line in the files is:
 
     `{position},{velocity},{acceleration}`
-* **Reversed:** Should the robot drive backwards
+* **Reversed Output:** Should the robot drive backwards
+* **Split Path:** Should the generated path be split into two paths for each side of the drive train
 
 There are two different ways to generate paths. One is normal generation, where you can either save CSV files to your computer or arrays will be copied to your keyboard. The second option is deploying to the robot. This will generate CSV files and upload them to the RoboRIO (assuming you're connected to the robot) at the path chosen in the settings.
 

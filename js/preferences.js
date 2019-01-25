@@ -22,6 +22,7 @@ class Preferences{
 		this.p_rioPathLocation = store.get('deployLocation', '/home/lvuser/deploy/paths');
 		this.p_useMetric = store.get('useMetric', false);
 		this.p_gameYear = store.get('gameYear', '19');
+		this.p_splitPath = store.get('splitPath', true);
 		this.currentPathName = "path";
 	}
 
@@ -87,6 +88,10 @@ class Preferences{
 
 	get gameYear(){
 		return this.p_gameYear;
+	}
+
+	get splitPath(){
+		return this.p_splitPath;
 	}
 
 	set lastRunVersion(value){
@@ -165,6 +170,11 @@ class Preferences{
 	set gameYear(value){
 		store.set('gameYear', value);
 		this.p_gameYear = value;
+	}
+
+	set splitPath(value){
+		store.set('splitPath', value);
+		this.p_splitPath = value;
 	}
 }
 

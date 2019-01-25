@@ -138,6 +138,7 @@ $(document).ready(function () {
 			return;
 		}
 		preferences.outputFormat = format;
+		preferences.splitPath = document.getElementById('splitPath').checked;
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -158,6 +159,7 @@ $(document).ready(function () {
 			return;
 		}
 		preferences.outputFormat = format;
+		preferences.splitPath = document.getElementById('splitPath').checked;
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -196,6 +198,7 @@ $(document).ready(function () {
 		document.getElementById('pathName').value = preferences.currentPathName;
 		document.getElementById('outputType').selectedIndex = preferences.outputType;
 		document.getElementById('outputFormat').value = preferences.outputFormat;
+		document.getElementById('splitPath').checked = preferences.splitPath;
 
 		M.updateTextFields();
 		$('select').formSelect();
@@ -206,6 +209,7 @@ $(document).ready(function () {
 		document.getElementById('pathName').value = preferences.currentPathName;
 		document.getElementById('outputType').selectedIndex = preferences.outputType;
 		document.getElementById('outputFormat').value = preferences.outputFormat;
+		document.getElementById('splitPath').checked = preferences.splitPath;
 
 		M.updateTextFields();
 		$('select').formSelect();

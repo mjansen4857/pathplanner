@@ -59,6 +59,7 @@ function generateAndDeploy(points, velocities, preferences, reverse) {
 	var robotPath = new RobotPath(points, velocities, preferences);
 	var outL = '';
 	var outR = '';
+	var outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat);
 	if (reverse) {
 		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
 		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
@@ -69,6 +70,7 @@ function generateAndDeploy(points, velocities, preferences, reverse) {
 	ipc.send('deploy-segments', {
 		left: outL,
 		right: outR,
+		center: outC,
 		name: preferences.currentPathName,
 		team: preferences.p_teamNumber,
 		path: preferences.p_rioPathLocation
@@ -88,28 +90,40 @@ function generateAndCopy(points, velocities, preferences, reverse) {
 	var robotPath = new RobotPath(points, velocities, preferences);
 	var out;
 	if (preferences.p_outputType == 1) {
-		if (reverse) {
-			out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
-				robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
-		} else {
-			out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
-				robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+		if(preferences.p_splitPath) {
+			if (reverse) {
+				out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
+					robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+			} else {
+				out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
+					robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+			}
+		}else{
+			out = robotPath.timeSegments.formatJavaArray(preferences.currentPathName, reverse, preferences.p_outputFormat);
 		}
 	} else if (preferences.p_outputType == 2) {
-		if (reverse) {
-			out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
-				robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
-		} else {
-			out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
-				robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+		if(preferences.p_splitPath) {
+			if (reverse) {
+				out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
+					robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+			} else {
+				out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n    ' +
+					robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+			}
+		}else{
+			out = robotPath.timeSegments.formatCppArray(preferences.currentPathName, reverse, preferences.p_outputFormat);
 		}
 	} else if (preferences.p_outputType == 3) {
-		if (reverse) {
-			out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n' +
-				robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse);
-		} else {
-			out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n' +
-				robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+		if(preferences.p_splitPath) {
+			if (reverse) {
+				out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n' +
+					robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse);
+			} else {
+				out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat) + '\n\n' +
+					robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat);
+			}
+		}else{
+			out = robotPath.timeSegments.formatPythonArray(preferences.currentPathName, reverse, preferences.p_outputFormat);
 		}
 	}
 	clipboard.writeText(out);
@@ -143,18 +157,23 @@ function generateAndSave(points, velocities, preferences, reverse) {
 
 		ipc.send('generating');
 		var robotPath = new RobotPath(points, velocities, preferences);
-		var outL = '';
-		var outR = '';
-		if (reverse) {
-			outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
-			outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
-		} else {
-			outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
-			outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
-		}
+		if(preferences.p_splitPath) {
+			var outL = '';
+			var outR = '';
+			if (reverse) {
+				outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
+				outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
+			} else {
+				outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat);
+				outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat);
+			}
 
-		fs.writeFileSync(filename + '/' + preferences.currentPathName + '_left.csv', outL, 'utf8');
-		fs.writeFileSync(filename + '/' + preferences.currentPathName + '_right.csv', outR, 'utf8');
+			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_left.csv', outL, 'utf8');
+			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_right.csv', outR, 'utf8');
+		}else{
+			var out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat);
+			fs.writeFileSync(filename + '/' + preferences.currentPathName + '.csv', out, 'utf8');
+		}
 		ipc.send('files-saved', preferences.currentPathName);
 	}
 }

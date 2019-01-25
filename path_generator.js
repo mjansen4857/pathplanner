@@ -623,6 +623,7 @@ class SegmentGroup {
 		ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
 		ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());
 		ret = ret.replace(/h/g, (Math.round(s.heading * 10000) / 10000 * n).toString());
+		ret = ret.replace(/t/g, (Math.round(s.time * 10000) / 10000 * n).toString());
 		return ret;
 	}
 

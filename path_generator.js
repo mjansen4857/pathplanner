@@ -44,7 +44,6 @@ function generateAndSendSegments(points, velocities, preferences) {
 		left: robotPath.left.segments,
 		right: robotPath.right.segments
 	});
-	log.info(robotPath.left.segments[100].vel + ', ' + robotPath.right.segments[100].vel);
 }
 
 /**
@@ -412,6 +411,8 @@ class RobotPath {
 	calculateHeading() {
 		log.info('    Calculating robot heading...');
 		var start = new Date().getTime();
+		var startAngle = Math.atan2(-this.timeSegments.segments[0].y, -this.timeSegments.segments[0].x) * (180 / Math.PI) - 180;
+		log.info(startAngle);
 		for (var i = 0; i < this.timeSegments.segments.length; i++) {
 			var angle;
 			if (i == 0) {
@@ -425,7 +426,14 @@ class RobotPath {
 			}else if(angle > 180){
 				angle -= 360;
 			}
+			var relativeAngle = angle - startAngle;
+			if(relativeAngle < -180){
+				relativeAngle += 360;
+			}else if(relativeAngle > 180){
+				relativeAngle -= 360;
+			}
 			this.timeSegments.segments[i].heading = angle;
+			this.timeSegments.segments[i].relativeHeading = relativeAngle;
 		}
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
@@ -641,7 +649,8 @@ class SegmentGroup {
 		ret = ret.replace(/p/g, (Math.round(s.pos * 10000) / 10000 * n).toString());
 		ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
 		ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());
-		ret = ret.replace(/h/g, (Math.round(s.heading * 10000) / 10000 * n).toString());
+		ret = ret.replace(/h/g, (Math.round(s.heading * 10000) / 10000).toString());
+		ret = ret.replace(/H/g, (Math.round(s.relativeHeading * 10000) / 10000).toString());
 		ret = ret.replace(/t/g, (Math.round(s.time * 10000) / 10000).toString());
 		ret = ret.replace(/S/g, step.toString());
 		ret = ret.replace(/s/g, (step * 1000).toString());
@@ -658,6 +667,7 @@ class Segment {
 		this.x = 0.0;
 		this.y = 0.0;
 		this.heading = 0.0;
+		this.relativeHeading = 0.0;
 		this.pos = 0.0;
 		this.vel = 0.0;
 		this.acc = 0.0;

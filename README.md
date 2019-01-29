@@ -74,4 +74,6 @@ There are two different ways to generate paths. One is normal generation, where 
   * MacOS: `npm run build-mac`
 
   * Linux: `npm run build-linux`
+  
+  * Run in Development Mode: `npm start`
 * The built application will be located in the dist folder

@@ -412,7 +412,6 @@ class RobotPath {
 		log.info('    Calculating robot heading...');
 		var start = new Date().getTime();
 		var startAngle = Math.atan2(-this.timeSegments.segments[0].y, -this.timeSegments.segments[0].x) * (180 / Math.PI) - 180;
-		log.info(startAngle);
 		for (var i = 0; i < this.timeSegments.segments.length; i++) {
 			var angle;
 			if (i == 0) {
@@ -420,6 +419,7 @@ class RobotPath {
 			} else {
 				angle = Math.atan2(this.timeSegments.segments[i - 1].y - this.timeSegments.segments[i].y, this.timeSegments.segments[i - 1].x - this.timeSegments.segments[i].x) * (180 / Math.PI);
 			}
+            this.timeSegments.segments[i].rawHeading = angle + 180;
 			angle -= 180;
 			if(angle < -180){
 				angle += 360;
@@ -434,8 +434,28 @@ class RobotPath {
 			}
 			this.timeSegments.segments[i].heading = angle;
 			this.timeSegments.segments[i].relativeHeading = relativeAngle;
+
+			if(i == 0){
+                this.timeSegments.segments[i].winding = angle;
+                this.timeSegments.segments[i].relativeWinding = relativeAngle;
+			}else{
+				var diff = this.getAngleDifference(this.timeSegments.segments[i].rawHeading, this.timeSegments.segments[i - 1].rawHeading);
+				var winding = this.timeSegments.segments[i - 1].winding + diff;
+                var relativeWinding = this.timeSegments.segments[i - 1].relativeWinding + diff;
+                this.timeSegments.segments[i].winding = winding;
+                this.timeSegments.segments[i].relativeWinding = relativeWinding;
+			}
 		}
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
+	}
+
+	getAngleDifference(a, b){
+		var d = Math.abs(a - b) % 360;
+		var r = d > 180 ? 360 - d : d;
+
+		var sign = (a - b >= 0 && a - b <= 180) || (a - b <= -180 && a - b >= -360) ? 1 : -1;
+		r *= sign;
+		return r;
 	}
 
     /**
@@ -456,6 +476,9 @@ class RobotPath {
 			left.x = seg.x + (w * sin_angle);
 			left.y = seg.y - (w * cos_angle);
 			left.heading = seg.heading;
+			left.relativeHeading = seg.relativeHeading;
+			left.winding = seg.winding;
+			left.relativeWinding = seg.relativeWinding;
 			left.dydx = seg.dydx;
 			left.dt = seg.dt;
 			left.time = seg.time;
@@ -472,6 +495,9 @@ class RobotPath {
 			right.x = seg.x - (w * sin_angle);
 			right.y = seg.y + (w * cos_angle);
 			right.heading = seg.heading;
+			right.relativeHeading = seg.relativeHeading;
+			right.winding = seg.winding;
+            right.relativeWinding = seg.relativeWinding;
 			right.dydx = seg.dydx;
 			right.dt = seg.dt;
 			right.time = seg.time;
@@ -654,6 +680,8 @@ class SegmentGroup {
 		ret = ret.replace(/t/g, (Math.round(s.time * 10000) / 10000).toString());
 		ret = ret.replace(/S/g, step.toString());
 		ret = ret.replace(/s/g, (step * 1000).toString());
+		ret = ret.replace(/W/g, (Math.round(s.relativeWinding * 10000) / 10000).toString());
+        ret = ret.replace(/w/g, (Math.round(s.winding * 10000) / 10000).toString());
 		return ret;
 	}
 
@@ -668,6 +696,9 @@ class Segment {
 		this.y = 0.0;
 		this.heading = 0.0;
 		this.relativeHeading = 0.0;
+		this.winding = 0.0;
+		this.relativeWinding = 0.0;
+		this.rawHeading = 0.0;
 		this.pos = 0.0;
 		this.vel = 0.0;
 		this.acc = 0.0;

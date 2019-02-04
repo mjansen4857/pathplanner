@@ -42,7 +42,7 @@ $(document).ready(function () {
 	$('.modal').modal();
 
 	// Update tooltips if user is on mac
-	if(is.macOS()){
+	if (is.macOS()) {
 		document.getElementById('savePathBtn').setAttribute('data-tooltip', 'Save Path (⌘+S)');
 		document.getElementById('openPathBtn').setAttribute('data-tooltip', 'Open Path (⌘+O)');
 		document.getElementById('generatePathBtn').setAttribute('data-tooltip', 'Generate Path (⌘+G)');
@@ -133,8 +133,11 @@ $(document).ready(function () {
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputType = document.getElementById('outputType').selectedIndex;
 		var format = document.getElementById('outputFormat').value;
-		if(!format.match(/^[xypvahHtSsWw](?:,[xypvahHtSsWw])*$/g)){
-			M.toast({html: '<span style="color: #d32f2f !important;">Invalid output format!</span>', displayLength: 5000});
+		if (!format.match(/^[xypvahHtSsWw](?:,[xypvahHtSsWw])*$/g)) {
+			M.toast({
+				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
+				displayLength: 5000
+			});
 			return;
 		}
 		preferences.outputFormat = format;
@@ -154,8 +157,11 @@ $(document).ready(function () {
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputType = document.getElementById('outputType').selectedIndex;
 		var format = document.getElementById('outputFormat').value;
-		if(!format.match(/^[xypvahHtSsWw](?:,[xypvahHtSsWw])*$/g)){
-			M.toast({html: '<span style="color: #d32f2f !important;">Invalid output format!</span>', displayLength: 5000});
+		if (!format.match(/^[xypvahHtSsWw](?:,[xypvahHtSsWw])*$/g)) {
+			M.toast({
+				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
+				displayLength: 5000
+			});
 			return;
 		}
 		preferences.outputFormat = format;
@@ -172,8 +178,8 @@ $(document).ready(function () {
 		generateDialog.close();
 	});
 	document.getElementById('changesClose').addEventListener('click', (event) => {
-        var changesModal = M.Modal.getInstance(document.getElementById('changesModal'));
-        changesModal.close();
+		var changesModal = M.Modal.getInstance(document.getElementById('changesModal'));
+		changesModal.close();
 	});
 
 	// Set the listeners for action buttons and add their hotkeys
@@ -267,7 +273,7 @@ $(document).ready(function () {
 	M.updateTextFields();
 
 	// Request the opened file if the app was opened using a .path file
-	if(is.production()){
+	if (is.production()) {
 		ipc.send('ready-for-file');
 	}
 });
@@ -278,7 +284,7 @@ $(document).ready(function () {
 function onSettingsConfirm() {
 	const oldVel = preferences.maxVel;
 	preferences.maxVel = parseFloat(document.getElementById('robotMaxV').value);
-	if(preferences.maxVel != oldVel){
+	if (preferences.maxVel != oldVel) {
 		pathEditor.updateVelocities(oldVel, preferences.maxVel);
 	}
 	preferences.maxAcc = parseFloat(document.getElementById('robotMaxAcc').value);
@@ -290,7 +296,7 @@ function onSettingsConfirm() {
 	preferences.rioPathLocation = document.getElementById('rioPathLocation').value;
 	preferences.useMetric = document.getElementById('units').value == 'metric';
 	const gameYear = document.getElementById('gameYear').value;
-	if(preferences.gameYear != gameYear){
+	if (preferences.gameYear != gameYear) {
 		var field = new Image();
 		field.onload = () => {
 			pathEditor.updateImage(field);
@@ -324,7 +330,7 @@ function savePath() {
 			extensions: ['path']
 		}]
 	}, (filename, bookmark) => {
-		if(filename) {
+		if (filename) {
 			var delim = '\\';
 			if (filename.lastIndexOf(delim) == -1) delim = '/';
 			preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
@@ -334,7 +340,11 @@ function savePath() {
 			for (var i = 0; i < points.length; i++) {
 				fixedPoints[i] = [Math.round((points[i].x - Util.xPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100, Math.round((points[i].y - Util.yPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100];
 			}
-			var output = JSON.stringify({points: fixedPoints, velocities: pathEditor.plannedPath.velocities, reversed: document.getElementById('reversed').checked});
+			var output = JSON.stringify({
+				points: fixedPoints,
+				velocities: pathEditor.plannedPath.velocities,
+				reversed: document.getElementById('reversed').checked
+			});
 			fs.writeFile(filename, output, 'utf8', (err) => {
 				if (err) {
 					log.error(err);
@@ -369,14 +379,14 @@ function openPath() {
 		}],
 		properties: ['openFile']
 	}, (filePaths, bookmarks) => {
-		if(filePaths) {
+		if (filePaths) {
 			var filename = filePaths[0];
 			loadFile(filename);
 		}
 	});
 }
 
-function loadFile(filename){
+function loadFile(filename) {
 	var delim = '\\';
 	if (filename.lastIndexOf(delim) == -1) delim = '/';
 	preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
@@ -393,9 +403,9 @@ function loadFile(filename){
 			}
 			pathEditor.plannedPath.points = points;
 			var velocities = json.velocities;
-			if(!velocities){
+			if (!velocities) {
 				velocities = [];
-				for(var i = 0; i < pathEditor.plannedPath.numSplines() + 1; i++){
+				for (var i = 0; i < pathEditor.plannedPath.numSplines() + 1; i++) {
 					velocities.push(preferences.maxVel);
 				}
 			}
@@ -443,42 +453,48 @@ ipc.on('generating', function (event, data) {
 	});
 });
 
-ipc.on('update-ready', function(event, data){
-	M.toast({html:'Ready to install updates! <a class="btn waves-effect indigo" onclick="notifyUpdates()" style="margin-left:20px !important;">Restart</a>', displayLength:Infinity});
+ipc.on('update-ready', function (event, data) {
+	M.toast({
+		html: 'Ready to install updates! <a class="btn waves-effect indigo" onclick="notifyUpdates()" style="margin-left:20px !important;">Restart</a>',
+		displayLength: Infinity
+	});
 });
 
-ipc.on('downloading-update', function(event, data){
-	M.toast({html:'Downloading pathplanner v' + data + '...', displayLength:5000})
+ipc.on('downloading-update', function (event, data) {
+	M.toast({html: 'Downloading pathplanner v' + data + '...', displayLength: 5000})
 });
 
-ipc.on('app-version', function(event, data){
+ipc.on('app-version', function (event, data) {
 	document.getElementById('title').innerText = 'PathPlanner v' + data;
-    if(is.production()){
-        if(!is.windows()){
-            repo.releases((err, body, headers) => {
-                if(body) {
-                    if (semver.gt(semver.clean(body[0].tag_name), data)) {
-                        M.toast({html:'PathPlanner ' + body[0].tag_name + ' is available to download! <a class="btn waves-effect indigo" onclick="openRepo()" style="margin-left:20px !important;">Download</a>', displayLength:Infinity});
-                    }
-                }
-            });
-        }
-        if(semver.gt(data, preferences.lastRunVersion)){
-            repo.releases((err, body, headers) => {
-                if(body) {
-                    var changesModal = M.Modal.getInstance(document.getElementById('changesModal'));
-                    var converter = new showdown.Converter();
-                    var changes = body[0].body;
-                    changes = changes.substr(changes.indexOf('\n') + 1);
-                    var html = converter.makeHtml(changes);
-                    html = html.replace('<ul>', '<ul class="browser-default">');
-                    document.getElementById('changesText').innerHTML = html;
-                    changesModal.open();
-                }
-            });
-        }
-        preferences.lastRunVersion = data;
-    }
+	if (is.production()) {
+		if (!is.windows()) {
+			repo.releases((err, body, headers) => {
+				if (body) {
+					if (semver.gt(semver.clean(body[0].tag_name), data)) {
+						M.toast({
+							html: 'PathPlanner ' + body[0].tag_name + ' is available to download! <a class="btn waves-effect indigo" onclick="openRepo()" style="margin-left:20px !important;">Download</a>',
+							displayLength: Infinity
+						});
+					}
+				}
+			});
+		}
+		if (semver.gt(data, preferences.lastRunVersion)) {
+			repo.releases((err, body, headers) => {
+				if (body) {
+					var changesModal = M.Modal.getInstance(document.getElementById('changesModal'));
+					var converter = new showdown.Converter();
+					var changes = body[0].body;
+					changes = changes.substr(changes.indexOf('\n') + 1);
+					var html = converter.makeHtml(changes);
+					html = html.replace('<ul>', '<ul class="browser-default">');
+					document.getElementById('changesText').innerHTML = html;
+					changesModal.open();
+				}
+			});
+		}
+		preferences.lastRunVersion = data;
+	}
 });
 
 ipc.on('connecting', function (event, data) {
@@ -498,22 +514,22 @@ ipc.on('connect-failed', function (event, data) {
 });
 
 ipc.on('opened-file', function (event, data) {
-	if(data){
+	if (data) {
 		trackEvent('User Interaction', 'Associated File');
 		loadFile(data);
 	}
 });
 
-function pathSerializer(done){
+function pathSerializer(done) {
 	done(JSON.stringify({points: pathEditor.plannedPath.points}));
 }
 
-function handleUndoRedo(serialized){
+function handleUndoRedo(serialized) {
 	var object = JSON.parse(serialized);
-	if(object) {
-        pathEditor.plannedPath.points = object.points;
-        pathEditor.update();
-    }
+	if (object) {
+		pathEditor.plannedPath.points = object.points;
+		pathEditor.update();
+	}
 }
 
 function saveHistory() {
@@ -524,12 +540,12 @@ function saveHistory() {
  * Open the github repo in the browser
  */
 function openRepo() {
-    shell.openExternal('https://github.com/mjansen4857/PathPlanner/releases/latest');
+	shell.openExternal('https://github.com/mjansen4857/PathPlanner/releases/latest');
 }
 
 /**
  * Inform the main process that the user wants to update
  */
-function notifyUpdates(){
+function notifyUpdates() {
 	ipc.send('quit-and-install');
 }

@@ -15,7 +15,7 @@ ipc.on('generate-path', function (event, data) {
 	try {
 		if (data.preview) {
 			generateAndSendSegments(data.points, data.velocities, data.preferences);
-		}else if(data.deploy){
+		} else if (data.deploy) {
 			generateAndDeploy(data.points, data.velocities, data.preferences, data.reverse);
 		} else if (data.preferences.p_outputType == 0) {
 			generateAndSave(data.points, data.velocities, data.preferences, data.reverse);
@@ -89,7 +89,7 @@ function generateAndCopy(points, velocities, preferences, reverse) {
 	var robotPath = new RobotPath(points, velocities, preferences);
 	var out;
 	if (preferences.p_outputType == 1) {
-		if(preferences.p_splitPath) {
+		if (preferences.p_splitPath) {
 			if (reverse) {
 				out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
 					robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
@@ -97,11 +97,11 @@ function generateAndCopy(points, velocities, preferences, reverse) {
 				out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
 					robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			}
-		}else{
+		} else {
 			out = robotPath.timeSegments.formatJavaArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep);
 		}
 	} else if (preferences.p_outputType == 2) {
-		if(preferences.p_splitPath) {
+		if (preferences.p_splitPath) {
 			if (reverse) {
 				out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
 					robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
@@ -109,11 +109,11 @@ function generateAndCopy(points, velocities, preferences, reverse) {
 				out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
 					robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			}
-		}else{
+		} else {
 			out = robotPath.timeSegments.formatCppArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep);
 		}
 	} else if (preferences.p_outputType == 3) {
-		if(preferences.p_splitPath) {
+		if (preferences.p_splitPath) {
 			if (reverse) {
 				out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n' +
 					robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
@@ -121,7 +121,7 @@ function generateAndCopy(points, velocities, preferences, reverse) {
 				out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n' +
 					robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			}
-		}else{
+		} else {
 			out = robotPath.timeSegments.formatPythonArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep);
 		}
 	}
@@ -156,7 +156,7 @@ function generateAndSave(points, velocities, preferences, reverse) {
 
 		ipc.send('generating');
 		var robotPath = new RobotPath(points, velocities, preferences);
-		if(preferences.p_splitPath) {
+		if (preferences.p_splitPath) {
 			var outL = '';
 			var outR = '';
 			if (reverse) {
@@ -169,7 +169,7 @@ function generateAndSave(points, velocities, preferences, reverse) {
 
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_left.csv', outL, 'utf8');
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_right.csv', outR, 'utf8');
-		}else{
+		} else {
 			var out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '.csv', out, 'utf8');
 		}
@@ -230,9 +230,9 @@ class RobotPath {
 		trackEvent('Generation', 'Generate', undefined, time);
 	}
 
-    /**
+	/**
 	 * Calculate the max velocity of the robot along every point on the curve
-     */
+	 */
 	calculateMaxVelocity() {
 		log.info('    Calculating max velocity on curve...');
 		var start = new Date().getTime();
@@ -248,12 +248,12 @@ class RobotPath {
 			if (!isFinite(r) || isNaN(r)) {
 				this.pathSegments.segments[i].vel = this.maxVel;
 
-				const numSegments = Math.round(1/joinStep);
-				if(i % numSegments >= numSegments - Math.round(numSegments/4)){
+				const numSegments = Math.round(1 / joinStep);
+				if (i % numSegments >= numSegments - Math.round(numSegments / 4)) {
 					const index = i + (numSegments - (i % numSegments));
 					const velIndex = ((index - numSegments) / numSegments) + 1;
 					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
-				}else if(i % numSegments <= Math.round(numSegments/4)){
+				} else if (i % numSegments <= Math.round(numSegments / 4)) {
 					const index = i - (i % numSegments);
 					const velIndex = ((index - numSegments) / numSegments) + 1;
 					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
@@ -263,12 +263,12 @@ class RobotPath {
 				var maxVCurve = Math.sqrt(this.mu * 9.8 * r);
 				this.pathSegments.segments[i].vel = Math.min(maxVCurve, this.maxVel);
 
-				const numSegments = Math.round(1/joinStep);
-				if(i % numSegments >= numSegments - Math.round(numSegments/4)){
+				const numSegments = Math.round(1 / joinStep);
+				if (i % numSegments >= numSegments - Math.round(numSegments / 4)) {
 					const index = i + (numSegments - (i % numSegments));
 					const velIndex = ((index - numSegments) / numSegments) + 1;
 					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
-				}else if(i % numSegments <= Math.round(numSegments/4)){
+				} else if (i % numSegments <= Math.round(numSegments / 4)) {
 					const index = i - (i % numSegments);
 					const velIndex = ((index - numSegments) / numSegments) + 1;
 					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
@@ -278,13 +278,13 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
-    /**
+	/**
 	 * Helper method to calculate the curve radius anywhere on the path, given 3 points
-     * @param i0 Point 1 index
-     * @param i1 Point 2 index
-     * @param i2 Point 3 index
-     * @returns The curve radius
-     */
+	 * @param i0 Point 1 index
+	 * @param i1 Point 2 index
+	 * @param i2 Point 3 index
+	 * @returns The curve radius
+	 */
 	calculateCurveRadius(i0, i1, i2) {
 		var a = this.pathSegments.segments[i0];
 		var b = this.pathSegments.segments[i1];
@@ -297,16 +297,16 @@ class RobotPath {
 		var r = (ab * bc * ac) / (4 * area);
 		// things get weird where 2 splines meet, and will give a very small radius
 		// therefore, ignore those points
-		if (i2 % Math.round(1/joinStep) == 0) {
+		if (i2 % Math.round(1 / joinStep) == 0) {
 			r = this.calculateCurveRadius(i0 - 1, i0, i1);
 		}
 		// Return radius on outside of curve
 		return r + (this.wheelbaseWidth / 2);
 	}
 
-    /**
+	/**
 	 * Calculate the position, velocity, acceleration, etc at every point on the curve
-     */
+	 */
 	calculateVelocity() {
 		log.info('    Calculating velocity...');
 		var start = new Date().getTime();
@@ -373,9 +373,9 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
-    /**
+	/**
 	 * Split the generated path into a list of points at the correct time interval
-     */
+	 */
 	splitGroupByTime() {
 		log.info('    Splitting segments by time...');
 		var start = new Date().getTime();
@@ -405,9 +405,9 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
-    /**
+	/**
 	 * Calculate the heading of the robot at every point on the path
-     */
+	 */
 	calculateHeading() {
 		log.info('    Calculating robot heading...');
 		var start = new Date().getTime();
@@ -419,37 +419,37 @@ class RobotPath {
 			} else {
 				angle = Math.atan2(this.timeSegments.segments[i - 1].y - this.timeSegments.segments[i].y, this.timeSegments.segments[i - 1].x - this.timeSegments.segments[i].x) * (180 / Math.PI);
 			}
-            this.timeSegments.segments[i].rawHeading = angle + 180;
+			this.timeSegments.segments[i].rawHeading = angle + 180;
 			angle -= 180;
-			if(angle < -180){
+			if (angle < -180) {
 				angle += 360;
-			}else if(angle > 180){
+			} else if (angle > 180) {
 				angle -= 360;
 			}
 			var relativeAngle = angle - startAngle;
-			if(relativeAngle < -180){
+			if (relativeAngle < -180) {
 				relativeAngle += 360;
-			}else if(relativeAngle > 180){
+			} else if (relativeAngle > 180) {
 				relativeAngle -= 360;
 			}
 			this.timeSegments.segments[i].heading = angle;
 			this.timeSegments.segments[i].relativeHeading = relativeAngle;
 
-			if(i == 0){
-                this.timeSegments.segments[i].winding = angle;
-                this.timeSegments.segments[i].relativeWinding = relativeAngle;
-			}else{
+			if (i == 0) {
+				this.timeSegments.segments[i].winding = angle;
+				this.timeSegments.segments[i].relativeWinding = relativeAngle;
+			} else {
 				var diff = this.getAngleDifference(this.timeSegments.segments[i].rawHeading, this.timeSegments.segments[i - 1].rawHeading);
 				var winding = this.timeSegments.segments[i - 1].winding + diff;
-                var relativeWinding = this.timeSegments.segments[i - 1].relativeWinding + diff;
-                this.timeSegments.segments[i].winding = winding;
-                this.timeSegments.segments[i].relativeWinding = relativeWinding;
+				var relativeWinding = this.timeSegments.segments[i - 1].relativeWinding + diff;
+				this.timeSegments.segments[i].winding = winding;
+				this.timeSegments.segments[i].relativeWinding = relativeWinding;
 			}
 		}
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
-	getAngleDifference(a, b){
+	getAngleDifference(a, b) {
 		var d = Math.abs(a - b) % 360;
 		var r = d > 180 ? 360 - d : d;
 
@@ -458,9 +458,9 @@ class RobotPath {
 		return r;
 	}
 
-    /**
+	/**
 	 * Split the path into a left and right path for each side of the robot
-     */
+	 */
 	splitLeftRight() {
 		log.info('    Splitting left and right robot paths...');
 		var start = new Date().getTime();
@@ -470,8 +470,8 @@ class RobotPath {
 			var left = new Segment();
 			var right = new Segment();
 
-			var cos_angle = Math.cos(seg.heading * (Math.PI/180));
-			var sin_angle = Math.sin(seg.heading * (Math.PI/180));
+			var cos_angle = Math.cos(seg.heading * (Math.PI / 180));
+			var sin_angle = Math.sin(seg.heading * (Math.PI / 180));
 
 			left.x = seg.x + (w * sin_angle);
 			left.y = seg.y - (w * cos_angle);
@@ -497,7 +497,7 @@ class RobotPath {
 			right.heading = seg.heading;
 			right.relativeHeading = seg.relativeHeading;
 			right.winding = seg.winding;
-            right.relativeWinding = seg.relativeWinding;
+			right.relativeWinding = seg.relativeWinding;
 			right.dydx = seg.dydx;
 			right.dt = seg.dt;
 			right.time = seg.time;
@@ -517,9 +517,9 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
-    /**
+	/**
 	 * Recalculate all the values for validation
-     */
+	 */
 	recalculateValues() {
 		log.info('    Verifying values...');
 		var start = new Date().getTime();
@@ -533,11 +533,11 @@ class RobotPath {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
-    /**
+	/**
 	 * Get the time for a segment
-     * @param segNum The index of the segment
-     * @returns The time
-     */
+	 * @param segNum The index of the segment
+	 * @returns The time
+	 */
 	segmentTime(segNum) {
 		return segNum * this.timeStep;
 	}
@@ -555,9 +555,9 @@ class Path {
 		this.makePath(pixelsPerUnit);
 	}
 
-    /**
+	/**
 	 * Make the pre-generation path
-     */
+	 */
 	makePath(pixelsPerUnit) {
 		var start = new Date().getTime();
 		log.info('Generating path...');
@@ -567,9 +567,9 @@ class Path {
 		log.info('DONE IN: ' + (new Date().getTime() - start) + 'ms');
 	}
 
-    /**
+	/**
 	 * Make x and y lists and convert the values from pixels to feet
-     */
+	 */
 	makeScaledLists(pixelsPerUnit) {
 		for (var i = 0; i < this.inGroup.segments.length; i++) {
 			this.x.push((this.inGroup.segments[i].x - this.p0.x) / pixelsPerUnit);
@@ -577,9 +577,9 @@ class Path {
 		}
 	}
 
-    /**
+	/**
 	 * Calculate the length of the path
-     */
+	 */
 	calculateLength() {
 		log.info('    Calculating length...');
 		var start = new Date().getTime();
@@ -598,9 +598,9 @@ class Path {
 		log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms. Length: ' + this.length + 'ft');
 	}
 
-    /**
+	/**
 	 * Create a segment for ech point on the path
-     */
+	 */
 	createSegments() {
 		log.info('    Calculating segments...');
 		var start = new Date().getTime();
@@ -629,7 +629,7 @@ class SegmentGroup {
 	constructor() {
 		this.segments = [];
 	}
-	
+
 	formatCSV(reverse, format, step) {
 		var str = '';
 		for (var i = 0; i < this.segments.length; i++) {
@@ -681,7 +681,7 @@ class SegmentGroup {
 		ret = ret.replace(/S/g, step.toString());
 		ret = ret.replace(/s/g, (step * 1000).toString());
 		ret = ret.replace(/W/g, (Math.round(s.relativeWinding * 10000) / 10000).toString());
-        ret = ret.replace(/w/g, (Math.round(s.winding * 10000) / 10000).toString());
+		ret = ret.replace(/w/g, (Math.round(s.winding * 10000) / 10000).toString());
 		return ret;
 	}
 

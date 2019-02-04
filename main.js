@@ -34,7 +34,7 @@ let win;
  * @param label the event label
  * @param value the event value
  */
-function trackEvent(category, action, label, value){
+function trackEvent(category, action, label, value) {
 	usr.event(category, action, label, value).send();
 }
 
@@ -43,14 +43,14 @@ global.trackEvent = trackEvent;
 /**
  * Track a screen view. Currently used to track when the app is launched
  */
-function trackScreen(){
-	usr.screenview({cd: 'PathPlanner', an: 'pathplanner', av:app.getVersion()}).send();
+function trackScreen() {
+	usr.screenview({cd: 'PathPlanner', an: 'pathplanner', av: app.getVersion()}).send();
 }
 
 /**
  * Create the main window
  */
-function createWindow(){
+function createWindow() {
 	win = new BrowserWindow({width: 1200, height: 745, icon: 'build/icon.png', frame: false, resizable: false});
 	win.setMenu(null);
 	// win.webContents.openDevTools();
@@ -65,7 +65,7 @@ function createWindow(){
 }
 
 // When the app is ready, create the window and check for updates if on windows
-app.on('ready', function(){
+app.on('ready', function () {
 	createWindow();
 	if (is.production()) {
 		if (is.windows()) {
@@ -80,7 +80,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-	if(win === null){
+	if (win === null) {
 		createWindow();
 	}
 });
@@ -102,7 +102,7 @@ ipc.on('quit-and-install', (event, data) => {
 });
 
 // Create a hidden window to generate the path to avoid delaying the main window
-ipc.on('generate', function(event, data){
+ipc.on('generate', function (event, data) {
 	log.info('Starting generation worker...');
 	var worker = new BrowserWindow({show: false});
 	worker.loadFile('generate.html');
@@ -122,23 +122,23 @@ ipc.on('deploy-segments', function (event, data) {
 		log.info('Uploading files...');
 		win.webContents.send('uploading');
 		// Helper function to upload both path files
-		let upload = function(){
-			if(preferences.splitPath) {
-                sftp.put(Buffer.from(data.left), data.path + '/' + data.name + '_left.csv').then((response) => {
-                    log.info(response);
-                    sftp.put(Buffer.from(data.right), data.path + '/' + data.name + '_right.csv').then((response) => {
-                        log.info(response);
-                    }).then(() => {
-                        win.webContents.send('uploaded', data.name);
-                        sftp.end();
-                    });
-                });
-            }else{
-                sftp.put(Buffer.from(data.center), data.path + '/' + data.name + '.csv').then((response) => {
-                    log.info(response);
-                }).then(() => {
-                    win.webContents.send('uploaded', data.name);
-                    sftp.end();
+		let upload = function () {
+			if (preferences.splitPath) {
+				sftp.put(Buffer.from(data.left), data.path + '/' + data.name + '_left.csv').then((response) => {
+					log.info(response);
+					sftp.put(Buffer.from(data.right), data.path + '/' + data.name + '_right.csv').then((response) => {
+						log.info(response);
+					}).then(() => {
+						win.webContents.send('uploaded', data.name);
+						sftp.end();
+					});
+				});
+			} else {
+				sftp.put(Buffer.from(data.center), data.path + '/' + data.name + '.csv').then((response) => {
+					log.info(response);
+				}).then(() => {
+					win.webContents.send('uploaded', data.name);
+					sftp.end();
 				});
 			}
 		};
@@ -157,40 +157,40 @@ ipc.on('deploy-segments', function (event, data) {
 });
 
 // Allow the renderer to get the app version
-ipc.on('request-version', function(event, data){
+ipc.on('request-version', function (event, data) {
 	win.webContents.send('app-version', app.getVersion());
 });
 
 // Update the last directory where path files were saved
-ipc.on('update-last-generate-dir', function(event, data){
+ipc.on('update-last-generate-dir', function (event, data) {
 	win.webContents.send('update-last-generate-dir', data);
 });
 
 // Notify the renderer that path files were saved
-ipc.on('files-saved', function(event, data){
+ipc.on('files-saved', function (event, data) {
 	win.webContents.send('files-saved', data);
 });
 
 // Notify the renderer that path arrays were copied
-ipc.on('copied-to-clipboard', function(event, data){
+ipc.on('copied-to-clipboard', function (event, data) {
 	win.webContents.send('copied-to-clipboard', data);
 });
 
 // Send the generated path to the renderer for the preview
-ipc.on('preview-segments', function(event, data){
+ipc.on('preview-segments', function (event, data) {
 	win.webContents.send('preview-segments', data);
 });
 
 // Notify the renderer that the generator is running
-ipc.on('generating', function(event, data){
+ipc.on('generating', function (event, data) {
 	win.webContents.send('generating', data);
 });
 
 // Send the path to the .path file that was opened with double click
 ipc.on('ready-for-file', function (event, data) {
-	if(!is.macOS()){
+	if (!is.macOS()) {
 		win.webContents.send('opened-file', process.argv[1]);
-	}else{
+	} else {
 		win.webContents.send('opened-file', macFile);
 	}
 });

@@ -112,7 +112,7 @@ class PlannedPath {
 	 * @param anchorIndex The index of the point to update
 	 * @param vel The new velocity
 	 */
-	updateVelocity(anchorIndex, vel){
+	updateVelocity(anchorIndex, vel) {
 		this.velocities[this.anchorIndexToVelocity(anchorIndex)] = vel;
 	}
 
@@ -121,7 +121,7 @@ class PlannedPath {
 	 * @param anchorIndex The anchor index
 	 * @returns {number} The velocity
 	 */
-	getVelocity(anchorIndex){
+	getVelocity(anchorIndex) {
 		return this.velocities[this.anchorIndexToVelocity(anchorIndex)];
 	}
 
@@ -130,10 +130,10 @@ class PlannedPath {
 	 * @param anchorIndex The anchor index
 	 * @returns {number} The velocity index
 	 */
-	anchorIndexToVelocity(anchorIndex){
-		if(anchorIndex == 0){
+	anchorIndexToVelocity(anchorIndex) {
+		if (anchorIndex == 0) {
 			return 0;
-		}else{
+		} else {
 			return ((anchorIndex - 3) / 3) + 1;
 		}
 	}

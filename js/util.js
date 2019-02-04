@@ -4,23 +4,23 @@ const pixelsPerMeter = pixelsPerFoot / 0.3048;
 const xPixelOffset = 56;
 const yPixelOffset = 78;
 
-class Vector2{
+class Vector2 {
 	/**
 	 * Construct a new 2D vector
 	 * @param x The x position
 	 * @param y The y position
 	 */
-	constructor(x, y){
+	constructor(x, y) {
 		this.x = x;
 		this.y = y;
-		this.magnitude = Math.sqrt((x*x) + (y*y));
+		this.magnitude = Math.sqrt((x * x) + (y * y));
 	}
 
 	/**
 	 * Get the magnitude
 	 * @returns {number} The magnitude
 	 */
-	getMagnitude(){
+	getMagnitude() {
 		return this.magnitude;
 	}
 
@@ -28,8 +28,8 @@ class Vector2{
 	 * Get the normalized vector
 	 * @returns {Vector2} The normalized vector
 	 */
-	normalized(){
-		if(this.magnitude > 0){
+	normalized() {
+		if (this.magnitude > 0) {
 			return Vector2.divide(this, this.magnitude);
 		}
 		return new Vector2(0, 0);
@@ -41,7 +41,7 @@ class Vector2{
 	 * @param b Point #2
 	 * @returns {Vector2} The sum of the two points
 	 */
-	static add(a, b){
+	static add(a, b) {
 		return new Vector2(a.x + b.x, a.y + b.y);
 	}
 
@@ -51,7 +51,7 @@ class Vector2{
 	 * @param b Point #2
 	 * @returns {Vector2} The difference of the two points
 	 */
-	static subtract(a, b){
+	static subtract(a, b) {
 		return new Vector2(a.x - b.x, a.y - b.y);
 	}
 
@@ -61,7 +61,7 @@ class Vector2{
 	 * @param mult The number to multiply by
 	 * @returns {Vector2} The product of the vector and number
 	 */
-	static multiply(a, mult){
+	static multiply(a, mult) {
 		return new Vector2(a.x * mult, a.y * mult);
 	}
 
@@ -71,12 +71,12 @@ class Vector2{
 	 * @param div The number to divide by
 	 * @returns {Vector2} The dividend of the vector and number
 	 */
-	static divide(a, div){
+	static divide(a, div) {
 		return new Vector2(a.x / div, a.y / div);
 	}
 }
 
-class Util{
+class Util {
 	/**
 	 * Interpolate on a line
 	 * @param a Point #1
@@ -84,7 +84,7 @@ class Util{
 	 * @param t The value to interpolate for. Between 0 and 1
 	 * @returns {Vector2} The interpolated point
 	 */
-	static lerp(a, b, t){
+	static lerp(a, b, t) {
 		return Vector2.add(a, Vector2.multiply(Vector2.subtract(b, a), t));
 	}
 
@@ -96,7 +96,7 @@ class Util{
 	 * @param t The value to interpolate for. Between 0 and 1
 	 * @returns {Vector2} The interpolated point
 	 */
-	static quadraticCurve(a, b, c, t){
+	static quadraticCurve(a, b, c, t) {
 		var p0 = Util.lerp(a, b, t);
 		var p1 = Util.lerp(b, c, t);
 		return Util.lerp(p0, p1, t);
@@ -111,7 +111,7 @@ class Util{
 	 * @param t The value to interpolate for. Between 0 and 1
 	 * @returns {Vector2} The interpolated point
 	 */
-	static cubicCurve(a, b, c, d, t){
+	static cubicCurve(a, b, c, d, t) {
 		var p0 = Util.quadraticCurve(a, b, c, t);
 		var p1 = Util.quadraticCurve(b, c, d, t);
 		return Util.lerp(p0, p1, t);
@@ -123,10 +123,10 @@ class Util{
 	 * @param b Point #2
 	 * @returns {number} The slope
 	 */
-	static slope(a, b){
+	static slope(a, b) {
 		var dy = a.y - b.y;
 		var dx = a.x - b.x;
-		return dy/dx;
+		return dy / dx;
 	}
 
 	/**
@@ -136,22 +136,22 @@ class Util{
 	 * @param p Find the closest point to this point
 	 * @returns {Vector2} The closest point on the line
 	 */
-	static closestPointOnLine(lineStart, lineEnd, p){
+	static closestPointOnLine(lineStart, lineEnd, p) {
 		var dx = lineEnd.x - lineStart.x;
 		var dy = lineEnd.y - lineStart.y;
 
-		if(dx === 0 === dy){
+		if (dx === 0 === dy) {
 			return lineStart;
 		}
 
 		var t = ((p.x - lineStart.x) * dx + (p.y - lineStart.y) * dy) / (dx * dx + dy * dy);
 
 		var closestPoint;
-		if(t < 0){
+		if (t < 0) {
 			closestPoint = lineStart;
-		}else if(t > 1){
+		} else if (t > 1) {
 			closestPoint = lineEnd;
-		}else{
+		} else {
 			closestPoint = Util.lerp(lineStart, lineEnd, t);
 		}
 		return closestPoint;

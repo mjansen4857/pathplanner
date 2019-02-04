@@ -6,8 +6,8 @@ const store = new Store({name: 'settings', cwd: home + '/.PathPlanner'});
  * A class to store references to app and robot preferences.
  * When a preference is changed, the value is also updated in system storage.
  */
-class Preferences{
-	constructor(){
+class Preferences {
+	constructor() {
 		this.p_maxVel = store.get('maxVel', 8.0);
 		this.p_maxAcc = store.get('maxAcc', 5.0);
 		this.p_mu = store.get('mu', 0.77);
@@ -26,153 +26,153 @@ class Preferences{
 		this.currentPathName = "path";
 	}
 
-	get lastRunVersion(){
+	get lastRunVersion() {
 		return store.get('version', '0.0.0');
 	}
 
-	get uid(){
+	get uid() {
 		return store.get('uid');
 	}
 
-	get maxVel(){
+	get maxVel() {
 		return this.p_maxVel;
 	}
 
-	get maxAcc(){
+	get maxAcc() {
 		return this.p_maxAcc;
 	}
 
-	get mu(){
+	get mu() {
 		return this.p_mu;
 	}
 
-	get wheelbaseWidth(){
+	get wheelbaseWidth() {
 		return this.p_wheelbaseWidth;
 	}
 
-	get robotLength(){
+	get robotLength() {
 		return this.p_robotLength;
 	}
 
-	get timeStep(){
+	get timeStep() {
 		return this.p_timeStep;
 	}
 
-	get outputType(){
+	get outputType() {
 		return this.p_outputType;
 	}
 
-	get outputFormat(){
+	get outputFormat() {
 		return this.p_outputFormat;
 	}
 
-	get lastGenerateDir(){
+	get lastGenerateDir() {
 		return this.p_lastGenerateDir;
 	}
 
-	get lastPathDir(){
+	get lastPathDir() {
 		return this.p_lastPathDir;
 	}
 
-	get teamNumber(){
+	get teamNumber() {
 		return this.p_teamNumber;
 	}
 
-	get rioPathLocation(){
+	get rioPathLocation() {
 		return this.p_rioPathLocation;
 	}
 
-	get useMetric(){
+	get useMetric() {
 		return this.p_useMetric;
 	}
 
-	get gameYear(){
+	get gameYear() {
 		return this.p_gameYear;
 	}
 
-	get splitPath(){
+	get splitPath() {
 		return this.p_splitPath;
 	}
 
-	set lastRunVersion(value){
+	set lastRunVersion(value) {
 		store.set('version', value);
 	}
 
-	set uid(value){
+	set uid(value) {
 		store.set('uid', value);
 	}
 
-	set maxVel(value){
+	set maxVel(value) {
 		store.set('maxVel', value);
 		this.p_maxVel = value;
 	}
 
-	set maxAcc(value){
+	set maxAcc(value) {
 		store.set('maxAcc', value);
 		this.p_maxAcc = value;
 	}
 
-	set mu(value){
+	set mu(value) {
 		store.set('mu', value);
 		this.p_mu = value;
 	}
 
-	set wheelbaseWidth(value){
+	set wheelbaseWidth(value) {
 		store.set('wheelbaseWidth', value);
 		this.p_wheelbaseWidth = value;
 	}
 
-	set robotLength(value){
+	set robotLength(value) {
 		store.set('robotLength', value);
 		this.p_robotLength = value;
 	}
 
-	set timeStep(value){
+	set timeStep(value) {
 		store.set('timeStep', value);
 		this.p_timeStep = value;
 	}
 
-	set outputType(value){
+	set outputType(value) {
 		store.set('outputType', value);
 		this.p_outputType = value;
 	}
 
-	set outputFormat(value){
+	set outputFormat(value) {
 		store.set('outputFormat', value);
 		this.p_outputFormat = value;
 	}
 
-	set lastGenerateDir(value){
+	set lastGenerateDir(value) {
 		store.set('lastGenerateDir', value);
 		this.p_lastGenerateDir = value;
 	}
 
-	set lastPathDir(value){
+	set lastPathDir(value) {
 		store.set('lastPathDir', value);
 		this.p_lastPathDir = value;
 	}
 
-	set teamNumber(value){
+	set teamNumber(value) {
 		store.set('teamNumber', value);
 		this.p_teamNumber = value;
 	}
 
-	set rioPathLocation(value){
+	set rioPathLocation(value) {
 		store.set('deployLocation', value);
 		this.p_rioPathLocation = value;
 	}
 
-	set useMetric(value){
+	set useMetric(value) {
 		store.set('useMetric', value);
 		this.p_useMetric = value;
 	}
 
-	set gameYear(value){
+	set gameYear(value) {
 		store.set('gameYear', value);
 		this.p_gameYear = value;
 	}
 
-	set splitPath(value){
+	set splitPath(value) {
 		store.set('splitPath', value);
 		this.p_splitPath = value;
 	}

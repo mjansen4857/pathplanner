@@ -55,7 +55,7 @@ function generateAndSendSegments(points, velocities, preferences) {
  */
 function generateAndDeploy(points, velocities, preferences, reverse) {
 	ipc.send('generating');
-	var robotPath = new RobotPath(points, velocities, preferences);
+	var robotPath = new RobotPath(points, velocities, preferences, reverse);
 	var outL = '';
 	var outR = '';
 	var outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
@@ -86,7 +86,7 @@ function generateAndDeploy(points, velocities, preferences, reverse) {
 function generateAndCopy(points, velocities, preferences, reverse) {
 	trackEvent('Generation', 'Generate and Copy', undefined, parseInt(preferences.p_outputType));
 	ipc.send('generating');
-	var robotPath = new RobotPath(points, velocities, preferences);
+	var robotPath = new RobotPath(points, velocities, preferences, reverse);
 	var out;
 	if (preferences.p_outputType == 1) {
 		if (preferences.p_splitPath) {
@@ -155,7 +155,7 @@ function generateAndSave(points, velocities, preferences, reverse) {
 		log.info(filename);
 
 		ipc.send('generating');
-		var robotPath = new RobotPath(points, velocities, preferences);
+		var robotPath = new RobotPath(points, velocities, preferences, reverse);
 		if (preferences.p_splitPath) {
 			var outL = '';
 			var outR = '';
@@ -205,7 +205,7 @@ function join(points, step) {
 }
 
 class RobotPath {
-	constructor(points, velocities, preferences) {
+	constructor(points, velocities, preferences, reverse) {
 		log.info('Generating path...');
 		var start = new Date().getTime();
 		this.path = new Path(join(points, joinStep), points[0], preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
@@ -219,6 +219,7 @@ class RobotPath {
 		this.mu = preferences.p_mu;
 		this.wheelbaseWidth = preferences.p_wheelbaseWidth;
 		this.timeStep = preferences.p_timeStep;
+		this.reverse = reverse;
 		this.calculateMaxVelocity();
 		this.calculateVelocity();
 		this.splitGroupByTime();
@@ -436,7 +437,16 @@ class RobotPath {
 			this.timeSegments.segments[i].relativeHeading = relativeAngle;
 
 			if (i == 0) {
-				this.timeSegments.segments[i].winding = angle;
+				var winding = angle;
+				if(this.reverse) {
+					winding += 180;
+					if (winding > 180) {
+						winding -= 360;
+					} else if (winding < -180) {
+						winding += 360;
+					}
+				}
+				this.timeSegments.segments[i].winding = winding;
 				this.timeSegments.segments[i].relativeWinding = relativeAngle;
 			} else {
 				var diff = this.getAngleDifference(this.timeSegments.segments[i].rawHeading, this.timeSegments.segments[i - 1].rawHeading);
@@ -675,7 +685,16 @@ class SegmentGroup {
 		ret = ret.replace(/p/g, (Math.round(s.pos * 10000) / 10000 * n).toString());
 		ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
 		ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());
-		ret = ret.replace(/h/g, (Math.round(s.heading * 10000) / 10000).toString());
+		var heading = s.heading;
+		if(reverse){
+			heading += 180;
+			if(heading > 180){
+				heading -= 360;
+			}else if(heading < -180){
+				heading += 360;
+			}
+		}
+		ret = ret.replace(/h/g, (Math.round(heading * 10000) / 10000).toString());
 		ret = ret.replace(/H/g, (Math.round(s.relativeHeading * 10000) / 10000).toString());
 		ret = ret.replace(/t/g, (Math.round(s.time * 10000) / 10000).toString());
 		ret = ret.replace(/S/g, step.toString());

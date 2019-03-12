@@ -102,8 +102,8 @@ $(document).ready(function () {
 	document.getElementById('robotMaxV').value = preferences.maxVel;
 	document.getElementById('robotMaxAcc').addEventListener('keyup', onSettingsEnter);
 	document.getElementById('robotMaxAcc').value = preferences.maxAcc;
-	document.getElementById('robotMu').addEventListener('keyup', onSettingsEnter);
-	document.getElementById('robotMu').value = preferences.mu;
+	// document.getElementById('robotMu').addEventListener('keyup', onSettingsEnter);
+	// document.getElementById('robotMu').value = preferences.mu;
 	document.getElementById('robotTimeStep').addEventListener('keyup', onSettingsEnter);
 	document.getElementById('robotTimeStep').value = preferences.timeStep;
 	document.getElementById('robotWidth').addEventListener('keyup', onSettingsEnter);
@@ -288,7 +288,7 @@ function onSettingsConfirm() {
 		pathEditor.updateVelocities(oldVel, preferences.maxVel);
 	}
 	preferences.maxAcc = parseFloat(document.getElementById('robotMaxAcc').value);
-	preferences.mu = parseFloat(document.getElementById('robotMu').value);
+	// preferences.mu = parseFloat(document.getElementById('robotMu').value);
 	preferences.timeStep = parseFloat(document.getElementById('robotTimeStep').value);
 	preferences.wheelbaseWidth = parseFloat(document.getElementById('robotWidth').value);
 	preferences.robotLength = parseFloat(document.getElementById('robotLength').value);

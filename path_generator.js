@@ -216,7 +216,7 @@ class RobotPath {
 		this.right = new SegmentGroup();
 		this.maxVel = preferences.p_maxVel;
 		this.maxAcc = preferences.p_maxAcc;
-		this.mu = preferences.p_mu;
+		// this.mu = preferences.p_mu;
 		this.wheelbaseWidth = preferences.p_wheelbaseWidth;
 		this.timeStep = preferences.p_timeStep;
 		this.reverse = reverse;
@@ -261,7 +261,13 @@ class RobotPath {
 				}
 			} else {
 				// Calculate max velocity on curve given the coefficient of friction between wheels and carpet
-				var maxVCurve = Math.sqrt(this.mu * 9.8 * r);
+				// var g = 9.8;
+				// var radius = this.useMetric ? r : r * 0.3048;
+				// var maxVCurve = Math.sqrt(this.mu * g * radius);
+				// if (!this.useMetric) maxVCurve *= 3.281;
+
+				var maxVCurve = Math.sqrt(this.maxAcc * (r - this.wheelbaseWidth / 2));
+
 				this.pathSegments.segments[i].vel = Math.min(maxVCurve, this.maxVel);
 
 				const numSegments = Math.round(1 / joinStep);

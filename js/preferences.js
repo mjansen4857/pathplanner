@@ -10,7 +10,7 @@ class Preferences {
 	constructor() {
 		this.p_maxVel = store.get('maxVel', 8.0);
 		this.p_maxAcc = store.get('maxAcc', 5.0);
-		this.p_mu = store.get('mu', 0.77);
+		// this.p_mu = store.get('mu', 0.77);
 		this.p_wheelbaseWidth = store.get('wheelbaseWidth', 2.0);
 		this.p_robotLength = store.get('robotLength', 3.0);
 		this.p_timeStep = store.get('timeStep', 0.01);
@@ -42,9 +42,9 @@ class Preferences {
 		return this.p_maxAcc;
 	}
 
-	get mu() {
-		return this.p_mu;
-	}
+	// get mu() {
+	// 	return this.p_mu;
+	// }
 
 	get wheelbaseWidth() {
 		return this.p_wheelbaseWidth;
@@ -112,10 +112,10 @@ class Preferences {
 		this.p_maxAcc = value;
 	}
 
-	set mu(value) {
-		store.set('mu', value);
-		this.p_mu = value;
-	}
+	// set mu(value) {
+	// 	store.set('mu', value);
+	// 	this.p_mu = value;
+	// }
 
 	set wheelbaseWidth(value) {
 		store.set('wheelbaseWidth', value);

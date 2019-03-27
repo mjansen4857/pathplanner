@@ -5,7 +5,6 @@ const {dialog, getGlobal} = require('electron').remote;
 const homeDir = require('os').homedir();
 const log = require('electron-log');
 const fs = require('fs');
-const trackEvent = getGlobal('trackEvent');
 const unhandled = require('electron-unhandled');
 unhandled({logger: log.error, showDialog: true});
 const joinStep = 0.00001;
@@ -23,7 +22,6 @@ ipc.on('generate-path', function (event, data) {
 			generateAndCopy(data.points, data.velocities, data.preferences, data.reverse);
 		}
 	} catch (err) {
-		trackEvent('Error', 'Generate Error');
 		log.error(err);
 	} finally {
 		var window = remote.getCurrentWindow();
@@ -84,7 +82,6 @@ function generateAndDeploy(points, velocities, preferences, reverse) {
  * @param reverse Should the robot drive backwards
  */
 function generateAndCopy(points, velocities, preferences, reverse) {
-	trackEvent('Generation', 'Generate and Copy', undefined, parseInt(preferences.p_outputType));
 	ipc.send('generating');
 	var robotPath = new RobotPath(points, velocities, preferences, reverse);
 	var out;
@@ -137,7 +134,6 @@ function generateAndCopy(points, velocities, preferences, reverse) {
  * @param reverse Should the robot drive backwards
  */
 function generateAndSave(points, velocities, preferences, reverse) {
-	trackEvent('Generation', 'Generate and Save');
 	var filePath = preferences.p_lastGenerateDir;
 	if (filePath == 'none') {
 		filePath = homeDir;
@@ -228,7 +224,6 @@ class RobotPath {
 		this.splitLeftRight();
 		var time = new Date().getTime() - start;
 		log.info('DONE IN: ' + time + 'ms');
-		trackEvent('Generation', 'Generate', undefined, time);
 	}
 
 	/**

@@ -4,7 +4,6 @@ const homeDir = require('os').homedir();
 const fs = require('fs');
 const ipc = require('electron').ipcRenderer;
 const log = require('electron-log');
-const trackEvent = getGlobal('trackEvent');
 const unhandled = require('electron-unhandled');
 unhandled({logger: log.error, showDialog: true});
 const hotkeys = require('hotkeys-js');
@@ -120,16 +119,13 @@ $(document).ready(function () {
 
 	// Set the listeners for the confirm buttons
 	document.getElementById('settingsConfirm').addEventListener('click', (event) => {
-		trackEvent('User Interaction', 'Settings Confirm');
 		onSettingsConfirm();
 	});
 	document.getElementById('pointConfigConfirm').addEventListener('click', (event) => {
-		trackEvent('User Interaction', 'Point Confirm');
 		pathEditor.pointConfigOnConfirm();
 		history.save();
 	});
 	document.getElementById('generateModalConfirm').addEventListener('click', (event) => {
-		trackEvent('User Interaction', 'Generate Confirm');
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputType = document.getElementById('outputType').selectedIndex;
 		var format = document.getElementById('outputFormat').value;
@@ -153,7 +149,6 @@ $(document).ready(function () {
 		generateDialog.close();
 	});
 	document.getElementById('generateModalDeploy').addEventListener('click', (event) => {
-		trackEvent('User Interaction', 'Deploy');
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputType = document.getElementById('outputType').selectedIndex;
 		var format = document.getElementById('outputFormat').value;
@@ -184,19 +179,15 @@ $(document).ready(function () {
 
 	// Set the listeners for action buttons and add their hotkeys
 	document.getElementById('savePathBtn').addEventListener('click', (event) => {
-		trackEvent('User Interaction', 'Save Path');
 		savePath();
 	});
 	hotkeys('ctrl+s,command+s', () => {
-		trackEvent('User Interaction', 'Save Path');
 		savePath();
 	});
 	document.getElementById('openPathBtn').addEventListener('click', (event) => {
-		trackEvent('User Interaction', 'Open Path');
 		openPath();
 	});
 	hotkeys('ctrl+o,command+o', () => {
-		trackEvent('User Interaction', 'Open Path');
 		openPath();
 	});
 	document.getElementById('generatePathBtn').addEventListener('click', (event) => {
@@ -222,7 +213,6 @@ $(document).ready(function () {
 		generateDialog.open();
 	});
 	hotkeys('ctrl+shift+g,command+shift+g', () => {
-		trackEvent('User Interaction', 'Generate Confirm');
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -232,7 +222,6 @@ $(document).ready(function () {
 		});
 	});
 	hotkeys('ctrl+shift+d,command+shift+d', () => {
-		trackEvent('User Interaction', 'Deploy');
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -243,7 +232,6 @@ $(document).ready(function () {
 		});
 	});
 	document.getElementById('previewPathBtn').addEventListener('click', (event) => {
-		trackEvent('User Interaction', 'Preview Path');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
@@ -252,7 +240,6 @@ $(document).ready(function () {
 		});
 	});
 	hotkeys('ctrl+p,command+p', () => {
-		trackEvent('User Interaction', 'Preview Path');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
@@ -261,11 +248,9 @@ $(document).ready(function () {
 		});
 	});
 	hotkeys('ctrl+z,command+z', () => {
-		trackEvent('User Interaction', 'Undo');
 		history.undo(handleUndoRedo);
 	});
 	hotkeys('ctrl+y,command+y', () => {
-		trackEvent('User Interaction', 'Redo');
 		history.redo(handleUndoRedo);
 	});
 
@@ -515,7 +500,6 @@ ipc.on('connect-failed', function (event, data) {
 
 ipc.on('opened-file', function (event, data) {
 	if (data) {
-		trackEvent('User Interaction', 'Associated File');
 		loadFile(data);
 	}
 });

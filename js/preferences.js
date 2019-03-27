@@ -30,10 +30,6 @@ class Preferences {
 		return store.get('version', '0.0.0');
 	}
 
-	get uid() {
-		return store.get('uid');
-	}
-
 	get maxVel() {
 		return this.p_maxVel;
 	}
@@ -96,10 +92,6 @@ class Preferences {
 
 	set lastRunVersion(value) {
 		store.set('version', value);
-	}
-
-	set uid(value) {
-		store.set('uid', value);
 	}
 
 	set maxVel(value) {

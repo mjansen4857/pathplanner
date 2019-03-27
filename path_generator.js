@@ -210,8 +210,8 @@ class RobotPath {
 		this.timeSegments = new SegmentGroup();
 		this.left = new SegmentGroup();
 		this.right = new SegmentGroup();
-		this.maxVel = preferences.p_maxVel;
-		this.maxAcc = preferences.p_maxAcc;
+		this.maxVel = preferences.maxVel;
+		this.maxAcc = preferences.maxAcc;
 		// this.mu = preferences.p_mu;
 		this.wheelbaseWidth = preferences.p_wheelbaseWidth;
 		this.timeStep = preferences.p_timeStep;

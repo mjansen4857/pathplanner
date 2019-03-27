@@ -328,7 +328,9 @@ function savePath() {
 			var output = JSON.stringify({
 				points: fixedPoints,
 				velocities: pathEditor.plannedPath.velocities,
-				reversed: document.getElementById('reversed').checked
+				reversed: document.getElementById('reversed').checked,
+				maxVel: preferences.maxVel,
+				maxAcc: preferences.maxAcc
 			});
 			fs.writeFile(filename, output, 'utf8', (err) => {
 				if (err) {
@@ -381,6 +383,18 @@ function loadFile(filename) {
 			log.error(err);
 		} else {
 			var json = JSON.parse(data);
+
+			var maxVel = json.maxVel;
+			var maxAcc = json.maxAcc;
+
+			if(maxVel && maxAcc){
+				preferences.maxVel = maxVel;
+				preferences.maxAcc = maxAcc;
+
+				document.getElementById('robotMaxV').value = maxVel;
+				document.getElementById('robotMaxAcc').value = maxAcc;
+			}
+
 			var points = json.points;
 			document.getElementById('reversed').checked = json.reversed;
 			for (var i = 0; i < points.length; i++) {

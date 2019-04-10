@@ -241,6 +241,7 @@ class RobotPath {
 			} else {
 				r = this.calculateCurveRadius(i - 1, i, i + 1);
 			}
+
 			if (!isFinite(r) || isNaN(r)) {
 				this.pathSegments.segments[i].vel = this.maxVel;
 
@@ -248,11 +249,11 @@ class RobotPath {
 				if (i % numSegments >= numSegments - Math.round(numSegments / 4)) {
 					const index = i + (numSegments - (i % numSegments));
 					const velIndex = ((index - numSegments) / numSegments) + 1;
-					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
+					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] == -1) ? this.maxVel : this.velocities[velIndex]);
 				} else if (i % numSegments <= Math.round(numSegments / 4)) {
 					const index = i - (i % numSegments);
 					const velIndex = ((index - numSegments) / numSegments) + 1;
-					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
+					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] == -1) ? this.maxVel : this.velocities[velIndex]);
 				}
 			} else {
 				// Calculate max velocity on curve given the coefficient of friction between wheels and carpet
@@ -269,11 +270,11 @@ class RobotPath {
 				if (i % numSegments >= numSegments - Math.round(numSegments / 4)) {
 					const index = i + (numSegments - (i % numSegments));
 					const velIndex = ((index - numSegments) / numSegments) + 1;
-					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
+					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] == -1) ? this.maxVel : this.velocities[velIndex]);
 				} else if (i % numSegments <= Math.round(numSegments / 4)) {
 					const index = i - (i % numSegments);
 					const velIndex = ((index - numSegments) / numSegments) + 1;
-					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, this.velocities[velIndex]);
+					this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] == -1) ? this.maxVel : this.velocities[velIndex]);
 				}
 			}
 		}

@@ -100,7 +100,11 @@ class PathEditor {
 								}
 								var angle = Math.round(Math.atan2(control.y - anchor.y, control.x - anchor.x) * (180 / Math.PI) * 10000) / 10000;
 								document.getElementById('pointAngle').value = angle;
-								document.getElementById('pointVelocity').value = this.plannedPath.getVelocity(this.updatePoint);
+								var velocity = this.plannedPath.getVelocity(this.updatePoint);
+								if(velocity == -1){
+									velocity = preferences.maxVel;
+								}
+								document.getElementById('pointVelocity').value = velocity;
 								M.updateTextFields();
 								pointConfigDialog.open();
 							}
@@ -318,7 +322,7 @@ class PathEditor {
 			var angle = parseFloat(document.getElementById('pointAngle').value);
 			var velocity = Math.max(parseFloat(document.getElementById('pointVelocity').value), (preferences.useMetric) ? 1 * 0.3048 : 1);
 			if (!velocity) {
-				velocity = preferences.maxVel;
+				velocity = -1;
 			}
 			this.plannedPath.updateVelocity(this.updatePoint, Math.min(velocity, preferences.maxVel));
 

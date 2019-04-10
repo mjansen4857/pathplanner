@@ -11,8 +11,7 @@ unhandled({logger: log.error, showDialog: true});
 // Generate the path when the main process requests it
 ipc.on('generate-path', function (event, data) {
 	try {
-		if (data.preview) {
-			log.info('here');
+		if (data.preview) {;
 			generateAndSendSegments(data.points, data.velocities, data.preferences);
 		} else if (data.deploy) {
 			generateAndDeploy(data.points, data.velocities, data.preferences, data.reverse);

@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "test": "jest",
     "publish-wl": "build --win --linux -p always",
     "publish-all": "build --win --linux --mac -p always",
     "publish-win": "build --win -p always",
@@ -39,7 +40,8 @@
       "**/*",
       "!build${/*}",
       "!dist${/*}",
-      "!res/psd${/*}"
+      "!res/psd${/*}",
+      "!test${/*}"
     ]
   },
   "repository": "https://github.com/mjansen4857/PathPlanner.git",
@@ -51,7 +53,8 @@
   "homepage": "https://github.com/mjansen4857/PathPlanner#readme",
   "devDependencies": {
     "electron": "^3.0.6",
-    "electron-builder": "^20.33.2"
+    "electron-builder": "^20.40.2",
+    "jest": "^24.7.1"
   },
   "dependencies": {
     "electron-is": "^3.0.0",

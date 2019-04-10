@@ -1,5 +1,6 @@
 const {Util, Vector2} = require('./util.js');
 const {Segment, SegmentGroup} = require('./segments.js');
+const log = require('electron-log');
 const joinStep = 0.00001;
 
 /**
@@ -8,8 +9,8 @@ const joinStep = 0.00001;
  * @param step The step to use to interpolate the curve
  * @returns The points on the curve
  */
-function join(points, step) {
-    log.info('    Joining splines... ');
+function join(points, step, noLogging) {
+    if(!noLogging) log.info('    Joining splines... ');
     var start = new Date().getTime();
     var s = new SegmentGroup();
     var numSplines = ((points.length - 4) / 3) + 1;
@@ -23,17 +24,20 @@ function join(points, step) {
             s.add(seg);
         }
     }
-    log.info('        Num segments per spline: ' + (s.segments.length / numSplines));
-    log.info('        Total segments: ' + s.segments.length);
-    log.info('    DONE IN: ' + (new Date().getTime() - start) + 'ms');
+    if(!noLogging) {
+        log.info('        Num segments per spline: ' + (s.segments.length / numSplines));
+        log.info('        Total segments: ' + s.segments.length);
+        log.info('    DONE IN: ' + (new Date().getTime() - start) + 'ms');
+    }
     return s;
 }
 
 class RobotPath {
-    constructor(points, velocities, preferences, reverse) {
-        log.info('Generating path...');
+    constructor(points, velocities, preferences, reverse, noLogging) {
+        this.noLogging = noLogging;
+        if(!this.noLogging) log.info('Generating path...');
         var start = new Date().getTime();
-        this.path = new Path(join(points, joinStep), points[0], preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
+        this.path = new Path(join(points, joinStep, noLogging), points[0], preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot, noLogging);
         this.velocities = velocities;
         this.pathSegments = this.path.group;
         this.timeSegments = new SegmentGroup();
@@ -52,14 +56,14 @@ class RobotPath {
         this.calculateHeading();
         this.splitLeftRight();
         var time = new Date().getTime() - start;
-        log.info('DONE IN: ' + time + 'ms');
+        if(!this.noLogging) log.info('DONE IN: ' + time + 'ms');
     }
 
     /**
      * Calculate the max velocity of the robot along every point on the curve
      */
     calculateMaxVelocity() {
-        log.info('    Calculating max velocity on curve...');
+        if(!this.noLogging) log.info('    Calculating max velocity on curve...');
         var start = new Date().getTime();
         for (var i = 0; i < this.pathSegments.segments.length; i++) {
             var r;
@@ -107,7 +111,7 @@ class RobotPath {
                 }
             }
         }
-        log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
+        if(!this.noLogging) log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
     }
 
     /**
@@ -140,7 +144,7 @@ class RobotPath {
      * Calculate the position, velocity, acceleration, etc at every point on the curve
      */
     calculateVelocity() {
-        log.info('    Calculating velocity...');
+        if(!this.noLogging) log.info('    Calculating velocity...');
         var start = new Date().getTime();
         var p = this.pathSegments.segments;
         p[0].vel = 0;
@@ -160,7 +164,7 @@ class RobotPath {
                 p[i].vel = p[i - 1].vel;
             }
         }
-        log.info('1: ' + (new Date().getTime() - start1) + 'ms');
+        if(!this.noLogging) log.info('1: ' + (new Date().getTime() - start1) + 'ms');
         var start2 = new Date().getTime();
         p[p.length - 1].vel = 0;
         for (i = p.length - 2; i > 1; i--) {
@@ -169,7 +173,7 @@ class RobotPath {
             var vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * this.maxAcc * dx));
             p[i].vel = Math.min((isNaN(vMax) ? this.maxVel : vMax), p[i].vel);
         }
-        log.info('2: ' + (new Date().getTime() - start2) + 'ms');
+        if(!this.noLogging) log.info('2: ' + (new Date().getTime() - start2) + 'ms');
         var start3 = new Date().getTime();
         for (var i = 1; i < p.length; i++) {
             var v = p[i].vel;
@@ -181,7 +185,7 @@ class RobotPath {
             }
             p[i].time = time;
         }
-        log.info('3: ' + (new Date().getTime() - start3) + 'ms');
+        if(!this.noLogging) log.info('3: ' + (new Date().getTime() - start3) + 'ms');
         var start4 = new Date().getTime();
         for (var i = 1; i < p.length; i++) {
             var dt = p[i].time - p[i - 1].time;
@@ -189,7 +193,7 @@ class RobotPath {
                 p.splice(i, 1);
             }
         }
-        log.info('4: ' + (new Date().getTime() - start4) + 'ms');
+        if(!this.noLogging) log.info('4: ' + (new Date().getTime() - start4) + 'ms');
         var start5 = new Date().getTime();
         for (var i = 1; i < p.length; i++) {
             var dv = p[i].vel - p[i - 1].vel;
@@ -200,16 +204,16 @@ class RobotPath {
                 p[i].acc = dv / dt;
             }
         }
-        log.info('5: ' + (new Date().getTime() - start5) + 'ms');
+        if(!this.noLogging) log.info('5: ' + (new Date().getTime() - start5) + 'ms');
         this.pathSegments.segments = p;
-        log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
+        if(!this.noLogging) log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
     }
 
     /**
      * Split the generated path into a list of points at the correct time interval
      */
     splitGroupByTime() {
-        log.info('    Splitting segments by time...');
+        if(!this.noLogging) log.info('    Splitting segments by time...');
         var start = new Date().getTime();
         var segNum = 0;
         var numMessySeg = 0;
@@ -229,19 +233,21 @@ class RobotPath {
                 segNum++;
             }
         }
-        log.info('        Divided into: ' + segNum + ' segments, with ' + numMessySeg + ' messy segments.');
-        log.info('        Stats:');
-        log.info('            Time: ' + this.timeSegments.segments[this.timeSegments.segments.length - 1].time + 's');
-        log.info('            Distance: ' + this.timeSegments.segments[this.timeSegments.segments.length - 1].pos + 'ft');
-        log.info('            Average velocity: ' + this.timeSegments.segments[this.timeSegments.segments.length - 1].pos / this.timeSegments.segments[this.timeSegments.segments.length - 1].time + 'ft/s');
-        log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
+        if(!this.noLogging) {
+            log.info('        Divided into: ' + segNum + ' segments, with ' + numMessySeg + ' messy segments.');
+            log.info('        Stats:');
+            log.info('            Time: ' + this.timeSegments.segments[this.timeSegments.segments.length - 1].time + 's');
+            log.info('            Distance: ' + this.timeSegments.segments[this.timeSegments.segments.length - 1].pos + 'ft');
+            log.info('            Average velocity: ' + this.timeSegments.segments[this.timeSegments.segments.length - 1].pos / this.timeSegments.segments[this.timeSegments.segments.length - 1].time + 'ft/s');
+            log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
+        }
     }
 
     /**
      * Calculate the heading of the robot at every point on the path
      */
     calculateHeading() {
-        log.info('    Calculating robot heading...');
+        if(!this.noLogging) log.info('    Calculating robot heading...');
         var start = new Date().getTime();
         var startAngle = Math.atan2(-this.timeSegments.segments[0].y, -this.timeSegments.segments[0].x) * (180 / Math.PI) - 180;
         for (var i = 0; i < this.timeSegments.segments.length; i++) {
@@ -287,7 +293,7 @@ class RobotPath {
                 this.timeSegments.segments[i].relativeWinding = relativeWinding;
             }
         }
-        log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
+        if(!this.noLogging) log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
     }
 
     getAngleDifference(a, b) {
@@ -303,7 +309,7 @@ class RobotPath {
      * Split the path into a left and right path for each side of the robot
      */
     splitLeftRight() {
-        log.info('    Splitting left and right robot paths...');
+        if(!this.noLogging) log.info('    Splitting left and right robot paths...');
         var start = new Date().getTime();
         var w = this.wheelbaseWidth / 2;
         for (var i = 0; i < this.timeSegments.segments.length; i++) {
@@ -355,14 +361,14 @@ class RobotPath {
             this.left.segments.push(left);
             this.right.segments.push(right);
         }
-        log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
+        if(!this.noLogging) log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
     }
 
     /**
      * Recalculate all the values for validation
      */
     recalculateValues() {
-        log.info('    Verifying values...');
+        if(!this.noLogging) log.info('    Verifying values...');
         var start = new Date().getTime();
         for (var i = 1; i < this.timeSegments.segments.length; i++) {
             var now = this.timeSegments.segments[i];
@@ -371,7 +377,7 @@ class RobotPath {
             now.vel = (now.pos - last.pos) / dt;
             now.acc = (now.vel - last.vel) / dt;
         }
-        log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
+        if(!this.noLogging) log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
     }
 
     /**
@@ -385,7 +391,8 @@ class RobotPath {
 }
 
 class Path {
-    constructor(s, p0, pixelsPerUnit) {
+    constructor(s, p0, pixelsPerUnit, noLogging) {
+        this.noLogging = noLogging;
         this.length = 0.0;
         this.p0 = p0;
         this.x = [];
@@ -401,11 +408,11 @@ class Path {
      */
     makePath(pixelsPerUnit) {
         var start = new Date().getTime();
-        log.info('Generating path...');
+        if(!this.noLogging) log.info('Generating path...');
         this.makeScaledLists(pixelsPerUnit);
         this.calculateLength();
         this.createSegments();
-        log.info('DONE IN: ' + (new Date().getTime() - start) + 'ms');
+        if(!this.noLogging) log.info('DONE IN: ' + (new Date().getTime() - start) + 'ms');
     }
 
     /**
@@ -422,7 +429,7 @@ class Path {
      * Calculate the length of the path
      */
     calculateLength() {
-        log.info('    Calculating length...');
+        if(!this.noLogging) log.info('    Calculating length...');
         var start = new Date().getTime();
         for (var i = 1; i < this.x.length; i++) {
             var dx = this.x[i] - this.x[i - 1];
@@ -436,14 +443,14 @@ class Path {
             }
             this.l.push(c + prevLength);
         }
-        log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms. Length: ' + this.length + 'ft');
+        if(!this.noLogging) log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms. Length: ' + this.length + 'ft');
     }
 
     /**
      * Create a segment for ech point on the path
      */
     createSegments() {
-        log.info('    Calculating segments...');
+        if(!this.noLogging) log.info('    Calculating segments...');
         var start = new Date().getTime();
         for (var i = 0; i < this.x.length - 1; i++) {
             var s = i;
@@ -458,7 +465,7 @@ class Path {
             }
             this.group.segments.push(seg);
         }
-        log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms. Created ' + this.group.segments.length + ' segments.');
+        if(!this.noLogging) log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms. Created ' + this.group.segments.length + ' segments.');
     }
 
     derivative(t1, t2) {

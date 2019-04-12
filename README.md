@@ -1,8 +1,11 @@
 # PathPlanner
+[![CircleCI](https://circleci.com/gh/mjansen4857/PathPlanner/tree/master.svg?style=svg)](https://circleci.com/gh/mjansen4857/PathPlanner/tree/master)
+
+Windows, MacOS, and Linux versions can be downloaded [here](https://github.com/mjansen4857/PathPlanner/releases/latest), or they can be installed from the Microsoft Store and Snapcraft badges below.
+
+
 <a href="https://microsoft.com/store/apps/9P7HKZQPJH8Q?ocid=badge"><img src="https://mjansen4857.github.io/microsoft_store.svg" height="64"></a>
 &nbsp;&nbsp;<a href="https://snapcraft.io/pathplanner"><img src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" height="64"></a>
-
-Windows, MacOS, and Linux versions can be downloaded [here](https://github.com/mjansen4857/PathPlanner/releases/latest), or they can be installed from the Microsoft Store and Snapcraft badges above.
 
 ## About
 ![Path Editor](https://i.imgur.com/AyZ7EyQ.png)

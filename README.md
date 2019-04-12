@@ -63,6 +63,7 @@ Paths consist of two types of points: anchor and control points. Anchor points a
     **This field is case sensitive.**
 * **Reversed Output:** Should the robot drive backwards
 * **Split Path:** Should the generated path be split into two paths for each side of the drive train
+* **Override End Velocity:** Should the path end with the velocity override of the last point instead of stopping
 
 There are two different ways to generate paths. One is normal generation, where you can either save CSV files to your computer or arrays will be copied to your keyboard. The second option is deploying to the robot. This will generate CSV files and upload them to the RoboRIO (assuming you're connected to the robot) at the path chosen in the settings.
 

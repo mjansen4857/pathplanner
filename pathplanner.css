@@ -96,6 +96,11 @@ a:focus{
 	margin-left: -20px !important;
 }
 
+.endVel-switch{
+	margin-top: -15px !important;
+	margin-left: -20px !important;
+}
+
 .switch label{
 	color: #737373 !important;
 	font-size: 16px !important;
@@ -149,7 +154,7 @@ nav {
 
 #generateModal {
 	width: 35% !important;
-	height: 57% !important;
+	height: 60% !important;
 }
 
 #changesModal li{

@@ -138,6 +138,7 @@ $(document).ready(function () {
 		}
 		preferences.outputFormat = format;
 		preferences.splitPath = document.getElementById('splitPath').checked;
+		preferences.endVelOverride = document.getElementById('endVelOverride').checked;
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -161,6 +162,7 @@ $(document).ready(function () {
 		}
 		preferences.outputFormat = format;
 		preferences.splitPath = document.getElementById('splitPath').checked;
+		preferences.endVelOverride = document.getElementById('endVelOverride').checked;
 		var reversed = document.getElementById('reversed').checked;
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -196,6 +198,7 @@ $(document).ready(function () {
 		document.getElementById('outputType').selectedIndex = preferences.outputType;
 		document.getElementById('outputFormat').value = preferences.outputFormat;
 		document.getElementById('splitPath').checked = preferences.splitPath;
+		document.getElementById('endVelOverride').checked = preferences.endVelOverride;
 
 		M.updateTextFields();
 		$('select').formSelect();
@@ -207,6 +210,7 @@ $(document).ready(function () {
 		document.getElementById('outputType').selectedIndex = preferences.outputType;
 		document.getElementById('outputFormat').value = preferences.outputFormat;
 		document.getElementById('splitPath').checked = preferences.splitPath;
+		document.getElementById('endVelOverride').checked = preferences.endVelOverride;
 
 		M.updateTextFields();
 		$('select').formSelect();
@@ -330,7 +334,8 @@ function savePath() {
 				velocities: pathEditor.plannedPath.velocities,
 				reversed: document.getElementById('reversed').checked,
 				maxVel: preferences.maxVel,
-				maxAcc: preferences.maxAcc
+				maxAcc: preferences.maxAcc,
+				endVelOverride: preferences.endVelOverride
 			});
 			fs.writeFile(filename, output, 'utf8', (err) => {
 				if (err) {
@@ -386,6 +391,7 @@ function loadFile(filename) {
 
 			var maxVel = json.maxVel;
 			var maxAcc = json.maxAcc;
+			var endVelOverride = json.endVelOverride;
 
 			if(maxVel && maxAcc){
 				preferences.maxVel = maxVel;
@@ -393,6 +399,14 @@ function loadFile(filename) {
 
 				document.getElementById('robotMaxV').value = maxVel;
 				document.getElementById('robotMaxAcc').value = maxAcc;
+			}
+
+			if(endVelOverride) {
+				preferences.endVelOverride = endVelOverride;
+				document.getElementById('endVelOverride').checked = endVelOverride;
+			}else{
+				preferences.endVelOverride = false;
+				document.getElementById('endVelOverride').checked = false;
 			}
 
 			var points = json.points;

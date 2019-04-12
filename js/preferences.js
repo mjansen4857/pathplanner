@@ -23,16 +23,13 @@ class Preferences {
 		this.maxAcc = (this.p_useMetric) ? 1.5 : 5.0;
 		this.p_gameYear = store.get('gameYear', '19');
 		this.p_splitPath = store.get('splitPath', true);
+		this.endVelOverride = false;
 		this.currentPathName = "path";
 	}
 
 	get lastRunVersion() {
 		return store.get('version', '0.0.0');
 	}
-
-	// get mu() {
-	// 	return this.p_mu;
-	// }
 
 	get wheelbaseWidth() {
 		return this.p_wheelbaseWidth;
@@ -85,11 +82,6 @@ class Preferences {
 	set lastRunVersion(value) {
 		store.set('version', value);
 	}
-
-	// set mu(value) {
-	// 	store.set('mu', value);
-	// 	this.p_mu = value;
-	// }
 
 	set wheelbaseWidth(value) {
 		store.set('wheelbaseWidth', value);

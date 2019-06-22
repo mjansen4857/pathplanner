@@ -22,9 +22,18 @@ let win;
  * Create the main window
  */
 function createWindow() {
-	win = new BrowserWindow({width: 1200, height: 745, icon: 'build/icon.png', frame: false, resizable: false});
+	win = new BrowserWindow({
+		width: 1200,
+		height: 745,
+		icon: 'build/icon.png',
+		frame: false,
+		resizable: false,
+		webPreferences: {
+			nodeIntegration: true
+		}
+	});
 	win.setMenu(null);
-	// win.webContents.openDevTools();
+	win.webContents.openDevTools();
 	win.loadFile('pathplanner.html');
 
 	win.on('closed', () => {
@@ -71,7 +80,12 @@ ipc.on('quit-and-install', (event, data) => {
 // Create a hidden window to generate the path to avoid delaying the main window
 ipc.on('generate', function (event, data) {
 	log.info('Starting generation worker...');
-	var worker = new BrowserWindow({show: false});
+	var worker = new BrowserWindow({
+		show: false,
+		webPreferences: {
+			nodeIntegration: true
+		}
+	});
 	worker.loadFile('generate.html');
 	worker.on('ready-to-show', () => worker.webContents.send('generate-path', data));
 });

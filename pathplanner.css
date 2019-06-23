@@ -88,6 +88,17 @@ a:focus{
 	transition: all ease 0.35s;
 }
 
+.wiggle:hover{
+	animation: wiggle 75ms infinite;
+	animation-timing-function: linear;
+}
+
+@keyframes wiggle {
+	0% { transform: translate(2px, 0); }
+	50% { transform: translate(-2px, 0); }
+	100% { transform: translate(2px, 0); }
+}
+
 .input-field{
 	margin-bottom: -10px !important;
 }

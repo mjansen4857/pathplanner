@@ -266,6 +266,12 @@ $(document).ready(function () {
 	if (is.production()) {
 		ipc.send('ready-for-file');
 	}
+
+	//Secret
+	let date = new Date();
+	if(date.getMonth() == 3 && date.getDate() == 1){
+		$('#windowSettings, #windowMin, #windowClose, #actionsBtn, #savePathBtn, #openPathBtn, #generatePathBtn, #previewPathBtn').addClass('wiggle');
+	}
 });
 
 /**

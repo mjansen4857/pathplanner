@@ -52,11 +52,11 @@
 				<form class="col s12">
 					<div class="row">
 						<div class="col s6 input-field">
-							<input id="teamNumber" type="number" required step="1">
+							<input id="teamNumber" type="number" required step="1" class="settingsInput">
 							<label for="teamNumber">Team Number</label>
 						</div>
 						<div class="col s6 input-field">
-							<input id="rioPathLocation" type="text" required>
+							<input id="rioPathLocation" type="text" required class="settingsInput">
 							<label for="rioPathLocation">RoboRIO Path Location</label>
 						</div>
 					</div>
@@ -78,31 +78,27 @@
 					</div>
 					<div class="row">
 						<div class="col s6 input-field">
-							<input id="robotMaxV" type="number" required step="0.01">
+							<input id="robotMaxV" type="number" required step="0.01" class="settingsInput">
 							<label for="robotMaxV">Max Velocity</label>
 						</div>
 						<div class="col s6 input-field">
-							<input id="robotMaxAcc" type="number" required step="0.01">
+							<input id="robotMaxAcc" type="number" required step="0.01" class="settingsInput">
 							<label for="robotMaxAcc">Max Acceleration</label>
 						</div>
 					</div>
 					<div class="row">
-						<!--<div class="col s6 input-field">-->
-							<!--<input id="robotMu" type="number" required step="0.0001">-->
-							<!--<label for="robotMu">Coefficient of Friction</label>-->
-						<!--</div>-->
 						<div class="col s6 input-field">
-							<input id="robotWidth" type="number" required step="0.01">
+							<input id="robotWidth" type="number" required step="0.01" class="settingsInput">
 							<label for="robotWidth">Wheelbase Width</label>
 						</div>
 						<div class="col s6 input-field">
-							<input id="robotTimeStep" type="number" required step="0.001">
+							<input id="robotTimeStep" type="number" required step="0.001" class="settingsInput">
 							<label for="robotTimeStep">Time Step</label>
 						</div>
 					</div>
 					<div class="row">
 						<div class="col s6 input-field">
-							<input id="robotLength" type="number" required step="0.01">
+							<input id="robotLength" type="number" required step="0.01" class="settingsInput">
 							<label for="robotLength">Robot Length</label>
 						</div>
 					</div>
@@ -121,21 +117,21 @@
 				<form class="col s12">
 					<div class="row">
 						<div class="col s6 input-field">
-							<input id="pointX" type="number" required step="0.0001">
+							<input id="pointX" type="number" required step="0.0001" class="pointConfigInput">
 							<label for="pointX">X Position</label>
 						</div>
 						<div class="col s6 input-field">
-							<input id="pointY" type="number" required step="0.0001">
+							<input id="pointY" type="number" required step="0.0001" class="pointConfigInput">
 							<label for="pointY">Y Position</label>
 						</div>
 					</div>
 					<div class="row">
 						<div class="col s6 input-field">
-							<input id="pointAngle" type="number" required step="0.0001">
+							<input id="pointAngle" type="number" required step="0.0001" class="pointConfigInput">
 							<label for="pointAngle">Angle</label>
 						</div>
 						<div class="col s6 input-field">
-							<input id="pointVelocity" type="number" required step="0.01">
+							<input id="pointVelocity" type="number" required step="0.01" class="pointConfigInput">
 							<label for="pointVelocity">Velocity Override</label>
 						</div>
 					</div>

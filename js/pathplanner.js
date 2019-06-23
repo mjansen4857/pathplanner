@@ -43,10 +43,10 @@ $(document).ready(function () {
 
 	// Update tooltips if user is on mac
 	if (is.macOS()) {
-		document.getElementById('savePathBtn').setAttribute('data-tooltip', 'Save Path (⌘+S)');
-		document.getElementById('openPathBtn').setAttribute('data-tooltip', 'Open Path (⌘+O)');
-		document.getElementById('generatePathBtn').setAttribute('data-tooltip', 'Generate Path (⌘+G)');
-		document.getElementById('previewPathBtn').setAttribute('data-tooltip', 'Preview Path (⌘+P)');
+		$('#savePathBtn').attr('data-tooltip', 'Save Path (⌘+S)');
+		$('#openPathBtn').attr('data-tooltip', 'Open Path (⌘+O)');
+		$('#generatePathBtn').attr('data-tooltip', 'Generate Path (⌘+G)');
+		$('#previewPathBtn').attr('data-tooltip', 'Preview Path (⌘+P)');
 	}
 
 	// Prevent arrow keys from incrementing numbers in input fields
@@ -68,13 +68,13 @@ $(document).ready(function () {
 	field.src = 'res/img/field' + preferences.gameYear + '.png';
 
 	// Minimize the window when the minimize button is pressed
-	document.getElementById('windowMin').addEventListener('click', (event) => {
+	$('#windowMin').click(() => {
 		var window = BrowserWindow.getFocusedWindow();
 		window.minimize();
 	});
 
 	// Close the window when the close button is pressed
-	document.getElementById('windowClose').addEventListener('click', (event) => {
+	$('#windowClose').click(() => {
 		var window = BrowserWindow.getFocusedWindow();
 		window.close();
 	});
@@ -94,42 +94,32 @@ $(document).ready(function () {
 	};
 
 	// Add the enter key listener to text fields/set their initial value
-	document.getElementById('pointX').addEventListener('keyup', onPointConfigEnter);
-	document.getElementById('pointY').addEventListener('keyup', onPointConfigEnter);
-	document.getElementById('pointAngle').addEventListener('keyup', onPointConfigEnter);
-	document.getElementById('pointVelocity').addEventListener('keyup', onPointConfigEnter);
-	document.getElementById('robotMaxV').addEventListener('keyup', onSettingsEnter);
-	document.getElementById('robotMaxV').value = preferences.maxVel;
-	document.getElementById('robotMaxAcc').addEventListener('keyup', onSettingsEnter);
-	document.getElementById('robotMaxAcc').value = preferences.maxAcc;
-	// document.getElementById('robotMu').addEventListener('keyup', onSettingsEnter);
-	// document.getElementById('robotMu').value = preferences.mu;
-	document.getElementById('robotTimeStep').addEventListener('keyup', onSettingsEnter);
-	document.getElementById('robotTimeStep').value = preferences.timeStep;
-	document.getElementById('robotWidth').addEventListener('keyup', onSettingsEnter);
-	document.getElementById('robotWidth').value = preferences.wheelbaseWidth;
-	document.getElementById('robotLength').addEventListener('keyup', onSettingsEnter);
-	document.getElementById('robotLength').value = preferences.robotLength;
-	document.getElementById('teamNumber').addEventListener('keyup', onSettingsEnter);
-	document.getElementById('teamNumber').value = preferences.teamNumber;
-	document.getElementById('rioPathLocation').addEventListener('keyup', onSettingsEnter);
-	document.getElementById('rioPathLocation').value = preferences.rioPathLocation;
-	document.getElementById('units').value = preferences.useMetric ? 'metric' : 'imperial';
-	document.getElementById('gameYear').value = preferences.gameYear;
+	$('.pointConfigInput').on('keyup', onPointConfigEnter);
+
+	$('.settingsInput').on('keyup', onSettingsEnter);
+	$('#robotMaxV').val(preferences.maxVel);
+	$('#robotMaxAcc').val(preferences.maxAcc);
+	$('#robotTimeStep').val(preferences.timeStep);
+	$('#robotWidth').val(preferences.wheelbaseWidth);
+	$('#robotLength').val(preferences.robotLength);
+	$('#teamNumber').val(preferences.teamNumber);
+	$('#rioPathLocation').val(preferences.rioPathLocation);
+	$('#units').val(preferences.useMetric ? 'metric' : 'imperial');
+	$('#gameYear').val(preferences.gameYear);
 	$('select').formSelect();
 
 	// Set the listeners for the confirm buttons
-	document.getElementById('settingsConfirm').addEventListener('click', (event) => {
+	$('#settingsConfirm').click(() => {
 		onSettingsConfirm();
 	});
-	document.getElementById('pointConfigConfirm').addEventListener('click', (event) => {
+	$('#pointConfigConfirm').click(() => {
 		pathEditor.pointConfigOnConfirm();
 		history.save();
 	});
-	document.getElementById('generateModalConfirm').addEventListener('click', (event) => {
-		preferences.currentPathName = document.getElementById('pathName').value;
-		preferences.outputType = document.getElementById('outputType').selectedIndex;
-		var format = document.getElementById('outputFormat').value;
+	$('#generateModalConfirm').click(() => {
+		preferences.currentPathName = $('#pathName').val();
+		preferences.outputType = $('#outputType').prop('selectedIndex');
+		var format = $('#outputFormat').val();
 		if (!format.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
@@ -138,22 +128,22 @@ $(document).ready(function () {
 			return;
 		}
 		preferences.outputFormat = format;
-		preferences.splitPath = document.getElementById('splitPath').checked;
-		preferences.endVelOverride = document.getElementById('endVelOverride').checked;
-		var reversed = document.getElementById('reversed').checked;
+		preferences.splitPath = $('#splitPath').prop('checked');
+		preferences.endVelOverride = $('#endVelOverride').prop('checked');
+		var reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
 			preferences: preferences,
 			reverse: reversed
 		});
-		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
+		var generateDialog = M.Modal.getInstance($('#generateModal'));
 		generateDialog.close();
 	});
-	document.getElementById('generateModalDeploy').addEventListener('click', (event) => {
-		preferences.currentPathName = document.getElementById('pathName').value;
-		preferences.outputType = document.getElementById('outputType').selectedIndex;
-		var format = document.getElementById('outputFormat').value;
+	$('#generateModalDeploy').click(() => {
+		preferences.currentPathName = $('#pathName').val();
+		preferences.outputType = $('#outputType').prop('selectedIndex');
+		var format = $('#outputFormat').val();
 		if (!format.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
@@ -162,9 +152,9 @@ $(document).ready(function () {
 			return;
 		}
 		preferences.outputFormat = format;
-		preferences.splitPath = document.getElementById('splitPath').checked;
-		preferences.endVelOverride = document.getElementById('endVelOverride').checked;
-		var reversed = document.getElementById('reversed').checked;
+		preferences.splitPath = $('#splitPath').prop('checked');
+		preferences.endVelOverride = $('#endVelOverride').prop('checked');
+		var reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
@@ -172,53 +162,45 @@ $(document).ready(function () {
 			reverse: reversed,
 			deploy: true
 		});
-		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
+		var generateDialog = M.Modal.getInstance($('#generateModal'));
 		generateDialog.close();
 	});
-	document.getElementById('changesClose').addEventListener('click', (event) => {
-		var changesModal = M.Modal.getInstance(document.getElementById('changesModal'));
+	$('#changesClose').click(() => {
+		var changesModal = M.Modal.getInstance($('#changesModal'));
 		changesModal.close();
 	});
 
 	// Set the listeners for action buttons and add their hotkeys
-	document.getElementById('savePathBtn').addEventListener('click', (event) => {
-		savePath();
-	});
-	hotkeys('ctrl+s,command+s', () => {
-		savePath();
-	});
-	document.getElementById('openPathBtn').addEventListener('click', (event) => {
-		openPath();
-	});
-	hotkeys('ctrl+o,command+o', () => {
-		openPath();
-	});
-	document.getElementById('generatePathBtn').addEventListener('click', (event) => {
-		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
-		document.getElementById('pathName').value = preferences.currentPathName;
-		document.getElementById('outputType').selectedIndex = preferences.outputType;
-		document.getElementById('outputFormat').value = preferences.outputFormat;
-		document.getElementById('splitPath').checked = preferences.splitPath;
-		document.getElementById('endVelOverride').checked = preferences.endVelOverride;
+	$('#savePathBtn').click(savePath);
+	hotkeys('ctrl+s,command+s', savePath);
+	$('#openPathBtn').click(openPath);
+	hotkeys('ctrl+o,command+o', openPath);
+	$('#generatePathBtn').click(() => {
+		var generateDialog = M.Modal.getInstance($('#generateModal'));
+		$('#pathName').val(preferences.currentPathName);
+		$('#outputType').prop('selectedIndex', preferences.outputType);
+		$('#outputFormat').val(preferences.outputFormat);
+		$('#splitPath').prop('checked', preferences.splitPath);
+		$('#endVelOverride').prop('checked', preferences.endVelOverride);
 
 		M.updateTextFields();
 		$('select').formSelect();
 		generateDialog.open();
 	});
 	hotkeys('ctrl+g,command+g', () => {
-		var generateDialog = M.Modal.getInstance(document.getElementById('generateModal'));
-		document.getElementById('pathName').value = preferences.currentPathName;
-		document.getElementById('outputType').selectedIndex = preferences.outputType;
-		document.getElementById('outputFormat').value = preferences.outputFormat;
-		document.getElementById('splitPath').checked = preferences.splitPath;
-		document.getElementById('endVelOverride').checked = preferences.endVelOverride;
+		var generateDialog = M.Modal.getInstance($('#generateModal'));
+		$('#pathName').val(preferences.currentPathName);
+		$('#outputType').prop('selectedIndex', preferences.outputType);
+		$('#outputFormat').val(preferences.outputFormat);
+		$('#splitPath').prop('checked', preferences.splitPath);
+		$('#endVelOverride').prop('checked', preferences.endVelOverride);
 
 		M.updateTextFields();
 		$('select').formSelect();
 		generateDialog.open();
 	});
 	hotkeys('ctrl+shift+g,command+shift+g', () => {
-		var reversed = document.getElementById('reversed').checked;
+		var reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
@@ -227,7 +209,7 @@ $(document).ready(function () {
 		});
 	});
 	hotkeys('ctrl+shift+d,command+shift+d', () => {
-		var reversed = document.getElementById('reversed').checked;
+		var reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
@@ -236,7 +218,7 @@ $(document).ready(function () {
 			deploy: true
 		});
 	});
-	document.getElementById('previewPathBtn').addEventListener('click', (event) => {
+	$('#previewPathBtn').click(() => {
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
@@ -279,19 +261,18 @@ $(document).ready(function () {
  */
 function onSettingsConfirm() {
 	const oldVel = preferences.maxVel;
-	preferences.maxVel = parseFloat(document.getElementById('robotMaxV').value);
+	preferences.maxVel = parseFloat($('#robotMaxV').val());
 	if (preferences.maxVel != oldVel) {
 		pathEditor.updateVelocities(oldVel, preferences.maxVel);
 	}
-	preferences.maxAcc = parseFloat(document.getElementById('robotMaxAcc').value);
-	// preferences.mu = parseFloat(document.getElementById('robotMu').value);
-	preferences.timeStep = parseFloat(document.getElementById('robotTimeStep').value);
-	preferences.wheelbaseWidth = parseFloat(document.getElementById('robotWidth').value);
-	preferences.robotLength = parseFloat(document.getElementById('robotLength').value);
-	preferences.teamNumber = parseFloat(document.getElementById('teamNumber').value);
-	preferences.rioPathLocation = document.getElementById('rioPathLocation').value;
-	preferences.useMetric = document.getElementById('units').value == 'metric';
-	const gameYear = document.getElementById('gameYear').value;
+	preferences.maxAcc = parseFloat($('#robotMaxAcc').val());
+	preferences.timeStep = parseFloat($('#robotTimeStep').val());
+	preferences.wheelbaseWidth = parseFloat($('#robotWidth').val());
+	preferences.robotLength = parseFloat($('#robotLength').val());
+	preferences.teamNumber = parseFloat($('#teamNumber').val());
+	preferences.rioPathLocation = $('#rioPathLocation').val();
+	preferences.useMetric = $('#units').value == 'metric';
+	const gameYear = $('#gameYear').value;
 	if (preferences.gameYear != gameYear) {
 		var field = new Image();
 		field.onload = () => {
@@ -302,7 +283,7 @@ function onSettingsConfirm() {
 	}
 	preferences.gameYear = gameYear;
 	pathEditor.update();
-	M.Modal.getInstance(document.getElementById('settings')).close();
+	M.Modal.getInstance($('#settings')).close();
 }
 
 /**
@@ -339,7 +320,7 @@ function savePath() {
 			var output = JSON.stringify({
 				points: fixedPoints,
 				velocities: pathEditor.plannedPath.velocities,
-				reversed: document.getElementById('reversed').checked,
+				reversed: $('#reversed').prop('checked'),
 				maxVel: preferences.maxVel,
 				maxAcc: preferences.maxAcc,
 				endVelOverride: preferences.endVelOverride
@@ -404,20 +385,20 @@ function loadFile(filename) {
 				preferences.maxVel = maxVel;
 				preferences.maxAcc = maxAcc;
 
-				document.getElementById('robotMaxV').value = maxVel;
-				document.getElementById('robotMaxAcc').value = maxAcc;
+				$('#robotMaxV').val(maxVel);
+				$('#robotMaxAcc').val(maxAcc);
 			}
 
 			if(endVelOverride) {
 				preferences.endVelOverride = endVelOverride;
-				document.getElementById('endVelOverride').checked = endVelOverride;
+				$('#endVelOverride').prop('checked', endVelOverride);
 			}else{
 				preferences.endVelOverride = false;
-				document.getElementById('endVelOverride').checked = false;
+				$('#endVelOverride').prop('checked', false);
 			}
 
 			var points = json.points;
-			document.getElementById('reversed').checked = json.reversed;
+			$('#reversed').prop('checked', json.reversed);
 			for (var i = 0; i < points.length; i++) {
 				points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.xPixelOffset, points[i][1] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.yPixelOffset);
 			}
@@ -485,7 +466,7 @@ ipc.on('downloading-update', function (event, data) {
 });
 
 ipc.on('app-version', function (event, data) {
-	document.getElementById('title').innerText = 'PathPlanner v' + data;
+	$('#title').prop('innerText', 'PathPlanner v' + data);
 	if (is.production()) {
 		if (!is.windows()) {
 			repo.releases((err, body, headers) => {
@@ -502,13 +483,13 @@ ipc.on('app-version', function (event, data) {
 		if (semver.gt(data, preferences.lastRunVersion)) {
 			repo.releases((err, body, headers) => {
 				if (body) {
-					var changesModal = M.Modal.getInstance(document.getElementById('changesModal'));
+					var changesModal = M.Modal.getInstance($('#changesModal'));
 					var converter = new showdown.Converter();
 					var changes = body[0].body;
 					changes = changes.substr(changes.indexOf('\n') + 1);
 					var html = converter.makeHtml(changes);
 					html = html.replace('<ul>', '<ul class="browser-default">');
-					document.getElementById('changesText').innerHTML = html;
+					$('#changesText').prop('innerHTML', html);
 					changesModal.open();
 				}
 			});

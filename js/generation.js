@@ -74,6 +74,7 @@ class RobotPath {
             } else {
                 r = this.calculateCurveRadius(i - 1, i, i + 1);
             }
+            this.pathSegments.segments[i].radius = r;
 
             if (!isFinite(r) || isNaN(r)) {
                 this.pathSegments.segments[i].vel = this.maxVel;
@@ -331,6 +332,7 @@ class RobotPath {
             left.dydx = seg.dydx;
             left.dt = seg.dt;
             left.time = seg.time;
+            left.radius = seg.radius;
 
             if (i > 0) {
                 var last = this.left.segments[i - 1];
@@ -350,6 +352,7 @@ class RobotPath {
             right.dydx = seg.dydx;
             right.dt = seg.dt;
             right.time = seg.time;
+            right.radius = seg.radius;
 
             if (i > 0) {
                 var last = this.right.segments[i - 1];

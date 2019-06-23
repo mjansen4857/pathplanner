@@ -17,6 +17,7 @@ const github = require('octonode').client();
 const repo = github.repo('mjansen4857/PathPlanner');
 const SimpleUndo = require('simple-undo');
 let history;
+const outputFormatRegX = /^[xypvahHtSsWwr](?:,[xypvahHtSsWwr])*$/g;
 
 let pathEditor;
 global.preferences = new Preferences();
@@ -129,7 +130,7 @@ $(document).ready(function () {
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputType = document.getElementById('outputType').selectedIndex;
 		var format = document.getElementById('outputFormat').value;
-		if (!format.match(/^[xypvahHtSsWw](?:,[xypvahHtSsWw])*$/g)) {
+		if (!format.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
 				displayLength: 5000
@@ -153,7 +154,7 @@ $(document).ready(function () {
 		preferences.currentPathName = document.getElementById('pathName').value;
 		preferences.outputType = document.getElementById('outputType').selectedIndex;
 		var format = document.getElementById('outputFormat').value;
-		if (!format.match(/^[xypvahHtSsWw](?:,[xypvahHtSsWw])*$/g)) {
+		if (!format.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
 				displayLength: 5000

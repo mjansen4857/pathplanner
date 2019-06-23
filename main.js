@@ -33,7 +33,7 @@ function createWindow() {
 		}
 	});
 	win.setMenu(null);
-	win.webContents.openDevTools();
+	// win.webContents.openDevTools();
 	win.loadFile('pathplanner.html');
 
 	win.on('closed', () => {

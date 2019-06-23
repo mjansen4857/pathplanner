@@ -64,6 +64,7 @@ class SegmentGroup {
         ret = ret.replace(/s/g, (step * 1000).toString());
         ret = ret.replace(/W/g, (Math.round(s.relativeWinding * 10000) / 10000).toString());
         ret = ret.replace(/w/g, (Math.round(s.winding * 10000) / 10000).toString());
+        ret = ret.replace(/r/g, (Math.round(s.radius * 10000) / 10000).toString());
         return ret;
     }
 
@@ -81,6 +82,7 @@ class Segment {
         this.winding = 0.0;
         this.relativeWinding = 0.0;
         this.rawHeading = 0.0;
+        this.radius = 0.0;
         this.pos = 0.0;
         this.vel = 0.0;
         this.acc = 0.0;

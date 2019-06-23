@@ -76,7 +76,7 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 
 * **Output Type:** The output type. Options are CSV file, Java array, C++ array, or Python array. CSV files are saved to a chosen location and arrays are copied to the clipboard.
 * **Path Name:** The name of the path. Underscores are assumed for CSV files and Python arrays while camel case is assumed for Java and C++ arrays
-* **Output Format:** The format to use for the output of the generation. This should consist of one or more [output format options](#output-format-options) separated by commas: 
+* **Output Format:** The format to use for the output of the generation. This should consist of one or more [output format options](#output-format-options) separated by commas.
 
     For example, a CSV file with format of p,v,a will output files where each line in the files is:
 

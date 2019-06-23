@@ -67,6 +67,27 @@ a:focus{
 	background-color: #c62828;
 }
 
+#actions:hover a #actionIcon{
+	transition: 0.35s;
+	transform: rotateZ(-90deg);
+}
+
+#actions:hover #actionsBtn{
+	transform: scale(1.1);
+	transition: all ease 0.35s;
+}
+
+#actions ul li:hover{
+	transform: scale(1.15);
+	transition: all ease 0.35s;
+}
+
+#actions #actionsBtn,
+#actions ul li{
+	transform: scale(1.0);
+	transition: all ease 0.35s;
+}
+
 .input-field{
 	margin-bottom: -10px !important;
 }

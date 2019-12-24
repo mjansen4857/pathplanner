@@ -1,7 +1,6 @@
 # PathPlanner
 [![CircleCI](https://circleci.com/gh/mjansen4857/PathPlanner/tree/master.svg?style=svg)](https://circleci.com/gh/mjansen4857/PathPlanner/tree/master)
 ![version](https://img.shields.io/github/release/mjansen4857/PathPlanner.svg)
-![dependencies](https://img.shields.io/david/mjansen4857/PathPlanner.svg)
 ![downloads](https://img.shields.io/github/downloads/mjansen4857/PathPlanner/total.svg)
 
 Windows, MacOS, and Linux versions can be downloaded [here.](https://github.com/mjansen4857/PathPlanner/releases/latest)

@@ -272,7 +272,7 @@ function onSettingsConfirm() {
 	preferences.teamNumber = parseFloat($('#teamNumber').val());
 	preferences.rioPathLocation = $('#rioPathLocation').val();
 	preferences.useMetric = $('#units').value === 'metric';
-	const gameYear = $('#gameYear').value;
+	const gameYear = $('#gameYear').val();
 	if (preferences.gameYear !== gameYear) {
 		let field = new Image();
 		field.onload = () => {

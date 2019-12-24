@@ -4,8 +4,8 @@ class SegmentGroup {
     }
 
     formatCSV(reverse, format, step) {
-        var str = '';
-        for (var i = 0; i < this.segments.length; i++) {
+        let str = '';
+        for (let i = 0; i < this.segments.length; i++) {
             str += this.formatSegment(i, reverse, format, step);
             if (i < this.segments.length - 1) {
                 str += '\n';
@@ -15,8 +15,8 @@ class SegmentGroup {
     }
 
     formatJavaArray(arrayName, reverse, format, step) {
-        var str = 'public static double[][] ' + arrayName + ' = new double[][] {\n';
-        for (var i = 0; i < this.segments.length; i++) {
+        let str = 'public static double[][] ' + arrayName + ' = new double[][] {\n';
+        for (let i = 0; i < this.segments.length; i++) {
             str += '        {' + this.formatSegment(i, reverse, format, step) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
         }
         str += '    }';
@@ -24,8 +24,8 @@ class SegmentGroup {
     }
 
     formatCppArray(arrayName, reverse, format, step) {
-        var str = 'double ' + arrayName + '[][] = {\n';
-        for (var i = 0; i < this.segments.length; i++) {
+        let str = 'double ' + arrayName + '[][] = {\n';
+        for (let i = 0; i < this.segments.length; i++) {
             str += '        {' + this.formatSegment(i, reverse, format, step) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
         }
         str += '    }';
@@ -33,22 +33,22 @@ class SegmentGroup {
     }
 
     formatPythonArray(arrayName, reverse, format, step) {
-        var str = arrayName + ' = [\n';
-        for (var i = 0; i < this.segments.length; i++) {
+        let str = arrayName + ' = [\n';
+        for (let i = 0; i < this.segments.length; i++) {
             str += '    [' + this.formatSegment(i, reverse, format, step) + ((i < this.segments.length - 1) ? '],\n' : ']]');
         }
         return str;
     }
 
     formatSegment(index, reverse, format, step) {
-        var s = this.segments[index];
-        var n = (reverse) ? -1 : 1;
-        var ret = format.replace(/x/g, (Math.round(s.x * 10000) / 10000 * n).toString());
+        const s = this.segments[index];
+        const n = (reverse) ? -1 : 1;
+        let ret = format.replace(/x/g, (Math.round(s.x * 10000) / 10000 * n).toString());
         ret = ret.replace(/y/g, (Math.round(s.y * 10000) / 10000 * n).toString());
         ret = ret.replace(/p/g, (Math.round(s.pos * 10000) / 10000 * n).toString());
         ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
         ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());
-        var heading = s.heading;
+        let heading = s.heading;
         if(reverse){
             heading += 180;
             if(heading > 180){

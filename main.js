@@ -80,7 +80,7 @@ ipc.on('quit-and-install', (event, data) => {
 // Create a hidden window to generate the path to avoid delaying the main window
 ipc.on('generate', function (event, data) {
 	log.info('Starting generation worker...');
-	var worker = new BrowserWindow({
+	let worker = new BrowserWindow({
 		show: false,
 		webPreferences: {
 			nodeIntegration: true

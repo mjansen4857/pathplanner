@@ -26,9 +26,9 @@ class PathEditor {
 		// Handle all mouse interactions with the points
 		// (Add, delete, drag, etc.)
 		this.canvas.addEventListener('mousemove', (evt) => {
-			var mousePos = getMousePos(this.canvas, evt);
-			if (evt.buttons == 0) {
-				for (var i = 0; i < this.plannedPath.numPoints(); i++) {
+			let mousePos = getMousePos(this.canvas, evt);
+			if (evt.buttons === 0) {
+				for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 					if ((Math.pow(mousePos.x - this.plannedPath.points[i].x, 2) + (Math.pow(mousePos.y - this.plannedPath.points[i].y, 2))) <= Math.pow(8, 2)) {
 						this.highlightedPoint = i;
 						this.update();
@@ -37,7 +37,7 @@ class PathEditor {
 						return;
 					}
 				}
-				for (var i = 0; i < this.plannedPath.numPoints(); i++) {
+				for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 					if ((Math.pow(this.lastMousePos.x - this.plannedPath.points[i].x, 2) + (Math.pow(this.lastMousePos.y - this.plannedPath.points[i].y, 2))) <= Math.pow(8, 2)) {
 						this.highlightedPoint = -1;
 						this.update();
@@ -46,18 +46,18 @@ class PathEditor {
 						return;
 					}
 				}
-			} else if (evt.buttons == 1) {
-				if (this.pointDragIndex != -1) {
+			} else if (evt.buttons === 1) {
+				if (this.pointDragIndex !== -1) {
 					if (mousePos.x >= 0 && mousePos.y >= 0 && mousePos.x <= this.width && mousePos.y <= this.height) {
-						if (evt.getModifierState('Shift') && this.pointDragIndex % 3 != 0) {
-							var controlIndex = this.pointDragIndex;
-							var nextIsAnchor = (controlIndex + 1) % 3 == 0;
-							var anchorIndex = (nextIsAnchor) ? controlIndex + 1 : controlIndex - 1;
-							var lineStart = this.plannedPath.points[anchorIndex];
-							var lineEnd = Vector2.add(this.plannedPath.points[controlIndex], Vector2.subtract(this.plannedPath.points[controlIndex], this.plannedPath.points[anchorIndex]));
-							var p = new Vector2(mousePos.x, mousePos.y);
-							var newPoint = Util.closestPointOnLine(lineStart, lineEnd, p);
-							if (newPoint.x - lineStart.x != 0 || newPoint.y - lineStart.y != 0) {
+						if (evt.getModifierState('Shift') && this.pointDragIndex % 3 !== 0) {
+							const controlIndex = this.pointDragIndex;
+							const nextIsAnchor = (controlIndex + 1) % 3 === 0;
+							const anchorIndex = (nextIsAnchor) ? controlIndex + 1 : controlIndex - 1;
+							const lineStart = this.plannedPath.points[anchorIndex];
+							const lineEnd = Vector2.add(this.plannedPath.points[controlIndex], Vector2.subtract(this.plannedPath.points[controlIndex], this.plannedPath.points[anchorIndex]));
+							const p = new Vector2(mousePos.x, mousePos.y);
+							const newPoint = Util.closestPointOnLine(lineStart, lineEnd, p);
+							if (newPoint.x - lineStart.x !== 0 || newPoint.y - lineStart.y !== 0) {
 								this.plannedPath.movePoint(controlIndex, newPoint);
 							}
 						} else {
@@ -71,37 +71,36 @@ class PathEditor {
 			this.lastMousePos.y = mousePos.y;
 		});
 		this.canvas.addEventListener('mousedown', (evt) => {
-			var mousePos = getMousePos(this.canvas, evt);
-			if (evt.buttons == 1) {
-				for (var i = 0; i < this.plannedPath.numPoints(); i++) {
+			const mousePos = getMousePos(this.canvas, evt);
+			if (evt.buttons === 1) {
+				for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 					if ((Math.pow(mousePos.x - this.plannedPath.points[i].x, 2) + (Math.pow(mousePos.y - this.plannedPath.points[i].y, 2))) <= Math.pow(8, 2)) {
 						this.pointDragIndex = i;
 					}
 				}
-			} else if (evt.buttons == 2) {
-				for (var i = 0; i < this.plannedPath.numPoints(); i++) {
+			} else if (evt.buttons === 2) {
+				for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 					if ((Math.pow(mousePos.x - this.plannedPath.points[i].x, 2) + (Math.pow(mousePos.y - this.plannedPath.points[i].y, 2))) <= Math.pow(8, 2)) {
-						if (i % 3 == 0) {
+						if (i % 3 === 0) {
 							if (((evt.getModifierState('Control') || evt.getModifierState('Meta'))) && this.plannedPath.numSplines() > 1) {
 								this.plannedPath.deleteSpline(i);
 								this.update();
 								this.saveHistory();
 							} else {
-								var pointConfigDialog = M.Modal.getInstance(document.getElementById('pointConfig'));
+								const pointConfigDialog = M.Modal.getInstance(document.getElementById('pointConfig'));
 								this.updatePoint = i;
 								document.getElementById('pointX').value = Math.round((this.plannedPath.points[i].x - Util.xPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 10000) / 10000;
 								document.getElementById('pointY').value = Math.round((this.plannedPath.points[i].y - Util.yPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 10000) / 10000;
-								var control;
-								var anchor = this.plannedPath.points[i];
-								if (i == this.plannedPath.points.length - 1) {
+								let control;
+								const anchor = this.plannedPath.points[i];
+								if (i === this.plannedPath.points.length - 1) {
 									control = Vector2.subtract(anchor, Vector2.subtract(this.plannedPath.points[i - 1], anchor));
 								} else {
 									control = this.plannedPath.points[i + 1];
 								}
-								var angle = Math.round(Math.atan2(control.y - anchor.y, control.x - anchor.x) * (180 / Math.PI) * 10000) / 10000;
-								document.getElementById('pointAngle').value = angle;
-								var velocity = this.plannedPath.getVelocity(this.updatePoint);
-								if(velocity == -1){
+								document.getElementById('pointAngle').value = Math.round(Math.atan2(control.y - anchor.y, control.x - anchor.x) * (180 / Math.PI) * 10000) / 10000;
+								let velocity = this.plannedPath.getVelocity(this.updatePoint);
+								if(velocity === -1){
 									velocity = preferences.maxVel;
 								}
 								document.getElementById('pointVelocity').value = velocity;
@@ -112,7 +111,7 @@ class PathEditor {
 						return;
 					}
 				}
-				if (!evt.getModifierState('Control') && !evt.getModifierState('Meta') && !evt.getModifierState('Shift') && evt.buttons == 2) {
+				if (!evt.getModifierState('Control') && !evt.getModifierState('Meta') && !evt.getModifierState('Shift') && evt.buttons === 2) {
 					this.plannedPath.addSpline(new Vector2(mousePos.x, mousePos.y));
 					this.highlightedPoint = this.plannedPath.points.length - 1;
 					this.update();
@@ -121,7 +120,7 @@ class PathEditor {
 			}
 		});
 		this.canvas.addEventListener('mouseup', (evt) => {
-			if (this.pointDragIndex != -1) {
+			if (this.pointDragIndex !== -1) {
 				this.saveHistory();
 			}
 			this.pointDragIndex = -1;
@@ -136,8 +135,8 @@ class PathEditor {
 	 * @param newValue
 	 */
 	updateVelocities(oldValue, newValue) {
-		for (var i = 0; i < this.plannedPath.velocities.length; i++) {
-			if (this.plannedPath.velocities[i] == oldValue || this.plannedPath.velocities[i] > newValue) {
+		for (let i = 0; i < this.plannedPath.velocities.length; i++) {
+			if (this.plannedPath.velocities[i] === oldValue || this.plannedPath.velocities[i] > newValue) {
 				this.plannedPath.velocities[i] = newValue;
 			}
 		}
@@ -155,7 +154,7 @@ class PathEditor {
 	 * Clear the canvas
 	 */
 	clear() {
-		var g = this.canvas.getContext('2d');
+		const g = this.canvas.getContext('2d');
 		g.clearRect(0, 0, this.canvas.width, this.canvas.height);
 	}
 
@@ -163,7 +162,7 @@ class PathEditor {
 	 * Draw the canvas. This draws the background image and the path/points
 	 */
 	draw() {
-		var g = this.canvas.getContext('2d');
+		const g = this.canvas.getContext('2d');
 
 		//draw field
 		g.drawImage(this.image, 0, 50);
@@ -173,30 +172,30 @@ class PathEditor {
 		g.strokeStyle = '#eeeeee';
 		g.imageSmoothingEnabled = false;
 		g.beginPath();
-		var angle = Math.atan2(this.plannedPath.points[1].y - this.plannedPath.points[0].y, this.plannedPath.points[1].x - this.plannedPath.points[0].x);
-		var startL = new Vector2(this.plannedPath.points[0].x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), this.plannedPath.points[0].y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
-		var startR = new Vector2(this.plannedPath.points[0].x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), this.plannedPath.points[0].y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+		const angle = Math.atan2(this.plannedPath.points[1].y - this.plannedPath.points[0].y, this.plannedPath.points[1].x - this.plannedPath.points[0].x);
+		const startL = new Vector2(this.plannedPath.points[0].x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), this.plannedPath.points[0].y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+		const startR = new Vector2(this.plannedPath.points[0].x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), this.plannedPath.points[0].y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
 		g.moveTo(startL.x, startL.y);
-		for (var i = 0; i < this.plannedPath.numSplines(); i++) {
-			var points = this.plannedPath.getPointsInSpline(i);
+		for (let i = 0; i < this.plannedPath.numSplines(); i++) {
+			const points = this.plannedPath.getPointsInSpline(i);
 
-			for (var d = 0; d <= 1; d += 0.01) {
-				var p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
-				var p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
-				var angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
-				var p1L = new Vector2(p1.x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), p0.y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+			for (let d = 0; d <= 1; d += 0.01) {
+				const p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
+				const p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
+				let angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+				const p1L = new Vector2(p1.x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), p0.y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
 
 				g.lineTo(p1L.x, p1L.y);
 			}
 		}
 		g.moveTo(startR.x, startR.y);
-		for (var i = 0; i < this.plannedPath.numSplines(); i++) {
-			var points = this.plannedPath.getPointsInSpline(i);
-			for (var d = 0; d <= 1; d += 0.01) {
-				var p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
-				var p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
-				var angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
-				var p1R = new Vector2(p1.x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), p0.y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+		for (let i = 0; i < this.plannedPath.numSplines(); i++) {
+			const points = this.plannedPath.getPointsInSpline(i);
+			for (let d = 0; d <= 1; d += 0.01) {
+				const p0 = Util.cubicCurve(points[0], points[1], points[2], points[3], d);
+				const p1 = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
+				const angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+				const p1R = new Vector2(p1.x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), p0.y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
 
 				g.lineTo(p1R.x, p1R.y);
 			}
@@ -207,8 +206,8 @@ class PathEditor {
 		g.strokeStyle = '#000000';
 		g.lineWidth = 2.5;
 		g.beginPath();
-		for (var i = 0; i < this.plannedPath.numSplines(); i++) {
-			var points = this.plannedPath.getPointsInSpline(i);
+		for (let i = 0; i < this.plannedPath.numSplines(); i++) {
+			const points = this.plannedPath.getPointsInSpline(i);
 			g.moveTo(points[0].x, points[0].y);
 			g.lineTo(points[1].x, points[1].y);
 			g.moveTo(points[2].x, points[2].y);
@@ -217,32 +216,32 @@ class PathEditor {
 		g.stroke();
 
 		//draw points and perimeter
-		var points = this.plannedPath.points;
-		for (var i = 0; i < points.length; i++) {
+		const points = this.plannedPath.points;
+		for (let i = 0; i < points.length; i++) {
 			g.lineWidth = 3;
-			if (i == 0) {
-				var angle = Math.atan2(points[i + 1].y - points[i].y, points[i + 1].x - points[i].x);
-				var l = new Vector2(points[i].x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
-				var r = new Vector2(points[i].x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+			if (i === 0) {
+				const angle = Math.atan2(points[i + 1].y - points[i].y, points[i + 1].x - points[i].x);
+				const l = new Vector2(points[i].x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+				const r = new Vector2(points[i].x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
 				g.fillStyle = "#388e3c";
 				g.strokeStyle = "#388e3c";
 				this.drawRobotPerimeter(l, r);
-			} else if (i == points.length - 1) {
-				var angle = Math.atan2(points[i - 1].y - points[i].y, points[i - 1].x - points[i].x);
-				var l = new Vector2(points[i].x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
-				var r = new Vector2(points[i].x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+			} else if (i === points.length - 1) {
+				const angle = Math.atan2(points[i - 1].y - points[i].y, points[i - 1].x - points[i].x);
+				const l = new Vector2(points[i].x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+				const r = new Vector2(points[i].x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
 				g.fillStyle = "#d32f2f";
 				g.strokeStyle = "#d32f2f";
 				this.drawRobotPerimeter(l, r);
 			} else {
 				g.fillStyle = '#FFFFFF';
 			}
-			if (i == this.highlightedPoint) {
+			if (i === this.highlightedPoint) {
 				g.fillStyle = '#ffeb3b';
 			}
 			g.strokeStyle = '#000000';
 			g.beginPath();
-			g.arc(points[i].x, points[i].y, 8, 2 * Math.PI, false);
+			g.arc(points[i].x, points[i].y, 8, 2 * Math.PI, 0);
 			g.fill();
 			g.stroke();
 		}
@@ -254,16 +253,16 @@ class PathEditor {
 	 * @param right The right-middle point of the robot
 	 */
 	drawRobotPerimeter(left, right) {
-		var g = this.canvas.getContext('2d');
-		var angle = Math.atan2(left.y - right.y, left.x - right.x);
-		var halfLength = preferences.robotLength / 2;
-		var backLeftX = (left.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
-		var backLeftY = (left.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
-		var frontLeftX = (left.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
-		var frontLeftY = (left.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
-		var backRightX = (right.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
-		var backRightY = (right.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
-		var frontRightX = (right.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
+		const g = this.canvas.getContext('2d');
+		const angle = Math.atan2(left.y - right.y, left.x - right.x);
+		const halfLength = preferences.robotLength / 2;
+		const backLeftX = (left.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
+		const backLeftY = (left.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
+		const frontLeftX = (left.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
+		const frontLeftY = (left.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
+		const backRightX = (right.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
+		const backRightY = (right.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
+		const frontRightX = (right.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
 		var frontRightY = (right.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
 		g.beginPath();
 		g.moveTo(backLeftX, backLeftY);

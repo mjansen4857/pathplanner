@@ -7,18 +7,19 @@ const joinStep = 0.00001;
  * Creates a segment group of many points on the curve from the list of anchor and control points
  * @param points The path points
  * @param step The step to use to interpolate the curve
+ * @param noLogging true if logging info should be skipped
  * @returns The points on the curve
  */
 function join(points, step, noLogging) {
     if(!noLogging) log.info('    Joining splines... ');
-    var start = new Date().getTime();
-    var s = new SegmentGroup();
-    var numSplines = ((points.length - 4) / 3) + 1;
-    for (var i = 0; i < numSplines; i++) {
-        var pointsInSpline = new Array(points[i * 3], points[i * 3 + 1], points[i * 3 + 2], points[i * 3 + 3]);
-        for (var d = step; d <= 1.0; d += step) {
-            var p = Util.cubicCurve(pointsInSpline[0], pointsInSpline[1], pointsInSpline[2], pointsInSpline[3], d);
-            var seg = new Segment();
+    const start = new Date().getTime();
+    let s = new SegmentGroup();
+    const numSplines = ((points.length - 4) / 3) + 1;
+    for (let i = 0; i < numSplines; i++) {
+        const pointsInSpline = [points[i * 3], points[i * 3 + 1], points[i * 3 + 2], points[i * 3 + 3]];
+        for (let d = step; d <= 1.0; d += step) {
+            const p = Util.cubicCurve(pointsInSpline[0], pointsInSpline[1], pointsInSpline[2], pointsInSpline[3], d);
+            let seg = new Segment();
             seg.x = p.x;
             seg.y = p.y;
             s.add(seg);
@@ -36,7 +37,7 @@ class RobotPath {
     constructor(points, velocities, preferences, reverse, noLogging) {
         this.noLogging = noLogging;
         if(!this.noLogging) log.info('Generating path...');
-        var start = new Date().getTime();
+        const start = new Date().getTime();
         this.path = new Path(join(points, joinStep, noLogging), points[0], preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot, noLogging);
         this.velocities = velocities;
         this.pathSegments = this.path.group;
@@ -55,7 +56,7 @@ class RobotPath {
         this.recalculateValues();
         this.calculateHeading();
         this.splitLeftRight();
-        var time = new Date().getTime() - start;
+        const time = new Date().getTime() - start;
         if(!this.noLogging) log.info('DONE IN: ' + time + 'ms');
     }
 
@@ -64,12 +65,12 @@ class RobotPath {
      */
     calculateMaxVelocity() {
         if(!this.noLogging) log.info('    Calculating max velocity on curve...');
-        var start = new Date().getTime();
-        for (var i = 0; i < this.pathSegments.segments.length; i++) {
-            var r;
-            if (i == this.path.group.segments.length - 1) {
+        const start = new Date().getTime();
+        for (let i = 0; i < this.pathSegments.segments.length; i++) {
+            let r;
+            if (i === this.path.group.segments.length - 1) {
                 r = this.calculateCurveRadius(i - 2, i - 1, i);
-            } else if (i == 0) {
+            } else if (i === 0) {
                 r = this.calculateCurveRadius(i, i + 1, i + 2);
             } else {
                 r = this.calculateCurveRadius(i - 1, i, i + 1);
@@ -83,11 +84,11 @@ class RobotPath {
                 if (i % numSegments >= numSegments - Math.round(numSegments / 4)) {
                     const index = i + (numSegments - (i % numSegments));
                     const velIndex = ((index - numSegments) / numSegments) + 1;
-                    this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] == -1) ? this.maxVel : this.velocities[velIndex]);
+                    this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] === -1) ? this.maxVel : this.velocities[velIndex]);
                 } else if (i % numSegments <= Math.round(numSegments / 4)) {
                     const index = i - (i % numSegments);
                     const velIndex = ((index - numSegments) / numSegments) + 1;
-                    this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] == -1) ? this.maxVel : this.velocities[velIndex]);
+                    this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] === -1) ? this.maxVel : this.velocities[velIndex]);
                 }
             } else {
                 // Calculate max velocity on curve given the coefficient of friction between wheels and carpet
@@ -96,7 +97,7 @@ class RobotPath {
                 // var maxVCurve = Math.sqrt(this.mu * g * radius);
                 // if (!this.useMetric) maxVCurve *= 3.281;
 
-                var maxVCurve = Math.sqrt(this.maxAcc * (r - this.wheelbaseWidth / 2));
+                const maxVCurve = Math.sqrt(this.maxAcc * (r - this.wheelbaseWidth / 2));
 
                 this.pathSegments.segments[i].vel = Math.min(maxVCurve, this.maxVel);
 
@@ -104,11 +105,11 @@ class RobotPath {
                 if (i % numSegments >= numSegments - Math.round(numSegments / 4)) {
                     const index = i + (numSegments - (i % numSegments));
                     const velIndex = ((index - numSegments) / numSegments) + 1;
-                    this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] == -1) ? this.maxVel : this.velocities[velIndex]);
+                    this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] === -1) ? this.maxVel : this.velocities[velIndex]);
                 } else if (i % numSegments <= Math.round(numSegments / 4)) {
                     const index = i - (i % numSegments);
                     const velIndex = ((index - numSegments) / numSegments) + 1;
-                    this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] == -1) ? this.maxVel : this.velocities[velIndex]);
+                    this.pathSegments.segments[i].vel = Math.min(this.pathSegments.segments[i].vel, (this.velocities[velIndex] === -1) ? this.maxVel : this.velocities[velIndex]);
                 }
             }
         }
@@ -123,18 +124,18 @@ class RobotPath {
      * @returns The curve radius
      */
     calculateCurveRadius(i0, i1, i2) {
-        var a = this.pathSegments.segments[i0];
-        var b = this.pathSegments.segments[i1];
-        var c = this.pathSegments.segments[i2];
-        var ab = Math.sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
-        var bc = Math.sqrt((c.x - b.x) * (c.x - b.x) + (b.y - c.y) * (b.y - c.y));
-        var ac = Math.sqrt((c.x - a.x) * (c.x - a.x) + (c.y - a.y) * (c.y - a.y));
-        var p = (ab + bc + ac) / 2;
-        var area = Math.sqrt(Math.abs(p * (p - ab) * (p - bc) * (p - ac)));
-        var r = (ab * bc * ac) / (4 * area);
+        const a = this.pathSegments.segments[i0];
+        const b = this.pathSegments.segments[i1];
+        const c = this.pathSegments.segments[i2];
+        const ab = Math.sqrt((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y));
+        const bc = Math.sqrt((c.x - b.x) * (c.x - b.x) + (b.y - c.y) * (b.y - c.y));
+        const ac = Math.sqrt((c.x - a.x) * (c.x - a.x) + (c.y - a.y) * (c.y - a.y));
+        const p = (ab + bc + ac) / 2;
+        const area = Math.sqrt(Math.abs(p * (p - ab) * (p - bc) * (p - ac)));
+        let r = (ab * bc * ac) / (4 * area);
         // things get weird where 2 splines meet, and will give a very small radius
         // therefore, ignore those points
-        if (i2 % Math.round(1 / joinStep) == 0) {
+        if (i2 % Math.round(1 / joinStep) === 0) {
             r = this.calculateCurveRadius(i0 - 1, i0, i1);
         }
         // Return radius on outside of curve
@@ -146,17 +147,17 @@ class RobotPath {
      */
     calculateVelocity() {
         if(!this.noLogging) log.info('    Calculating velocity...');
-        var start = new Date().getTime();
-        var p = this.pathSegments.segments;
+        const start = new Date().getTime();
+        let p = this.pathSegments.segments;
         p[0].vel = 0;
-        var time = 0;
-        var start1 = new Date().getTime();
-        for (var i = 1; i < p.length; i++) {
-            var v0 = p[i - 1].vel;
-            var dx = p[i - 1].dx;
+        let time = 0;
+        const start1 = new Date().getTime();
+        for (let i = 1; i < p.length; i++) {
+            const v0 = p[i - 1].vel;
+            const dx = p[i - 1].dx;
             if (dx > 0) {
-                var vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * this.maxAcc * dx));
-                var v = Math.min(vMax, p[i].vel);
+                const vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * this.maxAcc * dx));
+                let v = Math.min(vMax, p[i].vel);
                 if (isNaN(v)) {
                     v = p[i - 1].vel;
                 }
@@ -166,22 +167,22 @@ class RobotPath {
             }
         }
         if(!this.noLogging) log.info('1: ' + (new Date().getTime() - start1) + 'ms');
-        var start2 = new Date().getTime();
+        const start2 = new Date().getTime();
         if(!this.endVelOverride){
             p[p.length - 1].vel = 0;
         }
-        for (i = p.length - 2; i > 1; i--) {
-            var v0 = p[i + 1].vel;
-            var dx = p[i + 1].dx;
-            var vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * this.maxAcc * dx));
+        for (let i = p.length - 2; i > 1; i--) {
+            const v0 = p[i + 1].vel;
+            const dx = p[i + 1].dx;
+            const vMax = Math.sqrt(Math.abs(v0 * v0 + 2 * this.maxAcc * dx));
             p[i].vel = Math.min((isNaN(vMax) ? this.maxVel : vMax), p[i].vel);
         }
         if(!this.noLogging) log.info('2: ' + (new Date().getTime() - start2) + 'ms');
-        var start3 = new Date().getTime();
-        for (var i = 1; i < p.length; i++) {
-            var v = p[i].vel;
-            var dx = p[i - 1].dx;
-            var v0 = p[i - 1].vel;
+        const start3 = new Date().getTime();
+        for (let i = 1; i < p.length; i++) {
+            const v = p[i].vel;
+            const dx = p[i - 1].dx;
+            const v0 = p[i - 1].vel;
             time += (2 * dx) / (v + v0);
             if (isNaN(time)) {
                 time = 0;
@@ -189,19 +190,19 @@ class RobotPath {
             p[i].time = time;
         }
         if(!this.noLogging) log.info('3: ' + (new Date().getTime() - start3) + 'ms');
-        var start4 = new Date().getTime();
-        for (var i = 1; i < p.length; i++) {
-            var dt = p[i].time - p[i - 1].time;
-            if (dt == 0 || !isFinite(dt)) {
+        const start4 = new Date().getTime();
+        for (let i = 1; i < p.length; i++) {
+            const dt = p[i].time - p[i - 1].time;
+            if (dt === 0 || !isFinite(dt)) {
                 p.splice(i, 1);
             }
         }
         if(!this.noLogging) log.info('4: ' + (new Date().getTime() - start4) + 'ms');
-        var start5 = new Date().getTime();
-        for (var i = 1; i < p.length; i++) {
-            var dv = p[i].vel - p[i - 1].vel;
-            var dt = p[i].time - p[i - 1].time;
-            if (dt == 0) {
+        const start5 = new Date().getTime();
+        for (let i = 1; i < p.length; i++) {
+            const dv = p[i].vel - p[i - 1].vel;
+            const dt = p[i].time - p[i - 1].time;
+            if (dt === 0) {
                 p[i].acc = 0;
             } else {
                 p[i].acc = dv / dt;
@@ -217,12 +218,12 @@ class RobotPath {
      */
     splitGroupByTime() {
         if(!this.noLogging) log.info('    Splitting segments by time...');
-        var start = new Date().getTime();
-        var segNum = 0;
-        var numMessySeg = 0;
-        var p = this.pathSegments.segments;
-        for (var i = 0; i < p.length; i++) {
-            if (i == 0) {
+        const start = new Date().getTime();
+        let segNum = 0;
+        let numMessySeg = 0;
+        const p = this.pathSegments.segments;
+        for (let i = 0; i < p.length; i++) {
+            if (i === 0) {
                 this.timeSegments.segments.push(p[0]);
                 segNum++;
             }
@@ -251,11 +252,11 @@ class RobotPath {
      */
     calculateHeading() {
         if(!this.noLogging) log.info('    Calculating robot heading...');
-        var start = new Date().getTime();
-        var startAngle = Math.atan2(-this.timeSegments.segments[0].y, -this.timeSegments.segments[0].x) * (180 / Math.PI) - 180;
-        for (var i = 0; i < this.timeSegments.segments.length; i++) {
-            var angle;
-            if (i == 0) {
+        const start = new Date().getTime();
+        const startAngle = Math.atan2(-this.timeSegments.segments[0].y, -this.timeSegments.segments[0].x) * (180 / Math.PI) - 180;
+        for (let i = 0; i < this.timeSegments.segments.length; i++) {
+            let angle;
+            if (i === 0) {
                 angle = Math.atan2(-this.timeSegments.segments[i].y, -this.timeSegments.segments[i].x) * (180 / Math.PI);
             } else {
                 angle = Math.atan2(this.timeSegments.segments[i - 1].y - this.timeSegments.segments[i].y, this.timeSegments.segments[i - 1].x - this.timeSegments.segments[i].x) * (180 / Math.PI);
@@ -267,7 +268,7 @@ class RobotPath {
             } else if (angle > 180) {
                 angle -= 360;
             }
-            var relativeAngle = angle - startAngle;
+            let relativeAngle = angle - startAngle;
             if (relativeAngle < -180) {
                 relativeAngle += 360;
             } else if (relativeAngle > 180) {
@@ -276,8 +277,8 @@ class RobotPath {
             this.timeSegments.segments[i].heading = angle;
             this.timeSegments.segments[i].relativeHeading = relativeAngle;
 
-            if (i == 0) {
-                var winding = angle;
+            if (i === 0) {
+                let winding = angle;
                 if(this.reverse) {
                     winding += 180;
                     if (winding > 180) {
@@ -289,9 +290,9 @@ class RobotPath {
                 this.timeSegments.segments[i].winding = winding;
                 this.timeSegments.segments[i].relativeWinding = relativeAngle;
             } else {
-                var diff = this.getAngleDifference(this.timeSegments.segments[i].rawHeading, this.timeSegments.segments[i - 1].rawHeading);
-                var winding = this.timeSegments.segments[i - 1].winding + diff;
-                var relativeWinding = this.timeSegments.segments[i - 1].relativeWinding + diff;
+                const diff = this.getAngleDifference(this.timeSegments.segments[i].rawHeading, this.timeSegments.segments[i - 1].rawHeading);
+                const winding = this.timeSegments.segments[i - 1].winding + diff;
+                const relativeWinding = this.timeSegments.segments[i - 1].relativeWinding + diff;
                 this.timeSegments.segments[i].winding = winding;
                 this.timeSegments.segments[i].relativeWinding = relativeWinding;
             }
@@ -300,10 +301,10 @@ class RobotPath {
     }
 
     getAngleDifference(a, b) {
-        var d = Math.abs(a - b) % 360;
-        var r = d > 180 ? 360 - d : d;
+        const d = Math.abs(a - b) % 360;
+        let r = d > 180 ? 360 - d : d;
 
-        var sign = (a - b >= 0 && a - b <= 180) || (a - b <= -180 && a - b >= -360) ? 1 : -1;
+        const sign = (a - b >= 0 && a - b <= 180) || (a - b <= -180 && a - b >= -360) ? 1 : -1;
         r *= sign;
         return r;
     }
@@ -313,15 +314,15 @@ class RobotPath {
      */
     splitLeftRight() {
         if(!this.noLogging) log.info('    Splitting left and right robot paths...');
-        var start = new Date().getTime();
-        var w = this.wheelbaseWidth / 2;
-        for (var i = 0; i < this.timeSegments.segments.length; i++) {
-            var seg = this.timeSegments.segments[i];
-            var left = new Segment();
-            var right = new Segment();
+        const start = new Date().getTime();
+        const w = this.wheelbaseWidth / 2;
+        for (let i = 0; i < this.timeSegments.segments.length; i++) {
+            const seg = this.timeSegments.segments[i];
+            let left = new Segment();
+            let right = new Segment();
 
-            var cos_angle = Math.cos(seg.heading * (Math.PI / 180));
-            var sin_angle = Math.sin(seg.heading * (Math.PI / 180));
+            const cos_angle = Math.cos(seg.heading * (Math.PI / 180));
+            const sin_angle = Math.sin(seg.heading * (Math.PI / 180));
 
             left.x = seg.x + (w * sin_angle);
             left.y = seg.y - (w * cos_angle);
@@ -335,8 +336,8 @@ class RobotPath {
             left.radius = seg.radius;
 
             if (i > 0) {
-                var last = this.left.segments[i - 1];
-                var distance = Math.sqrt((left.x - last.x) * (left.x - last.x) + (left.y - last.y) * (left.y - last.y));
+                const last = this.left.segments[i - 1];
+                const distance = Math.sqrt((left.x - last.x) * (left.x - last.x) + (left.y - last.y) * (left.y - last.y));
 
                 left.pos = last.pos + distance;
                 left.vel = distance / seg.dt;
@@ -355,8 +356,8 @@ class RobotPath {
             right.radius = seg.radius;
 
             if (i > 0) {
-                var last = this.right.segments[i - 1];
-                var distance = Math.sqrt((right.x - last.x) * (right.x - last.x) + (right.y - last.y) * (right.y - last.y));
+                const last = this.right.segments[i - 1];
+                const distance = Math.sqrt((right.x - last.x) * (right.x - last.x) + (right.y - last.y) * (right.y - last.y));
 
                 right.pos = last.pos + distance;
                 right.vel = distance / seg.dt;
@@ -374,11 +375,11 @@ class RobotPath {
      */
     recalculateValues() {
         if(!this.noLogging) log.info('    Verifying values...');
-        var start = new Date().getTime();
-        for (var i = 1; i < this.timeSegments.segments.length; i++) {
-            var now = this.timeSegments.segments[i];
-            var last = this.timeSegments.segments[i - 1];
-            var dt = now.time - last.time;
+        const start = new Date().getTime();
+        for (let i = 1; i < this.timeSegments.segments.length; i++) {
+            let now = this.timeSegments.segments[i];
+            const last = this.timeSegments.segments[i - 1];
+            const dt = now.time - last.time;
             now.vel = (now.pos - last.pos) / dt;
             now.acc = (now.vel - last.vel) / dt;
         }
@@ -388,7 +389,7 @@ class RobotPath {
     /**
      * Get the time for a segment
      * @param segNum The index of the segment
-     * @returns The time
+     * @returns number The time
      */
     segmentTime(segNum) {
         return segNum * this.timeStep;
@@ -412,7 +413,7 @@ class Path {
      * Make the pre-generation path
      */
     makePath(pixelsPerUnit) {
-        var start = new Date().getTime();
+        const start = new Date().getTime();
         if(!this.noLogging) log.info('Generating path...');
         this.makeScaledLists(pixelsPerUnit);
         this.calculateLength();
@@ -424,7 +425,7 @@ class Path {
      * Make x and y lists and convert the values from pixels to feet
      */
     makeScaledLists(pixelsPerUnit) {
-        for (var i = 0; i < this.inGroup.segments.length; i++) {
+        for (let i = 0; i < this.inGroup.segments.length; i++) {
             this.x.push((this.inGroup.segments[i].x - this.p0.x) / pixelsPerUnit);
             this.y.push((this.inGroup.segments[i].y - this.p0.y) / pixelsPerUnit);
         }
@@ -435,15 +436,15 @@ class Path {
      */
     calculateLength() {
         if(!this.noLogging) log.info('    Calculating length...');
-        var start = new Date().getTime();
-        for (var i = 1; i < this.x.length; i++) {
-            var dx = this.x[i] - this.x[i - 1];
-            var dy = this.y[i] - this.y[i - 1];
-            var c = Math.sqrt((dx * dx) + (dy * dy));
+        const start = new Date().getTime();
+        for (let i = 1; i < this.x.length; i++) {
+            const dx = this.x[i] - this.x[i - 1];
+            const dy = this.y[i] - this.y[i - 1];
+            const c = Math.sqrt((dx * dx) + (dy * dy));
             this.length += c;
 
-            var prevLength = 0.0;
-            if (i != 1) {
+            let prevLength = 0.0;
+            if (i !== 1) {
                 prevLength = this.l[this.l.length - 1];
             }
             this.l.push(c + prevLength);
@@ -456,16 +457,16 @@ class Path {
      */
     createSegments() {
         if(!this.noLogging) log.info('    Calculating segments...');
-        var start = new Date().getTime();
-        for (var i = 0; i < this.x.length - 1; i++) {
-            var s = i;
-            var s2 = i + 1;
-            var seg = new Segment();
+        const start = new Date().getTime();
+        for (let i = 0; i < this.x.length - 1; i++) {
+            const s = i;
+            const s2 = i + 1;
+            let seg = new Segment();
             seg.x = this.x[s];
             seg.y = this.y[s];
             seg.pos = this.l[s];
             seg.dydx = this.derivative(s, s2);
-            if (i != 0) {
+            if (i !== 0) {
                 seg.dx = seg.pos - this.group.segments[this.group.segments.length - 1].pos;
             }
             this.group.segments.push(seg);

@@ -97,8 +97,8 @@ class Util {
 	 * @returns {Vector2} The interpolated point
 	 */
 	static quadraticCurve(a, b, c, t) {
-		var p0 = Util.lerp(a, b, t);
-		var p1 = Util.lerp(b, c, t);
+		const p0 = Util.lerp(a, b, t);
+		const p1 = Util.lerp(b, c, t);
 		return Util.lerp(p0, p1, t);
 	}
 
@@ -112,8 +112,8 @@ class Util {
 	 * @returns {Vector2} The interpolated point
 	 */
 	static cubicCurve(a, b, c, d, t) {
-		var p0 = Util.quadraticCurve(a, b, c, t);
-		var p1 = Util.quadraticCurve(b, c, d, t);
+		const p0 = Util.quadraticCurve(a, b, c, t);
+		const p1 = Util.quadraticCurve(b, c, d, t);
 		return Util.lerp(p0, p1, t);
 	}
 
@@ -124,8 +124,8 @@ class Util {
 	 * @returns {number} The slope
 	 */
 	static slope(a, b) {
-		var dy = a.y - b.y;
-		var dx = a.x - b.x;
+		const dy = a.y - b.y;
+		const dx = a.x - b.x;
 		return dy / dx;
 	}
 
@@ -137,16 +137,16 @@ class Util {
 	 * @returns {Vector2} The closest point on the line
 	 */
 	static closestPointOnLine(lineStart, lineEnd, p) {
-		var dx = lineEnd.x - lineStart.x;
-		var dy = lineEnd.y - lineStart.y;
+		const dx = lineEnd.x - lineStart.x;
+		const dy = lineEnd.y - lineStart.y;
 
 		if (dx === 0 === dy) {
 			return lineStart;
 		}
 
-		var t = ((p.x - lineStart.x) * dx + (p.y - lineStart.y) * dy) / (dx * dx + dy * dy);
+		const t = ((p.x - lineStart.x) * dx + (p.y - lineStart.y) * dy) / (dx * dx + dy * dy);
 
-		var closestPoint;
+		let closestPoint;
 		if (t < 0) {
 			closestPoint = lineStart;
 		} else if (t > 1) {

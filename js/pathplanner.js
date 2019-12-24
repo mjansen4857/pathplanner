@@ -24,13 +24,13 @@ global.preferences = new Preferences();
 
 // Set up some materialize stuff
 document.addEventListener('DOMContentLoaded', function () {
-	var actionElems = document.querySelectorAll('.fixed-action-btn');
-	var actionInstances = M.FloatingActionButton.init(actionElems, {
+	const actionElems = document.querySelectorAll('.fixed-action-btn');
+	M.FloatingActionButton.init(actionElems, {
 		direction: 'up'
 	});
 
-	var dropElems = document.querySelectorAll('.dropdown-trigger');
-	var dropInstances = M.Dropdown.init(dropElems, {
+	const dropElems = document.querySelectorAll('.dropdown-trigger');
+	M.Dropdown.init(dropElems, {
 		constrainWidth: false,
 		coverTrigger: false
 	});
@@ -51,14 +51,14 @@ $(document).ready(function () {
 
 	// Prevent arrow keys from incrementing numbers in input fields
 	$('form').on('keydown', 'input[type=number]', function (e) {
-		if (e.which == 38 || e.which == 40)
+		if (e.which === 38 || e.which === 40)
 			e.preventDefault();
 	});
 
 	ipc.send('request-version');
 
 	// Load the field image and create the path editor
-	var field = new Image();
+	let field = new Image();
 	field.onload = () => {
 		pathEditor = new PathEditor(field, saveHistory);
 		history = new SimpleUndo({maxLength: 10, provider: pathSerializer});
@@ -69,26 +69,26 @@ $(document).ready(function () {
 
 	// Minimize the window when the minimize button is pressed
 	$('#windowMin').click(() => {
-		var window = BrowserWindow.getFocusedWindow();
+		const window = BrowserWindow.getFocusedWindow();
 		window.minimize();
 	});
 
 	// Close the window when the close button is pressed
 	$('#windowClose').click(() => {
-		var window = BrowserWindow.getFocusedWindow();
+		const window = BrowserWindow.getFocusedWindow();
 		window.close();
 	});
 
 	// Press the confirm button when enter is pressed in a dialog
-	var onPointConfigEnter = (event) => {
+	const onPointConfigEnter = (event) => {
 		event.preventDefault();
-		if (event.keyCode == 13) {
+		if (event.keyCode === 13) {
 			document.getElementById('pointConfigConfirm').click();
 		}
 	};
-	var onSettingsEnter = (event) => {
+	const onSettingsEnter = (event) => {
 		event.preventDefault();
-		if (event.keyCode == 13) {
+		if (event.keyCode === 13) {
 			document.getElementById('settingsConfirm').click();
 		}
 	};
@@ -119,7 +119,7 @@ $(document).ready(function () {
 	$('#generateModalConfirm').click(() => {
 		preferences.currentPathName = $('#pathName').val();
 		preferences.outputType = $('#outputType').prop('selectedIndex');
-		var format = $('#outputFormat').val();
+		const format = $('#outputFormat').val();
 		if (!format.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
@@ -130,20 +130,20 @@ $(document).ready(function () {
 		preferences.outputFormat = format;
 		preferences.splitPath = $('#splitPath').prop('checked');
 		preferences.endVelOverride = $('#endVelOverride').prop('checked');
-		var reversed = $('#reversed').prop('checked');
+		const reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
 			preferences: preferences,
 			reverse: reversed
 		});
-		var generateDialog = M.Modal.getInstance($('#generateModal'));
+		const generateDialog = M.Modal.getInstance($('#generateModal'));
 		generateDialog.close();
 	});
 	$('#generateModalDeploy').click(() => {
 		preferences.currentPathName = $('#pathName').val();
 		preferences.outputType = $('#outputType').prop('selectedIndex');
-		var format = $('#outputFormat').val();
+		const format = $('#outputFormat').val();
 		if (!format.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
@@ -154,7 +154,7 @@ $(document).ready(function () {
 		preferences.outputFormat = format;
 		preferences.splitPath = $('#splitPath').prop('checked');
 		preferences.endVelOverride = $('#endVelOverride').prop('checked');
-		var reversed = $('#reversed').prop('checked');
+		const reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
@@ -162,11 +162,11 @@ $(document).ready(function () {
 			reverse: reversed,
 			deploy: true
 		});
-		var generateDialog = M.Modal.getInstance($('#generateModal'));
+		const generateDialog = M.Modal.getInstance($('#generateModal'));
 		generateDialog.close();
 	});
 	$('#changesClose').click(() => {
-		var changesModal = M.Modal.getInstance($('#changesModal'));
+		const changesModal = M.Modal.getInstance($('#changesModal'));
 		changesModal.close();
 	});
 
@@ -176,7 +176,7 @@ $(document).ready(function () {
 	$('#openPathBtn').click(openPath);
 	hotkeys('ctrl+o,command+o', openPath);
 	$('#generatePathBtn').click(() => {
-		var generateDialog = M.Modal.getInstance($('#generateModal'));
+		const generateDialog = M.Modal.getInstance($('#generateModal'));
 		$('#pathName').val(preferences.currentPathName);
 		$('#outputType').prop('selectedIndex', preferences.outputType);
 		$('#outputFormat').val(preferences.outputFormat);
@@ -188,7 +188,7 @@ $(document).ready(function () {
 		generateDialog.open();
 	});
 	hotkeys('ctrl+g,command+g', () => {
-		var generateDialog = M.Modal.getInstance($('#generateModal'));
+		const generateDialog = M.Modal.getInstance($('#generateModal'));
 		$('#pathName').val(preferences.currentPathName);
 		$('#outputType').prop('selectedIndex', preferences.outputType);
 		$('#outputFormat').val(preferences.outputFormat);
@@ -200,7 +200,7 @@ $(document).ready(function () {
 		generateDialog.open();
 	});
 	hotkeys('ctrl+shift+g,command+shift+g', () => {
-		var reversed = $('#reversed').prop('checked');
+		const reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
@@ -209,7 +209,7 @@ $(document).ready(function () {
 		});
 	});
 	hotkeys('ctrl+shift+d,command+shift+d', () => {
-		var reversed = $('#reversed').prop('checked');
+		const reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
@@ -251,7 +251,7 @@ $(document).ready(function () {
 
 	//Secret
 	let date = new Date();
-	if(date.getMonth() == 3 && date.getDate() == 1){
+	if(date.getMonth() === 3 && date.getDate() === 1){
 		$('#windowSettings, #windowMin, #windowClose, #actionsBtn, #savePathBtn, #openPathBtn, #generatePathBtn, #previewPathBtn').addClass('wiggle');
 	}
 });
@@ -262,7 +262,7 @@ $(document).ready(function () {
 function onSettingsConfirm() {
 	const oldVel = preferences.maxVel;
 	preferences.maxVel = parseFloat($('#robotMaxV').val());
-	if (preferences.maxVel != oldVel) {
+	if (preferences.maxVel !== oldVel) {
 		pathEditor.updateVelocities(oldVel, preferences.maxVel);
 	}
 	preferences.maxAcc = parseFloat($('#robotMaxAcc').val());
@@ -271,10 +271,10 @@ function onSettingsConfirm() {
 	preferences.robotLength = parseFloat($('#robotLength').val());
 	preferences.teamNumber = parseFloat($('#teamNumber').val());
 	preferences.rioPathLocation = $('#rioPathLocation').val();
-	preferences.useMetric = $('#units').value == 'metric';
+	preferences.useMetric = $('#units').value === 'metric';
 	const gameYear = $('#gameYear').value;
-	if (preferences.gameYear != gameYear) {
-		var field = new Image();
+	if (preferences.gameYear !== gameYear) {
+		let field = new Image();
 		field.onload = () => {
 			pathEditor.updateImage(field);
 			pathEditor.update();
@@ -290,9 +290,9 @@ function onSettingsConfirm() {
  * Save the current path to a file
  */
 function savePath() {
-	var path = preferences.lastPathDir;
+	let path = preferences.lastPathDir;
 
-	if (path != 'none') {
+	if (path !== 'none') {
 		path += '/' + preferences.currentPathName;
 	} else {
 		path = homeDir + '/' + preferences.currentPathName;
@@ -306,18 +306,18 @@ function savePath() {
 			name: 'PATH file',
 			extensions: ['path']
 		}]
-	}, (filename, bookmark) => {
+	}, (filename) => {
 		if (filename) {
-			var delim = '\\';
-			if (filename.lastIndexOf(delim) == -1) delim = '/';
+			let delim = '\\';
+			if (filename.lastIndexOf(delim) === -1) delim = '/';
 			preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
 			preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
-			var points = pathEditor.plannedPath.points;
-			var fixedPoints = [];
-			for (var i = 0; i < points.length; i++) {
+			const points = pathEditor.plannedPath.points;
+			let fixedPoints = [];
+			for (let i = 0; i < points.length; i++) {
 				fixedPoints[i] = [Math.round((points[i].x - Util.xPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100, Math.round((points[i].y - Util.yPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100];
 			}
-			var output = JSON.stringify({
+			const output = JSON.stringify({
 				points: fixedPoints,
 				velocities: pathEditor.plannedPath.velocities,
 				reversed: $('#reversed').prop('checked'),
@@ -343,9 +343,9 @@ function savePath() {
  * Open a path from a file
  */
 function openPath() {
-	var path = preferences.lastPathDir;
+	let path = preferences.lastPathDir;
 
-	if (path == 'none') {
+	if (path === 'none') {
 		path = homeDir;
 	}
 
@@ -358,28 +358,28 @@ function openPath() {
 			extensions: ['path']
 		}],
 		properties: ['openFile']
-	}, (filePaths, bookmarks) => {
+	}, (filePaths) => {
 		if (filePaths) {
-			var filename = filePaths[0];
+			const filename = filePaths[0];
 			loadFile(filename);
 		}
 	});
 }
 
 function loadFile(filename) {
-	var delim = '\\';
-	if (filename.lastIndexOf(delim) == -1) delim = '/';
+	let delim = '\\';
+	if (filename.lastIndexOf(delim) === -1) delim = '/';
 	preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
 	preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
 	fs.readFile(filename, 'utf8', (err, data) => {
 		if (err) {
 			log.error(err);
 		} else {
-			var json = JSON.parse(data);
+			const json = JSON.parse(data);
 
-			var maxVel = json.maxVel;
-			var maxAcc = json.maxAcc;
-			var endVelOverride = json.endVelOverride;
+			const maxVel = json.maxVel;
+			const maxAcc = json.maxAcc;
+			const endVelOverride = json.endVelOverride;
 
 			if(maxVel && maxAcc){
 				preferences.maxVel = maxVel;
@@ -397,16 +397,16 @@ function loadFile(filename) {
 				$('#endVelOverride').prop('checked', false);
 			}
 
-			var points = json.points;
+			let points = json.points;
 			$('#reversed').prop('checked', json.reversed);
-			for (var i = 0; i < points.length; i++) {
+			for (let i = 0; i < points.length; i++) {
 				points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.xPixelOffset, points[i][1] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.yPixelOffset);
 			}
 			pathEditor.plannedPath.points = points;
-			var velocities = json.velocities;
+			let velocities = json.velocities;
 			if (!velocities) {
 				velocities = [];
-				for (var i = 0; i < pathEditor.plannedPath.numSplines() + 1; i++) {
+				for (let i = 0; i < pathEditor.plannedPath.numSplines() + 1; i++) {
 					velocities.push(preferences.maxVel);
 				}
 			}
@@ -439,7 +439,7 @@ ipc.on('copied-to-clipboard', function (event, data) {
 });
 
 ipc.on('preview-segments', function (event, data) {
-	var time = Math.round(data.left[data.left.length - 1].time * 10) / 10;
+	const time = Math.round(data.left[data.left.length - 1].time * 10) / 10;
 	M.toast({
 		html: 'Driving time: ' + time + 's',
 		displayLength: time * 1000
@@ -447,14 +447,14 @@ ipc.on('preview-segments', function (event, data) {
 	pathEditor.previewPath(data.left, data.right);
 });
 
-ipc.on('generating', function (event, data) {
+ipc.on('generating', function () {
 	M.toast({
 		html: 'Generating path...',
 		displayLength: 6000
 	});
 });
 
-ipc.on('update-ready', function (event, data) {
+ipc.on('update-ready', function () {
 	M.toast({
 		html: 'Ready to install updates! <a class="btn waves-effect indigo" onclick="notifyUpdates()" style="margin-left:20px !important;">Restart</a>',
 		displayLength: Infinity
@@ -469,7 +469,7 @@ ipc.on('app-version', function (event, data) {
 	$('#title').prop('innerText', 'PathPlanner v' + data);
 	if (is.production()) {
 		if (!is.windows()) {
-			repo.releases((err, body, headers) => {
+			repo.releases((err, body) => {
 				if (body) {
 					if (semver.gt(semver.clean(body[0].tag_name), data)) {
 						M.toast({
@@ -481,13 +481,13 @@ ipc.on('app-version', function (event, data) {
 			});
 		}
 		if (semver.gt(data, preferences.lastRunVersion)) {
-			repo.releases((err, body, headers) => {
+			repo.releases((err, body) => {
 				if (body) {
-					var changesModal = M.Modal.getInstance($('#changesModal'));
-					var converter = new showdown.Converter();
-					var changes = body[0].body;
+					const changesModal = M.Modal.getInstance($('#changesModal'));
+					const converter = new showdown.Converter();
+					let changes = body[0].body;
 					changes = changes.substr(changes.indexOf('\n') + 1);
-					var html = converter.makeHtml(changes);
+					let html = converter.makeHtml(changes);
 					html = html.replace('<ul>', '<ul class="browser-default">');
 					$('#changesText').prop('innerHTML', html);
 					changesModal.open();
@@ -498,11 +498,11 @@ ipc.on('app-version', function (event, data) {
 	}
 });
 
-ipc.on('connecting', function (event, data) {
+ipc.on('connecting', function () {
 	M.toast({html: 'Connecting to robot...', displayLength: 6000});
 });
 
-ipc.on('uploading', function (event, data) {
+ipc.on('uploading', function () {
 	M.toast({html: 'Uploading paths...', displayLength: 6000});
 });
 
@@ -510,7 +510,7 @@ ipc.on('uploaded', function (event, data) {
 	M.toast({html: 'Path: ' + data + ' uploaded to robot!', displayLength: 6000});
 });
 
-ipc.on('connect-failed', function (event, data) {
+ipc.on('connect-failed', function () {
 	M.toast({html: '<span style="color: #d32f2f !important;">Failed to connect to robot!</span>', displayLength: 6000});
 });
 
@@ -525,7 +525,7 @@ function pathSerializer(done) {
 }
 
 function handleUndoRedo(serialized) {
-	var object = JSON.parse(serialized);
+	const object = JSON.parse(serialized);
 	if (object) {
 		pathEditor.plannedPath.points = object.points;
 		pathEditor.update();

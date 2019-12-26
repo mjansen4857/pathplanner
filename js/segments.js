@@ -48,6 +48,8 @@ class SegmentGroup {
         const n = (reverse) ? -1 : 1;
         let ret = format.replace(/x/g, (Math.round(s.x * 10000) / 10000 * n).toString());
         ret = ret.replace(/y/g, (Math.round(s.y * 10000) / 10000 * n).toString());
+        ret = ret.replace(/X/g, (Math.round(s.fieldX * 10000) / 10000).toString());
+        ret = ret.replace(/Y/g, (Math.round(s.fieldY * 10000) / 10000).toString());
         ret = ret.replace(/p/g, (Math.round(s.pos * 10000) / 10000 * n).toString());
         ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
         ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());
@@ -80,6 +82,8 @@ class Segment {
     constructor() {
         this.x = 0.0;
         this.y = 0.0;
+        this.fieldX = 0.0;
+        this.fieldY = 0.0;
         this.heading = 0.0;
         this.relativeHeading = 0.0;
         this.winding = 0.0;

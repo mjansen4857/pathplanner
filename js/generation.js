@@ -324,7 +324,9 @@ class RobotPath {
             const sin_angle = Math.sin(seg.heading * (Math.PI / 180));
 
             left.x = seg.x + (w * sin_angle);
+            left.fieldX = seg.fieldX + (w * sin_angle);
             left.y = seg.y - (w * cos_angle);
+            left.fieldY = seg.fieldY - (w * cos_angle);
             left.heading = seg.heading;
             left.relativeHeading = seg.relativeHeading;
             left.winding = seg.winding;
@@ -344,7 +346,9 @@ class RobotPath {
             }
 
             right.x = seg.x - (w * sin_angle);
+            right.fieldX = seg.fieldX - (w * sin_angle);
             right.y = seg.y + (w * cos_angle);
+            right.fieldY = seg.fieldY + (w * cos_angle);
             right.heading = seg.heading;
             right.relativeHeading = seg.relativeHeading;
             right.winding = seg.winding;
@@ -405,16 +409,17 @@ class Path {
         this.l = [];
         this.inGroup = s;
         this.group = new SegmentGroup();
-        this.makePath(pixelsPerUnit);
+        this.pixelsPerUnit = pixelsPerUnit;
+        this.makePath();
     }
 
     /**
      * Make the pre-generation path
      */
-    makePath(pixelsPerUnit) {
+    makePath() {
         const start = new Date().getTime();
         if(!this.noLogging) log.info('Generating path...');
-        this.makeScaledLists(pixelsPerUnit);
+        this.makeScaledLists();
         this.calculateLength();
         this.createSegments();
         if(!this.noLogging) log.info('DONE IN: ' + (new Date().getTime() - start) + 'ms');
@@ -423,10 +428,10 @@ class Path {
     /**
      * Make x and y lists and convert the values from pixels to feet
      */
-    makeScaledLists(pixelsPerUnit) {
+    makeScaledLists() {
         for (let i = 0; i < this.inGroup.segments.length; i++) {
-            this.x.push((this.inGroup.segments[i].x - this.p0.x) / pixelsPerUnit);
-            this.y.push((this.inGroup.segments[i].y - this.p0.y) / pixelsPerUnit);
+            this.x.push((this.inGroup.segments[i].x - this.p0.x) / this.pixelsPerUnit);
+            this.y.push((this.inGroup.segments[i].y - this.p0.y) / this.pixelsPerUnit);
         }
     }
 
@@ -462,7 +467,9 @@ class Path {
             const s2 = i + 1;
             let seg = new Segment();
             seg.x = this.x[s];
+            seg.fieldX = ((this.p0.x - Util.xPixelOffset) / this.pixelsPerUnit) + seg.x;
             seg.y = this.y[s];
+            seg.fieldY = ((this.p0.y - Util.yPixelOffset) / this.pixelsPerUnit) + seg.y;
             seg.pos = this.l[s];
             seg.dydx = this.derivative(s, s2);
             if (i !== 0) {

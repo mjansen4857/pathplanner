@@ -3,8 +3,11 @@ class SegmentGroup {
         this.segments = [];
     }
 
-    formatCSV(reverse, format, step) {
+    formatCSV(reverse, format, step, header) {
         let str = '';
+        if(header) {
+            str += header + '\n';
+        }
         for (let i = 0; i < this.segments.length; i++) {
             str += this.formatSegment(i, reverse, format, step);
             if (i < this.segments.length - 1) {

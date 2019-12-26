@@ -23,8 +23,8 @@ class Preferences {
 		this.maxAcc = (this.p_useMetric) ? 1.5 : 5.0;
 		this.p_gameYear = store.get('gameYear', '19');
 		this.p_splitPath = store.get('splitPath', true);
-		this.endVelOverride = false;
 		this.currentPathName = "path";
+		this.csvHeader = null;
 	}
 
 	get lastRunVersion() {

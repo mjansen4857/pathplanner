@@ -46,7 +46,6 @@ class RobotPath {
         this.right = new SegmentGroup();
         this.maxVel = preferences.maxVel;
         this.maxAcc = preferences.maxAcc;
-        this.endVelOverride = preferences.endVelOverride;
         this.wheelbaseWidth = preferences.p_wheelbaseWidth;
         this.timeStep = preferences.p_timeStep;
         this.reverse = reverse;
@@ -168,7 +167,7 @@ class RobotPath {
         }
         if(!this.noLogging) log.info('1: ' + (new Date().getTime() - start1) + 'ms');
         const start2 = new Date().getTime();
-        if(!this.endVelOverride){
+        if(this.velocities[this.velocities.length - 1] === -1){
             p[p.length - 1].vel = 0;
         }
         for (let i = p.length - 2; i > 1; i--) {

@@ -118,6 +118,7 @@ $(document).ready(function () {
 	});
 	$('#generateModalConfirm').click(() => {
 		preferences.currentPathName = $('#pathName').val();
+		preferences.csvHeader = $('#csvHeader').val();
 		preferences.outputType = $('#outputType').prop('selectedIndex');
 		const format = $('#outputFormat').val();
 		if (!format.match(outputFormatRegX)) {
@@ -129,7 +130,6 @@ $(document).ready(function () {
 		}
 		preferences.outputFormat = format;
 		preferences.splitPath = $('#splitPath').prop('checked');
-		preferences.endVelOverride = $('#endVelOverride').prop('checked');
 		const reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -142,6 +142,7 @@ $(document).ready(function () {
 	});
 	$('#generateModalDeploy').click(() => {
 		preferences.currentPathName = $('#pathName').val();
+		preferences.csvHeader = $('#csvHeader').val();
 		preferences.outputType = $('#outputType').prop('selectedIndex');
 		const format = $('#outputFormat').val();
 		if (!format.match(outputFormatRegX)) {
@@ -153,7 +154,6 @@ $(document).ready(function () {
 		}
 		preferences.outputFormat = format;
 		preferences.splitPath = $('#splitPath').prop('checked');
-		preferences.endVelOverride = $('#endVelOverride').prop('checked');
 		const reversed = $('#reversed').prop('checked');
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
@@ -178,10 +178,10 @@ $(document).ready(function () {
 	$('#generatePathBtn').click(() => {
 		const generateDialog = M.Modal.getInstance($('#generateModal'));
 		$('#pathName').val(preferences.currentPathName);
+		$('#csvHeader').val(preferences.csvHeader);
 		$('#outputType').prop('selectedIndex', preferences.outputType);
 		$('#outputFormat').val(preferences.outputFormat);
 		$('#splitPath').prop('checked', preferences.splitPath);
-		$('#endVelOverride').prop('checked', preferences.endVelOverride);
 
 		M.updateTextFields();
 		$('select').formSelect();
@@ -190,10 +190,10 @@ $(document).ready(function () {
 	hotkeys('ctrl+g,command+g', () => {
 		const generateDialog = M.Modal.getInstance($('#generateModal'));
 		$('#pathName').val(preferences.currentPathName);
+		$('#csvHeader').val(preferences.csvHeader);
 		$('#outputType').prop('selectedIndex', preferences.outputType);
 		$('#outputFormat').val(preferences.outputFormat);
 		$('#splitPath').prop('checked', preferences.splitPath);
-		$('#endVelOverride').prop('checked', preferences.endVelOverride);
 
 		M.updateTextFields();
 		$('select').formSelect();
@@ -323,7 +323,7 @@ function savePath() {
 				reversed: $('#reversed').prop('checked'),
 				maxVel: preferences.maxVel,
 				maxAcc: preferences.maxAcc,
-				endVelOverride: preferences.endVelOverride
+				csvHeader: preferences.csvHeader
 			});
 			fs.writeFile(filename, output, 'utf8', (err) => {
 				if (err) {
@@ -379,7 +379,6 @@ function loadFile(filename) {
 
 			const maxVel = json.maxVel;
 			const maxAcc = json.maxAcc;
-			const endVelOverride = json.endVelOverride;
 
 			if(maxVel && maxAcc){
 				preferences.maxVel = maxVel;
@@ -389,13 +388,9 @@ function loadFile(filename) {
 				$('#robotMaxAcc').val(maxAcc);
 			}
 
-			if(endVelOverride) {
-				preferences.endVelOverride = endVelOverride;
-				$('#endVelOverride').prop('checked', endVelOverride);
-			}else{
-				preferences.endVelOverride = false;
-				$('#endVelOverride').prop('checked', false);
-			}
+			const csvHeader = json.csvHeader;
+			preferences.csvHeader = csvHeader;
+			$('#csvHeader').val(csvHeader);
 
 			let points = json.points;
 			$('#reversed').prop('checked', json.reversed);

@@ -55,13 +55,13 @@ function generateAndDeploy(points, velocities, preferences, reverse) {
 	const robotPath = new RobotPath(points, velocities, preferences, reverse);
 	let outL = '';
 	let outR = '';
-	const outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+	const outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
 	if (reverse) {
-		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
-		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
 	} else {
-		outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
-		outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+		outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+		outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
 	}
 	ipc.send('deploy-segments', {
 		left: outL,
@@ -155,17 +155,17 @@ function generateAndSave(points, velocities, preferences, reverse) {
 			let outL = '';
 			let outR = '';
 			if (reverse) {
-				outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
-				outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+				outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
 			} else {
-				outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
-				outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+				outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
 			}
 
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_left.csv', outL, 'utf8');
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_right.csv', outR, 'utf8');
 		} else {
-			const out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep);
+			const out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '.csv', out, 'utf8');
 		}
 		ipc.send('files-saved', preferences.currentPathName);

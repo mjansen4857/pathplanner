@@ -45,7 +45,7 @@ class SegmentGroup {
 
     formatSegment(index, reverse, format, step, robotPath) {
         const s = this.segments[index];
-        let l, r = this.segments[index];
+        let l = this.segments[index], r = this.segments[index];
         if(robotPath){
             l = robotPath.left.segments[index];
             r = robotPath.right.segments[index];

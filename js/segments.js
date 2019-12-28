@@ -3,13 +3,13 @@ class SegmentGroup {
         this.segments = [];
     }
 
-    formatCSV(reverse, format, step, header) {
+    formatCSV(reverse, format, step, header, robotPath) {
         let str = '';
         if(header) {
             str += header + '\n';
         }
         for (let i = 0; i < this.segments.length; i++) {
-            str += this.formatSegment(i, reverse, format, step);
+            str += this.formatSegment(i, reverse, format, step, robotPath);
             if (i < this.segments.length - 1) {
                 str += '\n';
             }
@@ -17,39 +17,47 @@ class SegmentGroup {
         return str;
     }
 
-    formatJavaArray(arrayName, reverse, format, step) {
+    formatJavaArray(arrayName, reverse, format, step, robotPath) {
         let str = 'public static double[][] ' + arrayName + ' = new double[][] {\n';
         for (let i = 0; i < this.segments.length; i++) {
-            str += '        {' + this.formatSegment(i, reverse, format, step) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+            str += '        {' + this.formatSegment(i, reverse, format, step, robotPath) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
         }
         str += '    }';
         return str;
     }
 
-    formatCppArray(arrayName, reverse, format, step) {
+    formatCppArray(arrayName, reverse, format, step, robotPath) {
         let str = 'double ' + arrayName + '[][] = {\n';
         for (let i = 0; i < this.segments.length; i++) {
-            str += '        {' + this.formatSegment(i, reverse, format, step) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+            str += '        {' + this.formatSegment(i, reverse, format, step, robotPath) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
         }
         str += '    }';
         return str;
     }
 
-    formatPythonArray(arrayName, reverse, format, step) {
+    formatPythonArray(arrayName, reverse, format, step, robotPath) {
         let str = arrayName + ' = [\n';
         for (let i = 0; i < this.segments.length; i++) {
-            str += '    [' + this.formatSegment(i, reverse, format, step) + ((i < this.segments.length - 1) ? '],\n' : ']]');
+            str += '    [' + this.formatSegment(i, reverse, format, step, robotPath) + ((i < this.segments.length - 1) ? '],\n' : ']]');
         }
         return str;
     }
 
-    formatSegment(index, reverse, format, step) {
+    formatSegment(index, reverse, format, step, robotPath) {
         const s = this.segments[index];
+        const l = robotPath.left.segments[index];
+        const r = robotPath.right.segments[index];
         const n = (reverse) ? -1 : 1;
         let ret = format.replace(/x/g, (Math.round(s.x * 10000) / 10000 * n).toString());
         ret = ret.replace(/y/g, (Math.round(s.y * 10000) / 10000 * n).toString());
         ret = ret.replace(/X/g, (Math.round(s.fieldX * 10000) / 10000).toString());
         ret = ret.replace(/Y/g, (Math.round(s.fieldY * 10000) / 10000).toString());
+        ret = ret.replace(/pl/g, (Math.round(l.pos * 10000) / 10000 * n).toString());
+        ret = ret.replace(/pr/g, (Math.round(r.pos * 10000) / 10000 * n).toString());
+        ret = ret.replace(/vl/g, (Math.round(l.vel * 10000) / 10000 * n).toString());
+        ret = ret.replace(/vr/g, (Math.round(r.vel * 10000) / 10000 * n).toString());
+        ret = ret.replace(/al/g, (Math.round(l.acc * 10000) / 10000 * n).toString());
+        ret = ret.replace(/ar/g, (Math.round(r.acc * 10000) / 10000 * n).toString());
         ret = ret.replace(/p/g, (Math.round(s.pos * 10000) / 10000 * n).toString());
         ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
         ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());

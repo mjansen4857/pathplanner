@@ -55,13 +55,13 @@ function generateAndDeploy(points, velocities, preferences, reverse) {
 	const robotPath = new RobotPath(points, velocities, preferences, reverse);
 	let outL = '';
 	let outR = '';
-	const outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+	const outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
 	if (reverse) {
-		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
-		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
 	} else {
-		outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
-		outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+		outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+		outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
 	}
 	ipc.send('deploy-segments', {
 		left: outL,
@@ -87,38 +87,38 @@ function generateAndCopy(points, velocities, preferences, reverse) {
 	if (preferences.p_outputType === 1) {
 		if (preferences.p_splitPath) {
 			if (reverse) {
-				out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
-					robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n    ' +
+					robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
 			} else {
-				out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
-					robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n    ' +
+					robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
 			}
 		} else {
-			out = robotPath.timeSegments.formatJavaArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep);
+			out = robotPath.timeSegments.formatJavaArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
 		}
 	} else if (preferences.p_outputType === 2) {
 		if (preferences.p_splitPath) {
 			if (reverse) {
-				out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
-					robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n    ' +
+					robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
 			} else {
-				out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n    ' +
-					robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n    ' +
+					robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
 			}
 		} else {
-			out = robotPath.timeSegments.formatCppArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep);
+			out = robotPath.timeSegments.formatCppArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
 		}
 	} else if (preferences.p_outputType === 3) {
 		if (preferences.p_splitPath) {
 			if (reverse) {
-				out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n' +
-					robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n' +
+					robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
 			} else {
-				out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep) + '\n\n' +
-					robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep);
+				out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n' +
+					robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
 			}
 		} else {
-			out = robotPath.timeSegments.formatPythonArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep);
+			out = robotPath.timeSegments.formatPythonArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
 		}
 	}
 	clipboard.writeText(out);
@@ -155,17 +155,17 @@ function generateAndSave(points, velocities, preferences, reverse) {
 			let outL = '';
 			let outR = '';
 			if (reverse) {
-				outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
-				outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+				outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+				outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
 			} else {
-				outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
-				outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+				outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+				outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
 			}
 
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_left.csv', outL, 'utf8');
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_right.csv', outR, 'utf8');
 		} else {
-			const out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader);
+			const out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '.csv', out, 'utf8');
 		}
 		ipc.send('files-saved', preferences.currentPathName);

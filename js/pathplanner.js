@@ -17,7 +17,7 @@ const github = require('octonode').client();
 const repo = github.repo('mjansen4857/PathPlanner');
 const SimpleUndo = require('simple-undo');
 let history;
-const outputFormatRegX = /^[xyXYpvahHtSsWwr](?:,[xyXYpvahHtSsWwr])*$/g;
+const outputFormatRegX = /^[xyXYpvahHtSsWwr123456](?:,[xyXYpvahHtSsWwr123456])*$/g;
 
 let pathEditor;
 global.preferences = new Preferences();
@@ -121,7 +121,9 @@ $(document).ready(function () {
 		preferences.csvHeader = $('#csvHeader').val();
 		preferences.outputType = $('#outputType').prop('selectedIndex');
 		const format = $('#outputFormat').val();
-		if (!format.match(outputFormatRegX)) {
+		//this is a stupid workaround but whatever
+		let cleanedFormat = format.replace(/pl/g, '1').replace(/pr/g, '2').replace(/vl/g, '3').replace(/vr/g, '4').replace(/al/g, '5').replace(/ar/g, '6');
+		if (!cleanedFormat.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
 				displayLength: 5000
@@ -145,7 +147,9 @@ $(document).ready(function () {
 		preferences.csvHeader = $('#csvHeader').val();
 		preferences.outputType = $('#outputType').prop('selectedIndex');
 		const format = $('#outputFormat').val();
-		if (!format.match(outputFormatRegX)) {
+		//this is a stupid workaround but whatever
+		let cleanedFormat = format.replace(/pl/g, '1').replace(/pr/g, '2').replace(/vl/g, '3').replace(/vr/g, '4').replace(/al/g, '5').replace(/ar/g, '6');
+		if (!cleanedFormat.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
 				displayLength: 5000

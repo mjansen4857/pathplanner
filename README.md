@@ -37,21 +37,29 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 | Ctrl/⌘ + Y                                  | Redo                                  |
 
 ## Output Format Options
-| Symbol | Description                               |
-|--------|-------------------------------------------|
-| x      | X Coordinate                              |
-| y      | Y Coordinate                              |
-| p      | Position                                  |
-| v      | Velocity                                  |
-| a      | Acceleration                              |
-| h      | Absolute Heading in Degrees (-180 to 180) |
-| H      | Relative Heading in Degrees (-180 to 180) |
-| w      | Absolute Winding Heading in Degrees       |
-| W      | Relative Winding Heading in Degrees       |
-| t      | Time Elapsed                              |
-| s      | Time Step in Milliseconds                 |
-| S      | Time Step in Seconds                      |
-| r      | Curve Radius                              |
+| Symbol | Description                                               |
+|--------|-----------------------------------------------------------|
+| x      | X Coordinate (Zeroed at start of path)                    |
+| y      | Y Coordinate (Zeroed at start of path)                    |
+| X      | Field Relative X Coordinate                               |
+| Y      | Field Relative Y Coordinate                               |
+| p      | Position (Center if single file, left/right if split)     |
+| v      | Velocity (Center if single file, left/right if split)     |
+| a      | Acceleration (Center if single file, left/right if split) |
+| pl     | Left Only Position                                        |
+| pr     | Right Only Position                                       |
+| vl     | Left Only Velocity                                        |
+| vr     | Right Only Velocity                                       |
+| al     | Left Only Acceleration                                    |
+| ar     | Right Only Acceleration                                   |
+| h      | Absolute Heading in Degrees (-180 to 180)                 |
+| H      | Relative Heading in Degrees (-180 to 180)                 |
+| w      | Absolute Winding Heading in Degrees                       |
+| W      | Relative Winding Heading in Degrees                       |
+| t      | Time Elapsed                                              |
+| s      | Time Step in Milliseconds                                 |
+| S      | Time Step in Seconds                                      |
+| r      | Curve Radius                                              |
 
 ## Settings
 <img align="right" width="400" src="https://i.imgur.com/PWDXw2K.png" alt="Robot Settings" />

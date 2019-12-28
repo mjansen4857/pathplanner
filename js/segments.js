@@ -45,8 +45,11 @@ class SegmentGroup {
 
     formatSegment(index, reverse, format, step, robotPath) {
         const s = this.segments[index];
-        const l = robotPath.left.segments[index];
-        const r = robotPath.right.segments[index];
+        let l, r = this.segments[index];
+        if(robotPath){
+            l = robotPath.left.segments[index];
+            r = robotPath.right.segments[index];
+        }
         const n = (reverse) ? -1 : 1;
         let ret = format.replace(/x/g, (Math.round(s.x * 10000) / 10000 * n).toString());
         ret = ret.replace(/y/g, (Math.round(s.y * 10000) / 10000 * n).toString());

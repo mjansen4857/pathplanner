@@ -194,6 +194,13 @@ nav {
 	font-size: 16px;
 }
 
+#unsavedChangesModal {
+	width: 35% !important;
+	height: 30% !important;
+	top: 50% !important;
+	transform: translate(0, -50%) !important;
+}
+
 .tab{
 	width: 50% !important;
 }

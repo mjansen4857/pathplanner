@@ -17,6 +17,7 @@ unhandled({logger: log.error, showDialog: true});
 const is = require('electron-is');
 let macFile;
 let win;
+let shouldQuit = false;
 
 /**
  * Create the main window
@@ -35,6 +36,13 @@ function createWindow() {
 	win.setMenu(null);
 	// win.webContents.openDevTools();
 	win.loadFile('pathplanner.html');
+
+	win.on('close', (e) => {
+		if(!shouldQuit) {
+			e.preventDefault();
+			win.webContents.send('close-requested');
+		}
+	});
 
 	win.on('closed', () => {
 		win = null;
@@ -70,6 +78,11 @@ autoUpdater.on('update-available', (info) => {
 // Notify the renderer that an update is ready
 autoUpdater.on('update-downloaded', (info) => {
 	win.webContents.send('update-ready');
+});
+
+ipc.on('quit', (event, data) => {
+	shouldQuit = true;
+	app.quit();
 });
 
 // Update the app when the user clicks the restart button

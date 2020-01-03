@@ -18,6 +18,7 @@ const repo = github.repo('mjansen4857/PathPlanner');
 const SimpleUndo = require('simple-undo');
 let history;
 const outputFormatRegX = /^[xyXYpvahHtSsWwr123456](?:,[xyXYpvahHtSsWwr123456])*$/g;
+let unsavedChanges = false;
 
 let pathEditor;
 global.preferences = new Preferences();
@@ -85,6 +86,16 @@ $(document).ready(function () {
 		window.close();
 	});
 
+	$('#quitNoSave').click(() => {
+		ipc.send('quit');
+	});
+
+	$('#saveChanges').click(() => {
+		const unsavedDialog = M.Modal.getInstance($('#unsavedChangesModal'));
+		unsavedDialog.close();
+		savePath();
+	});
+
 	// Press the confirm button when enter is pressed in a dialog
 	const onPointConfigEnter = (event) => {
 		event.preventDefault();
@@ -120,7 +131,7 @@ $(document).ready(function () {
 	});
 	$('#pointConfigConfirm').click(() => {
 		pathEditor.pointConfigOnConfirm();
-		history.save();
+		saveHistory();
 	});
 	$('#generateModalConfirm').click(() => {
 		preferences.currentPathName = $('#pathName').val();
@@ -347,6 +358,8 @@ function savePath() {
 			});
 		}
 	});
+
+	unsavedChanges = false;
 }
 
 /**
@@ -422,8 +435,18 @@ function loadFile(filename) {
 				displayLength: 6000
 			});
 		}
+		unsavedChanges = false;
 	});
 }
+
+ipc.on('close-requested', function(event, data) {
+	if(unsavedChanges){
+		const unsavedDialog = M.Modal.getInstance($('#unsavedChangesModal'));
+		unsavedDialog.open();
+	}else{
+		ipc.send('quit');
+	}
+});
 
 ipc.on('update-last-generate-dir', function (event, data) {
 	preferences.lastGenerateDir = data;
@@ -539,6 +562,7 @@ function handleUndoRedo(serialized) {
 
 function saveHistory() {
 	history.save();
+	unsavedChanges = true;
 }
 
 /**

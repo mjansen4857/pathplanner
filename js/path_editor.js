@@ -127,6 +127,22 @@ class PathEditor {
 		});
 	}
 
+	flipPathY(){
+		for(let i = 0; i < this.plannedPath.numPoints(); i++){
+			this.plannedPath.get(i).y = this.height - this.plannedPath.get(i).y;
+		}
+		this.update();
+		this.saveHistory();
+	}
+
+	flipPathX(){
+		for(let i = 0; i < this.plannedPath.numPoints(); i++){
+			this.plannedPath.get(i).x = this.width - this.plannedPath.get(i).x;
+		}
+		this.update();
+		this.saveHistory();
+	}
+
 	/**
 	 * Update all point velocities that are one value to another.
 	 * Used when the robot max velocity is changed so point velocities

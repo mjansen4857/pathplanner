@@ -63,6 +63,12 @@ $(document).ready(function () {
 		pathEditor = new PathEditor(field, saveHistory);
 		history = new SimpleUndo({maxLength: 10, provider: pathSerializer});
 		history.save();
+		hotkeys('ctrl+shift+x,command+shift+x', () => {
+			pathEditor.flipPathX();
+		});
+		hotkeys('ctrl+shift+y,command+shift+y', () => {
+			pathEditor.flipPathY();
+		});
 		pathEditor.update();
 	};
 	field.src = 'res/img/field' + preferences.gameYear + '.png';

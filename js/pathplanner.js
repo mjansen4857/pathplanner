@@ -61,6 +61,11 @@ $(document).ready(function () {
 	// Load the field image and create the path editor
 	let field = new Image();
 	field.onload = () => {
+		if(preferences.gameYear == 20){
+			Util.xPixelOffset = Util.xOffset20;
+		}else{
+			Util.xPixelOffset = Util.xOffsetNormal;
+		}
 		pathEditor = new PathEditor(field, saveHistory);
 		history = new SimpleUndo({maxLength: 10, provider: pathSerializer});
 		history.save();
@@ -297,6 +302,12 @@ function onSettingsConfirm() {
 	if (preferences.gameYear !== gameYear) {
 		let field = new Image();
 		field.onload = () => {
+			if(preferences.gameYear == 20){
+				Util.xPixelOffset = Util.xOffset20;
+			}else{
+				Util.xPixelOffset = Util.xOffsetNormal;
+			}
+
 			pathEditor.updateImage(field);
 			pathEditor.update();
 		};

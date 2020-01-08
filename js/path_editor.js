@@ -1,5 +1,10 @@
-const {Vector2, Util} = require('./util.js');
-const {PlannedPath} = require('./planned_path.js');
+const {
+	Vector2,
+	Util
+} = require('./util.js');
+const {
+	PlannedPath
+} = require('./planned_path.js');
 
 class PathEditor {
 	/**
@@ -28,6 +33,7 @@ class PathEditor {
 		this.canvas.addEventListener('mousemove', (evt) => {
 			let mousePos = getMousePos(this.canvas, evt);
 			if (evt.buttons === 0) {
+				// No Mouse button pressed
 				for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 					if ((Math.pow(mousePos.x - this.plannedPath.points[i].x, 2) + (Math.pow(mousePos.y - this.plannedPath.points[i].y, 2))) <= Math.pow(8, 2)) {
 						this.highlightedPoint = i;
@@ -47,6 +53,7 @@ class PathEditor {
 					}
 				}
 			} else if (evt.buttons === 1) {
+				// Left mouse button pressed
 				if (this.pointDragIndex !== -1) {
 					if (mousePos.x >= 0 && mousePos.y >= 0 && mousePos.x <= this.width && mousePos.y <= this.height) {
 						if (evt.getModifierState('Shift') && this.pointDragIndex % 3 !== 0) {
@@ -61,7 +68,11 @@ class PathEditor {
 								this.plannedPath.movePoint(controlIndex, newPoint);
 							}
 						} else {
-							this.plannedPath.movePoint(this.pointDragIndex, new Vector2(mousePos.x, mousePos.y));
+							if (evt.getModifierState('Shift') && this.pointDragIndex % 3 === 0) {
+								this.plannedPath.movePoint(this.pointDragIndex, new Vector2(mousePos.x, this.originalYPos));
+							} else {
+								this.plannedPath.movePoint(this.pointDragIndex, new Vector2(mousePos.x, mousePos.y));
+							}
 						}
 						this.update();
 					}
@@ -73,12 +84,16 @@ class PathEditor {
 		this.canvas.addEventListener('mousedown', (evt) => {
 			const mousePos = getMousePos(this.canvas, evt);
 			if (evt.buttons === 1) {
+				// Left mouse button pressed
 				for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 					if ((Math.pow(mousePos.x - this.plannedPath.points[i].x, 2) + (Math.pow(mousePos.y - this.plannedPath.points[i].y, 2))) <= Math.pow(8, 2)) {
 						this.pointDragIndex = i;
+						this.originalXPos = this.plannedPath.points[i].x; // Used for constraining X axis position of main point of a spline duing mouseMove
+						this.originalYPos = this.plannedPath.points[i].y; // Used for constraining Y axis position of main point of a spline duing mouseMove
 					}
 				}
 			} else if (evt.buttons === 2) {
+				// Right mouse button pressed
 				for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 					if ((Math.pow(mousePos.x - this.plannedPath.points[i].x, 2) + (Math.pow(mousePos.y - this.plannedPath.points[i].y, 2))) <= Math.pow(8, 2)) {
 						if (i % 3 === 0) {
@@ -100,7 +115,7 @@ class PathEditor {
 								}
 								document.getElementById('pointAngle').value = Math.round(Math.atan2(control.y - anchor.y, control.x - anchor.x) * (180 / Math.PI) * 10000) / 10000;
 								let velocity = this.plannedPath.getVelocity(this.updatePoint);
-								if(velocity === -1){
+								if (velocity === -1) {
 									velocity = preferences.maxVel;
 								}
 								document.getElementById('pointVelocity').value = velocity;
@@ -127,16 +142,16 @@ class PathEditor {
 		});
 	}
 
-	flipPathY(){
-		for(let i = 0; i < this.plannedPath.numPoints(); i++){
+	flipPathY() {
+		for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 			this.plannedPath.get(i).y = this.height - this.plannedPath.get(i).y;
 		}
 		this.update();
 		this.saveHistory();
 	}
 
-	flipPathX(){
-		for(let i = 0; i < this.plannedPath.numPoints(); i++){
+	flipPathX() {
+		for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 			this.plannedPath.get(i).x = this.width - this.plannedPath.get(i).x;
 		}
 		this.update();

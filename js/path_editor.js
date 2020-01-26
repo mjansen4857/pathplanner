@@ -116,7 +116,7 @@ class PathEditor {
 								document.getElementById('pointAngle').value = Math.round(Math.atan2(control.y - anchor.y, control.x - anchor.x) * (180 / Math.PI) * 10000) / 10000;
 								let velocity = this.plannedPath.getVelocity(this.updatePoint);
 								if (velocity === -1) {
-									velocity = preferences.maxVel;
+									velocity = null;
 								}
 								document.getElementById('pointVelocity').value = velocity;
 								M.updateTextFields();

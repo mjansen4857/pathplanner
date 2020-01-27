@@ -72,8 +72,14 @@ class PlannedPath {
 		let anchor = new Vector2(anchorPos.x, anchorPos.y);
 		// let control2 = new Vector2(anchorPos.x + 5, anchorPos.y + 5);
 		let control2 = Vector2.subtract(Vector2.multiply(anchor, 2), control1);
+		if(index === 2){
+			this.velocities.splice(1, 0, -1);
+		}else if(index === this.points.length - 2){
+			this.velocities.splice(this.velocities.length - 2, 0, -1);
+		}else{
+			this.velocities.splice(this.anchorIndexToVelocity(index + 1), 0, -1);
+		}
 		this.points.splice(index, 0, control1, anchor, control2);
-		this.velocities.splice(this.anchorIndexToVelocity(index + 1), 0, -1);
 	}
 
 	/**

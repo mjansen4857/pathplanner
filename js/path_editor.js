@@ -155,8 +155,8 @@ class PathEditor {
 						let lowerDist = Util.distanceBetweenPoints(lower, mousePos);
 						let upperDist = Util.distanceBetweenPoints(upper, mousePos);
 						if(lowerDist < upperDist){
-							this.plannedPath.insertSpline(mousePos, closestPoint - 2);
-							this.highlightedPoint = closestPoint - 3;
+							this.plannedPath.insertSpline(mousePos, closestPoint - 1);
+							this.highlightedPoint = closestPoint;
 						}else{
 							this.plannedPath.insertSpline(mousePos, closestPoint + 2);
 							this.highlightedPoint = closestPoint + 3;

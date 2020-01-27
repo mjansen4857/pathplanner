@@ -335,6 +335,8 @@ class RobotPath {
             left.dt = seg.dt;
             left.time = seg.time;
             left.radius = seg.radius;
+            left.angularVelocity = seg.angularVelocity;
+            left.angularAccel = seg.angularAccel;
 
             if (i > 0) {
                 const last = this.left.segments[i - 1];
@@ -357,6 +359,8 @@ class RobotPath {
             right.dt = seg.dt;
             right.time = seg.time;
             right.radius = seg.radius;
+            right.angularVelocity = seg.angularVelocity;
+            right.angularAccel = seg.angularAccel;
 
             if (i > 0) {
                 const last = this.right.segments[i - 1];
@@ -385,6 +389,8 @@ class RobotPath {
             const dt = now.time - last.time;
             now.vel = (now.pos - last.pos) / dt;
             now.acc = (now.vel - last.vel) / dt;
+            now.angularVelocity = now.vel / now.radius;
+            now.angularAccel = (now.angularVelocity - last.angularVelocity) / dt;
         }
         if(!this.noLogging) log.info('        DONE IN: ' + (new Date().getTime() - start) + 'ms');
     }

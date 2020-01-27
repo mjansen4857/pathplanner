@@ -64,6 +64,8 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 | s      | Time Step in Milliseconds                                 |
 | S      | Time Step in Seconds                                      |
 | r      | Curve Radius                                              |
+| o      | Angular Velocity                                          |
+| O      | Angular Acceleration                                      |
 
 ## Settings
 <img align="right" width="400" src="https://i.imgur.com/QYNT1xQ.png" alt="Robot Settings" />

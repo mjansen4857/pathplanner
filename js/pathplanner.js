@@ -17,7 +17,7 @@ const github = require('octonode').client();
 const repo = github.repo('mjansen4857/PathPlanner');
 const SimpleUndo = require('simple-undo');
 let history;
-const outputFormatRegX = /^[xyXYpvahHtSsWwr123456](?:,[xyXYpvahHtSsWwr123456])*$/g;
+const outputFormatRegX = /^[xyXYpvahHtSsWwroO123456](?:,[xyXYpvahHtSsWwroO123456])*$/g;
 let unsavedChanges = false;
 
 let pathEditor;

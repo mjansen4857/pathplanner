@@ -132,6 +132,39 @@ class PathEditor {
 					this.update();
 					this.saveHistory();
 				}
+
+				if(evt.getModifierState('Shift')){
+					let closestPoint = 0;
+					for(let i = 3; i < this.plannedPath.points.length; i += 3){
+						let d1 = Util.distanceBetweenPoints(this.plannedPath.points[closestPoint], mousePos);
+						let d2 = Util.distanceBetweenPoints(this.plannedPath.points[i], mousePos);
+
+						if(d2 < d1){
+							closestPoint = i;
+						}
+					}
+					if(closestPoint === 0){
+						this.plannedPath.insertSpline(mousePos, 2);
+						this.highlightedPoint = 3;
+					}else if(closestPoint === this.plannedPath.points.length - 1){
+						this.plannedPath.insertSpline(mousePos, closestPoint - 1);
+						this.highlightedPoint = closestPoint - 3;
+					}else{
+						let lower = Util.closestPointOnLine(this.plannedPath.points[closestPoint], this.plannedPath.points[closestPoint - 3], mousePos);
+						let upper = Util.closestPointOnLine(this.plannedPath.points[closestPoint], this.plannedPath.points[closestPoint + 3], mousePos);
+						let lowerDist = Util.distanceBetweenPoints(lower, mousePos);
+						let upperDist = Util.distanceBetweenPoints(upper, mousePos);
+						if(lowerDist < upperDist){
+							this.plannedPath.insertSpline(mousePos, closestPoint - 2);
+							this.highlightedPoint = closestPoint - 3;
+						}else{
+							this.plannedPath.insertSpline(mousePos, closestPoint + 2);
+							this.highlightedPoint = closestPoint + 3;
+						}
+					}
+					this.update();
+					this.saveHistory();
+				}
 			}
 		});
 		this.canvas.addEventListener('mouseup', (evt) => {

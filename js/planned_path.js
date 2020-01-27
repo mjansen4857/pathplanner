@@ -62,6 +62,21 @@ class PlannedPath {
 	}
 
 	/**
+	 * Insert a new spline into the path
+	 * @param anchorPos The pos of the new anchor point
+	 * @param index The index to insert the spline at
+	 */
+	insertSpline(anchorPos, index){
+		let control1 = Vector2.multiply(Vector2.add(this.points[index - 1], new Vector2(anchorPos.x, anchorPos.y)), 0.5);
+		// let control1 = new Vector2(anchorPos.x - 5, anchorPos.y - 5);
+		let anchor = new Vector2(anchorPos.x, anchorPos.y);
+		// let control2 = new Vector2(anchorPos.x + 5, anchorPos.y + 5);
+		let control2 = Vector2.subtract(Vector2.multiply(anchor, 2), control1);
+		this.points.splice(index, 0, control1, anchor, control2);
+		this.velocities.splice(this.anchorIndexToVelocity(index + 1), 0, -1);
+	}
+
+	/**
 	 * Move a point in the path
 	 * @param i The index of the point to move
 	 * @param newPos The new position of the point

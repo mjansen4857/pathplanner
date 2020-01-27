@@ -20,23 +20,25 @@ Inspiration came from [Vannaka's Generator](https://github.com/vannaka/Motion_Pr
 Paths consist of two types of points: anchor and control points. Anchor points are points that *anchor* the path. They are points that the path will pass directly through. Control points are points that are attached to each anchor point. Control points can be used to fine-tune the curve of a path by pulling the path towards it. Anchor points, as well as their corresponding control points, can be added by right clicking anywhere on the field. They can be removed by by control/command + right clicking on the anchor point that you wish to remove. Any point on the path can be moved by dragging it around. While holding down the shift key and dragging a control point, its angle will be locked. You can right click on any anchor point to enter a position, change the angle (in degrees), and override the maximum velocity at that point. Overriding the velocity lets you slow down your robot at certain points in the path, which will prevent issues where the generation algorithm does not slow the robot down enough to accurately follow a tight curve, or it can just allow the robot to go slow in some areas (e.g. the area between the scale and switch) while maintaining a high speed during the rest of the path. When you are done editing the path, it can be saved and other paths can be loaded to edit. The path can then be generated for use on the robot or previewed in real time.
 
 ## Controls and Shortcuts
-| Shortcut                                     | Description                           |
-|----------------------------------------------|---------------------------------------|
-| Left Click + Drag                            | Move Point                            |
-| Right Click on Field                         | Add Point                             |
-| Right Click on Anchor Point                  |   Edit Point Position/Angle/Velocity  |
-| Ctrl/⌘ + Right Click on Anchor Point        | Delete Point                          |
-| Shift + Click and Drag on Control Point      | Move Control Point with Angle Locked  |
-| Ctrl/⌘ + S                                  | Save Path                             |
-| Ctrl/⌘ + O                                  | Open Path                             |
-| Ctrl/⌘ + G                                  | Generate Path                         |
-| Ctrl/⌘ + Shift + G                          | Generate Path with Last Used Settings |
-| Ctrl/⌘ + Shift + D                          | Deploy Generated Path to Robot        |
-| Ctrl/⌘ + P                                  | Preview Path                          |
-| Ctrl/⌘ + Z                                  | Undo                                  |
-| Ctrl/⌘ + Y                                  | Redo                                  |
-| Ctrl/⌘ + Shift + X                          | Flip path in the X direction          |
-| Ctrl/⌘ + Shift + Y                          | Flip path in the Y direction          |
+| Shortcut                                     | Description                              |
+|----------------------------------------------|------------------------------------------|
+| Left Click + Drag                            | Move Point                               |
+| Right Click on Field                         | Add Point                                |
+| Shift + Right Click on Field                 | Insert Point Between Two Other Points    |
+| Right Click on Anchor Point                  | Edit Point Position/Angle/Velocity       |
+| Ctrl/⌘ + Right Click on Anchor Point        | Delete Point                             |
+| Shift + Click and Drag on Control Point      | Move Control Point with Angle Locked     |
+| Shift + Click and Drag on Anchor Point       | Move Anchor point with Y Position Locked |
+| Ctrl/⌘ + S                                  | Save Path                                |
+| Ctrl/⌘ + O                                  | Open Path                                |
+| Ctrl/⌘ + G                                  | Generate Path                            |
+| Ctrl/⌘ + Shift + G                          | Generate Path with Last Used Settings    |
+| Ctrl/⌘ + Shift + D                          | Deploy Generated Path to Robot           |
+| Ctrl/⌘ + P                                  | Preview Path                             |
+| Ctrl/⌘ + Z                                  | Undo                                     |
+| Ctrl/⌘ + Y                                  | Redo                                     |
+| Ctrl/⌘ + Shift + X                          | Flip path in the X direction             |
+| Ctrl/⌘ + Shift + Y                          | Flip path in the Y direction             |
 
 ## Output Format Options
 | Symbol | Description                                               |
@@ -91,7 +93,6 @@ Paths consist of two types of points: anchor and control points. Anchor points a
     **This field is case sensitive.**
 * **Reversed Output:** Should the robot drive backwards
 * **Split Path:** Should the generated path be split into two paths for each side of the drive train
-* **Override End Velocity:** Should the path end with the velocity override of the last point instead of stopping
 
 There are two different ways to generate paths. One is normal generation, where you can either save CSV files to your computer or arrays will be copied to your keyboard. The second option is deploying to the robot. This will generate CSV files and upload them to the RoboRIO (assuming you're connected to the robot) at the path chosen in the settings.
 

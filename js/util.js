@@ -158,6 +158,18 @@ class Util {
 		}
 		return closestPoint;
 	}
+
+	/**
+	 * Give the distance between 2 points
+	 * @param point1 Point 1
+	 * @param point2 Point 2
+	 * @returns {number} The distance between the points
+	 */
+	static distanceBetweenPoints(point1, point2){
+		let a = point2.x - point1.x;
+		let b = point2.y - point1.y;
+		return Math.sqrt(a*a + b*b);
+	}
 }
 
 module.exports.Vector2 = Vector2;

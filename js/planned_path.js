@@ -8,10 +8,10 @@ class PlannedPath {
 	constructor() {
 		this.points = [];
 		this.velocities = [];
-		this.points.push(new Vector2(5.5 * Util.pixelsPerFoot + Util.xPixelOffset, 10.0 * Util.pixelsPerFoot + Util.yPixelOffset));
-		this.points.push(new Vector2(10.5 * Util.pixelsPerFoot + Util.xPixelOffset, 10.0 * Util.pixelsPerFoot + Util.yPixelOffset));
-		this.points.push(new Vector2(19.175 * Util.pixelsPerFoot + Util.xPixelOffset, 10.5 * Util.pixelsPerFoot + Util.yPixelOffset));
-		this.points.push(new Vector2(19.175 * Util.pixelsPerFoot + Util.xPixelOffset, 4.5 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.points.push(new Vector2(10 * Util.pixelsPerFoot + Util.xPixelOffset, 8 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.points.push(new Vector2(14.37 * Util.pixelsPerFoot + Util.xPixelOffset, 8 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.points.push(new Vector2(17.52 * Util.pixelsPerFoot + Util.xPixelOffset, 4.28 * Util.pixelsPerFoot + Util.yPixelOffset));
+		this.points.push(new Vector2(19.4 * Util.pixelsPerFoot + Util.xPixelOffset, 8.5 * Util.pixelsPerFoot + Util.yPixelOffset));
 		this.velocities.push(-1);
 		this.velocities.push(-1);
 	}

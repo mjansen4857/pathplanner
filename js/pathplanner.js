@@ -297,7 +297,7 @@ function onSettingsConfirm() {
 	preferences.robotLength = parseFloat($('#robotLength').val());
 	preferences.teamNumber = parseFloat($('#teamNumber').val());
 	preferences.rioPathLocation = $('#rioPathLocation').val();
-	preferences.useMetric = $('#units').value === 'metric';
+	preferences.useMetric = $('#units').val() === 'metric';
 	const gameYear = $('#gameYear').val();
 	if (preferences.gameYear !== gameYear) {
 		let field = new Image();

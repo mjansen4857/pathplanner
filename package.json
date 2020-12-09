@@ -63,7 +63,7 @@
     "electron-unhandled": "^2.2.0",
     "electron-updater": "^4.2.0",
     "hotkeys-js": "^3.7.3",
-    "jquery": "^3.4.1",
+    "jquery": "^3.5.0",
     "octonode": "^0.9.5",
     "semver": "^6.3.0",
     "showdown": "^1.9.1",

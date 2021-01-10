@@ -63,8 +63,19 @@ $(document).ready(function () {
 	field.onload = () => {
 		if(preferences.gameYear == 20){
 			Util.xPixelOffset = Util.xOffset20;
+			Util.yPixelOffset = Util.yPixelOffsetNormal;
+			Util.pixelsPerFoot = Util.pixelsPerFootNormal;
+			Util.pixelsPerMeter = Util.pixelsPerMeterNormal;
+		}else if(preferences.gameYear == 21){
+			Util.xPixelOffset = Util.xOffset21;
+			Util.yPixelOffset = Util.yPixelOffset21;
+			Util.pixelsPerFoot = Util.pixelsPerFoot21;
+			Util.pixelsPerMeter = Util.pixelsPerMeter21;
 		}else{
 			Util.xPixelOffset = Util.xOffsetNormal;
+			Util.yPixelOffset = Util.yPixelOffsetNormal;
+			Util.pixelsPerFoot = Util.pixelsPerFootNormal;
+			Util.pixelsPerMeter = Util.pixelsPerMeterNormal;
 		}
 		pathEditor = new PathEditor(field, saveHistory);
 		history = new SimpleUndo({maxLength: 10, provider: pathSerializer});
@@ -304,8 +315,19 @@ function onSettingsConfirm() {
 		field.onload = () => {
 			if(preferences.gameYear == 20){
 				Util.xPixelOffset = Util.xOffset20;
+				Util.yPixelOffset = Util.yPixelOffsetNormal;
+				Util.pixelsPerFoot = Util.pixelsPerFootNormal;
+				Util.pixelsPerMeter = Util.pixelsPerMeterNormal;
+			}else if(preferences.gameYear == 21){
+				Util.xPixelOffset = Util.xOffset21;
+				Util.yPixelOffset = Util.yPixelOffset21;
+				Util.pixelsPerFoot = Util.pixelsPerFoot21;
+				Util.pixelsPerMeter = Util.pixelsPerMeter21;
 			}else{
 				Util.xPixelOffset = Util.xOffsetNormal;
+				Util.yPixelOffset = Util.yPixelOffsetNormal;
+				Util.pixelsPerFoot = Util.pixelsPerFootNormal;
+				Util.pixelsPerMeter = Util.pixelsPerMeterNormal;
 			}
 
 			pathEditor.updateImage(field);

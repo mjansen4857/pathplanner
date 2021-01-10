@@ -21,7 +21,7 @@ class Preferences {
 		this.p_useMetric = store.get('useMetric', false);
 		this.maxVel = (this.p_useMetric) ? 2.5 : 8.0;
 		this.maxAcc = (this.p_useMetric) ? 1.5 : 5.0;
-		this.p_gameYear = store.get('gameYear', '20');
+		this.p_gameYear = store.get('gameYear', '21');
 		this.p_splitPath = store.get('splitPath', true);
 		this.currentPathName = "path";
 		this.csvHeader = null;

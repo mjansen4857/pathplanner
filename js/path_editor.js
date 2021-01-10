@@ -229,7 +229,11 @@ class PathEditor {
 		const g = this.canvas.getContext('2d');
 
 		//draw field
-		g.drawImage(this.image, 0, 50);
+		if(preferences.gameYear == 21){
+			g.drawImage(this.image, 75, 75, 1050, 525);
+		}else{
+			g.drawImage(this.image, 0, 50);
+		}
 
 		//draw path line
 		g.lineWidth = 3;

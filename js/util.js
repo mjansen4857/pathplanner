@@ -1,10 +1,17 @@
 // Numbers used for converting from pixels to feet and vice versa
-const pixelsPerFoot = 20.15;
-const pixelsPerMeter = pixelsPerFoot / 0.3048;
+const pixelsPerFootNormal = 20.15;
+const pixelsPerMeterNormal = pixelsPerFootNormal / 0.3048;
+const pixelsPerFoot21 = 35;
+const pixelsPerMeter21 = pixelsPerFoot21 / 0.3048;
 const xOffsetNormal = 56;
 const xOffset20 = 76.15;
+const xOffset21 = 75;
 let xPixelOffset = xOffsetNormal;
-const yPixelOffset = 78;
+let pixelsPerFoot = pixelsPerFootNormal;
+let pixelsPerMeter = pixelsPerMeterNormal;
+const yPixelOffsetNormal = 78;
+const yPixelOffset21 = 75;
+let yPixelOffset = yPixelOffsetNormal;
 
 class Vector2 {
 	/**
@@ -177,6 +184,13 @@ module.exports.Util = Util;
 module.exports.Util.xPixelOffset = xPixelOffset;
 module.exports.Util.xOffsetNormal = xOffsetNormal;
 module.exports.Util.xOffset20 = xOffset20;
+module.exports.Util.xOffset21 = xOffset21;
 module.exports.Util.yPixelOffset = yPixelOffset;
+module.exports.Util.yPixelOffsetNormal = yPixelOffsetNormal;
+module.exports.Util.yPixelOffset21 = yPixelOffset21;
 module.exports.Util.pixelsPerFoot = pixelsPerFoot;
+module.exports.Util.pixelsPerFootNormal = pixelsPerFootNormal;
+module.exports.Util.pixelsPerFoot21 = pixelsPerFoot21;
 module.exports.Util.pixelsPerMeter = pixelsPerMeter;
+module.exports.Util.pixelsPerMeterNormal = pixelsPerMeterNormal;
+module.exports.Util.pixelsPerMeter21 = pixelsPerMeter21;

@@ -12,13 +12,13 @@ unhandled({logger: log.error, showDialog: true});
 ipc.on('generate-path', function (event, data) {
 	try {
 		if (data.preview) {
-			generateAndSendSegments(data.points, data.velocities, data.preferences);
+			generateAndSendSegments(data.points, data.velocities, data.holonomicAngles, data.preferences);
 		} else if (data.deploy) {
-			generateAndDeploy(data.points, data.velocities, data.preferences, data.reverse);
+			generateAndDeploy(data.points, data.velocities, data.holonomicAngles, data.preferences, data.reverse);
 		} else if (data.preferences.p_outputType === 0) {
-			generateAndSave(data.points, data.velocities, data.preferences, data.reverse);
+			generateAndSave(data.points, data.velocities, data.holonomicAngles, data.preferences, data.reverse);
 		} else {
-			generateAndCopy(data.points, data.velocities, data.preferences, data.reverse);
+			generateAndCopy(data.points, data.velocities, data.holonomicAngles, data.preferences, data.reverse);
 		}
 	} catch (err) {
 		log.error(err);
@@ -32,14 +32,16 @@ ipc.on('generate-path', function (event, data) {
  * Generate the path and send the segments back for a preview
  * @param points The path points
  * @param velocities The path velocities
+ * @param holonomicAngles Angles for holonomic drive
  * @param preferences The robot preferences
  */
-function generateAndSendSegments(points, velocities, preferences) {
+function generateAndSendSegments(points, velocities, holonomicAngles, preferences) {
 	ipc.send('generating');
-	const robotPath = new RobotPath(points, velocities, preferences);
+	const robotPath = new RobotPath(points, velocities, holonomicAngles, preferences);
 	ipc.send('preview-segments', {
 		left: robotPath.left.segments,
-		right: robotPath.right.segments
+		right: robotPath.right.segments,
+		center: robotPath.timeSegments.segments
 	});
 }
 
@@ -47,12 +49,13 @@ function generateAndSendSegments(points, velocities, preferences) {
  * Generate the path and upload the files to the roborio
  * @param points The path points
  * @param velocities The path velocities
+ * @param holonomicAngles Angles for holonomic drive
  * @param preferences The robot preferences
  * @param reverse Should the robot drive backwards
  */
-function generateAndDeploy(points, velocities, preferences, reverse) {
+function generateAndDeploy(points, velocities, holonomicAngles, preferences, reverse) {
 	ipc.send('generating');
-	const robotPath = new RobotPath(points, velocities, preferences, reverse);
+	const robotPath = new RobotPath(points, velocities, holonomicAngles, preferences, reverse);
 	let outL = '';
 	let outR = '';
 	const outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
@@ -77,12 +80,13 @@ function generateAndDeploy(points, velocities, preferences, reverse) {
  * Generate the path and copy the output arrays to the clipboard
  * @param points The path points
  * @param velocities The path velocities
+ * @param holonomicAngles Angles for holonomic drive
  * @param preferences The robot preferences
  * @param reverse Should the robot drive backwards
  */
-function generateAndCopy(points, velocities, preferences, reverse) {
+function generateAndCopy(points, velocities, holonomicAngles, preferences, reverse) {
 	ipc.send('generating');
-	const robotPath = new RobotPath(points, velocities, preferences, reverse);
+	const robotPath = new RobotPath(points, velocities, holonomicAngles, preferences, reverse);
 	let out;
 	if (preferences.p_outputType === 1) {
 		if (preferences.p_splitPath) {
@@ -129,16 +133,17 @@ function generateAndCopy(points, velocities, preferences, reverse) {
  * Generate the path and save the files
  * @param points The path points
  * @param velocities The path velocities
+ * @param holonomicAngles Angles for holonomic drive
  * @param preferences The robot preferences
  * @param reverse Should the robot drive backwards
  */
-function generateAndSave(points, velocities, preferences, reverse) {
+function generateAndSave(points, velocities, holonomicAngles, preferences, reverse) {
 	let filePath = preferences.p_lastGenerateDir;
 	if (filePath === 'none') {
 		filePath = homeDir;
 	}
 
-	let filename = dialog.showOpenDialog({
+	let filename = dialog.showOpenDialogSync({
 		title: 'Generate Path',
 		defaultPath: filePath,
 		buttonLabel: 'Generate',
@@ -150,7 +155,7 @@ function generateAndSave(points, velocities, preferences, reverse) {
 		log.info(filename);
 
 		ipc.send('generating');
-		const robotPath = new RobotPath(points, velocities, preferences, reverse);
+		const robotPath = new RobotPath(points, velocities, holonomicAngles, preferences, reverse);
 		if (preferences.p_splitPath) {
 			let outL = '';
 			let outR = '';

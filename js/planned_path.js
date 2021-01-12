@@ -8,12 +8,15 @@ class PlannedPath {
 	constructor() {
 		this.points = [];
 		this.velocities = [];
+		this.holonomicAngles = [];
 		this.points.push(new Vector2(10 * Util.pixelsPerFoot + Util.xPixelOffset, 8 * Util.pixelsPerFoot + Util.yPixelOffset));
 		this.points.push(new Vector2(14.37 * Util.pixelsPerFoot + Util.xPixelOffset, 8 * Util.pixelsPerFoot + Util.yPixelOffset));
 		this.points.push(new Vector2(17.52 * Util.pixelsPerFoot + Util.xPixelOffset, 4.28 * Util.pixelsPerFoot + Util.yPixelOffset));
 		this.points.push(new Vector2(19.4 * Util.pixelsPerFoot + Util.xPixelOffset, 8.5 * Util.pixelsPerFoot + Util.yPixelOffset));
 		this.velocities.push(-1);
 		this.velocities.push(-1);
+		this.holonomicAngles.push(0);
+		this.holonomicAngles.push(45);
 	}
 
 	/**
@@ -59,6 +62,7 @@ class PlannedPath {
 		this.points.push(Vector2.multiply(Vector2.add(this.points[this.points.length - 1], new Vector2(anchorPos.x, anchorPos.y)), 0.5));
 		this.points.push(new Vector2(anchorPos.x, anchorPos.y));
 		this.velocities.push(-1);
+		this.holonomicAngles.push(0);
 	}
 
 	/**
@@ -74,10 +78,13 @@ class PlannedPath {
 		let control2 = Vector2.subtract(Vector2.multiply(anchor, 2), control1);
 		if(index === 2){
 			this.velocities.splice(1, 0, -1);
+			this.holonomicAngles.splice(1, 0, -1);
 		}else if(index === this.points.length - 2){
 			this.velocities.splice(this.velocities.length - 2, 0, -1);
+			this.holonomicAngles.splice(this.velocities.length - 2, 0, -1);
 		}else{
 			this.velocities.splice(this.anchorIndexToVelocity(index + 1), 0, -1);
+			this.holonomicAngles.splice(this.anchorIndexToVelocity(index + 1), 0, -1);
 		}
 		this.points.splice(index, 0, control1, anchor, control2);
 	}
@@ -125,6 +132,7 @@ class PlannedPath {
 				this.points.splice(anchorIndex - 1, 3);
 			}
 			this.velocities.splice(this.anchorIndexToVelocity(anchorIndex));
+			this.holonomicAngles.splice(this.anchorIndexToVelocity(anchorIndex));
 		}
 	}
 
@@ -137,6 +145,10 @@ class PlannedPath {
 		this.velocities[this.anchorIndexToVelocity(anchorIndex)] = vel;
 	}
 
+	updateHolonomicAngle(anchorIndex, angle) {
+		this.holonomicAngles[this.anchorIndexToVelocity(anchorIndex)] = angle;
+	}
+
 	/**
 	 * Get a velocity for an anchor point
 	 * @param anchorIndex The anchor index
@@ -144,6 +156,10 @@ class PlannedPath {
 	 */
 	getVelocity(anchorIndex) {
 		return this.velocities[this.anchorIndexToVelocity(anchorIndex)];
+	}
+
+	getHolonomicAngle(anchorIndex){
+		return this.holonomicAngles[this.anchorIndexToVelocity(anchorIndex)];
 	}
 
 	/**

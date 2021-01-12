@@ -34,13 +34,19 @@ function join(points, step, noLogging) {
 }
 
 class RobotPath {
-    constructor(points, velocities, preferences, reverse, noLogging) {
+    constructor(points, velocities, holonomicAngles, preferences, reverse, noLogging) {
         this.noLogging = noLogging;
         if(!this.noLogging) log.info('Generating path...');
         const start = new Date().getTime();
         this.xPixelOffset = (preferences.p_gameYear === '20') ? Util.xOffset20 : Util.xOffsetNormal;
-        this.path = new Path(join(points, joinStep, noLogging), points[0], preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot, noLogging, this.xPixelOffset);
+        log.info(Util.pixelsPerFoot, preferences.gameYear);
+        let pixelsPerUnit = preferences.p_useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot;
+        if(preferences.p_gameYear == 21){
+            pixelsPerUnit = preferences.p_useMetric ? Util.pixelsPerMeter21 : Util.pixelsPerFoot21;
+        }
+        this.path = new Path(join(points, joinStep, noLogging), points[0], pixelsPerUnit, noLogging, this.xPixelOffset);
         this.velocities = velocities;
+        this.holonomicAngles = holonomicAngles;
         this.pathSegments = this.path.group;
         this.timeSegments = new SegmentGroup();
         this.left = new SegmentGroup();

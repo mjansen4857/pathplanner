@@ -23,6 +23,7 @@ class Preferences {
 		this.maxAcc = (this.p_useMetric) ? 1.5 : 5.0;
 		this.p_gameYear = store.get('gameYear', '21');
 		this.p_splitPath = store.get('splitPath', true);
+		this.p_driveTrain = store.get('driveTrain', 'skid');
 		this.currentPathName = "path";
 		this.csvHeader = null;
 	}
@@ -77,6 +78,10 @@ class Preferences {
 
 	get splitPath() {
 		return this.p_splitPath;
+	}
+
+	get driveTrain() {
+		return this.p_driveTrain;
 	}
 
 	set lastRunVersion(value) {
@@ -141,6 +146,11 @@ class Preferences {
 	set splitPath(value) {
 		store.set('splitPath', value);
 		this.p_splitPath = value;
+	}
+
+	set driveTrain(value) {
+		store.set('driveTrain', value);
+		this.p_driveTrain = value;
 	}
 }
 

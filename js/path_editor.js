@@ -5,6 +5,7 @@ const {
 const {
 	PlannedPath
 } = require('./planned_path.js');
+const log = require('electron-log');
 
 class PathEditor {
 	/**
@@ -21,7 +22,9 @@ class PathEditor {
 		this.width = 1200;
 		this.height = 700;
 		this.highlightedPoint = -1;
+		this.highlightedHolonomicPoint = -1;
 		this.pointDragIndex = -1;
+		this.holonomicDragIndex = -1;
 		this.updatePoint = -1;
 		this.lastMousePos = {
 			x: 0,
@@ -42,6 +45,20 @@ class PathEditor {
 						this.lastMousePos.y = mousePos.y;
 						return;
 					}
+					if(i % 3 === 0){
+						//check if holonomic angle point is hovered
+						const angle = this.plannedPath.getHolonomicAngle(i) * (Math.PI / 180);
+						const halfLength = (preferences.robotLength/2) * (preferences.useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
+						let holoPointX = this.plannedPath.points[i].x + (halfLength * Math.cos(angle));
+						let holoPointY = this.plannedPath.points[i].y + (halfLength * Math.sin(angle));
+						if ((Math.pow(mousePos.x - holoPointX, 2) + (Math.pow(mousePos.y - holoPointY, 2))) <= Math.pow(6, 2)) {
+							this.highlightedHolonomicPoint = i;
+							this.update();
+							this.lastMousePos.x = mousePos.x;
+							this.lastMousePos.y = mousePos.y;
+							return;
+						}
+					}
 				}
 				for (let i = 0; i < this.plannedPath.numPoints(); i++) {
 					if ((Math.pow(this.lastMousePos.x - this.plannedPath.points[i].x, 2) + (Math.pow(this.lastMousePos.y - this.plannedPath.points[i].y, 2))) <= Math.pow(8, 2)) {
@@ -50,6 +67,20 @@ class PathEditor {
 						this.lastMousePos.x = mousePos.x;
 						this.lastMousePos.y = mousePos.y;
 						return;
+					}
+					if(i % 3 === 0){
+						//check if holonomic angle point is hovered
+						const angle = this.plannedPath.getHolonomicAngle(i) * (Math.PI / 180);
+						const halfLength = (preferences.robotLength/2) * (preferences.useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
+						let holoPointX = this.plannedPath.points[i].x + (halfLength * Math.cos(angle));
+						let holoPointY = this.plannedPath.points[i].y + (halfLength * Math.sin(angle));
+						if ((Math.pow(this.lastMousePos.x - holoPointX, 2) + (Math.pow(this.lastMousePos.y - holoPointY, 2))) <= Math.pow(6, 2)) {
+							this.highlightedHolonomicPoint = -1;
+							this.update();
+							this.lastMousePos.x = mousePos.x;
+							this.lastMousePos.y = mousePos.y;
+							return;
+						}
 					}
 				}
 			} else if (evt.buttons === 1) {
@@ -76,6 +107,12 @@ class PathEditor {
 						}
 						this.update();
 					}
+				}else if(this.holonomicDragIndex !== -1){
+					const dx = mousePos.x - this.plannedPath.points[this.holonomicDragIndex].x;
+					const dy = mousePos.y - this.plannedPath.points[this.holonomicDragIndex].y;
+					const theta = Math.round(Math.atan2(dy, dx) / (Math.PI / 180));
+					this.plannedPath.updateHolonomicAngle(this.holonomicDragIndex, theta);
+					this.update();
 				}
 			}
 			this.lastMousePos.x = mousePos.x;
@@ -90,6 +127,15 @@ class PathEditor {
 						this.pointDragIndex = i;
 						this.originalXPos = this.plannedPath.points[i].x; // Used for constraining X axis position of main point of a spline duing mouseMove
 						this.originalYPos = this.plannedPath.points[i].y; // Used for constraining Y axis position of main point of a spline duing mouseMove
+					}else if(i % 3 === 0){
+						//check if holonomic angle point is hovered
+						const angle = this.plannedPath.getHolonomicAngle(i) * (Math.PI / 180);
+						const halfLength = (preferences.robotLength/2) * (preferences.useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
+						let holoPointX = this.plannedPath.points[i].x + (halfLength * Math.cos(angle));
+						let holoPointY = this.plannedPath.points[i].y + (halfLength * Math.sin(angle));
+						if ((Math.pow(mousePos.x - holoPointX, 2) + (Math.pow(mousePos.y - holoPointY, 2))) <= Math.pow(6, 2)) {
+							this.holonomicDragIndex = i;
+						}
 					}
 				}
 			} else if (evt.buttons === 2) {
@@ -168,10 +214,14 @@ class PathEditor {
 			}
 		});
 		this.canvas.addEventListener('mouseup', (evt) => {
-			if (this.pointDragIndex !== -1) {
+			if (this.pointDragIndex !== -1 || this.holonomicDragIndex !== -1) {
 				this.saveHistory();
 			}
 			this.pointDragIndex = -1;
+			this.holonomicDragIndex = -1;
+			this.highlightedPoint = -1;
+			this.highlightedHolonomicPoint = -1;
+			this.update();
 		});
 	}
 
@@ -234,6 +284,16 @@ class PathEditor {
 		}else{
 			g.drawImage(this.image, 0, 50);
 		}
+
+		if(preferences.driveTrain == 'holonomic'){
+			this.drawPathHolonomic();
+		}else{
+			this.drawPathSkidSteer();
+		}
+	}
+
+	drawPathSkidSteer(){
+		const g = this.canvas.getContext('2d');
 
 		//draw path line
 		g.lineWidth = 3;
@@ -315,6 +375,74 @@ class PathEditor {
 		}
 	}
 
+	drawPathHolonomic(){
+		const g = this.canvas.getContext('2d');
+
+		//draw path line
+		g.lineWidth = 3;
+		g.strokeStyle = '#eeeeee';
+		g.imageSmoothingEnabled = false;
+		g.beginPath();
+		g.moveTo(this.plannedPath.points[0].x, this.plannedPath.points[0].y);
+		for (let i = 0; i < this.plannedPath.numSplines(); i++) {
+			const points = this.plannedPath.getPointsInSpline(i);
+
+			for (let d = 0; d <= 1; d += 0.01) {
+				const p = Util.cubicCurve(points[0], points[1], points[2], points[3], d + 0.01);
+				g.lineTo(p.x, p.y);
+			}
+		}
+		g.stroke();
+
+		//draw control lines
+		g.strokeStyle = '#000000';
+		g.lineWidth = 2.5;
+		g.beginPath();
+		for (let i = 0; i < this.plannedPath.numSplines(); i++) {
+			const points = this.plannedPath.getPointsInSpline(i);
+			g.moveTo(points[0].x, points[0].y);
+			g.lineTo(points[1].x, points[1].y);
+			g.moveTo(points[2].x, points[2].y);
+			g.lineTo(points[3].x, points[3].y);
+		}
+		g.stroke();
+
+		//draw points and perimeter
+		const points = this.plannedPath.points;
+		for (let i = 0; i < points.length; i++) {
+			g.lineWidth = 3;
+
+			if (i % 3 === 0) {
+				const angle = this.plannedPath.getHolonomicAngle(i) * (Math.PI / 180);
+				const l = new Vector2(points[i].x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+				const r = new Vector2(points[i].x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle)), points[i].y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle)));
+				if(i === points.length - 1){
+					g.fillStyle = "#d32f2f";
+					g.strokeStyle = "#d32f2f";
+				}else if(i === 0){
+					g.fillStyle = "#388e3c";
+					g.strokeStyle = "#388e3c";
+				}else{
+					g.fillStyle = "#ffffff";
+					g.strokeStyle = "#ffffff";
+				}
+				this.drawRobotPerimeter(l, r);
+			} else {
+				g.fillStyle = '#FFFFFF';
+			}
+			if (i === this.highlightedPoint) {
+				g.fillStyle = '#ffeb3b';
+			}
+			g.strokeStyle = '#000000';
+			g.beginPath();
+			g.arc(points[i].x, points[i].y, 8, 2 * Math.PI, 0);
+			g.fill();
+			g.stroke();
+		}
+
+		this.drawHolonomicPoints();
+	}
+
 	/**
 	 * Helper method to draw the outline of a robot
 	 * @param left The left-middle point of the robot
@@ -324,14 +452,14 @@ class PathEditor {
 		const g = this.canvas.getContext('2d');
 		const angle = Math.atan2(left.y - right.y, left.x - right.x);
 		const halfLength = preferences.robotLength / 2;
-		const backLeftX = (left.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
-		const backLeftY = (left.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
-		const frontLeftX = (left.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
-		const frontLeftY = (left.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
-		const backRightX = (right.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
-		const backRightY = (right.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
-		const frontRightX = (right.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
-		var frontRightY = (right.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
+		const frontLeftX = (left.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
+		const frontLeftY = (left.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
+		const backLeftX = (left.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
+		const backLeftY = (left.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
+		const frontRightX = (right.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
+		const frontRightY = (right.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
+		const backRightX = (right.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angle));
+		const backRightY = (right.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angle));
 		g.beginPath();
 		g.moveTo(backLeftX, backLeftY);
 		g.lineTo(frontLeftX, frontLeftY);
@@ -339,6 +467,55 @@ class PathEditor {
 		g.lineTo(backRightX, backRightY);
 		g.lineTo(backLeftX, backLeftY);
 		g.stroke();
+	}
+
+	drawHolonomicPreviewPerimeter(center, angle) {
+		const g = this.canvas.getContext('2d');
+		const angleRadians = angle * (Math.PI / 180);
+		const halfLength = preferences.robotLength / 2;
+		const l = new Vector2(center.x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians)), center.y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians)));
+		const r = new Vector2(center.x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians)), center.y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians)));
+		const frontLeftX = (l.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians));
+		const frontLeftY = (l.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
+		const backLeftX = (l.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians));
+		const backLeftY = (l.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
+		const frontRightX = (r.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians));
+		const frontRightY = (r.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
+		const backRightX = (r.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians));
+		const backRightY = (r.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
+		g.beginPath();
+		g.moveTo(backLeftX, backLeftY);
+		g.lineTo(frontLeftX, frontLeftY);
+		g.lineTo(frontRightX, frontRightY);
+		g.lineTo(backRightX, backRightY);
+		g.lineTo(backLeftX, backLeftY);
+		g.stroke();
+		const halfLengthPx = (preferences.robotLength/2) * (preferences.useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
+		let holoPointX = center.x + (halfLengthPx * Math.cos(angleRadians));
+		let holoPointY = center.y + (halfLengthPx * Math.sin(angleRadians));
+		g.beginPath();
+		g.arc(holoPointX, holoPointY, 6, 2 * Math.PI, 0);
+		g.fill();
+	}
+
+	drawHolonomicPoints(){
+		const g = this.canvas.getContext('2d');
+		for(let i = 0; i < this.plannedPath.numPoints(); i+=3){
+			g.beginPath();
+			g.strokeStyle = '#000000';
+			if (i === this.highlightedHolonomicPoint) {
+				g.fillStyle = '#ffeb3b';
+			}else{
+				g.fillStyle = '#222222';
+			}
+			const angle = this.plannedPath.getHolonomicAngle(i) * (Math.PI / 180);
+			const halfLength = (preferences.robotLength/2) * (preferences.useMetric ? Util.pixelsPerMeter : Util.pixelsPerFoot);
+			let holoPointX = this.plannedPath.points[i].x + (halfLength * Math.cos(angle));
+			let holoPointY = this.plannedPath.points[i].y + (halfLength * Math.sin(angle));
+			g.arc(holoPointX, holoPointY, 6, 2 * Math.PI, 0);
+			g.fill();
+			g.stroke();
+		}
 	}
 
 	/**
@@ -355,21 +532,33 @@ class PathEditor {
 	 * Run a path preview
 	 * @param leftSegments The generated path for the left side
 	 * @param rightSegments The generated path for the right side
+	 * @param centerSegments The generated path for the center
 	 */
-	previewPath(leftSegments, rightSegments) {
+	previewPath(leftSegments, rightSegments, centerSegments) {
 		var i = 0;
 		this.previewing = true;
 		var interval = setInterval(() => {
-			if (i < leftSegments.length) {
+			if (i < centerSegments.length) {
 				var g = this.canvas.getContext('2d');
 				this.clear();
-				g.drawImage(this.image, 0, 50);
+				if(preferences.gameYear == 21){
+					g.drawImage(this.image, 75, 75, 1050, 525);
+				}else{
+					g.drawImage(this.image, 0, 50);
+				}
 				g.strokeStyle = '#eeeeee';
-				var leftX = leftSegments[i].x * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].x;
-				var leftY = leftSegments[i].y * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].y;
-				var rightX = rightSegments[i].x * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].x;
-				var rightY = rightSegments[i].y * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].y;
-				this.drawRobotPerimeter(new Vector2(leftX, leftY), new Vector2(rightX, rightY));
+				g.fillStyle = '#eeeeee';
+				if(preferences.driveTrain == 'holonomic'){
+					const x = centerSegments[i].x * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].x;
+					const y = centerSegments[i].y * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].y;
+					this.drawHolonomicPreviewPerimeter(new Vector2(x, y), 0);
+				}else {
+					var leftX = leftSegments[i].x * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].x;
+					var leftY = leftSegments[i].y * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].y;
+					var rightX = rightSegments[i].x * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].x;
+					var rightY = rightSegments[i].y * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].y;
+					this.drawRobotPerimeter(new Vector2(leftX, leftY), new Vector2(rightX, rightY));
+				}
 				i++;
 			} else {
 				this.previewing = false;

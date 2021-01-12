@@ -139,6 +139,7 @@ $(document).ready(function () {
 	$('#rioPathLocation').val(preferences.rioPathLocation);
 	$('#units').val(preferences.useMetric ? 'metric' : 'imperial');
 	$('#gameYear').val(preferences.gameYear);
+	$('#driveTrain').val(preferences.driveTrain);
 	$('select').formSelect();
 
 	// Set the listeners for the confirm buttons
@@ -169,6 +170,7 @@ $(document).ready(function () {
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
+			holonomicAngles: pathEditor.plannedPath.holonomicAngles,
 			preferences: preferences,
 			reverse: reversed
 		});
@@ -195,6 +197,7 @@ $(document).ready(function () {
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
+			holonomicAngles: pathEditor.plannedPath.holonomicAngles,
 			preferences: preferences,
 			reverse: reversed,
 			deploy: true
@@ -241,6 +244,7 @@ $(document).ready(function () {
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
+			holonomicAngles: pathEditor.plannedPath.holonomicAngles,
 			preferences: preferences,
 			reverse: reversed
 		});
@@ -250,6 +254,7 @@ $(document).ready(function () {
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
+			holonomicAngles: pathEditor.plannedPath.holonomicAngles,
 			preferences: preferences,
 			reverse: reversed,
 			deploy: true
@@ -259,6 +264,7 @@ $(document).ready(function () {
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
+			holonomicAngles: pathEditor.plannedPath.holonomicAngles,
 			preferences: preferences,
 			preview: true
 		});
@@ -267,6 +273,7 @@ $(document).ready(function () {
 		ipc.send('generate', {
 			points: pathEditor.plannedPath.points,
 			velocities: pathEditor.plannedPath.velocities,
+			holonomicAngles: pathEditor.plannedPath.holonomicAngles,
 			preferences: preferences,
 			preview: true
 		});
@@ -336,6 +343,7 @@ function onSettingsConfirm() {
 		field.src = 'res/img/field' + gameYear + '.png';
 	}
 	preferences.gameYear = gameYear;
+	preferences.driveTrain = $('#driveTrain').val();
 	pathEditor.update();
 	M.Modal.getInstance($('#settings')).close();
 }
@@ -352,7 +360,7 @@ function savePath() {
 		path = homeDir + '/' + preferences.currentPathName;
 	}
 
-	dialog.showSaveDialog({
+	const filename = dialog.showSaveDialogSync({
 		title: 'Save Path',
 		defaultPath: path,
 		buttonLabel: 'Save',
@@ -360,37 +368,37 @@ function savePath() {
 			name: 'PATH file',
 			extensions: ['path']
 		}]
-	}, (filename) => {
-		if (filename) {
-			let delim = '\\';
-			if (filename.lastIndexOf(delim) === -1) delim = '/';
-			preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
-			preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
-			const points = pathEditor.plannedPath.points;
-			let fixedPoints = [];
-			for (let i = 0; i < points.length; i++) {
-				fixedPoints[i] = [Math.round((points[i].x - Util.xPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100, Math.round((points[i].y - Util.yPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100];
-			}
-			const output = JSON.stringify({
-				points: fixedPoints,
-				velocities: pathEditor.plannedPath.velocities,
-				reversed: $('#reversed').prop('checked'),
-				maxVel: preferences.maxVel,
-				maxAcc: preferences.maxAcc,
-				csvHeader: preferences.csvHeader
-			});
-			fs.writeFile(filename, output, 'utf8', (err) => {
-				if (err) {
-					log.error(err);
-				} else {
-					M.toast({
-						html: 'Path: "' + preferences.currentPathName + '" saved!',
-						displayLength: 6000
-					});
-				}
-			});
-		}
 	});
+	if (filename) {
+		let delim = '\\';
+		if (filename.lastIndexOf(delim) === -1) delim = '/';
+		preferences.lastPathDir = filename.substring(0, filename.lastIndexOf(delim));
+		preferences.currentPathName = filename.substring(filename.lastIndexOf(delim) + 1, filename.length - 5);
+		const points = pathEditor.plannedPath.points;
+		let fixedPoints = [];
+		for (let i = 0; i < points.length; i++) {
+			fixedPoints[i] = [Math.round((points[i].x - Util.xPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100, Math.round((points[i].y - Util.yPixelOffset) / ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * 100) / 100];
+		}
+		const output = JSON.stringify({
+			points: fixedPoints,
+			velocities: pathEditor.plannedPath.velocities,
+			holonomicAngles: pathEditor.plannedPath.holonomicAngles,
+			reversed: $('#reversed').prop('checked'),
+			maxVel: preferences.maxVel,
+			maxAcc: preferences.maxAcc,
+			csvHeader: preferences.csvHeader
+		});
+		fs.writeFile(filename, output, 'utf8', (err) => {
+			if (err) {
+				log.error(err);
+			} else {
+				M.toast({
+					html: 'Path: "' + preferences.currentPathName + '" saved!',
+					displayLength: 6000
+				});
+			}
+		});
+	}
 
 	unsavedChanges = false;
 }
@@ -405,7 +413,7 @@ function openPath() {
 		path = homeDir;
 	}
 
-	dialog.showOpenDialog({
+	const filePaths = dialog.showOpenDialogSync({
 		title: 'Open Path',
 		defaultPath: path,
 		buttonLabel: 'Open',
@@ -414,12 +422,11 @@ function openPath() {
 			extensions: ['path']
 		}],
 		properties: ['openFile']
-	}, (filePaths) => {
-		if (filePaths) {
-			const filename = filePaths[0];
-			loadFile(filename);
-		}
 	});
+	if (filePaths) {
+		const filename = filePaths[0];
+		loadFile(filename);
+	}
 }
 
 function loadFile(filename) {
@@ -454,6 +461,7 @@ function loadFile(filename) {
 				points[i] = new Vector2(points[i][0] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.xPixelOffset, points[i][1] * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + Util.yPixelOffset);
 			}
 			pathEditor.plannedPath.points = points;
+			pathEditor.plannedPath.holonomicAngles = json.holonomicAngles;
 			let velocities = json.velocities;
 			if (!velocities) {
 				velocities = [];
@@ -505,7 +513,7 @@ ipc.on('preview-segments', function (event, data) {
 		html: 'Driving time: ' + time + 's',
 		displayLength: time * 1000
 	});
-	pathEditor.previewPath(data.left, data.right);
+	pathEditor.previewPath(data.left, data.right, data.center);
 });
 
 ipc.on('generating', function () {
@@ -582,13 +590,15 @@ ipc.on('opened-file', function (event, data) {
 });
 
 function pathSerializer(done) {
-	done(JSON.stringify({points: pathEditor.plannedPath.points}));
+	done(JSON.stringify({points: pathEditor.plannedPath.points, velocities: pathEditor.plannedPath.velocities, holonomicAngles: pathEditor.plannedPath.holonomicAngles}));
 }
 
 function handleUndoRedo(serialized) {
 	const object = JSON.parse(serialized);
 	if (object) {
 		pathEditor.plannedPath.points = object.points;
+		pathEditor.plannedPath.velocities = object.velocities;
+		pathEditor.plannedPath.holonomicAngles = object.holonomicAngles;
 		pathEditor.update();
 	}
 }

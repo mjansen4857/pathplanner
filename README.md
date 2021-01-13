@@ -41,31 +41,32 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 | Ctrl/⌘ + Shift + Y                          | Flip path in the Y direction             |
 
 ## Output Format Options
-| Symbol | Description                                               |
-|--------|-----------------------------------------------------------|
-| x      | X Coordinate (Zeroed at start of path)                    |
-| y      | Y Coordinate (Zeroed at start of path)                    |
-| X      | Field Relative X Coordinate                               |
-| Y      | Field Relative Y Coordinate                               |
-| p      | Position (Center if single file, left/right if split)     |
-| v      | Velocity (Center if single file, left/right if split)     |
-| a      | Acceleration (Center if single file, left/right if split) |
-| pl     | Left Only Position                                        |
-| pr     | Right Only Position                                       |
-| vl     | Left Only Velocity                                        |
-| vr     | Right Only Velocity                                       |
-| al     | Left Only Acceleration                                    |
-| ar     | Right Only Acceleration                                   |
-| h      | Absolute Heading in Degrees (-180 to 180)                 |
-| H      | Relative Heading in Degrees (-180 to 180)                 |
-| w      | Absolute Winding Heading in Degrees                       |
-| W      | Relative Winding Heading in Degrees                       |
-| t      | Time Elapsed                                              |
-| s      | Time Step in Milliseconds                                 |
-| S      | Time Step in Seconds                                      |
-| r      | Curve Radius                                              |
-| o      | Angular Velocity                                          |
-| O      | Angular Acceleration                                      |
+| Symbol | Description                                                            |
+|--------|------------------------------------------------------------------------|
+| x      | X Coordinate (Zeroed at start of path)                                 |
+| y      | Y Coordinate (Zeroed at start of path)                                 |
+| X      | Field Relative X Coordinate                                            |
+| Y      | Field Relative Y Coordinate                                            |
+| p      | Position (Center if single file, left/right if split)                  |
+| v      | Velocity (Center if single file, left/right if split)                  |
+| a      | Acceleration (Center if single file, left/right if split)              |
+| pl     | Left Only Position                                                     |
+| pr     | Right Only Position                                                    |
+| vl     | Left Only Velocity                                                     |
+| vr     | Right Only Velocity                                                    |
+| al     | Left Only Acceleration                                                 |
+| ar     | Right Only Acceleration                                                |
+| h      | Absolute Heading in Degrees (-180 to 180)                              |
+| H      | Relative Heading in Degrees (-180 to 180)                              |
+| w      | Absolute Winding Heading in Degrees                                    |
+| W      | Relative Winding Heading in Degrees                                    |
+| t      | Time Elapsed                                                           |
+| s      | Time Step in Milliseconds                                              |
+| S      | Time Step in Seconds                                                   |
+| r      | Curve Radius                                                           |
+| o      | Angular Velocity                                                       |
+| O      | Angular Acceleration                                                   |
+| hh     | Holonomic Drive Heading in Degrees (-180 to 180, holonomic drive only) |
 
 ## Settings
 <img align="right" width="400" src="https://i.imgur.com/QYNT1xQ.png" alt="Robot Settings" />
@@ -79,6 +80,7 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * **Time Step:** The amount of time between each point in a profile in seconds.
 * **Wheelbase Width:** The width of the robot's drive train, used for splitting the left and right paths.
 * **Robot Length:** The length of the robot from bumper to bumper. This is used to draw the robot in the path preview and at the start/end points of the path.
+* **Drive Train:** The type of drive train your robot uses (Skid Steer or Holonomic, recommended output format for holonomic drive is "x,y,hh").
 
 ## Path Generation
 <img align="right" width="400" src="https://i.imgur.com/uLdE7xy.png" alt="Path Generation" />

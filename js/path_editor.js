@@ -476,13 +476,13 @@ class PathEditor {
 		const l = new Vector2(center.x + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians)), center.y - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians)));
 		const r = new Vector2(center.x - (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians)), center.y + (preferences.wheelbaseWidth / 2 * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians)));
 		const frontLeftX = (l.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians));
-		const frontLeftY = (l.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
+		const frontLeftY = (l.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
 		const backLeftX = (l.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians));
-		const backLeftY = (l.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
+		const backLeftY = (l.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
 		const frontRightX = (r.x + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians));
-		const frontRightY = (r.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
+		const frontRightY = (r.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
 		const backRightX = (r.x - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.cos(angleRadians));
-		const backRightY = (r.y + halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
+		const backRightY = (r.y - halfLength * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) * Math.sin(angleRadians));
 		g.beginPath();
 		g.moveTo(backLeftX, backLeftY);
 		g.lineTo(frontLeftX, frontLeftY);
@@ -551,7 +551,7 @@ class PathEditor {
 				if(preferences.driveTrain == 'holonomic'){
 					const x = centerSegments[i].x * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].x;
 					const y = centerSegments[i].y * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].y;
-					this.drawHolonomicPreviewPerimeter(new Vector2(x, y), 0);
+					this.drawHolonomicPreviewPerimeter(new Vector2(x, y), centerSegments[i].holonomicAngle);
 				}else {
 					var leftX = leftSegments[i].x * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].x;
 					var leftY = leftSegments[i].y * ((preferences.useMetric) ? Util.pixelsPerMeter : Util.pixelsPerFoot) + this.plannedPath.points[0].y;

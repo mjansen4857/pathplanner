@@ -6,11 +6,12 @@ const joinStep = 0.00001;
 /**
  * Creates a segment group of many points on the curve from the list of anchor and control points
  * @param points The path points
+ * @param holonomicAngles The angles for holonomic driving
  * @param step The step to use to interpolate the curve
  * @param noLogging true if logging info should be skipped
  * @returns The points on the curve
  */
-function join(points, step, noLogging) {
+function join(points, holonomicAngles, step, noLogging) {
     if(!noLogging) log.info('    Joining splines... ');
     const start = new Date().getTime();
     let s = new SegmentGroup();
@@ -22,6 +23,18 @@ function join(points, step, noLogging) {
             let seg = new Segment();
             seg.x = p.x;
             seg.y = p.y;
+            // Interpolate the holonomic angle via a sine curve
+            // const interpolationFactor = (Math.sin((d * Math.PI) - (Math.PI / 2)) + 1) / 2;
+            const interpolationFactor = d;
+            let deltaAngle = holonomicAngles[i + 1] - holonomicAngles[i];
+            if(Math.abs(deltaAngle) > 180){
+                if(deltaAngle < 0){
+                    deltaAngle = 180 + (deltaAngle % 180);
+                }else{
+                    deltaAngle = -180 + (deltaAngle % 180);
+                }
+            }
+            seg.holonomicAngle = holonomicAngles[i] + (interpolationFactor * (deltaAngle));
             s.add(seg);
         }
     }
@@ -44,7 +57,7 @@ class RobotPath {
         if(preferences.p_gameYear == 21){
             pixelsPerUnit = preferences.p_useMetric ? Util.pixelsPerMeter21 : Util.pixelsPerFoot21;
         }
-        this.path = new Path(join(points, joinStep, noLogging), points[0], pixelsPerUnit, noLogging, this.xPixelOffset);
+        this.path = new Path(join(points, holonomicAngles, joinStep, noLogging), points[0], pixelsPerUnit, noLogging, this.xPixelOffset);
         this.velocities = velocities;
         this.holonomicAngles = holonomicAngles;
         this.pathSegments = this.path.group;
@@ -56,6 +69,7 @@ class RobotPath {
         this.wheelbaseWidth = preferences.p_wheelbaseWidth;
         this.timeStep = preferences.p_timeStep;
         this.reverse = reverse;
+        this.isHolonomic = preferences.p_driveTrain == 'holonomic';
         this.calculateMaxVelocity();
         this.calculateVelocity();
         this.splitGroupByTime();
@@ -103,7 +117,10 @@ class RobotPath {
                 // var maxVCurve = Math.sqrt(this.mu * g * radius);
                 // if (!this.useMetric) maxVCurve *= 3.281;
 
-                const maxVCurve = Math.sqrt(this.maxAcc * (r - this.wheelbaseWidth / 2));
+                let maxVCurve = Math.sqrt(this.maxAcc * (r - this.wheelbaseWidth / 2));
+                if(this.isHolonomic){
+                    maxVCurve = Math.sqrt(this.maxAcc * r);
+                }
 
                 this.pathSegments.segments[i].vel = Math.min(maxVCurve, this.maxVel);
 
@@ -486,6 +503,7 @@ class Path {
             seg.fieldY = ((this.p0.y - Util.yPixelOffset) / this.pixelsPerUnit) + seg.y;
             seg.pos = this.l[s];
             seg.dydx = this.derivative(s, s2);
+            seg.holonomicAngle = this.inGroup.segments[i].holonomicAngle;
             if (i !== 0) {
                 seg.dx = seg.pos - this.group.segments[this.group.segments.length - 1].pos;
             }

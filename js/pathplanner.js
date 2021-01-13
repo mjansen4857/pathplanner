@@ -17,7 +17,7 @@ const github = require('octonode').client();
 const repo = github.repo('mjansen4857/PathPlanner');
 const SimpleUndo = require('simple-undo');
 let history;
-const outputFormatRegX = /^[xyXYpvahHtSsWwroO123456](?:,[xyXYpvahHtSsWwroO123456])*$/g;
+const outputFormatRegX = /^[xyXYpvahHtSsWwroO1234567](?:,[xyXYpvahHtSsWwroO1234567])*$/g;
 let unsavedChanges = false;
 
 let pathEditor;
@@ -156,7 +156,7 @@ $(document).ready(function () {
 		preferences.outputType = $('#outputType').prop('selectedIndex');
 		const format = $('#outputFormat').val();
 		//this is a stupid workaround but whatever
-		let cleanedFormat = format.replace(/pl/g, '1').replace(/pr/g, '2').replace(/vl/g, '3').replace(/vr/g, '4').replace(/al/g, '5').replace(/ar/g, '6');
+		let cleanedFormat = format.replace(/pl/g, '1').replace(/pr/g, '2').replace(/vl/g, '3').replace(/vr/g, '4').replace(/al/g, '5').replace(/ar/g, '6').replace(/hh/g, '7');
 		if (!cleanedFormat.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',
@@ -183,7 +183,7 @@ $(document).ready(function () {
 		preferences.outputType = $('#outputType').prop('selectedIndex');
 		const format = $('#outputFormat').val();
 		//this is a stupid workaround but whatever
-		let cleanedFormat = format.replace(/pl/g, '1').replace(/pr/g, '2').replace(/vl/g, '3').replace(/vr/g, '4').replace(/al/g, '5').replace(/ar/g, '6');
+		let cleanedFormat = format.replace(/pl/g, '1').replace(/pr/g, '2').replace(/vl/g, '3').replace(/vr/g, '4').replace(/al/g, '5').replace(/ar/g, '6').replace(/hh/g, '7');
 		if (!cleanedFormat.match(outputFormatRegX)) {
 			M.toast({
 				html: '<span style="color: #d32f2f !important;">Invalid output format!</span>',

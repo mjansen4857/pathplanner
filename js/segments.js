@@ -83,6 +83,13 @@ class SegmentGroup {
         ret = ret.replace(/r/g, (Math.round(s.radius * 10000) / 10000).toString());
         ret = ret.replace(/o/g, (Math.round(s.angularVelocity * 10000) / 10000).toString());
         ret = ret.replace(/O/g, (Math.round(s.angularAccel * 10000) / 10000).toString());
+        let holonomicHeading = s.holonomicAngle;
+        if(holonomicHeading > 180){
+            holonomicHeading -= 360;
+        }else if(holonomicHeading < -180){
+            holonomicHeading += 360;
+        }
+        ret = ret.replace(/hh/g, (Math.round(holonomicHeading * 10000) / 10000).toString());
         return ret;
     }
 
@@ -112,6 +119,7 @@ class Segment {
         this.dx = 0.0;
         this.angularVelocity = 0.0;
         this.angularAccel = 0.0;
+        this.holonomicAngle = 0.0;
     }
 }
 

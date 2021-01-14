@@ -19,6 +19,15 @@ Inspiration came from [Vannaka's Generator](https://github.com/vannaka/Motion_Pr
 
 Paths consist of two types of points: anchor and control points. Anchor points are points that *anchor* the path. They are points that the path will pass directly through. Control points are points that are attached to each anchor point. Control points can be used to fine-tune the curve of a path by pulling the path towards it. Anchor points, as well as their corresponding control points, can be added by right clicking anywhere on the field. They can be removed by by control/command + right clicking on the anchor point that you wish to remove. Any point on the path can be moved by dragging it around. While holding down the shift key and dragging a control point, its angle will be locked. You can right click on any anchor point to enter a position, change the angle (in degrees), and override the maximum velocity at that point. Overriding the velocity lets you slow down your robot at certain points in the path, which will prevent issues where the generation algorithm does not slow the robot down enough to accurately follow a tight curve, or it can just allow the robot to go slow in some areas (e.g. the area between the scale and switch) while maintaining a high speed during the rest of the path. When you are done editing the path, it can be saved and other paths can be loaded to edit. The path can then be generated for use on the robot or previewed in real time.
 
+## Holonomic Mode
+![Holonomic Demo](https://i.imgur.com/23Tsgfk.gif)
+
+PathPlanner now comes with an **experimental** holonomic drive train mode. This mode uses the same generation and pathing as the normal version, but decouples the robot's heading from the rest of the path. This allows teams with a holonomic drive train (Swerve drive, Mecanum, etc) to have control over the robot's rotation as it follows the path.
+
+When holonomic mode is enabled, the robot's perimeter will be drawn at every point along the path. A small gray dot representing the front of the robot will be drawn on the perimeter. This dot can be dragged to change the robot's heading at a given point. During generation, the heading is interpolated between each point.
+
+This mode is still very experimental and may have issues.
+
 ## Controls and Shortcuts
 | Shortcut                                     | Description                              |
 |----------------------------------------------|------------------------------------------|

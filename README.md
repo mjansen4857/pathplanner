@@ -67,6 +67,9 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 | o      | Angular Velocity                                                       |
 | O      | Angular Acceleration                                                   |
 | hh     | Holonomic Drive Heading in Degrees (-180 to 180, holonomic drive only) |
+| j      | Jerk (Center if single file, left/right if split)                      |
+
+If you would like all headings to be output in radians instead of degrees, you will need to manually edit the settings file located at `{USER HOME}/.PathPlanner/settings.json` and add this entry: `"outputRadians": true`
 
 ## Settings
 <img align="right" width="400" src="https://i.imgur.com/QYNT1xQ.png" alt="Robot Settings" />
@@ -80,7 +83,7 @@ Paths consist of two types of points: anchor and control points. Anchor points a
 * **Time Step:** The amount of time between each point in a profile in seconds.
 * **Wheelbase Width:** The width of the robot's drive train, used for splitting the left and right paths.
 * **Robot Length:** The length of the robot from bumper to bumper. This is used to draw the robot in the path preview and at the start/end points of the path.
-* **Drive Train:** The type of drive train your robot uses (Skid Steer or Holonomic, recommended output format for holonomic drive is "x,y,hh").
+* **Drive Train:** The type of drive train your robot uses (Skid Steer or Holonomic, recommended output format for holonomic drive is "x,y,hh" with split path turned off). When holonomic drive is selected, a gray dot will appear on the robot perimter. This dot represents the front of the robot and can be dragged to chnge the robot's heading at a given point.
 
 ## Path Generation
 <img align="right" width="400" src="https://i.imgur.com/uLdE7xy.png" alt="Path Generation" />

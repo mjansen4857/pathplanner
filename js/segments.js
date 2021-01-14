@@ -1,15 +1,17 @@
+const log = require('electron-log');
+
 class SegmentGroup {
     constructor() {
         this.segments = [];
     }
 
-    formatCSV(reverse, format, step, header, robotPath) {
+    formatCSV(reverse, format, step, header, robotPath, outputRadians) {
         let str = '';
         if(header) {
             str += header + '\n';
         }
         for (let i = 0; i < this.segments.length; i++) {
-            str += this.formatSegment(i, reverse, format, step, robotPath);
+            str += this.formatSegment(i, reverse, format, step, robotPath, outputRadians);
             if (i < this.segments.length - 1) {
                 str += '\n';
             }
@@ -17,33 +19,33 @@ class SegmentGroup {
         return str;
     }
 
-    formatJavaArray(arrayName, reverse, format, step, robotPath) {
+    formatJavaArray(arrayName, reverse, format, step, robotPath, outputRadians) {
         let str = 'public static double[][] ' + arrayName + ' = new double[][] {\n';
         for (let i = 0; i < this.segments.length; i++) {
-            str += '        {' + this.formatSegment(i, reverse, format, step, robotPath) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+            str += '        {' + this.formatSegment(i, reverse, format, step, robotPath, outputRadians) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
         }
         str += '    }';
         return str;
     }
 
-    formatCppArray(arrayName, reverse, format, step, robotPath) {
+    formatCppArray(arrayName, reverse, format, step, robotPath, outputRadians) {
         let str = 'double ' + arrayName + '[][] = {\n';
         for (let i = 0; i < this.segments.length; i++) {
-            str += '        {' + this.formatSegment(i, reverse, format, step, robotPath) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
+            str += '        {' + this.formatSegment(i, reverse, format, step, robotPath, outputRadians) + '}' + ((i < this.segments.length - 1) ? ',\n' : '\n');
         }
         str += '    }';
         return str;
     }
 
-    formatPythonArray(arrayName, reverse, format, step, robotPath) {
+    formatPythonArray(arrayName, reverse, format, step, robotPath, outputRadians) {
         let str = arrayName + ' = [\n';
         for (let i = 0; i < this.segments.length; i++) {
-            str += '    [' + this.formatSegment(i, reverse, format, step, robotPath) + ((i < this.segments.length - 1) ? '],\n' : ']]');
+            str += '    [' + this.formatSegment(i, reverse, format, step, robotPath, outputRadians) + ((i < this.segments.length - 1) ? '],\n' : ']]');
         }
         return str;
     }
 
-    formatSegment(index, reverse, format, step, robotPath) {
+    formatSegment(index, reverse, format, step, robotPath, outputRadians) {
         const s = this.segments[index];
         let l = this.segments[index], r = this.segments[index];
         if(robotPath){
@@ -64,6 +66,16 @@ class SegmentGroup {
         ret = ret.replace(/p/g, (Math.round(s.pos * 10000) / 10000 * n).toString());
         ret = ret.replace(/v/g, (Math.round(s.vel * 10000) / 10000 * n).toString());
         ret = ret.replace(/a/g, (Math.round(s.acc * 10000) / 10000 * n).toString());
+        let holonomicHeading = s.holonomicAngle;
+        if(holonomicHeading > 180){
+            holonomicHeading -= 360;
+        }else if(holonomicHeading < -180){
+            holonomicHeading += 360;
+        }
+        if(outputRadians){
+            holonomicHeading *= Math.PI / 180;
+        }
+        ret = ret.replace(/hh/g, (Math.round(holonomicHeading * 10000) / 10000).toString());
         let heading = s.heading;
         if(reverse){
             heading += 180;
@@ -73,23 +85,40 @@ class SegmentGroup {
                 heading += 360;
             }
         }
+        if(outputRadians){
+            heading *= Math.PI / 180;
+        }
         ret = ret.replace(/h/g, (Math.round(heading * 10000) / 10000).toString());
-        ret = ret.replace(/H/g, (Math.round(s.relativeHeading * 10000) / 10000).toString());
+        let relativeHeading = s.relativeHeading;
+        if(outputRadians){
+            relativeHeading *= Math.PI / 180;
+        }
+        ret = ret.replace(/H/g, (Math.round(relativeHeading * 10000) / 10000).toString());
         ret = ret.replace(/t/g, (Math.round(s.time * 10000) / 10000).toString());
         ret = ret.replace(/S/g, step.toString());
         ret = ret.replace(/s/g, (step * 1000).toString());
-        ret = ret.replace(/W/g, (Math.round(s.relativeWinding * 10000) / 10000).toString());
-        ret = ret.replace(/w/g, (Math.round(s.winding * 10000) / 10000).toString());
-        ret = ret.replace(/r/g, (Math.round(s.radius * 10000) / 10000).toString());
-        ret = ret.replace(/o/g, (Math.round(s.angularVelocity * 10000) / 10000).toString());
-        ret = ret.replace(/O/g, (Math.round(s.angularAccel * 10000) / 10000).toString());
-        let holonomicHeading = s.holonomicAngle;
-        if(holonomicHeading > 180){
-            holonomicHeading -= 360;
-        }else if(holonomicHeading < -180){
-            holonomicHeading += 360;
+        let relativeWinding = s.relativeWinding;
+        if(outputRadians){
+            relativeWinding *= Math.PI / 180;
         }
-        ret = ret.replace(/hh/g, (Math.round(holonomicHeading * 10000) / 10000).toString());
+        ret = ret.replace(/W/g, (Math.round(relativeWinding * 10000) / 10000).toString());
+        let winding = s.winding;
+        if(outputRadians){
+            winding *= Math.PI / 180;
+        }
+        ret = ret.replace(/w/g, (Math.round(winding * 10000) / 10000).toString());
+        ret = ret.replace(/r/g, (Math.round(s.radius * 10000) / 10000).toString());
+        let angularVelocity = s.angularVelocity;
+        if(outputRadians){
+            angularVelocity *= Math.PI / 180;
+        }
+        ret = ret.replace(/o/g, (Math.round(angularVelocity * 10000) / 10000).toString());
+        let angularAccel = s.angularAccel;
+        if(outputRadians){
+            angularAccel *= Math.PI / 180;
+        }
+        ret = ret.replace(/O/g, (Math.round(angularAccel * 10000) / 10000).toString());
+        ret = ret.replace(/j/g, (Math.round(s.jerk * 10000) / 10000).toString());
         return ret;
     }
 
@@ -120,6 +149,7 @@ class Segment {
         this.angularVelocity = 0.0;
         this.angularAccel = 0.0;
         this.holonomicAngle = 0.0;
+        this.jerk = 0.0;
     }
 }
 

@@ -369,6 +369,7 @@ class RobotPath {
                 left.pos = last.pos + distance;
                 left.vel = distance / seg.dt;
                 left.acc = (left.vel - last.vel) / seg.dt;
+                left.jerk = (left.acc - last.acc) / seg.dt;
             }
 
             right.x = seg.x - (w * sin_angle);
@@ -393,6 +394,7 @@ class RobotPath {
                 right.pos = last.pos + distance;
                 right.vel = distance / seg.dt;
                 right.acc = (right.vel - last.vel) / seg.dt;
+                right.jerk = (right.acc - last.acc) / seg.dt;
             }
 
             this.left.segments.push(left);
@@ -413,6 +415,7 @@ class RobotPath {
             const dt = now.time - last.time;
             now.vel = (now.pos - last.pos) / dt;
             now.acc = (now.vel - last.vel) / dt;
+            now.jerk = (now.acc - last.acc) / dt;
             now.angularVelocity = now.vel / now.radius;
             now.angularAccel = (now.angularVelocity - last.angularVelocity) / dt;
         }

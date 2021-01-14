@@ -24,6 +24,7 @@ class Preferences {
 		this.p_gameYear = store.get('gameYear', '21');
 		this.p_splitPath = store.get('splitPath', true);
 		this.p_driveTrain = store.get('driveTrain', 'skid');
+		this.p_outputRadians = store.get('outputRadians', false);
 		this.currentPathName = "path";
 		this.csvHeader = null;
 	}

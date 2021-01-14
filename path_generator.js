@@ -58,13 +58,13 @@ function generateAndDeploy(points, velocities, holonomicAngles, preferences, rev
 	const robotPath = new RobotPath(points, velocities, holonomicAngles, preferences, reverse);
 	let outL = '';
 	let outR = '';
-	const outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+	const outC = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
 	if (reverse) {
-		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
-		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+		outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
+		outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
 	} else {
-		outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
-		outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+		outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
+		outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
 	}
 	ipc.send('deploy-segments', {
 		left: outL,
@@ -91,38 +91,38 @@ function generateAndCopy(points, velocities, holonomicAngles, preferences, rever
 	if (preferences.p_outputType === 1) {
 		if (preferences.p_splitPath) {
 			if (reverse) {
-				out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n    ' +
-					robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
+				out = robotPath.right.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians) + '\n\n    ' +
+					robotPath.left.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians);
 			} else {
-				out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n    ' +
-					robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
+				out = robotPath.left.formatJavaArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians) + '\n\n    ' +
+					robotPath.right.formatJavaArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians);
 			}
 		} else {
-			out = robotPath.timeSegments.formatJavaArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
+			out = robotPath.timeSegments.formatJavaArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians);
 		}
 	} else if (preferences.p_outputType === 2) {
 		if (preferences.p_splitPath) {
 			if (reverse) {
-				out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n    ' +
-					robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
+				out = robotPath.right.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians) + '\n\n    ' +
+					robotPath.left.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians);
 			} else {
-				out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n    ' +
-					robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
+				out = robotPath.left.formatCppArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians) + '\n\n    ' +
+					robotPath.right.formatCppArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians);
 			}
 		} else {
-			out = robotPath.timeSegments.formatCppArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
+			out = robotPath.timeSegments.formatCppArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians);
 		}
 	} else if (preferences.p_outputType === 3) {
 		if (preferences.p_splitPath) {
 			if (reverse) {
-				out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n' +
-					robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
+				out = robotPath.right.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians) + '\n\n' +
+					robotPath.left.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians);
 			} else {
-				out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath) + '\n\n' +
-					robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
+				out = robotPath.left.formatPythonArray(preferences.currentPathName + 'Left', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians) + '\n\n' +
+					robotPath.right.formatPythonArray(preferences.currentPathName + 'Right', reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians);
 			}
 		} else {
-			out = robotPath.timeSegments.formatPythonArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath);
+			out = robotPath.timeSegments.formatPythonArray(preferences.currentPathName, reverse, preferences.p_outputFormat, preferences.p_timeStep, robotPath, preferences.p_outputRadians);
 		}
 	}
 	clipboard.writeText(out);
@@ -160,17 +160,17 @@ function generateAndSave(points, velocities, holonomicAngles, preferences, rever
 			let outL = '';
 			let outR = '';
 			if (reverse) {
-				outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
-				outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+				outL = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
+				outR = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
 			} else {
-				outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
-				outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+				outL = robotPath.left.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
+				outR = robotPath.right.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
 			}
 
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_left.csv', outL, 'utf8');
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '_right.csv', outR, 'utf8');
 		} else {
-			const out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath);
+			const out = robotPath.timeSegments.formatCSV(reverse, preferences.p_outputFormat, preferences.p_timeStep, preferences.csvHeader, robotPath, preferences.p_outputRadians);
 			fs.writeFileSync(filename + '/' + preferences.currentPathName + '.csv', out, 'utf8');
 		}
 		ipc.send('files-saved', preferences.currentPathName);

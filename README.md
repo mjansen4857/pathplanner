@@ -92,7 +92,7 @@ If you would like all headings to be output in radians instead of degrees, you w
 * **Time Step:** The amount of time between each point in a profile in seconds.
 * **Wheelbase Width:** The width of the robot's drive train, used for splitting the left and right paths.
 * **Robot Length:** The length of the robot from bumper to bumper. This is used to draw the robot in the path preview and at the start/end points of the path.
-* **Drive Train:** The type of drive train your robot uses (Skid Steer or Holonomic, recommended output format for holonomic drive is "x,y,hh" with split path turned off). When holonomic drive is selected, a gray dot will appear on the robot perimter. This dot represents the front of the robot and can be dragged to chnge the robot's heading at a given point.
+* **Drive Train:** The type of drive train your robot uses (Skid Steer or Holonomic). When holonomic drive is selected, a gray dot will appear on the robot perimter. This dot represents the front of the robot and can be dragged to chnge the robot's heading at a given point.
 
 ## Path Generation
 <img align="right" width="400" src="https://i.imgur.com/uLdE7xy.png" alt="Path Generation" />

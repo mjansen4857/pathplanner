@@ -52,7 +52,7 @@
   },
   "homepage": "https://github.com/mjansen4857/PathPlanner#readme",
   "devDependencies": {
-    "electron": "^7.2.4",
+    "electron": "^9.4.0",
     "electron-builder": "^22.9.1",
     "jest": "^24.9.0"
   },

@@ -1,0 +1,174 @@
+apply plugin: 'maven-publish'
+
+ext.licenseFile = files("$rootDir/LICENSE.txt")
+
+def pubVersion = '2022.0.0'
+
+def outputsFolder = file("$buildDir/allOutputs")
+
+def versionFile = file("$outputsFolder/version.txt")
+
+task outputVersions() {
+    description = 'Prints the versions of wpilib to a file for use by the downstream packaging project'
+    group = 'Build'
+    outputs.files(versionFile)
+
+    doFirst {
+        buildDir.mkdir()
+        outputsFolder.mkdir()
+    }
+
+    doLast {
+        versionFile.write pubVersion
+    }
+}
+
+task libraryBuild() {}
+
+build.dependsOn outputVersions
+
+task copyAllOutputs(type: Copy) {
+    destinationDir outputsFolder
+}
+
+build.dependsOn copyAllOutputs
+copyAllOutputs.dependsOn outputVersions
+
+ext.addTaskToCopyAllOutputs = { task ->
+    copyAllOutputs.dependsOn task
+    copyAllOutputs.inputs.file task.archivePath
+    copyAllOutputs.from task.archivePath
+}
+
+def artifactGroupId = 'com.pathplanner.lib'
+def baseArtifactId = 'PathplannerLib'
+def zipBaseName = "_GROUP_com_pathplanner_lib_ID_${baseArtifactId}-cpp_CLS"
+def javaBaseName = "_GROUP_com_pathplanner_lib_ID_${baseArtifactId}-java_CLS"
+
+task cppHeadersZip(type: Zip) {
+    destinationDirectory = outputsFolder
+    archiveBaseName = zipBaseName
+    classifier = "headers"
+
+    from(licenseFile) {
+        into '/'
+    }
+
+    from('src/main/native/include') {
+        into '/'
+    }
+}
+
+task cppSourceZip(type: Zip) {
+    destinationDirectory = outputsFolder
+    archiveBaseName = zipBaseName
+    classifier = "source"
+
+    from(licenseFile) {
+        into '/'
+    }
+
+    from('src/main/native/cpp') {
+        into '/'
+    }
+}
+
+build.dependsOn cppHeadersZip
+addTaskToCopyAllOutputs(cppHeadersZip)
+build.dependsOn cppSourceZip
+addTaskToCopyAllOutputs(cppSourceZip)
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+task outputJar(type: Jar, dependsOn: classes) {
+    archiveBaseName = javaBaseName
+    destinationDirectory = outputsFolder
+    from sourceSets.main.output
+}
+
+task outputSourcesJar(type: Jar, dependsOn: classes) {
+    archiveBaseName = javaBaseName
+    destinationDirectory = outputsFolder
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task outputJavadocJar(type: Jar, dependsOn: javadoc) {
+    archiveBaseName = javaBaseName
+    destinationDirectory = outputsFolder
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+    archives outputJar
+    archives outputSourcesJar
+    archives outputJavadocJar
+}
+
+addTaskToCopyAllOutputs(outputSourcesJar)
+addTaskToCopyAllOutputs(outputJavadocJar)
+addTaskToCopyAllOutputs(outputJar)
+
+build.dependsOn outputSourcesJar
+build.dependsOn outputJavadocJar
+build.dependsOn outputJar
+
+libraryBuild.dependsOn build
+
+def releasesRepoUrl = "$buildDir/repos/releases"
+
+publishing {
+    repositories {
+        maven {
+
+            url = releasesRepoUrl
+        }
+    }
+}
+
+task cleanReleaseRepo(type: Delete) {
+    delete releasesRepoUrl
+}
+
+tasks.matching {it != cleanReleaseRepo}.all {it.dependsOn cleanReleaseRepo}
+
+model {
+    publishing {
+        def taskList = createComponentZipTasks($.components, ['PathplannerLib'], zipBaseName, Zip, project, includeStandardZipFormat)
+
+        publications {
+            cpp(MavenPublication) {
+                taskList.each {
+                    artifact it
+                }
+                artifact cppHeadersZip
+                artifact cppSourceZip
+
+                artifactId = "${baseArtifactId}-cpp"
+                groupId artifactGroupId
+                version pubVersion
+            }
+
+            java(MavenPublication) {
+                artifact jar
+                artifact sourcesJar
+                artifact javadocJar
+
+                artifactId = "${baseArtifactId}-java"
+                groupId artifactGroupId
+                version pubVersion
+            }
+        }
+    }
+}

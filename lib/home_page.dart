@@ -2,8 +2,11 @@ import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:fitted_text_field_container/fitted_text_field_container.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
 import 'package:pathplanner/widgets/window_button/window_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   HomePage() : super();
@@ -15,6 +18,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   double _toolbarHeight = 56;
   String _version = '2022.0.0';
+  Directory _currentProject;
+  SharedPreferences _prefs;
   var _paths = [];
 
   @override
@@ -24,11 +29,15 @@ class _HomePageState extends State<HomePage> {
     for (int i = 0; i < 10; i++) {
       paths.add('Path ' + (i + 1).toString());
     }
-    setState(() {
-      _paths = paths;
-      if (Platform.isMacOS) {
-        _toolbarHeight = 56;
-      }
+    SharedPreferences.getInstance().then((val) {
+      _prefs = val;
+      setState(() {
+        _paths = paths;
+        String projectDir = _prefs.getString('currentProjectDir');
+        if (projectDir != null) {
+          _currentProject = Directory(projectDir);
+        }
+      });
     });
   }
 
@@ -86,12 +95,19 @@ class _HomePageState extends State<HomePage> {
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            'No Project',
-                            style: TextStyle(fontSize: 20, color: Colors.red),
+                            (_currentProject != null)
+                                ? basename(_currentProject.path)
+                                : 'No Project',
+                            style: TextStyle(
+                                fontSize: 20,
+                                color: (_currentProject != null)
+                                    ? Colors.white
+                                    : Colors.red),
                           ),
                         ),
                         ElevatedButton(
-                            onPressed: () {}, child: Text('Open Project')),
+                            onPressed: openProjectDialog,
+                            child: Text('Open Project')),
                         Expanded(
                           child: Container(),
                           flex: 4,
@@ -118,7 +134,45 @@ class _HomePageState extends State<HomePage> {
                   for (int i = 0; i < _paths.length; i++)
                     ListTile(
                       key: Key('$i'),
-                      title: Text(_paths[i]),
+                      leading: Padding(
+                        padding: const EdgeInsets.only(top: 8, bottom: 8),
+                        child: FittedTextFieldContainer(
+                          // calculator:
+                          //     FittedTextFieldCalculator.fitVisibleWithPadding(
+                          //         2),
+                          child: TextField(
+                            cursorColor: Colors.white,
+                            onSubmitted: (String text) {
+                              FocusScopeNode currentScope =
+                                  FocusScope.of(context);
+                              if (!currentScope.hasPrimaryFocus &&
+                                  currentScope.hasFocus) {
+                                FocusManager.instance.primaryFocus.unfocus();
+                              }
+                              setState(() {
+                                _paths[i] = text;
+                              });
+                            },
+                            controller: TextEditingController(text: _paths[i]),
+                            decoration: InputDecoration(
+                              border: InputBorder.none,
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: Colors.transparent,
+                                ),
+                              ),
+                              // errorBorder: InputBorder.none,
+                              // disabledBorder: InputBorder.none,
+                              contentPadding: EdgeInsets.all(8),
+                            ),
+                          ),
+                        ),
+                      ),
                       onTap: () {},
                     ),
                 ],
@@ -157,12 +211,7 @@ class _HomePageState extends State<HomePage> {
                     'Open Robot Project',
                     style: TextStyle(fontSize: 16),
                   ),
-                  onPressed: () async {
-                    var typeGroup = XTypeGroup();
-                    var projectFolder = getDirectoryPath(
-                        confirmButtonText: 'Open Project',
-                        initialDirectory: Directory.current.path);
-                  },
+                  onPressed: openProjectDialog,
                 ),
               ),
             ),
@@ -170,5 +219,15 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
     );
+  }
+
+  void openProjectDialog() async {
+    var projectFolder = await getDirectoryPath(
+        confirmButtonText: 'Open Project',
+        initialDirectory: Directory.current.path);
+    _prefs.setString('currentProjectDir', projectFolder);
+    setState(() {
+      _currentProject = Directory(projectFolder);
+    });
   }
 }

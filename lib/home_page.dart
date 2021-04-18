@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:fitted_text_field_container/fitted_text_field_container.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/robot_path.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 import 'package:pathplanner/widgets/window_button/window_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -186,11 +188,16 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     children: [
                       Divider(),
+                      ListTile(
+                        leading: Icon(Icons.add),
+                        title: Text('Add Path'),
+                        onTap: () {},
+                      ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: ListTile(
-                          leading: Icon(Icons.add),
-                          title: Text('Add Path'),
+                          leading: Icon(Icons.settings),
+                          title: Text('Settings'),
                           onTap: () {},
                         ),
                       ),
@@ -211,7 +218,23 @@ class _HomePageState extends State<HomePage> {
       return Center(
         child: Container(
           // color: Colors.grey,
-          child: PathEditor(),
+          child: PathEditor(
+            RobotPath([
+              Waypoint(
+                anchorPoint: Point(1.0, 3.0),
+                nextControl: Point(2.0, 3.0),
+              ),
+              Waypoint(
+                prevControl: Point(2.0, 2.0),
+                anchorPoint: Point(3.0, 2.0),
+                nextControl: Point(4.0, 2.0),
+              ),
+              Waypoint(
+                prevControl: Point(4.0, 3.0),
+                anchorPoint: Point(5.0, 3.0),
+              ),
+            ]),
+          ),
         ),
       );
     } else {

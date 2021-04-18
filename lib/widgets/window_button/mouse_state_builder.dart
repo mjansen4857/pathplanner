@@ -15,15 +15,14 @@ class MouseState {
 
 class MouseStateBuilder extends StatefulWidget {
   final MouseStateBuilderCB builder;
-  final VoidCallback? onPressed;
-  MouseStateBuilder({Key? key, required this.builder, this.onPressed})
-      : super(key: key);
+  final VoidCallback onPressed;
+  MouseStateBuilder({Key key, this.builder, this.onPressed}) : super(key: key);
   @override
   _MouseStateBuilderState createState() => _MouseStateBuilderState();
 }
 
 class _MouseStateBuilderState extends State<MouseStateBuilder> {
-  late MouseState _mouseState;
+  MouseState _mouseState;
   _MouseStateBuilderState() {
     _mouseState = MouseState();
   }
@@ -57,9 +56,9 @@ class _MouseStateBuilderState extends State<MouseStateBuilder> {
                 _mouseState.isMouseDown = false;
                 _mouseState.isMouseOver = false;
               });
-              WidgetsBinding.instance!.addPostFrameCallback((_) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (widget.onPressed != null) {
-                  widget.onPressed!();
+                  widget.onPressed();
                 }
               });
             },

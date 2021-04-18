@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
@@ -13,29 +14,26 @@ typedef WindowButtonBuilder = Widget Function(
 class WindowButtonContext {
   BuildContext context;
   MouseState mouseState;
-  Color? backgroundColor;
+  Color backgroundColor;
   Color iconColor;
   WindowButtonContext(
-      {required this.context,
-      required this.mouseState,
-      this.backgroundColor,
-      required this.iconColor});
+      {this.context, this.mouseState, this.backgroundColor, this.iconColor});
 }
 
 class WindowButtonColors {
-  late Color normal;
-  late Color mouseOver;
-  late Color mouseDown;
-  late Color iconNormal;
-  late Color iconMouseOver;
-  late Color iconMouseDown;
+  Color normal;
+  Color mouseOver;
+  Color mouseDown;
+  Color iconNormal;
+  Color iconMouseOver;
+  Color iconMouseDown;
   WindowButtonColors(
-      {Color? normal,
-      Color? mouseOver,
-      Color? mouseDown,
-      Color? iconNormal,
-      Color? iconMouseOver,
-      Color? iconMouseDown}) {
+      {Color normal,
+      Color mouseOver,
+      Color mouseDown,
+      Color iconNormal,
+      Color iconMouseOver,
+      Color iconMouseDown}) {
     this.normal = normal ?? _defaultButtonColors.normal;
     this.mouseOver = mouseOver ?? _defaultButtonColors.mouseOver;
     this.mouseDown = mouseDown ?? _defaultButtonColors.mouseDown;
@@ -54,16 +52,16 @@ final _defaultButtonColors = WindowButtonColors(
     iconMouseDown: Color(0xFFF0F0F0));
 
 class WindowButton extends StatelessWidget {
-  final WindowButtonBuilder? builder;
-  final WindowButtonIconBuilder? iconBuilder;
-  late final WindowButtonColors colors;
+  final WindowButtonBuilder builder;
+  final WindowButtonIconBuilder iconBuilder;
+  WindowButtonColors colors;
   final bool animate;
-  final EdgeInsets? padding;
-  final VoidCallback? onPressed;
+  final EdgeInsets padding;
+  final VoidCallback onPressed;
 
   WindowButton(
-      {Key? key,
-      WindowButtonColors? colors,
+      {Key key,
+      WindowButtonColors colors,
       this.builder,
       @required this.iconBuilder,
       this.padding,
@@ -87,10 +85,10 @@ class WindowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Don't show button on macOS
-    // if (Platform.isMacOS) {
-    //   return Container();
-    // }
+    // Don't show button on macOS since the system buttons will be there
+    if (Platform.isMacOS) {
+      return Container();
+    }
     final buttonSize = Size(kToolbarHeight, kToolbarHeight);
     return MouseStateBuilder(
       builder: (context, mouseState) {
@@ -101,7 +99,7 @@ class WindowButton extends StatelessWidget {
             iconColor: getIconColor(mouseState));
 
         var icon = (this.iconBuilder != null)
-            ? this.iconBuilder!(buttonContext)
+            ? this.iconBuilder(buttonContext)
             : Container();
         double borderSize = appWindow.borderSize;
         double defaultPadding =
@@ -119,13 +117,13 @@ class WindowButton extends StatelessWidget {
             color: buttonContext.backgroundColor ?? fadeOutColor,
             child: iconWithPadding);
         var button = (this.builder != null)
-            ? this.builder!(buttonContext, icon)
+            ? this.builder(buttonContext, icon)
             : iconWithPadding;
         return SizedBox(
             width: buttonSize.width, height: buttonSize.height, child: button);
       },
       onPressed: () {
-        if (this.onPressed != null) this.onPressed!();
+        if (this.onPressed != null) this.onPressed();
       },
     );
   }
@@ -133,10 +131,10 @@ class WindowButton extends StatelessWidget {
 
 class MinimizeWindowBtn extends WindowButton {
   MinimizeWindowBtn(
-      {Key? key,
-      WindowButtonColors? colors,
-      VoidCallback? onPressed,
-      bool? animate})
+      {Key key,
+      WindowButtonColors colors,
+      VoidCallback onPressed,
+      bool animate})
       : super(
             key: key,
             colors: colors,
@@ -148,10 +146,10 @@ class MinimizeWindowBtn extends WindowButton {
 
 class MaximizeWindowBtn extends WindowButton {
   MaximizeWindowBtn(
-      {Key? key,
-      WindowButtonColors? colors,
-      VoidCallback? onPressed,
-      bool? animate})
+      {Key key,
+      WindowButtonColors colors,
+      VoidCallback onPressed,
+      bool animate})
       : super(
             key: key,
             colors: colors,
@@ -169,10 +167,10 @@ final _defaultCloseButtonColors = WindowButtonColors(
 
 class CloseWindowBtn extends WindowButton {
   CloseWindowBtn(
-      {Key? key,
-      WindowButtonColors? colors,
-      VoidCallback? onPressed,
-      bool? animate})
+      {Key key,
+      WindowButtonColors colors,
+      VoidCallback onPressed,
+      bool animate})
       : super(
             key: key,
             colors: colors ?? _defaultCloseButtonColors,
@@ -184,7 +182,7 @@ class CloseWindowBtn extends WindowButton {
 
 class CloseIcon extends StatelessWidget {
   final Color color;
-  CloseIcon({Key? key, required this.color}) : super(key: key);
+  CloseIcon({Key key, this.color}) : super(key: key);
   @override
   Widget build(BuildContext context) => Align(
         alignment: Alignment.topLeft,
@@ -205,7 +203,7 @@ class CloseIcon extends StatelessWidget {
 /// Maximize
 class MaximizeIcon extends StatelessWidget {
   final Color color;
-  MaximizeIcon({Key? key, required this.color}) : super(key: key);
+  MaximizeIcon({Key key, this.color}) : super(key: key);
   @override
   Widget build(BuildContext context) => _AlignedPaint(_MaximizePainter(color));
 }
@@ -223,8 +221,8 @@ class _MaximizePainter extends _IconPainter {
 class RestoreIcon extends StatelessWidget {
   final Color color;
   RestoreIcon({
-    Key? key,
-    required this.color,
+    Key key,
+    this.color,
   }) : super(key: key);
   @override
   Widget build(BuildContext context) => _AlignedPaint(_RestorePainter(color));
@@ -248,7 +246,7 @@ class _RestorePainter extends _IconPainter {
 /// Minimize
 class MinimizeIcon extends StatelessWidget {
   final Color color;
-  MinimizeIcon({Key? key, required this.color}) : super(key: key);
+  MinimizeIcon({Key key, this.color}) : super(key: key);
   @override
   Widget build(BuildContext context) => _AlignedPaint(_MinimizePainter(color));
 }
@@ -273,7 +271,7 @@ abstract class _IconPainter extends CustomPainter {
 }
 
 class _AlignedPaint extends StatelessWidget {
-  const _AlignedPaint(this.painter, {Key? key}) : super(key: key);
+  const _AlignedPaint(this.painter, {Key key}) : super(key: key);
   final CustomPainter painter;
 
   @override

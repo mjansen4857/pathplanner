@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/widgets/window_button/window_button.dart';
 
@@ -10,6 +13,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  double _toolbarHeight = 56;
   String _version = '2022.0.0';
   var _paths = [];
 
@@ -22,6 +26,9 @@ class _HomePageState extends State<HomePage> {
     }
     setState(() {
       _paths = paths;
+      if (Platform.isMacOS) {
+        _toolbarHeight = 56;
+      }
     });
   }
 
@@ -29,8 +36,9 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: _toolbarHeight,
         title: SizedBox(
-          height: kToolbarHeight,
+          height: _toolbarHeight,
           child: Row(
             children: [
               Expanded(
@@ -59,18 +67,41 @@ class _HomePageState extends State<HomePage> {
       drawer: Drawer(
         child: Column(
           children: [
-            Container(
-              height: 160,
-              padding: EdgeInsets.all(8),
-              child: Align(
-                child: Text(
-                  'v' + _version,
-                  style: TextStyle(fontSize: 15),
-                ),
-                alignment: FractionalOffset.topLeft,
+            DrawerHeader(
+              child: Stack(
+                children: [
+                  Container(
+                    child: Align(
+                        alignment: FractionalOffset.bottomRight,
+                        child: Text('v' + _version)),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Container(),
+                          flex: 2,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            'No Project',
+                            style: TextStyle(fontSize: 20, color: Colors.red),
+                          ),
+                        ),
+                        ElevatedButton(
+                            onPressed: () {}, child: Text('Open Project')),
+                        Expanded(
+                          child: Container(),
+                          flex: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            Divider(),
             Expanded(
               child: ReorderableListView(
                 padding: EdgeInsets.zero,
@@ -121,7 +152,18 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: Container(
               child: Center(
-                child: Text('hi'),
+                child: ElevatedButton(
+                  child: Text(
+                    'Open Robot Project',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  onPressed: () async {
+                    var typeGroup = XTypeGroup();
+                    var projectFolder = getDirectoryPath(
+                        confirmButtonText: 'Open Project',
+                        initialDirectory: Directory.current.path);
+                  },
+                ),
               ),
             ),
           ),

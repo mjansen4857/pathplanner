@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:fitted_text_field_container/fitted_text_field_container.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 import 'package:pathplanner/widgets/window_button/window_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -201,24 +202,29 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Container(
-              child: Center(
-                child: ElevatedButton(
-                  child: Text(
-                    'Open Robot Project',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                  onPressed: openProjectDialog,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      body: buildBody(),
     );
+  }
+
+  Widget buildBody() {
+    if (_currentProject != null) {
+      return Center(
+        child: Container(
+          // color: Colors.grey,
+          child: PathEditor(),
+        ),
+      );
+    } else {
+      return Center(
+        child: ElevatedButton(
+          child: Text(
+            'Open Robot Project',
+            style: TextStyle(fontSize: 16),
+          ),
+          onPressed: openProjectDialog,
+        ),
+      );
+    }
   }
 
   void openProjectDialog() async {

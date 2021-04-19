@@ -4,6 +4,14 @@ class RobotPath {
   List<Waypoint> waypoints;
 
   RobotPath(this.waypoints);
+
+  String getWaypointLabel(Waypoint waypoint) {
+    if (waypoint == null) return null;
+    if (waypoint.isStartPoint()) return 'Start Point';
+    if (waypoint.isEndPoint()) return 'End Point';
+
+    return 'Waypoint ' + waypoints.indexOf(waypoint).toString();
+  }
 }
 
 class Waypoint {
@@ -16,6 +24,24 @@ class Waypoint {
   bool _isPrevControlDragging = false;
 
   Waypoint({this.anchorPoint, this.prevControl, this.nextControl});
+
+  void move(double dx, double dy) {
+    anchorPoint = Point(anchorPoint.x + dx, anchorPoint.y + dy);
+    if (nextControl != null) {
+      nextControl = Point(nextControl.x + dx, nextControl.y + dy);
+    }
+    if (prevControl != null) {
+      prevControl = Point(prevControl.x + dx, prevControl.y + dy);
+    }
+  }
+
+  double getXPos() {
+    return anchorPoint.x;
+  }
+
+  double getYPos() {
+    return anchorPoint.y;
+  }
 
   bool isStartPoint() {
     return prevControl == null;
@@ -70,13 +96,7 @@ class Waypoint {
 
   void dragUpdate(double dx, double dy) {
     if (_isAnchorDragging) {
-      anchorPoint = Point(anchorPoint.x + dx, anchorPoint.y + dy);
-      if (nextControl != null) {
-        nextControl = Point(nextControl.x + dx, nextControl.y + dy);
-      }
-      if (prevControl != null) {
-        prevControl = Point(prevControl.x + dx, prevControl.y + dy);
-      }
+      move(dx, dy);
     } else if (_isNextControlDragging) {
       nextControl = Point(nextControl.x + dx, nextControl.y + dy);
 

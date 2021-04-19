@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path.dart';
+import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
 
 class PathEditor extends StatefulWidget {
   RobotPath path;
@@ -15,11 +16,40 @@ class PathEditor extends StatefulWidget {
 
 class _PathEditorState extends State<PathEditor> {
   Waypoint _draggedPoint;
+  Waypoint _selectedPoint;
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: GestureDetector(
+        onTapDown: (details) {
+          FocusScopeNode currentScope = FocusScope.of(context);
+          if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+            FocusManager.instance.primaryFocus.unfocus();
+          }
+          for (Waypoint w in widget.path.waypoints.reversed) {
+            if (w.isPointInAnchor(
+                    xPixelsToMeters(details.localPosition.dx),
+                    yPixelsToMeters(details.localPosition.dy),
+                    pixelsToMeters(8)) ||
+                w.isPointInNextControl(
+                    xPixelsToMeters(details.localPosition.dx),
+                    yPixelsToMeters(details.localPosition.dy),
+                    pixelsToMeters(6)) ||
+                w.isPointInPrevControl(
+                    xPixelsToMeters(details.localPosition.dx),
+                    yPixelsToMeters(details.localPosition.dy),
+                    pixelsToMeters(6))) {
+              setState(() {
+                _selectedPoint = w;
+              });
+              return;
+            }
+          }
+          setState(() {
+            _selectedPoint = null;
+          });
+        },
         onPanStart: (details) {
           for (Waypoint w in widget.path.waypoints.reversed) {
             if (w.startDragging(
@@ -54,7 +84,27 @@ class _PathEditorState extends State<PathEditor> {
                 child: Container(
                   constraints: BoxConstraints(maxWidth: 1200, maxHeight: 600),
                   child: CustomPaint(
-                    painter: PathPainter(widget.path),
+                    child: Align(
+                      alignment: FractionalOffset.topRight,
+                      child: WaypointCard(
+                        _selectedPoint,
+                        label: widget.path.getWaypointLabel(_selectedPoint),
+                        onXPosUpdate: (newVal) {
+                          setState(() {
+                            _selectedPoint.move(
+                                newVal - _selectedPoint.anchorPoint.x, 0);
+                          });
+                        },
+                        onYPosUpdate: (newVal) {
+                          setState(() {
+                            _selectedPoint.move(
+                                0, newVal - _selectedPoint.anchorPoint.y);
+                          });
+                        },
+                      ),
+                    ),
+                    painter: PathPainter(widget.path,
+                        selectedWaypoint: _selectedPoint),
                   ),
                 ),
               ),
@@ -83,8 +133,9 @@ class PathPainter extends CustomPainter {
   var robotSize = Size(0.75, 0.75);
   static double scale = 1;
   RobotPath path;
+  Waypoint selectedWaypoint;
 
-  PathPainter(this.path);
+  PathPainter(this.path, {this.selectedWaypoint});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -165,6 +216,10 @@ class PathPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..color = Colors.grey[400]
       ..strokeWidth = 2;
+
+    if (waypoint == selectedWaypoint) {
+      paint.color = Colors.orange;
+    }
 
     Offset center = pointToPixelOffset(waypoint.anchorPoint, scale);
     double angle = waypoint.getAngleRadians();

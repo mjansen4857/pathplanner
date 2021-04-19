@@ -18,12 +18,17 @@ class Waypoint {
   Point anchorPoint;
   Point prevControl;
   Point nextControl;
+  double holonomicAngle;
 
   bool _isAnchorDragging = false;
   bool _isNextControlDragging = false;
   bool _isPrevControlDragging = false;
 
-  Waypoint({this.anchorPoint, this.prevControl, this.nextControl});
+  Waypoint(
+      {this.anchorPoint,
+      this.prevControl,
+      this.nextControl,
+      this.holonomicAngle = 0});
 
   void move(double dx, double dy) {
     anchorPoint = Point(anchorPoint.x + dx, anchorPoint.y + dy);
@@ -51,14 +56,17 @@ class Waypoint {
     return nextControl == null;
   }
 
-  double getAngleRadians() {
+  double getHeadingRadians() {
+    var heading;
     if (isStartPoint()) {
-      return -atan2(
-          nextControl.y - anchorPoint.y, nextControl.x - anchorPoint.x);
+      heading =
+          -atan2(nextControl.y - anchorPoint.y, nextControl.x - anchorPoint.x);
     } else {
-      return -atan2(
-          anchorPoint.y - prevControl.y, anchorPoint.x - prevControl.x);
+      heading =
+          -atan2(anchorPoint.y - prevControl.y, anchorPoint.x - prevControl.x);
     }
+    if (heading == -0) return 0;
+    return heading;
   }
 
   bool isPointInAnchor(double xPos, double yPos, double radius) {
@@ -99,32 +107,53 @@ class Waypoint {
       move(dx, dy);
     } else if (_isNextControlDragging) {
       nextControl = Point(nextControl.x + dx, nextControl.y + dy);
-
-      if (prevControl != null) {
-        var dst = anchorPoint.distanceTo(prevControl);
-        var dir =
-            Point(anchorPoint.x - nextControl.x, anchorPoint.y - nextControl.y);
-        var mag = dir.distanceTo(Point(0, 0));
-        dir = Point(dir.x / mag, dir.y / mag);
-
-        var control = Point(dir.x * dst, dir.y * dst);
-        prevControl =
-            Point(anchorPoint.x + control.x, anchorPoint.y + control.y);
-      }
+      updatePrevControlFromNext();
     } else if (_isPrevControlDragging) {
       prevControl = Point(prevControl.x + dx, prevControl.y + dy);
+      updateNextControlFromPrev();
+    }
+  }
 
-      if (nextControl != null) {
-        var dst = anchorPoint.distanceTo(nextControl);
-        var dir =
-            Point(anchorPoint.x - prevControl.x, anchorPoint.y - prevControl.y);
-        var mag = dir.distanceTo(Point(0, 0));
-        dir = Point(dir.x / mag, dir.y / mag);
+  void updatePrevControlFromNext() {
+    if (prevControl != null) {
+      var dst = anchorPoint.distanceTo(prevControl);
+      var dir = anchorPoint - nextControl;
+      var mag = dir.magnitude;
+      dir = Point(dir.x / mag, dir.y / mag);
 
-        var control = Point(dir.x * dst, dir.y * dst);
-        nextControl =
-            Point(anchorPoint.x + control.x, anchorPoint.y + control.y);
-      }
+      var control = Point(dir.x * dst, dir.y * dst);
+      prevControl = Point(anchorPoint.x + control.x, anchorPoint.y + control.y);
+    }
+  }
+
+  void updateNextControlFromPrev() {
+    if (nextControl != null) {
+      var dst = anchorPoint.distanceTo(nextControl);
+      var dir = (anchorPoint - prevControl);
+      var mag = dir.magnitude;
+      dir = Point(dir.x / mag, dir.y / mag);
+
+      var control = Point(dir.x * dst, dir.y * dst);
+      nextControl = Point(anchorPoint.x + control.x, anchorPoint.y + control.y);
+    }
+  }
+
+  void setHeading(double headingDegrees) {
+    var theta = -headingDegrees * pi / 180;
+    if (nextControl != null) {
+      var h = (anchorPoint - nextControl).magnitude;
+      var o = sin(theta) * h;
+      var a = cos(theta) * h;
+
+      nextControl = anchorPoint + Point(a, o);
+      updatePrevControlFromNext();
+    } else if (prevControl != null) {
+      var h = (anchorPoint - prevControl).magnitude;
+      var o = sin(theta) * h;
+      var a = cos(theta) * h;
+
+      prevControl = anchorPoint - Point(a, o);
+      updateNextControlFromPrev();
     }
   }
 

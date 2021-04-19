@@ -46,9 +46,9 @@ class _PathEditorState extends State<PathEditor> {
               return;
             }
           }
-          setState(() {
-            _selectedPoint = null;
-          });
+          // setState(() {
+          //   _selectedPoint = null;
+          // });
         },
         onPanStart: (details) {
           for (Waypoint w in widget.path.waypoints.reversed) {
@@ -99,6 +99,11 @@ class _PathEditorState extends State<PathEditor> {
                           setState(() {
                             _selectedPoint.move(
                                 0, newVal - _selectedPoint.anchorPoint.y);
+                          });
+                        },
+                        onHeadingUpdate: (newVal) {
+                          setState(() {
+                            _selectedPoint.setHeading(newVal);
                           });
                         },
                       ),
@@ -179,8 +184,8 @@ class PathPainter extends CustomPainter {
     for (int i = 0; i < path.waypoints.length - 1; i++) {
       Path p = Path();
 
-      double angle1 = path.waypoints[i].getAngleRadians();
-      double angle2 = path.waypoints[i + 1].getAngleRadians();
+      double angle1 = path.waypoints[i].getHeadingRadians();
+      double angle2 = path.waypoints[i + 1].getHeadingRadians();
       double halfWidth = metersToPixels(robotSize.width / 2, scale);
 
       Offset p0L = pointToPixelOffset(path.waypoints[i].anchorPoint, scale)
@@ -222,7 +227,7 @@ class PathPainter extends CustomPainter {
     }
 
     Offset center = pointToPixelOffset(waypoint.anchorPoint, scale);
-    double angle = waypoint.getAngleRadians();
+    double angle = waypoint.getHeadingRadians();
     double halfWidth = metersToPixels(robotSize.width / 2, scale);
     double halfLength = metersToPixels(robotSize.height / 2, scale);
 

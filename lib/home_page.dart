@@ -140,9 +140,6 @@ class _HomePageState extends State<HomePage> {
                       leading: Padding(
                         padding: const EdgeInsets.only(top: 8, bottom: 8),
                         child: FittedTextFieldContainer(
-                          // calculator:
-                          //     FittedTextFieldCalculator.fitVisibleWithPadding(
-                          //         2),
                           child: TextField(
                             cursorColor: Colors.white,
                             onSubmitted: (String text) {

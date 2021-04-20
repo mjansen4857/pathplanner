@@ -32,21 +32,24 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     List<RobotPath> paths = [];
     for (int i = 0; i < 3; i++) {
-      paths.add(RobotPath([
-        Waypoint(
-          anchorPoint: Point(1.0, 3.0),
-          nextControl: Point(2.0, 3.0),
-        ),
-        Waypoint(
-          prevControl: Point(3.0, 4.0),
-          anchorPoint: Point(3.0, 5.0),
-          isReversal: true,
-        ),
-        Waypoint(
-          prevControl: Point(4.0, 3.0),
-          anchorPoint: Point(5.0, 3.0),
-        ),
-      ], 'Path $i'));
+      paths.add(RobotPath(
+        [
+          Waypoint(
+            anchorPoint: Point(1.0, 3.0),
+            nextControl: Point(2.0, 3.0),
+          ),
+          Waypoint(
+            prevControl: Point(3.0, 4.0),
+            anchorPoint: Point(3.0, 5.0),
+            isReversal: true,
+          ),
+          Waypoint(
+            prevControl: Point(4.0, 3.0),
+            anchorPoint: Point(5.0, 3.0),
+          ),
+        ],
+        name: 'Path $i',
+      ));
     }
     SharedPreferences.getInstance().then((val) {
       _prefs = val;
@@ -154,7 +157,7 @@ class _HomePageState extends State<HomePage> {
                   for (int i = 0; i < _paths.length; i++)
                     PathTile(
                       _paths[i],
-                      Key('$i'),
+                      key: Key('$i'),
                       isSelected: _paths[i] == _currentPath,
                       tapCallback: () {
                         setState(() {
@@ -191,7 +194,7 @@ class _HomePageState extends State<HomePage> {
                                 prevControl: Point(4.0, 3.0),
                                 anchorPoint: Point(5.0, 3.0),
                               ),
-                            ], 'New Path'));
+                            ]));
                           });
                         },
                       ),

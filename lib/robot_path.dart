@@ -4,7 +4,7 @@ class RobotPath {
   List<Waypoint> waypoints;
   String name;
 
-  RobotPath(this.waypoints, this.name);
+  RobotPath(this.waypoints, {this.name = 'New Path'});
 
   String getWaypointLabel(Waypoint waypoint) {
     if (waypoint == null) return null;
@@ -31,7 +31,7 @@ class Waypoint {
       {this.anchorPoint,
       this.prevControl,
       this.nextControl,
-      this.holonomicAngle = 0,
+      this.holonomicAngle,
       this.isReversal = false,
       this.velOverride}) {
     if (isReversal) {
@@ -152,6 +152,15 @@ class Waypoint {
 
       var control = Point(dir.x * dst, dir.y * dst);
       nextControl = Point(anchorPoint.x + control.x, anchorPoint.y + control.y);
+    }
+  }
+
+  void setReversal(bool reversal) {
+    this.isReversal = reversal;
+    if (reversal) {
+      nextControl = prevControl;
+    } else {
+      updateNextControlFromPrev();
     }
   }
 

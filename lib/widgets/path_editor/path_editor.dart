@@ -125,6 +125,16 @@ class _PathEditorState extends State<PathEditor> {
                 });
               }
             },
+            onReversalUpdate: (newVal) {
+              setState(() {
+                widget._selectedPoint.setReversal(newVal);
+              });
+            },
+            onVelOverrideUpdate: (newVal) {
+              setState(() {
+                widget._selectedPoint.velOverride = newVal;
+              });
+            },
           ),
         ),
       ],
@@ -157,8 +167,8 @@ class PathPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     scale = size.width / defaultSize.width;
 
-    paintCenterPath(canvas, scale);
-    // paintDualPaths(canvas, scale);
+    // paintCenterPath(canvas, scale);
+    paintDualPaths(canvas, scale);
 
     for (Waypoint w in path.waypoints) {
       paintRobotOutline(canvas, scale, w);
@@ -185,7 +195,6 @@ class PathPainter extends CustomPainter {
     }
   }
 
-  // no worky. would have to make custom bezier drawing
   void paintDualPaths(Canvas canvas, double scale) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
@@ -195,33 +204,48 @@ class PathPainter extends CustomPainter {
     for (int i = 0; i < path.waypoints.length - 1; i++) {
       Path p = Path();
 
-      double angle1 = path.waypoints[i].getHeadingRadians();
-      double angle2 = path.waypoints[i + 1].getHeadingRadians();
       double halfWidth = metersToPixels(robotSize.width / 2, scale);
 
-      Offset p0L = pointToPixelOffset(path.waypoints[i].anchorPoint, scale)
-          .translate(halfWidth * sin(angle1), -(halfWidth * cos(angle1)));
-      Offset p1L = pointToPixelOffset(path.waypoints[i].nextControl, scale)
-          .translate(halfWidth * sin(angle1), -(halfWidth * cos(angle1)));
-      Offset p2L = pointToPixelOffset(path.waypoints[i + 1].prevControl, scale)
-          .translate(halfWidth * sin(angle2), -(halfWidth * cos(angle2)));
-      Offset p3L = pointToPixelOffset(path.waypoints[i + 1].anchorPoint, scale)
-          .translate(halfWidth * sin(angle2), -(halfWidth * cos(angle2)));
+      Offset p0 = pointToPixelOffset(path.waypoints[i].anchorPoint, scale);
+      Offset p1 = pointToPixelOffset(path.waypoints[i].nextControl, scale);
+      Offset p2 = pointToPixelOffset(path.waypoints[i + 1].prevControl, scale);
+      Offset p3 = pointToPixelOffset(path.waypoints[i + 1].anchorPoint, scale);
 
-      Offset p0R = pointToPixelOffset(path.waypoints[i].anchorPoint, scale)
-          .translate(-(halfWidth * sin(angle1)), halfWidth * cos(angle1));
-      Offset p1R = pointToPixelOffset(path.waypoints[i].nextControl, scale)
-          .translate(-(halfWidth * sin(angle1)), halfWidth * cos(angle1));
-      Offset p2R = pointToPixelOffset(path.waypoints[i + 1].prevControl, scale)
-          .translate(-(halfWidth * sin(angle2)), halfWidth * cos(angle2));
-      Offset p3R = pointToPixelOffset(path.waypoints[i + 1].anchorPoint, scale)
-          .translate(-(halfWidth * sin(angle2)), halfWidth * cos(angle2));
+      for (double t = 0; t < 1.0; t += 0.01) {
+        Offset center = _cubicLerp(p0, p1, p2, p3, t);
+        Offset centerNext = _cubicLerp(p0, p1, p2, p3, t + 0.01);
 
-      p.moveTo(p0L.dx, p0L.dy);
-      p.cubicTo(p1L.dx, p1L.dy, p2L.dx, p2L.dy, p3L.dx, p3L.dy);
+        double angle =
+            atan2(centerNext.dy - center.dy, centerNext.dx - center.dx);
 
-      p.moveTo(p0R.dx, p0R.dy);
-      p.cubicTo(p1R.dx, p1R.dy, p2R.dx, p2R.dy, p3R.dx, p3R.dy);
+        Offset r =
+            center.translate(-(halfWidth * sin(angle)), halfWidth * cos(angle));
+        Offset rNext = centerNext.translate(
+            -(halfWidth * sin(angle)), halfWidth * cos(angle));
+
+        if (t == 0) {
+          p.moveTo(r.dx, r.dy);
+        }
+        p.lineTo(rNext.dx, rNext.dy);
+      }
+
+      for (double t = 0; t < 1.0; t += 0.01) {
+        Offset center = _cubicLerp(p0, p1, p2, p3, t);
+        Offset centerNext = _cubicLerp(p0, p1, p2, p3, t + 0.01);
+
+        double angle =
+            atan2(centerNext.dy - center.dy, centerNext.dx - center.dx);
+
+        Offset l =
+            center.translate(halfWidth * sin(angle), -(halfWidth * cos(angle)));
+        Offset lNext = centerNext.translate(
+            halfWidth * sin(angle), -(halfWidth * cos(angle)));
+
+        if (t == 0) {
+          p.moveTo(l.dx, l.dy);
+        }
+        p.lineTo(lNext.dx, lNext.dy);
+      }
 
       canvas.drawPath(p, paint);
     }
@@ -332,4 +356,20 @@ class PathPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => true;
+
+  Offset _lerp(Offset a, Offset b, double t) {
+    return a + ((b - a) * t);
+  }
+
+  Offset _quadraticLerp(Offset a, Offset b, Offset c, double t) {
+    Offset p0 = _lerp(a, b, t);
+    Offset p1 = _lerp(b, c, t);
+    return _lerp(p0, p1, t);
+  }
+
+  Offset _cubicLerp(Offset a, Offset b, Offset c, Offset d, double t) {
+    Offset p0 = _quadraticLerp(a, b, c, t);
+    Offset p1 = _quadraticLerp(b, c, d, t);
+    return _lerp(p0, p1, t);
+  }
 }

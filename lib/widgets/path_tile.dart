@@ -1,6 +1,5 @@
 import 'package:fitted_text_field_container/fitted_text_field_container.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path.dart';
 
 class PathTile extends StatefulWidget {
@@ -9,7 +8,7 @@ class PathTile extends StatefulWidget {
   final Key key;
   final VoidCallback tapCallback;
 
-  PathTile(this.path, this.key, {this.isSelected = false, this.tapCallback});
+  PathTile(this.path, {this.isSelected = false, this.tapCallback, this.key});
 
   @override
   _PathTileState createState() => _PathTileState();
@@ -18,7 +17,8 @@ class PathTile extends StatefulWidget {
 class _PathTileState extends State<PathTile> {
   Widget buildTile() {
     return ListTile(
-      key: widget.key,
+      selected: widget.isSelected,
+      selectedTileColor: Colors.grey[800],
       leading: Padding(
         padding: const EdgeInsets.only(top: 8, bottom: 8),
         child: FittedTextFieldContainer(
@@ -65,77 +65,6 @@ class _PathTileState extends State<PathTile> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.isSelected) {
-      return Column(
-        children: [
-          buildTile(),
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              SizedBox(width: 25),
-              Icon(Icons.subdirectory_arrow_right),
-              SizedBox(width: 4),
-              Container(
-                width: 100,
-                height: 30,
-                child: TextField(
-                  onSubmitted: (val) {
-                    // updateValue(updateCallback, val);
-                    // unfocus(context);
-                  },
-                  // controller: controller,
-                  cursorColor: Colors.white,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
-                  ],
-                  style: TextStyle(fontSize: 12),
-                  decoration: InputDecoration(
-                    contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
-                    labelText: 'Max Vel',
-                    filled: true,
-                    border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey)),
-                    focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey)),
-                    labelStyle: TextStyle(color: Colors.grey),
-                  ),
-                ),
-              ),
-              SizedBox(width: 8),
-              Container(
-                width: 100,
-                height: 30,
-                child: TextField(
-                  onSubmitted: (val) {
-                    // updateValue(updateCallback, val);
-                    // unfocus(context);
-                  },
-                  // controller: controller,
-                  cursorColor: Colors.white,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
-                  ],
-                  style: TextStyle(fontSize: 12),
-                  decoration: InputDecoration(
-                    contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
-                    labelText: 'Max Accel',
-                    filled: true,
-                    border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey)),
-                    focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey)),
-                    labelStyle: TextStyle(color: Colors.grey),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-        ],
-      );
-    } else {
-      return buildTile();
-    }
+    return buildTile();
   }
 }

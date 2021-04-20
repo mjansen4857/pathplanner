@@ -4,16 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path.dart';
 
-typedef void ValueUpdateCallback(double val);
-
 // ignore: must_be_immutable
 class WaypointCard extends StatelessWidget {
   final Waypoint waypoint;
   final String label;
-  final ValueUpdateCallback onXPosUpdate;
-  final ValueUpdateCallback onYPosUpdate;
-  final ValueUpdateCallback onHeadingUpdate;
-  final ValueUpdateCallback onHolonomicUpdate;
+  final ValueChanged onXPosUpdate;
+  final ValueChanged onYPosUpdate;
+  final ValueChanged onHeadingUpdate;
+  final ValueChanged onHolonomicUpdate;
+  final ValueChanged onVelOverrideUpdate;
+  final ValueChanged onReversalUpdate;
 
   TextEditingController xPosController;
   TextEditingController yPosController;
@@ -26,7 +26,9 @@ class WaypointCard extends StatelessWidget {
       this.onXPosUpdate,
       this.onYPosUpdate,
       this.onHeadingUpdate,
-      this.onHolonomicUpdate}) {
+      this.onHolonomicUpdate,
+      this.onVelOverrideUpdate,
+      this.onReversalUpdate}) {
     if (waypoint != null) {
       xPosController =
           TextEditingController(text: waypoint.getXPos().toStringAsFixed(2));
@@ -40,18 +42,22 @@ class WaypointCard extends StatelessWidget {
           text: (waypoint.getHeadingRadians() * 180 / pi).toStringAsFixed(2));
       headingController.selection = TextSelection.fromPosition(
           TextPosition(offset: headingController.text.length));
-      holonomicController = TextEditingController(
-          text: waypoint.holonomicAngle.toStringAsFixed(2));
-      holonomicController.selection = TextSelection.fromPosition(
-          TextPosition(offset: holonomicController.text.length));
-      if (waypoint.velOverride != null) {
+      if (waypoint.holonomicAngle != null) {
         holonomicController = TextEditingController(
-            text: waypoint.velOverride.toStringAsFixed(2));
+            text: waypoint.holonomicAngle.toStringAsFixed(2));
       } else {
         holonomicController = TextEditingController();
       }
       holonomicController.selection = TextSelection.fromPosition(
           TextPosition(offset: holonomicController.text.length));
+      if (waypoint.velOverride != null) {
+        velOverrideController = TextEditingController(
+            text: waypoint.velOverride.toStringAsFixed(2));
+      } else {
+        velOverrideController = TextEditingController();
+      }
+      velOverrideController.selection = TextSelection.fromPosition(
+          TextPosition(offset: velOverrideController.text.length));
     }
   }
 
@@ -75,8 +81,14 @@ class WaypointCard extends StatelessWidget {
                 buildPositionRow(context),
                 SizedBox(height: 12),
                 buildAngleRow(context),
-                SizedBox(height: 12),
-                buildVelReversalRow(context),
+                Visibility(
+                  child: SizedBox(height: 12),
+                  visible: !waypoint.isStartPoint(),
+                ),
+                Visibility(
+                  child: buildVelReversalRow(context),
+                  visible: !waypoint.isStartPoint(),
+                ),
                 SizedBox(height: 5),
               ],
             ),
@@ -86,11 +98,8 @@ class WaypointCard extends StatelessWidget {
     );
   }
 
-  Widget buildTextFeild(
-      BuildContext context,
-      ValueUpdateCallback updateCallback,
-      TextEditingController controller,
-      String label,
+  Widget buildTextFeild(BuildContext context, ValueChanged updateCallback,
+      TextEditingController controller, String label,
       {bool enabled = true}) {
     return Container(
       width: 100,
@@ -129,7 +138,11 @@ class WaypointCard extends StatelessWidget {
           Checkbox(
             value: waypoint.isReversal,
             activeColor: Colors.indigo,
-            onChanged: (val) {},
+            onChanged: (val) {
+              if (onReversalUpdate != null) {
+                onReversalUpdate.call(val);
+              }
+            },
           ),
           Text('Reversal'),
         ],
@@ -142,7 +155,8 @@ class WaypointCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
       children: [
-        buildTextFeild(context, null, velOverrideController, 'Vel Override'),
+        buildTextFeild(context, onVelOverrideUpdate, velOverrideController,
+            'Vel Override'),
         SizedBox(width: 8),
         reversal,
         SizedBox(width: 14),
@@ -187,7 +201,7 @@ class WaypointCard extends StatelessWidget {
     }
   }
 
-  void updateValue(ValueUpdateCallback callback, String val) {
+  void updateValue(ValueChanged callback, String val) {
     if (callback != null) {
       var parsed = double.tryParse(val);
       callback.call(parsed);

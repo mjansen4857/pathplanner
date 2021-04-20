@@ -2,8 +2,9 @@ import 'dart:math';
 
 class RobotPath {
   List<Waypoint> waypoints;
+  String name;
 
-  RobotPath(this.waypoints);
+  RobotPath(this.waypoints, this.name);
 
   String getWaypointLabel(Waypoint waypoint) {
     if (waypoint == null) return null;
@@ -19,6 +20,8 @@ class Waypoint {
   Point prevControl;
   Point nextControl;
   double holonomicAngle;
+  bool isReversal;
+  double velOverride;
 
   bool _isAnchorDragging = false;
   bool _isNextControlDragging = false;
@@ -28,7 +31,13 @@ class Waypoint {
       {this.anchorPoint,
       this.prevControl,
       this.nextControl,
-      this.holonomicAngle = 0});
+      this.holonomicAngle = 0,
+      this.isReversal = false,
+      this.velOverride}) {
+    if (isReversal) {
+      nextControl = prevControl;
+    }
+  }
 
   void move(double dx, double dy) {
     anchorPoint = Point(anchorPoint.x + dx, anchorPoint.y + dy);
@@ -107,10 +116,18 @@ class Waypoint {
       move(dx, dy);
     } else if (_isNextControlDragging) {
       nextControl = Point(nextControl.x + dx, nextControl.y + dy);
-      updatePrevControlFromNext();
+      if (isReversal) {
+        prevControl = nextControl;
+      } else {
+        updatePrevControlFromNext();
+      }
     } else if (_isPrevControlDragging) {
       prevControl = Point(prevControl.x + dx, prevControl.y + dy);
-      updateNextControlFromPrev();
+      if (isReversal) {
+        nextControl = prevControl;
+      } else {
+        updateNextControlFromPrev();
+      }
     }
   }
 
@@ -146,14 +163,22 @@ class Waypoint {
       var a = cos(theta) * h;
 
       nextControl = anchorPoint + Point(a, o);
-      updatePrevControlFromNext();
+      if (isReversal) {
+        prevControl = nextControl;
+      } else {
+        updatePrevControlFromNext();
+      }
     } else if (prevControl != null) {
       var h = (anchorPoint - prevControl).magnitude;
       var o = sin(theta) * h;
       var a = cos(theta) * h;
 
       prevControl = anchorPoint - Point(a, o);
-      updateNextControlFromPrev();
+      if (isReversal) {
+        nextControl = prevControl;
+      } else {
+        updateNextControlFromPrev();
+      }
     }
   }
 

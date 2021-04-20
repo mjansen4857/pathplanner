@@ -20,103 +20,112 @@ class _PathEditorState extends State<PathEditor> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: GestureDetector(
-        onTapDown: (details) {
-          FocusScopeNode currentScope = FocusScope.of(context);
-          if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-            FocusManager.instance.primaryFocus.unfocus();
-          }
-          for (Waypoint w in widget.path.waypoints.reversed) {
-            if (w.isPointInAnchor(
-                    xPixelsToMeters(details.localPosition.dx),
-                    yPixelsToMeters(details.localPosition.dy),
-                    pixelsToMeters(8)) ||
-                w.isPointInNextControl(
-                    xPixelsToMeters(details.localPosition.dx),
-                    yPixelsToMeters(details.localPosition.dy),
-                    pixelsToMeters(6)) ||
-                w.isPointInPrevControl(
-                    xPixelsToMeters(details.localPosition.dx),
-                    yPixelsToMeters(details.localPosition.dy),
-                    pixelsToMeters(6))) {
+    return Stack(
+      children: [
+        Center(
+          child: GestureDetector(
+            onTapDown: (details) {
+              FocusScopeNode currentScope = FocusScope.of(context);
+              if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+                FocusManager.instance.primaryFocus.unfocus();
+              }
+              for (Waypoint w in widget.path.waypoints.reversed) {
+                if (w.isPointInAnchor(
+                        xPixelsToMeters(details.localPosition.dx),
+                        yPixelsToMeters(details.localPosition.dy),
+                        pixelsToMeters(8)) ||
+                    w.isPointInNextControl(
+                        xPixelsToMeters(details.localPosition.dx),
+                        yPixelsToMeters(details.localPosition.dy),
+                        pixelsToMeters(6)) ||
+                    w.isPointInPrevControl(
+                        xPixelsToMeters(details.localPosition.dx),
+                        yPixelsToMeters(details.localPosition.dy),
+                        pixelsToMeters(6))) {
+                  setState(() {
+                    _selectedPoint = w;
+                  });
+                  return;
+                }
+              }
               setState(() {
-                _selectedPoint = w;
+                _selectedPoint = null;
               });
-              return;
-            }
-          }
-          // setState(() {
-          //   _selectedPoint = null;
-          // });
-        },
-        onPanStart: (details) {
-          for (Waypoint w in widget.path.waypoints.reversed) {
-            if (w.startDragging(
-                xPixelsToMeters(details.localPosition.dx),
-                yPixelsToMeters(details.localPosition.dy),
-                pixelsToMeters(8),
-                pixelsToMeters(6))) {
-              _draggedPoint = w;
-              break;
-            }
-          }
-        },
-        onPanUpdate: (details) {
-          if (_draggedPoint != null) {
-            setState(() {
-              _draggedPoint.dragUpdate(pixelsToMeters(details.delta.dx),
-                  pixelsToMeters(-details.delta.dy));
-            });
-          }
-        },
-        onPanEnd: (details) {
-          if (_draggedPoint != null) {
-            _draggedPoint.stopDragging();
-            _draggedPoint = null;
-          }
-        },
-        child: Container(
-          child: Stack(
-            children: [
-              Image(image: AssetImage('images/field20.png')),
-              Positioned.fill(
-                child: Container(
-                  constraints: BoxConstraints(maxWidth: 1200, maxHeight: 600),
-                  child: CustomPaint(
-                    child: Align(
-                      alignment: FractionalOffset.topRight,
-                      child: WaypointCard(
-                        _selectedPoint,
-                        label: widget.path.getWaypointLabel(_selectedPoint),
-                        onXPosUpdate: (newVal) {
-                          setState(() {
-                            _selectedPoint.move(
-                                newVal - _selectedPoint.anchorPoint.x, 0);
-                          });
-                        },
-                        onYPosUpdate: (newVal) {
-                          setState(() {
-                            _selectedPoint.move(
-                                0, newVal - _selectedPoint.anchorPoint.y);
-                          });
-                        },
-                        onHeadingUpdate: (newVal) {
-                          setState(() {
-                            _selectedPoint.setHeading(newVal);
-                          });
-                        },
+            },
+            onPanStart: (details) {
+              for (Waypoint w in widget.path.waypoints.reversed) {
+                if (w.startDragging(
+                    xPixelsToMeters(details.localPosition.dx),
+                    yPixelsToMeters(details.localPosition.dy),
+                    pixelsToMeters(8),
+                    pixelsToMeters(6))) {
+                  _draggedPoint = w;
+                  break;
+                }
+              }
+            },
+            onPanUpdate: (details) {
+              if (_draggedPoint != null) {
+                setState(() {
+                  _draggedPoint.dragUpdate(pixelsToMeters(details.delta.dx),
+                      pixelsToMeters(-details.delta.dy));
+                });
+              }
+            },
+            onPanEnd: (details) {
+              if (_draggedPoint != null) {
+                _draggedPoint.stopDragging();
+                _draggedPoint = null;
+              }
+            },
+            child: Container(
+              child: Stack(
+                children: [
+                  Image(image: AssetImage('images/field20.png')),
+                  Positioned.fill(
+                    child: Container(
+                      constraints:
+                          BoxConstraints(maxWidth: 1200, maxHeight: 600),
+                      child: CustomPaint(
+                        painter: PathPainter(widget.path,
+                            selectedWaypoint: _selectedPoint),
                       ),
                     ),
-                    painter: PathPainter(widget.path,
-                        selectedWaypoint: _selectedPoint),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
-      ),
+        Align(
+          alignment: FractionalOffset.topRight,
+          child: WaypointCard(
+            _selectedPoint,
+            label: widget.path.getWaypointLabel(_selectedPoint),
+            onXPosUpdate: (newVal) {
+              if (newVal != null) {
+                setState(() {
+                  _selectedPoint.move(newVal - _selectedPoint.anchorPoint.x, 0);
+                });
+              }
+            },
+            onYPosUpdate: (newVal) {
+              if (newVal != null) {
+                setState(() {
+                  _selectedPoint.move(0, newVal - _selectedPoint.anchorPoint.y);
+                });
+              }
+            },
+            onHeadingUpdate: (newVal) {
+              if (newVal != null) {
+                setState(() {
+                  _selectedPoint.setHeading(newVal);
+                });
+              }
+            },
+          ),
+        ),
+      ],
     );
   }
 

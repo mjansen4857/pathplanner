@@ -222,15 +222,15 @@ class _HomePageState extends State<HomePage> {
                 nextControl: Point(2.0, 3.0),
               ),
               Waypoint(
-                prevControl: Point(2.0, 2.0),
-                anchorPoint: Point(3.0, 2.0),
-                nextControl: Point(4.0, 2.0),
+                prevControl: Point(3.0, 4.0),
+                anchorPoint: Point(3.0, 5.0),
+                isReversal: true,
               ),
               Waypoint(
                 prevControl: Point(4.0, 3.0),
                 anchorPoint: Point(5.0, 3.0),
               ),
-            ]),
+            ], 'test'),
           ),
         ),
       );

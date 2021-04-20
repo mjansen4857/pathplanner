@@ -19,6 +19,7 @@ class WaypointCard extends StatelessWidget {
   TextEditingController yPosController;
   TextEditingController headingController;
   TextEditingController holonomicController;
+  TextEditingController velOverrideController;
 
   WaypointCard(this.waypoint,
       {this.label,
@@ -41,6 +42,14 @@ class WaypointCard extends StatelessWidget {
           TextPosition(offset: headingController.text.length));
       holonomicController = TextEditingController(
           text: waypoint.holonomicAngle.toStringAsFixed(2));
+      holonomicController.selection = TextSelection.fromPosition(
+          TextPosition(offset: holonomicController.text.length));
+      if (waypoint.velOverride != null) {
+        holonomicController = TextEditingController(
+            text: waypoint.velOverride.toStringAsFixed(2));
+      } else {
+        holonomicController = TextEditingController();
+      }
       holonomicController.selection = TextSelection.fromPosition(
           TextPosition(offset: holonomicController.text.length));
     }
@@ -66,6 +75,9 @@ class WaypointCard extends StatelessWidget {
                 buildPositionRow(context),
                 SizedBox(height: 12),
                 buildAngleRow(context),
+                SizedBox(height: 12),
+                buildVelReversalRow(context),
+                SizedBox(height: 5),
               ],
             ),
           ),
@@ -109,6 +121,35 @@ class WaypointCard extends StatelessWidget {
     );
   }
 
+  Widget buildVelReversalRow(BuildContext context) {
+    Widget reversal;
+    if (!waypoint.isStartPoint() && !waypoint.isEndPoint()) {
+      reversal = Row(
+        children: [
+          Checkbox(
+            value: waypoint.isReversal,
+            activeColor: Colors.indigo,
+            onChanged: (val) {},
+          ),
+          Text('Reversal'),
+        ],
+      );
+    } else {
+      reversal = SizedBox(width: 90);
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        buildTextFeild(context, null, velOverrideController, 'Vel Override'),
+        SizedBox(width: 8),
+        reversal,
+        SizedBox(width: 14),
+      ],
+    );
+  }
+
   Widget buildAngleRow(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -149,9 +190,7 @@ class WaypointCard extends StatelessWidget {
   void updateValue(ValueUpdateCallback callback, String val) {
     if (callback != null) {
       var parsed = double.tryParse(val);
-      if (parsed != null) {
-        callback.call(parsed);
-      }
+      callback.call(parsed);
     }
   }
 }

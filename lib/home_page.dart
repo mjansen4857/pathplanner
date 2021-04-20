@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/robot_path.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
+import 'package:pathplanner/widgets/path_tile.dart';
 import 'package:pathplanner/widgets/window_button/window_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,19 +24,35 @@ class _HomePageState extends State<HomePage> {
   String _version = '2022.0.0';
   Directory _currentProject;
   SharedPreferences _prefs;
-  var _paths = [];
+  List<RobotPath> _paths = [];
+  RobotPath _currentPath;
 
   @override
   void initState() {
     super.initState();
-    var paths = [];
-    for (int i = 0; i < 10; i++) {
-      paths.add('Path ' + (i + 1).toString());
+    List<RobotPath> paths = [];
+    for (int i = 0; i < 3; i++) {
+      paths.add(RobotPath([
+        Waypoint(
+          anchorPoint: Point(1.0, 3.0),
+          nextControl: Point(2.0, 3.0),
+        ),
+        Waypoint(
+          prevControl: Point(3.0, 4.0),
+          anchorPoint: Point(3.0, 5.0),
+          isReversal: true,
+        ),
+        Waypoint(
+          prevControl: Point(4.0, 3.0),
+          anchorPoint: Point(5.0, 3.0),
+        ),
+      ], 'Path $i'));
     }
     SharedPreferences.getInstance().then((val) {
       _prefs = val;
       setState(() {
         _paths = paths;
+        _currentPath = _paths[0];
         String projectDir = _prefs.getString('currentProjectDir');
         if (projectDir != null) {
           _currentProject = Directory(projectDir);
@@ -129,51 +146,21 @@ class _HomePageState extends State<HomePage> {
                     if (oldIndex < newIndex) {
                       newIndex -= 1;
                     }
-                    final String path = _paths.removeAt(oldIndex);
+                    final RobotPath path = _paths.removeAt(oldIndex);
                     _paths.insert(newIndex, path);
                   });
                 },
                 children: [
                   for (int i = 0; i < _paths.length; i++)
-                    ListTile(
-                      key: Key('$i'),
-                      leading: Padding(
-                        padding: const EdgeInsets.only(top: 8, bottom: 8),
-                        child: FittedTextFieldContainer(
-                          child: TextField(
-                            cursorColor: Colors.white,
-                            onSubmitted: (String text) {
-                              FocusScopeNode currentScope =
-                                  FocusScope.of(context);
-                              if (!currentScope.hasPrimaryFocus &&
-                                  currentScope.hasFocus) {
-                                FocusManager.instance.primaryFocus.unfocus();
-                              }
-                              setState(() {
-                                _paths[i] = text;
-                              });
-                            },
-                            controller: TextEditingController(text: _paths[i]),
-                            decoration: InputDecoration(
-                              border: InputBorder.none,
-                              focusedBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: Colors.transparent,
-                                ),
-                              ),
-                              // errorBorder: InputBorder.none,
-                              // disabledBorder: InputBorder.none,
-                              contentPadding: EdgeInsets.all(8),
-                            ),
-                          ),
-                        ),
-                      ),
-                      onTap: () {},
+                    PathTile(
+                      _paths[i],
+                      Key('$i'),
+                      isSelected: _paths[i] == _currentPath,
+                      tapCallback: () {
+                        setState(() {
+                          _currentPath = _paths[i];
+                        });
+                      },
                     ),
                 ],
               ),
@@ -215,23 +202,7 @@ class _HomePageState extends State<HomePage> {
       return Center(
         child: Container(
           // color: Colors.grey,
-          child: PathEditor(
-            RobotPath([
-              Waypoint(
-                anchorPoint: Point(1.0, 3.0),
-                nextControl: Point(2.0, 3.0),
-              ),
-              Waypoint(
-                prevControl: Point(3.0, 4.0),
-                anchorPoint: Point(3.0, 5.0),
-                isReversal: true,
-              ),
-              Waypoint(
-                prevControl: Point(4.0, 3.0),
-                anchorPoint: Point(5.0, 3.0),
-              ),
-            ], 'test'),
-          ),
+          child: PathEditor(_currentPath),
         ),
       );
     } else {

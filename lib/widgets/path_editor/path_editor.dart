@@ -6,7 +6,9 @@ import 'package:pathplanner/robot_path.dart';
 import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
 
 class PathEditor extends StatefulWidget {
-  RobotPath path;
+  final RobotPath path;
+  Waypoint _draggedPoint;
+  Waypoint _selectedPoint;
 
   PathEditor(this.path);
 
@@ -15,9 +17,6 @@ class PathEditor extends StatefulWidget {
 }
 
 class _PathEditorState extends State<PathEditor> {
-  Waypoint _draggedPoint;
-  Waypoint _selectedPoint;
-
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -43,13 +42,13 @@ class _PathEditorState extends State<PathEditor> {
                         yPixelsToMeters(details.localPosition.dy),
                         pixelsToMeters(6))) {
                   setState(() {
-                    _selectedPoint = w;
+                    widget._selectedPoint = w;
                   });
                   return;
                 }
               }
               setState(() {
-                _selectedPoint = null;
+                widget._selectedPoint = null;
               });
             },
             onPanStart: (details) {
@@ -59,23 +58,24 @@ class _PathEditorState extends State<PathEditor> {
                     yPixelsToMeters(details.localPosition.dy),
                     pixelsToMeters(8),
                     pixelsToMeters(6))) {
-                  _draggedPoint = w;
+                  widget._draggedPoint = w;
                   break;
                 }
               }
             },
             onPanUpdate: (details) {
-              if (_draggedPoint != null) {
+              if (widget._draggedPoint != null) {
                 setState(() {
-                  _draggedPoint.dragUpdate(pixelsToMeters(details.delta.dx),
+                  widget._draggedPoint.dragUpdate(
+                      pixelsToMeters(details.delta.dx),
                       pixelsToMeters(-details.delta.dy));
                 });
               }
             },
             onPanEnd: (details) {
-              if (_draggedPoint != null) {
-                _draggedPoint.stopDragging();
-                _draggedPoint = null;
+              if (widget._draggedPoint != null) {
+                widget._draggedPoint.stopDragging();
+                widget._draggedPoint = null;
               }
             },
             child: Container(
@@ -88,7 +88,7 @@ class _PathEditorState extends State<PathEditor> {
                           BoxConstraints(maxWidth: 1200, maxHeight: 600),
                       child: CustomPaint(
                         painter: PathPainter(widget.path,
-                            selectedWaypoint: _selectedPoint),
+                            selectedWaypoint: widget._selectedPoint),
                       ),
                     ),
                   ),
@@ -100,26 +100,28 @@ class _PathEditorState extends State<PathEditor> {
         Align(
           alignment: FractionalOffset.topRight,
           child: WaypointCard(
-            _selectedPoint,
-            label: widget.path.getWaypointLabel(_selectedPoint),
+            widget._selectedPoint,
+            label: widget.path.getWaypointLabel(widget._selectedPoint),
             onXPosUpdate: (newVal) {
               if (newVal != null) {
                 setState(() {
-                  _selectedPoint.move(newVal - _selectedPoint.anchorPoint.x, 0);
+                  widget._selectedPoint
+                      .move(newVal - widget._selectedPoint.anchorPoint.x, 0);
                 });
               }
             },
             onYPosUpdate: (newVal) {
               if (newVal != null) {
                 setState(() {
-                  _selectedPoint.move(0, newVal - _selectedPoint.anchorPoint.y);
+                  widget._selectedPoint
+                      .move(0, newVal - widget._selectedPoint.anchorPoint.y);
                 });
               }
             },
             onHeadingUpdate: (newVal) {
               if (newVal != null) {
                 setState(() {
-                  _selectedPoint.setHeading(newVal);
+                  widget._selectedPoint.setHeading(newVal);
                 });
               }
             },

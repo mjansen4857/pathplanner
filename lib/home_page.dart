@@ -175,7 +175,25 @@ class _HomePageState extends State<HomePage> {
                       ListTile(
                         leading: Icon(Icons.add),
                         title: Text('Add Path'),
-                        onTap: () {},
+                        onTap: () {
+                          setState(() {
+                            _paths.add(RobotPath([
+                              Waypoint(
+                                anchorPoint: Point(1.0, 3.0),
+                                nextControl: Point(2.0, 3.0),
+                              ),
+                              Waypoint(
+                                prevControl: Point(3.0, 4.0),
+                                anchorPoint: Point(3.0, 5.0),
+                                isReversal: true,
+                              ),
+                              Waypoint(
+                                prevControl: Point(4.0, 3.0),
+                                anchorPoint: Point(5.0, 3.0),
+                              ),
+                            ], 'New Path'));
+                          });
+                        },
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),

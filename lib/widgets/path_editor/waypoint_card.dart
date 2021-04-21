@@ -8,6 +8,7 @@ import 'package:pathplanner/robot_path.dart';
 class WaypointCard extends StatelessWidget {
   final Waypoint waypoint;
   final String label;
+  final bool holonomicEnabled;
   final ValueChanged onXPosUpdate;
   final ValueChanged onYPosUpdate;
   final ValueChanged onHeadingUpdate;
@@ -23,6 +24,7 @@ class WaypointCard extends StatelessWidget {
 
   WaypointCard(this.waypoint,
       {this.label,
+      this.holonomicEnabled,
       this.onXPosUpdate,
       this.onYPosUpdate,
       this.onHeadingUpdate,
@@ -42,7 +44,7 @@ class WaypointCard extends StatelessWidget {
           text: (waypoint.getHeadingRadians() * 180 / pi).toStringAsFixed(2));
       headingController.selection = TextSelection.fromPosition(
           TextPosition(offset: headingController.text.length));
-      if (waypoint.holonomicAngle != null) {
+      if (holonomicEnabled) {
         holonomicController = TextEditingController(
             text: waypoint.holonomicAngle.toStringAsFixed(2));
       } else {
@@ -50,7 +52,7 @@ class WaypointCard extends StatelessWidget {
       }
       holonomicController.selection = TextSelection.fromPosition(
           TextPosition(offset: holonomicController.text.length));
-      if (waypoint.velOverride != null) {
+      if (waypoint.velOverride != null && !waypoint.isReversal) {
         velOverrideController = TextEditingController(
             text: waypoint.velOverride.toStringAsFixed(2));
       } else {
@@ -155,8 +157,9 @@ class WaypointCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
       children: [
-        buildTextFeild(context, onVelOverrideUpdate, velOverrideController,
-            'Vel Override'),
+        buildTextFeild(
+            context, onVelOverrideUpdate, velOverrideController, 'Vel Override',
+            enabled: !waypoint.isReversal),
         SizedBox(width: 8),
         reversal,
         SizedBox(width: 14),
@@ -175,7 +178,7 @@ class WaypointCard extends StatelessWidget {
         ),
         buildTextFeild(
             context, onHolonomicUpdate, holonomicController, 'Rotation',
-            enabled: false),
+            enabled: holonomicEnabled),
       ],
     );
   }

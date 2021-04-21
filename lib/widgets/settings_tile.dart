@@ -4,7 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 // ignore: must_be_immutable
 class SettingsTile extends StatefulWidget {
-  SettingsTile();
+  final VoidCallback onSettingsChanged;
+
+  SettingsTile({this.onSettingsChanged});
 
   @override
   _SettingsTileState createState() => _SettingsTileState();
@@ -113,10 +115,16 @@ class _SettingsTileState extends State<SettingsTile>
           if (value != null && _prefs != null) {
             _prefs.setDouble('robotWidth', value);
           }
+          if (widget.onSettingsChanged != null) {
+            widget.onSettingsChanged.call();
+          }
         }, _robotWidthController),
         buildTextField(context, 'Robot Length', (value) {
           if (value != null && _prefs != null) {
             _prefs.setDouble('robotLength', value);
+          }
+          if (widget.onSettingsChanged != null) {
+            widget.onSettingsChanged.call();
           }
         }, _robotLengthController),
         SwitchListTile(
@@ -128,6 +136,9 @@ class _SettingsTileState extends State<SettingsTile>
             setState(() {
               _holonomic = val;
             });
+            if (widget.onSettingsChanged != null) {
+              widget.onSettingsChanged.call();
+            }
           },
           title: Padding(
             padding: const EdgeInsets.only(left: 2),

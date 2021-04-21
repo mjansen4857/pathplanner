@@ -31,7 +31,7 @@ class Waypoint {
       {this.anchorPoint,
       this.prevControl,
       this.nextControl,
-      this.holonomicAngle,
+      this.holonomicAngle = 0,
       this.isReversal = false,
       this.velOverride}) {
     if (isReversal) {

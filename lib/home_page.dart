@@ -26,6 +26,9 @@ class _HomePageState extends State<HomePage> {
   SharedPreferences _prefs;
   List<RobotPath> _paths = [];
   RobotPath _currentPath;
+  double _robotWidth = 0.75;
+  double _robotLength = 1.0;
+  bool _holonomicMode = false;
 
   @override
   void initState() {
@@ -60,6 +63,9 @@ class _HomePageState extends State<HomePage> {
         if (projectDir != null) {
           _currentProject = Directory(projectDir);
         }
+        _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
+        _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
+        _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
       });
     });
   }
@@ -200,7 +206,18 @@ class _HomePageState extends State<HomePage> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
-                        child: SettingsTile(),
+                        child: SettingsTile(
+                          onSettingsChanged: () {
+                            setState(() {
+                              _robotWidth =
+                                  _prefs.getDouble('robotWidth') ?? 0.75;
+                              _robotLength =
+                                  _prefs.getDouble('robotLength') ?? 1.0;
+                              _holonomicMode =
+                                  _prefs.getBool('holonomicMode') ?? false;
+                            });
+                          },
+                        ),
                       ),
                     ],
                   ),
@@ -219,7 +236,8 @@ class _HomePageState extends State<HomePage> {
       return Center(
         child: Container(
           // color: Colors.grey,
-          child: PathEditor(_currentPath),
+          child: PathEditor(
+              _currentPath, _robotWidth, _robotLength, _holonomicMode),
         ),
       );
     } else {

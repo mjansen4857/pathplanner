@@ -9,8 +9,11 @@ class PathEditor extends StatefulWidget {
   final RobotPath path;
   Waypoint _draggedPoint;
   Waypoint _selectedPoint;
+  double robotWidth;
+  double robotLength;
+  bool holonomicMode;
 
-  PathEditor(this.path);
+  PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode);
 
   @override
   _PathEditorState createState() => _PathEditorState();
@@ -87,7 +90,10 @@ class _PathEditorState extends State<PathEditor> {
                       constraints:
                           BoxConstraints(maxWidth: 1200, maxHeight: 600),
                       child: CustomPaint(
-                        painter: PathPainter(widget.path,
+                        painter: PathPainter(
+                            widget.path,
+                            Size(widget.robotWidth, widget.robotLength),
+                            widget.holonomicMode,
                             selectedWaypoint: widget._selectedPoint),
                       ),
                     ),
@@ -102,6 +108,7 @@ class _PathEditorState extends State<PathEditor> {
           child: WaypointCard(
             widget._selectedPoint,
             label: widget.path.getWaypointLabel(widget._selectedPoint),
+            holonomicEnabled: widget.holonomicMode,
             onXPosUpdate: (newVal) {
               if (newVal != null) {
                 setState(() {
@@ -130,6 +137,13 @@ class _PathEditorState extends State<PathEditor> {
                 widget._selectedPoint.setReversal(newVal);
               });
             },
+            onHolonomicUpdate: (newVal) {
+              if (newVal != null) {
+                setState(() {
+                  widget._selectedPoint.holonomicAngle = newVal;
+                });
+              }
+            },
             onVelOverrideUpdate: (newVal) {
               setState(() {
                 widget._selectedPoint.velOverride = newVal;
@@ -156,19 +170,24 @@ class _PathEditorState extends State<PathEditor> {
 
 class PathPainter extends CustomPainter {
   var defaultSize = Size(1200, 600);
-  var robotSize = Size(0.75, 0.75);
+  var robotSize;
+  bool holonomicMode;
   static double scale = 1;
   RobotPath path;
   Waypoint selectedWaypoint;
 
-  PathPainter(this.path, {this.selectedWaypoint});
+  PathPainter(this.path, this.robotSize, this.holonomicMode,
+      {this.selectedWaypoint});
 
   @override
   void paint(Canvas canvas, Size size) {
     scale = size.width / defaultSize.width;
 
-    // paintCenterPath(canvas, scale);
-    paintDualPaths(canvas, scale);
+    if (holonomicMode) {
+      paintCenterPath(canvas, scale);
+    } else {
+      paintDualPaths(canvas, scale);
+    }
 
     for (Waypoint w in path.waypoints) {
       paintRobotOutline(canvas, scale, w);
@@ -262,7 +281,9 @@ class PathPainter extends CustomPainter {
     }
 
     Offset center = pointToPixelOffset(waypoint.anchorPoint, scale);
-    double angle = waypoint.getHeadingRadians();
+    double angle = (holonomicMode)
+        ? ((waypoint.holonomicAngle ?? 0) / 180 * pi)
+        : waypoint.getHeadingRadians();
     double halfWidth = metersToPixels(robotSize.width / 2, scale);
     double halfLength = metersToPixels(robotSize.height / 2, scale);
 

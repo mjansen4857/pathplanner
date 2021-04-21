@@ -26,6 +26,16 @@ class _PathEditorState extends State<PathEditor> {
       children: [
         Center(
           child: GestureDetector(
+            onDoubleTapDown: (details) {
+              setState(() {
+                widget.path.addWaypoint(Point(
+                    xPixelsToMeters(details.localPosition.dx),
+                    yPixelsToMeters(details.localPosition.dy)));
+                widget._selectedPoint =
+                    widget.path.waypoints[widget.path.waypoints.length - 1];
+              });
+            },
+            onDoubleTap: () {},
             onTapDown: (details) {
               FocusScopeNode currentScope = FocusScope.of(context);
               if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
@@ -67,7 +77,8 @@ class _PathEditorState extends State<PathEditor> {
                     pixelsToMeters(8),
                     pixelsToMeters(6),
                     pixelsToMeters(5),
-                    widget.robotLength)) {
+                    widget.robotLength,
+                    widget.holonomicMode)) {
                   widget._draggedPoint = w;
                   break;
                 }

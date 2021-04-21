@@ -13,6 +13,17 @@ class RobotPath {
 
     return 'Waypoint ' + waypoints.indexOf(waypoint).toString();
   }
+
+  void addWaypoint(Point anchorPos) {
+    waypoints[waypoints.length - 1].addNextControl();
+    waypoints.add(
+      Waypoint(
+        prevControl:
+            (waypoints[waypoints.length - 1].nextControl + anchorPos) * 0.5,
+        anchorPoint: anchorPos,
+      ),
+    );
+  }
 }
 
 class Waypoint {
@@ -110,8 +121,14 @@ class Waypoint {
     return pow(xPos - thingX, 2) + pow(yPos - thingY, 2) < pow(radius, 2);
   }
 
-  bool startDragging(double xPos, double yPos, double anchorRadius,
-      double controlRadius, double holonomicThingRadius, double robotLength) {
+  bool startDragging(
+      double xPos,
+      double yPos,
+      double anchorRadius,
+      double controlRadius,
+      double holonomicThingRadius,
+      double robotLength,
+      bool holonomicMode) {
     if (isPointInAnchor(xPos, yPos, anchorRadius)) {
       return _isAnchorDragging = true;
     } else if (isPointInNextControl(xPos, yPos, controlRadius)) {
@@ -119,7 +136,8 @@ class Waypoint {
     } else if (isPointInPrevControl(xPos, yPos, controlRadius)) {
       return _isPrevControlDragging = true;
     } else if (isPointInHolonomicThing(
-        xPos, yPos, holonomicThingRadius, robotLength)) {
+            xPos, yPos, holonomicThingRadius, robotLength) &&
+        holonomicMode) {
       return _isHolonomicThingDragging = true;
     }
     return false;
@@ -170,6 +188,16 @@ class Waypoint {
       var control = Point(dir.x * dst, dir.y * dst);
       nextControl = Point(anchorPoint.x + control.x, anchorPoint.y + control.y);
     }
+  }
+
+  void addNextControl() {
+    var dst = anchorPoint.distanceTo(prevControl);
+    var dir = (anchorPoint - prevControl);
+    var mag = dir.magnitude;
+    dir = Point(dir.x / mag, dir.y / mag);
+
+    var control = Point(dir.x * dst, dir.y * dst);
+    nextControl = Point(anchorPoint.x + control.x, anchorPoint.y + control.y);
   }
 
   void setReversal(bool reversal) {

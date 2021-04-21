@@ -156,11 +156,11 @@ class _PathEditorState extends State<PathEditor> {
   }
 
   double xPixelsToMeters(double pixels) {
-    return (pixels - 76) / 66.11 / PathPainter.scale;
+    return ((pixels / PathPainter.scale) - 76) / 66.11;
   }
 
   double yPixelsToMeters(double pixels) {
-    return (600 - pixels - 78) / 66.11 / PathPainter.scale;
+    return (600 - (pixels / PathPainter.scale) - 78) / 66.11;
   }
 
   double pixelsToMeters(double pixels) {

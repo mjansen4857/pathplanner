@@ -26,6 +26,7 @@ class PathPlanner extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         primarySwatch: Colors.indigo,
+        accentColor: Colors.white,
       ),
       home: HomePage(),
     );

@@ -254,7 +254,7 @@ class PathPainter extends CustomPainter {
   void paintRobotOutline(Canvas canvas, double scale, Waypoint waypoint) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Colors.grey[400]
+      ..color = Colors.grey[300]
       ..strokeWidth = 2;
 
     if (waypoint == selectedWaypoint) {

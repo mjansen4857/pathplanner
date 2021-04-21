@@ -3,12 +3,12 @@ import 'dart:math';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:file_selector/file_selector.dart';
-import 'package:fitted_text_field_container/fitted_text_field_container.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/robot_path.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 import 'package:pathplanner/widgets/path_tile.dart';
+import 'package:pathplanner/widgets/settings_tile.dart';
 import 'package:pathplanner/widgets/window_button/window_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -52,8 +52,8 @@ class _HomePageState extends State<HomePage> {
       ));
     }
     SharedPreferences.getInstance().then((val) {
-      _prefs = val;
       setState(() {
+        _prefs = val;
         _paths = paths;
         _currentPath = _paths[0];
         String projectDir = _prefs.getString('currentProjectDir');
@@ -200,11 +200,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
-                        child: ListTile(
-                          leading: Icon(Icons.settings),
-                          title: Text('Settings'),
-                          onTap: () {},
-                        ),
+                        child: SettingsTile(),
                       ),
                     ],
                   ),

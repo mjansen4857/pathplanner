@@ -26,6 +26,7 @@ class Waypoint {
   bool _isAnchorDragging = false;
   bool _isNextControlDragging = false;
   bool _isPrevControlDragging = false;
+  bool _isHolonomicThingDragging = false;
 
   Waypoint(
       {this.anchorPoint,
@@ -39,8 +40,10 @@ class Waypoint {
     }
   }
 
-  void move(double dx, double dy) {
-    anchorPoint = Point(anchorPoint.x + dx, anchorPoint.y + dy);
+  void move(double x, double y) {
+    double dx = x - anchorPoint.x;
+    double dy = y - anchorPoint.y;
+    anchorPoint = Point(x, y);
     if (nextControl != null) {
       nextControl = Point(nextControl.x + dx, nextControl.y + dy);
     }
@@ -99,35 +102,49 @@ class Waypoint {
     return false;
   }
 
-  bool startDragging(
-      double xPos, double yPos, double anchorRadius, double controlRadius) {
+  bool isPointInHolonomicThing(
+      double xPos, double yPos, double radius, double robotLength) {
+    double angle = -holonomicAngle / 180 * pi;
+    double thingX = anchorPoint.x + (robotLength / 2 * cos(angle));
+    double thingY = anchorPoint.y + (robotLength / 2 * sin(angle));
+    return pow(xPos - thingX, 2) + pow(yPos - thingY, 2) < pow(radius, 2);
+  }
+
+  bool startDragging(double xPos, double yPos, double anchorRadius,
+      double controlRadius, double holonomicThingRadius, double robotLength) {
     if (isPointInAnchor(xPos, yPos, anchorRadius)) {
       return _isAnchorDragging = true;
     } else if (isPointInNextControl(xPos, yPos, controlRadius)) {
       return _isNextControlDragging = true;
     } else if (isPointInPrevControl(xPos, yPos, controlRadius)) {
       return _isPrevControlDragging = true;
+    } else if (isPointInHolonomicThing(
+        xPos, yPos, holonomicThingRadius, robotLength)) {
+      return _isHolonomicThingDragging = true;
     }
     return false;
   }
 
-  void dragUpdate(double dx, double dy) {
+  void dragUpdate(double x, double y) {
     if (_isAnchorDragging) {
-      move(dx, dy);
+      move(x, y);
     } else if (_isNextControlDragging) {
-      nextControl = Point(nextControl.x + dx, nextControl.y + dy);
+      nextControl = Point(x, y);
       if (isReversal) {
         prevControl = nextControl;
       } else {
         updatePrevControlFromNext();
       }
     } else if (_isPrevControlDragging) {
-      prevControl = Point(prevControl.x + dx, prevControl.y + dy);
+      prevControl = Point(x, y);
       if (isReversal) {
         nextControl = prevControl;
       } else {
         updateNextControlFromPrev();
       }
+    } else if (_isHolonomicThingDragging) {
+      double rotation = -atan2(y - anchorPoint.y, x - anchorPoint.x);
+      holonomicAngle = (rotation * 180 / pi);
     }
   }
 
@@ -195,5 +212,6 @@ class Waypoint {
     _isPrevControlDragging = false;
     _isNextControlDragging = false;
     _isAnchorDragging = false;
+    _isHolonomicThingDragging = false;
   }
 }

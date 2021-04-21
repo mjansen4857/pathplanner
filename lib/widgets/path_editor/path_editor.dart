@@ -43,7 +43,12 @@ class _PathEditorState extends State<PathEditor> {
                     w.isPointInPrevControl(
                         xPixelsToMeters(details.localPosition.dx),
                         yPixelsToMeters(details.localPosition.dy),
-                        pixelsToMeters(6))) {
+                        pixelsToMeters(6)) ||
+                    w.isPointInHolonomicThing(
+                        xPixelsToMeters(details.localPosition.dx),
+                        yPixelsToMeters(details.localPosition.dy),
+                        pixelsToMeters(5),
+                        widget.robotLength)) {
                   setState(() {
                     widget._selectedPoint = w;
                   });
@@ -60,7 +65,9 @@ class _PathEditorState extends State<PathEditor> {
                     xPixelsToMeters(details.localPosition.dx),
                     yPixelsToMeters(details.localPosition.dy),
                     pixelsToMeters(8),
-                    pixelsToMeters(6))) {
+                    pixelsToMeters(6),
+                    pixelsToMeters(5),
+                    widget.robotLength)) {
                   widget._draggedPoint = w;
                   break;
                 }
@@ -70,8 +77,8 @@ class _PathEditorState extends State<PathEditor> {
               if (widget._draggedPoint != null) {
                 setState(() {
                   widget._draggedPoint.dragUpdate(
-                      pixelsToMeters(details.delta.dx),
-                      pixelsToMeters(-details.delta.dy));
+                      xPixelsToMeters(details.localPosition.dx),
+                      yPixelsToMeters(details.localPosition.dy));
                 });
               }
             },

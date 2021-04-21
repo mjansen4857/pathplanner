@@ -305,6 +305,12 @@ class PathPainter extends CustomPainter {
     canvas.drawLine(frontLeft, frontRight, paint);
     canvas.drawLine(frontRight, backRight, paint);
     canvas.drawLine(backRight, backLeft, paint);
+
+    if (holonomicMode) {
+      Offset frontMiddle = frontLeft + ((frontRight - frontLeft) * 0.5);
+      paint.style = PaintingStyle.fill;
+      canvas.drawCircle(frontMiddle, 5, paint);
+    }
   }
 
   void paintWaypoint(Canvas canvas, double scale, Waypoint waypoint) {

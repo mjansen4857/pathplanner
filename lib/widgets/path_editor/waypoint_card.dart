@@ -9,12 +9,14 @@ class WaypointCard extends StatelessWidget {
   final Waypoint waypoint;
   final String label;
   final bool holonomicEnabled;
+  final bool deleteEnabled;
   final ValueChanged onXPosUpdate;
   final ValueChanged onYPosUpdate;
   final ValueChanged onHeadingUpdate;
   final ValueChanged onHolonomicUpdate;
   final ValueChanged onVelOverrideUpdate;
   final ValueChanged onReversalUpdate;
+  final VoidCallback onDelete;
 
   TextEditingController xPosController;
   TextEditingController yPosController;
@@ -25,12 +27,14 @@ class WaypointCard extends StatelessWidget {
   WaypointCard(this.waypoint,
       {this.label,
       this.holonomicEnabled,
+      this.deleteEnabled,
       this.onXPosUpdate,
       this.onYPosUpdate,
       this.onHeadingUpdate,
       this.onHolonomicUpdate,
       this.onVelOverrideUpdate,
-      this.onReversalUpdate}) {
+      this.onReversalUpdate,
+      this.onDelete}) {
     if (waypoint != null) {
       xPosController =
           TextEditingController(text: waypoint.getXPos().toStringAsFixed(2));
@@ -78,7 +82,32 @@ class WaypointCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(label ?? 'Waypoint Label'),
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(
+                      width: 30,
+                    ),
+                    Text(label ?? 'Waypoint Label'),
+                    SizedBox(
+                      height: 30,
+                      width: 30,
+                      child: Visibility(
+                        visible: deleteEnabled,
+                        child: IconButton(
+                          icon: Icon(
+                            Icons.delete,
+                          ),
+                          onPressed: onDelete,
+                          splashRadius: 20,
+                          iconSize: 20,
+                          padding: EdgeInsets.all(0),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 SizedBox(height: 12),
                 buildPositionRow(context),
                 SizedBox(height: 12),

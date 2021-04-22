@@ -127,6 +127,22 @@ class _PathEditorState extends State<PathEditor> {
             widget._selectedPoint,
             label: widget.path.getWaypointLabel(widget._selectedPoint),
             holonomicEnabled: widget.holonomicMode,
+            deleteEnabled: widget.path.waypoints.length > 2,
+            onDelete: () {
+              setState(() {
+                widget.path.waypoints.remove(widget._selectedPoint);
+                if (widget._selectedPoint.isEndPoint()) {
+                  widget.path.waypoints[widget.path.waypoints.length - 1]
+                      .nextControl = null;
+                  widget.path.waypoints[widget.path.waypoints.length - 1]
+                      .isReversal = false;
+                } else if (widget._selectedPoint.isStartPoint()) {
+                  widget.path.waypoints[0].prevControl = null;
+                  widget.path.waypoints[0].isReversal = false;
+                }
+                widget._selectedPoint = null;
+              });
+            },
             onXPosUpdate: (newVal) {
               if (newVal != null) {
                 setState(() {

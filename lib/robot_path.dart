@@ -1,5 +1,8 @@
 import 'dart:math';
 
+import 'package:pathplanner/services/undo_redo.dart';
+import 'package:undo/undo.dart';
+
 class RobotPath {
   List<Waypoint> waypoints;
   String name;
@@ -23,6 +26,34 @@ class RobotPath {
         anchorPoint: anchorPos,
       ),
     );
+  }
+
+  static Waypoint cloneWaypoint(Waypoint w) {
+    Point anchor = Point(w.anchorPoint.x, w.anchorPoint.y);
+    Point prev =
+        w.prevControl == null ? null : Point(w.prevControl.x, w.prevControl.y);
+    Point next =
+        w.nextControl == null ? null : Point(w.nextControl.x, w.nextControl.y);
+
+    return Waypoint(
+      anchorPoint: anchor,
+      prevControl: prev,
+      nextControl: next,
+      holonomicAngle: w.holonomicAngle,
+      isReversal: w.isReversal,
+      velOverride: w.velOverride,
+      isLocked: w.isLocked,
+    );
+  }
+
+  static List<Waypoint> cloneWaypointList(List<Waypoint> waypoints) {
+    List<Waypoint> points = [];
+
+    for (Waypoint w in waypoints) {
+      points.add(cloneWaypoint(w));
+    }
+
+    return points;
   }
 }
 

@@ -2,8 +2,12 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path.dart';
+import 'package:pathplanner/services/undo_redo.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
+import 'package:undo/undo.dart';
 
 class PathEditor extends StatefulWidget {
   final RobotPath path;
@@ -12,6 +16,7 @@ class PathEditor extends StatefulWidget {
   double robotWidth;
   double robotLength;
   bool holonomicMode;
+  Waypoint _dragOldValue;
 
   PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode);
 
@@ -22,130 +27,184 @@ class PathEditor extends StatefulWidget {
 class _PathEditorState extends State<PathEditor> {
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Center(
-          child: GestureDetector(
-            onDoubleTapDown: (details) {
-              setState(() {
-                widget.path.addWaypoint(Point(
-                    xPixelsToMeters(details.localPosition.dx),
-                    yPixelsToMeters(details.localPosition.dy)));
-                widget._selectedPoint =
-                    widget.path.waypoints[widget.path.waypoints.length - 1];
-              });
-            },
-            onDoubleTap: () {},
-            onTapDown: (details) {
-              FocusScopeNode currentScope = FocusScope.of(context);
-              if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-                FocusManager.instance.primaryFocus.unfocus();
-              }
-              for (Waypoint w in widget.path.waypoints.reversed) {
-                if (w.isPointInAnchor(
-                        xPixelsToMeters(details.localPosition.dx),
-                        yPixelsToMeters(details.localPosition.dy),
-                        pixelsToMeters(8)) ||
-                    w.isPointInNextControl(
-                        xPixelsToMeters(details.localPosition.dx),
-                        yPixelsToMeters(details.localPosition.dy),
-                        pixelsToMeters(6)) ||
-                    w.isPointInPrevControl(
-                        xPixelsToMeters(details.localPosition.dx),
-                        yPixelsToMeters(details.localPosition.dy),
-                        pixelsToMeters(6)) ||
-                    w.isPointInHolonomicThing(
-                        xPixelsToMeters(details.localPosition.dx),
-                        yPixelsToMeters(details.localPosition.dy),
-                        pixelsToMeters(5),
-                        widget.robotLength)) {
+    return KeyBoardShortcuts(
+      keysToPress: {LogicalKeyboardKey.meta, LogicalKeyboardKey.keyZ},
+      onKeysPressed: () {
+        setState(() {
+          widget._selectedPoint = null;
+        });
+        UndoRedo.undo();
+      },
+      child: KeyBoardShortcuts(
+        keysToPress: {LogicalKeyboardKey.meta, LogicalKeyboardKey.keyY},
+        onKeysPressed: () {
+          setState(() {
+            widget._selectedPoint = null;
+          });
+          UndoRedo.redo();
+        },
+        child: Stack(
+          children: [
+            Center(
+              child: GestureDetector(
+                onDoubleTapDown: (details) {
+                  UndoRedo.addChange(Change(
+                    RobotPath.cloneWaypointList(widget.path.waypoints),
+                    () {
+                      setState(() {
+                        widget.path.addWaypoint(Point(
+                            xPixelsToMeters(details.localPosition.dx),
+                            yPixelsToMeters(details.localPosition.dy)));
+                      });
+                    },
+                    (oldValue) {
+                      setState(() {
+                        widget.path.waypoints =
+                            RobotPath.cloneWaypointList(oldValue);
+                      });
+                    },
+                  ));
                   setState(() {
-                    widget._selectedPoint = w;
+                    widget._selectedPoint =
+                        widget.path.waypoints[widget.path.waypoints.length - 1];
                   });
-                  return;
-                }
-              }
-              setState(() {
-                widget._selectedPoint = null;
-              });
-            },
-            onPanStart: (details) {
-              for (Waypoint w in widget.path.waypoints.reversed) {
-                if (w.startDragging(
-                    xPixelsToMeters(details.localPosition.dx),
-                    yPixelsToMeters(details.localPosition.dy),
-                    pixelsToMeters(8),
-                    pixelsToMeters(6),
-                    pixelsToMeters(5),
-                    widget.robotLength,
-                    widget.holonomicMode)) {
-                  widget._draggedPoint = w;
-                  break;
-                }
-              }
-            },
-            onPanUpdate: (details) {
-              if (widget._draggedPoint != null) {
-                setState(() {
-                  widget._draggedPoint.dragUpdate(
-                      xPixelsToMeters(details.localPosition.dx),
-                      yPixelsToMeters(details.localPosition.dy));
-                });
-              }
-            },
-            onPanEnd: (details) {
-              if (widget._draggedPoint != null) {
-                widget._draggedPoint.stopDragging();
-                widget._draggedPoint = null;
-              }
-            },
-            child: Container(
-              child: Stack(
-                children: [
-                  Image(image: AssetImage('images/field20.png')),
-                  Positioned.fill(
-                    child: Container(
-                      constraints:
-                          BoxConstraints(maxWidth: 1200, maxHeight: 600),
-                      child: CustomPaint(
-                        painter: PathPainter(
-                            widget.path,
-                            Size(widget.robotWidth, widget.robotLength),
-                            widget.holonomicMode,
-                            selectedWaypoint: widget._selectedPoint),
+                },
+                onDoubleTap: () {},
+                onTapDown: (details) {
+                  FocusScopeNode currentScope = FocusScope.of(context);
+                  if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+                    FocusManager.instance.primaryFocus.unfocus();
+                  }
+                  for (Waypoint w in widget.path.waypoints.reversed) {
+                    if (w.isPointInAnchor(
+                            xPixelsToMeters(details.localPosition.dx),
+                            yPixelsToMeters(details.localPosition.dy),
+                            pixelsToMeters(8)) ||
+                        w.isPointInNextControl(
+                            xPixelsToMeters(details.localPosition.dx),
+                            yPixelsToMeters(details.localPosition.dy),
+                            pixelsToMeters(6)) ||
+                        w.isPointInPrevControl(
+                            xPixelsToMeters(details.localPosition.dx),
+                            yPixelsToMeters(details.localPosition.dy),
+                            pixelsToMeters(6)) ||
+                        w.isPointInHolonomicThing(
+                            xPixelsToMeters(details.localPosition.dx),
+                            yPixelsToMeters(details.localPosition.dy),
+                            pixelsToMeters(5),
+                            widget.robotLength)) {
+                      setState(() {
+                        widget._selectedPoint = w;
+                      });
+                      return;
+                    }
+                  }
+                  setState(() {
+                    widget._selectedPoint = null;
+                  });
+                },
+                onPanStart: (details) {
+                  for (Waypoint w in widget.path.waypoints.reversed) {
+                    if (w.startDragging(
+                        xPixelsToMeters(details.localPosition.dx),
+                        yPixelsToMeters(details.localPosition.dy),
+                        pixelsToMeters(8),
+                        pixelsToMeters(6),
+                        pixelsToMeters(5),
+                        widget.robotLength,
+                        widget.holonomicMode)) {
+                      widget._draggedPoint = w;
+                      widget._dragOldValue = RobotPath.cloneWaypoint(w);
+                      break;
+                    }
+                  }
+                },
+                onPanUpdate: (details) {
+                  if (widget._draggedPoint != null) {
+                    setState(() {
+                      widget._draggedPoint.dragUpdate(
+                          xPixelsToMeters(details.localPosition.dx),
+                          yPixelsToMeters(details.localPosition.dy));
+                    });
+                  }
+                },
+                onPanEnd: (details) {
+                  if (widget._draggedPoint != null) {
+                    widget._draggedPoint.stopDragging();
+                    int index =
+                        widget.path.waypoints.indexOf(widget._draggedPoint);
+                    Waypoint dragEnd =
+                        RobotPath.cloneWaypoint(widget._draggedPoint);
+                    UndoRedo.addChange(Change(
+                      widget._dragOldValue,
+                      () {
+                        setState(() {
+                          if (widget.path.waypoints[index] !=
+                              widget._draggedPoint) {
+                            widget.path.waypoints[index] =
+                                RobotPath.cloneWaypoint(dragEnd);
+                          }
+                        });
+                      },
+                      (oldValue) {
+                        setState(() {
+                          widget.path.waypoints[index] =
+                              RobotPath.cloneWaypoint(oldValue);
+                        });
+                      },
+                    ));
+                    widget._draggedPoint = null;
+                  }
+                },
+                child: Container(
+                  child: Stack(
+                    children: [
+                      Image(image: AssetImage('images/field20.png')),
+                      Positioned.fill(
+                        child: Container(
+                          constraints:
+                              BoxConstraints(maxWidth: 1200, maxHeight: 600),
+                          child: CustomPaint(
+                            painter: PathPainter(
+                                widget.path,
+                                Size(widget.robotWidth, widget.robotLength),
+                                widget.holonomicMode,
+                                selectedWaypoint: widget._selectedPoint),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
+            Align(
+              alignment: FractionalOffset.topRight,
+              child: WaypointCard(
+                widget._selectedPoint,
+                label: widget.path.getWaypointLabel(widget._selectedPoint),
+                holonomicEnabled: widget.holonomicMode,
+                deleteEnabled: widget.path.waypoints.length > 2,
+                onDelete: () {
+                  setState(() {
+                    widget.path.waypoints.remove(widget._selectedPoint);
+                    if (widget._selectedPoint.isEndPoint()) {
+                      widget.path.waypoints[widget.path.waypoints.length - 1]
+                          .nextControl = null;
+                      widget.path.waypoints[widget.path.waypoints.length - 1]
+                          .isReversal = false;
+                    } else if (widget._selectedPoint.isStartPoint()) {
+                      widget.path.waypoints[0].prevControl = null;
+                      widget.path.waypoints[0].isReversal = false;
+                    }
+                    widget._selectedPoint = null;
+                  });
+                },
+              ),
+            ),
+          ],
         ),
-        Align(
-          alignment: FractionalOffset.topRight,
-          child: WaypointCard(
-            widget._selectedPoint,
-            label: widget.path.getWaypointLabel(widget._selectedPoint),
-            holonomicEnabled: widget.holonomicMode,
-            deleteEnabled: widget.path.waypoints.length > 2,
-            onDelete: () {
-              setState(() {
-                widget.path.waypoints.remove(widget._selectedPoint);
-                if (widget._selectedPoint.isEndPoint()) {
-                  widget.path.waypoints[widget.path.waypoints.length - 1]
-                      .nextControl = null;
-                  widget.path.waypoints[widget.path.waypoints.length - 1]
-                      .isReversal = false;
-                } else if (widget._selectedPoint.isStartPoint()) {
-                  widget.path.waypoints[0].prevControl = null;
-                  widget.path.waypoints[0].isReversal = false;
-                }
-                widget._selectedPoint = null;
-              });
-            },
-          ),
-        ),
-      ],
+      ),
     );
   }
 

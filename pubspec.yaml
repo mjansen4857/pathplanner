@@ -35,6 +35,9 @@ dependencies:
   file_selector_macos: ^0.0.3
   file_selector_windows: ^0.0.2
 #  file_selector_linux: ^0.0.2
+  undo: ^1.4.0
+  tuple: ^2.0.0
+  visibility_detector: ^0.2.0
 
 dev_dependencies:
   flutter_test:

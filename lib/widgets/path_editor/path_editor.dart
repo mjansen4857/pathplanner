@@ -197,17 +197,36 @@ class _PathEditorState extends State<PathEditor> {
                 holonomicEnabled: widget.holonomicMode,
                 deleteEnabled: widget.path.waypoints.length > 2,
                 onDelete: () {
+                  int delIndex =
+                      widget.path.waypoints.indexOf(widget._selectedPoint);
+                  UndoRedo.addChange(Change(
+                    RobotPath.cloneWaypointList(widget.path.waypoints),
+                    () {
+                      setState(() {
+                        Waypoint w = widget.path.waypoints.removeAt(delIndex);
+                        if (w.isEndPoint()) {
+                          widget
+                              .path
+                              .waypoints[widget.path.waypoints.length - 1]
+                              .nextControl = null;
+                          widget
+                              .path
+                              .waypoints[widget.path.waypoints.length - 1]
+                              .isReversal = false;
+                        } else if (w.isStartPoint()) {
+                          widget.path.waypoints[0].prevControl = null;
+                          widget.path.waypoints[0].isReversal = false;
+                        }
+                      });
+                    },
+                    (oldValue) {
+                      setState(() {
+                        widget.path.waypoints =
+                            RobotPath.cloneWaypointList(oldValue);
+                      });
+                    },
+                  ));
                   setState(() {
-                    widget.path.waypoints.remove(widget._selectedPoint);
-                    if (widget._selectedPoint.isEndPoint()) {
-                      widget.path.waypoints[widget.path.waypoints.length - 1]
-                          .nextControl = null;
-                      widget.path.waypoints[widget.path.waypoints.length - 1]
-                          .isReversal = false;
-                    } else if (widget._selectedPoint.isStartPoint()) {
-                      widget.path.waypoints[0].prevControl = null;
-                      widget.path.waypoints[0].isReversal = false;
-                    }
                     widget._selectedPoint = null;
                   });
                 },

@@ -125,6 +125,10 @@ class Waypoint {
     return heading;
   }
 
+  double getHeadingDegrees() {
+    return getHeadingRadians() * 180 / pi;
+  }
+
   bool isPointInAnchor(double xPos, double yPos, double radius) {
     return pow(xPos - anchorPoint.x, 2) + pow(yPos - anchorPoint.y, 2) <
         pow(radius, 2);

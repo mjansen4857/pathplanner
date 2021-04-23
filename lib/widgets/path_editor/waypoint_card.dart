@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path.dart';
+import 'package:pathplanner/services/undo_redo.dart';
+import 'package:undo/undo.dart';
 
 // ignore: must_be_immutable
 class WaypointCard extends StatefulWidget {
@@ -181,8 +183,21 @@ class _WaypointCardState extends State<WaypointCard> {
             value: widget.waypoint.isReversal,
             activeColor: Colors.indigo,
             onChanged: (val) {
+              Waypoint wRef = widget.waypoint;
+              UndoRedo.addChange(Change(
+                RobotPath.cloneWaypoint(wRef),
+                () {
+                  setState(() {
+                    wRef.setReversal(val);
+                  });
+                },
+                (oldVal) {
+                  setState(() {
+                    wRef.setReversal(oldVal.isReversal);
+                  });
+                },
+              ));
               setState(() {
-                widget.waypoint.setReversal(val);
                 if (val) {
                   widget.velOverrideController.text = '';
                 } else {
@@ -211,9 +226,20 @@ class _WaypointCardState extends State<WaypointCard> {
           'Vel Override',
           enabled: !widget.waypoint.isReversal,
           onSubmitted: (val) {
-            setState(() {
-              widget.waypoint.velOverride = val;
-            });
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(Change(
+              RobotPath.cloneWaypoint(wRef),
+              () {
+                setState(() {
+                  wRef.velOverride = val;
+                });
+              },
+              (oldVal) {
+                setState(() {
+                  wRef.velOverride = oldVal.velOverride;
+                });
+              },
+            ));
           },
         ),
         SizedBox(width: 8),
@@ -233,9 +259,20 @@ class _WaypointCardState extends State<WaypointCard> {
           widget.headingController,
           'Heading',
           onSubmitted: (val) {
-            setState(() {
-              widget.waypoint.setHeading(val);
-            });
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(Change(
+              RobotPath.cloneWaypoint(wRef),
+              () {
+                setState(() {
+                  wRef.setHeading(val);
+                });
+              },
+              (oldVal) {
+                setState(() {
+                  wRef.setHeading(oldVal.getHeadingDegrees());
+                });
+              },
+            ));
           },
         ),
         SizedBox(
@@ -247,9 +284,20 @@ class _WaypointCardState extends State<WaypointCard> {
           'Rotation',
           enabled: widget.holonomicEnabled,
           onSubmitted: (val) {
-            setState(() {
-              widget.waypoint.holonomicAngle = val;
-            });
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(Change(
+              RobotPath.cloneWaypoint(wRef),
+              () {
+                setState(() {
+                  wRef.holonomicAngle = val;
+                });
+              },
+              (oldVal) {
+                setState(() {
+                  wRef.holonomicAngle = oldVal.holonomicAngle;
+                });
+              },
+            ));
           },
         ),
       ],
@@ -266,9 +314,20 @@ class _WaypointCardState extends State<WaypointCard> {
           widget.xPosController,
           'X Position',
           onSubmitted: (val) {
-            setState(() {
-              widget.waypoint.move(val, widget.waypoint.anchorPoint.y);
-            });
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(Change(
+              RobotPath.cloneWaypoint(wRef),
+              () {
+                setState(() {
+                  wRef.move(val, wRef.anchorPoint.y);
+                });
+              },
+              (oldVal) {
+                setState(() {
+                  wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y);
+                });
+              },
+            ));
           },
         ),
         SizedBox(
@@ -279,9 +338,20 @@ class _WaypointCardState extends State<WaypointCard> {
           widget.yPosController,
           'Y Position',
           onSubmitted: (val) {
-            setState(() {
-              widget.waypoint.move(widget.waypoint.anchorPoint.x, val);
-            });
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(Change(
+              RobotPath.cloneWaypoint(wRef),
+              () {
+                setState(() {
+                  wRef.move(wRef.anchorPoint.x, val);
+                });
+              },
+              (oldVal) {
+                setState(() {
+                  wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y);
+                });
+              },
+            ));
           },
         ),
       ],

@@ -70,8 +70,8 @@ class _PathEditorState extends State<PathEditor> {
                     },
                     (oldValue) {
                       setState(() {
-                        widget.path.waypoints =
-                            RobotPath.cloneWaypointList(oldValue);
+                        widget.path.waypoints.removeLast();
+                        widget.path.waypoints.last.nextControl = null;
                       });
                     },
                   ));

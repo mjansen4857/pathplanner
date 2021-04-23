@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
@@ -28,7 +29,12 @@ class _PathEditorState extends State<PathEditor> {
   @override
   Widget build(BuildContext context) {
     return KeyBoardShortcuts(
-      keysToPress: {LogicalKeyboardKey.meta, LogicalKeyboardKey.keyZ},
+      keysToPress: {
+        (Platform.isMacOS)
+            ? LogicalKeyboardKey.meta
+            : LogicalKeyboardKey.control,
+        LogicalKeyboardKey.keyZ
+      },
       onKeysPressed: () {
         setState(() {
           widget._selectedPoint = null;
@@ -36,7 +42,12 @@ class _PathEditorState extends State<PathEditor> {
         UndoRedo.undo();
       },
       child: KeyBoardShortcuts(
-        keysToPress: {LogicalKeyboardKey.meta, LogicalKeyboardKey.keyY},
+        keysToPress: {
+          (Platform.isMacOS)
+              ? LogicalKeyboardKey.meta
+              : LogicalKeyboardKey.control,
+          LogicalKeyboardKey.keyY
+        },
         onKeysPressed: () {
           setState(() {
             widget._selectedPoint = null;

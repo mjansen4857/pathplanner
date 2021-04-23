@@ -5,17 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path.dart';
 
 // ignore: must_be_immutable
-class WaypointCard extends StatelessWidget {
+class WaypointCard extends StatefulWidget {
   final Waypoint waypoint;
   final String label;
   final bool holonomicEnabled;
   final bool deleteEnabled;
-  final ValueChanged onXPosUpdate;
-  final ValueChanged onYPosUpdate;
-  final ValueChanged onHeadingUpdate;
-  final ValueChanged onHolonomicUpdate;
-  final ValueChanged onVelOverrideUpdate;
-  final ValueChanged onReversalUpdate;
   final VoidCallback onDelete;
 
   TextEditingController xPosController;
@@ -25,16 +19,7 @@ class WaypointCard extends StatelessWidget {
   TextEditingController velOverrideController;
 
   WaypointCard(this.waypoint,
-      {this.label,
-      this.holonomicEnabled,
-      this.deleteEnabled,
-      this.onXPosUpdate,
-      this.onYPosUpdate,
-      this.onHeadingUpdate,
-      this.onHolonomicUpdate,
-      this.onVelOverrideUpdate,
-      this.onReversalUpdate,
-      this.onDelete}) {
+      {this.label, this.holonomicEnabled, this.deleteEnabled, this.onDelete}) {
     if (waypoint != null) {
       xPosController =
           TextEditingController(text: waypoint.getXPos().toStringAsFixed(2));
@@ -68,8 +53,13 @@ class WaypointCard extends StatelessWidget {
   }
 
   @override
+  _WaypointCardState createState() => _WaypointCardState();
+}
+
+class _WaypointCardState extends State<WaypointCard> {
+  @override
   Widget build(BuildContext context) {
-    if (waypoint == null) return Container();
+    if (widget.waypoint == null) return Container();
 
     return Padding(
       padding: EdgeInsets.all(8),
@@ -87,19 +77,40 @@ class WaypointCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
+                      height: 30,
                       width: 30,
+                      child: IconButton(
+                        tooltip: widget.waypoint.isLocked
+                            ? 'Unlock Waypoint'
+                            : 'Lock Waypoint',
+                        icon: Icon(
+                          widget.waypoint.isLocked
+                              ? Icons.lock
+                              : Icons.lock_open,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            widget.waypoint.isLocked =
+                                !widget.waypoint.isLocked;
+                          });
+                        },
+                        splashRadius: 20,
+                        iconSize: 20,
+                        padding: EdgeInsets.all(0),
+                      ),
                     ),
-                    Text(label ?? 'Waypoint Label'),
+                    Text(widget.label ?? 'Waypoint Label'),
                     SizedBox(
                       height: 30,
                       width: 30,
                       child: Visibility(
-                        visible: deleteEnabled,
+                        visible: widget.deleteEnabled,
                         child: IconButton(
+                          tooltip: 'Delete Waypoint',
                           icon: Icon(
                             Icons.delete,
                           ),
-                          onPressed: onDelete,
+                          onPressed: widget.onDelete,
                           splashRadius: 20,
                           iconSize: 20,
                           padding: EdgeInsets.all(0),
@@ -114,11 +125,11 @@ class WaypointCard extends StatelessWidget {
                 buildAngleRow(context),
                 Visibility(
                   child: SizedBox(height: 12),
-                  visible: !waypoint.isStartPoint(),
+                  visible: !widget.waypoint.isStartPoint(),
                 ),
                 Visibility(
                   child: buildVelReversalRow(context),
-                  visible: !waypoint.isStartPoint(),
+                  visible: !widget.waypoint.isStartPoint(),
                 ),
                 SizedBox(height: 5),
               ],
@@ -129,15 +140,15 @@ class WaypointCard extends StatelessWidget {
     );
   }
 
-  Widget buildTextFeild(BuildContext context, ValueChanged updateCallback,
-      TextEditingController controller, String label,
-      {bool enabled = true}) {
+  Widget buildTextFeild(
+      BuildContext context, TextEditingController controller, String label,
+      {bool enabled = true, ValueChanged onSubmitted}) {
     return Container(
       width: 100,
       height: 35,
       child: TextField(
         onSubmitted: (val) {
-          updateValue(updateCallback, val);
+          updateValue(onSubmitted, val);
           unfocus(context);
         },
         enabled: enabled,
@@ -163,16 +174,24 @@ class WaypointCard extends StatelessWidget {
 
   Widget buildVelReversalRow(BuildContext context) {
     Widget reversal;
-    if (!waypoint.isStartPoint() && !waypoint.isEndPoint()) {
+    if (!widget.waypoint.isStartPoint() && !widget.waypoint.isEndPoint()) {
       reversal = Row(
         children: [
           Checkbox(
-            value: waypoint.isReversal,
+            value: widget.waypoint.isReversal,
             activeColor: Colors.indigo,
             onChanged: (val) {
-              if (onReversalUpdate != null) {
-                onReversalUpdate.call(val);
-              }
+              setState(() {
+                widget.waypoint.setReversal(val);
+                if (val) {
+                  widget.velOverrideController.text = '';
+                } else {
+                  if (widget.waypoint.velOverride != null) {
+                    widget.velOverrideController.text =
+                        widget.waypoint.velOverride.toStringAsFixed(2);
+                  }
+                }
+              });
             },
           ),
           Text('Reversal'),
@@ -187,8 +206,16 @@ class WaypointCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.max,
       children: [
         buildTextFeild(
-            context, onVelOverrideUpdate, velOverrideController, 'Vel Override',
-            enabled: !waypoint.isReversal),
+          context,
+          widget.velOverrideController,
+          'Vel Override',
+          enabled: !widget.waypoint.isReversal,
+          onSubmitted: (val) {
+            setState(() {
+              widget.waypoint.velOverride = val;
+            });
+          },
+        ),
         SizedBox(width: 8),
         reversal,
         SizedBox(width: 14),
@@ -201,13 +228,30 @@ class WaypointCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
       children: [
-        buildTextFeild(context, onHeadingUpdate, headingController, 'Heading'),
+        buildTextFeild(
+          context,
+          widget.headingController,
+          'Heading',
+          onSubmitted: (val) {
+            setState(() {
+              widget.waypoint.setHeading(val);
+            });
+          },
+        ),
         SizedBox(
           width: 12,
         ),
         buildTextFeild(
-            context, onHolonomicUpdate, holonomicController, 'Rotation',
-            enabled: holonomicEnabled),
+          context,
+          widget.holonomicController,
+          'Rotation',
+          enabled: widget.holonomicEnabled,
+          onSubmitted: (val) {
+            setState(() {
+              widget.waypoint.holonomicAngle = val;
+            });
+          },
+        ),
       ],
     );
   }
@@ -217,11 +261,29 @@ class WaypointCard extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
       children: [
-        buildTextFeild(context, onXPosUpdate, xPosController, 'X Position'),
+        buildTextFeild(
+          context,
+          widget.xPosController,
+          'X Position',
+          onSubmitted: (val) {
+            setState(() {
+              widget.waypoint.move(val, widget.waypoint.anchorPoint.y);
+            });
+          },
+        ),
         SizedBox(
           width: 12,
         ),
-        buildTextFeild(context, onYPosUpdate, yPosController, 'Y Position'),
+        buildTextFeild(
+          context,
+          widget.yPosController,
+          'Y Position',
+          onSubmitted: (val) {
+            setState(() {
+              widget.waypoint.move(widget.waypoint.anchorPoint.x, val);
+            });
+          },
+        ),
       ],
     );
   }

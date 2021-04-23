@@ -143,46 +143,6 @@ class _PathEditorState extends State<PathEditor> {
                 widget._selectedPoint = null;
               });
             },
-            onXPosUpdate: (newVal) {
-              if (newVal != null) {
-                setState(() {
-                  widget._selectedPoint
-                      .move(newVal - widget._selectedPoint.anchorPoint.x, 0);
-                });
-              }
-            },
-            onYPosUpdate: (newVal) {
-              if (newVal != null) {
-                setState(() {
-                  widget._selectedPoint
-                      .move(0, newVal - widget._selectedPoint.anchorPoint.y);
-                });
-              }
-            },
-            onHeadingUpdate: (newVal) {
-              if (newVal != null) {
-                setState(() {
-                  widget._selectedPoint.setHeading(newVal);
-                });
-              }
-            },
-            onReversalUpdate: (newVal) {
-              setState(() {
-                widget._selectedPoint.setReversal(newVal);
-              });
-            },
-            onHolonomicUpdate: (newVal) {
-              if (newVal != null) {
-                setState(() {
-                  widget._selectedPoint.holonomicAngle = newVal;
-                });
-              }
-            },
-            onVelOverrideUpdate: (newVal) {
-              setState(() {
-                widget._selectedPoint.velOverride = newVal;
-              });
-            },
           ),
         ),
       ],

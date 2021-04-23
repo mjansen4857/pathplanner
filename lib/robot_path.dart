@@ -33,6 +33,7 @@ class Waypoint {
   double holonomicAngle;
   bool isReversal;
   double velOverride;
+  bool isLocked;
 
   bool _isAnchorDragging = false;
   bool _isNextControlDragging = false;
@@ -45,6 +46,7 @@ class Waypoint {
       this.nextControl,
       this.holonomicAngle = 0,
       this.isReversal = false,
+      this.isLocked = false,
       this.velOverride}) {
     if (isReversal) {
       nextControl = prevControl;
@@ -144,23 +146,43 @@ class Waypoint {
   }
 
   void dragUpdate(double x, double y) {
-    if (_isAnchorDragging) {
+    if (_isAnchorDragging && !isLocked) {
       move(x, y);
     } else if (_isNextControlDragging) {
-      nextControl = Point(x, y);
+      if (isLocked) {
+        Point lineEnd = nextControl + (nextControl - anchorPoint);
+        Point newPoint = _closestPointOnLine(anchorPoint, lineEnd, Point(x, y));
+        if (newPoint.x - anchorPoint.x != 0 ||
+            newPoint.y - anchorPoint.y != 0) {
+          nextControl = newPoint;
+        }
+      } else {
+        nextControl = Point(x, y);
+      }
+
       if (isReversal) {
         prevControl = nextControl;
       } else {
         updatePrevControlFromNext();
       }
     } else if (_isPrevControlDragging) {
-      prevControl = Point(x, y);
+      if (isLocked) {
+        Point lineEnd = prevControl + (prevControl - anchorPoint);
+        Point newPoint = _closestPointOnLine(anchorPoint, lineEnd, Point(x, y));
+        if (newPoint.x - anchorPoint.x != 0 ||
+            newPoint.y - anchorPoint.y != 0) {
+          prevControl = newPoint;
+        }
+      } else {
+        prevControl = Point(x, y);
+      }
+
       if (isReversal) {
         nextControl = prevControl;
       } else {
         updateNextControlFromPrev();
       }
-    } else if (_isHolonomicThingDragging) {
+    } else if (_isHolonomicThingDragging && !isLocked) {
       double rotation = -atan2(y - anchorPoint.y, x - anchorPoint.x);
       holonomicAngle = (rotation * 180 / pi);
     }
@@ -211,7 +233,7 @@ class Waypoint {
 
   void setHeading(double headingDegrees) {
     var theta = -headingDegrees * pi / 180;
-    if (nextControl != null) {
+    if (nextControl != null && !isReversal) {
       var h = (anchorPoint - nextControl).magnitude;
       var o = sin(theta) * h;
       var a = cos(theta) * h;
@@ -241,5 +263,27 @@ class Waypoint {
     _isNextControlDragging = false;
     _isAnchorDragging = false;
     _isHolonomicThingDragging = false;
+  }
+
+  Point _closestPointOnLine(Point lineStart, Point lineEnd, Point p) {
+    double dx = lineEnd.x - lineStart.x;
+    double dy = lineEnd.y - lineStart.y;
+
+    if (dx == 0 || dy == 0) {
+      return lineStart;
+    }
+
+    double t = ((p.x - lineStart.x) * dx + (p.y - lineStart.y) * dy) /
+        (dx * dx + dy * dy);
+
+    Point closestPoint;
+    if (t < 0) {
+      closestPoint = lineStart;
+    } else if (t > 1) {
+      closestPoint = lineEnd;
+    } else {
+      closestPoint = lineStart + ((lineEnd - lineStart) * t);
+    }
+    return closestPoint;
   }
 }

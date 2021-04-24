@@ -111,6 +111,11 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: _toolbarHeight,
+        actions: [
+          MinimizeWindowBtn(),
+          MaximizeWindowBtn(),
+          CloseWindowBtn(),
+        ],
         title: SizedBox(
           height: _toolbarHeight,
           child: Row(
@@ -128,13 +133,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-              ),
-              Row(
-                children: [
-                  MinimizeWindowBtn(),
-                  MaximizeWindowBtn(),
-                  CloseWindowBtn(),
-                ],
               ),
             ],
           ),

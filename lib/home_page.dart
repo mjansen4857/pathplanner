@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -37,34 +38,44 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     List<RobotPath> paths = [];
-    for (int i = 0; i < 3; i++) {
-      paths.add(RobotPath(
-        [
-          Waypoint(
-            anchorPoint: Point(1.0, 3.0),
-            nextControl: Point(2.0, 3.0),
-          ),
-          Waypoint(
-            prevControl: Point(3.0, 4.0),
-            anchorPoint: Point(3.0, 5.0),
-            isReversal: true,
-          ),
-          Waypoint(
-            prevControl: Point(4.0, 3.0),
-            anchorPoint: Point(5.0, 3.0),
-          ),
-        ],
-        name: 'Path $i',
-      ));
-    }
     SharedPreferences.getInstance().then((val) {
       setState(() {
         _prefs = val;
-        _paths = paths;
-        _currentPath = _paths[0];
+
         String projectDir = _prefs.getString('currentProjectDir');
         if (projectDir != null) {
           _currentProject = Directory(projectDir);
+          Directory pathsDir =
+              Directory(projectDir + '/src/main/deploy/pathplanner');
+          List<FileSystemEntity> pathFiles = pathsDir.listSync();
+          for (FileSystemEntity e in pathFiles) {
+            String json = File(e.path).readAsStringSync();
+            RobotPath p = RobotPath.fromJson(jsonDecode(json));
+            p.name = basenameWithoutExtension(e.path);
+            paths.add(p);
+          }
+          if (paths.length == 0) {
+            paths.add(RobotPath(
+              [
+                Waypoint(
+                  anchorPoint: Point(1.0, 3.0),
+                  nextControl: Point(2.0, 3.0),
+                ),
+                Waypoint(
+                  prevControl: Point(3.0, 4.0),
+                  anchorPoint: Point(3.0, 5.0),
+                  isReversal: true,
+                ),
+                Waypoint(
+                  prevControl: Point(4.0, 3.0),
+                  anchorPoint: Point(5.0, 3.0),
+                ),
+              ],
+              name: 'New Path',
+            ));
+          }
+          _paths = paths;
+          _currentPath = _paths[0];
         }
         _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
         _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
@@ -325,7 +336,16 @@ class _HomePageState extends State<HomePage> {
     if (projectFolder != null) {
       File buildFile = File(projectFolder + '/build.gradle');
       if (buildFile.existsSync()) {
+        Directory pathsDir =
+            Directory(projectFolder + '/src/main/deploy/pathplanner');
+        pathsDir.create(recursive: true);
         _prefs.setString('currentProjectDir', projectFolder);
+        List<FileSystemEntity> pathFiles = pathsDir.listSync();
+        for (FileSystemEntity e in pathFiles) {
+          print(e.path);
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(e.path)));
+        }
         setState(() {
           _currentProject = Directory(projectFolder);
         });

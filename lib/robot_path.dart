@@ -1,7 +1,5 @@
+import 'dart:convert';
 import 'dart:math';
-
-import 'package:pathplanner/services/undo_redo.dart';
-import 'package:undo/undo.dart';
 
 class RobotPath {
   List<Waypoint> waypoints;
@@ -9,12 +7,23 @@ class RobotPath {
 
   RobotPath(this.waypoints, {this.name = 'New Path'});
 
+  RobotPath.fromJson(Map<String, dynamic> json) {
+    waypoints = [];
+    for (Map<String, dynamic> pointJson in json['waypoints']) {
+      waypoints.add(Waypoint.fromJson(pointJson));
+    }
+  }
+
   String getWaypointLabel(Waypoint waypoint) {
     if (waypoint == null) return null;
     if (waypoint.isStartPoint()) return 'Start Point';
     if (waypoint.isEndPoint()) return 'End Point';
 
     return 'Waypoint ' + waypoints.indexOf(waypoint).toString();
+  }
+
+  void savePath(String saveDir) {
+    //byiibuno
   }
 
   void addWaypoint(Point anchorPos) {
@@ -54,6 +63,12 @@ class RobotPath {
     }
 
     return points;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'waypoints': waypoints,
+    };
   }
 }
 
@@ -320,5 +335,47 @@ class Waypoint {
       closestPoint = lineStart + ((lineEnd - lineStart) * t);
     }
     return closestPoint;
+  }
+
+  Waypoint.fromJson(Map<String, dynamic> json)
+      : anchorPoint = json['anchorPoint'] == null
+            ? null
+            : Point(json['anchorPoint']['x'], json['anchorPoint']['y']),
+        prevControl = json['prevControl'] == null
+            ? null
+            : Point(json['prevControl']['x'], json['prevControl']['y']),
+        nextControl = json['nextControl'] == null
+            ? null
+            : Point(json['nextControl']['x'], json['nextControl']['y']),
+        holonomicAngle = json['holonomicAngle'],
+        isReversal = json['isReversal'],
+        velOverride = json['velOverride'],
+        isLocked = json['isLocked'];
+
+  Map<String, dynamic> toJson() {
+    return {
+      'anchorPoint': anchorPoint == null
+          ? null
+          : {
+              'x': anchorPoint.x,
+              'y': anchorPoint.y,
+            },
+      'prevControl': prevControl == null
+          ? null
+          : {
+              'x': prevControl.x,
+              'y': prevControl.y,
+            },
+      'nextControl': nextControl == null
+          ? null
+          : {
+              'x': nextControl.x,
+              'y': nextControl.y,
+            },
+      'holonomicAngle': holonomicAngle,
+      'isReversal': isReversal,
+      'velOverride': velOverride,
+      'isLocked': isLocked,
+    };
   }
 }

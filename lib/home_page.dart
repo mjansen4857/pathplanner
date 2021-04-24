@@ -56,8 +56,28 @@ class _HomePageState extends State<HomePage> {
               paths.add(p);
             }
           }
-          if (paths.length == 0) {
-            paths.add(RobotPath(
+          List<String> pathOrder = _prefs.getStringList('pathOrder');
+          List<String> loadedOrder = [];
+          for (RobotPath path in paths) {
+            loadedOrder.add(path.name);
+          }
+          List<RobotPath> orderedPaths = [];
+          if (pathOrder != null) {
+            for (String name in pathOrder) {
+              int loadedIndex = loadedOrder.indexOf(name);
+              if (loadedIndex != -1) {
+                loadedOrder.removeAt(loadedIndex);
+                orderedPaths.add(paths.removeAt(loadedIndex));
+              }
+            }
+            for (RobotPath path in paths) {
+              orderedPaths.add(path);
+            }
+          } else {
+            orderedPaths = paths;
+          }
+          if (orderedPaths.length == 0) {
+            orderedPaths.add(RobotPath(
               [
                 Waypoint(
                   anchorPoint: Point(1.0, 3.0),
@@ -76,7 +96,7 @@ class _HomePageState extends State<HomePage> {
               name: 'New Path',
             ));
           }
-          _paths = paths;
+          _paths = orderedPaths;
           _currentPath = _paths[0];
         }
         _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
@@ -177,6 +197,12 @@ class _HomePageState extends State<HomePage> {
                     }
                     final RobotPath path = _paths.removeAt(oldIndex);
                     _paths.insert(newIndex, path);
+
+                    List<String> pathOrder = [];
+                    for (RobotPath path in _paths) {
+                      pathOrder.add(path.name);
+                    }
+                    _prefs.setStringList('pathOrder', pathOrder);
                   });
                 },
                 children: [
@@ -417,12 +443,7 @@ class _HomePageState extends State<HomePage> {
             Directory(projectFolder + '/src/main/deploy/pathplanner');
         pathsDir.create(recursive: true);
         _prefs.setString('currentProjectDir', projectFolder);
-        List<FileSystemEntity> pathFiles = pathsDir.listSync();
-        for (FileSystemEntity e in pathFiles) {
-          print(e.path);
-          ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(e.path)));
-        }
+        _prefs.remove('pathOrder');
         setState(() {
           _currentProject = Directory(projectFolder);
         });

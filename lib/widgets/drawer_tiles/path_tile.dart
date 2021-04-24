@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:fitted_text_field_container/fitted_text_field_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:pathplanner/robot_path.dart';
+import 'package:pathplanner/robot_path/robot_path.dart';
 
 typedef bool ValidRename(String name);
 

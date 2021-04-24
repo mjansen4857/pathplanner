@@ -4,9 +4,10 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pathplanner/robot_path.dart';
+import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
-import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
 import 'package:undo/undo.dart';
 
@@ -129,7 +130,7 @@ class _PathEditorState extends State<PathEditor> {
                         widget.robotLength,
                         widget.holonomicMode)) {
                       widget._draggedPoint = w;
-                      widget._dragOldValue = RobotPath.cloneWaypoint(w);
+                      widget._dragOldValue = w.clone();
                       break;
                     }
                   }
@@ -148,24 +149,21 @@ class _PathEditorState extends State<PathEditor> {
                     widget._draggedPoint.stopDragging();
                     int index =
                         widget.path.waypoints.indexOf(widget._draggedPoint);
-                    Waypoint dragEnd =
-                        RobotPath.cloneWaypoint(widget._draggedPoint);
+                    Waypoint dragEnd = widget._draggedPoint.clone();
                     UndoRedo.addChange(Change(
                       widget._dragOldValue,
                       () {
                         setState(() {
                           if (widget.path.waypoints[index] !=
                               widget._draggedPoint) {
-                            widget.path.waypoints[index] =
-                                RobotPath.cloneWaypoint(dragEnd);
+                            widget.path.waypoints[index] = dragEnd.clone();
                           }
                           widget.path.savePath(widget.pathsDir);
                         });
                       },
                       (oldValue) {
                         setState(() {
-                          widget.path.waypoints[index] =
-                              RobotPath.cloneWaypoint(oldValue);
+                          widget.path.waypoints[index] = oldValue.clone();
                           widget.path.savePath(widget.pathsDir);
                         });
                       },

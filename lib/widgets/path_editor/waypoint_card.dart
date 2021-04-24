@@ -1,12 +1,9 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pathplanner/robot_path.dart';
+import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:undo/undo.dart';
 
-// ignore: must_be_immutable
 class WaypointCard extends StatefulWidget {
   final Waypoint waypoint;
   final String label;
@@ -15,49 +12,12 @@ class WaypointCard extends StatefulWidget {
   final VoidCallback onDelete;
   final VoidCallback onShouldSave;
 
-  TextEditingController xPosController;
-  TextEditingController yPosController;
-  TextEditingController headingController;
-  TextEditingController holonomicController;
-  TextEditingController velOverrideController;
-
   WaypointCard(this.waypoint,
       {this.label,
       this.holonomicEnabled,
       this.deleteEnabled,
       this.onDelete,
-      this.onShouldSave}) {
-    if (waypoint != null) {
-      xPosController =
-          TextEditingController(text: waypoint.getXPos().toStringAsFixed(2));
-      xPosController.selection = TextSelection.fromPosition(
-          TextPosition(offset: xPosController.text.length));
-      yPosController =
-          TextEditingController(text: waypoint.getYPos().toStringAsFixed(2));
-      yPosController.selection = TextSelection.fromPosition(
-          TextPosition(offset: yPosController.text.length));
-      headingController = TextEditingController(
-          text: (waypoint.getHeadingRadians() * 180 / pi).toStringAsFixed(2));
-      headingController.selection = TextSelection.fromPosition(
-          TextPosition(offset: headingController.text.length));
-      if (holonomicEnabled) {
-        holonomicController = TextEditingController(
-            text: waypoint.holonomicAngle.toStringAsFixed(2));
-      } else {
-        holonomicController = TextEditingController();
-      }
-      holonomicController.selection = TextSelection.fromPosition(
-          TextPosition(offset: holonomicController.text.length));
-      if (waypoint.velOverride != null && !waypoint.isReversal) {
-        velOverrideController = TextEditingController(
-            text: waypoint.velOverride.toStringAsFixed(2));
-      } else {
-        velOverrideController = TextEditingController();
-      }
-      velOverrideController.selection = TextSelection.fromPosition(
-          TextPosition(offset: velOverrideController.text.length));
-    }
-  }
+      this.onShouldSave});
 
   @override
   _WaypointCardState createState() => _WaypointCardState();
@@ -79,66 +39,18 @@ class _WaypointCardState extends State<WaypointCard> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    SizedBox(
-                      height: 30,
-                      width: 30,
-                      child: IconButton(
-                        tooltip: widget.waypoint.isLocked
-                            ? 'Unlock Waypoint'
-                            : 'Lock Waypoint',
-                        icon: Icon(
-                          widget.waypoint.isLocked
-                              ? Icons.lock
-                              : Icons.lock_open,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            widget.waypoint.isLocked =
-                                !widget.waypoint.isLocked;
-                            if (widget.onShouldSave != null) {
-                              widget.onShouldSave.call();
-                            }
-                          });
-                        },
-                        splashRadius: 20,
-                        iconSize: 20,
-                        padding: EdgeInsets.all(0),
-                      ),
-                    ),
-                    Text(widget.label ?? 'Waypoint Label'),
-                    SizedBox(
-                      height: 30,
-                      width: 30,
-                      child: Visibility(
-                        visible: widget.deleteEnabled,
-                        child: IconButton(
-                          tooltip: 'Delete Waypoint',
-                          icon: Icon(
-                            Icons.delete,
-                          ),
-                          onPressed: widget.onDelete,
-                          splashRadius: 20,
-                          iconSize: 20,
-                          padding: EdgeInsets.all(0),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                buildHeader(),
                 SizedBox(height: 12),
                 buildPositionRow(context),
                 SizedBox(height: 12),
                 buildAngleRow(context),
                 Visibility(
-                  child: SizedBox(height: 12),
-                  visible: !widget.waypoint.isStartPoint(),
-                ),
-                Visibility(
-                  child: buildVelReversalRow(context),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 12),
+                      buildVelReversalRow(context),
+                    ],
+                  ),
                   visible: !widget.waypoint.isStartPoint(),
                 ),
                 SizedBox(height: 5),
@@ -150,7 +62,179 @@ class _WaypointCardState extends State<WaypointCard> {
     );
   }
 
-  Widget buildTextFeild(
+  Widget buildHeader() {
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        SizedBox(
+          height: 30,
+          width: 30,
+          child: IconButton(
+            tooltip:
+                widget.waypoint.isLocked ? 'Unlock Waypoint' : 'Lock Waypoint',
+            icon: Icon(
+              widget.waypoint.isLocked ? Icons.lock : Icons.lock_open,
+            ),
+            onPressed: () {
+              setState(() {
+                widget.waypoint.isLocked = !widget.waypoint.isLocked;
+                if (widget.onShouldSave != null) {
+                  widget.onShouldSave.call();
+                }
+              });
+            },
+            splashRadius: 20,
+            iconSize: 20,
+            padding: EdgeInsets.all(0),
+          ),
+        ),
+        Text(widget.label ?? 'Waypoint Label'),
+        SizedBox(
+          height: 30,
+          width: 30,
+          child: Visibility(
+            visible: widget.deleteEnabled,
+            child: IconButton(
+              tooltip: 'Delete Waypoint',
+              icon: Icon(
+                Icons.delete,
+              ),
+              onPressed: widget.onDelete,
+              splashRadius: 20,
+              iconSize: 20,
+              padding: EdgeInsets.all(0),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildPositionRow(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        buildTextField(
+          context,
+          _getController(widget.waypoint.getXPos().toStringAsFixed(2)),
+          'X Position',
+          onSubmitted: (val) {
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(_cardChange(
+              () => wRef.move(val, wRef.anchorPoint.y),
+              (oldVal) => wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y),
+            ));
+          },
+        ),
+        SizedBox(width: 12),
+        buildTextField(
+          context,
+          _getController(widget.waypoint.getYPos().toStringAsFixed(2)),
+          'Y Position',
+          onSubmitted: (val) {
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(_cardChange(
+              () => wRef.move(wRef.anchorPoint.x, val),
+              (oldVal) => wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y),
+            ));
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget buildAngleRow(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        buildTextField(
+          context,
+          _getController(
+              widget.waypoint.getHeadingDegrees().toStringAsFixed(2)),
+          'Heading',
+          onSubmitted: (val) {
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(_cardChange(
+              () => wRef.setHeading(val),
+              (oldVal) => wRef.setHeading(oldVal.getHeadingDegrees()),
+            ));
+          },
+        ),
+        SizedBox(width: 12),
+        buildTextField(
+          context,
+          !widget.holonomicEnabled
+              ? null
+              : _getController(
+                  widget.waypoint.holonomicAngle.toStringAsFixed(2)),
+          'Rotation',
+          enabled: widget.holonomicEnabled,
+          onSubmitted: (val) {
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(_cardChange(
+              () => wRef.holonomicAngle = val,
+              (oldVal) => wRef.holonomicAngle = oldVal.holonomicAngle,
+            ));
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget buildVelReversalRow(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.max,
+      children: [
+        buildTextField(
+          context,
+          widget.waypoint.isReversal || widget.waypoint.velOverride == null
+              ? null
+              : _getController(widget.waypoint.velOverride.toStringAsFixed(2)),
+          'Vel Override',
+          enabled: !widget.waypoint.isReversal,
+          onSubmitted: (val) {
+            Waypoint wRef = widget.waypoint;
+            UndoRedo.addChange(_cardChange(
+              () => wRef.velOverride = val,
+              (oldVal) => wRef.velOverride = oldVal.velOverride,
+            ));
+          },
+        ),
+        SizedBox(width: 8),
+        buildReversalWidget(),
+        SizedBox(width: 14),
+      ],
+    );
+  }
+
+  Widget buildReversalWidget() {
+    if (widget.waypoint.isStartPoint() || widget.waypoint.isEndPoint()) {
+      return SizedBox(width: 90);
+    } else {
+      return Row(
+        children: [
+          Checkbox(
+            value: widget.waypoint.isReversal,
+            activeColor: Colors.indigo,
+            onChanged: (val) {
+              Waypoint wRef = widget.waypoint;
+              UndoRedo.addChange(_cardChange(
+                () => wRef.setReversal(val),
+                (oldVal) => wRef.setReversal(oldVal.isReversal),
+              ));
+            },
+          ),
+          Text('Reversal'),
+        ],
+      );
+    }
+  }
+
+  Widget buildTextField(
       BuildContext context, TextEditingController controller, String label,
       {bool enabled = true, ValueChanged onSubmitted}) {
     return Container(
@@ -158,8 +242,14 @@ class _WaypointCardState extends State<WaypointCard> {
       height: 35,
       child: TextField(
         onSubmitted: (val) {
-          updateValue(onSubmitted, val);
-          unfocus(context);
+          if (onSubmitted != null) {
+            var parsed = double.tryParse(val);
+            onSubmitted.call(parsed);
+          }
+          FocusScopeNode currentScope = FocusScope.of(context);
+          if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+            FocusManager.instance.primaryFocus.unfocus();
+          }
         },
         enabled: enabled,
         controller: controller,
@@ -182,237 +272,31 @@ class _WaypointCardState extends State<WaypointCard> {
     );
   }
 
-  Widget buildVelReversalRow(BuildContext context) {
-    Widget reversal;
-    if (!widget.waypoint.isStartPoint() && !widget.waypoint.isEndPoint()) {
-      reversal = Row(
-        children: [
-          Checkbox(
-            value: widget.waypoint.isReversal,
-            activeColor: Colors.indigo,
-            onChanged: (val) {
-              Waypoint wRef = widget.waypoint;
-              UndoRedo.addChange(Change(
-                RobotPath.cloneWaypoint(wRef),
-                () {
-                  setState(() {
-                    wRef.setReversal(val);
-                    if (widget.onShouldSave != null) {
-                      widget.onShouldSave.call();
-                    }
-                  });
-                },
-                (oldVal) {
-                  setState(() {
-                    wRef.setReversal(oldVal.isReversal);
-                    if (widget.onShouldSave != null) {
-                      widget.onShouldSave.call();
-                    }
-                  });
-                },
-              ));
-              setState(() {
-                if (val) {
-                  widget.velOverrideController.text = '';
-                } else {
-                  if (widget.waypoint.velOverride != null) {
-                    widget.velOverrideController.text =
-                        widget.waypoint.velOverride.toStringAsFixed(2);
-                  }
-                }
-              });
-            },
-          ),
-          Text('Reversal'),
-        ],
-      );
-    } else {
-      reversal = SizedBox(width: 90);
-    }
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        buildTextFeild(
-          context,
-          widget.velOverrideController,
-          'Vel Override',
-          enabled: !widget.waypoint.isReversal,
-          onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
-            UndoRedo.addChange(Change(
-              RobotPath.cloneWaypoint(wRef),
-              () {
-                setState(() {
-                  wRef.velOverride = val;
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-              (oldVal) {
-                setState(() {
-                  wRef.velOverride = oldVal.velOverride;
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-            ));
-          },
-        ),
-        SizedBox(width: 8),
-        reversal,
-        SizedBox(width: 14),
-      ],
+  Change _cardChange(VoidCallback execute, Function(Waypoint oldVal) undo) {
+    return Change(
+      widget.waypoint.clone(),
+      () {
+        setState(() {
+          execute.call();
+          if (widget.onShouldSave != null) {
+            widget.onShouldSave.call();
+          }
+        });
+      },
+      (oldVal) {
+        setState(() {
+          undo.call(oldVal);
+          if (widget.onShouldSave != null) {
+            widget.onShouldSave.call();
+          }
+        });
+      },
     );
   }
 
-  Widget buildAngleRow(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        buildTextFeild(
-          context,
-          widget.headingController,
-          'Heading',
-          onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
-            UndoRedo.addChange(Change(
-              RobotPath.cloneWaypoint(wRef),
-              () {
-                setState(() {
-                  wRef.setHeading(val);
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-              (oldVal) {
-                setState(() {
-                  wRef.setHeading(oldVal.getHeadingDegrees());
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-            ));
-          },
-        ),
-        SizedBox(
-          width: 12,
-        ),
-        buildTextFeild(
-          context,
-          widget.holonomicController,
-          'Rotation',
-          enabled: widget.holonomicEnabled,
-          onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
-            UndoRedo.addChange(Change(
-              RobotPath.cloneWaypoint(wRef),
-              () {
-                setState(() {
-                  wRef.holonomicAngle = val;
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-              (oldVal) {
-                setState(() {
-                  wRef.holonomicAngle = oldVal.holonomicAngle;
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-            ));
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget buildPositionRow(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        buildTextFeild(
-          context,
-          widget.xPosController,
-          'X Position',
-          onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
-            UndoRedo.addChange(Change(
-              RobotPath.cloneWaypoint(wRef),
-              () {
-                setState(() {
-                  wRef.move(val, wRef.anchorPoint.y);
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-              (oldVal) {
-                setState(() {
-                  wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y);
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-            ));
-          },
-        ),
-        SizedBox(
-          width: 12,
-        ),
-        buildTextFeild(
-          context,
-          widget.yPosController,
-          'Y Position',
-          onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
-            UndoRedo.addChange(Change(
-              RobotPath.cloneWaypoint(wRef),
-              () {
-                setState(() {
-                  wRef.move(wRef.anchorPoint.x, val);
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-              (oldVal) {
-                setState(() {
-                  wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y);
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave.call();
-                  }
-                });
-              },
-            ));
-          },
-        ),
-      ],
-    );
-  }
-
-  void unfocus(BuildContext context) {
-    FocusScopeNode currentScope = FocusScope.of(context);
-    if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-      FocusManager.instance.primaryFocus.unfocus();
-    }
-  }
-
-  void updateValue(ValueChanged callback, String val) {
-    if (callback != null) {
-      var parsed = double.tryParse(val);
-      callback.call(parsed);
-    }
+  TextEditingController _getController(String text) {
+    return TextEditingController(text: text)
+      ..selection =
+          TextSelection.fromPosition(TextPosition(offset: text.length));
   }
 }

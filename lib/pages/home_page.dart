@@ -7,12 +7,13 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
-import 'package:pathplanner/robot_path.dart';
+import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
-import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
-import 'package:pathplanner/widgets/path_tile.dart';
-import 'package:pathplanner/widgets/settings_tile.dart';
+import 'package:pathplanner/widgets/drawer_tiles/path_tile.dart';
+import 'package:pathplanner/widgets/drawer_tiles/settings_tile.dart';
 import 'package:pathplanner/widgets/window_button/window_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -1,78 +1,4 @@
-import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
-
-class RobotPath {
-  List<Waypoint> waypoints;
-  String name;
-
-  RobotPath(this.waypoints, {this.name = 'New Path'});
-
-  RobotPath.fromJson(Map<String, dynamic> json) {
-    waypoints = [];
-    for (Map<String, dynamic> pointJson in json['waypoints']) {
-      waypoints.add(Waypoint.fromJson(pointJson));
-    }
-  }
-
-  String getWaypointLabel(Waypoint waypoint) {
-    if (waypoint == null) return null;
-    if (waypoint.isStartPoint()) return 'Start Point';
-    if (waypoint.isEndPoint()) return 'End Point';
-
-    return 'Waypoint ' + waypoints.indexOf(waypoint).toString();
-  }
-
-  void savePath(String saveDir) {
-    File pathFile = File(saveDir + name + '.path');
-    pathFile.writeAsString(jsonEncode(this));
-  }
-
-  void addWaypoint(Point anchorPos) {
-    waypoints[waypoints.length - 1].addNextControl();
-    waypoints.add(
-      Waypoint(
-        prevControl:
-            (waypoints[waypoints.length - 1].nextControl + anchorPos) * 0.5,
-        anchorPoint: anchorPos,
-      ),
-    );
-  }
-
-  static Waypoint cloneWaypoint(Waypoint w) {
-    Point anchor = Point(w.anchorPoint.x, w.anchorPoint.y);
-    Point prev =
-        w.prevControl == null ? null : Point(w.prevControl.x, w.prevControl.y);
-    Point next =
-        w.nextControl == null ? null : Point(w.nextControl.x, w.nextControl.y);
-
-    return Waypoint(
-      anchorPoint: anchor,
-      prevControl: prev,
-      nextControl: next,
-      holonomicAngle: w.holonomicAngle,
-      isReversal: w.isReversal,
-      velOverride: w.velOverride,
-      isLocked: w.isLocked,
-    );
-  }
-
-  static List<Waypoint> cloneWaypointList(List<Waypoint> waypoints) {
-    List<Waypoint> points = [];
-
-    for (Waypoint w in waypoints) {
-      points.add(cloneWaypoint(w));
-    }
-
-    return points;
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'waypoints': waypoints,
-    };
-  }
-}
 
 class Waypoint {
   Point anchorPoint;
@@ -99,6 +25,24 @@ class Waypoint {
     if (isReversal) {
       nextControl = prevControl;
     }
+  }
+
+  Waypoint clone() {
+    Point anchor = Point(anchorPoint.x, anchorPoint.y);
+    Point prev =
+        prevControl == null ? null : Point(prevControl.x, prevControl.y);
+    Point next =
+        nextControl == null ? null : Point(nextControl.x, nextControl.y);
+
+    return Waypoint(
+      anchorPoint: anchor,
+      prevControl: prev,
+      nextControl: next,
+      holonomicAngle: holonomicAngle,
+      isReversal: isReversal,
+      velOverride: velOverride,
+      isLocked: isLocked,
+    );
   }
 
   void move(double x, double y) {

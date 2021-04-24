@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:pathplanner/robot_path.dart';
 
+typedef bool ValidRename(String name);
+
 class PathTile extends StatefulWidget {
   final RobotPath path;
   final bool isSelected;
@@ -12,7 +14,9 @@ class PathTile extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onDuplicate;
   final VoidCallback onDelete;
-  final ValueChanged onRename;
+  final ValidRename onRename;
+
+  TextEditingController nameController;
 
   PathTile(this.path,
       {this.isSelected = false,
@@ -20,7 +24,11 @@ class PathTile extends StatefulWidget {
       this.key,
       this.onDuplicate,
       this.onDelete,
-      this.onRename});
+      this.onRename}) {
+    nameController = TextEditingController(text: path.name);
+    nameController.selection = TextSelection.fromPosition(
+        TextPosition(offset: nameController.text.length));
+  }
 
   @override
   _PathTileState createState() => _PathTileState();
@@ -62,13 +70,16 @@ class _PathTileState extends State<PathTile> {
                           currentScope.hasFocus) {
                         FocusManager.instance.primaryFocus.unfocus();
                       }
-                      if (widget.onRename != null) widget.onRename.call(text);
-                      setState(() {
-                        widget.path.name = text;
-                      });
+                      if (widget.onRename != null) {
+                        if (widget.onRename.call(text)) {
+                          setState(() {
+                            widget.path.name = text;
+                          });
+                        }
+                      }
                     }
                   },
-                  controller: TextEditingController(text: widget.path.name),
+                  controller: widget.nameController,
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     focusedBorder: OutlineInputBorder(

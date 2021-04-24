@@ -186,7 +186,39 @@ class _HomePageState extends State<HomePage> {
                       onRename: (name) {
                         File pathFile =
                             File(_pathsDir.path + _paths[i].name + '.path');
-                        pathFile.rename(_pathsDir.path + name + '.path');
+                        File newPathFile =
+                            File(_pathsDir.path + name + '.path');
+                        if (newPathFile.existsSync() &&
+                            newPathFile.path != pathFile.path) {
+                          Navigator.of(context).pop();
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return KeyBoardShortcuts(
+                                  keysToPress: {LogicalKeyboardKey.enter},
+                                  onKeysPressed: Navigator.of(context).pop,
+                                  child: AlertDialog(
+                                    title: Text('Unable to Rename'),
+                                    content: Text(
+                                        'The file "${basename(newPathFile.path)}" already exists'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: Navigator.of(context).pop,
+                                        child: Text(
+                                          'OK',
+                                          style: TextStyle(
+                                              color: Colors.indigoAccent),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              });
+                          return false;
+                        } else {
+                          pathFile.rename(_pathsDir.path + name + '.path');
+                          return true;
+                        }
                       },
                       onTap: () {
                         setState(() {

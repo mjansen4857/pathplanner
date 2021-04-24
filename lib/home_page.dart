@@ -138,7 +138,9 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         ElevatedButton(
-                            onPressed: openProjectDialog,
+                            onPressed: () {
+                              openProjectDialog(context);
+                            },
                             child: Text('Open Project')),
                         Expanded(
                           child: Container(),
@@ -288,11 +290,11 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: buildBody(),
+      body: buildBody(context),
     );
   }
 
-  Widget buildBody() {
+  Widget buildBody(BuildContext context) {
     if (_currentProject != null) {
       return Center(
         child: Container(
@@ -308,19 +310,50 @@ class _HomePageState extends State<HomePage> {
             'Open Robot Project',
             style: TextStyle(fontSize: 16),
           ),
-          onPressed: openProjectDialog,
+          onPressed: () {
+            openProjectDialog(context);
+          },
         ),
       );
     }
   }
 
-  void openProjectDialog() async {
+  void openProjectDialog(BuildContext context) async {
     var projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project',
         initialDirectory: Directory.current.path);
-    _prefs.setString('currentProjectDir', projectFolder);
-    setState(() {
-      _currentProject = Directory(projectFolder);
-    });
+    if (projectFolder != null) {
+      File buildFile = File(projectFolder + '/build.gradle');
+      if (buildFile.existsSync()) {
+        _prefs.setString('currentProjectDir', projectFolder);
+        setState(() {
+          _currentProject = Directory(projectFolder);
+        });
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return KeyBoardShortcuts(
+              keysToPress: {LogicalKeyboardKey.enter},
+              onKeysPressed: Navigator.of(context).pop,
+              child: AlertDialog(
+                title: Text('Invalid Project'),
+                content: Text(
+                    '$projectFolder is not a valid WPILib gradleRIO project'),
+                actions: [
+                  TextButton(
+                    onPressed: Navigator.of(context).pop,
+                    child: Text(
+                      'OK',
+                      style: TextStyle(color: Colors.indigoAccent),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      }
+    }
   }
 }

@@ -49,10 +49,12 @@ class _HomePageState extends State<HomePage> {
           _pathsDir = Directory(projectDir + '/src/main/deploy/pathplanner/');
           List<FileSystemEntity> pathFiles = _pathsDir.listSync();
           for (FileSystemEntity e in pathFiles) {
-            String json = File(e.path).readAsStringSync();
-            RobotPath p = RobotPath.fromJson(jsonDecode(json));
-            p.name = basenameWithoutExtension(e.path);
-            paths.add(p);
+            if (e.path.endsWith('.path')) {
+              String json = File(e.path).readAsStringSync();
+              RobotPath p = RobotPath.fromJson(jsonDecode(json));
+              p.name = basenameWithoutExtension(e.path);
+              paths.add(p);
+            }
           }
           if (paths.length == 0) {
             paths.add(RobotPath(
@@ -194,11 +196,20 @@ class _HomePageState extends State<HomePage> {
                       },
                       onDelete: () {
                         UndoRedo.clearHistory();
+
+                        // The fitted text field container does not rebuild
+                        // itself correctly so this is a way to hide it and
+                        // avoid confusion
+                        Navigator.of(context).pop();
+
                         showDialog(
                             context: context,
                             builder: (BuildContext context) {
                               void confirm() {
                                 Navigator.of(context).pop();
+                                File pathFile = File(
+                                    _pathsDir.path + _paths[i].name + '.path');
+                                pathFile.delete();
                                 setState(() {
                                   if (_currentPath == _paths.removeAt(i)) {
                                     _currentPath = _paths.first;
@@ -212,7 +223,7 @@ class _HomePageState extends State<HomePage> {
                                 child: AlertDialog(
                                   title: Text('Delete Path'),
                                   content: Text(
-                                      'Are you sure you want to delete ${_paths[i].name}?'),
+                                      'Are you sure you want to delete "${_paths[i].name}"? This cannot be undone.'),
                                   actions: [
                                     TextButton(
                                       onPressed: () {

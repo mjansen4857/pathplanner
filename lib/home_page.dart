@@ -27,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   double _toolbarHeight = 56;
   String _version = '2022.0.0';
   Directory _currentProject;
+  Directory _pathsDir;
   SharedPreferences _prefs;
   List<RobotPath> _paths = [];
   RobotPath _currentPath;
@@ -45,9 +46,8 @@ class _HomePageState extends State<HomePage> {
         String projectDir = _prefs.getString('currentProjectDir');
         if (projectDir != null) {
           _currentProject = Directory(projectDir);
-          Directory pathsDir =
-              Directory(projectDir + '/src/main/deploy/pathplanner');
-          List<FileSystemEntity> pathFiles = pathsDir.listSync();
+          _pathsDir = Directory(projectDir + '/src/main/deploy/pathplanner/');
+          List<FileSystemEntity> pathFiles = _pathsDir.listSync();
           for (FileSystemEntity e in pathFiles) {
             String json = File(e.path).readAsStringSync();
             RobotPath p = RobotPath.fromJson(jsonDecode(json));
@@ -181,6 +181,11 @@ class _HomePageState extends State<HomePage> {
                       _paths[i],
                       key: Key('$i'),
                       isSelected: _paths[i] == _currentPath,
+                      onRename: (name) {
+                        File pathFile =
+                            File(_pathsDir.path + _paths[i].name + '.path');
+                        pathFile.rename(_pathsDir.path + name + '.path');
+                      },
                       onTap: () {
                         setState(() {
                           _currentPath = _paths[i];

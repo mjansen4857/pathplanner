@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:fitted_text_field_container/fitted_text_field_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -10,13 +12,15 @@ class PathTile extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onDuplicate;
   final VoidCallback onDelete;
+  final ValueChanged onRename;
 
   PathTile(this.path,
       {this.isSelected = false,
       this.onTap,
       this.key,
       this.onDuplicate,
-      this.onDelete});
+      this.onDelete,
+      this.onRename});
 
   @override
   _PathTileState createState() => _PathTileState();
@@ -52,14 +56,17 @@ class _PathTileState extends State<PathTile> {
                 child: TextField(
                   cursorColor: Colors.white,
                   onSubmitted: (String text) {
-                    FocusScopeNode currentScope = FocusScope.of(context);
-                    if (!currentScope.hasPrimaryFocus &&
-                        currentScope.hasFocus) {
-                      FocusManager.instance.primaryFocus.unfocus();
+                    if (text != null && text != '') {
+                      FocusScopeNode currentScope = FocusScope.of(context);
+                      if (!currentScope.hasPrimaryFocus &&
+                          currentScope.hasFocus) {
+                        FocusManager.instance.primaryFocus.unfocus();
+                      }
+                      if (widget.onRename != null) widget.onRename.call(text);
+                      setState(() {
+                        widget.path.name = text;
+                      });
                     }
-                    setState(() {
-                      widget.path.name = text;
-                    });
                   },
                   controller: TextEditingController(text: widget.path.name),
                   decoration: InputDecoration(

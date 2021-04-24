@@ -13,6 +13,7 @@ class WaypointCard extends StatefulWidget {
   final bool holonomicEnabled;
   final bool deleteEnabled;
   final VoidCallback onDelete;
+  final VoidCallback onShouldSave;
 
   TextEditingController xPosController;
   TextEditingController yPosController;
@@ -21,7 +22,11 @@ class WaypointCard extends StatefulWidget {
   TextEditingController velOverrideController;
 
   WaypointCard(this.waypoint,
-      {this.label, this.holonomicEnabled, this.deleteEnabled, this.onDelete}) {
+      {this.label,
+      this.holonomicEnabled,
+      this.deleteEnabled,
+      this.onDelete,
+      this.onShouldSave}) {
     if (waypoint != null) {
       xPosController =
           TextEditingController(text: waypoint.getXPos().toStringAsFixed(2));
@@ -94,6 +99,9 @@ class _WaypointCardState extends State<WaypointCard> {
                           setState(() {
                             widget.waypoint.isLocked =
                                 !widget.waypoint.isLocked;
+                            if (widget.onShouldSave != null) {
+                              widget.onShouldSave.call();
+                            }
                           });
                         },
                         splashRadius: 20,
@@ -189,11 +197,17 @@ class _WaypointCardState extends State<WaypointCard> {
                 () {
                   setState(() {
                     wRef.setReversal(val);
+                    if (widget.onShouldSave != null) {
+                      widget.onShouldSave.call();
+                    }
                   });
                 },
                 (oldVal) {
                   setState(() {
                     wRef.setReversal(oldVal.isReversal);
+                    if (widget.onShouldSave != null) {
+                      widget.onShouldSave.call();
+                    }
                   });
                 },
               ));
@@ -232,11 +246,17 @@ class _WaypointCardState extends State<WaypointCard> {
               () {
                 setState(() {
                   wRef.velOverride = val;
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
               (oldVal) {
                 setState(() {
                   wRef.velOverride = oldVal.velOverride;
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
             ));
@@ -265,11 +285,17 @@ class _WaypointCardState extends State<WaypointCard> {
               () {
                 setState(() {
                   wRef.setHeading(val);
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
               (oldVal) {
                 setState(() {
                   wRef.setHeading(oldVal.getHeadingDegrees());
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
             ));
@@ -290,11 +316,17 @@ class _WaypointCardState extends State<WaypointCard> {
               () {
                 setState(() {
                   wRef.holonomicAngle = val;
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
               (oldVal) {
                 setState(() {
                   wRef.holonomicAngle = oldVal.holonomicAngle;
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
             ));
@@ -320,11 +352,17 @@ class _WaypointCardState extends State<WaypointCard> {
               () {
                 setState(() {
                   wRef.move(val, wRef.anchorPoint.y);
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
               (oldVal) {
                 setState(() {
                   wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y);
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
             ));
@@ -344,11 +382,17 @@ class _WaypointCardState extends State<WaypointCard> {
               () {
                 setState(() {
                   wRef.move(wRef.anchorPoint.x, val);
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
               (oldVal) {
                 setState(() {
                   wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y);
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave.call();
+                  }
                 });
               },
             ));

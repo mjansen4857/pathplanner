@@ -77,6 +77,10 @@ class _PathTileState extends State<PathTile> {
                           });
                         }
                       }
+                    } else {
+                      setState(() {
+                        widget.nameController.text = widget.path.name;
+                      });
                     }
                   },
                   controller: widget.nameController,

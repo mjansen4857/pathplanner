@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 class RobotPath {
@@ -23,7 +24,8 @@ class RobotPath {
   }
 
   void savePath(String saveDir) {
-    //byiibuno
+    File pathFile = File(saveDir + name + '.path');
+    pathFile.writeAsString(jsonEncode(this));
   }
 
   void addWaypoint(Point anchorPos) {

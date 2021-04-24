@@ -100,7 +100,9 @@ class _HomePageState extends State<HomePage> {
                   child: Container(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'PathPlanner',
+                      _currentPath == null
+                          ? 'PathPlanner'
+                          : 'PathPlanner - ' + _currentPath.name,
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                     ),
@@ -305,6 +307,7 @@ class _HomePageState extends State<HomePage> {
                             name: pathName,
                           ));
                           _currentPath = _paths.last;
+                          _currentPath.savePath(_pathsDir.path);
                         });
                       },
                     ),
@@ -347,6 +350,7 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ], name: pathName));
                             _currentPath = _paths.last;
+                            _currentPath.savePath(_pathsDir.path);
                             UndoRedo.clearHistory();
                           });
                         },
@@ -383,8 +387,8 @@ class _HomePageState extends State<HomePage> {
       return Center(
         child: Container(
           // color: Colors.grey,
-          child: PathEditor(
-              _currentPath, _robotWidth, _robotLength, _holonomicMode),
+          child: PathEditor(_currentPath, _robotWidth, _robotLength,
+              _holonomicMode, _pathsDir.path),
         ),
       );
     } else {

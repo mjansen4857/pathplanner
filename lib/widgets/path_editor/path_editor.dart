@@ -18,8 +18,10 @@ class PathEditor extends StatefulWidget {
   double robotLength;
   bool holonomicMode;
   Waypoint _dragOldValue;
+  String pathsDir;
 
-  PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode);
+  PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode,
+      this.pathsDir);
 
   @override
   _PathEditorState createState() => _PathEditorState();
@@ -66,12 +68,14 @@ class _PathEditorState extends State<PathEditor> {
                         widget.path.addWaypoint(Point(
                             xPixelsToMeters(details.localPosition.dx),
                             yPixelsToMeters(details.localPosition.dy)));
+                        widget.path.savePath(widget.pathsDir);
                       });
                     },
                     (oldValue) {
                       setState(() {
                         widget.path.waypoints.removeLast();
                         widget.path.waypoints.last.nextControl = null;
+                        widget.path.savePath(widget.pathsDir);
                       });
                     },
                   ));
@@ -155,12 +159,14 @@ class _PathEditorState extends State<PathEditor> {
                             widget.path.waypoints[index] =
                                 RobotPath.cloneWaypoint(dragEnd);
                           }
+                          widget.path.savePath(widget.pathsDir);
                         });
                       },
                       (oldValue) {
                         setState(() {
                           widget.path.waypoints[index] =
                               RobotPath.cloneWaypoint(oldValue);
+                          widget.path.savePath(widget.pathsDir);
                         });
                       },
                     ));
@@ -196,6 +202,9 @@ class _PathEditorState extends State<PathEditor> {
                 label: widget.path.getWaypointLabel(widget._selectedPoint),
                 holonomicEnabled: widget.holonomicMode,
                 deleteEnabled: widget.path.waypoints.length > 2,
+                onShouldSave: () {
+                  widget.path.savePath(widget.pathsDir);
+                },
                 onDelete: () {
                   int delIndex =
                       widget.path.waypoints.indexOf(widget._selectedPoint);
@@ -217,12 +226,14 @@ class _PathEditorState extends State<PathEditor> {
                           widget.path.waypoints[0].prevControl = null;
                           widget.path.waypoints[0].isReversal = false;
                         }
+                        widget.path.savePath(widget.pathsDir);
                       });
                     },
                     (oldValue) {
                       setState(() {
                         widget.path.waypoints =
                             RobotPath.cloneWaypointList(oldValue);
+                        widget.path.savePath(widget.pathsDir);
                       });
                     },
                   ));

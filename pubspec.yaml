@@ -38,6 +38,7 @@ dependencies:
   undo: ^1.4.0
   tuple: ^2.0.0
   visibility_detector: ^0.2.0
+  flutter_slidable: ^0.6.0
 
 dev_dependencies:
   flutter_test:

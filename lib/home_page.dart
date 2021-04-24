@@ -4,8 +4,11 @@ import 'dart:math';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/robot_path.dart';
+import 'package:pathplanner/services/undo_redo.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 import 'package:pathplanner/widgets/path_tile.dart';
 import 'package:pathplanner/widgets/settings_tile.dart';
@@ -165,9 +168,65 @@ class _HomePageState extends State<HomePage> {
                       _paths[i],
                       key: Key('$i'),
                       isSelected: _paths[i] == _currentPath,
-                      tapCallback: () {
+                      onTap: () {
                         setState(() {
                           _currentPath = _paths[i];
+                          UndoRedo.clearHistory();
+                        });
+                      },
+                      onDelete: () {
+                        UndoRedo.clearHistory();
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              void confirm() {
+                                Navigator.of(context).pop();
+                                setState(() {
+                                  if (_currentPath == _paths.removeAt(i)) {
+                                    _currentPath = _paths.first;
+                                  }
+                                });
+                              }
+
+                              return KeyBoardShortcuts(
+                                keysToPress: {LogicalKeyboardKey.enter},
+                                onKeysPressed: confirm,
+                                child: AlertDialog(
+                                  title: Text('Delete Path'),
+                                  content: Text(
+                                      'Are you sure you want to delete ${_paths[i].name}?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text(
+                                        'Cancel',
+                                        style: TextStyle(
+                                            color: Colors.indigoAccent),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: confirm,
+                                      child: Text(
+                                        'Confirm',
+                                        style: TextStyle(
+                                            color: Colors.indigoAccent),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            });
+                      },
+                      onDuplicate: () {
+                        UndoRedo.clearHistory();
+                        setState(() {
+                          _paths.add(RobotPath(
+                            RobotPath.cloneWaypointList(_paths[i].waypoints),
+                            name: _paths[i].name + ' Copy',
+                          ));
+                          _currentPath = _paths.last;
                         });
                       },
                     ),
@@ -201,6 +260,8 @@ class _HomePageState extends State<HomePage> {
                                 anchorPoint: Point(5.0, 3.0),
                               ),
                             ]));
+                            _currentPath = _paths.last;
+                            UndoRedo.clearHistory();
                           });
                         },
                       ),

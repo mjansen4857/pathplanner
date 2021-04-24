@@ -229,63 +229,80 @@ class _HomePageState extends State<HomePage> {
                       onDelete: () {
                         UndoRedo.clearHistory();
 
-                        // The fitted text field container does not rebuild
-                        // itself correctly so this is a way to hide it and
-                        // avoid confusion
-                        Navigator.of(context).pop();
+                        File pathFile =
+                            File(_pathsDir.path + _paths[i].name + '.path');
 
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              void confirm() {
-                                Navigator.of(context).pop();
-                                File pathFile = File(
-                                    _pathsDir.path + _paths[i].name + '.path');
-                                pathFile.delete();
-                                setState(() {
-                                  if (_currentPath == _paths.removeAt(i)) {
-                                    _currentPath = _paths.first;
-                                  }
-                                });
-                              }
+                        if (pathFile.existsSync()) {
+                          // The fitted text field container does not rebuild
+                          // itself correctly so this is a way to hide it and
+                          // avoid confusion
+                          Navigator.of(context).pop();
 
-                              return KeyBoardShortcuts(
-                                keysToPress: {LogicalKeyboardKey.enter},
-                                onKeysPressed: confirm,
-                                child: AlertDialog(
-                                  title: Text('Delete Path'),
-                                  content: Text(
-                                      'Are you sure you want to delete "${_paths[i].name}"? This cannot be undone.'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text(
-                                        'Cancel',
-                                        style: TextStyle(
-                                            color: Colors.indigoAccent),
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                void confirm() {
+                                  Navigator.of(context).pop();
+                                  pathFile.delete();
+                                  setState(() {
+                                    if (_currentPath == _paths.removeAt(i)) {
+                                      _currentPath = _paths.first;
+                                    }
+                                  });
+                                }
+
+                                return KeyBoardShortcuts(
+                                  keysToPress: {LogicalKeyboardKey.enter},
+                                  onKeysPressed: confirm,
+                                  child: AlertDialog(
+                                    title: Text('Delete Path'),
+                                    content: Text(
+                                        'Are you sure you want to delete "${_paths[i].name}"? This cannot be undone.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text(
+                                          'Cancel',
+                                          style: TextStyle(
+                                              color: Colors.indigoAccent),
+                                        ),
                                       ),
-                                    ),
-                                    TextButton(
-                                      onPressed: confirm,
-                                      child: Text(
-                                        'Confirm',
-                                        style: TextStyle(
-                                            color: Colors.indigoAccent),
+                                      TextButton(
+                                        onPressed: confirm,
+                                        child: Text(
+                                          'Confirm',
+                                          style: TextStyle(
+                                              color: Colors.indigoAccent),
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            });
+                                    ],
+                                  ),
+                                );
+                              });
+                        } else {
+                          setState(() {
+                            if (_currentPath == _paths.removeAt(i)) {
+                              _currentPath = _paths.first;
+                            }
+                          });
+                        }
                       },
                       onDuplicate: () {
                         UndoRedo.clearHistory();
                         setState(() {
+                          List<String> pathNames = [];
+                          for (RobotPath path in _paths) {
+                            pathNames.add(path.name);
+                          }
+                          String pathName = _paths[i].name + ' Copy';
+                          while (pathNames.contains(pathName)) {
+                            pathName = pathName + ' Copy';
+                          }
                           _paths.add(RobotPath(
                             RobotPath.cloneWaypointList(_paths[i].waypoints),
-                            name: _paths[i].name + ' Copy',
+                            name: pathName,
                           ));
                           _currentPath = _paths.last;
                         });
@@ -305,6 +322,14 @@ class _HomePageState extends State<HomePage> {
                         leading: Icon(Icons.add),
                         title: Text('Add Path'),
                         onTap: () {
+                          List<String> pathNames = [];
+                          for (RobotPath path in _paths) {
+                            pathNames.add(path.name);
+                          }
+                          String pathName = 'New Path';
+                          while (pathNames.contains(pathName)) {
+                            pathName = 'New ' + pathName;
+                          }
                           setState(() {
                             _paths.add(RobotPath([
                               Waypoint(
@@ -320,7 +345,7 @@ class _HomePageState extends State<HomePage> {
                                 prevControl: Point(4.0, 3.0),
                                 anchorPoint: Point(5.0, 3.0),
                               ),
-                            ]));
+                            ], name: pathName));
                             _currentPath = _paths.last;
                             UndoRedo.clearHistory();
                           });

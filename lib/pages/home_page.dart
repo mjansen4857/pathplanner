@@ -27,8 +27,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double _toolbarHeight = 56;
   String _version = '2022.0.0';
   Directory _currentProject;
@@ -41,7 +40,9 @@ class _HomePageState extends State<HomePage>
   bool _holonomicMode = false;
   bool _updateAvailable = false;
   AnimationController _updateController;
+  AnimationController _welcomeController;
   Animation<Offset> _offsetAnimation;
+  Animation<double> _scaleAnimation;
   String _releaseURL =
       'https://github.com/mjansen4857/pathplanner/releases/latest';
 
@@ -50,14 +51,19 @@ class _HomePageState extends State<HomePage>
     super.initState();
     _updateController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 400));
+    _welcomeController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 400));
     _offsetAnimation = Tween<Offset>(begin: Offset(0, -0.05), end: Offset.zero)
         .animate(CurvedAnimation(
       parent: _updateController,
       curve: Curves.ease,
     ));
+    _scaleAnimation =
+        CurvedAnimation(parent: _welcomeController, curve: Curves.ease);
     SharedPreferences.getInstance().then((val) {
       setState(() {
         _prefs = val;
+        _welcomeController.forward();
 
         String projectDir = _prefs.getString('currentProjectDir');
         _loadPaths(projectDir);
@@ -79,6 +85,7 @@ class _HomePageState extends State<HomePage>
   void dispose() {
     super.dispose();
     _updateController.dispose();
+    _welcomeController.dispose();
   }
 
   @override
@@ -447,43 +454,63 @@ class _HomePageState extends State<HomePage>
     if (_currentProject != null) {
       return Center(
         child: Container(
-          // color: Colors.grey,
           child: PathEditor(_currentPath, _robotWidth, _robotLength,
               _holonomicMode, _pathsDir.path),
         ),
       );
     } else {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-                width: 250,
-                height: 250,
-                child: Image(
-                  image: AssetImage('images/icon.png'),
-                )),
-            // SizedBox(height: 12),
-            Text(
-              'PathPlanner',
-              style: TextStyle(fontSize: 48),
-            ),
-            SizedBox(height: 96),
-            ElevatedButton(
-              child: Padding(
-                padding: const EdgeInsets.all(6.0),
-                child: Text(
-                  'Open Robot Project',
-                  style: TextStyle(fontSize: 24),
+      return Stack(
+        children: [
+          Center(child: Image.asset('images/field20.png')),
+          Center(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                color: Colors.black.withOpacity(0.15),
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.max,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                              width: 250,
+                              height: 250,
+                              child: Image(
+                                image: AssetImage('images/icon.png'),
+                              )),
+                          Text(
+                            'PathPlanner',
+                            style: TextStyle(fontSize: 48),
+                          ),
+                          SizedBox(height: 96),
+                          ElevatedButton(
+                            child: Padding(
+                              padding: const EdgeInsets.all(6.0),
+                              child: Text(
+                                'Open WPILib Project',
+                                style: TextStyle(fontSize: 24),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                                primary: Colors.grey[700]),
+                            onPressed: () {
+                              _openProjectDialog(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              style: ElevatedButton.styleFrom(primary: Colors.grey[700]),
-              onPressed: () {
-                _openProjectDialog(context);
-              },
             ),
-          ],
-        ),
+          ),
+        ],
       );
     }
   }

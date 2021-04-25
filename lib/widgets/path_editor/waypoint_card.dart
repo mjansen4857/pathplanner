@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
@@ -33,28 +35,39 @@ class _WaypointCardState extends State<WaypointCard> {
       child: Container(
         width: 250,
         child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHeader(),
-                SizedBox(height: 12),
-                _buildPositionRow(context),
-                SizedBox(height: 12),
-                _buildAngleRow(context),
-                Visibility(
-                  child: Column(
-                    children: [
-                      SizedBox(height: 12),
-                      _buildVelReversalRow(context),
-                    ],
-                  ),
-                  visible: !widget.waypoint.isStartPoint(),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          // color: Colors.grey[800].withOpacity(0.0),
+          color: Colors.white.withOpacity(0.13),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildHeader(),
+                    SizedBox(height: 12),
+                    _buildPositionRow(context),
+                    SizedBox(height: 12),
+                    _buildAngleRow(context),
+                    Visibility(
+                      child: Column(
+                        children: [
+                          SizedBox(height: 12),
+                          _buildVelReversalRow(context),
+                        ],
+                      ),
+                      visible: !widget.waypoint.isStartPoint(),
+                    ),
+                    SizedBox(height: 5),
+                  ],
                 ),
-                SizedBox(height: 5),
-              ],
+              ),
             ),
           ),
         ),

@@ -82,7 +82,7 @@ class _HomePageState extends State<HomePage> {
                   child: Text(
                     _currentPath == null
                         ? 'PathPlanner'
-                        : 'PathPlanner - ' + _currentPath.name,
+                        : '${_currentPath.name}',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                   ),
                 ),

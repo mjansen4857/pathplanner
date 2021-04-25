@@ -39,16 +39,16 @@ class _WaypointCardState extends State<WaypointCard> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                buildHeader(),
+                _buildHeader(),
                 SizedBox(height: 12),
-                buildPositionRow(context),
+                _buildPositionRow(context),
                 SizedBox(height: 12),
-                buildAngleRow(context),
+                _buildAngleRow(context),
                 Visibility(
                   child: Column(
                     children: [
                       SizedBox(height: 12),
-                      buildVelReversalRow(context),
+                      _buildVelReversalRow(context),
                     ],
                   ),
                   visible: !widget.waypoint.isStartPoint(),
@@ -62,7 +62,7 @@ class _WaypointCardState extends State<WaypointCard> {
     );
   }
 
-  Widget buildHeader() {
+  Widget _buildHeader() {
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -111,12 +111,12 @@ class _WaypointCardState extends State<WaypointCard> {
     );
   }
 
-  Widget buildPositionRow(BuildContext context) {
+  Widget _buildPositionRow(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
       children: [
-        buildTextField(
+        _buildTextField(
           context,
           _getController(widget.waypoint.getXPos().toStringAsFixed(2)),
           'X Position',
@@ -129,7 +129,7 @@ class _WaypointCardState extends State<WaypointCard> {
           },
         ),
         SizedBox(width: 12),
-        buildTextField(
+        _buildTextField(
           context,
           _getController(widget.waypoint.getYPos().toStringAsFixed(2)),
           'Y Position',
@@ -145,12 +145,12 @@ class _WaypointCardState extends State<WaypointCard> {
     );
   }
 
-  Widget buildAngleRow(BuildContext context) {
+  Widget _buildAngleRow(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
       children: [
-        buildTextField(
+        _buildTextField(
           context,
           _getController(
               widget.waypoint.getHeadingDegrees().toStringAsFixed(2)),
@@ -164,7 +164,7 @@ class _WaypointCardState extends State<WaypointCard> {
           },
         ),
         SizedBox(width: 12),
-        buildTextField(
+        _buildTextField(
           context,
           !widget.holonomicEnabled
               ? null
@@ -184,12 +184,12 @@ class _WaypointCardState extends State<WaypointCard> {
     );
   }
 
-  Widget buildVelReversalRow(BuildContext context) {
+  Widget _buildVelReversalRow(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
       children: [
-        buildTextField(
+        _buildTextField(
           context,
           widget.waypoint.isReversal || widget.waypoint.velOverride == null
               ? null
@@ -205,13 +205,13 @@ class _WaypointCardState extends State<WaypointCard> {
           },
         ),
         SizedBox(width: 8),
-        buildReversalWidget(),
+        _buildReversalWidget(),
         SizedBox(width: 14),
       ],
     );
   }
 
-  Widget buildReversalWidget() {
+  Widget _buildReversalWidget() {
     if (widget.waypoint.isStartPoint() || widget.waypoint.isEndPoint()) {
       return SizedBox(width: 90);
     } else {
@@ -234,7 +234,7 @@ class _WaypointCardState extends State<WaypointCard> {
     }
   }
 
-  Widget buildTextField(
+  Widget _buildTextField(
       BuildContext context, TextEditingController controller, String label,
       {bool enabled = true, ValueChanged onSubmitted}) {
     return Container(

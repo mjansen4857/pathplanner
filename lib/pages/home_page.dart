@@ -110,292 +110,33 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: _toolbarHeight,
-        actions: [
-          MinimizeWindowBtn(),
-          MaximizeWindowBtn(),
-          CloseWindowBtn(),
-        ],
-        title: SizedBox(
-          height: _toolbarHeight,
-          child: Row(
-            children: [
-              Expanded(
-                child: MoveWindow(
-                  child: Container(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      _currentPath == null
-                          ? 'PathPlanner'
-                          : 'PathPlanner - ' + _currentPath.name,
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      drawer: Drawer(
-        child: Column(
+      appBar: _buildAppBar(),
+      drawer: _buildDrawer(context),
+      body: _buildBody(context),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return AppBar(
+      toolbarHeight: _toolbarHeight,
+      actions: [
+        MinimizeWindowBtn(),
+        MaximizeWindowBtn(),
+        CloseWindowBtn(),
+      ],
+      title: SizedBox(
+        height: _toolbarHeight,
+        child: Row(
           children: [
-            DrawerHeader(
-              child: Stack(
-                children: [
-                  Container(
-                    child: Align(
-                        alignment: FractionalOffset.bottomRight,
-                        child: Text('v' + _version)),
-                  ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: Container(),
-                          flex: 2,
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            (_currentProject != null)
-                                ? basename(_currentProject.path)
-                                : 'No Project',
-                            style: TextStyle(
-                                fontSize: 20,
-                                color: (_currentProject != null)
-                                    ? Colors.white
-                                    : Colors.red),
-                          ),
-                        ),
-                        ElevatedButton(
-                            onPressed: () {
-                              openProjectDialog(context);
-                            },
-                            child: Text('Open Project')),
-                        Expanded(
-                          child: Container(),
-                          flex: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
             Expanded(
-              child: ReorderableListView(
-                padding: EdgeInsets.zero,
-                onReorder: (int oldIndex, int newIndex) {
-                  setState(() {
-                    if (oldIndex < newIndex) {
-                      newIndex -= 1;
-                    }
-                    final RobotPath path = _paths.removeAt(oldIndex);
-                    _paths.insert(newIndex, path);
-
-                    List<String> pathOrder = [];
-                    for (RobotPath path in _paths) {
-                      pathOrder.add(path.name);
-                    }
-                    _prefs.setStringList('pathOrder', pathOrder);
-                  });
-                },
-                children: [
-                  for (int i = 0; i < _paths.length; i++)
-                    PathTile(
-                      _paths[i],
-                      key: Key('$i'),
-                      isSelected: _paths[i] == _currentPath,
-                      onRename: (name) {
-                        File pathFile =
-                            File(_pathsDir.path + _paths[i].name + '.path');
-                        File newPathFile =
-                            File(_pathsDir.path + name + '.path');
-                        if (newPathFile.existsSync() &&
-                            newPathFile.path != pathFile.path) {
-                          Navigator.of(context).pop();
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return KeyBoardShortcuts(
-                                  keysToPress: {LogicalKeyboardKey.enter},
-                                  onKeysPressed: Navigator.of(context).pop,
-                                  child: AlertDialog(
-                                    title: Text('Unable to Rename'),
-                                    content: Text(
-                                        'The file "${basename(newPathFile.path)}" already exists'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: Navigator.of(context).pop,
-                                        child: Text(
-                                          'OK',
-                                          style: TextStyle(
-                                              color: Colors.indigoAccent),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              });
-                          return false;
-                        } else {
-                          pathFile.rename(_pathsDir.path + name + '.path');
-                          return true;
-                        }
-                      },
-                      onTap: () {
-                        setState(() {
-                          _currentPath = _paths[i];
-                          UndoRedo.clearHistory();
-                        });
-                      },
-                      onDelete: () {
-                        UndoRedo.clearHistory();
-
-                        File pathFile =
-                            File(_pathsDir.path + _paths[i].name + '.path');
-
-                        if (pathFile.existsSync()) {
-                          // The fitted text field container does not rebuild
-                          // itself correctly so this is a way to hide it and
-                          // avoid confusion
-                          Navigator.of(context).pop();
-
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                void confirm() {
-                                  Navigator.of(context).pop();
-                                  pathFile.delete();
-                                  setState(() {
-                                    if (_currentPath == _paths.removeAt(i)) {
-                                      _currentPath = _paths.first;
-                                    }
-                                  });
-                                }
-
-                                return KeyBoardShortcuts(
-                                  keysToPress: {LogicalKeyboardKey.enter},
-                                  onKeysPressed: confirm,
-                                  child: AlertDialog(
-                                    title: Text('Delete Path'),
-                                    content: Text(
-                                        'Are you sure you want to delete "${_paths[i].name}"? This cannot be undone.'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text(
-                                          'Cancel',
-                                          style: TextStyle(
-                                              color: Colors.indigoAccent),
-                                        ),
-                                      ),
-                                      TextButton(
-                                        onPressed: confirm,
-                                        child: Text(
-                                          'Confirm',
-                                          style: TextStyle(
-                                              color: Colors.indigoAccent),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              });
-                        } else {
-                          setState(() {
-                            if (_currentPath == _paths.removeAt(i)) {
-                              _currentPath = _paths.first;
-                            }
-                          });
-                        }
-                      },
-                      onDuplicate: () {
-                        UndoRedo.clearHistory();
-                        setState(() {
-                          List<String> pathNames = [];
-                          for (RobotPath path in _paths) {
-                            pathNames.add(path.name);
-                          }
-                          String pathName = _paths[i].name + ' Copy';
-                          while (pathNames.contains(pathName)) {
-                            pathName = pathName + ' Copy';
-                          }
-                          _paths.add(RobotPath(
-                            RobotPath.cloneWaypointList(_paths[i].waypoints),
-                            name: pathName,
-                          ));
-                          _currentPath = _paths.last;
-                          _currentPath.savePath(_pathsDir.path);
-                        });
-                      },
-                    ),
-                ],
-              ),
-            ),
-            Container(
-              child: Align(
-                alignment: FractionalOffset.bottomCenter,
+              child: MoveWindow(
                 child: Container(
-                  child: Column(
-                    children: [
-                      Divider(),
-                      ListTile(
-                        leading: Icon(Icons.add),
-                        title: Text('Add Path'),
-                        onTap: () {
-                          List<String> pathNames = [];
-                          for (RobotPath path in _paths) {
-                            pathNames.add(path.name);
-                          }
-                          String pathName = 'New Path';
-                          while (pathNames.contains(pathName)) {
-                            pathName = 'New ' + pathName;
-                          }
-                          setState(() {
-                            _paths.add(RobotPath([
-                              Waypoint(
-                                anchorPoint: Point(1.0, 3.0),
-                                nextControl: Point(2.0, 3.0),
-                              ),
-                              Waypoint(
-                                prevControl: Point(3.0, 4.0),
-                                anchorPoint: Point(3.0, 5.0),
-                                isReversal: true,
-                              ),
-                              Waypoint(
-                                prevControl: Point(4.0, 3.0),
-                                anchorPoint: Point(5.0, 3.0),
-                              ),
-                            ], name: pathName));
-                            _currentPath = _paths.last;
-                            _currentPath.savePath(_pathsDir.path);
-                            UndoRedo.clearHistory();
-                          });
-                        },
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: SettingsTile(
-                          onSettingsChanged: () {
-                            setState(() {
-                              _robotWidth =
-                                  _prefs.getDouble('robotWidth') ?? 0.75;
-                              _robotLength =
-                                  _prefs.getDouble('robotLength') ?? 1.0;
-                              _holonomicMode =
-                                  _prefs.getBool('holonomicMode') ?? false;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _currentPath == null
+                        ? 'PathPlanner'
+                        : 'PathPlanner - ' + _currentPath.name,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -403,11 +144,276 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: buildBody(context),
     );
   }
 
-  Widget buildBody(BuildContext context) {
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: Column(
+        children: [
+          DrawerHeader(
+            child: Stack(
+              children: [
+                Container(
+                  child: Align(
+                      alignment: FractionalOffset.bottomRight,
+                      child: Text('v' + _version)),
+                ),
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Container(),
+                        flex: 2,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          (_currentProject != null)
+                              ? basename(_currentProject.path)
+                              : 'No Project',
+                          style: TextStyle(
+                              fontSize: 20,
+                              color: (_currentProject != null)
+                                  ? Colors.white
+                                  : Colors.red),
+                        ),
+                      ),
+                      ElevatedButton(
+                          onPressed: () {
+                            _openProjectDialog(context);
+                          },
+                          child: Text('Open Project')),
+                      Expanded(
+                        child: Container(),
+                        flex: 4,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ReorderableListView(
+              padding: EdgeInsets.zero,
+              onReorder: (int oldIndex, int newIndex) {
+                setState(() {
+                  if (oldIndex < newIndex) {
+                    newIndex -= 1;
+                  }
+                  final RobotPath path = _paths.removeAt(oldIndex);
+                  _paths.insert(newIndex, path);
+
+                  List<String> pathOrder = [];
+                  for (RobotPath path in _paths) {
+                    pathOrder.add(path.name);
+                  }
+                  _prefs.setStringList('pathOrder', pathOrder);
+                });
+              },
+              children: [
+                for (int i = 0; i < _paths.length; i++)
+                  PathTile(
+                    _paths[i],
+                    key: Key('$i'),
+                    isSelected: _paths[i] == _currentPath,
+                    onRename: (name) {
+                      File pathFile =
+                          File(_pathsDir.path + _paths[i].name + '.path');
+                      File newPathFile = File(_pathsDir.path + name + '.path');
+                      if (newPathFile.existsSync() &&
+                          newPathFile.path != pathFile.path) {
+                        Navigator.of(context).pop();
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return KeyBoardShortcuts(
+                                keysToPress: {LogicalKeyboardKey.enter},
+                                onKeysPressed: Navigator.of(context).pop,
+                                child: AlertDialog(
+                                  title: Text('Unable to Rename'),
+                                  content: Text(
+                                      'The file "${basename(newPathFile.path)}" already exists'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: Navigator.of(context).pop,
+                                      child: Text(
+                                        'OK',
+                                        style: TextStyle(
+                                            color: Colors.indigoAccent),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            });
+                        return false;
+                      } else {
+                        pathFile.rename(_pathsDir.path + name + '.path');
+                        return true;
+                      }
+                    },
+                    onTap: () {
+                      setState(() {
+                        _currentPath = _paths[i];
+                        UndoRedo.clearHistory();
+                      });
+                    },
+                    onDelete: () {
+                      UndoRedo.clearHistory();
+
+                      File pathFile =
+                          File(_pathsDir.path + _paths[i].name + '.path');
+
+                      if (pathFile.existsSync()) {
+                        // The fitted text field container does not rebuild
+                        // itself correctly so this is a way to hide it and
+                        // avoid confusion
+                        Navigator.of(context).pop();
+
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              void confirm() {
+                                Navigator.of(context).pop();
+                                pathFile.delete();
+                                setState(() {
+                                  if (_currentPath == _paths.removeAt(i)) {
+                                    _currentPath = _paths.first;
+                                  }
+                                });
+                              }
+
+                              return KeyBoardShortcuts(
+                                keysToPress: {LogicalKeyboardKey.enter},
+                                onKeysPressed: confirm,
+                                child: AlertDialog(
+                                  title: Text('Delete Path'),
+                                  content: Text(
+                                      'Are you sure you want to delete "${_paths[i].name}"? This cannot be undone.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child: Text(
+                                        'Cancel',
+                                        style: TextStyle(
+                                            color: Colors.indigoAccent),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      onPressed: confirm,
+                                      child: Text(
+                                        'Confirm',
+                                        style: TextStyle(
+                                            color: Colors.indigoAccent),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            });
+                      } else {
+                        setState(() {
+                          if (_currentPath == _paths.removeAt(i)) {
+                            _currentPath = _paths.first;
+                          }
+                        });
+                      }
+                    },
+                    onDuplicate: () {
+                      UndoRedo.clearHistory();
+                      setState(() {
+                        List<String> pathNames = [];
+                        for (RobotPath path in _paths) {
+                          pathNames.add(path.name);
+                        }
+                        String pathName = _paths[i].name + ' Copy';
+                        while (pathNames.contains(pathName)) {
+                          pathName = pathName + ' Copy';
+                        }
+                        _paths.add(RobotPath(
+                          RobotPath.cloneWaypointList(_paths[i].waypoints),
+                          name: pathName,
+                        ));
+                        _currentPath = _paths.last;
+                        _currentPath.savePath(_pathsDir.path);
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+          Container(
+            child: Align(
+              alignment: FractionalOffset.bottomCenter,
+              child: Container(
+                child: Column(
+                  children: [
+                    Divider(),
+                    ListTile(
+                      leading: Icon(Icons.add),
+                      title: Text('Add Path'),
+                      onTap: () {
+                        List<String> pathNames = [];
+                        for (RobotPath path in _paths) {
+                          pathNames.add(path.name);
+                        }
+                        String pathName = 'New Path';
+                        while (pathNames.contains(pathName)) {
+                          pathName = 'New ' + pathName;
+                        }
+                        setState(() {
+                          _paths.add(RobotPath([
+                            Waypoint(
+                              anchorPoint: Point(1.0, 3.0),
+                              nextControl: Point(2.0, 3.0),
+                            ),
+                            Waypoint(
+                              prevControl: Point(3.0, 4.0),
+                              anchorPoint: Point(3.0, 5.0),
+                              isReversal: true,
+                            ),
+                            Waypoint(
+                              prevControl: Point(4.0, 3.0),
+                              anchorPoint: Point(5.0, 3.0),
+                            ),
+                          ], name: pathName));
+                          _currentPath = _paths.last;
+                          _currentPath.savePath(_pathsDir.path);
+                          UndoRedo.clearHistory();
+                        });
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: SettingsTile(
+                        onSettingsChanged: () {
+                          setState(() {
+                            _robotWidth =
+                                _prefs.getDouble('robotWidth') ?? 0.75;
+                            _robotLength =
+                                _prefs.getDouble('robotLength') ?? 1.0;
+                            _holonomicMode =
+                                _prefs.getBool('holonomicMode') ?? false;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
     if (_currentProject != null) {
       return Center(
         child: Container(
@@ -424,14 +430,14 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 16),
           ),
           onPressed: () {
-            openProjectDialog(context);
+            _openProjectDialog(context);
           },
         ),
       );
     }
   }
 
-  void openProjectDialog(BuildContext context) async {
+  void _openProjectDialog(BuildContext context) async {
     var projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project',
         initialDirectory: Directory.current.path);

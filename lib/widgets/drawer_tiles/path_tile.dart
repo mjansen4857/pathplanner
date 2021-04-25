@@ -16,26 +16,33 @@ class PathTile extends StatefulWidget {
   final VoidCallback onDelete;
   final ValidRename onRename;
 
-  TextEditingController nameController;
-
   PathTile(this.path,
       {this.isSelected = false,
       this.onTap,
       this.key,
       this.onDuplicate,
       this.onDelete,
-      this.onRename}) {
-    nameController = TextEditingController(text: path.name);
-    nameController.selection = TextSelection.fromPosition(
-        TextPosition(offset: nameController.text.length));
-  }
+      this.onRename});
 
   @override
   _PathTileState createState() => _PathTileState();
 }
 
 class _PathTileState extends State<PathTile> {
-  Widget buildTile() {
+  String _name;
+
+  @override
+  void initState() {
+    super.initState();
+    _name = widget.path.name;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildTile();
+  }
+
+  Widget _buildTile() {
     return ClipRect(
       clipBehavior: Clip.hardEdge,
       child: Slidable(
@@ -73,17 +80,20 @@ class _PathTileState extends State<PathTile> {
                       if (widget.onRename != null) {
                         if (widget.onRename.call(text)) {
                           setState(() {
+                            _name = text;
                             widget.path.name = text;
                           });
                         }
                       }
                     } else {
                       setState(() {
-                        widget.nameController.text = widget.path.name;
+                        _name = widget.path.name;
                       });
                     }
                   },
-                  controller: widget.nameController,
+                  controller: TextEditingController(text: _name)
+                    ..selection = TextSelection.fromPosition(
+                        TextPosition(offset: _name.length)),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     focusedBorder: OutlineInputBorder(
@@ -106,10 +116,5 @@ class _PathTileState extends State<PathTile> {
             onTap: widget.isSelected ? null : widget.onTap),
       ),
     );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return buildTile();
   }
 }

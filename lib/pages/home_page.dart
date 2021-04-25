@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> {
         _prefs = val;
 
         String projectDir = _prefs.getString('currentProjectDir');
-        // _loadPaths(projectDir);
+        _loadPaths(projectDir);
         _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
         _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
         _holonomicMode = _prefs.getBool('holonomicMode') ?? false;

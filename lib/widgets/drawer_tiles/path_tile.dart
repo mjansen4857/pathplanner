@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:fitted_text_field_container/fitted_text_field_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -29,12 +27,9 @@ class PathTile extends StatefulWidget {
 }
 
 class _PathTileState extends State<PathTile> {
-  String _name;
-
   @override
   void initState() {
     super.initState();
-    _name = widget.path.name;
   }
 
   @override
@@ -80,20 +75,20 @@ class _PathTileState extends State<PathTile> {
                       if (widget.onRename != null) {
                         if (widget.onRename.call(text)) {
                           setState(() {
-                            _name = text;
                             widget.path.name = text;
                           });
                         }
                       }
                     } else {
                       setState(() {
-                        _name = widget.path.name;
+                        // flutter be weird sometimes
+                        widget.path.name = widget.path.name;
                       });
                     }
                   },
-                  controller: TextEditingController(text: _name)
+                  controller: TextEditingController(text: widget.path.name)
                     ..selection = TextSelection.fromPosition(
-                        TextPosition(offset: _name.length)),
+                        TextPosition(offset: widget.path.name.length)),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     focusedBorder: OutlineInputBorder(

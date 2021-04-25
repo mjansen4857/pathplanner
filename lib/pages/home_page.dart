@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:file_selector/file_selector.dart';
@@ -35,71 +36,17 @@ class _HomePageState extends State<HomePage> {
   double _robotWidth = 0.75;
   double _robotLength = 1.0;
   bool _holonomicMode = false;
+  bool _animateIcon = true;
 
   @override
   void initState() {
     super.initState();
-    List<RobotPath> paths = [];
     SharedPreferences.getInstance().then((val) {
       setState(() {
         _prefs = val;
 
         String projectDir = _prefs.getString('currentProjectDir');
-        if (projectDir != null) {
-          _currentProject = Directory(projectDir);
-          _pathsDir = Directory(projectDir + '/src/main/deploy/pathplanner/');
-          List<FileSystemEntity> pathFiles = _pathsDir.listSync();
-          for (FileSystemEntity e in pathFiles) {
-            if (e.path.endsWith('.path')) {
-              String json = File(e.path).readAsStringSync();
-              RobotPath p = RobotPath.fromJson(jsonDecode(json));
-              p.name = basenameWithoutExtension(e.path);
-              paths.add(p);
-            }
-          }
-          List<String> pathOrder = _prefs.getStringList('pathOrder');
-          List<String> loadedOrder = [];
-          for (RobotPath path in paths) {
-            loadedOrder.add(path.name);
-          }
-          List<RobotPath> orderedPaths = [];
-          if (pathOrder != null) {
-            for (String name in pathOrder) {
-              int loadedIndex = loadedOrder.indexOf(name);
-              if (loadedIndex != -1) {
-                loadedOrder.removeAt(loadedIndex);
-                orderedPaths.add(paths.removeAt(loadedIndex));
-              }
-            }
-            for (RobotPath path in paths) {
-              orderedPaths.add(path);
-            }
-          } else {
-            orderedPaths = paths;
-          }
-          if (orderedPaths.length == 0) {
-            orderedPaths.add(RobotPath(
-              [
-                Waypoint(
-                  anchorPoint: Point(1.0, 3.0),
-                  nextControl: Point(2.0, 3.0),
-                ),
-                Waypoint(
-                  prevControl: Point(3.0, 4.0),
-                  anchorPoint: Point(3.0, 5.0),
-                  isReversal: true,
-                ),
-                Waypoint(
-                  prevControl: Point(4.0, 3.0),
-                  anchorPoint: Point(5.0, 3.0),
-                ),
-              ],
-              name: 'New Path',
-            ));
-          }
-          _paths = orderedPaths;
-          _currentPath = _paths[0];
-        }
+        // _loadPaths(projectDir);
         _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
         _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
         _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
@@ -111,7 +58,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(),
-      drawer: _buildDrawer(context),
+      drawer: _currentProject == null ? null : _buildDrawer(context),
       body: _buildBody(context),
     );
   }
@@ -424,16 +371,96 @@ class _HomePageState extends State<HomePage> {
       );
     } else {
       return Center(
-        child: ElevatedButton(
-          child: Text(
-            'Open Robot Project',
-            style: TextStyle(fontSize: 16),
-          ),
-          onPressed: () {
-            _openProjectDialog(context);
-          },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+                width: 250,
+                height: 250,
+                child: Image(
+                  image: AssetImage('images/icon.png'),
+                )),
+            // SizedBox(height: 12),
+            Text(
+              'PathPlanner',
+              style: TextStyle(fontSize: 48),
+            ),
+            SizedBox(height: 96),
+            ElevatedButton(
+              child: Padding(
+                padding: const EdgeInsets.all(6.0),
+                child: Text(
+                  'Open Robot Project',
+                  style: TextStyle(fontSize: 24),
+                ),
+              ),
+              style: ElevatedButton.styleFrom(primary: Colors.grey[700]),
+              onPressed: () {
+                _openProjectDialog(context);
+              },
+            ),
+          ],
         ),
       );
+    }
+  }
+
+  void _loadPaths(String projectDir) {
+    if (projectDir != null) {
+      List<RobotPath> paths = [];
+      _currentProject = Directory(projectDir);
+      _pathsDir = Directory(projectDir + '/src/main/deploy/pathplanner/');
+      List<FileSystemEntity> pathFiles = _pathsDir.listSync();
+      for (FileSystemEntity e in pathFiles) {
+        if (e.path.endsWith('.path')) {
+          String json = File(e.path).readAsStringSync();
+          RobotPath p = RobotPath.fromJson(jsonDecode(json));
+          p.name = basenameWithoutExtension(e.path);
+          paths.add(p);
+        }
+      }
+      List<String> pathOrder = _prefs.getStringList('pathOrder');
+      List<String> loadedOrder = [];
+      for (RobotPath path in paths) {
+        loadedOrder.add(path.name);
+      }
+      List<RobotPath> orderedPaths = [];
+      if (pathOrder != null) {
+        for (String name in pathOrder) {
+          int loadedIndex = loadedOrder.indexOf(name);
+          if (loadedIndex != -1) {
+            loadedOrder.removeAt(loadedIndex);
+            orderedPaths.add(paths.removeAt(loadedIndex));
+          }
+        }
+        for (RobotPath path in paths) {
+          orderedPaths.add(path);
+        }
+      } else {
+        orderedPaths = paths;
+      }
+      if (orderedPaths.length == 0) {
+        orderedPaths.add(RobotPath(
+          [
+            Waypoint(
+              anchorPoint: Point(1.0, 3.0),
+              nextControl: Point(2.0, 3.0),
+            ),
+            Waypoint(
+              prevControl: Point(3.0, 4.0),
+              anchorPoint: Point(3.0, 5.0),
+              isReversal: true,
+            ),
+            Waypoint(
+              prevControl: Point(4.0, 3.0),
+              anchorPoint: Point(5.0, 3.0),
+            ),
+          ],
+          name: 'New Path',
+        ));
+      }
+      _paths = orderedPaths;
+      _currentPath = _paths[0];
     }
   }
 
@@ -451,6 +478,7 @@ class _HomePageState extends State<HomePage> {
         _prefs.remove('pathOrder');
         setState(() {
           _currentProject = Directory(projectFolder);
+          _loadPaths(_currentProject.path);
         });
       } else {
         showDialog(

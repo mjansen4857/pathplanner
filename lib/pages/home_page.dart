@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
+import 'package:pathplanner/services/github.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
@@ -17,6 +18,7 @@ import 'package:pathplanner/widgets/drawer_tiles/path_tile.dart';
 import 'package:pathplanner/widgets/drawer_tiles/settings_tile.dart';
 import 'package:pathplanner/widgets/window_button/window_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   HomePage() : super();
@@ -25,7 +27,8 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   double _toolbarHeight = 56;
   String _version = '2022.0.0';
   Directory _currentProject;
@@ -36,11 +39,22 @@ class _HomePageState extends State<HomePage> {
   double _robotWidth = 0.75;
   double _robotLength = 1.0;
   bool _holonomicMode = false;
-  bool _animateIcon = true;
+  bool _updateAvailable = false;
+  AnimationController _updateController;
+  Animation<Offset> _offsetAnimation;
+  String _releaseURL =
+      'https://github.com/mjansen4857/pathplanner/releases/latest';
 
   @override
   void initState() {
     super.initState();
+    _updateController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 400));
+    _offsetAnimation = Tween<Offset>(begin: Offset(0, -0.05), end: Offset.zero)
+        .animate(CurvedAnimation(
+      parent: _updateController,
+      curve: Curves.ease,
+    ));
     SharedPreferences.getInstance().then((val) {
       setState(() {
         _prefs = val;
@@ -52,6 +66,19 @@ class _HomePageState extends State<HomePage> {
         _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
       });
     });
+
+    GitHubAPI.isUpdateAvailable(_version).then((value) {
+      setState(() {
+        _updateAvailable = value;
+        _updateController.forward();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _updateController.dispose();
   }
 
   @override
@@ -59,7 +86,12 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: _buildAppBar(),
       drawer: _currentProject == null ? null : _buildDrawer(context),
-      body: _buildBody(context),
+      body: Stack(
+        children: [
+          _buildBody(context),
+          _buildUpdateNotification(),
+        ],
+      ),
     );
   }
 
@@ -356,6 +388,57 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildUpdateNotification() {
+    return Visibility(
+      visible: _updateAvailable,
+      child: SlideTransition(
+        position: _offsetAnimation,
+        child: Align(
+          alignment: FractionalOffset.topLeft,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              color: Colors.white.withOpacity(0.13),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Update Available!',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (await canLaunch(_releaseURL)) {
+                              launch(_releaseURL);
+                            }
+                          },
+                          child: Text(
+                            'Update',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

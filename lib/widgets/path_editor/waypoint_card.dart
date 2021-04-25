@@ -43,7 +43,7 @@ class _WaypointCardState extends State<WaypointCard> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Column(

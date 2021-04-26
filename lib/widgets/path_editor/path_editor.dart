@@ -27,9 +27,9 @@ class PathEditor extends StatefulWidget {
 }
 
 class _PathEditorState extends State<PathEditor> {
-  Waypoint _draggedPoint;
-  Waypoint _selectedPoint;
-  Waypoint _dragOldValue;
+  Waypoint? _draggedPoint;
+  Waypoint? _selectedPoint;
+  Waypoint? _dragOldValue;
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +100,7 @@ class _PathEditorState extends State<PathEditor> {
         onTapDown: (details) {
           FocusScopeNode currentScope = FocusScope.of(context);
           if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-            FocusManager.instance.primaryFocus.unfocus();
+            FocusManager.instance.primaryFocus!.unfocus();
           }
           for (Waypoint w in widget.path.waypoints.reversed) {
             if (w.isPointInAnchor(
@@ -149,7 +149,7 @@ class _PathEditorState extends State<PathEditor> {
         onPanUpdate: (details) {
           if (_draggedPoint != null) {
             setState(() {
-              _draggedPoint.dragUpdate(
+              _draggedPoint!.dragUpdate(
                   _xPixelsToMeters(details.localPosition.dx),
                   _yPixelsToMeters(details.localPosition.dy));
             });
@@ -157,9 +157,9 @@ class _PathEditorState extends State<PathEditor> {
         },
         onPanEnd: (details) {
           if (_draggedPoint != null) {
-            _draggedPoint.stopDragging();
-            int index = widget.path.waypoints.indexOf(_draggedPoint);
-            Waypoint dragEnd = _draggedPoint.clone();
+            _draggedPoint!.stopDragging();
+            int index = widget.path.waypoints.indexOf(_draggedPoint!);
+            Waypoint dragEnd = _draggedPoint!.clone();
             UndoRedo.addChange(Change(
               _dragOldValue,
               () {
@@ -215,7 +215,7 @@ class _PathEditorState extends State<PathEditor> {
           widget.path.savePath(widget.pathsDir);
         },
         onDelete: () {
-          int delIndex = widget.path.waypoints.indexOf(_selectedPoint);
+          int delIndex = widget.path.waypoints.indexOf(_selectedPoint!);
           UndoRedo.addChange(Change(
             RobotPath.cloneWaypointList(widget.path.waypoints),
             () {

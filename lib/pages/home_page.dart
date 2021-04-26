@@ -30,19 +30,19 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double _toolbarHeight = 56;
   String _version = '2022.0.0';
-  Directory _currentProject;
-  Directory _pathsDir;
-  SharedPreferences _prefs;
+  Directory? _currentProject;
+  Directory? _pathsDir;
+  late SharedPreferences _prefs;
   List<RobotPath> _paths = [];
-  RobotPath _currentPath;
+  RobotPath? _currentPath;
   double _robotWidth = 0.75;
   double _robotLength = 1.0;
   bool _holonomicMode = false;
   bool _updateAvailable = false;
-  AnimationController _updateController;
-  AnimationController _welcomeController;
-  Animation<Offset> _offsetAnimation;
-  Animation<double> _scaleAnimation;
+  late AnimationController _updateController;
+  late AnimationController _welcomeController;
+  late Animation<Offset> _offsetAnimation;
+  late Animation<double> _scaleAnimation;
   String _releaseURL =
       'https://github.com/mjansen4857/pathplanner/releases/latest';
 
@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _prefs = val;
         _welcomeController.forward();
 
-        String projectDir = _prefs.getString('currentProjectDir');
+        String? projectDir = _prefs.getString('currentProjectDir');
         _loadPaths(projectDir);
         _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
         _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
@@ -91,7 +91,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar() as PreferredSizeWidget?,
       drawer: _currentProject == null ? null : _buildDrawer(context),
       body: Stack(
         children: [
@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   child: Text(
                     _currentPath == null
                         ? 'PathPlanner'
-                        : '${_currentPath.name}',
+                        : '${_currentPath!.name}',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                   ),
                 ),
@@ -157,7 +157,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
                           (_currentProject != null)
-                              ? basename(_currentProject.path)
+                              ? basename(_currentProject!.path)
                               : 'No Project',
                           style: TextStyle(
                               fontSize: 20,
@@ -207,8 +207,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     isSelected: _paths[i] == _currentPath,
                     onRename: (name) {
                       File pathFile =
-                          File(_pathsDir.path + _paths[i].name + '.path');
-                      File newPathFile = File(_pathsDir.path + name + '.path');
+                          File(_pathsDir!.path + _paths[i].name + '.path');
+                      File newPathFile = File(_pathsDir!.path + name + '.path');
                       if (newPathFile.existsSync() &&
                           newPathFile.path != pathFile.path) {
                         Navigator.of(context).pop();
@@ -237,7 +237,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             });
                         return false;
                       } else {
-                        pathFile.rename(_pathsDir.path + name + '.path');
+                        pathFile.rename(_pathsDir!.path + name + '.path');
                         return true;
                       }
                     },
@@ -251,7 +251,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       UndoRedo.clearHistory();
 
                       File pathFile =
-                          File(_pathsDir.path + _paths[i].name + '.path');
+                          File(_pathsDir!.path + _paths[i].name + '.path');
 
                       if (pathFile.existsSync()) {
                         // The fitted text field container does not rebuild
@@ -326,7 +326,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           name: pathName,
                         ));
                         _currentPath = _paths.last;
-                        _currentPath.savePath(_pathsDir.path);
+                        _currentPath!.savePath(_pathsDir!.path);
                       });
                     },
                   ),
@@ -369,7 +369,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                           ], name: pathName));
                           _currentPath = _paths.last;
-                          _currentPath.savePath(_pathsDir.path);
+                          _currentPath!.savePath(_pathsDir!.path);
                           UndoRedo.clearHistory();
                         });
                       },
@@ -454,8 +454,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (_currentProject != null) {
       return Center(
         child: Container(
-          child: PathEditor(_currentPath, _robotWidth, _robotLength,
-              _holonomicMode, _pathsDir.path),
+          child: PathEditor(_currentPath!, _robotWidth, _robotLength,
+              _holonomicMode, _pathsDir!.path),
         ),
       );
     } else {
@@ -515,12 +515,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _loadPaths(String projectDir) {
+  void _loadPaths(String? projectDir) {
     if (projectDir != null) {
       List<RobotPath> paths = [];
       _currentProject = Directory(projectDir);
       _pathsDir = Directory(projectDir + '/src/main/deploy/pathplanner/');
-      List<FileSystemEntity> pathFiles = _pathsDir.listSync();
+      List<FileSystemEntity> pathFiles = _pathsDir!.listSync();
       for (FileSystemEntity e in pathFiles) {
         if (e.path.endsWith('.path')) {
           String json = File(e.path).readAsStringSync();
@@ -529,7 +529,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           paths.add(p);
         }
       }
-      List<String> pathOrder = _prefs.getStringList('pathOrder');
+      List<String>? pathOrder = _prefs.getStringList('pathOrder');
       List<String> loadedOrder = [];
       for (RobotPath path in paths) {
         loadedOrder.add(path.name);
@@ -588,7 +588,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _prefs.remove('pathOrder');
         setState(() {
           _currentProject = Directory(projectFolder);
-          _loadPaths(_currentProject.path);
+          _loadPaths(_currentProject!.path);
         });
       } else {
         showDialog(

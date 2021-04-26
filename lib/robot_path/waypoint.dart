@@ -2,11 +2,11 @@ import 'dart:math';
 
 class Waypoint {
   Point anchorPoint;
-  Point prevControl;
-  Point nextControl;
+  Point? prevControl;
+  Point? nextControl;
   double holonomicAngle;
   bool isReversal;
-  double velOverride;
+  double? velOverride;
   bool isLocked;
 
   bool _isAnchorDragging = false;
@@ -15,7 +15,7 @@ class Waypoint {
   bool _isHolonomicThingDragging = false;
 
   Waypoint(
-      {this.anchorPoint,
+      {required this.anchorPoint,
       this.prevControl,
       this.nextControl,
       this.holonomicAngle = 0,
@@ -29,10 +29,10 @@ class Waypoint {
 
   Waypoint clone() {
     Point anchor = Point(anchorPoint.x, anchorPoint.y);
-    Point prev =
-        prevControl == null ? null : Point(prevControl.x, prevControl.y);
-    Point next =
-        nextControl == null ? null : Point(nextControl.x, nextControl.y);
+    Point? prev =
+        prevControl == null ? null : Point(prevControl!.x, prevControl!.y);
+    Point? next =
+        nextControl == null ? null : Point(nextControl!.x, nextControl!.y);
 
     return Waypoint(
       anchorPoint: anchor,
@@ -45,24 +45,24 @@ class Waypoint {
     );
   }
 
-  void move(double x, double y) {
-    double dx = x - anchorPoint.x;
-    double dy = y - anchorPoint.y;
+  void move(num x, num y) {
+    num dx = x - anchorPoint.x;
+    num dy = y - anchorPoint.y;
     anchorPoint = Point(x, y);
     if (nextControl != null) {
-      nextControl = Point(nextControl.x + dx, nextControl.y + dy);
+      nextControl = Point(nextControl!.x + dx, nextControl!.y + dy);
     }
     if (prevControl != null) {
-      prevControl = Point(prevControl.x + dx, prevControl.y + dy);
+      prevControl = Point(prevControl!.x + dx, prevControl!.y + dy);
     }
   }
 
   double getXPos() {
-    return anchorPoint.x;
+    return anchorPoint.x as double;
   }
 
   double getYPos() {
-    return anchorPoint.y;
+    return anchorPoint.y as double;
   }
 
   bool isStartPoint() {
@@ -76,11 +76,11 @@ class Waypoint {
   double getHeadingRadians() {
     var heading;
     if (isStartPoint()) {
-      heading =
-          -atan2(nextControl.y - anchorPoint.y, nextControl.x - anchorPoint.x);
+      heading = -atan2(
+          nextControl!.y - anchorPoint.y, nextControl!.x - anchorPoint.x);
     } else {
-      heading =
-          -atan2(anchorPoint.y - prevControl.y, anchorPoint.x - prevControl.x);
+      heading = -atan2(
+          anchorPoint.y - prevControl!.y, anchorPoint.x - prevControl!.x);
     }
     if (heading == -0) return 0;
     return heading;
@@ -97,7 +97,7 @@ class Waypoint {
 
   bool isPointInNextControl(double xPos, double yPos, double radius) {
     if (nextControl != null) {
-      return pow(xPos - nextControl.x, 2) + pow(yPos - nextControl.y, 2) <
+      return pow(xPos - nextControl!.x, 2) + pow(yPos - nextControl!.y, 2) <
           pow(radius, 2);
     }
     return false;
@@ -105,7 +105,7 @@ class Waypoint {
 
   bool isPointInPrevControl(double xPos, double yPos, double radius) {
     if (prevControl != null) {
-      return pow(xPos - prevControl.x, 2) + pow(yPos - prevControl.y, 2) <
+      return pow(xPos - prevControl!.x, 2) + pow(yPos - prevControl!.y, 2) <
           pow(radius, 2);
     }
     return false;
@@ -146,7 +146,7 @@ class Waypoint {
       move(x, y);
     } else if (_isNextControlDragging) {
       if (isLocked) {
-        Point lineEnd = nextControl + (nextControl - anchorPoint);
+        Point lineEnd = nextControl! + (nextControl! - anchorPoint);
         Point newPoint = _closestPointOnLine(anchorPoint, lineEnd, Point(x, y));
         if (newPoint.x - anchorPoint.x != 0 ||
             newPoint.y - anchorPoint.y != 0) {
@@ -163,7 +163,7 @@ class Waypoint {
       }
     } else if (_isPrevControlDragging) {
       if (isLocked) {
-        Point lineEnd = prevControl + (prevControl - anchorPoint);
+        Point lineEnd = prevControl! + (prevControl! - anchorPoint);
         Point newPoint = _closestPointOnLine(anchorPoint, lineEnd, Point(x, y));
         if (newPoint.x - anchorPoint.x != 0 ||
             newPoint.y - anchorPoint.y != 0) {
@@ -186,8 +186,8 @@ class Waypoint {
 
   void updatePrevControlFromNext() {
     if (prevControl != null) {
-      var dst = anchorPoint.distanceTo(prevControl);
-      var dir = anchorPoint - nextControl;
+      var dst = anchorPoint.distanceTo(prevControl!);
+      var dir = anchorPoint - nextControl!;
       var mag = dir.magnitude;
       dir = Point(dir.x / mag, dir.y / mag);
 
@@ -198,8 +198,8 @@ class Waypoint {
 
   void updateNextControlFromPrev() {
     if (nextControl != null) {
-      var dst = anchorPoint.distanceTo(nextControl);
-      var dir = (anchorPoint - prevControl);
+      var dst = anchorPoint.distanceTo(nextControl!);
+      var dir = (anchorPoint - prevControl!);
       var mag = dir.magnitude;
       dir = Point(dir.x / mag, dir.y / mag);
 
@@ -209,8 +209,8 @@ class Waypoint {
   }
 
   void addNextControl() {
-    var dst = anchorPoint.distanceTo(prevControl);
-    var dir = (anchorPoint - prevControl);
+    var dst = anchorPoint.distanceTo(prevControl!);
+    var dir = (anchorPoint - prevControl!);
     var mag = dir.magnitude;
     dir = Point(dir.x / mag, dir.y / mag);
 
@@ -230,7 +230,7 @@ class Waypoint {
   void setHeading(double headingDegrees) {
     var theta = -headingDegrees * pi / 180;
     if (nextControl != null && !isReversal) {
-      var h = (anchorPoint - nextControl).magnitude;
+      var h = (anchorPoint - nextControl!).magnitude;
       var o = sin(theta) * h;
       var a = cos(theta) * h;
 
@@ -241,7 +241,7 @@ class Waypoint {
         updatePrevControlFromNext();
       }
     } else if (prevControl != null) {
-      var h = (anchorPoint - prevControl).magnitude;
+      var h = (anchorPoint - prevControl!).magnitude;
       var o = sin(theta) * h;
       var a = cos(theta) * h;
 
@@ -262,8 +262,8 @@ class Waypoint {
   }
 
   Point _closestPointOnLine(Point lineStart, Point lineEnd, Point p) {
-    double dx = lineEnd.x - lineStart.x;
-    double dy = lineEnd.y - lineStart.y;
+    var dx = lineEnd.x - lineStart.x;
+    var dy = lineEnd.y - lineStart.y;
 
     if (dx == 0 || dy == 0) {
       return lineStart;
@@ -284,9 +284,7 @@ class Waypoint {
   }
 
   Waypoint.fromJson(Map<String, dynamic> json)
-      : anchorPoint = json['anchorPoint'] == null
-            ? null
-            : Point(json['anchorPoint']['x'], json['anchorPoint']['y']),
+      : anchorPoint = Point(json['anchorPoint']['x'], json['anchorPoint']['y']),
         prevControl = json['prevControl'] == null
             ? null
             : Point(json['prevControl']['x'], json['prevControl']['y']),
@@ -300,23 +298,21 @@ class Waypoint {
 
   Map<String, dynamic> toJson() {
     return {
-      'anchorPoint': anchorPoint == null
-          ? null
-          : {
-              'x': anchorPoint.x,
-              'y': anchorPoint.y,
-            },
+      'anchorPoint': {
+        'x': anchorPoint.x,
+        'y': anchorPoint.y,
+      },
       'prevControl': prevControl == null
           ? null
           : {
-              'x': prevControl.x,
-              'y': prevControl.y,
+              'x': prevControl!.x,
+              'y': prevControl!.y,
             },
       'nextControl': nextControl == null
           ? null
           : {
-              'x': nextControl.x,
-              'y': nextControl.y,
+              'x': nextControl!.x,
+              'y': nextControl!.y,
             },
       'holonomicAngle': holonomicAngle,
       'isReversal': isReversal,

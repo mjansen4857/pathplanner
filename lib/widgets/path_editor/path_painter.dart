@@ -9,7 +9,7 @@ class PathPainter extends CustomPainter {
   final Size _robotSize;
   final bool _holonomicMode;
   final RobotPath _path;
-  final Waypoint _selectedWaypoint;
+  final Waypoint? _selectedWaypoint;
 
   static double scale = 1;
 
@@ -38,15 +38,15 @@ class PathPainter extends CustomPainter {
   void _paintCenterPath(Canvas canvas, double scale) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Colors.grey[300]
+      ..color = Colors.grey[300]!
       ..strokeWidth = 2;
 
     for (int i = 0; i < _path.waypoints.length - 1; i++) {
       Path p = Path();
       Offset p0 = _pointToPixelOffset(_path.waypoints[i].anchorPoint, scale);
-      Offset p1 = _pointToPixelOffset(_path.waypoints[i].nextControl, scale);
+      Offset p1 = _pointToPixelOffset(_path.waypoints[i].nextControl!, scale);
       Offset p2 =
-          _pointToPixelOffset(_path.waypoints[i + 1].prevControl, scale);
+          _pointToPixelOffset(_path.waypoints[i + 1].prevControl!, scale);
       Offset p3 =
           _pointToPixelOffset(_path.waypoints[i + 1].anchorPoint, scale);
       p.moveTo(p0.dx, p0.dy);
@@ -59,7 +59,7 @@ class PathPainter extends CustomPainter {
   void _paintDualPaths(Canvas canvas, double scale) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Colors.grey[300]
+      ..color = Colors.grey[300]!
       ..strokeWidth = 2;
 
     for (int i = 0; i < _path.waypoints.length - 1; i++) {
@@ -68,9 +68,9 @@ class PathPainter extends CustomPainter {
       double halfWidth = _metersToPixels(_robotSize.width / 2, scale);
 
       Offset p0 = _pointToPixelOffset(_path.waypoints[i].anchorPoint, scale);
-      Offset p1 = _pointToPixelOffset(_path.waypoints[i].nextControl, scale);
+      Offset p1 = _pointToPixelOffset(_path.waypoints[i].nextControl!, scale);
       Offset p2 =
-          _pointToPixelOffset(_path.waypoints[i + 1].prevControl, scale);
+          _pointToPixelOffset(_path.waypoints[i + 1].prevControl!, scale);
       Offset p3 =
           _pointToPixelOffset(_path.waypoints[i + 1].anchorPoint, scale);
 
@@ -117,7 +117,7 @@ class PathPainter extends CustomPainter {
   void _paintRobotOutline(Canvas canvas, double scale, Waypoint waypoint) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Colors.grey[300]
+      ..color = Colors.grey[300]!
       ..strokeWidth = 2;
 
     if (waypoint == _selectedWaypoint) {
@@ -126,7 +126,7 @@ class PathPainter extends CustomPainter {
 
     Offset center = _pointToPixelOffset(waypoint.anchorPoint, scale);
     double angle = (_holonomicMode)
-        ? ((waypoint.holonomicAngle ?? 0) / 180 * pi)
+        ? (waypoint.holonomicAngle / 180 * pi)
         : waypoint.getHeadingRadians();
     double halfWidth = _metersToPixels(_robotSize.width / 2, scale);
     double halfLength = _metersToPixels(_robotSize.height / 2, scale);
@@ -166,11 +166,11 @@ class PathPainter extends CustomPainter {
     //draw control point lines
     if (waypoint.nextControl != null) {
       canvas.drawLine(_pointToPixelOffset(waypoint.anchorPoint, scale),
-          _pointToPixelOffset(waypoint.nextControl, scale), paint);
+          _pointToPixelOffset(waypoint.nextControl!, scale), paint);
     }
     if (waypoint.prevControl != null) {
       canvas.drawLine(_pointToPixelOffset(waypoint.anchorPoint, scale),
-          _pointToPixelOffset(waypoint.prevControl, scale), paint);
+          _pointToPixelOffset(waypoint.prevControl!, scale), paint);
     }
 
     if (waypoint.isStartPoint()) {
@@ -178,7 +178,7 @@ class PathPainter extends CustomPainter {
     } else if (waypoint.isEndPoint()) {
       paint.color = Colors.red;
     } else {
-      paint.color = Colors.grey[300];
+      paint.color = Colors.grey[300]!;
     }
 
     // draw anchor point
@@ -193,25 +193,25 @@ class PathPainter extends CustomPainter {
     // draw control points
     if (waypoint.nextControl != null) {
       paint.style = PaintingStyle.fill;
-      paint.color = Colors.grey[300];
+      paint.color = Colors.grey[300]!;
 
       canvas.drawCircle(
-          _pointToPixelOffset(waypoint.nextControl, scale), 6 * scale, paint);
+          _pointToPixelOffset(waypoint.nextControl!, scale), 6 * scale, paint);
       paint.style = PaintingStyle.stroke;
       paint.color = Colors.black;
       canvas.drawCircle(
-          _pointToPixelOffset(waypoint.nextControl, scale), 6 * scale, paint);
+          _pointToPixelOffset(waypoint.nextControl!, scale), 6 * scale, paint);
     }
     if (waypoint.prevControl != null) {
       paint.style = PaintingStyle.fill;
-      paint.color = Colors.grey[300];
+      paint.color = Colors.grey[300]!;
 
       canvas.drawCircle(
-          _pointToPixelOffset(waypoint.prevControl, scale), 6 * scale, paint);
+          _pointToPixelOffset(waypoint.prevControl!, scale), 6 * scale, paint);
       paint.style = PaintingStyle.stroke;
       paint.color = Colors.black;
       canvas.drawCircle(
-          _pointToPixelOffset(waypoint.prevControl, scale), 6 * scale, paint);
+          _pointToPixelOffset(waypoint.prevControl!, scale), 6 * scale, paint);
     }
   }
 

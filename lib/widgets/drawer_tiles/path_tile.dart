@@ -8,11 +8,11 @@ typedef bool ValidRename(String name);
 class PathTile extends StatefulWidget {
   final RobotPath path;
   final bool isSelected;
-  final Key key;
-  final VoidCallback onTap;
-  final VoidCallback onDuplicate;
-  final VoidCallback onDelete;
-  final ValidRename onRename;
+  final Key? key;
+  final VoidCallback? onTap;
+  final VoidCallback? onDuplicate;
+  final VoidCallback? onDelete;
+  final ValidRename? onRename;
 
   PathTile(this.path,
       {this.isSelected = false,
@@ -66,14 +66,14 @@ class _PathTileState extends State<PathTile> {
                 child: TextField(
                   cursorColor: Colors.white,
                   onSubmitted: (String text) {
-                    if (text != null && text != '') {
+                    if (text != '') {
                       FocusScopeNode currentScope = FocusScope.of(context);
                       if (!currentScope.hasPrimaryFocus &&
                           currentScope.hasFocus) {
-                        FocusManager.instance.primaryFocus.unfocus();
+                        FocusManager.instance.primaryFocus!.unfocus();
                       }
                       if (widget.onRename != null) {
-                        if (widget.onRename.call(text)) {
+                        if (widget.onRename!.call(text)) {
                           setState(() {
                             widget.path.name = text;
                           });

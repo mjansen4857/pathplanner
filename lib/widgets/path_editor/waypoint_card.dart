@@ -7,17 +7,17 @@ import 'package:pathplanner/services/undo_redo.dart';
 import 'package:undo/undo.dart';
 
 class WaypointCard extends StatefulWidget {
-  final Waypoint waypoint;
-  final String label;
+  final Waypoint? waypoint;
+  final String? label;
   final bool holonomicEnabled;
   final bool deleteEnabled;
-  final VoidCallback onDelete;
-  final VoidCallback onShouldSave;
+  final VoidCallback? onDelete;
+  final VoidCallback? onShouldSave;
 
   WaypointCard(this.waypoint,
       {this.label,
-      this.holonomicEnabled,
-      this.deleteEnabled,
+      this.holonomicEnabled = false,
+      this.deleteEnabled = false,
       this.onDelete,
       this.onShouldSave});
 
@@ -38,7 +38,6 @@ class _WaypointCardState extends State<WaypointCard> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          // color: Colors.grey[800].withOpacity(0.0),
           color: Colors.white.withOpacity(0.13),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
@@ -62,7 +61,7 @@ class _WaypointCardState extends State<WaypointCard> {
                           _buildVelReversalRow(context),
                         ],
                       ),
-                      visible: !widget.waypoint.isStartPoint(),
+                      visible: !widget.waypoint!.isStartPoint(),
                     ),
                     SizedBox(height: 5),
                   ],
@@ -85,15 +84,15 @@ class _WaypointCardState extends State<WaypointCard> {
           width: 30,
           child: IconButton(
             tooltip:
-                widget.waypoint.isLocked ? 'Unlock Waypoint' : 'Lock Waypoint',
+                widget.waypoint!.isLocked ? 'Unlock Waypoint' : 'Lock Waypoint',
             icon: Icon(
-              widget.waypoint.isLocked ? Icons.lock : Icons.lock_open,
+              widget.waypoint!.isLocked ? Icons.lock : Icons.lock_open,
             ),
             onPressed: () {
               setState(() {
-                widget.waypoint.isLocked = !widget.waypoint.isLocked;
+                widget.waypoint!.isLocked = !widget.waypoint!.isLocked;
                 if (widget.onShouldSave != null) {
-                  widget.onShouldSave.call();
+                  widget.onShouldSave!.call();
                 }
               });
             },
@@ -131,10 +130,10 @@ class _WaypointCardState extends State<WaypointCard> {
       children: [
         _buildTextField(
           context,
-          _getController(widget.waypoint.getXPos().toStringAsFixed(2)),
+          _getController(widget.waypoint!.getXPos().toStringAsFixed(2)),
           'X Position',
           onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
+            Waypoint wRef = widget.waypoint!;
             UndoRedo.addChange(_cardChange(
               () => wRef.move(val, wRef.anchorPoint.y),
               (oldVal) => wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y),
@@ -144,13 +143,14 @@ class _WaypointCardState extends State<WaypointCard> {
         SizedBox(width: 12),
         _buildTextField(
           context,
-          _getController(widget.waypoint.getYPos().toStringAsFixed(2)),
+          _getController(widget.waypoint!.getYPos().toStringAsFixed(2)),
           'Y Position',
           onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
+            Waypoint? wRef = widget.waypoint;
             UndoRedo.addChange(_cardChange(
-              () => wRef.move(wRef.anchorPoint.x, val),
-              (oldVal) => wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y),
+              () => wRef!.move(wRef.anchorPoint.x, val),
+              (oldVal) =>
+                  wRef!.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y),
             ));
           },
         ),
@@ -166,13 +166,13 @@ class _WaypointCardState extends State<WaypointCard> {
         _buildTextField(
           context,
           _getController(
-              widget.waypoint.getHeadingDegrees().toStringAsFixed(2)),
+              widget.waypoint!.getHeadingDegrees().toStringAsFixed(2)),
           'Heading',
           onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
+            Waypoint? wRef = widget.waypoint;
             UndoRedo.addChange(_cardChange(
-              () => wRef.setHeading(val),
-              (oldVal) => wRef.setHeading(oldVal.getHeadingDegrees()),
+              () => wRef!.setHeading(val),
+              (oldVal) => wRef!.setHeading(oldVal.getHeadingDegrees()),
             ));
           },
         ),
@@ -182,14 +182,14 @@ class _WaypointCardState extends State<WaypointCard> {
           !widget.holonomicEnabled
               ? null
               : _getController(
-                  widget.waypoint.holonomicAngle.toStringAsFixed(2)),
+                  widget.waypoint!.holonomicAngle.toStringAsFixed(2)),
           'Rotation',
           enabled: widget.holonomicEnabled,
           onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
+            Waypoint? wRef = widget.waypoint;
             UndoRedo.addChange(_cardChange(
-              () => wRef.holonomicAngle = val,
-              (oldVal) => wRef.holonomicAngle = oldVal.holonomicAngle,
+              () => wRef!.holonomicAngle = val,
+              (oldVal) => wRef!.holonomicAngle = oldVal.holonomicAngle,
             ));
           },
         ),
@@ -204,16 +204,17 @@ class _WaypointCardState extends State<WaypointCard> {
       children: [
         _buildTextField(
           context,
-          widget.waypoint.isReversal || widget.waypoint.velOverride == null
+          widget.waypoint!.isReversal || widget.waypoint!.velOverride == null
               ? null
-              : _getController(widget.waypoint.velOverride.toStringAsFixed(2)),
+              : _getController(
+                  widget.waypoint!.velOverride!.toStringAsFixed(2)),
           'Vel Override',
-          enabled: !widget.waypoint.isReversal,
+          enabled: !widget.waypoint!.isReversal,
           onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint;
+            Waypoint? wRef = widget.waypoint;
             UndoRedo.addChange(_cardChange(
-              () => wRef.velOverride = val,
-              (oldVal) => wRef.velOverride = oldVal.velOverride,
+              () => wRef!.velOverride = val,
+              (oldVal) => wRef!.velOverride = oldVal.velOverride,
             ));
           },
         ),
@@ -225,19 +226,19 @@ class _WaypointCardState extends State<WaypointCard> {
   }
 
   Widget _buildReversalWidget() {
-    if (widget.waypoint.isStartPoint() || widget.waypoint.isEndPoint()) {
+    if (widget.waypoint!.isStartPoint() || widget.waypoint!.isEndPoint()) {
       return SizedBox(width: 90);
     } else {
       return Row(
         children: [
           Checkbox(
-            value: widget.waypoint.isReversal,
+            value: widget.waypoint!.isReversal,
             activeColor: Colors.indigo,
             onChanged: (val) {
-              Waypoint wRef = widget.waypoint;
+              Waypoint? wRef = widget.waypoint;
               UndoRedo.addChange(_cardChange(
-                () => wRef.setReversal(val),
-                (oldVal) => wRef.setReversal(oldVal.isReversal),
+                () => wRef!.setReversal(val!),
+                (oldVal) => wRef!.setReversal(oldVal.isReversal),
               ));
             },
           ),
@@ -248,20 +249,20 @@ class _WaypointCardState extends State<WaypointCard> {
   }
 
   Widget _buildTextField(
-      BuildContext context, TextEditingController controller, String label,
-      {bool enabled = true, ValueChanged onSubmitted}) {
+      BuildContext context, TextEditingController? controller, String label,
+      {bool? enabled = true, ValueChanged? onSubmitted}) {
     return Container(
       width: 100,
       height: 35,
       child: TextField(
         onSubmitted: (val) {
           if (onSubmitted != null) {
-            var parsed = double.tryParse(val);
+            var parsed = double.tryParse(val)!;
             onSubmitted.call(parsed);
           }
           FocusScopeNode currentScope = FocusScope.of(context);
           if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-            FocusManager.instance.primaryFocus.unfocus();
+            FocusManager.instance.primaryFocus!.unfocus();
           }
         },
         enabled: enabled,
@@ -287,12 +288,12 @@ class _WaypointCardState extends State<WaypointCard> {
 
   Change _cardChange(VoidCallback execute, Function(Waypoint oldVal) undo) {
     return Change(
-      widget.waypoint.clone(),
+      widget.waypoint!.clone(),
       () {
         setState(() {
           execute.call();
           if (widget.onShouldSave != null) {
-            widget.onShouldSave.call();
+            widget.onShouldSave!.call();
           }
         });
       },
@@ -300,7 +301,7 @@ class _WaypointCardState extends State<WaypointCard> {
         setState(() {
           undo.call(oldVal);
           if (widget.onShouldSave != null) {
-            widget.onShouldSave.call();
+            widget.onShouldSave!.call();
           }
         });
       },

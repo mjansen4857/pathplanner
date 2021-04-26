@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 typedef MouseStateBuilderCB = Widget Function(
-    BuildContext context, MouseState mouseState);
+    BuildContext context, MouseState? mouseState);
 
 class MouseState {
   bool isMouseOver = false;
@@ -14,15 +14,15 @@ class MouseState {
 }
 
 class MouseStateBuilder extends StatefulWidget {
-  final MouseStateBuilderCB builder;
-  final VoidCallback onPressed;
-  MouseStateBuilder({Key key, this.builder, this.onPressed}) : super(key: key);
+  final MouseStateBuilderCB? builder;
+  final VoidCallback? onPressed;
+  MouseStateBuilder({Key? key, this.builder, this.onPressed}) : super(key: key);
   @override
   _MouseStateBuilderState createState() => _MouseStateBuilderState();
 }
 
 class _MouseStateBuilderState extends State<MouseStateBuilder> {
-  MouseState _mouseState;
+  MouseState? _mouseState;
   _MouseStateBuilderState() {
     _mouseState = MouseState();
   }
@@ -32,37 +32,37 @@ class _MouseStateBuilderState extends State<MouseStateBuilder> {
     return MouseRegion(
         onEnter: (event) {
           setState(() {
-            _mouseState.isMouseOver = true;
+            _mouseState!.isMouseOver = true;
           });
         },
         onExit: (event) {
           setState(() {
-            _mouseState.isMouseOver = false;
+            _mouseState!.isMouseOver = false;
           });
         },
         child: GestureDetector(
             onTapDown: (_) {
               setState(() {
-                _mouseState.isMouseDown = true;
+                _mouseState!.isMouseDown = true;
               });
             },
             onTapCancel: () {
               setState(() {
-                _mouseState.isMouseDown = false;
+                _mouseState!.isMouseDown = false;
               });
             },
             onTap: () {
               setState(() {
-                _mouseState.isMouseDown = false;
-                _mouseState.isMouseOver = false;
+                _mouseState!.isMouseDown = false;
+                _mouseState!.isMouseOver = false;
               });
-              WidgetsBinding.instance.addPostFrameCallback((_) {
+              WidgetsBinding.instance!.addPostFrameCallback((_) {
                 if (widget.onPressed != null) {
-                  widget.onPressed();
+                  widget.onPressed!();
                 }
               });
             },
             onTapUp: (_) {},
-            child: widget.builder(context, _mouseState)));
+            child: widget.builder!(context, _mouseState)));
   }
 }

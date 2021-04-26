@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsTile extends StatefulWidget {
-  final VoidCallback onSettingsChanged;
+  final VoidCallback? onSettingsChanged;
 
   SettingsTile({this.onSettingsChanged});
 
@@ -18,13 +18,13 @@ class _SettingsTileState extends State<SettingsTile>
   static final Animatable<double> _halfTween =
       Tween<double>(begin: 0.0, end: 0.5);
 
-  SharedPreferences _prefs;
+  SharedPreferences? _prefs;
   double _width = 0.75;
   double _length = 1.0;
   bool _holonomic = false;
 
-  AnimationController _controller;
-  Animation<double> _iconTurns;
+  late AnimationController _controller;
+  late Animation<double> _iconTurns;
 
   @override
   void initState() {
@@ -38,9 +38,9 @@ class _SettingsTileState extends State<SettingsTile>
       setState(() {
         _prefs = value;
         if (_prefs != null) {
-          _width = _prefs.getDouble('robotWidth') ?? 0.75;
-          _length = _prefs.getDouble('robotLength') ?? 1.0;
-          _holonomic = _prefs.getBool('holonomicMode') ?? false;
+          _width = _prefs!.getDouble('robotWidth') ?? 0.75;
+          _length = _prefs!.getDouble('robotLength') ?? 1.0;
+          _holonomic = _prefs!.getBool('holonomicMode') ?? false;
         }
       });
     });
@@ -67,24 +67,24 @@ class _SettingsTileState extends State<SettingsTile>
       children: [
         buildTextField(context, 'Robot Width', (value) {
           if (value != null && _prefs != null) {
-            _prefs.setDouble('robotWidth', value);
+            _prefs!.setDouble('robotWidth', value);
             setState(() {
               _width = value;
             });
           }
           if (widget.onSettingsChanged != null) {
-            widget.onSettingsChanged.call();
+            widget.onSettingsChanged!.call();
           }
         }, _width.toStringAsFixed(2)),
         buildTextField(context, 'Robot Length', (value) {
           if (value != null && _prefs != null) {
-            _prefs.setDouble('robotLength', value);
+            _prefs!.setDouble('robotLength', value);
             setState(() {
               _length = value;
             });
           }
           if (widget.onSettingsChanged != null) {
-            widget.onSettingsChanged.call();
+            widget.onSettingsChanged!.call();
           }
         }, _length.toStringAsFixed(2)),
         SwitchListTile(
@@ -92,12 +92,12 @@ class _SettingsTileState extends State<SettingsTile>
           activeColor: Colors.indigoAccent,
           contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
           onChanged: (val) {
-            _prefs.setBool('holonomicMode', val);
+            _prefs!.setBool('holonomicMode', val);
             setState(() {
               _holonomic = val;
             });
             if (widget.onSettingsChanged != null) {
-              widget.onSettingsChanged.call();
+              widget.onSettingsChanged!.call();
             }
           },
           title: Padding(
@@ -118,7 +118,7 @@ class _SettingsTileState extends State<SettingsTile>
         child: TextField(
           onSubmitted: (val) {
             if (onSubmitted != null) {
-              var parsed = double.tryParse(val);
+              var parsed = double.tryParse(val)!;
               onSubmitted.call(parsed);
             }
             _unfocus(context);
@@ -149,7 +149,7 @@ class _SettingsTileState extends State<SettingsTile>
   void _unfocus(BuildContext context) {
     FocusScopeNode currentScope = FocusScope.of(context);
     if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-      FocusManager.instance.primaryFocus.unfocus();
+      FocusManager.instance.primaryFocus!.unfocus();
     }
   }
 }

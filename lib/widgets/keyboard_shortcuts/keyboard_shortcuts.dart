@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:tuple/tuple.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
-Widget _homeWidget;
+Widget? _homeWidget;
 List<_KeyBoardShortcuts> _keyBoardShortcuts = [];
-Widget _customGlobal;
-String _customTitle;
-IconData _customIcon;
+Widget? _customGlobal;
+String? _customTitle;
+IconData? _customIcon;
 bool _helperIsOpen = false;
 List<Tuple3<Set<LogicalKeyboardKey>, Function(BuildContext context), String>>
     _newGlobal = [];
@@ -22,12 +22,12 @@ enum BasicShortCuts {
 
 void initShortCuts(
   Widget homePage, {
-  Set<Set<LogicalKeyboardKey>> keysToPress,
-  Set<Function(BuildContext context)> onKeysPressed,
-  Set<String> helpLabel,
-  Widget helpGlobal,
-  String helpTitle,
-  IconData helpIcon,
+  Set<Set<LogicalKeyboardKey>>? keysToPress,
+  Set<Function(BuildContext context)>? onKeysPressed,
+  Set<String>? helpLabel,
+  Widget? helpGlobal,
+  String? helpTitle,
+  IconData? helpIcon,
 }) async {
   if (keysToPress != null &&
       onKeysPressed != null &&
@@ -60,13 +60,13 @@ class KeyBoardShortcuts extends StatefulWidget {
   final Widget child;
 
   /// You can use shortCut function with BasicShortCuts to avoid write data by yourself
-  final Set<LogicalKeyboardKey> keysToPress;
+  final Set<LogicalKeyboardKey>? keysToPress;
 
   /// Function when keys are pressed
-  final VoidCallback onKeysPressed;
+  final VoidCallback? onKeysPressed;
 
   /// Label who will be displayed in helper
-  final String helpLabel;
+  final String? helpLabel;
 
   /// Activate when this widget is the first of the page
   final bool globalShortcuts;
@@ -76,8 +76,8 @@ class KeyBoardShortcuts extends StatefulWidget {
       this.onKeysPressed,
       this.helpLabel,
       this.globalShortcuts = false,
-      @required this.child,
-      Key key})
+      required this.child,
+      Key? key})
       : super(key: key);
 
   @override
@@ -85,11 +85,11 @@ class KeyBoardShortcuts extends StatefulWidget {
 }
 
 class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
-  FocusScopeNode focusScopeNode;
+  FocusScopeNode? focusScopeNode;
   ScrollController _controller = ScrollController();
   bool controllerIsReady = false;
   bool listening = false;
-  Key key;
+  late Key key;
   @override
   void initState() {
     _controller.addListener(() {
@@ -129,8 +129,8 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
       // when user type keysToPress
       if (widget.keysToPress != null &&
           widget.onKeysPressed != null &&
-          _isPressed(keysPressed, widget.keysToPress)) {
-        widget.onKeysPressed();
+          _isPressed(keysPressed, widget.keysToPress!)) {
+        widget.onKeysPressed!();
       }
 
       // when user request help menu
@@ -151,7 +151,7 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
 
         _keyBoardShortcuts.removeWhere((element) => toRemove.contains(element));
         _keyBoardShortcuts.forEach((element) {
-          Widget elementWidget = _helpWidget(element);
+          Widget? elementWidget = _helpWidget(element);
           if (elementWidget != null) activeHelp.add(elementWidget);
         }); // get all custom shortcuts
 
@@ -168,7 +168,7 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
               title: Text(_customTitle ?? 'Keyboard Shortcuts'),
               content: SingleChildScrollView(
                 child: ListBody(
-                  children: <Widget>[
+                  children: <Widget?>[
                     if (activeHelp.isNotEmpty)
                       ListBody(
                         children: [
@@ -193,29 +193,29 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
                                   leading: Icon(Icons.home),
                                   title: Text("Go on Home page"),
                                   subtitle:
-                                      Text(LogicalKeyboardKey.home.debugName),
+                                      Text(LogicalKeyboardKey.home.debugName!),
                                 ),
                                 ListTile(
                                   leading: Icon(Icons.subdirectory_arrow_left),
                                   title: Text("Go on last page"),
-                                  subtitle:
-                                      Text(LogicalKeyboardKey.escape.debugName),
+                                  subtitle: Text(
+                                      LogicalKeyboardKey.escape.debugName!),
                                 ),
                                 ListTile(
                                   leading: Icon(Icons.keyboard_arrow_up),
                                   title: Text("Scroll to top"),
-                                  subtitle:
-                                      Text(LogicalKeyboardKey.pageUp.debugName),
+                                  subtitle: Text(
+                                      LogicalKeyboardKey.pageUp.debugName!),
                                 ),
                                 ListTile(
                                   leading: Icon(Icons.keyboard_arrow_down),
                                   title: Text("Scroll to bottom"),
                                   subtitle: Text(
-                                      LogicalKeyboardKey.pageDown.debugName),
+                                      LogicalKeyboardKey.pageDown.debugName!),
                                 ),
                               ],
                             ),
-                  ],
+                  ] as List<Widget>,
                 ),
               ),
             ),
@@ -225,7 +225,7 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
         if (_homeWidget != null &&
             _isPressed(keysPressed, {LogicalKeyboardKey.home})) {
           Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => _homeWidget),
+              MaterialPageRoute(builder: (context) => _homeWidget!),
               (_) => false);
         } else if (_isPressed(keysPressed, {LogicalKeyboardKey.escape})) {
           Navigator.maybePop(context);
@@ -272,21 +272,21 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
   }
 }
 
-String _getKeysToPress(Set<LogicalKeyboardKey> keysToPress) {
+String _getKeysToPress(Set<LogicalKeyboardKey>? keysToPress) {
   String text = "";
   if (keysToPress != null) {
-    for (final i in keysToPress) text += i.debugName + " + ";
+    for (final i in keysToPress) text += i.debugName! + " + ";
     text = text.substring(0, text.lastIndexOf(" + "));
   }
   return text;
 }
 
-Widget _helpWidget(_KeyBoardShortcuts widget) {
+Widget? _helpWidget(_KeyBoardShortcuts widget) {
   String text = _getKeysToPress(widget.widget.keysToPress);
   if (widget.widget.helpLabel != null && text != "")
     return ListTile(
       leading: Icon(_customIcon ?? Icons.settings),
-      title: Text(widget.widget.helpLabel),
+      title: Text(widget.widget.helpLabel!),
       subtitle: Text(text),
     );
   return null;

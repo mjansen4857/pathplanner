@@ -8,7 +8,7 @@ class GitHubAPI {
     try {
       Release latestRelease = await _github.repositories
           .getLatestRelease(RepositorySlug('mjansen4857', 'pathplanner'));
-      String latestVersion = latestRelease.tagName.substring(1);
+      String latestVersion = latestRelease.tagName!.substring(1);
 
       print('Current Version: $currentVersion, Latest Release: $latestVersion');
 

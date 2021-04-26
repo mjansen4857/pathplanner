@@ -6,18 +6,18 @@ import 'waypoint.dart';
 
 class RobotPath {
   List<Waypoint> waypoints;
-  String name;
+  late String name;
 
   RobotPath(this.waypoints, {this.name = 'New Path'});
 
-  RobotPath.fromJson(Map<String, dynamic> json) {
+  RobotPath.fromJson(Map<String, dynamic> json) : waypoints = [] {
     waypoints = [];
     for (Map<String, dynamic> pointJson in json['waypoints']) {
       waypoints.add(Waypoint.fromJson(pointJson));
     }
   }
 
-  String getWaypointLabel(Waypoint waypoint) {
+  String? getWaypointLabel(Waypoint? waypoint) {
     if (waypoint == null) return null;
     if (waypoint.isStartPoint()) return 'Start Point';
     if (waypoint.isEndPoint()) return 'End Point';
@@ -35,7 +35,7 @@ class RobotPath {
     waypoints.add(
       Waypoint(
         prevControl:
-            (waypoints[waypoints.length - 1].nextControl + anchorPos) * 0.5,
+            (waypoints[waypoints.length - 1].nextControl! + anchorPos) * 0.5,
         anchorPoint: anchorPos,
       ),
     );

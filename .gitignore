@@ -9,6 +9,10 @@
 .history
 .svn/
 
+# Old version stuff
+/dist/
+/node_modules/
+
 # IntelliJ related
 *.iml
 *.ipr

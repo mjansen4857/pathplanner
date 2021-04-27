@@ -12,10 +12,10 @@ import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/github.dart';
 import 'package:pathplanner/services/undo_redo.dart';
-import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
-import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 import 'package:pathplanner/widgets/drawer_tiles/path_tile.dart';
 import 'package:pathplanner/widgets/drawer_tiles/settings_tile.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
+import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 import 'package:pathplanner/widgets/window_button/window_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -238,6 +238,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         return false;
                       } else {
                         pathFile.rename(_pathsDir!.path + name + '.path');
+                        setState(() {
+                          //flutter weird
+                          _currentPath!.name = _currentPath!.name;
+                        });
                         return true;
                       }
                     },

@@ -170,7 +170,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           onPressed: () {
                             _openProjectDialog(context);
                           },
-                          child: Text('Open Project')),
+                          child: Text('Switch Project')),
                       Expanded(
                         child: Container(),
                         flex: 4,

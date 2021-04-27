@@ -42,6 +42,7 @@ dependencies:
   github: ^8.1.0
   version: ^2.0.0
   url_launcher: ^6.0.3
+  process_run: ^0.12.1
 
 dev_dependencies:
   flutter_test:

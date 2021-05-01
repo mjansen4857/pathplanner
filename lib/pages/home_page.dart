@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   String _releaseURL =
       'https://github.com/mjansen4857/pathplanner/releases/latest';
   SecureBookmarks? _bookmarks = Platform.isMacOS ? SecureBookmarks() : null;
+  bool _appStoreBuild = false;
 
   @override
   void initState() {
@@ -66,12 +67,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     SharedPreferences.getInstance().then((prefs) async {
       String? projectDir = prefs.getString('currentProjectDir');
       if (projectDir != null && Platform.isMacOS) {
-        // The secure bookmark plugin sucks so I have to resolve it to access
-        // the project even though I already know the directory
-        await _bookmarks!.resolveBookmark(prefs.getString('macOSBookmark')!);
+        if (prefs.getString('macOSBookmark') != null) {
+          await _bookmarks!.resolveBookmark(prefs.getString('macOSBookmark')!);
 
-        await _bookmarks!
-            .startAccessingSecurityScopedResource(File(projectDir));
+          await _bookmarks!
+              .startAccessingSecurityScopedResource(File(projectDir));
+        } else {
+          projectDir = null;
+        }
       }
 
       setState(() {
@@ -116,7 +119,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ],
       ),
       floatingActionButton: Visibility(
-        visible: _currentProject != null,
+        visible: _currentProject != null && !_appStoreBuild,
         child: Tooltip(
           message: 'Deploy Robot Code',
           waitDuration: Duration(milliseconds: 500),

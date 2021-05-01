@@ -114,8 +114,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               _showSnackbar(context, 'Deploying robot code...',
                   duration: Duration(minutes: 5));
               try {
+                String gradlew = Platform.isWindows ? 'gradlew' : './gradlew';
                 ProcessResult result =
-                    await shell.runExecutableArguments('gradlew', ['deploy']);
+                    await shell.runExecutableArguments(gradlew, ['deploy']);
                 ScaffoldMessenger.of(context).removeCurrentSnackBar();
                 if (result.exitCode == 0) {
                   _showSnackbar(context, 'Successfully deployed.',

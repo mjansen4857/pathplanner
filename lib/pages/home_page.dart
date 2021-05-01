@@ -7,6 +7,7 @@ import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
@@ -46,6 +47,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> _scaleAnimation;
   String _releaseURL =
       'https://github.com/mjansen4857/pathplanner/releases/latest';
+  SecureBookmarks? _bookmarks = Platform.isMacOS ? SecureBookmarks() : null;
 
   @override
   void initState() {
@@ -61,12 +63,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ));
     _scaleAnimation =
         CurvedAnimation(parent: _welcomeController, curve: Curves.ease);
-    SharedPreferences.getInstance().then((val) {
+    SharedPreferences.getInstance().then((prefs) async {
+      String? projectDir = prefs.getString('currentProjectDir');
+      if (projectDir != null && Platform.isMacOS) {
+        // The secure bookmark plugin sucks so I have to resolve it to access
+        // the project even though I already know the directory
+        await _bookmarks!.resolveBookmark(prefs.getString('macOSBookmark')!);
+
+        await _bookmarks!
+            .startAccessingSecurityScopedResource(File(projectDir));
+      }
+
       setState(() {
-        _prefs = val;
+        _prefs = prefs;
         _welcomeController.forward();
 
-        String? projectDir = _prefs.getString('currentProjectDir');
         _loadPaths(projectDir);
         _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
         _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
@@ -87,6 +98,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     super.dispose();
     _updateController.dispose();
     _welcomeController.dispose();
+    if (Platform.isMacOS && _currentProject != null) {
+      _bookmarks!
+          .stopAccessingSecurityScopedResource(File(_currentProject!.path));
+    }
   }
 
   @override
@@ -625,6 +640,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         pathsDir.create(recursive: true);
         _prefs.setString('currentProjectDir', projectFolder);
         _prefs.remove('pathOrder');
+
+        if (Platform.isMacOS) {
+          // Bookmark project on macos so it can be accessed again later
+          String bookmark = await _bookmarks!.bookmark(File(projectFolder));
+          _prefs.setString('macOSBookmark', bookmark);
+        }
+
         setState(() {
           _currentProject = Directory(projectFolder);
           _loadPaths(_currentProject!.path);

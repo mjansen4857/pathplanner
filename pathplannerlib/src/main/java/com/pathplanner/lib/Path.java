@@ -8,12 +8,12 @@ import java.util.ArrayList;
 
 public class Path {
     private final ArrayList<State> generatedStates;
-    private final ArrayList<Point> pathPoints;
-    private final double maxVel;
-    private final double maxAccel;
-    private final boolean reversed;
+    private ArrayList<Waypoint> pathPoints;
+    private double maxVel;
+    private double maxAccel;
+    private boolean reversed;
 
-    protected Path(ArrayList<Point> pathPoints, double maxVel, double maxAccel, boolean reversed){
+    protected Path(ArrayList<Waypoint> pathPoints, double maxVel, double maxAccel, boolean reversed){
         this.pathPoints = pathPoints;
         this.maxVel = maxVel;
         this.maxAccel = maxAccel;
@@ -25,6 +25,10 @@ public class Path {
         recalculateValues(joined);
 
         this.generatedStates = joined;
+    }
+
+    protected Path(ArrayList<State> generatedStates){
+        this.generatedStates = generatedStates;
     }
 
     public ArrayList<State> getStates(){
@@ -79,17 +83,17 @@ public class Path {
         ArrayList<State> states = new ArrayList<>();
 
         for(int i = 0; i < numSplines(); i++){
-            ArrayList<Point> pointsInSpline = getPointsInSpline(i);
+            Waypoint startPoint = pathPoints.get(i);
+            Waypoint endPoint = pathPoints.get(i + 1);
 
             double endStep = (i == numSplines() - 1) ? 1.0 : 1.0 - step;
             for(double t = 0; t <= endStep; t += step){
-                Translation2d p = GeometryUtil.cubicLerp(pointsInSpline.get(0).translation, pointsInSpline.get(1).translation,
-                        pointsInSpline.get(2).translation, pointsInSpline.get(3).translation, t);
+                Translation2d p = GeometryUtil.cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
 
                 State state = new State();
                 state.pose = new Pose2d(p, state.pose.getRotation());
 
-                double deltaRot = ((AnchorPoint) pointsInSpline.get(3)).holonomicRotation.minus(((AnchorPoint) pointsInSpline.get(0)).holonomicRotation).getDegrees();
+                double deltaRot = endPoint.holonomicRotation.minus(startPoint.holonomicRotation).getDegrees();
                 if(Math.abs(deltaRot) > 180){
                     if(deltaRot < 0){
                         deltaRot = 180 + (deltaRot % 180);
@@ -97,7 +101,7 @@ public class Path {
                         deltaRot = -180 + (deltaRot % 180);
                     }
                 }
-                double holonomicRot = ((AnchorPoint) pointsInSpline.get(3)).holonomicRotation.getDegrees() + (t * deltaRot);
+                double holonomicRot = endPoint.holonomicRotation.getDegrees() + (t * deltaRot);
                 state.holonomicRotation = Rotation2d.fromDegrees(holonomicRot);
 
                 if(i > 0 || t > 0){
@@ -116,9 +120,9 @@ public class Path {
                 }
 
                 if(t == 0.0){
-                    state.linearVelMeters = ((AnchorPoint) pointsInSpline.get(0)).velocityOverride;
+                    state.linearVelMeters = startPoint.velOverride;
                 }else if(t == 1.0){
-                    state.linearVelMeters = ((AnchorPoint) pointsInSpline.get(3)).velocityOverride;
+                    state.linearVelMeters = endPoint.velOverride;
                 }else {
                     state.linearVelMeters = this.maxVel;
                 }
@@ -169,7 +173,7 @@ public class Path {
             }
         }
 
-        if(((AnchorPoint) pathPoints.get(pathPoints.size() - 1)).velocityOverride == -1){
+        if(pathPoints.get(pathPoints.size() - 1).velOverride == -1){
             states.get(states.size() - 1).linearVelMeters = 0;
         }
         for(int i = states.size() - 2; i > 1; i--){
@@ -245,16 +249,17 @@ public class Path {
     }
 
     private int numSplines() {
-        return ((this.pathPoints.size() - 4) / 3) + 1;
+        return this.pathPoints.size() - 1;
     }
 
-    private ArrayList<Point> getPointsInSpline(int index){
-        ArrayList<Point> spline = new ArrayList<>();
-        spline.add(this.pathPoints.get(index * 3));
-        spline.add(this.pathPoints.get(index * 3 + 1));
-        spline.add(this.pathPoints.get(index * 3 + 2));
-        spline.add(this.pathPoints.get(index * 3 + 3));
-        return spline;
+    protected static Path joinPaths(ArrayList<Path> paths){
+        ArrayList<State> joinedStates = new ArrayList<>();
+
+        for(Path path : paths){
+            joinedStates.addAll(path.getStates());
+        }
+
+        return new Path(joinedStates);
     }
 
     public static class State{
@@ -337,22 +342,21 @@ public class Path {
         }
     }
 
-    public static class AnchorPoint extends Point{
-        public double velocityOverride;
-        public Rotation2d holonomicRotation;
+    protected static class Waypoint {
+        private final Translation2d anchorPoint;
+        private final Translation2d prevControl;
+        private final Translation2d nextControl;
+        private final double velOverride;
+        private final Rotation2d holonomicRotation;
+        protected final boolean isReversal;
 
-        public AnchorPoint(Translation2d translation, double velocityOverride, Rotation2d holonomicRotation){
-            super(translation);
-            this.velocityOverride = velocityOverride;
+        protected Waypoint(Translation2d anchorPoint, Translation2d prevControl, Translation2d nextControl, double velOverride, Rotation2d holonomicRotation, boolean isReversal){
+            this.anchorPoint = anchorPoint;
+            this.prevControl = prevControl;
+            this.nextControl = nextControl;
+            this.velOverride = velOverride;
             this.holonomicRotation = holonomicRotation;
-        }
-    }
-
-    public static class Point{
-        public Translation2d translation;
-
-        public Point(Translation2d translation){
-            this.translation = translation;
+            this.isReversal = isReversal;
         }
     }
 }

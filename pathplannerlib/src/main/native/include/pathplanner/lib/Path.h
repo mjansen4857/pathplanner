@@ -32,34 +32,35 @@ namespace pathplanner{
                     Path::State interpolate(Path::State endval, double t);
             };
 
-            class Point{
+            class Waypoint{
                 public:
-                    frc::Translation2d translation;
+                    frc::Translation2d anchorPoint;
+                    frc::Translation2d prevControl;
+                    frc::Translation2d nextControl;
                     units::meters_per_second_t velocityOverride;
                     frc::Rotation2d holonomicRotation;
+                    bool isReversal;
 
-                    Point(frc::Translation2d translation, units::meters_per_second_t velocityOverride, frc::Rotation2d holonomicRotation){
-                        this->translation = translation;
+                    Waypoint(frc::Translation2d anchorPoint, frc::Translation2d prevControl, frc::Translation2d nextControl, units::meters_per_second_t velocityOverride, frc::Rotation2d holonomicRotation, bool isReversal){
+                        this->anchorPoint = anchorPoint;
+                        this->prevControl = prevControl;
+                        this->nextControl = nextControl;
                         this->velocityOverride = velocityOverride;
                         this->holonomicRotation = holonomicRotation;
-                    }
-
-                    Point(frc::Translation2d translation){
-                        this->translation = translation;
-                        this->velocityOverride = -1_mps;
-                        this->holonomicRotation = frc::Rotation2d(0_deg);
+                        this->isReversal = isReversal;
                     }
             };
 
         private:
             std::vector<Path::State> generatedStates;
-            std::vector<Path::Point> pathPoints;
+            std::vector<Path::Waypoint> pathPoints;
             units::meters_per_second_t maxVel;
             units::meters_per_second_squared_t maxAccel;
             bool reversed;
 
         public:
-            Path(std::vector<Path::Point> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
+            Path(std::vector<Path::Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
+            Path(std::vector<Path::State> states);
 
             std::vector<Path::State> getStates() { return this->generatedStates; }
             int numStates() { return getStates().size(); }
@@ -67,6 +68,7 @@ namespace pathplanner{
             Path::State getInitialState() { return getState(0); }
             Path::State getEndState() { return getState(numStates() - 1); }
             units::second_t getTotalTime() { return getEndState().time; }
+            static Path joinPaths(std::vector<Path> paths);
 
             Path::State sample(units::second_t time);
 
@@ -78,6 +80,6 @@ namespace pathplanner{
             void calculateVelocity(std::vector<Path::State> *states);
             void recalculateValues(std::vector<Path::State> *states);
             units::meter_t calculateRadius(Path::State s0, Path::State s1, Path::State s2);
-            std::vector<Path::Point> getPointsInSpline(int index);
+            std::vector<Path::Waypoint> getPointsInSpline(int index);
     };
 }

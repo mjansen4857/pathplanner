@@ -1,17 +1,33 @@
 #include "pathplanner/lib/PathPlanner.h"
 #include <frc/geometry/Translation2d.h>
+#include <frc/Filesystem.h>
+#include <wpi/SmallString.h>
+#include <wpi/Path.h>
+#include <wpi/raw_istream.h>
+#include <wpi/json.h>
 #include <vector>
+#include <iostream>
 
 using namespace pathplanner;
 
 double PathPlanner::resolution = 0.004;
 
-Path PathPlanner::loadPath(std::string name){
-    std::vector<Path::Point> pathPoints;
-    pathPoints.push_back(Path::Point(frc::Translation2d(0_m, 0_m), -1_mps, frc::Rotation2d()));
-    pathPoints.push_back(Path::Point(frc::Translation2d(1_m, 0_m)));
-    pathPoints.push_back(Path::Point(frc::Translation2d(4_m, 1_m)));
-    pathPoints.push_back(Path::Point(frc::Translation2d(5_m, 1_m), -1_mps, frc::Rotation2d()));
+Path PathPlanner::loadPath(std::string name, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){
+    std::string line;
+    wpi::SmallString<128> filePath;
 
-    return Path(pathPoints, 4_mps, 5_mps_sq, false);
-}
+    frc::filesystem::GetDeployDirectory(filePath);
+    wpi::sys::path::append(filePath, "pathplanner");
+    wpi::sys::path::append(filePath, name + ".path");
+
+    std::error_code error_code;
+    wpi::raw_fd_istream input{filePath.str(), error_code};
+
+    if(error_code){
+        throw std::runtime_error(("Cannot open file: " + filePath).str());
+    }
+
+    wpi::json json;
+    input >> json;
+
+    std::cout << json.is_array() << "\n";

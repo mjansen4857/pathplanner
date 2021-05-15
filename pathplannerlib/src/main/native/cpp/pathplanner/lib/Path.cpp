@@ -5,7 +5,7 @@
 
 using namespace pathplanner;
 
-Path::Path(std::vector<Point> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){
+Path::Path(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){
     this->pathPoints = pathPoints;
     this->maxVel = maxVel;
     this->maxAccel = maxAccel;
@@ -17,6 +17,22 @@ Path::Path(std::vector<Point> pathPoints, units::meters_per_second_t maxVel, uni
     this->recalculateValues(&joined);
 
     this->generatedStates = joined;
+}
+
+Path::Path(std::vector<Path::State> states){
+    this->generatedStates = states;
+}
+
+Path Path::joinPaths(std::vector<Path> paths){
+    std::vector<Path::State> joinedStates;
+
+    for(Path path : paths){
+        for(Path::State state : path.getStates()){
+            joinedStates.push_back(state);
+        }
+    }
+
+    return Path(joinedStates);
 }
 
 Path::State Path::sample(units::second_t time){
@@ -47,19 +63,18 @@ std::vector<Path::State> Path::joinSplines(double step){
     std::vector<Path::State> states;
 
     for(int i = 0; i < numSplines(); i++){
-        std::vector<Path::Point> pointsInSpline = getPointsInSpline(i);
+        Path::Waypoint startPoint = this->pathPoints[i];
+        Path::Waypoint endPoint = this->pathPoints[i + 1];
 
         double endStep = (i == numSplines() - 1) ? 1.0 : 1.0 - step;
         for(double t = 0; t <= endStep; t += step){
-            frc::Translation2d p = GeometryUtil::cubicLerp(pointsInSpline[0].translation, pointsInSpline[1].translation,
-                    pointsInSpline[2].translation, pointsInSpline[3].translation, t);
+            frc::Translation2d p = GeometryUtil::cubicLerp(startPoint.anchorPoint, startPoint.nextControl,
+                    endPoint.prevControl, endPoint.anchorPoint, t);
 
             Path::State state;
             state.pose = frc::Pose2d(p, state.pose.Rotation());
 
-            Point anchor0 = pointsInSpline[0];
-            Point anchor3 = pointsInSpline[3];
-            units::degree_t deltaRot = (anchor3.holonomicRotation - anchor0.holonomicRotation).Degrees();
+            units::degree_t deltaRot = (endPoint.holonomicRotation - startPoint.holonomicRotation).Degrees();
             
             if(units::math::abs(deltaRot) > 180_deg){
                 if(deltaRot < 0_deg){
@@ -68,7 +83,7 @@ std::vector<Path::State> Path::joinSplines(double step){
                     deltaRot = -180_deg + (GeometryUtil::modulo(deltaRot, 180_deg));
                 }
             }
-            units::degree_t holonomicRot = anchor3.holonomicRotation.Degrees() + (t * deltaRot);
+            units::degree_t holonomicRot = endPoint.holonomicRotation.Degrees() + (t * deltaRot);
             state.holonomicRotation = frc::Rotation2d(holonomicRot);
 
             if(i > 0 || t > 0){
@@ -87,9 +102,9 @@ std::vector<Path::State> Path::joinSplines(double step){
             }
 
             if(t == 0.0){
-                state.linearVel = anchor0.velocityOverride;
+                state.linearVel = startPoint.velocityOverride;
             }else if(t == 1.0){
-                state.linearVel = anchor3.velocityOverride;
+                state.linearVel = endPoint.velocityOverride;
             }else {
                 state.linearVel = this->maxVel;
             }
@@ -140,7 +155,7 @@ void Path::calculateVelocity(std::vector<Path::State> *states){
             }
         }
 
-        Point anchor = pathPoints[pathPoints.size() - 1];
+        Path::Waypoint anchor = pathPoints[pathPoints.size() - 1];
         if(anchor.velocityOverride == -1_mps){
             states->data()[states->size() - 1].linearVel = 0_mps;
         }
@@ -212,15 +227,6 @@ units::meter_t Path::calculateRadius(Path::State s0, Path::State s1, Path::State
     units::meter_t p = (ab + bc + ac) / 2;
     units::square_meter_t area = units::math::sqrt(units::math::abs(p * (p - ab) * (p - bc) * (p - ac)));
     return (ab * bc * ac) / (4 * area);
-}
-
-std::vector<Path::Point> Path::getPointsInSpline(int index){
-    std::vector<Point> spline;
-    spline.push_back(this->pathPoints[index * 3]);
-    spline.push_back(this->pathPoints[index * 3 + 1]);
-    spline.push_back(this->pathPoints[index * 3 + 2]);
-    spline.push_back(this->pathPoints[index * 3 + 3]);
-    return spline;
 }
 
 Path::State Path::State::interpolate(Path::State endVal, double t){

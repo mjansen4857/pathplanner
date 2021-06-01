@@ -1,0 +1,84 @@
+plugins {
+  id 'cpp'
+  id 'java'
+  id 'google-test'
+  id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
+  id 'edu.wpi.first.NativeUtils' version '2020.10.1'
+  id 'edu.wpi.first.GradleJni' version '0.11.0'
+  id 'edu.wpi.first.GradleVsCode' version '0.12.0'
+}
+
+repositories {
+  mavenCentral()
+}
+if (project.hasProperty('releaseMode')) {
+  wpilibRepositories.addAllReleaseRepositories(project)
+} else {
+  wpilibRepositories.addAllDevelopmentRepositories(project)
+}
+
+// Apply C++ configuration
+apply from: 'config.gradle'
+
+// Apply Java configuration
+dependencies {
+    implementation 'edu.wpi.first.cscore:cscore-java:2020.+'
+    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2020.+'
+    implementation 'edu.wpi.first.ntcore:ntcore-java:2020.+'
+    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2020.+'
+    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2020.+'
+    implementation 'edu.wpi.first.wpimath:wpimath-java:2020.+'
+    implementation 'edu.wpi.first.hal:hal-java:2020.+'
+    implementation "org.ejml:ejml-simple:0.38"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.0"
+    implementation "com.fasterxml.jackson.core:jackson-core:2.10.0"
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.10.0"
+    implementation 'edu.wpi.first.thirdparty.frc2020.opencv:opencv-java:3.4.7-3'
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+}
+
+// Set up exports properly
+nativeUtils {
+  exportsConfigs {
+    // Main library is just default empty. This will export everything
+    PathplannerLib {
+    }
+  }
+}
+
+model {
+  components {
+    PathplannerLib(NativeLibrarySpec) {
+      sources {
+        cpp {
+          source {
+            srcDirs 'src/main/native/cpp'
+            include '**/*.cpp'
+          }
+          exportedHeaders {
+            srcDirs 'src/main/native/include'
+          }
+        }
+      }
+      nativeUtils.useRequiredLibrary(it, 'wpilib_shared')
+    }
+  }
+  testSuites {
+    PathplannerLibTest {
+        sources.cpp {
+            source {
+                srcDir 'src/test/native/cpp'
+                include '**/*.cpp'
+            }
+        }
+
+        nativeUtils.useRequiredLibrary(it, "wpilib_executable_shared", "googletest_static")
+    }
+  }
+}
+
+apply from: 'publish.gradle'
+
+wrapper {
+  gradleVersion '6.0.1'
+}

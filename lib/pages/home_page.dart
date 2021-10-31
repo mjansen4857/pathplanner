@@ -156,27 +156,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildAppBar() {
-    return AppBar(
-      toolbarHeight: _toolbarHeight,
-      actions: [
-        MinimizeWindowBtn(),
-        MaximizeWindowBtn(),
-        CloseWindowBtn(),
-      ],
-      title: SizedBox(
-        height: _toolbarHeight,
-        child: Row(
+    double heightOffset = Platform.isMacOS ? 27 : 0;
+    return PreferredSize(
+      preferredSize: Size.fromHeight(_toolbarHeight + heightOffset),
+      child: MoveWindow(
+        child: Column(
           children: [
-            Expanded(
-              child: MoveWindow(
-                child: Container(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    _currentPath == null
-                        ? 'PathPlanner'
-                        : '${_currentPath!.name}',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-                  ),
+            Container(
+              height: heightOffset,
+              color: Colors.grey[850],
+            ),
+            AppBar(
+              toolbarHeight: _toolbarHeight,
+              actions: [
+                MinimizeWindowBtn(),
+                MaximizeWindowBtn(),
+                CloseWindowBtn(),
+              ],
+              title: SizedBox(
+                height: _toolbarHeight,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: MoveWindow(
+                        child: Container(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _currentPath == null
+                                ? 'PathPlanner'
+                                : '${_currentPath!.name}',
+                            style: TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

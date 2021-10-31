@@ -167,6 +167,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               color: Colors.grey[850],
             ),
             AppBar(
+              backgroundColor: Colors.grey[900],
               toolbarHeight: _toolbarHeight,
               actions: [
                 MinimizeWindowBtn(),

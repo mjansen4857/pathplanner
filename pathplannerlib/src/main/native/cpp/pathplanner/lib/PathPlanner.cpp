@@ -31,3 +31,8 @@ Path PathPlanner::loadPath(std::string name, units::meters_per_second_t maxVel, 
     input >> json;
 
     std::cout << json.is_array() << "\n";
+
+    std::vector<Path::State> test;
+
+    return Path(test);
+}

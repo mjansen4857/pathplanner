@@ -1,8 +1,8 @@
 package com.pathplanner.lib;
 
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -10,10 +10,12 @@ import org.json.simple.parser.JSONParser;
 import java.io.*;
 import java.util.ArrayList;
 
+import com.pathplanner.lib.Path2.Waypoint;
+
 public class PathPlanner {
     protected static double resolution = 0.004;
 
-    public static Path loadPath(String name, double maxVel, double maxAccel, boolean reversed) {
+    public static Path2 loadPath(String name, double maxVel, double maxAccel, boolean reversed) {
         try(BufferedReader br = new BufferedReader(new FileReader(new File(Filesystem.getDeployDirectory(), "pathplanner/" + name + ".path")))){
             StringBuilder fileContentBuilder = new StringBuilder();
             String line;
@@ -26,7 +28,7 @@ public class PathPlanner {
             JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
             JSONArray jsonWaypoints = (JSONArray) json.get("waypoints");
 
-            ArrayList<Path.Waypoint> waypoints = new ArrayList<>();
+            ArrayList<Path2.Waypoint> waypoints = new ArrayList<>();
 
             for (Object waypoint : jsonWaypoints) {
                 JSONObject jsonWaypoint = (JSONObject) waypoint;
@@ -42,7 +44,7 @@ public class PathPlanner {
 
                 JSONObject jsonNextControl = (JSONObject) jsonWaypoint.get("nextControl");
                 Translation2d nextControl = null;
-                if (jsonPrevControl != null) {
+                if (jsonNextControl != null) {
                     nextControl = new Translation2d((double) jsonNextControl.get("x"), (double) jsonNextControl.get("y"));
                 }
 
@@ -53,36 +55,39 @@ public class PathPlanner {
                     velOverride = (double) jsonWaypoint.get("velOverride");
                 }
 
-                waypoints.add(new Path.Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal));
+                waypoints.add(new Path2.Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal));
             }
 
-            ArrayList<ArrayList<Path.Waypoint>> splitPaths = new ArrayList<>();
-            ArrayList<Path.Waypoint> currentPath = new ArrayList<>();
+            ArrayList<ArrayList<Path2.Waypoint>> splitPaths = new ArrayList<>();
+            ArrayList<Path2.Waypoint> currentPath = new ArrayList<>();
 
-            for(Path.Waypoint w : waypoints){
+            for(int i = 0; i < waypoints.size(); i++){
+                Path2.Waypoint w = waypoints.get(i);
+
                 currentPath.add(w);
 
-                if(w.isReversal){
+                if(w.isReversal || i == waypoints.size() - 1){
                     splitPaths.add(currentPath);
                     currentPath = new ArrayList<>();
                     currentPath.add(w);
                 }
             }
 
-            ArrayList<Path> paths = new ArrayList<>();
+            ArrayList<Path2> paths = new ArrayList<>();
+            boolean shouldReverse = reversed;
             for(int i = 0; i < splitPaths.size(); i++){
-                boolean reversePath = (i % 2 == 0) == reversed;
-                paths.add(new Path(splitPaths.get(i), maxVel, maxAccel, reversePath));
+                paths.add(new Path2(splitPaths.get(i), maxVel, maxAccel, shouldReverse));
+                shouldReverse = !shouldReverse;
             }
 
-            return Path.joinPaths(paths);
+            return Path2.joinPaths(paths);
         }catch (Exception e){
             e.printStackTrace();
             return null;
         }
     }
 
-    public static Path loadPath(String name, double maxVel, double maxAccel){
+    public static Path2 loadPath(String name, double maxVel, double maxAccel){
         return loadPath(name, maxVel, maxAccel, false);
     }
 }

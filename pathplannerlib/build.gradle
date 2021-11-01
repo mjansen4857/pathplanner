@@ -22,19 +22,18 @@ apply from: 'config.gradle'
 
 // Apply Java configuration
 dependencies {
-    implementation 'edu.wpi.first.cscore:cscore-java:2020.+'
-    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2020.+'
-    implementation 'edu.wpi.first.ntcore:ntcore-java:2020.+'
-    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2020.+'
-    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2020.+'
-    implementation 'edu.wpi.first.wpimath:wpimath-java:2020.+'
-    implementation 'edu.wpi.first.hal:hal-java:2020.+'
+    implementation 'edu.wpi.first.cscore:cscore-java:2022.+'
+    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2022.+'
+    implementation 'edu.wpi.first.ntcore:ntcore-java:2022.+'
+    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2022.+'
+    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2022.+'
+    implementation 'edu.wpi.first.wpimath:wpimath-java:2022.+'
+    implementation 'edu.wpi.first.hal:hal-java:2022.+'
     implementation "org.ejml:ejml-simple:0.38"
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.10.0"
     implementation "com.fasterxml.jackson.core:jackson-core:2.10.0"
     implementation "com.fasterxml.jackson.core:jackson-databind:2.10.0"
-    implementation 'edu.wpi.first.thirdparty.frc2020.opencv:opencv-java:3.4.7-3'
-    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
+    implementation 'edu.wpi.first.thirdparty.frc2022.opencv:opencv-java:4.5.2-1'
 }
 
 // Set up exports properly

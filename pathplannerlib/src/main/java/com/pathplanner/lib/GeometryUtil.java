@@ -1,7 +1,7 @@
 package com.pathplanner.lib;
 
-import edu.wpi.first.wpilibj.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 
 public class GeometryUtil {
     protected static double doubleLerp(double startVal, double endVal, double t){

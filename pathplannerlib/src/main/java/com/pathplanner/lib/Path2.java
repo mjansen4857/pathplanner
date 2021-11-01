@@ -180,14 +180,12 @@ public class Path2 extends Trajectory {
                 state.poseMeters = new Pose2d(p, state.poseMeters.getRotation());
 
                 double deltaRot = endPoint.holonomicRotation.minus(startPoint.holonomicRotation).getDegrees();
-                if(Math.abs(deltaRot) > 180){
-                    if(deltaRot < 0){
-                        deltaRot = 180 + (deltaRot % 180);
-                    }else{
-                        deltaRot = -180 + (deltaRot % 180);
-                    }
+                if(deltaRot > 180){
+                    deltaRot -= 360;
+                }else if(deltaRot < -180){
+                    deltaRot += 360;
                 }
-                double holonomicRot = endPoint.holonomicRotation.getDegrees() + (t * deltaRot);
+                double holonomicRot = startPoint.holonomicRotation.getDegrees() + (t * deltaRot);
                 state.holonomicRotation = Rotation2d.fromDegrees(holonomicRot);
 
                 if(i > 0 || t > 0){

@@ -76,11 +76,11 @@ class Waypoint {
   double getHeadingRadians() {
     var heading;
     if (isStartPoint()) {
-      heading = -atan2(
-          nextControl!.y - anchorPoint.y, nextControl!.x - anchorPoint.x);
+      heading =
+          atan2(nextControl!.y - anchorPoint.y, nextControl!.x - anchorPoint.x);
     } else {
-      heading = -atan2(
-          anchorPoint.y - prevControl!.y, anchorPoint.x - prevControl!.x);
+      heading =
+          atan2(anchorPoint.y - prevControl!.y, anchorPoint.x - prevControl!.x);
     }
     if (heading == -0) return 0;
     return heading;
@@ -113,7 +113,7 @@ class Waypoint {
 
   bool isPointInHolonomicThing(
       double xPos, double yPos, double radius, double robotLength) {
-    double angle = -holonomicAngle / 180 * pi;
+    double angle = holonomicAngle / 180 * pi;
     double thingX = anchorPoint.x + (robotLength / 2 * cos(angle));
     double thingY = anchorPoint.y + (robotLength / 2 * sin(angle));
     return pow(xPos - thingX, 2) + pow(yPos - thingY, 2) < pow(radius, 2);
@@ -179,7 +179,7 @@ class Waypoint {
         updateNextControlFromPrev();
       }
     } else if (_isHolonomicThingDragging && !isLocked) {
-      double rotation = -atan2(y - anchorPoint.y, x - anchorPoint.x);
+      double rotation = atan2(y - anchorPoint.y, x - anchorPoint.x);
       holonomicAngle = (rotation * 180 / pi);
     }
   }
@@ -228,7 +228,7 @@ class Waypoint {
   }
 
   void setHeading(double headingDegrees) {
-    var theta = -headingDegrees * pi / 180;
+    var theta = headingDegrees * pi / 180;
     if (nextControl != null && !isReversal) {
       var h = (anchorPoint - nextControl!).magnitude;
       var o = sin(theta) * h;

@@ -10,12 +10,18 @@ import org.json.simple.parser.JSONParser;
 import java.io.*;
 import java.util.ArrayList;
 
-import com.pathplanner.lib.Path2.Waypoint;
-
 public class PathPlanner {
     protected static double resolution = 0.004;
 
-    public static Path2 loadPath(String name, double maxVel, double maxAccel, boolean reversed) {
+    /**
+     * Load a path file from storage
+     * @param name The name of the path to load
+     * @param maxVel Max velocity of the path
+     * @param maxAccel Max velocity of the path
+     * @param reversed Should the robot follow the path reversed
+     * @return The generated path
+     */
+    public static PathPlannerTrajectory loadPath(String name, double maxVel, double maxAccel, boolean reversed) {
         try(BufferedReader br = new BufferedReader(new FileReader(new File(Filesystem.getDeployDirectory(), "pathplanner/" + name + ".path")))){
             StringBuilder fileContentBuilder = new StringBuilder();
             String line;
@@ -28,7 +34,7 @@ public class PathPlanner {
             JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
             JSONArray jsonWaypoints = (JSONArray) json.get("waypoints");
 
-            ArrayList<Path2.Waypoint> waypoints = new ArrayList<>();
+            ArrayList<PathPlannerTrajectory.Waypoint> waypoints = new ArrayList<>();
 
             for (Object waypoint : jsonWaypoints) {
                 JSONObject jsonWaypoint = (JSONObject) waypoint;
@@ -55,14 +61,14 @@ public class PathPlanner {
                     velOverride = (double) jsonWaypoint.get("velOverride");
                 }
 
-                waypoints.add(new Path2.Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal));
+                waypoints.add(new PathPlannerTrajectory.Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal));
             }
 
-            ArrayList<ArrayList<Path2.Waypoint>> splitPaths = new ArrayList<>();
-            ArrayList<Path2.Waypoint> currentPath = new ArrayList<>();
+            ArrayList<ArrayList<PathPlannerTrajectory.Waypoint>> splitPaths = new ArrayList<>();
+            ArrayList<PathPlannerTrajectory.Waypoint> currentPath = new ArrayList<>();
 
             for(int i = 0; i < waypoints.size(); i++){
-                Path2.Waypoint w = waypoints.get(i);
+                PathPlannerTrajectory.Waypoint w = waypoints.get(i);
 
                 currentPath.add(w);
 
@@ -73,21 +79,28 @@ public class PathPlanner {
                 }
             }
 
-            ArrayList<Path2> paths = new ArrayList<>();
+            ArrayList<PathPlannerTrajectory> paths = new ArrayList<>();
             boolean shouldReverse = reversed;
             for(int i = 0; i < splitPaths.size(); i++){
-                paths.add(new Path2(splitPaths.get(i), maxVel, maxAccel, shouldReverse));
+                paths.add(new PathPlannerTrajectory(splitPaths.get(i), maxVel, maxAccel, shouldReverse));
                 shouldReverse = !shouldReverse;
             }
 
-            return Path2.joinPaths(paths);
+            return PathPlannerTrajectory.joinPaths(paths);
         }catch (Exception e){
             e.printStackTrace();
             return null;
         }
     }
 
-    public static Path2 loadPath(String name, double maxVel, double maxAccel){
+    /**
+     * Load a path from storage
+     * @param name The name of the path to load
+     * @param maxVel Max velocity of the path
+     * @param maxAccel Max velocity of the path
+     * @return The generated path
+     */
+    public static PathPlannerTrajectory loadPath(String name, double maxVel, double maxAccel){
         return loadPath(name, maxVel, maxAccel, false);
     }
 }

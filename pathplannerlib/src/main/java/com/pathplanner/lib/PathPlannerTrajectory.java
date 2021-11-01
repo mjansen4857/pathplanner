@@ -8,15 +8,20 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Path2 extends Trajectory {
-    protected Path2(ArrayList<Waypoint> pathPoints, double maxVel, double maxAccel, boolean reversed){
+public class PathPlannerTrajectory extends Trajectory {
+    protected PathPlannerTrajectory(ArrayList<Waypoint> pathPoints, double maxVel, double maxAccel, boolean reversed){
         super(generatePath(pathPoints, maxVel, maxAccel, reversed));
     }
 
-    protected Path2(List<State> states){
+    protected PathPlannerTrajectory(List<State> states){
         super(states);
     }
 
+    /**
+     * Sample the path at a point in time
+     * @param time The time to sample
+     * @return The state at the given point in time
+     */
     @Override
     public State sample(double time){
         if(time <= getInitialState().timeSeconds) return getInitialState();
@@ -42,14 +47,28 @@ public class Path2 extends Trajectory {
         return prevSample.interpolate(sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
     }
 
+    /**
+     * Get the initial state of the path
+     * @return The first state in the path
+     */
     public PathPlannerState getInitialState(){
         return (PathPlannerState) getStates().get(0);
     }
 
+    /**
+     * Get the end state of the path
+     * @return The last state in the path
+     */
     public PathPlannerState getEndState(){
         return (PathPlannerState) getStates().get(getStates().size() - 1);
     }
 
+    /**
+     * Get a state in the path based on its index.
+     * In most cases, using sample() is a better method.
+     * @param i The index of the state to retrieve
+     * @return The state at the given index
+     */
     public PathPlannerState getState(int i) {
         return (PathPlannerState) getStates().get(i);
     }
@@ -238,7 +257,7 @@ public class Path2 extends Trajectory {
         return (ab * bc * ac) / (4 * area);
     }
 
-    protected static Path2 joinPaths(ArrayList<Path2> paths){
+    protected static PathPlannerTrajectory joinPaths(ArrayList<PathPlannerTrajectory> paths){
         ArrayList<State> joinedStates = new ArrayList<>();
 
         for(int i = 0; i < paths.size(); i++){
@@ -253,7 +272,7 @@ public class Path2 extends Trajectory {
             joinedStates.addAll(paths.get(i).getStates());
         }
 
-        return new Path2(joinedStates);
+        return new PathPlannerTrajectory(joinedStates);
     }
 
     public static class PathPlannerState extends State{

@@ -8,6 +8,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
@@ -31,7 +32,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double _toolbarHeight = 56;
-  String _version = '2022.0.0';
+  String _version = '0.0.0';
   Directory? _currentProject;
   Directory? _pathsDir;
   late SharedPreferences _prefs;
@@ -88,10 +89,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       });
     });
 
-    GitHubAPI.isUpdateAvailable(_version).then((value) {
+    PackageInfo.fromPlatform().then((packageInfo) {
       setState(() {
-        _updateAvailable = value;
-        _updateController.forward();
+        _version = packageInfo.version;
+        print('Current version: ' + _version);
+        GitHubAPI.isUpdateAvailable(_version).then((value) {
+          setState(() {
+            _updateAvailable = value;
+            _updateController.forward();
+          });
+        });
       });
     });
   }

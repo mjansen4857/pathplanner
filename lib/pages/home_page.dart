@@ -89,18 +89,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       });
     });
 
-    PackageInfo.fromPlatform().then((packageInfo) {
-      setState(() {
-        _version = packageInfo.version;
-        print('Current version: ' + _version);
-        GitHubAPI.isUpdateAvailable(_version).then((value) {
-          setState(() {
-            _updateAvailable = value;
-            _updateController.forward();
+    if (!_appStoreBuild) {
+      PackageInfo.fromPlatform().then((packageInfo) {
+        setState(() {
+          _version = packageInfo.version;
+          print('Current version: ' + _version);
+          GitHubAPI.isUpdateAvailable(_version).then((value) {
+            setState(() {
+              _updateAvailable = value;
+              _updateController.forward();
+            });
           });
         });
       });
-    });
+    }
   }
 
   @override

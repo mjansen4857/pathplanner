@@ -22,6 +22,10 @@ units::meter_t GeometryUtil::unitLerp(units::meter_t startVal, units::meter_t en
    return startVal + (endVal - startVal) * t;
 }
 
+units::curvature_t GeometryUtil::unitLerp(units::curvature_t startVal, units::curvature_t endVal, double t) {
+   return startVal + (endVal - startVal) * t;
+}
+
 frc::Rotation2d GeometryUtil::rotationLerp(const frc::Rotation2d startVal, const frc::Rotation2d endVal, double t) {
    return startVal + ((endVal - startVal) * t);
 }

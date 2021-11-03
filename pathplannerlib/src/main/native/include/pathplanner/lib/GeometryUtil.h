@@ -10,6 +10,7 @@
 #include <units/angular_velocity.h>
 #include <units/angular_acceleration.h>
 #include <units/math.h>
+#include <units/curvature.h>
 
 namespace pathplanner {
     class GeometryUtil {
@@ -19,6 +20,7 @@ namespace pathplanner {
         static units::radians_per_second_t unitLerp(units::radians_per_second_t startVal, units::radians_per_second_t endVal, double t);
         static units::radians_per_second_squared_t unitLerp(units::radians_per_second_squared_t startVal, units::radians_per_second_squared_t endVal, double t);
         static units::meter_t unitLerp(units::meter_t startVal, units::meter_t endVal, double t);
+        static units::curvature_t unitLerp(units::curvature_t startVal, units::curvature_t endVal, double t);
 
         static frc::Rotation2d rotationLerp(const frc::Rotation2d startVal, const frc::Rotation2d endVal, double t);
         static frc::Translation2d translationLerp(const frc::Translation2d startVal, const frc::Translation2d endVal, double t);

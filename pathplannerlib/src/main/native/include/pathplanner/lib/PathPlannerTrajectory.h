@@ -12,24 +12,25 @@
 #include <units/angular_acceleration.h>
 #include <units/area.h>
 #include <units/math.h>
+#include <units/curvature.h>
 
 namespace pathplanner{
-    class Path{
+    class PathPlannerTrajectory{
         public:
-            class State {
+            class PathPlannerState{
                 public:
-                    frc::Pose2d pose;
-                    units::meter_t linearPos = 0_m;
-                    units::meters_per_second_t linearVel = 0_mps;
-                    units::meters_per_second_squared_t linearAccel = 0_mps_sq;
                     units::second_t time = 0_s;
+                    units::meter_t position = 0_m;
+                    units::meters_per_second_t velocity = 0_mps;
+                    units::meters_per_second_squared_t acceleration = 0_mps_sq;
+                    frc::Pose2d pose;
+                    units::curvature_t curvature{0.0};
                     units::radians_per_second_t angularVel;
                     units::radians_per_second_squared_t angularAccel;
                     frc::Rotation2d holonomicRotation;
+                    PathPlannerState interpolate(PathPlannerState endVal, double t);
                     units::meter_t curveRadius = 0_m;
                     units::meter_t deltaPos = 0_m;
-
-                    Path::State interpolate(Path::State endval, double t);
             };
 
             class Waypoint{
@@ -50,36 +51,25 @@ namespace pathplanner{
                         this->isReversal = isReversal;
                     }
             };
-
+        
         private:
-            std::vector<Path::State> generatedStates;
-            std::vector<Path::Waypoint> pathPoints;
-            units::meters_per_second_t maxVel;
-            units::meters_per_second_squared_t maxAccel;
-            bool reversed;
-
+            std::vector<PathPlannerState> states;
+            std::vector<PathPlannerState> joinSplines(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, double step);
+            void calculateMaxVel(std::vector<PathPlannerState> *states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel);
+            void calculateVelocity(std::vector<PathPlannerState> *states, std::vector<Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel);
+            void recalculateValues(std::vector<PathPlannerState> *states, bool reversed);
+            units::meter_t calculateRadius(PathPlannerState s0, PathPlannerState s1, PathPlannerState s2);
+        
         public:
-            Path(std::vector<Path::Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
-            Path(std::vector<Path::State> states);
+            PathPlannerTrajectory(std::vector<Waypoint> waypoints, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed);
+            PathPlannerTrajectory(std::vector<PathPlannerState> states);
 
-            std::vector<Path::State> getStates() { return this->generatedStates; }
+            PathPlannerState sample(units::second_t time);
+            std::vector<PathPlannerState> getStates() { return this->states; }
             int numStates() { return getStates().size(); }
-            Path::State getState(int i) { return getStates()[i]; }
-            Path::State getInitialState() { return getState(0); }
-            Path::State getEndState() { return getState(numStates() - 1); }
+            PathPlannerState getState(int i) { return getStates()[i]; }
+            PathPlannerState getInitialState() { return getState(0); }
+            PathPlannerState getEndState() { return getState(numStates() - 1); }
             units::second_t getTotalTime() { return getEndState().time; }
-            static Path joinPaths(std::vector<Path> paths);
-
-            Path::State sample(units::second_t time);
-
-        private:
-            int numSplines() { return ((this->pathPoints.size() - 4) / 3) + 1; }
-
-            std::vector<Path::State> joinSplines(double step);
-            void calculateMaxVel(std::vector<Path::State> *states);
-            void calculateVelocity(std::vector<Path::State> *states);
-            void recalculateValues(std::vector<Path::State> *states);
-            units::meter_t calculateRadius(Path::State s0, Path::State s1, Path::State s2);
-            std::vector<Path::Waypoint> getPointsInSpline(int index);
     };
 }

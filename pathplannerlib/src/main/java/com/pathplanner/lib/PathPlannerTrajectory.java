@@ -159,9 +159,8 @@ public class PathPlannerTrajectory extends Trajectory {
                 now.positionMeters *= -1;
                 now.velocityMetersPerSecond *= -1;
                 now.accelerationMetersPerSecondSq *= -1;
-                now.curvatureRadPerMeter = 1 / now.curveRadius;
 
-                double h = now.poseMeters.getRotation().getDegrees()+ 180;
+                double h = now.poseMeters.getRotation().getDegrees() + 180;
                 if(h > 180){
                     h -= 360;
                 }else if(h < -180){
@@ -180,6 +179,8 @@ public class PathPlannerTrajectory extends Trajectory {
                 now.angularVelocity = now.poseMeters.getRotation().minus(last.poseMeters.getRotation()).times(1 / dt);
                 now.angularAcceleration = now.angularVelocity.minus(last.angularVelocity).times(1 / dt);
             }
+
+            now.curvatureRadPerMeter = 1 / now.curveRadius;
         }
     }
 
@@ -255,24 +256,6 @@ public class PathPlannerTrajectory extends Trajectory {
         double p = (ab + bc + ac) / 2;
         double area = Math.sqrt(Math.abs(p * (p - ab) * (p - bc) * (p - ac)));
         return (ab * bc * ac) / (4 * area);
-    }
-
-    protected static PathPlannerTrajectory joinPaths(ArrayList<PathPlannerTrajectory> paths){
-        ArrayList<State> joinedStates = new ArrayList<>();
-
-        for(int i = 0; i < paths.size(); i++){
-            if (i != 0){
-                double lastEndTime = joinedStates.get(joinedStates.size() - 1).timeSeconds;
-
-                for(State s : paths.get(i).getStates()){
-                    s.timeSeconds += lastEndTime;
-                }
-            }
-
-            joinedStates.addAll(paths.get(i).getStates());
-        }
-
-        return new PathPlannerTrajectory(joinedStates);
     }
 
     public static class PathPlannerState extends State{

@@ -3,6 +3,8 @@ package com.pathplanner.lib;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -86,7 +88,7 @@ public class PathPlanner {
                 shouldReverse = !shouldReverse;
             }
 
-            return PathPlannerTrajectory.joinPaths(paths);
+            return joinPaths(paths);
         }catch (Exception e){
             e.printStackTrace();
             return null;
@@ -102,5 +104,23 @@ public class PathPlanner {
      */
     public static PathPlannerTrajectory loadPath(String name, double maxVel, double maxAccel){
         return loadPath(name, maxVel, maxAccel, false);
+    }
+
+    private static PathPlannerTrajectory joinPaths(ArrayList<PathPlannerTrajectory> paths){
+        ArrayList<Trajectory.State> joinedStates = new ArrayList<>();
+
+        for(int i = 0; i < paths.size(); i++){
+            if (i != 0){
+                double lastEndTime = joinedStates.get(joinedStates.size() - 1).timeSeconds;
+
+                for(Trajectory.State s : paths.get(i).getStates()){
+                    s.timeSeconds += lastEndTime;
+                }
+            }
+
+            joinedStates.addAll(paths.get(i).getStates());
+        }
+
+        return new PathPlannerTrajectory(joinedStates);
     }
 }

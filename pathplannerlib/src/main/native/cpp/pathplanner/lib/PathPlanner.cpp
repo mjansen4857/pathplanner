@@ -11,7 +11,7 @@ using namespace pathplanner;
 
 double PathPlanner::resolution = 0.004;
 
-Path PathPlanner::loadPath(std::string name, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){
+PathPlannerTrajectory PathPlanner::loadPath(std::string name, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){
    std::string line;
 
    std::string filePath = frc::filesystem::GetDeployDirectory() + "/pathplanner/" + name + ".path";
@@ -28,7 +28,7 @@ Path PathPlanner::loadPath(std::string name, units::meters_per_second_t maxVel, 
 
    std::cout << "is array: " << json.is_array() << std::endl;
 
-   std::vector<Path::State> test;
+   std::vector<PathPlannerTrajectory::PathPlannerState> test;
 
-   return Path(test);
+   return PathPlannerTrajectory(test);
 }

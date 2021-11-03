@@ -93,7 +93,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PackageInfo.fromPlatform().then((packageInfo) {
         setState(() {
           _version = packageInfo.version;
-          print('Current version: ' + _version);
           GitHubAPI.isUpdateAvailable(_version).then((value) {
             setState(() {
               _updateAvailable = value;
@@ -128,7 +127,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ],
       ),
       floatingActionButton: Visibility(
-        visible: _currentProject != null && !_appStoreBuild,
+        visible:
+            _currentProject != null && (!_appStoreBuild && !Platform.isMacOS),
         child: Tooltip(
           message: 'Deploy Robot Code',
           waitDuration: Duration(milliseconds: 500),

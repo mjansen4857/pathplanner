@@ -5,6 +5,8 @@
 
 using namespace pathplanner;
 
+#define PI 3.14159265358979323846
+
 PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed){
     std::vector<PathPlannerState> joined = this->joinSplines(waypoints, maxVelocity, PathPlanner::resolution);
     this->calculateMaxVel(&joined, maxVelocity, maxAcceleration);
@@ -16,30 +18,6 @@ PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, un
 
 PathPlannerTrajectory::PathPlannerTrajectory(std::vector<PathPlannerState> states){
     this->states = states;
-}
-
-PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(units::second_t time){
-    if(time <= getInitialState().time) return getInitialState();
-   if(time >= getTotalTime()) return getEndState();
-
-   int low = 1;
-   int high = getStates().size() - 1;
-
-   while(low != high){
-       int mid = (low + high) / 2;
-       if(getState(mid).time < time){
-           low = mid + 1;
-       }else{
-           high = mid;
-       }
-   }
-
-   PathPlannerState sample = getState(low);
-   PathPlannerState prevSample = getState(low - 1);
-
-   if(units::math::abs(sample.time - prevSample.time) < 0.001_s) return sample;
-
-   return prevSample.interpolate(sample, (time - prevSample.time) / (sample.time - prevSample.time));
 }
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::joinSplines(std::vector<PathPlannerTrajectory::Waypoint> pathPoints, units::meters_per_second_t maxVel, double step){
@@ -77,11 +55,11 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
                 state.position = s1.position + hypot;
                 state.deltaPos = hypot;
 
-                units::radian_t heading = units::math::atan2(s1.pose.Y() - s2.pose.Y(), s1.pose.X() - s2.pose.X()) + units::radian_t{M_PI};
-                if(heading > units::radian_t{M_PI}){
-                    heading -= units::radian_t{2 * M_PI};
-                }else if(heading < units::radian_t{-M_PI}){
-                    heading += units::radian_t{2 * M_PI};
+                units::radian_t heading = units::math::atan2(s1.pose.Y() - s2.pose.Y(), s1.pose.X() - s2.pose.X()) + units::radian_t{PI};
+                if(heading > units::radian_t{PI}){
+                    heading -= units::radian_t{2 * PI};
+                }else if(heading < units::radian_t{-PI}){
+                    heading += units::radian_t{2 * PI};
                 }
                 state.pose = frc::Pose2d(state.pose.Translation(), frc::Rotation2d(heading));
 

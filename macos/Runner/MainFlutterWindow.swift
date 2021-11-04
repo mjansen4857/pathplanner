@@ -1,17 +1,16 @@
 import Cocoa
 import FlutterMacOS
-import bitsdojo_window_macos
 
-class MainFlutterWindow: BitsdojoWindow {
-  override func bitsdojo_window_configure() -> UInt {
-    return BDW_CUSTOM_FRAME | BDW_HIDE_ON_STARTUP
-  }
+class MainFlutterWindow: NSWindow {
 
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController.init()
-    let windowFrame = self.frame
+    var windowFrame = self.frame
+    windowFrame.size = NSSize(width: 1280, height: 720)
     self.contentViewController = flutterViewController
     self.setFrame(windowFrame, display: true)
+    self.center()
+    self.titleVisibility = NSWindow.TitleVisibility.hidden
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 

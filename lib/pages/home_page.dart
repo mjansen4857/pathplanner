@@ -89,19 +89,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       });
     });
 
-    if (!_appStoreBuild) {
-      PackageInfo.fromPlatform().then((packageInfo) {
-        setState(() {
-          _version = packageInfo.version;
+    PackageInfo.fromPlatform().then((packageInfo) {
+      setState(() {
+        _version = packageInfo.version;
+        if (!_appStoreBuild) {
           GitHubAPI.isUpdateAvailable(_version).then((value) {
             setState(() {
               _updateAvailable = value;
               _updateController.forward();
             });
           });
-        });
+        }
       });
-    }
+    });
   }
 
   @override
@@ -165,43 +165,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Widget _buildAppBar() {
-    double heightOffset = Platform.isMacOS ? 27 : 0;
-    return PreferredSize(
-      preferredSize: Size.fromHeight(_toolbarHeight + heightOffset),
-      child: MoveWindow(
-        child: Column(
+    return AppBar(
+      backgroundColor: Colors.grey[900],
+      toolbarHeight: _toolbarHeight,
+      actions: [
+        MinimizeWindowBtn(),
+        MaximizeWindowBtn(),
+        CloseWindowBtn(),
+      ],
+      title: SizedBox(
+        height: _toolbarHeight,
+        child: Row(
           children: [
-            Container(
-              height: heightOffset,
-              color: Colors.grey[850],
-            ),
-            AppBar(
-              backgroundColor: Colors.grey[900],
-              toolbarHeight: _toolbarHeight,
-              actions: [
-                MinimizeWindowBtn(),
-                MaximizeWindowBtn(),
-                CloseWindowBtn(),
-              ],
-              title: SizedBox(
-                height: _toolbarHeight,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: MoveWindow(
-                        child: Container(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            _currentPath == null
-                                ? 'PathPlanner'
-                                : '${_currentPath!.name}',
-                            style: TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w500),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+            Expanded(
+              child: MoveWindow(
+                child: Container(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    _currentPath == null
+                        ? 'PathPlanner'
+                        : '${_currentPath!.name}',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                  ),
                 ),
               ),
             ),

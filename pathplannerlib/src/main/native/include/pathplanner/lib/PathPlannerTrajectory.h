@@ -63,13 +63,14 @@ namespace pathplanner{
         public:
             PathPlannerTrajectory(std::vector<Waypoint> waypoints, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed);
             PathPlannerTrajectory(std::vector<PathPlannerState> states);
+            PathPlannerTrajectory();
 
             PathPlannerState sample(units::second_t time);
-            std::vector<PathPlannerState> getStates() { return this->states; }
-            int numStates() { return getStates().size(); }
-            PathPlannerState getState(int i) { return getStates()[i]; }
-            PathPlannerState getInitialState() { return getState(0); }
-            PathPlannerState getEndState() { return getState(numStates() - 1); }
-            units::second_t getTotalTime() { return getEndState().time; }
+            std::vector<PathPlannerState> *getStates() { return &this->states; }
+            int numStates() { return getStates()->size(); }
+            PathPlannerState *getState(int i) { return &getStates()->data()[i]; }
+            PathPlannerState *getInitialState() { return getState(0); }
+            PathPlannerState *getEndState() { return getState(numStates() - 1); }
+            units::second_t getTotalTime() { return getEndState()->time; }
     };
 }

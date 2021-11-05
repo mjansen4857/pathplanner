@@ -20,6 +20,10 @@ PathPlannerTrajectory::PathPlannerTrajectory(std::vector<PathPlannerState> state
     this->states = states;
 }
 
+PathPlannerTrajectory::PathPlannerTrajectory(){
+    
+}
+
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::joinSplines(std::vector<PathPlannerTrajectory::Waypoint> pathPoints, units::meters_per_second_t maxVel, double step){
     std::vector<PathPlannerState> states;
     int numSplines = pathPoints.size() - 1;
@@ -201,23 +205,23 @@ units::meter_t PathPlannerTrajectory::calculateRadius(PathPlannerTrajectory::Pat
 }
 
 PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(units::second_t time){
-    if(time <= getInitialState().time) return getInitialState();
-    if(time >= getTotalTime()) return getEndState();
+    if(time <= getInitialState()->time) return *getInitialState();
+    if(time >= getTotalTime()) return *getEndState();
 
     int low = 1;
     int high = numStates() - 1;
 
     while(low != high){
         int mid = (low + high) / 2;
-        if(getState(mid).time < time){
+        if(getState(mid)->time < time){
             low = mid + 1;
         }else{
             high = mid;
         }
     }
 
-    PathPlannerTrajectory::PathPlannerState sample = getState(low);
-    PathPlannerTrajectory::PathPlannerState prevSample = getState(low - 1);
+    PathPlannerTrajectory::PathPlannerState sample = *getState(low);
+    PathPlannerTrajectory::PathPlannerState prevSample = *getState(low - 1);
 
     if(units::math::abs(sample.time - prevSample.time) < 0.001_s) return sample;
 

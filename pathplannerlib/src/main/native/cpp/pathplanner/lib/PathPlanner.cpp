@@ -64,5 +64,46 @@ PathPlannerTrajectory PathPlanner::loadPath(std::string name, units::meters_per_
         waypoints.push_back(PathPlannerTrajectory::Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal));
     }
 
-    return PathPlannerTrajectory(waypoints, maxVel, maxAccel, reversed);
+    std::vector<std::vector<PathPlannerTrajectory::Waypoint>> splitPaths;
+    std::vector<PathPlannerTrajectory::Waypoint> currentPath;
+
+    for(int i = 0; i < (int) waypoints.size(); i++){
+        PathPlannerTrajectory::Waypoint w = waypoints[i];
+
+        currentPath.push_back(w);
+
+        if(w.isReversal || i == (int) waypoints.size() - 1){
+            splitPaths.push_back(currentPath);
+            currentPath = std::vector<PathPlannerTrajectory::Waypoint>();
+            currentPath.push_back(w);
+        }
+    }
+
+    std::vector<PathPlannerTrajectory> paths;
+    bool shouldReverse = reversed;
+    for(int i = 0; i < (int) splitPaths.size(); i++){
+        paths.push_back(PathPlannerTrajectory(splitPaths[i], maxVel, maxAccel, shouldReverse));
+        shouldReverse = !shouldReverse;
+    }
+
+    return joinPaths(paths);
+}
+
+PathPlannerTrajectory PathPlanner::joinPaths(std::vector<PathPlannerTrajectory> paths){
+    std::vector<PathPlannerTrajectory::PathPlannerState> joinedStates;
+
+    for(int i = 0; i < (int) paths.size(); i++){
+        if(i != 0){
+            units::second_t lastEndTime = joinedStates[joinedStates.size() - 1].time;
+            for(int j = 0; j < paths[i].numStates(); j++){
+                paths[i].getState(j)->time += lastEndTime;
+            }
+        }
+
+        for(int j = 0; j < paths[i].numStates(); j++){
+            joinedStates.push_back(*paths[i].getState(j));
+        }
+    }
+
+    return PathPlannerTrajectory(joinedStates);
 }

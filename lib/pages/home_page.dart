@@ -587,6 +587,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       List<RobotPath> paths = [];
       _currentProject = Directory(projectDir);
       _pathsDir = Directory(projectDir + '/src/main/deploy/pathplanner/');
+      if(!_pathsDir!.existsSync()){
+        _pathsDir!.createSync(recursive: true);
+      }
       List<FileSystemEntity> pathFiles = _pathsDir!.listSync();
       for (FileSystemEntity e in pathFiles) {
         if (e.path.endsWith('.path')) {
@@ -650,7 +653,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       if (buildFile.existsSync()) {
         Directory pathsDir =
             Directory(projectFolder + '/src/main/deploy/pathplanner');
-        pathsDir.create(recursive: true);
+        pathsDir.createSync(recursive: true);
         _prefs.setString('currentProjectDir', projectFolder);
         _prefs.remove('pathOrder');
 

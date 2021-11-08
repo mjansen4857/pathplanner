@@ -101,3 +101,4 @@ msix_config:
   msix_version: 2022.0.0.0
   logo_path: images/icon.png
   store: true
+  languages: en_us

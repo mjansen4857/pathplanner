@@ -49,6 +49,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  msix: ^2.6.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -91,3 +92,12 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+msix_config:
+  display_name: FRC PathPlanner
+  publisher_display_name: Michael Jansen
+  identity_name: 39956MichaelJansen.FRCPathPlanner
+  publisher: CN=2DF9861F-6D68-40A5-BCD2-A0BC837334E3
+  msix_version: 2022.0.0.0
+  logo_path: images/icon.png
+  store: true

@@ -32,7 +32,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double _toolbarHeight = 56;
-  String _version = '0.0.0';
+  String _version = '2022.0.0';
   Directory? _currentProject;
   Directory? _pathsDir;
   late SharedPreferences _prefs;
@@ -89,19 +89,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       });
     });
 
-    PackageInfo.fromPlatform().then((packageInfo) {
-      setState(() {
-        _version = packageInfo.version;
-        if (!_appStoreBuild) {
-          GitHubAPI.isUpdateAvailable(_version).then((value) {
-            setState(() {
-              _updateAvailable = value;
-              _updateController.forward();
-            });
-          });
-        }
+    if (!_appStoreBuild) {
+      GitHubAPI.isUpdateAvailable(_version).then((value) {
+        setState(() {
+          _updateAvailable = value;
+          _updateController.forward();
+        });
       });
-    });
+    }
+
+    // PackageInfo plugin is broken on windows. Have to wait for an update
+
+    // PackageInfo.fromPlatform().then((packageInfo) {
+    //   setState(() {
+    //     _version = packageInfo.version;
+    //     if (!_appStoreBuild) {
+    //       GitHubAPI.isUpdateAvailable(_version).then((value) {
+    //         setState(() {
+    //           _updateAvailable = value;
+    //           _updateController.forward();
+    //         });
+    //       });
+    //     }
+    //   });
+    // });
   }
 
   @override

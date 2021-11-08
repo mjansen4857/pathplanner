@@ -100,5 +100,4 @@ msix_config:
   publisher: CN=2DF9861F-6D68-40A5-BCD2-A0BC837334E3
   msix_version: 2022.0.0.0
   logo_path: images/icon.png
-  store: true
-  languages: en_us
+  languages: en-us

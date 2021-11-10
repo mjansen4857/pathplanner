@@ -1,0 +1,3 @@
+[submodule "pathplannerlib"]
+	path = pathplannerlib
+	url = https://github.com/mjansen4857/pathplannerlib.git

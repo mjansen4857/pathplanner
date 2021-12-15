@@ -1,4 +1,3 @@
-import 'package:fitted_text_field_container/fitted_text_field_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
@@ -41,74 +40,92 @@ class _PathTileState extends State<PathTile> {
     return ClipRect(
       clipBehavior: Clip.hardEdge,
       child: Slidable(
-        actionPane: SlidableScrollActionPane(),
-        actionExtentRatio: 0.25,
-        actions: [
-          IconSlideAction(
-            caption: 'Delete',
-            color: Colors.red,
-            icon: Icons.delete,
-            onTap: widget.onDelete,
-          ),
-          IconSlideAction(
-            caption: 'Duplicate',
-            color: Colors.indigo,
-            icon: Icons.copy,
-            onTap: widget.onDuplicate,
-          ),
-        ],
-        child: ListTile(
-          selected: widget.isSelected,
-          selectedTileColor: Colors.grey[800],
-          leading: Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 8),
-            child: FittedTextFieldContainer(
-              child: TextField(
-                cursorColor: Colors.white,
-                onSubmitted: (String text) {
-                  if (text != '') {
-                    FocusScopeNode currentScope = FocusScope.of(context);
-                    if (!currentScope.hasPrimaryFocus &&
-                        currentScope.hasFocus) {
-                      FocusManager.instance.primaryFocus!.unfocus();
-                    }
-                    if (widget.onRename != null) {
-                      if (widget.onRename!.call(text)) {
-                        setState(() {
-                          widget.path.name = text;
-                        });
-                      }
-                    }
-                  } else {
-                    setState(() {
-                      // flutter be weird sometimes
-                      widget.path.name = widget.path.name;
-                    });
-                  }
-                },
-                controller: TextEditingController(text: widget.path.name)
-                  ..selection = TextSelection.fromPosition(
-                      TextPosition(offset: widget.path.name.length)),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.grey,
+        startActionPane: ActionPane(
+          extentRatio: 0.4,
+          motion: ScrollMotion(),
+          children: [
+            SlidableAction(
+              backgroundColor: Colors.red,
+              icon: Icons.delete,
+              onPressed: (context) {
+                widget.onDelete!();
+              },
+            ),
+            SlidableAction(
+              backgroundColor: Colors.blue,
+              icon: Icons.content_copy,
+              onPressed: (context) {
+                widget.onDuplicate!();
+              },
+            ),
+          ],
+        ),
+        child: Container(
+          height: 50,
+          width: 303,
+          child: MouseRegion(
+            cursor: widget.isSelected
+                ? MouseCursor.defer
+                : SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: widget.isSelected ? null : widget.onTap,
+              child: Container(
+                color:
+                    widget.isSelected ? Colors.grey[800] : Colors.transparent,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 6, bottom: 7, left: 16),
+                    child: IntrinsicWidth(
+                      child: TextField(
+                        cursorColor: Colors.white,
+                        onSubmitted: (String text) {
+                          if (text != '') {
+                            FocusScopeNode currentScope =
+                                FocusScope.of(context);
+                            if (!currentScope.hasPrimaryFocus &&
+                                currentScope.hasFocus) {
+                              FocusManager.instance.primaryFocus!.unfocus();
+                            }
+                            if (widget.onRename != null) {
+                              if (widget.onRename!.call(text)) {
+                                setState(() {
+                                  widget.path.name = text;
+                                });
+                              }
+                            }
+                          } else {
+                            setState(() {
+                              // flutter be weird sometimes
+                              widget.path.name = widget.path.name;
+                            });
+                          }
+                        },
+                        controller: TextEditingController(
+                            text: widget.path.name)
+                          ..selection = TextSelection.fromPosition(
+                              TextPosition(offset: widget.path.name.length)),
+                        decoration: InputDecoration(
+                          border: InputBorder.none,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.grey,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                          contentPadding: EdgeInsets.all(8),
+                        ),
+                      ),
                     ),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Colors.transparent,
-                    ),
-                  ),
-                  // errorBorder: InputBorder.none,
-                  // disabledBorder: InputBorder.none,
-                  contentPadding: EdgeInsets.all(8),
                 ),
               ),
             ),
           ),
-          onTap: widget.isSelected ? null : widget.onTap,
         ),
       ),
     );

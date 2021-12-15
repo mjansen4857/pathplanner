@@ -24,9 +24,6 @@ class PathPlanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PathPlanner',
-      shortcuts: Map.of(WidgetsApp.defaultShortcuts)
-        ..remove(LogicalKeySet(LogicalKeyboardKey.space))
-        ..remove(LogicalKeySet(LogicalKeyboardKey.enter)),
       theme: ThemeData(
         brightness: Brightness.dark,
         primarySwatch: Colors.indigo,

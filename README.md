@@ -1,7 +1,7 @@
 # PathPlanner
-<a href="https://www.microsoft.com/en-us/p/frc-pathplanner/9nqbkb5dw909?cid=storebadge&ocid=badge&rtc=1&activetab=pivot:overviewtab"><img src="https://raw.githubusercontent.com/mjansen4857/mjansen4857.github.io/master/badges/windows.svg?token=ACHJAZJ2E24SI5CCQVA6FDTBU6YWK" height=50></a>
+<a href="https://www.microsoft.com/en-us/p/frc-pathplanner/9nqbkb5dw909?cid=storebadge&ocid=badge&rtc=1&activetab=pivot:overviewtab"><img src="https://mjansen4857.com/badges/windows.svg" height=50></a>
 &nbsp;&nbsp;&nbsp;
-<a href="https://apps.apple.com/us/app/frc-pathplanner/id1593046876"><img src="https://raw.githubusercontent.com/mjansen4857/mjansen4857.github.io/master/badges/mac.svg?token=ACHJAZJMXJYZ23INLQ6FT7LBU6Z2Q" height=51></a>
+<a href="https://apps.apple.com/us/app/frc-pathplanner/id1593046876"><img src="https://mjansen4857.com/badges/mac.svg" height=51></a>
 
 Download from one of the above app stores to receive auto-updates. Manual installs can be found [here](https://github.com/mjansen4857/pathplanner/releases).
 

@@ -22,6 +22,7 @@ class _SettingsTileState extends State<SettingsTile>
   double _width = 0.75;
   double _length = 1.0;
   bool _holonomic = false;
+  bool _generateJSON = false;
 
   late AnimationController _controller;
   late Animation<double> _iconTurns;
@@ -41,6 +42,7 @@ class _SettingsTileState extends State<SettingsTile>
           _width = _prefs!.getDouble('robotWidth') ?? 0.75;
           _length = _prefs!.getDouble('robotLength') ?? 1.0;
           _holonomic = _prefs!.getBool('holonomicMode') ?? false;
+          _generateJSON = _prefs!.getBool('generateJSON') ?? false;
         }
       });
     });
@@ -49,7 +51,10 @@ class _SettingsTileState extends State<SettingsTile>
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
-      leading: Icon(Icons.settings),
+      leading: Icon(
+        Icons.settings,
+        color: Colors.white,
+      ),
       onExpansionChanged: (expanded) {
         setState(() {
           if (expanded) {
@@ -61,9 +66,15 @@ class _SettingsTileState extends State<SettingsTile>
       },
       trailing: RotationTransition(
         turns: _iconTurns,
-        child: Icon(Icons.expand_less),
+        child: Icon(
+          Icons.expand_less,
+          color: Colors.white,
+        ),
       ),
-      title: Text('Settings'),
+      title: Text(
+        'Settings',
+        style: TextStyle(color: Colors.white),
+      ),
       children: [
         buildTextField(context, 'Robot Width', (value) {
           if (value != null && _prefs != null) {
@@ -105,12 +116,30 @@ class _SettingsTileState extends State<SettingsTile>
             child: Text('Holonomic Mode'),
           ),
         ),
+        SwitchListTile(
+          value: _generateJSON,
+          activeColor: Colors.indigoAccent,
+          contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+          onChanged: (val) {
+            _prefs!.setBool('generateJSON', val);
+            setState(() {
+              _generateJSON = val;
+            });
+            if (widget.onSettingsChanged != null) {
+              widget.onSettingsChanged!.call();
+            }
+          },
+          title: Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text('Generate WPILib Trajectory'),
+          ),
+        ),
       ],
     );
   }
 
   Widget buildTextField(BuildContext context, String label,
-      ValueChanged onSubmitted, String text) {
+      ValueChanged? onSubmitted, String text) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 24, 6),
       child: Container(

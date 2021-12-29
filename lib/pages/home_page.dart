@@ -41,6 +41,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double _robotWidth = 0.75;
   double _robotLength = 1.0;
   bool _holonomicMode = false;
+  bool _generateJSON = false;
   bool _updateAvailable = false;
   late AnimationController _updateController;
   late AnimationController _welcomeController;
@@ -87,6 +88,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
         _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
         _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
+        _generateJSON = _prefs.getBool('generateJSON') ?? false;
       });
     });
 
@@ -464,6 +466,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 _prefs.getDouble('robotLength') ?? 1.0;
                             _holonomicMode =
                                 _prefs.getBool('holonomicMode') ?? false;
+                            _generateJSON =
+                                _prefs.getBool('generateJSON') ?? false;
                           });
                         },
                       ),
@@ -534,7 +538,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return Center(
         child: Container(
           child: PathEditor(_currentPath!, _robotWidth, _robotLength,
-              _holonomicMode, _pathsDir!.path),
+              _holonomicMode, _generateJSON, _pathsDir!.path),
         ),
       );
     } else {

@@ -6,15 +6,20 @@ import 'waypoint.dart';
 
 class RobotPath {
   List<Waypoint> waypoints;
+  double? maxVelocity;
+  double? maxAcceleration;
   late String name;
 
-  RobotPath(this.waypoints, {this.name = 'New Path'});
+  RobotPath(this.waypoints,
+      {this.name = 'New Path', this.maxVelocity, this.maxAcceleration});
 
   RobotPath.fromJson(Map<String, dynamic> json) : waypoints = [] {
-    waypoints = [];
     for (Map<String, dynamic> pointJson in json['waypoints']) {
       waypoints.add(Waypoint.fromJson(pointJson));
     }
+
+    maxVelocity = json['maxVelocity'];
+    maxAcceleration = json['maxAcceleration'];
   }
 
   String? getWaypointLabel(Waypoint? waypoint) {
@@ -52,8 +57,16 @@ class RobotPath {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'waypoints': waypoints,
-    };
+    if (maxVelocity == null && maxAcceleration == null) {
+      return {
+        'waypoints': waypoints,
+      };
+    } else {
+      return {
+        'waypoints': waypoints,
+        'maxVelocity': maxVelocity,
+        'maxAcceleration': maxAcceleration,
+      };
+    }
   }
 }

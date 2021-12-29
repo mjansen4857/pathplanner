@@ -7,6 +7,7 @@ import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
+import 'package:pathplanner/widgets/path_editor/wpilib_settings_card.dart';
 import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
 import 'package:undo/undo.dart';
 
@@ -17,10 +18,11 @@ class PathEditor extends StatefulWidget {
   final double robotWidth;
   final double robotLength;
   final bool holonomicMode;
+  final bool generateJSON;
   final String pathsDir;
 
   PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode,
-      this.pathsDir);
+      this.generateJSON, this.pathsDir);
 
   @override
   _PathEditorState createState() => _PathEditorState();
@@ -63,6 +65,7 @@ class _PathEditorState extends State<PathEditor> {
           children: [
             _buildEditor(),
             _buildWaypointCard(),
+            _buildWPILibSettingsCard(),
           ],
         ),
       ),
@@ -244,6 +247,21 @@ class _PathEditorState extends State<PathEditor> {
             _selectedPoint = null;
           });
         },
+      ),
+    );
+  }
+
+  Widget _buildWPILibSettingsCard() {
+    return Visibility(
+      visible: widget.generateJSON,
+      child: Align(
+        alignment: FractionalOffset.bottomLeft,
+        child: WPILibSettingsCard(
+          widget.path,
+          onShouldSave: () {
+            widget.path.savePath(widget.pathsDir);
+          },
+        ),
       ),
     );
   }

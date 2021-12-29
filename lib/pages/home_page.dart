@@ -67,6 +67,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         CurvedAnimation(parent: _welcomeController, curve: Curves.ease);
     SharedPreferences.getInstance().then((prefs) async {
       String? projectDir = prefs.getString('currentProjectDir');
+      String? pathsDir = prefs.getString('currentPathsDir');
       if (projectDir != null && Platform.isMacOS) {
         if (prefs.getString('macOSBookmark') != null) {
           await _bookmarks!.resolveBookmark(prefs.getString('macOSBookmark')!);
@@ -82,7 +83,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _prefs = prefs;
         _welcomeController.forward();
 
-        _loadPaths(projectDir);
+        _loadPaths(projectDir, pathsDir);
         _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
         _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
         _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
@@ -570,7 +571,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             child: Padding(
                               padding: const EdgeInsets.all(6.0),
                               child: Text(
-                                'Open WPILib Project',
+                                'Open Robot Project',
                                 style: TextStyle(fontSize: 24),
                               ),
                             ),
@@ -593,12 +594,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _loadPaths(String? projectDir) {
-    if (projectDir != null) {
+  void _loadPaths(String? projectDir, String? pathsDir) {
+    if (projectDir != null && pathsDir != null) {
       List<RobotPath> paths = [];
       _currentProject = Directory(projectDir);
-      _pathsDir = Directory(projectDir + '/src/main/deploy/pathplanner/');
-      if(!_pathsDir!.existsSync()){
+      _pathsDir = Directory(pathsDir);
+      if (!_pathsDir!.existsSync()) {
         _pathsDir!.createSync(recursive: true);
       }
       List<FileSystemEntity> pathFiles = _pathsDir!.listSync();
@@ -661,48 +662,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         initialDirectory: Directory.current.path);
     if (projectFolder != null) {
       File buildFile = File(projectFolder + '/build.gradle');
+
+      Directory pathsDir;
       if (buildFile.existsSync()) {
-        Directory pathsDir =
-            Directory(projectFolder + '/src/main/deploy/pathplanner');
-        pathsDir.createSync(recursive: true);
-        _prefs.setString('currentProjectDir', projectFolder);
-        _prefs.remove('pathOrder');
-
-        if (Platform.isMacOS) {
-          // Bookmark project on macos so it can be accessed again later
-          String bookmark = await _bookmarks!.bookmark(File(projectFolder));
-          _prefs.setString('macOSBookmark', bookmark);
-        }
-
-        setState(() {
-          _currentProject = Directory(projectFolder);
-          _loadPaths(_currentProject!.path);
-        });
+        // Java or C++ project
+        pathsDir = Directory(projectFolder + '/src/main/deploy/pathplanner/');
       } else {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return KeyBoardShortcuts(
-              keysToPress: {LogicalKeyboardKey.enter},
-              onKeysPressed: Navigator.of(context).pop,
-              child: AlertDialog(
-                title: Text('Invalid Project'),
-                content: Text(
-                    '$projectFolder is not a valid WPILib gradleRIO project'),
-                actions: [
-                  TextButton(
-                    onPressed: Navigator.of(context).pop,
-                    child: Text(
-                      'OK',
-                      style: TextStyle(color: Colors.indigoAccent),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
+        // Other language
+        pathsDir = Directory(projectFolder + '/deploy/pathplanner/');
       }
+
+      pathsDir.createSync(recursive: true);
+      _prefs.setString('currentProjectDir', projectFolder);
+      _prefs.setString('currentPathsDir', pathsDir.path);
+      _prefs.remove('pathOrder');
+
+      if (Platform.isMacOS) {
+        // Bookmark project on macos so it can be accessed again later
+        String bookmark = await _bookmarks!.bookmark(File(projectFolder));
+        _prefs.setString('macOSBookmark', bookmark);
+      }
+
+      setState(() {
+        _currentProject = Directory(projectFolder);
+        _loadPaths(_currentProject!.path, pathsDir.path);
+      });
     }
   }
 

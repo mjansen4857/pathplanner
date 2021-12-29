@@ -54,15 +54,17 @@ class _WaypointCardState extends State<WaypointCard> {
                     _buildPositionRow(context),
                     SizedBox(height: 12),
                     _buildAngleRow(context),
-                    Visibility(
-                      child: Column(
-                        children: [
-                          SizedBox(height: 12),
-                          _buildVelReversalRow(context),
-                        ],
-                      ),
-                      visible: !widget.waypoint!.isStartPoint(),
-                    ),
+                    SizedBox(height: 12),
+                    _buildVelReversalRow(context),
+                    // Visibility(
+                    //   child: Column(
+                    //     children: [
+                    //       SizedBox(height: 12),
+                    //       _buildVelReversalRow(context),
+                    //     ],
+                    //   ),
+                    //   visible: !widget.waypoint!.isStartPoint(),
+                    // ),
                     SizedBox(height: 5),
                   ],
                 ),
@@ -180,7 +182,7 @@ class _WaypointCardState extends State<WaypointCard> {
         _buildTextField(
           context,
           !widget.holonomicEnabled
-              ? null
+              ? _getController("")
               : _getController(
                   widget.waypoint!.holonomicAngle.toStringAsFixed(2)),
           'Rotation',
@@ -198,6 +200,7 @@ class _WaypointCardState extends State<WaypointCard> {
   }
 
   Widget _buildVelReversalRow(BuildContext context) {
+    print(widget.waypoint!.velOverride);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
@@ -205,7 +208,7 @@ class _WaypointCardState extends State<WaypointCard> {
         _buildTextField(
           context,
           widget.waypoint!.isReversal || widget.waypoint!.velOverride == null
-              ? null
+              ? _getController("")
               : _getController(
                   widget.waypoint!.velOverride!.toStringAsFixed(2)),
           'Vel Override',

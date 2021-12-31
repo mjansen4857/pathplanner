@@ -7,7 +7,7 @@ import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
-import 'package:pathplanner/widgets/path_editor/wpilib_settings_card.dart';
+import 'package:pathplanner/widgets/path_editor/generator_settings_card.dart';
 import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
 import 'package:undo/undo.dart';
 
@@ -19,10 +19,11 @@ class PathEditor extends StatefulWidget {
   final double robotLength;
   final bool holonomicMode;
   final bool generateJSON;
+  final bool generateCSV;
   final String pathsDir;
 
   PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode,
-      this.generateJSON, this.pathsDir);
+      this.generateJSON, this.generateCSV, this.pathsDir);
 
   @override
   _PathEditorState createState() => _PathEditorState();
@@ -83,14 +84,16 @@ class _PathEditorState extends State<PathEditor> {
                 widget.path.addWaypoint(Point(
                     _xPixelsToMeters(details.localPosition.dx),
                     _yPixelsToMeters(details.localPosition.dy)));
-                widget.path.savePath(widget.pathsDir);
+                widget.path.savePath(
+                    widget.pathsDir, widget.generateJSON, widget.generateCSV);
               });
             },
             (oldValue) {
               setState(() {
                 widget.path.waypoints.removeLast();
                 widget.path.waypoints.last.nextControl = null;
-                widget.path.savePath(widget.pathsDir);
+                widget.path.savePath(
+                    widget.pathsDir, widget.generateJSON, widget.generateCSV);
               });
             },
           ));
@@ -170,13 +173,15 @@ class _PathEditorState extends State<PathEditor> {
                   if (widget.path.waypoints[index] != _draggedPoint) {
                     widget.path.waypoints[index] = dragEnd.clone();
                   }
-                  widget.path.savePath(widget.pathsDir);
+                  widget.path.savePath(
+                      widget.pathsDir, widget.generateJSON, widget.generateCSV);
                 });
               },
               (oldValue) {
                 setState(() {
                   widget.path.waypoints[index] = oldValue.clone();
-                  widget.path.savePath(widget.pathsDir);
+                  widget.path.savePath(
+                      widget.pathsDir, widget.generateJSON, widget.generateCSV);
                 });
               },
             ));
@@ -215,7 +220,8 @@ class _PathEditorState extends State<PathEditor> {
         holonomicEnabled: widget.holonomicMode,
         deleteEnabled: widget.path.waypoints.length > 2,
         onShouldSave: () {
-          widget.path.savePath(widget.pathsDir);
+          widget.path.savePath(
+              widget.pathsDir, widget.generateJSON, widget.generateCSV);
         },
         onDelete: () {
           int delIndex = widget.path.waypoints.indexOf(_selectedPoint!);
@@ -233,13 +239,15 @@ class _PathEditorState extends State<PathEditor> {
                   widget.path.waypoints[0].prevControl = null;
                   widget.path.waypoints[0].isReversal = false;
                 }
-                widget.path.savePath(widget.pathsDir);
+                widget.path.savePath(
+                    widget.pathsDir, widget.generateJSON, widget.generateCSV);
               });
             },
             (oldValue) {
               setState(() {
                 widget.path.waypoints = RobotPath.cloneWaypointList(oldValue);
-                widget.path.savePath(widget.pathsDir);
+                widget.path.savePath(
+                    widget.pathsDir, widget.generateJSON, widget.generateCSV);
               });
             },
           ));
@@ -256,10 +264,11 @@ class _PathEditorState extends State<PathEditor> {
       visible: widget.generateJSON,
       child: Align(
         alignment: FractionalOffset.bottomLeft,
-        child: WPILibSettingsCard(
+        child: GeneratorSettingsCard(
           widget.path,
           onShouldSave: () {
-            widget.path.savePath(widget.pathsDir);
+            widget.path.savePath(
+                widget.pathsDir, widget.generateJSON, widget.generateCSV);
           },
         ),
       ),

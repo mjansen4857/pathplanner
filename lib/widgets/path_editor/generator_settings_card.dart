@@ -4,17 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 
-class WPILibSettingsCard extends StatefulWidget {
+class GeneratorSettingsCard extends StatefulWidget {
   final RobotPath? path;
   final VoidCallback? onShouldSave;
 
-  WPILibSettingsCard(this.path, {this.onShouldSave});
+  GeneratorSettingsCard(this.path, {this.onShouldSave});
 
   @override
-  _WPILibSettingsCardState createState() => _WPILibSettingsCardState();
+  _GeneratorSettingsCardState createState() => _GeneratorSettingsCardState();
 }
 
-class _WPILibSettingsCardState extends State<WPILibSettingsCard> {
+class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
   @override
   Widget build(BuildContext context) {
     if (widget.path == null) return Container();
@@ -42,7 +42,7 @@ class _WPILibSettingsCardState extends State<WPILibSettingsCard> {
                       mainAxisSize: MainAxisSize.max,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('WPILib Trajectory Settings'),
+                        Text('Generator Settings'),
                       ],
                     ),
                     SizedBox(height: 12),
@@ -82,6 +82,32 @@ class _WPILibSettingsCardState extends State<WPILibSettingsCard> {
                               }
                             });
                           },
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: widget.path!.isReversed ?? false,
+                              activeColor: Colors.indigo,
+                              onChanged: (val) {
+                                setState(() {
+                                  widget.path!.isReversed = val;
+                                  if (widget.onShouldSave != null) {
+                                    widget.onShouldSave!.call();
+                                  }
+                                });
+                              },
+                            ),
+                            SizedBox(width: 4),
+                            Text('Reversed'),
+                            SizedBox(width: 12),
+                          ],
                         ),
                       ],
                     ),

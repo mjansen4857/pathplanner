@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:pathplanner/robot_path/robot_path.dart';
@@ -5,17 +6,75 @@ import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
 
 class Trajectory {
-  final List<State> states;
+  late final List<State> states;
 
   Trajectory(this.states);
 
-  static Future<Trajectory> generateTrajectory(
-      RobotPath path, bool reversed) async {
-    List<State> joined =
-        joinSplines(path.waypoints, path.maxVelocity ?? 8.0, 0.004);
-    calculateMaxVel(
-        joined, path.maxVelocity ?? 8.0, path.maxAcceleration ?? 5.0);
-    calculateVelocity(joined, path.waypoints, path.maxAcceleration ?? 5.0);
+  Trajectory.joinTrajectories(List<Trajectory> trajectories) {
+    List<State> joinedStates = [];
+
+    for (int i = 0; i < trajectories.length; i++) {
+      if (i != 0) {
+        num lastEndTime = joinedStates.last.timeSeconds;
+
+        for (State s in trajectories[i].states) {
+          s.timeSeconds += lastEndTime;
+        }
+      }
+
+      joinedStates.addAll(trajectories[i].states);
+    }
+
+    this.states = joinedStates;
+  }
+
+  String getWPILibJSON() {
+    return jsonEncode(this.states);
+  }
+
+  String getCSV() {
+    String csv =
+        '# PathPlanner CSV Format:\n# timeSeconds, positionMeters, velocityMetersPerSecond, accelerationMetersPerSecondSq, headingDegrees, holonomicRotationDegrees, curvatureRadPerMeter, curveRadiusMeters, angularVelocityDegreesPerSec, angularAccelerationDegreesPerSecSq';
+
+    for (State s in states) {
+      csv += '\n ${s.toCSV()}';
+    }
+
+    return csv;
+  }
+
+  static Future<Trajectory> generateFullTrajectory(RobotPath path) async {
+    List<List<Waypoint>> splitPaths = [];
+    List<Waypoint> currentPath = [];
+
+    for (int i = 0; i < path.waypoints.length; i++) {
+      Waypoint w = path.waypoints[i];
+
+      currentPath.add(w);
+
+      if (w.isReversal || i == path.waypoints.length - 1) {
+        splitPaths.add(currentPath);
+        currentPath = [];
+        currentPath.add(w);
+      }
+    }
+
+    List<Trajectory> trajectories = [];
+    bool shouldReverse = path.isReversed ?? false;
+    for (int i = 0; i < splitPaths.length; i++) {
+      trajectories.add(await generateSingleTrajectory(splitPaths[i],
+          path.maxVelocity, path.maxAcceleration, shouldReverse));
+      shouldReverse = !shouldReverse;
+    }
+
+    return Trajectory.joinTrajectories(trajectories);
+  }
+
+  static Future<Trajectory> generateSingleTrajectory(List<Waypoint> pathPoints,
+      num? maxVel, num? maxAccel, bool reversed) async {
+    List<State> joined = joinSplines(pathPoints, maxVel ?? 8.0, 0.004);
+    calculateMaxVel(joined, maxVel ?? 8.0, maxAccel ?? 5.0);
+    calculateVelocity(joined, pathPoints, maxAccel ?? 5.0);
     recalculateValues(joined, reversed);
 
     return Trajectory(joined);
@@ -292,5 +351,32 @@ class State {
         GeometryUtil.numLerp(this.deltaPos, endVal.deltaPos, t);
 
     return lerpedState;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'acceleration': accelerationMetersPerSecondSq,
+      'curvature': curvatureRadPerMeter.isFinite ? curvatureRadPerMeter : 0,
+      'pose': {
+        'rotation': {
+          'radians': headingRadians,
+        },
+        'translation': {
+          'x': translationMeters.x,
+          'y': translationMeters.y,
+        },
+      },
+      'time': timeSeconds,
+      'velocity': velocityMetersPerSecond,
+      'position': positionMeters,
+      'holonomicRotation': holonomicRotation,
+      'angularVelocity': angularVelocity,
+      'angularAcceleration': angularAcceleration,
+      'curveRadius': curveRadius.isFinite ? curveRadius : 0,
+    };
+  }
+
+  String toCSV() {
+    return '$timeSeconds,$positionMeters,$velocityMetersPerSecond,$accelerationMetersPerSecondSq,${GeometryUtil.toDegrees(headingRadians)},$holonomicRotation,$curvatureRadPerMeter,$curveRadius,${GeometryUtil.toDegrees(angularVelocity)},${GeometryUtil.toDegrees(angularAcceleration)}';
   }
 }

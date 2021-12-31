@@ -27,4 +27,8 @@ class GeometryUtil {
       t,
     );
   }
+
+  static num toDegrees(num radians) {
+    return radians * 180 / pi;
+  }
 }

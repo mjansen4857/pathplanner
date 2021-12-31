@@ -4,8 +4,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsTile extends StatefulWidget {
   final VoidCallback? onSettingsChanged;
+  final VoidCallback? onGenerationEnabled;
 
-  SettingsTile({this.onSettingsChanged});
+  SettingsTile({this.onSettingsChanged, this.onGenerationEnabled});
 
   @override
   _SettingsTileState createState() => _SettingsTileState();
@@ -23,6 +24,7 @@ class _SettingsTileState extends State<SettingsTile>
   double _length = 1.0;
   bool _holonomic = false;
   bool _generateJSON = false;
+  bool _generateCSV = false;
 
   late AnimationController _controller;
   late Animation<double> _iconTurns;
@@ -43,6 +45,7 @@ class _SettingsTileState extends State<SettingsTile>
           _length = _prefs!.getDouble('robotLength') ?? 1.0;
           _holonomic = _prefs!.getBool('holonomicMode') ?? false;
           _generateJSON = _prefs!.getBool('generateJSON') ?? false;
+          _generateCSV = _prefs!.getBool('generateCSV') ?? false;
         }
       });
     });
@@ -128,10 +131,34 @@ class _SettingsTileState extends State<SettingsTile>
             if (widget.onSettingsChanged != null) {
               widget.onSettingsChanged!.call();
             }
+            if (widget.onGenerationEnabled != null && val) {
+              widget.onGenerationEnabled!.call();
+            }
           },
           title: Padding(
             padding: const EdgeInsets.only(left: 2),
-            child: Text('Generate WPILib Trajectory'),
+            child: Text('Generate WPILib JSON'),
+          ),
+        ),
+        SwitchListTile(
+          value: _generateCSV,
+          activeColor: Colors.indigoAccent,
+          contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+          onChanged: (val) {
+            _prefs!.setBool('generateCSV', val);
+            setState(() {
+              _generateCSV = val;
+            });
+            if (widget.onSettingsChanged != null) {
+              widget.onSettingsChanged!.call();
+            }
+            if (widget.onGenerationEnabled != null && val) {
+              widget.onGenerationEnabled!.call();
+            }
+          },
+          title: Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text('Generate CSV'),
           ),
         ),
       ],

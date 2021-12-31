@@ -32,7 +32,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double _toolbarHeight = 56;
-  String _version = '2022.0.0';
+  String _version = '2022.0.1';
   Directory? _currentProject;
   Directory? _pathsDir;
   late SharedPreferences _prefs;
@@ -42,6 +42,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double _robotLength = 1.0;
   bool _holonomicMode = false;
   bool _generateJSON = false;
+  bool _generateCSV = false;
   bool _updateAvailable = false;
   late AnimationController _updateController;
   late AnimationController _welcomeController;
@@ -89,6 +90,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
         _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
         _generateJSON = _prefs.getBool('generateJSON') ?? false;
+        _generateCSV = _prefs.getBool('generateCSV') ?? false;
       });
     });
 
@@ -407,7 +409,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           name: pathName,
                         ));
                         _currentPath = _paths.last;
-                        _currentPath!.savePath(_pathsDir!.path);
+                        _currentPath!.savePath(
+                            _pathsDir!.path, _generateJSON, _generateCSV);
                       });
                     },
                   ),
@@ -450,7 +453,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                           ], name: pathName));
                           _currentPath = _paths.last;
-                          _currentPath!.savePath(_pathsDir!.path);
+                          _currentPath!.savePath(
+                              _pathsDir!.path, _generateJSON, _generateCSV);
                           UndoRedo.clearHistory();
                         });
                       },
@@ -468,7 +472,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 _prefs.getBool('holonomicMode') ?? false;
                             _generateJSON =
                                 _prefs.getBool('generateJSON') ?? false;
+                            _generateCSV =
+                                _prefs.getBool('generateCSV') ?? false;
                           });
+                        },
+                        onGenerationEnabled: () {
+                          for (RobotPath path in _paths) {
+                            path.savePath(
+                                _pathsDir!.path, _generateJSON, _generateCSV);
+                          }
                         },
                       ),
                     ),
@@ -538,7 +550,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return Center(
         child: Container(
           child: PathEditor(_currentPath!, _robotWidth, _robotLength,
-              _holonomicMode, _generateJSON, _pathsDir!.path),
+              _holonomicMode, _generateJSON, _generateCSV, _pathsDir!.path),
         ),
       );
     } else {

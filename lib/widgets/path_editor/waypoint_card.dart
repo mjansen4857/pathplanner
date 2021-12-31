@@ -200,7 +200,6 @@ class _WaypointCardState extends State<WaypointCard> {
   }
 
   Widget _buildVelReversalRow(BuildContext context) {
-    print(widget.waypoint!.velOverride);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,

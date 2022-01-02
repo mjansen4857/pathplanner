@@ -189,25 +189,6 @@ class _PathEditorState extends State<PathEditor> {
               _draggedPoint = null;
             }
           },
-          // child: SizedBox.expand(
-          //   child: Container(
-          //     // constraints: BoxConstraints(maxWidth: 1200, maxHeight: 600),
-          //     // constraints: BoxConstraints.expand(),
-          //     decoration: BoxDecoration(
-          //         image: DecorationImage(
-          //       image: AssetImage('images/field20.png'),
-          //       fit: BoxFit.contain,
-          //     )),
-          //     alignment: Alignment.center,
-          //     child: CustomPaint(
-          //       painter: PathPainter(
-          //           widget.path,
-          //           Size(widget.robotWidth, widget.robotLength),
-          //           widget.holonomicMode,
-          //           _selectedPoint),
-          //     ),
-          //   ),
-          // ),
           child: Container(
             child: Stack(
               children: [
@@ -222,7 +203,6 @@ class _PathEditorState extends State<PathEditor> {
                 ),
                 Positioned.fill(
                   child: Container(
-                    // constraints: BoxConstraints(maxWidth: 1200, maxHeight: 600),
                     child: CustomPaint(
                       painter: PathPainter(
                           widget.path,

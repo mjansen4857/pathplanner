@@ -13,6 +13,11 @@ import 'package:undo/undo.dart';
 
 import 'path_painter.dart';
 
+enum EditorMode {
+  Edit,
+  Preview,
+}
+
 class PathEditor extends StatefulWidget {
   final RobotPath path;
   final double robotWidth;
@@ -33,6 +38,7 @@ class _PathEditorState extends State<PathEditor> {
   Waypoint? _draggedPoint;
   Waypoint? _selectedPoint;
   Waypoint? _dragOldValue;
+  EditorMode _mode = EditorMode.Edit;
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +73,65 @@ class _PathEditorState extends State<PathEditor> {
             _buildEditor(),
             _buildWaypointCard(),
             _buildWPILibSettingsCard(),
+            _buildToolbar(),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToolbar() {
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12.0),
+          child: Container(
+            height: 40,
+            // width: 120,
+            color: Colors.grey[900],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Tooltip(
+                  message: 'Edit',
+                  waitDuration: Duration(milliseconds: 500),
+                  child: MaterialButton(
+                    height: 50,
+                    minWidth: 50,
+                    child: Icon(Icons.edit),
+                    onPressed: _mode == EditorMode.Edit
+                        ? null
+                        : () {
+                            setState(() {
+                              _mode = EditorMode.Edit;
+                            });
+                          },
+                  ),
+                ),
+                VerticalDivider(
+                  width: 1,
+                ),
+                Tooltip(
+                  message: 'Preview',
+                  waitDuration: Duration(milliseconds: 500),
+                  child: MaterialButton(
+                    height: 50,
+                    minWidth: 50,
+                    child: Icon(Icons.play_arrow),
+                    onPressed: _mode == EditorMode.Preview
+                        ? null
+                        : () {
+                            setState(() {
+                              _mode = EditorMode.Preview;
+                            });
+                          },
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

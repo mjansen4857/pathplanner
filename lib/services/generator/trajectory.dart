@@ -6,18 +6,18 @@ import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
 
 class Trajectory {
-  late final List<State> states;
+  late final List<TrajectoryState> states;
 
   Trajectory(this.states);
 
   Trajectory.joinTrajectories(List<Trajectory> trajectories) {
-    List<State> joinedStates = [];
+    List<TrajectoryState> joinedStates = [];
 
     for (int i = 0; i < trajectories.length; i++) {
       if (i != 0) {
         num lastEndTime = joinedStates.last.timeSeconds;
 
-        for (State s in trajectories[i].states) {
+        for (TrajectoryState s in trajectories[i].states) {
           s.timeSeconds += lastEndTime;
         }
       }
@@ -36,7 +36,7 @@ class Trajectory {
     String csv =
         '# PathPlanner CSV Format:\n# timeSeconds, positionMeters, velocityMetersPerSecond, accelerationMetersPerSecondSq, headingDegrees, holonomicRotationDegrees, curvatureRadPerMeter, curveRadiusMeters, angularVelocityDegreesPerSec, angularAccelerationDegreesPerSecSq';
 
-    for (State s in states) {
+    for (TrajectoryState s in states) {
       csv += '\n ${s.toCSV()}';
     }
 
@@ -72,7 +72,8 @@ class Trajectory {
 
   static Future<Trajectory> generateSingleTrajectory(List<Waypoint> pathPoints,
       num? maxVel, num? maxAccel, bool reversed) async {
-    List<State> joined = joinSplines(pathPoints, maxVel ?? 8.0, 0.004);
+    List<TrajectoryState> joined =
+        joinSplines(pathPoints, maxVel ?? 8.0, 0.004);
     calculateMaxVel(joined, maxVel ?? 8.0, maxAccel ?? 5.0);
     calculateVelocity(joined, pathPoints, maxAccel ?? 5.0);
     recalculateValues(joined, reversed);
@@ -80,7 +81,7 @@ class Trajectory {
     return Trajectory(joined);
   }
 
-  State sample(num time) {
+  TrajectoryState sample(num time) {
     if (time <= states[0].timeSeconds) return states[0];
     if (time >= states[states.length - 1].timeSeconds)
       return states[states.length - 1];
@@ -97,8 +98,8 @@ class Trajectory {
       }
     }
 
-    State sample = states[low];
-    State prevSample = states[low - 1];
+    TrajectoryState sample = states[low];
+    TrajectoryState prevSample = states[low - 1];
 
     if ((sample.timeSeconds - prevSample.timeSeconds).abs() < 1E-3)
       return sample;
@@ -109,7 +110,12 @@ class Trajectory {
             (sample.timeSeconds - prevSample.timeSeconds));
   }
 
-  static void calculateMaxVel(List<State> states, num maxVel, num maxAccel) {
+  num getRuntime() {
+    return states.last.timeSeconds;
+  }
+
+  static void calculateMaxVel(
+      List<TrajectoryState> states, num maxVel, num maxAccel) {
     for (int i = 0; i < states.length; i++) {
       num radius;
       if (i == states.length - 1) {
@@ -133,7 +139,7 @@ class Trajectory {
   }
 
   static void calculateVelocity(
-      List<State> states, List<Waypoint> pathPoints, num maxAccel) {
+      List<TrajectoryState> states, List<Waypoint> pathPoints, num maxAccel) {
     if (pathPoints[0].velOverride == null) {
       states[0].velocityMetersPerSecond = 0;
     }
@@ -184,9 +190,9 @@ class Trajectory {
     }
   }
 
-  static void recalculateValues(List<State> states, bool reversed) {
+  static void recalculateValues(List<TrajectoryState> states, bool reversed) {
     for (int i = 0; i < states.length; i++) {
-      State now = states[i];
+      TrajectoryState now = states[i];
 
       if (reversed) {
         now.positionMeters *= -1;
@@ -203,7 +209,7 @@ class Trajectory {
       }
 
       if (i != 0) {
-        State last = states[i - 1];
+        TrajectoryState last = states[i - 1];
 
         num dt = now.timeSeconds - last.timeSeconds;
         now.velocityMetersPerSecond =
@@ -220,9 +226,9 @@ class Trajectory {
     }
   }
 
-  static List<State> joinSplines(
+  static List<TrajectoryState> joinSplines(
       List<Waypoint> pathPoints, num maxVel, double step) {
-    List<State> states = [];
+    List<TrajectoryState> states = [];
     int numSplines = pathPoints.length - 1;
 
     for (int i = 0; i < numSplines; i++) {
@@ -238,7 +244,7 @@ class Trajectory {
             endPoint.anchorPoint,
             t);
 
-        State state = State();
+        TrajectoryState state = TrajectoryState();
         state.translationMeters = p;
 
         double deltaRot = endPoint.holonomicAngle - startPoint.holonomicAngle;
@@ -252,8 +258,8 @@ class Trajectory {
         state.holonomicRotation = holonomicRot;
 
         if (i > 0 || t > 0) {
-          State s1 = states[states.length - 1];
-          State s2 = state;
+          TrajectoryState s1 = states[states.length - 1];
+          TrajectoryState s2 = state;
           double hypot = s1.translationMeters.distanceTo(s2.translationMeters);
           state.positionMeters = s1.positionMeters + hypot;
           state.deltaPos = hypot;
@@ -288,7 +294,8 @@ class Trajectory {
     return states;
   }
 
-  static num calculateRadius(State s0, State s1, State s2) {
+  static num calculateRadius(
+      TrajectoryState s0, TrajectoryState s1, TrajectoryState s2) {
     num ab = s0.translationMeters.distanceTo(s1.translationMeters);
     num bc = s1.translationMeters.distanceTo(s2.translationMeters);
     num ac = s0.translationMeters.distanceTo(s2.translationMeters);
@@ -299,7 +306,7 @@ class Trajectory {
   }
 }
 
-class State {
+class TrajectoryState {
   num timeSeconds = 0.0;
   num velocityMetersPerSecond = 0.0;
   num accelerationMetersPerSecondSq = 0.0;
@@ -314,8 +321,8 @@ class State {
   num curveRadius = 0.0;
   num deltaPos = 0.0;
 
-  State interpolate(State endVal, num t) {
-    State lerpedState = State();
+  TrajectoryState interpolate(TrajectoryState endVal, num t) {
+    TrajectoryState lerpedState = TrajectoryState();
 
     lerpedState.timeSeconds =
         GeometryUtil.numLerp(this.timeSeconds, endVal.timeSeconds, t);

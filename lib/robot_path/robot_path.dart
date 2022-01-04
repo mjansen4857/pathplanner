@@ -38,14 +38,18 @@ class RobotPath {
     return 'Waypoint ' + waypoints.indexOf(waypoint).toString();
   }
 
+  Future<void> generateTrajectory() {
+    return Future(() async {
+      generatedTrajectory = await Trajectory.generateFullTrajectory(this);
+    });
+  }
+
   void savePath(String saveDir, bool generateJSON, bool generateCSV) async {
     Stopwatch s = Stopwatch()..start();
     File pathFile = File(saveDir + name + '.path');
     pathFile.writeAsString(jsonEncode(this));
 
-    if (generateJSON || generateCSV) {
-      this.generatedTrajectory = await Trajectory.generateFullTrajectory(this);
-    }
+    this.generatedTrajectory = await Trajectory.generateFullTrajectory(this);
 
     if (generateJSON && generatedTrajectory != null) {
       Directory jsonDir = Directory(saveDir + 'generatedJSON/');

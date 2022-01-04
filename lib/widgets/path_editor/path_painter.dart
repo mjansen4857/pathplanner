@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
+import 'package:pathplanner/services/generator/trajectory.dart';
+import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 
 class PathPainter extends CustomPainter {
   final Size _defaultSize = Size(1200, 600);
@@ -10,35 +12,54 @@ class PathPainter extends CustomPainter {
   final bool _holonomicMode;
   final RobotPath _path;
   final Waypoint? _selectedWaypoint;
+  final EditorMode _editorMode;
+  Animation<num>? previewTime;
 
   static double scale = 1;
 
-  PathPainter(
-      this._path, this._robotSize, this._holonomicMode, this._selectedWaypoint);
+  PathPainter(this._path, this._robotSize, this._holonomicMode,
+      this._selectedWaypoint, this._editorMode, Animation<double>? animation)
+      : super(repaint: animation) {
+    if (animation != null && _path.generatedTrajectory != null) {
+      previewTime =
+          Tween<num>(begin: 0, end: _path.generatedTrajectory!.getRuntime())
+              .animate(animation);
+    }
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
     scale = size.width / _defaultSize.width;
 
-    if (_holonomicMode) {
-      _paintCenterPath(canvas, scale);
-    } else {
-      _paintDualPaths(canvas, scale);
-    }
+    switch (_editorMode) {
+      case EditorMode.Edit:
+        if (_holonomicMode) {
+          _paintCenterPath(canvas, scale, Colors.grey[300]!);
+        } else {
+          _paintDualPaths(canvas, scale);
+        }
 
-    for (Waypoint w in _path.waypoints) {
-      _paintRobotOutline(canvas, scale, w);
-      _paintWaypoint(canvas, scale, w);
+        for (Waypoint w in _path.waypoints) {
+          _paintRobotOutline(canvas, scale, w);
+          _paintWaypoint(canvas, scale, w);
+        }
+        break;
+      case EditorMode.Preview:
+        _paintCenterPath(canvas, scale, Colors.grey[700]!);
+        if (_path.generatedTrajectory != null && previewTime != null) {
+          _paintPreviewOutline(canvas, scale,
+              _path.generatedTrajectory!.sample(previewTime!.value));
+        }
     }
   }
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => true;
 
-  void _paintCenterPath(Canvas canvas, double scale) {
+  void _paintCenterPath(Canvas canvas, double scale, Color color) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Colors.grey[300]!
+      ..color = color
       ..strokeWidth = 2;
 
     for (int i = 0; i < _path.waypoints.length - 1; i++) {
@@ -155,6 +176,44 @@ class PathPainter extends CustomPainter {
       paint.style = PaintingStyle.fill;
       canvas.drawCircle(frontMiddle, 5, paint);
     }
+  }
+
+  void _paintPreviewOutline(
+      Canvas canvas, double scale, TrajectoryState state) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = Colors.grey[300]!
+      ..strokeWidth = 2;
+
+    Offset center = _pointToPixelOffset(state.translationMeters, scale);
+    num angle = (_holonomicMode)
+        ? (-state.holonomicRotation / 180 * pi)
+        : -state.headingRadians;
+    double halfWidth = _metersToPixels(_robotSize.width / 2, scale);
+    double halfLength = _metersToPixels(_robotSize.height / 2, scale);
+
+    Offset l = Offset(center.dx + (halfWidth * sin(angle)),
+        center.dy - (halfWidth * cos(angle)));
+    Offset r = Offset(center.dx - (halfWidth * sin(angle)),
+        center.dy + (halfWidth * cos(angle)));
+
+    Offset frontLeft = Offset(
+        l.dx + (halfLength * cos(angle)), l.dy + (halfLength * sin(angle)));
+    Offset backLeft = Offset(
+        l.dx - (halfLength * cos(angle)), l.dy - (halfLength * sin(angle)));
+    Offset frontRight = Offset(
+        r.dx + (halfLength * cos(angle)), r.dy + (halfLength * sin(angle)));
+    Offset backRight = Offset(
+        r.dx - (halfLength * cos(angle)), r.dy - (halfLength * sin(angle)));
+
+    canvas.drawLine(backLeft, frontLeft, paint);
+    canvas.drawLine(frontLeft, frontRight, paint);
+    canvas.drawLine(frontRight, backRight, paint);
+    canvas.drawLine(backRight, backLeft, paint);
+
+    Offset frontMiddle = frontLeft + ((frontRight - frontLeft) * 0.5);
+    paint.style = PaintingStyle.fill;
+    canvas.drawCircle(frontMiddle, 5, paint);
   }
 
   void _paintWaypoint(Canvas canvas, double scale, Waypoint waypoint) {

@@ -259,7 +259,7 @@ class _WaypointCardState extends State<WaypointCard> {
       child: TextField(
         onSubmitted: (val) {
           if (onSubmitted != null) {
-            var parsed = double.tryParse(val)!;
+            double? parsed = double.tryParse(val);
             onSubmitted.call(parsed);
           }
           FocusScopeNode currentScope = FocusScope.of(context);

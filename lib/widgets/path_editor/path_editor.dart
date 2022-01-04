@@ -8,6 +8,7 @@ import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/generator_settings_card.dart';
+import 'package:pathplanner/widgets/path_editor/path_info_card.dart';
 import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
 import 'package:undo/undo.dart';
 
@@ -26,6 +27,7 @@ class PathEditor extends StatefulWidget {
   final bool generateJSON;
   final bool generateCSV;
   final String pathsDir;
+  bool pathChanged = true;
 
   PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode,
       this.generateJSON, this.generateCSV, this.pathsDir);
@@ -34,14 +36,41 @@ class PathEditor extends StatefulWidget {
   _PathEditorState createState() => _PathEditorState();
 }
 
-class _PathEditorState extends State<PathEditor> {
+class _PathEditorState extends State<PathEditor>
+    with SingleTickerProviderStateMixin {
   Waypoint? _draggedPoint;
   Waypoint? _selectedPoint;
   Waypoint? _dragOldValue;
   EditorMode _mode = EditorMode.Edit;
+  AnimationController? _previewController;
+
+  @override
+  void initState() async {
+    super.initState();
+    _previewController = AnimationController(vsync: this);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _previewController!.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (widget.pathChanged) {
+      widget.path.generateTrajectory().whenComplete(() {
+        _previewController!.duration = Duration(
+            milliseconds:
+                (widget.path.generatedTrajectory!.getRuntime() * 1000).toInt());
+        setState(() {
+          _previewController!.reset();
+          _previewController!.repeat();
+        });
+      });
+      widget.pathChanged = false;
+    }
+
     return KeyBoardShortcuts(
       keysToPress: {
         (Platform.isMacOS)
@@ -70,14 +99,24 @@ class _PathEditorState extends State<PathEditor> {
         },
         child: Stack(
           children: [
-            _buildEditor(),
+            _buildEditorMode(),
             _buildWaypointCard(),
-            _buildWPILibSettingsCard(),
+            _buildGeneratorSettingsCard(),
+            _buildPathInfo(),
             _buildToolbar(),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildEditorMode() {
+    switch (_mode) {
+      case EditorMode.Edit:
+        return _buildPathEditor();
+      case EditorMode.Preview:
+        return _buildPreviewEditor();
+    }
   }
 
   Widget _buildToolbar() {
@@ -89,7 +128,6 @@ class _PathEditorState extends State<PathEditor> {
           borderRadius: BorderRadius.circular(12.0),
           child: Container(
             height: 40,
-            // width: 120,
             color: Colors.grey[900],
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -106,6 +144,8 @@ class _PathEditorState extends State<PathEditor> {
                         : () {
                             setState(() {
                               _mode = EditorMode.Edit;
+                              _previewController!.stop();
+                              _previewController!.reset();
                             });
                           },
                   ),
@@ -122,9 +162,19 @@ class _PathEditorState extends State<PathEditor> {
                     child: Icon(Icons.play_arrow),
                     onPressed: _mode == EditorMode.Preview
                         ? null
-                        : () {
+                        : () async {
+                            if (widget.path.generatedTrajectory == null) {
+                              await widget.path.generateTrajectory();
+                            }
+                            _previewController!.duration = Duration(
+                                milliseconds: (widget.path.generatedTrajectory!
+                                            .getRuntime() *
+                                        1000)
+                                    .toInt());
                             setState(() {
+                              _selectedPoint = null;
                               _mode = EditorMode.Preview;
+                              _previewController!.repeat();
                             });
                           },
                   ),
@@ -137,7 +187,47 @@ class _PathEditorState extends State<PathEditor> {
     );
   }
 
-  Widget _buildEditor() {
+  Widget _buildPreviewEditor() {
+    return Center(
+      child: InteractiveViewer(
+        child: Container(
+          child: _buildEditorStack(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEditorStack() {
+    return Stack(
+      children: [
+        AspectRatio(
+          aspectRatio: 2 / 1,
+          child: SizedBox.expand(
+            child: Image.asset(
+              'images/field20.png',
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: Container(
+            child: CustomPaint(
+              painter: PathPainter(
+                widget.path,
+                Size(widget.robotWidth, widget.robotLength),
+                widget.holonomicMode,
+                _selectedPoint,
+                _mode,
+                _previewController!.view,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPathEditor() {
     return Center(
       child: InteractiveViewer(
         child: GestureDetector(
@@ -254,30 +344,7 @@ class _PathEditorState extends State<PathEditor> {
             }
           },
           child: Container(
-            child: Stack(
-              children: [
-                AspectRatio(
-                  aspectRatio: 2 / 1,
-                  child: SizedBox.expand(
-                    child: Image.asset(
-                      'images/field20.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: Container(
-                    child: CustomPaint(
-                      painter: PathPainter(
-                          widget.path,
-                          Size(widget.robotWidth, widget.robotLength),
-                          widget.holonomicMode,
-                          _selectedPoint),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            child: _buildEditorStack(),
           ),
         ),
       ),
@@ -332,14 +399,38 @@ class _PathEditorState extends State<PathEditor> {
     );
   }
 
-  Widget _buildWPILibSettingsCard() {
+  Widget _buildPathInfo() {
     return Visibility(
-      visible: widget.generateJSON,
+      visible: _mode == EditorMode.Preview,
+      child: Align(
+        alignment: FractionalOffset.topRight,
+        child: PathInfoCard(widget.path),
+      ),
+    );
+  }
+
+  Widget _buildGeneratorSettingsCard() {
+    return Visibility(
+      visible: widget.generateJSON ||
+          widget.generateCSV ||
+          _mode == EditorMode.Preview,
       child: Align(
         alignment: FractionalOffset.bottomLeft,
         child: GeneratorSettingsCard(
           widget.path,
-          onShouldSave: () {
+          onShouldSave: () async {
+            if (_mode == EditorMode.Preview) {
+              await widget.path.generateTrajectory();
+              setState(() {
+                _previewController!.stop();
+                _previewController!.reset();
+                _previewController!.duration = Duration(
+                    milliseconds:
+                        (widget.path.generatedTrajectory!.getRuntime() * 1000)
+                            .toInt());
+                _previewController!.repeat();
+              });
+            }
             widget.path.savePath(
                 widget.pathsDir, widget.generateJSON, widget.generateCSV);
           },

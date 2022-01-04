@@ -45,7 +45,7 @@ class _PathEditorState extends State<PathEditor>
   AnimationController? _previewController;
 
   @override
-  void initState() async {
+  void initState() {
     super.initState();
     _previewController = AnimationController(vsync: this);
   }

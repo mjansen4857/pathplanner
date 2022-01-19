@@ -7,48 +7,56 @@ import 'package:pathplanner/services/generator/trajectory.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 
 class PathPainter extends CustomPainter {
-  final Size _defaultSize = Size(1200, 600);
-  final Size _robotSize;
-  final bool _holonomicMode;
-  final RobotPath _path;
-  final Waypoint? _selectedWaypoint;
-  final EditorMode _editorMode;
+  final Size defaultSize;
+  final Size robotSize;
+  final bool holonomicMode;
+  final RobotPath path;
+  final Waypoint? selectedWaypoint;
+  final EditorMode editorMode;
   Animation<num>? previewTime;
+  final double pixelsPerMeter;
 
   static double scale = 1;
 
-  PathPainter(this._path, this._robotSize, this._holonomicMode,
-      this._selectedWaypoint, this._editorMode, Animation<double>? animation)
+  PathPainter(
+      this.path,
+      this.robotSize,
+      this.holonomicMode,
+      this.selectedWaypoint,
+      this.editorMode,
+      Animation<double>? animation,
+      this.defaultSize,
+      this.pixelsPerMeter)
       : super(repaint: animation) {
-    if (animation != null && _path.generatedTrajectory != null) {
+    if (animation != null && path.generatedTrajectory != null) {
       previewTime =
-          Tween<num>(begin: 0, end: _path.generatedTrajectory!.getRuntime())
+          Tween<num>(begin: 0, end: path.generatedTrajectory!.getRuntime())
               .animate(animation);
     }
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    scale = size.width / _defaultSize.width;
+    scale = size.width / defaultSize.width;
 
-    switch (_editorMode) {
+    switch (editorMode) {
       case EditorMode.Edit:
-        if (_holonomicMode) {
+        if (holonomicMode) {
           _paintCenterPath(canvas, scale, Colors.grey[300]!);
         } else {
           _paintDualPaths(canvas, scale);
         }
 
-        for (Waypoint w in _path.waypoints) {
+        for (Waypoint w in path.waypoints) {
           _paintRobotOutline(canvas, scale, w);
           _paintWaypoint(canvas, scale, w);
         }
         break;
       case EditorMode.Preview:
         _paintCenterPath(canvas, scale, Colors.grey[700]!);
-        if (_path.generatedTrajectory != null && previewTime != null) {
+        if (path.generatedTrajectory != null && previewTime != null) {
           _paintPreviewOutline(canvas, scale,
-              _path.generatedTrajectory!.sample(previewTime!.value));
+              path.generatedTrajectory!.sample(previewTime!.value));
         }
     }
   }
@@ -62,14 +70,13 @@ class PathPainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 2;
 
-    for (int i = 0; i < _path.waypoints.length - 1; i++) {
+    for (int i = 0; i < path.waypoints.length - 1; i++) {
       Path p = Path();
-      Offset p0 = _pointToPixelOffset(_path.waypoints[i].anchorPoint, scale);
-      Offset p1 = _pointToPixelOffset(_path.waypoints[i].nextControl!, scale);
+      Offset p0 = _pointToPixelOffset(path.waypoints[i].anchorPoint, scale);
+      Offset p1 = _pointToPixelOffset(path.waypoints[i].nextControl!, scale);
       Offset p2 =
-          _pointToPixelOffset(_path.waypoints[i + 1].prevControl!, scale);
-      Offset p3 =
-          _pointToPixelOffset(_path.waypoints[i + 1].anchorPoint, scale);
+          _pointToPixelOffset(path.waypoints[i + 1].prevControl!, scale);
+      Offset p3 = _pointToPixelOffset(path.waypoints[i + 1].anchorPoint, scale);
       p.moveTo(p0.dx, p0.dy);
       p.cubicTo(p1.dx, p1.dy, p2.dx, p2.dy, p3.dx, p3.dy);
 
@@ -83,17 +90,16 @@ class PathPainter extends CustomPainter {
       ..color = Colors.grey[300]!
       ..strokeWidth = 2;
 
-    for (int i = 0; i < _path.waypoints.length - 1; i++) {
+    for (int i = 0; i < path.waypoints.length - 1; i++) {
       Path p = Path();
 
-      double halfWidth = _metersToPixels(_robotSize.width / 2, scale);
+      double halfWidth = _metersToPixels(robotSize.width / 2, scale);
 
-      Offset p0 = _pointToPixelOffset(_path.waypoints[i].anchorPoint, scale);
-      Offset p1 = _pointToPixelOffset(_path.waypoints[i].nextControl!, scale);
+      Offset p0 = _pointToPixelOffset(path.waypoints[i].anchorPoint, scale);
+      Offset p1 = _pointToPixelOffset(path.waypoints[i].nextControl!, scale);
       Offset p2 =
-          _pointToPixelOffset(_path.waypoints[i + 1].prevControl!, scale);
-      Offset p3 =
-          _pointToPixelOffset(_path.waypoints[i + 1].anchorPoint, scale);
+          _pointToPixelOffset(path.waypoints[i + 1].prevControl!, scale);
+      Offset p3 = _pointToPixelOffset(path.waypoints[i + 1].anchorPoint, scale);
 
       for (double t = 0; t < 1.0; t += 0.01) {
         Offset center = _cubicLerp(p0, p1, p2, p3, t);
@@ -141,16 +147,16 @@ class PathPainter extends CustomPainter {
       ..color = Colors.grey[300]!
       ..strokeWidth = 2;
 
-    if (waypoint == _selectedWaypoint) {
+    if (waypoint == selectedWaypoint) {
       paint.color = Colors.orange;
     }
 
     Offset center = _pointToPixelOffset(waypoint.anchorPoint, scale);
-    double angle = (_holonomicMode)
+    double angle = (holonomicMode)
         ? (-waypoint.holonomicAngle / 180 * pi)
         : -waypoint.getHeadingRadians();
-    double halfWidth = _metersToPixels(_robotSize.width / 2, scale);
-    double halfLength = _metersToPixels(_robotSize.height / 2, scale);
+    double halfWidth = _metersToPixels(robotSize.width / 2, scale);
+    double halfLength = _metersToPixels(robotSize.height / 2, scale);
 
     Offset l = Offset(center.dx + (halfWidth * sin(angle)),
         center.dy - (halfWidth * cos(angle)));
@@ -171,10 +177,10 @@ class PathPainter extends CustomPainter {
     canvas.drawLine(frontRight, backRight, paint);
     canvas.drawLine(backRight, backLeft, paint);
 
-    if (_holonomicMode) {
+    if (holonomicMode) {
       Offset frontMiddle = frontLeft + ((frontRight - frontLeft) * 0.5);
       paint.style = PaintingStyle.fill;
-      canvas.drawCircle(frontMiddle, 5, paint);
+      canvas.drawCircle(frontMiddle, _metersToPixels(0.075, scale), paint);
     }
   }
 
@@ -186,11 +192,11 @@ class PathPainter extends CustomPainter {
       ..strokeWidth = 2;
 
     Offset center = _pointToPixelOffset(state.translationMeters, scale);
-    num angle = (_holonomicMode)
+    num angle = (holonomicMode)
         ? (-state.holonomicRotation / 180 * pi)
         : -state.headingRadians;
-    double halfWidth = _metersToPixels(_robotSize.width / 2, scale);
-    double halfLength = _metersToPixels(_robotSize.height / 2, scale);
+    double halfWidth = _metersToPixels(robotSize.width / 2, scale);
+    double halfLength = _metersToPixels(robotSize.height / 2, scale);
 
     Offset l = Offset(center.dx + (halfWidth * sin(angle)),
         center.dy - (halfWidth * cos(angle)));
@@ -213,7 +219,7 @@ class PathPainter extends CustomPainter {
 
     Offset frontMiddle = frontLeft + ((frontRight - frontLeft) * 0.5);
     paint.style = PaintingStyle.fill;
-    canvas.drawCircle(frontMiddle, 5, paint);
+    canvas.drawCircle(frontMiddle, _metersToPixels(0.075, scale), paint);
   }
 
   void _paintWaypoint(Canvas canvas, double scale, Waypoint waypoint) {
@@ -242,46 +248,46 @@ class PathPainter extends CustomPainter {
 
     // draw anchor point
     paint.style = PaintingStyle.fill;
-    canvas.drawCircle(
-        _pointToPixelOffset(waypoint.anchorPoint, scale), 8 * scale, paint);
+    canvas.drawCircle(_pointToPixelOffset(waypoint.anchorPoint, scale),
+        _metersToPixels(0.125, scale), paint);
     paint.style = PaintingStyle.stroke;
     paint.color = Colors.black;
-    canvas.drawCircle(
-        _pointToPixelOffset(waypoint.anchorPoint, scale), 8 * scale, paint);
+    canvas.drawCircle(_pointToPixelOffset(waypoint.anchorPoint, scale),
+        _metersToPixels(0.125, scale), paint);
 
     // draw control points
     if (waypoint.nextControl != null) {
       paint.style = PaintingStyle.fill;
       paint.color = Colors.grey[300]!;
 
-      canvas.drawCircle(
-          _pointToPixelOffset(waypoint.nextControl!, scale), 6 * scale, paint);
+      canvas.drawCircle(_pointToPixelOffset(waypoint.nextControl!, scale),
+          _metersToPixels(0.1, scale), paint);
       paint.style = PaintingStyle.stroke;
       paint.color = Colors.black;
-      canvas.drawCircle(
-          _pointToPixelOffset(waypoint.nextControl!, scale), 6 * scale, paint);
+      canvas.drawCircle(_pointToPixelOffset(waypoint.nextControl!, scale),
+          _metersToPixels(0.1, scale), paint);
     }
     if (waypoint.prevControl != null) {
       paint.style = PaintingStyle.fill;
       paint.color = Colors.grey[300]!;
 
-      canvas.drawCircle(
-          _pointToPixelOffset(waypoint.prevControl!, scale), 6 * scale, paint);
+      canvas.drawCircle(_pointToPixelOffset(waypoint.prevControl!, scale),
+          _metersToPixels(0.1, scale), paint);
       paint.style = PaintingStyle.stroke;
       paint.color = Colors.black;
-      canvas.drawCircle(
-          _pointToPixelOffset(waypoint.prevControl!, scale), 6 * scale, paint);
+      canvas.drawCircle(_pointToPixelOffset(waypoint.prevControl!, scale),
+          _metersToPixels(0.1, scale), paint);
     }
   }
 
   Offset _pointToPixelOffset(Point point, double scale) {
-    return Offset((point.x * 66.11) + 76,
-            _defaultSize.height - ((point.y * 66.11) + 78))
+    return Offset((point.x * pixelsPerMeter) + 0,
+            defaultSize.height - ((point.y * pixelsPerMeter) + 0))
         .scale(scale, scale);
   }
 
   double _metersToPixels(double meters, double scale) {
-    return meters * 66.11 * scale;
+    return meters * pixelsPerMeter * scale;
   }
 
   Offset _lerp(Offset a, Offset b, double t) {

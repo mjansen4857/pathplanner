@@ -29,6 +29,9 @@ class PathEditor extends StatefulWidget {
   final String pathsDir;
   bool pathChanged = true;
 
+  Size defaultImageSize = Size(3240, 1620);
+  double pixelsPerMeter = 196.85;
+
   PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode,
       this.generateJSON, this.generateCSV, this.pathsDir);
 
@@ -198,32 +201,37 @@ class _PathEditorState extends State<PathEditor>
   }
 
   Widget _buildEditorStack() {
-    return Stack(
-      children: [
-        AspectRatio(
-          aspectRatio: 2 / 1,
-          child: SizedBox.expand(
-            child: Image.asset(
-              'images/field20.png',
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
-        Positioned.fill(
-          child: Container(
-            child: CustomPaint(
-              painter: PathPainter(
-                widget.path,
-                Size(widget.robotWidth, widget.robotLength),
-                widget.holonomicMode,
-                _selectedPoint,
-                _mode,
-                _previewController!.view,
+    return Padding(
+      padding: const EdgeInsets.all(48.0),
+      child: Stack(
+        children: [
+          AspectRatio(
+            aspectRatio: 2 / 1,
+            child: SizedBox.expand(
+              child: Image.asset(
+                'images/field22.png',
+                fit: BoxFit.contain,
               ),
             ),
           ),
-        ),
-      ],
+          Positioned.fill(
+            child: Container(
+              child: CustomPaint(
+                painter: PathPainter(
+                  widget.path,
+                  Size(widget.robotWidth, widget.robotLength),
+                  widget.holonomicMode,
+                  _selectedPoint,
+                  _mode,
+                  _previewController!.view,
+                  widget.defaultImageSize,
+                  widget.pixelsPerMeter,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -264,22 +272,20 @@ class _PathEditorState extends State<PathEditor>
               FocusManager.instance.primaryFocus!.unfocus();
             }
             for (Waypoint w in widget.path.waypoints.reversed) {
-              if (w.isPointInAnchor(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy),
-                      _pixelsToMeters(8)) ||
+              if (w.isPointInAnchor(_xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy), 0.125) ||
                   w.isPointInNextControl(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      _pixelsToMeters(6)) ||
+                      0.1) ||
                   w.isPointInPrevControl(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      _pixelsToMeters(6)) ||
+                      0.1) ||
                   w.isPointInHolonomicThing(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      _pixelsToMeters(5),
+                      0.075,
                       widget.robotLength)) {
                 setState(() {
                   _selectedPoint = w;
@@ -296,9 +302,9 @@ class _PathEditorState extends State<PathEditor>
               if (w.startDragging(
                   _xPixelsToMeters(details.localPosition.dx),
                   _yPixelsToMeters(details.localPosition.dy),
-                  _pixelsToMeters(8),
-                  _pixelsToMeters(6),
-                  _pixelsToMeters(5),
+                  0.125,
+                  0.1,
+                  0.075,
                   widget.robotLength,
                   widget.holonomicMode)) {
                 _draggedPoint = w;
@@ -440,14 +446,12 @@ class _PathEditorState extends State<PathEditor>
   }
 
   double _xPixelsToMeters(double pixels) {
-    return ((pixels / PathPainter.scale) - 76) / 66.11;
+    return ((pixels - 48) / PathPainter.scale) / widget.pixelsPerMeter;
   }
 
   double _yPixelsToMeters(double pixels) {
-    return (600 - (pixels / PathPainter.scale) - 78) / 66.11;
-  }
-
-  double _pixelsToMeters(double pixels) {
-    return pixels / 66.11 / PathPainter.scale;
+    return (widget.defaultImageSize.height -
+            ((pixels - 48) / PathPainter.scale)) /
+        widget.pixelsPerMeter;
   }
 }

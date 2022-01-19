@@ -32,7 +32,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double _toolbarHeight = 56;
-  String _version = '2022.0.1';
+  String _version = '2022.1.0';
   Directory? _currentProject;
   Directory? _pathsDir;
   late SharedPreferences _prefs;

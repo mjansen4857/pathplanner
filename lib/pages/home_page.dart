@@ -556,7 +556,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } else {
       return Stack(
         children: [
-          Center(child: Image.asset('images/field20.png')),
+          Center(
+              child: Padding(
+            padding: const EdgeInsets.all(48.0),
+            child: Image.asset('images/field22.png'),
+          )),
           Center(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),

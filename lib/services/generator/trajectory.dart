@@ -222,7 +222,13 @@ class Trajectory {
             (now.angularVelocity - last.angularVelocity) / dt;
       }
 
-      now.curvatureRadPerMeter = 1 / now.curveRadius;
+      if (now.curveRadius == double.infinity ||
+          now.curveRadius == double.nan ||
+          now.curveRadius == 0) {
+        now.curvatureRadPerMeter = 0;
+      } else {
+        now.curvatureRadPerMeter = 1 / now.curveRadius;
+      }
     }
   }
 

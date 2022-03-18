@@ -325,6 +325,7 @@ class _PathEditorState extends State<PathEditor>
             }
             setState(() {
               _selectedPoint = null;
+              _selectedPointIndex = widget.path.waypoints.length-1;
             });
           },
           onPanStart: (details) {

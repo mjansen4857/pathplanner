@@ -43,7 +43,7 @@ class _PathEditorState extends State<PathEditor>
     with SingleTickerProviderStateMixin {
   Waypoint? _draggedPoint;
   Waypoint? _selectedPoint;
-  int _selectedPointIndex = 0;
+  int _selectedPointIndex = -1;
   Waypoint? _dragOldValue;
   EditorMode _mode = EditorMode.Edit;
   AnimationController? _previewController;
@@ -242,12 +242,12 @@ class _PathEditorState extends State<PathEditor>
         child: GestureDetector(
           onDoubleTapDown: (details) {
             UndoRedo.addChange(Change(
-              [RobotPath.cloneWaypointList(widget.path.waypoints), _selectedPointIndex],
+              [RobotPath.cloneWaypointList(widget.path.waypoints), _selectedPointIndex == -1 || _selectedPointIndex >= widget.path.waypoints.length ? widget.path.waypoints.length-1 : _selectedPointIndex],
               () {
                 setState(() {
                   widget.path.addWaypoint(Point(
                       _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy)), _selectedPointIndex);
+                      _yPixelsToMeters(details.localPosition.dy)), _selectedPointIndex == -1 || _selectedPointIndex >= widget.path.waypoints.length ? widget.path.waypoints.length-1 : _selectedPointIndex);
                   widget.path.savePath(
                       widget.pathsDir, widget.generateJSON, widget.generateCSV);
                 });

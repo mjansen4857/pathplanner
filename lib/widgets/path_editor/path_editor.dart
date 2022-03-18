@@ -43,6 +43,7 @@ class _PathEditorState extends State<PathEditor>
     with SingleTickerProviderStateMixin {
   Waypoint? _draggedPoint;
   Waypoint? _selectedPoint;
+  int _selectedPointIndex = 0;
   Waypoint? _dragOldValue;
   EditorMode _mode = EditorMode.Edit;
   AnimationController? _previewController;
@@ -241,37 +242,34 @@ class _PathEditorState extends State<PathEditor>
         child: GestureDetector(
           onDoubleTapDown: (details) {
             UndoRedo.addChange(Change(
-              RobotPath.cloneWaypointList(widget.path.waypoints),
+              [RobotPath.cloneWaypointList(widget.path.waypoints), _selectedPointIndex],
               () {
                 setState(() {
                   widget.path.addWaypoint(Point(
                       _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy)));
+                      _yPixelsToMeters(details.localPosition.dy)), _selectedPointIndex);
                   widget.path.savePath(
                       widget.pathsDir, widget.generateJSON, widget.generateCSV);
                 });
               },
               (oldValue) {
                 setState(() {
-                  widget.path.waypoints.removeLast();
-                  widget.path.waypoints.last.nextControl = null;
+                  if(oldValue[1] == oldValue[0].length-1) {
+                    widget.path.waypoints.removeLast();
+                    widget.path.waypoints.last.nextControl = null;
+                  } else {
+                    final Waypoint removed = widget.path.waypoints.removeAt(oldValue[1]+1);
+                    widget.path.waypoints[oldValue[1]].nextControl = oldValue[0][oldValue[1]].nextControl;
+                    widget.path.waypoints[oldValue[1]+1].prevControl = oldValue[0][oldValue[1]+1].prevControl;
+                  }
                   widget.path.savePath(
                       widget.pathsDir, widget.generateJSON, widget.generateCSV);
                 });
               },
             ));
             setState(() {
-              _selectedPoint =
-                  widget.path.waypoints[widget.path.waypoints.length - 1];
-            });
-          },
-          onDoubleTap: () {},
-          onTapDown: (details) {
-            FocusScopeNode currentScope = FocusScope.of(context);
-            if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-              FocusManager.instance.primaryFocus!.unfocus();
-            }
-            for (Waypoint w in widget.path.waypoints.reversed) {
+            for (var i = 0; i < widget.path.waypoints.length; i++) {
+              Waypoint w = widget.path.waypoints[i];
               if (w.isPointInAnchor(_xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy), 0.125) ||
                   w.isPointInNextControl(
@@ -289,6 +287,38 @@ class _PathEditorState extends State<PathEditor>
                       widget.robotLength)) {
                 setState(() {
                   _selectedPoint = w;
+                  _selectedPointIndex = i;
+                });
+                }
+              }
+            });
+          },
+          onDoubleTap: () {},
+          onTapDown: (details) {
+            FocusScopeNode currentScope = FocusScope.of(context);
+            if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+              FocusManager.instance.primaryFocus!.unfocus();
+            }
+            for (var i = 0; i < widget.path.waypoints.length; i++) {
+              Waypoint w = widget.path.waypoints[i];
+              if (w.isPointInAnchor(_xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy), 0.125) ||
+                  w.isPointInNextControl(
+                      _xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy),
+                      0.1) ||
+                  w.isPointInPrevControl(
+                      _xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy),
+                      0.1) ||
+                  w.isPointInHolonomicThing(
+                      _xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy),
+                      0.075,
+                      widget.robotLength)) {
+                setState(() {
+                  _selectedPoint = w;
+                  _selectedPointIndex = i;
                 });
                 return;
               }

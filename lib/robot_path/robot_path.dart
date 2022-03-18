@@ -68,15 +68,30 @@ class RobotPath {
     print('Saved and generated path in ${s.elapsedMilliseconds}ms');
   }
 
-  void addWaypoint(Point anchorPos) {
-    waypoints[waypoints.length - 1].addNextControl();
-    waypoints.add(
-      Waypoint(
-        prevControl:
-            (waypoints[waypoints.length - 1].nextControl! + anchorPos) * 0.5,
+  void addWaypoint(Point anchorPos, int waypoint) {
+    if(waypoints[waypoint].nextControl == null) { 
+      print("Adding waypoint at the end");
+      waypoints[waypoints.length-1].addNextControl();
+      waypoints.add(
+        Waypoint(
+          prevControl:
+            (waypoints[waypoints.length-1].nextControl! + anchorPos) * 0.5,
         anchorPoint: anchorPos,
-      ),
-    );
+        ),
+      ); 
+    } else {
+      print("Adding waypoint in the middle of the path");
+      final Waypoint toAdd = Waypoint(
+        prevControl: (anchorPos + waypoints[waypoint].nextControl!) * 0.5,
+        anchorPoint: anchorPos,
+      );
+
+      waypoints.insert(
+        waypoint+1, toAdd
+      );
+      
+      toAdd.addNextControl();
+    }
   }
 
   static List<Waypoint> cloneWaypointList(List<Waypoint> waypoints) {

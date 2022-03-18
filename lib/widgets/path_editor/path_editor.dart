@@ -262,7 +262,7 @@ class _PathEditorState extends State<PathEditor>
                     widget.path.waypoints[oldValue[1]].nextControl = oldValue[0][oldValue[1]].nextControl;
                     widget.path.waypoints[oldValue[1]+1].prevControl = oldValue[0][oldValue[1]+1].prevControl;
                   }
-                  _selectedPointIndex = widget.path.waypoints.length-1; 
+                  _selectedPointIndex = -1; 
                   widget.path.savePath(
                       widget.pathsDir, widget.generateJSON, widget.generateCSV);
                 });
@@ -326,7 +326,7 @@ class _PathEditorState extends State<PathEditor>
             }
             setState(() {
               _selectedPoint = null;
-              _selectedPointIndex = widget.path.waypoints.length-1;
+              _selectedPointIndex = -1;
             });
           },
           onPanStart: (details) {

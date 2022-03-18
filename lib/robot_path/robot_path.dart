@@ -81,15 +81,16 @@ class RobotPath {
       ); 
     } else {
       print("Adding waypoint in the middle of the path");
-      waypoints.insert(
-        waypoint+1, Waypoint(
-          prevControl:
-            (waypoints[waypoint].anchorPoint + anchorPos) * 0.5,
-          nextControl:
-            (waypoints[waypoint].nextControl! + anchorPos) * 0.5,
-          anchorPoint: anchorPos,
-        )
+      final Waypoint toAdd = Waypoint(
+        prevControl: (anchorPos + waypoints[waypoint].nextControl!) * 0.5,
+        anchorPoint: anchorPos,
       );
+
+      waypoints.insert(
+        waypoint+1, toAdd
+      );
+      
+      toAdd.addNextControl();
     }
   }
 

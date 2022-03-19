@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 
@@ -119,6 +120,10 @@ class _PathTileState extends State<PathTile> {
                           ),
                           contentPadding: EdgeInsets.all(8),
                         ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.deny(
+                              RegExp("[\"*<>?\|/:\\\\]")),
+                        ],
                       ),
                     ),
                   ),

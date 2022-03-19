@@ -74,7 +74,7 @@ class Trajectory {
       num? maxVel, num? maxAccel, bool reversed) async {
     List<TrajectoryState> joined =
         joinSplines(pathPoints, maxVel ?? 8.0, 0.004);
-    calculateMaxVel(joined, maxVel ?? 8.0, maxAccel ?? 5.0);
+    calculateMaxVel(joined, maxVel ?? 8.0, maxAccel ?? 5.0, reversed);
     calculateVelocity(joined, pathPoints, maxAccel ?? 5.0);
     recalculateValues(joined, reversed);
 
@@ -115,7 +115,7 @@ class Trajectory {
   }
 
   static void calculateMaxVel(
-      List<TrajectoryState> states, num maxVel, num maxAccel) {
+      List<TrajectoryState> states, num maxVel, num maxAccel, bool reversed) {
     for (int i = 0; i < states.length; i++) {
       num radius;
       if (i == states.length - 1) {
@@ -126,12 +126,16 @@ class Trajectory {
         radius = calculateRadius(states[i - 1], states[i], states[i + 1]);
       }
 
+      if (reversed) {
+        radius *= -1;
+      }
+
       if (!radius.isFinite || radius.isNaN) {
         states[i].velocityMetersPerSecond =
             min(maxVel, states[i].velocityMetersPerSecond);
       } else {
         states[i].curveRadius = radius;
-        num maxVCurve = sqrt(maxAccel * radius);
+        num maxVCurve = sqrt(maxAccel * radius.abs());
         states[i].velocityMetersPerSecond =
             min(maxVCurve, states[i].velocityMetersPerSecond);
       }
@@ -306,9 +310,14 @@ class Trajectory {
     num bc = s1.translationMeters.distanceTo(s2.translationMeters);
     num ac = s0.translationMeters.distanceTo(s2.translationMeters);
 
+    Point vba = s0.translationMeters - s1.translationMeters;
+    Point vbc = s2.translationMeters - s1.translationMeters;
+    num cross_z = (vba.x * vbc.y) - (vba.y * vbc.x);
+    num sign = (cross_z < 0) ? 1 : -1;
+
     num p = (ab + bc + ac) / 2;
     num area = sqrt((p * (p - ab) * (p - bc) * (p - ac)).abs());
-    return (ab * bc * ac) / (4 * area);
+    return sign * (ab * bc * ac) / (4 * area);
   }
 }
 
@@ -338,8 +347,8 @@ class TrajectoryState {
       return endVal.interpolate(this, 1 - t);
     }
 
-    lerpedState.velocityMetersPerSecond =
-        velocityMetersPerSecond + (accelerationMetersPerSecondSq * deltaT);
+    lerpedState.velocityMetersPerSecond = GeometryUtil.numLerp(
+        this.velocityMetersPerSecond, endVal.velocityMetersPerSecond, t);
     lerpedState.positionMeters = (velocityMetersPerSecond * deltaT) +
         (0.5 * accelerationMetersPerSecondSq * deltaT * deltaT);
     lerpedState.accelerationMetersPerSecondSq = GeometryUtil.numLerp(

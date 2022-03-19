@@ -213,6 +213,7 @@ class _WaypointCardState extends State<WaypointCard> {
           'Vel Override',
           enabled: !widget.waypoint!.isReversal,
           onSubmitted: (val) {
+            if (val == 0.0) val = null;
             Waypoint? wRef = widget.waypoint;
             UndoRedo.addChange(_cardChange(
               () => wRef!.velOverride = val,

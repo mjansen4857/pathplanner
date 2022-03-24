@@ -1,0 +1,177 @@
+name: Build New Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release Version'
+        required: true
+        default: 'v'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: ncipollo/release-action@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        allowUpdates: true
+        commit: main
+        draft: true
+        name: 'PathPlanner ${{ github.event.inputs.version }}'
+        tag: ${{ github.event.inputs.version }}
+        body: | 
+          <div class="row"><a href="https://www.microsoft.com/en-us/p/frc-pathplanner/9nqbkb5dw909?cid=storebadge&ocid=badge&rtc=1&activetab=pivot:overviewtab"><img src="https://mjansen4857.com/badges/windows.svg" height=50></a>&nbsp;&nbsp;&nbsp;<a href="https://apps.apple.com/us/app/frc-pathplanner/id1593046876"><img src="https://mjansen4857.com/badges/mac.svg" height=51></a></div>
+          
+          # Changelog
+          * 
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      
+      - name: Setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 2.10.3
+          cache: true
+          cache-path: ${{ runner.tool_cache }}/flutter/windows
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build app for windows
+        run: flutter build windows
+    
+      - run: cp windows/redist/msvcp140.dll build/windows/runner/Release 
+      - run: cp windows/redist/vcruntime140.dll build/windows/runner/Release 
+      - run: cp windows/redist/vcruntime140_1.dll build/windows/runner/Release
+      
+      - name: Zip release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: 'PathPlanner-windows.zip'
+          directory: 'build/windows/runner/Release'
+          
+      - name: Push artifact to release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'build/windows/runner/Release/PathPlanner-windows.zip'
+          replacesArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          commit: main
+          draft: true
+          name: 'PathPlanner ${{ github.event.inputs.version }}'
+          tag: ${{ github.event.inputs.version }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      
+      - name: Setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 2.10.3
+          cache: true
+          cache-path: ${{ runner.tool_cache }}/flutter/macos
+        
+      - name: Enable macOS desktop support
+        run: flutter config --enable-macos-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build app for macOS
+        run: flutter build macos
+      
+      - name: Zip release
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r PathPlanner-macos.zip PathPlanner.app --symlinks
+          
+      - name: Push artifact to release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'build/macos/Build/Products/Release/PathPlanner-macos.zip'
+          replacesArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          commit: main
+          draft: true
+          name: 'PathPlanner ${{ github.event.inputs.version }}'
+          tag: ${{ github.event.inputs.version }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          
+  build-linux:
+    name: Build linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      
+      - name: Install flutter deps
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build libgtk-3-dev
+      
+      - name: Setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 2.10.3
+          cache: true
+          cache-path: ${{ runner.tool_cache }}/flutter/linux
+        
+      - name: Enable linux desktop support
+        run: flutter config --enable-linux-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build app for linux
+        run: flutter build linux
+      
+      - name: Zip release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: 'PathPlanner-linux.zip'
+          directory: 'build/linux/x64/release/bundle'
+          
+      - name: Push artifact to release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'build/linux/x64/release/bundle/PathPlanner-linux.zip'
+          replacesArtifacts: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          commit: main
+          draft: true
+          name: 'PathPlanner ${{ github.event.inputs.version }}'
+          tag: ${{ github.event.inputs.version }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true

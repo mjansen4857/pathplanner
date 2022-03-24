@@ -1,0 +1,60 @@
+name: Build Windows Artifact
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows Artifacts
+    runs-on: windows-2019
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      
+      - name: Setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 2.8.1
+          cache: true
+          cache-path: ${{ runner.tool_cache }}/flutter/windows
+          
+      - name: Enable windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build app for windows
+        run: flutter build windows
+    
+      - run: cp windows/redist/msvcp140.dll build/windows/runner/Release 
+      - run: cp windows/redist/vcruntime140.dll build/windows/runner/Release 
+      - run: cp windows/redist/vcruntime140_1.dll build/windows/runner/Release
+      
+      - name: Zip release
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: 'PathPlanner-windows.zip'
+          directory: 'build/windows/runner/Release'
+        
+      - name: Upload zip artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-zip
+          path: 'build/windows/runner/Release/PathPlanner-windows.zip'
+          retention-days: 1
+        
+      - name: Cleanup zip
+        run: rm build/windows/runner/Release/PathPlanner-windows.zip
+        
+      - name: Create MSIX
+        run: flutter pub run msix:create --store
+        
+      - name: Upload MSIX artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-msix
+          path: 'build/windows/runner/Release/pathplanner.msix'
+          retention-days: 1

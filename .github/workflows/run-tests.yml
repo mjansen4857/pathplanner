@@ -1,0 +1,31 @@
+name: Run Tests
+
+on:
+  pull_request:
+  
+  workflow_dispatch:
+
+jobs:
+  flutter-tests:
+    name: Flutter Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      
+      - name: Setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 2.10.3
+          cache: true
+          cache-path: ${{ runner.tool_cache }}/flutter/linux
+
+      - name: Get dependencies
+        run: flutter pub get
+        
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test

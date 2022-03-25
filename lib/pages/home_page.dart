@@ -1,26 +1,22 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'dart:ui';
 
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
-import 'package:pathplanner/robot_path/waypoint.dart';
-import 'package:pathplanner/services/github.dart';
 import 'package:pathplanner/services/undo_redo.dart';
+import 'package:pathplanner/widgets/custom_appbar.dart';
+import 'package:pathplanner/widgets/deploy_fab.dart';
 import 'package:pathplanner/widgets/drawer_tiles/path_tile.dart';
 import 'package:pathplanner/widgets/drawer_tiles/settings_tile.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
-import 'package:pathplanner/widgets/window_button/window_button.dart';
-import 'package:process_run/shell.dart';
+import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   HomePage() : super();
@@ -30,7 +26,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  double _toolbarHeight = 56;
   String _version = '2022.1.1';
   Directory? _currentProject;
   Directory? _pathsDir;
@@ -42,28 +37,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _holonomicMode = false;
   bool _generateJSON = false;
   bool _generateCSV = false;
-  bool _updateAvailable = false;
-  late AnimationController _updateController;
   late AnimationController _welcomeController;
-  late Animation<Offset> _offsetAnimation;
   late Animation<double> _scaleAnimation;
-  String _releaseURL =
-      'https://github.com/mjansen4857/pathplanner/releases/latest';
   SecureBookmarks? _bookmarks = Platform.isMacOS ? SecureBookmarks() : null;
   bool _appStoreBuild = false;
 
   @override
   void initState() {
     super.initState();
-    _updateController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 400));
     _welcomeController =
         AnimationController(vsync: this, duration: Duration(milliseconds: 400));
-    _offsetAnimation = Tween<Offset>(begin: Offset(0, -0.05), end: Offset.zero)
-        .animate(CurvedAnimation(
-      parent: _updateController,
-      curve: Curves.ease,
-    ));
     _scaleAnimation =
         CurvedAnimation(parent: _welcomeController, curve: Curves.ease);
     SharedPreferences.getInstance().then((prefs) async {
@@ -92,21 +75,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _generateCSV = _prefs.getBool('generateCSV') ?? false;
       });
     });
-
-    if (!_appStoreBuild) {
-      GitHubAPI.isUpdateAvailable(_version).then((value) {
-        setState(() {
-          _updateAvailable = value;
-          _updateController.forward();
-        });
-      });
-    }
   }
 
   @override
   void dispose() {
     super.dispose();
-    _updateController.dispose();
     _welcomeController.dispose();
     if (Platform.isMacOS && _currentProject != null) {
       _bookmarks!
@@ -117,80 +90,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar() as PreferredSizeWidget?,
+      appBar: CustomAppBar(
+          _currentPath == null ? 'PathPlanner' : _currentPath!.name),
       drawer: _currentProject == null ? null : _buildDrawer(context),
       body: Stack(
         children: [
           _buildBody(context),
-          _buildUpdateNotification(),
+          if (!_appStoreBuild) UpdateCard(_version),
         ],
       ),
       floatingActionButton: Visibility(
         visible:
             _currentProject != null && (!_appStoreBuild && !Platform.isMacOS),
-        child: Tooltip(
-          message: 'Deploy Robot Code',
-          waitDuration: Duration(milliseconds: 500),
-          child: FloatingActionButton(
-            child: Icon(Icons.send_rounded),
-            backgroundColor: Colors.grey[900],
-            foregroundColor: Colors.green,
-            onPressed: () async {
-              Shell shell = Shell().cd(_currentProject!.path);
-              _showSnackbar(context, 'Deploying robot code...',
-                  duration: Duration(minutes: 5));
-              try {
-                String gradlew = Platform.isWindows ? 'gradlew' : './gradlew';
-                ProcessResult result =
-                    await shell.runExecutableArguments(gradlew, ['deploy']);
-                ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                if (result.exitCode == 0) {
-                  _showSnackbar(context, 'Successfully deployed.',
-                      textColor: Colors.green);
-                } else {
-                  _showSnackbar(context, 'Failed to deploy.',
-                      textColor: Colors.red);
-                }
-              } on ShellException catch (_) {
-                ScaffoldMessenger.of(context).removeCurrentSnackBar();
-                _showSnackbar(context, 'Failed to deploy.',
-                    textColor: Colors.red);
-              }
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.grey[900],
-      toolbarHeight: _toolbarHeight,
-      actions: [
-        MinimizeWindowBtn(),
-        MaximizeWindowBtn(),
-        CloseWindowBtn(),
-      ],
-      title: SizedBox(
-        height: _toolbarHeight,
-        child: Row(
-          children: [
-            Expanded(
-              child: MoveWindow(
-                child: Container(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    _currentPath == null
-                        ? 'PathPlanner'
-                        : '${_currentPath!.name}',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        child: DeployFAB(_currentProject),
       ),
     );
   }
@@ -420,21 +332,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           pathName = 'New ' + pathName;
                         }
                         setState(() {
-                          _paths.add(RobotPath([
-                            Waypoint(
-                              anchorPoint: Point(1.0, 3.0),
-                              nextControl: Point(2.0, 3.0),
-                            ),
-                            Waypoint(
-                              prevControl: Point(3.0, 4.0),
-                              anchorPoint: Point(3.0, 5.0),
-                              isReversal: true,
-                            ),
-                            Waypoint(
-                              prevControl: Point(4.0, 3.0),
-                              anchorPoint: Point(5.0, 3.0),
-                            ),
-                          ], name: pathName));
+                          _paths.add(RobotPath.defaultPath(name: pathName));
                           _currentPath = _paths.last;
                           _currentPath!.savePath(
                               _pathsDir!.path, _generateJSON, _generateCSV);
@@ -473,57 +371,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildUpdateNotification() {
-    return Visibility(
-      visible: _updateAvailable,
-      child: SlideTransition(
-        position: _offsetAnimation,
-        child: Align(
-          alignment: FractionalOffset.topLeft,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              color: Colors.white.withOpacity(0.13),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Update Available!',
-                          style: TextStyle(fontSize: 20),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            if (await canLaunch(_releaseURL)) {
-                              launch(_releaseURL);
-                            }
-                          },
-                          child: Text(
-                            'Update',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -635,24 +482,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         orderedPaths = paths;
       }
       if (orderedPaths.length == 0) {
-        orderedPaths.add(RobotPath(
-          [
-            Waypoint(
-              anchorPoint: Point(1.0, 3.0),
-              nextControl: Point(2.0, 3.0),
-            ),
-            Waypoint(
-              prevControl: Point(3.0, 4.0),
-              anchorPoint: Point(3.0, 5.0),
-              isReversal: true,
-            ),
-            Waypoint(
-              prevControl: Point(4.0, 3.0),
-              anchorPoint: Point(5.0, 3.0),
-            ),
-          ],
-          name: 'New Path',
-        ));
+        orderedPaths.add(RobotPath.defaultPath());
       }
       _paths = orderedPaths;
       _currentPath = _paths[0];
@@ -691,17 +521,5 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _loadPaths(_currentProject!.path, pathsDir.path);
       });
     }
-  }
-
-  void _showSnackbar(BuildContext context, String message,
-      {Duration? duration, Color textColor = Colors.white}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(
-        message,
-        style: TextStyle(color: textColor, fontSize: 16),
-      ),
-      duration: duration ?? Duration(milliseconds: 4000),
-      backgroundColor: Colors.grey[900],
-    ));
   }
 }

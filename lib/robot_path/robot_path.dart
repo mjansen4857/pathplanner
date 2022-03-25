@@ -20,6 +20,23 @@ class RobotPath {
       this.maxAcceleration,
       this.isReversed});
 
+  RobotPath.defaultPath({this.name = 'New Path'})
+      : this.waypoints = [
+          Waypoint(
+            anchorPoint: Point(1.0, 3.0),
+            nextControl: Point(2.0, 3.0),
+          ),
+          Waypoint(
+            prevControl: Point(3.0, 4.0),
+            anchorPoint: Point(3.0, 5.0),
+            isReversal: true,
+          ),
+          Waypoint(
+            prevControl: Point(4.0, 3.0),
+            anchorPoint: Point(5.0, 3.0),
+          ),
+        ];
+
   RobotPath.fromJson(Map<String, dynamic> json) : waypoints = [] {
     for (Map<String, dynamic> pointJson in json['waypoints']) {
       waypoints.add(Waypoint.fromJson(pointJson));
@@ -69,16 +86,16 @@ class RobotPath {
   }
 
   void addWaypoint(Point anchorPos, int waypoint) {
-    if(waypoints[waypoint].nextControl == null) { 
+    if (waypoints[waypoint].nextControl == null) {
       print("Adding waypoint at the end");
-      waypoints[waypoints.length-1].addNextControl();
+      waypoints[waypoints.length - 1].addNextControl();
       waypoints.add(
         Waypoint(
           prevControl:
-            (waypoints[waypoints.length-1].nextControl! + anchorPos) * 0.5,
-        anchorPoint: anchorPos,
+              (waypoints[waypoints.length - 1].nextControl! + anchorPos) * 0.5,
+          anchorPoint: anchorPos,
         ),
-      ); 
+      );
     } else {
       print("Adding waypoint in the middle of the path");
       final Waypoint toAdd = Waypoint(
@@ -86,10 +103,8 @@ class RobotPath {
         anchorPoint: anchorPos,
       );
 
-      waypoints.insert(
-        waypoint+1, toAdd
-      );
-      
+      waypoints.insert(waypoint + 1, toAdd);
+
       toAdd.addNextControl();
     }
   }

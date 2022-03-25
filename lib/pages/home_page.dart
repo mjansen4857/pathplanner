@@ -101,22 +101,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         });
       });
     }
-
-    // PackageInfo plugin is broken on windows. Have to wait for an update
-
-    // PackageInfo.fromPlatform().then((packageInfo) {
-    //   setState(() {
-    //     _version = packageInfo.version;
-    //     if (!_appStoreBuild) {
-    //       GitHubAPI.isUpdateAvailable(_version).then((value) {
-    //         setState(() {
-    //           _updateAvailable = value;
-    //           _updateController.forward();
-    //         });
-    //       });
-    //     }
-    //   });
-    // });
   }
 
   @override

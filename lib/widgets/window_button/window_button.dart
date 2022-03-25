@@ -20,67 +20,32 @@ class WindowButtonContext {
       {this.context, this.mouseState, this.backgroundColor, this.iconColor});
 }
 
-class WindowButtonColors {
-  Color? normal;
-  Color? mouseOver;
-  Color? mouseDown;
-  Color? iconNormal;
-  Color? iconMouseOver;
-  Color? iconMouseDown;
-  WindowButtonColors(
-      {Color? normal,
-      Color? mouseOver,
-      Color? mouseDown,
-      Color? iconNormal,
-      Color? iconMouseOver,
-      Color? iconMouseDown}) {
-    this.normal = normal ?? _defaultButtonColors.normal;
-    this.mouseOver = mouseOver ?? _defaultButtonColors.mouseOver;
-    this.mouseDown = mouseDown ?? _defaultButtonColors.mouseDown;
-    this.iconNormal = iconNormal ?? _defaultButtonColors.iconNormal;
-    this.iconMouseOver = iconMouseOver ?? _defaultButtonColors.iconMouseOver;
-    this.iconMouseDown = iconMouseDown ?? _defaultButtonColors.iconMouseDown;
-  }
-}
-
-final _defaultButtonColors = WindowButtonColors(
-    normal: Colors.transparent,
-    iconNormal: Color(0xFFEEEEEE),
-    mouseOver: Color(0xFF404040),
-    mouseDown: Color(0xFF202020),
-    iconMouseOver: Color(0xFFFFFFFF),
-    iconMouseDown: Color(0xFFF0F0F0));
-
 class WindowButton extends StatelessWidget {
   final WindowButtonBuilder? builder;
   final WindowButtonIconBuilder? iconBuilder;
-  late WindowButtonColors colors;
   final bool animate;
   final EdgeInsets? padding;
   final VoidCallback? onPressed;
 
   WindowButton(
       {Key? key,
-      WindowButtonColors? colors,
       this.builder,
       this.iconBuilder,
       this.padding,
       this.onPressed,
       this.animate = false})
-      : super(key: key) {
-    this.colors = colors ?? _defaultButtonColors;
-  }
+      : super(key: key);
 
   Color? getBackgroundColor(MouseState mouseState) {
-    if (mouseState.isMouseDown) return colors.mouseDown;
-    if (mouseState.isMouseOver) return colors.mouseOver;
-    return colors.normal;
+    if (mouseState.isMouseDown) return Color(0xFF202020);
+    if (mouseState.isMouseOver) return Color(0xFF404040);
+    return Colors.transparent;
   }
 
   Color? getIconColor(MouseState mouseState) {
-    if (mouseState.isMouseDown) return colors.iconMouseDown;
-    if (mouseState.isMouseOver) return colors.iconMouseOver;
-    return colors.iconNormal;
+    if (mouseState.isMouseDown) return Color(0xFFF0F0F0);
+    if (mouseState.isMouseOver) return Color(0xFFFFFFFF);
+    return Color(0xFFEEEEEE);
   }
 
   @override
@@ -130,14 +95,9 @@ class WindowButton extends StatelessWidget {
 }
 
 class MinimizeWindowBtn extends WindowButton {
-  MinimizeWindowBtn(
-      {Key? key,
-      WindowButtonColors? colors,
-      VoidCallback? onPressed,
-      bool? animate})
+  MinimizeWindowBtn({Key? key, VoidCallback? onPressed, bool? animate})
       : super(
             key: key,
-            colors: colors,
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 MinimizeIcon(color: buttonContext.iconColor),
@@ -145,39 +105,30 @@ class MinimizeWindowBtn extends WindowButton {
 }
 
 class MaximizeWindowBtn extends WindowButton {
-  MaximizeWindowBtn(
-      {Key? key,
-      WindowButtonColors? colors,
-      VoidCallback? onPressed,
-      bool? animate})
+  MaximizeWindowBtn({Key? key, VoidCallback? onPressed, bool? animate})
       : super(
             key: key,
-            colors: colors,
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 MaximizeIcon(color: buttonContext.iconColor),
             onPressed: onPressed ?? () => appWindow.maximizeOrRestore());
 }
 
-final _defaultCloseButtonColors = WindowButtonColors(
-    mouseOver: Color(0xFFD32F2F),
-    mouseDown: Color(0xFFB71C1C),
-    iconNormal: Color(0xFFEEEEEE),
-    iconMouseOver: Color(0xFFFFFFFF));
-
 class CloseWindowBtn extends WindowButton {
-  CloseWindowBtn(
-      {Key? key,
-      WindowButtonColors? colors,
-      VoidCallback? onPressed,
-      bool? animate})
+  CloseWindowBtn({Key? key, VoidCallback? onPressed, bool? animate})
       : super(
             key: key,
-            colors: colors ?? _defaultCloseButtonColors,
             animate: animate ?? false,
             iconBuilder: (buttonContext) =>
                 CloseIcon(color: buttonContext.iconColor),
             onPressed: onPressed ?? () => appWindow.close());
+
+  @override
+  Color? getBackgroundColor(MouseState mouseState) {
+    if (mouseState.isMouseDown) return Color(0xFFB71C1C);
+    if (mouseState.isMouseOver) return Color(0xFFD32F2F);
+    return Colors.transparent;
+  }
 }
 
 class CloseIcon extends StatelessWidget {

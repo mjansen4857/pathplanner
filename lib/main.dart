@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import 'pages/home_page.dart';
 
@@ -22,12 +21,17 @@ void main() {
 class PathPlanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = ThemeData(
+      brightness: Brightness.dark,
+      primarySwatch: Colors.indigo,
+    );
+
     return MaterialApp(
       title: 'PathPlanner',
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.indigo,
-        accentColor: Colors.white,
+      theme: theme.copyWith(
+        colorScheme: theme.colorScheme.copyWith(
+          secondary: Colors.white,
+        ),
       ),
       home: HomePage(),
     );

@@ -312,8 +312,8 @@ class Trajectory {
 
     Point vba = s0.translationMeters - s1.translationMeters;
     Point vbc = s2.translationMeters - s1.translationMeters;
-    num cross_z = (vba.x * vbc.y) - (vba.y * vbc.x);
-    num sign = (cross_z < 0) ? 1 : -1;
+    num crossZ = (vba.x * vbc.y) - (vba.y * vbc.x);
+    num sign = (crossZ < 0) ? 1 : -1;
 
     num p = (ab + bc + ac) / 2;
     num area = sqrt((p * (p - ab) * (p - bc) * (p - ac)).abs());

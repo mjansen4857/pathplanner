@@ -27,10 +27,8 @@ class PathEditor extends StatefulWidget {
   final bool generateJSON;
   final bool generateCSV;
   final String pathsDir;
-  bool pathChanged = true;
-
-  Size defaultImageSize = Size(3240, 1620);
-  double pixelsPerMeter = 196.85;
+  final Size defaultImageSize = Size(3240, 1620);
+  final double pixelsPerMeter = 196.85;
 
   PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode,
       this.generateJSON, this.generateCSV, this.pathsDir);
@@ -62,7 +60,8 @@ class _PathEditorState extends State<PathEditor>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.pathChanged) {
+    if (_mode == EditorMode.Preview &&
+        widget.path.generatedTrajectory == null) {
       widget.path.generateTrajectory().whenComplete(() {
         _previewController!.duration = Duration(
             milliseconds:
@@ -72,7 +71,6 @@ class _PathEditorState extends State<PathEditor>
           _previewController!.repeat();
         });
       });
-      widget.pathChanged = false;
     }
 
     return KeyBoardShortcuts(
@@ -242,54 +240,69 @@ class _PathEditorState extends State<PathEditor>
         child: GestureDetector(
           onDoubleTapDown: (details) {
             UndoRedo.addChange(Change(
-              [RobotPath.cloneWaypointList(widget.path.waypoints), _selectedPointIndex == -1 || _selectedPointIndex >= widget.path.waypoints.length ? widget.path.waypoints.length-1 : _selectedPointIndex],
+              [
+                RobotPath.cloneWaypointList(widget.path.waypoints),
+                _selectedPointIndex == -1 ||
+                        _selectedPointIndex >= widget.path.waypoints.length
+                    ? widget.path.waypoints.length - 1
+                    : _selectedPointIndex
+              ],
               () {
                 setState(() {
-                  widget.path.addWaypoint(Point(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy)), _selectedPointIndex == -1 || _selectedPointIndex >= widget.path.waypoints.length ? widget.path.waypoints.length-1 : _selectedPointIndex);
+                  widget.path.addWaypoint(
+                      Point(_xPixelsToMeters(details.localPosition.dx),
+                          _yPixelsToMeters(details.localPosition.dy)),
+                      _selectedPointIndex == -1 ||
+                              _selectedPointIndex >=
+                                  widget.path.waypoints.length
+                          ? widget.path.waypoints.length - 1
+                          : _selectedPointIndex);
                   widget.path.savePath(
                       widget.pathsDir, widget.generateJSON, widget.generateCSV);
                 });
               },
               (oldValue) {
                 setState(() {
-                  if(oldValue[1] == oldValue[0].length-1) {
+                  if (oldValue[1] == oldValue[0].length - 1) {
                     widget.path.waypoints.removeLast();
                     widget.path.waypoints.last.nextControl = null;
                   } else {
-                    final Waypoint removed = widget.path.waypoints.removeAt(oldValue[1]+1);
-                    widget.path.waypoints[oldValue[1]].nextControl = oldValue[0][oldValue[1]].nextControl;
-                    widget.path.waypoints[oldValue[1]+1].prevControl = oldValue[0][oldValue[1]+1].prevControl;
+                    widget.path.waypoints.removeAt(oldValue[1] + 1);
+                    widget.path.waypoints[oldValue[1]].nextControl =
+                        oldValue[0][oldValue[1]].nextControl;
+                    widget.path.waypoints[oldValue[1] + 1].prevControl =
+                        oldValue[0][oldValue[1] + 1].prevControl;
                   }
-                  _selectedPointIndex = -1; 
+                  _selectedPointIndex = -1;
                   widget.path.savePath(
                       widget.pathsDir, widget.generateJSON, widget.generateCSV);
                 });
               },
             ));
             setState(() {
-            for (var i = 0; i < widget.path.waypoints.length; i++) {
-              Waypoint w = widget.path.waypoints[i];
-              if (w.isPointInAnchor(_xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy), 0.125) ||
-                  w.isPointInNextControl(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy),
-                      0.1) ||
-                  w.isPointInPrevControl(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy),
-                      0.1) ||
-                  w.isPointInHolonomicThing(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy),
-                      0.075,
-                      widget.robotLength)) {
-                setState(() {
-                  _selectedPoint = w;
-                  _selectedPointIndex = i;
-                });
+              for (var i = 0; i < widget.path.waypoints.length; i++) {
+                Waypoint w = widget.path.waypoints[i];
+                if (w.isPointInAnchor(
+                        _xPixelsToMeters(details.localPosition.dx),
+                        _yPixelsToMeters(details.localPosition.dy),
+                        0.125) ||
+                    w.isPointInNextControl(
+                        _xPixelsToMeters(details.localPosition.dx),
+                        _yPixelsToMeters(details.localPosition.dy),
+                        0.1) ||
+                    w.isPointInPrevControl(
+                        _xPixelsToMeters(details.localPosition.dx),
+                        _yPixelsToMeters(details.localPosition.dy),
+                        0.1) ||
+                    w.isPointInHolonomicThing(
+                        _xPixelsToMeters(details.localPosition.dx),
+                        _yPixelsToMeters(details.localPosition.dy),
+                        0.075,
+                        widget.robotLength)) {
+                  setState(() {
+                    _selectedPoint = w;
+                    _selectedPointIndex = i;
+                  });
                 }
               }
             });

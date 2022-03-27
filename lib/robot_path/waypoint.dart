@@ -4,9 +4,9 @@ class Waypoint {
   Point anchorPoint;
   Point? prevControl;
   Point? nextControl;
-  double holonomicAngle;
+  num holonomicAngle;
   bool isReversal;
-  double? velOverride;
+  num? velOverride;
   bool isLocked;
 
   bool _isAnchorDragging = false;

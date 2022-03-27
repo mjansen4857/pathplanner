@@ -8,8 +8,8 @@ import 'waypoint.dart';
 
 class RobotPath {
   List<Waypoint> waypoints;
-  double? maxVelocity;
-  double? maxAcceleration;
+  num? maxVelocity;
+  num? maxAcceleration;
   bool? isReversed;
   late String name;
   Trajectory? generatedTrajectory;

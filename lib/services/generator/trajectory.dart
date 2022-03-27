@@ -257,7 +257,7 @@ class Trajectory {
         TrajectoryState state = TrajectoryState();
         state.translationMeters = p;
 
-        double deltaRot = endPoint.holonomicAngle - startPoint.holonomicAngle;
+        num deltaRot = endPoint.holonomicAngle - startPoint.holonomicAngle;
         if (deltaRot > 180) {
           deltaRot -= 360;
         } else if (deltaRot < -180) {

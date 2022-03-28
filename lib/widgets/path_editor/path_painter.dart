@@ -152,7 +152,7 @@ class PathPainter extends CustomPainter {
     }
 
     Offset center = _pointToPixelOffset(waypoint.anchorPoint, scale);
-    double angle = (holonomicMode)
+    num angle = (holonomicMode)
         ? (-waypoint.holonomicAngle / 180 * pi)
         : -waypoint.getHeadingRadians();
     double halfWidth = _metersToPixels(robotSize.width / 2, scale);

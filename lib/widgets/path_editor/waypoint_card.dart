@@ -261,7 +261,7 @@ class _WaypointCardState extends State<WaypointCard> {
       child: TextField(
         onSubmitted: (val) {
           if (onSubmitted != null) {
-            double? parsed = val.interpret() as double?;
+            num parsed = val.interpret();
             onSubmitted.call(parsed);
           }
           FocusScopeNode currentScope = FocusScope.of(context);
@@ -273,7 +273,7 @@ class _WaypointCardState extends State<WaypointCard> {
         controller: controller,
         cursorColor: Colors.white,
         inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'([-+]?[0-9]*\.?[0-9]+[\/\+\-\*]?)+([-+]?[0-9]*\.?[0-9]?)')),
+          FilteringTextInputFormatter.allow(RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
         ],
         style: TextStyle(fontSize: 14),
         decoration: InputDecoration(

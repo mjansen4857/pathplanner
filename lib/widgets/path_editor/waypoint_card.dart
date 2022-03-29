@@ -259,7 +259,7 @@ class _WaypointCardState extends State<WaypointCard> {
       width: 100,
       height: 35,
       child: TextField(
-        onSubmitted: (String val) {
+        onSubmitted: (val) {
           if (onSubmitted != null) {
             double? parsed = val.interpret() as double?;
             onSubmitted.call(parsed);

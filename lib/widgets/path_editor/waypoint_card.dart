@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:undo/undo.dart';
+import 'package:function_tree/function_tree.dart';
 
 class WaypointCard extends StatefulWidget {
   final Waypoint? waypoint;
@@ -258,9 +259,9 @@ class _WaypointCardState extends State<WaypointCard> {
       width: 100,
       height: 35,
       child: TextField(
-        onSubmitted: (val) {
+        onSubmitted: (String val) {
           if (onSubmitted != null) {
-            double? parsed = double.tryParse(val);
+            double? parsed = val.interpret() as double?;
             onSubmitted.call(parsed);
           }
           FocusScopeNode currentScope = FocusScope.of(context);
@@ -272,7 +273,7 @@ class _WaypointCardState extends State<WaypointCard> {
         controller: controller,
         cursorColor: Colors.white,
         inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'(^(-?)\d*\.?\d*)')),
+          FilteringTextInputFormatter.allow(RegExp(r'([-+]?[0-9]*\.?[0-9]+[\/\+\-\*]?)+([-+]?[0-9]*\.?[0-9]?)')),
         ],
         style: TextStyle(fontSize: 14),
         decoration: InputDecoration(

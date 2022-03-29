@@ -43,6 +43,7 @@ dependencies:
   url_launcher: ^6.0.17
   process_run: ^0.12.2
   macos_secure_bookmarks: ^0.2.0
+  function_tree: ^0.8.12
 
 dev_dependencies:
   flutter_test:

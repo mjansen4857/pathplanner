@@ -57,12 +57,12 @@ class Waypoint {
     }
   }
 
-  double getXPos() {
-    return anchorPoint.x as double;
+  num getXPos() {
+    return anchorPoint.x;
   }
 
-  double getYPos() {
-    return anchorPoint.y as double;
+  num getYPos() {
+    return anchorPoint.y;
   }
 
   bool isStartPoint() {
@@ -73,7 +73,7 @@ class Waypoint {
     return nextControl == null;
   }
 
-  double getHeadingRadians() {
+  num getHeadingRadians() {
     var heading;
     if (isStartPoint()) {
       heading =
@@ -86,16 +86,16 @@ class Waypoint {
     return heading;
   }
 
-  double getHeadingDegrees() {
+  num getHeadingDegrees() {
     return getHeadingRadians() * 180 / pi;
   }
 
-  bool isPointInAnchor(double xPos, double yPos, double radius) {
+  bool isPointInAnchor(num xPos, num yPos, num radius) {
     return pow(xPos - anchorPoint.x, 2) + pow(yPos - anchorPoint.y, 2) <
         pow(radius, 2);
   }
 
-  bool isPointInNextControl(double xPos, double yPos, double radius) {
+  bool isPointInNextControl(num xPos, num yPos, num radius) {
     if (nextControl != null) {
       return pow(xPos - nextControl!.x, 2) + pow(yPos - nextControl!.y, 2) <
           pow(radius, 2);
@@ -103,7 +103,7 @@ class Waypoint {
     return false;
   }
 
-  bool isPointInPrevControl(double xPos, double yPos, double radius) {
+  bool isPointInPrevControl(num xPos, num yPos, num radius) {
     if (prevControl != null) {
       return pow(xPos - prevControl!.x, 2) + pow(yPos - prevControl!.y, 2) <
           pow(radius, 2);
@@ -112,21 +112,15 @@ class Waypoint {
   }
 
   bool isPointInHolonomicThing(
-      double xPos, double yPos, double radius, double robotLength) {
-    double angle = holonomicAngle / 180 * pi;
-    double thingX = anchorPoint.x + (robotLength / 2 * cos(angle));
-    double thingY = anchorPoint.y + (robotLength / 2 * sin(angle));
+      num xPos, num yPos, num radius, num robotLength) {
+    num angle = holonomicAngle / 180 * pi;
+    num thingX = anchorPoint.x + (robotLength / 2 * cos(angle));
+    num thingY = anchorPoint.y + (robotLength / 2 * sin(angle));
     return pow(xPos - thingX, 2) + pow(yPos - thingY, 2) < pow(radius, 2);
   }
 
-  bool startDragging(
-      double xPos,
-      double yPos,
-      double anchorRadius,
-      double controlRadius,
-      double holonomicThingRadius,
-      double robotLength,
-      bool holonomicMode) {
+  bool startDragging(num xPos, num yPos, num anchorRadius, num controlRadius,
+      num holonomicThingRadius, num robotLength, bool holonomicMode) {
     if (isPointInAnchor(xPos, yPos, anchorRadius)) {
       return _isAnchorDragging = true;
     } else if (isPointInNextControl(xPos, yPos, controlRadius)) {
@@ -141,7 +135,7 @@ class Waypoint {
     return false;
   }
 
-  void dragUpdate(double x, double y) {
+  void dragUpdate(num x, num y) {
     if (_isAnchorDragging && !isLocked) {
       move(x, y);
     } else if (_isNextControlDragging) {
@@ -179,7 +173,7 @@ class Waypoint {
         updateNextControlFromPrev();
       }
     } else if (_isHolonomicThingDragging && !isLocked) {
-      double rotation = atan2(y - anchorPoint.y, x - anchorPoint.x);
+      num rotation = atan2(y - anchorPoint.y, x - anchorPoint.x);
       holonomicAngle = (rotation * 180 / pi);
     }
   }
@@ -227,7 +221,7 @@ class Waypoint {
     }
   }
 
-  void setHeading(double headingDegrees) {
+  void setHeading(num headingDegrees) {
     var theta = headingDegrees * pi / 180;
     if (nextControl != null && !isReversal) {
       var h = (anchorPoint - nextControl!).magnitude;
@@ -269,7 +263,7 @@ class Waypoint {
       return lineStart;
     }
 
-    double t = ((p.x - lineStart.x) * dx + (p.y - lineStart.y) * dy) /
+    num t = ((p.x - lineStart.x) * dx + (p.y - lineStart.y) * dy) /
         (dx * dx + dy * dy);
 
     Point closestPoint;

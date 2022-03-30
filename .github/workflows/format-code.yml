@@ -2,6 +2,8 @@ name: Format Code
 
 on:
   pull_request:
+  
+  workflow_dispatch:
 
 jobs:
   format-dart:
@@ -11,8 +13,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        with:
-          ref: ${{ github.head_ref }}
           
       - name: Setup flutter
         uses: subosito/flutter-action@v2
@@ -28,5 +28,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Apply dart formatting changes
-          branch: ${{ github.head_ref }}
           file_pattern: lib/* test/*

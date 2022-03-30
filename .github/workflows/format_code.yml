@@ -1,0 +1,32 @@
+name: Format Code
+
+on:
+  pull_request:
+
+jobs:
+  format-dart:
+    name: Format Dart
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          
+      - name: Setup flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 2.10.3
+          cache: true
+          cache-path: ${{ runner.tool_cache }}/flutter/linux
+
+      - name: Format
+        run: flutter format lib/* test/*
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Apply dart formatting changes
+          branch: ${{ github.head_ref }}
+          file_pattern: lib/* test/*

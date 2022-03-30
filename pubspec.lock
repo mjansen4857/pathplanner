@@ -212,6 +212,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  function_tree:
+    dependency: "direct main"
+    description:
+      name: function_tree
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.8.12"
   github:
     dependency: "direct main"
     description:

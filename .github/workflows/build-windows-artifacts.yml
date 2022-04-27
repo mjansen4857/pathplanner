@@ -1,11 +1,11 @@
-name: Build Windows Artifact
+name: Build Windows Artifacts
 
 on:
   workflow_dispatch:
 
 jobs:
   build-windows:
-    name: Build Windows Artifact
+    name: Build Windows Artifacts
     runs-on: windows-2019
 
     steps:

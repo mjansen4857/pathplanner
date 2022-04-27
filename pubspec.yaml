@@ -48,7 +48,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  msix: ^2.8.1
+  msix: ^3.5.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -98,7 +98,6 @@ msix_config:
   publisher_display_name: Michael Jansen
   identity_name: 39956MichaelJansen.FRCPathPlanner
   publisher: CN=2DF9861F-6D68-40A5-BCD2-A0BC837334E3
-  msix_version: 2022.1.2.0
   logo_path: windows/icon.png
   languages: en-us
   icons_background_color: transparent

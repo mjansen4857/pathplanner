@@ -96,12 +96,12 @@ PathPlannerTrajectory PathPlanner::joinPaths(std::vector<PathPlannerTrajectory> 
         if(i != 0){
             units::second_t lastEndTime = joinedStates[joinedStates.size() - 1].time;
             for(int j = 0; j < paths[i].numStates(); j++){
-                paths[i].getState(j)->time += lastEndTime;
+                paths[i].getState(j).time += lastEndTime;
             }
         }
 
         for(int j = 0; j < paths[i].numStates(); j++){
-            joinedStates.push_back(*paths[i].getState(j));
+            joinedStates.push_back(paths[i].getState(j));
         }
     }
 

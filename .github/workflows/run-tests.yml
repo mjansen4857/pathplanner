@@ -41,11 +41,11 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v2
+      
+      - run: cd pathplannerlib
         
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      
-      - run: cd pathplannerlib
         
       - name: Compile and run tests
         run: ./gradlew build

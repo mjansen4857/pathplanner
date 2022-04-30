@@ -32,3 +32,20 @@ jobs:
 
       - name: Run tests
         run: flutter test
+  
+  pplib_tests:
+    name: PathPlannerLib Tests
+    runs-on: ubuntu-latest
+    container: wpilib/roborio-cross-ubuntu:2022-18.04
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      
+      - run: cd pathplannerlib
+        
+      - name: Compile and run tests
+        run: ./gradlew build

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/widgets/import_field_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsTile extends StatefulWidget {
@@ -259,7 +260,7 @@ class _SettingsTileState extends State<SettingsTile>
                               _selectedField = newValue;
                             });
                           } else {
-                            // Import new image
+                            showFieldImportDialog(context);
                           }
                         },
                         items: [
@@ -292,5 +293,14 @@ class _SettingsTileState extends State<SettingsTile>
     if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
       FocusManager.instance.primaryFocus!.unfocus();
     }
+  }
+
+  void showFieldImportDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ImportFieldDialog((FieldImage imported) {});
+      },
+    );
   }
 }

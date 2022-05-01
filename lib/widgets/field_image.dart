@@ -7,7 +7,6 @@ import 'package:image_size_getter/image_size_getter.dart';
 
 enum OfficialField {
   RapidReact,
-  Test,
 }
 
 class FieldImage extends StatelessWidget {
@@ -18,15 +17,6 @@ class FieldImage extends StatelessWidget {
 
   FieldImage.official(OfficialField field) {
     switch (field) {
-      case OfficialField.Test:
-        this.image = Image.asset(
-          'images/field22.png',
-          fit: BoxFit.contain,
-        );
-        this.defaultSize = ui.Size(3240, 1620);
-        this.pixelsPerMeter = 196.85;
-        this.name = 'Test';
-        break;
       case OfficialField.RapidReact:
       default:
         this.image = Image.asset(

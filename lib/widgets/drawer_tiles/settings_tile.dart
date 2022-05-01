@@ -28,7 +28,6 @@ class _SettingsTileState extends State<SettingsTile>
   bool _generateCSV = false;
   List<FieldImage> _fieldImages = [
     FieldImage.official(OfficialField.RapidReact),
-    FieldImage.official(OfficialField.Test),
   ];
   FieldImage? _selectedField;
 
@@ -87,28 +86,37 @@ class _SettingsTileState extends State<SettingsTile>
         style: TextStyle(color: Colors.white),
       ),
       children: [
-        buildTextField(context, 'Robot Width', (value) {
-          if (value != null && _prefs != null) {
-            _prefs!.setDouble('robotWidth', value);
-            setState(() {
-              _width = value;
-            });
-          }
-          if (widget.onSettingsChanged != null) {
-            widget.onSettingsChanged!.call();
-          }
-        }, _width.toStringAsFixed(2)),
-        buildTextField(context, 'Robot Length', (value) {
-          if (value != null && _prefs != null) {
-            _prefs!.setDouble('robotLength', value);
-            setState(() {
-              _length = value;
-            });
-          }
-          if (widget.onSettingsChanged != null) {
-            widget.onSettingsChanged!.call();
-          }
-        }, _length.toStringAsFixed(2)),
+        Padding(
+          padding: const EdgeInsets.only(left: 16, right: 24),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              buildTextField(context, 'Robot Width', (value) {
+                if (value != null && _prefs != null) {
+                  _prefs!.setDouble('robotWidth', value);
+                  setState(() {
+                    _width = value;
+                  });
+                }
+                if (widget.onSettingsChanged != null) {
+                  widget.onSettingsChanged!.call();
+                }
+              }, _width.toStringAsFixed(2)),
+              SizedBox(width: 8),
+              buildTextField(context, 'Robot Length', (value) {
+                if (value != null && _prefs != null) {
+                  _prefs!.setDouble('robotLength', value);
+                  setState(() {
+                    _length = value;
+                  });
+                }
+                if (widget.onSettingsChanged != null) {
+                  widget.onSettingsChanged!.call();
+                }
+              }, _length.toStringAsFixed(2)),
+            ],
+          ),
+        ),
         buildFieldImageDropdown(context),
         SwitchListTile(
           value: _holonomic,
@@ -177,9 +185,10 @@ class _SettingsTileState extends State<SettingsTile>
   Widget buildTextField(BuildContext context, String label,
       ValueChanged? onSubmitted, String text) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 24, 6),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Container(
-        height: 45,
+        height: 40,
+        width: 128,
         child: TextField(
           onSubmitted: (val) {
             if (onSubmitted != null) {
@@ -215,7 +224,7 @@ class _SettingsTileState extends State<SettingsTile>
     return Padding(
       padding: EdgeInsets.fromLTRB(18, 0, 24, 0),
       child: Container(
-        height: 45,
+        height: 48,
         child: Row(
           children: [
             Text(
@@ -226,7 +235,7 @@ class _SettingsTileState extends State<SettingsTile>
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Container(
-                width: 129,
+                width: 171,
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
                   borderRadius: BorderRadius.circular(4),
@@ -238,37 +247,39 @@ class _SettingsTileState extends State<SettingsTile>
                         .copyWith(canvasColor: Colors.grey[800]),
                     child: ButtonTheme(
                       alignedDropdown: true,
-                      child: DropdownButton<FieldImage>(
+                      child: DropdownButton<FieldImage?>(
                         value: _selectedField,
                         isExpanded: true,
                         underline: Container(),
                         icon: Icon(Icons.arrow_drop_down),
                         style: TextStyle(fontSize: 14),
                         onChanged: (FieldImage? newValue) {
-                          setState(() {
-                            _selectedField = newValue;
-                          });
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedField = newValue;
+                            });
+                          } else {
+                            // Import new image
+                          }
                         },
-                        items: _fieldImages.map<DropdownMenuItem<FieldImage>>(
-                            (FieldImage value) {
-                          return DropdownMenuItem<FieldImage>(
-                            value: value,
-                            child: Text(value.name),
-                          );
-                        }).toList(),
+                        items: [
+                          ..._fieldImages.map<DropdownMenuItem<FieldImage>>(
+                              (FieldImage value) {
+                            return DropdownMenuItem<FieldImage>(
+                              value: value,
+                              child: Text(value.name),
+                            );
+                          }).toList(),
+                          DropdownMenuItem<FieldImage?>(
+                            value: null,
+                            child: Text('Import Custom...'),
+                          )
+                        ],
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            SizedBox(width: 2),
-            IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.upload),
-              splashRadius: 18,
-              tooltip: 'Import Field Image',
-              color: Colors.grey,
             ),
           ],
         ),

@@ -13,6 +13,7 @@ import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/deploy_fab.dart';
 import 'package:pathplanner/widgets/drawer_tiles/path_tile.dart';
 import 'package:pathplanner/widgets/drawer_tiles/settings_tile.dart';
+import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 import 'package:pathplanner/widgets/update_card.dart';
@@ -379,8 +380,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (_currentProject != null) {
       return Center(
         child: Container(
-          child: PathEditor(_currentPath!, _robotWidth, _robotLength,
-              _holonomicMode, _generateJSON, _generateCSV, _pathsDir!.path),
+          child: PathEditor(
+              FieldImage.official(OfficialField.RapidReact),
+              _currentPath!,
+              _robotWidth,
+              _robotLength,
+              _holonomicMode,
+              _generateJSON,
+              _generateCSV,
+              _pathsDir!.path),
         ),
       );
     } else {

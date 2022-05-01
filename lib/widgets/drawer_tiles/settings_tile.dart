@@ -226,7 +226,7 @@ class _SettingsTileState extends State<SettingsTile>
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Container(
-                width: 171,
+                width: 129,
                 decoration: BoxDecoration(
                   color: Colors.grey[800],
                   borderRadius: BorderRadius.circular(4),
@@ -261,6 +261,14 @@ class _SettingsTileState extends State<SettingsTile>
                   ),
                 ),
               ),
+            ),
+            SizedBox(width: 2),
+            IconButton(
+              onPressed: () {},
+              icon: Icon(Icons.upload),
+              splashRadius: 18,
+              tooltip: 'Import Field Image',
+              color: Colors.grey,
             ),
           ],
         ),

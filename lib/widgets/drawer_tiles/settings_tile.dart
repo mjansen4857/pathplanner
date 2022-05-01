@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsTile extends StatefulWidget {
@@ -25,6 +26,11 @@ class _SettingsTileState extends State<SettingsTile>
   bool _holonomic = false;
   bool _generateJSON = false;
   bool _generateCSV = false;
+  List<FieldImage> _fieldImages = [
+    FieldImage.official(OfficialField.RapidReact),
+    FieldImage.official(OfficialField.Test),
+  ];
+  FieldImage? _selectedField;
 
   late AnimationController _controller;
   late Animation<double> _iconTurns;
@@ -49,6 +55,8 @@ class _SettingsTileState extends State<SettingsTile>
         }
       });
     });
+
+    _selectedField = _fieldImages[0];
   }
 
   @override
@@ -101,6 +109,7 @@ class _SettingsTileState extends State<SettingsTile>
             widget.onSettingsChanged!.call();
           }
         }, _length.toStringAsFixed(2)),
+        buildFieldImageDropdown(context),
         SwitchListTile(
           value: _holonomic,
           activeColor: Colors.indigoAccent,
@@ -197,6 +206,63 @@ class _SettingsTileState extends State<SettingsTile>
                 OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
             labelStyle: TextStyle(color: Colors.grey),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildFieldImageDropdown(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(18, 0, 24, 0),
+      child: Container(
+        height: 45,
+        child: Row(
+          children: [
+            Text(
+              'Field Image:',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Container(
+                width: 171,
+                decoration: BoxDecoration(
+                  color: Colors.grey[800],
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: ExcludeFocus(
+                  child: Theme(
+                    data: Theme.of(context)
+                        .copyWith(canvasColor: Colors.grey[800]),
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownButton<FieldImage>(
+                        value: _selectedField,
+                        isExpanded: true,
+                        underline: Container(),
+                        icon: Icon(Icons.arrow_drop_down),
+                        style: TextStyle(fontSize: 14),
+                        onChanged: (FieldImage? newValue) {
+                          setState(() {
+                            _selectedField = newValue;
+                          });
+                        },
+                        items: _fieldImages.map<DropdownMenuItem<FieldImage>>(
+                            (FieldImage value) {
+                          return DropdownMenuItem<FieldImage>(
+                            value: value,
+                            child: Text(value.name),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

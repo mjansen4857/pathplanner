@@ -2,8 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/import_field_dialog.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsTile extends StatefulWidget {
@@ -302,7 +305,56 @@ class _SettingsTileState extends State<SettingsTile>
       context: context,
       builder: (BuildContext context) {
         return ImportFieldDialog(
-            (String name, double pixelsPerMeter, File imageFile) {});
+            (String name, double pixelsPerMeter, File imageFile) async {
+          for (FieldImage image in _fieldImages) {
+            if (image.name == name) {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return KeyBoardShortcuts(
+                    keysToPress: {LogicalKeyboardKey.enter},
+                    onKeysPressed: () => Navigator.of(context).pop(),
+                    child: AlertDialog(
+                      title: Text('Failed to Import Field'),
+                      content: Text(
+                          'Field with the name "' + name + '" already exists.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+              return;
+            }
+          }
+
+          Directory appDir = await getApplicationSupportDirectory();
+          Directory imagesDir = Directory(join(appDir.path, 'custom_fields'));
+
+          imagesDir.createSync(recursive: true);
+
+          String imageExtension = imageFile.path.split('.').last;
+          String importedPath = join(
+              imagesDir.path,
+              name +
+                  '_' +
+                  pixelsPerMeter.toStringAsFixed(2) +
+                  '.' +
+                  imageExtension);
+
+          await imageFile.copy(importedPath);
+
+          FieldImage newField = FieldImage.custom(File(importedPath));
+
+          setState(() {
+            _fieldImages.add(newField);
+            _selectedField = _fieldImages.last;
+          });
+        });
       },
     );
   }

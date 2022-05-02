@@ -47,6 +47,7 @@ class FieldImage extends StatelessWidget {
     String ppm = fileName.substring(
         fileName.lastIndexOf('_') + 1, fileName.lastIndexOf('.'));
     this.pixelsPerMeter = num.parse(ppm);
+    this.name = fileName.substring(0, fileName.lastIndexOf('_'));
   }
 
   @override

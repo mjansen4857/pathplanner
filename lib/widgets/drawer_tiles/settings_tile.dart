@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -299,7 +301,8 @@ class _SettingsTileState extends State<SettingsTile>
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return ImportFieldDialog((FieldImage imported) {});
+        return ImportFieldDialog(
+            (String name, double pixelsPerMeter, File imageFile) {});
       },
     );
   }

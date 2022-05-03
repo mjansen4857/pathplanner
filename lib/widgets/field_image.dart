@@ -31,7 +31,10 @@ class FieldImage extends StatelessWidget {
   }
 
   FieldImage.custom(File imageFile) {
-    this.image = Image.file(imageFile);
+    this.image = Image.file(
+      imageFile,
+      fit: BoxFit.contain,
+    );
 
     final imageSize = ImageSizeGetter.getSize(FileInput(imageFile));
     if (imageSize.needRotate) {

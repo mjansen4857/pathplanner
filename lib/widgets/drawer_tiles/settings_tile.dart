@@ -12,8 +12,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SettingsTile extends StatefulWidget {
   final VoidCallback? onSettingsChanged;
   final VoidCallback? onGenerationEnabled;
+  final ValueChanged<FieldImage>? onFieldSelected;
+  final List<FieldImage> fieldImages;
+  final FieldImage? selectedField;
 
-  SettingsTile({this.onSettingsChanged, this.onGenerationEnabled});
+  SettingsTile(this.fieldImages,
+      {this.onSettingsChanged,
+      this.onGenerationEnabled,
+      this.selectedField,
+      this.onFieldSelected});
 
   @override
   _SettingsTileState createState() => _SettingsTileState();
@@ -32,10 +39,6 @@ class _SettingsTileState extends State<SettingsTile>
   bool _holonomic = false;
   bool _generateJSON = false;
   bool _generateCSV = false;
-  List<FieldImage> _fieldImages = [
-    FieldImage.official(OfficialField.RapidReact),
-  ];
-  FieldImage? _selectedField;
 
   late AnimationController _controller;
   late Animation<double> _iconTurns;
@@ -60,8 +63,6 @@ class _SettingsTileState extends State<SettingsTile>
         }
       });
     });
-
-    _selectedField = _fieldImages[0];
   }
 
   @override
@@ -254,23 +255,24 @@ class _SettingsTileState extends State<SettingsTile>
                     child: ButtonTheme(
                       alignedDropdown: true,
                       child: DropdownButton<FieldImage?>(
-                        value: _selectedField,
+                        value: widget.selectedField,
                         isExpanded: true,
                         underline: Container(),
                         icon: Icon(Icons.arrow_drop_down),
                         style: TextStyle(fontSize: 14),
                         onChanged: (FieldImage? newValue) {
                           if (newValue != null) {
-                            setState(() {
-                              _selectedField = newValue;
-                            });
+                            if (widget.onFieldSelected != null) {
+                              widget.onFieldSelected!.call(newValue);
+                            }
                           } else {
                             showFieldImportDialog(context);
                           }
                         },
                         items: [
-                          ..._fieldImages.map<DropdownMenuItem<FieldImage>>(
-                              (FieldImage value) {
+                          ...widget.fieldImages
+                              .map<DropdownMenuItem<FieldImage>>(
+                                  (FieldImage value) {
                             return DropdownMenuItem<FieldImage>(
                               value: value,
                               child: Text(value.name),
@@ -306,7 +308,7 @@ class _SettingsTileState extends State<SettingsTile>
       builder: (BuildContext context) {
         return ImportFieldDialog(
             (String name, double pixelsPerMeter, File imageFile) async {
-          for (FieldImage image in _fieldImages) {
+          for (FieldImage image in widget.fieldImages) {
             if (image.name == name) {
               showDialog(
                 context: context,
@@ -350,10 +352,9 @@ class _SettingsTileState extends State<SettingsTile>
 
           FieldImage newField = FieldImage.custom(File(importedPath));
 
-          setState(() {
-            _fieldImages.add(newField);
-            _selectedField = _fieldImages.last;
-          });
+          if (widget.onFieldSelected != null) {
+            widget.onFieldSelected!.call(newField);
+          }
         });
       },
     );

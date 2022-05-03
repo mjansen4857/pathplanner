@@ -1,0 +1,95 @@
+name: Build PathPlannerLib Artifacts
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  build-linux:
+    name: Build roboRIO Java/C++ and linux desktop
+    runs-on: ubuntu-latest
+    container: wpilib/roborio-cross-ubuntu:2022-18.04
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        working-directory: ./pathplannerlib
+        
+      - name: Install roborio toolchain
+        run: ./gradlew installRoboRIOToolchain
+        working-directory: ./pathplannerlib
+        
+      - name: Compile and run tests
+        run: ./gradlew build
+        working-directory: ./pathplannerlib
+        
+      - name: Publish
+        run: ./gradlew publish
+        working-directory: ./pathplannerlib
+        
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: roborio-linux
+          path: 'pathplannerlib/build/repos/releases/com/pathplanner/lib'
+          retention-days: 7
+          
+  build-windows:
+    name: Build windows desktop
+    runs-on: windows-2019
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+       
+      - name: Setup jdk
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'microsoft'
+        
+      - name: Compile and run tests
+        run: ./gradlew build
+        working-directory: ./pathplannerlib
+        
+      - name: Publish
+        run: ./gradlew publish
+        working-directory: ./pathplannerlib
+        
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows
+          path: 'pathplannerlib/build/repos/releases/com/pathplanner/lib'
+          retention-days: 7
+
+  build-macos:
+    name: Build macOS desktop
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        
+      - name: Setup jdk
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'microsoft'
+        
+      - name: Compile and run tests
+        run: ./gradlew build
+        working-directory: ./pathplannerlib
+        
+      - name: Publish
+        run: ./gradlew publish
+        working-directory: ./pathplannerlib
+        
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos
+          path: 'pathplannerlib/build/repos/releases/com/pathplanner/lib'
+          retention-days: 7

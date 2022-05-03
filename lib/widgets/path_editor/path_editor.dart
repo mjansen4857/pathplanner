@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
+import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/generator_settings_card.dart';
 import 'package:pathplanner/widgets/path_editor/path_info_card.dart';
@@ -27,11 +28,12 @@ class PathEditor extends StatefulWidget {
   final bool generateJSON;
   final bool generateCSV;
   final String pathsDir;
-  final Size defaultImageSize = Size(3240, 1620);
-  final double pixelsPerMeter = 196.85;
+  final FieldImage image;
+  // final Size defaultImageSize = Size(3240, 1620);
+  // final double pixelsPerMeter = 196.85;
 
-  PathEditor(this.path, this.robotWidth, this.robotLength, this.holonomicMode,
-      this.generateJSON, this.generateCSV, this.pathsDir);
+  PathEditor(this.image, this.path, this.robotWidth, this.robotLength,
+      this.holonomicMode, this.generateJSON, this.generateCSV, this.pathsDir);
 
   @override
   _PathEditorState createState() => _PathEditorState();
@@ -204,15 +206,7 @@ class _PathEditorState extends State<PathEditor>
       padding: const EdgeInsets.all(48.0),
       child: Stack(
         children: [
-          AspectRatio(
-            aspectRatio: 2 / 1,
-            child: SizedBox.expand(
-              child: Image.asset(
-                'images/field22.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
+          widget.image,
           Positioned.fill(
             child: Container(
               child: CustomPaint(
@@ -223,8 +217,8 @@ class _PathEditorState extends State<PathEditor>
                   _selectedPoint,
                   _mode,
                   _previewController!.view,
-                  widget.defaultImageSize,
-                  widget.pixelsPerMeter,
+                  widget.image.defaultSize,
+                  widget.image.pixelsPerMeter,
                 ),
               ),
             ),
@@ -491,12 +485,12 @@ class _PathEditorState extends State<PathEditor>
   }
 
   double _xPixelsToMeters(double pixels) {
-    return ((pixels - 48) / PathPainter.scale) / widget.pixelsPerMeter;
+    return ((pixels - 48) / PathPainter.scale) / widget.image.pixelsPerMeter;
   }
 
   double _yPixelsToMeters(double pixels) {
-    return (widget.defaultImageSize.height -
+    return (widget.image.defaultSize.height -
             ((pixels - 48) / PathPainter.scale)) /
-        widget.pixelsPerMeter;
+        widget.image.pixelsPerMeter;
   }
 }

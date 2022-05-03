@@ -1,12 +1,26 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/widgets/import_field_dialog.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsTile extends StatefulWidget {
   final VoidCallback? onSettingsChanged;
   final VoidCallback? onGenerationEnabled;
+  final ValueChanged<FieldImage>? onFieldSelected;
+  final List<FieldImage> fieldImages;
+  final FieldImage? selectedField;
 
-  SettingsTile({this.onSettingsChanged, this.onGenerationEnabled});
+  SettingsTile(this.fieldImages,
+      {this.onSettingsChanged,
+      this.onGenerationEnabled,
+      this.selectedField,
+      this.onFieldSelected});
 
   @override
   _SettingsTileState createState() => _SettingsTileState();
@@ -79,28 +93,38 @@ class _SettingsTileState extends State<SettingsTile>
         style: TextStyle(color: Colors.white),
       ),
       children: [
-        buildTextField(context, 'Robot Width', (value) {
-          if (value != null && _prefs != null) {
-            _prefs!.setDouble('robotWidth', value);
-            setState(() {
-              _width = value;
-            });
-          }
-          if (widget.onSettingsChanged != null) {
-            widget.onSettingsChanged!.call();
-          }
-        }, _width.toStringAsFixed(2)),
-        buildTextField(context, 'Robot Length', (value) {
-          if (value != null && _prefs != null) {
-            _prefs!.setDouble('robotLength', value);
-            setState(() {
-              _length = value;
-            });
-          }
-          if (widget.onSettingsChanged != null) {
-            widget.onSettingsChanged!.call();
-          }
-        }, _length.toStringAsFixed(2)),
+        Padding(
+          padding: const EdgeInsets.only(left: 16, right: 24),
+          child: Row(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              buildTextField(context, 'Robot Width', (value) {
+                if (value != null && _prefs != null) {
+                  _prefs!.setDouble('robotWidth', value);
+                  setState(() {
+                    _width = value;
+                  });
+                }
+                if (widget.onSettingsChanged != null) {
+                  widget.onSettingsChanged!.call();
+                }
+              }, _width.toStringAsFixed(2)),
+              SizedBox(width: 8),
+              buildTextField(context, 'Robot Length', (value) {
+                if (value != null && _prefs != null) {
+                  _prefs!.setDouble('robotLength', value);
+                  setState(() {
+                    _length = value;
+                  });
+                }
+                if (widget.onSettingsChanged != null) {
+                  widget.onSettingsChanged!.call();
+                }
+              }, _length.toStringAsFixed(2)),
+            ],
+          ),
+        ),
+        buildFieldImageDropdown(context),
         SwitchListTile(
           value: _holonomic,
           activeColor: Colors.indigoAccent,
@@ -168,9 +192,10 @@ class _SettingsTileState extends State<SettingsTile>
   Widget buildTextField(BuildContext context, String label,
       ValueChanged? onSubmitted, String text) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 6, 24, 6),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Container(
-        height: 45,
+        height: 40,
+        width: 128,
         child: TextField(
           onSubmitted: (val) {
             if (onSubmitted != null) {
@@ -202,10 +227,136 @@ class _SettingsTileState extends State<SettingsTile>
     );
   }
 
+  Widget buildFieldImageDropdown(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(18, 0, 24, 0),
+      child: Container(
+        height: 48,
+        child: Row(
+          children: [
+            Text(
+              'Field Image:',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+            SizedBox(width: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Container(
+                width: 171,
+                decoration: BoxDecoration(
+                  color: Colors.grey[800],
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: ExcludeFocus(
+                  child: Theme(
+                    data: Theme.of(context)
+                        .copyWith(canvasColor: Colors.grey[800]),
+                    child: ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownButton<FieldImage?>(
+                        value: widget.selectedField,
+                        isExpanded: true,
+                        underline: Container(),
+                        icon: Icon(Icons.arrow_drop_down),
+                        style: TextStyle(fontSize: 14),
+                        onChanged: (FieldImage? newValue) {
+                          if (newValue != null) {
+                            if (widget.onFieldSelected != null) {
+                              widget.onFieldSelected!.call(newValue);
+                            }
+                          } else {
+                            showFieldImportDialog(context);
+                          }
+                        },
+                        items: [
+                          ...widget.fieldImages
+                              .map<DropdownMenuItem<FieldImage>>(
+                                  (FieldImage value) {
+                            return DropdownMenuItem<FieldImage>(
+                              value: value,
+                              child: Text(value.name),
+                            );
+                          }).toList(),
+                          DropdownMenuItem<FieldImage?>(
+                            value: null,
+                            child: Text('Import Custom...'),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _unfocus(BuildContext context) {
     FocusScopeNode currentScope = FocusScope.of(context);
     if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
       FocusManager.instance.primaryFocus!.unfocus();
     }
+  }
+
+  void showFieldImportDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return ImportFieldDialog(
+            (String name, double pixelsPerMeter, File imageFile) async {
+          for (FieldImage image in widget.fieldImages) {
+            if (image.name == name) {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return KeyBoardShortcuts(
+                    keysToPress: {LogicalKeyboardKey.enter},
+                    onKeysPressed: () => Navigator.of(context).pop(),
+                    child: AlertDialog(
+                      title: Text('Failed to Import Field'),
+                      content: Text(
+                          'Field with the name "' + name + '" already exists.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+              return;
+            }
+          }
+
+          Directory appDir = await getApplicationSupportDirectory();
+          Directory imagesDir = Directory(join(appDir.path, 'custom_fields'));
+
+          imagesDir.createSync(recursive: true);
+
+          String imageExtension = imageFile.path.split('.').last;
+          String importedPath = join(
+              imagesDir.path,
+              name +
+                  '_' +
+                  pixelsPerMeter.toStringAsFixed(2) +
+                  '.' +
+                  imageExtension);
+
+          await imageFile.copy(importedPath);
+
+          FieldImage newField = FieldImage.custom(File(importedPath));
+
+          if (widget.onFieldSelected != null) {
+            widget.onFieldSelected!.call(newField);
+          }
+        });
+      },
+    );
   }
 }

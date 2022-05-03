@@ -14,7 +14,7 @@ class PathPainter extends CustomPainter {
   final Waypoint? selectedWaypoint;
   final EditorMode editorMode;
   Animation<num>? previewTime;
-  final double pixelsPerMeter;
+  final num pixelsPerMeter;
 
   static double scale = 1;
 

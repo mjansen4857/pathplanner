@@ -273,7 +273,8 @@ class _WaypointCardState extends State<WaypointCard> {
         controller: controller,
         cursorColor: Colors.white,
         inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
+          FilteringTextInputFormatter.allow(
+              RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
         ],
         style: TextStyle(fontSize: 14),
         decoration: InputDecoration(

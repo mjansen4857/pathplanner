@@ -7,12 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/deploy_fab.dart';
 import 'package:pathplanner/widgets/drawer_tiles/path_tile.dart';
 import 'package:pathplanner/widgets/drawer_tiles/settings_tile.dart';
+import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 import 'package:pathplanner/widgets/update_card.dart';
@@ -40,6 +42,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late AnimationController _welcomeController;
   late Animation<double> _scaleAnimation;
   SecureBookmarks? _bookmarks = Platform.isMacOS ? SecureBookmarks() : null;
+  List<FieldImage> _fieldImages = [
+    FieldImage.official(OfficialField.RapidReact),
+  ];
+  late FieldImage _fieldImage;
   bool _appStoreBuild = false;
 
   @override
@@ -49,30 +55,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         AnimationController(vsync: this, duration: Duration(milliseconds: 400));
     _scaleAnimation =
         CurvedAnimation(parent: _welcomeController, curve: Curves.ease);
-    SharedPreferences.getInstance().then((prefs) async {
-      String? projectDir = prefs.getString('currentProjectDir');
-      String? pathsDir = prefs.getString('currentPathsDir');
-      if (projectDir != null && Platform.isMacOS) {
-        if (prefs.getString('macOSBookmark') != null) {
-          await _bookmarks!.resolveBookmark(prefs.getString('macOSBookmark')!);
+    _fieldImage = _fieldImages[0];
 
-          await _bookmarks!
-              .startAccessingSecurityScopedResource(File(projectDir));
-        } else {
-          projectDir = null;
+    _loadFieldImages().then((_) {
+      SharedPreferences.getInstance().then((prefs) async {
+        String? projectDir = prefs.getString('currentProjectDir');
+        String? pathsDir = prefs.getString('currentPathsDir');
+        if (projectDir != null && Platform.isMacOS) {
+          if (prefs.getString('macOSBookmark') != null) {
+            await _bookmarks!
+                .resolveBookmark(prefs.getString('macOSBookmark')!);
+
+            await _bookmarks!
+                .startAccessingSecurityScopedResource(File(projectDir));
+          } else {
+            projectDir = null;
+          }
         }
-      }
 
-      setState(() {
-        _prefs = prefs;
-        _welcomeController.forward();
+        setState(() {
+          _prefs = prefs;
+          _welcomeController.forward();
 
-        _loadPaths(projectDir, pathsDir);
-        _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
-        _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
-        _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
-        _generateJSON = _prefs.getBool('generateJSON') ?? false;
-        _generateCSV = _prefs.getBool('generateCSV') ?? false;
+          _loadPaths(projectDir, pathsDir);
+          _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
+          _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
+          _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
+          _generateJSON = _prefs.getBool('generateJSON') ?? false;
+          _generateCSV = _prefs.getBool('generateCSV') ?? false;
+
+          String? selectedFieldName = _prefs.getString('fieldImage');
+          if (selectedFieldName != null) {
+            for (FieldImage image in _fieldImages) {
+              if (image.name == selectedFieldName) {
+                _fieldImage = image;
+                break;
+              }
+            }
+          }
+        });
       });
     });
   }
@@ -343,6 +364,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: SettingsTile(
+                        _fieldImages,
+                        selectedField: _fieldImage,
+                        onFieldSelected: (FieldImage image) {
+                          setState(() {
+                            _fieldImage = image;
+                            if (!_fieldImages.contains(image)) {
+                              _fieldImages.add(image);
+                            }
+                            _prefs.setString('fieldImage', image.name);
+                          });
+                        },
                         onSettingsChanged: () {
                           setState(() {
                             _robotWidth =
@@ -379,8 +411,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (_currentProject != null) {
       return Center(
         child: Container(
-          child: PathEditor(_currentPath!, _robotWidth, _robotLength,
-              _holonomicMode, _generateJSON, _generateCSV, _pathsDir!.path),
+          child: PathEditor(
+              _fieldImage,
+              _currentPath!,
+              _robotWidth,
+              _robotLength,
+              _holonomicMode,
+              _generateJSON,
+              _generateCSV,
+              _pathsDir!.path),
         ),
       );
     } else {
@@ -520,6 +559,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _currentProject = Directory(projectFolder);
         _loadPaths(_currentProject!.path, pathsDir.path);
       });
+    }
+  }
+
+  Future<void> _loadFieldImages() async {
+    Directory appDir = await getApplicationSupportDirectory();
+    Directory imagesDir = Directory(join(appDir.path, 'custom_fields'));
+
+    imagesDir.createSync(recursive: true);
+
+    List<FileSystemEntity> fileEntities = imagesDir.listSync();
+    for (FileSystemEntity e in fileEntities) {
+      _fieldImages.add(FieldImage.custom(File(e.path)));
     }
   }
 }

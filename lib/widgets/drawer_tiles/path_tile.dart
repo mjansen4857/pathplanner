@@ -3,8 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/widgets/custom_popup_menu.dart' as custom;
 
-typedef bool ValidRename(String name);
-
 enum MenuOptions {
   Delete,
   Duplicate,
@@ -17,7 +15,7 @@ class PathTile extends StatefulWidget {
   final VoidCallback? onTap;
   final VoidCallback? onDuplicate;
   final VoidCallback? onDelete;
-  final ValidRename? onRename;
+  final bool Function(String name)? onRename;
 
   PathTile(this.path,
       {this.isSelected = false,
@@ -41,46 +39,7 @@ class _PathTileState extends State<PathTile> {
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
-          custom.PopupMenuButton<MenuOptions>(
-            splashRadius: 18,
-            tooltip: '',
-            onSelected: (MenuOptions value) {
-              switch (value) {
-                case MenuOptions.Delete:
-                  if (widget.onDelete != null) {
-                    widget.onDelete!.call();
-                  }
-                  break;
-                case MenuOptions.Duplicate:
-                  if (widget.onDuplicate != null) {
-                    widget.onDuplicate!.call();
-                  }
-              }
-            },
-            itemBuilder: (BuildContext context) =>
-                <custom.PopupMenuEntry<MenuOptions>>[
-              custom.PopupMenuItem<MenuOptions>(
-                value: MenuOptions.Delete,
-                child: Row(
-                  children: [
-                    Icon(Icons.delete),
-                    SizedBox(width: 12),
-                    Text('Delete'),
-                  ],
-                ),
-              ),
-              custom.PopupMenuItem<MenuOptions>(
-                value: MenuOptions.Duplicate,
-                child: Row(
-                  children: [
-                    Icon(Icons.copy),
-                    SizedBox(width: 12),
-                    Text('Duplicate'),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          _buildPopupMenu(),
           Expanded(
             child: MouseRegion(
               cursor: widget.isSelected
@@ -96,55 +55,7 @@ class _PathTileState extends State<PathTile> {
                     child: Padding(
                       padding:
                           const EdgeInsets.only(top: 6, bottom: 7, left: 2),
-                      child: IntrinsicWidth(
-                        child: TextField(
-                          cursorColor: Colors.white,
-                          onSubmitted: (String text) {
-                            if (text != '') {
-                              FocusScopeNode currentScope =
-                                  FocusScope.of(context);
-                              if (!currentScope.hasPrimaryFocus &&
-                                  currentScope.hasFocus) {
-                                FocusManager.instance.primaryFocus!.unfocus();
-                              }
-                              if (widget.onRename != null) {
-                                if (widget.onRename!.call(text)) {
-                                  setState(() {
-                                    widget.path.name = text;
-                                  });
-                                }
-                              }
-                            } else {
-                              setState(() {
-                                // flutter be weird sometimes
-                                widget.path.name = widget.path.name;
-                              });
-                            }
-                          },
-                          controller: TextEditingController(
-                              text: widget.path.name)
-                            ..selection = TextSelection.fromPosition(
-                                TextPosition(offset: widget.path.name.length)),
-                          decoration: InputDecoration(
-                            border: InputBorder.none,
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.grey,
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Colors.transparent,
-                              ),
-                            ),
-                            contentPadding: EdgeInsets.all(8),
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.deny(
-                                RegExp("[\"*<>?\|/:\\\\]")),
-                          ],
-                        ),
-                      ),
+                      child: _buildTextField(),
                     ),
                   ),
                 ),
@@ -153,6 +64,97 @@ class _PathTileState extends State<PathTile> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTextField() {
+    return IntrinsicWidth(
+      child: TextField(
+        cursorColor: Colors.white,
+        onSubmitted: (String text) {
+          if (text != '') {
+            FocusScopeNode currentScope = FocusScope.of(context);
+            if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+              FocusManager.instance.primaryFocus!.unfocus();
+            }
+            if (widget.onRename != null) {
+              if (widget.onRename!.call(text)) {
+                setState(() {
+                  widget.path.name = text;
+                });
+              }
+            }
+          } else {
+            setState(() {
+              // flutter be weird sometimes
+              widget.path.name = widget.path.name;
+            });
+          }
+        },
+        controller: TextEditingController(text: widget.path.name)
+          ..selection = TextSelection.fromPosition(
+              TextPosition(offset: widget.path.name.length)),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.grey,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+              color: Colors.transparent,
+            ),
+          ),
+          contentPadding: EdgeInsets.all(8),
+        ),
+        inputFormatters: [
+          FilteringTextInputFormatter.deny(RegExp("[\"*<>?\|/:\\\\]")),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPopupMenu() {
+    return custom.PopupMenuButton<MenuOptions>(
+      splashRadius: 18,
+      tooltip: '',
+      onSelected: (MenuOptions value) {
+        switch (value) {
+          case MenuOptions.Delete:
+            if (widget.onDelete != null) {
+              widget.onDelete!.call();
+            }
+            break;
+          case MenuOptions.Duplicate:
+            if (widget.onDuplicate != null) {
+              widget.onDuplicate!.call();
+            }
+        }
+      },
+      itemBuilder: (BuildContext context) =>
+          <custom.PopupMenuEntry<MenuOptions>>[
+        custom.PopupMenuItem<MenuOptions>(
+          value: MenuOptions.Delete,
+          child: Row(
+            children: [
+              Icon(Icons.delete),
+              SizedBox(width: 12),
+              Text('Delete'),
+            ],
+          ),
+        ),
+        custom.PopupMenuItem<MenuOptions>(
+          value: MenuOptions.Duplicate,
+          child: Row(
+            children: [
+              Icon(Icons.copy),
+              SizedBox(width: 12),
+              Text('Duplicate'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

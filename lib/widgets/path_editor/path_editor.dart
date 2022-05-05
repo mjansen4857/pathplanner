@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -12,7 +11,6 @@ import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/generator_settings_card.dart';
 import 'package:pathplanner/widgets/path_editor/path_info_card.dart';
 import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
 import 'path_painter.dart';
@@ -30,11 +28,9 @@ class PathEditor extends StatefulWidget {
   final bool generateJSON;
   final bool generateCSV;
   final String pathsDir;
-  final FieldImage image;
-  // final Size defaultImageSize = Size(3240, 1620);
-  // final double pixelsPerMeter = 196.85;
+  final FieldImage fieldImage;
 
-  PathEditor(this.image, this.path, this.robotWidth, this.robotLength,
+  PathEditor(this.fieldImage, this.path, this.robotWidth, this.robotLength,
       this.holonomicMode, this.generateJSON, this.generateCSV, this.pathsDir);
 
   @override
@@ -49,43 +45,12 @@ class _PathEditorState extends State<PathEditor>
   Waypoint? _dragOldValue;
   EditorMode _mode = EditorMode.Edit;
   AnimationController? _previewController;
-  SharedPreferences? _prefs;
   GlobalKey _key = GlobalKey();
-  _CardPosition _waypointCardPos = _CardPosition(top: 0, right: 0);
-  _CardPosition _generatorCardPos = _CardPosition(bottom: 0, left: 0);
-  _CardPosition _pathCardPos = _CardPosition(top: 0, right: 0);
 
   @override
   void initState() {
     super.initState();
     _previewController = AnimationController(vsync: this);
-
-    SharedPreferences.getInstance().then((prefs) {
-      _prefs = prefs;
-      String? waypointCardJson = _prefs!.getString('waypointCardPos');
-      String? generatorCardJson = _prefs!.getString('generatorCardPos');
-      String? pathCardJson = _prefs!.getString('pathCardPos');
-
-      if (waypointCardJson != null) {
-        setState(() {
-          _waypointCardPos =
-              _CardPosition.fromJson(jsonDecode(waypointCardJson));
-        });
-      }
-
-      if (generatorCardJson != null) {
-        setState(() {
-          _generatorCardPos =
-              _CardPosition.fromJson(jsonDecode(generatorCardJson));
-        });
-      }
-
-      if (pathCardJson != null) {
-        setState(() {
-          _pathCardPos = _CardPosition.fromJson(jsonDecode(pathCardJson));
-        });
-      }
-    });
   }
 
   @override
@@ -241,7 +206,7 @@ class _PathEditorState extends State<PathEditor>
       padding: const EdgeInsets.all(48.0),
       child: Stack(
         children: [
-          widget.image,
+          widget.fieldImage,
           Positioned.fill(
             child: Container(
               child: CustomPaint(
@@ -252,8 +217,8 @@ class _PathEditorState extends State<PathEditor>
                   _selectedPoint,
                   _mode,
                   _previewController!.view,
-                  widget.image.defaultSize,
-                  widget.image.pixelsPerMeter,
+                  widget.fieldImage.defaultSize,
+                  widget.fieldImage.pixelsPerMeter,
                 ),
               ),
             ),
@@ -441,132 +406,21 @@ class _PathEditorState extends State<PathEditor>
       });
     }
 
-    return Positioned(
-      top: _waypointCardPos.top,
-      left: _waypointCardPos.left,
-      right: _waypointCardPos.right,
-      bottom: _waypointCardPos.bottom,
-      child: WaypointCard(
-        _selectedPoint,
-        label: waypointLabel,
-        holonomicEnabled: widget.holonomicMode,
-        deleteEnabled: widget.path.waypoints.length > 2,
-        onDragFinished: () {
-          if (_prefs != null) {
-            _prefs!.setString('waypointCardPos', jsonEncode(_waypointCardPos));
-          }
-        },
-        onDragged: (Offset newGlobalPos, Size cardSize) {
-          RenderBox renderBox =
-              _key.currentContext?.findRenderObject() as RenderBox;
-
-          Offset newLocalPos = renderBox.globalToLocal(newGlobalPos);
-          bool isTop = newLocalPos.dy <
-              (renderBox.size.height / 2) - (cardSize.height / 2);
-          bool isLeft = newLocalPos.dx <
-              (renderBox.size.width / 2) - (cardSize.width / 2);
-
-          _CardPosition newCardPos = _CardPosition(
-            top: isTop ? max(newLocalPos.dy, 0) : null,
-            left: isLeft ? max(newLocalPos.dx, 0) : null,
-            right: isLeft
-                ? null
-                : max(
-                    renderBox.size.width - newLocalPos.dx - cardSize.width, 0),
-            bottom: isTop
-                ? null
-                : max(renderBox.size.height - newLocalPos.dy - cardSize.height,
-                    0),
-          );
-
-          setState(() {
-            _waypointCardPos = newCardPos;
-          });
-        },
-        onShouldSave: () {
-          widget.path.savePath(
-              widget.pathsDir, widget.generateJSON, widget.generateCSV);
-        },
-        onDelete: () {
-          int delIndex = widget.path.waypoints.indexOf(_selectedPoint!);
-          UndoRedo.addChange(Change(
-            RobotPath.cloneWaypointList(widget.path.waypoints),
-            () {
-              setState(() {
-                Waypoint w = widget.path.waypoints.removeAt(delIndex);
-                if (w.isEndPoint()) {
-                  widget.path.waypoints[widget.path.waypoints.length - 1]
-                      .nextControl = null;
-                  widget.path.waypoints[widget.path.waypoints.length - 1]
-                      .isReversal = false;
-                } else if (w.isStartPoint()) {
-                  widget.path.waypoints[0].prevControl = null;
-                  widget.path.waypoints[0].isReversal = false;
-                }
-                widget.path.savePath(
-                    widget.pathsDir, widget.generateJSON, widget.generateCSV);
-              });
-            },
-            (oldValue) {
-              setState(() {
-                widget.path.waypoints = RobotPath.cloneWaypointList(oldValue);
-                widget.path.savePath(
-                    widget.pathsDir, widget.generateJSON, widget.generateCSV);
-              });
-            },
-          ));
-          setState(() {
-            _selectedPoint = null;
-          });
-        },
-      ),
+    return WaypointCard(
+      _selectedPoint,
+      _key,
+      label: waypointLabel,
+      holonomicEnabled: widget.holonomicMode,
+      deleteEnabled: widget.path.waypoints.length > 2,
     );
   }
 
   Widget _buildPathInfo() {
     return Visibility(
       visible: _mode == EditorMode.Preview,
-      child: Positioned(
-        top: _pathCardPos.top,
-        left: _pathCardPos.left,
-        right: _pathCardPos.right,
-        bottom: _pathCardPos.bottom,
-        child: PathInfoCard(
-          widget.path,
-          onDragFinished: () {
-            if (_prefs != null) {
-              _prefs!.setString('pathCardPos', jsonEncode(_pathCardPos));
-            }
-          },
-          onDragged: (Offset newGlobalPos, Size cardSize) {
-            RenderBox renderBox =
-                _key.currentContext?.findRenderObject() as RenderBox;
-
-            Offset newLocalPos = renderBox.globalToLocal(newGlobalPos);
-            bool isTop = newLocalPos.dy <
-                (renderBox.size.height / 2) - (cardSize.height / 2);
-            bool isLeft = newLocalPos.dx <
-                (renderBox.size.width / 2) - (cardSize.width / 2);
-
-            _CardPosition newCardPos = _CardPosition(
-              top: isTop ? max(newLocalPos.dy, 0) : null,
-              left: isLeft ? max(newLocalPos.dx, 0) : null,
-              right: isLeft
-                  ? null
-                  : max(renderBox.size.width - newLocalPos.dx - cardSize.width,
-                      0),
-              bottom: isTop
-                  ? null
-                  : max(
-                      renderBox.size.height - newLocalPos.dy - cardSize.height,
-                      0),
-            );
-
-            setState(() {
-              _pathCardPos = newCardPos;
-            });
-          },
-        ),
+      child: PathInfoCard(
+        widget.path,
+        _key,
       ),
     );
   }
@@ -576,102 +430,37 @@ class _PathEditorState extends State<PathEditor>
       visible: widget.generateJSON ||
           widget.generateCSV ||
           _mode == EditorMode.Preview,
-      child: Positioned(
-        top: _generatorCardPos.top,
-        left: _generatorCardPos.left,
-        right: _generatorCardPos.right,
-        bottom: _generatorCardPos.bottom,
-        child: GeneratorSettingsCard(
-          widget.path,
-          onDragFinished: () {
-            if (_prefs != null) {
-              _prefs!
-                  .setString('generatorCardPos', jsonEncode(_generatorCardPos));
-            }
-          },
-          onDragged: (Offset newGlobalPos, Size cardSize) {
-            RenderBox renderBox =
-                _key.currentContext?.findRenderObject() as RenderBox;
-
-            Offset newLocalPos = renderBox.globalToLocal(newGlobalPos);
-            bool isTop = newLocalPos.dy <
-                (renderBox.size.height / 2) - (cardSize.height / 2);
-            bool isLeft = newLocalPos.dx <
-                (renderBox.size.width / 2) - (cardSize.width / 2);
-
-            _CardPosition newCardPos = _CardPosition(
-              top: isTop ? max(newLocalPos.dy, 0) : null,
-              left: isLeft ? max(newLocalPos.dx, 0) : null,
-              right: isLeft
-                  ? null
-                  : max(renderBox.size.width - newLocalPos.dx - cardSize.width,
-                      0),
-              bottom: isTop
-                  ? null
-                  : max(
-                      renderBox.size.height - newLocalPos.dy - cardSize.height,
-                      0),
-            );
-
+      child: GeneratorSettingsCard(
+        widget.path,
+        _key,
+        onShouldSave: () async {
+          if (_mode == EditorMode.Preview) {
+            await widget.path.generateTrajectory();
             setState(() {
-              _generatorCardPos = newCardPos;
+              _previewController!.stop();
+              _previewController!.reset();
+              _previewController!.duration = Duration(
+                  milliseconds:
+                      (widget.path.generatedTrajectory!.getRuntime() * 1000)
+                          .toInt());
+              _previewController!.repeat();
             });
-          },
-          onShouldSave: () async {
-            if (_mode == EditorMode.Preview) {
-              await widget.path.generateTrajectory();
-              setState(() {
-                _previewController!.stop();
-                _previewController!.reset();
-                _previewController!.duration = Duration(
-                    milliseconds:
-                        (widget.path.generatedTrajectory!.getRuntime() * 1000)
-                            .toInt());
-                _previewController!.repeat();
-              });
-            }
-            widget.path.savePath(
-                widget.pathsDir, widget.generateJSON, widget.generateCSV);
-          },
-        ),
+          }
+          widget.path.savePath(
+              widget.pathsDir, widget.generateJSON, widget.generateCSV);
+        },
       ),
     );
   }
 
   double _xPixelsToMeters(double pixels) {
-    return ((pixels - 48) / PathPainter.scale) / widget.image.pixelsPerMeter;
+    return ((pixels - 48) / PathPainter.scale) /
+        widget.fieldImage.pixelsPerMeter;
   }
 
   double _yPixelsToMeters(double pixels) {
-    return (widget.image.defaultSize.height -
+    return (widget.fieldImage.defaultSize.height -
             ((pixels - 48) / PathPainter.scale)) /
-        widget.image.pixelsPerMeter;
-  }
-}
-
-class _CardPosition {
-  final double? top;
-  final double? left;
-  final double? right;
-  final double? bottom;
-
-  _CardPosition({this.top, this.left, this.right, this.bottom});
-
-  factory _CardPosition.fromJson(Map<String, dynamic> parsedJson) {
-    return _CardPosition(
-      top: parsedJson['top'],
-      left: parsedJson['left'],
-      right: parsedJson['right'],
-      bottom: parsedJson['bottom'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'top': top,
-      'left': left,
-      'right': right,
-      'bottom': bottom,
-    };
+        widget.fieldImage.pixelsPerMeter;
   }
 }

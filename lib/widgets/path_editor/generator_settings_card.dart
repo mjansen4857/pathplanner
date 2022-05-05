@@ -6,11 +6,9 @@ import 'package:pathplanner/widgets/draggable_card.dart';
 class GeneratorSettingsCard extends StatefulWidget {
   final RobotPath? path;
   final VoidCallback? onShouldSave;
-  final void Function(Offset, Size)? onDragged;
-  final VoidCallback? onDragFinished;
+  final GlobalKey stackKey;
 
-  GeneratorSettingsCard(this.path,
-      {this.onShouldSave, this.onDragged, this.onDragFinished});
+  GeneratorSettingsCard(this.path, this.stackKey, {this.onShouldSave});
 
   @override
   _GeneratorSettingsCardState createState() => _GeneratorSettingsCardState();
@@ -22,8 +20,9 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
     if (widget.path == null) return Container();
 
     return DraggableCard(
-      onDragged: widget.onDragged,
-      onDragFinished: widget.onDragFinished,
+      widget.stackKey,
+      defaultPosition: CardPosition(bottom: 0, left: 0),
+      prefsKey: 'generatorCardPos',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,

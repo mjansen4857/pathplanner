@@ -4,10 +4,9 @@ import 'package:pathplanner/widgets/draggable_card.dart';
 
 class PathInfoCard extends StatefulWidget {
   final RobotPath? path;
-  final void Function(Offset, Size)? onDragged;
-  final VoidCallback? onDragFinished;
+  final GlobalKey stackKey;
 
-  PathInfoCard(this.path, {this.onDragged, this.onDragFinished});
+  PathInfoCard(this.path, this.stackKey);
 
   @override
   _PathInfoCardState createState() => _PathInfoCardState();
@@ -20,8 +19,9 @@ class _PathInfoCardState extends State<PathInfoCard> {
       return Container();
 
     return DraggableCard(
-      onDragged: widget.onDragged,
-      onDragFinished: widget.onDragFinished,
+      widget.stackKey,
+      defaultPosition: CardPosition(top: 0, right: 0),
+      prefsKey: 'pathCardPos',
       child: Center(
         child: Text(
             'Total Runtime: ${widget.path!.generatedTrajectory!.getRuntime().toStringAsFixed(2)}s'),

@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
@@ -15,17 +13,14 @@ class WaypointCard extends StatefulWidget {
   final bool deleteEnabled;
   final VoidCallback? onDelete;
   final VoidCallback? onShouldSave;
-  final void Function(Offset, Size)? onDragged;
-  final VoidCallback? onDragFinished;
+  final GlobalKey stackKey;
 
-  WaypointCard(this.waypoint,
+  WaypointCard(this.waypoint, this.stackKey,
       {this.label,
       this.holonomicEnabled = false,
       this.deleteEnabled = false,
       this.onDelete,
-      this.onShouldSave,
-      this.onDragged,
-      this.onDragFinished});
+      this.onShouldSave});
 
   @override
   _WaypointCardState createState() => _WaypointCardState();
@@ -37,8 +32,9 @@ class _WaypointCardState extends State<WaypointCard> {
     if (widget.waypoint == null) return Container();
 
     return DraggableCard(
-      onDragged: widget.onDragged,
-      onDragFinished: widget.onDragFinished,
+      widget.stackKey,
+      defaultPosition: CardPosition(top: 0, right: 0),
+      prefsKey: 'waypointCardPos',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,

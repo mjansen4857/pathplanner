@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
+import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:undo/undo.dart';
 import 'package:function_tree/function_tree.dart';
 
@@ -31,76 +32,36 @@ class WaypointCard extends StatefulWidget {
 }
 
 class _WaypointCardState extends State<WaypointCard> {
-  Offset? _dragStartLocal;
-  GlobalKey _key = GlobalKey();
-
   @override
   Widget build(BuildContext context) {
     if (widget.waypoint == null) return Container();
 
-    return GestureDetector(
-      key: _key,
-      onPanStart: (DragStartDetails details) {
-        _dragStartLocal = details.localPosition;
-      },
-      onPanEnd: (DragEndDetails details) {
-        _dragStartLocal = null;
-        if (widget.onDragFinished != null) {
-          widget.onDragFinished!.call();
-        }
-      },
-      onPanUpdate: (DragUpdateDetails details) {
-        if (widget.onDragged != null && _dragStartLocal != null) {
-          RenderBox renderBox =
-              _key.currentContext?.findRenderObject() as RenderBox;
-          widget.onDragged!
-              .call(details.globalPosition - _dragStartLocal!, renderBox.size);
-        }
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          width: 250,
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            color: Colors.white.withOpacity(0.13),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildHeader(),
-                      SizedBox(height: 12),
-                      // Override gesture detector on UI elements so they wont cause the card to move
-                      GestureDetector(
-                        onPanStart: (details) {},
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildPositionRow(context),
-                            SizedBox(height: 12),
-                            _buildAngleRow(context),
-                            SizedBox(height: 12),
-                            _buildVelReversalRow(context),
-                            SizedBox(height: 5),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+    return DraggableCard(
+      onDragged: widget.onDragged,
+      onDragFinished: widget.onDragFinished,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildHeader(),
+          SizedBox(height: 12),
+          // Override gesture detector on UI elements so they wont cause the card to move
+          GestureDetector(
+            onPanStart: (details) {},
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildPositionRow(context),
+                SizedBox(height: 12),
+                _buildAngleRow(context),
+                SizedBox(height: 12),
+                _buildVelReversalRow(context),
+                SizedBox(height: 5),
+              ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

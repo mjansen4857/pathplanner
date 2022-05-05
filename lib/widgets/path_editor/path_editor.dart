@@ -52,6 +52,7 @@ class _PathEditorState extends State<PathEditor>
   SharedPreferences? _prefs;
   GlobalKey _key = GlobalKey();
   _CardPosition _waypointCardPos = _CardPosition(top: 0, right: 0);
+  _CardPosition _generatorCardPos = _CardPosition(bottom: 0, left: 0);
 
   @override
   void initState() {
@@ -61,11 +62,19 @@ class _PathEditorState extends State<PathEditor>
     SharedPreferences.getInstance().then((prefs) {
       _prefs = prefs;
       String? waypointCardJson = _prefs!.getString('waypointCardPos');
+      String? generatorCardJson = _prefs!.getString('generatorCardPos');
 
       if (waypointCardJson != null) {
         setState(() {
           _waypointCardPos =
               _CardPosition.fromJson(jsonDecode(waypointCardJson));
+        });
+      }
+
+      if (generatorCardJson != null) {
+        setState(() {
+          _generatorCardPos =
+              _CardPosition.fromJson(jsonDecode(generatorCardJson));
         });
       }
     });
@@ -521,10 +530,47 @@ class _PathEditorState extends State<PathEditor>
       visible: widget.generateJSON ||
           widget.generateCSV ||
           _mode == EditorMode.Preview,
-      child: Align(
-        alignment: FractionalOffset.bottomLeft,
+      child: Positioned(
+        top: _generatorCardPos.top,
+        left: _generatorCardPos.left,
+        right: _generatorCardPos.right,
+        bottom: _generatorCardPos.bottom,
         child: GeneratorSettingsCard(
           widget.path,
+          onDragFinished: () {
+            if (_prefs != null) {
+              _prefs!
+                  .setString('generatorCardPos', jsonEncode(_generatorCardPos));
+            }
+          },
+          onDragged: (Offset newGlobalPos, Size cardSize) {
+            RenderBox renderBox =
+                _key.currentContext?.findRenderObject() as RenderBox;
+
+            Offset newLocalPos = renderBox.globalToLocal(newGlobalPos);
+            bool isTop = newLocalPos.dy <
+                (renderBox.size.height / 2) - (cardSize.height / 2);
+            bool isLeft = newLocalPos.dx <
+                (renderBox.size.width / 2) - (cardSize.width / 2);
+
+            _CardPosition newCardPos = _CardPosition(
+              top: isTop ? max(newLocalPos.dy, 0) : null,
+              left: isLeft ? max(newLocalPos.dx, 0) : null,
+              right: isLeft
+                  ? null
+                  : max(renderBox.size.width - newLocalPos.dx - cardSize.width,
+                      0),
+              bottom: isTop
+                  ? null
+                  : max(
+                      renderBox.size.height - newLocalPos.dy - cardSize.height,
+                      0),
+            );
+
+            setState(() {
+              _generatorCardPos = newCardPos;
+            });
+          },
           onShouldSave: () async {
             if (_mode == EditorMode.Preview) {
               await widget.path.generateTrajectory();

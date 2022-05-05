@@ -49,6 +49,7 @@ class RobotPath {
 
   String? getWaypointLabel(Waypoint? waypoint) {
     if (waypoint == null) return null;
+    if (!waypoints.contains(waypoint)) return null;
     if (waypoint.isStartPoint()) return 'Start Point';
     if (waypoint.isEndPoint()) return 'End Point';
 

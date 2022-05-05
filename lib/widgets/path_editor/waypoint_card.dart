@@ -14,60 +14,88 @@ class WaypointCard extends StatefulWidget {
   final bool deleteEnabled;
   final VoidCallback? onDelete;
   final VoidCallback? onShouldSave;
+  final void Function(Offset, Size)? onDragged;
+  final VoidCallback? onDragFinished;
 
   WaypointCard(this.waypoint,
       {this.label,
       this.holonomicEnabled = false,
       this.deleteEnabled = false,
       this.onDelete,
-      this.onShouldSave});
+      this.onShouldSave,
+      this.onDragged,
+      this.onDragFinished});
 
   @override
   _WaypointCardState createState() => _WaypointCardState();
 }
 
 class _WaypointCardState extends State<WaypointCard> {
+  Offset? _dragStartLocal;
+  GlobalKey _key = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     if (widget.waypoint == null) return Container();
 
-    return Padding(
-      padding: EdgeInsets.all(8),
-      child: Container(
-        width: 250,
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          color: Colors.white.withOpacity(0.13),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildHeader(),
-                    SizedBox(height: 12),
-                    _buildPositionRow(context),
-                    SizedBox(height: 12),
-                    _buildAngleRow(context),
-                    SizedBox(height: 12),
-                    _buildVelReversalRow(context),
-                    // Visibility(
-                    //   child: Column(
-                    //     children: [
-                    //       SizedBox(height: 12),
-                    //       _buildVelReversalRow(context),
-                    //     ],
-                    //   ),
-                    //   visible: !widget.waypoint!.isStartPoint(),
-                    // ),
-                    SizedBox(height: 5),
-                  ],
+    return GestureDetector(
+      key: _key,
+      onPanStart: (DragStartDetails details) {
+        _dragStartLocal = details.localPosition;
+      },
+      onPanEnd: (DragEndDetails details) {
+        _dragStartLocal = null;
+        if (widget.onDragFinished != null) {
+          widget.onDragFinished!.call();
+        }
+      },
+      onPanUpdate: (DragUpdateDetails details) {
+        if (widget.onDragged != null && _dragStartLocal != null) {
+          RenderBox renderBox =
+              _key.currentContext?.findRenderObject() as RenderBox;
+          widget.onDragged!
+              .call(details.globalPosition - _dragStartLocal!, renderBox.size);
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          width: 250,
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            color: Colors.white.withOpacity(0.13),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildHeader(),
+                      SizedBox(height: 12),
+                      // Override gesture detector on UI elements so they wont cause the card to move
+                      GestureDetector(
+                        onPanStart: (details) {},
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildPositionRow(context),
+                            SizedBox(height: 12),
+                            _buildAngleRow(context),
+                            SizedBox(height: 12),
+                            _buildVelReversalRow(context),
+                            SizedBox(height: 5),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -85,23 +113,28 @@ class _WaypointCardState extends State<WaypointCard> {
         SizedBox(
           height: 30,
           width: 30,
-          child: IconButton(
-            tooltip:
-                widget.waypoint!.isLocked ? 'Unlock Waypoint' : 'Lock Waypoint',
-            icon: Icon(
-              widget.waypoint!.isLocked ? Icons.lock : Icons.lock_open,
+          // Override gesture detector on UI elements so they wont cause the card to move
+          child: GestureDetector(
+            onPanStart: (details) {},
+            child: IconButton(
+              tooltip: widget.waypoint!.isLocked
+                  ? 'Unlock Waypoint'
+                  : 'Lock Waypoint',
+              icon: Icon(
+                widget.waypoint!.isLocked ? Icons.lock : Icons.lock_open,
+              ),
+              onPressed: () {
+                setState(() {
+                  widget.waypoint!.isLocked = !widget.waypoint!.isLocked;
+                  if (widget.onShouldSave != null) {
+                    widget.onShouldSave!.call();
+                  }
+                });
+              },
+              splashRadius: 20,
+              iconSize: 20,
+              padding: EdgeInsets.all(0),
             ),
-            onPressed: () {
-              setState(() {
-                widget.waypoint!.isLocked = !widget.waypoint!.isLocked;
-                if (widget.onShouldSave != null) {
-                  widget.onShouldSave!.call();
-                }
-              });
-            },
-            splashRadius: 20,
-            iconSize: 20,
-            padding: EdgeInsets.all(0),
           ),
         ),
         Text(widget.label ?? 'Waypoint Label'),
@@ -110,15 +143,19 @@ class _WaypointCardState extends State<WaypointCard> {
           width: 30,
           child: Visibility(
             visible: widget.deleteEnabled,
-            child: IconButton(
-              tooltip: 'Delete Waypoint',
-              icon: Icon(
-                Icons.delete,
+            // Override gesture detector on UI elements so they wont cause the card to move
+            child: GestureDetector(
+              onPanStart: (details) {},
+              child: IconButton(
+                tooltip: 'Delete Waypoint',
+                icon: Icon(
+                  Icons.delete,
+                ),
+                onPressed: widget.onDelete,
+                splashRadius: 20,
+                iconSize: 20,
+                padding: EdgeInsets.all(0),
               ),
-              onPressed: widget.onDelete,
-              splashRadius: 20,
-              iconSize: 20,
-              padding: EdgeInsets.all(0),
             ),
           ),
         ),

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -11,6 +12,7 @@ import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/generator_settings_card.dart';
 import 'package:pathplanner/widgets/path_editor/path_info_card.dart';
 import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
 import 'path_painter.dart';
@@ -47,11 +49,43 @@ class _PathEditorState extends State<PathEditor>
   Waypoint? _dragOldValue;
   EditorMode _mode = EditorMode.Edit;
   AnimationController? _previewController;
+  SharedPreferences? _prefs;
+  GlobalKey _key = GlobalKey();
+  _CardPosition _waypointCardPos = _CardPosition(top: 0, right: 0);
+  _CardPosition _generatorCardPos = _CardPosition(bottom: 0, left: 0);
+  _CardPosition _pathCardPos = _CardPosition(top: 0, right: 0);
 
   @override
   void initState() {
     super.initState();
     _previewController = AnimationController(vsync: this);
+
+    SharedPreferences.getInstance().then((prefs) {
+      _prefs = prefs;
+      String? waypointCardJson = _prefs!.getString('waypointCardPos');
+      String? generatorCardJson = _prefs!.getString('generatorCardPos');
+      String? pathCardJson = _prefs!.getString('pathCardPos');
+
+      if (waypointCardJson != null) {
+        setState(() {
+          _waypointCardPos =
+              _CardPosition.fromJson(jsonDecode(waypointCardJson));
+        });
+      }
+
+      if (generatorCardJson != null) {
+        setState(() {
+          _generatorCardPos =
+              _CardPosition.fromJson(jsonDecode(generatorCardJson));
+        });
+      }
+
+      if (pathCardJson != null) {
+        setState(() {
+          _pathCardPos = _CardPosition.fromJson(jsonDecode(pathCardJson));
+        });
+      }
+    });
   }
 
   @override
@@ -102,6 +136,7 @@ class _PathEditorState extends State<PathEditor>
           UndoRedo.redo();
         },
         child: Stack(
+          key: _key,
           children: [
             _buildEditorMode(),
             _buildWaypointCard(),
@@ -397,13 +432,57 @@ class _PathEditorState extends State<PathEditor>
   }
 
   Widget _buildWaypointCard() {
-    return Align(
-      alignment: FractionalOffset.topRight,
+    String? waypointLabel = widget.path.getWaypointLabel(_selectedPoint);
+    if (waypointLabel == null) {
+      // Somehow the selected waypoint is not in the path. Reset selected point.
+      setState(() {
+        _selectedPointIndex = -1;
+        _selectedPoint = null;
+      });
+    }
+
+    return Positioned(
+      top: _waypointCardPos.top,
+      left: _waypointCardPos.left,
+      right: _waypointCardPos.right,
+      bottom: _waypointCardPos.bottom,
       child: WaypointCard(
         _selectedPoint,
-        label: widget.path.getWaypointLabel(_selectedPoint),
+        label: waypointLabel,
         holonomicEnabled: widget.holonomicMode,
         deleteEnabled: widget.path.waypoints.length > 2,
+        onDragFinished: () {
+          if (_prefs != null) {
+            _prefs!.setString('waypointCardPos', jsonEncode(_waypointCardPos));
+          }
+        },
+        onDragged: (Offset newGlobalPos, Size cardSize) {
+          RenderBox renderBox =
+              _key.currentContext?.findRenderObject() as RenderBox;
+
+          Offset newLocalPos = renderBox.globalToLocal(newGlobalPos);
+          bool isTop = newLocalPos.dy <
+              (renderBox.size.height / 2) - (cardSize.height / 2);
+          bool isLeft = newLocalPos.dx <
+              (renderBox.size.width / 2) - (cardSize.width / 2);
+
+          _CardPosition newCardPos = _CardPosition(
+            top: isTop ? max(newLocalPos.dy, 0) : null,
+            left: isLeft ? max(newLocalPos.dx, 0) : null,
+            right: isLeft
+                ? null
+                : max(
+                    renderBox.size.width - newLocalPos.dx - cardSize.width, 0),
+            bottom: isTop
+                ? null
+                : max(renderBox.size.height - newLocalPos.dy - cardSize.height,
+                    0),
+          );
+
+          setState(() {
+            _waypointCardPos = newCardPos;
+          });
+        },
         onShouldSave: () {
           widget.path.savePath(
               widget.pathsDir, widget.generateJSON, widget.generateCSV);
@@ -447,9 +526,47 @@ class _PathEditorState extends State<PathEditor>
   Widget _buildPathInfo() {
     return Visibility(
       visible: _mode == EditorMode.Preview,
-      child: Align(
-        alignment: FractionalOffset.topRight,
-        child: PathInfoCard(widget.path),
+      child: Positioned(
+        top: _pathCardPos.top,
+        left: _pathCardPos.left,
+        right: _pathCardPos.right,
+        bottom: _pathCardPos.bottom,
+        child: PathInfoCard(
+          widget.path,
+          onDragFinished: () {
+            if (_prefs != null) {
+              _prefs!.setString('pathCardPos', jsonEncode(_pathCardPos));
+            }
+          },
+          onDragged: (Offset newGlobalPos, Size cardSize) {
+            RenderBox renderBox =
+                _key.currentContext?.findRenderObject() as RenderBox;
+
+            Offset newLocalPos = renderBox.globalToLocal(newGlobalPos);
+            bool isTop = newLocalPos.dy <
+                (renderBox.size.height / 2) - (cardSize.height / 2);
+            bool isLeft = newLocalPos.dx <
+                (renderBox.size.width / 2) - (cardSize.width / 2);
+
+            _CardPosition newCardPos = _CardPosition(
+              top: isTop ? max(newLocalPos.dy, 0) : null,
+              left: isLeft ? max(newLocalPos.dx, 0) : null,
+              right: isLeft
+                  ? null
+                  : max(renderBox.size.width - newLocalPos.dx - cardSize.width,
+                      0),
+              bottom: isTop
+                  ? null
+                  : max(
+                      renderBox.size.height - newLocalPos.dy - cardSize.height,
+                      0),
+            );
+
+            setState(() {
+              _pathCardPos = newCardPos;
+            });
+          },
+        ),
       ),
     );
   }
@@ -459,10 +576,47 @@ class _PathEditorState extends State<PathEditor>
       visible: widget.generateJSON ||
           widget.generateCSV ||
           _mode == EditorMode.Preview,
-      child: Align(
-        alignment: FractionalOffset.bottomLeft,
+      child: Positioned(
+        top: _generatorCardPos.top,
+        left: _generatorCardPos.left,
+        right: _generatorCardPos.right,
+        bottom: _generatorCardPos.bottom,
         child: GeneratorSettingsCard(
           widget.path,
+          onDragFinished: () {
+            if (_prefs != null) {
+              _prefs!
+                  .setString('generatorCardPos', jsonEncode(_generatorCardPos));
+            }
+          },
+          onDragged: (Offset newGlobalPos, Size cardSize) {
+            RenderBox renderBox =
+                _key.currentContext?.findRenderObject() as RenderBox;
+
+            Offset newLocalPos = renderBox.globalToLocal(newGlobalPos);
+            bool isTop = newLocalPos.dy <
+                (renderBox.size.height / 2) - (cardSize.height / 2);
+            bool isLeft = newLocalPos.dx <
+                (renderBox.size.width / 2) - (cardSize.width / 2);
+
+            _CardPosition newCardPos = _CardPosition(
+              top: isTop ? max(newLocalPos.dy, 0) : null,
+              left: isLeft ? max(newLocalPos.dx, 0) : null,
+              right: isLeft
+                  ? null
+                  : max(renderBox.size.width - newLocalPos.dx - cardSize.width,
+                      0),
+              bottom: isTop
+                  ? null
+                  : max(
+                      renderBox.size.height - newLocalPos.dy - cardSize.height,
+                      0),
+            );
+
+            setState(() {
+              _generatorCardPos = newCardPos;
+            });
+          },
           onShouldSave: () async {
             if (_mode == EditorMode.Preview) {
               await widget.path.generateTrajectory();
@@ -492,5 +646,32 @@ class _PathEditorState extends State<PathEditor>
     return (widget.image.defaultSize.height -
             ((pixels - 48) / PathPainter.scale)) /
         widget.image.pixelsPerMeter;
+  }
+}
+
+class _CardPosition {
+  final double? top;
+  final double? left;
+  final double? right;
+  final double? bottom;
+
+  _CardPosition({this.top, this.left, this.right, this.bottom});
+
+  factory _CardPosition.fromJson(Map<String, dynamic> parsedJson) {
+    return _CardPosition(
+      top: parsedJson['top'],
+      left: parsedJson['left'],
+      right: parsedJson['right'],
+      bottom: parsedJson['bottom'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'top': top,
+      'left': left,
+      'right': right,
+      'bottom': bottom,
+    };
   }
 }

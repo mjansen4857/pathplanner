@@ -53,6 +53,7 @@ class _PathEditorState extends State<PathEditor>
   GlobalKey _key = GlobalKey();
   _CardPosition _waypointCardPos = _CardPosition(top: 0, right: 0);
   _CardPosition _generatorCardPos = _CardPosition(bottom: 0, left: 0);
+  _CardPosition _pathCardPos = _CardPosition(top: 0, right: 0);
 
   @override
   void initState() {
@@ -63,6 +64,7 @@ class _PathEditorState extends State<PathEditor>
       _prefs = prefs;
       String? waypointCardJson = _prefs!.getString('waypointCardPos');
       String? generatorCardJson = _prefs!.getString('generatorCardPos');
+      String? pathCardJson = _prefs!.getString('pathCardPos');
 
       if (waypointCardJson != null) {
         setState(() {
@@ -75,6 +77,12 @@ class _PathEditorState extends State<PathEditor>
         setState(() {
           _generatorCardPos =
               _CardPosition.fromJson(jsonDecode(generatorCardJson));
+        });
+      }
+
+      if (pathCardJson != null) {
+        setState(() {
+          _pathCardPos = _CardPosition.fromJson(jsonDecode(pathCardJson));
         });
       }
     });
@@ -518,9 +526,47 @@ class _PathEditorState extends State<PathEditor>
   Widget _buildPathInfo() {
     return Visibility(
       visible: _mode == EditorMode.Preview,
-      child: Align(
-        alignment: FractionalOffset.topRight,
-        child: PathInfoCard(widget.path),
+      child: Positioned(
+        top: _pathCardPos.top,
+        left: _pathCardPos.left,
+        right: _pathCardPos.right,
+        bottom: _pathCardPos.bottom,
+        child: PathInfoCard(
+          widget.path,
+          onDragFinished: () {
+            if (_prefs != null) {
+              _prefs!.setString('pathCardPos', jsonEncode(_pathCardPos));
+            }
+          },
+          onDragged: (Offset newGlobalPos, Size cardSize) {
+            RenderBox renderBox =
+                _key.currentContext?.findRenderObject() as RenderBox;
+
+            Offset newLocalPos = renderBox.globalToLocal(newGlobalPos);
+            bool isTop = newLocalPos.dy <
+                (renderBox.size.height / 2) - (cardSize.height / 2);
+            bool isLeft = newLocalPos.dx <
+                (renderBox.size.width / 2) - (cardSize.width / 2);
+
+            _CardPosition newCardPos = _CardPosition(
+              top: isTop ? max(newLocalPos.dy, 0) : null,
+              left: isLeft ? max(newLocalPos.dx, 0) : null,
+              right: isLeft
+                  ? null
+                  : max(renderBox.size.width - newLocalPos.dx - cardSize.width,
+                      0),
+              bottom: isTop
+                  ? null
+                  : max(
+                      renderBox.size.height - newLocalPos.dy - cardSize.height,
+                      0),
+            );
+
+            setState(() {
+              _pathCardPos = newCardPos;
+            });
+          },
+        ),
       ),
     );
   }

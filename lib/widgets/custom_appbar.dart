@@ -6,7 +6,7 @@ class CustomAppBar extends AppBar {
   final String titleText;
   final double height;
 
-  CustomAppBar(this.titleText, {Key? key, this.height = 56})
+  CustomAppBar({this.titleText = 'PathPlanner', this.height = 56, Key? key})
       : super(
           key: key,
           backgroundColor: Colors.grey[900],

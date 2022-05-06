@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
@@ -21,16 +21,23 @@ import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage() : super();
+  final FieldImage defaultFieldImage;
+  final String appVersion;
+  final bool appStoreBuild;
+
+  HomePage(
+    this.defaultFieldImage, {
+    this.appVersion = '0.0.0',
+    this.appStoreBuild = false,
+    Key? key,
+  }) : super(key: key);
 
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  String _version = '2022.1.1';
-  Directory? _currentProject;
-  Directory? _pathsDir;
+  Directory? _projectDir;
   late SharedPreferences _prefs;
   List<RobotPath> _paths = [];
   RobotPath? _currentPath;
@@ -38,32 +45,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _holonomicMode = false;
   bool _generateJSON = false;
   bool _generateCSV = false;
-  late AnimationController _welcomeController;
-  late Animation<double> _scaleAnimation;
   SecureBookmarks? _bookmarks = Platform.isMacOS ? SecureBookmarks() : null;
-  List<FieldImage> _fieldImages = [
-    FieldImage.official(OfficialField.RapidReact),
-  ];
-  late FieldImage _fieldImage;
-  bool _appStoreBuild = false;
+  List<FieldImage> _fieldImages = FieldImage.offialFields();
+  FieldImage? _fieldImage;
+  late AnimationController _animController;
+  late Animation<double> _scaleAnimation;
+  GlobalKey _key = GlobalKey();
 
   @override
   void initState() {
     super.initState();
-    _welcomeController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 400));
+
+    _animController =
+        AnimationController(vsync: this, duration: Duration(milliseconds: 250));
     _scaleAnimation =
-        CurvedAnimation(parent: _welcomeController, curve: Curves.ease);
-    _fieldImage = _fieldImages[0];
+        CurvedAnimation(parent: _animController, curve: Curves.ease);
 
     _loadFieldImages().then((_) {
       SharedPreferences.getInstance().then((prefs) async {
+        _prefs = prefs;
+
         String? projectDir = prefs.getString('currentProjectDir');
-        String? pathsDir = prefs.getString('currentPathsDir');
         if (projectDir != null && Platform.isMacOS) {
-          if (prefs.getString('macOSBookmark') != null) {
+          if (_prefs.getString('macOSBookmark') != null) {
             await _bookmarks!
-                .resolveBookmark(prefs.getString('macOSBookmark')!);
+                .resolveBookmark(_prefs.getString('macOSBookmark')!);
 
             await _bookmarks!
                 .startAccessingSecurityScopedResource(File(projectDir));
@@ -72,11 +78,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           }
         }
 
-        setState(() {
-          _prefs = prefs;
-          _welcomeController.forward();
+        if (projectDir == null) {
+          projectDir = await Navigator.push(
+            _key.currentContext!,
+            PageRouteBuilder(
+              pageBuilder: (context, anim1, anim2) => WelcomePage(
+                widget.defaultFieldImage,
+                appVersion: widget.appVersion,
+              ),
+              transitionDuration: Duration.zero,
+              reverseTransitionDuration: Duration.zero,
+            ),
+          );
 
-          _loadPaths(projectDir, pathsDir);
+          _prefs.setString('currentProjectDir', projectDir!);
+          _prefs.remove('pathOrder');
+
+          if (Platform.isMacOS) {
+            // Bookmark project on macos so it can be accessed again later
+            String bookmark = await _bookmarks!.bookmark(File(projectDir));
+            _prefs.setString('macOSBookmark', bookmark);
+          }
+        }
+
+        setState(() {
+          _projectDir = Directory(projectDir!);
+
+          _paths = _loadPaths(_projectDir!);
+          _currentPath = _paths[0];
           _robotSize = Size(_prefs.getDouble('robotWidth') ?? 0.75,
               _prefs.getDouble('robotLength') ?? 1.0);
           _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
@@ -92,6 +121,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               }
             }
           }
+
+          _animController.forward();
         });
       });
     });
@@ -100,29 +131,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void dispose() {
     super.dispose();
-    _welcomeController.dispose();
-    if (Platform.isMacOS && _currentProject != null) {
-      _bookmarks!
-          .stopAccessingSecurityScopedResource(File(_currentProject!.path));
+    if (Platform.isMacOS && _projectDir != null) {
+      _bookmarks!.stopAccessingSecurityScopedResource(File(_projectDir!.path));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _key,
       appBar: CustomAppBar(
-          _currentPath == null ? 'PathPlanner' : _currentPath!.name),
-      drawer: _currentProject == null ? null : _buildDrawer(context),
-      body: Stack(
-        children: [
-          _buildBody(context),
-          if (!_appStoreBuild) UpdateCard(_version),
-        ],
+        titleText: _currentPath == null ? 'PathPlanner' : _currentPath!.name,
+      ),
+      drawer: _projectDir == null ? null : _buildDrawer(context),
+      body: ScaleTransition(
+        scale: _scaleAnimation,
+        child: _buildBody(),
       ),
       floatingActionButton: Visibility(
         visible:
-            _currentProject != null && (!_appStoreBuild && !Platform.isMacOS),
-        child: DeployFAB(_currentProject),
+            _projectDir != null && (!widget.appStoreBuild && !Platform.isMacOS),
+        child: DeployFAB(_projectDir),
       ),
     );
   }
@@ -137,7 +166,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 Container(
                   child: Align(
                       alignment: FractionalOffset.bottomRight,
-                      child: Text('v' + _version)),
+                      child: Text('v' + widget.appVersion)),
                 ),
                 Center(
                   child: Column(
@@ -150,12 +179,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          (_currentProject != null)
-                              ? basename(_currentProject!.path)
+                          (_projectDir != null)
+                              ? basename(_projectDir!.path)
                               : 'No Project',
                           style: TextStyle(
                               fontSize: 20,
-                              color: (_currentProject != null)
+                              color: (_projectDir != null)
                                   ? Colors.white
                                   : Colors.red),
                         ),
@@ -200,9 +229,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     key: Key('$i'),
                     isSelected: _paths[i] == _currentPath,
                     onRename: (name) {
+                      Directory pathsDir = _getPathsDir(_projectDir!);
+
                       File pathFile =
-                          File(_pathsDir!.path + _paths[i].name + '.path');
-                      File newPathFile = File(_pathsDir!.path + name + '.path');
+                          File(join(pathsDir.path, _paths[i].name + '.path'));
+                      File newPathFile =
+                          File(join(pathsDir.path, name + '.path'));
                       if (newPathFile.existsSync() &&
                           newPathFile.path != pathFile.path) {
                         Navigator.of(context).pop();
@@ -231,7 +263,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             });
                         return false;
                       } else {
-                        pathFile.rename(_pathsDir!.path + name + '.path');
+                        pathFile.rename(join(pathsDir.path, name + '.path'));
                         setState(() {
                           //flutter weird
                           _currentPath!.name = _currentPath!.name;
@@ -248,13 +280,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     onDelete: () {
                       UndoRedo.clearHistory();
 
+                      Directory pathsDir = _getPathsDir(_projectDir!);
+
                       File pathFile =
-                          File(_pathsDir!.path + _paths[i].name + '.path');
+                          File(join(pathsDir.path, _paths[i].name + '.path'));
 
                       if (pathFile.existsSync()) {
                         // The fitted text field container does not rebuild
                         // itself correctly so this is a way to hide it and
-                        // avoid confusion
+                        // avoid confusion. (Hides drawer)
                         Navigator.of(context).pop();
 
                         showDialog(
@@ -310,6 +344,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     },
                     onDuplicate: () {
                       UndoRedo.clearHistory();
+
                       setState(() {
                         List<String> pathNames = [];
                         for (RobotPath path in _paths) {
@@ -324,8 +359,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           name: pathName,
                         ));
                         _currentPath = _paths.last;
-                        _currentPath!.savePath(
-                            _pathsDir!.path, _generateJSON, _generateCSV);
+                        _savePath(_currentPath!);
                       });
                     },
                   ),
@@ -354,8 +388,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         setState(() {
                           _paths.add(RobotPath.defaultPath(name: pathName));
                           _currentPath = _paths.last;
-                          _currentPath!.savePath(
-                              _pathsDir!.path, _generateJSON, _generateCSV);
+                          _savePath(_currentPath!);
                           UndoRedo.clearHistory();
                         });
                       },
@@ -389,8 +422,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         },
                         onGenerationEnabled: () {
                           for (RobotPath path in _paths) {
-                            path.savePath(
-                                _pathsDir!.path, _generateJSON, _generateCSV);
+                            _savePath(path);
                           }
                         },
                       ),
@@ -405,148 +437,106 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    if (_currentProject != null) {
-      return Center(
-        child: Container(
-          child: PathEditor(
-            _fieldImage,
-            _currentPath!,
-            _robotSize,
-            _holonomicMode,
-            showGeneratorSettings: _generateJSON || _generateCSV,
-            savePath: (RobotPath path) {
-              path.savePath(_pathsDir!.path, _generateJSON, _generateCSV);
-            },
-            prefs: _prefs,
-          ),
-        ),
-      );
-    } else {
+  Widget _buildBody() {
+    if (_projectDir != null) {
       return Stack(
         children: [
           Center(
-              child: Padding(
-            padding: const EdgeInsets.all(48.0),
-            child: Image.asset('images/field22.png'),
-          )),
-          Center(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                color: Colors.black.withOpacity(0.15),
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Column(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                              width: 250,
-                              height: 250,
-                              child: Image(
-                                image: AssetImage('images/icon.png'),
-                              )),
-                          Text(
-                            'PathPlanner',
-                            style: TextStyle(fontSize: 48),
-                          ),
-                          SizedBox(height: 96),
-                          ElevatedButton(
-                            child: Padding(
-                              padding: const EdgeInsets.all(6.0),
-                              child: Text(
-                                'Open Robot Project',
-                                style: TextStyle(fontSize: 24),
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                                primary: Colors.grey[700]),
-                            onPressed: () {
-                              _openProjectDialog(context);
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+            child: Container(
+              child: PathEditor(
+                _fieldImage ?? widget.defaultFieldImage,
+                _currentPath!,
+                _robotSize,
+                _holonomicMode,
+                showGeneratorSettings: _generateJSON || _generateCSV,
+                savePath: (path) => _savePath(path),
+                prefs: _prefs,
               ),
             ),
           ),
+          if (!widget.appStoreBuild) UpdateCard(widget.appVersion),
         ],
       );
+    } else {
+      return Container();
     }
   }
 
-  void _loadPaths(String? projectDir, String? pathsDir) {
-    if (projectDir != null && pathsDir != null) {
-      List<RobotPath> paths = [];
-      _currentProject = Directory(projectDir);
-      _pathsDir = Directory(pathsDir);
-      if (!_pathsDir!.existsSync()) {
-        _pathsDir!.createSync(recursive: true);
+  List<RobotPath> _loadPaths(Directory projectDir) {
+    List<RobotPath> paths = [];
+
+    Directory pathsDir = _getPathsDir(projectDir);
+    if (!pathsDir.existsSync()) {
+      pathsDir.createSync(recursive: true);
+    }
+
+    List<FileSystemEntity> pathFiles = pathsDir.listSync();
+    for (FileSystemEntity e in pathFiles) {
+      if (e.path.endsWith('.path')) {
+        String json = File(e.path).readAsStringSync();
+        RobotPath p = RobotPath.fromJson(jsonDecode(json));
+        p.name = basenameWithoutExtension(e.path);
+        paths.add(p);
       }
-      List<FileSystemEntity> pathFiles = _pathsDir!.listSync();
-      for (FileSystemEntity e in pathFiles) {
-        if (e.path.endsWith('.path')) {
-          String json = File(e.path).readAsStringSync();
-          RobotPath p = RobotPath.fromJson(jsonDecode(json));
-          p.name = basenameWithoutExtension(e.path);
-          paths.add(p);
+    }
+
+    List<String>? pathOrder = _prefs.getStringList('pathOrder');
+    List<String> loadedOrder = [];
+    for (RobotPath path in paths) {
+      loadedOrder.add(path.name);
+    }
+
+    List<RobotPath> orderedPaths = [];
+    if (pathOrder != null) {
+      for (String name in pathOrder) {
+        int loadedIndex = loadedOrder.indexOf(name);
+        if (loadedIndex != -1) {
+          loadedOrder.removeAt(loadedIndex);
+          orderedPaths.add(paths.removeAt(loadedIndex));
         }
       }
-      List<String>? pathOrder = _prefs.getStringList('pathOrder');
-      List<String> loadedOrder = [];
       for (RobotPath path in paths) {
-        loadedOrder.add(path.name);
+        orderedPaths.add(path);
       }
-      List<RobotPath> orderedPaths = [];
-      if (pathOrder != null) {
-        for (String name in pathOrder) {
-          int loadedIndex = loadedOrder.indexOf(name);
-          if (loadedIndex != -1) {
-            loadedOrder.removeAt(loadedIndex);
-            orderedPaths.add(paths.removeAt(loadedIndex));
-          }
-        }
-        for (RobotPath path in paths) {
-          orderedPaths.add(path);
-        }
-      } else {
-        orderedPaths = paths;
-      }
-      if (orderedPaths.length == 0) {
-        orderedPaths.add(RobotPath.defaultPath());
-      }
-      _paths = orderedPaths;
-      _currentPath = _paths[0];
+    } else {
+      orderedPaths = paths;
+    }
+
+    if (orderedPaths.length == 0) {
+      orderedPaths.add(RobotPath.defaultPath());
+    }
+
+    return orderedPaths;
+  }
+
+  Directory _getPathsDir(Directory projectDir) {
+    File buildFile = File(join(projectDir.path, 'build.gradle'));
+
+    if (buildFile.existsSync()) {
+      // Java or C++ project
+      return Directory(
+          join(projectDir.path, 'src', 'main', 'deploy', 'pathplanner'));
+    } else {
+      // Other language
+      return Directory(join(projectDir.path, 'deploy', 'pathplanner'));
+    }
+  }
+
+  void _savePath(RobotPath path) {
+    if (_projectDir != null) {
+      path.savePath(_getPathsDir(_projectDir!), _generateJSON, _generateCSV);
     }
   }
 
   void _openProjectDialog(BuildContext context) async {
-    var projectFolder = await getDirectoryPath(
+    String? projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project',
         initialDirectory: Directory.current.path);
     if (projectFolder != null) {
-      File buildFile = File(projectFolder + '/build.gradle');
-
-      Directory pathsDir;
-      if (buildFile.existsSync()) {
-        // Java or C++ project
-        pathsDir = Directory(projectFolder + '/src/main/deploy/pathplanner/');
-      } else {
-        // Other language
-        pathsDir = Directory(projectFolder + '/deploy/pathplanner/');
-      }
+      Directory pathsDir = _getPathsDir(Directory(projectFolder));
 
       pathsDir.createSync(recursive: true);
       _prefs.setString('currentProjectDir', projectFolder);
-      _prefs.setString('currentPathsDir', pathsDir.path);
       _prefs.remove('pathOrder');
 
       if (Platform.isMacOS) {
@@ -556,8 +546,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
 
       setState(() {
-        _currentProject = Directory(projectFolder);
-        _loadPaths(_currentProject!.path, pathsDir.path);
+        _projectDir = Directory(projectFolder);
+        _loadPaths(_projectDir!);
       });
     }
   }

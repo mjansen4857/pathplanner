@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
+import 'package:pathplanner/widgets/field_image.dart';
 
 import 'pages/home_page.dart';
 
@@ -19,6 +20,10 @@ void main() {
 }
 
 class PathPlanner extends StatelessWidget {
+  final FieldImage defaultField = FieldImage.official(OfficialField.RapidReact);
+  final String appVersion = '2022.1.1';
+  final bool appStoreBuild = false;
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = ThemeData(
@@ -33,7 +38,11 @@ class PathPlanner extends StatelessWidget {
           secondary: Colors.white,
         ),
       ),
-      home: HomePage(),
+      home: HomePage(
+        defaultField,
+        appVersion: appVersion,
+        appStoreBuild: appStoreBuild,
+      ),
     );
   }
 }

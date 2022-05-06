@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:path/path.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
 
 import 'waypoint.dart';
@@ -62,24 +63,24 @@ class RobotPath {
     });
   }
 
-  void savePath(String saveDir, bool generateJSON, bool generateCSV) async {
+  void savePath(Directory saveDir, bool generateJSON, bool generateCSV) async {
     Stopwatch s = Stopwatch()..start();
-    File pathFile = File(saveDir + name + '.path');
+    File pathFile = File(join(saveDir.path, name + '.path'));
     pathFile.writeAsString(jsonEncode(this));
 
     this.generatedTrajectory = await Trajectory.generateFullTrajectory(this);
 
     if (generateJSON && generatedTrajectory != null) {
-      Directory jsonDir = Directory(saveDir + 'generatedJSON/');
+      Directory jsonDir = Directory(join(saveDir.path, 'generatedJSON'));
       if (!jsonDir.existsSync()) jsonDir.createSync(recursive: true);
-      File jsonFile = File(jsonDir.path + name + '.wpilib.json');
+      File jsonFile = File(join(jsonDir.path, name + '.wpilib.json'));
       jsonFile.writeAsString(generatedTrajectory!.getWPILibJSON());
     }
 
     if (generateCSV && generatedTrajectory != null) {
-      Directory csvDir = Directory(saveDir + 'generatedCSV/');
+      Directory csvDir = Directory(join(saveDir.path, 'generatedCSV'));
       if (!csvDir.existsSync()) csvDir.createSync(recursive: true);
-      File csvFile = File(csvDir.path + name + '.csv');
+      File csvFile = File(join(csvDir.path, name + '.csv'));
       csvFile.writeAsString(generatedTrajectory!.getCSV());
     }
 

@@ -15,6 +15,12 @@ class FieldImage extends StatelessWidget {
   late final num pixelsPerMeter;
   late final String name;
 
+  static List<FieldImage> offialFields() {
+    return [
+      FieldImage.official(OfficialField.RapidReact),
+    ];
+  }
+
   FieldImage.official(OfficialField field) {
     switch (field) {
       case OfficialField.RapidReact:

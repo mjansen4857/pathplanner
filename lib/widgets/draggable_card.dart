@@ -12,12 +12,14 @@ class DraggableCard extends StatefulWidget {
   final CardPosition defaultPosition;
   final String? prefsKey;
   final GlobalKey stackKey;
+  final SharedPreferences? prefs;
 
   DraggableCard(this.stackKey,
       {this.child,
       this.width = 250,
       this.defaultPosition = const CardPosition(),
       this.prefsKey,
+      this.prefs,
       Key? key})
       : super(key: key);
 
@@ -28,42 +30,34 @@ class DraggableCard extends StatefulWidget {
 class _DraggableCardState extends State<DraggableCard> {
   Offset? _dragStartLocal;
   GlobalKey _key = GlobalKey();
-  CardPosition? _cardPosition;
-  SharedPreferences? _prefs;
+  late CardPosition _cardPosition;
 
   @override
   void initState() {
     super.initState();
 
-    SharedPreferences.getInstance().then((prefs) {
-      _prefs = prefs;
-      if (widget.prefsKey != null) {
-        String? cardJson = _prefs!.getString(widget.prefsKey!);
+    if (widget.prefsKey != null && widget.prefs != null) {
+      String? cardJson = widget.prefs!.getString(widget.prefsKey!);
 
-        if (cardJson != null) {
-          setState(() {
-            _cardPosition = CardPosition.fromJson(jsonDecode(cardJson));
-          });
-        } else {
-          setState(() {
-            _cardPosition = widget.defaultPosition;
-          });
-        }
+      if (cardJson != null) {
+        setState(() {
+          _cardPosition = CardPosition.fromJson(jsonDecode(cardJson));
+        });
+      } else {
+        setState(() {
+          _cardPosition = widget.defaultPosition;
+        });
       }
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_cardPosition == null) {
-      return Container();
-    }
-
     return Positioned(
-      top: _cardPosition!.top,
-      left: _cardPosition!.left,
-      right: _cardPosition!.right,
-      bottom: _cardPosition!.bottom,
+      top: _cardPosition.top,
+      left: _cardPosition.left,
+      right: _cardPosition.right,
+      bottom: _cardPosition.bottom,
       child: GestureDetector(
         key: _key,
         onPanStart: (DragStartDetails details) {
@@ -71,8 +65,9 @@ class _DraggableCardState extends State<DraggableCard> {
         },
         onPanEnd: (DragEndDetails details) {
           _dragStartLocal = null;
-          if (_prefs != null && widget.prefsKey != null) {
-            _prefs!.setString(widget.prefsKey!, jsonEncode(_cardPosition));
+          if (widget.prefs != null && widget.prefsKey != null) {
+            widget.prefs!
+                .setString(widget.prefsKey!, jsonEncode(_cardPosition));
           }
         },
         onPanUpdate: (DragUpdateDetails details) {

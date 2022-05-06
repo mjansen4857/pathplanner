@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class GeneratorSettingsCard extends StatefulWidget {
   final RobotPath? path;
   final VoidCallback? onShouldSave;
   final GlobalKey stackKey;
+  final SharedPreferences? prefs;
 
-  GeneratorSettingsCard(this.path, this.stackKey, {this.onShouldSave});
+  GeneratorSettingsCard(this.path, this.stackKey,
+      {this.onShouldSave, this.prefs});
 
   @override
   _GeneratorSettingsCardState createState() => _GeneratorSettingsCardState();
@@ -23,6 +26,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
       widget.stackKey,
       defaultPosition: CardPosition(bottom: 0, left: 0),
       prefsKey: 'generatorCardPos',
+      prefs: widget.prefs,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,

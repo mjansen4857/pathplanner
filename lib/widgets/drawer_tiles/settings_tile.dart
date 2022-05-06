@@ -6,7 +6,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/import_field_dialog.dart';
-import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsTile extends StatefulWidget {

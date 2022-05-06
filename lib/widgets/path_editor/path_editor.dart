@@ -1,19 +1,9 @@
-import 'dart:io';
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
-import 'package:pathplanner/robot_path/waypoint.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/field_image.dart';
-import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
-import 'package:pathplanner/widgets/path_editor/generator_settings_card.dart';
-import 'package:pathplanner/widgets/path_editor/path_info_card.dart';
-import 'package:pathplanner/widgets/path_editor/waypoint_card.dart';
-import 'package:undo/undo.dart';
-
-import 'path_painter.dart';
+import 'package:pathplanner/widgets/path_editor/editors/edit_editor.dart';
+import 'package:pathplanner/widgets/path_editor/editors/preview_editor.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum EditorMode {
   Edit,
@@ -22,104 +12,54 @@ enum EditorMode {
 
 class PathEditor extends StatefulWidget {
   final RobotPath path;
-  final double robotWidth;
-  final double robotLength;
+  final Size robotSize;
   final bool holonomicMode;
-  final bool generateJSON;
-  final bool generateCSV;
-  final String pathsDir;
   final FieldImage fieldImage;
+  final bool showGeneratorSettings;
+  final void Function(RobotPath path)? savePath;
+  final SharedPreferences? prefs;
 
-  PathEditor(this.fieldImage, this.path, this.robotWidth, this.robotLength,
-      this.holonomicMode, this.generateJSON, this.generateCSV, this.pathsDir);
+  PathEditor(this.fieldImage, this.path, this.robotSize, this.holonomicMode,
+      {this.showGeneratorSettings = false, this.savePath, this.prefs});
 
   @override
   _PathEditorState createState() => _PathEditorState();
 }
 
-class _PathEditorState extends State<PathEditor>
-    with SingleTickerProviderStateMixin {
-  Waypoint? _draggedPoint;
-  Waypoint? _selectedPoint;
-  int _selectedPointIndex = -1;
-  Waypoint? _dragOldValue;
+class _PathEditorState extends State<PathEditor> {
   EditorMode _mode = EditorMode.Edit;
-  AnimationController? _previewController;
-  GlobalKey _key = GlobalKey();
-
-  @override
-  void initState() {
-    super.initState();
-    _previewController = AnimationController(vsync: this);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _previewController!.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    if (_mode == EditorMode.Preview &&
-        widget.path.generatedTrajectory == null) {
-      widget.path.generateTrajectory().whenComplete(() {
-        _previewController!.duration = Duration(
-            milliseconds:
-                (widget.path.generatedTrajectory!.getRuntime() * 1000).toInt());
-        setState(() {
-          _previewController!.reset();
-          _previewController!.repeat();
-        });
-      });
-    }
-
-    return KeyBoardShortcuts(
-      keysToPress: {
-        (Platform.isMacOS)
-            ? LogicalKeyboardKey.meta
-            : LogicalKeyboardKey.control,
-        LogicalKeyboardKey.keyZ
-      },
-      onKeysPressed: () {
-        setState(() {
-          _selectedPoint = null;
-        });
-        UndoRedo.undo();
-      },
-      child: KeyBoardShortcuts(
-        keysToPress: {
-          (Platform.isMacOS)
-              ? LogicalKeyboardKey.meta
-              : LogicalKeyboardKey.control,
-          LogicalKeyboardKey.keyY
-        },
-        onKeysPressed: () {
-          setState(() {
-            _selectedPoint = null;
-          });
-          UndoRedo.redo();
-        },
-        child: Stack(
-          key: _key,
-          children: [
-            _buildEditorMode(),
-            _buildWaypointCard(),
-            _buildGeneratorSettingsCard(),
-            _buildPathInfo(),
-            _buildToolbar(),
-          ],
-        ),
-      ),
+    return Stack(
+      children: [
+        _buildEditorMode(),
+        _buildToolbar(),
+      ],
     );
   }
 
   Widget _buildEditorMode() {
     switch (_mode) {
       case EditorMode.Edit:
-        return _buildPathEditor();
+        return EditEditor(
+          widget.path,
+          widget.robotSize,
+          widget.holonomicMode,
+          widget.fieldImage,
+          showGeneratorSettings: widget.showGeneratorSettings,
+          savePath: widget.savePath,
+          prefs: widget.prefs,
+        );
       case EditorMode.Preview:
-        return _buildPreviewEditor();
+        return PreviewEditor(
+          widget.path,
+          widget.fieldImage,
+          widget.robotSize,
+          widget.holonomicMode,
+          savePath: widget.savePath,
+          prefs: widget.prefs,
+        );
     }
   }
 
@@ -148,8 +88,6 @@ class _PathEditorState extends State<PathEditor>
                         : () {
                             setState(() {
                               _mode = EditorMode.Edit;
-                              _previewController!.stop();
-                              _previewController!.reset();
                             });
                           },
                   ),
@@ -170,15 +108,9 @@ class _PathEditorState extends State<PathEditor>
                             if (widget.path.generatedTrajectory == null) {
                               await widget.path.generateTrajectory();
                             }
-                            _previewController!.duration = Duration(
-                                milliseconds: (widget.path.generatedTrajectory!
-                                            .getRuntime() *
-                                        1000)
-                                    .toInt());
+
                             setState(() {
-                              _selectedPoint = null;
                               _mode = EditorMode.Preview;
-                              _previewController!.repeat();
                             });
                           },
                   ),
@@ -189,278 +121,5 @@ class _PathEditorState extends State<PathEditor>
         ),
       ),
     );
-  }
-
-  Widget _buildPreviewEditor() {
-    return Center(
-      child: InteractiveViewer(
-        child: Container(
-          child: _buildEditorStack(),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEditorStack() {
-    return Padding(
-      padding: const EdgeInsets.all(48.0),
-      child: Stack(
-        children: [
-          widget.fieldImage,
-          Positioned.fill(
-            child: Container(
-              child: CustomPaint(
-                painter: PathPainter(
-                  widget.path,
-                  Size(widget.robotWidth, widget.robotLength),
-                  widget.holonomicMode,
-                  _selectedPoint,
-                  _mode,
-                  _previewController!.view,
-                  widget.fieldImage.defaultSize,
-                  widget.fieldImage.pixelsPerMeter,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPathEditor() {
-    return Center(
-      child: InteractiveViewer(
-        child: GestureDetector(
-          onDoubleTapDown: (details) {
-            UndoRedo.addChange(Change(
-              [
-                RobotPath.cloneWaypointList(widget.path.waypoints),
-                _selectedPointIndex == -1 ||
-                        _selectedPointIndex >= widget.path.waypoints.length
-                    ? widget.path.waypoints.length - 1
-                    : _selectedPointIndex
-              ],
-              () {
-                setState(() {
-                  widget.path.addWaypoint(
-                      Point(_xPixelsToMeters(details.localPosition.dx),
-                          _yPixelsToMeters(details.localPosition.dy)),
-                      _selectedPointIndex == -1 ||
-                              _selectedPointIndex >=
-                                  widget.path.waypoints.length
-                          ? widget.path.waypoints.length - 1
-                          : _selectedPointIndex);
-                  widget.path.savePath(
-                      widget.pathsDir, widget.generateJSON, widget.generateCSV);
-                });
-              },
-              (oldValue) {
-                setState(() {
-                  if (oldValue[1] == oldValue[0].length - 1) {
-                    widget.path.waypoints.removeLast();
-                    widget.path.waypoints.last.nextControl = null;
-                  } else {
-                    widget.path.waypoints.removeAt(oldValue[1] + 1);
-                    widget.path.waypoints[oldValue[1]].nextControl =
-                        oldValue[0][oldValue[1]].nextControl;
-                    widget.path.waypoints[oldValue[1] + 1].prevControl =
-                        oldValue[0][oldValue[1] + 1].prevControl;
-                  }
-                  _selectedPointIndex = -1;
-                  widget.path.savePath(
-                      widget.pathsDir, widget.generateJSON, widget.generateCSV);
-                });
-              },
-            ));
-            setState(() {
-              for (var i = 0; i < widget.path.waypoints.length; i++) {
-                Waypoint w = widget.path.waypoints[i];
-                if (w.isPointInAnchor(
-                        _xPixelsToMeters(details.localPosition.dx),
-                        _yPixelsToMeters(details.localPosition.dy),
-                        0.125) ||
-                    w.isPointInNextControl(
-                        _xPixelsToMeters(details.localPosition.dx),
-                        _yPixelsToMeters(details.localPosition.dy),
-                        0.1) ||
-                    w.isPointInPrevControl(
-                        _xPixelsToMeters(details.localPosition.dx),
-                        _yPixelsToMeters(details.localPosition.dy),
-                        0.1) ||
-                    w.isPointInHolonomicThing(
-                        _xPixelsToMeters(details.localPosition.dx),
-                        _yPixelsToMeters(details.localPosition.dy),
-                        0.075,
-                        widget.robotLength)) {
-                  setState(() {
-                    _selectedPoint = w;
-                    _selectedPointIndex = i;
-                  });
-                }
-              }
-            });
-          },
-          onDoubleTap: () {},
-          onTapDown: (details) {
-            FocusScopeNode currentScope = FocusScope.of(context);
-            if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-              FocusManager.instance.primaryFocus!.unfocus();
-            }
-            for (var i = 0; i < widget.path.waypoints.length; i++) {
-              Waypoint w = widget.path.waypoints[i];
-              if (w.isPointInAnchor(_xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy), 0.125) ||
-                  w.isPointInNextControl(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy),
-                      0.1) ||
-                  w.isPointInPrevControl(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy),
-                      0.1) ||
-                  w.isPointInHolonomicThing(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy),
-                      0.075,
-                      widget.robotLength)) {
-                setState(() {
-                  _selectedPoint = w;
-                  _selectedPointIndex = i;
-                });
-                return;
-              }
-            }
-            setState(() {
-              _selectedPoint = null;
-              _selectedPointIndex = -1;
-            });
-          },
-          onPanStart: (details) {
-            for (Waypoint w in widget.path.waypoints.reversed) {
-              if (w.startDragging(
-                  _xPixelsToMeters(details.localPosition.dx),
-                  _yPixelsToMeters(details.localPosition.dy),
-                  0.125,
-                  0.1,
-                  0.075,
-                  widget.robotLength,
-                  widget.holonomicMode)) {
-                _draggedPoint = w;
-                _dragOldValue = w.clone();
-                break;
-              }
-            }
-          },
-          onPanUpdate: (details) {
-            if (_draggedPoint != null) {
-              setState(() {
-                _draggedPoint!.dragUpdate(
-                    _xPixelsToMeters(details.localPosition.dx),
-                    _yPixelsToMeters(details.localPosition.dy));
-              });
-            }
-          },
-          onPanEnd: (details) {
-            if (_draggedPoint != null) {
-              _draggedPoint!.stopDragging();
-              int index = widget.path.waypoints.indexOf(_draggedPoint!);
-              Waypoint dragEnd = _draggedPoint!.clone();
-              UndoRedo.addChange(Change(
-                _dragOldValue,
-                () {
-                  setState(() {
-                    if (widget.path.waypoints[index] != _draggedPoint) {
-                      widget.path.waypoints[index] = dragEnd.clone();
-                    }
-                    widget.path.savePath(widget.pathsDir, widget.generateJSON,
-                        widget.generateCSV);
-                  });
-                },
-                (oldValue) {
-                  setState(() {
-                    widget.path.waypoints[index] = oldValue.clone();
-                    widget.path.savePath(widget.pathsDir, widget.generateJSON,
-                        widget.generateCSV);
-                  });
-                },
-              ));
-              _draggedPoint = null;
-            }
-          },
-          child: Container(
-            child: _buildEditorStack(),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWaypointCard() {
-    String? waypointLabel = widget.path.getWaypointLabel(_selectedPoint);
-    if (waypointLabel == null) {
-      // Somehow the selected waypoint is not in the path. Reset selected point.
-      setState(() {
-        _selectedPointIndex = -1;
-        _selectedPoint = null;
-      });
-    }
-
-    return WaypointCard(
-      _selectedPoint,
-      _key,
-      label: waypointLabel,
-      holonomicEnabled: widget.holonomicMode,
-      deleteEnabled: widget.path.waypoints.length > 2,
-    );
-  }
-
-  Widget _buildPathInfo() {
-    return Visibility(
-      visible: _mode == EditorMode.Preview,
-      child: PathInfoCard(
-        widget.path,
-        _key,
-      ),
-    );
-  }
-
-  Widget _buildGeneratorSettingsCard() {
-    return Visibility(
-      visible: widget.generateJSON ||
-          widget.generateCSV ||
-          _mode == EditorMode.Preview,
-      child: GeneratorSettingsCard(
-        widget.path,
-        _key,
-        onShouldSave: () async {
-          if (_mode == EditorMode.Preview) {
-            await widget.path.generateTrajectory();
-            setState(() {
-              _previewController!.stop();
-              _previewController!.reset();
-              _previewController!.duration = Duration(
-                  milliseconds:
-                      (widget.path.generatedTrajectory!.getRuntime() * 1000)
-                          .toInt());
-              _previewController!.repeat();
-            });
-          }
-          widget.path.savePath(
-              widget.pathsDir, widget.generateJSON, widget.generateCSV);
-        },
-      ),
-    );
-  }
-
-  double _xPixelsToMeters(double pixels) {
-    return ((pixels - 48) / PathPainter.scale) /
-        widget.fieldImage.pixelsPerMeter;
-  }
-
-  double _yPixelsToMeters(double pixels) {
-    return (widget.fieldImage.defaultSize.height -
-            ((pixels - 48) / PathPainter.scale)) /
-        widget.fieldImage.pixelsPerMeter;
   }
 }

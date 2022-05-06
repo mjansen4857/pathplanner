@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 
 class ImportFieldDialog extends StatefulWidget {
   final Function(String name, double pixelsPerMeter, File imageFile) onImport;

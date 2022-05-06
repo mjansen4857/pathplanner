@@ -15,7 +15,7 @@ import 'package:pathplanner/widgets/deploy_fab.dart';
 import 'package:pathplanner/widgets/drawer_tiles/path_tile.dart';
 import 'package:pathplanner/widgets/drawer_tiles/settings_tile.dart';
 import 'package:pathplanner/widgets/field_image.dart';
-import 'package:pathplanner/widgets/keyboard_shortcuts/keyboard_shortcuts.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
 import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,8 +34,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late SharedPreferences _prefs;
   List<RobotPath> _paths = [];
   RobotPath? _currentPath;
-  double _robotWidth = 0.75;
-  double _robotLength = 1.0;
+  Size _robotSize = Size(0.75, 1.0);
   bool _holonomicMode = false;
   bool _generateJSON = false;
   bool _generateCSV = false;
@@ -78,8 +77,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _welcomeController.forward();
 
           _loadPaths(projectDir, pathsDir);
-          _robotWidth = _prefs.getDouble('robotWidth') ?? 0.75;
-          _robotLength = _prefs.getDouble('robotLength') ?? 1.0;
+          _robotSize = Size(_prefs.getDouble('robotWidth') ?? 0.75,
+              _prefs.getDouble('robotLength') ?? 1.0);
           _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
           _generateJSON = _prefs.getBool('generateJSON') ?? false;
           _generateCSV = _prefs.getBool('generateCSV') ?? false;
@@ -377,10 +376,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         },
                         onSettingsChanged: () {
                           setState(() {
-                            _robotWidth =
-                                _prefs.getDouble('robotWidth') ?? 0.75;
-                            _robotLength =
-                                _prefs.getDouble('robotLength') ?? 1.0;
+                            _robotSize = Size(
+                                _prefs.getDouble('robotWidth') ?? 0.75,
+                                _prefs.getDouble('robotLength') ?? 1.0);
                             _holonomicMode =
                                 _prefs.getBool('holonomicMode') ?? false;
                             _generateJSON =
@@ -412,14 +410,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return Center(
         child: Container(
           child: PathEditor(
-              _fieldImage,
-              _currentPath!,
-              _robotWidth,
-              _robotLength,
-              _holonomicMode,
-              _generateJSON,
-              _generateCSV,
-              _pathsDir!.path),
+            _fieldImage,
+            _currentPath!,
+            _robotSize,
+            _holonomicMode,
+            showGeneratorSettings: _generateJSON || _generateCSV,
+            savePath: (RobotPath path) {
+              path.savePath(_pathsDir!.path, _generateJSON, _generateCSV);
+            },
+            prefs: _prefs,
+          ),
         ),
       );
     } else {

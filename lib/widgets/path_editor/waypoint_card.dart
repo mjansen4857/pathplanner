@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:function_tree/function_tree.dart';
 
@@ -14,13 +15,18 @@ class WaypointCard extends StatefulWidget {
   final VoidCallback? onDelete;
   final VoidCallback? onShouldSave;
   final GlobalKey stackKey;
+  final SharedPreferences? prefs;
 
-  WaypointCard(this.waypoint, this.stackKey,
-      {this.label,
-      this.holonomicEnabled = false,
-      this.deleteEnabled = false,
-      this.onDelete,
-      this.onShouldSave});
+  WaypointCard(
+    this.waypoint,
+    this.stackKey, {
+    this.label,
+    this.holonomicEnabled = false,
+    this.deleteEnabled = false,
+    this.onDelete,
+    this.onShouldSave,
+    this.prefs,
+  });
 
   @override
   _WaypointCardState createState() => _WaypointCardState();
@@ -35,6 +41,7 @@ class _WaypointCardState extends State<WaypointCard> {
       widget.stackKey,
       defaultPosition: CardPosition(top: 0, right: 0),
       prefsKey: 'waypointCardPos',
+      prefs: widget.prefs,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,

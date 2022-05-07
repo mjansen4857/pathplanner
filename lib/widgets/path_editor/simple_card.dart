@@ -3,11 +3,11 @@ import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SimpleCard extends StatefulWidget {
-  final String text;
+  final Widget? child;
   final GlobalKey stackKey;
   final SharedPreferences? prefs;
 
-  SimpleCard(this.text, this.stackKey, {this.prefs, Key? key})
+  SimpleCard(this.stackKey, {this.child, this.prefs, Key? key})
       : super(key: key);
 
   @override
@@ -23,7 +23,7 @@ class _SimpleCardState extends State<SimpleCard> {
       prefsKey: 'simpleCardPos',
       prefs: widget.prefs,
       child: Center(
-        child: Text(widget.text),
+        child: widget.child,
       ),
     );
   }

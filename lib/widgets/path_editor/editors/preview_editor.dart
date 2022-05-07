@@ -115,8 +115,9 @@ class _PreviewEditorState extends State<PreviewEditor>
 
   Widget _buildRuntimeCard() {
     return SimpleCard(
-      'Total Runtime: ${widget.path.generatedTrajectory.getRuntime().toStringAsFixed(2)}s',
       _key,
+      child: Text(
+          'Total Runtime: ${widget.path.generatedTrajectory.getRuntime().toStringAsFixed(2)}s'),
       prefs: widget.prefs,
       key: _pathRuntimeKey,
     );

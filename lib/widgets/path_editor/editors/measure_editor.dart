@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
+import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 import 'package:pathplanner/widgets/path_editor/simple_card.dart';
@@ -23,6 +26,8 @@ class MeasureEditor extends StatefulWidget {
 }
 
 class _MeasureEditorState extends State<MeasureEditor> {
+  Point? _measureStart;
+  Point? _measureEnd;
   GlobalKey _key = GlobalKey();
 
   @override
@@ -37,25 +42,44 @@ class _MeasureEditorState extends State<MeasureEditor> {
       children: [
         Center(
           child: InteractiveViewer(
-            child: Container(
-              child: Padding(
-                padding: const EdgeInsets.all(48.0),
-                child: Stack(
-                  children: [
-                    widget.fieldImage,
-                    Positioned.fill(
-                      child: Container(
-                        child: CustomPaint(
-                          painter: _MeasurePainter(
-                            widget.path,
-                            widget.fieldImage,
-                            widget.robotSize,
-                            widget.holonomicMode,
+            child: GestureDetector(
+              onPanStart: (DragStartDetails details) {
+                setState(() {
+                  _measureStart = Point(
+                      _xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy));
+                  _measureEnd = null;
+                });
+              },
+              onPanUpdate: (DragUpdateDetails details) {
+                setState(() {
+                  _measureEnd = Point(
+                      _xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy));
+                });
+              },
+              child: Container(
+                child: Padding(
+                  padding: const EdgeInsets.all(48.0),
+                  child: Stack(
+                    children: [
+                      widget.fieldImage,
+                      Positioned.fill(
+                        child: Container(
+                          child: CustomPaint(
+                            painter: _MeasurePainter(
+                              widget.path,
+                              widget.fieldImage,
+                              widget.robotSize,
+                              widget.holonomicMode,
+                              _measureStart,
+                              _measureEnd,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -68,10 +92,42 @@ class _MeasureEditorState extends State<MeasureEditor> {
 
   Widget _buildPathLengthCard() {
     return SimpleCard(
-      'Path Length: ${widget.path.generatedTrajectory.getLength().toStringAsFixed(2)}m',
       _key,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'Ruler Length: ${_getRulerLength().toStringAsFixed(2)}m',
+            style: TextStyle(fontSize: 18),
+          ),
+          Text(
+            'Path Length: ${widget.path.generatedTrajectory.getLength().toStringAsFixed(2)}m',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
       prefs: widget.prefs,
     );
+  }
+
+  double _getRulerLength() {
+    if (_measureStart != null && _measureEnd != null) {
+      return _measureStart!.distanceTo(_measureEnd!);
+    }
+
+    return 0;
+  }
+
+  double _xPixelsToMeters(double pixels) {
+    return ((pixels - 48) / _MeasurePainter.scale) /
+        widget.fieldImage.pixelsPerMeter;
+  }
+
+  double _yPixelsToMeters(double pixels) {
+    return (widget.fieldImage.defaultSize.height -
+            ((pixels - 48) / _MeasurePainter.scale)) /
+        widget.fieldImage.pixelsPerMeter;
   }
 }
 
@@ -80,11 +136,13 @@ class _MeasurePainter extends CustomPainter {
   final FieldImage fieldImage;
   final Size robotSize;
   final bool holonomicMode;
+  final Point? measureStart;
+  final Point? measureEnd;
 
   static double scale = 1;
 
-  _MeasurePainter(
-      this.path, this.fieldImage, this.robotSize, this.holonomicMode);
+  _MeasurePainter(this.path, this.fieldImage, this.robotSize,
+      this.holonomicMode, this.measureStart, this.measureEnd);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -99,6 +157,7 @@ class _MeasurePainter extends CustomPainter {
     }
 
     _paintWaypoints(canvas);
+    _paintMeasureLine(canvas);
   }
 
   @override
@@ -118,6 +177,41 @@ class _MeasurePainter extends CustomPainter {
               waypoint.anchorPoint, scale, fieldImage),
           PathPainterUtil.metersToPixels(0.1, scale, fieldImage),
           paint);
+    }
+  }
+
+  void _paintMeasureLine(Canvas canvas) {
+    if (measureStart != null && measureEnd != null) {
+      Offset measureStartPx =
+          PathPainterUtil.pointToPixelOffset(measureStart!, scale, fieldImage);
+      Offset measureEndPx =
+          PathPainterUtil.pointToPixelOffset(measureEnd!, scale, fieldImage);
+
+      var paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..color = Colors.grey[400]!
+        ..strokeWidth = 2;
+
+      num lineLength = sqrt(pow(measureStartPx.dx - measureEndPx.dx, 2) +
+          pow(measureStartPx.dy - measureEndPx.dy, 2));
+
+      for (num pos = 0; pos < lineLength; pos += 16) {
+        num startT = pos / lineLength;
+        num endT = (pos < lineLength - 8) ? (pos + 8) / lineLength : 1.0;
+
+        Offset start =
+            GeometryUtil.offsetLerp(measureStartPx, measureEndPx, startT);
+        Offset end =
+            GeometryUtil.offsetLerp(measureStartPx, measureEndPx, endT);
+
+        canvas.drawLine(start, end, paint);
+      }
+
+      paint.style = PaintingStyle.fill;
+      paint.color = Colors.grey[300]!;
+
+      canvas.drawCircle(measureStartPx, 3, paint);
+      canvas.drawCircle(measureEndPx, 3, paint);
     }
   }
 }

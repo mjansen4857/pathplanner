@@ -345,7 +345,7 @@ class _EditPainter extends CustomPainter {
           path, canvas, scale, Colors.grey[300]!, fieldImage);
     } else {
       PathPainterUtil.paintDualPaths(
-          path, robotSize, canvas, scale, fieldImage);
+          path, robotSize, canvas, scale, Colors.grey[300]!, fieldImage);
     }
 
     for (Waypoint w in path.waypoints) {

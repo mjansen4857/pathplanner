@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/widgets.dart';
+
 class GeometryUtil {
   static num numLerp(num startVal, num endVal, num t) {
     return startVal + (endVal - startVal) * t;
@@ -9,6 +11,13 @@ class GeometryUtil {
     return Point(
       numLerp(startVal.x, endVal.x, t),
       numLerp(startVal.y, endVal.y, t),
+    );
+  }
+
+  static Offset offsetLerp(Offset startVal, Offset endVal, num t) {
+    return Offset(
+      numLerp(startVal.dx, endVal.dx, t).toDouble(),
+      numLerp(startVal.dy, endVal.dy, t).toDouble(),
     );
   }
 

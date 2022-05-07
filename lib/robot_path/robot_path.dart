@@ -13,7 +13,7 @@ class RobotPath {
   num? maxAcceleration;
   bool? isReversed;
   late String name;
-  Trajectory? generatedTrajectory;
+  late Trajectory generatedTrajectory;
 
   RobotPath(this.waypoints,
       {this.name = 'New Path',
@@ -36,7 +36,9 @@ class RobotPath {
             prevControl: Point(4.0, 3.0),
             anchorPoint: Point(5.0, 3.0),
           ),
-        ];
+        ] {
+    this.generateTrajectory();
+  }
 
   RobotPath.fromJson(Map<String, dynamic> json) : waypoints = [] {
     for (Map<String, dynamic> pointJson in json['waypoints']) {
@@ -46,6 +48,8 @@ class RobotPath {
     maxVelocity = json['maxVelocity'];
     maxAcceleration = json['maxAcceleration'];
     isReversed = json['isReversed'];
+
+    this.generateTrajectory();
   }
 
   String? getWaypointLabel(Waypoint? waypoint) {
@@ -70,18 +74,18 @@ class RobotPath {
 
     this.generatedTrajectory = await Trajectory.generateFullTrajectory(this);
 
-    if (generateJSON && generatedTrajectory != null) {
+    if (generateJSON) {
       Directory jsonDir = Directory(join(saveDir.path, 'generatedJSON'));
       if (!jsonDir.existsSync()) jsonDir.createSync(recursive: true);
       File jsonFile = File(join(jsonDir.path, name + '.wpilib.json'));
-      jsonFile.writeAsString(generatedTrajectory!.getWPILibJSON());
+      jsonFile.writeAsString(generatedTrajectory.getWPILibJSON());
     }
 
-    if (generateCSV && generatedTrajectory != null) {
+    if (generateCSV) {
       Directory csvDir = Directory(join(saveDir.path, 'generatedCSV'));
       if (!csvDir.existsSync()) csvDir.createSync(recursive: true);
       File csvFile = File(join(csvDir.path, name + '.csv'));
-      csvFile.writeAsString(generatedTrajectory!.getCSV());
+      csvFile.writeAsString(generatedTrajectory.getCSV());
     }
 
     print('Saved and generated path in ${s.elapsedMilliseconds}ms');

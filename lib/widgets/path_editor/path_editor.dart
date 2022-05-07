@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/editors/edit_editor.dart';
+import 'package:pathplanner/widgets/path_editor/editors/measure_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/preview_editor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum EditorMode {
   Edit,
   Preview,
+  Measure,
 }
 
 class PathEditor extends StatefulWidget {
@@ -60,6 +63,14 @@ class _PathEditorState extends State<PathEditor> {
           savePath: widget.savePath,
           prefs: widget.prefs,
         );
+      case EditorMode.Measure:
+        return MeasureEditor(
+          widget.path,
+          widget.fieldImage,
+          widget.robotSize,
+          widget.holonomicMode,
+          prefs: widget.prefs,
+        );
     }
   }
 
@@ -86,15 +97,14 @@ class _PathEditorState extends State<PathEditor> {
                     onPressed: _mode == EditorMode.Edit
                         ? null
                         : () {
+                            UndoRedo.clearHistory();
                             setState(() {
                               _mode = EditorMode.Edit;
                             });
                           },
                   ),
                 ),
-                VerticalDivider(
-                  width: 1,
-                ),
+                VerticalDivider(width: 1),
                 Tooltip(
                   message: 'Preview',
                   waitDuration: Duration(milliseconds: 500),
@@ -105,12 +115,27 @@ class _PathEditorState extends State<PathEditor> {
                     onPressed: _mode == EditorMode.Preview
                         ? null
                         : () async {
-                            if (widget.path.generatedTrajectory == null) {
-                              await widget.path.generateTrajectory();
-                            }
-
+                            UndoRedo.clearHistory();
                             setState(() {
                               _mode = EditorMode.Preview;
+                            });
+                          },
+                  ),
+                ),
+                VerticalDivider(width: 1),
+                Tooltip(
+                  message: 'Measure',
+                  waitDuration: Duration(milliseconds: 500),
+                  child: MaterialButton(
+                    height: 50,
+                    minWidth: 50,
+                    child: Icon(Icons.straighten),
+                    onPressed: _mode == EditorMode.Measure
+                        ? null
+                        : () async {
+                            UndoRedo.clearHistory();
+                            setState(() {
+                              _mode = EditorMode.Measure;
                             });
                           },
                   ),

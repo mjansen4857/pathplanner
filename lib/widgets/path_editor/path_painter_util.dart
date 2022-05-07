@@ -31,10 +31,10 @@ class PathPainterUtil {
   }
 
   static void paintDualPaths(RobotPath path, Size robotSize, Canvas canvas,
-      double scale, FieldImage fieldImage) {
+      double scale, Color color, FieldImage fieldImage) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Colors.grey[300]!
+      ..color = color
       ..strokeWidth = 2;
 
     for (int i = 0; i < path.waypoints.length - 1; i++) {

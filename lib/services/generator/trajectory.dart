@@ -114,6 +114,15 @@ class Trajectory {
     return states.last.timeSeconds;
   }
 
+  num getLength() {
+    num length = 0;
+
+    for (TrajectoryState state in states) {
+      length += state.deltaPos.abs();
+    }
+    return length;
+  }
+
   static void calculateMaxVel(
       List<TrajectoryState> states, num maxVel, num maxAccel, bool reversed) {
     for (int i = 0; i < states.length; i++) {

@@ -5,6 +5,7 @@ import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/widgets/path_editor/cards/marker_card.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,6 +27,7 @@ class MarkerEditor extends StatefulWidget {
 }
 
 class _MarkerEditorState extends State<MarkerEditor> {
+  EventMarker? _selectedMarker;
   GlobalKey _key = GlobalKey();
 
   @override
@@ -36,6 +38,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
         Center(
           child: InteractiveViewer(
             child: GestureDetector(
+              onTapUp: (TapUpDetails details) {},
               child: Container(
                 child: Padding(
                   padding: const EdgeInsets.all(48.0),
@@ -50,6 +53,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
                               widget.fieldImage,
                               widget.robotSize,
                               widget.holonomicMode,
+                              _selectedMarker,
                             ),
                           ),
                         ),
@@ -61,7 +65,42 @@ class _MarkerEditorState extends State<MarkerEditor> {
             ),
           ),
         ),
+        _buildMarkerCard(),
       ],
+    );
+  }
+
+  Widget _buildMarkerCard() {
+    return MarkerCard(
+      _key,
+      key: ValueKey(_selectedMarker),
+      prefs: widget.prefs,
+      marker: _selectedMarker,
+      maxMarkerPos: widget.path.waypoints.length - 1,
+      onDelete: () {
+        widget.path.markers.remove(_selectedMarker);
+        if (widget.savePath != null) {
+          widget.savePath!.call(widget.path);
+        }
+        setState(() {
+          _selectedMarker = null;
+        });
+      },
+      onAdd: (EventMarker newMarker) {
+        widget.path.markers.add(newMarker);
+        if (widget.savePath != null) {
+          widget.savePath!.call(widget.path);
+        }
+
+        setState(() {
+          _selectedMarker = newMarker;
+        });
+      },
+      onSave: () {
+        if (widget.savePath != null) {
+          widget.savePath!.call(widget.path);
+        }
+      },
     );
   }
 }
@@ -71,13 +110,14 @@ class _MarkerPainter extends CustomPainter {
   final FieldImage fieldImage;
   final Size robotSize;
   final bool holonomicMode;
+  final EventMarker? selectedMarker;
 
   final IconData markerIcon = Icons.location_on;
 
   static double scale = 1.0;
 
-  _MarkerPainter(
-      this.path, this.fieldImage, this.robotSize, this.holonomicMode);
+  _MarkerPainter(this.path, this.fieldImage, this.robotSize, this.holonomicMode,
+      this.selectedMarker);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -97,7 +137,11 @@ class _MarkerPainter extends CustomPainter {
         path, canvas, scale, Colors.grey[400]!, fieldImage);
 
     for (EventMarker marker in path.markers) {
-      _drawMarker(canvas, _getMarkerLocation(marker), Colors.grey[300]!);
+      if (marker == selectedMarker) {
+        _drawMarker(canvas, _getMarkerLocation(marker), Colors.orange);
+      } else {
+        _drawMarker(canvas, _getMarkerLocation(marker), Colors.grey[300]!);
+      }
     }
   }
 

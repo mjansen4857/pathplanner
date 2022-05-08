@@ -71,6 +71,8 @@ class _PathEditorState extends State<PathEditor> {
           widget.fieldImage,
           widget.robotSize,
           widget.holonomicMode,
+          savePath: widget.savePath,
+          prefs: widget.prefs,
         );
       case EditorMode.Measure:
         return MeasureEditor(

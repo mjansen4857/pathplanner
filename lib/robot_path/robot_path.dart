@@ -141,6 +141,7 @@ class RobotPath {
     if (maxVelocity == null && maxAcceleration == null && isReversed == null) {
       return {
         'waypoints': waypoints,
+        'markers': markers,
       };
     } else {
       return {
@@ -148,6 +149,7 @@ class RobotPath {
         'maxVelocity': maxVelocity,
         'maxAcceleration': maxAcceleration,
         'isReversed': isReversed,
+        'markers': markers,
       };
     }
   }
@@ -160,7 +162,7 @@ class EventMarker {
   EventMarker(this.position, this.name);
 
   EventMarker.fromJson(Map<String, dynamic> json)
-      : this(json['postion'], json['name']);
+      : this(json['position'], json['name']);
 
   Map<String, dynamic> toJson() {
     return {

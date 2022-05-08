@@ -31,11 +31,6 @@ class _MeasureEditorState extends State<MeasureEditor> {
   GlobalKey _key = GlobalKey();
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Stack(
       key: _key,

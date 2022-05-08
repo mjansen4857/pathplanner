@@ -135,6 +135,11 @@ class PathPainterUtil {
       paint.style = PaintingStyle.fill;
       canvas.drawCircle(
           frontMiddle, metersToPixels(0.075, scale, fieldImage), paint);
+      paint.style = PaintingStyle.stroke;
+      paint.strokeWidth = 1;
+      paint.color = Colors.black;
+      canvas.drawCircle(
+          frontMiddle, metersToPixels(0.075, scale, fieldImage), paint);
     }
   }
 

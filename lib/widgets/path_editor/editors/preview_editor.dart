@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
 import 'package:pathplanner/widgets/field_image.dart';
-import 'package:pathplanner/widgets/path_editor/generator_settings_card.dart';
-import 'package:pathplanner/widgets/path_editor/simple_card.dart';
+import 'package:pathplanner/widgets/path_editor/cards/generator_settings_card.dart';
+import 'package:pathplanner/widgets/path_editor/cards/simple_card.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

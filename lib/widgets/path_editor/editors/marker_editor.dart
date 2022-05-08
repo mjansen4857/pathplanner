@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
+import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -95,9 +96,9 @@ class _MarkerPainter extends CustomPainter {
     PathPainterUtil.paintCenterPath(
         path, canvas, scale, Colors.grey[400]!, fieldImage);
 
-    Offset test =
-        PathPainterUtil.pointToPixelOffset(Point(4.55, 3.3), scale, fieldImage);
-    _drawMarker(canvas, test, Colors.grey[300]!);
+    for (EventMarker marker in path.markers) {
+      _drawMarker(canvas, _getMarkerLocation(marker), Colors.grey[300]!);
+    }
   }
 
   @override
@@ -136,5 +137,23 @@ class _MarkerPainter extends CustomPainter {
 
     textPainter.paint(canvas, location - Offset(20, 37));
     textStrokePainter.paint(canvas, location - Offset(20, 37));
+  }
+
+  Offset _getMarkerLocation(EventMarker marker) {
+    int startIndex = marker.position.floor();
+    double t = marker.position % 1;
+
+    if (startIndex == path.waypoints.length - 1) {
+      startIndex--;
+      t = 1;
+    }
+    Waypoint start = path.waypoints[startIndex];
+    Waypoint end = path.waypoints[startIndex + 1];
+
+    Point markerPosMeters = GeometryUtil.cubicLerp(start.anchorPoint,
+        start.nextControl!, end.prevControl!, end.anchorPoint, t);
+
+    return PathPainterUtil.pointToPixelOffset(
+        markerPosMeters, scale, fieldImage);
   }
 }

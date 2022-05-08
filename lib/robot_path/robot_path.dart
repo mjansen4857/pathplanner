@@ -14,12 +14,14 @@ class RobotPath {
   bool? isReversed;
   late String name;
   late Trajectory generatedTrajectory;
+  List<EventMarker> markers;
 
   RobotPath(this.waypoints,
       {this.name = 'New Path',
       this.maxVelocity,
       this.maxAcceleration,
-      this.isReversed});
+      this.isReversed,
+      this.markers = const []});
 
   RobotPath.defaultPath({this.name = 'New Path'})
       : this.waypoints = [
@@ -36,13 +38,23 @@ class RobotPath {
             prevControl: Point(4.0, 3.0),
             anchorPoint: Point(5.0, 3.0),
           ),
-        ] {
+        ],
+        this.markers = [] {
     this.generateTrajectory();
   }
 
-  RobotPath.fromJson(Map<String, dynamic> json) : waypoints = [] {
+  RobotPath.fromJson(Map<String, dynamic> json)
+      : waypoints = [],
+        markers = [] {
     for (Map<String, dynamic> pointJson in json['waypoints']) {
       waypoints.add(Waypoint.fromJson(pointJson));
+    }
+
+    for (Map<String, dynamic> markerJson in json['markers'] ?? []) {
+      EventMarker marker = EventMarker.fromJson(markerJson);
+      if (marker.position <= waypoints.length - 1) {
+        markers.add(marker);
+      }
     }
 
     maxVelocity = json['maxVelocity'];
@@ -138,5 +150,22 @@ class RobotPath {
         'isReversed': isReversed,
       };
     }
+  }
+}
+
+class EventMarker {
+  double position;
+  String name;
+
+  EventMarker(this.position, this.name);
+
+  EventMarker.fromJson(Map<String, dynamic> json)
+      : this(json['postion'], json['name']);
+
+  Map<String, dynamic> toJson() {
+    return {
+      'position': position,
+      'name': name,
+    };
   }
 }

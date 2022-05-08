@@ -6,7 +6,7 @@ import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
-import 'package:pathplanner/widgets/path_editor/simple_card.dart';
+import 'package:pathplanner/widgets/path_editor/cards/simple_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MeasureEditor extends StatefulWidget {

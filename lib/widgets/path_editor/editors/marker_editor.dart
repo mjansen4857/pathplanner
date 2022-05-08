@@ -38,7 +38,28 @@ class _MarkerEditorState extends State<MarkerEditor> {
         Center(
           child: InteractiveViewer(
             child: GestureDetector(
-              onTapUp: (TapUpDetails details) {},
+              onTapUp: (TapUpDetails details) {
+                for (EventMarker marker in widget.path.markers) {
+                  Offset markerPosPx = _MarkerPainter._getMarkerLocation(
+                      marker, widget.path, widget.fieldImage);
+                  Offset markerCenterPx =
+                      markerPosPx - const Offset(-48, 20 - 48);
+
+                  print(details.localPosition.toString() +
+                      ', ' +
+                      markerCenterPx.toString());
+
+                  if ((details.localPosition - markerCenterPx).distance <= 40) {
+                    setState(() {
+                      _selectedMarker = marker;
+                    });
+                    return;
+                  }
+                }
+                setState(() {
+                  _selectedMarker = null;
+                });
+              },
               child: Container(
                 child: Padding(
                   padding: const EdgeInsets.all(48.0),
@@ -138,9 +159,11 @@ class _MarkerPainter extends CustomPainter {
 
     for (EventMarker marker in path.markers) {
       if (marker == selectedMarker) {
-        _drawMarker(canvas, _getMarkerLocation(marker), Colors.orange);
+        _drawMarker(canvas, _getMarkerLocation(marker, path, fieldImage),
+            Colors.orange);
       } else {
-        _drawMarker(canvas, _getMarkerLocation(marker), Colors.grey[300]!);
+        _drawMarker(canvas, _getMarkerLocation(marker, path, fieldImage),
+            Colors.grey[300]!);
       }
     }
   }
@@ -183,7 +206,8 @@ class _MarkerPainter extends CustomPainter {
     textStrokePainter.paint(canvas, location - Offset(20, 37));
   }
 
-  Offset _getMarkerLocation(EventMarker marker) {
+  static Offset _getMarkerLocation(
+      EventMarker marker, RobotPath path, FieldImage fieldImage) {
     int startIndex = marker.position.floor();
     double t = marker.position % 1;
 

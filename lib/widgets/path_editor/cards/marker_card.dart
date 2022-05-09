@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/widgets/custom_input_slider.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,7 +11,7 @@ class MarkerCard extends StatefulWidget {
   final GlobalKey stackKey;
   final SharedPreferences? prefs;
   final EventMarker? marker;
-  final double? maxMarkerPos;
+  final double maxMarkerPos;
   final VoidCallback? onDelete;
   final void Function(EventMarker newMarker)? onAdd;
   final VoidCallback? onSave;
@@ -18,7 +19,7 @@ class MarkerCard extends StatefulWidget {
   const MarkerCard(this.stackKey,
       {this.prefs,
       this.marker,
-      this.maxMarkerPos,
+      this.maxMarkerPos = 1,
       this.onDelete,
       this.onAdd,
       this.onSave,
@@ -31,7 +32,7 @@ class MarkerCard extends StatefulWidget {
 
 class _MarkerCardState extends State<MarkerCard> {
   TextEditingController _nameController = TextEditingController(text: 'marker');
-  TextEditingController _posController = TextEditingController(text: '0.0');
+  double _sliderPos = 0;
 
   @override
   void initState() {
@@ -40,17 +41,11 @@ class _MarkerCardState extends State<MarkerCard> {
     if (widget.marker != null) {
       _nameController.text = widget.marker!.name;
 
-      if (widget.maxMarkerPos != null) {
-        _posController.text =
-            (widget.marker!.position / widget.maxMarkerPos! * 100)
-                .toStringAsFixed(2);
-      }
+      _sliderPos = widget.marker!.position;
     }
 
     _nameController.selection = TextSelection.fromPosition(
         TextPosition(offset: _nameController.text.length));
-    _posController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _posController.text.length));
   }
 
   @override
@@ -66,7 +61,7 @@ class _MarkerCardState extends State<MarkerCard> {
         children: [
           _buildHeader(),
           _buildNameField(),
-          _buildPositionField(),
+          _buildPositionSlider(),
           _buildAddButton(),
         ],
       ),
@@ -116,7 +111,7 @@ class _MarkerCardState extends State<MarkerCard> {
       // Override gesture detector on UI elements so they wont cause the card to move
       onPanStart: (details) {},
       child: Padding(
-        padding: const EdgeInsets.only(top: 8.0),
+        padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
         child: Container(
           height: 35,
           child: TextField(
@@ -145,48 +140,87 @@ class _MarkerCardState extends State<MarkerCard> {
     );
   }
 
-  Widget _buildPositionField() {
+  Widget _buildPositionSlider() {
     return GestureDetector(
-      // Override gesture detector on UI elements so they wont cause the card to move
       onPanStart: (details) {},
       child: Padding(
-        padding: const EdgeInsets.only(top: 12.0),
-        child: Container(
-          height: 35,
-          child: TextField(
-            onSubmitted: (value) {
-              if (widget.onSave != null &&
-                  widget.marker != null &&
-                  widget.maxMarkerPos != null) {
-                widget.marker!.position = 0;
-                if (_posController.text.length > 0) {
-                  widget.marker!.position =
-                      (min(100, double.parse(_posController.text)) / 100.0) *
-                          widget.maxMarkerPos!;
-                }
-                widget.onSave!.call();
-              }
-            },
-            controller: _posController,
-            cursorColor: Colors.white,
-            style: TextStyle(fontSize: 14),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
-            ],
-            decoration: InputDecoration(
-              contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
-              labelText: 'Position Percentage',
-              filled: true,
-              border: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey)),
-              focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey)),
-              labelStyle: TextStyle(color: Colors.grey),
-            ),
+        padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+        child: InputSlider(
+          onChange: (value) {
+            if (widget.marker != null) {
+              widget.marker!.position = value;
+            }
+
+            setState(() {
+              _sliderPos = value;
+            });
+          },
+          onChangeEnd: (value) {
+            if (widget.onSave != null) {
+              widget.onSave!.call();
+            }
+          },
+          min: 0.0,
+          max: widget.maxMarkerPos,
+          decimalPlaces: 2,
+          defaultValue: _sliderPos,
+          inputDecoration: InputDecoration(
+            contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+            filled: true,
+            label: Text('Position'),
+            border:
+                OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+            focusedBorder:
+                OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+            labelStyle: TextStyle(color: Colors.grey),
           ),
+          inactiveSliderColor: Colors.grey[600],
+          activeSliderColor: Colors.indigo[500],
         ),
       ),
     );
+
+    // return GestureDetector(
+    //   // Override gesture detector on UI elements so they wont cause the card to move
+    //   onPanStart: (details) {},
+    //   child: Padding(
+    //     padding: const EdgeInsets.only(top: 12.0),
+    //     child: Container(
+    //       height: 35,
+    //       child: TextField(
+    //         onSubmitted: (value) {
+    //           if (widget.onSave != null &&
+    //               widget.marker != null &&
+    //               widget.maxMarkerPos != null) {
+    //             widget.marker!.position = 0;
+    //             if (_posController.text.length > 0) {
+    //               widget.marker!.position =
+    //                   (min(100, double.parse(_posController.text)) / 100.0) *
+    //                       widget.maxMarkerPos!;
+    //             }
+    //             widget.onSave!.call();
+    //           }
+    //         },
+    //         controller: _posController,
+    //         cursorColor: Colors.white,
+    //         style: TextStyle(fontSize: 14),
+    //         inputFormatters: [
+    //           FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
+    //         ],
+    //         decoration: InputDecoration(
+    //           contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+    //           labelText: 'Position Percentage',
+    //           filled: true,
+    //           border: OutlineInputBorder(
+    //               borderSide: BorderSide(color: Colors.grey)),
+    //           focusedBorder: OutlineInputBorder(
+    //               borderSide: BorderSide(color: Colors.grey)),
+    //           labelStyle: TextStyle(color: Colors.grey),
+    //         ),
+    //       ),
+    //     ),
+    //   ),
+    // );
   }
 
   Widget _buildAddButton() {
@@ -199,17 +233,9 @@ class _MarkerCardState extends State<MarkerCard> {
           padding: const EdgeInsets.only(top: 8.0),
           child: ElevatedButton(
             onPressed: () {
-              if (widget.onAdd != null &&
-                  widget.marker == null &&
-                  widget.maxMarkerPos != null) {
-                double markerPos = 0;
-                if (_posController.text.length > 0) {
-                  markerPos =
-                      (min(100, double.parse(_posController.text)) / 100.0) *
-                          widget.maxMarkerPos!;
-                }
+              if (widget.onAdd != null && widget.marker == null) {
                 widget.onAdd!
-                    .call(EventMarker(markerPos, _nameController.text));
+                    .call(EventMarker(_sliderPos, _nameController.text));
               }
             },
             child: Row(

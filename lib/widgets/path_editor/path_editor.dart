@@ -73,6 +73,7 @@ class _PathEditorState extends State<PathEditor> {
           widget.holonomicMode,
           savePath: widget.savePath,
           prefs: widget.prefs,
+          key: ValueKey(widget.path),
         );
       case EditorMode.Measure:
         return MeasureEditor(

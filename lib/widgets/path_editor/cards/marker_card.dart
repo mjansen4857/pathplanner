@@ -1,7 +1,4 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/widgets/custom_input_slider.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
@@ -14,7 +11,7 @@ class MarkerCard extends StatefulWidget {
   final double maxMarkerPos;
   final VoidCallback? onDelete;
   final void Function(EventMarker newMarker)? onAdd;
-  final VoidCallback? onSave;
+  final void Function(EventMarker oldMarker)? onEdited;
 
   const MarkerCard(this.stackKey,
       {this.prefs,
@@ -22,7 +19,7 @@ class MarkerCard extends StatefulWidget {
       this.maxMarkerPos = 1,
       this.onDelete,
       this.onAdd,
-      this.onSave,
+      this.onEdited,
       Key? key})
       : super(key: key);
 
@@ -33,6 +30,7 @@ class MarkerCard extends StatefulWidget {
 class _MarkerCardState extends State<MarkerCard> {
   TextEditingController _nameController = TextEditingController(text: 'marker');
   double _sliderPos = 0;
+  EventMarker? _oldMarker;
 
   @override
   void initState() {
@@ -116,9 +114,10 @@ class _MarkerCardState extends State<MarkerCard> {
           height: 35,
           child: TextField(
             onSubmitted: (value) {
-              if (widget.onSave != null && widget.marker != null) {
+              if (widget.onEdited != null && widget.marker != null) {
+                _oldMarker = widget.marker!.clone();
                 widget.marker!.name = value;
-                widget.onSave!.call();
+                widget.onEdited!.call(_oldMarker!);
               }
             },
             controller: _nameController,
@@ -148,6 +147,9 @@ class _MarkerCardState extends State<MarkerCard> {
         child: InputSlider(
           onChange: (value) {
             if (widget.marker != null) {
+              if (_oldMarker == null) {
+                _oldMarker = widget.marker!.clone();
+              }
               widget.marker!.position = value;
             }
 
@@ -156,9 +158,10 @@ class _MarkerCardState extends State<MarkerCard> {
             });
           },
           onChangeEnd: (value) {
-            if (widget.onSave != null) {
-              widget.onSave!.call();
+            if (widget.onEdited != null && widget.marker != null) {
+              widget.onEdited!.call(_oldMarker!);
             }
+            _oldMarker = null;
           },
           min: 0.0,
           max: widget.maxMarkerPos,
@@ -179,48 +182,6 @@ class _MarkerCardState extends State<MarkerCard> {
         ),
       ),
     );
-
-    // return GestureDetector(
-    //   // Override gesture detector on UI elements so they wont cause the card to move
-    //   onPanStart: (details) {},
-    //   child: Padding(
-    //     padding: const EdgeInsets.only(top: 12.0),
-    //     child: Container(
-    //       height: 35,
-    //       child: TextField(
-    //         onSubmitted: (value) {
-    //           if (widget.onSave != null &&
-    //               widget.marker != null &&
-    //               widget.maxMarkerPos != null) {
-    //             widget.marker!.position = 0;
-    //             if (_posController.text.length > 0) {
-    //               widget.marker!.position =
-    //                   (min(100, double.parse(_posController.text)) / 100.0) *
-    //                       widget.maxMarkerPos!;
-    //             }
-    //             widget.onSave!.call();
-    //           }
-    //         },
-    //         controller: _posController,
-    //         cursorColor: Colors.white,
-    //         style: TextStyle(fontSize: 14),
-    //         inputFormatters: [
-    //           FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
-    //         ],
-    //         decoration: InputDecoration(
-    //           contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
-    //           labelText: 'Position Percentage',
-    //           filled: true,
-    //           border: OutlineInputBorder(
-    //               borderSide: BorderSide(color: Colors.grey)),
-    //           focusedBorder: OutlineInputBorder(
-    //               borderSide: BorderSide(color: Colors.grey)),
-    //           labelStyle: TextStyle(color: Colors.grey),
-    //         ),
-    //       ),
-    //     ),
-    //   ),
-    // );
   }
 
   Widget _buildAddButton() {

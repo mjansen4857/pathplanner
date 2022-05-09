@@ -137,6 +137,16 @@ class RobotPath {
     return points;
   }
 
+  static List<EventMarker> cloneMarkerList(List<EventMarker> markers) {
+    List<EventMarker> ret = [];
+
+    for (EventMarker m in markers) {
+      ret.add(m.clone());
+    }
+
+    return ret;
+  }
+
   Map<String, dynamic> toJson() {
     List<EventMarker> savedMarkers = [];
     for (EventMarker marker in markers) {
@@ -178,4 +188,23 @@ class EventMarker {
       'name': name,
     };
   }
+
+  EventMarker clone() {
+    return EventMarker(position, name);
+  }
+
+  @override
+  String toString() {
+    return 'EventMarker($name, $position)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is EventMarker &&
+        other.position == position &&
+        other.name == name;
+  }
+
+  @override
+  int get hashCode => position.hashCode + name.hashCode;
 }

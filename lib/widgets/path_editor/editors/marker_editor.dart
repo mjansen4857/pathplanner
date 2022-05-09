@@ -71,8 +71,11 @@ class _MarkerEditorState extends State<MarkerEditor> {
                 child: GestureDetector(
                   onTapUp: (TapUpDetails details) {
                     for (EventMarker marker in widget.path.markers) {
-                      Offset markerPosPx = _MarkerPainter._getMarkerLocation(
-                          marker, widget.path, widget.fieldImage);
+                      Offset markerPosPx = PathPainterUtil.getMarkerLocation(
+                          marker,
+                          widget.path,
+                          widget.fieldImage,
+                          _MarkerPainter.scale);
                       Offset markerCenterPx =
                           markerPosPx - const Offset(-48, 20 - 48);
 
@@ -192,6 +195,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
           ],
           (oldValue) {
             int index = widget.path.markers.indexOf(oldValue[1]);
+            print(widget.path.markers);
             if (index != -1) {
               widget.path.markers[index] = oldValue[0].clone();
             }
@@ -223,8 +227,6 @@ class _MarkerPainter extends CustomPainter {
   final bool holonomicMode;
   final EventMarker? selectedMarker;
 
-  final IconData markerIcon = Icons.location_on;
-
   static double scale = 1.0;
 
   _MarkerPainter(this.path, this.fieldImage, this.robotSize, this.holonomicMode,
@@ -249,10 +251,14 @@ class _MarkerPainter extends CustomPainter {
 
     for (EventMarker marker in path.markers) {
       if (marker == selectedMarker) {
-        _drawMarker(canvas, _getMarkerLocation(marker, path, fieldImage),
+        PathPainterUtil.paintMarker(
+            canvas,
+            PathPainterUtil.getMarkerLocation(marker, path, fieldImage, scale),
             Colors.orange);
       } else {
-        _drawMarker(canvas, _getMarkerLocation(marker, path, fieldImage),
+        PathPainterUtil.paintMarker(
+            canvas,
+            PathPainterUtil.getMarkerLocation(marker, path, fieldImage, scale),
             Colors.grey[300]!);
       }
     }
@@ -260,58 +266,4 @@ class _MarkerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-
-  void _drawMarker(Canvas canvas, Offset location, Color color) {
-    TextPainter textPainter = TextPainter(
-      textDirection: TextDirection.ltr,
-      text: TextSpan(
-        text: String.fromCharCode(markerIcon.codePoint),
-        style: TextStyle(
-          fontSize: 40,
-          color: color,
-          fontFamily: markerIcon.fontFamily,
-        ),
-      ),
-    );
-
-    TextPainter textStrokePainter = TextPainter(
-      textDirection: TextDirection.ltr,
-      text: TextSpan(
-        text: String.fromCharCode(markerIcon.codePoint),
-        style: TextStyle(
-          fontSize: 40,
-          fontFamily: markerIcon.fontFamily,
-          foreground: Paint()
-            ..style = PaintingStyle.stroke
-            ..strokeWidth = 1
-            ..color = Colors.black,
-        ),
-      ),
-    );
-
-    textPainter.layout();
-    textStrokePainter.layout();
-
-    textPainter.paint(canvas, location - Offset(20, 37));
-    textStrokePainter.paint(canvas, location - Offset(20, 37));
-  }
-
-  static Offset _getMarkerLocation(
-      EventMarker marker, RobotPath path, FieldImage fieldImage) {
-    int startIndex = marker.position.floor();
-    double t = marker.position % 1;
-
-    if (startIndex == path.waypoints.length - 1) {
-      startIndex--;
-      t = 1;
-    }
-    Waypoint start = path.waypoints[startIndex];
-    Waypoint end = path.waypoints[startIndex + 1];
-
-    Point markerPosMeters = GeometryUtil.cubicLerp(start.anchorPoint,
-        start.nextControl!, end.prevControl!, end.anchorPoint, t);
-
-    return PathPainterUtil.pointToPixelOffset(
-        markerPosMeters, scale, fieldImage);
-  }
 }

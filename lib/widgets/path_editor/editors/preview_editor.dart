@@ -147,6 +147,14 @@ class _PreviewPainter extends CustomPainter {
 
     PathPainterUtil.paintCenterPath(
         path, canvas, scale, Colors.grey[700]!, fieldImage);
+
+    for (EventMarker marker in path.markers) {
+      PathPainterUtil.paintMarker(
+          canvas,
+          PathPainterUtil.getMarkerLocation(marker, path, fieldImage, scale),
+          Colors.grey[700]!);
+    }
+
     _paintPreviewOutline(
         canvas, path.generatedTrajectory.sample(previewTime.value));
   }

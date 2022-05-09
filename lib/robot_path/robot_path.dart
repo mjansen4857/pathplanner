@@ -151,7 +151,7 @@ class RobotPath {
     List<EventMarker> savedMarkers = [];
     for (EventMarker marker in markers) {
       // Only save markers that are on the path
-      if (marker.position <= waypoints.length - 2) {
+      if (marker.position <= waypoints.length - 1) {
         savedMarkers.add(marker);
       }
     }

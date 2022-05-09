@@ -151,6 +151,13 @@ class _MeasurePainter extends CustomPainter {
           path, robotSize, canvas, scale, Colors.grey[700]!, fieldImage);
     }
 
+    for (EventMarker marker in path.markers) {
+      PathPainterUtil.paintMarker(
+          canvas,
+          PathPainterUtil.getMarkerLocation(marker, path, fieldImage, scale),
+          Colors.grey[700]!);
+    }
+
     _paintWaypoints(canvas);
     _paintMeasureLine(canvas);
   }

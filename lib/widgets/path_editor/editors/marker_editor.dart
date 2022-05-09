@@ -45,10 +45,6 @@ class _MarkerEditorState extends State<MarkerEditor> {
                   Offset markerCenterPx =
                       markerPosPx - const Offset(-48, 20 - 48);
 
-                  print(details.localPosition.toString() +
-                      ', ' +
-                      markerCenterPx.toString());
-
                   if ((details.localPosition - markerCenterPx).distance <= 40) {
                     setState(() {
                       _selectedMarker = marker;

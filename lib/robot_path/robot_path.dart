@@ -138,10 +138,18 @@ class RobotPath {
   }
 
   Map<String, dynamic> toJson() {
+    List<EventMarker> savedMarkers = [];
+    for (EventMarker marker in markers) {
+      // Only save markers that are on the path
+      if (marker.position <= waypoints.length - 2) {
+        savedMarkers.add(marker);
+      }
+    }
+
     if (maxVelocity == null && maxAcceleration == null && isReversed == null) {
       return {
         'waypoints': waypoints,
-        'markers': markers,
+        'markers': savedMarkers,
       };
     } else {
       return {
@@ -149,7 +157,7 @@ class RobotPath {
         'maxVelocity': maxVelocity,
         'maxAcceleration': maxAcceleration,
         'isReversed': isReversed,
-        'markers': markers,
+        'markers': savedMarkers,
       };
     }
   }

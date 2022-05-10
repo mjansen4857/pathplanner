@@ -352,6 +352,7 @@ public class PathPlannerTrajectory extends Trajectory {
             }
 
             marker.timeSeconds = closestState.timeSeconds;
+            marker.positionMeters = markerPos;
         }
     }
 
@@ -411,12 +412,12 @@ public class PathPlannerTrajectory extends Trajectory {
     public static class EventMarker {
         public String name;
         public double timeSeconds;
+        public Translation2d positionMeters;
         protected double waypointRelativePos;
 
         protected EventMarker(String name, double waypointRelativePos){
             this.name = name;
             this.waypointRelativePos = waypointRelativePos;
-            this.timeSeconds = 0;
         }
     }
 }

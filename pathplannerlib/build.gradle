@@ -1,7 +1,8 @@
 plugins {
   id 'cpp'
   id 'java'
-  id 'google-test'
+  id 'google-test-test-suite'
+  id "edu.wpi.first.GradleRIO" version "2022.4.1"
   id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
   id 'edu.wpi.first.NativeUtils' version '2022.8.1'
   id 'edu.wpi.first.GradleJni' version '1.0.0'
@@ -91,7 +92,9 @@ model {
     }
   }
   testSuites {
-    PathplannerLibTest {
+    PathplannerLibTest(GoogleTestTestSuiteSpec) {
+        testing $.components.PathplannerLib
+
         sources.cpp {
             source {
                 srcDir 'src/test/native/cpp'
@@ -99,7 +102,12 @@ model {
             }
         }
 
-        nativeUtils.useRequiredLibrary(it, "wpilib_executable_shared", "googletest_static")
+        // Enable run tasks for this component
+        wpi.cpp.enableExternalTasks(it)
+
+        wpi.cpp.vendor.cpp(it)
+        wpi.cpp.deps.wpilib(it)
+        wpi.cpp.deps.googleTest(it)
     }
   }
 }

@@ -1,18 +1,15 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
-import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/cards/marker_card.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:undo/undo.dart';
 
 class MarkerEditor extends StatefulWidget {
   final RobotPath path;
@@ -195,7 +192,6 @@ class _MarkerEditorState extends State<MarkerEditor> {
           ],
           (oldValue) {
             int index = widget.path.markers.indexOf(oldValue[1]);
-            print(widget.path.markers);
             if (index != -1) {
               widget.path.markers[index] = oldValue[0].clone();
             }

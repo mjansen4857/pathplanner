@@ -9,12 +9,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
-    protected PathPlannerTrajectory(ArrayList<Waypoint> pathPoints, double maxVel, double maxAccel, boolean reversed){
+    private final List<EventMarker> markers;
+
+    protected PathPlannerTrajectory(ArrayList<Waypoint> pathPoints, ArrayList<EventMarker> markers, double maxVel, double maxAccel, boolean reversed){
         super(generatePath(pathPoints, maxVel, maxAccel, reversed));
+
+        this.markers = markers;
+        this.calculateMarkerTimes(pathPoints);
+    }
+
+    protected PathPlannerTrajectory(List<State> states, ArrayList<EventMarker> markers){
+        super(states);
+
+        this.markers = markers;
     }
 
     protected PathPlannerTrajectory(List<State> states){
         super(states);
+
+        this.markers = new ArrayList<>();
+    }
+
+    public List<EventMarker> getMarkers(){
+        return this.markers;
     }
 
     /**
@@ -74,12 +91,47 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     private static List<State> generatePath(ArrayList<Waypoint> pathPoints, double maxVel, double maxAccel, boolean reversed){
-        List<PathPlannerState> joined = joinSplines(pathPoints, maxVel, PathPlanner.resolution);
-        calculateMaxVel(joined, maxVel, maxAccel, reversed);
-        calculateVelocity(joined, pathPoints, maxAccel);
-        recalculateValues(joined, reversed);
+        ArrayList<ArrayList<PathPlannerTrajectory.Waypoint>> splitPaths = new ArrayList<>();
+        ArrayList<PathPlannerTrajectory.Waypoint> currentPath = new ArrayList<>();
 
-        return new ArrayList<>(joined);
+        for(int i = 0; i < pathPoints.size(); i++){
+            PathPlannerTrajectory.Waypoint w = pathPoints.get(i);
+
+            currentPath.add(w);
+
+            if(w.isReversal || i == pathPoints.size() - 1){
+                splitPaths.add(currentPath);
+                currentPath = new ArrayList<>();
+                currentPath.add(w);
+            }
+        }
+
+        ArrayList<ArrayList<PathPlannerState>> splitStates = new ArrayList<>();
+        boolean shouldReverse = reversed;
+        for(int i = 0; i < splitPaths.size(); i++){
+            ArrayList<PathPlannerState> joined = joinSplines(pathPoints, maxVel, PathPlanner.resolution);
+            calculateMaxVel(joined, maxVel, maxAccel, shouldReverse);
+            calculateVelocity(joined, pathPoints, maxAccel);
+            recalculateValues(joined, shouldReverse);
+            splitStates.add(joined);
+            shouldReverse = !shouldReverse;
+        }
+
+        ArrayList<Trajectory.State> joinedStates = new ArrayList<>();
+
+        for(int i = 0; i < splitStates.size(); i++){
+            if (i != 0){
+                double lastEndTime = joinedStates.get(joinedStates.size() - 1).timeSeconds;
+
+                for(Trajectory.State s : splitStates.get(i)){
+                    s.timeSeconds += lastEndTime;
+                }
+            }
+
+            joinedStates.addAll(splitStates.get(i));
+        }
+
+        return joinedStates;
     }
 
     private static void calculateMaxVel(List<PathPlannerState> states, double maxVel, double maxAccel, boolean reversed){
@@ -273,6 +325,36 @@ public class PathPlannerTrajectory extends Trajectory {
         return sign * (ab * bc * ac) / (4 * area);
     }
 
+    /** Assumes states have already been generated and the markers list has been populated */
+    private void calculateMarkerTimes(ArrayList<Waypoint> waypoints){
+        for(EventMarker marker : this.markers){
+            int startIndex = (int) marker.waypointRelativePos;
+            double t = marker.waypointRelativePos % 1;
+
+            if(startIndex == waypoints.size() - 1){
+                startIndex--;
+                t = 1;
+            }
+
+            Waypoint startPoint = waypoints.get((int) marker.waypointRelativePos);
+            Waypoint endPoint = waypoints.get(((int) marker.waypointRelativePos) + 1);
+
+            Translation2d markerPos = GeometryUtil.cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
+
+            // Very unoptimized, hopefullly can find a better solution
+            // However, any on the fly generation probably won't have any markers so this shouldn't be a huge issue
+            State closestState = this.getStates().get(0);
+            double closestDistance = Double.MAX_VALUE;
+            for(State state : this.getStates()){
+                if(state.poseMeters.getTranslation().getDistance(markerPos) < closestDistance){
+                    closestState = state;
+                }
+            }
+
+            marker.timeSeconds = closestState.timeSeconds;
+        }
+    }
+
     public static class PathPlannerState extends State{
         public double positionMeters = 0;
         public Rotation2d angularVelocity = new Rotation2d();
@@ -323,6 +405,18 @@ public class PathPlannerTrajectory extends Trajectory {
             this.velOverride = velOverride;
             this.holonomicRotation = holonomicRotation;
             this.isReversal = isReversal;
+        }
+    }
+
+    public static class EventMarker {
+        public String name;
+        public double timeSeconds;
+        protected double waypointRelativePos;
+
+        protected EventMarker(String name, double waypointRelativePos){
+            this.name = name;
+            this.waypointRelativePos = waypointRelativePos;
+            this.timeSeconds = 0;
         }
     }
 }

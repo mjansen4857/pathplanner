@@ -38,6 +38,24 @@ namespace pathplanner{
 
                     friend class PathPlannerTrajectory;
             };
+
+            class EventMarker{
+                public:
+                    std::string name;
+                    units::second_t time;
+                    frc::Translation2d position;
+                
+                private:
+                    double waypointRelativePos;
+
+                    EventMarker(std::string name, double waypointRelativePos){
+                        this->name = name;
+                        this->waypointRelativePos = waypointRelativePos;
+                    }
+
+                    friend class PathPlannerTrajectory;
+                    friend class PathPlanner;
+            };
         
         private:
             class Waypoint{
@@ -60,19 +78,23 @@ namespace pathplanner{
             };
 
             std::vector<PathPlannerState> states;
+            std::vector<EventMarker> markers;
 
-            std::vector<PathPlannerState> joinSplines(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, double step);
-            void calculateMaxVel(std::vector<PathPlannerState>& states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
-            void calculateVelocity(std::vector<PathPlannerState>& states, std::vector<Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel);
-            void recalculateValues(std::vector<PathPlannerState>& states, bool reversed);
-            units::meter_t calculateRadius(PathPlannerState s0, PathPlannerState s1, PathPlannerState s2);
+            static std::vector<PathPlannerState> generatePath(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
+            static std::vector<PathPlannerState> joinSplines(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, double step);
+            static void calculateMaxVel(std::vector<PathPlannerState>& states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
+            static void calculateVelocity(std::vector<PathPlannerState>& states, std::vector<Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel);
+            static void recalculateValues(std::vector<PathPlannerState>& states, bool reversed);
+            static units::meter_t calculateRadius(PathPlannerState s0, PathPlannerState s1, PathPlannerState s2);
+
+            void calculateMarkerTimes(std::vector<Waypoint> pathPoints);
 
             friend class PathPlanner;
         
         public:
-            PathPlannerTrajectory(std::vector<Waypoint> waypoints, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed);
+            PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed);
+            PathPlannerTrajectory(std::vector<PathPlannerState> states, std::vector<EventMarker> markers);
             PathPlannerTrajectory(std::vector<PathPlannerState> states);
-            PathPlannerTrajectory();
 
             /**
              * @brief Sample the path at a point in time

@@ -33,8 +33,5 @@ namespace pathplanner{
             static PathPlannerTrajectory loadPath(std::string name, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel){
                 return PathPlanner::loadPath(name, maxVel, maxAccel, false);
             }
-
-        private:
-            static PathPlannerTrajectory joinPaths(std::vector<pathplanner::PathPlannerTrajectory> paths);
     };
 }

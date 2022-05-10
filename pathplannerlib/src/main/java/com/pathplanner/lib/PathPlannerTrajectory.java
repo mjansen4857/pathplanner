@@ -336,8 +336,8 @@ public class PathPlannerTrajectory extends Trajectory {
                 t = 1;
             }
 
-            Waypoint startPoint = waypoints.get((int) marker.waypointRelativePos);
-            Waypoint endPoint = waypoints.get(((int) marker.waypointRelativePos) + 1);
+            Waypoint startPoint = waypoints.get(startIndex);
+            Waypoint endPoint = waypoints.get(startIndex + 1);
 
             Translation2d markerPos = GeometryUtil.cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
 
@@ -346,8 +346,10 @@ public class PathPlannerTrajectory extends Trajectory {
             State closestState = this.getStates().get(0);
             double closestDistance = Double.MAX_VALUE;
             for(State state : this.getStates()){
-                if(state.poseMeters.getTranslation().getDistance(markerPos) < closestDistance){
+                double distance = state.poseMeters.getTranslation().getDistance(markerPos);
+                if(distance < closestDistance){
                     closestState = state;
+                    closestDistance = distance;
                 }
             }
 

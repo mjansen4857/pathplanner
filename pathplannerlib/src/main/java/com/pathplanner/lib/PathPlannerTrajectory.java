@@ -214,7 +214,7 @@ public class PathPlannerTrajectory extends Trajectory {
             PathPlannerState now = states.get(i);
 
             if(reversed){
-                now.positionMeters *= -1;
+                now.linearPos *= -1;
                 now.velocityMetersPerSecond *= -1;
                 now.accelerationMetersPerSecondSq *= -1;
 
@@ -231,7 +231,7 @@ public class PathPlannerTrajectory extends Trajectory {
                 PathPlannerState last = states.get(i - 1);
 
                 double dt = now.timeSeconds - last.timeSeconds;
-                now.velocityMetersPerSecond = (now.positionMeters - last.positionMeters) / dt;
+                now.velocityMetersPerSecond = (now.linearPos - last.linearPos) / dt;
                 now.accelerationMetersPerSecondSq = (now.velocityMetersPerSecond - last.velocityMetersPerSecond) / dt;
 
                 now.angularVelocity = now.poseMeters.getRotation().minus(last.poseMeters.getRotation()).times(1 / dt);
@@ -274,7 +274,7 @@ public class PathPlannerTrajectory extends Trajectory {
                     PathPlannerState s1 = states.get(states.size() - 1);
                     PathPlannerState s2 = state;
                     double hypot = s1.poseMeters.getTranslation().getDistance(s2.poseMeters.getTranslation());
-                    state.positionMeters = s1.positionMeters + hypot;
+                    state.linearPos = s1.linearPos + hypot;
                     state.deltaPos = hypot;
 
                     double heading = Math.toDegrees(Math.atan2(s1.poseMeters.getY() - s2.poseMeters.getY(), s1.poseMeters.getX() - s2.poseMeters.getX())) + 180;
@@ -357,11 +357,11 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     public static class PathPlannerState extends State{
-        public double positionMeters = 0;
         public Rotation2d angularVelocity = new Rotation2d();
         public Rotation2d angularAcceleration = new Rotation2d();
         public Rotation2d holonomicRotation = new Rotation2d();
 
+        private double linearPos = 0;
         private double curveRadius = 0;
         private double deltaPos = 0;
 
@@ -376,7 +376,7 @@ public class PathPlannerTrajectory extends Trajectory {
             }
 
             lerpedState.velocityMetersPerSecond = GeometryUtil.doubleLerp(velocityMetersPerSecond, endVal.velocityMetersPerSecond, t);
-            lerpedState.positionMeters = (velocityMetersPerSecond * deltaT) + (0.5 * accelerationMetersPerSecondSq * Math.pow(deltaT, 2));
+            lerpedState.linearPos = (velocityMetersPerSecond * deltaT) + (0.5 * accelerationMetersPerSecondSq * Math.pow(deltaT, 2));
             lerpedState.accelerationMetersPerSecondSq = GeometryUtil.doubleLerp(accelerationMetersPerSecondSq, endVal.accelerationMetersPerSecondSq, t);
             Translation2d newTrans = GeometryUtil.translationLerp(poseMeters.getTranslation(), endVal.poseMeters.getTranslation(), t);
             Rotation2d newHeading = GeometryUtil.rotationLerp(poseMeters.getRotation(), endVal.poseMeters.getRotation(), t);

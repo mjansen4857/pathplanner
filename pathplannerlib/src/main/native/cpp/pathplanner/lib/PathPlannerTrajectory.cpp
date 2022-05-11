@@ -44,9 +44,9 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::gene
     bool shouldReverse = reversed;
     for(size_t i = 0; i < splitPaths.size(); i++){
         std::vector<PathPlannerState> joined = PathPlannerTrajectory::joinSplines(splitPaths[i], maxVel, PathPlanner::resolution);
-        PathPlannerTrajectory::calculateMaxVel(joined, maxVel, maxAccel, reversed);
+        PathPlannerTrajectory::calculateMaxVel(joined, maxVel, maxAccel, shouldReverse);
         PathPlannerTrajectory::calculateVelocity(joined, splitPaths[i], maxAccel);
-        PathPlannerTrajectory::recalculateValues(joined, reversed);
+        PathPlannerTrajectory::recalculateValues(joined, shouldReverse);
         splitStates.push_back(joined);
         shouldReverse = !shouldReverse;
     }

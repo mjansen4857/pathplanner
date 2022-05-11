@@ -30,6 +30,10 @@ public class PathPlannerTrajectory extends Trajectory {
         this.markers = new ArrayList<>();
     }
 
+    /**
+     * Get all of the markers in the path
+     * @return List of the markers
+     */
     public List<EventMarker> getMarkers(){
         return this.markers;
     }

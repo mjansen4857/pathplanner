@@ -111,6 +111,13 @@ namespace pathplanner{
              * @return Reference to a vector of all states
              */
             std::vector<PathPlannerState>& getStates() { return this->states; }
+
+            /**
+             * @brief Get all of the markers in the path
+             * 
+             * @return Reference to a vector of all markers
+             */
+            std::vector<EventMarker>& getMarkers() { return this->markers; }
             
             /**
              * @brief Get the total number of states in the path

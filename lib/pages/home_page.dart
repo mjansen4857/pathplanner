@@ -474,9 +474,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     for (FileSystemEntity e in pathFiles) {
       if (e.path.endsWith('.path')) {
         String json = File(e.path).readAsStringSync();
-        RobotPath p = RobotPath.fromJson(jsonDecode(json));
-        p.name = basenameWithoutExtension(e.path);
-        paths.add(p);
+        try {
+          RobotPath p = RobotPath.fromJson(jsonDecode(json));
+          p.name = basenameWithoutExtension(e.path);
+          paths.add(p);
+        } catch (e) {
+          // Path is not in correct format. Don't add it
+        }
       }
     }
 
@@ -547,7 +551,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       setState(() {
         _projectDir = Directory(projectFolder);
-        _loadPaths(_projectDir!);
+        _paths = _loadPaths(_projectDir!);
+        _currentPath = _paths[0];
       });
     }
   }

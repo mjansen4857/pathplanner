@@ -3,6 +3,7 @@ import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/editors/edit_editor.dart';
+import 'package:pathplanner/widgets/path_editor/editors/marker_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/measure_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/preview_editor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum EditorMode {
   Edit,
   Preview,
+  Markers,
   Measure,
 }
 
@@ -63,6 +65,16 @@ class _PathEditorState extends State<PathEditor> {
           savePath: widget.savePath,
           prefs: widget.prefs,
         );
+      case EditorMode.Markers:
+        return MarkerEditor(
+          widget.path,
+          widget.fieldImage,
+          widget.robotSize,
+          widget.holonomicMode,
+          savePath: widget.savePath,
+          prefs: widget.prefs,
+          key: ValueKey(widget.path),
+        );
       case EditorMode.Measure:
         return MeasureEditor(
           widget.path,
@@ -88,8 +100,8 @@ class _PathEditorState extends State<PathEditor> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Tooltip(
-                  message: 'Edit',
-                  waitDuration: Duration(milliseconds: 500),
+                  message: 'Edit Path',
+                  waitDuration: const Duration(milliseconds: 500),
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
@@ -107,14 +119,14 @@ class _PathEditorState extends State<PathEditor> {
                 VerticalDivider(width: 1),
                 Tooltip(
                   message: 'Preview',
-                  waitDuration: Duration(milliseconds: 500),
+                  waitDuration: const Duration(milliseconds: 500),
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.play_arrow),
                     onPressed: _mode == EditorMode.Preview
                         ? null
-                        : () async {
+                        : () {
                             UndoRedo.clearHistory();
                             setState(() {
                               _mode = EditorMode.Preview;
@@ -124,15 +136,33 @@ class _PathEditorState extends State<PathEditor> {
                 ),
                 VerticalDivider(width: 1),
                 Tooltip(
+                  message: 'Edit Markers',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: MaterialButton(
+                    height: 50,
+                    minWidth: 50,
+                    child: Icon(Icons.pin_drop),
+                    onPressed: _mode == EditorMode.Markers
+                        ? null
+                        : () {
+                            UndoRedo.clearHistory();
+                            setState(() {
+                              _mode = EditorMode.Markers;
+                            });
+                          },
+                  ),
+                ),
+                VerticalDivider(width: 1),
+                Tooltip(
                   message: 'Measure',
-                  waitDuration: Duration(milliseconds: 500),
+                  waitDuration: const Duration(milliseconds: 500),
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.straighten),
                     onPressed: _mode == EditorMode.Measure
                         ? null
-                        : () async {
+                        : () {
                             UndoRedo.clearHistory();
                             setState(() {
                               _mode = EditorMode.Measure;

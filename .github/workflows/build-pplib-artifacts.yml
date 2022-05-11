@@ -49,6 +49,10 @@ jobs:
         with:
           java-version: '11'
           distribution: 'microsoft'
+      
+      - name: Install roborio toolchain
+        run: ./gradlew installRoboRIOToolchain
+        working-directory: ./pathplannerlib
         
       - name: Compile and run tests
         run: ./gradlew build
@@ -78,6 +82,10 @@ jobs:
         with:
           java-version: '11'
           distribution: 'microsoft'
+      
+      - name: Install roborio toolchain
+        run: ./gradlew installRoboRIOToolchain
+        working-directory: ./pathplannerlib
         
       - name: Compile and run tests
         run: ./gradlew build

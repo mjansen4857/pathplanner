@@ -23,3 +23,17 @@ class UndoRedo {
     stack.clearHistory();
   }
 }
+
+class CustomChange<T> extends Change<T> {
+  final T _oldValue;
+  final void Function(T oldValue) _customExecute;
+
+  CustomChange(
+      this._oldValue, this._customExecute, Function(dynamic oldValue) undo)
+      : super(_oldValue, () {}, undo);
+
+  @override
+  void execute() {
+    _customExecute(_oldValue);
+  }
+}

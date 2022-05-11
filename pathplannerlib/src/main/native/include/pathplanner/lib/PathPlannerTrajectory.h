@@ -21,19 +21,43 @@ namespace pathplanner{
             class PathPlannerState{
                 public:
                     units::second_t time = 0_s;
-                    units::meter_t position = 0_m;
                     units::meters_per_second_t velocity = 0_mps;
                     units::meters_per_second_squared_t acceleration = 0_mps_sq;
                     frc::Pose2d pose;
                     units::curvature_t curvature{0.0};
                     units::radians_per_second_t angularVel;
                     units::radians_per_second_squared_t angularAccel;
-                    frc::Rotation2d holonomicRotation;
-                    PathPlannerState interpolate(PathPlannerState endVal, double t);
+                    frc::Rotation2d holonomicRotation;     
+            
+                private:
+                    units::meter_t position = 0_m;
                     units::meter_t curveRadius = 0_m;
                     units::meter_t deltaPos = 0_m;
+
+                    PathPlannerState interpolate(PathPlannerState endVal, double t);   
+
+                    friend class PathPlannerTrajectory;
             };
 
+            class EventMarker{
+                public:
+                    std::string name;
+                    units::second_t time;
+                    frc::Translation2d position;
+                
+                private:
+                    double waypointRelativePos;
+
+                    EventMarker(std::string name, double waypointRelativePos){
+                        this->name = name;
+                        this->waypointRelativePos = waypointRelativePos;
+                    }
+
+                    friend class PathPlannerTrajectory;
+                    friend class PathPlanner;
+            };
+        
+        private:
             class Waypoint{
                 public:
                     frc::Translation2d anchorPoint;
@@ -52,19 +76,26 @@ namespace pathplanner{
                         this->isReversal = isReversal;
                     }
             };
-        
-        private:
+
             std::vector<PathPlannerState> states;
-            std::vector<PathPlannerState> joinSplines(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, double step);
-            void calculateMaxVel(std::vector<PathPlannerState>& states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
-            void calculateVelocity(std::vector<PathPlannerState>& states, std::vector<Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel);
-            void recalculateValues(std::vector<PathPlannerState>& states, bool reversed);
-            units::meter_t calculateRadius(PathPlannerState s0, PathPlannerState s1, PathPlannerState s2);
+            std::vector<EventMarker> markers;
+
+            static std::vector<PathPlannerState> generatePath(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
+            static std::vector<PathPlannerState> joinSplines(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, double step);
+            static void calculateMaxVel(std::vector<PathPlannerState>& states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
+            static void calculateVelocity(std::vector<PathPlannerState>& states, std::vector<Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel);
+            static void recalculateValues(std::vector<PathPlannerState>& states, bool reversed);
+            static units::meter_t calculateRadius(PathPlannerState s0, PathPlannerState s1, PathPlannerState s2);
+
+            void calculateMarkerTimes(std::vector<Waypoint> pathPoints);
+
+            friend class PathPlanner;
         
         public:
-            PathPlannerTrajectory(std::vector<Waypoint> waypoints, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed);
+            PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed);
+            PathPlannerTrajectory(std::vector<PathPlannerState> states, std::vector<EventMarker> markers);
             PathPlannerTrajectory(std::vector<PathPlannerState> states);
-            PathPlannerTrajectory();
+            PathPlannerTrajectory(){}
 
             /**
              * @brief Sample the path at a point in time
@@ -80,6 +111,13 @@ namespace pathplanner{
              * @return Reference to a vector of all states
              */
             std::vector<PathPlannerState>& getStates() { return this->states; }
+
+            /**
+             * @brief Get all of the markers in the path
+             * 
+             * @return Reference to a vector of all markers
+             */
+            std::vector<EventMarker>& getMarkers() { return this->markers; }
             
             /**
              * @brief Get the total number of states in the path

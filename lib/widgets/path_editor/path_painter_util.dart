@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
+import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 class PathPainterUtil {
@@ -135,7 +136,68 @@ class PathPainterUtil {
       paint.style = PaintingStyle.fill;
       canvas.drawCircle(
           frontMiddle, metersToPixels(0.075, scale, fieldImage), paint);
+      paint.style = PaintingStyle.stroke;
+      paint.strokeWidth = 1;
+      paint.color = Colors.black;
+      canvas.drawCircle(
+          frontMiddle, metersToPixels(0.075, scale, fieldImage), paint);
     }
+  }
+
+  static void paintMarker(Canvas canvas, Offset location, Color color) {
+    final IconData markerIcon = Icons.location_on;
+
+    TextPainter textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      text: TextSpan(
+        text: String.fromCharCode(markerIcon.codePoint),
+        style: TextStyle(
+          fontSize: 40,
+          color: color,
+          fontFamily: markerIcon.fontFamily,
+        ),
+      ),
+    );
+
+    TextPainter textStrokePainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      text: TextSpan(
+        text: String.fromCharCode(markerIcon.codePoint),
+        style: TextStyle(
+          fontSize: 40,
+          fontFamily: markerIcon.fontFamily,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1
+            ..color = Colors.black,
+        ),
+      ),
+    );
+
+    textPainter.layout();
+    textStrokePainter.layout();
+
+    textPainter.paint(canvas, location - Offset(20, 37));
+    textStrokePainter.paint(canvas, location - Offset(20, 37));
+  }
+
+  static Offset getMarkerLocation(
+      EventMarker marker, RobotPath path, FieldImage fieldImage, double scale) {
+    int startIndex = marker.position.floor();
+    double t = marker.position % 1;
+
+    if (startIndex == path.waypoints.length - 1) {
+      startIndex--;
+      t = 1;
+    }
+    Waypoint start = path.waypoints[startIndex];
+    Waypoint end = path.waypoints[startIndex + 1];
+
+    Point markerPosMeters = GeometryUtil.cubicLerp(start.anchorPoint,
+        start.nextControl!, end.prevControl!, end.anchorPoint, t);
+
+    return PathPainterUtil.pointToPixelOffset(
+        markerPosMeters, scale, fieldImage);
   }
 
   static Offset pointToPixelOffset(

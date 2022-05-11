@@ -6,7 +6,7 @@ import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
-import 'package:pathplanner/widgets/path_editor/simple_card.dart';
+import 'package:pathplanner/widgets/path_editor/cards/simple_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MeasureEditor extends StatefulWidget {
@@ -29,11 +29,6 @@ class _MeasureEditorState extends State<MeasureEditor> {
   Point? _measureStart;
   Point? _measureEnd;
   GlobalKey _key = GlobalKey();
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +149,13 @@ class _MeasurePainter extends CustomPainter {
     } else {
       PathPainterUtil.paintDualPaths(
           path, robotSize, canvas, scale, Colors.grey[700]!, fieldImage);
+    }
+
+    for (EventMarker marker in path.markers) {
+      PathPainterUtil.paintMarker(
+          canvas,
+          PathPainterUtil.getMarkerLocation(marker, path, fieldImage, scale),
+          Colors.grey[700]!);
     }
 
     _paintWaypoints(canvas);

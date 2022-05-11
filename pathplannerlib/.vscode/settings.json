@@ -64,6 +64,9 @@
     "mutex": "cpp",
     "new": "cpp",
     "stdexcept": "cpp",
-    "typeinfo": "cpp"
-}
+    "typeinfo": "cpp",
+    "codecvt": "cpp",
+    "filesystem": "cpp",
+    "cinttypes": "cpp"
+  }
 }

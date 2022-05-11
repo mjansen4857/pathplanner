@@ -2,26 +2,102 @@
 #include "pathplanner/lib/GeometryUtil.h"
 #include "pathplanner/lib/PathPlanner.h"
 #include <math.h>
+#include <limits>
 
 using namespace pathplanner;
 
 #define PI 3.14159265358979323846
 
-PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed){
-    std::vector<PathPlannerState> joined = this->joinSplines(waypoints, maxVelocity, PathPlanner::resolution);
-    this->calculateMaxVel(joined, maxVelocity, maxAcceleration, reversed);
-    this->calculateVelocity(joined, waypoints, maxAcceleration);
-    this->recalculateValues(joined, reversed);
+PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed){
+    this->states = PathPlannerTrajectory::generatePath(waypoints, maxVelocity, maxAcceleration, reversed);
 
-    this->states = joined;
+    this->markers = markers;
+    this->calculateMarkerTimes(waypoints);
+}
+
+PathPlannerTrajectory::PathPlannerTrajectory(std::vector<PathPlannerState> states, std::vector<EventMarker> markers){
+    this->states = states;
+    this->markers = markers;
 }
 
 PathPlannerTrajectory::PathPlannerTrajectory(std::vector<PathPlannerState> states){
     this->states = states;
 }
 
-PathPlannerTrajectory::PathPlannerTrajectory(){
-    
+std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::generatePath(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){
+    std::vector<std::vector<Waypoint>> splitPaths;
+    std::vector<Waypoint> currentPath;
+
+    for(size_t i = 0; i < pathPoints.size(); i++){
+        Waypoint w = pathPoints[i];
+
+        currentPath.push_back(w);
+
+        if(w.isReversal || i == pathPoints.size() - 1){
+            splitPaths.push_back(currentPath);
+            currentPath = std::vector<Waypoint>();
+            currentPath.push_back(w);
+        }
+    }
+
+    std::vector<std::vector<PathPlannerState>> splitStates;
+    bool shouldReverse = reversed;
+    for(size_t i = 0; i < splitPaths.size(); i++){
+        std::vector<PathPlannerState> joined = PathPlannerTrajectory::joinSplines(splitPaths[i], maxVel, PathPlanner::resolution);
+        PathPlannerTrajectory::calculateMaxVel(joined, maxVel, maxAccel, shouldReverse);
+        PathPlannerTrajectory::calculateVelocity(joined, splitPaths[i], maxAccel);
+        PathPlannerTrajectory::recalculateValues(joined, shouldReverse);
+        splitStates.push_back(joined);
+        shouldReverse = !shouldReverse;
+    }
+
+    std::vector<PathPlannerState> joinedStates;
+    for(size_t i = 0; i < splitStates.size(); i++){
+        if(i != 0){
+            units::second_t lastEndTime = joinedStates[joinedStates.size() - 1].time;
+            for(PathPlannerState& state : splitStates[i]){
+                state.time += lastEndTime;
+            }
+        }
+
+        for(PathPlannerState& state : splitStates[i]){
+            joinedStates.push_back(state);
+        }
+    }
+
+    return joinedStates;
+}
+
+void PathPlannerTrajectory::calculateMarkerTimes(std::vector<Waypoint> pathPoints){
+    for(EventMarker& marker : this->markers){
+        size_t startIndex = (size_t) marker.waypointRelativePos;
+        double t = std::fmod(marker.waypointRelativePos, 1.0);
+
+        if(startIndex == pathPoints.size() - 1){
+            startIndex--;
+            t = 1.0;
+        }
+
+        Waypoint startPoint = pathPoints[startIndex];
+        Waypoint endPoint = pathPoints[startIndex + 1];
+
+        frc::Translation2d markerPos = GeometryUtil::cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
+
+        // Very unoptimized, hopefully can find a better solution
+        // However, any on the fly generation probably won't have any markers so this shouldn't be a huge issue
+        PathPlannerState closestState = this->getStates()[0];
+        double closestDistance = std::numeric_limits<double>::max();
+        for(PathPlannerState state : this->getStates()){
+            double distance = state.pose.Translation().Distance(markerPos)();
+            if(distance < closestDistance){
+                closestState = state;
+                closestDistance = distance;
+            }
+        }
+
+        marker.time = closestState.time;
+        marker.position = markerPos;
+    }
 }
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::joinSplines(std::vector<PathPlannerTrajectory::Waypoint> pathPoints, units::meters_per_second_t maxVel, double step){

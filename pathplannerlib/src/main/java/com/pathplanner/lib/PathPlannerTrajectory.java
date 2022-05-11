@@ -9,12 +9,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
-    protected PathPlannerTrajectory(ArrayList<Waypoint> pathPoints, double maxVel, double maxAccel, boolean reversed){
+    private final List<EventMarker> markers;
+
+    protected PathPlannerTrajectory(ArrayList<Waypoint> pathPoints, ArrayList<EventMarker> markers, double maxVel, double maxAccel, boolean reversed){
         super(generatePath(pathPoints, maxVel, maxAccel, reversed));
+
+        this.markers = markers;
+        this.calculateMarkerTimes(pathPoints);
+    }
+
+    protected PathPlannerTrajectory(List<State> states, ArrayList<EventMarker> markers){
+        super(states);
+
+        this.markers = markers;
     }
 
     protected PathPlannerTrajectory(List<State> states){
         super(states);
+
+        this.markers = new ArrayList<>();
+    }
+
+    /**
+     * Get all of the markers in the path
+     * @return List of the markers
+     */
+    public List<EventMarker> getMarkers(){
+        return this.markers;
     }
 
     /**
@@ -74,12 +95,47 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     private static List<State> generatePath(ArrayList<Waypoint> pathPoints, double maxVel, double maxAccel, boolean reversed){
-        List<PathPlannerState> joined = joinSplines(pathPoints, maxVel, PathPlanner.resolution);
-        calculateMaxVel(joined, maxVel, maxAccel, reversed);
-        calculateVelocity(joined, pathPoints, maxAccel);
-        recalculateValues(joined, reversed);
+        ArrayList<ArrayList<PathPlannerTrajectory.Waypoint>> splitPaths = new ArrayList<>();
+        ArrayList<PathPlannerTrajectory.Waypoint> currentPath = new ArrayList<>();
 
-        return new ArrayList<>(joined);
+        for(int i = 0; i < pathPoints.size(); i++){
+            PathPlannerTrajectory.Waypoint w = pathPoints.get(i);
+
+            currentPath.add(w);
+
+            if(w.isReversal || i == pathPoints.size() - 1){
+                splitPaths.add(currentPath);
+                currentPath = new ArrayList<>();
+                currentPath.add(w);
+            }
+        }
+
+        ArrayList<ArrayList<PathPlannerState>> splitStates = new ArrayList<>();
+        boolean shouldReverse = reversed;
+        for(int i = 0; i < splitPaths.size(); i++){
+            ArrayList<PathPlannerState> joined = joinSplines(splitPaths.get(i), maxVel, PathPlanner.resolution);
+            calculateMaxVel(joined, maxVel, maxAccel, shouldReverse);
+            calculateVelocity(joined, splitPaths.get(i), maxAccel);
+            recalculateValues(joined, shouldReverse);
+            splitStates.add(joined);
+            shouldReverse = !shouldReverse;
+        }
+
+        ArrayList<Trajectory.State> joinedStates = new ArrayList<>();
+
+        for(int i = 0; i < splitStates.size(); i++){
+            if (i != 0){
+                double lastEndTime = joinedStates.get(joinedStates.size() - 1).timeSeconds;
+
+                for(Trajectory.State s : splitStates.get(i)){
+                    s.timeSeconds += lastEndTime;
+                }
+            }
+
+            joinedStates.addAll(splitStates.get(i));
+        }
+
+        return joinedStates;
     }
 
     private static void calculateMaxVel(List<PathPlannerState> states, double maxVel, double maxAccel, boolean reversed){
@@ -162,7 +218,7 @@ public class PathPlannerTrajectory extends Trajectory {
             PathPlannerState now = states.get(i);
 
             if(reversed){
-                now.positionMeters *= -1;
+                now.linearPos *= -1;
                 now.velocityMetersPerSecond *= -1;
                 now.accelerationMetersPerSecondSq *= -1;
 
@@ -179,7 +235,7 @@ public class PathPlannerTrajectory extends Trajectory {
                 PathPlannerState last = states.get(i - 1);
 
                 double dt = now.timeSeconds - last.timeSeconds;
-                now.velocityMetersPerSecond = (now.positionMeters - last.positionMeters) / dt;
+                now.velocityMetersPerSecond = (now.linearPos - last.linearPos) / dt;
                 now.accelerationMetersPerSecondSq = (now.velocityMetersPerSecond - last.velocityMetersPerSecond) / dt;
 
                 now.angularVelocity = now.poseMeters.getRotation().minus(last.poseMeters.getRotation()).times(1 / dt);
@@ -222,7 +278,7 @@ public class PathPlannerTrajectory extends Trajectory {
                     PathPlannerState s1 = states.get(states.size() - 1);
                     PathPlannerState s2 = state;
                     double hypot = s1.poseMeters.getTranslation().getDistance(s2.poseMeters.getTranslation());
-                    state.positionMeters = s1.positionMeters + hypot;
+                    state.linearPos = s1.linearPos + hypot;
                     state.deltaPos = hypot;
 
                     double heading = Math.toDegrees(Math.atan2(s1.poseMeters.getY() - s2.poseMeters.getY(), s1.poseMeters.getX() - s2.poseMeters.getX())) + 180;
@@ -273,12 +329,45 @@ public class PathPlannerTrajectory extends Trajectory {
         return sign * (ab * bc * ac) / (4 * area);
     }
 
+    /** Assumes states have already been generated and the markers list has been populated */
+    private void calculateMarkerTimes(ArrayList<Waypoint> waypoints){
+        for(EventMarker marker : this.markers){
+            int startIndex = (int) marker.waypointRelativePos;
+            double t = marker.waypointRelativePos % 1;
+
+            if(startIndex == waypoints.size() - 1){
+                startIndex--;
+                t = 1;
+            }
+
+            Waypoint startPoint = waypoints.get(startIndex);
+            Waypoint endPoint = waypoints.get(startIndex + 1);
+
+            Translation2d markerPos = GeometryUtil.cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
+
+            // Very unoptimized, hopefullly can find a better solution
+            // However, any on the fly generation probably won't have any markers so this shouldn't be a huge issue
+            State closestState = this.getStates().get(0);
+            double closestDistance = Double.MAX_VALUE;
+            for(State state : this.getStates()){
+                double distance = state.poseMeters.getTranslation().getDistance(markerPos);
+                if(distance < closestDistance){
+                    closestState = state;
+                    closestDistance = distance;
+                }
+            }
+
+            marker.timeSeconds = closestState.timeSeconds;
+            marker.positionMeters = markerPos;
+        }
+    }
+
     public static class PathPlannerState extends State{
-        public double positionMeters = 0;
         public Rotation2d angularVelocity = new Rotation2d();
         public Rotation2d angularAcceleration = new Rotation2d();
         public Rotation2d holonomicRotation = new Rotation2d();
 
+        private double linearPos = 0;
         private double curveRadius = 0;
         private double deltaPos = 0;
 
@@ -293,7 +382,7 @@ public class PathPlannerTrajectory extends Trajectory {
             }
 
             lerpedState.velocityMetersPerSecond = GeometryUtil.doubleLerp(velocityMetersPerSecond, endVal.velocityMetersPerSecond, t);
-            lerpedState.positionMeters = (velocityMetersPerSecond * deltaT) + (0.5 * accelerationMetersPerSecondSq * Math.pow(deltaT, 2));
+            lerpedState.linearPos = (velocityMetersPerSecond * deltaT) + (0.5 * accelerationMetersPerSecondSq * Math.pow(deltaT, 2));
             lerpedState.accelerationMetersPerSecondSq = GeometryUtil.doubleLerp(accelerationMetersPerSecondSq, endVal.accelerationMetersPerSecondSq, t);
             Translation2d newTrans = GeometryUtil.translationLerp(poseMeters.getTranslation(), endVal.poseMeters.getTranslation(), t);
             Rotation2d newHeading = GeometryUtil.rotationLerp(poseMeters.getRotation(), endVal.poseMeters.getRotation(), t);
@@ -323,6 +412,18 @@ public class PathPlannerTrajectory extends Trajectory {
             this.velOverride = velOverride;
             this.holonomicRotation = holonomicRotation;
             this.isReversal = isReversal;
+        }
+    }
+
+    public static class EventMarker {
+        public String name;
+        public double timeSeconds;
+        public Translation2d positionMeters;
+        protected double waypointRelativePos;
+
+        protected EventMarker(String name, double waypointRelativePos){
+            this.name = name;
+            this.waypointRelativePos = waypointRelativePos;
         }
     }
 }

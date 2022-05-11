@@ -109,9 +109,9 @@ public class PathPlannerTrajectory extends Trajectory {
         ArrayList<ArrayList<PathPlannerState>> splitStates = new ArrayList<>();
         boolean shouldReverse = reversed;
         for(int i = 0; i < splitPaths.size(); i++){
-            ArrayList<PathPlannerState> joined = joinSplines(pathPoints, maxVel, PathPlanner.resolution);
+            ArrayList<PathPlannerState> joined = joinSplines(splitPaths.get(i), maxVel, PathPlanner.resolution);
             calculateMaxVel(joined, maxVel, maxAccel, shouldReverse);
-            calculateVelocity(joined, pathPoints, maxAccel);
+            calculateVelocity(joined, splitPaths.get(i), maxAccel);
             recalculateValues(joined, shouldReverse);
             splitStates.add(joined);
             shouldReverse = !shouldReverse;

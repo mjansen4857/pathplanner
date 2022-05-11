@@ -43,25 +43,25 @@ public class PathPlanner {
                 JSONObject jsonWaypoint = (JSONObject) waypoint;
 
                 JSONObject jsonAnchor = (JSONObject) jsonWaypoint.get("anchorPoint");
-                Translation2d anchorPoint = new Translation2d((double) jsonAnchor.get("x"), (double) jsonAnchor.get("y"));
+                Translation2d anchorPoint = new Translation2d(((Number) jsonAnchor.get("x")).doubleValue(), ((Number) jsonAnchor.get("y")).doubleValue());
 
                 JSONObject jsonPrevControl = (JSONObject) jsonWaypoint.get("prevControl");
                 Translation2d prevControl = null;
                 if (jsonPrevControl != null) {
-                    prevControl = new Translation2d((double) jsonPrevControl.get("x"), (double) jsonPrevControl.get("y"));
+                    prevControl = new Translation2d(((Number) jsonPrevControl.get("x")).doubleValue(), ((Number) jsonPrevControl.get("y")).doubleValue());
                 }
 
                 JSONObject jsonNextControl = (JSONObject) jsonWaypoint.get("nextControl");
                 Translation2d nextControl = null;
                 if (jsonNextControl != null) {
-                    nextControl = new Translation2d((double) jsonNextControl.get("x"), (double) jsonNextControl.get("y"));
+                    nextControl = new Translation2d(((Number) jsonNextControl.get("x")).doubleValue(), ((Number) jsonNextControl.get("y")).doubleValue());
                 }
 
-                Rotation2d holonomicAngle = Rotation2d.fromDegrees((double) jsonWaypoint.get("holonomicAngle"));
+                Rotation2d holonomicAngle = Rotation2d.fromDegrees(((Number) jsonWaypoint.get("holonomicAngle")).doubleValue());
                 boolean isReversal = (boolean) jsonWaypoint.get("isReversal");
                 double velOverride = -1;
                 if (jsonWaypoint.get("velOverride") != null) {
-                    velOverride = (double) jsonWaypoint.get("velOverride");
+                    velOverride = ((Number) jsonWaypoint.get("velOverride")).doubleValue();
                 }
 
                 waypoints.add(new PathPlannerTrajectory.Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal));
@@ -75,7 +75,7 @@ public class PathPlanner {
                 for(Object marker : jsonMarkers){
                     JSONObject jsonMarker = (JSONObject) marker;
 
-                    markers.add(new EventMarker((String) jsonMarker.get("name"), (double) jsonMarker.get("position")));
+                    markers.add(new EventMarker((String) jsonMarker.get("name"), ((Number) jsonMarker.get("position")).doubleValue()));
                 }
             }
 

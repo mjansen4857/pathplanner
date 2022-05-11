@@ -551,7 +551,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       setState(() {
         _projectDir = Directory(projectFolder);
-        _loadPaths(_projectDir!);
+        _paths = _loadPaths(_projectDir!);
+        _currentPath = _paths[0];
       });
     }
   }

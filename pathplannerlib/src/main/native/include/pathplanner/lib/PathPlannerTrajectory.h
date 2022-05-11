@@ -95,6 +95,7 @@ namespace pathplanner{
             PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed);
             PathPlannerTrajectory(std::vector<PathPlannerState> states, std::vector<EventMarker> markers);
             PathPlannerTrajectory(std::vector<PathPlannerState> states);
+            PathPlannerTrajectory(){}
 
             /**
              * @brief Sample the path at a point in time

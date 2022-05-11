@@ -274,6 +274,11 @@ class Trajectory {
         }
 
         double holonomicRot = startPoint.holonomicAngle + (deltaRot * t);
+        if (holonomicRot > 180) {
+          holonomicRot -= 360;
+        } else if (holonomicRot < -180) {
+          holonomicRot += 360;
+        }
         state.holonomicRotation = holonomicRot;
 
         if (i > 0 || t > 0) {

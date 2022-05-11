@@ -271,7 +271,13 @@ public class PathPlannerTrajectory extends Trajectory {
                 }else if(deltaRot < -180){
                     deltaRot += 360;
                 }
+
                 double holonomicRot = startPoint.holonomicRotation.getDegrees() + (t * deltaRot);
+                if(holonomicRot > 180){
+                    holonomicRot -= 360;
+                }else if(holonomicRot < -180){
+                    holonomicRot += 360;
+                }
                 state.holonomicRotation = Rotation2d.fromDegrees(holonomicRot);
 
                 if(i > 0 || t > 0){

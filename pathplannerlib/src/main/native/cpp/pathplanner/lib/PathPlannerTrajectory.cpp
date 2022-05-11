@@ -125,7 +125,13 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
                    deltaRot += 360_deg;
                }
            }
+           
            units::degree_t holonomicRot = startPoint.holonomicRotation.Degrees() + (t * deltaRot);
+           if(holonomicRot > 180_deg){
+               holonomicRot -= 360_deg;
+           }else if(holonomicRot < -180_deg){
+               holonomicRot += 360_deg;
+           }
            state.holonomicRotation = frc::Rotation2d(holonomicRot);
 
            if(i > 0 || t > 0){

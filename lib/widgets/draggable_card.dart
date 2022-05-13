@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,6 +51,8 @@ class _DraggableCardState extends State<DraggableCard> {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Positioned(
       top: _cardPosition.top,
       left: _cardPosition.left,
@@ -102,7 +105,6 @@ class _DraggableCardState extends State<DraggableCard> {
           child: Container(
             width: widget.width,
             child: Card(
-              color: Theme.of(context).colorScheme.surfaceVariant,
               child: Padding(
                 padding: EdgeInsets.all(10),
                 child: widget.child,

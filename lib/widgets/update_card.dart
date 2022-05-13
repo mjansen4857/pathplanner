@@ -48,6 +48,8 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Visibility(
       visible: _updateAvailable,
       child: SlideTransition(
@@ -57,39 +59,31 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              color: Colors.white.withOpacity(0.13),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Update Available!',
-                          style: TextStyle(fontSize: 20),
-                        ),
-                        SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () async {
-                            Uri url = Uri.parse(_releaseURL);
-                            if (await canLaunchUrl(url)) {
-                              launchUrl(url);
-                            }
-                          },
-                          child: Text(
-                            'Update',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      ],
+              child: Padding(
+                padding: EdgeInsets.all(10.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Update Available!',
+                      style:
+                          TextStyle(fontSize: 18, color: colorScheme.onSurface),
                     ),
-                  ),
+                    SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        primary: colorScheme.primaryContainer,
+                        onPrimary: colorScheme.onPrimaryContainer,
+                      ),
+                      onPressed: () async {
+                        Uri url = Uri.parse(_releaseURL);
+                        if (await canLaunchUrl(url)) {
+                          launchUrl(url);
+                        }
+                      },
+                      child: Text('Update'),
+                    ),
+                  ],
                 ),
               ),
             ),

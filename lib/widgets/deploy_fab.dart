@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:process_run/shell.dart';
 
 class DeployFAB extends StatelessWidget {
-  final Directory projectDir;
+  final Directory? projectDir;
 
   const DeployFAB({required this.projectDir, super.key});
 
@@ -18,7 +18,7 @@ class DeployFAB extends StatelessWidget {
         backgroundColor: Colors.grey[900],
         foregroundColor: Colors.green,
         onPressed: () async {
-          Shell shell = Shell().cd(projectDir.path);
+          Shell shell = Shell().cd(projectDir!.path);
           _showSnackbar(context, 'Deploying robot code...',
               duration: Duration(minutes: 5));
           try {

@@ -82,7 +82,7 @@ class _WaypointCardState extends State<WaypointCard> {
           child: GestureDetector(
             onPanStart: (details) {},
             child: IconButton(
-              color: colorScheme.onSurfaceVariant,
+              color: colorScheme.onSurface,
               tooltip: widget.waypoint!.isLocked
                   ? 'Unlock Waypoint'
                   : 'Lock Waypoint',
@@ -103,7 +103,7 @@ class _WaypointCardState extends State<WaypointCard> {
         ),
         Text(
           widget.label ?? 'Waypoint Label',
-          style: TextStyle(color: colorScheme.onSurfaceVariant),
+          style: TextStyle(color: colorScheme.onSurface),
         ),
         SizedBox(
           height: 30,
@@ -114,7 +114,7 @@ class _WaypointCardState extends State<WaypointCard> {
             child: GestureDetector(
               onPanStart: (details) {},
               child: IconButton(
-                color: colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurface,
                 tooltip: 'Delete Waypoint',
                 icon: Icon(
                   Icons.delete,
@@ -244,8 +244,8 @@ class _WaypointCardState extends State<WaypointCard> {
         children: [
           Checkbox(
             value: widget.waypoint!.isReversal,
-            activeColor: colorScheme.primary,
-            checkColor: colorScheme.onPrimary,
+            activeColor: colorScheme.primaryContainer,
+            checkColor: colorScheme.onPrimaryContainer,
             onChanged: (val) {
               Waypoint? wRef = widget.waypoint;
               UndoRedo.addChange(_cardChange(
@@ -256,7 +256,7 @@ class _WaypointCardState extends State<WaypointCard> {
           ),
           Text(
             'Reversal',
-            style: TextStyle(color: colorScheme.onSurfaceVariant),
+            style: TextStyle(color: colorScheme.onSurface),
           ),
         ],
       );
@@ -288,7 +288,7 @@ class _WaypointCardState extends State<WaypointCard> {
           FilteringTextInputFormatter.allow(
               RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
         ],
-        style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+        style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
         decoration: InputDecoration(
           contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
           labelText: label,

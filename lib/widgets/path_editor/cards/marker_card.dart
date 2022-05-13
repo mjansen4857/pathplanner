@@ -79,7 +79,7 @@ class _MarkerCardState extends State<MarkerCard> {
         ),
         Text(
           widget.marker == null ? 'New Marker' : 'Edit Marker',
-          style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
+          style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
         ),
         SizedBox(
           width: 30,
@@ -93,7 +93,7 @@ class _MarkerCardState extends State<MarkerCard> {
                 tooltip: 'Delete Marker',
                 icon: Icon(
                   Icons.delete,
-                  color: colorScheme.onSurfaceVariant,
+                  color: colorScheme.onSurface,
                 ),
                 onPressed: widget.onDelete,
                 splashRadius: 20,
@@ -124,7 +124,7 @@ class _MarkerCardState extends State<MarkerCard> {
               }
             },
             controller: _nameController,
-            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
             decoration: InputDecoration(
               contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
               labelText: 'Marker Name',
@@ -165,15 +165,14 @@ class _MarkerCardState extends State<MarkerCard> {
           max: widget.maxMarkerPos,
           decimalPlaces: 2,
           defaultValue: _sliderPos,
-          textFieldStyle:
-              TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+          textFieldStyle: TextStyle(fontSize: 14, color: colorScheme.onSurface),
           inputDecoration: InputDecoration(
             contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
             label: Text('Position'),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
           ),
-          inactiveSliderColor: colorScheme.onSurfaceVariant,
-          activeSliderColor: colorScheme.primary,
+          inactiveSliderColor: colorScheme.secondaryContainer,
+          activeSliderColor: colorScheme.primaryContainer,
         ),
       ),
     );
@@ -194,8 +193,8 @@ class _MarkerCardState extends State<MarkerCard> {
               }
             },
             style: ElevatedButton.styleFrom(
-              primary: colorScheme.primary,
-              onPrimary: colorScheme.onPrimary,
+              primary: colorScheme.primaryContainer,
+              onPrimary: colorScheme.onPrimaryContainer,
             ),
             label: const Text('Add Marker'),
             icon: const Icon(Icons.add),

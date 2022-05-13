@@ -97,6 +97,8 @@ class _PathEditorState extends State<PathEditor> {
   }
 
   Widget _buildToolbar(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
@@ -104,7 +106,6 @@ class _PathEditorState extends State<PathEditor> {
         child: Container(
           height: 48,
           child: Card(
-            color: Theme.of(context).colorScheme.surfaceVariant,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -115,7 +116,7 @@ class _PathEditorState extends State<PathEditor> {
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.edit),
-                    textColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    textColor: colorScheme.onSurface,
                     onPressed: _mode == EditorMode.Edit
                         ? null
                         : () {
@@ -134,7 +135,7 @@ class _PathEditorState extends State<PathEditor> {
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.play_arrow),
-                    textColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    textColor: colorScheme.onSurface,
                     onPressed: _mode == EditorMode.Preview
                         ? null
                         : () {
@@ -153,7 +154,7 @@ class _PathEditorState extends State<PathEditor> {
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.pin_drop),
-                    textColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    textColor: colorScheme.onSurface,
                     onPressed: _mode == EditorMode.Markers
                         ? null
                         : () {
@@ -172,7 +173,7 @@ class _PathEditorState extends State<PathEditor> {
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.straighten),
-                    textColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    textColor: colorScheme.onSurface,
                     onPressed: _mode == EditorMode.Measure
                         ? null
                         : () {

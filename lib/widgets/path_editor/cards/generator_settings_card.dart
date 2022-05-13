@@ -41,7 +41,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
             children: [
               Text(
                 'Generator Settings',
-                style: TextStyle(color: colorScheme.onSurfaceVariant),
+                style: TextStyle(color: colorScheme.onSurface),
               ),
             ],
           ),
@@ -97,8 +97,8 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                       children: [
                         Checkbox(
                           value: widget.path.isReversed ?? false,
-                          activeColor: colorScheme.primary,
-                          checkColor: colorScheme.onPrimary,
+                          activeColor: colorScheme.primaryContainer,
+                          checkColor: colorScheme.onPrimaryContainer,
                           onChanged: (val) {
                             setState(() {
                               widget.path.isReversed = val;
@@ -109,7 +109,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                         SizedBox(width: 4),
                         Text(
                           'Reversed',
-                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                          style: TextStyle(color: colorScheme.onSurface),
                         ),
                         SizedBox(width: 12),
                       ],
@@ -148,7 +148,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'(^(-?)\d*\.?\d*)')),
         ],
-        style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+        style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
         decoration: InputDecoration(
           contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
           labelText: label,

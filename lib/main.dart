@@ -16,7 +16,7 @@ class PathPlanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = ThemeData(
       brightness: Brightness.dark,
-      colorSchemeSeed: Colors.blue,
+      colorSchemeSeed: Colors.indigo,
       useMaterial3: true,
     );
 

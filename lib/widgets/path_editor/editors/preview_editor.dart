@@ -54,6 +54,8 @@ class _PreviewEditorState extends State<PreviewEditor>
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Stack(
       key: _key,
       children: [
@@ -85,7 +87,7 @@ class _PreviewEditorState extends State<PreviewEditor>
           ),
         ),
         _buildGeneratorSettingsCard(),
-        _buildRuntimeCard(context),
+        _buildRuntimeCard(colorScheme),
       ],
     );
   }
@@ -115,12 +117,12 @@ class _PreviewEditorState extends State<PreviewEditor>
     );
   }
 
-  Widget _buildRuntimeCard(BuildContext context) {
+  Widget _buildRuntimeCard(ColorScheme colorScheme) {
     return SimpleCard(
       stackKey: _key,
       child: Text(
         'Total Runtime: ${widget.path.generatedTrajectory.getRuntime().toStringAsFixed(2)}s',
-        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        style: TextStyle(color: colorScheme.onSurface),
       ),
       prefs: widget.prefs,
       key: _pathRuntimeKey,

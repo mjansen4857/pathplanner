@@ -69,6 +69,8 @@ class _SettingsTileState extends State<SettingsTile>
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return ExpansionTile(
       leading: Icon(
         Icons.settings,
@@ -125,7 +127,7 @@ class _SettingsTileState extends State<SettingsTile>
         buildFieldImageDropdown(context),
         SwitchListTile(
           value: _holonomic,
-          activeColor: Theme.of(context).colorScheme.primary,
+          activeColor: colorScheme.primary,
           contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
           onChanged: (val) {
             _prefs!.setBool('holonomicMode', val);
@@ -183,6 +185,8 @@ class _SettingsTileState extends State<SettingsTile>
 
   Widget buildTextField(BuildContext context, String label,
       ValueChanged? onSubmitted, String text) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Container(
@@ -202,19 +206,16 @@ class _SettingsTileState extends State<SettingsTile>
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
           ],
-          style: TextStyle(
-              fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
           decoration: InputDecoration(
             contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
             labelText: label,
             filled: true,
-            fillColor: Theme.of(context).colorScheme.surface,
+            fillColor: colorScheme.surface,
             border: OutlineInputBorder(
-                borderSide:
-                    BorderSide(color: Theme.of(context).colorScheme.outline)),
+                borderSide: BorderSide(color: colorScheme.outline)),
             focusedBorder: OutlineInputBorder(
-                borderSide:
-                    BorderSide(color: Theme.of(context).colorScheme.outline)),
+                borderSide: BorderSide(color: colorScheme.outline)),
             labelStyle: TextStyle(color: Colors.grey),
           ),
         ),
@@ -223,6 +224,8 @@ class _SettingsTileState extends State<SettingsTile>
   }
 
   Widget buildFieldImageDropdown(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: EdgeInsets.fromLTRB(18, 0, 24, 0),
       child: Container(
@@ -239,25 +242,22 @@ class _SettingsTileState extends State<SettingsTile>
               child: Container(
                 width: 168,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
+                  color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(4),
-                  border:
-                      Border.all(color: Theme.of(context).colorScheme.outline),
+                  border: Border.all(color: colorScheme.outline),
                 ),
                 child: ExcludeFocus(
                   child: ButtonTheme(
                     alignedDropdown: true,
                     child: DropdownButton<FieldImage?>(
-                      dropdownColor:
-                          Theme.of(context).colorScheme.surfaceVariant,
+                      dropdownColor: colorScheme.surfaceVariant,
                       borderRadius: BorderRadius.circular(8),
                       value: widget.selectedField,
                       isExpanded: true,
                       underline: Container(),
                       icon: Icon(Icons.arrow_drop_down),
-                      style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).colorScheme.onSurface),
+                      style:
+                          TextStyle(fontSize: 14, color: colorScheme.onSurface),
                       onChanged: (FieldImage? newValue) {
                         if (newValue != null) {
                           widget.onFieldSelected(newValue);

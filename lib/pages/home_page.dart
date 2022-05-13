@@ -151,12 +151,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       floatingActionButton: Visibility(
         visible:
             _projectDir != null && (!widget.appStoreBuild && !Platform.isMacOS),
-        child: DeployFAB(projectDir: _projectDir!),
+        child: DeployFAB(projectDir: _projectDir),
       ),
     );
   }
 
   Widget _buildDrawer(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Drawer(
       child: Column(
         children: [
@@ -168,8 +169,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       alignment: FractionalOffset.bottomRight,
                       child: Text(
                         'v' + widget.appVersion,
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface),
+                        style: TextStyle(color: colorScheme.onSurface),
                       )),
                 ),
                 Center(
@@ -191,8 +191,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
                       ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            onPrimary: Theme.of(context).colorScheme.onPrimary,
-                            primary: Theme.of(context).colorScheme.primary,
+                            onPrimary: colorScheme.onPrimaryContainer,
+                            primary: colorScheme.primaryContainer,
                           ),
                           onPressed: () {
                             _openProjectDialog(context);
@@ -209,23 +209,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           Expanded(
-            child: ReorderableListView(
+            child: ListView(
               padding: EdgeInsets.zero,
-              onReorder: (int oldIndex, int newIndex) {
-                setState(() {
-                  if (oldIndex < newIndex) {
-                    newIndex -= 1;
-                  }
-                  final RobotPath path = _paths.removeAt(oldIndex);
-                  _paths.insert(newIndex, path);
-
-                  List<String> pathOrder = [];
-                  for (RobotPath path in _paths) {
-                    pathOrder.add(path.name);
-                  }
-                  _prefs.setStringList('pathOrder', pathOrder);
-                });
-              },
               children: [
                 for (int i = 0; i < _paths.length; i++)
                   PathTile(
@@ -478,33 +463,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     }
 
-    List<String>? pathOrder = _prefs.getStringList('pathOrder');
-    List<String> loadedOrder = [];
-    for (RobotPath path in paths) {
-      loadedOrder.add(path.name);
-    }
-
-    List<RobotPath> orderedPaths = [];
-    if (pathOrder != null) {
-      for (String name in pathOrder) {
-        int loadedIndex = loadedOrder.indexOf(name);
-        if (loadedIndex != -1) {
-          loadedOrder.removeAt(loadedIndex);
-          orderedPaths.add(paths.removeAt(loadedIndex));
-        }
-      }
-      for (RobotPath path in paths) {
-        orderedPaths.add(path);
-      }
-    } else {
-      orderedPaths = paths;
-    }
-
-    if (orderedPaths.length == 0) {
-      orderedPaths.add(RobotPath.defaultPath());
-    }
-
-    return orderedPaths;
+    return paths;
   }
 
   Directory _getPathsDir(Directory projectDir) {

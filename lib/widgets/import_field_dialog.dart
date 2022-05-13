@@ -8,7 +8,7 @@ import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 class ImportFieldDialog extends StatefulWidget {
   final Function(String name, double pixelsPerMeter, File imageFile) onImport;
 
-  ImportFieldDialog(this.onImport, {Key? key}) : super(key: key);
+  ImportFieldDialog({required this.onImport, super.key});
 
   @override
   State<ImportFieldDialog> createState() => _ImportFieldDialogState();

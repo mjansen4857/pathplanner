@@ -6,22 +6,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MarkerCard extends StatefulWidget {
   final GlobalKey stackKey;
-  final SharedPreferences? prefs;
+  final SharedPreferences prefs;
   final EventMarker? marker;
   final double maxMarkerPos;
-  final VoidCallback? onDelete;
-  final void Function(EventMarker newMarker)? onAdd;
-  final void Function(EventMarker oldMarker)? onEdited;
+  final VoidCallback onDelete;
+  final void Function(EventMarker newMarker) onAdd;
+  final void Function(EventMarker oldMarker) onEdited;
 
-  const MarkerCard(this.stackKey,
-      {this.prefs,
+  const MarkerCard(
+      {required this.stackKey,
+      required this.prefs,
       this.marker,
       this.maxMarkerPos = 1,
-      this.onDelete,
-      this.onAdd,
-      this.onEdited,
-      Key? key})
-      : super(key: key);
+      required this.onDelete,
+      required this.onAdd,
+      required this.onEdited,
+      super.key});
 
   @override
   State<MarkerCard> createState() => _MarkerCardState();
@@ -51,7 +51,7 @@ class _MarkerCardState extends State<MarkerCard> {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return DraggableCard(
-      widget.stackKey,
+      stackKey: widget.stackKey,
       defaultPosition: CardPosition(top: 0, right: 0),
       prefsKey: 'markerCardPos',
       prefs: widget.prefs,
@@ -117,10 +117,10 @@ class _MarkerCardState extends State<MarkerCard> {
           height: 35,
           child: TextField(
             onSubmitted: (value) {
-              if (widget.onEdited != null && widget.marker != null) {
+              if (widget.marker != null) {
                 _oldMarker = widget.marker!.clone();
                 widget.marker!.name = value;
-                widget.onEdited!.call(_oldMarker!);
+                widget.onEdited(_oldMarker!);
               }
             },
             controller: _nameController,
@@ -156,8 +156,8 @@ class _MarkerCardState extends State<MarkerCard> {
             });
           },
           onChangeEnd: (value) {
-            if (widget.onEdited != null && widget.marker != null) {
-              widget.onEdited!.call(_oldMarker!);
+            if (widget.marker != null) {
+              widget.onEdited(_oldMarker!);
             }
             _oldMarker = null;
           },
@@ -189,9 +189,8 @@ class _MarkerCardState extends State<MarkerCard> {
           padding: const EdgeInsets.only(top: 8.0),
           child: ElevatedButton.icon(
             onPressed: () {
-              if (widget.onAdd != null && widget.marker == null) {
-                widget.onAdd!
-                    .call(EventMarker(_sliderPos, _nameController.text));
+              if (widget.marker == null) {
+                widget.onAdd(EventMarker(_sliderPos, _nameController.text));
               }
             },
             style: ElevatedButton.styleFrom(

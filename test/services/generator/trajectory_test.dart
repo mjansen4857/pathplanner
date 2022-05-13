@@ -20,7 +20,8 @@ void main() {
           anchorPoint: Point(3.0, 5.0),
         ),
       ];
-      RobotPath path = RobotPath(waypoints, maxVelocity: 8, maxAcceleration: 5);
+      RobotPath path =
+          RobotPath(waypoints: waypoints, maxVelocity: 8, maxAcceleration: 5);
 
       Trajectory traj = await Trajectory.generateFullTrajectory(path);
 
@@ -43,7 +44,8 @@ void main() {
           anchorPoint: Point(5.0, 3.0),
         ),
       ];
-      RobotPath path = RobotPath(waypoints, maxVelocity: 8, maxAcceleration: 5);
+      RobotPath path =
+          RobotPath(waypoints: waypoints, maxVelocity: 8, maxAcceleration: 5);
 
       Trajectory traj = await Trajectory.generateFullTrajectory(path);
 

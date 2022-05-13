@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,18 +9,18 @@ class DraggableCard extends StatefulWidget {
   final Widget? child;
   final double width;
   final CardPosition defaultPosition;
-  final String? prefsKey;
+  final String prefsKey;
   final GlobalKey stackKey;
-  final SharedPreferences? prefs;
+  final SharedPreferences prefs;
 
-  DraggableCard(this.stackKey,
-      {this.child,
+  DraggableCard(
+      {required this.stackKey,
+      this.child,
       this.width = 250,
       this.defaultPosition = const CardPosition(),
-      this.prefsKey,
-      this.prefs,
-      Key? key})
-      : super(key: key);
+      required this.prefsKey,
+      required this.prefs,
+      super.key});
 
   @override
   State<DraggableCard> createState() => _DraggableCardState();
@@ -36,18 +35,16 @@ class _DraggableCardState extends State<DraggableCard> {
   void initState() {
     super.initState();
 
-    if (widget.prefsKey != null && widget.prefs != null) {
-      String? cardJson = widget.prefs!.getString(widget.prefsKey!);
+    String? cardJson = widget.prefs.getString(widget.prefsKey);
 
-      if (cardJson != null) {
-        setState(() {
-          _cardPosition = CardPosition.fromJson(jsonDecode(cardJson));
-        });
-      } else {
-        setState(() {
-          _cardPosition = widget.defaultPosition;
-        });
-      }
+    if (cardJson != null) {
+      setState(() {
+        _cardPosition = CardPosition.fromJson(jsonDecode(cardJson));
+      });
+    } else {
+      setState(() {
+        _cardPosition = widget.defaultPosition;
+      });
     }
   }
 
@@ -65,10 +62,7 @@ class _DraggableCardState extends State<DraggableCard> {
         },
         onPanEnd: (DragEndDetails details) {
           _dragStartLocal = null;
-          if (widget.prefs != null && widget.prefsKey != null) {
-            widget.prefs!
-                .setString(widget.prefsKey!, jsonEncode(_cardPosition));
-          }
+          widget.prefs.setString(widget.prefsKey, jsonEncode(_cardPosition));
         },
         onPanUpdate: (DragUpdateDetails details) {
           if (_dragStartLocal != null) {

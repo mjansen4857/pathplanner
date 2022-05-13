@@ -16,13 +16,17 @@ class MarkerEditor extends StatefulWidget {
   final FieldImage fieldImage;
   final Size robotSize;
   final bool holonomicMode;
-  final void Function(RobotPath path)? savePath;
-  final SharedPreferences? prefs;
+  final void Function(RobotPath path) savePath;
+  final SharedPreferences prefs;
 
   const MarkerEditor(
-      this.path, this.fieldImage, this.robotSize, this.holonomicMode,
-      {this.savePath, this.prefs, Key? key})
-      : super(key: key);
+      {required this.path,
+      required this.fieldImage,
+      required this.robotSize,
+      required this.holonomicMode,
+      required this.savePath,
+      required this.prefs,
+      super.key});
 
   @override
   State<MarkerEditor> createState() => _MarkerEditorState();
@@ -123,7 +127,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
 
   Widget _buildMarkerCard() {
     return MarkerCard(
-      _key,
+      stackKey: _key,
       key: ValueKey(_selectedMarker),
       prefs: widget.prefs,
       marker: _selectedMarker,
@@ -137,9 +141,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
           (oldValue) {
             // Execute
             widget.path.markers.remove(oldValue[1]);
-            if (widget.savePath != null) {
-              widget.savePath!(widget.path);
-            }
+            widget.savePath(widget.path);
             setState(() {
               _selectedMarker = null;
             });
@@ -147,9 +149,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
           (oldValue) {
             // Undo
             widget.path.markers = RobotPath.cloneMarkerList(oldValue[0]);
-            if (widget.savePath != null) {
-              widget.savePath!(widget.path);
-            }
+            widget.savePath(widget.path);
             setState(() {
               _selectedMarker = oldValue[1];
             });
@@ -164,9 +164,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
           ],
           (oldValue) {
             widget.path.markers.add(oldValue[1]);
-            if (widget.savePath != null) {
-              widget.savePath!(widget.path);
-            }
+            widget.savePath(widget.path);
 
             setState(() {
               _selectedMarker = oldValue[1];
@@ -174,9 +172,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
           },
           (oldValue) {
             widget.path.markers = RobotPath.cloneMarkerList(oldValue[0]);
-            if (widget.savePath != null) {
-              widget.savePath!(widget.path);
-            }
+            widget.savePath(widget.path);
 
             setState(() {
               _selectedMarker = null;
@@ -196,9 +192,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
               widget.path.markers[index] = oldValue[0].clone();
             }
 
-            if (widget.savePath != null) {
-              widget.savePath!(widget.path);
-            }
+            widget.savePath(widget.path);
           },
           (oldValue) {
             int index = widget.path.markers.indexOf(oldValue[0]);
@@ -206,9 +200,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
               widget.path.markers[index] = oldValue[1].clone();
             }
 
-            if (widget.savePath != null) {
-              widget.savePath!(widget.path);
-            }
+            widget.savePath(widget.path);
           },
         ));
       },

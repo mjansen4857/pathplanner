@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 
 class CustomAppBar extends AppBar {
   final String titleText;
-  final double height;
 
-  CustomAppBar({this.titleText = 'PathPlanner', this.height = 56, Key? key})
+  CustomAppBar(
+      {this.titleText = 'PathPlanner', super.toolbarHeight = 56, super.key})
       : super(
-          key: key,
-          toolbarHeight: height,
           actions: [],
           title: SizedBox(
-            height: height,
+            height: toolbarHeight,
             child: Row(
               children: [
                 Expanded(

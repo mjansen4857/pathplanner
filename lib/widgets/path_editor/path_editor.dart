@@ -21,11 +21,18 @@ class PathEditor extends StatefulWidget {
   final bool holonomicMode;
   final FieldImage fieldImage;
   final bool showGeneratorSettings;
-  final void Function(RobotPath path)? savePath;
-  final SharedPreferences? prefs;
+  final void Function(RobotPath path) savePath;
+  final SharedPreferences prefs;
 
-  PathEditor(this.fieldImage, this.path, this.robotSize, this.holonomicMode,
-      {this.showGeneratorSettings = false, this.savePath, this.prefs});
+  PathEditor(
+      {required this.fieldImage,
+      required this.path,
+      required this.robotSize,
+      required this.holonomicMode,
+      this.showGeneratorSettings = false,
+      required this.savePath,
+      required this.prefs,
+      super.key});
 
   @override
   _PathEditorState createState() => _PathEditorState();
@@ -48,40 +55,43 @@ class _PathEditorState extends State<PathEditor> {
     switch (_mode) {
       case EditorMode.Edit:
         return EditEditor(
-          widget.path,
-          widget.robotSize,
-          widget.holonomicMode,
-          widget.fieldImage,
+          path: widget.path,
+          robotSize: widget.robotSize,
+          holonomicMode: widget.holonomicMode,
+          fieldImage: widget.fieldImage,
           showGeneratorSettings: widget.showGeneratorSettings,
           savePath: widget.savePath,
           prefs: widget.prefs,
+          key: ValueKey(widget.path),
         );
       case EditorMode.Preview:
         return PreviewEditor(
-          widget.path,
-          widget.fieldImage,
-          widget.robotSize,
-          widget.holonomicMode,
+          path: widget.path,
+          fieldImage: widget.fieldImage,
+          robotSize: widget.robotSize,
+          holonomicMode: widget.holonomicMode,
           savePath: widget.savePath,
           prefs: widget.prefs,
+          key: ValueKey(widget.path),
         );
       case EditorMode.Markers:
         return MarkerEditor(
-          widget.path,
-          widget.fieldImage,
-          widget.robotSize,
-          widget.holonomicMode,
+          path: widget.path,
+          fieldImage: widget.fieldImage,
+          robotSize: widget.robotSize,
+          holonomicMode: widget.holonomicMode,
           savePath: widget.savePath,
           prefs: widget.prefs,
           key: ValueKey(widget.path),
         );
       case EditorMode.Measure:
         return MeasureEditor(
-          widget.path,
-          widget.fieldImage,
-          widget.robotSize,
-          widget.holonomicMode,
+          path: widget.path,
+          fieldImage: widget.fieldImage,
+          robotSize: widget.robotSize,
+          holonomicMode: widget.holonomicMode,
           prefs: widget.prefs,
+          key: ValueKey(widget.path),
         );
     }
   }

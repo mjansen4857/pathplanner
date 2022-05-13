@@ -24,7 +24,7 @@ class PathPlanner extends StatelessWidget {
       title: 'PathPlanner',
       theme: theme,
       home: HomePage(
-        defaultField,
+        defaultFieldImage: defaultField,
         appVersion: appVersion,
         appStoreBuild: appStoreBuild,
       ),

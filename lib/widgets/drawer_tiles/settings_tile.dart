@@ -10,17 +10,19 @@ import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsTile extends StatefulWidget {
-  final VoidCallback? onSettingsChanged;
-  final VoidCallback? onGenerationEnabled;
-  final ValueChanged<FieldImage>? onFieldSelected;
+  final VoidCallback onSettingsChanged;
+  final VoidCallback onGenerationEnabled;
+  final ValueChanged<FieldImage> onFieldSelected;
   final List<FieldImage> fieldImages;
-  final FieldImage? selectedField;
+  final FieldImage selectedField;
 
-  SettingsTile(this.fieldImages,
-      {this.onSettingsChanged,
-      this.onGenerationEnabled,
-      this.selectedField,
-      this.onFieldSelected});
+  SettingsTile(
+      {required this.fieldImages,
+      required this.onSettingsChanged,
+      required this.onGenerationEnabled,
+      required this.selectedField,
+      required this.onFieldSelected,
+      super.key});
 
   @override
   _SettingsTileState createState() => _SettingsTileState();
@@ -105,9 +107,7 @@ class _SettingsTileState extends State<SettingsTile>
                     _width = value;
                   });
                 }
-                if (widget.onSettingsChanged != null) {
-                  widget.onSettingsChanged!.call();
-                }
+                widget.onSettingsChanged();
               }, _width.toStringAsFixed(2)),
               SizedBox(width: 8),
               buildTextField(context, 'Robot Length', (value) {
@@ -117,9 +117,7 @@ class _SettingsTileState extends State<SettingsTile>
                     _length = value;
                   });
                 }
-                if (widget.onSettingsChanged != null) {
-                  widget.onSettingsChanged!.call();
-                }
+                widget.onSettingsChanged();
               }, _length.toStringAsFixed(2)),
             ],
           ),
@@ -134,9 +132,7 @@ class _SettingsTileState extends State<SettingsTile>
             setState(() {
               _holonomic = val;
             });
-            if (widget.onSettingsChanged != null) {
-              widget.onSettingsChanged!.call();
-            }
+            widget.onSettingsChanged();
           },
           title: Padding(
             padding: const EdgeInsets.only(left: 2),
@@ -152,11 +148,9 @@ class _SettingsTileState extends State<SettingsTile>
             setState(() {
               _generateJSON = val;
             });
-            if (widget.onSettingsChanged != null) {
-              widget.onSettingsChanged!.call();
-            }
-            if (widget.onGenerationEnabled != null && val) {
-              widget.onGenerationEnabled!.call();
+            widget.onSettingsChanged();
+            if (val) {
+              widget.onGenerationEnabled();
             }
           },
           title: Padding(
@@ -173,11 +167,9 @@ class _SettingsTileState extends State<SettingsTile>
             setState(() {
               _generateCSV = val;
             });
-            if (widget.onSettingsChanged != null) {
-              widget.onSettingsChanged!.call();
-            }
-            if (widget.onGenerationEnabled != null && val) {
-              widget.onGenerationEnabled!.call();
+            widget.onSettingsChanged();
+            if (val) {
+              widget.onGenerationEnabled();
             }
           },
           title: Padding(
@@ -268,9 +260,7 @@ class _SettingsTileState extends State<SettingsTile>
                           color: Theme.of(context).colorScheme.onSurface),
                       onChanged: (FieldImage? newValue) {
                         if (newValue != null) {
-                          if (widget.onFieldSelected != null) {
-                            widget.onFieldSelected!.call(newValue);
-                          }
+                          widget.onFieldSelected(newValue);
                         } else {
                           showFieldImportDialog(context);
                         }
@@ -310,7 +300,7 @@ class _SettingsTileState extends State<SettingsTile>
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return ImportFieldDialog(
+        return ImportFieldDialog(onImport:
             (String name, double pixelsPerMeter, File imageFile) async {
           for (FieldImage image in widget.fieldImages) {
             if (image.name == name) {
@@ -356,9 +346,7 @@ class _SettingsTileState extends State<SettingsTile>
 
           FieldImage newField = FieldImage.custom(File(importedPath));
 
-          if (widget.onFieldSelected != null) {
-            widget.onFieldSelected!.call(newField);
-          }
+          widget.onFieldSelected(newField);
         });
       },
     );

@@ -14,13 +14,17 @@ class PreviewEditor extends StatefulWidget {
   final FieldImage fieldImage;
   final Size robotSize;
   final bool holonomicMode;
-  final void Function(RobotPath path)? savePath;
-  final SharedPreferences? prefs;
+  final void Function(RobotPath path) savePath;
+  final SharedPreferences prefs;
 
   const PreviewEditor(
-      this.path, this.fieldImage, this.robotSize, this.holonomicMode,
-      {this.savePath, this.prefs, Key? key})
-      : super(key: key);
+      {required this.path,
+      required this.fieldImage,
+      required this.robotSize,
+      required this.holonomicMode,
+      required this.savePath,
+      required this.prefs,
+      super.key});
 
   @override
   State<PreviewEditor> createState() => _PreviewEditorState();
@@ -88,8 +92,8 @@ class _PreviewEditorState extends State<PreviewEditor>
 
   Widget _buildGeneratorSettingsCard() {
     return GeneratorSettingsCard(
-      widget.path,
-      _key,
+      path: widget.path,
+      stackKey: _key,
       onShouldSave: () async {
         await widget.path.generateTrajectory();
 
@@ -105,9 +109,7 @@ class _PreviewEditorState extends State<PreviewEditor>
                 (widget.path.generatedTrajectory.getRuntime() * 1000).toInt());
         _previewController.repeat();
 
-        if (widget.savePath != null) {
-          widget.savePath!.call(widget.path);
-        }
+        widget.savePath(widget.path);
       },
       prefs: widget.prefs,
     );
@@ -115,7 +117,7 @@ class _PreviewEditorState extends State<PreviewEditor>
 
   Widget _buildRuntimeCard(BuildContext context) {
     return SimpleCard(
-      _key,
+      stackKey: _key,
       child: Text(
         'Total Runtime: ${widget.path.generatedTrajectory.getRuntime().toStringAsFixed(2)}s',
         style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),

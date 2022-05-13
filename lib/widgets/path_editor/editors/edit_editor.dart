@@ -19,14 +19,19 @@ class EditEditor extends StatefulWidget {
   final Size robotSize;
   final bool holonomicMode;
   final FieldImage fieldImage;
-  final void Function(RobotPath path)? savePath;
+  final void Function(RobotPath path) savePath;
   final bool showGeneratorSettings;
-  final SharedPreferences? prefs;
+  final SharedPreferences prefs;
 
   const EditEditor(
-      this.path, this.robotSize, this.holonomicMode, this.fieldImage,
-      {this.savePath, this.showGeneratorSettings = false, this.prefs, Key? key})
-      : super(key: key);
+      {required this.path,
+      required this.robotSize,
+      required this.holonomicMode,
+      required this.fieldImage,
+      required this.savePath,
+      this.showGeneratorSettings = false,
+      required this.prefs,
+      super.key});
 
   @override
   State<EditEditor> createState() => _EditEditorState();
@@ -107,9 +112,7 @@ class _EditEditorState extends State<EditEditor> {
                                   widget.path.waypoints.length
                           ? widget.path.waypoints.length - 1
                           : _selectedPointIndex);
-                  if (widget.savePath != null) {
-                    widget.savePath!.call(widget.path);
-                  }
+                  widget.savePath(widget.path);
                 });
               },
               (oldValue) {
@@ -125,9 +128,7 @@ class _EditEditorState extends State<EditEditor> {
                         oldValue[0][oldValue[1] + 1].prevControl;
                   }
                   _selectedPointIndex = -1;
-                  if (widget.savePath != null) {
-                    widget.savePath!.call(widget.path);
-                  }
+                  widget.savePath(widget.path);
                 });
               },
             ));
@@ -231,17 +232,13 @@ class _EditEditorState extends State<EditEditor> {
                     if (widget.path.waypoints[index] != _draggedPoint) {
                       widget.path.waypoints[index] = dragEnd.clone();
                     }
-                    if (widget.savePath != null) {
-                      widget.savePath!.call(widget.path);
-                    }
+                    widget.savePath(widget.path);
                   });
                 },
                 (oldValue) {
                   setState(() {
                     widget.path.waypoints[index] = oldValue.clone();
-                    if (widget.savePath != null) {
-                      widget.savePath!.call(widget.path);
-                    }
+                    widget.savePath(widget.path);
                   });
                 },
               ));
@@ -287,8 +284,8 @@ class _EditEditorState extends State<EditEditor> {
     }
 
     return WaypointCard(
-      _selectedWaypoint,
-      _key,
+      waypoint: _selectedWaypoint,
+      stackKey: _key,
       label: waypointLabel,
       holonomicEnabled: widget.holonomicMode,
       deleteEnabled: widget.path.waypoints.length > 2,
@@ -310,17 +307,13 @@ class _EditEditorState extends State<EditEditor> {
                 widget.path.waypoints[0].isReversal = false;
               }
 
-              if (widget.savePath != null) {
-                widget.savePath!(widget.path);
-              }
+              widget.savePath(widget.path);
             });
           },
           (oldValue) {
             setState(() {
               widget.path.waypoints = RobotPath.cloneWaypointList(oldValue);
-              if (widget.savePath != null) {
-                widget.savePath!(widget.path);
-              }
+              widget.savePath(widget.path);
             });
           },
         ));
@@ -329,9 +322,7 @@ class _EditEditorState extends State<EditEditor> {
         });
       },
       onShouldSave: () {
-        if (widget.savePath != null) {
-          widget.savePath!(widget.path);
-        }
+        widget.savePath(widget.path);
       },
     );
   }
@@ -340,12 +331,10 @@ class _EditEditorState extends State<EditEditor> {
     return Visibility(
       visible: widget.showGeneratorSettings,
       child: GeneratorSettingsCard(
-        widget.path,
-        _key,
-        onShouldSave: () async {
-          if (widget.savePath != null) {
-            widget.savePath!.call(widget.path);
-          }
+        path: widget.path,
+        stackKey: _key,
+        onShouldSave: () {
+          widget.savePath(widget.path);
         },
         prefs: widget.prefs,
       ),

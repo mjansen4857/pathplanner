@@ -16,8 +16,9 @@ class RobotPath {
   late Trajectory generatedTrajectory;
   List<EventMarker> markers;
 
-  RobotPath(this.waypoints,
-      {this.name = 'New Path',
+  RobotPath(
+      {required this.waypoints,
+      this.name = 'New Path',
       this.maxVelocity,
       this.maxAcceleration,
       this.isReversed,

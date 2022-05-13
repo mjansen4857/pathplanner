@@ -8,7 +8,7 @@ import '../services/github.dart';
 class UpdateCard extends StatefulWidget {
   final String currentVersion;
 
-  UpdateCard(this.currentVersion, {Key? key}) : super(key: key);
+  UpdateCard({required this.currentVersion, super.key});
 
   @override
   State<UpdateCard> createState() => _UpdateCardState();

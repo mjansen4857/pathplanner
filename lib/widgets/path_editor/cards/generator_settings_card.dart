@@ -5,13 +5,17 @@ import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GeneratorSettingsCard extends StatefulWidget {
-  final RobotPath? path;
-  final VoidCallback? onShouldSave;
+  final RobotPath path;
+  final VoidCallback onShouldSave;
   final GlobalKey stackKey;
-  final SharedPreferences? prefs;
+  final SharedPreferences prefs;
 
-  GeneratorSettingsCard(this.path, this.stackKey,
-      {this.onShouldSave, this.prefs});
+  GeneratorSettingsCard(
+      {required this.path,
+      required this.stackKey,
+      required this.onShouldSave,
+      required this.prefs,
+      super.key});
 
   @override
   _GeneratorSettingsCardState createState() => _GeneratorSettingsCardState();
@@ -20,12 +24,10 @@ class GeneratorSettingsCard extends StatefulWidget {
 class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
   @override
   Widget build(BuildContext context) {
-    if (widget.path == null) return Container();
-
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return DraggableCard(
-      widget.stackKey,
+      stackKey: widget.stackKey,
       defaultPosition: CardPosition(bottom: 0, left: 0),
       prefsKey: 'generatorCardPos',
       prefs: widget.prefs,
@@ -57,34 +59,30 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                   children: [
                     _buildTextField(
                       context,
-                      widget.path!.maxVelocity != null
+                      widget.path.maxVelocity != null
                           ? _getController(
-                              widget.path!.maxVelocity!.toStringAsFixed(2))
+                              widget.path.maxVelocity!.toStringAsFixed(2))
                           : _getController('8.0'),
                       'Max Velocity',
                       onSubmitted: (val) {
                         setState(() {
-                          widget.path!.maxVelocity = val;
-                          if (widget.onShouldSave != null) {
-                            widget.onShouldSave!.call();
-                          }
+                          widget.path.maxVelocity = val;
+                          widget.onShouldSave();
                         });
                       },
                     ),
                     SizedBox(width: 12),
                     _buildTextField(
                       context,
-                      widget.path!.maxAcceleration != null
+                      widget.path.maxAcceleration != null
                           ? _getController(
-                              widget.path!.maxAcceleration!.toStringAsFixed(2))
+                              widget.path.maxAcceleration!.toStringAsFixed(2))
                           : _getController('5.0'),
                       'Max Accel',
                       onSubmitted: (val) {
                         setState(() {
-                          widget.path!.maxAcceleration = val;
-                          if (widget.onShouldSave != null) {
-                            widget.onShouldSave!.call();
-                          }
+                          widget.path.maxAcceleration = val;
+                          widget.onShouldSave();
                         });
                       },
                     ),
@@ -98,15 +96,13 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                     Row(
                       children: [
                         Checkbox(
-                          value: widget.path!.isReversed ?? false,
+                          value: widget.path.isReversed ?? false,
                           activeColor: colorScheme.primary,
                           checkColor: colorScheme.onPrimary,
                           onChanged: (val) {
                             setState(() {
-                              widget.path!.isReversed = val;
-                              if (widget.onShouldSave != null) {
-                                widget.onShouldSave!.call();
-                              }
+                              widget.path.isReversed = val;
+                              widget.onShouldSave();
                             });
                           },
                         ),

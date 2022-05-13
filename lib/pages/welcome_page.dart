@@ -10,8 +10,8 @@ class WelcomePage extends StatefulWidget {
   final String appVersion;
   final FieldImage backgroundImage;
 
-  const WelcomePage(this.backgroundImage, {this.appVersion = '0.0.0', Key? key})
-      : super(key: key);
+  const WelcomePage(
+      {required this.backgroundImage, required this.appVersion, super.key});
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();

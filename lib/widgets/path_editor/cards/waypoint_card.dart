@@ -12,21 +12,21 @@ class WaypointCard extends StatefulWidget {
   final String? label;
   final bool holonomicEnabled;
   final bool deleteEnabled;
-  final VoidCallback? onDelete;
-  final VoidCallback? onShouldSave;
+  final VoidCallback onDelete;
+  final VoidCallback onShouldSave;
   final GlobalKey stackKey;
-  final SharedPreferences? prefs;
+  final SharedPreferences prefs;
 
   WaypointCard(
-    this.waypoint,
-    this.stackKey, {
-    this.label,
-    this.holonomicEnabled = false,
-    this.deleteEnabled = false,
-    this.onDelete,
-    this.onShouldSave,
-    this.prefs,
-  });
+      {this.waypoint,
+      required this.stackKey,
+      this.label,
+      this.holonomicEnabled = false,
+      this.deleteEnabled = false,
+      required this.onDelete,
+      required this.onShouldSave,
+      required this.prefs,
+      super.key});
 
   @override
   _WaypointCardState createState() => _WaypointCardState();
@@ -39,7 +39,7 @@ class _WaypointCardState extends State<WaypointCard> {
     if (widget.waypoint == null) return Container();
 
     return DraggableCard(
-      widget.stackKey,
+      stackKey: widget.stackKey,
       defaultPosition: CardPosition(top: 0, right: 0),
       prefsKey: 'waypointCardPos',
       prefs: widget.prefs,
@@ -92,9 +92,7 @@ class _WaypointCardState extends State<WaypointCard> {
               onPressed: () {
                 setState(() {
                   widget.waypoint!.isLocked = !widget.waypoint!.isLocked;
-                  if (widget.onShouldSave != null) {
-                    widget.onShouldSave!.call();
-                  }
+                  widget.onShouldSave();
                 });
               },
               splashRadius: 20,
@@ -306,17 +304,13 @@ class _WaypointCardState extends State<WaypointCard> {
       () {
         setState(() {
           execute.call();
-          if (widget.onShouldSave != null) {
-            widget.onShouldSave!.call();
-          }
+          widget.onShouldSave();
         });
       },
       (oldVal) {
         setState(() {
           undo.call(oldVal);
-          if (widget.onShouldSave != null) {
-            widget.onShouldSave!.call();
-          }
+          widget.onShouldSave();
         });
       },
     );

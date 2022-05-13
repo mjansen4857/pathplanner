@@ -11,19 +11,19 @@ enum MenuOptions {
 class PathTile extends StatefulWidget {
   final RobotPath path;
   final bool isSelected;
-  final Key? key;
-  final VoidCallback? onTap;
-  final VoidCallback? onDuplicate;
-  final VoidCallback? onDelete;
-  final bool Function(String name)? onRename;
+  final VoidCallback onTap;
+  final VoidCallback onDuplicate;
+  final VoidCallback onDelete;
+  final bool Function(String name) onRename;
 
-  PathTile(this.path,
-      {this.isSelected = false,
-      this.onTap,
-      this.key,
-      this.onDuplicate,
-      this.onDelete,
-      this.onRename});
+  PathTile(
+      {required this.path,
+      this.isSelected = false,
+      required this.onTap,
+      required this.onDuplicate,
+      required this.onDelete,
+      required this.onRename,
+      super.key});
 
   @override
   _PathTileState createState() => _PathTileState();
@@ -79,12 +79,10 @@ class _PathTileState extends State<PathTile> {
             if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
               FocusManager.instance.primaryFocus!.unfocus();
             }
-            if (widget.onRename != null) {
-              if (widget.onRename!.call(text)) {
-                setState(() {
-                  widget.path.name = text;
-                });
-              }
+            if (widget.onRename(text)) {
+              setState(() {
+                widget.path.name = text;
+              });
             }
           } else {
             setState(() {
@@ -136,14 +134,10 @@ class _PathTileState extends State<PathTile> {
       onSelected: (MenuOptions value) {
         switch (value) {
           case MenuOptions.Delete:
-            if (widget.onDelete != null) {
-              widget.onDelete!.call();
-            }
+            widget.onDelete();
             break;
           case MenuOptions.Duplicate:
-            if (widget.onDuplicate != null) {
-              widget.onDuplicate!.call();
-            }
+            widget.onDuplicate();
         }
       },
       itemBuilder: (BuildContext context) =>

@@ -25,12 +25,12 @@ class HomePage extends StatefulWidget {
   final String appVersion;
   final bool appStoreBuild;
 
-  HomePage(
-    this.defaultFieldImage, {
-    this.appVersion = '0.0.0',
-    this.appStoreBuild = false,
-    Key? key,
-  }) : super(key: key);
+  HomePage({
+    required this.defaultFieldImage,
+    required this.appVersion,
+    required this.appStoreBuild,
+    super.key,
+  });
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             _key.currentContext!,
             PageRouteBuilder(
               pageBuilder: (context, anim1, anim2) => WelcomePage(
-                widget.defaultFieldImage,
+                backgroundImage: widget.defaultFieldImage,
                 appVersion: widget.appVersion,
               ),
               transitionDuration: Duration.zero,
@@ -151,7 +151,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       floatingActionButton: Visibility(
         visible:
             _projectDir != null && (!widget.appStoreBuild && !Platform.isMacOS),
-        child: DeployFAB(_projectDir),
+        child: DeployFAB(projectDir: _projectDir!),
       ),
     );
   }
@@ -229,7 +229,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               children: [
                 for (int i = 0; i < _paths.length; i++)
                   PathTile(
-                    _paths[i],
+                    path: _paths[i],
                     key: Key('$i'),
                     isSelected: _paths[i] == _currentPath,
                     onRename: (name) {
@@ -347,7 +347,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           pathName = pathName + ' Copy';
                         }
                         _paths.add(RobotPath(
-                          RobotPath.cloneWaypointList(_paths[i].waypoints),
+                          waypoints:
+                              RobotPath.cloneWaypointList(_paths[i].waypoints),
                           name: pathName,
                         ));
                         _currentPath = _paths.last;
@@ -388,8 +389,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
                       child: SettingsTile(
-                        _fieldImages,
-                        selectedField: _fieldImage,
+                        fieldImages: _fieldImages,
+                        selectedField: _fieldImage ?? widget.defaultFieldImage,
                         onFieldSelected: (FieldImage image) {
                           setState(() {
                             _fieldImage = image;
@@ -436,17 +437,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           Center(
             child: Container(
               child: PathEditor(
-                _fieldImage ?? widget.defaultFieldImage,
-                _currentPath!,
-                _robotSize,
-                _holonomicMode,
+                fieldImage: _fieldImage ?? widget.defaultFieldImage,
+                path: _currentPath!,
+                robotSize: _robotSize,
+                holonomicMode: _holonomicMode,
                 showGeneratorSettings: _generateJSON || _generateCSV,
                 savePath: (path) => _savePath(path),
                 prefs: _prefs,
               ),
             ),
           ),
-          if (!widget.appStoreBuild) UpdateCard(widget.appVersion),
+          if (!widget.appStoreBuild)
+            UpdateCard(currentVersion: widget.appVersion),
         ],
       );
     } else {

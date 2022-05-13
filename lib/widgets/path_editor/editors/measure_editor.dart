@@ -14,12 +14,15 @@ class MeasureEditor extends StatefulWidget {
   final FieldImage fieldImage;
   final Size robotSize;
   final bool holonomicMode;
-  final SharedPreferences? prefs;
+  final SharedPreferences prefs;
 
   const MeasureEditor(
-      this.path, this.fieldImage, this.robotSize, this.holonomicMode,
-      {this.prefs, Key? key})
-      : super(key: key);
+      {required this.path,
+      required this.fieldImage,
+      required this.robotSize,
+      required this.holonomicMode,
+      required this.prefs,
+      super.key});
 
   @override
   State<MeasureEditor> createState() => _MeasureEditorState();
@@ -87,7 +90,7 @@ class _MeasureEditorState extends State<MeasureEditor> {
 
   Widget _buildPathLengthCard(BuildContext context) {
     return SimpleCard(
-      _key,
+      stackKey: _key,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,

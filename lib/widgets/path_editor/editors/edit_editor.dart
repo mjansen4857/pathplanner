@@ -293,6 +293,46 @@ class _EditEditorState extends State<EditEditor> {
       holonomicEnabled: widget.holonomicMode,
       deleteEnabled: widget.path.waypoints.length > 2,
       prefs: widget.prefs,
+      onDelete: () {
+        int delIndex = widget.path.waypoints.indexOf(_selectedWaypoint!);
+        UndoRedo.addChange(Change(
+          RobotPath.cloneWaypointList(widget.path.waypoints),
+          () {
+            setState(() {
+              Waypoint w = widget.path.waypoints.removeAt(delIndex);
+              if (w.isEndPoint()) {
+                widget.path.waypoints[widget.path.waypoints.length - 1]
+                    .nextControl = null;
+                widget.path.waypoints[widget.path.waypoints.length - 1]
+                    .isReversal = false;
+              } else if (w.isStartPoint()) {
+                widget.path.waypoints[0].prevControl = null;
+                widget.path.waypoints[0].isReversal = false;
+              }
+
+              if (widget.savePath != null) {
+                widget.savePath!(widget.path);
+              }
+            });
+          },
+          (oldValue) {
+            setState(() {
+              widget.path.waypoints = RobotPath.cloneWaypointList(oldValue);
+              if (widget.savePath != null) {
+                widget.savePath!(widget.path);
+              }
+            });
+          },
+        ));
+        setState(() {
+          _selectedWaypoint = null;
+        });
+      },
+      onShouldSave: () {
+        if (widget.savePath != null) {
+          widget.savePath!(widget.path);
+        }
+      },
     );
   }
 

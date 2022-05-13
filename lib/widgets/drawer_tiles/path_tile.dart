@@ -30,53 +30,43 @@ class PathTile extends StatefulWidget {
 }
 
 class _PathTileState extends State<PathTile> {
-  bool _hovered = false;
-
   @override
   Widget build(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return MouseRegion(
-      onEnter: (_) => setState(() {
-        _hovered = true;
-      }),
-      onExit: (_) => setState(() {
-        _hovered = false;
-      }),
-      child: Container(
-        height: 50,
-        width: 303,
-        color:
-            widget.isSelected ? colorScheme.surfaceVariant : Colors.transparent,
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Expanded(
-              child: MouseRegion(
-                cursor: widget.isSelected
-                    ? MouseCursor.defer
-                    : SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: widget.isSelected ? null : widget.onTap,
-                  child: Container(
-                    color: widget.isSelected
-                        ? colorScheme.surfaceVariant
-                        : Colors.transparent,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding:
-                            const EdgeInsets.only(top: 6, bottom: 7, left: 8),
-                        child: _buildTextField(context),
-                      ),
+    return Container(
+      height: 50,
+      width: 303,
+      color:
+          widget.isSelected ? colorScheme.surfaceVariant : Colors.transparent,
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Expanded(
+            child: MouseRegion(
+              cursor: widget.isSelected
+                  ? MouseCursor.defer
+                  : SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: widget.isSelected ? null : widget.onTap,
+                child: Container(
+                  color: widget.isSelected
+                      ? colorScheme.surfaceVariant
+                      : Colors.transparent,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding:
+                          const EdgeInsets.only(top: 6, bottom: 7, left: 8),
+                      child: _buildTextField(context),
                     ),
                   ),
                 ),
               ),
             ),
-            _buildPopupMenu(colorScheme),
-          ],
-        ),
+          ),
+          _buildPopupMenu(colorScheme),
+        ],
       ),
     );
   }
@@ -135,64 +125,62 @@ class _PathTileState extends State<PathTile> {
   Widget _buildPopupMenu(ColorScheme colorScheme) {
     return SizedBox(
       width: 48,
-      child: Visibility(
-        visible: _hovered,
-        child: custom.PopupMenuButton<MenuOptions>(
-          color: colorScheme.surfaceVariant,
-          icon: Icon(
-            Icons.adaptive.more,
-            color: widget.isSelected
-                ? colorScheme.onSurfaceVariant
-                : colorScheme.onSurface,
-          ),
-          splashRadius: 18,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          tooltip: '',
-          onSelected: (MenuOptions value) {
-            switch (value) {
-              case MenuOptions.Delete:
-                widget.onDelete();
-                break;
-              case MenuOptions.Duplicate:
-                widget.onDuplicate();
-            }
-          },
-          itemBuilder: (BuildContext context) =>
-              <custom.PopupMenuEntry<MenuOptions>>[
-            custom.PopupMenuItem<MenuOptions>(
-              value: MenuOptions.Delete,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.delete,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  SizedBox(width: 12),
-                  Text(
-                    'Delete',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-            custom.PopupMenuItem<MenuOptions>(
-              value: MenuOptions.Duplicate,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.copy,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  SizedBox(width: 12),
-                  Text(
-                    'Duplicate',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      child: custom.PopupMenuButton<MenuOptions>(
+        color: colorScheme.surfaceVariant,
+        icon: Icon(
+          Icons.adaptive.more,
+          color: widget.isSelected
+              ? colorScheme.onSurfaceVariant
+              : colorScheme.onSurface,
         ),
+        splashRadius: 18,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        tooltip: '',
+        onSelected: (MenuOptions value) {
+          switch (value) {
+            case MenuOptions.Delete:
+              print('del');
+              widget.onDelete();
+              break;
+            case MenuOptions.Duplicate:
+              widget.onDuplicate();
+          }
+        },
+        itemBuilder: (BuildContext context) =>
+            <custom.PopupMenuEntry<MenuOptions>>[
+          custom.PopupMenuItem<MenuOptions>(
+            value: MenuOptions.Delete,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.delete,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Delete',
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          custom.PopupMenuItem<MenuOptions>(
+            value: MenuOptions.Duplicate,
+            child: Row(
+              children: [
+                Icon(
+                  Icons.copy,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                SizedBox(width: 12),
+                Text(
+                  'Duplicate',
+                  style: TextStyle(color: colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

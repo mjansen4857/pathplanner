@@ -34,6 +34,8 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return KeyBoardShortcuts(
       keysToPress: {LogicalKeyboardKey.enter},
       onKeysPressed: () => confirm(context),
@@ -49,7 +51,6 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                   width: 200,
                   child: TextField(
                     controller: _nameController,
-                    cursorColor: Colors.white,
                     inputFormatters: [
                       FilteringTextInputFormatter.deny(
                           RegExp("[\"*<>?\|/:\\\\]")),
@@ -58,12 +59,8 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                     decoration: InputDecoration(
                       contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Field Name',
-                      filled: true,
                       border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey)),
-                      focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey)),
-                      labelStyle: TextStyle(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(4)),
                     ),
                   ),
                 ),
@@ -73,7 +70,6 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                   width: 200,
                   child: TextField(
                     controller: _ppmController,
-                    cursorColor: Colors.white,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(
                           RegExp(r'(^\d*\.?\d*)')),
@@ -82,12 +78,8 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                     decoration: InputDecoration(
                       contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Pixels Per Meter',
-                      filled: true,
                       border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey)),
-                      focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.grey)),
-                      labelStyle: TextStyle(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(4)),
                     ),
                   ),
                 ),
@@ -106,13 +98,13 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                     (_selectedFile == null)
                         ? Text(
                             'None Selected',
-                            style: TextStyle(color: Colors.red),
+                            style: TextStyle(color: colorScheme.error),
                           )
                         : Text(
                             _selectedFile!.path
                                 .split(Platform.pathSeparator)
                                 .last,
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(color: colorScheme.primary),
                           ),
                   ],
                 ),
@@ -130,6 +122,10 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                       });
                     }
                   },
+                  style: ElevatedButton.styleFrom(
+                    primary: colorScheme.primaryContainer,
+                    onPrimary: colorScheme.onPrimaryContainer,
+                  ),
                   child: Text('Choose File'),
                 ),
               ],
@@ -141,17 +137,11 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: Colors.indigoAccent),
-            ),
+            child: Text('Cancel'),
           ),
           TextButton(
             onPressed: () => confirm(context),
-            child: Text(
-              'Confirm',
-              style: TextStyle(color: Colors.indigoAccent),
-            ),
+            child: Text('Confirm'),
           ),
         ],
       ),

@@ -1,6 +1,4 @@
-import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter/material.dart';
-import 'package:pathplanner/widgets/window_button/window_button.dart';
 
 class CustomAppBar extends AppBar {
   final String titleText;
@@ -11,24 +9,18 @@ class CustomAppBar extends AppBar {
           key: key,
           backgroundColor: Colors.grey[900],
           toolbarHeight: height,
-          actions: [
-            MinimizeWindowBtn(),
-            MaximizeWindowBtn(),
-            CloseWindowBtn(),
-          ],
+          actions: [],
           title: SizedBox(
             height: height,
             child: Row(
               children: [
                 Expanded(
-                  child: MoveWindow(
-                    child: Container(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        titleText,
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w500),
-                      ),
+                  child: Container(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      titleText,
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ),

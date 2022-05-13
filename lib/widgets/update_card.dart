@@ -77,8 +77,9 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
                         SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () async {
-                            if (await canLaunch(_releaseURL)) {
-                              launch(_releaseURL);
+                            Uri url = Uri.parse(_releaseURL);
+                            if (await canLaunchUrl(url)) {
+                              launchUrl(url);
                             }
                           },
                           child: Text(

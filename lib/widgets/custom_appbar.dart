@@ -7,7 +7,6 @@ class CustomAppBar extends AppBar {
   CustomAppBar({this.titleText = 'PathPlanner', this.height = 56, Key? key})
       : super(
           key: key,
-          backgroundColor: Colors.grey[900],
           toolbarHeight: height,
           actions: [],
           title: SizedBox(

@@ -35,6 +35,7 @@ class WaypointCard extends StatefulWidget {
 class _WaypointCardState extends State<WaypointCard> {
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
     if (widget.waypoint == null) return Container();
 
     return DraggableCard(
@@ -46,7 +47,7 @@ class _WaypointCardState extends State<WaypointCard> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildHeader(),
+          _buildHeader(colorScheme),
           SizedBox(height: 12),
           // Override gesture detector on UI elements so they wont cause the card to move
           GestureDetector(
@@ -69,7 +70,7 @@ class _WaypointCardState extends State<WaypointCard> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ColorScheme colorScheme) {
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -81,6 +82,7 @@ class _WaypointCardState extends State<WaypointCard> {
           child: GestureDetector(
             onPanStart: (details) {},
             child: IconButton(
+              color: colorScheme.onSurfaceVariant,
               tooltip: widget.waypoint!.isLocked
                   ? 'Unlock Waypoint'
                   : 'Lock Waypoint',
@@ -101,7 +103,10 @@ class _WaypointCardState extends State<WaypointCard> {
             ),
           ),
         ),
-        Text(widget.label ?? 'Waypoint Label'),
+        Text(
+          widget.label ?? 'Waypoint Label',
+          style: TextStyle(color: colorScheme.onSurfaceVariant),
+        ),
         SizedBox(
           height: 30,
           width: 30,
@@ -111,6 +116,7 @@ class _WaypointCardState extends State<WaypointCard> {
             child: GestureDetector(
               onPanStart: (details) {},
               child: IconButton(
+                color: colorScheme.onSurfaceVariant,
                 tooltip: 'Delete Waypoint',
                 icon: Icon(
                   Icons.delete,
@@ -202,6 +208,8 @@ class _WaypointCardState extends State<WaypointCard> {
   }
 
   Widget _buildVelReversalRow(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
@@ -223,14 +231,14 @@ class _WaypointCardState extends State<WaypointCard> {
             ));
           },
         ),
-        SizedBox(width: 8),
-        _buildReversalWidget(),
+        SizedBox(width: 12),
+        _buildReversalWidget(colorScheme),
         SizedBox(width: 14),
       ],
     );
   }
 
-  Widget _buildReversalWidget() {
+  Widget _buildReversalWidget(ColorScheme colorScheme) {
     if (widget.waypoint!.isStartPoint() || widget.waypoint!.isEndPoint()) {
       return SizedBox(width: 90);
     } else {
@@ -238,7 +246,8 @@ class _WaypointCardState extends State<WaypointCard> {
         children: [
           Checkbox(
             value: widget.waypoint!.isReversal,
-            activeColor: Colors.indigo,
+            activeColor: colorScheme.primary,
+            checkColor: colorScheme.onPrimary,
             onChanged: (val) {
               Waypoint? wRef = widget.waypoint;
               UndoRedo.addChange(_cardChange(
@@ -247,7 +256,10 @@ class _WaypointCardState extends State<WaypointCard> {
               ));
             },
           ),
-          Text('Reversal'),
+          Text(
+            'Reversal',
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
+          ),
         ],
       );
     }
@@ -256,8 +268,10 @@ class _WaypointCardState extends State<WaypointCard> {
   Widget _buildTextField(
       BuildContext context, TextEditingController? controller, String label,
       {bool? enabled = true, ValueChanged? onSubmitted}) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      width: 100,
+      width: 105,
       height: 35,
       child: TextField(
         onSubmitted: (val) {
@@ -272,21 +286,15 @@ class _WaypointCardState extends State<WaypointCard> {
         },
         enabled: enabled,
         controller: controller,
-        cursorColor: Colors.white,
         inputFormatters: [
           FilteringTextInputFormatter.allow(
               RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
         ],
-        style: TextStyle(fontSize: 14),
+        style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
         decoration: InputDecoration(
           contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
           labelText: label,
-          filled: true,
-          border:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-          focusedBorder:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-          labelStyle: TextStyle(color: Colors.grey),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
         ),
       ),
     );

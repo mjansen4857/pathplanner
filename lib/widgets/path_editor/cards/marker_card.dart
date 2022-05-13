@@ -48,6 +48,8 @@ class _MarkerCardState extends State<MarkerCard> {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return DraggableCard(
       widget.stackKey,
       defaultPosition: CardPosition(top: 0, right: 0),
@@ -57,16 +59,16 @@ class _MarkerCardState extends State<MarkerCard> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _buildHeader(),
-          _buildNameField(),
-          _buildPositionSlider(),
-          _buildAddButton(),
+          _buildHeader(colorScheme),
+          _buildNameField(colorScheme),
+          _buildPositionSlider(colorScheme),
+          _buildAddButton(colorScheme),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ColorScheme colorScheme) {
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -77,7 +79,7 @@ class _MarkerCardState extends State<MarkerCard> {
         ),
         Text(
           widget.marker == null ? 'New Marker' : 'Edit Marker',
-          style: TextStyle(fontSize: 16),
+          style: TextStyle(fontSize: 16, color: colorScheme.onSurfaceVariant),
         ),
         SizedBox(
           width: 30,
@@ -91,6 +93,7 @@ class _MarkerCardState extends State<MarkerCard> {
                 tooltip: 'Delete Marker',
                 icon: Icon(
                   Icons.delete,
+                  color: colorScheme.onSurfaceVariant,
                 ),
                 onPressed: widget.onDelete,
                 splashRadius: 20,
@@ -104,7 +107,7 @@ class _MarkerCardState extends State<MarkerCard> {
     );
   }
 
-  Widget _buildNameField() {
+  Widget _buildNameField(ColorScheme colorScheme) {
     return GestureDetector(
       // Override gesture detector on UI elements so they wont cause the card to move
       onPanStart: (details) {},
@@ -121,17 +124,12 @@ class _MarkerCardState extends State<MarkerCard> {
               }
             },
             controller: _nameController,
-            cursorColor: Colors.white,
-            style: TextStyle(fontSize: 14),
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
             decoration: InputDecoration(
               contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
               labelText: 'Marker Name',
-              filled: true,
-              border: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey)),
-              focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey)),
-              labelStyle: TextStyle(color: Colors.grey),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
             ),
           ),
         ),
@@ -139,7 +137,7 @@ class _MarkerCardState extends State<MarkerCard> {
     );
   }
 
-  Widget _buildPositionSlider() {
+  Widget _buildPositionSlider(ColorScheme colorScheme) {
     return GestureDetector(
       onPanStart: (details) {},
       child: Padding(
@@ -167,24 +165,21 @@ class _MarkerCardState extends State<MarkerCard> {
           max: widget.maxMarkerPos,
           decimalPlaces: 2,
           defaultValue: _sliderPos,
+          textFieldStyle:
+              TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
           inputDecoration: InputDecoration(
             contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
-            filled: true,
             label: Text('Position'),
-            border:
-                OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-            focusedBorder:
-                OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-            labelStyle: TextStyle(color: Colors.grey),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
           ),
-          inactiveSliderColor: Colors.grey[600],
-          activeSliderColor: Colors.indigo[500],
+          inactiveSliderColor: colorScheme.onSurfaceVariant,
+          activeSliderColor: colorScheme.primary,
         ),
       ),
     );
   }
 
-  Widget _buildAddButton() {
+  Widget _buildAddButton(ColorScheme colorScheme) {
     return GestureDetector(
       // Override gesture detector on UI elements so they wont cause the card to move
       onPanStart: (details) {},
@@ -192,25 +187,19 @@ class _MarkerCardState extends State<MarkerCard> {
         visible: widget.marker == null,
         child: Padding(
           padding: const EdgeInsets.only(top: 8.0),
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
             onPressed: () {
               if (widget.onAdd != null && widget.marker == null) {
                 widget.onAdd!
                     .call(EventMarker(_sliderPos, _nameController.text));
               }
             },
-            child: Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.add,
-                  size: 18,
-                ),
-                SizedBox(width: 4),
-                Text('Add Marker'),
-              ],
+            style: ElevatedButton.styleFrom(
+              primary: colorScheme.primary,
+              onPrimary: colorScheme.onPrimary,
             ),
+            label: const Text('Add Marker'),
+            icon: const Icon(Icons.add),
           ),
         ),
       ),

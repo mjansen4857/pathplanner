@@ -16,16 +16,13 @@ class PathPlanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = ThemeData(
       brightness: Brightness.dark,
-      primarySwatch: Colors.indigo,
+      colorSchemeSeed: Colors.blue,
+      useMaterial3: true,
     );
 
     return MaterialApp(
       title: 'PathPlanner',
-      theme: theme.copyWith(
-        colorScheme: theme.colorScheme.copyWith(
-          secondary: Colors.white,
-        ),
-      ),
+      theme: theme,
       home: HomePage(
         defaultField,
         appVersion: appVersion,

@@ -35,11 +35,13 @@ class _PathTileState extends State<PathTile> {
     return Container(
       height: 50,
       width: 303,
-      color: widget.isSelected ? Colors.grey[800] : Colors.transparent,
+      color: widget.isSelected
+          ? Theme.of(context).colorScheme.surfaceVariant
+          : Colors.transparent,
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
-          _buildPopupMenu(),
+          _buildPopupMenu(context),
           Expanded(
             child: MouseRegion(
               cursor: widget.isSelected
@@ -48,14 +50,15 @@ class _PathTileState extends State<PathTile> {
               child: GestureDetector(
                 onTap: widget.isSelected ? null : widget.onTap,
                 child: Container(
-                  color:
-                      widget.isSelected ? Colors.grey[800] : Colors.transparent,
+                  color: widget.isSelected
+                      ? Theme.of(context).colorScheme.surfaceVariant
+                      : Colors.transparent,
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Padding(
                       padding:
                           const EdgeInsets.only(top: 6, bottom: 7, left: 2),
-                      child: _buildTextField(),
+                      child: _buildTextField(context),
                     ),
                   ),
                 ),
@@ -67,10 +70,9 @@ class _PathTileState extends State<PathTile> {
     );
   }
 
-  Widget _buildTextField() {
+  Widget _buildTextField(BuildContext context) {
     return IntrinsicWidth(
       child: TextField(
-        cursorColor: Colors.white,
         onSubmitted: (String text) {
           if (text != '') {
             FocusScopeNode currentScope = FocusScope.of(context);
@@ -91,6 +93,10 @@ class _PathTileState extends State<PathTile> {
             });
           }
         },
+        style: TextStyle(
+            color: widget.isSelected
+                ? Theme.of(context).colorScheme.onSurfaceVariant
+                : Theme.of(context).colorScheme.onSurface),
         controller: TextEditingController(text: widget.path.name)
           ..selection = TextSelection.fromPosition(
               TextPosition(offset: widget.path.name.length)),
@@ -98,7 +104,7 @@ class _PathTileState extends State<PathTile> {
           border: InputBorder.none,
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(
-              color: Colors.grey,
+              color: Theme.of(context).colorScheme.outline,
             ),
           ),
           enabledBorder: OutlineInputBorder(
@@ -115,9 +121,17 @@ class _PathTileState extends State<PathTile> {
     );
   }
 
-  Widget _buildPopupMenu() {
+  Widget _buildPopupMenu(BuildContext context) {
     return custom.PopupMenuButton<MenuOptions>(
+      color: Theme.of(context).colorScheme.surfaceVariant,
+      icon: Icon(
+        Icons.adaptive.more,
+        color: widget.isSelected
+            ? Theme.of(context).colorScheme.onSurfaceVariant
+            : Theme.of(context).colorScheme.onSurface,
+      ),
       splashRadius: 18,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       tooltip: '',
       onSelected: (MenuOptions value) {
         switch (value) {
@@ -138,9 +152,16 @@ class _PathTileState extends State<PathTile> {
           value: MenuOptions.Delete,
           child: Row(
             children: [
-              Icon(Icons.delete),
+              Icon(
+                Icons.delete,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               SizedBox(width: 12),
-              Text('Delete'),
+              Text(
+                'Delete',
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
             ],
           ),
         ),
@@ -148,9 +169,16 @@ class _PathTileState extends State<PathTile> {
           value: MenuOptions.Duplicate,
           child: Row(
             children: [
-              Icon(Icons.copy),
+              Icon(
+                Icons.copy,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               SizedBox(width: 12),
-              Text('Duplicate'),
+              Text(
+                'Duplicate',
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
             ],
           ),
         ),

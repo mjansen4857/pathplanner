@@ -166,7 +166,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 Container(
                   child: Align(
                       alignment: FractionalOffset.bottomRight,
-                      child: Text('v' + widget.appVersion)),
+                      child: Text(
+                        'v' + widget.appVersion,
+                        style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface),
+                      )),
                 ),
                 Center(
                   child: Column(
@@ -179,17 +183,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          (_projectDir != null)
-                              ? basename(_projectDir!.path)
-                              : 'No Project',
+                          basename(_projectDir!.path),
                           style: TextStyle(
-                              fontSize: 20,
-                              color: (_projectDir != null)
-                                  ? Colors.white
-                                  : Colors.red),
+                            fontSize: 20,
+                          ),
                         ),
                       ),
                       ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            onPrimary: Theme.of(context).colorScheme.onPrimary,
+                            primary: Theme.of(context).colorScheme.primary,
+                          ),
                           onPressed: () {
                             _openProjectDialog(context);
                           },
@@ -251,11 +255,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   actions: [
                                     TextButton(
                                       onPressed: Navigator.of(context).pop,
-                                      child: Text(
-                                        'OK',
-                                        style: TextStyle(
-                                            color: Colors.indigoAccent),
-                                      ),
+                                      child: Text('OK'),
                                     ),
                                   ],
                                 ),
@@ -316,19 +316,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       onPressed: () {
                                         Navigator.of(context).pop();
                                       },
-                                      child: Text(
-                                        'Cancel',
-                                        style: TextStyle(
-                                            color: Colors.indigoAccent),
-                                      ),
+                                      child: Text('Cancel'),
                                     ),
                                     TextButton(
                                       onPressed: confirm,
-                                      child: Text(
-                                        'Confirm',
-                                        style: TextStyle(
-                                            color: Colors.indigoAccent),
-                                      ),
+                                      child: Text('Confirm'),
                                     ),
                                   ],
                                 ),

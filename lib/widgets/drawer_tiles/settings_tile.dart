@@ -127,7 +127,7 @@ class _SettingsTileState extends State<SettingsTile>
         buildFieldImageDropdown(context),
         SwitchListTile(
           value: _holonomic,
-          activeColor: Colors.indigoAccent,
+          activeColor: Theme.of(context).colorScheme.primary,
           contentPadding: EdgeInsets.symmetric(vertical: 0, horizontal: 16),
           onChanged: (val) {
             _prefs!.setBool('holonomicMode', val);
@@ -207,19 +207,22 @@ class _SettingsTileState extends State<SettingsTile>
           controller: TextEditingController(text: text)
             ..selection =
                 TextSelection.fromPosition(TextPosition(offset: text.length)),
-          cursorColor: Colors.white,
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
           ],
-          style: TextStyle(fontSize: 14),
+          style: TextStyle(
+              fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
           decoration: InputDecoration(
             contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
             labelText: label,
             filled: true,
-            border:
-                OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-            focusedBorder:
-                OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+            fillColor: Theme.of(context).colorScheme.surface,
+            border: OutlineInputBorder(
+                borderSide:
+                    BorderSide(color: Theme.of(context).colorScheme.outline)),
+            focusedBorder: OutlineInputBorder(
+                borderSide:
+                    BorderSide(color: Theme.of(context).colorScheme.outline)),
             labelStyle: TextStyle(color: Colors.grey),
           ),
         ),
@@ -242,48 +245,49 @@ class _SettingsTileState extends State<SettingsTile>
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Container(
-                width: 171,
+                width: 168,
                 decoration: BoxDecoration(
-                  color: Colors.grey[800],
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.grey),
+                  border:
+                      Border.all(color: Theme.of(context).colorScheme.outline),
                 ),
                 child: ExcludeFocus(
-                  child: Theme(
-                    data: Theme.of(context)
-                        .copyWith(canvasColor: Colors.grey[800]),
-                    child: ButtonTheme(
-                      alignedDropdown: true,
-                      child: DropdownButton<FieldImage?>(
-                        value: widget.selectedField,
-                        isExpanded: true,
-                        underline: Container(),
-                        icon: Icon(Icons.arrow_drop_down),
-                        style: TextStyle(fontSize: 14),
-                        onChanged: (FieldImage? newValue) {
-                          if (newValue != null) {
-                            if (widget.onFieldSelected != null) {
-                              widget.onFieldSelected!.call(newValue);
-                            }
-                          } else {
-                            showFieldImportDialog(context);
+                  child: ButtonTheme(
+                    alignedDropdown: true,
+                    child: DropdownButton<FieldImage?>(
+                      dropdownColor:
+                          Theme.of(context).colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(8),
+                      value: widget.selectedField,
+                      isExpanded: true,
+                      underline: Container(),
+                      icon: Icon(Icons.arrow_drop_down),
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).colorScheme.onSurface),
+                      onChanged: (FieldImage? newValue) {
+                        if (newValue != null) {
+                          if (widget.onFieldSelected != null) {
+                            widget.onFieldSelected!.call(newValue);
                           }
-                        },
-                        items: [
-                          ...widget.fieldImages
-                              .map<DropdownMenuItem<FieldImage>>(
-                                  (FieldImage value) {
-                            return DropdownMenuItem<FieldImage>(
-                              value: value,
-                              child: Text(value.name),
-                            );
-                          }).toList(),
-                          DropdownMenuItem<FieldImage?>(
-                            value: null,
-                            child: Text('Import Custom...'),
-                          )
-                        ],
-                      ),
+                        } else {
+                          showFieldImportDialog(context);
+                        }
+                      },
+                      items: [
+                        ...widget.fieldImages.map<DropdownMenuItem<FieldImage>>(
+                            (FieldImage value) {
+                          return DropdownMenuItem<FieldImage>(
+                            value: value,
+                            child: Text(value.name),
+                          );
+                        }).toList(),
+                        DropdownMenuItem<FieldImage?>(
+                          value: null,
+                          child: Text('Import Custom...'),
+                        )
+                      ],
                     ),
                   ),
                 ),

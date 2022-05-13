@@ -81,7 +81,7 @@ class _PreviewEditorState extends State<PreviewEditor>
           ),
         ),
         _buildGeneratorSettingsCard(),
-        _buildRuntimeCard(),
+        _buildRuntimeCard(context),
       ],
     );
   }
@@ -113,11 +113,13 @@ class _PreviewEditorState extends State<PreviewEditor>
     );
   }
 
-  Widget _buildRuntimeCard() {
+  Widget _buildRuntimeCard(BuildContext context) {
     return SimpleCard(
       _key,
       child: Text(
-          'Total Runtime: ${widget.path.generatedTrajectory.getRuntime().toStringAsFixed(2)}s'),
+        'Total Runtime: ${widget.path.generatedTrajectory.getRuntime().toStringAsFixed(2)}s',
+        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+      ),
       prefs: widget.prefs,
       key: _pathRuntimeKey,
     );

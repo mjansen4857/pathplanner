@@ -80,12 +80,12 @@ class _MeasureEditorState extends State<MeasureEditor> {
             ),
           ),
         ),
-        _buildPathLengthCard(),
+        _buildPathLengthCard(context),
       ],
     );
   }
 
-  Widget _buildPathLengthCard() {
+  Widget _buildPathLengthCard(BuildContext context) {
     return SimpleCard(
       _key,
       child: Column(
@@ -94,11 +94,14 @@ class _MeasureEditorState extends State<MeasureEditor> {
         children: [
           Text(
             'Ruler Length: ${_getRulerLength().toStringAsFixed(2)}m',
-            style: TextStyle(fontSize: 18),
+            style: TextStyle(
+                fontSize: 18,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           Text(
             'Path Length: ${widget.path.generatedTrajectory.getLength().toStringAsFixed(2)}m',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),

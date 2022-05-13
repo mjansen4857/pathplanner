@@ -108,19 +108,10 @@ class _DraggableCardState extends State<DraggableCard> {
           child: Container(
             width: widget.width,
             child: Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              color: Colors.white.withOpacity(0.13),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Padding(
-                    padding: EdgeInsets.all(8),
-                    child: widget.child,
-                  ),
-                ),
+              color: Theme.of(context).colorScheme.surfaceVariant,
+              child: Padding(
+                padding: EdgeInsets.all(10),
+                child: widget.child,
               ),
             ),
           ),

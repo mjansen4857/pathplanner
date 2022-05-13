@@ -22,6 +22,8 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
   Widget build(BuildContext context) {
     if (widget.path == null) return Container();
 
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return DraggableCard(
       widget.stackKey,
       defaultPosition: CardPosition(bottom: 0, left: 0),
@@ -35,7 +37,10 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Generator Settings'),
+              Text(
+                'Generator Settings',
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
+              ),
             ],
           ),
           SizedBox(height: 12),
@@ -94,7 +99,8 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                       children: [
                         Checkbox(
                           value: widget.path!.isReversed ?? false,
-                          activeColor: Colors.indigo,
+                          activeColor: colorScheme.primary,
+                          checkColor: colorScheme.onPrimary,
                           onChanged: (val) {
                             setState(() {
                               widget.path!.isReversed = val;
@@ -105,7 +111,10 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                           },
                         ),
                         SizedBox(width: 4),
-                        Text('Reversed'),
+                        Text(
+                          'Reversed',
+                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                        ),
                         SizedBox(width: 12),
                       ],
                     ),
@@ -122,8 +131,10 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
   Widget _buildTextField(
       BuildContext context, TextEditingController? controller, String label,
       {bool? enabled = true, ValueChanged? onSubmitted}) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Container(
-      width: 100,
+      width: 105,
       height: 35,
       child: TextField(
         onSubmitted: (val) {
@@ -138,20 +149,14 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
         },
         enabled: enabled,
         controller: controller,
-        cursorColor: Colors.white,
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'(^(-?)\d*\.?\d*)')),
         ],
-        style: TextStyle(fontSize: 14),
+        style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
         decoration: InputDecoration(
           contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
           labelText: label,
-          filled: true,
-          border:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-          focusedBorder:
-              OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-          labelStyle: TextStyle(color: Colors.grey),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
         ),
       ),
     );

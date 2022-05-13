@@ -39,7 +39,7 @@ class _PathEditorState extends State<PathEditor> {
     return Stack(
       children: [
         _buildEditorMode(),
-        _buildToolbar(),
+        _buildToolbar(context),
       ],
     );
   }
@@ -86,16 +86,15 @@ class _PathEditorState extends State<PathEditor> {
     }
   }
 
-  Widget _buildToolbar() {
+  Widget _buildToolbar(BuildContext context) {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(12.0),
-          child: Container(
-            height: 40,
-            color: Colors.grey[900],
+        child: Container(
+          height: 48,
+          child: Card(
+            color: Theme.of(context).colorScheme.surfaceVariant,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -106,6 +105,7 @@ class _PathEditorState extends State<PathEditor> {
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.edit),
+                    textColor: Theme.of(context).colorScheme.onSurfaceVariant,
                     onPressed: _mode == EditorMode.Edit
                         ? null
                         : () {
@@ -124,6 +124,7 @@ class _PathEditorState extends State<PathEditor> {
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.play_arrow),
+                    textColor: Theme.of(context).colorScheme.onSurfaceVariant,
                     onPressed: _mode == EditorMode.Preview
                         ? null
                         : () {
@@ -142,6 +143,7 @@ class _PathEditorState extends State<PathEditor> {
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.pin_drop),
+                    textColor: Theme.of(context).colorScheme.onSurfaceVariant,
                     onPressed: _mode == EditorMode.Markers
                         ? null
                         : () {
@@ -160,6 +162,7 @@ class _PathEditorState extends State<PathEditor> {
                     height: 50,
                     minWidth: 50,
                     child: Icon(Icons.straighten),
+                    textColor: Theme.of(context).colorScheme.onSurfaceVariant,
                     onPressed: _mode == EditorMode.Measure
                         ? null
                         : () {

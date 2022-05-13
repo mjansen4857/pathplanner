@@ -13,7 +13,6 @@ import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/deploy_fab.dart';
 import 'package:pathplanner/widgets/path_tile.dart';
-import 'package:pathplanner/widgets/drawer_tiles/settings_tile.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
@@ -398,6 +397,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   context: context,
                                   builder: (BuildContext context) {
                                     return SettingsDialog(
+                                      prefs: _prefs,
                                       fieldImages: _fieldImages,
                                       selectedField: _fieldImage ??
                                           widget.defaultFieldImage,

@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 class WelcomePage extends StatefulWidget {
@@ -43,8 +42,9 @@ class _WelcomePageState extends State<WelcomePage>
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      appBar: CustomAppBar(),
       body: Stack(
         children: [
           Center(
@@ -75,13 +75,14 @@ class _WelcomePageState extends State<WelcomePage>
                           ),
                           Text(
                             'PathPlanner',
-                            style: TextStyle(fontSize: 48),
+                            style: TextStyle(
+                                fontSize: 48, color: colorScheme.onSurface),
                           ),
                           Text(
                             'v' + widget.appVersion,
                             style: TextStyle(
                               fontSize: 24,
-                              color: Colors.grey,
+                              color: colorScheme.secondary,
                             ),
                           ),
                           SizedBox(height: 64),
@@ -94,7 +95,9 @@ class _WelcomePageState extends State<WelcomePage>
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                                primary: Colors.grey[800]),
+                              primary: colorScheme.surfaceVariant,
+                              onPrimary: colorScheme.onSurfaceVariant,
+                            ),
                             onPressed: () {
                               _showOpenProjectDialog(context);
                             },

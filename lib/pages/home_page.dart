@@ -12,11 +12,12 @@ import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/deploy_fab.dart';
-import 'package:pathplanner/widgets/drawer_tiles/path_tile.dart';
+import 'package:pathplanner/widgets/path_tile.dart';
 import 'package:pathplanner/widgets/drawer_tiles/settings_tile.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
+import 'package:pathplanner/widgets/settings_dialog.dart';
 import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -158,259 +159,305 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   Widget _buildDrawer(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Drawer(
-      child: Column(
-        children: [
-          DrawerHeader(
-            child: Stack(
-              children: [
-                Container(
-                  child: Align(
-                      alignment: FractionalOffset.bottomRight,
-                      child: Text(
-                        'v' + widget.appVersion,
-                        style: TextStyle(color: colorScheme.onSurface),
-                      )),
-                ),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Container(),
-                        flex: 2,
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
+    return ClipRRect(
+      borderRadius: BorderRadius.only(
+        topRight: Radius.circular(16),
+        bottomRight: Radius.circular(16),
+      ),
+      child: Drawer(
+        child: Column(
+          children: [
+            DrawerHeader(
+              child: Stack(
+                children: [
+                  Container(
+                    child: Align(
+                        alignment: FractionalOffset.bottomRight,
                         child: Text(
-                          basename(_projectDir!.path),
-                          style: TextStyle(
-                            fontSize: 20,
+                          'v' + widget.appVersion,
+                          style: TextStyle(color: colorScheme.onSurface),
+                        )),
+                  ),
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Container(),
+                          flex: 2,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            basename(_projectDir!.path),
+                            style: TextStyle(
+                              fontSize: 20,
+                            ),
                           ),
                         ),
-                      ),
-                      ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            onPrimary: colorScheme.onPrimaryContainer,
-                            primary: colorScheme.primaryContainer,
-                          ),
-                          onPressed: () {
-                            _openProjectDialog(context);
-                          },
-                          child: Text('Switch Project')),
-                      Expanded(
-                        child: Container(),
-                        flex: 4,
+                        ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              onPrimary: colorScheme.onPrimaryContainer,
+                              primary: colorScheme.primaryContainer,
+                            ),
+                            onPressed: () {
+                              _openProjectDialog(context);
+                            },
+                            child: Text('Switch Project')),
+                        Expanded(
+                          child: Container(),
+                          flex: 4,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  for (int i = 0; i < _paths.length; i++)
+                    PathTile(
+                      path: _paths[i],
+                      key: Key('$i'),
+                      isSelected: _paths[i] == _currentPath,
+                      onRename: (name) {
+                        Directory pathsDir = _getPathsDir(_projectDir!);
+
+                        File pathFile =
+                            File(join(pathsDir.path, _paths[i].name + '.path'));
+                        File newPathFile =
+                            File(join(pathsDir.path, name + '.path'));
+                        if (newPathFile.existsSync() &&
+                            newPathFile.path != pathFile.path) {
+                          Navigator.of(context).pop();
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return KeyBoardShortcuts(
+                                  keysToPress: {LogicalKeyboardKey.enter},
+                                  onKeysPressed: Navigator.of(context).pop,
+                                  child: AlertDialog(
+                                    title: Text('Unable to Rename'),
+                                    content: Text(
+                                        'The file "${basename(newPathFile.path)}" already exists'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: Navigator.of(context).pop,
+                                        child: Text('OK'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              });
+                          return false;
+                        } else {
+                          pathFile.rename(join(pathsDir.path, name + '.path'));
+                          setState(() {
+                            //flutter weird
+                            _currentPath!.name = _currentPath!.name;
+                          });
+                          return true;
+                        }
+                      },
+                      onTap: () {
+                        setState(() {
+                          _currentPath = _paths[i];
+                          UndoRedo.clearHistory();
+                        });
+                      },
+                      onDelete: () {
+                        UndoRedo.clearHistory();
+
+                        Directory pathsDir = _getPathsDir(_projectDir!);
+
+                        File pathFile =
+                            File(join(pathsDir.path, _paths[i].name + '.path'));
+
+                        if (pathFile.existsSync()) {
+                          // The fitted text field container does not rebuild
+                          // itself correctly so this is a way to hide it and
+                          // avoid confusion. (Hides drawer)
+                          Navigator.of(context).pop();
+
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                void confirm() {
+                                  Navigator.of(context).pop();
+                                  pathFile.delete();
+                                  setState(() {
+                                    if (_currentPath == _paths.removeAt(i)) {
+                                      _currentPath = _paths.first;
+                                    }
+                                  });
+                                }
+
+                                return KeyBoardShortcuts(
+                                  keysToPress: {LogicalKeyboardKey.enter},
+                                  onKeysPressed: confirm,
+                                  child: AlertDialog(
+                                    title: Text('Delete Path'),
+                                    content: Text(
+                                        'Are you sure you want to delete "${_paths[i].name}"? This cannot be undone.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: confirm,
+                                        child: Text('Confirm'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              });
+                        } else {
+                          setState(() {
+                            if (_currentPath == _paths.removeAt(i)) {
+                              _currentPath = _paths.first;
+                            }
+                          });
+                        }
+                      },
+                      onDuplicate: () {
+                        UndoRedo.clearHistory();
+
+                        setState(() {
+                          List<String> pathNames = [];
+                          for (RobotPath path in _paths) {
+                            pathNames.add(path.name);
+                          }
+                          String pathName = _paths[i].name + ' Copy';
+                          while (pathNames.contains(pathName)) {
+                            pathName = pathName + ' Copy';
+                          }
+                          _paths.add(RobotPath(
+                            waypoints: RobotPath.cloneWaypointList(
+                                _paths[i].waypoints),
+                            name: pathName,
+                          ));
+                          _currentPath = _paths.last;
+                          _savePath(_currentPath!);
+                        });
+                      },
+                    ),
+                ],
+              ),
+            ),
+            Container(
+              child: Align(
+                alignment: FractionalOffset.bottomCenter,
+                child: Container(
+                  child: Column(
+                    children: [
+                      Divider(),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0, top: 4.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                List<String> pathNames = [];
+                                for (RobotPath path in _paths) {
+                                  pathNames.add(path.name);
+                                }
+                                String pathName = 'New Path';
+                                while (pathNames.contains(pathName)) {
+                                  pathName = 'New ' + pathName;
+                                }
+                                setState(() {
+                                  _paths.add(
+                                      RobotPath.defaultPath(name: pathName));
+                                  _currentPath = _paths.last;
+                                  _savePath(_currentPath!);
+                                  UndoRedo.clearHistory();
+                                });
+                              },
+                              icon: Icon(Icons.add),
+                              label: Text('Add Path'),
+                              style: ElevatedButton.styleFrom(
+                                primary: colorScheme.primaryContainer,
+                                onPrimary: colorScheme.onPrimaryContainer,
+                                fixedSize: Size(135, 56),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return SettingsDialog(
+                                      fieldImages: _fieldImages,
+                                      selectedField: _fieldImage ??
+                                          widget.defaultFieldImage,
+                                      onFieldSelected: (FieldImage image) {
+                                        setState(() {
+                                          _fieldImage = image;
+                                          if (!_fieldImages.contains(image)) {
+                                            _fieldImages.add(image);
+                                          }
+                                          _prefs.setString(
+                                              'fieldImage', image.name);
+                                        });
+                                      },
+                                      onSettingsChanged: () {
+                                        setState(() {
+                                          _robotSize = Size(
+                                              _prefs.getDouble('robotWidth') ??
+                                                  0.75,
+                                              _prefs.getDouble('robotLength') ??
+                                                  1.0);
+                                          _holonomicMode =
+                                              _prefs.getBool('holonomicMode') ??
+                                                  false;
+                                          _generateJSON =
+                                              _prefs.getBool('generateJSON') ??
+                                                  false;
+                                          _generateCSV =
+                                              _prefs.getBool('generateCSV') ??
+                                                  false;
+                                        });
+                                      },
+                                      onGenerationEnabled: () {
+                                        for (RobotPath path in _paths) {
+                                          _savePath(path);
+                                        }
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                              icon: Icon(Icons.settings),
+                              label: Text('Settings'),
+                              style: ElevatedButton.styleFrom(
+                                primary: colorScheme.surface,
+                                onPrimary: colorScheme.onSurface,
+                                fixedSize: Size(135, 56),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                for (int i = 0; i < _paths.length; i++)
-                  PathTile(
-                    path: _paths[i],
-                    key: Key('$i'),
-                    isSelected: _paths[i] == _currentPath,
-                    onRename: (name) {
-                      Directory pathsDir = _getPathsDir(_projectDir!);
-
-                      File pathFile =
-                          File(join(pathsDir.path, _paths[i].name + '.path'));
-                      File newPathFile =
-                          File(join(pathsDir.path, name + '.path'));
-                      if (newPathFile.existsSync() &&
-                          newPathFile.path != pathFile.path) {
-                        Navigator.of(context).pop();
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return KeyBoardShortcuts(
-                                keysToPress: {LogicalKeyboardKey.enter},
-                                onKeysPressed: Navigator.of(context).pop,
-                                child: AlertDialog(
-                                  title: Text('Unable to Rename'),
-                                  content: Text(
-                                      'The file "${basename(newPathFile.path)}" already exists'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: Navigator.of(context).pop,
-                                      child: Text('OK'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            });
-                        return false;
-                      } else {
-                        pathFile.rename(join(pathsDir.path, name + '.path'));
-                        setState(() {
-                          //flutter weird
-                          _currentPath!.name = _currentPath!.name;
-                        });
-                        return true;
-                      }
-                    },
-                    onTap: () {
-                      setState(() {
-                        _currentPath = _paths[i];
-                        UndoRedo.clearHistory();
-                      });
-                    },
-                    onDelete: () {
-                      UndoRedo.clearHistory();
-
-                      Directory pathsDir = _getPathsDir(_projectDir!);
-
-                      File pathFile =
-                          File(join(pathsDir.path, _paths[i].name + '.path'));
-
-                      if (pathFile.existsSync()) {
-                        // The fitted text field container does not rebuild
-                        // itself correctly so this is a way to hide it and
-                        // avoid confusion. (Hides drawer)
-                        Navigator.of(context).pop();
-
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              void confirm() {
-                                Navigator.of(context).pop();
-                                pathFile.delete();
-                                setState(() {
-                                  if (_currentPath == _paths.removeAt(i)) {
-                                    _currentPath = _paths.first;
-                                  }
-                                });
-                              }
-
-                              return KeyBoardShortcuts(
-                                keysToPress: {LogicalKeyboardKey.enter},
-                                onKeysPressed: confirm,
-                                child: AlertDialog(
-                                  title: Text('Delete Path'),
-                                  content: Text(
-                                      'Are you sure you want to delete "${_paths[i].name}"? This cannot be undone.'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: confirm,
-                                      child: Text('Confirm'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            });
-                      } else {
-                        setState(() {
-                          if (_currentPath == _paths.removeAt(i)) {
-                            _currentPath = _paths.first;
-                          }
-                        });
-                      }
-                    },
-                    onDuplicate: () {
-                      UndoRedo.clearHistory();
-
-                      setState(() {
-                        List<String> pathNames = [];
-                        for (RobotPath path in _paths) {
-                          pathNames.add(path.name);
-                        }
-                        String pathName = _paths[i].name + ' Copy';
-                        while (pathNames.contains(pathName)) {
-                          pathName = pathName + ' Copy';
-                        }
-                        _paths.add(RobotPath(
-                          waypoints:
-                              RobotPath.cloneWaypointList(_paths[i].waypoints),
-                          name: pathName,
-                        ));
-                        _currentPath = _paths.last;
-                        _savePath(_currentPath!);
-                      });
-                    },
-                  ),
-              ],
-            ),
-          ),
-          Container(
-            child: Align(
-              alignment: FractionalOffset.bottomCenter,
-              child: Container(
-                child: Column(
-                  children: [
-                    Divider(),
-                    ListTile(
-                      leading: Icon(Icons.add),
-                      title: Text('Add Path'),
-                      onTap: () {
-                        List<String> pathNames = [];
-                        for (RobotPath path in _paths) {
-                          pathNames.add(path.name);
-                        }
-                        String pathName = 'New Path';
-                        while (pathNames.contains(pathName)) {
-                          pathName = 'New ' + pathName;
-                        }
-                        setState(() {
-                          _paths.add(RobotPath.defaultPath(name: pathName));
-                          _currentPath = _paths.last;
-                          _savePath(_currentPath!);
-                          UndoRedo.clearHistory();
-                        });
-                      },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: SettingsTile(
-                        fieldImages: _fieldImages,
-                        selectedField: _fieldImage ?? widget.defaultFieldImage,
-                        onFieldSelected: (FieldImage image) {
-                          setState(() {
-                            _fieldImage = image;
-                            if (!_fieldImages.contains(image)) {
-                              _fieldImages.add(image);
-                            }
-                            _prefs.setString('fieldImage', image.name);
-                          });
-                        },
-                        onSettingsChanged: () {
-                          setState(() {
-                            _robotSize = Size(
-                                _prefs.getDouble('robotWidth') ?? 0.75,
-                                _prefs.getDouble('robotLength') ?? 1.0);
-                            _holonomicMode =
-                                _prefs.getBool('holonomicMode') ?? false;
-                            _generateJSON =
-                                _prefs.getBool('generateJSON') ?? false;
-                            _generateCSV =
-                                _prefs.getBool('generateCSV') ?? false;
-                          });
-                        },
-                        onGenerationEnabled: () {
-                          for (RobotPath path in _paths) {
-                            _savePath(path);
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

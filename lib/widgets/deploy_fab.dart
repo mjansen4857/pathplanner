@@ -10,13 +10,14 @@ class DeployFAB extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Tooltip(
       message: 'Deploy Robot Code',
       waitDuration: Duration(milliseconds: 500),
-      child: FloatingActionButton(
-        child: Icon(Icons.send_rounded),
-        backgroundColor: Colors.grey[900],
-        foregroundColor: Colors.green,
+      child: FloatingActionButton.extended(
+        icon: Icon(Icons.send_rounded),
+        label: Text('Deploy'),
         onPressed: () async {
           Shell shell = Shell().cd(projectDir!.path);
           _showSnackbar(context, 'Deploying robot code...',
@@ -28,14 +29,15 @@ class DeployFAB extends StatelessWidget {
             ScaffoldMessenger.of(context).removeCurrentSnackBar();
             if (result.exitCode == 0) {
               _showSnackbar(context, 'Successfully deployed.',
-                  textColor: Colors.green);
+                  textColor: colorScheme.primary);
             } else {
               _showSnackbar(context, 'Failed to deploy.',
-                  textColor: Colors.red);
+                  textColor: colorScheme.error);
             }
           } on ShellException catch (_) {
             ScaffoldMessenger.of(context).removeCurrentSnackBar();
-            _showSnackbar(context, 'Failed to deploy.', textColor: Colors.red);
+            _showSnackbar(context, 'Failed to deploy.',
+                textColor: colorScheme.error);
           }
         },
       ),
@@ -44,13 +46,15 @@ class DeployFAB extends StatelessWidget {
 
   void _showSnackbar(BuildContext context, String message,
       {Duration? duration, Color textColor = Colors.white}) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
         message,
         style: TextStyle(color: textColor, fontSize: 16),
       ),
       duration: duration ?? Duration(milliseconds: 4000),
-      backgroundColor: Colors.grey[900],
+      backgroundColor: colorScheme.surfaceVariant,
     ));
   }
 }

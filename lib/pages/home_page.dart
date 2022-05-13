@@ -150,7 +150,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
       floatingActionButton: Visibility(
         visible:
-            _projectDir != null && (!widget.appStoreBuild && !Platform.isMacOS),
+            _projectDir != null && !(widget.appStoreBuild && Platform.isMacOS),
         child: DeployFAB(projectDir: _projectDir),
       ),
     );

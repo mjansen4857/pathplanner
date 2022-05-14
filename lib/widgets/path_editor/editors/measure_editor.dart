@@ -60,7 +60,7 @@ class _MeasureEditorState extends State<MeasureEditor> {
               },
               child: Container(
                 child: Padding(
-                  padding: const EdgeInsets.all(48.0),
+                  padding: const EdgeInsets.fromLTRB(48, 24, 48, 48),
                   child: Stack(
                     children: [
                       widget.fieldImage,
@@ -126,7 +126,7 @@ class _MeasureEditorState extends State<MeasureEditor> {
 
   double _yPixelsToMeters(double pixels) {
     return (widget.fieldImage.defaultSize.height -
-            ((pixels - 48) / _MeasurePainter.scale)) /
+            ((pixels - 24) / _MeasurePainter.scale)) /
         widget.fieldImage.pixelsPerMeter;
   }
 }

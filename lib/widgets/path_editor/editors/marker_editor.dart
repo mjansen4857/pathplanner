@@ -78,7 +78,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
                           widget.fieldImage,
                           _MarkerPainter.scale);
                       Offset markerCenterPx =
-                          markerPosPx - const Offset(-48, 20 - 48);
+                          markerPosPx - const Offset(-48, 20 - 24);
 
                       if ((details.localPosition - markerCenterPx).distance <=
                           40) {
@@ -94,7 +94,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
                   },
                   child: Container(
                     child: Padding(
-                      padding: const EdgeInsets.all(48.0),
+                      padding: const EdgeInsets.fromLTRB(48, 24, 48, 48),
                       child: Stack(
                         children: [
                           widget.fieldImage,

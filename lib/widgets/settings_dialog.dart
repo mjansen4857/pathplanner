@@ -53,6 +53,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return AlertDialog(
       title: Text('Settings'),
       content: Container(
@@ -101,7 +103,20 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   children: [
                     FilterChip(
                       label: Text('Generate JSON'),
+                      labelStyle: TextStyle(
+                          color: _generateJSON
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onSurface),
                       selected: _generateJSON,
+                      backgroundColor: colorScheme.surface,
+                      selectedColor: colorScheme.primaryContainer,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                              color: _generateJSON
+                                  ? colorScheme.primaryContainer
+                                  : colorScheme.outline,
+                              width: 1)),
                       onSelected: (value) {
                         widget.prefs.setBool('generateJSON', value);
                         setState(() {
@@ -115,7 +130,20 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     ),
                     FilterChip(
                       label: Text('Generate CSV'),
+                      labelStyle: TextStyle(
+                          color: _generateCSV
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onSurface),
                       selected: _generateCSV,
+                      backgroundColor: colorScheme.surface,
+                      selectedColor: colorScheme.primaryContainer,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                              color: _generateCSV
+                                  ? colorScheme.primaryContainer
+                                  : colorScheme.outline,
+                              width: 1)),
                       onSelected: (value) {
                         widget.prefs.setBool('generateCSV', value);
                         setState(() {
@@ -129,7 +157,20 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     ),
                     FilterChip(
                       label: Text('Holonomic Mode'),
+                      labelStyle: TextStyle(
+                          color: _holonomicMode
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onSurface),
                       selected: _holonomicMode,
+                      backgroundColor: colorScheme.surface,
+                      selectedColor: colorScheme.primaryContainer,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                              color: _holonomicMode
+                                  ? colorScheme.primaryContainer
+                                  : colorScheme.outline,
+                              width: 1)),
                       onSelected: (value) {
                         widget.prefs.setBool('holonomicMode', value);
                         setState(() {

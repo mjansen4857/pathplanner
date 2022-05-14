@@ -247,7 +247,7 @@ class _EditEditorState extends State<EditEditor> {
           },
           child: Container(
             child: Padding(
-              padding: const EdgeInsets.all(48.0),
+              padding: const EdgeInsets.fromLTRB(48, 24, 48, 48),
               child: Stack(
                 children: [
                   widget.fieldImage,
@@ -348,7 +348,7 @@ class _EditEditorState extends State<EditEditor> {
 
   double _yPixelsToMeters(double pixels) {
     return (widget.fieldImage.defaultSize.height -
-            ((pixels - 48) / _EditPainter.scale)) /
+            ((pixels - 24) / _EditPainter.scale)) /
         widget.fieldImage.pixelsPerMeter;
   }
 }

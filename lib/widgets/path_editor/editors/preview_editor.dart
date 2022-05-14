@@ -63,7 +63,7 @@ class _PreviewEditorState extends State<PreviewEditor>
           child: InteractiveViewer(
             child: Container(
               child: Padding(
-                padding: const EdgeInsets.all(48.0),
+                padding: const EdgeInsets.fromLTRB(48, 24, 48, 48),
                 child: Stack(
                   children: [
                     widget.fieldImage,

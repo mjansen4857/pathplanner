@@ -56,14 +56,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return AlertDialog(
       title: Text('Settings'),
       content: Container(
-        width: 275,
+        width: 345,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text('Robot Size:'),
+            SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildTextField(context, 'Robot Width', (value) {
+                _buildTextField(context, 'Width', (value) {
                   if (value != null) {
                     widget.prefs.setDouble('robotWidth', value);
                     setState(() {
@@ -72,7 +75,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   }
                   widget.onSettingsChanged();
                 }, _width.toStringAsFixed(2)),
-                _buildTextField(context, 'Robot Length', (value) {
+                _buildTextField(context, 'Length', (value) {
                   if (value != null) {
                     widget.prefs.setDouble('robotLength', value);
                     setState(() {
@@ -83,7 +86,62 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 }, _length.toStringAsFixed(2)),
               ],
             ),
+            SizedBox(height: 18),
             _buildFieldImageDropdown(context),
+            SizedBox(height: 24),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Additional Options:'),
+                SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilterChip(
+                      label: Text('Generate JSON'),
+                      selected: _generateJSON,
+                      onSelected: (value) {
+                        widget.prefs.setBool('generateJSON', value);
+                        setState(() {
+                          _generateJSON = value;
+                        });
+                        widget.onSettingsChanged();
+                        if (value) {
+                          widget.onGenerationEnabled();
+                        }
+                      },
+                    ),
+                    FilterChip(
+                      label: Text('Generate CSV'),
+                      selected: _generateCSV,
+                      onSelected: (value) {
+                        widget.prefs.setBool('generateCSV', value);
+                        setState(() {
+                          _generateCSV = value;
+                        });
+                        widget.onSettingsChanged();
+                        if (value) {
+                          widget.onGenerationEnabled();
+                        }
+                      },
+                    ),
+                    FilterChip(
+                      label: Text('Holonomic Mode'),
+                      selected: _holonomicMode,
+                      onSelected: (value) {
+                        widget.prefs.setBool('holonomicMode', value);
+                        setState(() {
+                          _holonomicMode = value;
+                        });
+                        widget.onSettingsChanged();
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -104,7 +162,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Container(
         height: 40,
-        width: 132,
+        width: 165,
         child: TextField(
           onSubmitted: (val) {
             if (onSubmitted != null) {
@@ -133,19 +191,16 @@ class _SettingsDialogState extends State<SettingsDialog> {
   Widget _buildFieldImageDropdown(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      height: 48,
-      child: Row(
-        children: [
-          Text(
-            'Field Image:',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-          SizedBox(width: 8),
-          Padding(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Field Image:'),
+        SizedBox(height: 4),
+        Container(
+          height: 48,
+          child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Container(
-              width: 181,
               decoration: BoxDecoration(
                 color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(4),
@@ -191,8 +246,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

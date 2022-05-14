@@ -18,9 +18,6 @@ jobs:
           flutter-version: 3.0.0
           cache: true
           cache-path: ${{ runner.tool_cache }}/flutter/windows
-          
-      - name: Enable windows desktop
-        run: flutter config --enable-windows-desktop
 
       - name: Get dependencies
         run: flutter pub get

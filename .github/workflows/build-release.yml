@@ -93,9 +93,6 @@ jobs:
           flutter-version: 3.0.0
           cache: true
           cache-path: ${{ runner.tool_cache }}/flutter/macos
-        
-      - name: Enable macOS desktop support
-        run: flutter config --enable-macos-desktop
 
       - name: Get dependencies
         run: flutter pub get
@@ -144,9 +141,6 @@ jobs:
           flutter-version: 3.0.0
           cache: true
           cache-path: ${{ runner.tool_cache }}/flutter/linux
-        
-      - name: Enable linux desktop support
-        run: flutter config --enable-linux-desktop
 
       - name: Get dependencies
         run: flutter pub get

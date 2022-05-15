@@ -42,6 +42,7 @@ dependencies:
   path_provider: ^2.0.9
   image_size_getter: ^2.1.1
   path: ^1.8.0
+  window_manager: ^0.2.3
 
 dev_dependencies:
   flutter_test:

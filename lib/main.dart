@@ -1,9 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'pages/home_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await windowManager.ensureInitialized();
+
+  WindowOptions windowOptions = WindowOptions(
+    size: Size(1280, 720),
+    center: true,
+    title: 'PathPlanner',
+  );
+
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
   runApp(PathPlanner());
 }
 

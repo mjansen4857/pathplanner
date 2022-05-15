@@ -48,8 +48,6 @@ class _MarkerCardState extends State<MarkerCard> {
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return DraggableCard(
       stackKey: widget.stackKey,
       defaultPosition: CardPosition(top: 0, right: 0),

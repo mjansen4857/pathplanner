@@ -35,7 +35,6 @@ class WaypointCard extends StatefulWidget {
 class _WaypointCardState extends State<WaypointCard> {
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
     if (widget.waypoint == null) return Container();
 
     return DraggableCard(

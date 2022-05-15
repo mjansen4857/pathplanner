@@ -49,7 +49,7 @@ class _WelcomePageState extends State<WelcomePage>
         children: [
           Center(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(48, 24, 48, 48),
+              padding: EdgeInsets.all(48),
               child: widget.backgroundImage,
             ),
           ),

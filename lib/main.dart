@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:window_manager/window_manager.dart';
@@ -12,6 +14,8 @@ void main() async {
     size: Size(1280, 720),
     center: true,
     title: 'PathPlanner',
+    titleBarStyle:
+        Platform.isMacOS ? TitleBarStyle.normal : TitleBarStyle.hidden,
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {

@@ -47,7 +47,7 @@ class _WaypointCardState extends State<WaypointCard> {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildHeader(colorScheme),
+          _buildHeader(),
           SizedBox(height: 12),
           // Override gesture detector on UI elements so they wont cause the card to move
           GestureDetector(
@@ -70,7 +70,9 @@ class _WaypointCardState extends State<WaypointCard> {
     );
   }
 
-  Widget _buildHeader(ColorScheme colorScheme) {
+  Widget _buildHeader() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -206,8 +208,6 @@ class _WaypointCardState extends State<WaypointCard> {
   }
 
   Widget _buildVelReversalRow(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
@@ -230,13 +230,15 @@ class _WaypointCardState extends State<WaypointCard> {
           },
         ),
         SizedBox(width: 12),
-        _buildReversalWidget(colorScheme),
+        _buildReversalWidget(),
         SizedBox(width: 14),
       ],
     );
   }
 
-  Widget _buildReversalWidget(ColorScheme colorScheme) {
+  Widget _buildReversalWidget() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     if (widget.waypoint!.isStartPoint() || widget.waypoint!.isEndPoint()) {
       return SizedBox(width: 90);
     } else {

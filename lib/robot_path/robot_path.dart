@@ -106,7 +106,6 @@ class RobotPath {
 
   void addWaypoint(Point anchorPos, int waypoint) {
     if (waypoints[waypoint].nextControl == null) {
-      print("Adding waypoint at the end");
       waypoints[waypoints.length - 1].addNextControl();
       waypoints.add(
         Waypoint(
@@ -116,7 +115,6 @@ class RobotPath {
         ),
       );
     } else {
-      print("Adding waypoint in the middle of the path");
       final Waypoint toAdd = Waypoint(
         prevControl: (anchorPos + waypoints[waypoint].nextControl!) * 0.5,
         anchorPoint: anchorPos,

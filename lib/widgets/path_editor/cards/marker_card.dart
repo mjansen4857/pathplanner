@@ -59,16 +59,18 @@ class _MarkerCardState extends State<MarkerCard> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _buildHeader(colorScheme),
-          _buildNameField(colorScheme),
-          _buildPositionSlider(colorScheme),
-          _buildAddButton(colorScheme),
+          _buildHeader(),
+          _buildNameField(),
+          _buildPositionSlider(),
+          _buildAddButton(),
         ],
       ),
     );
   }
 
-  Widget _buildHeader(ColorScheme colorScheme) {
+  Widget _buildHeader() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Row(
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -107,7 +109,9 @@ class _MarkerCardState extends State<MarkerCard> {
     );
   }
 
-  Widget _buildNameField(ColorScheme colorScheme) {
+  Widget _buildNameField() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       // Override gesture detector on UI elements so they wont cause the card to move
       onPanStart: (details) {},
@@ -137,7 +141,9 @@ class _MarkerCardState extends State<MarkerCard> {
     );
   }
 
-  Widget _buildPositionSlider(ColorScheme colorScheme) {
+  Widget _buildPositionSlider() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       onPanStart: (details) {},
       child: Padding(
@@ -178,7 +184,9 @@ class _MarkerCardState extends State<MarkerCard> {
     );
   }
 
-  Widget _buildAddButton(ColorScheme colorScheme) {
+  Widget _buildAddButton() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return GestureDetector(
       // Override gesture detector on UI elements so they wont cause the card to move
       onPanStart: (details) {},

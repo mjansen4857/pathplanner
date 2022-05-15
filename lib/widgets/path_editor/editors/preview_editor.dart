@@ -54,8 +54,6 @@ class _PreviewEditorState extends State<PreviewEditor>
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return Stack(
       key: _key,
       children: [
@@ -87,7 +85,7 @@ class _PreviewEditorState extends State<PreviewEditor>
           ),
         ),
         _buildGeneratorSettingsCard(),
-        _buildRuntimeCard(colorScheme),
+        _buildRuntimeCard(),
       ],
     );
   }
@@ -117,7 +115,9 @@ class _PreviewEditorState extends State<PreviewEditor>
     );
   }
 
-  Widget _buildRuntimeCard(ColorScheme colorScheme) {
+  Widget _buildRuntimeCard() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return SimpleCard(
       stackKey: _key,
       child: Text(

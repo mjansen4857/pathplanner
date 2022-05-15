@@ -70,7 +70,7 @@ class _PathTileState extends State<PathTile> {
                   ),
                 ),
               ),
-              _buildPopupMenu(colorScheme),
+              _buildPopupMenu(),
             ],
           ),
         ),
@@ -130,67 +130,72 @@ class _PathTileState extends State<PathTile> {
     );
   }
 
-  Widget _buildPopupMenu(ColorScheme colorScheme) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 16.0),
-      child: SizedBox(
-        width: 48,
-        child: custom.PopupMenuButton<MenuOptions>(
-          color: colorScheme.surfaceVariant,
-          icon: Icon(
-            Icons.adaptive.more,
-            color: widget.isSelected
-                ? colorScheme.onSurfaceVariant
-                : colorScheme.onSurface,
+  Widget _buildPopupMenu() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Visibility(
+      visible: widget.isSelected,
+      child: Padding(
+        padding: const EdgeInsets.only(right: 16.0),
+        child: SizedBox(
+          width: 48,
+          child: custom.PopupMenuButton<MenuOptions>(
+            color: colorScheme.surfaceVariant,
+            icon: Icon(
+              Icons.adaptive.more,
+              color: widget.isSelected
+                  ? colorScheme.onSurfaceVariant
+                  : colorScheme.onSurface,
+            ),
+            splashRadius: 18,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            tooltip: '',
+            onSelected: (MenuOptions value) {
+              switch (value) {
+                case MenuOptions.Delete:
+                  widget.onDelete();
+                  break;
+                case MenuOptions.Duplicate:
+                  widget.onDuplicate();
+              }
+            },
+            itemBuilder: (BuildContext context) =>
+                <custom.PopupMenuEntry<MenuOptions>>[
+              custom.PopupMenuItem<MenuOptions>(
+                value: MenuOptions.Delete,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.delete,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Delete',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+              custom.PopupMenuItem<MenuOptions>(
+                value: MenuOptions.Duplicate,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.copy,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    SizedBox(width: 12),
+                    Text(
+                      'Duplicate',
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          splashRadius: 18,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          tooltip: '',
-          onSelected: (MenuOptions value) {
-            switch (value) {
-              case MenuOptions.Delete:
-                print('del');
-                widget.onDelete();
-                break;
-              case MenuOptions.Duplicate:
-                widget.onDuplicate();
-            }
-          },
-          itemBuilder: (BuildContext context) =>
-              <custom.PopupMenuEntry<MenuOptions>>[
-            custom.PopupMenuItem<MenuOptions>(
-              value: MenuOptions.Delete,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.delete,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  SizedBox(width: 12),
-                  Text(
-                    'Delete',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-            custom.PopupMenuItem<MenuOptions>(
-              value: MenuOptions.Duplicate,
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.copy,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  SizedBox(width: 12),
-                  Text(
-                    'Duplicate',
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ),
       ),
     );

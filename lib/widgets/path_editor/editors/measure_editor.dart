@@ -35,8 +35,6 @@ class _MeasureEditorState extends State<MeasureEditor> {
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return Stack(
       key: _key,
       children: [
@@ -85,12 +83,14 @@ class _MeasureEditorState extends State<MeasureEditor> {
             ),
           ),
         ),
-        _buildPathLengthCard(colorScheme),
+        _buildPathLengthCard(),
       ],
     );
   }
 
-  Widget _buildPathLengthCard(ColorScheme colorScheme) {
+  Widget _buildPathLengthCard() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return SimpleCard(
       stackKey: _key,
       child: Column(

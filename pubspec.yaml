@@ -44,6 +44,7 @@ dependencies:
   path: ^1.8.0
   window_manager: ^0.2.3
   flutter_colorpicker: ^1.0.3
+  logger: ^1.1.0
 
 dev_dependencies:
   flutter_test:

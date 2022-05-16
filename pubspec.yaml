@@ -43,6 +43,7 @@ dependencies:
   image_size_getter: ^2.1.1
   path: ^1.8.0
   window_manager: ^0.2.3
+  flutter_colorpicker: ^1.0.3
 
 dev_dependencies:
   flutter_test:

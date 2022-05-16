@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +18,7 @@ class SettingsDialog extends StatefulWidget {
   final List<FieldImage> fieldImages;
   final FieldImage selectedField;
   final SharedPreferences prefs;
+  final ValueChanged<Color> onTeamColorChanged;
 
   SettingsDialog(
       {required this.onSettingsChanged,
@@ -25,6 +27,7 @@ class SettingsDialog extends StatefulWidget {
       required this.fieldImages,
       required this.selectedField,
       required this.prefs,
+      required this.onTeamColorChanged,
       super.key});
 
   @override
@@ -38,6 +41,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late bool _generateJSON;
   late bool _generateCSV;
   late FieldImage _selectedField;
+  late Color _teamColor;
 
   @override
   void initState() {
@@ -49,6 +53,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
     _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
     _selectedField = widget.selectedField;
+    _teamColor = Color(widget.prefs.getInt('teamColor') ?? Colors.indigo.value);
   }
 
   @override
@@ -89,7 +94,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
               ],
             ),
             SizedBox(height: 18),
-            _buildFieldImageDropdown(context),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildFieldImageDropdown(context),
+                _buildTeamColorPicker(context),
+              ],
+            ),
             SizedBox(height: 24),
             Column(
               mainAxisSize: MainAxisSize.min,
@@ -239,6 +250,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         SizedBox(height: 4),
         Container(
           height: 48,
+          width: 165,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Container(
@@ -283,6 +295,73 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       )
                     ],
                   ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTeamColorPicker(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Team Color:'),
+        SizedBox(height: 4),
+        Container(
+          height: 48,
+          width: 165,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: ElevatedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Pick Team Color'),
+                      content: SingleChildScrollView(
+                        child: ColorPicker(
+                          pickerColor: _teamColor,
+                          enableAlpha: false,
+                          hexInputBar: true,
+                          onColorChanged: (Color color) {
+                            setState(() {
+                              _teamColor = color;
+                            });
+                          },
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            setState(() {
+                              _teamColor = Colors.indigo;
+                              widget.onTeamColorChanged(_teamColor);
+                            });
+                          },
+                          child: Text('Reset'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            widget.onTeamColorChanged(_teamColor);
+                          },
+                          child: Text('Confirm'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              child: Container(),
+              style: ElevatedButton.styleFrom(
+                primary: _teamColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
                 ),
               ),
             ),

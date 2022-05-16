@@ -24,11 +24,15 @@ class HomePage extends StatefulWidget {
   final FieldImage defaultFieldImage;
   final String appVersion;
   final bool appStoreBuild;
+  final SharedPreferences prefs;
+  final ValueChanged<Color> onTeamColorChanged;
 
   HomePage({
     required this.defaultFieldImage,
     required this.appVersion,
     required this.appStoreBuild,
+    required this.prefs,
+    required this.onTeamColorChanged,
     super.key,
   });
 
@@ -38,7 +42,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Directory? _projectDir;
-  late SharedPreferences _prefs;
   List<RobotPath> _paths = [];
   RobotPath? _currentPath;
   Size _robotSize = Size(0.75, 1.0);
@@ -61,69 +64,64 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _scaleAnimation =
         CurvedAnimation(parent: _animController, curve: Curves.ease);
 
-    _loadFieldImages().then((_) {
-      SharedPreferences.getInstance().then((prefs) async {
-        _prefs = prefs;
+    _loadFieldImages().then((_) async {
+      String? projectDir = widget.prefs.getString('currentProjectDir');
+      if (projectDir != null && Platform.isMacOS) {
+        if (widget.prefs.getString('macOSBookmark') != null) {
+          await _bookmarks!
+              .resolveBookmark(widget.prefs.getString('macOSBookmark')!);
 
-        String? projectDir = prefs.getString('currentProjectDir');
-        if (projectDir != null && Platform.isMacOS) {
-          if (_prefs.getString('macOSBookmark') != null) {
-            await _bookmarks!
-                .resolveBookmark(_prefs.getString('macOSBookmark')!);
-
-            await _bookmarks!
-                .startAccessingSecurityScopedResource(File(projectDir));
-          } else {
-            projectDir = null;
-          }
+          await _bookmarks!
+              .startAccessingSecurityScopedResource(File(projectDir));
+        } else {
+          projectDir = null;
         }
+      }
 
-        if (projectDir == null) {
-          projectDir = await Navigator.push(
-            _key.currentContext!,
-            PageRouteBuilder(
-              pageBuilder: (context, anim1, anim2) => WelcomePage(
-                backgroundImage: widget.defaultFieldImage,
-                appVersion: widget.appVersion,
-              ),
-              transitionDuration: Duration.zero,
-              reverseTransitionDuration: Duration.zero,
+      if (projectDir == null) {
+        projectDir = await Navigator.push(
+          _key.currentContext!,
+          PageRouteBuilder(
+            pageBuilder: (context, anim1, anim2) => WelcomePage(
+              backgroundImage: widget.defaultFieldImage,
+              appVersion: widget.appVersion,
             ),
-          );
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ),
+        );
 
-          _prefs.setString('currentProjectDir', projectDir!);
-          _prefs.remove('pathOrder');
+        widget.prefs.setString('currentProjectDir', projectDir!);
 
-          if (Platform.isMacOS) {
-            // Bookmark project on macos so it can be accessed again later
-            String bookmark = await _bookmarks!.bookmark(File(projectDir));
-            _prefs.setString('macOSBookmark', bookmark);
-          }
+        if (Platform.isMacOS) {
+          // Bookmark project on macos so it can be accessed again later
+          String bookmark = await _bookmarks!.bookmark(File(projectDir));
+          widget.prefs.setString('macOSBookmark', bookmark);
         }
+      }
 
-        setState(() {
-          _projectDir = Directory(projectDir!);
+      setState(() {
+        _projectDir = Directory(projectDir!);
 
-          _paths = _loadPaths(_projectDir!);
-          _currentPath = _paths[0];
-          _robotSize = Size(_prefs.getDouble('robotWidth') ?? 0.75,
-              _prefs.getDouble('robotLength') ?? 1.0);
-          _holonomicMode = _prefs.getBool('holonomicMode') ?? false;
-          _generateJSON = _prefs.getBool('generateJSON') ?? false;
-          _generateCSV = _prefs.getBool('generateCSV') ?? false;
+        _paths = _loadPaths(_projectDir!);
+        _currentPath = _paths[0];
+        _robotSize = Size(widget.prefs.getDouble('robotWidth') ?? 0.75,
+            widget.prefs.getDouble('robotLength') ?? 1.0);
+        _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
+        _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
+        _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
 
-          String? selectedFieldName = _prefs.getString('fieldImage');
-          if (selectedFieldName != null) {
-            for (FieldImage image in _fieldImages) {
-              if (image.name == selectedFieldName) {
-                _fieldImage = image;
-                break;
-              }
+        String? selectedFieldName = widget.prefs.getString('fieldImage');
+        if (selectedFieldName != null) {
+          for (FieldImage image in _fieldImages) {
+            if (image.name == selectedFieldName) {
+              _fieldImage = image;
+              break;
             }
           }
+        }
 
-          _animController.forward();
-        });
+        _animController.forward();
       });
     });
   }
@@ -397,7 +395,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   context: context,
                                   builder: (BuildContext context) {
                                     return SettingsDialog(
-                                      prefs: _prefs,
+                                      prefs: widget.prefs,
+                                      onTeamColorChanged:
+                                          widget.onTeamColorChanged,
                                       fieldImages: _fieldImages,
                                       selectedField: _fieldImage ??
                                           widget.defaultFieldImage,
@@ -407,26 +407,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                           if (!_fieldImages.contains(image)) {
                                             _fieldImages.add(image);
                                           }
-                                          _prefs.setString(
+                                          widget.prefs.setString(
                                               'fieldImage', image.name);
                                         });
                                       },
                                       onSettingsChanged: () {
                                         setState(() {
                                           _robotSize = Size(
-                                              _prefs.getDouble('robotWidth') ??
+                                              widget.prefs.getDouble(
+                                                      'robotWidth') ??
                                                   0.75,
-                                              _prefs.getDouble('robotLength') ??
+                                              widget.prefs.getDouble(
+                                                      'robotLength') ??
                                                   1.0);
-                                          _holonomicMode =
-                                              _prefs.getBool('holonomicMode') ??
-                                                  false;
-                                          _generateJSON =
-                                              _prefs.getBool('generateJSON') ??
-                                                  false;
-                                          _generateCSV =
-                                              _prefs.getBool('generateCSV') ??
-                                                  false;
+                                          _holonomicMode = widget.prefs
+                                                  .getBool('holonomicMode') ??
+                                              false;
+                                          _generateJSON = widget.prefs
+                                                  .getBool('generateJSON') ??
+                                              false;
+                                          _generateCSV = widget.prefs
+                                                  .getBool('generateCSV') ??
+                                              false;
                                         });
                                       },
                                       onGenerationEnabled: () {
@@ -475,7 +477,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 holonomicMode: _holonomicMode,
                 showGeneratorSettings: _generateJSON || _generateCSV,
                 savePath: (path) => _savePath(path),
-                prefs: _prefs,
+                prefs: widget.prefs,
               ),
             ),
           ),
@@ -540,13 +542,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       Directory pathsDir = _getPathsDir(Directory(projectFolder));
 
       pathsDir.createSync(recursive: true);
-      _prefs.setString('currentProjectDir', projectFolder);
-      _prefs.remove('pathOrder');
+      widget.prefs.setString('currentProjectDir', projectFolder);
+      widget.prefs.remove('pathOrder');
 
       if (Platform.isMacOS) {
         // Bookmark project on macos so it can be accessed again later
         String bookmark = await _bookmarks!.bookmark(File(projectFolder));
-        _prefs.setString('macOSBookmark', bookmark);
+        widget.prefs.setString('macOSBookmark', bookmark);
       }
 
       setState(() {

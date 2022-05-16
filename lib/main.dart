@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'pages/home_page.dart';
@@ -26,26 +27,55 @@ void main() async {
   runApp(PathPlanner());
 }
 
-class PathPlanner extends StatelessWidget {
+class PathPlanner extends StatefulWidget {
   final FieldImage defaultField = FieldImage.official(OfficialField.RapidReact);
   final String appVersion = '2022.1.1';
   final bool appStoreBuild = false;
 
+  PathPlanner({super.key});
+
+  @override
+  State<PathPlanner> createState() => _PathPlannerState();
+}
+
+class _PathPlannerState extends State<PathPlanner> {
+  SharedPreferences? _prefs;
+  late Color _teamColor;
+
+  @override
+  void initState() {
+    super.initState();
+
+    SharedPreferences.getInstance().then((prefs) {
+      setState(() {
+        _prefs = prefs;
+        _teamColor = Color(_prefs!.getInt('teamColor') ?? Colors.indigo.value);
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = ThemeData(
-      brightness: Brightness.dark,
-      colorSchemeSeed: Colors.indigo,
-      useMaterial3: true,
-    );
+    if (_prefs == null) return Container();
 
     return MaterialApp(
       title: 'PathPlanner',
-      theme: theme,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        colorSchemeSeed: _teamColor,
+        useMaterial3: true,
+      ),
       home: HomePage(
-        defaultFieldImage: defaultField,
-        appVersion: appVersion,
-        appStoreBuild: appStoreBuild,
+        defaultFieldImage: widget.defaultField,
+        appVersion: widget.appVersion,
+        appStoreBuild: widget.appStoreBuild,
+        prefs: _prefs!,
+        onTeamColorChanged: (Color color) {
+          setState(() {
+            _teamColor = color;
+            _prefs!.setInt('teamColor', _teamColor.value);
+          });
+        },
       ),
     );
   }

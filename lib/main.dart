@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 import 'package:logger/src/outputs/file_output.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/widgets/dialogs/error_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -16,7 +17,7 @@ import 'pages/home_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Directory logPath = await getApplicationSupportDirectory();
-  File logFile = File(join(logPath.path, 'log.txt'));
+
   Logger logger = Logger(
     printer: PrettyPrinter(
       colors: false,
@@ -25,7 +26,7 @@ void main() async {
     output: MultiOutput([
       ConsoleOutput(),
       FileOutput(
-        file: logFile,
+        file: File(join(logPath.path, 'log.txt')),
       ),
     ]),
   );
@@ -55,7 +56,6 @@ void main() async {
 
       runApp(PathPlanner(
         logger: logger,
-        logFile: logFile,
       ));
     },
     (Object error, StackTrace stack) {
@@ -70,9 +70,8 @@ class PathPlanner extends StatefulWidget {
   final String appVersion = '2022.1.1';
   final bool appStoreBuild = false;
   final Logger logger;
-  final File logFile;
 
-  PathPlanner({required this.logger, required this.logFile, super.key});
+  PathPlanner({required this.logger, super.key});
 
   @override
   State<PathPlanner> createState() => _PathPlannerState();
@@ -119,49 +118,8 @@ class _PathPlannerState extends State<PathPlanner> {
       ),
       builder: (BuildContext context, Widget? w) {
         ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
-          return AlertDialog(
-            title: Text('PathPlanner encountered an error'),
-            content: Container(
-              constraints: BoxConstraints(maxWidth: 500),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Flexible(
-                    child: SelectableText(
-                      errorDetails.exception.toString(),
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                  SizedBox(height: 18),
-                  Flexible(
-                    child: SelectableText.rich(
-                      TextSpan(
-                        text:
-                            'If you are going to report this error, please include the steps to reproduce and the log file located at: ',
-                        children: [
-                          TextSpan(
-                            text: widget.logFile.path,
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  exit(1);
-                },
-                child: Text('Exit'),
-              ),
-            ],
+          return ErrorDialog(
+            errorDetails: errorDetails,
           );
         };
         if (w == null) return Container();

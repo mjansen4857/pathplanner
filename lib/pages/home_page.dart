@@ -16,7 +16,7 @@ import 'package:pathplanner/widgets/path_tile.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/path_editor.dart';
-import 'package:pathplanner/widgets/settings_dialog.dart';
+import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
 import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

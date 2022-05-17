@@ -7,9 +7,9 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'field_image.dart';
+import '../field_image.dart';
 import 'import_field_dialog.dart';
-import 'keyboard_shortcuts.dart';
+import '../keyboard_shortcuts.dart';
 
 class SettingsDialog extends StatefulWidget {
   final VoidCallback onSettingsChanged;

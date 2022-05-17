@@ -56,11 +56,26 @@ class _WaypointCardState extends State<WaypointCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildPositionRow(context),
-                SizedBox(height: 12),
-                _buildAngleRow(context),
-                SizedBox(height: 12),
-                _buildVelReversalRow(context),
-                SizedBox(height: 5),
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: _buildHeadingVelRow(context),
+                ),
+                Visibility(
+                  visible: widget.holonomicEnabled,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: _buildRotation(context),
+                  ),
+                ),
+                Visibility(
+                  visible: !widget.waypoint!.isStartPoint() &&
+                      !widget.waypoint!.isEndPoint(),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: _buildStopReversalRow(context),
+                  ),
+                ),
+                SizedBox(height: 3),
               ],
             ),
           ),
@@ -141,6 +156,7 @@ class _WaypointCardState extends State<WaypointCard> {
           context,
           _getController(widget.waypoint!.getXPos().toStringAsFixed(2)),
           'X Position',
+          width: 105,
           onSubmitted: (val) {
             Waypoint wRef = widget.waypoint!;
             UndoRedo.addChange(_cardChange(
@@ -154,6 +170,7 @@ class _WaypointCardState extends State<WaypointCard> {
           context,
           _getController(widget.waypoint!.getYPos().toStringAsFixed(2)),
           'Y Position',
+          width: 105,
           onSubmitted: (val) {
             Waypoint? wRef = widget.waypoint;
             UndoRedo.addChange(_cardChange(
@@ -167,7 +184,7 @@ class _WaypointCardState extends State<WaypointCard> {
     );
   }
 
-  Widget _buildAngleRow(BuildContext context) {
+  Widget _buildHeadingVelRow(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.max,
@@ -177,6 +194,7 @@ class _WaypointCardState extends State<WaypointCard> {
           _getController(
               widget.waypoint!.getHeadingDegrees().toStringAsFixed(2)),
           'Heading',
+          width: 105,
           onSubmitted: (val) {
             Waypoint? wRef = widget.waypoint;
             UndoRedo.addChange(_cardChange(
@@ -188,37 +206,16 @@ class _WaypointCardState extends State<WaypointCard> {
         SizedBox(width: 12),
         _buildTextField(
           context,
-          !widget.holonomicEnabled
-              ? _getController("")
-              : _getController(
-                  widget.waypoint!.holonomicAngle.toStringAsFixed(2)),
-          'Rotation',
-          enabled: widget.holonomicEnabled,
-          onSubmitted: (val) {
-            Waypoint? wRef = widget.waypoint;
-            UndoRedo.addChange(_cardChange(
-              () => wRef!.holonomicAngle = val,
-              (oldVal) => wRef!.holonomicAngle = oldVal.holonomicAngle,
-            ));
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVelReversalRow(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        _buildTextField(
-          context,
-          widget.waypoint!.isReversal || widget.waypoint!.velOverride == null
+          widget.waypoint!.isReversal ||
+                  widget.waypoint!.velOverride == null ||
+                  widget.waypoint!.isStopPoint
               ? _getController("")
               : _getController(
                   widget.waypoint!.velOverride!.toStringAsFixed(2)),
           'Vel Override',
-          enabled: !widget.waypoint!.isReversal,
+          enabled:
+              !(widget.waypoint!.isReversal || widget.waypoint!.isStopPoint),
+          width: 105,
           onSubmitted: (val) {
             if (val == 0.0) val = null;
             Waypoint? wRef = widget.waypoint;
@@ -227,50 +224,86 @@ class _WaypointCardState extends State<WaypointCard> {
               (oldVal) => wRef!.velOverride = oldVal.velOverride,
             ));
           },
-        ),
-        SizedBox(width: 12),
-        _buildReversalWidget(),
-        SizedBox(width: 14),
+        )
       ],
     );
   }
 
-  Widget _buildReversalWidget() {
+  Widget _buildRotation(BuildContext context) {
+    return _buildTextField(
+      context,
+      !widget.holonomicEnabled
+          ? _getController("")
+          : _getController(widget.waypoint!.holonomicAngle.toStringAsFixed(2)),
+      'Holonomic Rotation',
+      enabled: widget.holonomicEnabled,
+      onSubmitted: (val) {
+        Waypoint? wRef = widget.waypoint;
+        UndoRedo.addChange(_cardChange(
+          () => wRef!.holonomicAngle = val,
+          (oldVal) => wRef!.holonomicAngle = oldVal.holonomicAngle,
+        ));
+      },
+    );
+  }
+
+  Widget _buildStopReversalRow(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    if (widget.waypoint!.isStartPoint() || widget.waypoint!.isEndPoint()) {
-      return SizedBox(width: 90);
-    } else {
-      return Row(
-        children: [
-          Checkbox(
-            value: widget.waypoint!.isReversal,
-            activeColor: colorScheme.primaryContainer,
-            checkColor: colorScheme.onPrimaryContainer,
-            onChanged: (val) {
-              Waypoint? wRef = widget.waypoint;
-              UndoRedo.addChange(_cardChange(
-                () => wRef!.setReversal(val!),
-                (oldVal) => wRef!.setReversal(oldVal.isReversal),
-              ));
-            },
-          ),
-          Text(
-            'Reversal',
-            style: TextStyle(color: colorScheme.onSurface),
-          ),
-        ],
-      );
-    }
+    return Row(
+      children: [
+        Row(
+          children: [
+            Checkbox(
+              value: widget.waypoint!.isReversal,
+              activeColor: colorScheme.primaryContainer,
+              checkColor: colorScheme.onPrimaryContainer,
+              onChanged: (val) {
+                Waypoint? wRef = widget.waypoint;
+                UndoRedo.addChange(_cardChange(
+                  () => wRef!.setReversal(val!),
+                  (oldVal) => wRef!.setReversal(oldVal.isReversal),
+                ));
+              },
+            ),
+            Text(
+              'Reversal',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+          ],
+        ),
+        SizedBox(width: 25),
+        Row(
+          children: [
+            Checkbox(
+              value: widget.waypoint!.isStopPoint,
+              activeColor: colorScheme.primaryContainer,
+              checkColor: colorScheme.onPrimaryContainer,
+              onChanged: (val) {
+                Waypoint? wRef = widget.waypoint;
+                UndoRedo.addChange(_cardChange(
+                  () => wRef!.isStopPoint = val!,
+                  (oldVal) => wRef!.isStopPoint = oldVal.isStopPoint,
+                ));
+              },
+            ),
+            Text(
+              'Stop Point',
+              style: TextStyle(color: colorScheme.onSurface),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _buildTextField(
       BuildContext context, TextEditingController? controller, String label,
-      {bool? enabled = true, ValueChanged? onSubmitted}) {
+      {bool? enabled = true, ValueChanged? onSubmitted, double? width}) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      width: 105,
+      width: width,
       height: 35,
       child: TextField(
         onSubmitted: (val) {

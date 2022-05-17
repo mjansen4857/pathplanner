@@ -8,20 +8,23 @@ class Waypoint {
   bool isReversal;
   num? velOverride;
   bool isLocked;
+  bool isStopPoint;
 
   bool _isAnchorDragging = false;
   bool _isNextControlDragging = false;
   bool _isPrevControlDragging = false;
   bool _isHolonomicThingDragging = false;
 
-  Waypoint(
-      {required this.anchorPoint,
-      this.prevControl,
-      this.nextControl,
-      this.holonomicAngle = 0,
-      this.isReversal = false,
-      this.isLocked = false,
-      this.velOverride}) {
+  Waypoint({
+    required this.anchorPoint,
+    this.prevControl,
+    this.nextControl,
+    this.holonomicAngle = 0,
+    this.isReversal = false,
+    this.isLocked = false,
+    this.velOverride,
+    this.isStopPoint = false,
+  }) {
     if (isReversal) {
       nextControl = prevControl;
     }
@@ -42,6 +45,7 @@ class Waypoint {
       isReversal: isReversal,
       velOverride: velOverride,
       isLocked: isLocked,
+      isStopPoint: isStopPoint,
     );
   }
 
@@ -288,7 +292,8 @@ class Waypoint {
         holonomicAngle = json['holonomicAngle'],
         isReversal = json['isReversal'],
         velOverride = json['velOverride'],
-        isLocked = json['isLocked'];
+        isLocked = json['isLocked'],
+        isStopPoint = json['isStopPoint'] ?? false;
 
   Map<String, dynamic> toJson() {
     return {
@@ -312,6 +317,7 @@ class Waypoint {
       'isReversal': isReversal,
       'velOverride': velOverride,
       'isLocked': isLocked,
+      'isStopPoint': isStopPoint,
     };
   }
 }

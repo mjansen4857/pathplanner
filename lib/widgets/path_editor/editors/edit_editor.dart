@@ -380,6 +380,10 @@ class _EditPainter extends CustomPainter {
     for (Waypoint w in path.waypoints) {
       Color color = Colors.grey[300]!;
 
+      if (w.isStopPoint) {
+        color = Colors.deepPurpleAccent;
+      }
+
       if (w == selectedWaypoint) {
         color = Colors.orange;
       }

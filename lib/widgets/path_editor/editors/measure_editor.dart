@@ -172,8 +172,10 @@ class _MeasurePainter extends CustomPainter {
 
   void _paintWaypoints(Canvas canvas) {
     for (Waypoint waypoint in path.waypoints) {
-      PathPainterUtil.paintRobotOutline(waypoint, robotSize, holonomicMode,
-          canvas, scale, Colors.grey[400]!, fieldImage);
+      Color color =
+          waypoint.isStopPoint ? Colors.deepPurple : Colors.grey[400]!;
+      PathPainterUtil.paintRobotOutline(
+          waypoint, robotSize, holonomicMode, canvas, scale, color, fieldImage);
 
       var paint = Paint()
         ..style = PaintingStyle.fill

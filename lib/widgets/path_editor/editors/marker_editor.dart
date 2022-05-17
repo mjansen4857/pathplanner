@@ -230,8 +230,10 @@ class _MarkerPainter extends CustomPainter {
     }
 
     for (Waypoint waypoint in path.waypoints) {
-      PathPainterUtil.paintRobotOutline(waypoint, robotSize, holonomicMode,
-          canvas, scale, Colors.grey[700]!, fieldImage);
+      Color color =
+          waypoint.isStopPoint ? Colors.deepPurple : Colors.grey[700]!;
+      PathPainterUtil.paintRobotOutline(
+          waypoint, robotSize, holonomicMode, canvas, scale, color, fieldImage);
     }
 
     PathPainterUtil.paintCenterPath(

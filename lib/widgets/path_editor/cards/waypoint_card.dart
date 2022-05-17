@@ -206,15 +206,12 @@ class _WaypointCardState extends State<WaypointCard> {
         SizedBox(width: 12),
         _buildTextField(
           context,
-          widget.waypoint!.isReversal ||
-                  widget.waypoint!.velOverride == null ||
-                  widget.waypoint!.isStopPoint
+          widget.waypoint!.isReversal || widget.waypoint!.velOverride == null
               ? _getController("")
               : _getController(
                   widget.waypoint!.velOverride!.toStringAsFixed(2)),
           'Vel Override',
-          enabled:
-              !(widget.waypoint!.isReversal || widget.waypoint!.isStopPoint),
+          enabled: !widget.waypoint!.isReversal,
           width: 105,
           onSubmitted: (val) {
             if (val == 0.0) val = null;

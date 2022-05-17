@@ -52,7 +52,7 @@ class Trajectory {
 
       currentPath.add(w);
 
-      if (w.isReversal || i == path.waypoints.length - 1) {
+      if (w.isReversal || w.isStopPoint || i == path.waypoints.length - 1) {
         splitPaths.add(currentPath);
         currentPath = [];
         currentPath.add(w);
@@ -62,9 +62,13 @@ class Trajectory {
     List<Trajectory> trajectories = [];
     bool shouldReverse = path.isReversed ?? false;
     for (int i = 0; i < splitPaths.length; i++) {
-      trajectories.add(await generateSingleTrajectory(splitPaths[i],
-          path.maxVelocity, path.maxAcceleration, shouldReverse));
-      shouldReverse = !shouldReverse;
+      List<Waypoint> splitPath = splitPaths[i];
+      trajectories.add(await generateSingleTrajectory(
+          splitPath, path.maxVelocity, path.maxAcceleration, shouldReverse));
+
+      if (splitPath[splitPath.length - 1].isReversal) {
+        shouldReverse = !shouldReverse;
+      }
     }
 
     return Trajectory.joinTrajectories(trajectories);

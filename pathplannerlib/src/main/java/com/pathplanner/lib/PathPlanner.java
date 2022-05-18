@@ -118,7 +118,7 @@ public class PathPlanner {
                     // Get the markers that should be part of this path and correct their positions
                     ArrayList<EventMarker> currentMarkers = new ArrayList<>();
                     for(EventMarker marker : markers){
-                        if(marker.waypointRelativePos >= waypoints.indexOf(currentPath.get(0)) && marker.waypointRelativePos <= waypoints.indexOf(w)){
+                        if(marker.waypointRelativePos >= waypoints.indexOf(currentPath.get(0)) && marker.waypointRelativePos <= i){
                             currentMarkers.add(new EventMarker(marker.name, marker.waypointRelativePos - waypoints.indexOf(currentPath.get(0))));
                         }
                     }

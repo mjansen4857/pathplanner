@@ -14,6 +14,7 @@
 #include <units/area.h>
 #include <units/math.h>
 #include <units/curvature.h>
+#include "PathConstraints.h"
 
 namespace pathplanner{
     class PathPlannerTrajectory{
@@ -66,14 +67,16 @@ namespace pathplanner{
                     units::meters_per_second_t velocityOverride;
                     frc::Rotation2d holonomicRotation;
                     bool isReversal;
+                    bool isStopPoint;
 
-                    Waypoint(frc::Translation2d anchorPoint, frc::Translation2d prevControl, frc::Translation2d nextControl, units::meters_per_second_t velocityOverride, frc::Rotation2d holonomicRotation, bool isReversal){
+                    Waypoint(frc::Translation2d anchorPoint, frc::Translation2d prevControl, frc::Translation2d nextControl, units::meters_per_second_t velocityOverride, frc::Rotation2d holonomicRotation, bool isReversal, bool isStopPoint){
                         this->anchorPoint = anchorPoint;
                         this->prevControl = prevControl;
                         this->nextControl = nextControl;
                         this->velocityOverride = velocityOverride;
                         this->holonomicRotation = holonomicRotation;
                         this->isReversal = isReversal;
+                        this->isStopPoint = isStopPoint;
                     }
             };
 
@@ -92,7 +95,7 @@ namespace pathplanner{
             friend class PathPlanner;
         
         public:
-            PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed);
+            PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, PathConstraints constraints, bool reversed);
             PathPlannerTrajectory(std::vector<PathPlannerState> states, std::vector<EventMarker> markers);
             PathPlannerTrajectory(std::vector<PathPlannerState> states);
             PathPlannerTrajectory(){}

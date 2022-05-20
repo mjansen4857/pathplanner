@@ -135,6 +135,7 @@ public class PathPlanner {
             }
 
             ArrayList<PathPlannerTrajectory> pathGroup = new ArrayList<>();
+            boolean shouldReverse = reversed;
             for(int i = 0; i < splitWaypoints.size(); i++){
                 PathConstraints currentConstraints;
                 if(i > allConstraints.size() - 1){
@@ -143,7 +144,15 @@ public class PathPlanner {
                     currentConstraints = allConstraints.get(i);
                 }
 
-                pathGroup.add(new PathPlannerTrajectory(splitWaypoints.get(i), splitMarkers.get(i), currentConstraints, reversed));
+                pathGroup.add(new PathPlannerTrajectory(splitWaypoints.get(i), splitMarkers.get(i), currentConstraints, shouldReverse));
+
+                // Loop through waypoints and invert shouldReverse for every reversal point.
+                // This makes sure that other paths in the group are properly reversed.
+                for(int j = 1; j < splitWaypoints.get(i).size(); j++){
+                    if(splitWaypoints.get(i).get(j).isReversal){
+                        shouldReverse = !shouldReverse;
+                    }
+                }
             }
 
             return pathGroup;

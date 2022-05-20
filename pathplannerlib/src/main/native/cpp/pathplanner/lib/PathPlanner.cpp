@@ -82,6 +82,7 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, 
 
     std::vector<PathPlannerTrajectory> pathGroup;
     std::vector<PathConstraints> constraintsVec(constraints);
+    bool shouldReverse = reversed;
     for(size_t i = 0; i < splitWaypoints.size(); i++){
         PathConstraints currentConstraints;
         if(i > constraintsVec.size() - 1){
@@ -90,7 +91,15 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, 
             currentConstraints = constraintsVec[i];
         }
 
-        pathGroup.push_back(PathPlannerTrajectory(splitWaypoints[i], splitMarkers[i], currentConstraints, reversed));
+        pathGroup.push_back(PathPlannerTrajectory(splitWaypoints[i], splitMarkers[i], currentConstraints, shouldReverse));
+
+        // Loop through waypoints and invert shouldReverse for every reversal point.
+        // This makes sure that other paths in the group are properly reversed.
+        for(size_t j = 1; j < splitWaypoints[i].size(); j++){
+            if(splitWaypoints[i][j].isReversal){
+                shouldReverse = !shouldReverse;
+            }
+        }
     }
 
     return pathGroup;

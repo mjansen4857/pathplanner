@@ -138,7 +138,6 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
                 PathPlannerState s1 = states[states.size() - 1];
                 PathPlannerState s2 = state;
                 units::meter_t hypot = s1.pose.Translation().Distance(s2.pose.Translation());
-                state.position = s1.position + hypot;
                 state.deltaPos = hypot;
 
                 units::radian_t heading = units::math::atan2(s1.pose.Y() - s2.pose.Y(), s1.pose.X() - s2.pose.X()) + units::radian_t{PI};
@@ -247,11 +246,10 @@ void PathPlannerTrajectory::calculateVelocity(std::vector<PathPlannerTrajectory:
 }
 
 void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory::PathPlannerState>& states, bool reversed){
-    for(size_t i = 0; i < states.size(); i++){
+    for(int i = states.size() - 1; i >= 0; i--){
         PathPlannerState& now = states[i];
 
         if(reversed){
-            now.position *= -1;
             now.velocity *= -1;
             now.acceleration *= -1;
 
@@ -264,14 +262,14 @@ void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory:
             now.pose = frc::Pose2d(now.pose.Translation(), frc::Rotation2d(h));
         }
 
-        if(i != 0){
-            PathPlannerState& last = states[i - 1];
+        if(i != static_cast<int>(states.size() - 1)){
+            PathPlannerState& next = states[i + 1];
 
-            units::second_t dt = now.time - last.time;
-            now.velocity = (now.position - last.position) / dt;
-            now.acceleration = (now.velocity - last.velocity) / dt;
-            now.angularVel = (now.pose.Rotation().Radians() - last.pose.Rotation().Radians()) / dt;
-            now.angularAccel = (now.angularVel - last.angularVel) / dt;
+            units::second_t dt = next.time - now.time;
+            now.velocity = next.deltaPos / dt;
+            now.acceleration = (next.velocity - now.velocity) / dt;
+            now.angularVelocity = (next.pose.Rotation().Radians() - now.pose.Rotation().Radians()) / dt;
+            now.holonomicAngularVelocity = (next.holonomicRotation.Radians() - now.holonomicRotation.Radians()) / dt;
         }
 
         if(!GeometryUtil::isFinite(now.curveRadius) || GeometryUtil::isNaN(now.curveRadius) || now.curveRadius() == 0){
@@ -336,14 +334,13 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState:
     }
 
     lerpedState.velocity = GeometryUtil::unitLerp(velocity, endVal.velocity, t);
-    lerpedState.position = (velocity * deltaT) + (0.5 * acceleration * (deltaT * deltaT));
     lerpedState.acceleration = GeometryUtil::unitLerp(acceleration, endVal.acceleration, t);
     frc::Translation2d newTrans = GeometryUtil::translationLerp(pose.Translation(), endVal.pose.Translation(), t);
     frc::Rotation2d newHeading = GeometryUtil::rotationLerp(pose.Rotation(), endVal.pose.Rotation(), t);
     lerpedState.pose = frc::Pose2d(newTrans, newHeading);
-    lerpedState.angularVel = GeometryUtil::unitLerp(angularVel, endVal.angularVel, t);
-    lerpedState.angularAccel = GeometryUtil::unitLerp(angularAccel, endVal.angularAccel, t);
+    lerpedState.angularVelocity = GeometryUtil::unitLerp(angularVelocity, endVal.angularVelocity, t);
     lerpedState.holonomicRotation = GeometryUtil::rotationLerp(holonomicRotation, endVal.holonomicRotation, t);
+    lerpedState.holonomicAngularVelocity = GeometryUtil::unitLerp(holonomicAngularVelocity, endVal.holonomicAngularVelocity, t);
     lerpedState.curveRadius = GeometryUtil::unitLerp(curveRadius, endVal.curveRadius, t);
     lerpedState.curvature = GeometryUtil::unitLerp(curvature, endVal.curvature, t);
 

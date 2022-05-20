@@ -214,11 +214,10 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     private static void recalculateValues(List<PathPlannerState> states, boolean reversed){
-        for(int i = 0; i < states.size(); i++){
+        for(int i = states.size() - 1; i >= 0; i--){
             PathPlannerState now = states.get(i);
 
             if(reversed){
-                now.linearPos *= -1;
                 now.velocityMetersPerSecond *= -1;
                 now.accelerationMetersPerSecondSq *= -1;
 
@@ -231,15 +230,15 @@ public class PathPlannerTrajectory extends Trajectory {
                 now.poseMeters = new Pose2d(now.poseMeters.getTranslation(), Rotation2d.fromDegrees(h));
             }
 
-            if(i != 0){
-                PathPlannerState last = states.get(i - 1);
+            if(i != states.size() - 1){
+                PathPlannerState next = states.get(i + 1);
 
-                double dt = now.timeSeconds - last.timeSeconds;
-                now.velocityMetersPerSecond = (now.linearPos - last.linearPos) / dt;
-                now.accelerationMetersPerSecondSq = (now.velocityMetersPerSecond - last.velocityMetersPerSecond) / dt;
+                double dt = next.timeSeconds - now.timeSeconds;
+                now.velocityMetersPerSecond = next.deltaPos / dt;
+                now.accelerationMetersPerSecondSq = (next.velocityMetersPerSecond - now.velocityMetersPerSecond) / dt;
 
-                now.angularVelocity = now.poseMeters.getRotation().minus(last.poseMeters.getRotation()).times(1 / dt);
-                now.angularAcceleration = now.angularVelocity.minus(last.angularVelocity).times(1 / dt);
+                now.angularVelocityRadPerSec = (next.poseMeters.getRotation().getRadians() - now.poseMeters.getRotation().getRadians()) / dt;
+                now.holonomicAngularVelocityRadPerSec = (next.holonomicRotation.getRadians() - now.holonomicRotation.getRadians()) / dt;
             }
 
             if(Double.isInfinite(now.curveRadius) || Double.isNaN(now.curveRadius) || now.curveRadius == 0){
@@ -284,7 +283,6 @@ public class PathPlannerTrajectory extends Trajectory {
                     PathPlannerState s1 = states.get(states.size() - 1);
                     PathPlannerState s2 = state;
                     double hypot = s1.poseMeters.getTranslation().getDistance(s2.poseMeters.getTranslation());
-                    state.linearPos = s1.linearPos + hypot;
                     state.deltaPos = hypot;
 
                     double heading = Math.toDegrees(Math.atan2(s1.poseMeters.getY() - s2.poseMeters.getY(), s1.poseMeters.getX() - s2.poseMeters.getX())) + 180;
@@ -369,11 +367,10 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     public static class PathPlannerState extends State{
-        public Rotation2d angularVelocity = new Rotation2d();
-        public Rotation2d angularAcceleration = new Rotation2d();
+        public double angularVelocityRadPerSec = 0;
         public Rotation2d holonomicRotation = new Rotation2d();
+        public double holonomicAngularVelocityRadPerSec = 0;
 
-        private double linearPos = 0;
         private double curveRadius = 0;
         private double deltaPos = 0;
 
@@ -388,13 +385,12 @@ public class PathPlannerTrajectory extends Trajectory {
             }
 
             lerpedState.velocityMetersPerSecond = GeometryUtil.doubleLerp(velocityMetersPerSecond, endVal.velocityMetersPerSecond, t);
-            lerpedState.linearPos = (velocityMetersPerSecond * deltaT) + (0.5 * accelerationMetersPerSecondSq * Math.pow(deltaT, 2));
             lerpedState.accelerationMetersPerSecondSq = GeometryUtil.doubleLerp(accelerationMetersPerSecondSq, endVal.accelerationMetersPerSecondSq, t);
             Translation2d newTrans = GeometryUtil.translationLerp(poseMeters.getTranslation(), endVal.poseMeters.getTranslation(), t);
             Rotation2d newHeading = GeometryUtil.rotationLerp(poseMeters.getRotation(), endVal.poseMeters.getRotation(), t);
             lerpedState.poseMeters = new Pose2d(newTrans, newHeading);
-            lerpedState.angularVelocity = GeometryUtil.rotationLerp(angularVelocity, endVal.angularVelocity, t);
-            lerpedState.angularAcceleration = GeometryUtil.rotationLerp(angularAcceleration, endVal.angularAcceleration, t);
+            lerpedState.angularVelocityRadPerSec = GeometryUtil.doubleLerp(angularVelocityRadPerSec, endVal.angularVelocityRadPerSec, t);
+            lerpedState.holonomicAngularVelocityRadPerSec = GeometryUtil.doubleLerp(holonomicAngularVelocityRadPerSec, endVal.holonomicAngularVelocityRadPerSec, t);
             lerpedState.holonomicRotation = GeometryUtil.rotationLerp(holonomicRotation, endVal.holonomicRotation, t);
             lerpedState.curveRadius = GeometryUtil.doubleLerp(curveRadius, endVal.curveRadius, t);
             lerpedState.curvatureRadPerMeter = GeometryUtil.doubleLerp(curvatureRadPerMeter, endVal.curvatureRadPerMeter, t);

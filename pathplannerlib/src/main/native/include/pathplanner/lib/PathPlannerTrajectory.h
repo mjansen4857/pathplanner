@@ -26,12 +26,11 @@ namespace pathplanner{
                     units::meters_per_second_squared_t acceleration = 0_mps_sq;
                     frc::Pose2d pose;
                     units::curvature_t curvature{0.0};
-                    units::radians_per_second_t angularVel;
-                    units::radians_per_second_squared_t angularAccel;
-                    frc::Rotation2d holonomicRotation;     
+                    units::radians_per_second_t angularVelocity;
+                    frc::Rotation2d holonomicRotation;
+                    units::radians_per_second_t holonomicAngularVelocity;
             
                 private:
-                    units::meter_t position = 0_m;
                     units::meter_t curveRadius = 0_m;
                     units::meter_t deltaPos = 0_m;
 

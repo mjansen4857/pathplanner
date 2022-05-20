@@ -207,7 +207,7 @@ class Trajectory {
   }
 
   static void recalculateValues(List<TrajectoryState> states, bool reversed) {
-    for (int i = 0; i < states.length; i++) {
+    for (int i = states.length - 1; i >= 0; i--) {
       TrajectoryState now = states[i];
 
       if (reversed) {
@@ -223,17 +223,17 @@ class Trajectory {
         now.headingRadians = h;
       }
 
-      if (i != 0) {
-        TrajectoryState last = states[i - 1];
+      if (i != states.length - 1) {
+        TrajectoryState next = states[i + 1];
 
-        num dt = now.timeSeconds - last.timeSeconds;
-        now.velocityMetersPerSecond = now.deltaPos / dt;
+        num dt = next.timeSeconds - now.timeSeconds;
+        now.velocityMetersPerSecond = next.deltaPos / dt;
         now.accelerationMetersPerSecondSq =
-            (now.velocityMetersPerSecond - last.velocityMetersPerSecond) / dt;
+            (next.velocityMetersPerSecond - now.velocityMetersPerSecond) / dt;
 
-        now.angularVelocity = (now.headingRadians - last.headingRadians) / dt;
+        now.angularVelocity = (next.headingRadians - now.headingRadians) / dt;
         now.holonomicAngularVelocity =
-            (now.holonomicRotation - last.holonomicRotation) / dt;
+            (next.holonomicAngularVelocity - now.holonomicRotation) / dt;
       }
 
       if (now.curveRadius == double.infinity ||

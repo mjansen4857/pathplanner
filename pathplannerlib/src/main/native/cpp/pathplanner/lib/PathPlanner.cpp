@@ -32,7 +32,7 @@ PathPlannerTrajectory PathPlanner::loadPath(std::string name, PathConstraints co
     return PathPlannerTrajectory(waypoints, markers, constraints, reversed);
 }
 
-std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, std::initializer_list<PathConstraints> constraints, bool reversed = false){
+std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, std::initializer_list<PathConstraints> constraints, bool reversed){
     if(constraints.size() == 0){
         throw std::runtime_error("At least one PathConstraints is required but none were provized");
     }
@@ -124,7 +124,7 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(w
         frc::Rotation2d holonomicAngle = frc::Rotation2d(units::degree_t{holonomic});
         bool isReversal = waypoint.at("isReversal");
         bool isStopPoint = false;
-        if(json.find("isStopPoint") != json.end()){
+        if(waypoint.find("isStopPoint") != waypoint.end()){
             isStopPoint = waypoint.at("isStopPoint");
         }
         units::meters_per_second_t velOverride = -1_mps;

@@ -33,8 +33,7 @@ class Trajectory {
   }
 
   String getCSV() {
-    String csv =
-        '# PathPlanner CSV Format:\n# timeSeconds, positionMeters, velocityMetersPerSecond, accelerationMetersPerSecondSq, headingDegrees, holonomicRotationDegrees, curvatureRadPerMeter, curveRadiusMeters, angularVelocityDegreesPerSec, angularAccelerationDegreesPerSecSq';
+    String csv = TrajectoryState.getCSVHeader();
 
     for (TrajectoryState s in states) {
       csv += '\n ${s.toCSV()}';
@@ -212,7 +211,6 @@ class Trajectory {
       TrajectoryState now = states[i];
 
       if (reversed) {
-        now.positionMeters *= -1;
         now.velocityMetersPerSecond *= -1;
         now.accelerationMetersPerSecondSq *= -1;
 
@@ -229,14 +227,13 @@ class Trajectory {
         TrajectoryState last = states[i - 1];
 
         num dt = now.timeSeconds - last.timeSeconds;
-        now.velocityMetersPerSecond =
-            (now.positionMeters - last.positionMeters) / dt;
+        now.velocityMetersPerSecond = now.deltaPos / dt;
         now.accelerationMetersPerSecondSq =
             (now.velocityMetersPerSecond - last.velocityMetersPerSecond) / dt;
 
         now.angularVelocity = (now.headingRadians - last.headingRadians) / dt;
-        now.angularAcceleration =
-            (now.angularVelocity - last.angularVelocity) / dt;
+        now.holonomicAngularVelocity =
+            (now.holonomicRotation - last.holonomicRotation) / dt;
       }
 
       if (now.curveRadius == double.infinity ||
@@ -289,7 +286,6 @@ class Trajectory {
           TrajectoryState s1 = states[states.length - 1];
           TrajectoryState s2 = state;
           double hypot = s1.translationMeters.distanceTo(s2.translationMeters);
-          state.positionMeters = s1.positionMeters + hypot;
           state.deltaPos = hypot;
 
           double heading = atan2(
@@ -346,10 +342,9 @@ class TrajectoryState {
   Point translationMeters = Point(0, 0);
   num headingRadians = 0.0;
   num curvatureRadPerMeter = 0.0;
-  num positionMeters = 0.0;
   num angularVelocity = 0.0;
-  num angularAcceleration = 0.0;
   num holonomicRotation = 0.0;
+  num holonomicAngularVelocity = 0.0;
 
   num curveRadius = 0.0;
   num deltaPos = 0.0;
@@ -367,8 +362,6 @@ class TrajectoryState {
 
     lerpedState.velocityMetersPerSecond = GeometryUtil.numLerp(
         this.velocityMetersPerSecond, endVal.velocityMetersPerSecond, t);
-    lerpedState.positionMeters = (velocityMetersPerSecond * deltaT) +
-        (0.5 * accelerationMetersPerSecondSq * deltaT * deltaT);
     lerpedState.accelerationMetersPerSecondSq = GeometryUtil.numLerp(
         this.accelerationMetersPerSecondSq,
         endVal.accelerationMetersPerSecondSq,
@@ -381,10 +374,10 @@ class TrajectoryState {
         this.curvatureRadPerMeter, endVal.curvatureRadPerMeter, t);
     lerpedState.angularVelocity =
         GeometryUtil.numLerp(this.angularVelocity, endVal.angularVelocity, t);
-    lerpedState.angularAcceleration = GeometryUtil.numLerp(
-        this.angularAcceleration, endVal.angularAcceleration, t);
     lerpedState.holonomicRotation = GeometryUtil.numLerp(
         this.holonomicRotation, endVal.holonomicRotation, t);
+    lerpedState.holonomicAngularVelocity = GeometryUtil.numLerp(
+        this.holonomicAngularVelocity, endVal.holonomicAngularVelocity, t);
     lerpedState.curveRadius =
         GeometryUtil.numLerp(this.curveRadius, endVal.curveRadius, t);
     lerpedState.deltaPos =
@@ -395,8 +388,7 @@ class TrajectoryState {
 
   Map<String, dynamic> toJson() {
     return {
-      'acceleration': accelerationMetersPerSecondSq,
-      'curvature': curvatureRadPerMeter.isFinite ? curvatureRadPerMeter : 0,
+      'time': timeSeconds,
       'pose': {
         'rotation': {
           'radians': headingRadians,
@@ -406,17 +398,20 @@ class TrajectoryState {
           'y': translationMeters.y,
         },
       },
-      'time': timeSeconds,
       'velocity': velocityMetersPerSecond,
-      'position': positionMeters,
+      'acceleration': accelerationMetersPerSecondSq,
+      'curvature': curvatureRadPerMeter.isFinite ? curvatureRadPerMeter : 0,
       'holonomicRotation': holonomicRotation,
       'angularVelocity': angularVelocity,
-      'angularAcceleration': angularAcceleration,
-      'curveRadius': curveRadius.isFinite ? curveRadius : 0,
+      'holonomicAngularVelocity': holonomicAngularVelocity,
     };
   }
 
   String toCSV() {
-    return '$timeSeconds,$positionMeters,$velocityMetersPerSecond,$accelerationMetersPerSecondSq,${GeometryUtil.toDegrees(headingRadians)},$holonomicRotation,$curvatureRadPerMeter,$curveRadius,${GeometryUtil.toDegrees(angularVelocity)},${GeometryUtil.toDegrees(angularAcceleration)}';
+    return '$timeSeconds,${translationMeters.x},${translationMeters.y},${GeometryUtil.toDegrees(headingRadians)},$velocityMetersPerSecond,$accelerationMetersPerSecondSq,$curvatureRadPerMeter,$holonomicRotation,${GeometryUtil.toDegrees(angularVelocity)},$holonomicAngularVelocity}';
+  }
+
+  static String getCSVHeader() {
+    return '# PathPlanner CSV Format:\n# timeSeconds, xPositionMeters, yPositionMeters, headingDegrees, velocityMetersPerSecond, accelerationMetersPerSecondSq, curvatureRadPerMeter, holonomicRotationDegrees, angularVelocityDegreesPerSec, holonomicAngularVelocityDegreesPerSec';
   }
 }

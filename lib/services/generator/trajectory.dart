@@ -233,7 +233,7 @@ class Trajectory {
 
         now.angularVelocity = (next.headingRadians - now.headingRadians) / dt;
         now.holonomicAngularVelocity =
-            (next.holonomicAngularVelocity - now.holonomicRotation) / dt;
+            (next.holonomicRotation - now.holonomicRotation) / dt;
       }
 
       if (now.curveRadius == double.infinity ||
@@ -408,7 +408,7 @@ class TrajectoryState {
   }
 
   String toCSV() {
-    return '$timeSeconds,${translationMeters.x},${translationMeters.y},${GeometryUtil.toDegrees(headingRadians)},$velocityMetersPerSecond,$accelerationMetersPerSecondSq,$curvatureRadPerMeter,$holonomicRotation,${GeometryUtil.toDegrees(angularVelocity)},$holonomicAngularVelocity}';
+    return '$timeSeconds,${translationMeters.x},${translationMeters.y},${GeometryUtil.toDegrees(headingRadians)},$velocityMetersPerSecond,$accelerationMetersPerSecondSq,$curvatureRadPerMeter,$holonomicRotation,${GeometryUtil.toDegrees(angularVelocity)},$holonomicAngularVelocity';
   }
 
   static String getCSVHeader() {

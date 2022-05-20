@@ -4,7 +4,6 @@
 #include <frc/Filesystem.h>
 #include <wpi/SmallString.h>
 #include <wpi/raw_istream.h>
-#include <wpi/json.h>
 #include <units/length.h>
 #include <units/angle.h>
 #include <units/velocity.h>
@@ -14,8 +13,29 @@ using namespace pathplanner;
 
 double PathPlanner::resolution = 0.004;
 
-PathPlannerTrajectory PathPlanner::loadPath(std::string name, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){
-    std::string line;
+PathPlannerTrajectory PathPlanner::loadPath(std::string name, PathConstraints constraints, bool reversed){
+    std::string filePath = frc::filesystem::GetDeployDirectory() + "/pathplanner/" + name + ".path";
+
+    std::error_code error_code;
+    wpi::raw_fd_istream input{filePath, error_code};
+
+    if(error_code){
+        throw std::runtime_error("Cannot open file: " + filePath);
+    }
+
+    wpi::json json;
+    input >> json;
+
+    std::vector<PathPlannerTrajectory::Waypoint> waypoints = getWaypointsFromJson(json);
+    std::vector<PathPlannerTrajectory::EventMarker> markers = getMarkersFromJson(json);
+
+    return PathPlannerTrajectory(waypoints, markers, constraints, reversed);
+}
+
+std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, std::initializer_list<PathConstraints> constraints, bool reversed){
+    if(constraints.size() == 0){
+        throw std::runtime_error("At least one PathConstraints is required but none were provized");
+    }
 
     std::string filePath = frc::filesystem::GetDeployDirectory() + "/pathplanner/" + name + ".path";
 
@@ -29,6 +49,63 @@ PathPlannerTrajectory PathPlanner::loadPath(std::string name, units::meters_per_
     wpi::json json;
     input >> json;
 
+    std::vector<PathPlannerTrajectory::Waypoint> waypoints = getWaypointsFromJson(json);
+    std::vector<PathPlannerTrajectory::EventMarker> markers = getMarkersFromJson(json);
+
+    std::vector<std::vector<PathPlannerTrajectory::Waypoint>> splitWaypoints;
+    std::vector<std::vector<PathPlannerTrajectory::EventMarker>> splitMarkers;
+
+    std::vector<PathPlannerTrajectory::Waypoint> currentPath;
+    for(size_t i = 0; i < waypoints.size(); i++){
+        PathPlannerTrajectory::Waypoint w = waypoints[i];
+
+        currentPath.push_back(w);
+        if(w.isStopPoint || i == waypoints.size() - 1){
+            // Get the markers that should be part of this path and correct their positions
+            std::vector<PathPlannerTrajectory::EventMarker> currentMarkers;
+            for(PathPlannerTrajectory::EventMarker marker : markers){
+                if(marker.waypointRelativePos >= indexOfWaypoint(waypoints, currentPath[0]) && marker.waypointRelativePos <= i){
+                    currentMarkers.push_back(PathPlannerTrajectory::EventMarker(marker.name, marker.waypointRelativePos - indexOfWaypoint(waypoints, currentPath[0])));
+                }
+            }
+            splitMarkers.push_back(currentMarkers);
+
+            splitWaypoints.push_back(currentPath);
+            currentPath = std::vector<PathPlannerTrajectory::Waypoint>();
+            currentPath.push_back(w);
+        }
+    }
+
+    if(splitWaypoints.size() != splitMarkers.size()){
+        throw std::runtime_error("Size of splitWaypoints does not match splitMarkers. Something went very wrong");
+    }
+
+    std::vector<PathPlannerTrajectory> pathGroup;
+    std::vector<PathConstraints> constraintsVec(constraints);
+    bool shouldReverse = reversed;
+    for(size_t i = 0; i < splitWaypoints.size(); i++){
+        PathConstraints currentConstraints;
+        if(i > constraintsVec.size() - 1){
+            currentConstraints = constraintsVec[constraintsVec.size() - 1];
+        }else{
+            currentConstraints = constraintsVec[i];
+        }
+
+        pathGroup.push_back(PathPlannerTrajectory(splitWaypoints[i], splitMarkers[i], currentConstraints, shouldReverse));
+
+        // Loop through waypoints and invert shouldReverse for every reversal point.
+        // This makes sure that other paths in the group are properly reversed.
+        for(size_t j = 1; j < splitWaypoints[i].size(); j++){
+            if(splitWaypoints[i][j].isReversal){
+                shouldReverse = !shouldReverse;
+            }
+        }
+    }
+
+    return pathGroup;
+}
+
+std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(wpi::json json){
     std::vector<PathPlannerTrajectory::Waypoint> waypoints;
     for (wpi::json::reference waypoint : json.at("waypoints")){
         wpi::json::reference jsonAnchor = waypoint.at("anchorPoint");
@@ -55,15 +132,23 @@ PathPlannerTrajectory PathPlanner::loadPath(std::string name, units::meters_per_
         double holonomic = waypoint.at("holonomicAngle");
         frc::Rotation2d holonomicAngle = frc::Rotation2d(units::degree_t{holonomic});
         bool isReversal = waypoint.at("isReversal");
+        bool isStopPoint = false;
+        if(waypoint.find("isStopPoint") != waypoint.end()){
+            isStopPoint = waypoint.at("isStopPoint");
+        }
         units::meters_per_second_t velOverride = -1_mps;
         if(!waypoint.at("velOverride").is_null()){
             double vel = waypoint.at("velOverride");
             velOverride = units::meters_per_second_t{vel};
         }
 
-        waypoints.push_back(PathPlannerTrajectory::Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal));
+        waypoints.push_back(PathPlannerTrajectory::Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal, isStopPoint));
     }
 
+    return waypoints;
+}
+
+std::vector<PathPlannerTrajectory::EventMarker> PathPlanner::getMarkersFromJson(wpi::json json){
     std::vector<PathPlannerTrajectory::EventMarker> markers;
 
     if(json.find("markers") != json.end()){
@@ -73,5 +158,14 @@ PathPlannerTrajectory PathPlanner::loadPath(std::string name, units::meters_per_
         }
     }
 
-    return PathPlannerTrajectory(waypoints, markers, maxVel, maxAccel, reversed);
+    return markers;
+}
+
+int PathPlanner::indexOfWaypoint(std::vector<PathPlannerTrajectory::Waypoint> waypoints, PathPlannerTrajectory::Waypoint waypoint){
+    for(size_t i = 0; i < waypoints.size(); i++){
+        if(waypoints[i].anchorPoint == waypoint.anchorPoint){
+            return i;
+        }
+    }
+    return -1;
 }

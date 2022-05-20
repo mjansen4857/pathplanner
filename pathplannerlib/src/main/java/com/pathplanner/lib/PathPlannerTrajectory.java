@@ -11,8 +11,8 @@ import java.util.List;
 public class PathPlannerTrajectory extends Trajectory {
     private final List<EventMarker> markers;
 
-    protected PathPlannerTrajectory(ArrayList<Waypoint> pathPoints, ArrayList<EventMarker> markers, double maxVel, double maxAccel, boolean reversed){
-        super(generatePath(pathPoints, maxVel, maxAccel, reversed));
+    protected PathPlannerTrajectory(ArrayList<Waypoint> pathPoints, ArrayList<EventMarker> markers, PathConstraints constraints, boolean reversed){
+        super(generatePath(pathPoints, constraints.maxVelocity, constraints.maxAcceleration, reversed));
 
         this.markers = markers;
         this.calculateMarkerTimes(pathPoints);
@@ -95,15 +95,15 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     private static List<State> generatePath(ArrayList<Waypoint> pathPoints, double maxVel, double maxAccel, boolean reversed){
-        ArrayList<ArrayList<PathPlannerTrajectory.Waypoint>> splitPaths = new ArrayList<>();
-        ArrayList<PathPlannerTrajectory.Waypoint> currentPath = new ArrayList<>();
+        ArrayList<ArrayList<Waypoint>> splitPaths = new ArrayList<>();
+        ArrayList<Waypoint> currentPath = new ArrayList<>();
 
         for(int i = 0; i < pathPoints.size(); i++){
-            PathPlannerTrajectory.Waypoint w = pathPoints.get(i);
+            Waypoint w = pathPoints.get(i);
 
             currentPath.add(w);
 
-            if(w.isReversal || i == pathPoints.size() - 1){
+            if((i != 0 && w.isReversal) || i == pathPoints.size() - 1){
                 splitPaths.add(currentPath);
                 currentPath = new ArrayList<>();
                 currentPath.add(w);
@@ -404,20 +404,22 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     protected static class Waypoint {
-        private final Translation2d anchorPoint;
-        private final Translation2d prevControl;
-        private final Translation2d nextControl;
-        private final double velOverride;
-        private final Rotation2d holonomicRotation;
+        protected final Translation2d anchorPoint;
+        protected final Translation2d prevControl;
+        protected final Translation2d nextControl;
+        protected final double velOverride;
+        protected final Rotation2d holonomicRotation;
         protected final boolean isReversal;
+        protected final boolean isStopPoint;
 
-        protected Waypoint(Translation2d anchorPoint, Translation2d prevControl, Translation2d nextControl, double velOverride, Rotation2d holonomicRotation, boolean isReversal){
+        protected Waypoint(Translation2d anchorPoint, Translation2d prevControl, Translation2d nextControl, double velOverride, Rotation2d holonomicRotation, boolean isReversal, boolean isStopPoint){
             this.anchorPoint = anchorPoint;
             this.prevControl = prevControl;
             this.nextControl = nextControl;
             this.velOverride = velOverride;
             this.holonomicRotation = holonomicRotation;
             this.isReversal = isReversal;
+            this.isStopPoint = isStopPoint;
         }
     }
 

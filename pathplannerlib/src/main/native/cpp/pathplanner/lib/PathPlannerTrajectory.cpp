@@ -8,8 +8,8 @@ using namespace pathplanner;
 
 #define PI 3.14159265358979323846
 
-PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, units::meters_per_second_t maxVelocity, units::meters_per_second_squared_t maxAcceleration, bool reversed){
-    this->states = PathPlannerTrajectory::generatePath(waypoints, maxVelocity, maxAcceleration, reversed);
+PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, PathConstraints constraints, bool reversed){
+    this->states = PathPlannerTrajectory::generatePath(waypoints, constraints.maxVelocity, constraints.maxAcceleration, reversed);
 
     this->markers = markers;
     this->calculateMarkerTimes(waypoints);
@@ -33,7 +33,7 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::gene
 
         currentPath.push_back(w);
 
-        if(w.isReversal || i == pathPoints.size() - 1){
+        if((i != 0 && w.isReversal) || i == pathPoints.size() - 1){
             splitPaths.push_back(currentPath);
             currentPath = std::vector<Waypoint>();
             currentPath.push_back(w);

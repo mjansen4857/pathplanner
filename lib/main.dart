@@ -7,7 +7,6 @@ import 'package:logger/logger.dart';
 import 'package:logger/src/outputs/file_output.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pathplanner/widgets/dialogs/error_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -116,15 +115,6 @@ class _PathPlannerState extends State<PathPlanner> {
           });
         },
       ),
-      builder: (BuildContext context, Widget? w) {
-        ErrorWidget.builder = (FlutterErrorDetails errorDetails) {
-          return ErrorDialog(
-            errorDetails: errorDetails,
-          );
-        };
-        if (w == null) return Container();
-        return w;
-      },
     );
   }
 }

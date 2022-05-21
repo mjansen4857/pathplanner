@@ -28,6 +28,7 @@ void main() async {
         file: File(join(logPath.path, 'log.txt')),
       ),
     ]),
+    filter: ProductionFilter(),
   );
 
   runZonedGuarded(

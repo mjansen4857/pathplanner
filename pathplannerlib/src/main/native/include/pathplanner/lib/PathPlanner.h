@@ -60,6 +60,17 @@ namespace pathplanner{
                 return loadPathGroup(name, {PathConstraints(maxVel, maxAccel)}, reversed);
             }
 
+            /**
+             * Load path constraints from a path file in storage. This can be used to change path max vel/accel in the
+             * GUI instead of updating and rebuilding code. This requires that max velocity and max acceleration have been
+             * explicitly set in the GUI.
+             * 
+             * Throws a runtime error if constraints are not present in the file
+             * @param name The name of the path to load constraints from
+             * @return The constraints from the path file
+             */
+            static PathConstraints getConstraintsFromPath(std::string name);
+
         private:
             static std::vector<PathPlannerTrajectory::Waypoint> getWaypointsFromJson(wpi::json json);
             static std::vector<PathPlannerTrajectory::EventMarker> getMarkersFromJson(wpi::json json);

@@ -199,6 +199,37 @@ public class PathPlanner {
         return loadPathGroup(name, false, new PathConstraints(maxVel, maxAccel));
     }
 
+    /**
+     * Load path constraints from a path file in storage. This can be used to change path max vel/accel in the
+     * GUI instead of updating and rebuilding code. This requires that max velocity and max acceleration have been
+     * explicitly set in the GUI.
+     * @param name The name of the path to load constraints from
+     * @return The constraints from the path file, null if they are not present in the file
+     */
+    public static PathConstraints getConstraintsFromPath(String name){
+        try(BufferedReader br = new BufferedReader(new FileReader(new File(Filesystem.getDeployDirectory(), "pathplanner/" + name + ".path")))){
+            StringBuilder fileContentBuilder = new StringBuilder();
+            String line;
+            while((line = br.readLine()) != null){
+                fileContentBuilder.append(line);
+            }
+
+            String fileContent = fileContentBuilder.toString();
+            JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+            if(json.containsKey("maxVelocity") && json.containsKey("maxAcceleration")){
+                double maxV = ((Number) json.get("maxVelocity")).doubleValue();
+                double maxA = ((Number) json.get("maxAcceleration")).doubleValue();
+                return new PathConstraints(maxV, maxA);
+            }else{
+                throw new RuntimeException("Path constraints not present in path file. Make sure you explicitly set them in the GUI.");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private static ArrayList<Waypoint> getWaypointsFromJson(JSONObject json){
         JSONArray jsonWaypoints = (JSONArray) json.get("waypoints");
 

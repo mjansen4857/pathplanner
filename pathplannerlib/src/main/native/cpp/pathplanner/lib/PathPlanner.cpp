@@ -105,6 +105,29 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, 
     return pathGroup;
 }
 
+PathConstraints PathPlanner::getConstraintsFromPath(std::string name){
+    std::string filePath = frc::filesystem::GetDeployDirectory() + "/pathplanner/" + name + ".path";
+
+    std::error_code error_code;
+    wpi::raw_fd_istream input{filePath, error_code};
+
+    if(error_code){
+        throw std::runtime_error("Cannot open file: " + filePath);
+    }
+
+    wpi::json json;
+    input >> json;
+
+    if(json.find("maxVelocity") != json.end() && json.find("maxAcceleration") != json.end()){
+        double maxV = json.at("maxVelocity");
+        double maxA = json.at("maxAcceleration");
+
+        return PathConstraints(units::meters_per_second_t{maxV}, units::meters_per_second_squared_t{maxA});
+    }else{
+        throw std::runtime_error("Path constraints not present in path file. Make sure you explicitly set them in the GUI.");
+    }
+}
+
 std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(wpi::json json){
     std::vector<PathPlannerTrajectory::Waypoint> waypoints;
     for (wpi::json::reference waypoint : json.at("waypoints")){

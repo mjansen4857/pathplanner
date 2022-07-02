@@ -47,5 +47,5 @@ jobs:
         working-directory: ./pathplannerlib
         
       - name: Compile and run tests
-        run: ./gradlew build
+        run: ./gradlew build -PreleaseMode
         working-directory: ./pathplannerlib

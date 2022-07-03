@@ -44,16 +44,6 @@ public class PPHolonomicDriveController {
     }
 
     /**
-     * Constructs a PPHolonomicDriveController
-     * 
-     * @param xyController A PID controller to respond to error in both the field-relative X and Y directions
-     * @param rotationController A PID controller to respond to error in rotation
-     */
-    public PPHolonomicDriveController(PIDController xyController, PIDController rotationController){
-        this(xyController, xyController, rotationController);
-    }
-
-    /**
      * Returns true if the pose error is within tolerance of the reference.
      *
      * @return True if the pose error is within tolerance of the reference.

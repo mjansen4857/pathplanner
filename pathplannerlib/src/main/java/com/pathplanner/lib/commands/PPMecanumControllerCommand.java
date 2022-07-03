@@ -77,37 +77,6 @@ public class PPMecanumControllerCommand extends CommandBase {
 
     addRequirements(requirements);
   }
-  /**
-   * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
-   * trajectory. The user should implement a velocity PID on the desired output wheel velocities.
-   *
-   * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path -
-   * this is left to the user, since it is not appropriate for paths with non-stationary end-states.
-   *
-   * @param trajectory The Pathplanner trajectory to follow.
-   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes to
-   *     provide this.
-   * @param kinematics The kinematics for the robot drivetrain.
-   * @param xyController The Trajectory Tracker PID controller for the robot's x and y position.
-   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
-   * @param maxWheelVelocityMetersPerSecond The maximum velocity of a drivetrain wheel.
-   * @param outputWheelSpeeds A MecanumDriveWheelSpeeds object containing the output wheel speeds.
-   * @param eventMap           Map of event marker names to the commands that should run when reaching that marker.
-   *                           This SHOULD NOT contain any commands requiring the same subsystems as this command, or it will be interrupted
-   * @param requirements The subsystems to require.
-   */
-  public PPMecanumControllerCommand(
-          PathPlannerTrajectory trajectory,
-          Supplier<Pose2d> poseSupplier,
-          MecanumDriveKinematics kinematics,
-          PIDController xyController,
-          PIDController rotationController,
-          double maxWheelVelocityMetersPerSecond,
-          Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
-          HashMap<String, CommandBase> eventMap,
-          Subsystem... requirements) {
-    this(trajectory, poseSupplier, kinematics, xyController, xyController, rotationController, maxWheelVelocityMetersPerSecond, outputWheelSpeeds, eventMap, requirements);
-  }
 
   /**
    * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
@@ -138,34 +107,6 @@ public class PPMecanumControllerCommand extends CommandBase {
           Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
           Subsystem... requirements) {
     this(trajectory, poseSupplier, kinematics, xController, yController, rotationController, maxWheelVelocityMetersPerSecond, outputWheelSpeeds, new HashMap<>(), requirements);
-  }
-  /**
-   * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
-   * trajectory. The user should implement a velocity PID on the desired output wheel velocities.
-   *
-   * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path -
-   * this is left to the user, since it is not appropriate for paths with non-stationary end-states.
-   *
-   * @param trajectory The Pathplanner trajectory to follow.
-   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes to
-   *     provide this.
-   * @param kinematics The kinematics for the robot drivetrain.
-   * @param xyController The Trajectory Tracker PID controller for the robot's x and y position.
-   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
-   * @param maxWheelVelocityMetersPerSecond The maximum velocity of a drivetrain wheel.
-   * @param outputWheelSpeeds A MecanumDriveWheelSpeeds object containing the output wheel speeds.
-   * @param requirements The subsystems to require.
-   */
-  public PPMecanumControllerCommand(
-          PathPlannerTrajectory trajectory,
-          Supplier<Pose2d> poseSupplier,
-          MecanumDriveKinematics kinematics,
-          PIDController xyController,
-          PIDController rotationController,
-          double maxWheelVelocityMetersPerSecond,
-          Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
-          Subsystem... requirements) {
-    this(trajectory, poseSupplier, kinematics, xyController, xyController, rotationController, maxWheelVelocityMetersPerSecond, outputWheelSpeeds, new HashMap<>(), requirements);
   }
 
   @Override

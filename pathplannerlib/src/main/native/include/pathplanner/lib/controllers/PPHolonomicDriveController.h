@@ -18,14 +18,6 @@ namespace pathplanner {
             PPHolonomicDriveController(frc2::PIDController xController, frc2::PIDController yController, frc2::PIDController rotationController);
 
             /**
-             * Constructs a PPHolonomicDriveController
-             * 
-             * @param xyController A PID controller to respond to error in both the field-relative X and Y directions
-             * @param rotationController A PID controller to respond to error in rotation
-             */
-            PPHolonomicDriveController(frc2::PIDController xyController, frc2::PIDController rotationController) : PPHolonomicDriveController(xyController, xyController, rotationController) {}
-
-            /**
              * Returns true if the pose error is within tolerance of the reference.
              *
              * @return True if the pose error is within tolerance of the reference.

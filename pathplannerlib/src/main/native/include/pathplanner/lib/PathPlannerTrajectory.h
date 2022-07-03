@@ -31,6 +31,13 @@ namespace pathplanner{
                     units::radians_per_second_t angularVelocity;
                     frc::Rotation2d holonomicRotation;
                     units::radians_per_second_t holonomicAngularVelocity;
+
+                    /**
+                     * @brief Get this state as a WPILib trajectory state
+                     * 
+                     * @return The WPILib state
+                     */
+                    frc::Trajectory::State asWPILibState();
             
                 private:
                     units::meter_t curveRadius = 0_m;

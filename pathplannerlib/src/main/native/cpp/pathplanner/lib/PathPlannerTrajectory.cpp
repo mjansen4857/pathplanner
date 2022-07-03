@@ -345,20 +345,25 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState:
     return lerpedState;
 }
 
+frc::Trajectory::State PathPlannerTrajectory::PathPlannerState::asWPILibState(){
+    frc::Trajectory::State wpiState;
+
+    wpiState.t = this->time;
+    wpiState.pose = this->pose;
+    wpiState.velocity = this->velocity;
+    wpiState.acceleration = this->acceleration;
+    wpiState.curvature = this->curvature;
+
+    return wpiState;
+}
+
 frc::Trajectory PathPlannerTrajectory::asWPILibTrajectory() {
     std::vector<frc::Trajectory::State> wpiStates;
 
     for(size_t i = 0; i < this->states.size(); i++){
         PathPlannerTrajectory::PathPlannerState ppState = this->states[i];
-        frc::Trajectory::State wpiState;
 
-        wpiState.t = ppState.time;
-        wpiState.pose = ppState.pose;
-        wpiState.velocity = ppState.velocity;
-        wpiState.acceleration = ppState.acceleration;
-        wpiState.curvature = ppState.curvature;
-
-        wpiStates.push_back(wpiState);
+        wpiStates.push_back(ppState.asWPILibState());
     }
 
     return frc::Trajectory(wpiStates);

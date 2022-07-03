@@ -16,6 +16,8 @@
 #include <units/curvature.h>
 #include "PathConstraints.h"
 
+#define PI 3.14159265358979323846
+
 namespace pathplanner{
     class PathPlannerTrajectory{
         public:

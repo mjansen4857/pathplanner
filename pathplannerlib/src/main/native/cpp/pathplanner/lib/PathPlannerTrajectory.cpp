@@ -6,8 +6,6 @@
 
 using namespace pathplanner;
 
-#define PI 3.14159265358979323846
-
 PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, PathConstraints constraints, bool reversed){
     this->states = PathPlannerTrajectory::generatePath(waypoints, constraints.maxVelocity, constraints.maxAcceleration, reversed);
 

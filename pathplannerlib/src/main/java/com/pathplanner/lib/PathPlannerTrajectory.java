@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
@@ -364,6 +365,9 @@ public class PathPlannerTrajectory extends Trajectory {
             marker.timeSeconds = closestState.timeSeconds;
             marker.positionMeters = markerPos;
         }
+
+        // Ensure the markers are sorted by time
+        this.markers.sort(Comparator.comparingDouble(m -> m.timeSeconds));
     }
 
     public static class PathPlannerState extends State{

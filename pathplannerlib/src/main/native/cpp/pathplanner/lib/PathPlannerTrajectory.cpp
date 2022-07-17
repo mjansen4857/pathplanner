@@ -96,6 +96,11 @@ void PathPlannerTrajectory::calculateMarkerTimes(std::vector<Waypoint> pathPoint
         marker.time = closestState.time;
         marker.position = markerPos;
     }
+
+    // Ensure the markers are sorted by time
+    std::sort(this->markers.begin(), this->markers.end(), [](EventMarker& a, EventMarker& b){
+        return a.time < b.time;
+    });
 }
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::joinSplines(std::vector<PathPlannerTrajectory::Waypoint> pathPoints, units::meters_per_second_t maxVel, double step){

@@ -129,12 +129,13 @@ public class PPSwerveControllerCommand extends CommandBase {
 
         this.outputModuleStates.accept(targetModuleStates);
 
-        for(PathPlannerTrajectory.EventMarker m : unpassedMarkers){
-            if(currentTime >= m.timeSeconds && this.eventMap.containsKey(m.name)){
-                CommandBase command = this.eventMap.get(m.name);
+        if(currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
+            PathPlannerTrajectory.EventMarker marker = this.unpassedMarkers.remove(0);
+
+            if(this.eventMap.containsKey(marker.name)) {
+                CommandBase command = this.eventMap.get(marker.name);
 
                 command.schedule();
-                unpassedMarkers.remove(m);
             }
         }
     }

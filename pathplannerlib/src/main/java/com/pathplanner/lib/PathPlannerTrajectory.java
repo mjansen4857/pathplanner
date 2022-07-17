@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
@@ -217,19 +218,6 @@ public class PathPlannerTrajectory extends Trajectory {
         for(int i = states.size() - 1; i >= 0; i--){
             PathPlannerState now = states.get(i);
 
-            if(reversed){
-                now.velocityMetersPerSecond *= -1;
-                now.accelerationMetersPerSecondSq *= -1;
-
-                double h = now.poseMeters.getRotation().getDegrees() + 180;
-                if(h > 180){
-                    h -= 360;
-                }else if(h < -180){
-                    h += 360;
-                }
-                now.poseMeters = new Pose2d(now.poseMeters.getTranslation(), Rotation2d.fromDegrees(h));
-            }
-
             if(i != states.size() - 1){
                 PathPlannerState next = states.get(i + 1);
 
@@ -245,6 +233,19 @@ public class PathPlannerTrajectory extends Trajectory {
                 now.curvatureRadPerMeter = 0;
             }else{
                 now.curvatureRadPerMeter = 1 / now.curveRadius;
+            }
+
+            if(reversed){
+                now.velocityMetersPerSecond *= -1;
+                now.accelerationMetersPerSecondSq *= -1;
+
+                double h = now.poseMeters.getRotation().getDegrees() + 180;
+                if(h > 180){
+                    h -= 360;
+                }else if(h < -180){
+                    h += 360;
+                }
+                now.poseMeters = new Pose2d(now.poseMeters.getTranslation(), Rotation2d.fromDegrees(h));
             }
         }
     }
@@ -364,6 +365,9 @@ public class PathPlannerTrajectory extends Trajectory {
             marker.timeSeconds = closestState.timeSeconds;
             marker.positionMeters = markerPos;
         }
+
+        // Ensure the markers are sorted by time
+        this.markers.sort(Comparator.comparingDouble(m -> m.timeSeconds));
     }
 
     public static class PathPlannerState extends State{

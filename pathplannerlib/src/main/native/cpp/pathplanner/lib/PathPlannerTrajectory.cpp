@@ -6,8 +6,6 @@
 
 using namespace pathplanner;
 
-#define PI 3.14159265358979323846
-
 PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, PathConstraints constraints, bool reversed){
     this->states = PathPlannerTrajectory::generatePath(waypoints, constraints.maxVelocity, constraints.maxAcceleration, reversed);
 
@@ -98,6 +96,11 @@ void PathPlannerTrajectory::calculateMarkerTimes(std::vector<Waypoint> pathPoint
         marker.time = closestState.time;
         marker.position = markerPos;
     }
+
+    // Ensure the markers are sorted by time
+    std::sort(this->markers.begin(), this->markers.end(), [](EventMarker& a, EventMarker& b){
+        return a.time < b.time;
+    });
 }
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::joinSplines(std::vector<PathPlannerTrajectory::Waypoint> pathPoints, units::meters_per_second_t maxVel, double step){
@@ -249,19 +252,6 @@ void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory:
     for(int i = states.size() - 1; i >= 0; i--){
         PathPlannerState& now = states[i];
 
-        if(reversed){
-            now.velocity *= -1;
-            now.acceleration *= -1;
-
-            units::degree_t h = now.pose.Rotation().Degrees() + 180_deg;
-            if(h > 180_deg){
-                h -= 360_deg;
-            }else if(h < -180_deg){
-                h += 360_deg;
-            }
-            now.pose = frc::Pose2d(now.pose.Translation(), frc::Rotation2d(h));
-        }
-
         if(i != static_cast<int>(states.size() - 1)){
             PathPlannerState& next = states[i + 1];
 
@@ -276,6 +266,19 @@ void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory:
             now.curvature = units::curvature_t{0};
         }else{
             now.curvature = units::curvature_t{1 / now.curveRadius()};
+        }
+
+        if(reversed){
+            now.velocity *= -1;
+            now.acceleration *= -1;
+
+            units::degree_t h = now.pose.Rotation().Degrees() + 180_deg;
+            if(h > 180_deg){
+                h -= 360_deg;
+            }else if(h < -180_deg){
+                h += 360_deg;
+            }
+            now.pose = frc::Pose2d(now.pose.Translation(), frc::Rotation2d(h));
         }
     }
 }
@@ -347,20 +350,25 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState:
     return lerpedState;
 }
 
+frc::Trajectory::State PathPlannerTrajectory::PathPlannerState::asWPILibState(){
+    frc::Trajectory::State wpiState;
+
+    wpiState.t = this->time;
+    wpiState.pose = this->pose;
+    wpiState.velocity = this->velocity;
+    wpiState.acceleration = this->acceleration;
+    wpiState.curvature = this->curvature;
+
+    return wpiState;
+}
+
 frc::Trajectory PathPlannerTrajectory::asWPILibTrajectory() {
     std::vector<frc::Trajectory::State> wpiStates;
 
     for(size_t i = 0; i < this->states.size(); i++){
         PathPlannerTrajectory::PathPlannerState ppState = this->states[i];
-        frc::Trajectory::State wpiState;
 
-        wpiState.t = ppState.time;
-        wpiState.pose = ppState.pose;
-        wpiState.velocity = ppState.velocity;
-        wpiState.acceleration = ppState.acceleration;
-        wpiState.curvature = ppState.curvature;
-
-        wpiStates.push_back(wpiState);
+        wpiStates.push_back(ppState.asWPILibState());
     }
 
     return frc::Trajectory(wpiStates);

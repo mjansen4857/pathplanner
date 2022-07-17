@@ -512,6 +512,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     }
 
+    if (paths.isEmpty) {
+      paths.add(RobotPath.defaultPath());
+    }
+
     return paths;
   }
 

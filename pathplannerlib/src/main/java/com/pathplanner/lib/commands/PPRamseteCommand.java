@@ -9,6 +9,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
 import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
@@ -32,7 +35,8 @@ public class PPRamseteCommand extends CommandBase {
     private final PIDController leftController;
     private final PIDController rightController;
     private final BiConsumer<Double, Double> output;
-    private final HashMap<String, CommandBase> eventMap;
+    private final HashMap<String, Command> eventMap;
+    private final Field2d field = new Field2d();
 
     private DifferentialDriveWheelSpeeds prevSpeeds;
     private double prevTime;
@@ -69,7 +73,7 @@ public class PPRamseteCommand extends CommandBase {
             PIDController leftController,
             PIDController rightController,
             BiConsumer<Double, Double> outputVolts,
-            HashMap<String, CommandBase> eventMap,
+            HashMap<String, Command> eventMap,
             Subsystem... requirements) {
         this.trajectory = trajectory;
         this.poseSupplier = poseSupplier;
@@ -107,7 +111,7 @@ public class PPRamseteCommand extends CommandBase {
             RamseteController controller,
             DifferentialDriveKinematics kinematics,
             BiConsumer<Double, Double> outputMetersPerSecond,
-            HashMap<String, CommandBase> eventMap,
+            HashMap<String, Command> eventMap,
             Subsystem... requirements) {
         this.trajectory = trajectory;
         this.poseSupplier = poseSupplier;
@@ -187,7 +191,10 @@ public class PPRamseteCommand extends CommandBase {
         this.unpassedMarkers.addAll(this.trajectory.getMarkers());
         this.prevTime = -1;
 
-        PathPlannerTrajectory.PathPlannerState initialState = (PathPlannerTrajectory.PathPlannerState) this.trajectory.sample(0);
+        SmartDashboard.putData("PPRamseteCommand_field", this.field);
+        this.field.getObject("traj").setTrajectory(this.trajectory);
+
+        PathPlannerTrajectory.PathPlannerState initialState = this.trajectory.getInitialState();
         this.prevSpeeds = this.kinematics.toWheelSpeeds(new ChassisSpeeds(initialState.velocityMetersPerSecond, 0, initialState.curvatureRadPerMeter * initialState.velocityMetersPerSecond));
 
         this.timer.reset();
@@ -209,7 +216,15 @@ public class PPRamseteCommand extends CommandBase {
             return;
         }
 
-        DifferentialDriveWheelSpeeds targetWheelSpeeds = this.kinematics.toWheelSpeeds(this.controller.calculate(this.poseSupplier.get(), this.trajectory.sample(currentTime)));
+        Pose2d currentPose = this.poseSupplier.get();
+        PathPlannerTrajectory.PathPlannerState desiredState = (PathPlannerTrajectory.PathPlannerState) this.trajectory.sample(currentTime);
+        this.field.setRobotPose(currentPose);
+
+        SmartDashboard.putNumber("PPRamseteCommand_xError", currentPose.getX() - desiredState.poseMeters.getX());
+        SmartDashboard.putNumber("PPRamseteCommand_yError", currentPose.getY() - desiredState.poseMeters.getY());
+        SmartDashboard.putNumber("PPRamseteCommand_rotationError", currentPose.getRotation().getRadians() - desiredState.poseMeters.getRotation().getRadians());
+
+        DifferentialDriveWheelSpeeds targetWheelSpeeds = this.kinematics.toWheelSpeeds(this.controller.calculate(currentPose, desiredState));
 
         double leftSpeedSetpoint = targetWheelSpeeds.leftMetersPerSecond;
         double rightSpeedSetpoint = targetWheelSpeeds.rightMetersPerSecond;
@@ -232,11 +247,11 @@ public class PPRamseteCommand extends CommandBase {
         this.prevSpeeds = targetWheelSpeeds;
         this.prevTime = currentTime;
 
-        if(currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
+        if(this.unpassedMarkers.size() > 0 && currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
             PathPlannerTrajectory.EventMarker marker = this.unpassedMarkers.remove(0);
 
             if(this.eventMap.containsKey(marker.name)) {
-                CommandBase command = this.eventMap.get(marker.name);
+                Command command = this.eventMap.get(marker.name);
 
                 command.schedule();
             }

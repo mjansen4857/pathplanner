@@ -15,6 +15,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 
@@ -28,7 +31,8 @@ public class PPSwerveControllerCommand extends CommandBase {
     private final SwerveDriveKinematics kinematics;
     private final PPHolonomicDriveController controller;
     private final Consumer<SwerveModuleState[]> outputModuleStates;
-    private final HashMap<String, CommandBase> eventMap;
+    private final HashMap<String, Command> eventMap;
+    private final Field2d field = new Field2d();
 
     private ArrayList<PathPlannerTrajectory.EventMarker> unpassedMarkers;
 
@@ -64,7 +68,7 @@ public class PPSwerveControllerCommand extends CommandBase {
             PIDController yController,
             PIDController rotationController,
             Consumer<SwerveModuleState[]> outputModuleStates,
-            HashMap<String, CommandBase> eventMap,
+            HashMap<String, Command> eventMap,
             Subsystem... requirements) {
         this.trajectory = trajectory;
         this.poseSupplier = poseSupplier;
@@ -115,6 +119,9 @@ public class PPSwerveControllerCommand extends CommandBase {
         this.unpassedMarkers = new ArrayList<>();
         this.unpassedMarkers.addAll(this.trajectory.getMarkers());
 
+        SmartDashboard.putData("PPSwerveControllerCommand_field", this.field);
+        this.field.getObject("traj").setTrajectory(this.trajectory);
+
         this.timer.reset();
         this.timer.start();
     }
@@ -124,16 +131,23 @@ public class PPSwerveControllerCommand extends CommandBase {
         double currentTime = this.timer.get();
         PathPlannerState desiredState = (PathPlannerState) this.trajectory.sample(currentTime);
 
-        ChassisSpeeds targetChassisSpeeds = this.controller.calculate(this.poseSupplier.get(), desiredState);
+        Pose2d currentPose = this.poseSupplier.get();
+        this.field.setRobotPose(currentPose);
+
+        SmartDashboard.putNumber("PPSwerveControllerCommand_xError", currentPose.getX() - desiredState.poseMeters.getX());
+        SmartDashboard.putNumber("PPSwerveControllerCommand_yError", currentPose.getY() - desiredState.poseMeters.getY());
+        SmartDashboard.putNumber("PPSwerveControllerCommand_rotationError", currentPose.getRotation().getRadians() - desiredState.holonomicRotation.getRadians());
+
+        ChassisSpeeds targetChassisSpeeds = this.controller.calculate(currentPose, desiredState);
         SwerveModuleState[] targetModuleStates = this.kinematics.toSwerveModuleStates(targetChassisSpeeds);
 
         this.outputModuleStates.accept(targetModuleStates);
 
-        if(currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
+        if(this.unpassedMarkers.size() > 0 && currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
             PathPlannerTrajectory.EventMarker marker = this.unpassedMarkers.remove(0);
 
             if(this.eventMap.containsKey(marker.name)) {
-                CommandBase command = this.eventMap.get(marker.name);
+                Command command = this.eventMap.get(marker.name);
 
                 command.schedule();
             }

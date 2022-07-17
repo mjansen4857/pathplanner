@@ -252,19 +252,6 @@ void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory:
     for(int i = states.size() - 1; i >= 0; i--){
         PathPlannerState& now = states[i];
 
-        if(reversed){
-            now.velocity *= -1;
-            now.acceleration *= -1;
-
-            units::degree_t h = now.pose.Rotation().Degrees() + 180_deg;
-            if(h > 180_deg){
-                h -= 360_deg;
-            }else if(h < -180_deg){
-                h += 360_deg;
-            }
-            now.pose = frc::Pose2d(now.pose.Translation(), frc::Rotation2d(h));
-        }
-
         if(i != static_cast<int>(states.size() - 1)){
             PathPlannerState& next = states[i + 1];
 
@@ -279,6 +266,19 @@ void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory:
             now.curvature = units::curvature_t{0};
         }else{
             now.curvature = units::curvature_t{1 / now.curveRadius()};
+        }
+
+        if(reversed){
+            now.velocity *= -1;
+            now.acceleration *= -1;
+
+            units::degree_t h = now.pose.Rotation().Degrees() + 180_deg;
+            if(h > 180_deg){
+                h -= 360_deg;
+            }else if(h < -180_deg){
+                h += 360_deg;
+            }
+            now.pose = frc::Pose2d(now.pose.Translation(), frc::Rotation2d(h));
         }
     }
 }

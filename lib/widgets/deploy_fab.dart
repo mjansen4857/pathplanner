@@ -21,7 +21,7 @@ class DeployFAB extends StatelessWidget {
         onPressed: () async {
           Shell shell = Shell().cd(projectDir!.path);
           _showSnackbar(context, 'Deploying robot code...',
-              duration: Duration(minutes: 5));
+              duration: Duration(minutes: 10));
           try {
             String gradlew = Platform.isWindows ? 'gradlew' : './gradlew';
             ProcessResult result =

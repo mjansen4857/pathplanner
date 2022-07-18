@@ -15,7 +15,7 @@ class UpdateCard extends StatefulWidget {
 class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
   late AnimationController _updateController;
   late Animation<Offset> _offsetAnimation;
-  bool _updateAvailable = false;
+  bool _visibile = false;
   final String _releaseURL =
       'https://github.com/mjansen4857/pathplanner/releases/latest';
 
@@ -32,7 +32,7 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
 
     GitHubAPI.isUpdateAvailable(widget.currentVersion).then((value) {
       setState(() {
-        _updateAvailable = value;
+        _visibile = value;
         _updateController.forward();
       });
     });
@@ -40,8 +40,8 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    super.dispose();
     _updateController.dispose();
+    super.dispose();
   }
 
   @override
@@ -49,40 +49,50 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Visibility(
-      visible: _updateAvailable,
+      visible: _visibile,
       child: SlideTransition(
         position: _offsetAnimation,
-        child: Align(
-          alignment: FractionalOffset.topLeft,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding: EdgeInsets.all(10.0),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Update Available!',
-                      style:
-                          TextStyle(fontSize: 18, color: colorScheme.onSurface),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 0),
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(10.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'PathPlanner update available!',
+                    style:
+                        TextStyle(fontSize: 18, color: colorScheme.onSurface),
+                  ),
+                  SizedBox(width: 12),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: colorScheme.primaryContainer,
+                      onPrimary: colorScheme.onPrimaryContainer,
                     ),
-                    SizedBox(width: 8),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        primary: colorScheme.primaryContainer,
-                        onPrimary: colorScheme.onPrimaryContainer,
-                      ),
-                      onPressed: () async {
-                        Uri url = Uri.parse(_releaseURL);
-                        if (await canLaunchUrl(url)) {
-                          launchUrl(url);
-                        }
-                      },
-                      child: Text('Update'),
+                    onPressed: () async {
+                      Uri url = Uri.parse(_releaseURL);
+                      if (await canLaunchUrl(url)) {
+                        launchUrl(url);
+                      }
+                    },
+                    child: Text('Update'),
+                  ),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      primary: colorScheme.surfaceVariant,
+                      onPrimary: colorScheme.onSurfaceVariant,
                     ),
-                  ],
-                ),
+                    onPressed: () {
+                      setState(() {
+                        _visibile = false;
+                      });
+                    },
+                    child: Text('Dismiss'),
+                  ),
+                ],
               ),
             ),
           ),

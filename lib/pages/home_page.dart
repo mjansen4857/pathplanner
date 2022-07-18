@@ -48,6 +48,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _holonomicMode = false;
   bool _generateJSON = false;
   bool _generateCSV = false;
+  bool _isWpiLib = false;
   SecureBookmarks? _bookmarks = Platform.isMacOS ? SecureBookmarks() : null;
   List<FieldImage> _fieldImages = FieldImage.offialFields();
   FieldImage? _fieldImage;
@@ -104,6 +105,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _projectDir = Directory(projectDir!);
 
         _paths = _loadPaths(_projectDir!);
+        _isWpiLib = _isWpiLibProject(_projectDir!);
         _currentPath = _paths[0];
         _robotSize = Size(widget.prefs.getDouble('robotWidth') ?? 0.75,
             widget.prefs.getDouble('robotLength') ?? 1.0);
@@ -147,8 +149,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         child: _buildBody(),
       ),
       floatingActionButton: Visibility(
-        visible:
-            _projectDir != null && !(widget.appStoreBuild && Platform.isMacOS),
+        visible: _isWpiLib &&
+            _projectDir != null &&
+            !(widget.appStoreBuild && Platform.isMacOS),
         child: DeployFAB(projectDir: _projectDir),
       ),
     );
@@ -520,9 +523,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Directory _getPathsDir(Directory projectDir) {
-    File buildFile = File(join(projectDir.path, 'build.gradle'));
-
-    if (buildFile.existsSync()) {
+    if (_isWpiLibProject(projectDir)) {
       // Java or C++ project
       return Directory(
           join(projectDir.path, 'src', 'main', 'deploy', 'pathplanner'));
@@ -530,6 +531,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       // Other language
       return Directory(join(projectDir.path, 'deploy', 'pathplanner'));
     }
+  }
+
+  bool _isWpiLibProject(Directory projectDir) {
+    File buildFile = File(join(projectDir.path, 'build.gradle'));
+
+    return buildFile.existsSync();
   }
 
   void _savePath(RobotPath path) {
@@ -558,6 +565,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         _projectDir = Directory(projectFolder);
         _paths = _loadPaths(_projectDir!);
+        _isWpiLib = _isWpiLibProject(_projectDir!);
         _currentPath = _paths[0];
       });
     }

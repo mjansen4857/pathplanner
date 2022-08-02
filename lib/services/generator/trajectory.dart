@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
+import 'package:pathplanner/services/generator/math_util.dart';
 
 class Trajectory {
   late final List<TrajectoryState> states;
@@ -215,11 +216,7 @@ class Trajectory {
         now.accelerationMetersPerSecondSq *= -1;
 
         num h = now.headingRadians + pi;
-        if (h > pi) {
-          h -= 2 * pi;
-        } else if (h < -pi) {
-          h += 2 * pi;
-        }
+        h = MathUtil.inputModulus(h, -pi, pi);
         now.headingRadians = h;
       }
 
@@ -231,9 +228,10 @@ class Trajectory {
         now.accelerationMetersPerSecondSq =
             (next.velocityMetersPerSecond - now.velocityMetersPerSecond) / dt;
 
-        now.angularVelocity = (next.headingRadians - now.headingRadians) / dt;
+        now.angularVelocity =
+            MathUtil.inputModulus(next.headingRadians - now.headingRadians, -pi, pi) / dt;
         now.holonomicAngularVelocity =
-            (next.holonomicRotation - now.holonomicRotation) / dt;
+            MathUtil.inputModulus(next.holonomicRotation - now.holonomicRotation, -180, 180) / dt;
       }
 
       if (now.curveRadius == double.infinity ||
@@ -268,18 +266,10 @@ class Trajectory {
         state.translationMeters = p;
 
         num deltaRot = endPoint.holonomicAngle - startPoint.holonomicAngle;
-        if (deltaRot > 180) {
-          deltaRot -= 360;
-        } else if (deltaRot < -180) {
-          deltaRot += 360;
-        }
+        deltaRot = MathUtil.inputModulus(deltaRot, -180, 180);
 
-        double holonomicRot = startPoint.holonomicAngle + (deltaRot * t);
-        if (holonomicRot > 180) {
-          holonomicRot -= 360;
-        } else if (holonomicRot < -180) {
-          holonomicRot += 360;
-        }
+        num holonomicRot = startPoint.holonomicAngle + (deltaRot * t);
+        holonomicRot = MathUtil.inputModulus(holonomicRot, -180, 180);
         state.holonomicRotation = holonomicRot;
 
         if (i > 0 || t > 0) {
@@ -288,15 +278,11 @@ class Trajectory {
           double hypot = s1.translationMeters.distanceTo(s2.translationMeters);
           state.deltaPos = hypot;
 
-          double heading = atan2(
+          num heading = atan2(
                   s1.translationMeters.y - s2.translationMeters.y,
                   s1.translationMeters.x - s2.translationMeters.x) +
               pi;
-          if (heading > pi) {
-            heading -= 2 * pi;
-          } else if (heading < -pi) {
-            heading += 2 * pi;
-          }
+          heading = MathUtil.inputModulus(heading, -pi, pi);
           state.headingRadians = heading;
 
           if (i == 0 && t == step) {

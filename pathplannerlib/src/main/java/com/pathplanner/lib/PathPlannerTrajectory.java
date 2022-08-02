@@ -1,5 +1,6 @@
 package com.pathplanner.lib;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -225,8 +226,8 @@ public class PathPlannerTrajectory extends Trajectory {
                 now.velocityMetersPerSecond = next.deltaPos / dt;
                 now.accelerationMetersPerSecondSq = (next.velocityMetersPerSecond - now.velocityMetersPerSecond) / dt;
 
-                now.angularVelocityRadPerSec = (next.poseMeters.getRotation().getRadians() - now.poseMeters.getRotation().getRadians()) / dt;
-                now.holonomicAngularVelocityRadPerSec = (next.holonomicRotation.getRadians() - now.holonomicRotation.getRadians()) / dt;
+                now.angularVelocityRadPerSec = MathUtil.inputModulus(next.poseMeters.getRotation().getRadians() - now.poseMeters.getRotation().getRadians(), -Math.PI, Math.PI) / dt;
+                now.holonomicAngularVelocityRadPerSec = MathUtil.inputModulus(next.holonomicRotation.getRadians() - now.holonomicRotation.getRadians(), -Math.PI, Math.PI) / dt;
             }
 
             if(Double.isInfinite(now.curveRadius) || Double.isNaN(now.curveRadius) || now.curveRadius == 0){
@@ -240,11 +241,7 @@ public class PathPlannerTrajectory extends Trajectory {
                 now.accelerationMetersPerSecondSq *= -1;
 
                 double h = now.poseMeters.getRotation().getDegrees() + 180;
-                if(h > 180){
-                    h -= 360;
-                }else if(h < -180){
-                    h += 360;
-                }
+                h = MathUtil.inputModulus(h, -180, 180);
                 now.poseMeters = new Pose2d(now.poseMeters.getTranslation(), Rotation2d.fromDegrees(h));
             }
         }
@@ -266,18 +263,9 @@ public class PathPlannerTrajectory extends Trajectory {
                 state.poseMeters = new Pose2d(p, state.poseMeters.getRotation());
 
                 double deltaRot = endPoint.holonomicRotation.minus(startPoint.holonomicRotation).getDegrees();
-                if(deltaRot > 180){
-                    deltaRot -= 360;
-                }else if(deltaRot < -180){
-                    deltaRot += 360;
-                }
-
+                deltaRot = MathUtil.inputModulus(deltaRot, -180, 180);
                 double holonomicRot = startPoint.holonomicRotation.getDegrees() + (t * deltaRot);
-                if(holonomicRot > 180){
-                    holonomicRot -= 360;
-                }else if(holonomicRot < -180){
-                    holonomicRot += 360;
-                }
+                holonomicRot = MathUtil.inputModulus(holonomicRot, -180, 180);
                 state.holonomicRotation = Rotation2d.fromDegrees(holonomicRot);
 
                 if(i > 0 || t > 0){
@@ -287,11 +275,7 @@ public class PathPlannerTrajectory extends Trajectory {
                     state.deltaPos = hypot;
 
                     double heading = Math.toDegrees(Math.atan2(s1.poseMeters.getY() - s2.poseMeters.getY(), s1.poseMeters.getX() - s2.poseMeters.getX())) + 180;
-                    if(heading > 180){
-                        heading -= 360;
-                    }else if(heading < -180){
-                        heading += 360;
-                    }
+                    heading = MathUtil.inputModulus(heading, -180, 180);
                     state.poseMeters = new Pose2d(state.poseMeters.getTranslation(), Rotation2d.fromDegrees(heading));
 
                     if(i == 0 && t == step){

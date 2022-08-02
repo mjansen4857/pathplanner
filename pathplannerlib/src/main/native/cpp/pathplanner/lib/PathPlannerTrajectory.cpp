@@ -192,7 +192,7 @@ void PathPlannerTrajectory::calculateMaxVel(std::vector<PathPlannerTrajectory::P
         }else{
             states[i].curveRadius = radius;
 
-            units::meters_per_second_t maxVCurve = units::math::sqrt(maxAccel * radius);
+            units::meters_per_second_t maxVCurve = units::math::sqrt(maxAccel * units::math::abs(radius));
 
             states[i].velocity = units::math::min(maxVCurve, states[i].velocity);
         }

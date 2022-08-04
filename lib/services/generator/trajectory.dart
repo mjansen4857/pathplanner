@@ -355,13 +355,13 @@ class TrajectoryState {
     lerpedState.translationMeters = GeometryUtil.pointLerp(
         this.translationMeters, endVal.translationMeters, t);
     lerpedState.headingRadians =
-        GeometryUtil.numLerp(this.headingRadians, endVal.headingRadians, t);
+        GeometryUtil.rotationLerp(this.headingRadians, endVal.headingRadians, t, pi);
     lerpedState.curvatureRadPerMeter = GeometryUtil.numLerp(
         this.curvatureRadPerMeter, endVal.curvatureRadPerMeter, t);
     lerpedState.angularVelocity =
         GeometryUtil.numLerp(this.angularVelocity, endVal.angularVelocity, t);
-    lerpedState.holonomicRotation = GeometryUtil.numLerp(
-        this.holonomicRotation, endVal.holonomicRotation, t);
+    lerpedState.holonomicRotation = GeometryUtil.rotationLerp(
+        this.holonomicRotation, endVal.holonomicRotation, t, 180);
     lerpedState.holonomicAngularVelocity = GeometryUtil.numLerp(
         this.holonomicAngularVelocity, endVal.holonomicAngularVelocity, t);
     lerpedState.curveRadius =

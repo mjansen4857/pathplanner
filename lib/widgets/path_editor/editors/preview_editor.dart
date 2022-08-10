@@ -206,6 +206,6 @@ class _PreviewPainter extends CustomPainter {
     Offset frontMiddle = frontLeft + ((frontRight - frontLeft) * 0.5);
     paint.style = PaintingStyle.fill;
     canvas.drawCircle(frontMiddle,
-        PathPainterUtil.metersToPixels(0.075, scale, fieldImage), paint);
+        PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
   }
 }

@@ -228,10 +228,12 @@ class Trajectory {
         now.accelerationMetersPerSecondSq =
             (next.velocityMetersPerSecond - now.velocityMetersPerSecond) / dt;
 
-        now.angularVelocity =
-            MathUtil.inputModulus(next.headingRadians - now.headingRadians, -pi, pi) / dt;
-        now.holonomicAngularVelocity =
-            MathUtil.inputModulus(next.holonomicRotation - now.holonomicRotation, -180, 180) / dt;
+        now.angularVelocity = MathUtil.inputModulus(
+                next.headingRadians - now.headingRadians, -pi, pi) /
+            dt;
+        now.holonomicAngularVelocity = MathUtil.inputModulus(
+                next.holonomicRotation - now.holonomicRotation, -180, 180) /
+            dt;
       }
 
       if (now.curveRadius == double.infinity ||
@@ -278,8 +280,7 @@ class Trajectory {
           double hypot = s1.translationMeters.distanceTo(s2.translationMeters);
           state.deltaPos = hypot;
 
-          num heading = atan2(
-                  s1.translationMeters.y - s2.translationMeters.y,
+          num heading = atan2(s1.translationMeters.y - s2.translationMeters.y,
                   s1.translationMeters.x - s2.translationMeters.x) +
               pi;
           heading = MathUtil.inputModulus(heading, -pi, pi);
@@ -354,8 +355,8 @@ class TrajectoryState {
         t);
     lerpedState.translationMeters = GeometryUtil.pointLerp(
         this.translationMeters, endVal.translationMeters, t);
-    lerpedState.headingRadians =
-        GeometryUtil.rotationLerp(this.headingRadians, endVal.headingRadians, t, pi);
+    lerpedState.headingRadians = GeometryUtil.rotationLerp(
+        this.headingRadians, endVal.headingRadians, t, pi);
     lerpedState.curvatureRadPerMeter = GeometryUtil.numLerp(
         this.curvatureRadPerMeter, endVal.curvatureRadPerMeter, t);
     lerpedState.angularVelocity =

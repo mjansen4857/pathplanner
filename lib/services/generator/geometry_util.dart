@@ -9,8 +9,8 @@ class GeometryUtil {
   }
 
   static num rotationLerp(num startVal, num endVal, num t, num limit) {
-    if((startVal - endVal).abs() > limit) {
-      if(startVal < 0) {
+    if ((startVal - endVal).abs() > limit) {
+      if (startVal < 0) {
         startVal += 2 * limit;
       } else {
         endVal += 2 * limit;

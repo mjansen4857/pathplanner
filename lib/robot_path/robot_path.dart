@@ -83,7 +83,8 @@ class RobotPath {
   void savePath(Directory saveDir, bool generateJSON, bool generateCSV) async {
     Stopwatch s = Stopwatch()..start();
     File pathFile = File(join(saveDir.path, name + '.path'));
-    pathFile.writeAsString(jsonEncode(this));
+    const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+    pathFile.writeAsString(encoder.convert(this));
 
     this.generatedTrajectory = await Trajectory.generateFullTrajectory(this);
 

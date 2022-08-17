@@ -1,3 +1,4 @@
+#include "frc/MathUtil.h"
 #include "pathplanner/lib/PathPlannerTrajectory.h"
 #include "pathplanner/lib/GeometryUtil.h"
 #include "pathplanner/lib/PathPlanner.h"
@@ -120,21 +121,10 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
            state.pose = frc::Pose2d(p, state.pose.Rotation());
 
            units::degree_t deltaRot = (endPoint.holonomicRotation - startPoint.holonomicRotation).Degrees();
+           deltaRot = frc::InputModulus(deltaRot, -180_deg, 180_deg);
 
-           if(units::math::abs(deltaRot) > 180_deg){
-               if(deltaRot > 180_deg) {
-                   deltaRot -= 360_deg;
-               }else if(deltaRot < -180_deg){
-                   deltaRot += 360_deg;
-               }
-           }
-           
            units::degree_t holonomicRot = startPoint.holonomicRotation.Degrees() + (t * deltaRot);
-           if(holonomicRot > 180_deg){
-               holonomicRot -= 360_deg;
-           }else if(holonomicRot < -180_deg){
-               holonomicRot += 360_deg;
-           }
+           holonomicRot = frc::InputModulus(holonomicRot, -180_deg, 180_deg);
            state.holonomicRotation = frc::Rotation2d(holonomicRot);
 
            if(i > 0 || t > 0){
@@ -144,11 +134,7 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
                 state.deltaPos = hypot;
 
                 units::radian_t heading = units::math::atan2(s1.pose.Y() - s2.pose.Y(), s1.pose.X() - s2.pose.X()) + units::radian_t{PI};
-                if(heading > units::radian_t{PI}){
-                    heading -= units::radian_t{2 * PI};
-                }else if(heading < units::radian_t{-PI}){
-                    heading += units::radian_t{2 * PI};
-                }
+                heading = frc::InputModulus(heading, (units::radian_t)-PI, (units::radian_t)PI);
                 state.pose = frc::Pose2d(state.pose.Translation(), frc::Rotation2d(heading));
 
                 if(i == 0 && t == step){
@@ -258,8 +244,8 @@ void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory:
             units::second_t dt = next.time - now.time;
             now.velocity = next.deltaPos / dt;
             now.acceleration = (next.velocity - now.velocity) / dt;
-            now.angularVelocity = (next.pose.Rotation().Radians() - now.pose.Rotation().Radians()) / dt;
-            now.holonomicAngularVelocity = (next.holonomicRotation.Radians() - now.holonomicRotation.Radians()) / dt;
+            now.angularVelocity = frc::InputModulus(next.pose.Rotation().Radians() - now.pose.Rotation().Radians(), (units::radian_t)-PI, (units::radian_t)PI) / dt;
+            now.holonomicAngularVelocity = frc::InputModulus(next.holonomicRotation.Radians() - now.holonomicRotation.Radians(), (units::radian_t)-PI, (units::radian_t)PI) / dt;
         }
 
         if(!GeometryUtil::isFinite(now.curveRadius) || GeometryUtil::isNaN(now.curveRadius) || now.curveRadius() == 0){
@@ -273,11 +259,7 @@ void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory:
             now.acceleration *= -1;
 
             units::degree_t h = now.pose.Rotation().Degrees() + 180_deg;
-            if(h > 180_deg){
-                h -= 360_deg;
-            }else if(h < -180_deg){
-                h += 360_deg;
-            }
+            h = frc::InputModulus(h, -180_deg, 180_deg);
             now.pose = frc::Pose2d(now.pose.Translation(), frc::Rotation2d(h));
         }
     }

@@ -134,13 +134,13 @@ class PathPainterUtil {
     if (holonomicMode) {
       Offset frontMiddle = frontLeft + ((frontRight - frontLeft) * 0.5);
       paint.style = PaintingStyle.fill;
-      canvas.drawCircle(
-          frontMiddle, metersToPixels(0.075, scale, fieldImage), paint);
+      canvas.drawCircle(frontMiddle,
+          PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
       paint.style = PaintingStyle.stroke;
       paint.strokeWidth = 1;
       paint.color = Colors.black;
-      canvas.drawCircle(
-          frontMiddle, metersToPixels(0.075, scale, fieldImage), paint);
+      canvas.drawCircle(frontMiddle,
+          PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
     }
   }
 
@@ -212,6 +212,12 @@ class PathPainterUtil {
   static double metersToPixels(
       double meters, double scale, FieldImage fieldImage) {
     return meters * fieldImage.pixelsPerMeter * scale;
+  }
+
+  static double uiPointSizeToPixels(
+      double size, double scale, FieldImage fieldImage) {
+    // 3240 = width of field image size is based on
+    return size / 3240 * fieldImage.defaultSize.width * scale;
   }
 
   static Offset lerp(Offset a, Offset b, double t) {

@@ -138,19 +138,23 @@ class _EditEditorState extends State<EditEditor> {
                 if (w.isPointInAnchor(
                         _xPixelsToMeters(details.localPosition.dx),
                         _yPixelsToMeters(details.localPosition.dy),
-                        0.125) ||
+                        _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                            25, _EditPainter.scale, widget.fieldImage))) ||
                     w.isPointInNextControl(
                         _xPixelsToMeters(details.localPosition.dx),
                         _yPixelsToMeters(details.localPosition.dy),
-                        0.1) ||
+                        _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                            20, _EditPainter.scale, widget.fieldImage))) ||
                     w.isPointInPrevControl(
                         _xPixelsToMeters(details.localPosition.dx),
                         _yPixelsToMeters(details.localPosition.dy),
-                        0.1) ||
+                        _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                            20, _EditPainter.scale, widget.fieldImage))) ||
                     w.isPointInHolonomicThing(
                         _xPixelsToMeters(details.localPosition.dx),
                         _yPixelsToMeters(details.localPosition.dy),
-                        0.075,
+                        _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                            15, _EditPainter.scale, widget.fieldImage)),
                         widget.robotSize.height)) {
                   setState(() {
                     _selectedWaypoint = w;
@@ -168,20 +172,26 @@ class _EditEditorState extends State<EditEditor> {
             }
             for (var i = 0; i < widget.path.waypoints.length; i++) {
               Waypoint w = widget.path.waypoints[i];
-              if (w.isPointInAnchor(_xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy), 0.125) ||
+              if (w.isPointInAnchor(
+                      _xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy),
+                      _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                          25, _EditPainter.scale, widget.fieldImage))) ||
                   w.isPointInNextControl(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      0.1) ||
+                      _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                          20, _EditPainter.scale, widget.fieldImage))) ||
                   w.isPointInPrevControl(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      0.1) ||
+                      _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                          20, _EditPainter.scale, widget.fieldImage))) ||
                   w.isPointInHolonomicThing(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      0.075,
+                      _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                          15, _EditPainter.scale, widget.fieldImage)),
                       widget.robotSize.height)) {
                 setState(() {
                   _selectedWaypoint = w;
@@ -200,9 +210,12 @@ class _EditEditorState extends State<EditEditor> {
               if (w.startDragging(
                   _xPixelsToMeters(details.localPosition.dx),
                   _yPixelsToMeters(details.localPosition.dy),
-                  0.125,
-                  0.1,
-                  0.075,
+                  _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                      25, _EditPainter.scale, widget.fieldImage)),
+                  _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                      20, _EditPainter.scale, widget.fieldImage)),
+                  _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                      15, _EditPainter.scale, widget.fieldImage)),
                   widget.robotSize.height,
                   widget.holonomicMode)) {
                 _draggedPoint = w;
@@ -434,14 +447,14 @@ class _EditPainter extends CustomPainter {
     canvas.drawCircle(
         PathPainterUtil.pointToPixelOffset(
             waypoint.anchorPoint, scale, fieldImage),
-        PathPainterUtil.metersToPixels(0.125, scale, fieldImage),
+        PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
         paint);
     paint.style = PaintingStyle.stroke;
     paint.color = Colors.black;
     canvas.drawCircle(
         PathPainterUtil.pointToPixelOffset(
             waypoint.anchorPoint, scale, fieldImage),
-        PathPainterUtil.metersToPixels(0.125, scale, fieldImage),
+        PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
         paint);
 
     // draw control points
@@ -452,14 +465,14 @@ class _EditPainter extends CustomPainter {
       canvas.drawCircle(
           PathPainterUtil.pointToPixelOffset(
               waypoint.nextControl!, scale, fieldImage),
-          PathPainterUtil.metersToPixels(0.1, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
           paint);
       paint.style = PaintingStyle.stroke;
       paint.color = Colors.black;
       canvas.drawCircle(
           PathPainterUtil.pointToPixelOffset(
               waypoint.nextControl!, scale, fieldImage),
-          PathPainterUtil.metersToPixels(0.1, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
           paint);
     }
     if (waypoint.prevControl != null) {
@@ -469,14 +482,14 @@ class _EditPainter extends CustomPainter {
       canvas.drawCircle(
           PathPainterUtil.pointToPixelOffset(
               waypoint.prevControl!, scale, fieldImage),
-          PathPainterUtil.metersToPixels(0.1, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
           paint);
       paint.style = PaintingStyle.stroke;
       paint.color = Colors.black;
       canvas.drawCircle(
           PathPainterUtil.pointToPixelOffset(
               waypoint.prevControl!, scale, fieldImage),
-          PathPainterUtil.metersToPixels(0.1, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
           paint);
     }
   }

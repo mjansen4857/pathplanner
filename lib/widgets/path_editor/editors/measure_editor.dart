@@ -184,7 +184,7 @@ class _MeasurePainter extends CustomPainter {
       canvas.drawCircle(
           PathPainterUtil.pointToPixelOffset(
               waypoint.anchorPoint, scale, fieldImage),
-          PathPainterUtil.metersToPixels(0.1, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
           paint);
     }
   }

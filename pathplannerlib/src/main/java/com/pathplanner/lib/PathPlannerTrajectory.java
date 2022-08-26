@@ -332,22 +332,21 @@ public class PathPlannerTrajectory extends Trajectory {
             Waypoint startPoint = waypoints.get(startIndex);
             Waypoint endPoint = waypoints.get(startIndex + 1);
 
-            Translation2d markerPos = GeometryUtil.cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
+            marker.positionMeters = GeometryUtil.cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
 
-            // Very unoptimized, hopefullly can find a better solution
-            // However, any on the fly generation probably won't have any markers so this shouldn't be a huge issue
-            State closestState = this.getStates().get(0);
-            double closestDistance = Double.MAX_VALUE;
-            for(State state : this.getStates()){
-                double distance = state.poseMeters.getTranslation().getDistance(markerPos);
-                if(distance < closestDistance){
-                    closestState = state;
-                    closestDistance = distance;
-                }
+            int statesPerWaypoint = (int) (1 / PathPlanner.resolution);
+            startIndex = (int) ((statesPerWaypoint * marker.waypointRelativePos) - Math.floor(marker.waypointRelativePos));
+            t = (statesPerWaypoint * marker.waypointRelativePos) % 1;
+
+            if(startIndex == getStates().size() - 1){
+                startIndex--;
+                t = 1;
             }
 
-            marker.timeSeconds = closestState.timeSeconds;
-            marker.positionMeters = markerPos;
+            double start = getState(startIndex).timeSeconds;
+            double end = getState(startIndex + 1).timeSeconds;
+
+            marker.timeSeconds = GeometryUtil.doubleLerp(start, end, t);
         }
 
         // Ensure the markers are sorted by time

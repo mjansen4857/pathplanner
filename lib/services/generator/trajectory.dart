@@ -7,6 +7,7 @@ import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/services/generator/math_util.dart';
 
 class Trajectory {
+  static final double resolution = 0.004;
   late final List<TrajectoryState> states;
 
   Trajectory(this.states);
@@ -77,7 +78,7 @@ class Trajectory {
   static Future<Trajectory> generateSingleTrajectory(List<Waypoint> pathPoints,
       num? maxVel, num? maxAccel, bool reversed) async {
     List<TrajectoryState> joined =
-        joinSplines(pathPoints, maxVel ?? 8.0, 0.004);
+        joinSplines(pathPoints, maxVel ?? 8.0, Trajectory.resolution);
     calculateMaxVel(joined, maxVel ?? 8.0, maxAccel ?? 5.0, reversed);
     calculateVelocity(joined, pathPoints, maxAccel ?? 5.0);
     recalculateValues(joined, reversed);

@@ -184,7 +184,8 @@ class PathPainterUtil {
 
   static num getMarkerTime(EventMarker marker, RobotPath path) {
     int statesPerWaypoint = 1 ~/ Trajectory.resolution;
-    int startIndex = (statesPerWaypoint * marker.position).floor() - marker.position.floor();
+    int startIndex =
+        (statesPerWaypoint * marker.position).floor() - marker.position.floor();
     double t = (statesPerWaypoint * marker.position) % 1;
 
     if (startIndex == path.generatedTrajectory.states.length - 1) {

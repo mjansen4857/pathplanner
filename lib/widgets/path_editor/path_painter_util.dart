@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
-import 'package:pathplanner/services/generator/trajectory.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 class PathPainterUtil {
@@ -180,22 +179,6 @@ class PathPainterUtil {
 
     textPainter.paint(canvas, location - Offset(20, 37));
     textStrokePainter.paint(canvas, location - Offset(20, 37));
-  }
-
-  static num getMarkerTime(EventMarker marker, RobotPath path) {
-    int statesPerWaypoint = 1 ~/ Trajectory.resolution;
-    int startIndex =
-        (statesPerWaypoint * marker.position).floor() - marker.position.floor();
-    double t = (statesPerWaypoint * marker.position) % 1;
-
-    if (startIndex == path.generatedTrajectory.states.length - 1) {
-      startIndex--;
-      t = 1;
-    }
-    num start = path.generatedTrajectory.states[startIndex].timeSeconds;
-    num end = path.generatedTrajectory.states[startIndex + 1].timeSeconds;
-
-    return GeometryUtil.numLerp(start, end, t);
   }
 
   static Offset getMarkerLocation(

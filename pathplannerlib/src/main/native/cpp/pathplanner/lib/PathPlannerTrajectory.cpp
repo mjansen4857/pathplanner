@@ -80,22 +80,21 @@ void PathPlannerTrajectory::calculateMarkerTimes(std::vector<Waypoint> pathPoint
         Waypoint startPoint = pathPoints[startIndex];
         Waypoint endPoint = pathPoints[startIndex + 1];
 
-        frc::Translation2d markerPos = GeometryUtil::cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
+        marker.position = GeometryUtil::cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
 
-        // Very unoptimized, hopefully can find a better solution
-        // However, any on the fly generation probably won't have any markers so this shouldn't be a huge issue
-        PathPlannerState closestState = this->getStates()[0];
-        double closestDistance = std::numeric_limits<double>::max();
-        for(PathPlannerState state : this->getStates()){
-            double distance = state.pose.Translation().Distance(markerPos)();
-            if(distance < closestDistance){
-                closestState = state;
-                closestDistance = distance;
-            }
+        int statesPerWaypoint = (int) (1.0 / pathplanner::PathPlanner::resolution);
+        startIndex = (size_t) ((statesPerWaypoint * marker.waypointRelativePos) - std::floor(marker.waypointRelativePos));
+        t = std::fmod(statesPerWaypoint * marker.waypointRelativePos, 1.0);
+
+        if(startIndex == getStates().size() - 1){
+            startIndex--;
+            t = 1;
         }
 
-        marker.time = closestState.time;
-        marker.position = markerPos;
+        units::second_t start = getState(startIndex).time;
+        units::second_t end = getState(startIndex + 1).time;
+
+        marker.time = GeometryUtil::unitLerp(start, end, t);
     }
 
     // Ensure the markers are sorted by time

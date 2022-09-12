@@ -80,29 +80,35 @@ class RobotPath {
     });
   }
 
-  void savePath(Directory saveDir, bool generateJSON, bool generateCSV) async {
-    Stopwatch s = Stopwatch()..start();
-    File pathFile = File(join(saveDir.path, '$name.path'));
-    const JsonEncoder encoder = JsonEncoder.withIndent('  ');
-    pathFile.writeAsString(encoder.convert(this));
+  Future<bool> savePath(
+      Directory saveDir, bool generateJSON, bool generateCSV) async {
+    try {
+      Stopwatch s = Stopwatch()..start();
+      File pathFile = File(join(saveDir.path, '$name.path'));
+      const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+      pathFile.writeAsString(encoder.convert(this));
 
-    generatedTrajectory = await Trajectory.generateFullTrajectory(this);
+      generatedTrajectory = await Trajectory.generateFullTrajectory(this);
 
-    if (generateJSON) {
-      Directory jsonDir = Directory(join(saveDir.path, 'generatedJSON'));
-      if (!jsonDir.existsSync()) jsonDir.createSync(recursive: true);
-      File jsonFile = File(join(jsonDir.path, '$name.wpilib.json'));
-      jsonFile.writeAsString(generatedTrajectory.getWPILibJSON());
+      if (generateJSON) {
+        Directory jsonDir = Directory(join(saveDir.path, 'generatedJSON'));
+        if (!jsonDir.existsSync()) jsonDir.createSync(recursive: true);
+        File jsonFile = File(join(jsonDir.path, '$name.wpilib.json'));
+        jsonFile.writeAsString(generatedTrajectory.getWPILibJSON());
+      }
+
+      if (generateCSV) {
+        Directory csvDir = Directory(join(saveDir.path, 'generatedCSV'));
+        if (!csvDir.existsSync()) csvDir.createSync(recursive: true);
+        File csvFile = File(join(csvDir.path, '$name.csv'));
+        csvFile.writeAsString(generatedTrajectory.getCSV());
+      }
+
+      print('Saved and generated path in ${s.elapsedMilliseconds}ms');
+      return true;
+    } catch (e) {
+      return false;
     }
-
-    if (generateCSV) {
-      Directory csvDir = Directory(join(saveDir.path, 'generatedCSV'));
-      if (!csvDir.existsSync()) csvDir.createSync(recursive: true);
-      File csvFile = File(join(csvDir.path, '$name.csv'));
-      csvFile.writeAsString(generatedTrajectory.getCSV());
-    }
-
-    print('Saved and generated path in ${s.elapsedMilliseconds}ms');
   }
 
   void addWaypoint(Point anchorPos, int waypoint) {

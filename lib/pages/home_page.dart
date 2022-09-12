@@ -148,7 +148,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       drawer: _projectDir == null ? null : _buildDrawer(context),
       body: ScaleTransition(
         scale: _scaleAnimation,
-        child: _buildBody(),
+        child: _buildBody(context),
       ),
       floatingActionButton: Visibility(
         visible: _isWpiLib &&
@@ -346,7 +346,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             name: pathName,
                           ));
                           _currentPath = _paths.last;
-                          _savePath(_currentPath!);
+                          _savePath(_currentPath!, context);
                         });
                       },
                     ),
@@ -378,7 +378,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             setState(() {
                               _paths.add(RobotPath.defaultPath(name: pathName));
                               _currentPath = _paths.last;
-                              _savePath(_currentPath!);
+                              _savePath(_currentPath!, context);
                               UndoRedo.clearHistory();
                             });
                           },
@@ -435,7 +435,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   },
                                   onGenerationEnabled: () {
                                     for (RobotPath path in _paths) {
-                                      _savePath(path);
+                                      _savePath(path, context);
                                     }
                                   },
                                 );
@@ -464,7 +464,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     if (_projectDir != null) {
       return Stack(
         children: [
@@ -475,7 +475,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               robotSize: _robotSize,
               holonomicMode: _holonomicMode,
               showGeneratorSettings: _generateJSON || _generateCSV,
-              savePath: (path) => _savePath(path),
+              savePath: (path) => _savePath(path, context),
               prefs: widget.prefs,
             ),
           ),
@@ -545,9 +545,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return buildFile.existsSync();
   }
 
-  void _savePath(RobotPath path) {
+  void _savePath(RobotPath path, BuildContext context) async {
     if (_projectDir != null) {
-      path.savePath(_getPathsDir(_projectDir!), _generateJSON, _generateCSV);
+      bool result = await path.savePath(
+          _getPathsDir(_projectDir!), _generateJSON, _generateCSV);
+
+      if (!result) {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Failed to save path'),
+              content: const SizedBox(
+                width: 400,
+                child: Text(
+                    'This is likely because you have a file for this path open in another program. Please close the program and try again.'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
     }
   }
 

@@ -13,7 +13,7 @@ class DraggableCard extends StatefulWidget {
   final GlobalKey stackKey;
   final SharedPreferences prefs;
 
-  DraggableCard(
+  const DraggableCard(
       {required this.stackKey,
       this.child,
       this.width = 250,
@@ -28,7 +28,7 @@ class DraggableCard extends StatefulWidget {
 
 class _DraggableCardState extends State<DraggableCard> {
   Offset? _dragStartLocal;
-  GlobalKey _key = GlobalKey();
+  final GlobalKey _key = GlobalKey();
   late CardPosition _cardPosition;
 
   @override
@@ -99,11 +99,11 @@ class _DraggableCardState extends State<DraggableCard> {
         },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: Container(
+          child: SizedBox(
             width: widget.width,
             child: Card(
               child: Padding(
-                padding: EdgeInsets.all(10),
+                padding: const EdgeInsets.all(10),
                 child: widget.child,
               ),
             ),

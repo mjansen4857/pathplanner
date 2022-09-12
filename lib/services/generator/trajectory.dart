@@ -7,7 +7,7 @@ import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/services/generator/math_util.dart';
 
 class Trajectory {
-  static final double resolution = 0.004;
+  static const double resolution = 0.004;
   late final List<TrajectoryState> states;
 
   Trajectory(this.states);
@@ -27,11 +27,11 @@ class Trajectory {
       joinedStates.addAll(trajectories[i].states);
     }
 
-    this.states = joinedStates;
+    states = joinedStates;
   }
 
   String getWPILibJSON() {
-    return jsonEncode(this.states);
+    return jsonEncode(states);
   }
 
   String getCSV() {
@@ -111,8 +111,9 @@ class Trajectory {
 
   TrajectoryState sample(num time) {
     if (time <= states[0].timeSeconds) return states[0];
-    if (time >= states[states.length - 1].timeSeconds)
+    if (time >= states[states.length - 1].timeSeconds) {
       return states[states.length - 1];
+    }
 
     int low = 1;
     int high = states.length - 1;
@@ -129,8 +130,9 @@ class Trajectory {
     TrajectoryState sample = states[low];
     TrajectoryState prevSample = states[low - 1];
 
-    if ((sample.timeSeconds - prevSample.timeSeconds).abs() < 1E-3)
+    if ((sample.timeSeconds - prevSample.timeSeconds).abs() < 1E-3) {
       return sample;
+    }
 
     return prevSample.interpolate(
         sample,
@@ -350,7 +352,7 @@ class TrajectoryState {
   num timeSeconds = 0.0;
   num velocityMetersPerSecond = 0.0;
   num accelerationMetersPerSecondSq = 0.0;
-  Point translationMeters = Point(0, 0);
+  Point translationMeters = const Point(0, 0);
   num headingRadians = 0.0;
   num curvatureRadPerMeter = 0.0;
   num angularVelocity = 0.0;
@@ -364,35 +366,32 @@ class TrajectoryState {
     TrajectoryState lerpedState = TrajectoryState();
 
     lerpedState.timeSeconds =
-        GeometryUtil.numLerp(this.timeSeconds, endVal.timeSeconds, t);
-    num deltaT = lerpedState.timeSeconds - this.timeSeconds;
+        GeometryUtil.numLerp(timeSeconds, endVal.timeSeconds, t);
+    num deltaT = lerpedState.timeSeconds - timeSeconds;
 
     if (deltaT < 0) {
       return endVal.interpolate(this, 1 - t);
     }
 
     lerpedState.velocityMetersPerSecond = GeometryUtil.numLerp(
-        this.velocityMetersPerSecond, endVal.velocityMetersPerSecond, t);
+        velocityMetersPerSecond, endVal.velocityMetersPerSecond, t);
     lerpedState.accelerationMetersPerSecondSq = GeometryUtil.numLerp(
-        this.accelerationMetersPerSecondSq,
-        endVal.accelerationMetersPerSecondSq,
-        t);
-    lerpedState.translationMeters = GeometryUtil.pointLerp(
-        this.translationMeters, endVal.translationMeters, t);
-    lerpedState.headingRadians = GeometryUtil.rotationLerp(
-        this.headingRadians, endVal.headingRadians, t, pi);
+        accelerationMetersPerSecondSq, endVal.accelerationMetersPerSecondSq, t);
+    lerpedState.translationMeters =
+        GeometryUtil.pointLerp(translationMeters, endVal.translationMeters, t);
+    lerpedState.headingRadians =
+        GeometryUtil.rotationLerp(headingRadians, endVal.headingRadians, t, pi);
     lerpedState.curvatureRadPerMeter = GeometryUtil.numLerp(
-        this.curvatureRadPerMeter, endVal.curvatureRadPerMeter, t);
+        curvatureRadPerMeter, endVal.curvatureRadPerMeter, t);
     lerpedState.angularVelocity =
-        GeometryUtil.numLerp(this.angularVelocity, endVal.angularVelocity, t);
+        GeometryUtil.numLerp(angularVelocity, endVal.angularVelocity, t);
     lerpedState.holonomicRotation = GeometryUtil.rotationLerp(
-        this.holonomicRotation, endVal.holonomicRotation, t, 180);
+        holonomicRotation, endVal.holonomicRotation, t, 180);
     lerpedState.holonomicAngularVelocity = GeometryUtil.numLerp(
-        this.holonomicAngularVelocity, endVal.holonomicAngularVelocity, t);
+        holonomicAngularVelocity, endVal.holonomicAngularVelocity, t);
     lerpedState.curveRadius =
-        GeometryUtil.numLerp(this.curveRadius, endVal.curveRadius, t);
-    lerpedState.deltaPos =
-        GeometryUtil.numLerp(this.deltaPos, endVal.deltaPos, t);
+        GeometryUtil.numLerp(curveRadius, endVal.curveRadius, t);
+    lerpedState.deltaPos = GeometryUtil.numLerp(deltaPos, endVal.deltaPos, t);
 
     return lerpedState;
   }

@@ -31,10 +31,12 @@ class _WindowButtonState extends State<WindowButton> {
     return MouseStateBuilder(
       builder: (context, mouseState) {
         Color? backgroundColor;
-        if (mouseState.isMouseDown)
+        if (mouseState.isMouseDown) {
           backgroundColor = widget.pressedBackgroundColor;
-        if (mouseState.isMouseOver)
+        }
+        if (mouseState.isMouseOver) {
           backgroundColor = widget.hoverBackgroundColor;
+        }
 
         return SizedBox(
           width: widget.buttonWidth,
@@ -59,7 +61,7 @@ class MinimizeWindowButton extends WindowButton {
   MinimizeWindowButton({super.key})
       : super(
           icon: Icons.minimize,
-          padding: EdgeInsets.fromLTRB(8, 8, 8, 20),
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 20),
           onPressed: () {
             windowManager.minimize();
           },
@@ -101,16 +103,19 @@ class MouseState {
   MouseState();
   @override
   String toString() {
-    return "isMouseDown: ${this.isMouseDown} - isMouseOver: ${this.isMouseOver}";
+    return 'isMouseDown: $isMouseDown - isMouseOver: $isMouseOver';
   }
 }
 
 class MouseStateBuilder extends StatefulWidget {
   final MouseStateBuilderCB? builder;
   final VoidCallback? onPressed;
-  MouseStateBuilder({Key? key, this.builder, this.onPressed}) : super(key: key);
+
+  const MouseStateBuilder({Key? key, this.builder, this.onPressed})
+      : super(key: key);
+
   @override
-  _MouseStateBuilderState createState() => _MouseStateBuilderState();
+  State<MouseStateBuilder> createState() => _MouseStateBuilderState();
 }
 
 class _MouseStateBuilderState extends State<MouseStateBuilder> {

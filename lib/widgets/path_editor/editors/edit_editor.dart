@@ -42,7 +42,7 @@ class _EditEditorState extends State<EditEditor> {
   Waypoint? _selectedWaypoint;
   int _selectedPointIndex = -1;
   Waypoint? _dragOldValue;
-  GlobalKey _key = GlobalKey();
+  final GlobalKey _key = GlobalKey();
 
   @override
   void initState() {
@@ -258,27 +258,23 @@ class _EditEditorState extends State<EditEditor> {
               _draggedPoint = null;
             }
           },
-          child: Container(
-            child: Padding(
-              padding: const EdgeInsets.all(48),
-              child: Stack(
-                children: [
-                  widget.fieldImage,
-                  Positioned.fill(
-                    child: Container(
-                      child: CustomPaint(
-                        painter: _EditPainter(
-                          widget.path,
-                          widget.fieldImage,
-                          widget.robotSize,
-                          widget.holonomicMode,
-                          _selectedWaypoint,
-                        ),
-                      ),
+          child: Padding(
+            padding: const EdgeInsets.all(48),
+            child: Stack(
+              children: [
+                widget.fieldImage,
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _EditPainter(
+                      widget.path,
+                      widget.fieldImage,
+                      widget.robotSize,
+                      widget.holonomicMode,
+                      _selectedWaypoint,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

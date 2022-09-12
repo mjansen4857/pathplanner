@@ -8,7 +8,7 @@ import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 class ImportFieldDialog extends StatefulWidget {
   final Function(String name, double pixelsPerMeter, File imageFile) onImport;
 
-  ImportFieldDialog({required this.onImport, super.key});
+  const ImportFieldDialog({required this.onImport, super.key});
 
   @override
   State<ImportFieldDialog> createState() => _ImportFieldDialogState();
@@ -40,32 +40,32 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
       keysToPress: {LogicalKeyboardKey.enter},
       onKeysPressed: () => confirm(context),
       child: AlertDialog(
-        title: Text('Import Custom Field'),
+        title: const Text('Import Custom Field'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
-                Container(
+                SizedBox(
                   height: 40,
                   width: 200,
                   child: TextField(
                     controller: _nameController,
                     inputFormatters: [
                       FilteringTextInputFormatter.deny(
-                          RegExp("[\"*<>?\|/:\\\\]")),
+                          RegExp('["*<>?|/:\\\\]')),
                     ],
-                    style: TextStyle(fontSize: 14),
+                    style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
-                      contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+                      contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Field Name',
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(4)),
                     ),
                   ),
                 ),
-                SizedBox(width: 12),
-                Container(
+                const SizedBox(width: 12),
+                SizedBox(
                   height: 40,
                   width: 200,
                   child: TextField(
@@ -74,9 +74,9 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                       FilteringTextInputFormatter.allow(
                           RegExp(r'(^\d*\.?\d*)')),
                     ],
-                    style: TextStyle(fontSize: 14),
+                    style: const TextStyle(fontSize: 14),
                     decoration: InputDecoration(
-                      contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+                      contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Pixels Per Meter',
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(4)),
@@ -85,14 +85,14 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    Text(
+                    const Text(
                       'Image: ',
                     ),
                     (_selectedFile == null)
@@ -123,10 +123,10 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    primary: colorScheme.primaryContainer,
-                    onPrimary: colorScheme.onPrimaryContainer,
+                    backgroundColor: colorScheme.primaryContainer,
+                    foregroundColor: colorScheme.onPrimaryContainer,
                   ),
-                  child: Text('Choose File'),
+                  child: const Text('Choose File'),
                 ),
               ],
             ),
@@ -137,11 +137,11 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
             onPressed: () {
               Navigator.of(context).pop();
             },
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => confirm(context),
-            child: Text('Confirm'),
+            child: const Text('Confirm'),
           ),
         ],
       ),
@@ -149,8 +149,8 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
   }
 
   void confirm(BuildContext context) {
-    if (_nameController.text.length > 0 &&
-        _nameController.text.length > 0 &&
+    if (_nameController.text.isNotEmpty &&
+        _nameController.text.isNotEmpty &&
         _selectedFile != null) {
       Navigator.of(context).pop();
       widget.onImport.call(_nameController.text,

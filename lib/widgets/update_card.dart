@@ -6,7 +6,7 @@ import '../services/github.dart';
 class UpdateCard extends StatefulWidget {
   final String currentVersion;
 
-  UpdateCard({required this.currentVersion, super.key});
+  const UpdateCard({required this.currentVersion, super.key});
 
   @override
   State<UpdateCard> createState() => _UpdateCardState();
@@ -22,10 +22,11 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _updateController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 400));
-    _offsetAnimation = Tween<Offset>(begin: Offset(0, -0.05), end: Offset.zero)
-        .animate(CurvedAnimation(
+    _updateController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
+    _offsetAnimation =
+        Tween<Offset>(begin: const Offset(0, -0.05), end: Offset.zero)
+            .animate(CurvedAnimation(
       parent: _updateController,
       curve: Curves.ease,
     ));
@@ -56,7 +57,7 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
           padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 0),
           child: Card(
             child: Padding(
-              padding: EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(10.0),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -65,11 +66,11 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
                     style:
                         TextStyle(fontSize: 18, color: colorScheme.onSurface),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      primary: colorScheme.primaryContainer,
-                      onPrimary: colorScheme.onPrimaryContainer,
+                      backgroundColor: colorScheme.primaryContainer,
+                      foregroundColor: colorScheme.onPrimaryContainer,
                     ),
                     onPressed: () async {
                       Uri url = Uri.parse(_releaseURL);
@@ -77,20 +78,20 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
                         launchUrl(url);
                       }
                     },
-                    child: Text('Update'),
+                    child: const Text('Update'),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      primary: colorScheme.surfaceVariant,
-                      onPrimary: colorScheme.onSurfaceVariant,
+                      backgroundColor: colorScheme.surfaceVariant,
+                      foregroundColor: colorScheme.onSurfaceVariant,
                     ),
                     onPressed: () {
                       setState(() {
                         _visibile = false;
                       });
                     },
-                    child: Text('Dismiss'),
+                    child: const Text('Dismiss'),
                   ),
                 ],
               ),

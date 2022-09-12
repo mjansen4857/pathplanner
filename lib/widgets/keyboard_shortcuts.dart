@@ -70,22 +70,21 @@ class KeyBoardShortcuts extends StatefulWidget {
   /// Activate when this widget is the first of the page
   final bool globalShortcuts;
 
-  KeyBoardShortcuts(
+  const KeyBoardShortcuts(
       {this.keysToPress,
       this.onKeysPressed,
       this.helpLabel,
       this.globalShortcuts = false,
       required this.child,
-      Key? key})
-      : super(key: key);
+      super.key});
 
   @override
-  _KeyBoardShortcuts createState() => _KeyBoardShortcuts();
+  State<KeyBoardShortcuts> createState() => _KeyBoardShortcuts();
 }
 
 class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
   FocusScopeNode? focusScopeNode;
-  ScrollController _controller = ScrollController();
+  final ScrollController _controller = ScrollController();
   bool controllerIsReady = false;
   bool listening = false;
   late Key key;
@@ -139,20 +138,20 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
 
         //verify if element is visible or not
         List<_KeyBoardShortcuts> toRemove = [];
-        _keyBoardShortcuts.forEach((element) {
+        for (var element in _keyBoardShortcuts) {
           if (VisibilityDetectorController.instance
                   .widgetBoundsFor(element.key) ==
               null) {
             element.listening = false;
             toRemove.add(element);
           }
-        });
+        }
 
         _keyBoardShortcuts.removeWhere((element) => toRemove.contains(element));
-        _keyBoardShortcuts.forEach((element) {
+        for (var element in _keyBoardShortcuts) {
           Widget? elementWidget = _helpWidget(element);
           if (elementWidget != null) activeHelp.add(elementWidget);
-        }); // get all custom shortcuts
+        } // get all custom shortcuts
 
         bool showGlobalShort =
             _keyBoardShortcuts.any((element) => element.widget.globalShortcuts);
@@ -172,48 +171,47 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
                       ListBody(
                         children: [
                           for (final i in activeHelp) i,
-                          Divider(),
+                          const Divider(),
                         ],
                       ),
                     if (showGlobalShort)
-                      _customGlobal != null
-                          ? _customGlobal
-                          : ListBody(
-                              children: [
-                                for (final newElement in _newGlobal)
-                                  ListTile(
-                                    leading:
-                                        Icon(_customIcon ?? Icons.settings),
-                                    title: Text(newElement.item3),
-                                    subtitle:
-                                        Text(_getKeysToPress(newElement.item1)),
-                                  ),
+                      _customGlobal ??
+                          ListBody(
+                            children: [
+                              for (final newElement in _newGlobal)
                                 ListTile(
-                                  leading: Icon(Icons.home),
-                                  title: Text("Go on Home page"),
+                                  leading: Icon(_customIcon ?? Icons.settings),
+                                  title: Text(newElement.item3),
                                   subtitle:
-                                      Text(LogicalKeyboardKey.home.debugName!),
+                                      Text(_getKeysToPress(newElement.item1)),
                                 ),
-                                ListTile(
-                                  leading: Icon(Icons.subdirectory_arrow_left),
-                                  title: Text("Go on last page"),
-                                  subtitle: Text(
-                                      LogicalKeyboardKey.escape.debugName!),
-                                ),
-                                ListTile(
-                                  leading: Icon(Icons.keyboard_arrow_up),
-                                  title: Text("Scroll to top"),
-                                  subtitle: Text(
-                                      LogicalKeyboardKey.pageUp.debugName!),
-                                ),
-                                ListTile(
-                                  leading: Icon(Icons.keyboard_arrow_down),
-                                  title: Text("Scroll to bottom"),
-                                  subtitle: Text(
-                                      LogicalKeyboardKey.pageDown.debugName!),
-                                ),
-                              ],
-                            ),
+                              ListTile(
+                                leading: const Icon(Icons.home),
+                                title: const Text('Go on Home page'),
+                                subtitle:
+                                    Text(LogicalKeyboardKey.home.debugName!),
+                              ),
+                              ListTile(
+                                leading:
+                                    const Icon(Icons.subdirectory_arrow_left),
+                                title: const Text('Go on last page'),
+                                subtitle:
+                                    Text(LogicalKeyboardKey.escape.debugName!),
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.keyboard_arrow_up),
+                                title: const Text('Scroll to top'),
+                                subtitle:
+                                    Text(LogicalKeyboardKey.pageUp.debugName!),
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.keyboard_arrow_down),
+                                title: const Text('Scroll to bottom'),
+                                subtitle: Text(
+                                    LogicalKeyboardKey.pageDown.debugName!),
+                              ),
+                            ],
+                          ),
                   ] as List<Widget>,
                 ),
               ),
@@ -233,7 +231,7 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
             keysPressed.first.keyId == 0x10700000022) {
           _controller.animateTo(
             _controller.position.maxScrollExtent,
-            duration: new Duration(milliseconds: 50),
+            duration: const Duration(milliseconds: 50),
             curve: Curves.easeOut,
           );
         } else if (controllerIsReady &&
@@ -241,7 +239,7 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
             keysPressed.first.keyId == 0x10700000021) {
           _controller.animateTo(
             _controller.position.minScrollExtent,
-            duration: new Duration(milliseconds: 50),
+            duration: const Duration(milliseconds: 50),
             curve: Curves.easeOut,
           );
         }
@@ -262,32 +260,36 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
       child:
           PrimaryScrollController(controller: _controller, child: widget.child),
       onVisibilityChanged: (visibilityInfo) {
-        if (visibilityInfo.visibleFraction == 1)
+        if (visibilityInfo.visibleFraction == 1) {
           _attachKeyboardIfDetached();
-        else
+        } else {
           _detachKeyboardIfAttached();
+        }
       },
     );
   }
 }
 
 String _getKeysToPress(Set<LogicalKeyboardKey>? keysToPress) {
-  String text = "";
+  String text = '';
   if (keysToPress != null) {
-    for (final i in keysToPress) text += i.debugName! + " + ";
-    text = text.substring(0, text.lastIndexOf(" + "));
+    for (final i in keysToPress) {
+      text += '${i.debugName!} + ';
+    }
+    text = text.substring(0, text.lastIndexOf(' + '));
   }
   return text;
 }
 
 Widget? _helpWidget(_KeyBoardShortcuts widget) {
   String text = _getKeysToPress(widget.widget.keysToPress);
-  if (widget.widget.helpLabel != null && text != "")
+  if (widget.widget.helpLabel != null && text != '') {
     return ListTile(
       leading: Icon(_customIcon ?? Icons.settings),
       title: Text(widget.widget.helpLabel!),
       subtitle: Text(text),
     );
+  }
   return null;
 }
 

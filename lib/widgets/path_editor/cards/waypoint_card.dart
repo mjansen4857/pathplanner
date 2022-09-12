@@ -17,7 +17,7 @@ class WaypointCard extends StatefulWidget {
   final GlobalKey stackKey;
   final SharedPreferences prefs;
 
-  WaypointCard(
+  const WaypointCard(
       {this.waypoint,
       required this.stackKey,
       this.label,
@@ -29,7 +29,7 @@ class WaypointCard extends StatefulWidget {
       super.key});
 
   @override
-  _WaypointCardState createState() => _WaypointCardState();
+  State<WaypointCard> createState() => _WaypointCardState();
 }
 
 class _WaypointCardState extends State<WaypointCard> {
@@ -39,7 +39,7 @@ class _WaypointCardState extends State<WaypointCard> {
 
     return DraggableCard(
       stackKey: widget.stackKey,
-      defaultPosition: CardPosition(top: 0, right: 0),
+      defaultPosition: const CardPosition(top: 0, right: 0),
       prefsKey: 'waypointCardPos',
       prefs: widget.prefs,
       child: Column(
@@ -47,7 +47,7 @@ class _WaypointCardState extends State<WaypointCard> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildHeader(),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           // Override gesture detector on UI elements so they wont cause the card to move
           GestureDetector(
             onPanStart: (details) {},
@@ -75,7 +75,7 @@ class _WaypointCardState extends State<WaypointCard> {
                     child: _buildStopReversalRow(context),
                   ),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
               ],
             ),
           ),
@@ -113,7 +113,7 @@ class _WaypointCardState extends State<WaypointCard> {
               },
               splashRadius: 20,
               iconSize: 20,
-              padding: EdgeInsets.all(0),
+              padding: const EdgeInsets.all(0),
             ),
           ),
         ),
@@ -132,13 +132,13 @@ class _WaypointCardState extends State<WaypointCard> {
               child: IconButton(
                 color: colorScheme.onSurface,
                 tooltip: 'Delete Waypoint',
-                icon: Icon(
+                icon: const Icon(
                   Icons.delete,
                 ),
                 onPressed: widget.onDelete,
                 splashRadius: 20,
                 iconSize: 20,
-                padding: EdgeInsets.all(0),
+                padding: const EdgeInsets.all(0),
               ),
             ),
           ),
@@ -165,7 +165,7 @@ class _WaypointCardState extends State<WaypointCard> {
             ));
           },
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         _buildTextField(
           context,
           _getController(widget.waypoint!.getYPos().toStringAsFixed(2)),
@@ -203,11 +203,11 @@ class _WaypointCardState extends State<WaypointCard> {
             ));
           },
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         _buildTextField(
           context,
           widget.waypoint!.isReversal || widget.waypoint!.velOverride == null
-              ? _getController("")
+              ? _getController('')
               : _getController(
                   widget.waypoint!.velOverride!.toStringAsFixed(2)),
           'Vel Override',
@@ -230,7 +230,7 @@ class _WaypointCardState extends State<WaypointCard> {
     return _buildTextField(
       context,
       !widget.holonomicEnabled
-          ? _getController("")
+          ? _getController('')
           : _getController(widget.waypoint!.holonomicAngle.toStringAsFixed(2)),
       'Holonomic Rotation',
       enabled: widget.holonomicEnabled,
@@ -269,7 +269,7 @@ class _WaypointCardState extends State<WaypointCard> {
             ),
           ],
         ),
-        SizedBox(width: 25),
+        const SizedBox(width: 25),
         Row(
           children: [
             Checkbox(
@@ -299,7 +299,7 @@ class _WaypointCardState extends State<WaypointCard> {
       {bool? enabled = true, ValueChanged? onSubmitted, double? width}) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
+    return SizedBox(
       width: width,
       height: 35,
       child: TextField(
@@ -321,7 +321,7 @@ class _WaypointCardState extends State<WaypointCard> {
         ],
         style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
         decoration: InputDecoration(
-          contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+          contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
           labelText: label,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
         ),

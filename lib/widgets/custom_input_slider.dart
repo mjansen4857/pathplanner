@@ -86,7 +86,8 @@ class InputSlider extends StatefulWidget {
   final Size textFieldSize;
 
   const InputSlider(
-      {required this.onChange,
+      {super.key,
+      required this.onChange,
       required this.min,
       required this.max,
       required this.defaultValue,
@@ -106,27 +107,26 @@ class InputSlider extends StatefulWidget {
       this.inputDecoration,
       this.leadingWeight,
       this.sliderWeight,
-      this.textFieldSize = const Size(60, 35)})
-      : super();
+      this.textFieldSize = const Size(60, 35)});
 
   @override
-  _InputSliderState createState() =>
-      _InputSliderState(defaultValue: defaultValue);
+  State<InputSlider> createState() => _InputSliderState();
 }
 
 class _InputSliderState extends State<InputSlider> {
-  double defaultValue;
+  late double _defaultValue;
   TextEditingController _controller = TextEditingController();
-
-  _InputSliderState({required this.defaultValue});
 
   @override
   void initState() {
     super.initState();
-    assert(defaultValue >= widget.min && defaultValue <= widget.max,
-        "value must be between min and max.");
+
+    _defaultValue = widget.defaultValue;
+
+    assert(_defaultValue >= widget.min && _defaultValue <= widget.max,
+        'value must be between min and max.');
     _controller = TextEditingController(
-        text: defaultValue.toStringAsFixed(widget.decimalPlaces));
+        text: _defaultValue.toStringAsFixed(widget.decimalPlaces));
   }
 
   @override
@@ -152,13 +152,13 @@ class _InputSliderState extends State<InputSlider> {
             keyboardType: TextInputType.number,
             style: widget.textFieldStyle ?? DefaultTextStyle.of(context).style,
             onSubmitted: (value) {
-              double parsedValue = double.tryParse(value) ?? this.defaultValue;
+              double parsedValue = double.tryParse(value) ?? _defaultValue;
               parsedValue = parsedValue.clamp(widget.min, widget.max);
               setState(() {
-                this.defaultValue = parsedValue;
+                _defaultValue = parsedValue;
               });
-              _setControllerValue(this.defaultValue);
-              widget.onChangeEnd?.call(this.defaultValue);
+              _setControllerValue(_defaultValue);
+              widget.onChangeEnd?.call(_defaultValue);
             },
             textAlign: TextAlign.center,
             decoration: widget.inputDecoration ??
@@ -184,7 +184,7 @@ class _InputSliderState extends State<InputSlider> {
                               Theme.of(context).primaryColor)),
                   filled: widget.filled,
                   fillColor: widget.fillColor,
-                  contentPadding: EdgeInsets.only(top: 5),
+                  contentPadding: const EdgeInsets.only(top: 5),
                 ),
           ),
         ),
@@ -192,7 +192,7 @@ class _InputSliderState extends State<InputSlider> {
           flex: widget.sliderWeight ?? 1,
           fit: FlexFit.tight,
           child: Slider(
-            value: defaultValue,
+            value: _defaultValue,
             min: widget.min,
             max: widget.max,
             divisions: widget.division,
@@ -201,7 +201,7 @@ class _InputSliderState extends State<InputSlider> {
             onChangeEnd: widget.onChangeEnd,
             onChanged: (double value) {
               setState(() {
-                this.defaultValue = value;
+                _defaultValue = value;
               });
               _setControllerValue(value);
             },

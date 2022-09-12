@@ -26,7 +26,7 @@ class CustomAppBar extends AppBar {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         titleText,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 20, fontWeight: FontWeight.w500),
                       ),
                     ),
@@ -42,7 +42,7 @@ class CustomAppBar extends AppBar {
 class _MoveWindowArea extends StatelessWidget {
   final Widget? child;
 
-  _MoveWindowArea({this.child});
+  const _MoveWindowArea({this.child});
 
   @override
   Widget build(BuildContext context) {

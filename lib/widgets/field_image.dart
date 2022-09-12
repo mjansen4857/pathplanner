@@ -6,7 +6,7 @@ import 'package:image_size_getter/file_input.dart';
 import 'package:image_size_getter/image_size_getter.dart';
 
 enum OfficialField {
-  RapidReact,
+  rapidReact,
 }
 
 class FieldImage extends StatelessWidget {
@@ -17,37 +17,37 @@ class FieldImage extends StatelessWidget {
 
   static List<FieldImage> offialFields() {
     return [
-      FieldImage.official(OfficialField.RapidReact),
+      FieldImage.official(OfficialField.rapidReact),
     ];
   }
 
-  FieldImage.official(OfficialField field) {
+  FieldImage.official(OfficialField field, {super.key}) {
     switch (field) {
-      case OfficialField.RapidReact:
+      case OfficialField.rapidReact:
       default:
-        this.image = Image.asset(
+        image = Image.asset(
           'images/field22.png',
           fit: BoxFit.contain,
         );
-        this.defaultSize = ui.Size(3240, 1620);
-        this.pixelsPerMeter = 196.85;
-        this.name = 'Rapid React';
+        defaultSize = const ui.Size(3240, 1620);
+        pixelsPerMeter = 196.85;
+        name = 'Rapid React';
         break;
     }
   }
 
-  FieldImage.custom(File imageFile) {
-    this.image = Image.file(
+  FieldImage.custom(File imageFile, {super.key}) {
+    image = Image.file(
       imageFile,
       fit: BoxFit.contain,
     );
 
     final imageSize = ImageSizeGetter.getSize(FileInput(imageFile));
     if (imageSize.needRotate) {
-      this.defaultSize =
+      defaultSize =
           ui.Size(imageSize.height.toDouble(), imageSize.width.toDouble());
     } else {
-      this.defaultSize =
+      defaultSize =
           ui.Size(imageSize.width.toDouble(), imageSize.height.toDouble());
     }
 
@@ -55,16 +55,16 @@ class FieldImage extends StatelessWidget {
     String fileName = imageFile.path.split(Platform.pathSeparator).last;
     String ppm = fileName.substring(
         fileName.lastIndexOf('_') + 1, fileName.lastIndexOf('.'));
-    this.pixelsPerMeter = num.parse(ppm);
-    this.name = fileName.substring(0, fileName.lastIndexOf('_'));
+    pixelsPerMeter = num.parse(ppm);
+    name = fileName.substring(0, fileName.lastIndexOf('_'));
   }
 
   @override
   Widget build(BuildContext context) {
     return AspectRatio(
-      aspectRatio: this.defaultSize.width / this.defaultSize.height,
+      aspectRatio: defaultSize.width / defaultSize.height,
       child: SizedBox.expand(
-        child: this.image,
+        child: image,
       ),
     );
   }

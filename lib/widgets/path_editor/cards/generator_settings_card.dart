@@ -10,7 +10,7 @@ class GeneratorSettingsCard extends StatefulWidget {
   final GlobalKey stackKey;
   final SharedPreferences prefs;
 
-  GeneratorSettingsCard(
+  const GeneratorSettingsCard(
       {required this.path,
       required this.stackKey,
       required this.onShouldSave,
@@ -18,7 +18,7 @@ class GeneratorSettingsCard extends StatefulWidget {
       super.key});
 
   @override
-  _GeneratorSettingsCardState createState() => _GeneratorSettingsCardState();
+  State<GeneratorSettingsCard> createState() => _GeneratorSettingsCardState();
 }
 
 class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
@@ -28,7 +28,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
 
     return DraggableCard(
       stackKey: widget.stackKey,
-      defaultPosition: CardPosition(bottom: 0, left: 0),
+      defaultPosition: const CardPosition(bottom: 0, left: 0),
       prefsKey: 'generatorCardPos',
       prefs: widget.prefs,
       child: Column(
@@ -45,7 +45,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           // Override gesture detector on UI elements so they wont cause the card to move
           GestureDetector(
             onPanStart: (details) {},
@@ -71,7 +71,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                         });
                       },
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     _buildTextField(
                       context,
                       widget.path.maxAcceleration != null
@@ -88,7 +88,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                     ),
                   ],
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.max,
@@ -106,12 +106,12 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                             });
                           },
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
                           'Reversed',
                           style: TextStyle(color: colorScheme.onSurface),
                         ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                       ],
                     ),
                   ],
@@ -129,7 +129,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
       {bool? enabled = true, ValueChanged? onSubmitted}) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
+    return SizedBox(
       width: 105,
       height: 35,
       child: TextField(
@@ -150,7 +150,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
         ],
         style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
         decoration: InputDecoration(
-          contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+          contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
           labelText: label,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
         ),

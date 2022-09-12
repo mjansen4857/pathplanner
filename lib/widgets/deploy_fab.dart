@@ -14,18 +14,21 @@ class DeployFAB extends StatelessWidget {
 
     return Tooltip(
       message: 'Deploy Robot Code',
-      waitDuration: Duration(milliseconds: 500),
+      waitDuration: const Duration(milliseconds: 500),
       child: FloatingActionButton.extended(
-        icon: Icon(Icons.send_rounded),
-        label: Text('Deploy'),
-        onPressed: () async {
+        icon: const Icon(Icons.send_rounded),
+        label: const Text('Deploy'),
+        onPressed: ([bool mounted = true]) async {
           Shell shell = Shell().cd(projectDir!.path);
           _showSnackbar(context, 'Deploying robot code...',
-              duration: Duration(minutes: 10));
+              duration: const Duration(minutes: 10));
           try {
             String gradlew = Platform.isWindows ? 'gradlew' : './gradlew';
             ProcessResult result =
                 await shell.runExecutableArguments(gradlew, ['deploy']);
+
+            if (!mounted) return;
+
             ScaffoldMessenger.of(context).removeCurrentSnackBar();
             if (result.exitCode == 0) {
               _showSnackbar(context, 'Successfully deployed.',
@@ -53,7 +56,7 @@ class DeployFAB extends StatelessWidget {
         message,
         style: TextStyle(color: textColor, fontSize: 16),
       ),
-      duration: duration ?? Duration(milliseconds: 4000),
+      duration: duration ?? const Duration(milliseconds: 4000),
       backgroundColor: colorScheme.surfaceVariant,
     ));
   }

@@ -25,23 +25,23 @@ class RobotPath {
       this.markers = const []});
 
   RobotPath.defaultPath({this.name = 'New Path'})
-      : this.waypoints = [
+      : waypoints = [
           Waypoint(
-            anchorPoint: Point(1.0, 3.0),
-            nextControl: Point(2.0, 3.0),
+            anchorPoint: const Point(1.0, 3.0),
+            nextControl: const Point(2.0, 3.0),
           ),
           Waypoint(
-            prevControl: Point(3.0, 4.0),
-            anchorPoint: Point(3.0, 5.0),
+            prevControl: const Point(3.0, 4.0),
+            anchorPoint: const Point(3.0, 5.0),
             isReversal: true,
           ),
           Waypoint(
-            prevControl: Point(4.0, 3.0),
-            anchorPoint: Point(5.0, 3.0),
+            prevControl: const Point(4.0, 3.0),
+            anchorPoint: const Point(5.0, 3.0),
           ),
         ],
-        this.markers = [] {
-    this.generateTrajectory();
+        markers = [] {
+    generateTrajectory();
   }
 
   RobotPath.fromJson(Map<String, dynamic> json)
@@ -62,7 +62,7 @@ class RobotPath {
     maxAcceleration = json['maxAcceleration'];
     isReversed = json['isReversed'];
 
-    this.generateTrajectory();
+    generateTrajectory();
   }
 
   String? getWaypointLabel(Waypoint? waypoint) {
@@ -71,7 +71,7 @@ class RobotPath {
     if (waypoint.isStartPoint()) return 'Start Point';
     if (waypoint.isEndPoint()) return 'End Point';
 
-    return 'Waypoint ' + waypoints.indexOf(waypoint).toString();
+    return 'Waypoint ${waypoints.indexOf(waypoint)}';
   }
 
   Future<void> generateTrajectory() {
@@ -82,23 +82,23 @@ class RobotPath {
 
   void savePath(Directory saveDir, bool generateJSON, bool generateCSV) async {
     Stopwatch s = Stopwatch()..start();
-    File pathFile = File(join(saveDir.path, name + '.path'));
+    File pathFile = File(join(saveDir.path, '$name.path'));
     const JsonEncoder encoder = JsonEncoder.withIndent('  ');
     pathFile.writeAsString(encoder.convert(this));
 
-    this.generatedTrajectory = await Trajectory.generateFullTrajectory(this);
+    generatedTrajectory = await Trajectory.generateFullTrajectory(this);
 
     if (generateJSON) {
       Directory jsonDir = Directory(join(saveDir.path, 'generatedJSON'));
       if (!jsonDir.existsSync()) jsonDir.createSync(recursive: true);
-      File jsonFile = File(join(jsonDir.path, name + '.wpilib.json'));
+      File jsonFile = File(join(jsonDir.path, '$name.wpilib.json'));
       jsonFile.writeAsString(generatedTrajectory.getWPILibJSON());
     }
 
     if (generateCSV) {
       Directory csvDir = Directory(join(saveDir.path, 'generatedCSV'));
       if (!csvDir.existsSync()) csvDir.createSync(recursive: true);
-      File csvFile = File(join(csvDir.path, name + '.csv'));
+      File csvFile = File(join(csvDir.path, '$name.csv'));
       csvFile.writeAsString(generatedTrajectory.getCSV());
     }
 

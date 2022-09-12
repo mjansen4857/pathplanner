@@ -25,8 +25,8 @@ class _WelcomePageState extends State<WelcomePage>
   void initState() {
     super.initState();
 
-    _welcomeController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 500));
+    _welcomeController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 500));
     _scaleAnimation =
         CurvedAnimation(parent: _welcomeController, curve: Curves.ease);
 
@@ -49,7 +49,7 @@ class _WelcomePageState extends State<WelcomePage>
         children: [
           Center(
             child: Padding(
-              padding: EdgeInsets.all(48),
+              padding: const EdgeInsets.all(48),
               child: widget.backgroundImage,
             ),
           ),
@@ -79,28 +79,28 @@ class _WelcomePageState extends State<WelcomePage>
                                 fontSize: 48, color: colorScheme.onSurface),
                           ),
                           Text(
-                            'v' + widget.appVersion,
+                            'v${widget.appVersion}',
                             style: TextStyle(
                               fontSize: 24,
                               color: colorScheme.secondary,
                             ),
                           ),
-                          SizedBox(height: 64),
+                          const SizedBox(height: 64),
                           ElevatedButton(
-                            child: Padding(
-                              padding: const EdgeInsets.all(6.0),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colorScheme.surfaceVariant,
+                              foregroundColor: colorScheme.onSurfaceVariant,
+                            ),
+                            onPressed: () {
+                              _showOpenProjectDialog(context);
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.all(6.0),
                               child: Text(
                                 'Open Robot Project',
                                 style: TextStyle(fontSize: 24),
                               ),
                             ),
-                            style: ElevatedButton.styleFrom(
-                              primary: colorScheme.surfaceVariant,
-                              onPrimary: colorScheme.onSurfaceVariant,
-                            ),
-                            onPressed: () {
-                              _showOpenProjectDialog(context);
-                            },
                           ),
                         ],
                       ),
@@ -120,6 +120,8 @@ class _WelcomePageState extends State<WelcomePage>
       confirmButtonText: 'Open Project',
       initialDirectory: Directory.current.path,
     );
+
+    if (!mounted) return;
 
     if (projectFolder != null) {
       Navigator.pop(context, projectFolder);

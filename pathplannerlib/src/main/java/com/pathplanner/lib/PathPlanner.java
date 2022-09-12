@@ -200,6 +200,91 @@ public class PathPlanner {
     }
 
     /**
+     * Generate a path on-the-fly from a list of points
+     * As you can't see the path in the GUI when using this method, make sure you have a good idea
+     * of what works well and what doesn't before you use this method in competition. Points positioned in weird
+     * configurations such as being too close together can lead to really janky paths.
+     * @param constraints The max velocity and max acceleration of the path
+     * @param reversed Should the robot follow this path reversed
+     * @param point1 First point in the path
+     * @param point2 Second point in the path
+     * @param points Remaining points in the path
+     * @return The generated path
+     */
+    public static PathPlannerTrajectory generatePath(PathConstraints constraints, boolean reversed, PathPoint point1, PathPoint point2, PathPoint... points){
+        ArrayList<PathPoint> allPoints = new ArrayList<>();
+        allPoints.add(point1);
+        allPoints.add(point2);
+        allPoints.addAll(Arrays.asList(points));
+
+        ArrayList<Waypoint> waypoints = new ArrayList<>();
+        waypoints.add(new Waypoint(point1.position, null, null, point1.velocityOverride, point1.holonomicRotation, false, false));
+
+        for(int i = 1; i < allPoints.size(); i++){
+            PathPoint p1 = allPoints.get(i - 1);
+            PathPoint p2 = allPoints.get(i);
+
+            double thirdDistance = p1.position.getDistance(p2.position) / 3.0;
+
+            Translation2d p1Next = p1.position.plus(new Translation2d(p1.heading.getCos() * thirdDistance, p1.heading.getSin() * thirdDistance));
+            waypoints.get(i - 1).nextControl = p1Next;
+
+            Translation2d p2Prev = p2.position.minus(new Translation2d(p2.heading.getCos() * thirdDistance, p2.heading.getSin() * thirdDistance));
+            waypoints.add(new Waypoint(p2.position, p2Prev, null, p2.velocityOverride, p2.holonomicRotation, false, false));
+        }
+
+        return new PathPlannerTrajectory(waypoints, new ArrayList<>(), constraints, reversed);
+    }
+
+    /**
+     * Generate a path on-the-fly from a list of points
+     * As you can't see the path in the GUI when using this method, make sure you have a good idea
+     * of what works well and what doesn't before you use this method in competition. Points positioned in weird
+     * configurations such as being too close together can lead to really janky paths.
+     * @param maxVel The max velocity of the path
+     * @param maxAccel The max acceleration of the path
+     * @param reversed Should the robot follow this path reversed
+     * @param point1 First point in the path
+     * @param point2 Second point in the path
+     * @param points Remaining points in the path
+     * @return The generated path
+     */
+    public static PathPlannerTrajectory generatePath(double maxVel, double maxAccel, boolean reversed, PathPoint point1, PathPoint point2, PathPoint... points){
+        return generatePath(new PathConstraints(maxVel, maxAccel), reversed, point1, point2, points);
+    }
+
+    /**
+     * Generate a path on-the-fly from a list of points
+     * As you can't see the path in the GUI when using this method, make sure you have a good idea
+     * of what works well and what doesn't before you use this method in competition. Points positioned in weird
+     * configurations such as being too close together can lead to really janky paths.
+     * @param constraints The max velocity and max acceleration of the path
+     * @param point1 First point in the path
+     * @param point2 Second point in the path
+     * @param points Remaining points in the path
+     * @return The generated path
+     */
+    public static PathPlannerTrajectory generatePath(PathConstraints constraints, PathPoint point1, PathPoint point2, PathPoint... points){
+        return generatePath(constraints , false, point1, point2, points);
+    }
+
+    /**
+     * Generate a path on-the-fly from a list of points
+     * As you can't see the path in the GUI when using this method, make sure you have a good idea
+     * of what works well and what doesn't before you use this method in competition. Points positioned in weird
+     * configurations such as being too close together can lead to really janky paths.
+     * @param maxVel The max velocity of the path
+     * @param maxAccel The max acceleration of the path
+     * @param point1 First point in the path
+     * @param point2 Second point in the path
+     * @param points Remaining points in the path
+     * @return The generated path
+     */
+    public static PathPlannerTrajectory generatePath(double maxVel, double maxAccel, PathPoint point1, PathPoint point2, PathPoint... points){
+        return generatePath(new PathConstraints(maxVel, maxAccel), false, point1, point2, points);
+    }
+
+    /**
      * Load path constraints from a path file in storage. This can be used to change path max vel/accel in the
      * GUI instead of updating and rebuilding code. This requires that max velocity and max acceleration have been
      * explicitly set in the GUI.

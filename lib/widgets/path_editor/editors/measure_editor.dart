@@ -31,7 +31,7 @@ class MeasureEditor extends StatefulWidget {
 class _MeasureEditorState extends State<MeasureEditor> {
   Point? _measureStart;
   Point? _measureEnd;
-  GlobalKey _key = GlobalKey();
+  final GlobalKey _key = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -56,28 +56,24 @@ class _MeasureEditorState extends State<MeasureEditor> {
                       _yPixelsToMeters(details.localPosition.dy));
                 });
               },
-              child: Container(
-                child: Padding(
-                  padding: const EdgeInsets.all(48),
-                  child: Stack(
-                    children: [
-                      widget.fieldImage,
-                      Positioned.fill(
-                        child: Container(
-                          child: CustomPaint(
-                            painter: _MeasurePainter(
-                              widget.path,
-                              widget.fieldImage,
-                              widget.robotSize,
-                              widget.holonomicMode,
-                              _measureStart,
-                              _measureEnd,
-                            ),
-                          ),
+              child: Padding(
+                padding: const EdgeInsets.all(48),
+                child: Stack(
+                  children: [
+                    widget.fieldImage,
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _MeasurePainter(
+                          widget.path,
+                          widget.fieldImage,
+                          widget.robotSize,
+                          widget.holonomicMode,
+                          _measureStart,
+                          _measureEnd,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -93,6 +89,7 @@ class _MeasureEditorState extends State<MeasureEditor> {
 
     return SimpleCard(
       stackKey: _key,
+      prefs: widget.prefs,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -107,7 +104,6 @@ class _MeasureEditorState extends State<MeasureEditor> {
           ),
         ],
       ),
-      prefs: widget.prefs,
     );
   }
 

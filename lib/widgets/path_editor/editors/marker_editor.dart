@@ -34,7 +34,7 @@ class MarkerEditor extends StatefulWidget {
 
 class _MarkerEditorState extends State<MarkerEditor> {
   EventMarker? _selectedMarker;
-  GlobalKey _key = GlobalKey();
+  final GlobalKey _key = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -92,27 +92,23 @@ class _MarkerEditorState extends State<MarkerEditor> {
                       _selectedMarker = null;
                     });
                   },
-                  child: Container(
-                    child: Padding(
-                      padding: const EdgeInsets.all(48),
-                      child: Stack(
-                        children: [
-                          widget.fieldImage,
-                          Positioned.fill(
-                            child: Container(
-                              child: CustomPaint(
-                                painter: _MarkerPainter(
-                                  widget.path,
-                                  widget.fieldImage,
-                                  widget.robotSize,
-                                  widget.holonomicMode,
-                                  _selectedMarker,
-                                ),
-                              ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(48),
+                    child: Stack(
+                      children: [
+                        widget.fieldImage,
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _MarkerPainter(
+                              widget.path,
+                              widget.fieldImage,
+                              widget.robotSize,
+                              widget.holonomicMode,
+                              _selectedMarker,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

@@ -20,7 +20,7 @@ class SettingsDialog extends StatefulWidget {
   final SharedPreferences prefs;
   final ValueChanged<Color> onTeamColorChanged;
 
-  SettingsDialog(
+  const SettingsDialog(
       {required this.onSettingsChanged,
       required this.onGenerationEnabled,
       required this.onFieldSelected,
@@ -61,15 +61,15 @@ class _SettingsDialogState extends State<SettingsDialog> {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return AlertDialog(
-      title: Text('Settings'),
-      content: Container(
+      title: const Text('Settings'),
+      content: SizedBox(
         width: 345,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Robot Size:'),
-            SizedBox(height: 4),
+            const Text('Robot Size:'),
+            const SizedBox(height: 4),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -93,7 +93,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 }, _length.toStringAsFixed(2)),
               ],
             ),
-            SizedBox(height: 18),
+            const SizedBox(height: 18),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -101,19 +101,19 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 _buildTeamColorPicker(context),
               ],
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Additional Options:'),
-                SizedBox(height: 8),
+                const Text('Additional Options:'),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
                     FilterChip(
-                      label: Text('Generate JSON'),
+                      label: const Text('Generate JSON'),
                       labelStyle: TextStyle(
                           color: _generateJSON
                               ? colorScheme.onPrimaryContainer
@@ -140,7 +140,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       },
                     ),
                     FilterChip(
-                      label: Text('Generate CSV'),
+                      label: const Text('Generate CSV'),
                       labelStyle: TextStyle(
                           color: _generateCSV
                               ? colorScheme.onPrimaryContainer
@@ -167,7 +167,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       },
                     ),
                     FilterChip(
-                      label: Text('Holonomic Mode'),
+                      label: const Text('Holonomic Mode'),
                       labelStyle: TextStyle(
                           color: _holonomicMode
                               ? colorScheme.onPrimaryContainer
@@ -200,7 +200,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text('Close'),
+          child: const Text('Close'),
         ),
       ],
     );
@@ -212,7 +212,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Container(
+      child: SizedBox(
         height: 40,
         width: 165,
         child: TextField(
@@ -231,7 +231,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
           ],
           style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
           decoration: InputDecoration(
-            contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+            contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
             labelText: label,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
           ),
@@ -246,9 +246,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Field Image:'),
-        SizedBox(height: 4),
-        Container(
+        const Text('Field Image:'),
+        const SizedBox(height: 4),
+        SizedBox(
           height: 48,
           width: 165,
           child: Padding(
@@ -268,7 +268,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     value: _selectedField,
                     isExpanded: true,
                     underline: Container(),
-                    icon: Icon(Icons.arrow_drop_down),
+                    icon: const Icon(Icons.arrow_drop_down),
                     style:
                         TextStyle(fontSize: 14, color: colorScheme.onSurface),
                     onChanged: (FieldImage? newValue) {
@@ -289,7 +289,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           child: Text(value.name),
                         );
                       }).toList(),
-                      DropdownMenuItem<FieldImage?>(
+                      const DropdownMenuItem<FieldImage?>(
                         value: null,
                         child: Text('Import Custom...'),
                       )
@@ -308,9 +308,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Team Color:'),
-        SizedBox(height: 4),
-        Container(
+        const Text('Team Color:'),
+        const SizedBox(height: 4),
+        SizedBox(
           height: 48,
           width: 165,
           child: Padding(
@@ -321,7 +321,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   context: context,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: Text('Pick Team Color'),
+                      title: const Text('Pick Team Color'),
                       content: SingleChildScrollView(
                         child: ColorPicker(
                           pickerColor: _teamColor,
@@ -343,27 +343,27 @@ class _SettingsDialogState extends State<SettingsDialog> {
                               widget.onTeamColorChanged(_teamColor);
                             });
                           },
-                          child: Text('Reset'),
+                          child: const Text('Reset'),
                         ),
                         TextButton(
                           onPressed: () {
                             Navigator.of(context).pop();
                             widget.onTeamColorChanged(_teamColor);
                           },
-                          child: Text('Confirm'),
+                          child: const Text('Confirm'),
                         ),
                       ],
                     );
                   },
                 );
               },
-              child: Container(),
               style: ElevatedButton.styleFrom(
-                primary: _teamColor,
+                backgroundColor: _teamColor,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
+              child: Container(),
             ),
           ),
         ),
@@ -393,13 +393,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     keysToPress: {LogicalKeyboardKey.enter},
                     onKeysPressed: () => Navigator.of(context).pop(),
                     child: AlertDialog(
-                      title: Text('Failed to Import Field'),
-                      content: Text(
-                          'Field with the name "' + name + '" already exists.'),
+                      title: const Text('Failed to Import Field'),
+                      content:
+                          Text('Field with the name "$name" already exists.'),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: Text('OK'),
+                          child: const Text('OK'),
                         ),
                       ],
                     ),
@@ -416,13 +416,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
           imagesDir.createSync(recursive: true);
 
           String imageExtension = imageFile.path.split('.').last;
-          String importedPath = join(
-              imagesDir.path,
-              name +
-                  '_' +
-                  pixelsPerMeter.toStringAsFixed(2) +
-                  '.' +
-                  imageExtension);
+          String importedPath = join(imagesDir.path,
+              '${name}_${pixelsPerMeter.toStringAsFixed(2)}.$imageExtension');
 
           await imageFile.copy(importedPath);
 

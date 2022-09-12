@@ -387,13 +387,13 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     protected static class Waypoint {
-        protected final Translation2d anchorPoint;
-        protected final Translation2d prevControl;
-        protected final Translation2d nextControl;
-        protected final double velOverride;
-        protected final Rotation2d holonomicRotation;
-        protected final boolean isReversal;
-        protected final boolean isStopPoint;
+        protected Translation2d anchorPoint;
+        protected Translation2d prevControl;
+        protected Translation2d nextControl;
+        protected double velOverride;
+        protected Rotation2d holonomicRotation;
+        protected boolean isReversal;
+        protected boolean isStopPoint;
 
         protected Waypoint(Translation2d anchorPoint, Translation2d prevControl, Translation2d nextControl, double velOverride, Rotation2d holonomicRotation, boolean isReversal, boolean isStopPoint){
             this.anchorPoint = anchorPoint;

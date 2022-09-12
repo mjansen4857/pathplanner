@@ -145,7 +145,7 @@ class PathPainterUtil {
   }
 
   static void paintMarker(Canvas canvas, Offset location, Color color) {
-    final IconData markerIcon = Icons.location_on;
+    const IconData markerIcon = Icons.location_on;
 
     TextPainter textPainter = TextPainter(
       textDirection: TextDirection.ltr,
@@ -177,8 +177,8 @@ class PathPainterUtil {
     textPainter.layout();
     textStrokePainter.layout();
 
-    textPainter.paint(canvas, location - Offset(20, 37));
-    textStrokePainter.paint(canvas, location - Offset(20, 37));
+    textPainter.paint(canvas, location - const Offset(20, 37));
+    textStrokePainter.paint(canvas, location - const Offset(20, 37));
   }
 
   static Offset getMarkerLocation(

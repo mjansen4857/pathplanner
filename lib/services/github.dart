@@ -2,7 +2,7 @@ import 'package:github/github.dart';
 import 'package:version/version.dart';
 
 class GitHubAPI {
-  static GitHub _github = GitHub();
+  static final GitHub _github = GitHub();
 
   static Future<bool> isUpdateAvailable(String currentVersion) async {
     try {

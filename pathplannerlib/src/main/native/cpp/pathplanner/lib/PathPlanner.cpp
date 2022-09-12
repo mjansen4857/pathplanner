@@ -105,6 +105,31 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, 
     return pathGroup;
 }
 
+PathPlannerTrajectory PathPlanner::generatePath(PathConstraints constraints, bool reversed, PathPoint point1, PathPoint point2, std::initializer_list<PathPoint> points){
+    std::vector<PathPoint> allPoints;
+    allPoints.push_back(point1);
+    allPoints.push_back(point2);
+    allPoints.insert(allPoints.end(), points);
+
+    std::vector<PathPlannerTrajectory::Waypoint> waypoints;
+    waypoints.push_back(PathPlannerTrajectory::Waypoint(point1.m_position, frc::Translation2d(), frc::Translation2d(), point1.m_velocityOverride, point1.m_holonomicRotation, false, false));
+
+    for(size_t i = 1; i < allPoints.size(); i++){
+        PathPoint p1 = allPoints[i - 1];
+        PathPoint p2 = allPoints[i];
+
+        units::meter_t thirdDistance = p1.m_position.Distance(p2.m_position) / 3.0;
+
+        frc::Translation2d p1Next = p1.m_position + frc::Translation2d(p1.m_heading.Cos() * thirdDistance, p1.m_heading.Sin() * thirdDistance);
+        waypoints[i - 1].nextControl = p1Next;
+
+        frc::Translation2d p2Prev = p2.m_position - frc::Translation2d(p2.m_heading.Cos() * thirdDistance, p2.m_heading.Sin() * thirdDistance);
+        waypoints.push_back(PathPlannerTrajectory::Waypoint(p2.m_position, p2Prev, frc::Translation2d(), p2.m_velocityOverride, p2.m_holonomicRotation, false, false));
+    }
+
+    return PathPlannerTrajectory(waypoints, std::vector<PathPlannerTrajectory::EventMarker>(), constraints, reversed);
+}
+
 PathConstraints PathPlanner::getConstraintsFromPath(std::string name){
     std::string filePath = frc::filesystem::GetDeployDirectory() + "/pathplanner/" + name + ".path";
 

@@ -4,8 +4,8 @@ import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/widgets/custom_popup_menu.dart' as custom;
 
 enum MenuOptions {
-  Delete,
-  Duplicate,
+  delete,
+  duplicate,
 }
 
 class PathTile extends StatefulWidget {
@@ -16,7 +16,7 @@ class PathTile extends StatefulWidget {
   final VoidCallback onDelete;
   final bool Function(String name) onRename;
 
-  PathTile(
+  const PathTile(
       {required this.path,
       this.isSelected = false,
       required this.onTap,
@@ -26,7 +26,7 @@ class PathTile extends StatefulWidget {
       super.key});
 
   @override
-  _PathTileState createState() => _PathTileState();
+  State<PathTile> createState() => _PathTileState();
 }
 
 class _PathTileState extends State<PathTile> {
@@ -116,15 +116,16 @@ class _PathTileState extends State<PathTile> {
               color: colorScheme.outline,
             ),
           ),
-          enabledBorder: OutlineInputBorder(
+          enabledBorder: const OutlineInputBorder(
             borderSide: BorderSide(
               color: Colors.transparent,
             ),
           ),
-          contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         ),
         inputFormatters: [
-          FilteringTextInputFormatter.deny(RegExp("[\"*<>?\|/:\\\\]")),
+          FilteringTextInputFormatter.deny(RegExp('["*<>?|/:\\\\]')),
         ],
       ),
     );
@@ -153,24 +154,24 @@ class _PathTileState extends State<PathTile> {
             tooltip: '',
             onSelected: (MenuOptions value) {
               switch (value) {
-                case MenuOptions.Delete:
+                case MenuOptions.delete:
                   widget.onDelete();
                   break;
-                case MenuOptions.Duplicate:
+                case MenuOptions.duplicate:
                   widget.onDuplicate();
               }
             },
             itemBuilder: (BuildContext context) =>
                 <custom.PopupMenuEntry<MenuOptions>>[
               custom.PopupMenuItem<MenuOptions>(
-                value: MenuOptions.Delete,
+                value: MenuOptions.delete,
                 child: Row(
                   children: [
                     Icon(
                       Icons.delete,
                       color: colorScheme.onSurfaceVariant,
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Text(
                       'Delete',
                       style: TextStyle(color: colorScheme.onSurfaceVariant),
@@ -179,14 +180,14 @@ class _PathTileState extends State<PathTile> {
                 ),
               ),
               custom.PopupMenuItem<MenuOptions>(
-                value: MenuOptions.Duplicate,
+                value: MenuOptions.duplicate,
                 child: Row(
                   children: [
                     Icon(
                       Icons.copy,
                       color: colorScheme.onSurfaceVariant,
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     Text(
                       'Duplicate',
                       style: TextStyle(color: colorScheme.onSurfaceVariant),

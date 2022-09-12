@@ -28,7 +28,7 @@ class HomePage extends StatefulWidget {
   final SharedPreferences prefs;
   final ValueChanged<Color> onTeamColorChanged;
 
-  HomePage({
+  const HomePage({
     required this.defaultFieldImage,
     required this.appVersion,
     required this.appStoreBuild,
@@ -38,31 +38,32 @@ class HomePage extends StatefulWidget {
   });
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Directory? _projectDir;
   List<RobotPath> _paths = [];
   RobotPath? _currentPath;
-  Size _robotSize = Size(0.75, 1.0);
+  Size _robotSize = const Size(0.75, 1.0);
   bool _holonomicMode = false;
   bool _generateJSON = false;
   bool _generateCSV = false;
   bool _isWpiLib = false;
-  SecureBookmarks? _bookmarks = Platform.isMacOS ? SecureBookmarks() : null;
-  List<FieldImage> _fieldImages = FieldImage.offialFields();
+  final SecureBookmarks? _bookmarks =
+      Platform.isMacOS ? SecureBookmarks() : null;
+  final List<FieldImage> _fieldImages = FieldImage.offialFields();
   FieldImage? _fieldImage;
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
-  GlobalKey _key = GlobalKey();
+  final GlobalKey _key = GlobalKey();
 
   @override
   void initState() {
     super.initState();
 
-    _animController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 250));
+    _animController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 250));
     _scaleAnimation =
         CurvedAnimation(parent: _animController, curve: Curves.ease);
 
@@ -161,7 +162,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget _buildDrawer(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
     return ClipRRect(
-      borderRadius: BorderRadius.only(
+      borderRadius: const BorderRadius.only(
         topRight: Radius.circular(16),
         bottomRight: Radius.circular(16),
       ),
@@ -171,43 +172,44 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             DrawerHeader(
               child: Stack(
                 children: [
-                  Container(
-                    child: Align(
-                        alignment: FractionalOffset.bottomRight,
-                        child: Text(
-                          'v' + widget.appVersion,
-                          style: TextStyle(color: colorScheme.onSurface),
-                        )),
-                  ),
+                  Align(
+                      alignment: FractionalOffset.bottomRight,
+                      child: Text(
+                        'v${widget.appVersion}',
+                        style: TextStyle(color: colorScheme.onSurface),
+                      )),
                   Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Expanded(
-                          child: Container(),
                           flex: 2,
+                          child: Container(),
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
                             basename(_projectDir!.path),
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 20,
                             ),
                           ),
                         ),
                         ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              onPrimary: colorScheme.onPrimaryContainer,
-                              primary: colorScheme.primaryContainer,
+                              foregroundColor: colorScheme.onPrimaryContainer,
+                              backgroundColor: colorScheme.primaryContainer,
                             ),
                             onPressed: () {
                               _openProjectDialog(context);
                             },
-                            child: Text('Switch Project')),
+                            child: const Padding(
+                              padding: EdgeInsets.only(bottom: 3.0),
+                              child: Text('Switch Project'),
+                            )),
                         Expanded(
-                          child: Container(),
                           flex: 4,
+                          child: Container(),
                         ),
                       ],
                     ),
@@ -228,9 +230,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         Directory pathsDir = _getPathsDir(_projectDir!);
 
                         File pathFile =
-                            File(join(pathsDir.path, _paths[i].name + '.path'));
+                            File(join(pathsDir.path, '${_paths[i].name}.path'));
                         File newPathFile =
-                            File(join(pathsDir.path, name + '.path'));
+                            File(join(pathsDir.path, '$name.path'));
                         if (newPathFile.existsSync() &&
                             newPathFile.path != pathFile.path) {
                           Navigator.of(context).pop();
@@ -241,13 +243,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   keysToPress: {LogicalKeyboardKey.enter},
                                   onKeysPressed: Navigator.of(context).pop,
                                   child: AlertDialog(
-                                    title: Text('Unable to Rename'),
+                                    title: const Text('Unable to Rename'),
                                     content: Text(
                                         'The file "${basename(newPathFile.path)}" already exists'),
                                     actions: [
                                       TextButton(
                                         onPressed: Navigator.of(context).pop,
-                                        child: Text('OK'),
+                                        child: const Text('OK'),
                                       ),
                                     ],
                                   ),
@@ -255,7 +257,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               });
                           return false;
                         } else {
-                          pathFile.rename(join(pathsDir.path, name + '.path'));
+                          pathFile.rename(join(pathsDir.path, '$name.path'));
                           setState(() {
                             //flutter weird
                             _currentPath!.name = _currentPath!.name;
@@ -275,7 +277,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         Directory pathsDir = _getPathsDir(_projectDir!);
 
                         File pathFile =
-                            File(join(pathsDir.path, _paths[i].name + '.path'));
+                            File(join(pathsDir.path, '${_paths[i].name}.path'));
 
                         if (pathFile.existsSync()) {
                           // The fitted text field container does not rebuild
@@ -300,7 +302,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   keysToPress: {LogicalKeyboardKey.enter},
                                   onKeysPressed: confirm,
                                   child: AlertDialog(
-                                    title: Text('Delete Path'),
+                                    title: const Text('Delete Path'),
                                     content: Text(
                                         'Are you sure you want to delete "${_paths[i].name}"? This cannot be undone.'),
                                     actions: [
@@ -308,11 +310,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         onPressed: () {
                                           Navigator.of(context).pop();
                                         },
-                                        child: Text('Cancel'),
+                                        child: const Text('Cancel'),
                                       ),
                                       TextButton(
                                         onPressed: confirm,
-                                        child: Text('Confirm'),
+                                        child: const Text('Confirm'),
                                       ),
                                     ],
                                   ),
@@ -334,9 +336,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           for (RobotPath path in _paths) {
                             pathNames.add(path.name);
                           }
-                          String pathName = _paths[i].name + ' Copy';
+                          String pathName = '${_paths[i].name} Copy';
                           while (pathNames.contains(pathName)) {
-                            pathName = pathName + ' Copy';
+                            pathName = '$pathName Copy';
                           }
                           _paths.add(RobotPath(
                             waypoints: RobotPath.cloneWaypointList(
@@ -351,115 +353,109 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            Container(
-              child: Align(
-                alignment: FractionalOffset.bottomCenter,
-                child: Container(
-                  child: Column(
-                    children: [
-                      Divider(),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12.0, top: 4.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                List<String> pathNames = [];
-                                for (RobotPath path in _paths) {
-                                  pathNames.add(path.name);
-                                }
-                                String pathName = 'New Path';
-                                while (pathNames.contains(pathName)) {
-                                  pathName = 'New ' + pathName;
-                                }
-                                setState(() {
-                                  _paths.add(
-                                      RobotPath.defaultPath(name: pathName));
-                                  _currentPath = _paths.last;
-                                  _savePath(_currentPath!);
-                                  UndoRedo.clearHistory();
-                                });
-                              },
-                              icon: Icon(Icons.add),
-                              label: Text('Add Path'),
-                              style: ElevatedButton.styleFrom(
-                                primary: colorScheme.primaryContainer,
-                                onPrimary: colorScheme.onPrimaryContainer,
-                                fixedSize: Size(135, 56),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16)),
-                              ),
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return SettingsDialog(
-                                      prefs: widget.prefs,
-                                      onTeamColorChanged:
-                                          widget.onTeamColorChanged,
-                                      fieldImages: _fieldImages,
-                                      selectedField: _fieldImage ??
-                                          widget.defaultFieldImage,
-                                      onFieldSelected: (FieldImage image) {
-                                        setState(() {
-                                          _fieldImage = image;
-                                          if (!_fieldImages.contains(image)) {
-                                            _fieldImages.add(image);
-                                          }
-                                          widget.prefs.setString(
-                                              'fieldImage', image.name);
-                                        });
-                                      },
-                                      onSettingsChanged: () {
-                                        setState(() {
-                                          _robotSize = Size(
-                                              widget.prefs.getDouble(
-                                                      'robotWidth') ??
-                                                  0.75,
-                                              widget.prefs.getDouble(
-                                                      'robotLength') ??
-                                                  1.0);
-                                          _holonomicMode = widget.prefs
-                                                  .getBool('holonomicMode') ??
+            Align(
+              alignment: FractionalOffset.bottomCenter,
+              child: Column(
+                children: [
+                  const Divider(),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0, top: 4.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.max,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            List<String> pathNames = [];
+                            for (RobotPath path in _paths) {
+                              pathNames.add(path.name);
+                            }
+                            String pathName = 'New Path';
+                            while (pathNames.contains(pathName)) {
+                              pathName = 'New $pathName';
+                            }
+                            setState(() {
+                              _paths.add(RobotPath.defaultPath(name: pathName));
+                              _currentPath = _paths.last;
+                              _savePath(_currentPath!);
+                              UndoRedo.clearHistory();
+                            });
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add Path'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primaryContainer,
+                            foregroundColor: colorScheme.onPrimaryContainer,
+                            fixedSize: const Size(135, 56),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return SettingsDialog(
+                                  prefs: widget.prefs,
+                                  onTeamColorChanged: widget.onTeamColorChanged,
+                                  fieldImages: _fieldImages,
+                                  selectedField:
+                                      _fieldImage ?? widget.defaultFieldImage,
+                                  onFieldSelected: (FieldImage image) {
+                                    setState(() {
+                                      _fieldImage = image;
+                                      if (!_fieldImages.contains(image)) {
+                                        _fieldImages.add(image);
+                                      }
+                                      widget.prefs
+                                          .setString('fieldImage', image.name);
+                                    });
+                                  },
+                                  onSettingsChanged: () {
+                                    setState(() {
+                                      _robotSize = Size(
+                                          widget.prefs
+                                                  .getDouble('robotWidth') ??
+                                              0.75,
+                                          widget.prefs
+                                                  .getDouble('robotLength') ??
+                                              1.0);
+                                      _holonomicMode = widget.prefs
+                                              .getBool('holonomicMode') ??
+                                          false;
+                                      _generateJSON = widget.prefs
+                                              .getBool('generateJSON') ??
+                                          false;
+                                      _generateCSV =
+                                          widget.prefs.getBool('generateCSV') ??
                                               false;
-                                          _generateJSON = widget.prefs
-                                                  .getBool('generateJSON') ??
-                                              false;
-                                          _generateCSV = widget.prefs
-                                                  .getBool('generateCSV') ??
-                                              false;
-                                        });
-                                      },
-                                      onGenerationEnabled: () {
-                                        for (RobotPath path in _paths) {
-                                          _savePath(path);
-                                        }
-                                      },
-                                    );
+                                    });
+                                  },
+                                  onGenerationEnabled: () {
+                                    for (RobotPath path in _paths) {
+                                      _savePath(path);
+                                    }
                                   },
                                 );
                               },
-                              icon: Icon(Icons.settings),
-                              label: Text('Settings'),
-                              style: ElevatedButton.styleFrom(
-                                primary: colorScheme.surface,
-                                onPrimary: colorScheme.onSurface,
-                                fixedSize: Size(135, 56),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16)),
-                              ),
-                            ),
-                          ],
+                            );
+                          },
+                          icon: const Icon(Icons.settings),
+                          label: const Text('Settings'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.surface,
+                            foregroundColor: colorScheme.onSurface,
+                            fixedSize: const Size(135, 56),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -473,16 +469,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return Stack(
         children: [
           Center(
-            child: Container(
-              child: PathEditor(
-                fieldImage: _fieldImage ?? widget.defaultFieldImage,
-                path: _currentPath!,
-                robotSize: _robotSize,
-                holonomicMode: _holonomicMode,
-                showGeneratorSettings: _generateJSON || _generateCSV,
-                savePath: (path) => _savePath(path),
-                prefs: widget.prefs,
-              ),
+            child: PathEditor(
+              fieldImage: _fieldImage ?? widget.defaultFieldImage,
+              path: _currentPath!,
+              robotSize: _robotSize,
+              holonomicMode: _holonomicMode,
+              showGeneratorSettings: _generateJSON || _generateCSV,
+              savePath: (path) => _savePath(path),
+              prefs: widget.prefs,
             ),
           ),
           Align(

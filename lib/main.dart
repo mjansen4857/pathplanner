@@ -42,8 +42,8 @@ void main() async {
       };
 
       WindowOptions windowOptions = WindowOptions(
-        size: Size(1280, 720),
-        minimumSize: Size(640, 360),
+        size: const Size(1280, 720),
+        minimumSize: const Size(640, 360),
         center: true,
         title: 'PathPlanner',
         titleBarStyle:
@@ -67,7 +67,7 @@ void main() async {
 }
 
 class PathPlanner extends StatefulWidget {
-  final FieldImage defaultField = FieldImage.official(OfficialField.RapidReact);
+  final FieldImage defaultField = FieldImage.official(OfficialField.rapidReact);
   final String appVersion = '2022.1.1';
   final bool appStoreBuild = false;
   final Logger logger;

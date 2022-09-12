@@ -78,7 +78,7 @@ class Waypoint {
   }
 
   num getHeadingRadians() {
-    var heading;
+    num heading;
     if (isStartPoint()) {
       heading =
           atan2(nextControl!.y - anchorPoint.y, nextControl!.x - anchorPoint.x);
@@ -217,7 +217,7 @@ class Waypoint {
   }
 
   void setReversal(bool reversal) {
-    this.isReversal = reversal;
+    isReversal = reversal;
     if (reversal) {
       nextControl = prevControl;
     } else {

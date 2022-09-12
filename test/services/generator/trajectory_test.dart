@@ -6,18 +6,18 @@ import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
 
 void main() {
-  group("Generate trajectory", () {
+  group('Generate trajectory', () {
     // Trajectory is a pretty complex class, so just check that the runtime of
     // the path is correct to make sure something isn't very wrong
     test('simple path', () async {
       List<Waypoint> waypoints = [
         Waypoint(
-          anchorPoint: Point(1.0, 3.0),
-          nextControl: Point(2.0, 3.0),
+          anchorPoint: const Point(1.0, 3.0),
+          nextControl: const Point(2.0, 3.0),
         ),
         Waypoint(
-          prevControl: Point(3.0, 4.0),
-          anchorPoint: Point(3.0, 5.0),
+          prevControl: const Point(3.0, 4.0),
+          anchorPoint: const Point(3.0, 5.0),
         ),
       ];
       RobotPath path =
@@ -31,17 +31,17 @@ void main() {
     test('complex path', () async {
       List<Waypoint> waypoints = [
         Waypoint(
-          anchorPoint: Point(1.0, 3.0),
-          nextControl: Point(2.0, 3.0),
+          anchorPoint: const Point(1.0, 3.0),
+          nextControl: const Point(2.0, 3.0),
         ),
         Waypoint(
-          prevControl: Point(3.0, 4.0),
-          anchorPoint: Point(3.0, 5.0),
+          prevControl: const Point(3.0, 4.0),
+          anchorPoint: const Point(3.0, 5.0),
           isReversal: true,
         ),
         Waypoint(
-          prevControl: Point(4.0, 3.0),
-          anchorPoint: Point(5.0, 3.0),
+          prevControl: const Point(4.0, 3.0),
+          anchorPoint: const Point(5.0, 3.0),
         ),
       ];
       RobotPath path =

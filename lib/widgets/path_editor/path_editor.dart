@@ -9,10 +9,10 @@ import 'package:pathplanner/widgets/path_editor/editors/preview_editor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 enum EditorMode {
-  Edit,
-  Preview,
-  Markers,
-  Measure,
+  edit,
+  preview,
+  markers,
+  measure,
 }
 
 class PathEditor extends StatefulWidget {
@@ -24,7 +24,7 @@ class PathEditor extends StatefulWidget {
   final void Function(RobotPath path) savePath;
   final SharedPreferences prefs;
 
-  PathEditor(
+  const PathEditor(
       {required this.fieldImage,
       required this.path,
       required this.robotSize,
@@ -35,11 +35,11 @@ class PathEditor extends StatefulWidget {
       super.key});
 
   @override
-  _PathEditorState createState() => _PathEditorState();
+  State<PathEditor> createState() => _PathEditorState();
 }
 
 class _PathEditorState extends State<PathEditor> {
-  EditorMode _mode = EditorMode.Edit;
+  EditorMode _mode = EditorMode.edit;
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +53,7 @@ class _PathEditorState extends State<PathEditor> {
 
   Widget _buildEditorMode() {
     switch (_mode) {
-      case EditorMode.Edit:
+      case EditorMode.edit:
         return EditEditor(
           path: widget.path,
           robotSize: widget.robotSize,
@@ -64,7 +64,7 @@ class _PathEditorState extends State<PathEditor> {
           prefs: widget.prefs,
           key: ValueKey(widget.path),
         );
-      case EditorMode.Preview:
+      case EditorMode.preview:
         return PreviewEditor(
           path: widget.path,
           fieldImage: widget.fieldImage,
@@ -74,7 +74,7 @@ class _PathEditorState extends State<PathEditor> {
           prefs: widget.prefs,
           key: ValueKey(widget.path),
         );
-      case EditorMode.Markers:
+      case EditorMode.markers:
         return MarkerEditor(
           path: widget.path,
           fieldImage: widget.fieldImage,
@@ -84,7 +84,7 @@ class _PathEditorState extends State<PathEditor> {
           prefs: widget.prefs,
           key: ValueKey(widget.path),
         );
-      case EditorMode.Measure:
+      case EditorMode.measure:
         return MeasureEditor(
           path: widget.path,
           fieldImage: widget.fieldImage,
@@ -103,7 +103,7 @@ class _PathEditorState extends State<PathEditor> {
       alignment: Alignment.bottomCenter,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Container(
+        child: SizedBox(
           height: 48,
           child: Card(
             child: Row(
@@ -115,73 +115,73 @@ class _PathEditorState extends State<PathEditor> {
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
-                    child: Icon(Icons.edit),
                     textColor: colorScheme.onSurface,
-                    onPressed: _mode == EditorMode.Edit
+                    onPressed: _mode == EditorMode.edit
                         ? null
                         : () {
                             UndoRedo.clearHistory();
                             setState(() {
-                              _mode = EditorMode.Edit;
+                              _mode = EditorMode.edit;
                             });
                           },
+                    child: const Icon(Icons.edit),
                   ),
                 ),
-                VerticalDivider(width: 1),
+                const VerticalDivider(width: 1),
                 Tooltip(
                   message: 'Preview',
                   waitDuration: const Duration(milliseconds: 500),
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
-                    child: Icon(Icons.play_arrow),
                     textColor: colorScheme.onSurface,
-                    onPressed: _mode == EditorMode.Preview
+                    onPressed: _mode == EditorMode.preview
                         ? null
                         : () {
                             UndoRedo.clearHistory();
                             setState(() {
-                              _mode = EditorMode.Preview;
+                              _mode = EditorMode.preview;
                             });
                           },
+                    child: const Icon(Icons.play_arrow),
                   ),
                 ),
-                VerticalDivider(width: 1),
+                const VerticalDivider(width: 1),
                 Tooltip(
                   message: 'Edit Markers',
                   waitDuration: const Duration(milliseconds: 500),
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
-                    child: Icon(Icons.pin_drop),
                     textColor: colorScheme.onSurface,
-                    onPressed: _mode == EditorMode.Markers
+                    onPressed: _mode == EditorMode.markers
                         ? null
                         : () {
                             UndoRedo.clearHistory();
                             setState(() {
-                              _mode = EditorMode.Markers;
+                              _mode = EditorMode.markers;
                             });
                           },
+                    child: const Icon(Icons.pin_drop),
                   ),
                 ),
-                VerticalDivider(width: 1),
+                const VerticalDivider(width: 1),
                 Tooltip(
                   message: 'Measure',
                   waitDuration: const Duration(milliseconds: 500),
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
-                    child: Icon(Icons.straighten),
                     textColor: colorScheme.onSurface,
-                    onPressed: _mode == EditorMode.Measure
+                    onPressed: _mode == EditorMode.measure
                         ? null
                         : () {
                             UndoRedo.clearHistory();
                             setState(() {
-                              _mode = EditorMode.Measure;
+                              _mode = EditorMode.measure;
                             });
                           },
+                    child: const Icon(Icons.straighten),
                   ),
                 ),
               ],

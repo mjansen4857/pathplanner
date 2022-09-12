@@ -7,11 +7,11 @@ class SimpleCard extends StatefulWidget {
   final GlobalKey stackKey;
   final SharedPreferences prefs;
 
-  SimpleCard(
+  const SimpleCard(
       {required this.stackKey, this.child, required this.prefs, super.key});
 
   @override
-  _SimpleCardState createState() => _SimpleCardState();
+  State<SimpleCard> createState() => _SimpleCardState();
 }
 
 class _SimpleCardState extends State<SimpleCard> {
@@ -19,7 +19,7 @@ class _SimpleCardState extends State<SimpleCard> {
   Widget build(BuildContext context) {
     return DraggableCard(
       stackKey: widget.stackKey,
-      defaultPosition: CardPosition(top: 0, right: 0),
+      defaultPosition: const CardPosition(top: 0, right: 0),
       prefsKey: 'simpleCardPos',
       prefs: widget.prefs,
       child: Center(

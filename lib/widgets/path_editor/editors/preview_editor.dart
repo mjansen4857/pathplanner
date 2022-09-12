@@ -33,7 +33,7 @@ class PreviewEditor extends StatefulWidget {
 class _PreviewEditorState extends State<PreviewEditor>
     with SingleTickerProviderStateMixin {
   late AnimationController _previewController;
-  GlobalKey _key = GlobalKey();
+  final GlobalKey _key = GlobalKey();
   UniqueKey _pathRuntimeKey = UniqueKey();
 
   @override
@@ -59,27 +59,23 @@ class _PreviewEditorState extends State<PreviewEditor>
       children: [
         Center(
           child: InteractiveViewer(
-            child: Container(
-              child: Padding(
-                padding: const EdgeInsets.all(48),
-                child: Stack(
-                  children: [
-                    widget.fieldImage,
-                    Positioned.fill(
-                      child: Container(
-                        child: CustomPaint(
-                          painter: _PreviewPainter(
-                            widget.path,
-                            widget.fieldImage,
-                            widget.robotSize,
-                            widget.holonomicMode,
-                            _previewController.view,
-                          ),
-                        ),
+            child: Padding(
+              padding: const EdgeInsets.all(48),
+              child: Stack(
+                children: [
+                  widget.fieldImage,
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _PreviewPainter(
+                        widget.path,
+                        widget.fieldImage,
+                        widget.robotSize,
+                        widget.holonomicMode,
+                        _previewController.view,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -120,12 +116,12 @@ class _PreviewEditorState extends State<PreviewEditor>
 
     return SimpleCard(
       stackKey: _key,
+      prefs: widget.prefs,
+      key: _pathRuntimeKey,
       child: Text(
         'Total Runtime: ${widget.path.generatedTrajectory.getRuntime().toStringAsFixed(2)}s',
         style: TextStyle(color: colorScheme.onSurface),
       ),
-      prefs: widget.prefs,
-      key: _pathRuntimeKey,
     );
   }
 }

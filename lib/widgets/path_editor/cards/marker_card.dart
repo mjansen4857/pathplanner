@@ -28,7 +28,8 @@ class MarkerCard extends StatefulWidget {
 }
 
 class _MarkerCardState extends State<MarkerCard> {
-  TextEditingController _nameController = TextEditingController(text: 'marker');
+  final TextEditingController _nameController =
+      TextEditingController(text: 'marker');
   double _sliderPos = 0;
   EventMarker? _oldMarker;
 
@@ -50,7 +51,7 @@ class _MarkerCardState extends State<MarkerCard> {
   Widget build(BuildContext context) {
     return DraggableCard(
       stackKey: widget.stackKey,
-      defaultPosition: CardPosition(top: 0, right: 0),
+      defaultPosition: const CardPosition(top: 0, right: 0),
       prefsKey: 'markerCardPos',
       prefs: widget.prefs,
       child: Column(
@@ -73,7 +74,7 @@ class _MarkerCardState extends State<MarkerCard> {
       mainAxisSize: MainAxisSize.max,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(
+        const SizedBox(
           width: 30,
           height: 30,
         ),
@@ -98,7 +99,7 @@ class _MarkerCardState extends State<MarkerCard> {
                 onPressed: widget.onDelete,
                 splashRadius: 20,
                 iconSize: 20,
-                padding: EdgeInsets.all(0),
+                padding: const EdgeInsets.all(0),
               ),
             ),
           ),
@@ -115,7 +116,7 @@ class _MarkerCardState extends State<MarkerCard> {
       onPanStart: (details) {},
       child: Padding(
         padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
-        child: Container(
+        child: SizedBox(
           height: 35,
           child: TextField(
             onSubmitted: (value) {
@@ -128,7 +129,7 @@ class _MarkerCardState extends State<MarkerCard> {
             controller: _nameController,
             style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
             decoration: InputDecoration(
-              contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
+              contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
               labelText: 'Marker Name',
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
@@ -149,9 +150,7 @@ class _MarkerCardState extends State<MarkerCard> {
         child: InputSlider(
           onChange: (value) {
             if (widget.marker != null) {
-              if (_oldMarker == null) {
-                _oldMarker = widget.marker!.clone();
-              }
+              _oldMarker ??= widget.marker!.clone();
               widget.marker!.position = value;
             }
 
@@ -171,8 +170,8 @@ class _MarkerCardState extends State<MarkerCard> {
           defaultValue: _sliderPos,
           textFieldStyle: TextStyle(fontSize: 14, color: colorScheme.onSurface),
           inputDecoration: InputDecoration(
-            contentPadding: EdgeInsets.fromLTRB(8, 4, 8, 4),
-            label: Text('Position'),
+            contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+            label: const Text('Position'),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
           ),
           inactiveSliderColor: colorScheme.secondaryContainer,
@@ -199,8 +198,8 @@ class _MarkerCardState extends State<MarkerCard> {
               }
             },
             style: ElevatedButton.styleFrom(
-              primary: colorScheme.primaryContainer,
-              onPrimary: colorScheme.onPrimaryContainer,
+              backgroundColor: colorScheme.primaryContainer,
+              foregroundColor: colorScheme.onPrimaryContainer,
             ),
             label: const Text('Add Marker'),
             icon: const Icon(Icons.add),

@@ -9,7 +9,7 @@ import 'package:process_run/shell.dart';
 class PPLibUpdateCard extends StatefulWidget {
   final Directory projectDir;
 
-  PPLibUpdateCard({required this.projectDir, super.key});
+  const PPLibUpdateCard({required this.projectDir, super.key});
 
   @override
   State<PPLibUpdateCard> createState() => _PPLibUpdateCardState();
@@ -29,10 +29,11 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
   void initState() {
     super.initState();
 
-    _updateController =
-        AnimationController(vsync: this, duration: Duration(milliseconds: 400));
-    _offsetAnimation = Tween<Offset>(begin: Offset(0, -0.05), end: Offset.zero)
-        .animate(CurvedAnimation(
+    _updateController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
+    _offsetAnimation =
+        Tween<Offset>(begin: const Offset(0, -0.05), end: Offset.zero)
+            .animate(CurvedAnimation(
       parent: _updateController,
       curve: Curves.ease,
     ));
@@ -88,7 +89,7 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
           padding: const EdgeInsets.fromLTRB(8.0, 4.0, 8.0, 0),
           child: Card(
             child: Padding(
-              padding: EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(10.0),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -97,11 +98,11 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
                     style:
                         TextStyle(fontSize: 18, color: colorScheme.onSurface),
                   ),
-                  SizedBox(width: 12),
+                  const SizedBox(width: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      primary: colorScheme.primaryContainer,
-                      onPrimary: colorScheme.onPrimaryContainer,
+                      backgroundColor: colorScheme.primaryContainer,
+                      foregroundColor: colorScheme.onPrimaryContainer,
                     ),
                     onPressed: () async {
                       if (_remoteFileContent != null) {
@@ -113,13 +114,18 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
                         });
 
                         Shell shell = Shell().cd(widget.projectDir.path);
+
+                        if (!mounted) return;
                         _showSnackbar(context, 'Building robot code...',
-                            duration: Duration(minutes: 10));
+                            duration: const Duration(minutes: 10));
+
                         try {
                           String gradlew =
                               Platform.isWindows ? 'gradlew' : './gradlew';
                           ProcessResult result = await shell
                               .runExecutableArguments(gradlew, ['build']);
+
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).removeCurrentSnackBar();
                           if (result.exitCode == 0) {
                             _showSnackbar(
@@ -138,20 +144,20 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
                         }
                       }
                     },
-                    child: Text('Update'),
+                    child: const Text('Update'),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      primary: colorScheme.surfaceVariant,
-                      onPrimary: colorScheme.onSurfaceVariant,
+                      backgroundColor: colorScheme.surfaceVariant,
+                      foregroundColor: colorScheme.onSurfaceVariant,
                     ),
                     onPressed: () {
                       setState(() {
                         _visibile = false;
                       });
                     },
-                    child: Text('Dismiss'),
+                    child: const Text('Dismiss'),
                   ),
                 ],
               ),
@@ -171,7 +177,7 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
         message,
         style: TextStyle(color: textColor, fontSize: 16),
       ),
-      duration: duration ?? Duration(milliseconds: 4000),
+      duration: duration ?? const Duration(milliseconds: 4000),
       backgroundColor: colorScheme.surfaceVariant,
     ));
   }

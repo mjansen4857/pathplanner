@@ -199,6 +199,43 @@ public class PathPlanner {
         return loadPathGroup(name, false, new PathConstraints(maxVel, maxAccel));
     }
 
+    public static PathPlannerTrajectory generatePath(PathConstraints constraints, boolean reversed, PathPoint point1, PathPoint point2, PathPoint... points){
+        ArrayList<PathPoint> allPoints = new ArrayList<>();
+        allPoints.add(point1);
+        allPoints.add(point2);
+        allPoints.addAll(Arrays.asList(points));
+
+        ArrayList<Waypoint> waypoints = new ArrayList<>();
+        waypoints.add(new Waypoint(point1.position, null, null, point1.velocityOverride, point1.holonomicRotation, false, false));
+
+        for(int i = 1; i < allPoints.size(); i++){
+            PathPoint p1 = allPoints.get(i - 1);
+            PathPoint p2 = allPoints.get(i);
+
+            double thirdDistance = p1.position.getDistance(p2.position) / 3.0;
+
+            Translation2d p1Next = p1.position.plus(new Translation2d(p1.heading.getCos() * thirdDistance, p1.heading.getSin() * thirdDistance));
+            waypoints.get(i - 1).nextControl = p1Next;
+
+            Translation2d p2Prev = p2.position.minus(new Translation2d(p2.heading.getCos() * thirdDistance, p2.heading.getSin() * thirdDistance));
+            waypoints.add(new Waypoint(p2.position, p2Prev, null, p2.velocityOverride, p2.holonomicRotation, false, false));
+        }
+
+        return new PathPlannerTrajectory(waypoints, new ArrayList<>(), constraints, reversed);
+    }
+
+    public static PathPlannerTrajectory generatePath(double maxVel, double maxAccel, boolean reversed, PathPoint point1, PathPoint point2, PathPoint... points){
+        return generatePath(new PathConstraints(maxVel, maxAccel), reversed, point1, point2, points);
+    }
+
+    public static PathPlannerTrajectory generatePath(PathConstraints constraints, PathPoint point1, PathPoint point2, PathPoint... points){
+        return generatePath(constraints , false, point1, point2, points);
+    }
+
+    public static PathPlannerTrajectory generatePath(double maxVel, double maxAccel, PathPoint point1, PathPoint point2, PathPoint... points){
+        return generatePath(new PathConstraints(maxVel, maxAccel), false, point1, point2, points);
+    }
+
     /**
      * Load path constraints from a path file in storage. This can be used to change path max vel/accel in the
      * GUI instead of updating and rebuilding code. This requires that max velocity and max acceleration have been

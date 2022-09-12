@@ -43,6 +43,7 @@ void main() async {
 
       WindowOptions windowOptions = WindowOptions(
         size: Size(1280, 720),
+        minimumSize: Size(640, 360),
         center: true,
         title: 'PathPlanner',
         titleBarStyle:

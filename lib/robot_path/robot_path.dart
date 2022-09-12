@@ -175,6 +175,7 @@ class RobotPath {
 
 class EventMarker {
   double position;
+  late double timeSeconds;
   String name;
 
   EventMarker(this.position, this.name);

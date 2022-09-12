@@ -7,6 +7,7 @@ import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/services/generator/math_util.dart';
 
 class Trajectory {
+  static final double resolution = 0.004;
   late final List<TrajectoryState> states;
 
   Trajectory(this.states);
@@ -71,18 +72,41 @@ class Trajectory {
       }
     }
 
-    return Trajectory.joinTrajectories(trajectories);
+    Trajectory trajectory = Trajectory.joinTrajectories(trajectories);
+
+    calculateMarkerTimes(trajectory, path.markers);
+
+    return trajectory;
   }
 
   static Future<Trajectory> generateSingleTrajectory(List<Waypoint> pathPoints,
       num? maxVel, num? maxAccel, bool reversed) async {
     List<TrajectoryState> joined =
-        joinSplines(pathPoints, maxVel ?? 8.0, 0.004);
+        joinSplines(pathPoints, maxVel ?? 8.0, Trajectory.resolution);
     calculateMaxVel(joined, maxVel ?? 8.0, maxAccel ?? 5.0, reversed);
     calculateVelocity(joined, pathPoints, maxAccel ?? 5.0);
     recalculateValues(joined, reversed);
 
     return Trajectory(joined);
+  }
+
+  static void calculateMarkerTimes(
+      Trajectory trajectory, List<EventMarker> markers) async {
+    for (EventMarker marker in markers) {
+      int statesPerWaypoint = 1 ~/ Trajectory.resolution;
+      int startIndex = (statesPerWaypoint * marker.position).floor() -
+          marker.position.floor();
+      double t = (statesPerWaypoint * marker.position) % 1;
+
+      if (startIndex == trajectory.states.length - 1) {
+        startIndex--;
+        t = 1;
+      }
+      num start = trajectory.states[startIndex].timeSeconds;
+      num end = trajectory.states[startIndex + 1].timeSeconds;
+
+      marker.timeSeconds = GeometryUtil.numLerp(start, end, t).toDouble();
+    }
   }
 
   TrajectoryState sample(num time) {

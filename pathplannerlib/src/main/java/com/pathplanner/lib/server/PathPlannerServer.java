@@ -1,13 +1,22 @@
 package com.pathplanner.lib.server;
 
+import com.pathplanner.lib.PathPlannerTrajectory;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.Filesystem;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PathPlannerServer {
     private static volatile boolean isRunning = false;
@@ -45,8 +54,66 @@ public class PathPlannerServer {
         // Non ping-pong messages are sent in json format
         try {
             JSONObject json = (JSONObject) new JSONParser().parse(message);
+
+            String command = (String) json.get("command");
+
+            switch (command){
+                case "updatePath":
+                    String pathName = (String) json.get("pathName");
+                    String fileContent = (String) json.get("fileContent");
+
+                    File pathFile = new File(Filesystem.getDeployDirectory(), "pathplanner/" + pathName + ".path");
+
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(pathFile))) {
+                        writer.write(fileContent);
+                        writer.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break;
+                default:
+                    // Unknown command
+                    break;
+            }
         } catch (ParseException e) {
             // Invalid json. Ignore this message
         }
+    }
+
+    public static void sendActivePath(List<Trajectory.State> states){
+        JSONObject json = new JSONObject();
+
+        json.put("command", "activePath");
+
+        JSONArray statesJson = new JSONArray();
+        for(Trajectory.State s : states){
+            JSONObject stateJson = new JSONObject();
+            stateJson.put("x", s.poseMeters.getTranslation().getX());
+            stateJson.put("y", s.poseMeters.getTranslation().getY());
+            statesJson.add(stateJson);
+        }
+        json.put("states", statesJson);
+
+        sendToClients(json.toJSONString());
+    }
+
+    public static void sendPathFollowingData(Pose2d targetPose, Pose2d actualPose){
+        JSONObject json = new JSONObject();
+
+        json.put("command", "pathFollowingData");
+
+        JSONObject targetPoseJson = new JSONObject();
+        targetPoseJson.put("x", targetPose.getX());
+        targetPoseJson.put("y", targetPose.getY());
+        targetPoseJson.put("theta", targetPose.getRotation().getRadians());
+        json.put("targetPose", targetPoseJson);
+
+        JSONObject actualPoseJson = new JSONObject();
+        actualPoseJson.put("x", actualPose.getX());
+        actualPoseJson.put("y", actualPose.getY());
+        actualPoseJson.put("theta", actualPose.getRotation().getRadians());
+        json.put("actualPose", actualPoseJson);
+
+        sendToClients(json.toJSONString());
     }
 }

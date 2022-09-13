@@ -1,6 +1,7 @@
 package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.server.PathPlannerServer;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
@@ -204,6 +205,8 @@ public class PPRamseteCommand extends CommandBase {
             this.leftController.reset();
             this.rightController.reset();
         }
+
+        PathPlannerServer.sendActivePath(this.trajectory.getStates());
     }
 
     @Override
@@ -219,6 +222,7 @@ public class PPRamseteCommand extends CommandBase {
         Pose2d currentPose = this.poseSupplier.get();
         PathPlannerTrajectory.PathPlannerState desiredState = (PathPlannerTrajectory.PathPlannerState) this.trajectory.sample(currentTime);
         this.field.setRobotPose(currentPose);
+        PathPlannerServer.sendPathFollowingData(desiredState.poseMeters, currentPose);
 
         SmartDashboard.putNumber("PPRamseteCommand_xError", currentPose.getX() - desiredState.poseMeters.getX());
         SmartDashboard.putNumber("PPRamseteCommand_yError", currentPose.getY() - desiredState.poseMeters.getY());

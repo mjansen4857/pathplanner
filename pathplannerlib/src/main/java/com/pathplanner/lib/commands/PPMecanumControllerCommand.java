@@ -7,6 +7,7 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.PathPlannerTrajectory.PathPlannerState;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.server.PathPlannerServer;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -123,6 +124,8 @@ public class PPMecanumControllerCommand extends CommandBase {
 
     this.timer.reset();
     this.timer.start();
+
+    PathPlannerServer.sendActivePath(this.trajectory.getStates());
   }
 
   @Override
@@ -132,6 +135,7 @@ public class PPMecanumControllerCommand extends CommandBase {
 
     Pose2d currentPose = this.poseSupplier.get();
     this.field.setRobotPose(currentPose);
+    PathPlannerServer.sendPathFollowingData(new Pose2d(desiredState.poseMeters.getTranslation(), desiredState.holonomicRotation), currentPose);
 
     SmartDashboard.putNumber("PPMecanumControllerCommand_xError", currentPose.getX() - desiredState.poseMeters.getX());
     SmartDashboard.putNumber("PPMecanumControllerCommand_yError", currentPose.getY() - desiredState.poseMeters.getY());

@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 import 'package:logger/src/outputs/file_output.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
@@ -54,6 +55,8 @@ void main() async {
         await windowManager.show();
         await windowManager.focus();
       });
+
+      PPLibClient.initialize('127.0.0.1', 5810);
 
       runApp(PathPlanner(
         logger: logger,

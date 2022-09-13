@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -11,6 +12,8 @@ class PPLibClient {
 
   static Stream<bool> connectionStatusStream() async* {
     bool connected = socket != null;
+    yield connected;
+
     while (true) {
       bool isConnected = socket != null;
       if (connected != isConnected) {
@@ -27,7 +30,6 @@ class PPLibClient {
     enabled = true;
 
     try {
-      print('Attempting to connect to $host:$port');
       socket = await Socket.connect(host, port);
     } catch (e) {
       // Connection refused. Wait a few seconds and try again
@@ -37,25 +39,48 @@ class PPLibClient {
     }
     lastPong = DateTime.now();
 
-    print('Connected to server');
-
     socket!.listen(
       (Uint8List data) {
-        String str = String.fromCharCodes(data);
-        str = str.replaceAll('\r', '');
-        str = str.replaceAll('\n', '');
-        print('Received from server: $str');
+        String str = String.fromCharCodes(data).trim();
+        List<String> messages = str.split('\n');
 
-        if (str == 'pong') {
-          lastPong = DateTime.now();
+        // Dart sockets can group multiple messages together
+        for (String message in messages) {
+          String msg = message.trim();
+
+          if (msg == 'pong') {
+            lastPong = DateTime.now();
+          } else {
+            // Commands are sent in JSON format
+            Map<String, dynamic> json = jsonDecode(msg);
+
+            String command = json['command'];
+            switch (command) {
+              case 'activePath':
+                {
+                  print('Active path: ${json['states']}');
+                }
+                break;
+              case 'pathFollowingData':
+                {
+                  // print('Path following data:');
+                  // print('Target: ${json['targetPose']}');
+                  // print('Actual: ${json['actualtPose']}');
+                }
+                break;
+              default:
+                {
+                  // Unknown command
+                }
+                break;
+            }
+          }
         }
       },
       onError: (error) {
         print('Server connection error');
       },
       onDone: () {
-        print('Connection ended');
-
         if (socket != null) {
           socket!.destroy();
           socket = null;
@@ -76,7 +101,6 @@ class PPLibClient {
 
       if (DateTime.now().difference(lastPong).inSeconds > 10) {
         // Connection with server timed out
-        print('Connection with server timed out');
         socket!.destroy();
         timer.cancel();
         return;
@@ -88,7 +112,6 @@ class PPLibClient {
 
   static void stopServer() {
     if (enabled) {
-      print('Stopping server');
       enabled = false;
       if (socket != null) {
         socket!.destroy();

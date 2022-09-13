@@ -41,12 +41,10 @@ public class PathPlannerServer {
     }
 
     private static void sendToClients(String message){
+        clients.removeIf(client -> !client.isAlive);
+
         for(PathPlannerServerThread client : clients) {
-            if(!client.isAlive){
-                clients.remove(client);
-            }else{
-                client.sendMessage(message);
-            }
+            client.sendMessage(message);
         }
     }
 
@@ -86,12 +84,19 @@ public class PathPlannerServer {
         json.put("command", "activePath");
 
         JSONArray statesJson = new JSONArray();
-        for(Trajectory.State s : states){
-            JSONObject stateJson = new JSONObject();
-            stateJson.put("x", s.poseMeters.getTranslation().getX());
-            stateJson.put("y", s.poseMeters.getTranslation().getY());
-            statesJson.add(stateJson);
+        // Send only 1 in 10 states to prevent buffer overflow on longer paths
+        for(int i = 0; i < states.size() - 1; i += 10){
+            JSONArray stateArr = new JSONArray();
+            stateArr.add(Math.round(states.get(i).poseMeters.getTranslation().getX() * 100.0) / 100.0);
+            stateArr.add(Math.round(states.get(i).poseMeters.getTranslation().getY() * 100.0) / 100.0);
+            statesJson.add(stateArr);
         }
+
+        JSONArray lastStateArr = new JSONArray();
+        lastStateArr.add(Math.round(states.get(states.size() - 1).poseMeters.getTranslation().getX() * 100.0) / 100.0);
+        lastStateArr.add(Math.round(states.get(states.size() - 1).poseMeters.getTranslation().getY() * 100.0) / 100.0);
+        statesJson.add(lastStateArr);
+        
         json.put("states", statesJson);
 
         sendToClients(json.toJSONString());

@@ -1,18 +1,49 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:pathplanner/services/pplib_client.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'window_buttons.dart';
 
 class CustomAppBar extends AppBar {
   final String titleText;
+  final bool pplibClient;
 
-  CustomAppBar({this.titleText = 'PathPlanner', super.key})
+  CustomAppBar(
+      {this.titleText = 'PathPlanner', this.pplibClient = false, super.key})
       : super(
           actions: Platform.isMacOS
               ? null
               : [
+                  if (pplibClient)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: StreamBuilder<bool>(
+                          stream: PPLibClient.connectionStatusStream(),
+                          builder: (context, snapshot) {
+                            bool connected =
+                                snapshot.hasData ? snapshot.data! : false;
+
+                            if (connected) {
+                              return const Tooltip(
+                                message: 'Connected to Robot',
+                                child: Icon(
+                                  Icons.lan,
+                                  color: Colors.green,
+                                ),
+                              );
+                            } else {
+                              return const Tooltip(
+                                message: 'Not Connected to Robot',
+                                child: Icon(
+                                  Icons.lan,
+                                  color: Colors.red,
+                                ),
+                              );
+                            }
+                          }),
+                    ),
                   MinimizeWindowButton(),
                   MaximizeWindowButton(),
                   CloseWindowButton(),

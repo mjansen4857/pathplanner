@@ -56,8 +56,6 @@ void main() async {
         await windowManager.focus();
       });
 
-      PPLibClient.initialize('127.0.0.1', 5810);
-
       runApp(PathPlanner(
         logger: logger,
       ));

@@ -40,8 +40,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late bool _holonomicMode;
   late bool _generateJSON;
   late bool _generateCSV;
+  late bool _pplibClient;
   late FieldImage _selectedField;
   late Color _teamColor;
+  late String _pplibClientHost;
+  late int _pplibClientPort;
 
   @override
   void initState() {
@@ -52,8 +55,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
     _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
     _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
     _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
+    _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
     _selectedField = widget.selectedField;
     _teamColor = Color(widget.prefs.getInt('teamColor') ?? Colors.indigo.value);
+    _pplibClientHost =
+        widget.prefs.getString('pplibClientHost') ?? '10.30.15.2';
+    _pplibClientPort = widget.prefs.getInt('pplibClientPort') ?? 5810;
   }
 
   @override
@@ -73,27 +80,41 @@ class _SettingsDialogState extends State<SettingsDialog> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildTextField(context, 'Width', (value) {
-                  if (value != null) {
-                    widget.prefs.setDouble('robotWidth', value);
-                    setState(() {
-                      _width = value;
-                    });
-                  }
-                  widget.onSettingsChanged();
-                }, _width.toStringAsFixed(2)),
-                _buildTextField(context, 'Length', (value) {
-                  if (value != null) {
-                    widget.prefs.setDouble('robotLength', value);
-                    setState(() {
-                      _length = value;
-                    });
-                  }
-                  widget.onSettingsChanged();
-                }, _length.toStringAsFixed(2)),
+                _buildTextField(
+                  context,
+                  'Width',
+                  (value) {
+                    double? val = double.tryParse(value);
+                    if (val != null) {
+                      widget.prefs.setDouble('robotWidth', val);
+                      setState(() {
+                        _width = val;
+                      });
+                    }
+                    widget.onSettingsChanged();
+                  },
+                  _width.toStringAsFixed(2),
+                  FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
+                ),
+                _buildTextField(
+                  context,
+                  'Length',
+                  (value) {
+                    double? val = double.tryParse(value);
+                    if (val != null) {
+                      widget.prefs.setDouble('robotLength', val);
+                      setState(() {
+                        _length = val;
+                      });
+                    }
+                    widget.onSettingsChanged();
+                  },
+                  _length.toStringAsFixed(2),
+                  FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
+                ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -101,7 +122,51 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 _buildTeamColorPicker(context),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
+            if (_pplibClient)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('PPLib Client:'),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildTextField(
+                        context,
+                        'Host',
+                        (value) {
+                          widget.prefs.setString('pplibClientHost', value);
+                          setState(() {
+                            _pplibClientHost = value;
+                          });
+                          widget.onSettingsChanged();
+                        },
+                        _pplibClientHost,
+                        null,
+                      ),
+                      _buildTextField(
+                        context,
+                        'Port',
+                        (value) {
+                          int? val = int.tryParse(value);
+                          if (val != null) {
+                            widget.prefs.setInt('pplibClientPort', val);
+                            setState(() {
+                              _pplibClientPort = val;
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                        _pplibClientPort.toString(),
+                        FilteringTextInputFormatter.allow(RegExp(r'(^\d*)')),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
             Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,6 +255,30 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         widget.onSettingsChanged();
                       },
                     ),
+                    FilterChip(
+                      label: const Text('PPLib Client'),
+                      labelStyle: TextStyle(
+                          color: _pplibClient
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onSurface),
+                      selected: _pplibClient,
+                      backgroundColor: colorScheme.surface,
+                      selectedColor: colorScheme.primaryContainer,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                              color: _pplibClient
+                                  ? colorScheme.primaryContainer
+                                  : colorScheme.outline,
+                              width: 1)),
+                      onSelected: (value) {
+                        widget.prefs.setBool('pplibClient', value);
+                        setState(() {
+                          _pplibClient = value;
+                        });
+                        widget.onSettingsChanged();
+                      },
+                    ),
                   ],
                 ),
               ],
@@ -206,8 +295,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
     );
   }
 
-  Widget _buildTextField(BuildContext context, String label,
-      ValueChanged? onSubmitted, String text) {
+  Widget _buildTextField(
+      BuildContext context,
+      String label,
+      ValueChanged<String>? onSubmitted,
+      String text,
+      TextInputFormatter? formatter) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
@@ -217,9 +310,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
         width: 165,
         child: TextField(
           onSubmitted: (val) {
-            if (onSubmitted != null) {
-              var parsed = double.tryParse(val)!;
-              onSubmitted.call(parsed);
+            if (onSubmitted != null && val.isNotEmpty) {
+              onSubmitted.call(val);
             }
             _unfocus(context);
           },
@@ -227,7 +319,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             ..selection =
                 TextSelection.fromPosition(TextPosition(offset: text.length)),
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'(^\d*\.?\d*)')),
+            if (formatter != null) formatter,
           ],
           style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
           decoration: InputDecoration(

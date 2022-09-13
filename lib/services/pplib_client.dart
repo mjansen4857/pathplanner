@@ -2,19 +2,37 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PPLibClient {
   static Socket? socket;
+  static bool enabled = false;
   static DateTime lastPong = DateTime.now();
 
-  static Future<void> initialize(String host, int port) async {
+  static Stream<bool> connectionStatusStream() async* {
+    bool connected = socket != null;
+    while (true) {
+      bool isConnected = socket != null;
+      if (connected != isConnected) {
+        connected = isConnected;
+        yield connected;
+      }
+      await Future.delayed(const Duration(seconds: 5));
+    }
+  }
+
+  static Future<void> initialize(SharedPreferences prefs) async {
+    String host = prefs.getString('pplibClientHost') ?? '10.30.15.2';
+    int port = prefs.getInt('pplibClientPort') ?? 5810;
+    enabled = true;
+
     try {
       print('Attempting to connect to $host:$port');
       socket = await Socket.connect(host, port);
     } catch (e) {
       // Connection refused. Wait a few seconds and try again
       await Future.delayed(const Duration(seconds: 10));
-      initialize(host, port);
+      if (enabled) initialize(prefs);
       return;
     }
     lastPong = DateTime.now();
@@ -44,7 +62,7 @@ class PPLibClient {
         }
 
         // Attempt to reconnect.
-        initialize(host, port);
+        if (enabled) initialize(prefs);
       },
     );
 
@@ -66,5 +84,15 @@ class PPLibClient {
 
       socket!.writeln('ping');
     });
+  }
+
+  static void stopServer() {
+    if (enabled) {
+      print('Stopping server');
+      enabled = false;
+      if (socket != null) {
+        socket!.destroy();
+      }
+    }
   }
 }

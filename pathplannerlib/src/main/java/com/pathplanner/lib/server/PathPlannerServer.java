@@ -1,5 +1,9 @@
 package com.pathplanner.lib.server;
 
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -17,13 +21,32 @@ public class PathPlannerServer {
 
                     while(true){
                         Socket socket = serverSocket.accept();
-                        clients.add(new PathPlannerServerThread(socket));
+                        clients.add(new PathPlannerServerThread(socket, PathPlannerServer::handleMessage));
                         clients.get(clients.size() - 1).start();
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }).start();
+        }
+    }
+
+    private static void sendToClients(String message){
+        for(PathPlannerServerThread client : clients) {
+            if(!client.isAlive){
+                clients.remove(client);
+            }else{
+                client.sendMessage(message);
+            }
+        }
+    }
+
+    private static void handleMessage(String message){
+        // Non ping-pong messages are sent in json format
+        try {
+            JSONObject json = (JSONObject) new JSONParser().parse(message);
+        } catch (ParseException e) {
+            // Invalid json. Ignore this message
         }
     }
 }

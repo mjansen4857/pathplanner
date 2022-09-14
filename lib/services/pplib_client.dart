@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -36,6 +37,18 @@ class PPLibClient {
   static void setOnPathFollowingDataChanged(
       Function(TrajectoryState, TrajectoryState) onChanged) {
     _onPathFollowingDataChanged = onChanged;
+  }
+
+  static void sendUpdatedPath(RobotPath path) {
+    if (_enabled && _socket != null) {
+      Map<String, dynamic> json = {
+        'command': 'updatePath',
+        'pathName': path.name,
+        'fileContent': jsonEncode(path),
+      };
+
+      _socket!.writeln(jsonEncode(json));
+    }
   }
 
   static Future<void> initialize(SharedPreferences prefs) async {

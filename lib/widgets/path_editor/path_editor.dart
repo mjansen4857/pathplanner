@@ -1,10 +1,15 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/services/generator/trajectory.dart';
+import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/editors/edit_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/marker_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/measure_editor.dart';
+import 'package:pathplanner/widgets/path_editor/editors/path_following_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/preview_editor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,6 +18,7 @@ enum EditorMode {
   preview,
   markers,
   measure,
+  pathFollowing,
 }
 
 class PathEditor extends StatefulWidget {
@@ -40,6 +46,27 @@ class PathEditor extends StatefulWidget {
 
 class _PathEditorState extends State<PathEditor> {
   EditorMode _mode = EditorMode.edit;
+  List<Point>? _activePath;
+  TrajectoryState? _targetPose;
+  TrajectoryState? _actualPose;
+
+  @override
+  void initState() {
+    super.initState();
+
+    PPLibClient.setOnActivePathChanged((value) {
+      setState(() {
+        _activePath = value;
+      });
+    });
+
+    PPLibClient.setOnPathFollowingDataChanged((p0, p1) {
+      setState(() {
+        _targetPose = p0;
+        _actualPose = p1;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +120,14 @@ class _PathEditorState extends State<PathEditor> {
           prefs: widget.prefs,
           key: ValueKey(widget.path),
         );
+      case EditorMode.pathFollowing:
+        return PathFollowingEditor(
+          fieldImage: widget.fieldImage,
+          robotSize: widget.robotSize,
+          activePath: _activePath,
+          targetPose: _targetPose,
+          actualPose: _actualPose,
+        );
     }
   }
 
@@ -106,86 +141,112 @@ class _PathEditorState extends State<PathEditor> {
         child: SizedBox(
           height: 48,
           child: Card(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Tooltip(
-                  message: 'Edit Path',
-                  waitDuration: const Duration(milliseconds: 500),
-                  child: MaterialButton(
-                    height: 50,
-                    minWidth: 50,
-                    textColor: colorScheme.onSurface,
-                    onPressed: _mode == EditorMode.edit
-                        ? null
-                        : () {
-                            UndoRedo.clearHistory();
-                            setState(() {
-                              _mode = EditorMode.edit;
-                            });
-                          },
-                    child: const Icon(Icons.edit),
-                  ),
-                ),
-                const VerticalDivider(width: 1),
-                Tooltip(
-                  message: 'Preview',
-                  waitDuration: const Duration(milliseconds: 500),
-                  child: MaterialButton(
-                    height: 50,
-                    minWidth: 50,
-                    textColor: colorScheme.onSurface,
-                    onPressed: _mode == EditorMode.preview
-                        ? null
-                        : () {
-                            UndoRedo.clearHistory();
-                            setState(() {
-                              _mode = EditorMode.preview;
-                            });
-                          },
-                    child: const Icon(Icons.play_arrow),
-                  ),
-                ),
-                const VerticalDivider(width: 1),
-                Tooltip(
-                  message: 'Edit Markers',
-                  waitDuration: const Duration(milliseconds: 500),
-                  child: MaterialButton(
-                    height: 50,
-                    minWidth: 50,
-                    textColor: colorScheme.onSurface,
-                    onPressed: _mode == EditorMode.markers
-                        ? null
-                        : () {
-                            UndoRedo.clearHistory();
-                            setState(() {
-                              _mode = EditorMode.markers;
-                            });
-                          },
-                    child: const Icon(Icons.pin_drop),
-                  ),
-                ),
-                const VerticalDivider(width: 1),
-                Tooltip(
-                  message: 'Measure',
-                  waitDuration: const Duration(milliseconds: 500),
-                  child: MaterialButton(
-                    height: 50,
-                    minWidth: 50,
-                    textColor: colorScheme.onSurface,
-                    onPressed: _mode == EditorMode.measure
-                        ? null
-                        : () {
-                            UndoRedo.clearHistory();
-                            setState(() {
-                              _mode = EditorMode.measure;
-                            });
-                          },
-                    child: const Icon(Icons.straighten),
-                  ),
-                ),
-              ],
-            ),
+            child: StreamBuilder(
+                stream: PPLibClient.connectionStatusStream(),
+                builder: (context, snapshot) {
+                  bool connected = snapshot.hasData ? snapshot.data! : false;
+
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Tooltip(
+                        message: 'Edit Path',
+                        waitDuration: const Duration(milliseconds: 500),
+                        child: MaterialButton(
+                          height: 50,
+                          minWidth: 50,
+                          textColor: colorScheme.onSurface,
+                          onPressed: _mode == EditorMode.edit
+                              ? null
+                              : () {
+                                  UndoRedo.clearHistory();
+                                  setState(() {
+                                    _mode = EditorMode.edit;
+                                  });
+                                },
+                          child: const Icon(Icons.edit),
+                        ),
+                      ),
+                      const VerticalDivider(width: 1),
+                      Tooltip(
+                        message: 'Preview',
+                        waitDuration: const Duration(milliseconds: 500),
+                        child: MaterialButton(
+                          height: 50,
+                          minWidth: 50,
+                          textColor: colorScheme.onSurface,
+                          onPressed: _mode == EditorMode.preview
+                              ? null
+                              : () {
+                                  UndoRedo.clearHistory();
+                                  setState(() {
+                                    _mode = EditorMode.preview;
+                                  });
+                                },
+                          child: const Icon(Icons.play_arrow),
+                        ),
+                      ),
+                      const VerticalDivider(width: 1),
+                      Tooltip(
+                        message: 'Edit Markers',
+                        waitDuration: const Duration(milliseconds: 500),
+                        child: MaterialButton(
+                          height: 50,
+                          minWidth: 50,
+                          textColor: colorScheme.onSurface,
+                          onPressed: _mode == EditorMode.markers
+                              ? null
+                              : () {
+                                  UndoRedo.clearHistory();
+                                  setState(() {
+                                    _mode = EditorMode.markers;
+                                  });
+                                },
+                          child: const Icon(Icons.pin_drop),
+                        ),
+                      ),
+                      const VerticalDivider(width: 1),
+                      Tooltip(
+                        message: 'Measure',
+                        waitDuration: const Duration(milliseconds: 500),
+                        child: MaterialButton(
+                          height: 50,
+                          minWidth: 50,
+                          textColor: colorScheme.onSurface,
+                          onPressed: _mode == EditorMode.measure
+                              ? null
+                              : () {
+                                  UndoRedo.clearHistory();
+                                  setState(() {
+                                    _mode = EditorMode.measure;
+                                  });
+                                },
+                          child: const Icon(Icons.straighten),
+                        ),
+                      ),
+                      if (connected) const VerticalDivider(width: 1),
+                      if (connected)
+                        Tooltip(
+                          message: 'Path Following',
+                          waitDuration: const Duration(milliseconds: 500),
+                          child: MaterialButton(
+                            height: 50,
+                            minWidth: 50,
+                            textColor: colorScheme.onSurface,
+                            onPressed: _mode == EditorMode.pathFollowing
+                                ? null
+                                : () {
+                                    UndoRedo.clearHistory();
+                                    setState(() {
+                                      _mode = EditorMode.pathFollowing;
+                                    });
+                                  },
+                            child: const Icon(Icons.route),
+                          ),
+                        ),
+                    ],
+                  );
+                }),
           ),
         ),
       ),

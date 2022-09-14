@@ -96,7 +96,7 @@ public class PathPlannerServer {
         lastStateArr.add(Math.round(states.get(states.size() - 1).poseMeters.getTranslation().getX() * 100.0) / 100.0);
         lastStateArr.add(Math.round(states.get(states.size() - 1).poseMeters.getTranslation().getY() * 100.0) / 100.0);
         statesJson.add(lastStateArr);
-        
+
         json.put("states", statesJson);
 
         sendToClients(json.toJSONString());

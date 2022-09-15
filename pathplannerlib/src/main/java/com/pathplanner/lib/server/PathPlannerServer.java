@@ -20,7 +20,7 @@ import java.util.List;
 
 public class PathPlannerServer {
     private static volatile boolean isRunning = false;
-    private static volatile ArrayList<PathPlannerServerThread> clients = new ArrayList<>();
+    private static ArrayList<PathPlannerServerThread> clients = new ArrayList<>();
 
     public static void startServer(int serverPort){
         if(!isRunning){

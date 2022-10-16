@@ -3,6 +3,7 @@ import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/editors/edit_editor.dart';
+import 'package:pathplanner/widgets/path_editor/editors/graph_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/marker_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/measure_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/preview_editor.dart';
@@ -13,6 +14,7 @@ enum EditorMode {
   preview,
   markers,
   measure,
+  graph,
 }
 
 class PathEditor extends StatefulWidget {
@@ -90,6 +92,14 @@ class _PathEditorState extends State<PathEditor> {
           fieldImage: widget.fieldImage,
           robotSize: widget.robotSize,
           holonomicMode: widget.holonomicMode,
+          prefs: widget.prefs,
+          key: ValueKey(widget.path),
+        );
+      case EditorMode.graph:
+        return GraphEditor(
+          path: widget.path,
+          holonomicMode: widget.holonomicMode,
+          savePath: widget.savePath,
           prefs: widget.prefs,
           key: ValueKey(widget.path),
         );
@@ -184,6 +194,24 @@ class _PathEditorState extends State<PathEditor> {
                     child: const Icon(Icons.straighten),
                   ),
                 ),
+                const VerticalDivider(width: 1),
+                Tooltip(
+                    message: 'Graph Path',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: MaterialButton(
+                      height: 50,
+                      minWidth: 50,
+                      textColor: colorScheme.onSurface,
+                      onPressed: _mode == EditorMode.graph
+                          ? null
+                          : () {
+                              UndoRedo.clearHistory();
+                              setState(() {
+                                _mode = EditorMode.graph;
+                              });
+                            },
+                      child: const Icon(Icons.show_chart),
+                    )),
               ],
             ),
           ),

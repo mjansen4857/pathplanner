@@ -384,6 +384,7 @@ class _GraphEditorState extends State<GraphEditor> {
   Widget _buildGraphSettingsCard() {
     return GraphSettingsCard(
         stackKey: _key,
+        key: _graphRuntimeKey,
         holonomicMode: widget.holonomicMode,
         onUpdate: () async {
           setState(() {

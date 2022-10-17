@@ -62,6 +62,23 @@ class RobotPath {
     maxAcceleration = json['maxAcceleration'];
     isReversed = json['isReversed'];
 
+    // Validate some stuff to avoid loading invalid files
+    if (waypoints.length < 2) {
+      throw RobotPathJsonException('Less than 2 waypoints');
+    }
+    if (waypoints.first.isReversal ||
+        waypoints.first.isStopPoint ||
+        waypoints.last.isReversal ||
+        waypoints.last.isStopPoint) {
+      throw RobotPathJsonException(
+          'Start or end point is marked as a reversal or stop point');
+    }
+    for (Waypoint w in waypoints) {
+      if (w.velOverride == 0) {
+        throw RobotPathJsonException('Velocity override of a waypoint is 0');
+      }
+    }
+
     generateTrajectory();
   }
 
@@ -214,4 +231,10 @@ class EventMarker {
 
   @override
   int get hashCode => position.hashCode + name.hashCode;
+}
+
+class RobotPathJsonException implements Exception {
+  final String cause;
+
+  RobotPathJsonException(this.cause);
 }

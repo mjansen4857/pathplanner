@@ -138,22 +138,22 @@ class _EditEditorState extends State<EditEditor> {
                 if (w.isPointInAnchor(
                         _xPixelsToMeters(details.localPosition.dx),
                         _yPixelsToMeters(details.localPosition.dy),
-                        _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                        _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                             25, _EditPainter.scale, widget.fieldImage))) ||
                     w.isPointInNextControl(
                         _xPixelsToMeters(details.localPosition.dx),
                         _yPixelsToMeters(details.localPosition.dy),
-                        _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                        _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                             20, _EditPainter.scale, widget.fieldImage))) ||
                     w.isPointInPrevControl(
                         _xPixelsToMeters(details.localPosition.dx),
                         _yPixelsToMeters(details.localPosition.dy),
-                        _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                        _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                             20, _EditPainter.scale, widget.fieldImage))) ||
                     w.isPointInHolonomicThing(
                         _xPixelsToMeters(details.localPosition.dx),
                         _yPixelsToMeters(details.localPosition.dy),
-                        _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                        _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                             15, _EditPainter.scale, widget.fieldImage)),
                         widget.robotSize.height)) {
                   setState(() {
@@ -175,22 +175,22 @@ class _EditEditorState extends State<EditEditor> {
               if (w.isPointInAnchor(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                      _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                           25, _EditPainter.scale, widget.fieldImage))) ||
                   w.isPointInNextControl(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                      _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                           20, _EditPainter.scale, widget.fieldImage))) ||
                   w.isPointInPrevControl(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                      _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                           20, _EditPainter.scale, widget.fieldImage))) ||
                   w.isPointInHolonomicThing(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
-                      _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                      _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                           15, _EditPainter.scale, widget.fieldImage)),
                       widget.robotSize.height)) {
                 setState(() {
@@ -210,11 +210,11 @@ class _EditEditorState extends State<EditEditor> {
               if (w.startDragging(
                   _xPixelsToMeters(details.localPosition.dx),
                   _yPixelsToMeters(details.localPosition.dy),
-                  _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                  _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                       25, _EditPainter.scale, widget.fieldImage)),
-                  _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                  _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                       20, _EditPainter.scale, widget.fieldImage)),
-                  _xPixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                  _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                       15, _EditPainter.scale, widget.fieldImage)),
                   widget.robotSize.height,
                   widget.holonomicMode)) {
@@ -311,9 +311,12 @@ class _EditEditorState extends State<EditEditor> {
                     .nextControl = null;
                 widget.path.waypoints[widget.path.waypoints.length - 1]
                     .isReversal = false;
+                widget.path.waypoints[widget.path.waypoints.length - 1]
+                    .isStopPoint = false;
               } else if (w.isStartPoint()) {
                 widget.path.waypoints[0].prevControl = null;
                 widget.path.waypoints[0].isReversal = false;
+                widget.path.waypoints[0].isStopPoint = false;
               }
 
               widget.savePath(widget.path);
@@ -359,6 +362,10 @@ class _EditEditorState extends State<EditEditor> {
     return (widget.fieldImage.defaultSize.height -
             ((pixels - 48) / _EditPainter.scale)) /
         widget.fieldImage.pixelsPerMeter;
+  }
+
+  double _pixelsToMeters(double pixels) {
+    return (pixels / _EditPainter.scale) / widget.fieldImage.pixelsPerMeter;
   }
 }
 

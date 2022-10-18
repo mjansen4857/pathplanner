@@ -43,8 +43,10 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
     _showVelocity = widget.prefs.getBool(GraphEditor.prefShowVelocity) ?? true;
     _showAccel = widget.prefs.getBool(GraphEditor.prefShowAccel) ?? true;
     _showHeading = widget.prefs.getBool(GraphEditor.prefShowHeading) ?? true;
-    _showAngularVelocity = widget.prefs.getBool(GraphEditor.prefShowAngularVelocity) ?? true;
-    _showCurvature = widget.prefs.getBool(GraphEditor.prefShowCurvature) ?? true;
+    _showAngularVelocity =
+        widget.prefs.getBool(GraphEditor.prefShowAngularVelocity) ?? true;
+    _showCurvature =
+        widget.prefs.getBool(GraphEditor.prefShowCurvature) ?? true;
     _showRotation = widget.prefs.getBool(GraphEditor.prefShowRotation) ?? true;
   }
 

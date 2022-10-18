@@ -55,7 +55,7 @@ class _WelcomePageState extends State<WelcomePage>
           Center(
             child: Padding(
               padding: const EdgeInsets.all(48),
-              child: widget.backgroundImage,
+              child: widget.backgroundImage.getWidget(),
             ),
           ),
           Center(

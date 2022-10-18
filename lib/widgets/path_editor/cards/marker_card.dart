@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MarkerCard extends StatefulWidget {
   final GlobalKey stackKey;
   final SharedPreferences prefs;
-  final RobotPath? path;
+  final RobotPath path;
   final EventMarker? marker;
   final double maxMarkerPos;
   final VoidCallback onDelete;
@@ -18,7 +18,7 @@ class MarkerCard extends StatefulWidget {
   const MarkerCard(
       {required this.stackKey,
       required this.prefs,
-      this.path,
+      required this.path,
       this.marker,
       this.maxMarkerPos = 1,
       required this.onDelete,
@@ -156,7 +156,7 @@ class _MarkerCardState extends State<MarkerCard> {
               _oldMarker ??= widget.marker!.clone();
               widget.marker!.position = value;
               Trajectory.calculateMarkerTime(
-                  widget.path!.generatedTrajectory, widget.marker!);
+                  widget.path.generatedTrajectory, widget.marker!);
             }
 
             setState(() {

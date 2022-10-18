@@ -5,9 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class GraphSettingsCard extends StatefulWidget {
   final bool holonomicMode;
-  final VoidCallback onUpdate;
   final VoidCallback onToggleSampled;
   final VoidCallback onToggleMinimized;
+  final VoidCallback onShouldRedraw;
   final GlobalKey stackKey;
   final SharedPreferences prefs;
   final bool isSampled;
@@ -16,9 +16,9 @@ class GraphSettingsCard extends StatefulWidget {
   const GraphSettingsCard(
       {required this.stackKey,
       required this.holonomicMode,
-      required this.onUpdate,
       required this.onToggleSampled,
       required this.onToggleMinimized,
+      required this.onShouldRedraw,
       required this.prefs,
       required this.isSampled,
       required this.cardMinimized,
@@ -29,6 +29,25 @@ class GraphSettingsCard extends StatefulWidget {
 }
 
 class _GraphSettingsCardState extends State<GraphSettingsCard> {
+  late bool _showVelocity;
+  late bool _showAccel;
+  late bool _showHeading;
+  late bool _showAngularVelocity;
+  late bool _showCurvature;
+  late bool _showRotation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _showVelocity = widget.prefs.getBool(GraphEditor.prefShowVelocity) ?? true;
+    _showAccel = widget.prefs.getBool(GraphEditor.prefShowAccel) ?? true;
+    _showHeading = widget.prefs.getBool(GraphEditor.prefShowHeading) ?? true;
+    _showAngularVelocity = widget.prefs.getBool(GraphEditor.prefShowAngularVelocity) ?? true;
+    _showCurvature = widget.prefs.getBool(GraphEditor.prefShowCurvature) ?? true;
+    _showRotation = widget.prefs.getBool(GraphEditor.prefShowRotation) ?? true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return DraggableCard(
@@ -140,15 +159,16 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Checkbox(
-          value: widget.prefs.getBool(GraphEditor.prefShowVelocity),
+          value: _showVelocity,
           activeColor: GraphEditor.colorVelocity,
           checkColor: GraphEditor.colorVelocity,
           side: BorderSide(color: GraphEditor.colorVelocity, width: 2),
           onChanged: (val) {
-            bool state =
-                widget.prefs.getBool(GraphEditor.prefShowVelocity) ?? true;
-            widget.prefs.setBool(GraphEditor.prefShowVelocity, !state);
-            widget.onUpdate();
+            widget.prefs.setBool(GraphEditor.prefShowVelocity, val!);
+            setState(() {
+              _showVelocity = val;
+            });
+            widget.onShouldRedraw();
           },
         ),
         Text(
@@ -157,15 +177,16 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
         ),
         const SizedBox(width: 12),
         Checkbox(
-          value: widget.prefs.getBool(GraphEditor.prefShowAccel),
+          value: _showAccel,
           activeColor: GraphEditor.colorAccel,
           checkColor: GraphEditor.colorAccel,
           side: BorderSide(color: GraphEditor.colorAccel, width: 2),
           onChanged: (val) {
-            bool state =
-                widget.prefs.getBool(GraphEditor.prefShowAccel) ?? true;
-            widget.prefs.setBool(GraphEditor.prefShowAccel, !state);
-            widget.onUpdate();
+            widget.prefs.setBool(GraphEditor.prefShowAccel, val!);
+            setState(() {
+              _showAccel = val;
+            });
+            widget.onShouldRedraw();
           },
         ),
         Text(
@@ -184,15 +205,16 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Checkbox(
-          value: widget.prefs.getBool(GraphEditor.prefShowHeading),
+          value: _showHeading,
           activeColor: GraphEditor.colorHeading,
           checkColor: GraphEditor.colorHeading,
           side: BorderSide(color: GraphEditor.colorHeading, width: 2),
           onChanged: (val) {
-            bool state =
-                widget.prefs.getBool(GraphEditor.prefShowHeading) ?? true;
-            widget.prefs.setBool(GraphEditor.prefShowHeading, !state);
-            widget.onUpdate();
+            widget.prefs.setBool(GraphEditor.prefShowHeading, val!);
+            setState(() {
+              _showHeading = val;
+            });
+            widget.onShouldRedraw();
           },
         ),
         Text(
@@ -201,16 +223,16 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
         ),
         const SizedBox(width: 12),
         Checkbox(
-          value: widget.prefs.getBool(GraphEditor.prefShowAngularVelocity),
+          value: _showAngularVelocity,
           activeColor: GraphEditor.colorAngularVelocity,
           checkColor: GraphEditor.colorAngularVelocity,
           side: BorderSide(color: GraphEditor.colorAngularVelocity, width: 2),
           onChanged: (val) {
-            bool state =
-                widget.prefs.getBool(GraphEditor.prefShowAngularVelocity) ??
-                    true;
-            widget.prefs.setBool(GraphEditor.prefShowAngularVelocity, !state);
-            widget.onUpdate();
+            widget.prefs.setBool(GraphEditor.prefShowAngularVelocity, val!);
+            setState(() {
+              _showAngularVelocity = val;
+            });
+            widget.onShouldRedraw();
           },
         ),
         Text(
@@ -229,15 +251,16 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Checkbox(
-          value: widget.prefs.getBool(GraphEditor.prefShowCurvature),
+          value: _showCurvature,
           activeColor: GraphEditor.colorCurvature,
           checkColor: GraphEditor.colorCurvature,
           side: BorderSide(color: GraphEditor.colorCurvature, width: 2),
           onChanged: (val) {
-            bool state =
-                widget.prefs.getBool(GraphEditor.prefShowCurvature) ?? true;
-            widget.prefs.setBool(GraphEditor.prefShowCurvature, !state);
-            widget.onUpdate();
+            widget.prefs.setBool(GraphEditor.prefShowCurvature, val!);
+            setState(() {
+              _showCurvature = val;
+              widget.onShouldRedraw();
+            });
           },
         ),
         Text(
@@ -256,15 +279,16 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
       mainAxisSize: MainAxisSize.max,
       children: [
         Checkbox(
-          value: widget.prefs.getBool(GraphEditor.prefShowRotation),
+          value: _showRotation,
           activeColor: GraphEditor.colorRotation,
           checkColor: GraphEditor.colorRotation,
           side: BorderSide(color: GraphEditor.colorRotation, width: 2),
           onChanged: (val) {
-            bool state =
-                widget.prefs.getBool(GraphEditor.prefShowRotation) ?? true;
-            widget.prefs.setBool(GraphEditor.prefShowRotation, !state);
-            widget.onUpdate();
+            widget.prefs.setBool(GraphEditor.prefShowRotation, val!);
+            setState(() {
+              _showRotation = val;
+            });
+            widget.onShouldRedraw();
           },
         ),
         Text(
@@ -273,16 +297,16 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
         ),
         const SizedBox(width: 12),
         Checkbox(
-          value: widget.prefs.getBool(GraphEditor.prefShowAngularVelocity),
+          value: _showAngularVelocity,
           activeColor: GraphEditor.colorAngularVelocity,
           checkColor: GraphEditor.colorAngularVelocity,
           side: BorderSide(color: GraphEditor.colorAngularVelocity, width: 2),
           onChanged: (val) {
-            bool state =
-                widget.prefs.getBool(GraphEditor.prefShowAngularVelocity) ??
-                    true;
-            widget.prefs.setBool(GraphEditor.prefShowAngularVelocity, !state);
-            widget.onUpdate();
+            widget.prefs.setBool(GraphEditor.prefShowAngularVelocity, val!);
+            setState(() {
+              _showAngularVelocity = val;
+            });
+            widget.onShouldRedraw();
           },
         ),
         Text(

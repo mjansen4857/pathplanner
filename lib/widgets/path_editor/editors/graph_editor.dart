@@ -8,6 +8,101 @@ import 'package:pathplanner/widgets/path_editor/cards/generator_settings_card.da
 import 'package:pathplanner/widgets/path_editor/cards/graph_settings_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class GraphEditor extends StatefulWidget {
+  final RobotPath path;
+  final bool holonomicMode;
+  final void Function(RobotPath path) savePath;
+  final SharedPreferences prefs;
+  static String prefShowVelocity = 'graphShowVelocity';
+  static String prefShowAccel = 'graphShowAccel';
+  static String prefShowHeading = 'graphShowHeading';
+  static String prefShowRotation = 'graphShowRotation';
+  static String prefShowAngularVelocity = 'graphShowAngularVelocity';
+  static String prefShowCurvature = 'graphShowCurvature';
+  static Color colorVelocity = Colors.red;
+  static Color colorAccel = Colors.orange;
+  static Color colorHeading = Colors.yellow;
+  static Color colorRotation = Colors.yellow;
+  static Color colorAngularVelocity = Colors.green;
+  static Color colorCurvature = Colors.blue;
+
+  const GraphEditor(
+      {required this.path,
+      required this.holonomicMode,
+      required this.savePath,
+      required this.prefs,
+      super.key});
+
+  @override
+  State<GraphEditor> createState() => _GraphEditorState();
+}
+
+class _GraphEditorState extends State<GraphEditor> {
+  final GlobalKey _key = GlobalKey();
+  bool _isSampled = false;
+  bool _cardMinimized = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      key: _key,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(48, 48, 48, 72),
+          child: _LineChart(
+              isSampled: _isSampled,
+              path: widget.path,
+              holonomicMode: widget.holonomicMode,
+              prefs: widget.prefs),
+        ),
+        _buildGraphSettingsCard(),
+        _buildGeneratorSettingsCard(),
+      ],
+    );
+  }
+
+  Widget _buildGraphSettingsCard() {
+    return GraphSettingsCard(
+        stackKey: _key,
+        holonomicMode: widget.holonomicMode,
+        onToggleSampled: () {
+          setState(() {
+            _isSampled = !_isSampled;
+          });
+        },
+        onToggleMinimized: () {
+          setState(() {
+            _cardMinimized = !_cardMinimized;
+          });
+        },
+        onShouldRedraw: () {
+          setState(() {
+            // Force rebuild card to update runtime
+          });
+        },
+        prefs: widget.prefs,
+        isSampled: _isSampled,
+        cardMinimized: _cardMinimized);
+  }
+
+  Widget _buildGeneratorSettingsCard() {
+    return GeneratorSettingsCard(
+      path: widget.path,
+      stackKey: _key,
+      onShouldSave: () async {
+        await widget.path.generateTrajectory();
+
+        setState(() {
+          // Force rebuild card to update runtime
+        });
+
+        widget.savePath(widget.path);
+      },
+      prefs: widget.prefs,
+    );
+  }
+}
+
 class _LineChart extends StatelessWidget {
   const _LineChart(
       {required this.isSampled,
@@ -323,105 +418,6 @@ class _LineChart extends StatelessWidget {
       axisSide: meta.axisSide,
       space: 10,
       child: Text(value.toStringAsFixed(1), style: style),
-    );
-  }
-}
-
-class GraphEditor extends StatefulWidget {
-  final RobotPath path;
-  final bool holonomicMode;
-  final void Function(RobotPath path) savePath;
-  final SharedPreferences prefs;
-  static String prefShowVelocity = 'showVelocity';
-  static String prefShowAccel = 'showAccel';
-  static String prefShowHeading = 'showHeading';
-  static String prefShowRotation = 'showRotation';
-  static String prefShowAngularVelocity = 'showAngularVelocity';
-  static String prefShowCurvature = 'showCurvature';
-  static Color colorVelocity = Colors.red;
-  static Color colorAccel = Colors.orange;
-  static Color colorHeading = Colors.yellow;
-  static Color colorRotation = Colors.yellow;
-  static Color colorAngularVelocity = Colors.green;
-  static Color colorCurvature = Colors.blue;
-
-  const GraphEditor(
-      {required this.path,
-      required this.holonomicMode,
-      required this.savePath,
-      required this.prefs,
-      super.key});
-
-  @override
-  State<GraphEditor> createState() => _GraphEditorState();
-}
-
-class _GraphEditorState extends State<GraphEditor> {
-  final GlobalKey _key = GlobalKey();
-  UniqueKey _graphRuntimeKey = UniqueKey();
-  bool isSampled = false;
-  bool cardMinimized = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      key: _key,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(48, 48, 48, 72),
-          child: _LineChart(
-              isSampled: isSampled,
-              path: widget.path,
-              holonomicMode: widget.holonomicMode,
-              prefs: widget.prefs),
-        ),
-        _buildGraphSettingsCard(),
-        _buildGeneratorSettingsCard(),
-      ],
-    );
-  }
-
-  Widget _buildGraphSettingsCard() {
-    return GraphSettingsCard(
-        stackKey: _key,
-        key: _graphRuntimeKey,
-        holonomicMode: widget.holonomicMode,
-        onUpdate: () async {
-          setState(() {
-            // Force rebuild card to update runtime
-            _graphRuntimeKey = UniqueKey();
-          });
-        },
-        onToggleSampled: () async {
-          setState(() {
-            isSampled = !isSampled;
-          });
-        },
-        onToggleMinimized: () async {
-          setState(() {
-            cardMinimized = !cardMinimized;
-          });
-        },
-        prefs: widget.prefs,
-        isSampled: isSampled,
-        cardMinimized: cardMinimized);
-  }
-
-  Widget _buildGeneratorSettingsCard() {
-    return GeneratorSettingsCard(
-      path: widget.path,
-      stackKey: _key,
-      onShouldSave: () async {
-        await widget.path.generateTrajectory();
-
-        setState(() {
-          // Force rebuild card to update runtime
-          _graphRuntimeKey = UniqueKey();
-        });
-
-        widget.savePath(widget.path);
-      },
-      prefs: widget.prefs,
     );
   }
 }

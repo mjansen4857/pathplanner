@@ -76,9 +76,10 @@ class _GraphEditorState extends State<GraphEditor> {
           });
         },
         onShouldRedraw: () {
-          setState(() {
-            // Force rebuild card to update runtime
-          });
+          // The graph needs to be redrawn based on the card's change to the
+          // preferences, so trigger a redraw.  There is no internal state that
+          // needs to change, so the lambda is empty.
+          setState(() {});
         },
         prefs: widget.prefs,
         isSampled: _isSampled,
@@ -92,9 +93,10 @@ class _GraphEditorState extends State<GraphEditor> {
       onShouldSave: () async {
         await widget.path.generateTrajectory();
 
-        setState(() {
-          // Force rebuild card to update runtime
-        });
+        // The graph needs to be redrawn based on the card's change to the
+        // preferences, so trigger a redraw.  There is no internal state that
+        // needs to change, so the lambda is empty.
+        setState(() {});
 
         widget.savePath(widget.path);
       },

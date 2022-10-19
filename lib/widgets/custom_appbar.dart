@@ -8,7 +8,10 @@ import 'window_buttons.dart';
 class CustomAppBar extends AppBar {
   final String titleText;
 
-  CustomAppBar({this.titleText = 'PathPlanner', super.key})
+  CustomAppBar(
+      {this.titleText = 'PathPlanner',
+      super.key,
+      super.automaticallyImplyLeading})
       : super(
           actions: Platform.isMacOS
               ? null

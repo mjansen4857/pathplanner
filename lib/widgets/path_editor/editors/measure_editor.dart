@@ -60,7 +60,7 @@ class _MeasureEditorState extends State<MeasureEditor> {
                 padding: const EdgeInsets.all(48),
                 child: Stack(
                   children: [
-                    widget.fieldImage,
+                    widget.fieldImage.getWidget(),
                     Positioned.fill(
                       child: CustomPaint(
                         painter: _MeasurePainter(

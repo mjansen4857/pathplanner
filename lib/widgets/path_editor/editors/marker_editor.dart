@@ -96,7 +96,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
                     padding: const EdgeInsets.all(48),
                     child: Stack(
                       children: [
-                        widget.fieldImage,
+                        widget.fieldImage.getWidget(),
                         Positioned.fill(
                           child: CustomPaint(
                             painter: _MarkerPainter(

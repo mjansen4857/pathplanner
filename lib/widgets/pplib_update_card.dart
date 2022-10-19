@@ -42,28 +42,27 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
         File(join(widget.projectDir.path, 'vendordeps', 'PathplannerLib.json'));
 
     if (_vendorDepFile.existsSync()) {
-      _vendorDepFile.readAsString().then((local) {
+      _vendorDepFile.readAsString().then((local) async {
         Map<String, dynamic> localJson = jsonDecode(local);
 
         try {
-          http.read(Uri.parse(_jsonURL)).then((remote) {
-            Map<String, dynamic> remoteJson = jsonDecode(remote);
+          String remote = await http.read(Uri.parse(_jsonURL));
+          Map<String, dynamic> remoteJson = jsonDecode(remote);
 
-            String localVersion = localJson['version'];
-            String remoteVersion = remoteJson['version'];
+          String localVersion = localJson['version'];
+          String remoteVersion = remoteJson['version'];
 
-            print(
-                'Current PPLib Version: $localVersion, Latest Release: $remoteVersion');
+          print(
+              'Current PPLib Version: $localVersion, Latest Release: $remoteVersion');
 
-            // Assume that if the versions are different, remote is newest
-            if (localVersion != remoteVersion) {
-              setState(() {
-                _remoteFileContent = remote;
-                _visibile = true;
-                _updateController.forward();
-              });
-            }
-          });
+          // Assume that if the versions are different, remote is newest
+          if (localVersion != remoteVersion) {
+            setState(() {
+              _remoteFileContent = remote;
+              _visibile = true;
+              _updateController.forward();
+            });
+          }
         } catch (e) {
           // Can't get file. Probably not connected to internet
         }

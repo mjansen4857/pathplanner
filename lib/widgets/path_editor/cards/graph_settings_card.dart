@@ -261,8 +261,8 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
             widget.prefs.setBool(GraphEditor.prefShowCurvature, val!);
             setState(() {
               _showCurvature = val;
-              widget.onShouldRedraw();
             });
+            widget.onShouldRedraw();
           },
         ),
         Text(

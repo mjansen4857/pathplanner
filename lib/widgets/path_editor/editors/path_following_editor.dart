@@ -30,7 +30,7 @@ class PathFollowingEditor extends StatelessWidget {
               padding: const EdgeInsets.all(48),
               child: Stack(
                 children: [
-                  fieldImage,
+                  fieldImage.getWidget(),
                   Positioned.fill(
                     child: CustomPaint(
                       painter: _PathFollowingPainter(

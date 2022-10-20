@@ -279,10 +279,18 @@ class _SettingsDialogState extends State<SettingsDialog> {
                             builder: (context) {
                               return AlertDialog(
                                 title: const Text('PPLib Client'),
-                                content: const SizedBox(
+                                content: SizedBox(
                                   width: 300,
-                                  child: Text(
-                                      'If enabled, this setting will allow PathPlanner to connect to a PathPlannerLib server running in your robot code. This will display a path following visualization in a new editor tab and automatically update path files on the robot to match local changes. Are you sure you want to enable this functionality?'),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Text(
+                                          'If enabled, this setting will allow PathPlanner to connect to a PathPlannerLib server running in your robot code. This will display a path following visualization in a new editor tab and automatically update path files on the robot to match local changes. Are you sure you want to enable this functionality?'),
+                                      SizedBox(height: 16),
+                                      Text(
+                                          'Unfortunately, this is only supported in the Java version for now. :('),
+                                    ],
+                                  ),
                                 ),
                                 actions: [
                                   TextButton(

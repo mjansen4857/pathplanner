@@ -126,6 +126,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
       stackKey: _key,
       key: ValueKey(_selectedMarker),
       prefs: widget.prefs,
+      path: widget.path,
       marker: _selectedMarker,
       maxMarkerPos: widget.path.waypoints.length - 1,
       onDelete: () {

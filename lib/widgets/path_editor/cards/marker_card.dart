@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/services/generator/trajectory.dart';
 import 'package:pathplanner/widgets/custom_input_slider.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class MarkerCard extends StatefulWidget {
   final GlobalKey stackKey;
   final SharedPreferences prefs;
+  final RobotPath path;
   final EventMarker? marker;
   final double maxMarkerPos;
   final VoidCallback onDelete;
@@ -16,6 +18,7 @@ class MarkerCard extends StatefulWidget {
   const MarkerCard(
       {required this.stackKey,
       required this.prefs,
+      required this.path,
       this.marker,
       this.maxMarkerPos = 1,
       required this.onDelete,
@@ -152,6 +155,8 @@ class _MarkerCardState extends State<MarkerCard> {
             if (widget.marker != null) {
               _oldMarker ??= widget.marker!.clone();
               widget.marker!.position = value;
+              Trajectory.calculateMarkerTime(
+                  widget.path.generatedTrajectory, widget.marker!);
             }
 
             setState(() {

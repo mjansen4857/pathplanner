@@ -9,7 +9,7 @@ enum OfficialField {
   rapidReact,
 }
 
-class FieldImage extends StatelessWidget {
+class FieldImage {
   late final Image image;
   late final ui.Size defaultSize;
   late final num pixelsPerMeter;
@@ -21,7 +21,7 @@ class FieldImage extends StatelessWidget {
     ];
   }
 
-  FieldImage.official(OfficialField field, {super.key}) {
+  FieldImage.official(OfficialField field) {
     switch (field) {
       case OfficialField.rapidReact:
       default:
@@ -36,7 +36,7 @@ class FieldImage extends StatelessWidget {
     }
   }
 
-  FieldImage.custom(File imageFile, {super.key}) {
+  FieldImage.custom(File imageFile) {
     image = Image.file(
       imageFile,
       fit: BoxFit.contain,
@@ -60,7 +60,21 @@ class FieldImage extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    if (other.runtimeType != runtimeType) {
+      return false;
+    }
+    return other is FieldImage && other.name == name;
+  }
+
+  @override
+  int get hashCode => Object.hash(image.hashCode, defaultSize.hashCode,
+      pixelsPerMeter.hashCode, name.hashCode);
+
+  Widget getWidget() {
     return AspectRatio(
       aspectRatio: defaultSize.width / defaultSize.height,
       child: SizedBox.expand(

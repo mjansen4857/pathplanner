@@ -7,6 +7,7 @@ import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/editors/edit_editor.dart';
+import 'package:pathplanner/widgets/path_editor/editors/graph_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/marker_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/measure_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/path_following_editor.dart';
@@ -19,6 +20,7 @@ enum EditorMode {
   markers,
   measure,
   pathFollowing,
+  graph,
 }
 
 class PathEditor extends StatefulWidget {
@@ -128,6 +130,14 @@ class _PathEditorState extends State<PathEditor> {
           targetPose: _targetPose,
           actualPose: _actualPose,
         );
+      case EditorMode.graph:
+        return GraphEditor(
+          path: widget.path,
+          holonomicMode: widget.holonomicMode,
+          savePath: widget.savePath,
+          prefs: widget.prefs,
+          key: ValueKey(widget.path),
+        );
     }
   }
 
@@ -224,6 +234,24 @@ class _PathEditorState extends State<PathEditor> {
                           child: const Icon(Icons.straighten),
                         ),
                       ),
+                      const VerticalDivider(width: 1),
+                      Tooltip(
+                          message: 'Graph Path',
+                          waitDuration: const Duration(milliseconds: 500),
+                          child: MaterialButton(
+                            height: 50,
+                            minWidth: 50,
+                            textColor: colorScheme.onSurface,
+                            onPressed: _mode == EditorMode.graph
+                                ? null
+                                : () {
+                                    UndoRedo.clearHistory();
+                                    setState(() {
+                                      _mode = EditorMode.graph;
+                                    });
+                                  },
+                            child: const Icon(Icons.show_chart),
+                          )),
                       if (connected) const VerticalDivider(width: 1),
                       if (connected)
                         Tooltip(

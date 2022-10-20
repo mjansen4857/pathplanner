@@ -96,7 +96,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
                     padding: const EdgeInsets.all(48),
                     child: Stack(
                       children: [
-                        widget.fieldImage,
+                        widget.fieldImage.getWidget(),
                         Positioned.fill(
                           child: CustomPaint(
                             painter: _MarkerPainter(
@@ -126,6 +126,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
       stackKey: _key,
       key: ValueKey(_selectedMarker),
       prefs: widget.prefs,
+      path: widget.path,
       marker: _selectedMarker,
       maxMarkerPos: widget.path.waypoints.length - 1,
       onDelete: () {

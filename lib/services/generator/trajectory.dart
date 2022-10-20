@@ -74,7 +74,7 @@ class Trajectory {
 
     Trajectory trajectory = Trajectory.joinTrajectories(trajectories);
 
-    calculateMarkerTimes(trajectory, path.markers);
+    calculateAllMarkerTimes(trajectory, path.markers);
 
     return trajectory;
   }
@@ -90,22 +90,27 @@ class Trajectory {
     return Trajectory(joined);
   }
 
-  static void calculateMarkerTimes(
+  static void calculateMarkerTime(
+      Trajectory trajectory, EventMarker marker) async {
+    int statesPerWaypoint = 1 ~/ Trajectory.resolution;
+    int startIndex =
+        (statesPerWaypoint * marker.position).floor() - marker.position.floor();
+    double t = (statesPerWaypoint * marker.position) % 1;
+
+    if (startIndex == trajectory.states.length - 1) {
+      startIndex--;
+      t = 1;
+    }
+    num start = trajectory.states[startIndex].timeSeconds;
+    num end = trajectory.states[startIndex + 1].timeSeconds;
+
+    marker.timeSeconds = GeometryUtil.numLerp(start, end, t).toDouble();
+  }
+
+  static void calculateAllMarkerTimes(
       Trajectory trajectory, List<EventMarker> markers) async {
     for (EventMarker marker in markers) {
-      int statesPerWaypoint = 1 ~/ Trajectory.resolution;
-      int startIndex = (statesPerWaypoint * marker.position).floor() -
-          marker.position.floor();
-      double t = (statesPerWaypoint * marker.position) % 1;
-
-      if (startIndex == trajectory.states.length - 1) {
-        startIndex--;
-        t = 1;
-      }
-      num start = trajectory.states[startIndex].timeSeconds;
-      num end = trajectory.states[startIndex + 1].timeSeconds;
-
-      marker.timeSeconds = GeometryUtil.numLerp(start, end, t).toDouble();
+      calculateMarkerTime(trajectory, marker);
     }
   }
 

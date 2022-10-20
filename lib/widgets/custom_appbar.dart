@@ -11,7 +11,10 @@ class CustomAppBar extends AppBar {
   final bool pplibClient;
 
   CustomAppBar(
-      {this.titleText = 'PathPlanner', this.pplibClient = false, super.key})
+      {this.titleText = 'PathPlanner',
+      this.pplibClient = false,
+      super.key,
+      super.automaticallyImplyLeading})
       : super(
           actions: Platform.isMacOS
               ? null

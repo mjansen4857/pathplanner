@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 class WelcomePage extends StatefulWidget {
@@ -45,12 +46,16 @@ class _WelcomePageState extends State<WelcomePage>
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      appBar: CustomAppBar(
+        titleText: 'PathPlanner',
+        automaticallyImplyLeading: false,
+      ),
       body: Stack(
         children: [
           Center(
             child: Padding(
               padding: const EdgeInsets.all(48),
-              child: widget.backgroundImage,
+              child: widget.backgroundImage.getWidget(),
             ),
           ),
           Center(

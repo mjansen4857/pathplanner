@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }
       }
 
-      if (projectDir == null) {
+      if (projectDir == null || !Directory(projectDir).existsSync()) {
         projectDir = await Navigator.push(
           _key.currentContext!,
           PageRouteBuilder(
@@ -529,8 +529,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           RobotPath p = RobotPath.fromJson(jsonDecode(json));
           p.name = basenameWithoutExtension(e.path);
           paths.add(p);
-        } catch (e) {
-          // Path is not in correct format. Don't add it
+        } catch (ex) {
+          // Path is not in correct format. Don't add it and notify user
+          showDialog(
+              context: this.context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('Error loading ${basename(e.path)}'),
+                  content: Text(ex is RobotPathJsonException
+                      ? ex.cause
+                      : 'Can\'t parse JSON'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                );
+              });
         }
       }
     }

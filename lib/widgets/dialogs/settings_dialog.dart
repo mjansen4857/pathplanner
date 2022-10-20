@@ -271,10 +271,41 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                   ? colorScheme.primaryContainer
                                   : colorScheme.outline,
                               width: 1)),
-                      onSelected: (value) {
-                        widget.prefs.setBool('pplibClient', value);
+                      onSelected: (value) async {
+                        bool enable = false;
+                        if (value) {
+                          await showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('PPLib Client'),
+                                content: const SizedBox(
+                                  width: 300,
+                                  child: Text(
+                                      'If enabled, this setting will allow PathPlanner to connect to a PathPlannerLib server running in your robot code. This will display a path following visualization in a new editor tab and automatically update path files on the robot to match local changes. Are you sure you want to enable this functionality?'),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('NO'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      enable = true;
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('YES'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
+                        widget.prefs.setBool('pplibClient', enable);
                         setState(() {
-                          _pplibClient = value;
+                          _pplibClient = enable;
                         });
                         widget.onSettingsChanged();
                       },

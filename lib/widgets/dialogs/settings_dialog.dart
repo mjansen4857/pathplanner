@@ -289,6 +289,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                       SizedBox(height: 16),
                                       Text(
                                           'Unfortunately, this is only supported in the Java version for now. :('),
+                                      SizedBox(height: 16),
+                                      Text(
+                                          'Please make sure this is disabled in the app and robot code during competition to save on network bandwidth.'),
                                     ],
                                   ),
                                 ),

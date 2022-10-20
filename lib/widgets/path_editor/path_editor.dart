@@ -51,6 +51,7 @@ class _PathEditorState extends State<PathEditor> {
   List<Point>? _activePath;
   TrajectoryState? _targetPose;
   TrajectoryState? _actualPose;
+  bool _ppLibConnected = false;
 
   @override
   void initState() {
@@ -67,6 +68,20 @@ class _PathEditorState extends State<PathEditor> {
         _targetPose = p0;
         _actualPose = p1;
       });
+    });
+
+    PPLibClient.connectionStatusStream().listen((data) {
+      if (!data && _mode == EditorMode.pathFollowing) {
+        UndoRedo.clearHistory();
+        setState(() {
+          _mode = EditorMode.edit;
+          _ppLibConnected = data;
+        });
+      } else {
+        setState(() {
+          _ppLibConnected = data;
+        });
+      }
     });
   }
 
@@ -142,8 +157,6 @@ class _PathEditorState extends State<PathEditor> {
   }
 
   Widget _buildToolbar(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
@@ -151,130 +164,118 @@ class _PathEditorState extends State<PathEditor> {
         child: SizedBox(
           height: 48,
           child: Card(
-            child: StreamBuilder(
-                stream: PPLibClient.connectionStatusStream(),
-                builder: (context, snapshot) {
-                  bool connected = snapshot.hasData ? snapshot.data! : false;
-
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Tooltip(
-                        message: 'Edit Path',
-                        waitDuration: const Duration(milliseconds: 500),
-                        child: MaterialButton(
-                          height: 50,
-                          minWidth: 50,
-                          textColor: colorScheme.onSurface,
-                          onPressed: _mode == EditorMode.edit
-                              ? null
-                              : () {
-                                  UndoRedo.clearHistory();
-                                  setState(() {
-                                    _mode = EditorMode.edit;
-                                  });
-                                },
-                          child: const Icon(Icons.edit),
-                        ),
-                      ),
-                      const VerticalDivider(width: 1),
-                      Tooltip(
-                        message: 'Preview',
-                        waitDuration: const Duration(milliseconds: 500),
-                        child: MaterialButton(
-                          height: 50,
-                          minWidth: 50,
-                          textColor: colorScheme.onSurface,
-                          onPressed: _mode == EditorMode.preview
-                              ? null
-                              : () {
-                                  UndoRedo.clearHistory();
-                                  setState(() {
-                                    _mode = EditorMode.preview;
-                                  });
-                                },
-                          child: const Icon(Icons.play_arrow),
-                        ),
-                      ),
-                      const VerticalDivider(width: 1),
-                      Tooltip(
-                        message: 'Edit Markers',
-                        waitDuration: const Duration(milliseconds: 500),
-                        child: MaterialButton(
-                          height: 50,
-                          minWidth: 50,
-                          textColor: colorScheme.onSurface,
-                          onPressed: _mode == EditorMode.markers
-                              ? null
-                              : () {
-                                  UndoRedo.clearHistory();
-                                  setState(() {
-                                    _mode = EditorMode.markers;
-                                  });
-                                },
-                          child: const Icon(Icons.pin_drop),
-                        ),
-                      ),
-                      const VerticalDivider(width: 1),
-                      Tooltip(
-                        message: 'Measure',
-                        waitDuration: const Duration(milliseconds: 500),
-                        child: MaterialButton(
-                          height: 50,
-                          minWidth: 50,
-                          textColor: colorScheme.onSurface,
-                          onPressed: _mode == EditorMode.measure
-                              ? null
-                              : () {
-                                  UndoRedo.clearHistory();
-                                  setState(() {
-                                    _mode = EditorMode.measure;
-                                  });
-                                },
-                          child: const Icon(Icons.straighten),
-                        ),
-                      ),
-                      const VerticalDivider(width: 1),
-                      Tooltip(
-                          message: 'Graph Path',
-                          waitDuration: const Duration(milliseconds: 500),
-                          child: MaterialButton(
-                            height: 50,
-                            minWidth: 50,
-                            textColor: colorScheme.onSurface,
-                            onPressed: _mode == EditorMode.graph
-                                ? null
-                                : () {
-                                    UndoRedo.clearHistory();
-                                    setState(() {
-                                      _mode = EditorMode.graph;
-                                    });
-                                  },
-                            child: const Icon(Icons.show_chart),
-                          )),
-                      if (connected) const VerticalDivider(width: 1),
-                      if (connected)
-                        Tooltip(
-                          message: 'Path Following',
-                          waitDuration: const Duration(milliseconds: 500),
-                          child: MaterialButton(
-                            height: 50,
-                            minWidth: 50,
-                            textColor: colorScheme.onSurface,
-                            onPressed: _mode == EditorMode.pathFollowing
-                                ? null
-                                : () {
-                                    UndoRedo.clearHistory();
-                                    setState(() {
-                                      _mode = EditorMode.pathFollowing;
-                                    });
-                                  },
-                            child: const Icon(Icons.route),
-                          ),
-                        ),
-                    ],
-                  );
-                }),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Tooltip(
+                  message: 'Edit Path',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: MaterialButton(
+                    height: 50,
+                    minWidth: 50,
+                    onPressed: _mode == EditorMode.edit
+                        ? null
+                        : () {
+                            UndoRedo.clearHistory();
+                            setState(() {
+                              _mode = EditorMode.edit;
+                            });
+                          },
+                    child: const Icon(Icons.edit),
+                  ),
+                ),
+                const VerticalDivider(width: 1),
+                Tooltip(
+                  message: 'Preview',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: MaterialButton(
+                    height: 50,
+                    minWidth: 50,
+                    onPressed: _mode == EditorMode.preview
+                        ? null
+                        : () {
+                            UndoRedo.clearHistory();
+                            setState(() {
+                              _mode = EditorMode.preview;
+                            });
+                          },
+                    child: const Icon(Icons.play_arrow),
+                  ),
+                ),
+                const VerticalDivider(width: 1),
+                Tooltip(
+                  message: 'Edit Markers',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: MaterialButton(
+                    height: 50,
+                    minWidth: 50,
+                    onPressed: _mode == EditorMode.markers
+                        ? null
+                        : () {
+                            UndoRedo.clearHistory();
+                            setState(() {
+                              _mode = EditorMode.markers;
+                            });
+                          },
+                    child: const Icon(Icons.pin_drop),
+                  ),
+                ),
+                const VerticalDivider(width: 1),
+                Tooltip(
+                  message: 'Measure',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: MaterialButton(
+                    height: 50,
+                    minWidth: 50,
+                    onPressed: _mode == EditorMode.measure
+                        ? null
+                        : () {
+                            UndoRedo.clearHistory();
+                            setState(() {
+                              _mode = EditorMode.measure;
+                            });
+                          },
+                    child: const Icon(Icons.straighten),
+                  ),
+                ),
+                const VerticalDivider(width: 1),
+                Tooltip(
+                    message: 'Graph Path',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: MaterialButton(
+                      height: 50,
+                      minWidth: 50,
+                      onPressed: _mode == EditorMode.graph
+                          ? null
+                          : () {
+                              UndoRedo.clearHistory();
+                              setState(() {
+                                _mode = EditorMode.graph;
+                              });
+                            },
+                      child: const Icon(Icons.show_chart),
+                    )),
+                if (_ppLibConnected) const VerticalDivider(width: 1),
+                if (_ppLibConnected)
+                  Tooltip(
+                    message: 'Path Following',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: MaterialButton(
+                      height: 50,
+                      minWidth: 50,
+                      onPressed: _mode == EditorMode.pathFollowing
+                          ? null
+                          : () {
+                              UndoRedo.clearHistory();
+                              setState(() {
+                                _mode = EditorMode.pathFollowing;
+                              });
+                            },
+                      child: const Icon(Icons.route),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

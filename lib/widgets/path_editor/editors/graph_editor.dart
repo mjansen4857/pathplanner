@@ -39,7 +39,7 @@ class GraphEditor extends StatefulWidget {
 
 class _GraphEditorState extends State<GraphEditor> {
   final GlobalKey _key = GlobalKey();
-  bool _isSampled = false;
+  bool _isSampled = true;
   bool _cardMinimized = false;
 
   @override

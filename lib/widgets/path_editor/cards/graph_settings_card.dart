@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:pathplanner/widgets/path_editor/editors/graph_editor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -57,43 +58,17 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
       defaultPosition: const CardPosition(top: 0, right: 0),
       prefsKey: 'graphCardPos',
       prefs: widget.prefs,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildHeader(),
-          // Override gesture detector on UI elements so they won't cause the card to move
-          GestureDetector(
-            onPanStart: (details) {},
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Visibility(
-                    visible: !widget.cardMinimized,
-                    child: Padding(
-                        padding: const EdgeInsets.only(top: 12.0),
-                        child: _buildVelocityAccelRow(context))),
-                Visibility(
-                    visible: !widget.holonomicMode && !widget.cardMinimized,
-                    child: Padding(
-                        padding: const EdgeInsets.only(top: 12.0),
-                        child: _buildHeadingAngularRow(context))),
-                Visibility(
-                    visible: !widget.holonomicMode && !widget.cardMinimized,
-                    child: Padding(
-                        padding: const EdgeInsets.only(top: 12.0),
-                        child: _buildCurvatureRow(context))),
-                Visibility(
-                    visible: widget.holonomicMode && !widget.cardMinimized,
-                    child: Padding(
-                        padding: const EdgeInsets.only(top: 12.0),
-                        child: _buildHolonomicRow(context))),
-                const SizedBox(height: 3),
-              ],
-            ),
-          ),
-        ],
+      // Override gesture detector on UI elements so they wont cause the card to move
+      child: GestureDetector(
+        onPanStart: (details) {},
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(),
+            _buildBody(),
+          ],
+        ),
       ),
     );
   }
@@ -108,22 +83,18 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
         SizedBox(
           height: 30,
           width: 30,
-          // Override gesture detector on UI elements so they wont cause the card to move
-          child: GestureDetector(
-            onPanStart: (details) {},
-            child: IconButton(
-              color: colorScheme.onSurface,
-              tooltip: !widget.isSampled
-                  ? 'Switch to\nSampled Path'
-                  : 'Switch to\nPath States',
-              icon: Icon(
-                widget.isSampled ? Icons.bar_chart : Icons.stacked_line_chart,
-              ),
-              onPressed: widget.onToggleSampled,
-              splashRadius: 20,
-              iconSize: 20,
-              padding: const EdgeInsets.all(0),
+          child: IconButton(
+            color: colorScheme.onSurface,
+            tooltip: !widget.isSampled
+                ? 'Switch to\nSampled Path'
+                : 'Switch to\nPath States',
+            icon: Icon(
+              widget.isSampled ? Icons.bar_chart : Icons.stacked_line_chart,
             ),
+            onPressed: widget.onToggleSampled,
+            splashRadius: 20,
+            iconSize: 20,
+            padding: const EdgeInsets.all(0),
           ),
         ),
         Text(
@@ -133,38 +104,49 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
         SizedBox(
           height: 30,
           width: 30,
-          // Override gesture detector on UI elements so they wont cause the card to move
-          child: GestureDetector(
-            onPanStart: (details) {},
-            child: IconButton(
-              color: colorScheme.onSurface,
-              tooltip: !widget.cardMinimized ? 'Minimize' : 'Show',
-              icon: Icon(
-                widget.cardMinimized ? Icons.dehaze : Icons.minimize,
-              ),
-              onPressed: widget.onToggleMinimized,
-              splashRadius: 20,
-              iconSize: 20,
-              padding: const EdgeInsets.all(0),
+          child: IconButton(
+            color: colorScheme.onSurface,
+            tooltip: !widget.cardMinimized ? 'Minimize' : 'Show',
+            icon: Icon(
+              widget.cardMinimized ? Icons.expand_more : Icons.expand_less,
             ),
+            onPressed: widget.onToggleMinimized,
+            splashRadius: 20,
+            iconSize: 20,
+            padding: const EdgeInsets.all(0),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildVelocityAccelRow(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
+  Widget _buildBody() {
+    return Visibility(
+      visible: !widget.cardMinimized,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildLeftColumn(),
+            _buildRightColumn(),
+          ],
+        ),
+      ),
+    );
+  }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildLeftColumn() {
+    return Column(
       mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Checkbox(
+        _buildLegendCheckbox(
+          label: 'Velocity',
           value: _showVelocity,
-          activeColor: GraphEditor.colorVelocity,
-          checkColor: GraphEditor.colorVelocity,
-          side: BorderSide(color: GraphEditor.colorVelocity, width: 2),
+          color: GraphEditor.colorVelocity,
           onChanged: (val) {
             widget.prefs.setBool(GraphEditor.prefShowVelocity, val!);
             setState(() {
@@ -173,16 +155,59 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
             widget.onShouldRedraw();
           },
         ),
-        Text(
-          'Velocity',
-          style: TextStyle(color: colorScheme.onSurface),
+        ConditionalWidget(
+          condition: widget.holonomicMode,
+          trueChild: _buildLegendCheckbox(
+            label: 'Rotation',
+            value: _showRotation,
+            color: GraphEditor.colorRotation,
+            onChanged: (val) {
+              widget.prefs.setBool(GraphEditor.prefShowRotation, val!);
+              setState(() {
+                _showRotation = val;
+              });
+              widget.onShouldRedraw();
+            },
+          ),
+          falseChild: _buildLegendCheckbox(
+            label: 'Heading',
+            value: _showHeading,
+            color: GraphEditor.colorHeading,
+            onChanged: (val) {
+              widget.prefs.setBool(GraphEditor.prefShowHeading, val!);
+              setState(() {
+                _showHeading = val;
+              });
+              widget.onShouldRedraw();
+            },
+          ),
         ),
-        const SizedBox(width: 12),
-        Checkbox(
+        if (!widget.holonomicMode)
+          _buildLegendCheckbox(
+            label: 'Curvature',
+            value: _showCurvature,
+            color: GraphEditor.colorCurvature,
+            onChanged: (val) {
+              widget.prefs.setBool(GraphEditor.prefShowCurvature, val!);
+              setState(() {
+                _showCurvature = val;
+              });
+              widget.onShouldRedraw();
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRightColumn() {
+    return Column(
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLegendCheckbox(
+          label: 'Acceleration',
           value: _showAccel,
-          activeColor: GraphEditor.colorAccel,
-          checkColor: GraphEditor.colorAccel,
-          side: BorderSide(color: GraphEditor.colorAccel, width: 2),
+          color: GraphEditor.colorAccel,
           onChanged: (val) {
             widget.prefs.setBool(GraphEditor.prefShowAccel, val!);
             setState(() {
@@ -191,44 +216,10 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
             widget.onShouldRedraw();
           },
         ),
-        Text(
-          'Acceleration',
-          style: TextStyle(color: colorScheme.onSurface),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHeadingAngularRow(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        Checkbox(
-          value: _showHeading,
-          activeColor: GraphEditor.colorHeading,
-          checkColor: GraphEditor.colorHeading,
-          side: BorderSide(color: GraphEditor.colorHeading, width: 2),
-          onChanged: (val) {
-            widget.prefs.setBool(GraphEditor.prefShowHeading, val!);
-            setState(() {
-              _showHeading = val;
-            });
-            widget.onShouldRedraw();
-          },
-        ),
-        Text(
-          'Heading',
-          style: TextStyle(color: colorScheme.onSurface),
-        ),
-        const SizedBox(width: 12),
-        Checkbox(
+        _buildLegendCheckbox(
+          label: 'Angular Vel',
           value: _showAngularVelocity,
-          activeColor: GraphEditor.colorAngularVelocity,
-          checkColor: GraphEditor.colorAngularVelocity,
-          side: BorderSide(color: GraphEditor.colorAngularVelocity, width: 2),
+          color: GraphEditor.colorAngularVelocity,
           onChanged: (val) {
             widget.prefs.setBool(GraphEditor.prefShowAngularVelocity, val!);
             setState(() {
@@ -237,84 +228,27 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
             widget.onShouldRedraw();
           },
         ),
-        Text(
-          'Angular',
-          style: TextStyle(color: colorScheme.onSurface),
-        ),
       ],
     );
   }
 
-  Widget _buildCurvatureRow(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
+  Widget _buildLegendCheckbox({
+    required String label,
+    required bool value,
+    required Color color,
+    required ValueChanged<bool?> onChanged,
+  }) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Checkbox(
-          value: _showCurvature,
-          activeColor: GraphEditor.colorCurvature,
-          checkColor: GraphEditor.colorCurvature,
-          side: BorderSide(color: GraphEditor.colorCurvature, width: 2),
-          onChanged: (val) {
-            widget.prefs.setBool(GraphEditor.prefShowCurvature, val!);
-            setState(() {
-              _showCurvature = val;
-            });
-            widget.onShouldRedraw();
-          },
+          value: value,
+          activeColor: color,
+          checkColor: color,
+          side: BorderSide(color: color, width: 2),
+          onChanged: onChanged,
         ),
-        Text(
-          'Curvature',
-          style: TextStyle(color: colorScheme.onSurface),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHolonomicRow(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.max,
-      children: [
-        Checkbox(
-          value: _showRotation,
-          activeColor: GraphEditor.colorRotation,
-          checkColor: GraphEditor.colorRotation,
-          side: BorderSide(color: GraphEditor.colorRotation, width: 2),
-          onChanged: (val) {
-            widget.prefs.setBool(GraphEditor.prefShowRotation, val!);
-            setState(() {
-              _showRotation = val;
-            });
-            widget.onShouldRedraw();
-          },
-        ),
-        Text(
-          'Rotaion',
-          style: TextStyle(color: colorScheme.onSurface),
-        ),
-        const SizedBox(width: 12),
-        Checkbox(
-          value: _showAngularVelocity,
-          activeColor: GraphEditor.colorAngularVelocity,
-          checkColor: GraphEditor.colorAngularVelocity,
-          side: BorderSide(color: GraphEditor.colorAngularVelocity, width: 2),
-          onChanged: (val) {
-            widget.prefs.setBool(GraphEditor.prefShowAngularVelocity, val!);
-            setState(() {
-              _showAngularVelocity = val;
-            });
-            widget.onShouldRedraw();
-          },
-        ),
-        Text(
-          'Angular',
-          style: TextStyle(color: colorScheme.onSurface),
-        ),
+        Text(label),
       ],
     );
   }

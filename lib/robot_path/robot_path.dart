@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:path/path.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
+import 'package:pathplanner/services/pplib_client.dart';
 
 import 'waypoint.dart';
 
@@ -103,7 +104,12 @@ class RobotPath {
       Stopwatch s = Stopwatch()..start();
       File pathFile = File(join(saveDir.path, '$name.path'));
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
-      pathFile.writeAsString(encoder.convert(this));
+
+      // Wait until saving locally finishes to send the path to the server
+      // to avoid possible issues while simulating robot code
+      pathFile.writeAsString(encoder.convert(this)).then((_) {
+        PPLibClient.sendUpdatedPath(this);
+      });
 
       generatedTrajectory = await Trajectory.generateFullTrajectory(this);
 

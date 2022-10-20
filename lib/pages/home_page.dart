@@ -9,6 +9,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/deploy_fab.dart';
@@ -49,6 +50,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool _holonomicMode = false;
   bool _generateJSON = false;
   bool _generateCSV = false;
+  bool _pplibClient = false;
   bool _isWpiLib = false;
   final SecureBookmarks? _bookmarks =
       Platform.isMacOS ? SecureBookmarks() : null;
@@ -114,6 +116,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
         _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
         _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
+        _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
+
+        if (_pplibClient) PPLibClient.initialize(widget.prefs);
 
         String? selectedFieldName = widget.prefs.getString('fieldImage');
         if (selectedFieldName != null) {
@@ -144,6 +149,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       key: _key,
       appBar: CustomAppBar(
         titleText: _currentPath == null ? 'PathPlanner' : _currentPath!.name,
+        pplibClient: _pplibClient,
       ),
       drawer: _projectDir == null ? null : _buildDrawer(context),
       body: ScaleTransition(
@@ -431,6 +437,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       _generateCSV =
                                           widget.prefs.getBool('generateCSV') ??
                                               false;
+                                      _pplibClient =
+                                          widget.prefs.getBool('pplibClient') ??
+                                              false;
+                                      if (_pplibClient) {
+                                        PPLibClient.initialize(widget.prefs);
+                                      } else {
+                                        PPLibClient.stopServer();
+                                      }
                                     });
                                   },
                                   onGenerationEnabled: () {

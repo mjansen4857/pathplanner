@@ -82,9 +82,9 @@ class Trajectory {
   static Future<Trajectory> generateSingleTrajectory(List<Waypoint> pathPoints,
       num? maxVel, num? maxAccel, bool reversed) async {
     List<TrajectoryState> joined =
-        joinSplines(pathPoints, maxVel ?? 8.0, Trajectory.resolution);
-    calculateMaxVel(joined, maxVel ?? 8.0, maxAccel ?? 5.0, reversed);
-    calculateVelocity(joined, pathPoints, maxAccel ?? 5.0);
+        joinSplines(pathPoints, maxVel ?? 4.0, Trajectory.resolution);
+    calculateMaxVel(joined, maxVel ?? 4.0, maxAccel ?? 3.0, reversed);
+    calculateVelocity(joined, pathPoints, maxAccel ?? 3.0);
     recalculateValues(joined, reversed);
 
     return Trajectory(joined);

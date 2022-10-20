@@ -62,7 +62,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                       widget.path.maxVelocity != null
                           ? _getController(
                               widget.path.maxVelocity!.toStringAsFixed(2))
-                          : _getController('8.0'),
+                          : _getController('4.0'),
                       'Max Velocity',
                       onSubmitted: (val) {
                         setState(() {
@@ -77,7 +77,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                       widget.path.maxAcceleration != null
                           ? _getController(
                               widget.path.maxAcceleration!.toStringAsFixed(2))
-                          : _getController('5.0'),
+                          : _getController('3.0'),
                       'Max Accel',
                       onSubmitted: (val) {
                         setState(() {

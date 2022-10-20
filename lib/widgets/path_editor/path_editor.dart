@@ -1,11 +1,16 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/services/generator/trajectory.dart';
+import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/editors/edit_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/graph_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/marker_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/measure_editor.dart';
+import 'package:pathplanner/widgets/path_editor/editors/path_following_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/preview_editor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,6 +19,7 @@ enum EditorMode {
   preview,
   markers,
   measure,
+  pathFollowing,
   graph,
 }
 
@@ -42,6 +48,42 @@ class PathEditor extends StatefulWidget {
 
 class _PathEditorState extends State<PathEditor> {
   EditorMode _mode = EditorMode.edit;
+  List<Point>? _activePath;
+  TrajectoryState? _targetPose;
+  TrajectoryState? _actualPose;
+  bool _ppLibConnected = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    PPLibClient.setOnActivePathChanged((value) {
+      setState(() {
+        _activePath = value;
+      });
+    });
+
+    PPLibClient.setOnPathFollowingDataChanged((p0, p1) {
+      setState(() {
+        _targetPose = p0;
+        _actualPose = p1;
+      });
+    });
+
+    PPLibClient.connectionStatusStream().listen((data) {
+      if (!data && _mode == EditorMode.pathFollowing) {
+        UndoRedo.clearHistory();
+        setState(() {
+          _mode = EditorMode.edit;
+          _ppLibConnected = data;
+        });
+      } else {
+        setState(() {
+          _ppLibConnected = data;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +137,14 @@ class _PathEditorState extends State<PathEditor> {
           prefs: widget.prefs,
           key: ValueKey(widget.path),
         );
+      case EditorMode.pathFollowing:
+        return PathFollowingEditor(
+          fieldImage: widget.fieldImage,
+          robotSize: widget.robotSize,
+          activePath: _activePath,
+          targetPose: _targetPose,
+          actualPose: _actualPose,
+        );
       case EditorMode.graph:
         return GraphEditor(
           path: widget.path,
@@ -107,8 +157,6 @@ class _PathEditorState extends State<PathEditor> {
   }
 
   Widget _buildToolbar(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
@@ -125,7 +173,6 @@ class _PathEditorState extends State<PathEditor> {
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
-                    textColor: colorScheme.onSurface,
                     onPressed: _mode == EditorMode.edit
                         ? null
                         : () {
@@ -144,7 +191,6 @@ class _PathEditorState extends State<PathEditor> {
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
-                    textColor: colorScheme.onSurface,
                     onPressed: _mode == EditorMode.preview
                         ? null
                         : () {
@@ -163,7 +209,6 @@ class _PathEditorState extends State<PathEditor> {
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
-                    textColor: colorScheme.onSurface,
                     onPressed: _mode == EditorMode.markers
                         ? null
                         : () {
@@ -182,7 +227,6 @@ class _PathEditorState extends State<PathEditor> {
                   child: MaterialButton(
                     height: 50,
                     minWidth: 50,
-                    textColor: colorScheme.onSurface,
                     onPressed: _mode == EditorMode.measure
                         ? null
                         : () {
@@ -201,7 +245,6 @@ class _PathEditorState extends State<PathEditor> {
                     child: MaterialButton(
                       height: 50,
                       minWidth: 50,
-                      textColor: colorScheme.onSurface,
                       onPressed: _mode == EditorMode.graph
                           ? null
                           : () {
@@ -212,6 +255,25 @@ class _PathEditorState extends State<PathEditor> {
                             },
                       child: const Icon(Icons.show_chart),
                     )),
+                if (_ppLibConnected) const VerticalDivider(width: 1),
+                if (_ppLibConnected)
+                  Tooltip(
+                    message: 'Path Following',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: MaterialButton(
+                      height: 50,
+                      minWidth: 50,
+                      onPressed: _mode == EditorMode.pathFollowing
+                          ? null
+                          : () {
+                              UndoRedo.clearHistory();
+                              setState(() {
+                                _mode = EditorMode.pathFollowing;
+                              });
+                            },
+                      child: const Icon(Icons.route),
+                    ),
+                  ),
               ],
             ),
           ),

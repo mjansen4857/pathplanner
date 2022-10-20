@@ -52,6 +52,7 @@ class CustomAppBar extends AppBar {
                   CloseWindowButton(),
                 ],
           title: SizedBox(
+            height: 48,
             child: Row(
               children: [
                 Expanded(

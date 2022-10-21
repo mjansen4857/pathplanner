@@ -158,6 +158,20 @@ namespace pathplanner{
              * @return Reference to the last state in the path
              */
             PathPlannerState& getEndState() { return getState(numStates() - 1); }
+
+            /**
+             * @brief Get the inital pose of a differential drive robot in the path
+             * 
+             * @return The initial pose 
+             */
+            frc::Pose2d getInitialPose() { return getInitialState().pose; }
+
+            /**
+             * @brief Get the inital pose of a holonomic drive robot in the path
+             * 
+             * @return The initial pose 
+             */
+            frc::Pose2d getInitialHolonomicPose() { return frc::Pose2d(getInitialPose().Translation(), getInitialState().holonomicRotation); }
             
             /**
              * @brief Get the total runtime of the path

@@ -79,6 +79,14 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     /**
+     * Get the initial pose of a holonomic drive robot in the path
+     * @return The initial pose
+     */
+    public Pose2d getInitialHolonomicPose(){
+        return new Pose2d(getInitialPose().getTranslation(), getInitialState().holonomicRotation);
+    }
+
+    /**
      * Get the end state of the path
      * @return The last state in the path
      */

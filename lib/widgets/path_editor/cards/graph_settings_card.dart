@@ -8,7 +8,7 @@ class GraphSettingsCard extends StatefulWidget {
   final bool holonomicMode;
   final VoidCallback onToggleSampled;
   final VoidCallback onToggleMinimized;
-  final VoidCallback onShouldRedraw;
+  final VoidCallback onSettingChanged;
   final GlobalKey stackKey;
   final SharedPreferences prefs;
   final bool isSampled;
@@ -19,7 +19,7 @@ class GraphSettingsCard extends StatefulWidget {
       required this.holonomicMode,
       required this.onToggleSampled,
       required this.onToggleMinimized,
-      required this.onShouldRedraw,
+      required this.onSettingChanged,
       required this.prefs,
       required this.isSampled,
       required this.cardMinimized,
@@ -35,7 +35,6 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
   late bool _showHeading;
   late bool _showAngularVelocity;
   late bool _showCurvature;
-  late bool _showRotation;
 
   @override
   void initState() {
@@ -48,7 +47,6 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
         widget.prefs.getBool(GraphEditor.prefShowAngularVelocity) ?? true;
     _showCurvature =
         widget.prefs.getBool(GraphEditor.prefShowCurvature) ?? true;
-    _showRotation = widget.prefs.getBool(GraphEditor.prefShowRotation) ?? true;
   }
 
   @override
@@ -152,49 +150,33 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
             setState(() {
               _showVelocity = val;
             });
-            widget.onShouldRedraw();
+            widget.onSettingChanged();
           },
         ),
-        ConditionalWidget(
-          condition: widget.holonomicMode,
-          trueChild: _buildLegendCheckbox(
-            label: 'Rotation',
-            value: _showRotation,
-            color: GraphEditor.colorRotation,
-            onChanged: (val) {
-              widget.prefs.setBool(GraphEditor.prefShowRotation, val!);
-              setState(() {
-                _showRotation = val;
-              });
-              widget.onShouldRedraw();
-            },
-          ),
-          falseChild: _buildLegendCheckbox(
-            label: 'Heading',
-            value: _showHeading,
-            color: GraphEditor.colorHeading,
-            onChanged: (val) {
-              widget.prefs.setBool(GraphEditor.prefShowHeading, val!);
-              setState(() {
-                _showHeading = val;
-              });
-              widget.onShouldRedraw();
-            },
-          ),
+        _buildLegendCheckbox(
+          label: widget.holonomicMode ? 'Rotation' : 'Heading',
+          value: _showHeading,
+          color: GraphEditor.colorHeading,
+          onChanged: (val) {
+            widget.prefs.setBool(GraphEditor.prefShowHeading, val!);
+            setState(() {
+              _showHeading = val;
+            });
+            widget.onSettingChanged();
+          },
         ),
-        if (!widget.holonomicMode)
-          _buildLegendCheckbox(
-            label: 'Curvature',
-            value: _showCurvature,
-            color: GraphEditor.colorCurvature,
-            onChanged: (val) {
-              widget.prefs.setBool(GraphEditor.prefShowCurvature, val!);
-              setState(() {
-                _showCurvature = val;
-              });
-              widget.onShouldRedraw();
-            },
-          ),
+        _buildLegendCheckbox(
+          label: 'Curvature',
+          value: _showCurvature,
+          color: GraphEditor.colorCurvature,
+          onChanged: (val) {
+            widget.prefs.setBool(GraphEditor.prefShowCurvature, val!);
+            setState(() {
+              _showCurvature = val;
+            });
+            widget.onSettingChanged();
+          },
+        ),
       ],
     );
   }
@@ -213,7 +195,7 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
             setState(() {
               _showAccel = val;
             });
-            widget.onShouldRedraw();
+            widget.onSettingChanged();
           },
         ),
         _buildLegendCheckbox(
@@ -225,7 +207,7 @@ class _GraphSettingsCardState extends State<GraphSettingsCard> {
             setState(() {
               _showAngularVelocity = val;
             });
-            widget.onShouldRedraw();
+            widget.onSettingChanged();
           },
         ),
       ],

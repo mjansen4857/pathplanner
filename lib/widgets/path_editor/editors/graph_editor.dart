@@ -3,6 +3,7 @@ import 'dart:core';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
 import 'package:pathplanner/widgets/path_editor/cards/generator_settings_card.dart';
 import 'package:pathplanner/widgets/path_editor/cards/graph_settings_card.dart';
@@ -16,13 +17,11 @@ class GraphEditor extends StatefulWidget {
   static String prefShowVelocity = 'graphShowVelocity';
   static String prefShowAccel = 'graphShowAccel';
   static String prefShowHeading = 'graphShowHeading';
-  static String prefShowRotation = 'graphShowRotation';
   static String prefShowAngularVelocity = 'graphShowAngularVelocity';
   static String prefShowCurvature = 'graphShowCurvature';
   static Color colorVelocity = Colors.red;
   static Color colorAccel = Colors.orange;
   static Color colorHeading = Colors.yellow;
-  static Color colorRotation = Colors.yellow;
   static Color colorAngularVelocity = Colors.green;
   static Color colorCurvature = Colors.blue;
 
@@ -42,6 +41,43 @@ class _GraphEditorState extends State<GraphEditor> {
   bool _isSampled = true;
   bool _cardMinimized = false;
 
+  List<FlSpot> _sampledVel = [];
+  List<FlSpot> _sampledAccel = [];
+  List<FlSpot> _sampledHeading = [];
+  List<FlSpot> _sampledRotation = [];
+  List<FlSpot> _sampledAngularVel = [];
+  List<FlSpot> _sampledHoloAngularVel = [];
+  List<FlSpot> _sampledCurvature = [];
+
+  List<FlSpot> _fullVel = [];
+  List<FlSpot> _fullAccel = [];
+  List<FlSpot> _fullHeading = [];
+  List<FlSpot> _fullRotation = [];
+  List<FlSpot> _fullAngularVel = [];
+  List<FlSpot> _fullHoloAngularVel = [];
+  List<FlSpot> _fullCurvature = [];
+
+  late bool _showVelocity;
+  late bool _showAccel;
+  late bool _showHeading;
+  late bool _showAngularVel;
+  late bool _showCurvature;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _fillData();
+
+    _showVelocity = widget.prefs.getBool(GraphEditor.prefShowVelocity) ?? true;
+    _showAccel = widget.prefs.getBool(GraphEditor.prefShowAccel) ?? true;
+    _showHeading = widget.prefs.getBool(GraphEditor.prefShowHeading) ?? true;
+    _showAngularVel =
+        widget.prefs.getBool(GraphEditor.prefShowAngularVelocity) ?? true;
+    _showCurvature =
+        widget.prefs.getBool(GraphEditor.prefShowCurvature) ?? true;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -49,11 +85,7 @@ class _GraphEditorState extends State<GraphEditor> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(48, 48, 48, 72),
-          child: _LineChart(
-              isSampled: _isSampled,
-              path: widget.path,
-              holonomicMode: widget.holonomicMode,
-              prefs: widget.prefs),
+          child: _buildChart(),
         ),
         _buildGraphSettingsCard(),
         _buildGeneratorSettingsCard(),
@@ -75,11 +107,20 @@ class _GraphEditorState extends State<GraphEditor> {
             _cardMinimized = !_cardMinimized;
           });
         },
-        onShouldRedraw: () {
-          // The graph needs to be redrawn based on the card's change to the
-          // preferences, so trigger a redraw.  There is no internal state that
-          // needs to change, so the lambda is empty.
-          setState(() {});
+        onSettingChanged: () {
+          setState(() {
+            _showVelocity =
+                widget.prefs.getBool(GraphEditor.prefShowVelocity) ?? true;
+            _showAccel =
+                widget.prefs.getBool(GraphEditor.prefShowAccel) ?? true;
+            _showHeading =
+                widget.prefs.getBool(GraphEditor.prefShowHeading) ?? true;
+            _showAngularVel =
+                widget.prefs.getBool(GraphEditor.prefShowAngularVelocity) ??
+                    true;
+            _showCurvature =
+                widget.prefs.getBool(GraphEditor.prefShowCurvature) ?? true;
+          });
         },
         prefs: widget.prefs,
         isSampled: _isSampled,
@@ -93,333 +134,185 @@ class _GraphEditorState extends State<GraphEditor> {
       onShouldSave: () async {
         await widget.path.generateTrajectory();
 
-        // The graph needs to be redrawn based on the card's change to the
-        // preferences, so trigger a redraw.  There is no internal state that
-        // needs to change, so the lambda is empty.
-        setState(() {});
+        setState(() {
+          _fillData();
+        });
 
         widget.savePath(widget.path);
       },
       prefs: widget.prefs,
     );
   }
-}
 
-class _LineChart extends StatelessWidget {
-  const _LineChart(
-      {required this.isSampled,
-      required this.path,
-      required this.holonomicMode,
-      required this.prefs});
+  void _fillData() {
+    Trajectory traj = widget.path.generatedTrajectory;
 
-  final bool isSampled;
-  final RobotPath path;
-  final bool holonomicMode;
-  final SharedPreferences prefs;
+    // Create sampled data
+    _sampledVel = [];
+    _sampledAccel = [];
+    _sampledHeading = [];
+    _sampledRotation = [];
+    _sampledAngularVel = [];
+    _sampledHoloAngularVel = [];
+    _sampledCurvature = [];
+    for (double t = 0; t <= traj.getRuntime(); t += 0.02) {
+      TrajectoryState s = traj.sample(t);
 
-  @override
-  Widget build(BuildContext context) {
-    List<FlSpot> velocity, acceleration, heading, rotation, angular, curvature;
-    TrajectoryState? state;
-    double min, max, time;
-    int idx, length;
-
-    if (isSampled) {
-      length = (path.generatedTrajectory.getRuntime() + 0.0199999) ~/ 0.02;
-    } else {
-      length = path.generatedTrajectory.states.length;
+      _sampledVel.add(FlSpot(t, s.velocityMetersPerSecond.toDouble()));
+      _sampledAccel.add(FlSpot(t, s.accelerationMetersPerSecondSq.toDouble()));
+      _sampledHeading.add(FlSpot(t, s.headingRadians.toDouble()));
+      _sampledRotation.add(
+          FlSpot(t, GeometryUtil.toRadians(s.holonomicRotation).toDouble()));
+      _sampledAngularVel.add(FlSpot(t, s.angularVelocity.toDouble()));
+      _sampledHoloAngularVel.add(FlSpot(
+          t, GeometryUtil.toRadians(s.holonomicAngularVelocity).toDouble()));
+      _sampledCurvature.add(FlSpot(t, s.curvatureRadPerMeter.toDouble()));
     }
 
-    velocity = [];
-    acceleration = [];
-    heading = [];
-    rotation = [];
-    angular = [];
-    curvature = [];
+    // Create full data
+    _fullVel = [];
+    _fullAccel = [];
+    _fullHeading = [];
+    _fullRotation = [];
+    _fullAngularVel = [];
+    _fullHoloAngularVel = [];
+    _fullCurvature = [];
+    for (int i = 0; i < traj.states.length; i++) {
+      TrajectoryState s = traj.states[i];
+      double t = s.timeSeconds.toDouble();
 
-    min = -1.0;
-    max = 1.0;
-    time = 0.0;
+      double vel = s.velocityMetersPerSecond.toDouble();
+      double accel = s.accelerationMetersPerSecondSq.toDouble();
 
-    for (idx = 0; idx < length; idx++) {
-      if (isSampled) {
-        state = path.generatedTrajectory.sample(idx / 50.0);
-        time = idx / 50.0;
-      } else {
-        state = path.generatedTrajectory.states[idx];
-        time = state.timeSeconds.toDouble();
-      }
-
-      if (prefs.getBool(GraphEditor.prefShowVelocity) ?? true) {
-        velocity.add(FlSpot(time, state.velocityMetersPerSecond.toDouble()));
-        min = velocity[idx].y < min ? velocity[idx].y : min;
-        max = velocity[idx].y > max ? velocity[idx].y : max;
-      }
-
-      if (prefs.getBool(GraphEditor.prefShowAccel) ?? true) {
-        acceleration
-            .add(FlSpot(time, state.accelerationMetersPerSecondSq.toDouble()));
-        min = acceleration[idx].y < min ? acceleration[idx].y : min;
-        max = acceleration[idx].y > max ? acceleration[idx].y : max;
-      }
-
-      if (!holonomicMode) {
-        if (prefs.getBool(GraphEditor.prefShowHeading) ?? true) {
-          heading.add(FlSpot(time, state.headingRadians.toDouble()));
-          min = heading[idx].y < min ? heading[idx].y : min;
-          max = heading[idx].y > max ? heading[idx].y : max;
-        }
-
-        if (prefs.getBool(GraphEditor.prefShowAngularVelocity) ?? true) {
-          angular.add(FlSpot(time, state.angularVelocity.toDouble()));
-          min = angular[idx].y < min ? angular[idx].y : min;
-          max = angular[idx].y > max ? angular[idx].y : max;
-        }
-
-        if (prefs.getBool(GraphEditor.prefShowCurvature) ?? true) {
-          curvature.add(FlSpot(time, state.curvatureRadPerMeter.toDouble()));
-          min = curvature[idx].y < min ? curvature[idx].y : min;
-          max = curvature[idx].y > max ? curvature[idx].y : max;
-        }
-      } else {
-        if (prefs.getBool(GraphEditor.prefShowRotation) ?? true) {
-          rotation.add(FlSpot(
-              time, (state.holonomicRotation.toDouble() * 3.14159) / 180.0));
-          min = rotation[idx].y < min ? rotation[idx].y : min;
-          max = rotation[idx].y > max ? rotation[idx].y : max;
-        }
-
-        if (prefs.getBool(GraphEditor.prefShowAngularVelocity) ?? true) {
-          angular.add(FlSpot(time,
-              (state.holonomicAngularVelocity.toDouble() * 3.14159) / 180.0));
-          min = angular[idx].y < min ? angular[idx].y : min;
-          max = angular[idx].y > max ? angular[idx].y : max;
-        }
-      }
+      _fullVel.add(FlSpot(t, vel));
+      _fullAccel.add(FlSpot(t, accel));
+      _fullHeading.add(FlSpot(t, s.headingRadians.toDouble()));
+      _fullRotation.add(
+          FlSpot(t, GeometryUtil.toRadians(s.holonomicRotation).toDouble()));
+      _fullAngularVel.add(FlSpot(t, s.angularVelocity.toDouble()));
+      _fullHoloAngularVel.add(FlSpot(
+          t, GeometryUtil.toRadians(s.holonomicAngularVelocity).toDouble()));
+      _fullCurvature.add(FlSpot(t, s.curvatureRadPerMeter.toDouble()));
     }
+  }
 
-    List<LineChartBarData> lineBarsData = [];
-
-    if (prefs.getBool(GraphEditor.prefShowVelocity) ?? true) {
-      LineChartBarData dataVelocity = LineChartBarData(
-        isCurved: false,
-        color: GraphEditor.colorVelocity,
-        barWidth: 5,
-        isStrokeCapRound: true,
-        dotData: FlDotData(show: false),
-        belowBarData: BarAreaData(show: false),
-        spots: velocity,
-      );
-
-      lineBarsData.add(dataVelocity);
-    }
-
-    if (prefs.getBool(GraphEditor.prefShowAccel) ?? true) {
-      LineChartBarData dataAcceleration = LineChartBarData(
-        isCurved: false,
-        color: GraphEditor.colorAccel,
-        barWidth: 5,
-        isStrokeCapRound: true,
-        dotData: FlDotData(show: false),
-        belowBarData: BarAreaData(show: false),
-        spots: acceleration,
-      );
-
-      lineBarsData.add(dataAcceleration);
-    }
-
-    if (!holonomicMode) {
-      if (prefs.getBool(GraphEditor.prefShowHeading) ?? true) {
-        LineChartBarData dataHeading = LineChartBarData(
-          isCurved: false,
-          color: GraphEditor.colorHeading,
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: FlDotData(show: false),
-          belowBarData: BarAreaData(show: false),
-          spots: heading,
-        );
-
-        lineBarsData.add(dataHeading);
-      }
-
-      if (prefs.getBool(GraphEditor.prefShowAngularVelocity) ?? true) {
-        LineChartBarData dataAngular = LineChartBarData(
-          isCurved: false,
-          color: GraphEditor.colorAngularVelocity,
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: FlDotData(show: false),
-          belowBarData: BarAreaData(show: false),
-          spots: angular,
-        );
-
-        lineBarsData.add(dataAngular);
-      }
-
-      if (prefs.getBool(GraphEditor.prefShowCurvature) ?? true) {
-        LineChartBarData dataCurvature = LineChartBarData(
-          isCurved: false,
-          color: GraphEditor.colorCurvature,
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: FlDotData(show: false),
-          belowBarData: BarAreaData(show: false),
-          spots: curvature,
-        );
-
-        lineBarsData.add(dataCurvature);
-      }
-    } else {
-      if (prefs.getBool(GraphEditor.prefShowRotation) ?? true) {
-        LineChartBarData dataHoloRotation = LineChartBarData(
-          isCurved: false,
-          color: GraphEditor.colorRotation,
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: FlDotData(show: false),
-          belowBarData: BarAreaData(show: false),
-          spots: rotation,
-        );
-
-        lineBarsData.add(dataHoloRotation);
-      }
-
-      if (prefs.getBool(GraphEditor.prefShowAngularVelocity) ?? true) {
-        LineChartBarData dataHoloAngle = LineChartBarData(
-          isCurved: false,
-          color: GraphEditor.colorAngularVelocity,
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: FlDotData(show: false),
-          belowBarData: BarAreaData(show: false),
-          spots: angular,
-        );
-
-        lineBarsData.add(dataHoloAngle);
-      }
-    }
-
-    List<VerticalLine> markers = List.empty(growable: true);
-
-    for (idx = 0; idx < path.markers.length; idx++) {
-      markers.add(VerticalLine(
-          x: path.markers[idx].timeSeconds,
-          label: VerticalLineLabel(
-              labelResolver: markerLabel,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-              alignment: Alignment.topCenter,
-              show: true),
-          color: Colors.white38,
-          strokeWidth: 3));
-    }
-
-    ExtraLinesData extraLines = ExtraLinesData(horizontalLines: [
-      HorizontalLine(
-        y: 0,
-        color: Colors.white60,
-        strokeWidth: 3,
-      ),
-    ], verticalLines: markers, extraLinesOnTop: false);
-
-    SideTitles leftTitles = SideTitles(
-      getTitlesWidget: leftTitleWidgets,
-      showTitles: true,
-      reservedSize: 40,
-    );
-
-    SideTitles bottomTitles = SideTitles(
-      showTitles: true,
-      reservedSize: 32,
-      getTitlesWidget: bottomTitleWidgets,
-    );
-
-    FlTitlesData titlesData = FlTitlesData(
-      bottomTitles: AxisTitles(
-        sideTitles: bottomTitles,
-      ),
-      rightTitles: AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      topTitles: AxisTitles(
-        sideTitles: SideTitles(showTitles: false),
-      ),
-      leftTitles: AxisTitles(
-        sideTitles: leftTitles,
-      ),
-    );
-
-    FlBorderData borderData = FlBorderData(
-      show: true,
-      border: const Border(
-        bottom: BorderSide(color: Colors.white24, width: 4),
-        left: BorderSide(color: Colors.white24, width: 4),
-        right: BorderSide(color: Colors.white24, width: 4),
-        top: BorderSide(color: Colors.white24, width: 4),
-      ),
-    );
-
-    LineChartData data = LineChartData(
-      lineTouchData: LineTouchData(enabled: false),
-      gridData: FlGridData(show: true),
-      titlesData: titlesData,
-      borderData: borderData,
-      lineBarsData: lineBarsData,
-      extraLinesData: extraLines,
-      minX: 0,
-      maxX: time,
-      minY: min.floorToDouble(),
-      maxY: max.ceilToDouble(),
-    );
-
+  Widget _buildChart() {
     return LineChart(
-      data,
+      LineChartData(
+        lineTouchData: LineTouchData(enabled: false),
+        gridData: FlGridData(show: true),
+        borderData: FlBorderData(
+          show: true,
+          border: const Border(
+            bottom: BorderSide(color: Colors.white24, width: 4),
+            left: BorderSide(color: Colors.white24, width: 4),
+            right: BorderSide(color: Colors.white24, width: 4),
+            top: BorderSide(color: Colors.white24, width: 4),
+          ),
+        ),
+        lineBarsData: [
+          if (_showVelocity)
+            LineChartBarData(
+              isCurved: false,
+              color: GraphEditor.colorVelocity,
+              barWidth: 5,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+              spots: _isSampled ? _sampledVel : _fullVel,
+            ),
+          if (_showAccel)
+            LineChartBarData(
+              isCurved: false,
+              color: GraphEditor.colorAccel,
+              barWidth: 5,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+              spots: _isSampled ? _sampledAccel : _fullAccel,
+            ),
+          if (_showHeading)
+            LineChartBarData(
+              isCurved: false,
+              color: GraphEditor.colorHeading,
+              barWidth: 5,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+              spots: widget.holonomicMode
+                  ? (_isSampled ? _sampledRotation : _fullRotation)
+                  : (_isSampled ? _sampledHeading : _fullHeading),
+            ),
+          if (_showAngularVel)
+            LineChartBarData(
+              isCurved: false,
+              color: GraphEditor.colorAngularVelocity,
+              barWidth: 5,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+              spots: widget.holonomicMode
+                  ? (_isSampled ? _sampledHoloAngularVel : _fullHoloAngularVel)
+                  : (_isSampled ? _sampledAngularVel : _fullAngularVel),
+            ),
+          if (_showCurvature)
+            LineChartBarData(
+              isCurved: false,
+              color: GraphEditor.colorCurvature,
+              barWidth: 5,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+              spots: _isSampled ? _sampledCurvature : _fullCurvature,
+            ),
+        ],
+        extraLinesData: ExtraLinesData(
+          horizontalLines: [
+            HorizontalLine(
+              y: 0,
+              color: Colors.white60,
+              strokeWidth: 3,
+            ),
+          ],
+          verticalLines: [
+            for (EventMarker m in widget.path.markers)
+              VerticalLine(
+                x: m.timeSeconds,
+                label: VerticalLineLabel(
+                  labelResolver: (_) => m.name,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  alignment: Alignment.topCenter,
+                  show: true,
+                ),
+                color: Colors.grey[600],
+                strokeWidth: 3,
+              ),
+          ],
+          extraLinesOnTop: true,
+        ),
+        titlesData: FlTitlesData(
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: 0.5,
+              getTitlesWidget: (value, meta) =>
+                  Text(((value * 100).roundToDouble() / 100).toString()),
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: 1,
+              reservedSize: 28,
+              getTitlesWidget: (value, meta) =>
+                  Text(((value * 100).roundToDouble() / 100).toString()),
+            ),
+          ),
+        ),
+      ),
       swapAnimationDuration: const Duration(milliseconds: 0),
-    );
-  }
-
-  String markerLabel(VerticalLine line) {
-    for (int idx = 0; idx < path.markers.length; idx++) {
-      if (path.markers[idx].timeSeconds == line.x) {
-        return path.markers[idx].name;
-      }
-    }
-    return '';
-  }
-
-  Widget leftTitleWidgets(double value, TitleMeta meta) {
-    if ((value - value.toInt()).abs() > 0.01) {
-      return const Text('');
-    }
-
-    const style = TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.bold,
-      fontSize: 14,
-    );
-
-    return SideTitleWidget(
-        axisSide: meta.axisSide,
-        space: 10,
-        child: Text(value.toInt().toString(),
-            style: style, textAlign: TextAlign.center));
-  }
-
-  Widget bottomTitleWidgets(double value, TitleMeta meta) {
-    if (((value * 10.0) - (value * 10.0).round().toInt()).abs() > 0.01) {
-      return const Text('');
-    }
-
-    const style = TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.bold,
-      fontSize: 16,
-    );
-
-    return SideTitleWidget(
-      axisSide: meta.axisSide,
-      space: 10,
-      child: Text(value.toStringAsFixed(1), style: style),
     );
   }
 }

@@ -54,4 +54,8 @@ class GeometryUtil {
   static num toDegrees(num radians) {
     return radians * 180 / pi;
   }
+
+  static num toRadians(num degrees) {
+    return degrees * pi / 180;
+  }
 }

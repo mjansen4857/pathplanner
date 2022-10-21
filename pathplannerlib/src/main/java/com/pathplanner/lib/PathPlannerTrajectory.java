@@ -231,8 +231,6 @@ public class PathPlannerTrajectory extends Trajectory {
                 PathPlannerState next = states.get(i + 1);
 
                 double dt = next.timeSeconds - now.timeSeconds;
-                now.velocityMetersPerSecond = next.deltaPos / dt;
-                now.accelerationMetersPerSecondSq = (next.velocityMetersPerSecond - now.velocityMetersPerSecond) / dt;
 
                 now.angularVelocityRadPerSec = MathUtil.inputModulus(next.poseMeters.getRotation().getRadians() - now.poseMeters.getRotation().getRadians(), -Math.PI, Math.PI) / dt;
                 now.holonomicAngularVelocityRadPerSec = MathUtil.inputModulus(next.holonomicRotation.getRadians() - now.holonomicRotation.getRadians(), -Math.PI, Math.PI) / dt;

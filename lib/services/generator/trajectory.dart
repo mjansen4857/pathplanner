@@ -255,9 +255,6 @@ class Trajectory {
         TrajectoryState next = states[i + 1];
 
         num dt = next.timeSeconds - now.timeSeconds;
-        now.velocityMetersPerSecond = next.deltaPos / dt;
-        now.accelerationMetersPerSecondSq =
-            (next.velocityMetersPerSecond - now.velocityMetersPerSecond) / dt;
 
         now.angularVelocity = MathUtil.inputModulus(
                 next.headingRadians - now.headingRadians, -pi, pi) /

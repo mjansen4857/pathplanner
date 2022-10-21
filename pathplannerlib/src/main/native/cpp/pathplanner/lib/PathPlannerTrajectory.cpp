@@ -241,8 +241,6 @@ void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory:
             PathPlannerState& next = states[i + 1];
 
             units::second_t dt = next.time - now.time;
-            now.velocity = next.deltaPos / dt;
-            now.acceleration = (next.velocity - now.velocity) / dt;
             now.angularVelocity = frc::InputModulus(next.pose.Rotation().Radians() - now.pose.Rotation().Radians(), (units::radian_t)-PI, (units::radian_t)PI) / dt;
             now.holonomicAngularVelocity = frc::InputModulus(next.holonomicRotation.Radians() - now.holonomicRotation.Radians(), (units::radian_t)-PI, (units::radian_t)PI) / dt;
         }

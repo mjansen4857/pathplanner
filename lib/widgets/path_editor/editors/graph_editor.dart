@@ -130,6 +130,7 @@ class _GraphEditorState extends State<GraphEditor> {
   Widget _buildGeneratorSettingsCard() {
     return GeneratorSettingsCard(
       path: widget.path,
+      holonomicMode: widget.holonomicMode,
       stackKey: _key,
       onShouldSave: () async {
         await widget.path.generateTrajectory();

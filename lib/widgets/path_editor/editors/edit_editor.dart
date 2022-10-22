@@ -344,6 +344,7 @@ class _EditEditorState extends State<EditEditor> {
       visible: widget.showGeneratorSettings,
       child: GeneratorSettingsCard(
         path: widget.path,
+        holonomicMode: widget.holonomicMode,
         stackKey: _key,
         onShouldSave: () {
           widget.savePath(widget.path);

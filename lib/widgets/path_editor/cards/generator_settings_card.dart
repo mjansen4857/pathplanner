@@ -9,12 +9,14 @@ class GeneratorSettingsCard extends StatefulWidget {
   final VoidCallback onShouldSave;
   final GlobalKey stackKey;
   final SharedPreferences prefs;
+  final bool holonomicMode;
 
   const GeneratorSettingsCard(
       {required this.path,
       required this.stackKey,
       required this.onShouldSave,
       required this.prefs,
+      required this.holonomicMode,
       super.key});
 
   @override
@@ -88,33 +90,40 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: widget.path.isReversed ?? false,
-                          activeColor: colorScheme.primaryContainer,
-                          checkColor: colorScheme.onPrimaryContainer,
-                          onChanged: (val) {
-                            setState(() {
-                              widget.path.isReversed = val;
-                              widget.onShouldSave();
-                            });
-                          },
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Reversed',
-                          style: TextStyle(color: colorScheme.onSurface),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                    ),
-                  ],
+                Visibility(
+                  visible: !widget.holonomicMode,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: widget.path.isReversed ?? false,
+                                activeColor: colorScheme.primaryContainer,
+                                checkColor: colorScheme.onPrimaryContainer,
+                                onChanged: (val) {
+                                  setState(() {
+                                    widget.path.isReversed = val;
+                                    widget.onShouldSave();
+                                  });
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Reversed',
+                                style: TextStyle(color: colorScheme.onSurface),
+                              ),
+                              const SizedBox(width: 12),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

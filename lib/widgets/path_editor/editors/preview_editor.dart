@@ -89,6 +89,7 @@ class _PreviewEditorState extends State<PreviewEditor>
   Widget _buildGeneratorSettingsCard() {
     return GeneratorSettingsCard(
       path: widget.path,
+      holonomicMode: widget.holonomicMode,
       stackKey: _key,
       onShouldSave: () async {
         await widget.path.generateTrajectory();

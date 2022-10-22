@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:pathplanner/widgets/path_editor/editors/graph_editor.dart';
 import 'package:shared_preferences/shared_preferences.dart';

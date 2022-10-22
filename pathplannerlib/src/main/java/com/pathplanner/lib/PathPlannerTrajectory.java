@@ -268,9 +268,7 @@ public class PathPlannerTrajectory extends Trajectory {
                 PathPlannerState state = new PathPlannerState();
                 state.poseMeters = new Pose2d(p, state.poseMeters.getRotation());
 
-                double deltaRot = endPoint.holonomicRotation.minus(startPoint.holonomicRotation).getDegrees();
-                deltaRot = MathUtil.inputModulus(deltaRot, -180, 180);
-                double holonomicRot = startPoint.holonomicRotation.getDegrees() + (t * deltaRot);
+                double holonomicRot = GeometryUtil.cosineInterpolate(startPoint.holonomicRotation, endPoint.holonomicRotation, t).getDegrees();
                 holonomicRot = MathUtil.inputModulus(holonomicRot, -180, 180);
                 state.holonomicRotation = Rotation2d.fromDegrees(holonomicRot);
 

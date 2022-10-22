@@ -119,10 +119,7 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
            PathPlannerState state;
            state.pose = frc::Pose2d(p, state.pose.Rotation());
 
-           units::degree_t deltaRot = (endPoint.holonomicRotation - startPoint.holonomicRotation).Degrees();
-           deltaRot = frc::InputModulus(deltaRot, -180_deg, 180_deg);
-
-           units::degree_t holonomicRot = startPoint.holonomicRotation.Degrees() + (t * deltaRot);
+           units::degree_t holonomicRot = GeometryUtil::cosineInterpolate(startPoint.holonomicRotation, endPoint.holonomicRotation, t).Degrees();
            holonomicRot = frc::InputModulus(holonomicRot, -180_deg, 180_deg);
            state.holonomicRotation = frc::Rotation2d(holonomicRot);
 

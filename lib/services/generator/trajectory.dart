@@ -295,10 +295,6 @@ class Trajectory {
         TrajectoryState state = TrajectoryState();
         state.translationMeters = p;
 
-        num deltaRot = endPoint.holonomicAngle - startPoint.holonomicAngle;
-        deltaRot = MathUtil.inputModulus(deltaRot, -180, 180);
-
-        // num holonomicRot = startPoint.holonomicAngle + (deltaRot * t);
         num holonomicRot = MathUtil.cosineInterpolate(
             startPoint.holonomicAngle, endPoint.holonomicAngle, t);
         holonomicRot = MathUtil.inputModulus(holonomicRot, -180, 180);

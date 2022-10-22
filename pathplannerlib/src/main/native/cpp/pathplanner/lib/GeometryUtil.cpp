@@ -1,4 +1,7 @@
 #include "pathplanner/lib/GeometryUtil.h"
+#include <math.h>
+
+#define PI 3.14159265358979323846
 
 using namespace pathplanner;
 
@@ -48,6 +51,11 @@ frc::Translation2d GeometryUtil::cubicLerp(const frc::Translation2d a, const frc
    frc::Translation2d p0 = GeometryUtil::quadraticLerp(a, b, c, t);
    frc::Translation2d p1 = GeometryUtil::quadraticLerp(b, c, d, t);
    return GeometryUtil::translationLerp(p0, p1, t);
+}
+
+frc::Rotation2d GeometryUtil::cosineInterpolate(const frc::Rotation2d y1, const frc::Rotation2d y2, double mu){
+   double mu2 = (1 - cos(mu * PI)) / 2;
+   return frc::Rotation2d(y1.Radians() * (1 - mu2) + y2.Radians() * mu2);
 }
 
 units::degree_t GeometryUtil::modulo(units::degree_t a, units::degree_t b){

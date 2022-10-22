@@ -28,6 +28,8 @@ namespace pathplanner {
         static frc::Translation2d quadraticLerp(const frc::Translation2d a, const frc::Translation2d b, const frc::Translation2d c, double t);
         static frc::Translation2d cubicLerp(const frc::Translation2d a, const frc::Translation2d b, const frc::Translation2d c, const frc::Translation2d d, double t);
 
+        static frc::Rotation2d cosineInterpolate(const frc::Rotation2d y1, const frc::Rotation2d y2, double mu);
+
         static units::degree_t modulo(units::degree_t a, units::degree_t b);
 
         static bool isFinite(units::meter_t u);

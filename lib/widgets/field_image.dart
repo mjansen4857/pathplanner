@@ -15,6 +15,9 @@ class FieldImage {
   late final num pixelsPerMeter;
   late final String name;
 
+  static final FieldImage defaultField =
+      FieldImage.official(OfficialField.rapidReact);
+
   static List<FieldImage> offialFields() {
     return [
       FieldImage.official(OfficialField.rapidReact),

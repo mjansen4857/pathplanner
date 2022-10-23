@@ -23,14 +23,12 @@ import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
-  final FieldImage defaultFieldImage;
   final String appVersion;
   final bool appStoreBuild;
   final SharedPreferences prefs;
   final ValueChanged<Color> onTeamColorChanged;
 
   const HomePage({
-    required this.defaultFieldImage,
     required this.appVersion,
     required this.appStoreBuild,
     required this.prefs,
@@ -88,7 +86,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _key.currentContext!,
           PageRouteBuilder(
             pageBuilder: (context, anim1, anim2) => WelcomePage(
-              backgroundImage: widget.defaultFieldImage,
+              backgroundImage: FieldImage.defaultField,
               appVersion: widget.appVersion,
             ),
             transitionDuration: Duration.zero,
@@ -380,7 +378,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               pathName = 'New $pathName';
                             }
                             setState(() {
-                              _paths.add(RobotPath.defaultPath(name: pathName));
+                              _paths.add(RobotPath.defaultPath(
+                                  name: pathName,
+                                  fieldImage:
+                                      _fieldImage ?? FieldImage.defaultField));
                               _currentPath = _paths.last;
                               _savePath(_currentPath!, context);
                               UndoRedo.clearHistory();
@@ -406,7 +407,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   onTeamColorChanged: widget.onTeamColorChanged,
                                   fieldImages: _fieldImages,
                                   selectedField:
-                                      _fieldImage ?? widget.defaultFieldImage,
+                                      _fieldImage ?? FieldImage.defaultField,
                                   onFieldSelected: (FieldImage image) {
                                     setState(() {
                                       _fieldImage = image;
@@ -482,7 +483,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         children: [
           Center(
             child: PathEditor(
-              fieldImage: _fieldImage ?? widget.defaultFieldImage,
+              fieldImage: _fieldImage ?? FieldImage.defaultField,
               path: _currentPath!,
               robotSize: _robotSize,
               holonomicMode: _holonomicMode,
@@ -551,7 +552,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     if (paths.isEmpty) {
-      paths.add(RobotPath.defaultPath());
+      paths.add(RobotPath.defaultPath(
+          fieldImage: _fieldImage ?? FieldImage.defaultField));
     }
 
     return paths;

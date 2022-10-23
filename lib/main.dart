@@ -73,12 +73,11 @@ void main() async {
 }
 
 class PathPlanner extends StatefulWidget {
-  final FieldImage defaultField = FieldImage.official(OfficialField.rapidReact);
   final String appVersion;
   final bool appStoreBuild;
   final Logger logger;
 
-  PathPlanner(
+  const PathPlanner(
       {required this.logger,
       required this.appVersion,
       required this.appStoreBuild,
@@ -116,7 +115,6 @@ class _PathPlannerState extends State<PathPlanner> {
         useMaterial3: true,
       ),
       home: HomePage(
-        defaultFieldImage: widget.defaultField,
         appVersion: widget.appVersion,
         appStoreBuild: widget.appStoreBuild,
         prefs: _prefs!,

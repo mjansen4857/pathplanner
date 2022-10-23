@@ -1,17 +1,17 @@
 import org.gradle.internal.os.OperatingSystem
 
 nativeUtils.addWpiNativeUtils()
-nativeUtils.withRoboRIO()
+nativeUtils.withCrossRoboRIO()
 
 nativeUtils {
   wpi {
     configureDependencies {
-      wpiVersion = "2022.+"
-      niLibVersion = "2022.+"
-      opencvVersion = "4.5.2-1"
-      googleTestVersion = "1.9.0-5-437e100-1"
-      imguiVersion = "1.86-1"
-      wpimathVersion = "2022.+"
+      wpiVersion = "2023.+"
+      niLibVersion = "2023.+"
+      opencvVersion = "4.6.0-2"
+      googleTestVersion = "1.11.0-3"
+      imguiVersion = "1.88-5"
+      wpimathVersion = "2023.+"
     }
   }
 }

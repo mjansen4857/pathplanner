@@ -7,7 +7,7 @@ jobs:
   build-linux:
     name: Build roboRIO Java/C++ and linux desktop
     runs-on: ubuntu-latest
-    container: wpilib/roborio-cross-ubuntu:2022-18.04
+    container: wpilib/roborio-cross-ubuntu:2023-22.04
     
     steps:
       - name: Checkout repo
@@ -48,7 +48,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'
-          distribution: 'microsoft'
+          distribution: 'zulu'
       
       - name: Install roborio toolchain
         run: ./gradlew installRoboRIOToolchain
@@ -81,7 +81,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'
-          distribution: 'microsoft'
+          distribution: 'zulu'
       
       - name: Install roborio toolchain
         run: ./gradlew installRoboRIOToolchain

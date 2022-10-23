@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 // ignore: implementation_imports
 import 'package:logger/src/outputs/file_output.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -55,8 +56,11 @@ void main() async {
         await windowManager.focus();
       });
 
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
       runApp(PathPlanner(
         logger: logger,
+        appVersion: packageInfo.version,
       ));
     },
     (Object error, StackTrace stack) {
@@ -68,11 +72,11 @@ void main() async {
 
 class PathPlanner extends StatefulWidget {
   final FieldImage defaultField = FieldImage.official(OfficialField.rapidReact);
-  final String appVersion = '2022.1.1';
+  final String appVersion;
   final bool appStoreBuild = false;
   final Logger logger;
 
-  PathPlanner({required this.logger, super.key});
+  PathPlanner({required this.logger, required this.appVersion, super.key});
 
   @override
   State<PathPlanner> createState() => _PathPlannerState();

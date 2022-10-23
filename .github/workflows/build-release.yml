@@ -11,7 +11,7 @@ on:
 jobs:
   create-release:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
@@ -30,7 +30,7 @@ jobs:
           * 
   build-windows:
     name: Build Windows
-    runs-on: windows-latest
+    runs-on: windows-2022
     permissions:
       contents: write
 
@@ -79,7 +79,7 @@ jobs:
 
   build-macos:
     name: Build macOS
-    runs-on: macos-latest
+    runs-on: macos-12
     permissions:
       contents: write
 
@@ -122,7 +122,7 @@ jobs:
           
   build-linux:
     name: Build linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
 

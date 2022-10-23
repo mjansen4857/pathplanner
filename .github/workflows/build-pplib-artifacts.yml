@@ -6,7 +6,7 @@ on:
 jobs:
   build-linux:
     name: Build roboRIO Java/C++ and linux desktop
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: wpilib/roborio-cross-ubuntu:2023-22.04
     
     steps:
@@ -38,7 +38,7 @@ jobs:
           
   build-windows:
     name: Build windows desktop
-    runs-on: windows-2019
+    runs-on: windows-2022
     
     steps:
       - name: Checkout repo
@@ -71,7 +71,7 @@ jobs:
 
   build-macos:
     name: Build macOS desktop
-    runs-on: macos-latest
+    runs-on: macos-12
     
     steps:
       - name: Checkout repo

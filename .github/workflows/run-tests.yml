@@ -11,7 +11,7 @@ on:
 jobs:
   flutter-tests:
     name: Flutter Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repo
@@ -35,7 +35,7 @@ jobs:
   
   pplib_tests:
     name: PathPlannerLib Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: wpilib/roborio-cross-ubuntu:2023-22.04
     
     steps:

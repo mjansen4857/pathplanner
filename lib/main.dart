@@ -8,7 +8,6 @@ import 'package:logger/src/outputs/file_output.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -73,12 +72,11 @@ void main() async {
 }
 
 class PathPlanner extends StatefulWidget {
-  final FieldImage defaultField = FieldImage.official(OfficialField.rapidReact);
   final String appVersion;
   final bool appStoreBuild;
   final Logger logger;
 
-  PathPlanner(
+  const PathPlanner(
       {required this.logger,
       required this.appVersion,
       required this.appStoreBuild,
@@ -116,7 +114,6 @@ class _PathPlannerState extends State<PathPlanner> {
         useMaterial3: true,
       ),
       home: HomePage(
-        defaultFieldImage: widget.defaultField,
         appVersion: widget.appVersion,
         appStoreBuild: widget.appStoreBuild,
         prefs: _prefs!,

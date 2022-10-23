@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:path/path.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
 import 'package:pathplanner/services/pplib_client.dart';
+import 'package:pathplanner/widgets/field_image.dart';
 
 import 'waypoint.dart';
 
@@ -25,23 +26,28 @@ class RobotPath {
       this.isReversed,
       this.markers = const []});
 
-  RobotPath.defaultPath({this.name = 'New Path'})
-      : waypoints = [
-          Waypoint(
-            anchorPoint: const Point(1.0, 3.0),
-            nextControl: const Point(2.0, 3.0),
-          ),
-          Waypoint(
-            prevControl: const Point(3.0, 4.0),
-            anchorPoint: const Point(3.0, 5.0),
-            isReversal: true,
-          ),
-          Waypoint(
-            prevControl: const Point(4.0, 3.0),
-            anchorPoint: const Point(5.0, 3.0),
-          ),
-        ],
+  RobotPath.defaultPath(
+      {this.name = 'New Path', required FieldImage fieldImage})
+      : waypoints = [],
         markers = [] {
+    num posScale = (fieldImage.defaultSize.width / fieldImage.pixelsPerMeter) /
+        (FieldImage.defaultField.defaultSize.width /
+            FieldImage.defaultField.pixelsPerMeter);
+    waypoints = [
+      Waypoint(
+        anchorPoint: Point(1.0 * posScale, 3.0 * posScale),
+        nextControl: Point(2.0 * posScale, 3.0 * posScale),
+      ),
+      Waypoint(
+        prevControl: Point(3.0 * posScale, 4.0 * posScale),
+        anchorPoint: Point(3.0 * posScale, 5.0 * posScale),
+        isReversal: true,
+      ),
+      Waypoint(
+        prevControl: Point(4.0 * posScale, 3.0 * posScale),
+        anchorPoint: Point(5.0 * posScale, 3.0 * posScale),
+      ),
+    ];
     generateTrajectory();
   }
 

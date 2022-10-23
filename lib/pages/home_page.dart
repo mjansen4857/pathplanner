@@ -157,9 +157,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         child: _buildBody(context),
       ),
       floatingActionButton: Visibility(
-        visible: _isWpiLib &&
-            _projectDir != null &&
-            !(widget.appStoreBuild && Platform.isMacOS),
+        visible: _isWpiLib && _projectDir != null && !widget.appStoreBuild,
         child: DeployFAB(projectDir: _projectDir),
       ),
     );
@@ -499,9 +497,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (!widget.appStoreBuild)
-                  UpdateCard(currentVersion: widget.appVersion),
-                if (_isWpiLib && !(widget.appStoreBuild && Platform.isMacOS))
+                UpdateCard(currentVersion: widget.appVersion),
+                if (_isWpiLib && !widget.appStoreBuild)
                   PPLibUpdateCard(projectDir: _projectDir!),
               ],
             ),

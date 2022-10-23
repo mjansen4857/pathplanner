@@ -61,6 +61,8 @@ void main() async {
       runApp(PathPlanner(
         logger: logger,
         appVersion: packageInfo.version,
+        appStoreBuild: packageInfo.installerStore !=
+            null, // This will only be true if installed from apple app store
       ));
     },
     (Object error, StackTrace stack) {
@@ -73,10 +75,14 @@ void main() async {
 class PathPlanner extends StatefulWidget {
   final FieldImage defaultField = FieldImage.official(OfficialField.rapidReact);
   final String appVersion;
-  final bool appStoreBuild = false;
+  final bool appStoreBuild;
   final Logger logger;
 
-  PathPlanner({required this.logger, required this.appVersion, super.key});
+  PathPlanner(
+      {required this.logger,
+      required this.appVersion,
+      required this.appStoreBuild,
+      super.key});
 
   @override
   State<PathPlanner> createState() => _PathPlannerState();

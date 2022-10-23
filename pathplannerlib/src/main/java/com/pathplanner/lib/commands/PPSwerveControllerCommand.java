@@ -161,6 +161,10 @@ public class PPSwerveControllerCommand extends CommandBase {
     @Override
     public void end(boolean interrupted) {
         this.timer.stop();
+
+        if(interrupted){
+            this.outputModuleStates.accept(this.kinematics.toSwerveModuleStates(new ChassisSpeeds(0, 0, 0)));
+        }
     }
 
     @Override

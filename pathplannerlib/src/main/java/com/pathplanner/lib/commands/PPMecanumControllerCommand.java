@@ -162,6 +162,10 @@ public class PPMecanumControllerCommand extends CommandBase {
   @Override
   public void end(boolean interrupted) {
     this.timer.stop();
+
+    if(interrupted){
+      this.outputWheelSpeeds.accept(new MecanumDriveWheelSpeeds(0, 0, 0, 0));
+    }
   }
 
   @Override

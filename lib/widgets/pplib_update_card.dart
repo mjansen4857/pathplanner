@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart';
+import 'package:pathplanner/services/log.dart';
 import 'package:process_run/shell.dart';
+import 'package:version/version.dart';
 
 class PPLibUpdateCard extends StatefulWidget {
   final Directory projectDir;
@@ -52,11 +54,10 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
           String localVersion = localJson['version'];
           String remoteVersion = remoteJson['version'];
 
-          print(
+          Log.verbose(
               'Current PPLib Version: $localVersion, Latest Release: $remoteVersion');
 
-          // Assume that if the versions are different, remote is newest
-          if (localVersion != remoteVersion) {
+          if (Version.parse(remoteVersion) > Version.parse(localVersion)) {
             setState(() {
               _remoteFileContent = remote;
               _visibile = true;

@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:path/path.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
+import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
@@ -133,7 +134,8 @@ class RobotPath {
         csvFile.writeAsString(generatedTrajectory.getCSV());
       }
 
-      print('Saved and generated path in ${s.elapsedMilliseconds}ms');
+      Log.info(
+          'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
       return true;
     } catch (e) {
       return false;

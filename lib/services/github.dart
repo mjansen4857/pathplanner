@@ -1,4 +1,5 @@
 import 'package:github/github.dart';
+import 'package:pathplanner/services/log.dart';
 import 'package:version/version.dart';
 
 class GitHubAPI {
@@ -10,7 +11,8 @@ class GitHubAPI {
           .getLatestRelease(RepositorySlug('mjansen4857', 'pathplanner'));
       String latestVersion = latestRelease.tagName!.substring(1);
 
-      print('Current Version: $currentVersion, Latest Release: $latestVersion');
+      Log.verbose(
+          'Current App Version: $currentVersion, Latest Release: $latestVersion');
 
       Version current = Version.parse(currentVersion);
       Version latest = Version.parse(latestVersion);

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(runner LANGUAGES CXX)
 
 set(BINARY_NAME "pathplanner")
-set(APPLICATION_ID "com.example.pathplanner")
+set(APPLICATION_ID "com.mjansen4857.pathplanner")
 
 cmake_policy(SET CMP0063 NEW)
 

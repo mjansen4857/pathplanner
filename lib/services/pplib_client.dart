@@ -6,6 +6,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
+import 'package:pathplanner/services/log.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PPLibClient {
@@ -115,7 +116,8 @@ class PPLibClient {
                 break;
               default:
                 {
-                  // Unknown command
+                  Log.warning(
+                      'Unknown message received from PPLib server: $msg');
                 }
                 break;
             }
@@ -123,7 +125,7 @@ class PPLibClient {
         }
       },
       onError: (error) {
-        print('Server connection error');
+        Log.error('PPLib Server connection error', error);
       },
       onDone: () {
         if (_socket != null) {
@@ -145,7 +147,7 @@ class PPLibClient {
       }
 
       if (DateTime.now().difference(_lastPong).inSeconds > 10) {
-        // Connection with server timed out
+        Log.warning('Connection to PPLib server timed out');
         _socket!.destroy();
         timer.cancel();
         return;

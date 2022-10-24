@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       
       - name: Setup flutter
         uses: subosito/flutter-action@v2
@@ -30,7 +30,7 @@ jobs:
       - run: cp windows/redist/vcruntime140_1.dll build/windows/runner/Release
       
       - name: Zip release
-        uses: thedoctor0/zip-release@master
+        uses: thedoctor0/zip-release@main
         with:
           type: 'zip'
           filename: 'PathPlanner-windows.zip'

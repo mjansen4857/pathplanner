@@ -79,6 +79,12 @@ class _GraphEditorState extends State<GraphEditor> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _fillData();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       key: _key,

@@ -190,6 +190,7 @@ class Trajectory {
       List<TrajectoryState> states, List<Waypoint> pathPoints, num maxAccel) {
     if (pathPoints[0].velOverride == null) {
       states[0].velocityMetersPerSecond = 0;
+      states[0].accelerationMetersPerSecondSq = maxAccel;
     }
 
     for (int i = 1; i < states.length; i++) {

@@ -158,11 +158,14 @@ class _WaypointCardState extends State<WaypointCard> {
           'X Position',
           width: 105,
           onSubmitted: (val) {
-            Waypoint wRef = widget.waypoint!;
-            UndoRedo.addChange(_cardChange(
-              () => wRef.move(val, wRef.anchorPoint.y),
-              (oldVal) => wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y),
-            ));
+            if (val != null) {
+              Waypoint wRef = widget.waypoint!;
+              UndoRedo.addChange(_cardChange(
+                () => wRef.move(val, wRef.anchorPoint.y),
+                (oldVal) =>
+                    wRef.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y),
+              ));
+            }
           },
         ),
         const SizedBox(width: 12),
@@ -172,12 +175,14 @@ class _WaypointCardState extends State<WaypointCard> {
           'Y Position',
           width: 105,
           onSubmitted: (val) {
-            Waypoint? wRef = widget.waypoint;
-            UndoRedo.addChange(_cardChange(
-              () => wRef!.move(wRef.anchorPoint.x, val),
-              (oldVal) =>
-                  wRef!.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y),
-            ));
+            if (val != null) {
+              Waypoint? wRef = widget.waypoint;
+              UndoRedo.addChange(_cardChange(
+                () => wRef!.move(wRef.anchorPoint.x, val),
+                (oldVal) =>
+                    wRef!.move(oldVal.anchorPoint.x, oldVal.anchorPoint.y),
+              ));
+            }
           },
         ),
       ],
@@ -196,11 +201,13 @@ class _WaypointCardState extends State<WaypointCard> {
           'Heading',
           width: 105,
           onSubmitted: (val) {
-            Waypoint? wRef = widget.waypoint;
-            UndoRedo.addChange(_cardChange(
-              () => wRef!.setHeading(val),
-              (oldVal) => wRef!.setHeading(oldVal.getHeadingDegrees()),
-            ));
+            if (val != null) {
+              Waypoint? wRef = widget.waypoint;
+              UndoRedo.addChange(_cardChange(
+                () => wRef!.setHeading(val),
+                (oldVal) => wRef!.setHeading(oldVal.getHeadingDegrees()),
+              ));
+            }
           },
         ),
         const SizedBox(width: 12),
@@ -235,11 +242,13 @@ class _WaypointCardState extends State<WaypointCard> {
       'Holonomic Rotation',
       enabled: widget.holonomicEnabled,
       onSubmitted: (val) {
-        Waypoint? wRef = widget.waypoint;
-        UndoRedo.addChange(_cardChange(
-          () => wRef!.holonomicAngle = val,
-          (oldVal) => wRef!.holonomicAngle = oldVal.holonomicAngle,
-        ));
+        if (val != null) {
+          Waypoint? wRef = widget.waypoint;
+          UndoRedo.addChange(_cardChange(
+            () => wRef!.holonomicAngle = val,
+            (oldVal) => wRef!.holonomicAngle = oldVal.holonomicAngle,
+          ));
+        }
       },
     );
   }
@@ -305,8 +314,12 @@ class _WaypointCardState extends State<WaypointCard> {
       child: TextField(
         onSubmitted: (val) {
           if (onSubmitted != null) {
-            num parsed = val.interpret();
-            onSubmitted.call(parsed);
+            if (val.isEmpty) {
+              onSubmitted(null);
+            } else {
+              num parsed = val.interpret();
+              onSubmitted(parsed);
+            }
           }
           FocusScopeNode currentScope = FocusScope.of(context);
           if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {

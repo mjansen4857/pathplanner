@@ -143,7 +143,7 @@ class _GeneratorSettingsCardState extends State<GeneratorSettingsCard> {
       height: 35,
       child: TextField(
         onSubmitted: (val) {
-          if (onSubmitted != null) {
+          if (onSubmitted != null && val.isNotEmpty) {
             var parsed = double.tryParse(val)!;
             onSubmitted.call(parsed);
           }

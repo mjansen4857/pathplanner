@@ -54,7 +54,7 @@ class PPLibClient {
 
   static Future<void> initialize(SharedPreferences prefs) async {
     String host = prefs.getString('pplibClientHost') ?? '10.30.15.2';
-    int port = prefs.getInt('pplibClientPort') ?? 5810;
+    int port = prefs.getInt('pplibClientPort') ?? 5811;
     _enabled = true;
 
     try {

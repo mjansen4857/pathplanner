@@ -60,7 +60,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     _teamColor = Color(widget.prefs.getInt('teamColor') ?? Colors.indigo.value);
     _pplibClientHost =
         widget.prefs.getString('pplibClientHost') ?? '10.30.15.2';
-    _pplibClientPort = widget.prefs.getInt('pplibClientPort') ?? 5810;
+    _pplibClientPort = widget.prefs.getInt('pplibClientPort') ?? 5811;
   }
 
   @override

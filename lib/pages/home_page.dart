@@ -348,7 +348,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             name: pathName,
                           ));
                           _currentPath = _paths.last;
-                          _savePath(_currentPath!, context);
+                          _savePath(_currentPath!);
                         });
                       },
                     ),
@@ -383,7 +383,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   fieldImage:
                                       _fieldImage ?? FieldImage.defaultField));
                               _currentPath = _paths.last;
-                              _savePath(_currentPath!, context);
+                              _savePath(_currentPath!);
                               UndoRedo.clearHistory();
                             });
                           },
@@ -448,7 +448,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   },
                                   onGenerationEnabled: () {
                                     for (RobotPath path in _paths) {
-                                      _savePath(path, context);
+                                      _savePath(path);
                                     }
                                   },
                                 );
@@ -488,7 +488,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               robotSize: _robotSize,
               holonomicMode: _holonomicMode,
               showGeneratorSettings: _generateJSON || _generateCSV,
-              savePath: (path) => _savePath(path, context),
+              savePath: (path) => _savePath(path),
               prefs: widget.prefs,
             ),
           ),
@@ -554,6 +554,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (paths.isEmpty) {
       paths.add(RobotPath.defaultPath(
           fieldImage: _fieldImage ?? FieldImage.defaultField));
+      _savePath(paths.last);
     }
 
     return paths;
@@ -576,14 +577,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return buildFile.existsSync();
   }
 
-  void _savePath(RobotPath path, BuildContext context) async {
+  void _savePath(RobotPath path) async {
     if (_projectDir != null) {
       bool result = await path.savePath(
           _getPathsDir(_projectDir!), _generateJSON, _generateCSV);
 
       if (!result) {
         showDialog(
-          context: context,
+          context: this.context,
           builder: (context) {
             return AlertDialog(
               title: const Text('Failed to save path'),

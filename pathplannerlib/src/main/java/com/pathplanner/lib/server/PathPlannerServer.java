@@ -16,11 +16,12 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PathPlannerServer {
     private static volatile boolean isRunning = false;
-    private static ArrayList<PathPlannerServerThread> clients = new ArrayList<>();
+    private static List<PathPlannerServerThread> clients = Collections.synchronizedList(new ArrayList<>());
 
     public static void startServer(int serverPort){
         if(!isRunning){
@@ -40,7 +41,7 @@ public class PathPlannerServer {
         }
     }
 
-    private static void sendToClients(String message){
+    private static synchronized void sendToClients(String message){
         clients.removeIf(client -> !client.isAlive);
 
         for(PathPlannerServerThread client : clients) {
@@ -48,7 +49,7 @@ public class PathPlannerServer {
         }
     }
 
-    private static void handleMessage(String message){
+    private static synchronized void handleMessage(String message){
         // Non ping-pong messages are sent in json format
         try {
             JSONObject json = (JSONObject) new JSONParser().parse(message);

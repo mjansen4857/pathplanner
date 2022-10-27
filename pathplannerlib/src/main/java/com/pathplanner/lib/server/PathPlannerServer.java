@@ -31,8 +31,10 @@ public class PathPlannerServer {
 
                     while(true){
                         Socket socket = serverSocket.accept();
-                        clients.add(new PathPlannerServerThread(socket, PathPlannerServer::handleMessage));
-                        clients.get(clients.size() - 1).start();
+                        synchronized (clients) {
+                            clients.add(new PathPlannerServerThread(socket, PathPlannerServer::handleMessage));
+                            clients.get(clients.size() - 1).start();
+                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -41,11 +43,19 @@ public class PathPlannerServer {
         }
     }
 
-    private static synchronized void sendToClients(String message){
-        clients.removeIf(client -> !client.isAlive);
+    private static void sendToClients(String message){
+        synchronized (clients){
+            // This try/catch block is here just in case I missed any multithreading shenanigans
+            // So, instead of crashing it will just not send the message
+            try{
+                clients.removeIf(client -> !client.isAlive);
 
-        for(PathPlannerServerThread client : clients) {
-            client.sendMessage(message);
+                for(PathPlannerServerThread client : clients) {
+                    client.sendMessage(message);
+                }
+            } catch (Exception e){
+                // do nothing
+            }
         }
     }
 

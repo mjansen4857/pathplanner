@@ -14,6 +14,7 @@ class MarkerCard extends StatefulWidget {
   final VoidCallback onDelete;
   final void Function(EventMarker newMarker) onAdd;
   final void Function(EventMarker oldMarker) onEdited;
+  final ValueChanged<double?> onPreviewPosChanged;
 
   const MarkerCard(
       {required this.stackKey,
@@ -24,6 +25,7 @@ class MarkerCard extends StatefulWidget {
       required this.onDelete,
       required this.onAdd,
       required this.onEdited,
+      required this.onPreviewPosChanged,
       super.key});
 
   @override
@@ -157,6 +159,8 @@ class _MarkerCardState extends State<MarkerCard> {
               widget.marker!.position = value;
               Trajectory.calculateMarkerTime(
                   widget.path.generatedTrajectory, widget.marker!);
+            } else {
+              widget.onPreviewPosChanged(value);
             }
 
             setState(() {

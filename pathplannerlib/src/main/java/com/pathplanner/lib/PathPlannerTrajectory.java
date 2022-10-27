@@ -14,6 +14,12 @@ public class PathPlannerTrajectory extends Trajectory {
     private final List<EventMarker> markers;
     private final double endWaitTime;
 
+    public PathPlannerTrajectory() {
+        super();
+        this.markers = new ArrayList<>();
+        this.endWaitTime = 0;
+    }
+
     protected PathPlannerTrajectory(ArrayList<Waypoint> pathPoints, ArrayList<EventMarker> markers, PathConstraints constraints, boolean reversed){
         super(generatePath(pathPoints, constraints.maxVelocity, constraints.maxAcceleration, reversed));
 

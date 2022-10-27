@@ -27,7 +27,7 @@ class PPLibClient {
         connected = isConnected;
         yield connected;
       }
-      await Future.delayed(const Duration(seconds: 5));
+      await Future.delayed(const Duration(seconds: 1));
     }
   }
 
@@ -61,7 +61,7 @@ class PPLibClient {
       _socket = await Socket.connect(host, port);
     } catch (e) {
       // Connection refused. Wait a few seconds and try again
-      await Future.delayed(const Duration(seconds: 10));
+      await Future.delayed(const Duration(seconds: 3));
       if (_enabled) initialize(prefs);
       return;
     }

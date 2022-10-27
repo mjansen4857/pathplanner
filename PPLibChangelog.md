@@ -1,5 +1,12 @@
 # PathPlannerLib Changelog
 
+## PathPlannerLib Beta v2023.0.1
+* Fixed a PathPlannerLib server crash
+* Added `getEndWaitTime` methods to trajectories to get the wait time that was configured in the GUI
+* Added `fromCurrentHolonomicState` and `fromCurrentDifferentialState` helper methods to the PathPoint class that will return a PathPoint with the current position, heading, velocity, etc of the robot
+* Fixed holonomic rotation not correctly passing the -180/180 barrier
+* Added empty PathPlannerTrajectory constructor
+
 ## PathPlannerLib Beta v2023.0.0
 * Added functionality to get event markers for a path. The `getMarkers` method will return a list of all markers on a path. These markers will have a name, time, and position associated with them that can be used in path following commands to trigger other code
 * Added the ability to load a path as a path group. A path file will be split into multiple paths based on the waypoints marked as stop points. If a path with stop points is loaded as a normal path, the robot will not stop at stop points

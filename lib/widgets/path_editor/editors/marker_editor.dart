@@ -34,6 +34,7 @@ class MarkerEditor extends StatefulWidget {
 
 class _MarkerEditorState extends State<MarkerEditor> {
   EventMarker? _selectedMarker;
+  double? _markerPreviewPos;
   final GlobalKey _key = GlobalKey();
 
   @override
@@ -105,6 +106,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
                               widget.robotSize,
                               widget.holonomicMode,
                               _selectedMarker,
+                              _markerPreviewPos,
                             ),
                           ),
                         ),
@@ -141,6 +143,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
             widget.savePath(widget.path);
             setState(() {
               _selectedMarker = null;
+              _markerPreviewPos = null;
             });
           },
           (oldValue) {
@@ -149,6 +152,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
             widget.savePath(widget.path);
             setState(() {
               _selectedMarker = oldValue[1];
+              _markerPreviewPos = null;
             });
           },
         ));
@@ -165,6 +169,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
 
             setState(() {
               _selectedMarker = oldValue[1];
+              _markerPreviewPos = null;
             });
           },
           (oldValue) {
@@ -173,6 +178,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
 
             setState(() {
               _selectedMarker = null;
+              _markerPreviewPos = null;
             });
           },
         ));
@@ -201,6 +207,11 @@ class _MarkerEditorState extends State<MarkerEditor> {
           },
         ));
       },
+      onPreviewPosChanged: (value) {
+        setState(() {
+          _markerPreviewPos = value;
+        });
+      },
     );
   }
 }
@@ -211,11 +222,12 @@ class _MarkerPainter extends CustomPainter {
   final Size robotSize;
   final bool holonomicMode;
   final EventMarker? selectedMarker;
+  final double? markerPreviewPos;
 
   static double scale = 1.0;
 
   _MarkerPainter(this.path, this.fieldImage, this.robotSize, this.holonomicMode,
-      this.selectedMarker);
+      this.selectedMarker, this.markerPreviewPos);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -248,6 +260,17 @@ class _MarkerPainter extends CustomPainter {
             PathPainterUtil.getMarkerLocation(marker, path, fieldImage, scale),
             Colors.grey[300]!);
       }
+    }
+
+    if (selectedMarker == null && markerPreviewPos != null) {
+      Offset previewLocation = PathPainterUtil.getMarkerLocation(
+          EventMarker(markerPreviewPos!, 'preview'), path, fieldImage, scale);
+
+      Paint paint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = Colors.orange;
+
+      canvas.drawCircle(previewLocation, 4, paint);
     }
   }
 

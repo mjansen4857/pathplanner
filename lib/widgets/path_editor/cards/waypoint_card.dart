@@ -236,13 +236,16 @@ class _WaypointCardState extends State<WaypointCard> {
   Widget _buildRotation(BuildContext context) {
     return _buildTextField(
       context,
-      !widget.holonomicEnabled
+      !widget.holonomicEnabled || widget.waypoint!.holonomicAngle == null
           ? _getController('')
-          : _getController(widget.waypoint!.holonomicAngle.toStringAsFixed(2)),
+          : _getController(widget.waypoint!.holonomicAngle!.toStringAsFixed(2)),
       'Holonomic Rotation',
       enabled: widget.holonomicEnabled,
       onSubmitted: (val) {
-        if (val != null) {
+        if (val != null ||
+            !(widget.waypoint!.isStartPoint() ||
+                widget.waypoint!.isEndPoint() ||
+                widget.waypoint!.isStopPoint)) {
           Waypoint? wRef = widget.waypoint;
           UndoRedo.addChange(_cardChange(
             () => wRef!.holonomicAngle = val,
@@ -288,8 +291,14 @@ class _WaypointCardState extends State<WaypointCard> {
               onChanged: (val) {
                 Waypoint? wRef = widget.waypoint;
                 UndoRedo.addChange(_cardChange(
-                  () => wRef!.isStopPoint = val!,
-                  (oldVal) => wRef!.isStopPoint = oldVal.isStopPoint,
+                  () {
+                    wRef!.isStopPoint = val!;
+                    wRef.holonomicAngle ??= 0;
+                  },
+                  (oldVal) {
+                    wRef!.isStopPoint = oldVal.isStopPoint;
+                    wRef.holonomicAngle = oldVal.holonomicAngle;
+                  },
                 ));
               },
             ),

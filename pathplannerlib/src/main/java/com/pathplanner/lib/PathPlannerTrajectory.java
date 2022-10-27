@@ -268,7 +268,31 @@ public class PathPlannerTrajectory extends Trajectory {
                 PathPlannerState state = new PathPlannerState();
                 state.poseMeters = new Pose2d(p, state.poseMeters.getRotation());
 
-                double holonomicRot = GeometryUtil.cosineInterpolate(startPoint.holonomicRotation, endPoint.holonomicRotation, t).getDegrees();
+                Rotation2d startRot = startPoint.holonomicRotation;
+                Rotation2d endRot = endPoint.holonomicRotation;
+
+                int startSeachOffset = 0;
+                int endSearchOffset = 0;
+
+                while(startRot == null || endRot == null){
+                    if(startRot == null){
+                        startSeachOffset++;
+                        startRot = pathPoints.get(i - startSeachOffset).holonomicRotation;
+                    }
+                    if(endRot == null){
+                        endSearchOffset++;
+                        endRot = pathPoints.get(i + 1 + endSearchOffset).holonomicRotation;
+                    }
+                }
+
+                double deltaRot = endRot.minus(startRot).getDegrees();
+                deltaRot = MathUtil.inputModulus(deltaRot, -180, 180);
+
+                int startRotIndex = i - startSeachOffset;
+                int endRotIndex = i + 1 + endSearchOffset;
+                int rotRange = endRotIndex - startRotIndex;
+
+                double holonomicRot = GeometryUtil.cosineInterpolate(startRot, Rotation2d.fromDegrees(startRot.getDegrees() + deltaRot), ((i + t) - startRotIndex) / rotRange).getDegrees();
                 holonomicRot = MathUtil.inputModulus(holonomicRot, -180, 180);
                 state.holonomicRotation = Rotation2d.fromDegrees(holonomicRot);
 

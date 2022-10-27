@@ -119,7 +119,31 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
            PathPlannerState state;
            state.pose = frc::Pose2d(p, state.pose.Rotation());
 
-           units::degree_t holonomicRot = GeometryUtil::cosineInterpolate(startPoint.holonomicRotation, endPoint.holonomicRotation, t).Degrees();
+           frc::Rotation2d startRot = startPoint.holonomicRotation;
+           frc::Rotation2d endRot = endPoint.holonomicRotation;
+
+           int startSearchOffset = 0;
+           int endSearchOffset = 0;
+
+           while(startRot.Radians() == 999_rad || endRot.Radians() == 999_rad){
+               if(startRot.Radians() == 999_rad){
+                   startSearchOffset++;
+                   startRot = pathPoints[i - startSearchOffset].holonomicRotation;
+               }
+               if(endRot.Radians() == 999_rad){
+                   endSearchOffset++;
+                   endRot = pathPoints[i + 1 + endSearchOffset].holonomicRotation;
+               }
+           }
+
+           units::degree_t deltaRot = (endRot - startRot).Degrees();
+           deltaRot = frc::InputModulus(deltaRot, -180_deg, 180_deg);
+
+           int startRotIndex = i - startSearchOffset;
+           int endRotIndex = i + 1 + endSearchOffset;
+           int rotRange = endRotIndex - startRotIndex;
+
+           units::degree_t holonomicRot = GeometryUtil::cosineInterpolate(startRot, frc::Rotation2d(startRot.Degrees() + deltaRot), ((i + t) - startRotIndex) / rotRange).Degrees();
            holonomicRot = frc::InputModulus(holonomicRot, -180_deg, 180_deg);
            state.holonomicRotation = frc::Rotation2d(holonomicRot);
 

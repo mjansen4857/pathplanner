@@ -296,8 +296,32 @@ class Trajectory {
         TrajectoryState state = TrajectoryState();
         state.translationMeters = p;
 
-        num holonomicRot = MathUtil.cosineInterpolate(
-            startPoint.holonomicAngle, endPoint.holonomicAngle, t);
+        num? startRot = startPoint.holonomicAngle;
+        num? endRot = endPoint.holonomicAngle;
+
+        int startSearchOffset = 0;
+        int endSearchOffset = 0;
+
+        while (startRot == null || endRot == null) {
+          if (startRot == null) {
+            startSearchOffset++;
+            startRot = pathPoints[i - startSearchOffset].holonomicAngle;
+          }
+          if (endRot == null) {
+            endSearchOffset++;
+            endRot = pathPoints[i + 1 + endSearchOffset].holonomicAngle;
+          }
+        }
+
+        num deltaRot = endRot - startRot;
+        deltaRot = MathUtil.inputModulus(deltaRot, -180, 180);
+
+        int startRotIndex = i - startSearchOffset;
+        int endRotIndex = i + 1 + endSearchOffset;
+        int rotRange = endRotIndex - startRotIndex;
+
+        num holonomicRot = MathUtil.cosineInterpolate(startRot,
+            startRot + deltaRot, ((i + t) - startRotIndex) / rotRange);
         holonomicRot = MathUtil.inputModulus(holonomicRot, -180, 180);
         state.holonomicRotation = holonomicRot;
 

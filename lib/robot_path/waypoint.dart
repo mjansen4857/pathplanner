@@ -9,6 +9,7 @@ class Waypoint {
   num? velOverride;
   bool isLocked;
   bool isStopPoint;
+  num waitTime;
 
   bool _isAnchorDragging = false;
   bool _isNextControlDragging = false;
@@ -24,6 +25,7 @@ class Waypoint {
     this.isLocked = false,
     this.velOverride,
     this.isStopPoint = false,
+    this.waitTime = 0,
   }) {
     if (isReversal) {
       nextControl = prevControl;
@@ -46,6 +48,7 @@ class Waypoint {
       velOverride: velOverride,
       isLocked: isLocked,
       isStopPoint: isStopPoint,
+      waitTime: waitTime,
     );
   }
 
@@ -296,7 +299,8 @@ class Waypoint {
         isReversal = json['isReversal'],
         velOverride = json['velOverride'],
         isLocked = json['isLocked'],
-        isStopPoint = json['isStopPoint'] ?? false {
+        isStopPoint = json['isStopPoint'] ?? false,
+        waitTime = json['waitTime'] ?? 0 {
     if ((isStartPoint() || isEndPoint() || isStopPoint) &&
         holonomicAngle == null) {
       holonomicAngle = 0;
@@ -329,6 +333,7 @@ class Waypoint {
       'velOverride': velOverride,
       'isLocked': isLocked,
       'isStopPoint': isStopPoint,
+      'waitTime': waitTime,
     };
   }
 }

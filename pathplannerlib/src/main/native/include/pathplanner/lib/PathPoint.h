@@ -2,6 +2,8 @@
 
 #include <frc/geometry/Translation2d.h>
 #include <frc/geometry/Rotation2d.h>
+#include <frc/geometry/Pose2d.h>
+#include <frc/kinematics/ChassisSpeeds.h>
 #include <units/velocity.h>
 
 namespace pathplanner{
@@ -26,5 +28,15 @@ namespace pathplanner{
             
             PathPoint(frc::Translation2d position, frc::Rotation2d heading) :
                 PathPoint(position, heading, frc::Rotation2d(), -1_mps) {}
+            
+            static PathPoint fromCurrentHolonomicState(frc::Pose2d currentPose, frc::ChassisSpeeds currentSpeeds) {
+                units::meters_per_second_t linearVel = units::math::sqrt((currentSpeeds.vx * currentSpeeds.vx) + (currentSpeeds.vy * currentSpeeds.vy));
+                frc::Rotation2d heading(units::math::atan2(currentSpeeds.vy, currentSpeeds.vx));
+                return PathPoint(currentPose.Translation(), heading, currentPose.Rotation(), linearVel);
+            }
+
+            static PathPoint fromCurrentDifferentialState(frc::Pose2d currentPose, frc::ChassisSpeeds currentSpeeds) {
+                return PathPoint(currentPose.Translation(), currentPose.Rotation(), currentSpeeds.vx);
+            }
     };
 }

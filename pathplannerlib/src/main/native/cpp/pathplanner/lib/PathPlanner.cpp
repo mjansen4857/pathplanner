@@ -112,7 +112,7 @@ PathPlannerTrajectory PathPlanner::generatePath(PathConstraints constraints, boo
     allPoints.insert(allPoints.end(), points);
 
     std::vector<PathPlannerTrajectory::Waypoint> waypoints;
-    waypoints.push_back(PathPlannerTrajectory::Waypoint(point1.m_position, frc::Translation2d(), frc::Translation2d(), point1.m_velocityOverride, point1.m_holonomicRotation, false, false));
+    waypoints.push_back(PathPlannerTrajectory::Waypoint(point1.m_position, frc::Translation2d(), frc::Translation2d(), point1.m_velocityOverride, point1.m_holonomicRotation, false, false, 0_s));
 
     for(size_t i = 1; i < allPoints.size(); i++){
         PathPoint p1 = allPoints[i - 1];
@@ -124,7 +124,7 @@ PathPlannerTrajectory PathPlanner::generatePath(PathConstraints constraints, boo
         waypoints[i - 1].nextControl = p1Next;
 
         frc::Translation2d p2Prev = p2.m_position - frc::Translation2d(p2.m_heading.Cos() * thirdDistance, p2.m_heading.Sin() * thirdDistance);
-        waypoints.push_back(PathPlannerTrajectory::Waypoint(p2.m_position, p2Prev, frc::Translation2d(), p2.m_velocityOverride, p2.m_holonomicRotation, false, false));
+        waypoints.push_back(PathPlannerTrajectory::Waypoint(p2.m_position, p2Prev, frc::Translation2d(), p2.m_velocityOverride, p2.m_holonomicRotation, false, false, 0_s));
     }
 
     return PathPlannerTrajectory(waypoints, std::vector<PathPlannerTrajectory::EventMarker>(), constraints, reversed);
@@ -194,7 +194,13 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(w
             velOverride = units::meters_per_second_t{vel};
         }
 
-        waypoints.push_back(PathPlannerTrajectory::Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal, isStopPoint));
+        units::second_t waitTime = 0_s;
+        if(waypoint.find("waitTime") != waypoint.end()){
+            double wait = waypoint.at("waitTime");
+            waitTime = units::second_t{wait};
+        }
+
+        waypoints.push_back(PathPlannerTrajectory::Waypoint(anchorPoint, prevControl, nextControl, velOverride, holonomicAngle, isReversal, isStopPoint, waitTime));
     }
 
     return waypoints;

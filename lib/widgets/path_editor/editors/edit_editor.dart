@@ -313,10 +313,13 @@ class _EditEditorState extends State<EditEditor> {
                     .isReversal = false;
                 widget.path.waypoints[widget.path.waypoints.length - 1]
                     .isStopPoint = false;
+                widget.path.waypoints[widget.path.waypoints.length - 1]
+                    .holonomicAngle ??= 0;
               } else if (w.isStartPoint()) {
                 widget.path.waypoints[0].prevControl = null;
                 widget.path.waypoints[0].isReversal = false;
                 widget.path.waypoints[0].isStopPoint = false;
+                widget.path.waypoints[0].holonomicAngle ??= 0;
               }
 
               widget.savePath(widget.path);

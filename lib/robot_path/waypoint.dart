@@ -4,7 +4,7 @@ class Waypoint {
   Point anchorPoint;
   Point? prevControl;
   Point? nextControl;
-  num holonomicAngle;
+  num? holonomicAngle;
   bool isReversal;
   num? velOverride;
   bool isLocked;
@@ -117,7 +117,10 @@ class Waypoint {
 
   bool isPointInHolonomicThing(
       num xPos, num yPos, num radius, num robotLength) {
-    num angle = holonomicAngle / 180 * pi;
+    if (holonomicAngle == null) {
+      return false;
+    }
+    num angle = holonomicAngle! / 180 * pi;
     num thingX = anchorPoint.x + (robotLength / 2 * cos(angle));
     num thingY = anchorPoint.y + (robotLength / 2 * sin(angle));
     return pow(xPos - thingX, 2) + pow(yPos - thingY, 2) < pow(radius, 2);
@@ -293,7 +296,12 @@ class Waypoint {
         isReversal = json['isReversal'],
         velOverride = json['velOverride'],
         isLocked = json['isLocked'],
-        isStopPoint = json['isStopPoint'] ?? false;
+        isStopPoint = json['isStopPoint'] ?? false {
+    if ((isStartPoint() || isEndPoint() || isStopPoint) &&
+        holonomicAngle == null) {
+      holonomicAngle = 0;
+    }
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -313,7 +321,10 @@ class Waypoint {
               'x': nextControl!.x,
               'y': nextControl!.y,
             },
-      'holonomicAngle': holonomicAngle,
+      'holonomicAngle': (isStartPoint() || isEndPoint() || isStopPoint) &&
+              holonomicAngle == null
+          ? 0.0
+          : holonomicAngle,
       'isReversal': isReversal,
       'velOverride': velOverride,
       'isLocked': isLocked,

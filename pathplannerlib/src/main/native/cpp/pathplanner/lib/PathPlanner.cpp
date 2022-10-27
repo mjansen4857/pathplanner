@@ -177,8 +177,12 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(w
             nextControl = frc::Translation2d(units::meter_t{nextX}, units::meter_t{nextY});
         }
 
-        double holonomic = waypoint.at("holonomicAngle");
-        frc::Rotation2d holonomicAngle = frc::Rotation2d(units::degree_t{holonomic});
+        // C++ is annoying
+        frc::Rotation2d holonomicAngle(999_rad);
+        if(!waypoint.at("holonomicAngle").is_null()){
+            double holonomic = waypoint.at("holonomicAngle");
+            holonomicAngle = frc::Rotation2d(units::degree_t{holonomic});
+        }
         bool isReversal = waypoint.at("isReversal");
         bool isStopPoint = false;
         if(waypoint.find("isStopPoint") != waypoint.end()){

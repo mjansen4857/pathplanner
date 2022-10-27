@@ -100,6 +100,10 @@ class PathPainterUtil {
       double scale,
       Color color,
       FieldImage fieldImage) {
+    if (holonomicMode && waypoint.holonomicAngle == null) {
+      return;
+    }
+
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = color
@@ -107,7 +111,7 @@ class PathPainterUtil {
 
     Offset center = pointToPixelOffset(waypoint.anchorPoint, scale, fieldImage);
     num angle = (holonomicMode)
-        ? (-waypoint.holonomicAngle / 180 * pi)
+        ? (-waypoint.holonomicAngle! / 180 * pi)
         : -waypoint.getHeadingRadians();
     double halfWidth = metersToPixels(robotSize.width / 2, scale, fieldImage);
     double halfLength = metersToPixels(robotSize.height / 2, scale, fieldImage);

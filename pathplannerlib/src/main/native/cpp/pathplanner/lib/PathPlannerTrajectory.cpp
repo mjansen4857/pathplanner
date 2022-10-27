@@ -143,7 +143,7 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
            int endRotIndex = i + 1 + endSearchOffset;
            int rotRange = endRotIndex - startRotIndex;
 
-           units::degree_t holonomicRot = GeometryUtil::cosineInterpolate(startRot, startRot + frc::Rotation2d(deltaRot), ((i + t) - startRotIndex) / rotRange).Degrees();
+           units::degree_t holonomicRot = GeometryUtil::cosineInterpolate(startRot, frc::Rotation2d(startRot.Degrees() + deltaRot), ((i + t) - startRotIndex) / rotRange).Degrees();
            holonomicRot = frc::InputModulus(holonomicRot, -180_deg, 180_deg);
            state.holonomicRotation = frc::Rotation2d(holonomicRot);
 

@@ -340,7 +340,7 @@ public class PathPlanner {
 
             Rotation2d holonomicAngle = null;
             if(jsonWaypoint.get("holonomicAngle") != null){
-                Rotation2d.fromDegrees(((Number) jsonWaypoint.get("holonomicAngle")).doubleValue());
+                holonomicAngle = Rotation2d.fromDegrees(((Number) jsonWaypoint.get("holonomicAngle")).doubleValue());
             }
             boolean isReversal = (boolean) jsonWaypoint.get("isReversal");
             Object isStopPointObj = jsonWaypoint.get("isStopPoint");

@@ -292,7 +292,7 @@ public class PathPlannerTrajectory extends Trajectory {
                 int endRotIndex = i + 1 + endSearchOffset;
                 int rotRange = endRotIndex - startRotIndex;
 
-                double holonomicRot = GeometryUtil.cosineInterpolate(startRot, startRot.plus(Rotation2d.fromDegrees(deltaRot)), ((i + t) - startRotIndex) / rotRange).getDegrees();
+                double holonomicRot = GeometryUtil.cosineInterpolate(startRot, Rotation2d.fromDegrees(startRot.getDegrees() + deltaRot), ((i + t) - startRotIndex) / rotRange).getDegrees();
                 holonomicRot = MathUtil.inputModulus(holonomicRot, -180, 180);
                 state.holonomicRotation = Rotation2d.fromDegrees(holonomicRot);
 

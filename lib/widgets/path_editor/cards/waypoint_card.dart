@@ -68,6 +68,14 @@ class _WaypointCardState extends State<WaypointCard> {
                   ),
                 ),
                 Visibility(
+                  visible: widget.waypoint!.isEndPoint() ||
+                      widget.waypoint!.isStopPoint,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 12.0),
+                    child: _buildWaitTime(context),
+                  ),
+                ),
+                Visibility(
                   visible: !widget.waypoint!.isStartPoint() &&
                       !widget.waypoint!.isEndPoint(),
                   child: Padding(
@@ -250,6 +258,23 @@ class _WaypointCardState extends State<WaypointCard> {
           UndoRedo.addChange(_cardChange(
             () => wRef!.holonomicAngle = val,
             (oldVal) => wRef!.holonomicAngle = oldVal.holonomicAngle,
+          ));
+        }
+      },
+    );
+  }
+
+  Widget _buildWaitTime(BuildContext context) {
+    return _buildTextField(
+      context,
+      _getController(widget.waypoint!.waitTime.toStringAsFixed(2)),
+      'End Wait Time',
+      onSubmitted: (val) {
+        if (val != null) {
+          Waypoint? wRef = widget.waypoint;
+          UndoRedo.addChange(_cardChange(
+            () => wRef!.waitTime = val,
+            (oldVal) => wRef!.waitTime = oldVal.waitTime,
           ));
         }
       },

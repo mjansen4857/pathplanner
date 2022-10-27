@@ -12,24 +12,22 @@ import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
     private final List<EventMarker> markers;
+    private final double endWaitTime;
 
     protected PathPlannerTrajectory(ArrayList<Waypoint> pathPoints, ArrayList<EventMarker> markers, PathConstraints constraints, boolean reversed){
         super(generatePath(pathPoints, constraints.maxVelocity, constraints.maxAcceleration, reversed));
 
         this.markers = markers;
         this.calculateMarkerTimes(pathPoints);
+        this.endWaitTime = pathPoints.get(pathPoints.size() - 1).waitTime;
     }
 
-    protected PathPlannerTrajectory(List<State> states, ArrayList<EventMarker> markers){
-        super(states);
-
-        this.markers = markers;
-    }
-
-    protected PathPlannerTrajectory(List<State> states){
-        super(states);
-
-        this.markers = new ArrayList<>();
+    /**
+     * Get the end wait time for this path configured in the GUI
+     * @return End wait time in seconds
+     */
+    public double getEndWaitTimeSeconds(){
+        return this.endWaitTime;
     }
 
     /**
@@ -422,8 +420,9 @@ public class PathPlannerTrajectory extends Trajectory {
         protected Rotation2d holonomicRotation;
         protected boolean isReversal;
         protected boolean isStopPoint;
+        protected double waitTime;
 
-        protected Waypoint(Translation2d anchorPoint, Translation2d prevControl, Translation2d nextControl, double velOverride, Rotation2d holonomicRotation, boolean isReversal, boolean isStopPoint){
+        protected Waypoint(Translation2d anchorPoint, Translation2d prevControl, Translation2d nextControl, double velOverride, Rotation2d holonomicRotation, boolean isReversal, boolean isStopPoint, double waitTime){
             this.anchorPoint = anchorPoint;
             this.prevControl = prevControl;
             this.nextControl = nextControl;
@@ -431,6 +430,7 @@ public class PathPlannerTrajectory extends Trajectory {
             this.holonomicRotation = holonomicRotation;
             this.isReversal = isReversal;
             this.isStopPoint = isStopPoint;
+            this.waitTime = waitTime;
         }
     }
 

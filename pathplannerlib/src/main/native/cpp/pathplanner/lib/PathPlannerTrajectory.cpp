@@ -12,15 +12,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, st
 
     this->markers = markers;
     this->calculateMarkerTimes(waypoints);
-}
-
-PathPlannerTrajectory::PathPlannerTrajectory(std::vector<PathPlannerState> states, std::vector<EventMarker> markers){
-    this->states = states;
-    this->markers = markers;
-}
-
-PathPlannerTrajectory::PathPlannerTrajectory(std::vector<PathPlannerState> states){
-    this->states = states;
+    this->endWaitTime = waypoints[waypoints.size() - 1].waitTime;
 }
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::generatePath(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){

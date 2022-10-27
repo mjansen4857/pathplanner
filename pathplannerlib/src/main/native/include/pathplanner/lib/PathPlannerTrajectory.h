@@ -76,8 +76,9 @@ namespace pathplanner{
                     frc::Rotation2d holonomicRotation;
                     bool isReversal;
                     bool isStopPoint;
+                    units::second_t waitTime;
 
-                    Waypoint(frc::Translation2d anchorPoint, frc::Translation2d prevControl, frc::Translation2d nextControl, units::meters_per_second_t velocityOverride, frc::Rotation2d holonomicRotation, bool isReversal, bool isStopPoint){
+                    Waypoint(frc::Translation2d anchorPoint, frc::Translation2d prevControl, frc::Translation2d nextControl, units::meters_per_second_t velocityOverride, frc::Rotation2d holonomicRotation, bool isReversal, bool isStopPoint, units::second_t waitTime){
                         this->anchorPoint = anchorPoint;
                         this->prevControl = prevControl;
                         this->nextControl = nextControl;
@@ -85,11 +86,13 @@ namespace pathplanner{
                         this->holonomicRotation = holonomicRotation;
                         this->isReversal = isReversal;
                         this->isStopPoint = isStopPoint;
+                        this->waitTime = waitTime;
                     }
             };
 
             std::vector<PathPlannerState> states;
             std::vector<EventMarker> markers;
+            units::second_t endWaitTime;
 
             static std::vector<PathPlannerState> generatePath(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
             static std::vector<PathPlannerState> joinSplines(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, double step);
@@ -104,9 +107,14 @@ namespace pathplanner{
         
         public:
             PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, PathConstraints constraints, bool reversed);
-            PathPlannerTrajectory(std::vector<PathPlannerState> states, std::vector<EventMarker> markers);
-            PathPlannerTrajectory(std::vector<PathPlannerState> states);
             PathPlannerTrajectory(){}
+
+            /**
+             * @brief Get the end wait time for this path configured in the GUI
+             * 
+             * @return End wait time in seconds
+             */
+            units::second_t getEndWaitTime() { return this->endWaitTime; }
 
             /**
              * @brief Sample the path at a point in time

@@ -3,7 +3,6 @@ package com.pathplanner.lib;
 import static org.junit.Assert.*;
 
 import org.junit.*;
-
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 

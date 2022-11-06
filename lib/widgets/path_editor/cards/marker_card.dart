@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
-import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_input_slider.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';

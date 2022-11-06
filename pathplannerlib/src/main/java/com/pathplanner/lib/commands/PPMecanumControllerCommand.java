@@ -151,10 +151,10 @@ public class PPMecanumControllerCommand extends CommandBase {
     if(this.unpassedMarkers.size() > 0 && currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
       PathPlannerTrajectory.EventMarker marker = this.unpassedMarkers.remove(0);
 
-      if(this.eventMap.containsKey(marker.name)) {
-        Command command = this.eventMap.get(marker.name);
-
-        command.schedule();
+      for(String eventName : marker.names) {
+        if(this.eventMap.containsKey(eventName)) {
+          this.eventMap.get(eventName).schedule();
+        }
       }
     }
   }

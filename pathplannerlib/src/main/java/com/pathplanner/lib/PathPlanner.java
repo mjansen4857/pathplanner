@@ -119,7 +119,7 @@ public class PathPlanner {
                     ArrayList<EventMarker> currentMarkers = new ArrayList<>();
                     for(EventMarker marker : markers){
                         if(marker.waypointRelativePos >= waypoints.indexOf(currentPath.get(0)) && marker.waypointRelativePos <= i){
-                            currentMarkers.add(new EventMarker(marker.name, marker.waypointRelativePos - waypoints.indexOf(currentPath.get(0))));
+                            currentMarkers.add(new EventMarker(marker.names, marker.waypointRelativePos - waypoints.indexOf(currentPath.get(0))));
                         }
                     }
                     splitMarkers.add(currentMarkers);
@@ -371,7 +371,17 @@ public class PathPlanner {
             for(Object marker : jsonMarkers){
                 JSONObject jsonMarker = (JSONObject) marker;
 
-                markers.add(new EventMarker((String) jsonMarker.get("name"), ((Number) jsonMarker.get("position")).doubleValue()));
+                JSONArray eventNames = (JSONArray) jsonMarker.get("names");
+                ArrayList<String> names = new ArrayList<>();
+                if(eventNames != null){
+                    for (Object eventName : eventNames) {
+                        names.add((String) eventName);
+                    }
+                }else{
+                    // Handle transition between one-event markers and multi-event markers. Remove next season
+                    names.add((String) jsonMarker.get("name"));
+                }
+                markers.add(new EventMarker(names, ((Number) jsonMarker.get("position")).doubleValue()));
             }
         }
 

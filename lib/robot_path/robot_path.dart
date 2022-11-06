@@ -217,6 +217,8 @@ class EventMarker {
 
   EventMarker(this.position, this.names);
 
+  // ?? operator to handle transition from one-event markers to multi-event
+  // markers. Remove next season
   EventMarker.fromJson(Map<String, dynamic> json)
       : this(json['position'],
             List<String>.from(json['names'] ?? [json['name']]));

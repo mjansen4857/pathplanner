@@ -28,5 +28,8 @@ Make sure you [install PathPlannerLib](https://github.com/mjansen4857/pathplanne
       * windows
       * macos
       * linux
-* The built app will be located in `<PROJECT DIR>/build/<PLATFORM>`
+* The built app will be located here:
+    * Windows: `<PROJECT DIR>/build/windows/runner/Release`
+    * maxOS: `<PROJECT DIR>/build/macos/Build/Products/Release`
+    * Linux: `<PROJECT DIR>/build/linux/x64/release/bundle`
 * OR `flutter run` to run in debug mode

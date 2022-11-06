@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
+import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_input_slider.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,8 +34,6 @@ class MarkerCard extends StatefulWidget {
 }
 
 class _MarkerCardState extends State<MarkerCard> {
-  final TextEditingController _nameController =
-      TextEditingController(text: 'marker');
   double _sliderPos = 0;
   EventMarker? _oldMarker;
 
@@ -43,13 +42,8 @@ class _MarkerCardState extends State<MarkerCard> {
     super.initState();
 
     if (widget.marker != null) {
-      _nameController.text = widget.marker!.name;
-
       _sliderPos = widget.marker!.position;
     }
-
-    _nameController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _nameController.text.length));
   }
 
   @override
@@ -64,7 +58,7 @@ class _MarkerCardState extends State<MarkerCard> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _buildHeader(),
-          _buildNameField(),
+          if (widget.marker != null) _buildNameFields(),
           _buildPositionSlider(),
           _buildAddButton(),
         ],
@@ -113,32 +107,77 @@ class _MarkerCardState extends State<MarkerCard> {
     );
   }
 
-  Widget _buildNameField() {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
+  Widget _buildNameFields() {
     return GestureDetector(
       // Override gesture detector on UI elements so they wont cause the card to move
       onPanStart: (details) {},
       child: Padding(
         padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
-        child: SizedBox(
-          height: 35,
-          child: TextField(
-            onSubmitted: (value) {
-              if (widget.marker != null) {
-                _oldMarker = widget.marker!.clone();
-                widget.marker!.name = value;
-                widget.onEdited(_oldMarker!);
-              }
-            },
-            controller: _nameController,
-            style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-              labelText: 'Marker Name',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
-            ),
+        child: Column(
+          children: [
+            for (int i = 0; i < widget.marker!.names.length; i++)
+              _buildNameTextField(
+                  onSubmitted: (value) {
+                    if (value.isNotEmpty) {
+                      setState(() {
+                        _oldMarker = widget.marker!.clone();
+                        widget.marker!.names[i] = value;
+                        widget.onEdited(_oldMarker!);
+                      });
+                    } else if (widget.marker!.names.length > 1) {
+                      setState(() {
+                        _oldMarker = widget.marker!.clone();
+                        widget.marker!.names.removeAt(i);
+                        widget.onEdited(_oldMarker!);
+                      });
+                    } else {
+                      // Hack to get name to show back up when enter pressed on empty text box
+                      setState(() {});
+                    }
+                  },
+                  name: widget.marker!.names[i],
+                  label: 'Event ${i + 1}'),
+            if (widget.marker!.names.length < 8)
+              _buildNameTextField(
+                onSubmitted: (value) {
+                  if (value.isNotEmpty) {
+                    setState(() {
+                      _oldMarker = widget.marker!.clone();
+                      widget.marker!.names.add(value);
+                      widget.onEdited(_oldMarker!);
+                    });
+                  }
+                },
+                name: '',
+                label: 'Add new event...',
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNameTextField(
+      {required ValueChanged<String> onSubmitted,
+      required String label,
+      required String name}) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+    TextEditingController controller = TextEditingController(text: name);
+    controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: controller.text.length));
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: SizedBox(
+        height: 35,
+        child: TextField(
+          onSubmitted: onSubmitted,
+          controller: controller,
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+            labelText: label,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
           ),
         ),
       ),
@@ -151,7 +190,7 @@ class _MarkerCardState extends State<MarkerCard> {
     return GestureDetector(
       onPanStart: (details) {},
       child: Padding(
-        padding: const EdgeInsets.only(top: 8.0, left: 4.0),
+        padding: const EdgeInsets.only(left: 4.0),
         child: InputSlider(
           onChange: (value) {
             if (widget.marker != null) {
@@ -203,12 +242,13 @@ class _MarkerCardState extends State<MarkerCard> {
           child: ElevatedButton.icon(
             onPressed: () {
               if (widget.marker == null) {
-                widget.onAdd(EventMarker(_sliderPos, _nameController.text));
+                widget.onAdd(EventMarker(_sliderPos, ['event']));
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primaryContainer,
               foregroundColor: colorScheme.onPrimaryContainer,
+              minimumSize: const Size(220, 40),
             ),
             label: const Text('Add Marker'),
             icon: const Icon(Icons.add),

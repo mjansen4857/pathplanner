@@ -67,6 +67,15 @@
     "typeinfo": "cpp",
     "codecvt": "cpp",
     "filesystem": "cpp",
-    "cinttypes": "cpp"
-  }
+    "cinttypes": "cpp",
+    "any": "cpp",
+    "bit": "cpp",
+    "compare": "cpp",
+    "concepts": "cpp",
+    "numbers": "cpp",
+    "semaphore": "cpp",
+    "span": "cpp",
+    "stop_token": "cpp",
+    "variant": "cpp"
+}
 }

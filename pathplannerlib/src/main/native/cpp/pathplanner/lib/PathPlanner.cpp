@@ -65,7 +65,7 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, 
             std::vector<PathPlannerTrajectory::EventMarker> currentMarkers;
             for(PathPlannerTrajectory::EventMarker marker : markers){
                 if(marker.waypointRelativePos >= indexOfWaypoint(waypoints, currentPath[0]) && marker.waypointRelativePos <= i){
-                    currentMarkers.push_back(PathPlannerTrajectory::EventMarker(marker.name, marker.waypointRelativePos - indexOfWaypoint(waypoints, currentPath[0])));
+                    currentMarkers.push_back(PathPlannerTrajectory::EventMarker(marker.names, marker.waypointRelativePos - indexOfWaypoint(waypoints, currentPath[0])));
                 }
             }
             splitMarkers.push_back(currentMarkers);
@@ -211,7 +211,16 @@ std::vector<PathPlannerTrajectory::EventMarker> PathPlanner::getMarkersFromJson(
 
     if(json.find("markers") != json.end()){
         for(wpi::json::reference marker : json.at("markers")){
-            PathPlannerTrajectory::EventMarker m(marker.at("name"), marker.at("position"));
+            std::vector<std::string> names;
+            if(marker.find("names") != marker.end()){
+                for(std::string name : marker.at("names")){
+                    names.push_back(name);
+                }
+            }else{
+                // Handle transition from one-event markers to multi-event markers. Remove next season
+                names.push_back(marker.at("name"));
+            }
+            PathPlannerTrajectory::EventMarker m(names, marker.at("position"));
             markers.push_back(m);
         }
     }

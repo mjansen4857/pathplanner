@@ -50,15 +50,15 @@ namespace pathplanner{
 
             class EventMarker{
                 public:
-                    std::string name;
+                    std::vector<std::string> names;
                     units::second_t time;
                     frc::Translation2d position;
                 
                 private:
                     double waypointRelativePos;
 
-                    EventMarker(std::string name, double waypointRelativePos){
-                        this->name = name;
+                    EventMarker(std::vector<std::string> names, double waypointRelativePos){
+                        this->names = names;
                         this->waypointRelativePos = waypointRelativePos;
                     }
 

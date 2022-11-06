@@ -441,13 +441,13 @@ public class PathPlannerTrajectory extends Trajectory {
     }
 
     public static class EventMarker {
-        public String name;
+        public ArrayList<String> names;
         public double timeSeconds;
         public Translation2d positionMeters;
         protected double waypointRelativePos;
 
-        protected EventMarker(String name, double waypointRelativePos){
-            this.name = name;
+        protected EventMarker(ArrayList<String> names, double waypointRelativePos){
+            this.names = names;
             this.waypointRelativePos = waypointRelativePos;
         }
     }

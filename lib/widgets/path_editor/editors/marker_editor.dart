@@ -264,7 +264,7 @@ class _MarkerPainter extends CustomPainter {
 
     if (selectedMarker == null && markerPreviewPos != null) {
       Offset previewLocation = PathPainterUtil.getMarkerLocation(
-          EventMarker(markerPreviewPos!, 'preview'), path, fieldImage, scale);
+          EventMarker(markerPreviewPos!, ['preview']), path, fieldImage, scale);
 
       Paint paint = Paint()
         ..style = PaintingStyle.fill

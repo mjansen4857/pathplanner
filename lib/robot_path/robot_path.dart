@@ -213,38 +213,41 @@ class RobotPath {
 class EventMarker {
   double position;
   late double timeSeconds;
-  String name;
+  List<String> names;
 
-  EventMarker(this.position, this.name);
+  EventMarker(this.position, this.names);
 
+  // ?? operator to handle transition from one-event markers to multi-event
+  // markers. Remove next season
   EventMarker.fromJson(Map<String, dynamic> json)
-      : this(json['position'], json['name']);
+      : this(json['position'],
+            List<String>.from(json['names'] ?? [json['name']]));
 
   Map<String, dynamic> toJson() {
     return {
       'position': position,
-      'name': name,
+      'names': names,
     };
   }
 
   EventMarker clone() {
-    return EventMarker(position, name);
+    return EventMarker(position, names);
   }
 
   @override
   String toString() {
-    return 'EventMarker($name, $position)';
+    return 'EventMarker($names, $position)';
   }
 
   @override
   bool operator ==(Object other) {
     return other is EventMarker &&
         other.position == position &&
-        other.name == name;
+        other.names == names;
   }
 
   @override
-  int get hashCode => position.hashCode + name.hashCode;
+  int get hashCode => position.hashCode + names.hashCode;
 }
 
 class RobotPathJsonException implements Exception {

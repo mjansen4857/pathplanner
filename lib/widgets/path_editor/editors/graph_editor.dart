@@ -286,7 +286,7 @@ class _GraphEditorState extends State<GraphEditor> {
               VerticalLine(
                 x: m.timeSeconds,
                 label: VerticalLineLabel(
-                  labelResolver: (_) => m.name,
+                  labelResolver: (_) => m.names[0],
                   style: const TextStyle(color: Colors.white, fontSize: 16),
                   alignment: Alignment.topCenter,
                   show: true,

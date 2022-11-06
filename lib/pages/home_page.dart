@@ -9,6 +9,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
@@ -547,6 +548,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ],
                 );
               });
+          Log.error('Failed to load path', ex);
         }
       }
     }

@@ -29,7 +29,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.4
   shared_preferences: ^2.0.11
-  file_selector: ^0.8.4
+  file_selector: ^0.9.0
   undo: ^1.4.0
   tuple: ^2.0.0
   visibility_detector: ^0.3.3

@@ -110,7 +110,7 @@ class _ImportFieldDialogState extends State<ImportFieldDialog> {
                 ),
                 ElevatedButton(
                   onPressed: () async {
-                    final typeGroup =
+                    const typeGroup =
                         XTypeGroup(label: 'images', extensions: ['jpg', 'png']);
                     final file = await openFile(
                         acceptedTypeGroups: [typeGroup],

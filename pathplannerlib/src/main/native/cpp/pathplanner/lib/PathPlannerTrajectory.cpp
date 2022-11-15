@@ -341,18 +341,6 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState:
     return lerpedState;
 }
 
-frc::Trajectory::State PathPlannerTrajectory::PathPlannerState::asWPILibState() const{
-    frc::Trajectory::State wpiState;
-
-    wpiState.t = this->time;
-    wpiState.pose = this->pose;
-    wpiState.velocity = this->velocity;
-    wpiState.acceleration = this->acceleration;
-    wpiState.curvature = this->curvature;
-
-    return wpiState;
-}
-
 frc::Trajectory PathPlannerTrajectory::asWPILibTrajectory() const{
     std::vector<frc::Trajectory::State> wpiStates;
 

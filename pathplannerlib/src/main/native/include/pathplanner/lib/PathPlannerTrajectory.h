@@ -72,7 +72,7 @@ namespace pathplanner
         private:
             double waypointRelativePos;
 
-            constexpr EventMarker(std::vector<std::string> names, double waypointRelativePos)
+            EventMarker(std::vector<std::string> names, double waypointRelativePos)
             {
                 this->names = names;
                 this->waypointRelativePos = waypointRelativePos;
@@ -163,7 +163,7 @@ namespace pathplanner
          */
         std::vector<EventMarker> const &getMarkers() const { return this->markers; }
 
-                /**
+        /**
          * @brief Get all of the markers in the path
          *
          * @return Reference to a vector of all markers

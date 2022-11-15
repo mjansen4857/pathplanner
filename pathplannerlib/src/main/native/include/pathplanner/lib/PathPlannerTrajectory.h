@@ -145,16 +145,30 @@ namespace pathplanner
         /**
          * @brief Get all of the states in the path
          *
-         * @return Reference to a vector of all states
+         * @return Const reference to a vector of all states
          */
         std::vector<PathPlannerState> const &getStates() const { return this->states; }
 
         /**
+         * @brief Get all of the states in the path
+         *
+         * @return Reference to a vector of all states
+         */
+        std::vector<PathPlannerState> &getStates() { return this->states; }
+
+        /**
+         * @brief Get all of the markers in the path
+         *
+         * @return Const reference to a vector of all markers
+         */
+        std::vector<EventMarker> const &getMarkers() const { return this->markers; }
+
+                /**
          * @brief Get all of the markers in the path
          *
          * @return Reference to a vector of all markers
          */
-        std::vector<EventMarker> const &getMarkers() const { return this->markers; }
+        std::vector<EventMarker> &getMarkers() { return this->markers; }
 
         /**
          * @brief Get the total number of states in the path
@@ -169,21 +183,21 @@ namespace pathplanner
          * @param i The index of the state
          * @return Reference to the state at the given index
          */
-        PathPlannerState const &getState(int i) const { return getStates()[i]; }
+        PathPlannerState getState(int i) const { return getStates()[i]; }
 
         /**
          * @brief Get the initial state of the path
          *
          * @return Reference to the first state of the path
          */
-        PathPlannerState const &getInitialState() const { return getState(0); }
+        PathPlannerState getInitialState() const { return getState(0); }
 
         /**
          * @brief Get the end state of the path
          *
          * @return Reference to the last state in the path
          */
-        PathPlannerState const &getEndState() const { return getState(numStates() - 1); }
+        PathPlannerState getEndState() const { return getState(numStates() - 1); }
 
         /**
          * @brief Get the inital pose of a differential drive robot in the path

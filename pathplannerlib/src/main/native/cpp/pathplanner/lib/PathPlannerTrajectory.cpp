@@ -7,8 +7,7 @@
 
 using namespace pathplanner;
 
-PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, PathConstraints constraints, bool reversed)
-{
+PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, PathConstraints constraints, bool reversed){
     this->states = PathPlannerTrajectory::generatePath(waypoints, constraints.maxVelocity, constraints.maxAcceleration, reversed);
 
     this->markers = markers;
@@ -16,19 +15,16 @@ PathPlannerTrajectory::PathPlannerTrajectory(std::vector<Waypoint> waypoints, st
     this->endWaitTime = waypoints[waypoints.size() - 1].waitTime;
 }
 
-std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::generatePath(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed)
-{
+std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::generatePath(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){
     std::vector<std::vector<Waypoint>> splitPaths;
     std::vector<Waypoint> currentPath;
 
-    for (size_t i = 0; i < pathPoints.size(); i++)
-    {
+    for(size_t i = 0; i < pathPoints.size(); i++){
         Waypoint w = pathPoints[i];
 
         currentPath.push_back(w);
 
-        if ((i != 0 && w.isReversal) || i == pathPoints.size() - 1)
-        {
+        if((i != 0 && w.isReversal) || i == pathPoints.size() - 1){
             splitPaths.push_back(currentPath);
             currentPath = std::vector<Waypoint>();
             currentPath.push_back(w);
@@ -37,8 +33,7 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::gene
 
     std::vector<std::vector<PathPlannerState>> splitStates;
     bool shouldReverse = reversed;
-    for (size_t i = 0; i < splitPaths.size(); i++)
-    {
+    for(size_t i = 0; i < splitPaths.size(); i++){
         std::vector<PathPlannerState> joined = PathPlannerTrajectory::joinSplines(splitPaths[i], maxVel, PathPlanner::resolution);
         PathPlannerTrajectory::calculateMaxVel(joined, maxVel, maxAccel, shouldReverse);
         PathPlannerTrajectory::calculateVelocity(joined, splitPaths[i], maxAccel);
@@ -48,19 +43,15 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::gene
     }
 
     std::vector<PathPlannerState> joinedStates;
-    for (size_t i = 0; i < splitStates.size(); i++)
-    {
-        if (i != 0)
-        {
+    for(size_t i = 0; i < splitStates.size(); i++){
+        if(i != 0){
             units::second_t lastEndTime = joinedStates[joinedStates.size() - 1].time;
-            for (PathPlannerState &state : splitStates[i])
-            {
+            for(PathPlannerState& state : splitStates[i]){
                 state.time += lastEndTime;
             }
         }
 
-        for (PathPlannerState &state : splitStates[i])
-        {
+        for(PathPlannerState& state : splitStates[i]){
             joinedStates.push_back(state);
         }
     }
@@ -68,15 +59,12 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::gene
     return joinedStates;
 }
 
-void PathPlannerTrajectory::calculateMarkerTimes(std::vector<Waypoint> pathPoints)
-{
-    for (EventMarker &marker : this->markers)
-    {
-        size_t startIndex = (size_t)marker.waypointRelativePos;
+void PathPlannerTrajectory::calculateMarkerTimes(std::vector<Waypoint> pathPoints){
+    for(EventMarker& marker : this->markers){
+        size_t startIndex = (size_t) marker.waypointRelativePos;
         double t = std::fmod(marker.waypointRelativePos, 1.0);
 
-        if (startIndex == pathPoints.size() - 1)
-        {
+        if(startIndex == pathPoints.size() - 1){
             startIndex--;
             t = 1.0;
         }
@@ -86,12 +74,11 @@ void PathPlannerTrajectory::calculateMarkerTimes(std::vector<Waypoint> pathPoint
 
         marker.position = GeometryUtil::cubicLerp(startPoint.anchorPoint, startPoint.nextControl, endPoint.prevControl, endPoint.anchorPoint, t);
 
-        int statesPerWaypoint = (int)(1.0 / pathplanner::PathPlanner::resolution);
-        startIndex = (size_t)((statesPerWaypoint * marker.waypointRelativePos) - std::floor(marker.waypointRelativePos));
+        int statesPerWaypoint = (int) (1.0 / pathplanner::PathPlanner::resolution);
+        startIndex = (size_t) ((statesPerWaypoint * marker.waypointRelativePos) - std::floor(marker.waypointRelativePos));
         t = std::fmod(statesPerWaypoint * marker.waypointRelativePos, 1.0);
 
-        if (startIndex == getStates().size() - 1)
-        {
+        if(startIndex == getStates().size() - 1){
             startIndex--;
             t = 1;
         }
@@ -103,62 +90,56 @@ void PathPlannerTrajectory::calculateMarkerTimes(std::vector<Waypoint> pathPoint
     }
 
     // Ensure the markers are sorted by time
-    std::sort(this->markers.begin(), this->markers.end(), [](EventMarker &a, EventMarker &b)
-              { return a.time < b.time; });
+    std::sort(this->markers.begin(), this->markers.end(), [](EventMarker& a, EventMarker& b){
+        return a.time < b.time;
+    });
 }
 
-std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::joinSplines(std::vector<PathPlannerTrajectory::Waypoint> pathPoints, units::meters_per_second_t maxVel, double step)
-{
+std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::joinSplines(std::vector<PathPlannerTrajectory::Waypoint> pathPoints, units::meters_per_second_t maxVel, double step){
     std::vector<PathPlannerState> states;
     int numSplines = pathPoints.size() - 1;
 
-    for (int i = 0; i < numSplines; i++)
-    {
-        Waypoint startPoint = pathPoints[i];
-        Waypoint endPoint = pathPoints[i + 1];
+   for(int i = 0; i < numSplines; i++){
+       Waypoint startPoint = pathPoints[i];
+       Waypoint endPoint = pathPoints[i + 1];
 
-        double endStep = (i == numSplines - 1) ? 1.0 : 1.0 - step;
-        for (double t = 0; t <= endStep; t += step)
-        {
-            frc::Translation2d p = GeometryUtil::cubicLerp(startPoint.anchorPoint, startPoint.nextControl,
-                                                           endPoint.prevControl, endPoint.anchorPoint, t);
+       double endStep = (i == numSplines - 1) ? 1.0 : 1.0 - step;
+       for(double t = 0; t <= endStep; t += step){
+           frc::Translation2d p = GeometryUtil::cubicLerp(startPoint.anchorPoint, startPoint.nextControl,
+                   endPoint.prevControl, endPoint.anchorPoint, t);
 
-            PathPlannerState state;
-            state.pose = frc::Pose2d(p, state.pose.Rotation());
+           PathPlannerState state;
+           state.pose = frc::Pose2d(p, state.pose.Rotation());
 
-            frc::Rotation2d startRot = startPoint.holonomicRotation;
-            frc::Rotation2d endRot = endPoint.holonomicRotation;
+           frc::Rotation2d startRot = startPoint.holonomicRotation;
+           frc::Rotation2d endRot = endPoint.holonomicRotation;
 
-            int startSearchOffset = 0;
-            int endSearchOffset = 0;
+           int startSearchOffset = 0;
+           int endSearchOffset = 0;
 
-            while (startRot.Radians() == 999_rad || endRot.Radians() == 999_rad)
-            {
-                if (startRot.Radians() == 999_rad)
-                {
-                    startSearchOffset++;
-                    startRot = pathPoints[i - startSearchOffset].holonomicRotation;
-                }
-                if (endRot.Radians() == 999_rad)
-                {
-                    endSearchOffset++;
-                    endRot = pathPoints[i + 1 + endSearchOffset].holonomicRotation;
-                }
-            }
+           while(startRot.Radians() == 999_rad || endRot.Radians() == 999_rad){
+               if(startRot.Radians() == 999_rad){
+                   startSearchOffset++;
+                   startRot = pathPoints[i - startSearchOffset].holonomicRotation;
+               }
+               if(endRot.Radians() == 999_rad){
+                   endSearchOffset++;
+                   endRot = pathPoints[i + 1 + endSearchOffset].holonomicRotation;
+               }
+           }
 
-            units::degree_t deltaRot = (endRot - startRot).Degrees();
-            deltaRot = frc::InputModulus(deltaRot, -180_deg, 180_deg);
+           units::degree_t deltaRot = (endRot - startRot).Degrees();
+           deltaRot = frc::InputModulus(deltaRot, -180_deg, 180_deg);
 
-            int startRotIndex = i - startSearchOffset;
-            int endRotIndex = i + 1 + endSearchOffset;
-            int rotRange = endRotIndex - startRotIndex;
+           int startRotIndex = i - startSearchOffset;
+           int endRotIndex = i + 1 + endSearchOffset;
+           int rotRange = endRotIndex - startRotIndex;
 
-            units::degree_t holonomicRot = GeometryUtil::cosineInterpolate(startRot, frc::Rotation2d(startRot.Degrees() + deltaRot), ((i + t) - startRotIndex) / rotRange).Degrees();
-            holonomicRot = frc::InputModulus(holonomicRot, -180_deg, 180_deg);
-            state.holonomicRotation = frc::Rotation2d(holonomicRot);
+           units::degree_t holonomicRot = GeometryUtil::cosineInterpolate(startRot, frc::Rotation2d(startRot.Degrees() + deltaRot), ((i + t) - startRotIndex) / rotRange).Degrees();
+           holonomicRot = frc::InputModulus(holonomicRot, -180_deg, 180_deg);
+           state.holonomicRotation = frc::Rotation2d(holonomicRot);
 
-            if (i > 0 || t > 0)
-            {
+           if(i > 0 || t > 0){
                 PathPlannerState s1 = states[states.size() - 1];
                 PathPlannerState s2 = state;
                 units::meter_t hypot = s1.pose.Translation().Distance(s2.pose.Translation());
@@ -168,63 +149,45 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
                 heading = frc::InputModulus(heading, (units::radian_t)-PI, (units::radian_t)PI);
                 state.pose = frc::Pose2d(state.pose.Translation(), frc::Rotation2d(heading));
 
-                if (i == 0 && t == step)
-                {
+                if(i == 0 && t == step){
                     states[states.size() - 1].pose = frc::Pose2d(states[states.size() - 1].pose.Translation(), frc::Rotation2d(heading));
                 }
             }
 
-            if (t == 0.0)
-            {
-                state.velocity = startPoint.velocityOverride;
-            }
-            else if (t >= 1.0)
-            {
-                state.velocity = endPoint.velocityOverride;
-            }
-            else
-            {
-                state.velocity = maxVel;
-            }
+           if(t == 0.0){
+               state.velocity = startPoint.velocityOverride;
+           }else if(t >= 1.0){
+               state.velocity = endPoint.velocityOverride;
+           }else {
+               state.velocity = maxVel;
+           }
 
-            if (state.velocity == -1_mps)
-                state.velocity = maxVel;
+           if(state.velocity == -1_mps) state.velocity = maxVel;
 
-            states.push_back(state);
-        }
-    }
-    return states;
+           states.push_back(state);
+       }
+   }
+   return states;
 }
 
-void PathPlannerTrajectory::calculateMaxVel(std::vector<PathPlannerTrajectory::PathPlannerState> &states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed)
-{
-    for (size_t i = 0; i < states.size(); i++)
-    {
+void PathPlannerTrajectory::calculateMaxVel(std::vector<PathPlannerTrajectory::PathPlannerState>& states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed){
+    for(size_t i = 0; i < states.size(); i++){
         units::meter_t radius;
-        if (i == states.size() - 1)
-        {
+        if(i == states.size() - 1){
             radius = calculateRadius(states[i - 2], states[i - 1], states[i]);
-        }
-        else if (i == 0)
-        {
+        }else if(i == 0){
             radius = calculateRadius(states[i], states[i + 1], states[i + 2]);
-        }
-        else
-        {
+        }else{
             radius = calculateRadius(states[i - 1], states[i], states[i + 1]);
         }
 
-        if (reversed)
-        {
+        if(reversed){
             radius *= -1;
         }
 
-        if (!GeometryUtil::isFinite(radius) || GeometryUtil::isNaN(radius))
-        {
+        if(!GeometryUtil::isFinite(radius) || GeometryUtil::isNaN(radius)){
             states[i].velocity = units::math::min(maxVel, states[i].velocity);
-        }
-        else
-        {
+        }else{
             states[i].curveRadius = radius;
 
             units::meters_per_second_t maxVCurve = units::math::sqrt(maxAccel * units::math::abs(radius));
@@ -234,36 +197,28 @@ void PathPlannerTrajectory::calculateMaxVel(std::vector<PathPlannerTrajectory::P
     }
 }
 
-void PathPlannerTrajectory::calculateVelocity(std::vector<PathPlannerTrajectory::PathPlannerState> &states, std::vector<PathPlannerTrajectory::Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel)
-{
-    if (pathPoints[0].velocityOverride == -1_mps)
-    {
+void PathPlannerTrajectory::calculateVelocity(std::vector<PathPlannerTrajectory::PathPlannerState>& states, std::vector<PathPlannerTrajectory::Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel){
+    if(pathPoints[0].velocityOverride == -1_mps){
         states[0].velocity = 0_mps;
     }
 
-    for (size_t i = 1; i < states.size(); i++)
-    {
+    for(size_t i = 1; i < states.size(); i++){
         units::meters_per_second_t v0 = states[i - 1].velocity;
         units::meter_t deltaPos = states[i].deltaPos;
 
-        if (deltaPos > 0_m)
-        {
+        if(deltaPos > 0_m) {
             units::meters_per_second_t vMax = units::math::sqrt(units::math::abs((v0 * v0) + (2 * maxAccel * deltaPos)));
             states[i].velocity = units::math::min(vMax, states[i].velocity);
-        }
-        else
-        {
+        }else{
             states[i].velocity = states[i - 1].velocity;
         }
     }
 
     PathPlannerTrajectory::Waypoint anchor = pathPoints[pathPoints.size() - 1];
-    if (anchor.velocityOverride == -1_mps)
-    {
+    if(anchor.velocityOverride == -1_mps){
         states[states.size() - 1].velocity = 0_mps;
     }
-    for (size_t i = states.size() - 2; i > 1; i--)
-    {
+    for(size_t i = states.size() - 2; i > 1; i--){
         units::meters_per_second_t v0 = states[i + 1].velocity;
         units::meter_t deltaPos = states[i + 1].deltaPos;
 
@@ -272,8 +227,7 @@ void PathPlannerTrajectory::calculateVelocity(std::vector<PathPlannerTrajectory:
     }
 
     units::second_t time = 0_s;
-    for (size_t i = 1; i < states.size(); i++)
-    {
+    for(size_t i = 1; i < states.size(); i++){
         units::meters_per_second_t v = states[i].velocity;
         units::meter_t deltaPos = states[i].deltaPos;
         units::meters_per_second_t v0 = states[i - 1].velocity;
@@ -284,43 +238,33 @@ void PathPlannerTrajectory::calculateVelocity(std::vector<PathPlannerTrajectory:
         units::meters_per_second_t dv = v - v0;
         units::second_t dt = time - states[i - 1].time;
 
-        if (dt == 0_s)
-        {
+        if(dt == 0_s){
             states[i].acceleration = 0_mps_sq;
-        }
-        else
-        {
+        }else{
             states[i].acceleration = dv / dt;
         }
     }
 }
 
-void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory::PathPlannerState> &states, bool reversed)
-{
-    for (int i = states.size() - 1; i >= 0; i--)
-    {
-        PathPlannerState &now = states[i];
+void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory::PathPlannerState>& states, bool reversed){
+    for(int i = states.size() - 1; i >= 0; i--){
+        PathPlannerState& now = states[i];
 
-        if (i != static_cast<int>(states.size() - 1))
-        {
-            PathPlannerState &next = states[i + 1];
+        if(i != static_cast<int>(states.size() - 1)){
+            PathPlannerState& next = states[i + 1];
 
             units::second_t dt = next.time - now.time;
             now.angularVelocity = frc::InputModulus(next.pose.Rotation().Radians() - now.pose.Rotation().Radians(), (units::radian_t)-PI, (units::radian_t)PI) / dt;
             now.holonomicAngularVelocity = frc::InputModulus(next.holonomicRotation.Radians() - now.holonomicRotation.Radians(), (units::radian_t)-PI, (units::radian_t)PI) / dt;
         }
 
-        if (!GeometryUtil::isFinite(now.curveRadius) || GeometryUtil::isNaN(now.curveRadius) || now.curveRadius() == 0)
-        {
+        if(!GeometryUtil::isFinite(now.curveRadius) || GeometryUtil::isNaN(now.curveRadius) || now.curveRadius() == 0){
             now.curvature = units::curvature_t{0};
-        }
-        else
-        {
+        }else{
             now.curvature = units::curvature_t{1 / now.curveRadius()};
         }
 
-        if (reversed)
-        {
+        if(reversed){
             now.velocity *= -1;
             now.acceleration *= -1;
 
@@ -331,8 +275,7 @@ void PathPlannerTrajectory::recalculateValues(std::vector<PathPlannerTrajectory:
     }
 }
 
-units::meter_t PathPlannerTrajectory::calculateRadius(PathPlannerTrajectory::PathPlannerState s0, PathPlannerTrajectory::PathPlannerState s1, PathPlannerTrajectory::PathPlannerState s2)
-{
+units::meter_t PathPlannerTrajectory::calculateRadius(PathPlannerTrajectory::PathPlannerState s0, PathPlannerTrajectory::PathPlannerState s1, PathPlannerTrajectory::PathPlannerState s2){
     frc::Translation2d a = s0.pose.Translation();
     frc::Translation2d b = s1.pose.Translation();
     frc::Translation2d c = s2.pose.Translation();
@@ -351,25 +294,18 @@ units::meter_t PathPlannerTrajectory::calculateRadius(PathPlannerTrajectory::Pat
     return sign * (ab * bc * ac) / (4 * area);
 }
 
-PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(units::second_t time) const
-{
-    if (time <= getInitialState().time)
-        return getInitialState();
-    if (time >= getTotalTime())
-        return getEndState();
+PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(units::second_t time) const{
+    if(time <= getInitialState().time) return getInitialState();
+    if(time >= getTotalTime()) return getEndState();
 
     int low = 1;
     int high = numStates() - 1;
 
-    while (low != high)
-    {
+    while(low != high){
         int mid = (low + high) / 2;
-        if (getState(mid).time < time)
-        {
+        if(getState(mid).time < time){
             low = mid + 1;
-        }
-        else
-        {
+        }else{
             high = mid;
         }
     }
@@ -377,23 +313,19 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(units::sec
     PathPlannerTrajectory::PathPlannerState const &sample = getState(low);
     PathPlannerTrajectory::PathPlannerState const &prevSample = getState(low - 1);
 
-    if (units::math::abs(sample.time - prevSample.time) < 0.001_s)
-        return sample;
+    if(units::math::abs(sample.time - prevSample.time) < 0.001_s) return sample;
 
     return prevSample.interpolate(sample, (time - prevSample.time) / (sample.time - prevSample.time));
 }
 
-PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState::interpolate(PathPlannerTrajectory::PathPlannerState endVal, double t) const
-{
+PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState::interpolate(PathPlannerTrajectory::PathPlannerState endVal, double t) const{
     PathPlannerTrajectory::PathPlannerState lerpedState;
 
     lerpedState.time = GeometryUtil::unitLerp(time, endVal.time, t);
     units::second_t deltaT = lerpedState.time - time;
 
-    if (deltaT < 0_s)
-    {
-        return endVal.interpolate(*this, 1 - t);
-    }
+    if(deltaT < 0_s)
+        return endVal.interpolate(*this, 1-t);
 
     lerpedState.velocity = GeometryUtil::unitLerp(velocity, endVal.velocity, t);
     lerpedState.acceleration = GeometryUtil::unitLerp(acceleration, endVal.acceleration, t);
@@ -409,12 +341,22 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState:
     return lerpedState;
 }
 
-frc::Trajectory PathPlannerTrajectory::asWPILibTrajectory() const
-{
+frc::Trajectory::State PathPlannerTrajectory::PathPlannerState::asWPILibState() const{
+    frc::Trajectory::State wpiState;
+
+    wpiState.t = this->time;
+    wpiState.pose = this->pose;
+    wpiState.velocity = this->velocity;
+    wpiState.acceleration = this->acceleration;
+    wpiState.curvature = this->curvature;
+
+    return wpiState;
+}
+
+frc::Trajectory PathPlannerTrajectory::asWPILibTrajectory() const{
     std::vector<frc::Trajectory::State> wpiStates;
 
-    for (size_t i = 0; i < this->states.size(); i++)
-    {
+    for(size_t i = 0; i < this->states.size(); i++){
         PathPlannerTrajectory::PathPlannerState ppState = this->states[i];
 
         wpiStates.push_back(ppState.asWPILibState());

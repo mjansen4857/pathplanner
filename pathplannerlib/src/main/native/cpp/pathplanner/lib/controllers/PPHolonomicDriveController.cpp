@@ -6,31 +6,28 @@
 using namespace pathplanner;
 
 PPHolonomicDriveController::PPHolonomicDriveController(frc2::PIDController xController, frc2::PIDController yController, frc2::PIDController rotationController)
-    : m_xController(std::move(xController)), m_yController(std::move(yController)), m_rotationController(std::move(rotationController))
-{
-    this->m_rotationController.EnableContinuousInput(-PI, PI);
-}
+    : m_xController(std::move(xController)), m_yController(std::move(yController)), m_rotationController(std::move(rotationController)){
+        this->m_rotationController.EnableContinuousInput(-PI, PI);
+    }
 
-bool PPHolonomicDriveController::atReference() const
-{
+bool PPHolonomicDriveController::atReference() const{
     frc::Translation2d translationTolerance = this->m_tolerance.Translation();
     frc::Rotation2d rotationTolerance = this->m_tolerance.Rotation();
 
-    return units::math::abs(this->m_translationError.X()) < translationTolerance.X() && units::math::abs(this->m_translationError.Y()) < translationTolerance.Y() && units::math::abs(this->m_rotationError.Radians()) < rotationTolerance.Radians();
+    return units::math::abs(this->m_translationError.X()) < translationTolerance.X()
+        && units::math::abs(this->m_translationError.Y()) < translationTolerance.Y()
+        && units::math::abs(this->m_rotationError.Radians()) < rotationTolerance.Radians();
 }
 
-void PPHolonomicDriveController::setTolerance(frc::Pose2d &tolerance)
-{
+void PPHolonomicDriveController::setTolerance(frc::Pose2d& tolerance){
     this->m_tolerance = tolerance;
 }
 
-void PPHolonomicDriveController::setEnabled(bool enabled)
-{
+void PPHolonomicDriveController::setEnabled(bool enabled){
     this->m_isEnabled = enabled;
 }
 
-frc::ChassisSpeeds PPHolonomicDriveController::calculate(frc::Pose2d &currentPose, PathPlannerTrajectory::PathPlannerState &referenceState)
-{
+frc::ChassisSpeeds PPHolonomicDriveController::calculate(frc::Pose2d& currentPose, PathPlannerTrajectory::PathPlannerState& referenceState){
     units::meters_per_second_t xFF = referenceState.velocity * referenceState.pose.Rotation().Cos();
     units::meters_per_second_t yFF = referenceState.velocity * referenceState.pose.Rotation().Sin();
     units::radians_per_second_t rotationFF = referenceState.holonomicAngularVelocity;
@@ -38,8 +35,7 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculate(frc::Pose2d &currentPos
     this->m_translationError = referenceState.pose.RelativeTo(currentPose).Translation();
     this->m_rotationError = referenceState.holonomicRotation - currentPose.Rotation();
 
-    if (!this->m_isEnabled)
-    {
+    if(!this->m_isEnabled){
         return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF, yFF, rotationFF, currentPose.Rotation());
     }
 

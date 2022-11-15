@@ -18,13 +18,10 @@
 
 #define PI 3.14159265358979323846
 
-namespace pathplanner
-{
-    class PathPlannerTrajectory
-    {
+namespace pathplanner {
+    class PathPlannerTrajectory {
     public:
-        class PathPlannerState
-        {
+        class PathPlannerState {
         public:
             units::second_t time = 0_s;
             units::meters_per_second_t velocity = 0_mps;
@@ -40,8 +37,7 @@ namespace pathplanner
              *
              * @return The WPILib state
              */
-            constexpr frc::Trajectory::State asWPILibState() const
-            {
+            constexpr frc::Trajectory::State asWPILibState() const{
                 frc::Trajectory::State wpiState;
 
                 wpiState.t = this->time;
@@ -62,8 +58,7 @@ namespace pathplanner
             friend class PathPlannerTrajectory;
         };
 
-        class EventMarker
-        {
+        class EventMarker{
         public:
             std::vector<std::string> names;
             units::second_t time;
@@ -72,8 +67,7 @@ namespace pathplanner
         private:
             double waypointRelativePos;
 
-            EventMarker(std::vector<std::string> names, double waypointRelativePos)
-            {
+            EventMarker(std::vector<std::string> names, double waypointRelativePos){
                 this->names = names;
                 this->waypointRelativePos = waypointRelativePos;
             }
@@ -83,8 +77,7 @@ namespace pathplanner
         };
 
     private:
-        class Waypoint
-        {
+        class Waypoint{
         public:
             frc::Translation2d anchorPoint;
             frc::Translation2d prevControl;
@@ -95,8 +88,7 @@ namespace pathplanner
             bool isStopPoint;
             units::second_t waitTime;
 
-            constexpr Waypoint(frc::Translation2d anchorPoint, frc::Translation2d prevControl, frc::Translation2d nextControl, units::meters_per_second_t velocityOverride, frc::Rotation2d holonomicRotation, bool isReversal, bool isStopPoint, units::second_t waitTime)
-            {
+            constexpr Waypoint(frc::Translation2d anchorPoint, frc::Translation2d prevControl, frc::Translation2d nextControl, units::meters_per_second_t velocityOverride, frc::Rotation2d holonomicRotation, bool isReversal, bool isStopPoint, units::second_t waitTime){
                 this->anchorPoint = anchorPoint;
                 this->prevControl = prevControl;
                 this->nextControl = nextControl;
@@ -114,9 +106,9 @@ namespace pathplanner
 
         static std::vector<PathPlannerState> generatePath(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
         static std::vector<PathPlannerState> joinSplines(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, double step);
-        static void calculateMaxVel(std::vector<PathPlannerState> &states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
-        static void calculateVelocity(std::vector<PathPlannerState> &states, std::vector<Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel);
-        static void recalculateValues(std::vector<PathPlannerState> &states, bool reversed);
+        static void calculateMaxVel(std::vector<PathPlannerState>& states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
+        static void calculateVelocity(std::vector<PathPlannerState>& states, std::vector<Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel);
+        static void recalculateValues(std::vector<PathPlannerState>& states, bool reversed);
         static units::meter_t calculateRadius(PathPlannerState s0, PathPlannerState s1, PathPlannerState s2);
 
         void calculateMarkerTimes(std::vector<Waypoint> pathPoints);
@@ -125,7 +117,7 @@ namespace pathplanner
 
     public:
         PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, PathConstraints constraints, bool reversed);
-        PathPlannerTrajectory() {}
+        PathPlannerTrajectory(){}
 
         /**
          * @brief Get the end wait time for this path configured in the GUI
@@ -147,28 +139,28 @@ namespace pathplanner
          *
          * @return Const reference to a vector of all states
          */
-        std::vector<PathPlannerState> const &getStates() const { return this->states; }
+        std::vector<PathPlannerState> const& getStates() const { return this->states; }
 
         /**
          * @brief Get all of the states in the path
          *
          * @return Reference to a vector of all states
          */
-        std::vector<PathPlannerState> &getStates() { return this->states; }
+        std::vector<PathPlannerState>& getStates() { return this->states; }
 
         /**
          * @brief Get all of the markers in the path
          *
          * @return Const reference to a vector of all markers
          */
-        std::vector<EventMarker> const &getMarkers() const { return this->markers; }
+        std::vector<EventMarker> const& getMarkers() const { return this->markers; }
 
         /**
          * @brief Get all of the markers in the path
          *
          * @return Reference to a vector of all markers
          */
-        std::vector<EventMarker> &getMarkers() { return this->markers; }
+        std::vector<EventMarker>& getMarkers() { return this->markers; }
 
         /**
          * @brief Get the total number of states in the path
@@ -179,23 +171,45 @@ namespace pathplanner
 
         /**
          * @brief Get a state in the path based on its index. In most cases, using sample() is a better method.
-         *
+         * 
          * @param i The index of the state
          * @return Reference to the state at the given index
+         */
+        PathPlannerState& getState(int i) { return getStates()[i]; }
+
+        /**
+         * @brief Get the initial state of the path
+         * 
+         * @return Reference to the first state of the path
+         */
+        PathPlannerState& getInitialState() { return getState(0); }
+
+        /**
+         * @brief Get the end state of the path
+         * 
+         * @return Reference to the last state in the path
+         */
+        PathPlannerState& getEndState() { return getState(numStates() - 1); }
+
+        /**
+         * @brief Get a state in the path based on its index. In most cases, using sample() is a better method.
+         *
+         * @param i The index of the state
+         * @return Copy of the state at the given index
          */
         PathPlannerState getState(int i) const { return getStates()[i]; }
 
         /**
          * @brief Get the initial state of the path
          *
-         * @return Reference to the first state of the path
+         * @return Copy of the first state of the path
          */
         PathPlannerState getInitialState() const { return getState(0); }
 
         /**
          * @brief Get the end state of the path
          *
-         * @return Reference to the last state in the path
+         * @return Copy of the last state in the path
          */
         PathPlannerState getEndState() const { return getState(numStates() - 1); }
 

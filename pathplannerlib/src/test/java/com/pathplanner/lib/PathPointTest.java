@@ -2,19 +2,23 @@ package com.pathplanner.lib;
 
 import static org.junit.Assert.*;
 
-import org.junit.*;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import org.junit.*;
 
 public class PathPointTest {
   public static final double DELTA = 1e-2;
 
   @Test
-  public void constructor(){
-    PathPoint p = new PathPoint(new Translation2d(1.2, 2.7), Rotation2d.fromDegrees(25), Rotation2d.fromDegrees(67), 2.4);
+  public void constructor() {
+    PathPoint p =
+        new PathPoint(
+            new Translation2d(1.2, 2.7),
+            Rotation2d.fromDegrees(25),
+            Rotation2d.fromDegrees(67),
+            2.4);
 
     assertEquals(new Translation2d(1.2, 2.7), p.position);
     assertEquals(Rotation2d.fromDegrees(25), p.heading);
@@ -23,7 +27,7 @@ public class PathPointTest {
   }
 
   @Test
-  public void fromCurrentHolonomicState(){
+  public void fromCurrentHolonomicState() {
     Pose2d pose = new Pose2d(1.7, 2.1, Rotation2d.fromDegrees(45));
     ChassisSpeeds speeds = new ChassisSpeeds(1.7, -1.2, 0.8);
 
@@ -35,7 +39,7 @@ public class PathPointTest {
   }
 
   @Test
-  public void fromCurrentDifferentialState(){
+  public void fromCurrentDifferentialState() {
     Pose2d pose = new Pose2d(1.7, 2.1, Rotation2d.fromDegrees(45));
     ChassisSpeeds speeds = new ChassisSpeeds(1.7, 0.0, 0.8);
 

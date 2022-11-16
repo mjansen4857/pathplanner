@@ -19,15 +19,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/**
- * Custom PathPlanner version of MecanumControllerCommand
- */
+/** Custom PathPlanner version of MecanumControllerCommand */
 public class PPMecanumControllerCommand extends CommandBase {
   private final Timer timer = new Timer();
   private final PathPlannerTrajectory trajectory;
@@ -49,16 +46,17 @@ public class PPMecanumControllerCommand extends CommandBase {
    * this is left to the user, since it is not appropriate for paths with non-stationary end-states.
    *
    * @param trajectory The Pathplanner trajectory to follow.
-   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes to
-   *     provide this.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
    * @param kinematics The kinematics for the robot drivetrain.
    * @param xController The Trajectory Tracker PID controller for the robot's x position.
    * @param yController The Trajectory Tracker PID controller for the robot's y position.
    * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
    * @param maxWheelVelocityMetersPerSecond The maximum velocity of a drivetrain wheel.
    * @param outputWheelSpeeds A MecanumDriveWheelSpeeds object containing the output wheel speeds.
-   * @param eventMap           Map of event marker names to the commands that should run when reaching that marker.
-   *                           This SHOULD NOT contain any commands requiring the same subsystems as this command, or it will be interrupted
+   * @param eventMap Map of event marker names to the commands that should run when reaching that
+   *     marker. This SHOULD NOT contain any commands requiring the same subsystems as this command,
+   *     or it will be interrupted
    * @param requirements The subsystems to require.
    */
   public PPMecanumControllerCommand(
@@ -91,8 +89,8 @@ public class PPMecanumControllerCommand extends CommandBase {
    * this is left to the user, since it is not appropriate for paths with non-stationary end-states.
    *
    * @param trajectory The Pathplanner trajectory to follow.
-   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes to
-   *     provide this.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
    * @param kinematics The kinematics for the robot drivetrain.
    * @param xController The Trajectory Tracker PID controller for the robot's x position.
    * @param yController The Trajectory Tracker PID controller for the robot's y position.
@@ -102,16 +100,26 @@ public class PPMecanumControllerCommand extends CommandBase {
    * @param requirements The subsystems to require.
    */
   public PPMecanumControllerCommand(
-          PathPlannerTrajectory trajectory,
-          Supplier<Pose2d> poseSupplier,
-          MecanumDriveKinematics kinematics,
-          PIDController xController,
-          PIDController yController,
-          PIDController rotationController,
-          double maxWheelVelocityMetersPerSecond,
-          Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
-          Subsystem... requirements) {
-    this(trajectory, poseSupplier, kinematics, xController, yController, rotationController, maxWheelVelocityMetersPerSecond, outputWheelSpeeds, new HashMap<>(), requirements);
+      PathPlannerTrajectory trajectory,
+      Supplier<Pose2d> poseSupplier,
+      MecanumDriveKinematics kinematics,
+      PIDController xController,
+      PIDController yController,
+      PIDController rotationController,
+      double maxWheelVelocityMetersPerSecond,
+      Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
+      Subsystem... requirements) {
+    this(
+        trajectory,
+        poseSupplier,
+        kinematics,
+        xController,
+        yController,
+        rotationController,
+        maxWheelVelocityMetersPerSecond,
+        outputWheelSpeeds,
+        new HashMap<>(),
+        requirements);
   }
 
   @Override
@@ -135,11 +143,17 @@ public class PPMecanumControllerCommand extends CommandBase {
 
     Pose2d currentPose = this.poseSupplier.get();
     this.field.setRobotPose(currentPose);
-    PathPlannerServer.sendPathFollowingData(new Pose2d(desiredState.poseMeters.getTranslation(), desiredState.holonomicRotation), currentPose);
+    PathPlannerServer.sendPathFollowingData(
+        new Pose2d(desiredState.poseMeters.getTranslation(), desiredState.holonomicRotation),
+        currentPose);
 
-    SmartDashboard.putNumber("PPMecanumControllerCommand_xError", currentPose.getX() - desiredState.poseMeters.getX());
-    SmartDashboard.putNumber("PPMecanumControllerCommand_yError", currentPose.getY() - desiredState.poseMeters.getY());
-    SmartDashboard.putNumber("PPMecanumControllerCommand_rotationError", currentPose.getRotation().getRadians() - desiredState.holonomicRotation.getRadians());
+    SmartDashboard.putNumber(
+        "PPMecanumControllerCommand_xError", currentPose.getX() - desiredState.poseMeters.getX());
+    SmartDashboard.putNumber(
+        "PPMecanumControllerCommand_yError", currentPose.getY() - desiredState.poseMeters.getY());
+    SmartDashboard.putNumber(
+        "PPMecanumControllerCommand_rotationError",
+        currentPose.getRotation().getRadians() - desiredState.holonomicRotation.getRadians());
 
     ChassisSpeeds targetChassisSpeeds = this.controller.calculate(currentPose, desiredState);
     MecanumDriveWheelSpeeds targetWheelSpeeds = this.kinematics.toWheelSpeeds(targetChassisSpeeds);
@@ -148,11 +162,11 @@ public class PPMecanumControllerCommand extends CommandBase {
 
     this.outputWheelSpeeds.accept(targetWheelSpeeds);
 
-    if(this.unpassedMarkers.size() > 0 && currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
+    if (this.unpassedMarkers.size() > 0 && currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
       PathPlannerTrajectory.EventMarker marker = this.unpassedMarkers.remove(0);
 
-      for(String eventName : marker.names) {
-        if(this.eventMap.containsKey(eventName)) {
+      for (String eventName : marker.names) {
+        if (this.eventMap.containsKey(eventName)) {
           this.eventMap.get(eventName).schedule();
         }
       }
@@ -163,7 +177,7 @@ public class PPMecanumControllerCommand extends CommandBase {
   public void end(boolean interrupted) {
     this.timer.stop();
 
-    if(interrupted){
+    if (interrupted) {
       this.outputWheelSpeeds.accept(new MecanumDriveWheelSpeeds(0, 0, 0, 0));
     }
   }

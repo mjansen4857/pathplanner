@@ -13,7 +13,7 @@ using namespace pathplanner;
 
 double PathPlanner::resolution = 0.004;
 
-PathPlannerTrajectory PathPlanner::loadPath(std::string name, PathConstraints constraints, bool reversed){
+PathPlannerTrajectory PathPlanner::loadPath(std::string const& name, PathConstraints const& constraints, bool reversed){
     std::string filePath = frc::filesystem::GetDeployDirectory() + "/pathplanner/" + name + ".path";
 
     std::error_code error_code;
@@ -32,7 +32,7 @@ PathPlannerTrajectory PathPlanner::loadPath(std::string name, PathConstraints co
     return PathPlannerTrajectory(waypoints, markers, constraints, reversed);
 }
 
-std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, std::initializer_list<PathConstraints> constraints, bool reversed){
+std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string const& name, std::initializer_list<PathConstraints> const& constraints, bool reversed){
     if (constraints.size() == 0){
         throw std::runtime_error("At least one PathConstraints is required but none were provized");
     }
@@ -65,7 +65,7 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, 
             std::vector<PathPlannerTrajectory::EventMarker> currentMarkers;
             for (PathPlannerTrajectory::EventMarker marker : markers){
                 if (marker.waypointRelativePos >= indexOfWaypoint(waypoints, currentPath[0]) && marker.waypointRelativePos <= i)
-                    currentMarkers.push_back(PathPlannerTrajectory::EventMarker(marker.names, marker.waypointRelativePos - indexOfWaypoint(waypoints, currentPath[0])));
+                    currentMarkers.push_back(PathPlannerTrajectory::EventMarker(std::move(marker.names), marker.waypointRelativePos - indexOfWaypoint(waypoints, currentPath[0])));
             }
             splitMarkers.push_back(currentMarkers);
 
@@ -101,7 +101,10 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(std::string name, 
     return pathGroup;
 }
 
-PathPlannerTrajectory PathPlanner::generatePath(PathConstraints constraints, bool reversed, PathPoint point1, PathPoint point2, std::initializer_list<PathPoint> points){
+PathPlannerTrajectory PathPlanner::generatePath(
+    PathConstraints const& constraints, bool reversed, 
+    PathPoint const& point1, PathPoint const& point2, 
+    std::initializer_list<PathPoint> const& points){
     std::vector<PathPoint> allPoints;
     allPoints.push_back(point1);
     allPoints.push_back(point2);
@@ -126,7 +129,7 @@ PathPlannerTrajectory PathPlanner::generatePath(PathConstraints constraints, boo
     return PathPlannerTrajectory(waypoints, std::vector<PathPlannerTrajectory::EventMarker>(), constraints, reversed);
 }
 
-PathConstraints PathPlanner::getConstraintsFromPath(std::string name){
+PathConstraints PathPlanner::getConstraintsFromPath(std::string const& name){
     std::string filePath = frc::filesystem::GetDeployDirectory() + "/pathplanner/" + name + ".path";
 
     std::error_code error_code;
@@ -215,7 +218,7 @@ std::vector<PathPlannerTrajectory::EventMarker> PathPlanner::getMarkersFromJson(
                 // Handle transition from one-event markers to multi-event markers. Remove next season
                 names.push_back(marker.at("name"));
             }
-            PathPlannerTrajectory::EventMarker m(names, marker.at("position"));
+            PathPlannerTrajectory::EventMarker m(std::move(names), marker.at("position"));
             markers.push_back(m);
         }
     }
@@ -223,7 +226,7 @@ std::vector<PathPlannerTrajectory::EventMarker> PathPlanner::getMarkersFromJson(
     return markers;
 }
 
-int PathPlanner::indexOfWaypoint(std::vector<PathPlannerTrajectory::Waypoint> waypoints, PathPlannerTrajectory::Waypoint waypoint){
+int PathPlanner::indexOfWaypoint(std::vector<PathPlannerTrajectory::Waypoint> const& waypoints, PathPlannerTrajectory::Waypoint const& waypoint){
     for (size_t i = 0; i < waypoints.size(); i++){
         if (waypoints[i].anchorPoint == waypoint.anchorPoint)
             return i;

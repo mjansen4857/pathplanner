@@ -17,7 +17,7 @@ namespace pathplanner
          * @param yController A PID controller to respond to error in the field-relative Y direction
          * @param rotationController A PID controller to respond to error in rotation
          */
-        PPHolonomicDriveController(frc2::PIDController xController, frc2::PIDController yController, frc2::PIDController rotationController);
+        PPHolonomicDriveController(frc2::PIDController&& xController, frc2::PIDController&& yController, frc2::PIDController&& rotationController);
 
         /**
          * Returns true if the pose error is within tolerance of the reference.
@@ -31,7 +31,7 @@ namespace pathplanner
          *
          * @param tolerance The pose error which is tolerable
          */
-        void setTolerance(frc::Pose2d &tolerance);
+        void setTolerance(frc::Pose2d const& tolerance);
 
         /**
          * Enables and disables the controller for troubleshooting. When calculate() is called on a disabled
@@ -48,7 +48,7 @@ namespace pathplanner
          * @param referenceState The desired trajectory state
          * @return The next output of the holonomic drive controller
          */
-        frc::ChassisSpeeds calculate(frc::Pose2d &currentPose, PathPlannerTrajectory::PathPlannerState &referenceState);
+        frc::ChassisSpeeds calculate(frc::Pose2d const& currentPose, PathPlannerTrajectory::PathPlannerState const& referenceState);
 
     private:
         frc2::PIDController m_xController;

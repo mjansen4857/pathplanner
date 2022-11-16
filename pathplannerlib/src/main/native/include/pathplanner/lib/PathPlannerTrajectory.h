@@ -53,7 +53,7 @@ namespace pathplanner {
             units::meter_t curveRadius = 0_m;
             units::meter_t deltaPos = 0_m;
 
-            PathPlannerState interpolate(PathPlannerState endVal, double t) const;
+            PathPlannerState interpolate(PathPlannerState const& endVal, double t) const;
 
             friend class PathPlannerTrajectory;
         };
@@ -67,7 +67,7 @@ namespace pathplanner {
         private:
             double waypointRelativePos;
 
-            EventMarker(std::vector<std::string> names, double waypointRelativePos){
+            EventMarker(std::vector<std::string>&& names, double waypointRelativePos){
                 this->names = names;
                 this->waypointRelativePos = waypointRelativePos;
             }
@@ -104,19 +104,19 @@ namespace pathplanner {
         std::vector<EventMarker> markers;
         units::second_t endWaitTime;
 
-        static std::vector<PathPlannerState> generatePath(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
-        static std::vector<PathPlannerState> joinSplines(std::vector<Waypoint> pathPoints, units::meters_per_second_t maxVel, double step);
+        static std::vector<PathPlannerState> generatePath(std::vector<Waypoint> const& pathPoints, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
+        static std::vector<PathPlannerState> joinSplines(std::vector<Waypoint> const& pathPoints, units::meters_per_second_t maxVel, double step);
         static void calculateMaxVel(std::vector<PathPlannerState>& states, units::meters_per_second_t maxVel, units::meters_per_second_squared_t maxAccel, bool reversed);
         static void calculateVelocity(std::vector<PathPlannerState>& states, std::vector<Waypoint> pathPoints, units::meters_per_second_squared_t maxAccel);
         static void recalculateValues(std::vector<PathPlannerState>& states, bool reversed);
-        static units::meter_t calculateRadius(PathPlannerState s0, PathPlannerState s1, PathPlannerState s2);
+        static units::meter_t calculateRadius(PathPlannerState const& s0, PathPlannerState const& s1, PathPlannerState const& s2);
 
-        void calculateMarkerTimes(std::vector<Waypoint> pathPoints);
+        void calculateMarkerTimes(std::vector<Waypoint> const& pathPoints);
 
         friend class PathPlanner;
 
     public:
-        PathPlannerTrajectory(std::vector<Waypoint> waypoints, std::vector<EventMarker> markers, PathConstraints constraints, bool reversed);
+        PathPlannerTrajectory(std::vector<Waypoint> const& waypoints, std::vector<EventMarker> const& markers, PathConstraints const& constraints, bool reversed);
         PathPlannerTrajectory(){}
 
         /**

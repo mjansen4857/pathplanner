@@ -38,5 +38,10 @@ namespace pathplanner {
         constexpr static PathPoint fromCurrentDifferentialState(frc::Pose2d currentPose, frc::ChassisSpeeds currentSpeeds){
             return PathPoint(currentPose.Translation(), currentPose.Rotation(), currentSpeeds.vx);
         }
+
+        constexpr PathPoint(PathPoint&&) = default; // explicit default move constructor
+        constexpr PathPoint& operator=(PathPoint&&) = default; // explicit default move assignment operator
+        constexpr PathPoint(PathPoint const&) = default; // explicit default copy constructor
+        constexpr PathPoint& operator=(PathPoint const&) = default; // explicit default copy assignment operator
     };
 }

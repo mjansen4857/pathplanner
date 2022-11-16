@@ -5,8 +5,8 @@
 
 using namespace pathplanner;
 
-PPHolonomicDriveController::PPHolonomicDriveController(frc2::PIDController xController, frc2::PIDController yController, frc2::PIDController rotationController)
-    : m_xController(std::move(xController)), m_yController(std::move(yController)), m_rotationController(std::move(rotationController)){
+PPHolonomicDriveController::PPHolonomicDriveController(frc2::PIDController&& xController, frc2::PIDController&& yController, frc2::PIDController&& rotationController)
+    : m_xController(xController), m_yController(yController), m_rotationController(rotationController){
         this->m_rotationController.EnableContinuousInput(-PI, PI);
     }
 
@@ -19,7 +19,7 @@ bool PPHolonomicDriveController::atReference() const{
         && units::math::abs(this->m_rotationError.Radians()) < rotationTolerance.Radians();
 }
 
-void PPHolonomicDriveController::setTolerance(frc::Pose2d& tolerance){
+void PPHolonomicDriveController::setTolerance(frc::Pose2d const& tolerance){
     this->m_tolerance = tolerance;
 }
 
@@ -27,7 +27,7 @@ void PPHolonomicDriveController::setEnabled(bool enabled){
     this->m_isEnabled = enabled;
 }
 
-frc::ChassisSpeeds PPHolonomicDriveController::calculate(frc::Pose2d& currentPose, PathPlannerTrajectory::PathPlannerState& referenceState){
+frc::ChassisSpeeds PPHolonomicDriveController::calculate(frc::Pose2d const& currentPose, PathPlannerTrajectory::PathPlannerState const& referenceState){
     units::meters_per_second_t xFF = referenceState.velocity * referenceState.pose.Rotation().Cos();
     units::meters_per_second_t yFF = referenceState.velocity * referenceState.pose.Rotation().Sin();
     units::radians_per_second_t rotationFF = referenceState.holonomicAngularVelocity;

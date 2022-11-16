@@ -10,7 +10,7 @@ on:
 
 jobs:
   dart-formatting:
-    name: Check Dart Formatting & Analysis
+    name: Check Flutter Formatting & Analysis
     runs-on: ubuntu-22.04
 
     steps:
@@ -55,7 +55,7 @@ jobs:
         working-directory: ./pathplannerlib
   
   flutter-tests:
-    name: Flutter Tests
+    name: Flutter Build & Test
     runs-on: ubuntu-22.04
     needs: [dart-formatting]
 
@@ -77,7 +77,7 @@ jobs:
         run: flutter test
   
   pplib_tests:
-    name: PathPlannerLib Tests
+    name: PathPlannerLib Build & Test
     runs-on: ubuntu-22.04
     needs: [pplib-formatting]
     container: wpilib/roborio-cross-ubuntu:2023-22.04

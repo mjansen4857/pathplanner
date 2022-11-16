@@ -4,100 +4,102 @@ on:
   workflow_dispatch:
   
 jobs:
-  build-linux:
-    name: Build roboRIO Java/C++ and linux desktop
+  build-docker:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - container: wpilib/roborio-cross-ubuntu:2023-22.04
+            artifact-name: Athena
+            build-options: "-Ponlylinuxathena"
+          - container: wpilib/ubuntu-base:22.04
+            artifact-name: Linux
+            build-options: ""
+    name: "Build - ${{ matrix.artifact-name }}"
     runs-on: ubuntu-22.04
-    container: wpilib/roborio-cross-ubuntu:2023-22.04
-    
+    container: ${{ matrix.container }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        
+      
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         working-directory: ./pathplannerlib
-        
-      - name: Install roborio toolchain
-        run: ./gradlew installRoboRIOToolchain
-        working-directory: ./pathplannerlib
-        
-      - name: Compile and run tests
-        run: ./gradlew build
-        working-directory: ./pathplannerlib
-        
-      - name: Publish
-        run: ./gradlew publish
-        working-directory: ./pathplannerlib
-        
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: roborio-linux
-          path: 'pathplannerlib/build/repos/releases/com/pathplanner/lib'
-          retention-days: 7
-          
-  build-windows:
-    name: Build windows desktop
-    runs-on: windows-2022
-    
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-       
-      - name: Setup jdk
-        uses: actions/setup-java@v3
-        with:
-          java-version: '11'
-          distribution: 'temurin'
       
-      - name: Install roborio toolchain
-        run: ./gradlew installRoboRIOToolchain
+      - name: Build
+        run: ./gradlew build --max-workers 1 -PreleaseMode ${{ matrix.build-options }}
         working-directory: ./pathplannerlib
-        
-      - name: Compile and run tests
-        run: ./gradlew build
-        working-directory: ./pathplannerlib
-        
-      - name: Publish
-        run: ./gradlew publish
-        working-directory: ./pathplannerlib
-        
+      
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: windows
-          path: 'pathplannerlib/build/repos/releases/com/pathplanner/lib'
-          retention-days: 7
+          name: ${{ matrix.artifact-name }}
+          path: pathplannerlib/build/allOutputs
 
-  build-macos:
-    name: Build macOS desktop
-    runs-on: macos-12
-    
+  build-host:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            artifact-name: Win64
+            architecture: x64
+          - os: macos-12
+            artifact-name: macOS
+            architecture: x64
+    name: "Build - ${{ matrix.artifact-name }}"
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        
-      - name: Setup jdk
+      
+      - name: Setup java
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          architecture: ${{ matrix.architecture }}
+          distribution: 'temurin'
+      
+      - name: Build
+        run: ./gradlew build -PreleaseMode -Pbuildalldesktop
+        working-directory: ./pathplannerlib
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: pathplannerlib/build/allOutputs
+  
+  combine:
+    name: Combine
+    needs: [build-docker, build-host]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout build-tools
+        uses: actions/checkout@v3
+        with:
+          repository: wpilibsuite/build-tools
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: combiner/products/build/allOutputs
+      
+      - name: Flatten Artifacts
+        run: rsync -a --delete combiner/products/build/allOutputs/*/* combiner/products/build/allOutputs/
+      
+      - name: Setup java
         uses: actions/setup-java@v3
         with:
           java-version: '11'
           distribution: 'temurin'
       
-      - name: Install roborio toolchain
-        run: ./gradlew installRoboRIOToolchain
-        working-directory: ./pathplannerlib
-        
-      - name: Compile and run tests
-        run: ./gradlew build
-        working-directory: ./pathplannerlib
-        
-      - name: Publish
-        run: ./gradlew publish
-        working-directory: ./pathplannerlib
-        
+      - name: Combine
+        run: ./gradlew publish -Pthirdparty
+        working-directory: combiner
+      
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: macos
-          path: 'pathplannerlib/build/repos/releases/com/pathplanner/lib'
-          retention-days: 7
+          name: Maven
+          path: ~/releases

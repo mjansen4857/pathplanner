@@ -70,7 +70,7 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 
 	std::vector < PathPlannerTrajectory::Waypoint > currentPath;
 	for (size_t i = 0; i < waypoints.size(); i++) {
-		PathPlannerTrajectory::Waypoint w = waypoints[i];
+		PathPlannerTrajectory::Waypoint const &w = waypoints[i];
 
 		currentPath.push_back(w);
 		if (w.isStopPoint || i == waypoints.size() - 1) {
@@ -80,12 +80,11 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 				if (marker.waypointRelativePos
 						>= indexOfWaypoint(waypoints, currentPath[0])
 						&& marker.waypointRelativePos <= i) {
-					currentMarkers.push_back(
-							PathPlannerTrajectory::EventMarker(
-									std::move(marker.names),
-									marker.waypointRelativePos
-											- indexOfWaypoint(waypoints,
-													currentPath[0])));
+					currentMarkers.emplace_back(
+                            std::move(marker.names),
+                            marker.waypointRelativePos
+                                    - indexOfWaypoint(waypoints,
+                                            currentPath[0]));
 				}
 			}
 			splitMarkers.push_back(currentMarkers);
@@ -112,9 +111,8 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 			currentConstraints = constraintsVec[i];
 		}
 
-		pathGroup.push_back(
-				PathPlannerTrajectory(splitWaypoints[i], splitMarkers[i],
-						currentConstraints, shouldReverse));
+		pathGroup.emplace_back(splitWaypoints[i], splitMarkers[i],
+						currentConstraints, shouldReverse);
 
 		// Loop through waypoints and invert shouldReverse for every reversal point.
 		// This makes sure that other paths in the group are properly reversed.
@@ -138,15 +136,15 @@ PathPlannerTrajectory PathPlanner::generatePath(
 	allPoints.insert(allPoints.end(), points);
 
 	std::vector < PathPlannerTrajectory::Waypoint > waypoints;
-	waypoints.push_back(
-			PathPlannerTrajectory::Waypoint(point1.m_position,
-					frc::Translation2d(), frc::Translation2d(),
-					point1.m_velocityOverride, point1.m_holonomicRotation,
-					false, false, 0_s));
+	waypoints.emplace_back(
+			point1.m_position,
+            frc::Translation2d(), frc::Translation2d(),
+            point1.m_velocityOverride, point1.m_holonomicRotation,
+            false, false, 0_s);
 
 	for (size_t i = 1; i < allPoints.size(); i++) {
-		PathPoint p1 = allPoints[i - 1];
-		PathPoint p2 = allPoints[i];
+		PathPoint const &p1 = allPoints[i - 1];
+		PathPoint const &p2 = allPoints[i];
 
 		units::meter_t thirdDistance = p1.m_position.Distance(p2.m_position)
 				/ 3.0;
@@ -159,10 +157,10 @@ PathPlannerTrajectory PathPlanner::generatePath(
 		frc::Translation2d p2Prev = p2.m_position
 				- frc::Translation2d(p2.m_heading.Cos() * thirdDistance,
 						p2.m_heading.Sin() * thirdDistance);
-		waypoints.push_back(
-				PathPlannerTrajectory::Waypoint(p2.m_position, p2Prev,
-						frc::Translation2d(), p2.m_velocityOverride,
-						p2.m_holonomicRotation, false, false, 0_s));
+		waypoints.emplace_back(
+				p2.m_position, p2Prev,
+                frc::Translation2d(), p2.m_velocityOverride,
+                p2.m_holonomicRotation, false, false, 0_s);
 	}
 
 	return PathPlannerTrajectory(waypoints,
@@ -201,13 +199,13 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(
 		wpi::json json) {
 	std::vector < PathPlannerTrajectory::Waypoint > waypoints;
 	for (wpi::json::reference waypoint : json.at("waypoints")) {
-		wpi::json::reference jsonAnchor = waypoint.at("anchorPoint");
+		wpi::json::reference const &jsonAnchor = waypoint.at("anchorPoint");
 		double anchorX = jsonAnchor.at("x");
 		double anchorY = jsonAnchor.at("y");
 		frc::Translation2d anchorPoint = frc::Translation2d(units::meter_t {
 				anchorX }, units::meter_t { anchorY });
 
-		wpi::json::reference jsonPrevControl = waypoint.at("prevControl");
+		wpi::json::reference const &jsonPrevControl = waypoint.at("prevControl");
 		frc::Translation2d prevControl;
 		if (!jsonPrevControl.is_null()) {
 			double prevX = jsonPrevControl.at("x");
@@ -216,7 +214,7 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(
 					units::meter_t { prevY });
 		}
 
-		wpi::json::reference jsonNextControl = waypoint.at("nextControl");
+		wpi::json::reference const &jsonNextControl = waypoint.at("nextControl");
 		frc::Translation2d nextControl;
 		if (!jsonNextControl.is_null()) {
 			double nextX = jsonNextControl.at("x");
@@ -248,10 +246,10 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(
 			waitTime = units::second_t { wait };
 		}
 
-		waypoints.push_back(
-				PathPlannerTrajectory::Waypoint(anchorPoint, prevControl,
-						nextControl, velOverride, holonomicAngle, isReversal,
-						isStopPoint, waitTime));
+		waypoints.emplace_back(
+				anchorPoint, prevControl,
+                nextControl, velOverride, holonomicAngle, isReversal,
+                isStopPoint, waitTime);
 	}
 
 	return waypoints;
@@ -266,15 +264,14 @@ std::vector<PathPlannerTrajectory::EventMarker> PathPlanner::getMarkersFromJson(
 			std::vector < std::string > names;
 			if (marker.find("names") != marker.end()) {
 				for (std::string name : marker.at("names")) {
-					names.push_back(name);
+					names.push_back(std::move(name));
 				}
 			} else {
 				// Handle transition from one-event markers to multi-event markers. Remove next season
 				names.push_back(marker.at("name"));
 			}
-			PathPlannerTrajectory::EventMarker m(std::move(names),
+			markers.emplace_back(std::move(names),
 					marker.at("position"));
-			markers.push_back(m);
 		}
 	}
 

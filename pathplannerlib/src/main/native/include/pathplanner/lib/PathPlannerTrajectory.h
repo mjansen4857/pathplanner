@@ -76,6 +76,7 @@ public:
 
 		friend class PathPlannerTrajectory;
 		friend class PathPlanner;
+		friend class std::vector;
 	};
 
 private:

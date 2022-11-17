@@ -6,16 +6,9 @@ import java.util.*;
 
 public abstract class BaseAutoBuilder {
   protected final HashMap<String, Command> eventMap;
-  protected final HashMap<String, Set<Subsystem>> eventRequirements;
 
   protected BaseAutoBuilder(HashMap<String, Command> eventMap) {
     this.eventMap = eventMap;
-
-    this.eventRequirements = new HashMap<>();
-    eventMap.forEach(
-        (key, cmd) -> {
-          this.eventRequirements.put(key, cmd.getRequirements());
-        });
   }
 
   protected abstract CommandBase getPathFollowingCommand(PathPlannerTrajectory trajectory);
@@ -91,18 +84,6 @@ public abstract class BaseAutoBuilder {
 
     public Set<Subsystem> getSoftRequirements() {
       return command.getRequirements();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (other == this) {
-        return true;
-      }
-
-      if (other instanceof WrappedEventCommand) {
-        return command.equals(((WrappedEventCommand) other).command);
-      }
-      return false;
     }
   }
 }

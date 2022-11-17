@@ -16,7 +16,7 @@ TEST(PathPointTest, TestConstructor) {
 
 TEST(PathPointTest, TestFromCurrentHolonomicState) {
 	frc::Pose2d pose(1.7_m, 2.1_m, frc::Rotation2d(45_deg));
-	frc::ChassisSpeeds speeds(1.7_mps, -1.2_mps, 0.8_rad_per_s);
+	frc::ChassisSpeeds speeds = frc::ChassisSpeeds::FromFieldRelativeSpeeds(1.7_mps, -1.2_mps, 0.8_rad_per_s, 0_deg);
 	PathPoint p = PathPoint::fromCurrentHolonomicState(pose, speeds);
 
 	EXPECT_EQ(frc::Translation2d(1.7_m, 2.1_m), p.m_position);
@@ -27,7 +27,7 @@ TEST(PathPointTest, TestFromCurrentHolonomicState) {
 
 TEST(PathPointTest, TestFromCurrentDifferentialState) {
 	frc::Pose2d pose(1.7_m, 2.1_m, frc::Rotation2d(45_deg));
-	frc::ChassisSpeeds speeds(1.7_mps, 0_mps, 0.8_rad_per_s);
+	frc::ChassisSpeeds speeds = frc::ChassisSpeeds::FromFieldRelativeSpeeds(1.7_mps, 0_mps, 0.8_rad_per_s, 0_deg);
 	PathPoint p = PathPoint::fromCurrentDifferentialState(pose, speeds);
 
 	EXPECT_EQ(frc::Translation2d(1.7_m, 2.1_m), p.m_position);

@@ -261,7 +261,7 @@ std::vector<PathPlannerTrajectory::EventMarker> PathPlanner::getMarkersFromJson(
 			std::vector < std::string > names;
 			if (marker.find("names") != marker.end()) {
 				for (wpi::json::const_reference name : marker.at("names")) {
-					names.emplace_back(name);
+					names.emplace_back(static_cast<std::string const&>(name));
 				}
 			} else {
 				// Handle transition from one-event markers to multi-event markers. Remove next season

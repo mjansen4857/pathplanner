@@ -72,7 +72,7 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 	for (size_t i = 0; i < waypoints.size(); i++) {
 		PathPlannerTrajectory::Waypoint const w = waypoints[i];
 
-		currentPath.push_back(w);
+		currentPath.emplace_back(w);
 		if (w.isStopPoint || i == waypoints.size() - 1) {
 			// Get the markers that should be part of this path and correct their positions
 			std::vector < PathPlannerTrajectory::EventMarker > currentMarkers;
@@ -80,18 +80,18 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 				if (marker.waypointRelativePos
 						>= indexOfWaypoint(waypoints, currentPath[0])
 						&& marker.waypointRelativePos <= i) {
-					currentMarkers.push_back(
+					currentMarkers.emplace_back(
 							PathPlannerTrajectory::EventMarker(marker.names,
 									marker.waypointRelativePos
 											- indexOfWaypoint(waypoints,
 													currentPath[0])));
 				}
 			}
-			splitMarkers.push_back(currentMarkers);
+			splitMarkers.emplace_back(currentMarkers);
 
-			splitWaypoints.push_back(currentPath);
+			splitWaypoints.emplace_back(currentPath);
 			currentPath = std::vector<PathPlannerTrajectory::Waypoint>();
-			currentPath.push_back(w);
+			currentPath.emplace_back(w);
 		}
 	}
 
@@ -129,8 +129,8 @@ PathPlannerTrajectory PathPlanner::generatePath(
 		PathPoint const point1, PathPoint const point2,
 		std::initializer_list<PathPoint> const points) {
 	std::vector < PathPoint > allPoints;
-	allPoints.push_back(point1);
-	allPoints.push_back(point2);
+	allPoints.emplace_back(point1);
+	allPoints.emplace_back(point2);
 	allPoints.insert(allPoints.end(), points);
 
 	std::vector < PathPlannerTrajectory::Waypoint > waypoints;
@@ -261,13 +261,13 @@ std::vector<PathPlannerTrajectory::EventMarker> PathPlanner::getMarkersFromJson(
 			std::vector < std::string > names;
 			if (marker.find("names") != marker.end()) {
 				for (wpi::json::const_reference name : marker.at("names")) {
-					names.push_back(name);
+					names.emplace_back(name);
 				}
 			} else {
 				// Handle transition from one-event markers to multi-event markers. Remove next season
-				names.push_back(marker.at("name"));
+				names.emplace_back(marker.at("name"));
 			}
-			markers.push_back(
+			markers.emplace_back(
 					PathPlannerTrajectory::EventMarker(std::move(names),
 							marker.at("position")));
 		}

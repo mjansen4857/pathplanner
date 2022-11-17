@@ -3,8 +3,6 @@
 #include <units/velocity.h>
 #include <units/acceleration.h>
 
-#include <assert.h>
-
 namespace pathplanner {
 class PathConstraints {
 public:

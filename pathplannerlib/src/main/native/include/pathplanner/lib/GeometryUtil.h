@@ -17,87 +17,89 @@
 
 namespace pathplanner {
 namespace GeometryUtil {
-constexpr units::second_t unitLerp(units::second_t startVal,
-		units::second_t endVal, double t) {
+constexpr units::second_t unitLerp(units::second_t const startVal,
+		units::second_t const endVal, double const t) {
 	return startVal + (endVal - startVal) * t;
 }
 
 constexpr units::meters_per_second_t unitLerp(
-		units::meters_per_second_t startVal, units::meters_per_second_t endVal,
-		double t) {
+		units::meters_per_second_t const startVal,
+		units::meters_per_second_t const endVal, double const t) {
 	return startVal + (endVal - startVal) * t;
 }
 
 constexpr units::meters_per_second_squared_t unitLerp(
-		units::meters_per_second_squared_t startVal,
-		units::meters_per_second_squared_t endVal, double t) {
+		units::meters_per_second_squared_t const startVal,
+		units::meters_per_second_squared_t const endVal, double const t) {
 	return startVal + (endVal - startVal) * t;
 }
 
 constexpr units::radians_per_second_t unitLerp(
-		units::radians_per_second_t startVal,
-		units::radians_per_second_t endVal, double t) {
+		units::radians_per_second_t const startVal,
+		units::radians_per_second_t const endVal, double const t) {
 	return startVal + (endVal - startVal) * t;
 }
 
 constexpr units::radians_per_second_squared_t unitLerp(
-		units::radians_per_second_squared_t startVal,
-		units::radians_per_second_squared_t endVal, double t) {
+		units::radians_per_second_squared_t const startVal,
+		units::radians_per_second_squared_t const endVal, double const t) {
 	return startVal + (endVal - startVal) * t;
 }
 
-constexpr units::meter_t unitLerp(units::meter_t startVal,
-		units::meter_t endVal, double t) {
+constexpr units::meter_t unitLerp(units::meter_t const startVal,
+		units::meter_t const endVal, double const t) {
 	return startVal + (endVal - startVal) * t;
 }
 
-constexpr units::curvature_t unitLerp(units::curvature_t startVal,
-		units::curvature_t endVal, double t) {
+constexpr units::curvature_t unitLerp(units::curvature_t const startVal,
+		units::curvature_t const endVal, double const t) {
 	return startVal + (endVal - startVal) * t;
 }
 
-constexpr frc::Rotation2d rotationLerp(const frc::Rotation2d startVal,
-		const frc::Rotation2d endVal, double t) {
+constexpr frc::Rotation2d rotationLerp(frc::Rotation2d const startVal,
+		frc::Rotation2d const endVal, double const t) {
 	return startVal + ((endVal - startVal) * t);
 }
 
-constexpr frc::Translation2d translationLerp(const frc::Translation2d startVal,
-		const frc::Translation2d endVal, double t) {
+constexpr frc::Translation2d translationLerp(frc::Translation2d const startVal,
+		frc::Translation2d const endVal, double const t) {
 	return startVal + ((endVal - startVal) * t);
 }
 
-constexpr frc::Translation2d quadraticLerp(const frc::Translation2d a,
-		const frc::Translation2d b, const frc::Translation2d c, double t) {
-	frc::Translation2d p0 = translationLerp(a, b, t);
-	frc::Translation2d p1 = translationLerp(b, c, t);
+constexpr frc::Translation2d quadraticLerp(frc::Translation2d const a,
+		frc::Translation2d const b, frc::Translation2d const c,
+		double const t) {
+	frc::Translation2d const p0 = translationLerp(a, b, t);
+	frc::Translation2d const p1 = translationLerp(b, c, t);
 	return translationLerp(p0, p1, t);
 }
 
-constexpr frc::Translation2d cubicLerp(const frc::Translation2d a,
-		const frc::Translation2d b, const frc::Translation2d c,
-		const frc::Translation2d d, double t) {
-	frc::Translation2d p0 = quadraticLerp(a, b, c, t);
-	frc::Translation2d p1 = quadraticLerp(b, c, d, t);
+constexpr frc::Translation2d cubicLerp(frc::Translation2d const a,
+		frc::Translation2d const b, frc::Translation2d const c,
+		frc::Translation2d const d, double const t) {
+	frc::Translation2d const p0 = quadraticLerp(a, b, c, t);
+	frc::Translation2d const p1 = quadraticLerp(b, c, d, t);
 	return translationLerp(p0, p1, t);
 }
 
-constexpr frc::Rotation2d cosineInterpolate(const frc::Rotation2d y1,
-		const frc::Rotation2d y2, double mu) {
-	double mu2 = (1 - frc::Rotation2d(units::radian_t { mu * PI }).Cos()) / 2;
+constexpr frc::Rotation2d cosineInterpolate(frc::Rotation2d const y1,
+		frc::Rotation2d const y2, double const mu) {
+	double const mu2 = (1 - frc::Rotation2d(units::radian_t { mu * PI }).Cos())
+			/ 2;
 	return frc::Rotation2d(y1.Radians() * (1 - mu2) + y2.Radians() * mu2);
 }
 
-inline units::degree_t modulo(units::degree_t a, units::degree_t b) {
+inline units::degree_t modulo(units::degree_t const a,
+		units::degree_t const b) {
 	return a - (b * units::math::floor(a / b));
 }
 
-inline bool isFinite(units::meter_t u) {
+inline bool isFinite(units::meter_t const u) {
 	return std::isfinite(u());
 }
 
-inline bool isNaN(units::meter_t u) {
+inline bool isNaN(units::meter_t const u) {
 	return std::isnan(u());
 }
-
 }
 }

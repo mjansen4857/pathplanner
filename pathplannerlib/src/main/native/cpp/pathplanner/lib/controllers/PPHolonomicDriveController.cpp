@@ -24,7 +24,7 @@ bool PPHolonomicDriveController::atReference() const {
 					< rotationTolerance.Radians();
 }
 
-void PPHolonomicDriveController::setTolerance(frc::Pose2d const &tolerance) {
+void PPHolonomicDriveController::setTolerance(frc::Pose2d const tolerance) {
 	this->m_tolerance = tolerance;
 }
 
@@ -33,7 +33,7 @@ void PPHolonomicDriveController::setEnabled(bool enabled) {
 }
 
 frc::ChassisSpeeds PPHolonomicDriveController::calculate(
-		frc::Pose2d const &currentPose,
+		frc::Pose2d const currentPose,
 		PathPlannerTrajectory::PathPlannerState const &referenceState) {
 	units::meters_per_second_t xFF = referenceState.velocity
 			* referenceState.pose.Rotation().Cos();

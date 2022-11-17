@@ -10,7 +10,7 @@ using namespace pathplanner;
 PathPlannerTrajectory::PathPlannerTrajectory(
 		std::vector<Waypoint> const &waypoints,
 		std::vector<EventMarker> const &markers,
-		PathConstraints const &constraints, bool reversed) {
+		PathConstraints const constraints, bool const reversed) {
 	this->states = generatePath(waypoints, constraints.maxVelocity,
 			constraints.maxAcceleration, reversed);
 
@@ -21,13 +21,14 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::generatePath(
 		std::vector<Waypoint> const &pathPoints,
-		units::meters_per_second_t maxVel,
-		units::meters_per_second_squared_t maxAccel, bool reversed) {
+		units::meters_per_second_t const maxVel,
+		units::meters_per_second_squared_t const maxAccel,
+		bool const reversed) {
 	std::vector < std::vector < Waypoint >> splitPaths;
 	std::vector < Waypoint > currentPath;
 
 	for (size_t i = 0; i < pathPoints.size(); i++) {
-		Waypoint const &w = pathPoints[i];
+		Waypoint const w = pathPoints[i];
 
 		currentPath.push_back(w);
 
@@ -79,8 +80,8 @@ void PathPlannerTrajectory::calculateMarkerTimes(
 			t = 1.0;
 		}
 
-		Waypoint const &startPoint = pathPoints[startIndex];
-		Waypoint const &endPoint = pathPoints[startIndex + 1];
+		Waypoint const startPoint = pathPoints[startIndex];
+		Waypoint const endPoint = pathPoints[startIndex + 1];
 
 		marker.position = GeometryUtil::cubicLerp(startPoint.anchorPoint,
 				startPoint.nextControl, endPoint.prevControl,
@@ -112,13 +113,13 @@ void PathPlannerTrajectory::calculateMarkerTimes(
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::joinSplines(
 		std::vector<Waypoint> const &pathPoints,
-		units::meters_per_second_t maxVel, double step) {
+		units::meters_per_second_t const maxVel, double const step) {
 	std::vector < PathPlannerState > states;
 	int numSplines = pathPoints.size() - 1;
 
 	for (int i = 0; i < numSplines; i++) {
-		Waypoint const &startPoint = pathPoints[i];
-		Waypoint const &endPoint = pathPoints[i + 1];
+		Waypoint const startPoint = pathPoints[i];
+		Waypoint const endPoint = pathPoints[i + 1];
 
 		double endStep = (i == numSplines - 1) ? 1.0 : 1.0 - step;
 		for (double t = 0; t <= endStep; t += step) {
@@ -203,8 +204,9 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
 
 void PathPlannerTrajectory::calculateMaxVel(
 		std::vector<PathPlannerState> &states,
-		units::meters_per_second_t maxVel,
-		units::meters_per_second_squared_t maxAccel, bool reversed) {
+		units::meters_per_second_t const maxVel,
+		units::meters_per_second_squared_t const maxAccel,
+		bool const reversed) {
 	for (size_t i = 0; i < states.size(); i++) {
 		units::meter_t radius;
 		if (i == states.size() - 1) {
@@ -235,7 +237,7 @@ void PathPlannerTrajectory::calculateMaxVel(
 
 void PathPlannerTrajectory::calculateVelocity(
 		std::vector<PathPlannerState> &states, std::vector<Waypoint> pathPoints,
-		units::meters_per_second_squared_t maxAccel) {
+		units::meters_per_second_squared_t const maxAccel) {
 	if (pathPoints[0].velocityOverride == -1_mps) {
 		states[0].velocity = 0_mps;
 	}
@@ -253,7 +255,7 @@ void PathPlannerTrajectory::calculateVelocity(
 		}
 	}
 
-	Waypoint const &anchor = pathPoints[pathPoints.size() - 1];
+	Waypoint const anchor = pathPoints[pathPoints.size() - 1];
 	if (anchor.velocityOverride == -1_mps) {
 		states[states.size() - 1].velocity = 0_mps;
 	}
@@ -287,7 +289,7 @@ void PathPlannerTrajectory::calculateVelocity(
 }
 
 void PathPlannerTrajectory::recalculateValues(
-		std::vector<PathPlannerState> &states, bool reversed) {
+		std::vector<PathPlannerState> &states, bool const reversed) {
 	for (int i = states.size() - 1; i >= 0; i--) {
 		PathPlannerState &now = states[i];
 
@@ -348,7 +350,7 @@ units::meter_t PathPlannerTrajectory::calculateRadius(
 }
 
 PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(
-		units::second_t time) const {
+		units::second_t const time) const {
 	if (time <= getInitialState().time) {
 		return getInitialState();
 	}
@@ -380,8 +382,8 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(
 }
 
 PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState::interpolate(
-		PathPlannerState const &endVal, double t) const {
-	PathPlannerState lerpedState{};
+		PathPlannerState const &endVal, double const t) const {
+	PathPlannerState lerpedState { };
 
 	lerpedState.time = GeometryUtil::unitLerp(time, endVal.time, t);
 	units::second_t deltaT = lerpedState.time - time;

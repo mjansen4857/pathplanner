@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -113,7 +114,14 @@ public class PPLTVUnicycleCommand extends CommandBase {
 
       for (String eventName : marker.names) {
         if (this.eventMap.containsKey(eventName)) {
-          this.eventMap.get(eventName).schedule();
+          Command cmd = this.eventMap.get(eventName);
+          new FunctionalCommand(
+                  cmd::initialize,
+                  cmd::execute,
+                  cmd::end,
+                  cmd::isFinished,
+                  cmd.getRequirements().toArray(new Subsystem[0]))
+              .schedule();
         }
       }
     }

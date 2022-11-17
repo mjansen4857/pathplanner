@@ -4,7 +4,7 @@ ext.licenseFile = files("$rootDir/LICENSE.txt")
 
 def pubVersion = '2023.0.1'
 
-def outputsFolder = file("$buildDir/allOutputs")
+def outputsFolder = file("$buildDir/outputs")
 
 def versionFile = file("$outputsFolder/version.txt")
 
@@ -28,7 +28,9 @@ task libraryBuild() {}
 build.dependsOn outputVersions
 
 task copyAllOutputs(type: Copy) {
-    destinationDir outputsFolder
+    destinationDir file("$buildDir/allOutputs")
+    from versionFile
+    dependsOn outputVersions
 }
 
 build.dependsOn copyAllOutputs

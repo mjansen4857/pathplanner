@@ -148,7 +148,7 @@ spotless {
 apply from: 'publish.gradle'
 
 wrapper {
-    gradleVersion '7.3.3'
+    gradleVersion '7.5.1'
 }
 
 test {

@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class LTVUnicycleAutoBuilder extends BaseAutoBuilder {
-  private final Supplier<Pose2d> poseSupplier;
   private final Consumer<ChassisSpeeds> outputChassisSpeeds;
   private final LTVUnicycleController controller;
   private final Subsystem[] driveRequirements;
@@ -26,6 +25,8 @@ public class LTVUnicycleAutoBuilder extends BaseAutoBuilder {
    *
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
    *     to provide this.
+   * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+   *     be called once at the beginning of an auto.
    * @param outputChassisSpeeds A consumer that accepts the output of the controller.
    * @param controller The LTVUnicycleController that will be used to follow the path.
    * @param eventMap Map of event marker names to the commands that should run when reaching that
@@ -35,13 +36,13 @@ public class LTVUnicycleAutoBuilder extends BaseAutoBuilder {
    */
   public LTVUnicycleAutoBuilder(
       Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
       Consumer<ChassisSpeeds> outputChassisSpeeds,
       LTVUnicycleController controller,
       HashMap<String, Command> eventMap,
       Subsystem... driveRequirements) {
-    super(eventMap);
+    super(poseSupplier, resetPose, eventMap, DrivetrainType.STANDARD);
 
-    this.poseSupplier = poseSupplier;
     this.outputChassisSpeeds = outputChassisSpeeds;
     this.controller = controller;
     this.driveRequirements = driveRequirements;

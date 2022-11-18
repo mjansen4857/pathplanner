@@ -14,7 +14,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class LTVDifferentialAutoBuilder extends BaseAutoBuilder {
-  private final Supplier<Pose2d> poseSupplier;
   private final Supplier<DifferentialDriveWheelSpeeds> speedsSupplier;
   private final Consumer<DifferentialDriveWheelVoltages> outputVolts;
   private final LTVDifferentialDriveController controller;
@@ -28,6 +27,8 @@ public class LTVDifferentialAutoBuilder extends BaseAutoBuilder {
    *
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
    *     to provide this.
+   * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+   *     be called once at the beginning of an auto.
    * @param speedsSupplier A supplier that returns the current robot wheel speeds.
    * @param outputVolts A consumer that accepts the output of the controller.
    * @param controller The LTVDifferentialDriveController that will be used to follow the path.
@@ -38,14 +39,14 @@ public class LTVDifferentialAutoBuilder extends BaseAutoBuilder {
    */
   public LTVDifferentialAutoBuilder(
       Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
       Supplier<DifferentialDriveWheelSpeeds> speedsSupplier,
       Consumer<DifferentialDriveWheelVoltages> outputVolts,
       LTVDifferentialDriveController controller,
       HashMap<String, Command> eventMap,
       Subsystem... driveRequirements) {
-    super(eventMap);
+    super(poseSupplier, resetPose, eventMap, DrivetrainType.STANDARD);
 
-    this.poseSupplier = poseSupplier;
     this.speedsSupplier = speedsSupplier;
     this.outputVolts = outputVolts;
     this.controller = controller;

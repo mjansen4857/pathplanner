@@ -13,10 +13,10 @@ import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.HashMap;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class RamseteAutoBuilder extends BaseAutoBuilder {
-  private final Supplier<Pose2d> poseSupplier;
   private final RamseteController controller;
   private final SimpleMotorFeedforward feedforward;
   private final DifferentialDriveKinematics kinematics;
@@ -33,6 +33,8 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
    *
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
    *     to provide this.
+   * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+   *     be called once at the beginning of an auto.
    * @param controller The RAMSETE controller used to follow the trajectory.
    * @param feedforward The feedforward to use for the drive.
    * @param kinematics The kinematics for the robot drivetrain.
@@ -49,6 +51,7 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
    */
   public RamseteAutoBuilder(
       Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
       RamseteController controller,
       SimpleMotorFeedforward feedforward,
       DifferentialDriveKinematics kinematics,
@@ -57,9 +60,8 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
       BiConsumer<Double, Double> outputVolts,
       HashMap<String, Command> eventMap,
       Subsystem... driveRequirements) {
-    super(eventMap);
+    super(poseSupplier, resetPose, eventMap, DrivetrainType.STANDARD);
 
-    this.poseSupplier = poseSupplier;
     this.controller = controller;
     this.feedforward = feedforward;
     this.kinematics = kinematics;

@@ -14,7 +14,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class MecanumAutoBuilder extends BaseAutoBuilder {
-  private final Supplier<Pose2d> poseSupplier;
   private final MecanumDriveKinematics kinematics;
   private final PIDConstants translationConstants;
   private final PIDConstants rotationConstants;
@@ -30,6 +29,8 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
    *
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
    *     to provide this.
+   * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+   *     be called once at the beginning of an auto.
    * @param kinematics The kinematics for the robot drivetrain.
    * @param translationConstants PID Constants for the controller that will correct for translation
    *     error
@@ -43,6 +44,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
    */
   public MecanumAutoBuilder(
       Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
       MecanumDriveKinematics kinematics,
       PIDConstants translationConstants,
       PIDConstants rotationConstants,
@@ -50,9 +52,8 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
       Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
       HashMap<String, Command> eventMap,
       Subsystem... driveRequirements) {
-    super(eventMap);
+    super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC);
 
-    this.poseSupplier = poseSupplier;
     this.kinematics = kinematics;
     this.translationConstants = translationConstants;
     this.rotationConstants = rotationConstants;

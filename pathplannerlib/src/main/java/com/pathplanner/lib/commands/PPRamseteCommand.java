@@ -13,8 +13,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 

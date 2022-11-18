@@ -8,10 +8,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -31,6 +29,12 @@ public class PPLTVUnicycleCommand extends CommandBase {
   /**
    * Creates a new PPLTVUnicycleCommand. This command will follow the given trajectory using an
    * LTVUnicycleController.
+   *
+   * <p>NOTE: Do not use this command with an event map inside of an autonomous command group unless
+   * you are sure it will work fine. If an event marker triggers a command for a subsystem required
+   * by the command group, the command group will be interrupted. Instead, use
+   * LTVUnicycleAutoBuilder to create a path following command that will trigger events without
+   * interrupting the main command group.
    *
    * @param trajectory The trajectory to follow.
    * @param poseSupplier A supplier that returns the current robot pose.
@@ -76,6 +80,17 @@ public class PPLTVUnicycleCommand extends CommandBase {
 
   @Override
   public void initialize() {
+    if (this.trajectory.getMarkers().size() > 0 && this.eventMap.size() > 0) {
+      try {
+        CommandGroupBase.requireUngrouped(this);
+      } catch (IllegalArgumentException e) {
+        throw new RuntimeException(
+                "Path following commands cannot be added to command groups if using "
+                        + "event markers, as the events could interrupt the command group. Instead, please use "
+                        + "LTVUnicycleAutoBuilder to create a command group safe path following command.");
+      }
+    }
+
     this.unpassedMarkers = new ArrayList<>();
     this.unpassedMarkers = new ArrayList<>(this.trajectory.getMarkers());
 

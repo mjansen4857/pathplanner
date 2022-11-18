@@ -16,10 +16,8 @@ import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.FunctionalCommand;
-import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -45,6 +43,12 @@ public class PPMecanumControllerCommand extends CommandBase {
    *
    * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path -
    * this is left to the user, since it is not appropriate for paths with non-stationary end-states.
+   *
+   * <p>NOTE: Do not use this command with an event map inside of an autonomous command group unless
+   * you are sure it will work fine. If an event marker triggers a command for a subsystem required
+   * by the command group, the command group will be interrupted. Instead, use MecanumAutoBuilder to
+   * create a path following command that will trigger events without interrupting the main command
+   * group.
    *
    * @param trajectory The Pathplanner trajectory to follow.
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
@@ -125,6 +129,17 @@ public class PPMecanumControllerCommand extends CommandBase {
 
   @Override
   public void initialize() {
+    if (this.trajectory.getMarkers().size() > 0 && this.eventMap.size() > 0) {
+      try {
+        CommandGroupBase.requireUngrouped(this);
+      } catch (IllegalArgumentException e) {
+        throw new RuntimeException(
+                "Path following commands cannot be added to command groups if using "
+                        + "event markers, as the events could interrupt the command group. Instead, please use "
+                        + "MecanumAutoBuilder to create a command group safe path following command.");
+      }
+    }
+
     this.unpassedMarkers = new ArrayList<>();
     this.unpassedMarkers.addAll(this.trajectory.getMarkers());
 

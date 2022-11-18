@@ -39,6 +39,12 @@ public class PPSwerveControllerCommand extends CommandBase {
    * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path-
    * this is left to the user, since it is not appropriate for paths with nonstationary endstates.
    *
+   * <p>NOTE: Do not use this command with an event map inside of an autonomous command group unless
+   * you are sure it will work fine. If an event marker triggers a command for a subsystem required
+   * by the command group, the command group will be interrupted. Instead, use SwerveAutoBuilder to
+   * create a path following command that will trigger events without interrupting the main command
+   * group.
+   *
    * @param trajectory The trajectory to follow.
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
    *     to provide this.
@@ -113,6 +119,17 @@ public class PPSwerveControllerCommand extends CommandBase {
 
   @Override
   public void initialize() {
+    if (this.trajectory.getMarkers().size() > 0 && this.eventMap.size() > 0) {
+      try {
+        CommandGroupBase.requireUngrouped(this);
+      } catch (IllegalArgumentException e) {
+        throw new RuntimeException(
+            "Path following commands cannot be added to command groups if using "
+                + "event markers, as the events could interrupt the command group. Instead, please use "
+                + "SwerveAutoBuilder to create a command group safe path following command.");
+      }
+    }
+
     this.unpassedMarkers = new ArrayList<>();
     this.unpassedMarkers.addAll(this.trajectory.getMarkers());
 

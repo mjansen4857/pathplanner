@@ -1,6 +1,7 @@
 package com.pathplanner.lib.auto;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.commands.FollowPathWithEvents;
 import edu.wpi.first.wpilibj2.command.*;
 import java.util.*;
 
@@ -32,94 +33,10 @@ public abstract class BaseAutoBuilder {
    * this instead of adding the path following commands to your command group directly.
    *
    * @param trajectory The trajectory to follow
-   * @return Command group that will follow the trajectory and trigger events
+   * @return Command that will follow the trajectory and trigger events
    */
   public CommandBase followPathWithEvents(PathPlannerTrajectory trajectory) {
-    return new ParallelDeadlineGroup(getPathFollowingCommand(trajectory), eventGroup(trajectory));
-  }
-
-  /**
-   * Create a parallel command group that will handle triggering events. This group will consist of
-   * a sequential command group for each event that will: wait until it is time to trigger the
-   * event, cancel any previous events that share requirements with the event, then run the event
-   * command.
-   *
-   * @param trajectory The trajectory to trigger events for
-   * @return Command group that will trigger events. To be used alongside a path following command
-   */
-  protected ParallelCommandGroup eventGroup(PathPlannerTrajectory trajectory) {
-    Set<WrappedEventCommand> prevEventCommands = new HashSet<>();
-    ParallelCommandGroup eventGroup = new ParallelCommandGroup();
-
-    for (PathPlannerTrajectory.EventMarker marker : trajectory.getMarkers()) {
-      for (String name : marker.names) {
-        if (eventMap.containsKey(name)) {
-          Command cmd = eventMap.get(name);
-          Set<WrappedEventCommand> commandsToCancel = new HashSet<>();
-
-          for (WrappedEventCommand prevCommand : prevEventCommands) {
-            if (!Collections.disjoint(cmd.getRequirements(), prevCommand.getSoftRequirements())) {
-              commandsToCancel.add(prevCommand);
-            }
-          }
-
-          WrappedEventCommand eventCommand = new WrappedEventCommand(cmd);
-
-          eventGroup.addCommands(
-              new SequentialCommandGroup(
-                  new WaitCommand(marker.timeSeconds),
-                  new InstantCommand(
-                      () -> {
-                        for (WrappedEventCommand c : commandsToCancel) {
-                          c.interrupt();
-                        }
-                      }),
-                  eventCommand));
-          eventGroup.addRequirements(cmd.getRequirements().toArray(new Subsystem[0]));
-          prevEventCommands.add(eventCommand);
-        }
-      }
-    }
-    return eventGroup;
-  }
-
-  protected static class WrappedEventCommand extends CommandBase {
-    private final Command command;
-    private boolean shouldInterrupt = false;
-
-    protected WrappedEventCommand(Command command) {
-      CommandGroupBase.requireUngrouped(command);
-
-      this.command = command;
-    }
-
-    @Override
-    public void initialize() {
-      shouldInterrupt = false;
-      command.initialize();
-    }
-
-    @Override
-    public void execute() {
-      command.execute();
-    }
-
-    @Override
-    public void end(boolean interrupted) {
-      command.end(shouldInterrupt || interrupted);
-    }
-
-    @Override
-    public boolean isFinished() {
-      return shouldInterrupt || command.isFinished();
-    }
-
-    public void interrupt(){
-      shouldInterrupt = true;
-    }
-
-    public Set<Subsystem> getSoftRequirements() {
-      return command.getRequirements();
-    }
+    return new FollowPathWithEvents(
+        getPathFollowingCommand(trajectory), trajectory.getMarkers(), eventMap);
   }
 }

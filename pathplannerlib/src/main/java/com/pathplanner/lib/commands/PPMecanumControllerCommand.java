@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Consumer;
@@ -134,9 +133,9 @@ public class PPMecanumControllerCommand extends CommandBase {
         CommandGroupBase.requireUngrouped(this);
       } catch (IllegalArgumentException e) {
         throw new RuntimeException(
-                "Path following commands cannot be added to command groups if using "
-                        + "event markers, as the events could interrupt the command group. Instead, please use "
-                        + "MecanumAutoBuilder to create a command group safe path following command.");
+            "Path following commands cannot be added to command groups if using "
+                + "event markers, as the events could interrupt the command group. Instead, please use "
+                + "MecanumAutoBuilder to create a command group safe path following command.");
       }
     }
 

@@ -20,6 +20,22 @@ public class LTVDifferentialAutoBuilder extends BaseAutoBuilder {
   private final LTVDifferentialDriveController controller;
   private final Subsystem[] driveRequirements;
 
+  /**
+   * Create an auto builder that will create command groups that will handle path following and
+   * triggering events.
+   *
+   * <p>This auto builder will use PPLTVDifferentialDriveCommand to follow paths.
+   *
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param speedsSupplier A supplier that returns the current robot wheel speeds.
+   * @param outputVolts A consumer that accepts the output of the controller.
+   * @param controller The LTVDifferentialDriveController that will be used to follow the path.
+   * @param eventMap Map of event marker names to the commands that should run when reaching that
+   *     marker.
+   * @param driveRequirements The subsystems that the path following commands should require.
+   *     Usually just a Drive subsystem.
+   */
   public LTVDifferentialAutoBuilder(
       Supplier<Pose2d> poseSupplier,
       Supplier<DifferentialDriveWheelSpeeds> speedsSupplier,

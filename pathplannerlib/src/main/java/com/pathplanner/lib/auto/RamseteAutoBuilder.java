@@ -25,6 +25,28 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
   private final BiConsumer<Double, Double> outputVolts;
   private final Subsystem[] driveRequirements;
 
+  /**
+   * Create an auto builder that will create command groups that will handle path following and
+   * triggering events.
+   *
+   * <p>This auto builder will use PPRamseteCommand to follow paths.
+   *
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param controller The RAMSETE controller used to follow the trajectory.
+   * @param feedforward The feedforward to use for the drive.
+   * @param kinematics The kinematics for the robot drivetrain.
+   * @param speedsSupplier A function that supplies the speeds of the left and right sides of the
+   *     robot drive.
+   * @param driveConstants PID constants for the controllers that will correct for error on each
+   *     side of the drive train
+   * @param outputVolts A function that consumes the computed left and right outputs (in volts) for
+   *     the robot drive.
+   * @param eventMap Map of event marker names to the commands that should run when reaching that
+   *     marker.
+   * @param driveRequirements The subsystems that the path following commands should require.
+   *     Usually just a Drive subsystem.
+   */
   public RamseteAutoBuilder(
       Supplier<Pose2d> poseSupplier,
       RamseteController controller,

@@ -37,7 +37,9 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-databind:2.12.4"
     implementation 'edu.wpi.first.thirdparty.frc2023.opencv:opencv-java:4.6.0-2'
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
 }
 
 // Set up exports properly
@@ -152,5 +154,5 @@ wrapper {
 }
 
 test {
-    useJUnit()
+    useJUnitPlatform()
 }

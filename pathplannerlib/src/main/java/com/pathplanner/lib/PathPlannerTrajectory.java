@@ -530,5 +530,12 @@ public class PathPlannerTrajectory extends Trajectory {
       this.names = names;
       this.waypointRelativePos = waypointRelativePos;
     }
+
+    public static EventMarker fromTime(ArrayList<String> names, double timeSeconds) {
+      EventMarker m = new EventMarker(names, 0);
+      m.timeSeconds = timeSeconds;
+
+      return m;
+    }
   }
 }

@@ -71,7 +71,7 @@ public abstract class BaseAutoBuilder {
                   new InstantCommand(
                       () -> {
                         for (WrappedEventCommand c : commandsToCancel) {
-                          c.cancel();
+                          c.interrupt();
                         }
                       }),
                   eventCommand));
@@ -85,6 +85,7 @@ public abstract class BaseAutoBuilder {
 
   protected static class WrappedEventCommand extends CommandBase {
     private final Command command;
+    private boolean shouldInterrupt = false;
 
     protected WrappedEventCommand(Command command) {
       CommandGroupBase.requireUngrouped(command);
@@ -94,6 +95,7 @@ public abstract class BaseAutoBuilder {
 
     @Override
     public void initialize() {
+      shouldInterrupt = false;
       command.initialize();
     }
 
@@ -104,12 +106,16 @@ public abstract class BaseAutoBuilder {
 
     @Override
     public void end(boolean interrupted) {
-      command.end(interrupted);
+      command.end(shouldInterrupt || interrupted);
     }
 
     @Override
     public boolean isFinished() {
-      return command.isFinished();
+      return shouldInterrupt || command.isFinished();
+    }
+
+    public void interrupt(){
+      shouldInterrupt = true;
     }
 
     public Set<Subsystem> getSoftRequirements() {

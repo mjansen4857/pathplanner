@@ -26,10 +26,7 @@ public class PPSwerveControllerCommand extends CommandBase {
   private final SwerveDriveKinematics kinematics;
   private final PPHolonomicDriveController controller;
   private final Consumer<SwerveModuleState[]> outputModuleStates;
-  private final HashMap<String, Command> eventMap;
   private final Field2d field = new Field2d();
-
-  private ArrayList<PathPlannerTrajectory.EventMarker> unpassedMarkers;
 
   /**
    * Constructs a new PPSwerveControllerCommand that when executed will follow the provided
@@ -39,12 +36,6 @@ public class PPSwerveControllerCommand extends CommandBase {
    * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path-
    * this is left to the user, since it is not appropriate for paths with nonstationary endstates.
    *
-   * <p>NOTE: Do not use this command with an event map inside of an autonomous command group unless
-   * you are sure it will work fine. If an event marker triggers a command for a subsystem required
-   * by the command group, the command group will be interrupted. Instead, use SwerveAutoBuilder to
-   * create a path following command that will trigger events without interrupting the main command
-   * group.
-   *
    * @param trajectory The trajectory to follow.
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
    *     to provide this.
@@ -53,9 +44,6 @@ public class PPSwerveControllerCommand extends CommandBase {
    * @param yController The Trajectory Tracker PID controller for the robot's y position.
    * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
    * @param outputModuleStates The raw output module states from the position controllers.
-   * @param eventMap Map of event marker names to the commands that should run when reaching that
-   *     marker. This SHOULD NOT contain any commands requiring the same subsystems as this command,
-   *     or it will be interrupted
    * @param requirements The subsystems to require.
    */
   public PPSwerveControllerCommand(
@@ -66,73 +54,18 @@ public class PPSwerveControllerCommand extends CommandBase {
       PIDController yController,
       PIDController rotationController,
       Consumer<SwerveModuleState[]> outputModuleStates,
-      HashMap<String, Command> eventMap,
       Subsystem... requirements) {
     this.trajectory = trajectory;
     this.poseSupplier = poseSupplier;
     this.kinematics = kinematics;
     this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
     this.outputModuleStates = outputModuleStates;
-    this.eventMap = eventMap;
 
     addRequirements(requirements);
   }
 
-  /**
-   * Constructs a new PPSwerveControllerCommand that when executed will follow the provided
-   * trajectory. This command will not return output voltages but rather raw module states from the
-   * position controllers which need to be put into a velocity PID.
-   *
-   * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path-
-   * this is left to the user, since it is not appropriate for paths with nonstationary endstates.
-   *
-   * @param trajectory The trajectory to follow.
-   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
-   *     to provide this.
-   * @param kinematics The kinematics for the robot drivetrain.
-   * @param xController The Trajectory Tracker PID controller for the robot's x position.
-   * @param yController The Trajectory Tracker PID controller for the robot's y position.
-   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
-   * @param outputModuleStates The raw output module states from the position controllers.
-   * @param requirements The subsystems to require.
-   */
-  public PPSwerveControllerCommand(
-      PathPlannerTrajectory trajectory,
-      Supplier<Pose2d> poseSupplier,
-      SwerveDriveKinematics kinematics,
-      PIDController xController,
-      PIDController yController,
-      PIDController rotationController,
-      Consumer<SwerveModuleState[]> outputModuleStates,
-      Subsystem... requirements) {
-    this(
-        trajectory,
-        poseSupplier,
-        kinematics,
-        xController,
-        yController,
-        rotationController,
-        outputModuleStates,
-        new HashMap<>(),
-        requirements);
-  }
-
   @Override
   public void initialize() {
-    if (this.trajectory.getMarkers().size() > 0 && this.eventMap.size() > 0) {
-      try {
-        CommandGroupBase.requireUngrouped(this);
-      } catch (IllegalArgumentException e) {
-        throw new RuntimeException(
-            "Path following commands cannot be added to command groups if using "
-                + "event markers, as the events could interrupt the command group. Instead, please use "
-                + "SwerveAutoBuilder to create a command group safe path following command.");
-      }
-    }
-
-    this.unpassedMarkers = new ArrayList<>();
-    this.unpassedMarkers.addAll(this.trajectory.getMarkers());
-
     SmartDashboard.putData("PPSwerveControllerCommand_field", this.field);
     this.field.getObject("traj").setTrajectory(this.trajectory);
 
@@ -166,23 +99,6 @@ public class PPSwerveControllerCommand extends CommandBase {
         this.kinematics.toSwerveModuleStates(targetChassisSpeeds);
 
     this.outputModuleStates.accept(targetModuleStates);
-
-    if (this.unpassedMarkers.size() > 0 && currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
-      PathPlannerTrajectory.EventMarker marker = this.unpassedMarkers.remove(0);
-
-      for (String eventName : marker.names) {
-        if (this.eventMap.containsKey(eventName)) {
-          Command cmd = this.eventMap.get(eventName);
-          new FunctionalCommand(
-                  cmd::initialize,
-                  cmd::execute,
-                  cmd::end,
-                  cmd::isFinished,
-                  cmd.getRequirements().toArray(new Subsystem[0]))
-              .schedule();
-        }
-      }
-    }
   }
 
   @Override

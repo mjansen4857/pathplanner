@@ -31,10 +31,7 @@ public class PPMecanumControllerCommand extends CommandBase {
   private final PPHolonomicDriveController controller;
   private final double maxWheelVelocityMetersPerSecond;
   private final Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds;
-  private final HashMap<String, Command> eventMap;
   private final Field2d field = new Field2d();
-
-  private ArrayList<PathPlannerTrajectory.EventMarker> unpassedMarkers;
 
   /**
    * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
@@ -42,12 +39,6 @@ public class PPMecanumControllerCommand extends CommandBase {
    *
    * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path -
    * this is left to the user, since it is not appropriate for paths with non-stationary end-states.
-   *
-   * <p>NOTE: Do not use this command with an event map inside of an autonomous command group unless
-   * you are sure it will work fine. If an event marker triggers a command for a subsystem required
-   * by the command group, the command group will be interrupted. Instead, use MecanumAutoBuilder to
-   * create a path following command that will trigger events without interrupting the main command
-   * group.
    *
    * @param trajectory The Pathplanner trajectory to follow.
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
@@ -58,9 +49,6 @@ public class PPMecanumControllerCommand extends CommandBase {
    * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
    * @param maxWheelVelocityMetersPerSecond The maximum velocity of a drivetrain wheel.
    * @param outputWheelSpeeds A MecanumDriveWheelSpeeds object containing the output wheel speeds.
-   * @param eventMap Map of event marker names to the commands that should run when reaching that
-   *     marker. This SHOULD NOT contain any commands requiring the same subsystems as this command,
-   *     or it will be interrupted
    * @param requirements The subsystems to require.
    */
   public PPMecanumControllerCommand(
@@ -72,7 +60,6 @@ public class PPMecanumControllerCommand extends CommandBase {
       PIDController rotationController,
       double maxWheelVelocityMetersPerSecond,
       Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
-      HashMap<String, Command> eventMap,
       Subsystem... requirements) {
     this.trajectory = trajectory;
     this.poseSupplier = poseSupplier;
@@ -80,68 +67,12 @@ public class PPMecanumControllerCommand extends CommandBase {
     this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
     this.maxWheelVelocityMetersPerSecond = maxWheelVelocityMetersPerSecond;
     this.outputWheelSpeeds = outputWheelSpeeds;
-    this.eventMap = eventMap;
 
     addRequirements(requirements);
   }
 
-  /**
-   * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
-   * trajectory. The user should implement a velocity PID on the desired output wheel velocities.
-   *
-   * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path -
-   * this is left to the user, since it is not appropriate for paths with non-stationary end-states.
-   *
-   * @param trajectory The Pathplanner trajectory to follow.
-   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
-   *     to provide this.
-   * @param kinematics The kinematics for the robot drivetrain.
-   * @param xController The Trajectory Tracker PID controller for the robot's x position.
-   * @param yController The Trajectory Tracker PID controller for the robot's y position.
-   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
-   * @param maxWheelVelocityMetersPerSecond The maximum velocity of a drivetrain wheel.
-   * @param outputWheelSpeeds A MecanumDriveWheelSpeeds object containing the output wheel speeds.
-   * @param requirements The subsystems to require.
-   */
-  public PPMecanumControllerCommand(
-      PathPlannerTrajectory trajectory,
-      Supplier<Pose2d> poseSupplier,
-      MecanumDriveKinematics kinematics,
-      PIDController xController,
-      PIDController yController,
-      PIDController rotationController,
-      double maxWheelVelocityMetersPerSecond,
-      Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
-      Subsystem... requirements) {
-    this(
-        trajectory,
-        poseSupplier,
-        kinematics,
-        xController,
-        yController,
-        rotationController,
-        maxWheelVelocityMetersPerSecond,
-        outputWheelSpeeds,
-        new HashMap<>(),
-        requirements);
-  }
-
   @Override
   public void initialize() {
-    if (this.trajectory.getMarkers().size() > 0 && this.eventMap.size() > 0) {
-      try {
-        CommandGroupBase.requireUngrouped(this);
-      } catch (IllegalArgumentException e) {
-        throw new RuntimeException(
-            "Path following commands cannot be added to command groups if using "
-                + "event markers, as the events could interrupt the command group. Instead, please use "
-                + "MecanumAutoBuilder to create a command group safe path following command.");
-      }
-    }
-
-    this.unpassedMarkers = new ArrayList<>();
-    this.unpassedMarkers.addAll(this.trajectory.getMarkers());
-
     SmartDashboard.putData("PPMecanumControllerCommand_field", this.field);
     this.field.getObject("traj").setTrajectory(this.trajectory);
 
@@ -176,23 +107,6 @@ public class PPMecanumControllerCommand extends CommandBase {
     targetWheelSpeeds.desaturate(this.maxWheelVelocityMetersPerSecond);
 
     this.outputWheelSpeeds.accept(targetWheelSpeeds);
-
-    if (this.unpassedMarkers.size() > 0 && currentTime >= this.unpassedMarkers.get(0).timeSeconds) {
-      PathPlannerTrajectory.EventMarker marker = this.unpassedMarkers.remove(0);
-
-      for (String eventName : marker.names) {
-        if (this.eventMap.containsKey(eventName)) {
-          Command cmd = this.eventMap.get(eventName);
-          new FunctionalCommand(
-                  cmd::initialize,
-                  cmd::execute,
-                  cmd::end,
-                  cmd::isFinished,
-                  cmd.getRequirements().toArray(new Subsystem[0]))
-              .schedule();
-        }
-      }
-    }
   }
 
   @Override

@@ -59,7 +59,7 @@ public class SwerveAutoBuilder extends BaseAutoBuilder {
   }
 
   @Override
-  protected CommandBase getPathFollowingCommand(PathPlannerTrajectory trajectory) {
+  public CommandBase followPath(PathPlannerTrajectory trajectory) {
     return new PPSwerveControllerCommand(
         trajectory,
         poseSupplier,

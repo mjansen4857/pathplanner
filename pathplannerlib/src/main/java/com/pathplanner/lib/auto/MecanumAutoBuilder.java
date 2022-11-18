@@ -62,7 +62,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
   }
 
   @Override
-  protected CommandBase getPathFollowingCommand(PathPlannerTrajectory trajectory) {
+  public CommandBase followPath(PathPlannerTrajectory trajectory) {
     return new PPMecanumControllerCommand(
         trajectory,
         poseSupplier,

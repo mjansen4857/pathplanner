@@ -53,7 +53,7 @@ public class LTVDifferentialAutoBuilder extends BaseAutoBuilder {
   }
 
   @Override
-  protected CommandBase getPathFollowingCommand(PathPlannerTrajectory trajectory) {
+  public CommandBase followPath(PathPlannerTrajectory trajectory) {
     return new PPLTVDifferentialDriveCommand(
         trajectory, poseSupplier, speedsSupplier, outputVolts, controller, driveRequirements);
   }

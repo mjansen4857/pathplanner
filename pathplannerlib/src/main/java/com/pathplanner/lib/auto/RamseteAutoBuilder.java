@@ -70,7 +70,7 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
   }
 
   @Override
-  protected CommandBase getPathFollowingCommand(PathPlannerTrajectory trajectory) {
+  public CommandBase followPath(PathPlannerTrajectory trajectory) {
     return new PPRamseteCommand(
         trajectory,
         poseSupplier,

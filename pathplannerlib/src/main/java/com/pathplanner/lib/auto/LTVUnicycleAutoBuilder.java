@@ -48,7 +48,7 @@ public class LTVUnicycleAutoBuilder extends BaseAutoBuilder {
   }
 
   @Override
-  protected CommandBase getPathFollowingCommand(PathPlannerTrajectory trajectory) {
+  public CommandBase followPath(PathPlannerTrajectory trajectory) {
     return new PPLTVUnicycleCommand(
         trajectory, poseSupplier, outputChassisSpeeds, controller, driveRequirements);
   }

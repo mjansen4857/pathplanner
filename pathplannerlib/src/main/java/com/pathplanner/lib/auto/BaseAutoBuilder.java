@@ -18,25 +18,57 @@ public abstract class BaseAutoBuilder {
   }
 
   /**
-   * Method that will provide a path following command to the auto builder. This will be used to
-   * create more complex command groups.
+   * Create a path following command for a given trajectory. This will not trigger any events while
+   * path following.
    *
    * <p>Override this to create auto builders for your custom path following commands.
    *
    * @param trajectory The trajectory to follow
    * @return A path following command for the given trajectory
    */
-  protected abstract CommandBase getPathFollowingCommand(PathPlannerTrajectory trajectory);
+  public abstract CommandBase followPath(PathPlannerTrajectory trajectory);
 
   /**
-   * Create a command group safe path following command that will trigger events as it goes. Use
-   * this instead of adding the path following commands to your command group directly.
+   * Create a sequential command group that will follow each path in a path group. This will not
+   * trigger any events while path following.
+   *
+   * @param pathGroup The path group to follow
+   * @return Command for following all paths in the group
+   */
+  public CommandBase followPathGroup(ArrayList<PathPlannerTrajectory> pathGroup) {
+    SequentialCommandGroup group = new SequentialCommandGroup();
+
+    for (PathPlannerTrajectory path : pathGroup) {
+      group.addCommands(followPath(path));
+    }
+
+    return group;
+  }
+
+  /**
+   * Create a path following command that will trigger events as it goes.
    *
    * @param trajectory The trajectory to follow
    * @return Command that will follow the trajectory and trigger events
    */
   public CommandBase followPathWithEvents(PathPlannerTrajectory trajectory) {
-    return new FollowPathWithEvents(
-        getPathFollowingCommand(trajectory), trajectory.getMarkers(), eventMap);
+    return new FollowPathWithEvents(followPath(trajectory), trajectory.getMarkers(), eventMap);
+  }
+
+  /**
+   * Create a sequential command group that will follow each path in a path group and trigger events
+   * as it goes.
+   *
+   * @param pathGroup The path group to follow
+   * @return Command for following all paths in the group
+   */
+  public CommandBase followPathGroupWithEvents(ArrayList<PathPlannerTrajectory> pathGroup) {
+    SequentialCommandGroup group = new SequentialCommandGroup();
+
+    for (PathPlannerTrajectory path : pathGroup) {
+      group.addCommands(followPathWithEvents(path));
+    }
+
+    return group;
   }
 }

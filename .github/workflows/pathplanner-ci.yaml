@@ -12,7 +12,7 @@ env:
 
 jobs:
   formatting-analysis:
-    name: Check Formatting & Analysis
+    name: "[GUI] Check Formatting & Analysis"
     runs-on: ubuntu-22.04
 
     steps:
@@ -36,7 +36,7 @@ jobs:
         run: flutter format -o none --set-exit-if-changed lib/* test/*
   
   test:
-    name: Run Tests
+    name: "[GUI] Run Tests"
     runs-on: ubuntu-22.04
 
     steps:
@@ -73,7 +73,7 @@ jobs:
             build-option: "linux"
             artifact-path: "build/linux/x64/release/bundle"
             artifact-name: PathPlanner-Linux
-    name: "Build - ${{ matrix.artifact-name }}"
+    name: "[GUI] Build - ${{ matrix.artifact-name }}"
     needs: [formatting-analysis, test]
     runs-on: ${{ matrix.os }}
     steps:

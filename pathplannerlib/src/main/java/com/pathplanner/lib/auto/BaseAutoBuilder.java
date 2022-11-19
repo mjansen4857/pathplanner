@@ -95,6 +95,12 @@ public abstract class BaseAutoBuilder {
     return group;
   }
 
+  /**
+   * Create a command that will call the resetPose consumer with the first pose of the path. This is usually only used once at the beginning of auto.
+   *
+   * @param trajectory The trajectory to reset the pose for
+   * @return Command that will reset the pose
+   */
   public CommandBase resetPose(PathPlannerTrajectory trajectory) {
     if (drivetrainType == DrivetrainType.HOLONOMIC) {
       return new InstantCommand(() -> resetPose.accept(trajectory.getInitialHolonomicPose()));

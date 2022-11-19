@@ -261,11 +261,11 @@ std::vector<PathPlannerTrajectory::EventMarker> PathPlanner::getMarkersFromJson(
 			std::vector < std::string > names;
 			if (marker.find("names") != marker.end()) {
 				for (wpi::json::const_reference name : marker.at("names")) {
-					names.emplace_back(static_cast<std::string const&>(name));
+					names.push_back(name);
 				}
 			} else {
 				// Handle transition from one-event markers to multi-event markers. Remove next season
-				names.emplace_back(marker.at("name"));
+				names.push_back(marker.at("name"));
 			}
 			markers.emplace_back(
 					PathPlannerTrajectory::EventMarker(std::move(names),

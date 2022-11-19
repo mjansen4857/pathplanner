@@ -43,7 +43,7 @@ public:
 			frc2::PIDController xController, frc2::PIDController yController,
 			frc2::PIDController rotationController,
 			std::function<void(std::array<frc::SwerveModuleState, NumModules>)> output,
-			std::unordered_map<std::string, std::unique_ptr<frc2::Command>> eventMap,
+			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 			std::initializer_list<frc2::Subsystem*> requirements) : m_trajectory(
 			trajectory), m_pose(pose), m_kinematics(kinematics), m_output(
 			output), m_eventMap(eventMap), m_controller(xController,

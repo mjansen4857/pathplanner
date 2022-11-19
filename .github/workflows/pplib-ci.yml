@@ -31,7 +31,6 @@ jobs:
     container: wpilib/ubuntu-base:22.04
 
     steps:
-      steps:
       - name: Checkout repo
         uses: actions/checkout@v3
         

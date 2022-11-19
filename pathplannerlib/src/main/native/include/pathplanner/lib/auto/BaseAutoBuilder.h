@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <unordered_map>
 #include <frc/geometry/Pose2d.h>
 #include <frc2/command/CommandBase.h>
 #include "pathplanner/lib/PathPlannerTrajectory.h"

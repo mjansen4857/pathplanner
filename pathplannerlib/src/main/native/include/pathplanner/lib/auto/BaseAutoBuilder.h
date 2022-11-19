@@ -62,6 +62,16 @@ protected:
 		HOLONOMIC, STANDARD
 	};
 
+	/**
+	 * Construct a BaseAutoBuilder
+	 *
+	 * @param pose A function that supplies the robot pose - use one of the odometry classes
+	 *     to provide this.
+	 * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+	 *     be called once ath the beginning of an auto.
+	 * @param eventMap Event map for triggering events at markers
+	 * @param drivetrainType Type of drivetrain the autobuilder is building for
+	 */
 	BaseAutoBuilder(std::function<frc::Pose2d()> pose,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,

@@ -21,6 +21,11 @@ nativeUtils.wpi.addWarningsAsErrors()
 
 nativeUtils.setSinglePrintPerPlatform()
 
+nativeUtils.wpi.addVendorDeps()
+nativeUtils.wpi.getVendorDeps().loadAll()
+nativeUtils.wpi.getVendorDeps().getNativeVendor().initializeNativeDependencies()
+nativeUtils.wpi.getVendorDeps().addVendorReposToMaven(false)
+
 model {
     // components {
     //     all {
@@ -36,6 +41,7 @@ model {
     binaries {
         withType(NativeBinarySpec).all {
             nativeUtils.usePlatformArguments(it)
+            nativeUtils.wpi.getVendorDeps().getNativeVendor().cpp(it)
         }
     }
 }

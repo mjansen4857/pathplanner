@@ -1,21 +1,60 @@
-name: Build PathPlannerLib Artifacts
+name: PathPlannerLib
 
 on:
+  push:
+
+  pull_request:
+
   workflow_dispatch:
-  
+
 jobs:
+  formatting:
+    name: "[PPLib] Check Formatting"
+    runs-on: ubuntu-22.04
+    container: wpilib/ubuntu-base:22.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        working-directory: ./pathplannerlib
+      
+      - name: Check formatting
+        run: ./gradlew spotlessCheck
+        working-directory: ./pathplannerlib
+  
+  test:
+    name: "[PPLib] Run tests"
+    runs-on: ubuntu-22.04
+    container: wpilib/ubuntu-base:22.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        working-directory: ./pathplannerlib
+        
+      - name: Compile and run tests
+        run: ./gradlew test -PreleaseMode
+        working-directory: ./pathplannerlib
+  
   build-docker:
     strategy:
       fail-fast: false
       matrix:
         include:
           - container: wpilib/roborio-cross-ubuntu:2023-22.04
-            artifact-name: Athena
+            artifact-name: PPLib-Athena
             build-options: "-Ponlylinuxathena"
           - container: wpilib/ubuntu-base:22.04
-            artifact-name: Linux
+            artifact-name: PPLib-Linux
             build-options: ""
-    name: "Build - ${{ matrix.artifact-name }}"
+    name: "[PPLib] Build - ${{ matrix.artifact-name }}"
+    needs: [formatting, test]
     runs-on: ubuntu-22.04
     container: ${{ matrix.container }}
     steps:
@@ -35,19 +74,20 @@ jobs:
         with:
           name: ${{ matrix.artifact-name }}
           path: pathplannerlib/build/allOutputs
-
+  
   build-host:
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: windows-2022
-            artifact-name: Win64
+            artifact-name: PPLib-Win64
             architecture: x64
           - os: macos-12
-            artifact-name: macOS
+            artifact-name: PPLib-macOS
             architecture: x64
-    name: "Build - ${{ matrix.artifact-name }}"
+    name: "[PPLib] Build - ${{ matrix.artifact-name }}"
+    needs: [formatting, test]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
@@ -71,7 +111,7 @@ jobs:
           path: pathplannerlib/build/allOutputs
   
   combine:
-    name: Combine
+    name: "[PPLib] Combine"
     needs: [build-docker, build-host]
     runs-on: ubuntu-22.04
     steps:
@@ -101,5 +141,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: Maven
+          name: PPLib-Maven
           path: ~/releases

@@ -24,7 +24,7 @@ public:
 	 * @return The generated path
 	 */
 	static PathPlannerTrajectory loadPath(std::string const &name,
-			PathConstraints const &constraints, bool reversed = false);
+			PathConstraints const constraints, bool const reversed = false);
 
 	/**
 	 * @brief Load a path file from storage
@@ -36,9 +36,9 @@ public:
 	 * @return The generated path
 	 */
 	static PathPlannerTrajectory loadPath(std::string const &name,
-			units::meters_per_second_t maxVel,
-			units::meters_per_second_squared_t maxAccel,
-			bool reversed = false) {
+			units::meters_per_second_t const maxVel,
+			units::meters_per_second_squared_t const maxAccel,
+			bool const reversed = false) {
 		return loadPath(name, PathConstraints(maxVel, maxAccel), reversed);
 	}
 
@@ -52,8 +52,8 @@ public:
 	 */
 	static std::vector<PathPlannerTrajectory> loadPathGroup(
 			std::string const &name,
-			std::initializer_list<PathConstraints> const &constraints,
-			bool reversed = false);
+			std::initializer_list<PathConstraints> const constraints,
+			bool const reversed = false);
 
 	/**
 	 * @brief Load a path file from storage as a path group. This will separate the path into multiple paths based on the waypoints marked as "stop points"
@@ -64,10 +64,10 @@ public:
 	 * @param reversed Should the robot follow the path group reversed
 	 * @return Vector of all generated paths in the group
 	 */
-	static std::vector<PathPlannerTrajectory> loadPathGroup(std::string name,
-			units::meters_per_second_t maxVel,
-			units::meters_per_second_squared_t maxAccel,
-			bool reversed = false) {
+	static std::vector<PathPlannerTrajectory> loadPathGroup(
+			std::string const &name, units::meters_per_second_t const maxVel,
+			units::meters_per_second_squared_t const maxAccel,
+			bool const reversed = false) {
 		return loadPathGroup(name, { PathConstraints(maxVel, maxAccel) },
 				reversed);
 	}
@@ -85,10 +85,9 @@ public:
 	 * @param points Remaining points in the path
 	 * @return The generated path
 	 */
-	static PathPlannerTrajectory generatePath(
-			PathConstraints const &constraints, bool reversed,
-			PathPoint const &point1, PathPoint const &point2,
-			std::initializer_list<PathPoint> const &points = { });
+	static PathPlannerTrajectory generatePath(PathConstraints const constraints,
+			bool const reversed, PathPoint const point1, PathPoint const point2,
+			std::initializer_list<PathPoint> const points = { });
 
 	/**
 	 * @brief Generate a path on-the-fly from a list of points
@@ -104,10 +103,11 @@ public:
 	 * @param points Remaining points in the path
 	 * @return The generated path
 	 */
-	static PathPlannerTrajectory generatePath(units::meters_per_second_t maxVel,
-			units::meters_per_second_squared_t maxAccel, bool reversed,
-			PathPoint const &point1, PathPoint const &point2,
-			std::initializer_list<PathPoint> const &points = { }) {
+	static PathPlannerTrajectory generatePath(
+			units::meters_per_second_t const maxVel,
+			units::meters_per_second_squared_t const maxAccel,
+			bool const reversed, PathPoint const point1, PathPoint const point2,
+			std::initializer_list<PathPoint> const points = { }) {
 		return generatePath(PathConstraints(maxVel, maxAccel), reversed, point1,
 				point2, points);
 	}
@@ -124,10 +124,9 @@ public:
 	 * @param points Remaining points in the path
 	 * @return The generated path
 	 */
-	static PathPlannerTrajectory generatePath(
-			PathConstraints const &constraints, PathPoint const &point1,
-			PathPoint const &point2,
-			std::initializer_list<PathPoint> const &points = { }) {
+	static PathPlannerTrajectory generatePath(PathConstraints const constraints,
+			PathPoint const point1, PathPoint const point2,
+			std::initializer_list<PathPoint> const points = { }) {
 		return generatePath(constraints, false, point1, point2, points);
 	}
 
@@ -144,10 +143,11 @@ public:
 	 * @param points Remaining points in the path
 	 * @return The generated path
 	 */
-	static PathPlannerTrajectory generatePath(units::meters_per_second_t maxVel,
-			units::meters_per_second_squared_t maxAccel,
-			PathPoint const &point1, PathPoint const &point2,
-			std::initializer_list<PathPoint> const &points = { }) {
+	static PathPlannerTrajectory generatePath(
+			units::meters_per_second_t const maxVel,
+			units::meters_per_second_squared_t const maxAccel,
+			PathPoint const point1, PathPoint const point2,
+			std::initializer_list<PathPoint> const points = { }) {
 		return generatePath(PathConstraints(maxVel, maxAccel), false, point1,
 				point2, points);
 	}
@@ -170,6 +170,6 @@ private:
 			wpi::json json);
 	static int indexOfWaypoint(
 			std::vector<PathPlannerTrajectory::Waypoint> const &waypoints,
-			PathPlannerTrajectory::Waypoint const &waypoint);
+			PathPlannerTrajectory::Waypoint const waypoint);
 };
 }

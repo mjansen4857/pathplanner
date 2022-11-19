@@ -31,7 +31,7 @@ public:
 	 *
 	 * @param tolerance The pose error which is tolerable
 	 */
-	void setTolerance(frc::Pose2d const &tolerance);
+	void setTolerance(frc::Pose2d const tolerance);
 
 	/**
 	 * Enables and disables the controller for troubleshooting. When calculate() is called on a disabled
@@ -48,7 +48,7 @@ public:
 	 * @param referenceState The desired trajectory state
 	 * @return The next output of the holonomic drive controller
 	 */
-	frc::ChassisSpeeds calculate(frc::Pose2d const &currentPose,
+	frc::ChassisSpeeds calculate(frc::Pose2d const currentPose,
 			PathPlannerTrajectory::PathPlannerState const &referenceState);
 
 private:

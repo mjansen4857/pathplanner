@@ -54,7 +54,7 @@ public:
 		units::meter_t deltaPos = 0_m;
 
 		PathPlannerState interpolate(PathPlannerState const &endVal,
-				double t) const;
+				double const t) const;
 
 		friend class PathPlannerTrajectory;
 	};
@@ -69,7 +69,13 @@ public:
 		double waypointRelativePos;
 
 		EventMarker(std::vector<std::string> &&names,
-				double waypointRelativePos) {
+				double const waypointRelativePos) {
+			this->names = names;
+			this->waypointRelativePos = waypointRelativePos;
+		}
+
+		EventMarker(std::vector<std::string> const &names,
+				double const waypointRelativePos) {
 			this->names = names;
 			this->waypointRelativePos = waypointRelativePos;
 		}
@@ -90,11 +96,12 @@ private:
 		bool isStopPoint;
 		units::second_t waitTime;
 
-		constexpr Waypoint(frc::Translation2d anchorPoint,
-				frc::Translation2d prevControl, frc::Translation2d nextControl,
-				units::meters_per_second_t velocityOverride,
-				frc::Rotation2d holonomicRotation, bool isReversal,
-				bool isStopPoint, units::second_t waitTime) {
+		constexpr Waypoint(frc::Translation2d const anchorPoint,
+				frc::Translation2d const prevControl,
+				frc::Translation2d const nextControl,
+				units::meters_per_second_t const velocityOverride,
+				frc::Rotation2d const holonomicRotation, bool const isReversal,
+				bool const isStopPoint, units::second_t const waitTime) {
 			this->anchorPoint = anchorPoint;
 			this->prevControl = prevControl;
 			this->nextControl = nextControl;
@@ -112,19 +119,21 @@ private:
 
 	static std::vector<PathPlannerState> generatePath(
 			std::vector<Waypoint> const &pathPoints,
-			units::meters_per_second_t maxVel,
-			units::meters_per_second_squared_t maxAccel, bool reversed);
+			units::meters_per_second_t const maxVel,
+			units::meters_per_second_squared_t const maxAccel,
+			bool const reversed);
 	static std::vector<PathPlannerState> joinSplines(
 			std::vector<Waypoint> const &pathPoints,
-			units::meters_per_second_t maxVel, double step);
+			units::meters_per_second_t const maxVel, double step);
 	static void calculateMaxVel(std::vector<PathPlannerState> &states,
-			units::meters_per_second_t maxVel,
-			units::meters_per_second_squared_t maxAccel, bool reversed);
+			units::meters_per_second_t const maxVel,
+			units::meters_per_second_squared_t const maxAccel,
+			bool const reversed);
 	static void calculateVelocity(std::vector<PathPlannerState> &states,
 			std::vector<Waypoint> pathPoints,
-			units::meters_per_second_squared_t maxAccel);
+			units::meters_per_second_squared_t const maxAccel);
 	static void recalculateValues(std::vector<PathPlannerState> &states,
-			bool reversed);
+			bool const reversed);
 	static units::meter_t calculateRadius(PathPlannerState const &s0,
 			PathPlannerState const &s1, PathPlannerState const &s2);
 
@@ -135,7 +144,7 @@ private:
 public:
 	PathPlannerTrajectory(std::vector<Waypoint> const &waypoints,
 			std::vector<EventMarker> const &markers,
-			PathConstraints const &constraints, bool reversed);
+			PathConstraints const constraints, bool const reversed);
 	PathPlannerTrajectory() {
 	}
 
@@ -154,7 +163,7 @@ public:
 	 * @param time The time to sample
 	 * @return The state at the given point in time
 	 */
-	PathPlannerState sample(units::second_t time) const;
+	PathPlannerState sample(units::second_t const time) const;
 
 	/**
 	 * @brief Get all of the states in the path
@@ -207,7 +216,7 @@ public:
 	 * @param i The index of the state
 	 * @return Reference to the state at the given index
 	 */
-	PathPlannerState& getState(int i) {
+	PathPlannerState& getState(int const i) {
 		return getStates()[i];
 	}
 
@@ -235,7 +244,7 @@ public:
 	 * @param i The index of the state
 	 * @return Copy of the state at the given index
 	 */
-	PathPlannerState getState(int i) const {
+	PathPlannerState getState(int const i) const {
 		return getStates()[i];
 	}
 

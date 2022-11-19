@@ -25,23 +25,6 @@ jobs:
         run: ./gradlew spotlessCheck
         working-directory: ./pathplannerlib
   
-  test:
-    name: "[PPLib] Run tests"
-    runs-on: ubuntu-22.04
-    container: wpilib/ubuntu-base:22.04
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-        
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        working-directory: ./pathplannerlib
-        
-      - name: Compile and run tests
-        run: ./gradlew test -PreleaseMode
-        working-directory: ./pathplannerlib
-  
   build-docker:
     strategy:
       fail-fast: false
@@ -54,7 +37,6 @@ jobs:
             artifact-name: PPLib-Linux
             build-options: ""
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
-    needs: [formatting, test]
     runs-on: ubuntu-22.04
     container: ${{ matrix.container }}
     steps:
@@ -87,7 +69,6 @@ jobs:
             artifact-name: PPLib-macOS
             architecture: x64
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
-    needs: [formatting, test]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo

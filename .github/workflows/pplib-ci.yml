@@ -48,7 +48,7 @@ jobs:
         working-directory: ./pathplannerlib
       
       - name: Build
-        run: ./gradlew build --max-workers 1 ${{ matrix.build-options }}
+        run: ./gradlew build --max-workers 1 -PreleaseMode ${{ matrix.build-options }}
         working-directory: ./pathplannerlib
       
       - name: Upload artifact
@@ -82,7 +82,7 @@ jobs:
           distribution: 'temurin'
       
       - name: Build
-        run: ./gradlew build -Pbuildalldesktop
+        run: ./gradlew build -PreleaseMode -Pbuildalldesktop
         working-directory: ./pathplannerlib
       
       - name: Upload artifact

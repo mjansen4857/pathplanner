@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <deque>
 #include <memory>
+#include <span>
 
 namespace pathplanner {
 template<size_t NumModules>
@@ -71,6 +72,60 @@ public:
 			frc2::PIDController rotationController,
 			std::function<void(std::array<frc::SwerveModuleState, NumModules>)> output,
 			std::initializer_list<frc2::Subsystem*> requirements) : m_trajectory(
+			trajectory), m_pose(pose), m_kinematics(kinematics), m_output(
+			output), m_controller(xController, yController, rotationController) {
+		this->AddRequirements(requirements);
+	}
+
+	/**
+	 * @brief Constructs a new PPSwerveControllerCommand that when executed will follow the
+	 * provided trajectory.
+	 *
+	 * @param trajectory         The trajectory to follow.
+	 * @param pose               A function that returns the robot pose - use one of the odometry classes to provide this.
+	 * @param kinematics         The kinematics for the robot drivetrain.
+	 * @param xController        The Trajectory Tracker PID controller for the robot's x position.
+	 * @param yController        The Trajectory Tracker PID controller for the robot's y position.
+	 * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+	 * @param output             The raw output module states from the position controllers.
+	 * @param eventMap           Map of event marker names to the commands that should run when reaching that marker.
+	 *                           This SHOULD NOT contain any commands requiring the same subsystems as this command, or it will be interrupted
+	 * @param requirements       The subsystems to require.
+	 */
+	PPSwerveControllerCommand(PathPlannerTrajectory trajectory,
+			std::function<frc::Pose2d()> pose,
+			frc::SwerveDriveKinematics<NumModules> kinematics,
+			frc2::PIDController xController, frc2::PIDController yController,
+			frc2::PIDController rotationController,
+			std::function<void(std::array<frc::SwerveModuleState, NumModules>)> output,
+			std::shared_ptr<std::unordered_map<std::string, frc2::CommandPtr>> eventMap,
+			std::span<frc2::Subsystem* const > requirements = { }) : m_trajectory(
+			trajectory), m_pose(pose), m_kinematics(kinematics), m_output(
+			output), m_eventMap(eventMap), m_controller(xController,
+			yController, rotationController) {
+		this->AddRequirements(requirements);
+	}
+
+	/**
+	 * @brief Constructs a new PPSwerveControllerCommand that when executed will follow the
+	 * provided trajectory.
+	 *
+	 * @param trajectory         The trajectory to follow.
+	 * @param pose               A function that returns the robot pose - use one of the odometry classes to provide this.
+	 * @param kinematics         The kinematics for the robot drivetrain.
+	 * @param xController        The Trajectory Tracker PID controller for the robot's x position.
+	 * @param yController        The Trajectory Tracker PID controller for the robot's y position.
+	 * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+	 * @param output             The raw output module states from the position controllers.
+	 * @param requirements       The subsystems to require.
+	 */
+	PPSwerveControllerCommand(PathPlannerTrajectory trajectory,
+			std::function<frc::Pose2d()> pose,
+			frc::SwerveDriveKinematics<NumModules> kinematics,
+			frc2::PIDController xController, frc2::PIDController yController,
+			frc2::PIDController rotationController,
+			std::function<void(std::array<frc::SwerveModuleState, NumModules>)> output,
+			std::span<frc2::Subsystem* const > requirements = { }) : m_trajectory(
 			trajectory), m_pose(pose), m_kinematics(kinematics), m_output(
 			output), m_controller(xController, yController, rotationController) {
 		this->AddRequirements(requirements);

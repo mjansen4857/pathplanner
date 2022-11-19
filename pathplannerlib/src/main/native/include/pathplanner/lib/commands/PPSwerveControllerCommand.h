@@ -10,8 +10,8 @@
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/smartdashboard/Field2d.h>
-#include <pathplanner/lib/PathPlannerTrajectory.h>
-#include <pathplanner/lib/controllers/PPHolonomicDriveController.h>
+#include "pathplanner/lib/PathPlannerTrajectory.h"
+#include "pathplanner/lib/controllers/PPHolonomicDriveController.h"
 #include <unordered_map>
 #include <deque>
 #include <memory>
@@ -43,7 +43,7 @@ public:
 			frc2::PIDController xController, frc2::PIDController yController,
 			frc2::PIDController rotationController,
 			std::function<void(std::array<frc::SwerveModuleState, NumModules>)> output,
-			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
+			std::shared_ptr<std::unordered_map<std::string, frc2::CommandPtr>> eventMap,
 			std::initializer_list<frc2::Subsystem*> requirements) : m_trajectory(
 			trajectory), m_pose(pose), m_kinematics(kinematics), m_output(
 			output), m_eventMap(eventMap), m_controller(xController,
@@ -121,8 +121,8 @@ public:
 			this->m_unpassedMarkers.pop_front();
 
 			for (std::string name : marker.names) {
-				if (this->m_eventMap.find(name) != this->m_eventMap.end()) {
-					this->m_eventMap[name]->Schedule();
+				if (this->m_eventMap->find(name) != this->m_eventMap->end()) {
+					this->m_eventMap->at(name).Schedule();
 				}
 			}
 		}
@@ -147,7 +147,7 @@ private:
 	std::function<frc::Pose2d()> m_pose;
 	frc::SwerveDriveKinematics<NumModules> m_kinematics;
 	std::function<void(std::array<frc::SwerveModuleState, NumModules>)> m_output;
-	std::unordered_map<std::string, std::shared_ptr<frc2::Command>> m_eventMap;
+	std::shared_ptr<std::unordered_map<std::string, frc2::CommandPtr>> m_eventMap;
 
 	frc::Timer m_timer;
 	PPHolonomicDriveController m_controller;

@@ -6,8 +6,8 @@
 using namespace pathplanner;
 
 PPHolonomicDriveController::PPHolonomicDriveController(
-		frc2::PIDController &&xController, frc2::PIDController &&yController,
-		frc2::PIDController &&rotationController) : m_xController(xController), m_yController(
+		frc2::PIDController xController, frc2::PIDController yController,
+		frc2::PIDController rotationController) : m_xController(xController), m_yController(
 		yController), m_rotationController(rotationController) {
 	this->m_rotationController.EnableContinuousInput(-PI, PI);
 }

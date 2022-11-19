@@ -15,9 +15,9 @@ public:
 	 * @param yController A PID controller to respond to error in the field-relative Y direction
 	 * @param rotationController A PID controller to respond to error in rotation
 	 */
-	PPHolonomicDriveController(frc2::PIDController &&xController,
-			frc2::PIDController &&yController,
-			frc2::PIDController &&rotationController);
+	PPHolonomicDriveController(frc2::PIDController xController,
+			frc2::PIDController yController,
+			frc2::PIDController rotationController);
 
 	/**
 	 * Returns true if the pose error is within tolerance of the reference.

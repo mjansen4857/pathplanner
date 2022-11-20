@@ -98,17 +98,16 @@ public:
 		WaitBehavior waitBehavior;
 		units::second_t waitTime;
 
-		constexpr StopEvent(std::vector<std::string> const names,
-				ExecutionBehavior const executionBehavior,
-				WaitBehavior const waitBehavior,
-				units::second_t const waitTime) {
+		StopEvent(std::vector<std::string> names,
+				ExecutionBehavior executionBehavior, WaitBehavior waitBehavior,
+				units::second_t waitTime) {
 			this->names = names;
 			this->executionBehavior = executionBehavior;
 			this->waitBehavior = waitBehavior;
 			this->waitTime = waitTime;
 		}
 
-		constexpr StopEvent() {
+		StopEvent() {
 			this->names = std::vector<std::string>();
 			this->executionBehavior = ExecutionBehavior::PARALLEL;
 			this->waitBehavior = WaitBehavior::NONE;
@@ -128,12 +127,12 @@ private:
 		bool isStopPoint;
 		StopEvent stopEvent;
 
-		constexpr Waypoint(frc::Translation2d const anchorPoint,
+		Waypoint(frc::Translation2d const anchorPoint,
 				frc::Translation2d const prevControl,
 				frc::Translation2d const nextControl,
 				units::meters_per_second_t const velocityOverride,
 				frc::Rotation2d const holonomicRotation, bool const isReversal,
-				bool const isStopPoint, StopEvent const stopEvent) {
+				bool const isStopPoint, StopEvent stopEvent) {
 			this->anchorPoint = anchorPoint;
 			this->prevControl = prevControl;
 			this->nextControl = nextControl;

@@ -262,8 +262,7 @@ public class PathPlanner {
             point1.velocityOverride,
             point1.holonomicRotation,
             false,
-            false,
-            0));
+            false));
 
     for (int i = 1; i < allPoints.size(); i++) {
       PathPoint p1 = allPoints.get(i - 1);
@@ -283,14 +282,7 @@ public class PathPlanner {
                   p2.heading.getCos() * thirdDistance, p2.heading.getSin() * thirdDistance));
       waypoints.add(
           new Waypoint(
-              p2.position,
-              p2Prev,
-              null,
-              p2.velocityOverride,
-              p2.holonomicRotation,
-              false,
-              false,
-              0));
+              p2.position, p2Prev, null, p2.velocityOverride, p2.holonomicRotation, false, false));
     }
 
     return new PathPlannerTrajectory(waypoints, new ArrayList<>(), constraints, reversed);
@@ -437,11 +429,6 @@ public class PathPlanner {
         velOverride = ((Number) jsonWaypoint.get("velOverride")).doubleValue();
       }
 
-      double waitTime = 0;
-      if (jsonWaypoint.get("waitTime") != null) {
-        waitTime = ((Number) jsonWaypoint.get("waitTime")).doubleValue();
-      }
-
       waypoints.add(
           new Waypoint(
               anchorPoint,
@@ -450,8 +437,7 @@ public class PathPlanner {
               velOverride,
               holonomicAngle,
               isReversal,
-              isStopPoint,
-              waitTime));
+              isStopPoint));
     }
 
     return waypoints;

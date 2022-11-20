@@ -11,12 +11,10 @@ import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
   private final List<EventMarker> markers;
-  private final double endWaitTime;
 
   public PathPlannerTrajectory() {
     super();
     this.markers = new ArrayList<>();
-    this.endWaitTime = 0;
   }
 
   protected PathPlannerTrajectory(
@@ -28,16 +26,6 @@ public class PathPlannerTrajectory extends Trajectory {
 
     this.markers = markers;
     this.calculateMarkerTimes(pathPoints);
-    this.endWaitTime = pathPoints.get(pathPoints.size() - 1).waitTime;
-  }
-
-  /**
-   * Get the end wait time for this path configured in the GUI
-   *
-   * @return End wait time in seconds
-   */
-  public double getEndWaitTimeSeconds() {
-    return this.endWaitTime;
   }
 
   /**
@@ -498,7 +486,6 @@ public class PathPlannerTrajectory extends Trajectory {
     protected Rotation2d holonomicRotation;
     protected boolean isReversal;
     protected boolean isStopPoint;
-    protected double waitTime;
 
     protected Waypoint(
         Translation2d anchorPoint,
@@ -507,8 +494,7 @@ public class PathPlannerTrajectory extends Trajectory {
         double velOverride,
         Rotation2d holonomicRotation,
         boolean isReversal,
-        boolean isStopPoint,
-        double waitTime) {
+        boolean isStopPoint) {
       this.anchorPoint = anchorPoint;
       this.prevControl = prevControl;
       this.nextControl = nextControl;
@@ -516,7 +502,6 @@ public class PathPlannerTrajectory extends Trajectory {
       this.holonomicRotation = holonomicRotation;
       this.isReversal = isReversal;
       this.isStopPoint = isStopPoint;
-      this.waitTime = waitTime;
     }
   }
 

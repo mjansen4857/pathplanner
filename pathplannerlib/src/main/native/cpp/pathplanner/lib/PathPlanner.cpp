@@ -136,7 +136,7 @@ PathPlannerTrajectory PathPlanner::generatePath(
 	std::vector < PathPlannerTrajectory::Waypoint > waypoints;
 	waypoints.emplace_back(point1.m_position, frc::Translation2d(),
 			frc::Translation2d(), point1.m_velocityOverride,
-			point1.m_holonomicRotation, false, false, 0_s);
+			point1.m_holonomicRotation, false, false);
 
 	for (size_t i = 1; i < allPoints.size(); i++) {
 		PathPoint const p1 = allPoints[i - 1];
@@ -154,8 +154,7 @@ PathPlannerTrajectory PathPlanner::generatePath(
 				- frc::Translation2d(p2.m_heading.Cos() * thirdDistance,
 						p2.m_heading.Sin() * thirdDistance);
 		waypoints.emplace_back(p2.m_position, p2Prev, frc::Translation2d(),
-				p2.m_velocityOverride, p2.m_holonomicRotation, false, false,
-				0_s);
+				p2.m_velocityOverride, p2.m_holonomicRotation, false, false);
 	}
 
 	return PathPlannerTrajectory(waypoints,
@@ -239,14 +238,8 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(
 								static_cast<double>(waypoint.at("velOverride")) } :
 						-1_mps;
 
-		units::second_t const waitTime =
-				(waypoint.find("waitTime") != waypoint.end()) ?
-						(units::second_t { static_cast<double>(waypoint.at(
-								"waitTime")) }) :
-						0_s;
-
 		waypoints.emplace_back(anchorPoint, prevControl, nextControl,
-				velOverride, holonomicAngle, isReversal, isStopPoint, waitTime);
+				velOverride, holonomicAngle, isReversal, isStopPoint);
 	}
 
 	return waypoints;

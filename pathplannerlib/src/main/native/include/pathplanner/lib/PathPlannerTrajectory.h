@@ -94,14 +94,13 @@ private:
 		frc::Rotation2d holonomicRotation;
 		bool isReversal;
 		bool isStopPoint;
-		units::second_t waitTime;
 
 		constexpr Waypoint(frc::Translation2d const anchorPoint,
 				frc::Translation2d const prevControl,
 				frc::Translation2d const nextControl,
 				units::meters_per_second_t const velocityOverride,
 				frc::Rotation2d const holonomicRotation, bool const isReversal,
-				bool const isStopPoint, units::second_t const waitTime) {
+				bool const isStopPoint) {
 			this->anchorPoint = anchorPoint;
 			this->prevControl = prevControl;
 			this->nextControl = nextControl;
@@ -109,13 +108,11 @@ private:
 			this->holonomicRotation = holonomicRotation;
 			this->isReversal = isReversal;
 			this->isStopPoint = isStopPoint;
-			this->waitTime = waitTime;
 		}
 	};
 
 	std::vector<PathPlannerState> states;
 	std::vector<EventMarker> markers;
-	units::second_t endWaitTime;
 
 	static std::vector<PathPlannerState> generatePath(
 			std::vector<Waypoint> const &pathPoints,
@@ -146,15 +143,6 @@ public:
 			std::vector<EventMarker> const &markers,
 			PathConstraints const constraints, bool const reversed);
 	PathPlannerTrajectory() {
-	}
-
-	/**
-	 * @brief Get the end wait time for this path configured in the GUI
-	 *
-	 * @return End wait time in seconds
-	 */
-	units::second_t getEndWaitTime() const {
-		return this->endWaitTime;
 	}
 
 	/**

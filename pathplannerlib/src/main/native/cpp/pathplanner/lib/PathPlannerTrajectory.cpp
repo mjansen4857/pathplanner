@@ -16,7 +16,6 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 
 	this->markers = markers;
 	this->calculateMarkerTimes(waypoints);
-	this->endWaitTime = waypoints[waypoints.size() - 1].waitTime;
 }
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::generatePath(

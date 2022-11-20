@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:function_tree/function_tree.dart';
 import 'package:pathplanner/robot_path/stop_event.dart';
 import 'package:pathplanner/widgets/draggable_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -44,7 +46,195 @@ class _StopEventCardState extends State<StopEventCard> {
             style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 8),
+          _buildExecutionBehaviorDropdown(),
           _buildNameFields(),
+          const SizedBox(height: 8),
+          _buildWaitBehaviorDropdown(),
+          if (widget.stopEvent!.waitBehavior != WaitBehavior.none)
+            _buildWaitTime(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWaitTime(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(3, 8, 3, 0),
+      child: _buildTextField(
+        context,
+        _getController(widget.stopEvent!.waitTime.toStringAsFixed(2)),
+        'Wait Time',
+        onSubmitted: (val) {
+          setState(() {
+            _oldEvent = widget.stopEvent!.clone();
+            widget.stopEvent!.waitTime = val ?? 0;
+            widget.onEdited(_oldEvent!);
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+      BuildContext context, TextEditingController? controller, String label,
+      {bool? enabled = true, ValueChanged? onSubmitted, double? width}) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      width: width,
+      height: 35,
+      child: TextField(
+        onSubmitted: (val) {
+          if (onSubmitted != null) {
+            if (val.isEmpty) {
+              onSubmitted(null);
+            } else {
+              num parsed = val.interpret();
+              onSubmitted(parsed);
+            }
+          }
+          FocusScopeNode currentScope = FocusScope.of(context);
+          if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+            FocusManager.instance.primaryFocus!.unfocus();
+          }
+        },
+        enabled: enabled,
+        controller: controller,
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(
+              RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
+        ],
+        style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+        decoration: InputDecoration(
+          contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+        ),
+      ),
+    );
+  }
+
+  TextEditingController _getController(String text) {
+    return TextEditingController(text: text)
+      ..selection =
+          TextSelection.fromPosition(TextPosition(offset: text.length));
+  }
+
+  Widget _buildWaitBehaviorDropdown() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Wait Behavior:'),
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 44,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: colorScheme.outline),
+                ),
+                child: ExcludeFocus(
+                  child: ButtonTheme(
+                    alignedDropdown: true,
+                    child: DropdownButton<WaitBehavior>(
+                      dropdownColor: colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(8),
+                      value: widget.stopEvent!.waitBehavior,
+                      isExpanded: true,
+                      underline: Container(),
+                      icon: const Icon(Icons.arrow_drop_down),
+                      onChanged: (WaitBehavior? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _oldEvent = widget.stopEvent!.clone();
+                            widget.stopEvent!.waitBehavior = newValue;
+                            widget.onEdited(_oldEvent!);
+                          });
+                        }
+                      },
+                      items: [
+                        ...WaitBehavior.values
+                            .map<DropdownMenuItem<WaitBehavior>>(
+                                (WaitBehavior value) {
+                          return DropdownMenuItem<WaitBehavior>(
+                            value: value,
+                            child: Text(
+                                '${value.name[0].toUpperCase()}${value.name.substring(1)}'),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExecutionBehaviorDropdown() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Execution Behavior:'),
+          const SizedBox(height: 4),
+          SizedBox(
+            height: 44,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: colorScheme.outline),
+                ),
+                child: ExcludeFocus(
+                  child: ButtonTheme(
+                    alignedDropdown: true,
+                    child: DropdownButton<ExecutionBehavior>(
+                      dropdownColor: colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(8),
+                      value: widget.stopEvent!.executionBehavior,
+                      isExpanded: true,
+                      underline: Container(),
+                      icon: const Icon(Icons.arrow_drop_down),
+                      onChanged: (ExecutionBehavior? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _oldEvent = widget.stopEvent!.clone();
+                            widget.stopEvent!.executionBehavior = newValue;
+                            widget.onEdited(_oldEvent!);
+                          });
+                        }
+                      },
+                      items: [
+                        ...ExecutionBehavior.values
+                            .map<DropdownMenuItem<ExecutionBehavior>>(
+                                (ExecutionBehavior value) {
+                          return DropdownMenuItem<ExecutionBehavior>(
+                            value: value,
+                            child: Text(
+                                '${value.name[0].toUpperCase()}${value.name.substring(1)}'),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -80,7 +270,7 @@ class _StopEventCardState extends State<StopEventCard> {
                   },
                   name: widget.stopEvent!.eventNames[i],
                   label: 'Event ${i + 1}'),
-            if (widget.stopEvent!.eventNames.length < 8)
+            if (widget.stopEvent!.eventNames.length < 4)
               _buildNameTextField(
                 onSubmitted: (value) {
                   if (value.isNotEmpty) {

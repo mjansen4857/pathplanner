@@ -12,7 +12,6 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/kinematics/MecanumDriveKinematics.h>
-#include <frc/kinematics/MecanumDriveWheelSpeeds.h>
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
 #include <units/angle.h>
@@ -123,7 +122,6 @@ private:
 	frc::MecanumDriveKinematics m_kinematics;
 	PPHolonomicDriveController m_controller;
 	const units::meters_per_second_t m_maxWheelVelocity;
-	std::function<frc::MecanumDriveWheelSpeeds()> m_currentWheelSpeeds;
 	std::function<
 			void(units::meters_per_second_t, units::meters_per_second_t,
 					units::meters_per_second_t, units::meters_per_second_t)> m_outputVel;

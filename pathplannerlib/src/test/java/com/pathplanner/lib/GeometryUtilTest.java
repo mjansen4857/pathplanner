@@ -1,10 +1,10 @@
 package com.pathplanner.lib;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import org.junit.*;
+import org.junit.jupiter.api.Test;
 
 public class GeometryUtilTest {
   public static final double DELTA = 1e-3;

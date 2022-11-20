@@ -1,8 +1,8 @@
 package com.pathplanner.lib;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.*;
+import org.junit.jupiter.api.Test;
 
 public class PathConstraintsTest {
   public static final double DELTA = 1e-3;

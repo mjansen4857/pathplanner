@@ -136,7 +136,8 @@ PathPlannerTrajectory PathPlanner::generatePath(
 	std::vector < PathPlannerTrajectory::Waypoint > waypoints;
 	waypoints.emplace_back(point1.m_position, frc::Translation2d(),
 			frc::Translation2d(), point1.m_velocityOverride,
-			point1.m_holonomicRotation, false, false);
+			point1.m_holonomicRotation, false, false,
+			PathPlannerTrajectory::StopEvent());
 
 	for (size_t i = 1; i < allPoints.size(); i++) {
 		PathPoint const p1 = allPoints[i - 1];
@@ -154,7 +155,8 @@ PathPlannerTrajectory PathPlanner::generatePath(
 				- frc::Translation2d(p2.m_heading.Cos() * thirdDistance,
 						p2.m_heading.Sin() * thirdDistance);
 		waypoints.emplace_back(p2.m_position, p2Prev, frc::Translation2d(),
-				p2.m_velocityOverride, p2.m_holonomicRotation, false, false);
+				p2.m_velocityOverride, p2.m_holonomicRotation, false, false,
+				PathPlannerTrajectory::StopEvent());
 	}
 
 	return PathPlannerTrajectory(waypoints,
@@ -238,8 +240,62 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(
 								static_cast<double>(waypoint.at("velOverride")) } :
 						-1_mps;
 
+		PathPlannerTrajectory::StopEvent stopEvent;
+		if (waypoint.find("stopEvent") != waypoint.end()) {
+			std::vector < std::string > names;
+			PathPlannerTrajectory::StopEvent::ExecutionBehavior executionBehavior =
+					PathPlannerTrajectory::StopEvent::ExecutionBehavior::PARALLEL;
+			PathPlannerTrajectory::StopEvent::WaitBehavior waitBehvior =
+					PathPlannerTrajectory::StopEvent::WaitBehavior::NONE;
+			units::second_t waitTime = 0_s;
+
+			wpi::json::const_reference stopEventJson = waypoint.at("stopEvent");
+			if (stopEventJson.find("names") != stopEventJson.end()) {
+				for (wpi::json::const_reference name : stopEventJson.at("names")) {
+					names.push_back(name);
+				}
+			}
+			if (stopEventJson.find("executionBehavior")
+					!= stopEventJson.end()) {
+				std::string behavior = stopEventJson.at("executionBehavior");
+
+				if (behavior == "parallel") {
+					executionBehavior =
+							PathPlannerTrajectory::StopEvent::ExecutionBehavior::PARALLEL;
+				} else if (behavior == "sequential") {
+					executionBehavior =
+							PathPlannerTrajectory::StopEvent::ExecutionBehavior::SEQUENTIAL;
+				}
+			}
+			if (stopEventJson.find("waitBehavior") != stopEventJson.end()) {
+				std::string behavior = stopEventJson.at("waitBehavior");
+
+				if (behavior == "none") {
+					waitBehvior =
+							PathPlannerTrajectory::StopEvent::WaitBehavior::NONE;
+				} else if (behavior == "before") {
+					waitBehvior =
+							PathPlannerTrajectory::StopEvent::WaitBehavior::BEFORE;
+				} else if (behavior == "after") {
+					waitBehvior =
+							PathPlannerTrajectory::StopEvent::WaitBehavior::AFTER;
+				} else if (behavior == "deadline") {
+					waitBehvior =
+							PathPlannerTrajectory::StopEvent::WaitBehavior::DEADLINE;
+				}
+			}
+			if (stopEventJson.find("waitTime") != stopEventJson.end()) {
+				waitTime = units::second_t {
+						static_cast<double>(stopEventJson.at("waitTime")) };
+			}
+
+			stopEvent = PathPlannerTrajectory::StopEvent(names,
+					executionBehavior, waitBehvior, waitTime);
+		}
+
 		waypoints.emplace_back(anchorPoint, prevControl, nextControl,
-				velOverride, holonomicAngle, isReversal, isStopPoint);
+				velOverride, holonomicAngle, isReversal, isStopPoint,
+				stopEvent);
 	}
 
 	return waypoints;

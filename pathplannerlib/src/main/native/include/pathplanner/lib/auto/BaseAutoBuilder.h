@@ -59,7 +59,7 @@ public:
 	frc2::CommandPtr resetPose(PathPlannerTrajectory trajectory);
 
 protected:
-	enum DriveTrainType {
+	enum class DriveTrainType {
 		HOLONOMIC, STANDARD
 	};
 

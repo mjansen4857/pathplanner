@@ -80,7 +80,7 @@ public abstract class BaseAutoBuilder {
 
   /**
    * Create a sequential command group that will follow each path in a path group and trigger events
-   * as it goes.
+   * as it goes. This will not run any stop events.
    *
    * @param pathGroup The path group to follow
    * @return Command for following all paths in the group
@@ -108,5 +108,91 @@ public abstract class BaseAutoBuilder {
     } else {
       return new InstantCommand(() -> resetPose.accept(trajectory.getInitialPose()));
     }
+  }
+
+  /**
+   * Wrap an event command, so it can be added to a command group
+   *
+   * @param eventCommand The event command to wrap
+   * @return Wrapped event command
+   */
+  protected CommandBase wrappedEventCommand(Command eventCommand) {
+    return new FunctionalCommand(
+        eventCommand::initialize,
+        eventCommand::execute,
+        eventCommand::end,
+        eventCommand::isFinished,
+        eventCommand.getRequirements().toArray(new Subsystem[0]));
+  }
+
+  /**
+   * Create a command group to handle all of the commands at a stop event
+   *
+   * @param stopEvent The stop event to create the command group for
+   * @return Command group for the stop event
+   */
+  public CommandBase stopEventGroup(PathPlannerTrajectory.StopEvent stopEvent) {
+    CommandGroupBase events =
+        switch (stopEvent.executionBehavior) {
+          case PARALLEL -> new ParallelCommandGroup();
+          case SEQUENTIAL -> new SequentialCommandGroup();
+        };
+
+    for (String name : stopEvent.names) {
+      if (eventMap.containsKey(name)) {
+        events.addCommands(wrappedEventCommand(eventMap.get(name)));
+      }
+    }
+
+    return switch (stopEvent.waitBehavior) {
+      case BEFORE -> new SequentialCommandGroup(new WaitCommand(stopEvent.waitTime), events);
+      case AFTER -> new SequentialCommandGroup(events, new WaitCommand(stopEvent.waitTime));
+      case DEADLINE -> new ParallelDeadlineGroup(new WaitCommand(stopEvent.waitTime), events);
+      case NONE -> events;
+    };
+  }
+
+  /**
+   * Create a complete autonomous command group. This will reset the robot pose at the begininng of
+   * the first path, follow paths, trigger events during path following, and run commands between
+   * paths with stop events.
+   *
+   * <p>Using this does have its limitations, but it should be good enough for most teams. However,
+   * if you want the auto command to function in a different way, you can create your own class that
+   * extends BaseAutoBuilder and override existing builder methods to create the command group
+   * however you wish.
+   *
+   * @param trajectory Single trajectory to follow during the auto
+   * @return Autonomous command
+   */
+  public CommandBase fullAuto(PathPlannerTrajectory trajectory) {
+    return fullAuto(new ArrayList<>(List.of(trajectory)));
+  }
+
+  /**
+   * Create a complete autonomous command group. This will reset the robot pose at the begininng of
+   * the first path, follow paths, trigger events during path following, and run commands between
+   * paths with stop events.
+   *
+   * <p>Using this does have its limitations, but it should be good enough for most teams. However,
+   * if you want the auto command to function in a different way, you can create your own class that
+   * extends BaseAutoBuilder and override existing builder methods to create the command group
+   * however you wish.
+   *
+   * @param pathGroup Path group to follow during the auto
+   * @return Autonomous command
+   */
+  public CommandBase fullAuto(ArrayList<PathPlannerTrajectory> pathGroup) {
+    SequentialCommandGroup group = new SequentialCommandGroup();
+
+    group.addCommands(resetPose(pathGroup.get(0)));
+
+    for (PathPlannerTrajectory traj : pathGroup) {
+      group.addCommands(stopEventGroup(traj.getStartStopEvent()), followPathWithEvents(traj));
+    }
+
+    group.addCommands(stopEventGroup(pathGroup.get(pathGroup.size() - 1).getEndStopEvent()));
+
+    return group;
   }
 }

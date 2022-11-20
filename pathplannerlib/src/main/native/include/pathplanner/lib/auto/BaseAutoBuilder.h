@@ -28,7 +28,7 @@ public:
 	 * @param pathGroup The path group to follow
 	 * @return Command for following all paths in the group
 	 */
-	frc2::CommandPtr followPathGroup(
+	virtual frc2::CommandPtr followPathGroup(
 			std::vector<PathPlannerTrajectory> pathGroup);
 
 	/**
@@ -37,16 +37,17 @@ public:
 	 * @param trajectory The trajectory to follow
 	 * @return Command that will follow the trajectory and trigger events
 	 */
-	frc2::CommandPtr followPathWithEvents(PathPlannerTrajectory trajectory);
+	virtual frc2::CommandPtr followPathWithEvents(
+			PathPlannerTrajectory trajectory);
 
 	/**
 	 * Create a sequential command group that will follow each path in a path group and trigger events
-	 * as it goes.
+	 * as it goes. This will not run any stop events.
 	 *
 	 * @param pathGroup The path group to follow
 	 * @return Command for following all paths in the group
 	 */
-	frc2::CommandPtr followPathGroupWithEvents(
+	virtual frc2::CommandPtr followPathGroupWithEvents(
 			std::vector<PathPlannerTrajectory> pathGroup);
 
 	/**
@@ -56,7 +57,47 @@ public:
 	 * @param trajectory The trajectory to reset the pose for
 	 * @return Command that will reset the pose
 	 */
-	frc2::CommandPtr resetPose(PathPlannerTrajectory trajectory);
+	virtual frc2::CommandPtr resetPose(PathPlannerTrajectory trajectory);
+
+	/**
+	 * Create a command group to handle all of the commands at a stop event
+	 *
+	 * @param stopEvent The stop event to create the command group for
+	 * @return Command group for the stop event
+	 */
+	virtual frc2::CommandPtr stopEventGroup(
+			PathPlannerTrajectory::StopEvent stopEvent);
+
+	/**
+	 * Create a complete autonomous command group. This will reset the robot pose at the begininng of
+	 * the first path, follow paths, trigger events during path following, and run commands between
+	 * paths with stop events.
+	 *
+	 * <p>Using this does have its limitations, but it should be good enough for most teams. However,
+	 * if you want the auto command to function in a different way, you can create your own class that
+	 * extends BaseAutoBuilder and override existing builder methods to create the command group
+	 * however you wish.
+	 *
+	 * @param trajectory Single trajectory to follow during the auto
+	 * @return Autonomous command
+	 */
+	virtual frc2::CommandPtr fullAuto(PathPlannerTrajectory trajectory);
+
+	/**
+	 * Create a complete autonomous command group. This will reset the robot pose at the begininng of
+	 * the first path, follow paths, trigger events during path following, and run commands between
+	 * paths with stop events.
+	 *
+	 * <p>Using this does have its limitations, but it should be good enough for most teams. However,
+	 * if you want the auto command to function in a different way, you can create your own class that
+	 * extends BaseAutoBuilder and override existing builder methods to create the command group
+	 * however you wish.
+	 *
+	 * @param pathGroup Path group to follow during the auto
+	 * @return Autonomous command
+	 */
+	virtual frc2::CommandPtr fullAuto(
+			std::vector<PathPlannerTrajectory> pathGroup);
 
 protected:
 	enum class DriveTrainType {
@@ -77,6 +118,15 @@ protected:
 			std::function<void(frc::Pose2d)> resetPose,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 			DriveTrainType drivetrainType);
+
+	/**
+	 * Wrap an event command, so it can be added to a command group
+	 *
+	 * @param eventCommand The event command to wrap
+	 * @return Wrapped event command
+	 */
+	virtual frc2::CommandPtr wrappedEventCommand(
+			std::shared_ptr<frc2::Command> command);
 
 	std::function<frc::Pose2d()> m_pose;
 	std::function<void(frc::Pose2d)> m_resetPose;

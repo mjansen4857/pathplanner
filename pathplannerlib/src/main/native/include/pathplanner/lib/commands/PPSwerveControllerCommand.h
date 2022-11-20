@@ -3,17 +3,25 @@
 #include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandHelper.h>
 #include <frc/Timer.h>
+#include <frc/controller/PIDController.h>
 #include <frc/geometry/Pose2d.h>
+#include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/kinematics/SwerveDriveKinematics.h>
 #include <frc/kinematics/SwerveModuleState.h>
+#include <frc/smartdashboard/SmartDashboard.h>
 #include <frc/smartdashboard/Field2d.h>
 #include "pathplanner/lib/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PPHolonomicDriveController.h"
+#include <unordered_map>
+#include <deque>
+#include <memory>
 #include <span>
 
 namespace pathplanner {
+template<size_t NumModules>
 class PPSwerveControllerCommand: public frc2::CommandHelper<frc2::CommandBase,
-		PPSwerveControllerCommand> {
+		PPSwerveControllerCommand<NumModules>> {
+
 public:
 	/**
 	 * @brief Constructs a new PPSwerveControllerCommand that when executed will follow the
@@ -30,11 +38,15 @@ public:
 	 */
 	PPSwerveControllerCommand(PathPlannerTrajectory trajectory,
 			std::function<frc::Pose2d()> pose,
-			frc::SwerveDriveKinematics<4> kinematics,
+			frc::SwerveDriveKinematics<NumModules> kinematics,
 			frc2::PIDController xController, frc2::PIDController yController,
 			frc2::PIDController rotationController,
-			std::function<void(std::array<frc::SwerveModuleState, 4>)> output,
-			std::initializer_list<frc2::Subsystem*> requirements);
+			std::function<void(std::array<frc::SwerveModuleState, NumModules>)> output,
+			std::initializer_list<frc2::Subsystem*> requirements) : m_trajectory(
+			trajectory), m_pose(pose), m_kinematics(kinematics), m_output(
+			output), m_controller(xController, yController, rotationController) {
+		this->AddRequirements(requirements);
+	}
 
 	/**
 	 * @brief Constructs a new PPSwerveControllerCommand that when executed will follow the
@@ -51,25 +63,69 @@ public:
 	 */
 	PPSwerveControllerCommand(PathPlannerTrajectory trajectory,
 			std::function<frc::Pose2d()> pose,
-			frc::SwerveDriveKinematics<4> kinematics,
+			frc::SwerveDriveKinematics<NumModules> kinematics,
 			frc2::PIDController xController, frc2::PIDController yController,
 			frc2::PIDController rotationController,
-			std::function<void(std::array<frc::SwerveModuleState, 4>)> output,
-			std::span<frc2::Subsystem* const > requirements = { });
+			std::function<void(std::array<frc::SwerveModuleState, NumModules>)> output,
+			std::span<frc2::Subsystem* const > requirements = { }) : m_trajectory(
+			trajectory), m_pose(pose), m_kinematics(kinematics), m_output(
+			output), m_controller(xController, yController, rotationController) {
+		this->AddRequirements(requirements);
+	}
 
-	void Initialize() override;
+	void Initialize() override {
+		frc::SmartDashboard::PutData("PPSwerveControllerCommand_field",
+				&this->m_field);
+		this->m_field.GetObject("traj")->SetTrajectory(
+				this->m_trajectory.asWPILibTrajectory());
 
-	void Execute() override;
+		this->m_timer.Reset();
+		this->m_timer.Start();
+	}
 
-	void End(bool interrupted) override;
+	void Execute() override {
+		auto currentTime = this->m_timer.Get();
+		auto desiredState = this->m_trajectory.sample(currentTime);
 
-	bool IsFinished() override;
+		frc::Pose2d currentPose = this->m_pose();
+		this->m_field.SetRobotPose(currentPose);
+
+		frc::SmartDashboard::PutNumber("PPSwerveControllerCommand_xError",
+				(currentPose.X() - desiredState.pose.X())());
+		frc::SmartDashboard::PutNumber("PPSwerveControllerCommand_yError",
+				(currentPose.Y() - desiredState.pose.Y())());
+		frc::SmartDashboard::PutNumber(
+				"PPSwerveControllerCommand_rotationError",
+				(currentPose.Rotation().Radians()
+						- desiredState.holonomicRotation.Radians())());
+
+		frc::ChassisSpeeds targetChassisSpeeds = this->m_controller.calculate(
+				currentPose, desiredState);
+		auto targetModuleStates = this->m_kinematics.ToSwerveModuleStates(
+				targetChassisSpeeds);
+
+		this->m_output(targetModuleStates);
+	}
+
+	void End(bool interrupted) override {
+		this->m_timer.Stop();
+
+		if (interrupted) {
+			this->m_output(
+					this->m_kinematics.ToSwerveModuleStates(
+							frc::ChassisSpeeds()));
+		}
+	}
+
+	bool IsFinished() override {
+		return this->m_timer.HasElapsed(this->m_trajectory.getTotalTime());
+	}
 
 private:
 	PathPlannerTrajectory m_trajectory;
 	std::function<frc::Pose2d()> m_pose;
-	frc::SwerveDriveKinematics<4> m_kinematics;
-	std::function<void(std::array<frc::SwerveModuleState, 4>)> m_output;
+	frc::SwerveDriveKinematics<NumModules> m_kinematics;
+	std::function<void(std::array<frc::SwerveModuleState, NumModules>)> m_output;
 
 	frc::Timer m_timer;
 	PPHolonomicDriveController m_controller;

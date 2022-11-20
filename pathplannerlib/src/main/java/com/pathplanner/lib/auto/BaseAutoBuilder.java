@@ -132,11 +132,11 @@ public abstract class BaseAutoBuilder {
    * @return Command group for the stop event
    */
   public CommandBase stopEventGroup(PathPlannerTrajectory.StopEvent stopEvent) {
-    CommandGroupBase events =
-        switch (stopEvent.executionBehavior) {
-          case PARALLEL -> new ParallelCommandGroup();
-          case SEQUENTIAL -> new SequentialCommandGroup();
-        };
+    CommandGroupBase events = new ParallelCommandGroup();
+    if (stopEvent.executionBehavior
+        == PathPlannerTrajectory.StopEvent.ExecutionBehavior.SEQUENTIAL) {
+      events = new SequentialCommandGroup();
+    }
 
     for (String name : stopEvent.names) {
       if (eventMap.containsKey(name)) {
@@ -144,12 +144,17 @@ public abstract class BaseAutoBuilder {
       }
     }
 
-    return switch (stopEvent.waitBehavior) {
-      case BEFORE -> new SequentialCommandGroup(new WaitCommand(stopEvent.waitTime), events);
-      case AFTER -> new SequentialCommandGroup(events, new WaitCommand(stopEvent.waitTime));
-      case DEADLINE -> new ParallelDeadlineGroup(new WaitCommand(stopEvent.waitTime), events);
-      case NONE -> events;
-    };
+    switch (stopEvent.waitBehavior) {
+      case BEFORE:
+        return new SequentialCommandGroup(new WaitCommand(stopEvent.waitTime), events);
+      case AFTER:
+        return new SequentialCommandGroup(events, new WaitCommand(stopEvent.waitTime));
+      case DEADLINE:
+        return new ParallelDeadlineGroup(new WaitCommand(stopEvent.waitTime), events);
+      case NONE:
+      default:
+        return events;
+    }
   }
 
   /**

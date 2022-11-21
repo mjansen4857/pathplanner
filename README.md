@@ -18,6 +18,7 @@ PathPlanner is a motion profile generator for FRC robots created by team 3015. T
 * Split a path into a "path group" to follow each part of a path seperately.
 * Auto path saving and file management
 * Robot-side vendor library for path generation and custom path following commands/controllers
+* Full autonomous command generation with PathPlannerLib AutoBuilder
 
 ## Usage and Documentation
 #### [Check the Wiki](https://github.com/mjansen4857/pathplanner/wiki)

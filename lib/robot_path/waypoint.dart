@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'package:pathplanner/robot_path/stop_event.dart';
+
 class Waypoint {
   Point anchorPoint;
   Point? prevControl;
@@ -9,7 +11,7 @@ class Waypoint {
   num? velOverride;
   bool isLocked;
   bool isStopPoint;
-  num waitTime;
+  StopEvent stopEvent;
 
   bool _isAnchorDragging = false;
   bool _isNextControlDragging = false;
@@ -25,7 +27,7 @@ class Waypoint {
     this.isLocked = false,
     this.velOverride,
     this.isStopPoint = false,
-    this.waitTime = 0,
+    required this.stopEvent,
   }) {
     if (isReversal) {
       nextControl = prevControl;
@@ -48,7 +50,7 @@ class Waypoint {
       velOverride: velOverride,
       isLocked: isLocked,
       isStopPoint: isStopPoint,
-      waitTime: waitTime,
+      stopEvent: stopEvent.clone(),
     );
   }
 
@@ -300,7 +302,7 @@ class Waypoint {
         velOverride = json['velOverride'],
         isLocked = json['isLocked'],
         isStopPoint = json['isStopPoint'] ?? false,
-        waitTime = json['waitTime'] ?? 0 {
+        stopEvent = StopEvent.fromJson(json['stopEvent'] ?? {}) {
     if ((isStartPoint() || isEndPoint() || isStopPoint) &&
         holonomicAngle == null) {
       holonomicAngle = 0;
@@ -333,7 +335,7 @@ class Waypoint {
       'velOverride': velOverride,
       'isLocked': isLocked,
       'isStopPoint': isStopPoint,
-      'waitTime': waitTime,
+      'stopEvent': stopEvent.toJson(),
     };
   }
 }

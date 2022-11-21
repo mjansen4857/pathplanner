@@ -136,7 +136,7 @@ class _MarkerCardState extends State<MarkerCard> {
                   },
                   name: widget.marker!.names[i],
                   label: 'Event ${i + 1}'),
-            if (widget.marker!.names.length < 8)
+            if (widget.marker!.names.length < 4)
               _buildNameTextField(
                 onSubmitted: (value) {
                   if (value.isNotEmpty) {

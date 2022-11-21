@@ -11,12 +11,14 @@ import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
   private final List<EventMarker> markers;
-  private final double endWaitTime;
+  private final StopEvent startStopEvent;
+  private final StopEvent endStopEvent;
 
   public PathPlannerTrajectory() {
     super();
     this.markers = new ArrayList<>();
-    this.endWaitTime = 0;
+    this.startStopEvent = new StopEvent();
+    this.endStopEvent = new StopEvent();
   }
 
   protected PathPlannerTrajectory(
@@ -28,16 +30,26 @@ public class PathPlannerTrajectory extends Trajectory {
 
     this.markers = markers;
     this.calculateMarkerTimes(pathPoints);
-    this.endWaitTime = pathPoints.get(pathPoints.size() - 1).waitTime;
+    this.startStopEvent = pathPoints.get(0).stopEvent;
+    this.endStopEvent = pathPoints.get(pathPoints.size() - 1).stopEvent;
   }
 
   /**
-   * Get the end wait time for this path configured in the GUI
+   * Get the "stop event" for the beginning of the path
    *
-   * @return End wait time in seconds
+   * @return The start stop event
    */
-  public double getEndWaitTimeSeconds() {
-    return this.endWaitTime;
+  public StopEvent getStartStopEvent() {
+    return this.startStopEvent;
+  }
+
+  /**
+   * Get the "stop event" for the end of the path
+   *
+   * @return The end stop event
+   */
+  public StopEvent getEndStopEvent() {
+    return this.endStopEvent;
   }
 
   /**
@@ -498,7 +510,7 @@ public class PathPlannerTrajectory extends Trajectory {
     protected Rotation2d holonomicRotation;
     protected boolean isReversal;
     protected boolean isStopPoint;
-    protected double waitTime;
+    protected StopEvent stopEvent;
 
     protected Waypoint(
         Translation2d anchorPoint,
@@ -508,7 +520,7 @@ public class PathPlannerTrajectory extends Trajectory {
         Rotation2d holonomicRotation,
         boolean isReversal,
         boolean isStopPoint,
-        double waitTime) {
+        StopEvent stopEvent) {
       this.anchorPoint = anchorPoint;
       this.prevControl = prevControl;
       this.nextControl = nextControl;
@@ -516,7 +528,7 @@ public class PathPlannerTrajectory extends Trajectory {
       this.holonomicRotation = holonomicRotation;
       this.isReversal = isReversal;
       this.isStopPoint = isStopPoint;
-      this.waitTime = waitTime;
+      this.stopEvent = stopEvent;
     }
   }
 
@@ -536,6 +548,76 @@ public class PathPlannerTrajectory extends Trajectory {
       m.timeSeconds = timeSeconds;
 
       return m;
+    }
+  }
+
+  public static class StopEvent {
+    public enum ExecutionBehavior {
+      PARALLEL("parallel"),
+      SEQUENTIAL("sequential");
+
+      public final String value;
+
+      ExecutionBehavior(String value) {
+        this.value = value;
+      }
+
+      public static ExecutionBehavior fromValue(String value) {
+        if (value.equals(PARALLEL.value)) {
+          return PARALLEL;
+        } else if (value.equals(SEQUENTIAL.value)) {
+          return SEQUENTIAL;
+        }
+
+        return null;
+      }
+    }
+
+    public enum WaitBehavior {
+      NONE("none"),
+      BEFORE("before"),
+      AFTER("after"),
+      DEADLINE("deadline");
+
+      public final String value;
+
+      WaitBehavior(String value) {
+        this.value = value;
+      }
+
+      public static WaitBehavior fromValue(String value) {
+        if (value.equals(NONE.value)) {
+          return NONE;
+        } else if (value.equals(BEFORE.value)) {
+          return BEFORE;
+        } else if (value.equals(AFTER.value)) {
+          return AFTER;
+        } else if (value.equals(DEADLINE.value)) {
+          return DEADLINE;
+        }
+
+        return null;
+      }
+    }
+
+    public final ArrayList<String> names;
+    public final ExecutionBehavior executionBehavior;
+    public final WaitBehavior waitBehavior;
+    public final double waitTime;
+
+    public StopEvent(
+        ArrayList<String> names,
+        ExecutionBehavior executionBehavior,
+        WaitBehavior waitBehavior,
+        double waitTime) {
+      this.names = names;
+      this.executionBehavior = executionBehavior;
+      this.waitBehavior = waitBehavior;
+      this.waitTime = waitTime;
+    }
+
+    public StopEvent() {
+      this(new ArrayList<>(), ExecutionBehavior.PARALLEL, WaitBehavior.NONE, 0);
     }
   }
 }

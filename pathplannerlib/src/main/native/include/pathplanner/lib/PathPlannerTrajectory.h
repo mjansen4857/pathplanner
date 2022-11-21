@@ -84,6 +84,37 @@ public:
 		friend class PathPlanner;
 	};
 
+	class StopEvent {
+	public:
+		enum class ExecutionBehavior {
+			PARALLEL, SEQUENTIAL
+		};
+		enum class WaitBehavior {
+			NONE, BEFORE, AFTER, DEADLINE
+		};
+
+		std::vector<std::string> names;
+		ExecutionBehavior executionBehavior;
+		WaitBehavior waitBehavior;
+		units::second_t waitTime;
+
+		StopEvent(std::vector<std::string> names,
+				ExecutionBehavior executionBehavior, WaitBehavior waitBehavior,
+				units::second_t waitTime) {
+			this->names = names;
+			this->executionBehavior = executionBehavior;
+			this->waitBehavior = waitBehavior;
+			this->waitTime = waitTime;
+		}
+
+		StopEvent() {
+			this->names = std::vector<std::string>();
+			this->executionBehavior = ExecutionBehavior::PARALLEL;
+			this->waitBehavior = WaitBehavior::NONE;
+			this->waitTime = 0_s;
+		}
+	};
+
 private:
 	class Waypoint {
 	public:
@@ -94,14 +125,14 @@ private:
 		frc::Rotation2d holonomicRotation;
 		bool isReversal;
 		bool isStopPoint;
-		units::second_t waitTime;
+		StopEvent stopEvent;
 
-		constexpr Waypoint(frc::Translation2d const anchorPoint,
+		Waypoint(frc::Translation2d const anchorPoint,
 				frc::Translation2d const prevControl,
 				frc::Translation2d const nextControl,
 				units::meters_per_second_t const velocityOverride,
 				frc::Rotation2d const holonomicRotation, bool const isReversal,
-				bool const isStopPoint, units::second_t const waitTime) {
+				bool const isStopPoint, StopEvent stopEvent) {
 			this->anchorPoint = anchorPoint;
 			this->prevControl = prevControl;
 			this->nextControl = nextControl;
@@ -109,13 +140,14 @@ private:
 			this->holonomicRotation = holonomicRotation;
 			this->isReversal = isReversal;
 			this->isStopPoint = isStopPoint;
-			this->waitTime = waitTime;
+			this->stopEvent = stopEvent;
 		}
 	};
 
 	std::vector<PathPlannerState> states;
 	std::vector<EventMarker> markers;
-	units::second_t endWaitTime;
+	StopEvent startStopEvent;
+	StopEvent endStopEvent;
 
 	static std::vector<PathPlannerState> generatePath(
 			std::vector<Waypoint> const &pathPoints,
@@ -149,12 +181,21 @@ public:
 	}
 
 	/**
-	 * @brief Get the end wait time for this path configured in the GUI
+	 * Get the "stop event" for the beginning of the path
 	 *
-	 * @return End wait time in seconds
+	 * @return The start stop event
 	 */
-	units::second_t getEndWaitTime() const {
-		return this->endWaitTime;
+	StopEvent getStartStopEvent() const {
+		return this->startStopEvent;
+	}
+
+	/**
+	 * Get the "stop event" for the end of the path
+	 *
+	 * @return The end stop event
+	 */
+	StopEvent getEndStopEvent() const {
+		return this->endStopEvent;
 	}
 
 	/**

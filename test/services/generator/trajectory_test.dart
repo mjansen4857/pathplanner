@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
+import 'package:pathplanner/robot_path/stop_event.dart';
 import 'package:pathplanner/robot_path/waypoint.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
 
@@ -14,10 +15,12 @@ void main() {
         Waypoint(
           anchorPoint: const Point(1.0, 3.0),
           nextControl: const Point(2.0, 3.0),
+          stopEvent: StopEvent(),
         ),
         Waypoint(
           prevControl: const Point(3.0, 4.0),
           anchorPoint: const Point(3.0, 5.0),
+          stopEvent: StopEvent(),
         ),
       ];
       RobotPath path =
@@ -33,15 +36,18 @@ void main() {
         Waypoint(
           anchorPoint: const Point(1.0, 3.0),
           nextControl: const Point(2.0, 3.0),
+          stopEvent: StopEvent(),
         ),
         Waypoint(
           prevControl: const Point(3.0, 4.0),
           anchorPoint: const Point(3.0, 5.0),
+          stopEvent: StopEvent(),
           isReversal: true,
         ),
         Waypoint(
           prevControl: const Point(4.0, 3.0),
           anchorPoint: const Point(5.0, 3.0),
+          stopEvent: StopEvent(),
         ),
       ];
       RobotPath path =

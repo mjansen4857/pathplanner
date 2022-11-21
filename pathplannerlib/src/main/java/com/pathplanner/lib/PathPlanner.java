@@ -263,7 +263,7 @@ public class PathPlanner {
             point1.holonomicRotation,
             false,
             false,
-            0));
+            new PathPlannerTrajectory.StopEvent()));
 
     for (int i = 1; i < allPoints.size(); i++) {
       PathPoint p1 = allPoints.get(i - 1);
@@ -290,7 +290,7 @@ public class PathPlanner {
               p2.holonomicRotation,
               false,
               false,
-              0));
+              new PathPlannerTrajectory.StopEvent()));
     }
 
     return new PathPlannerTrajectory(waypoints, new ArrayList<>(), constraints, reversed);
@@ -437,9 +437,46 @@ public class PathPlanner {
         velOverride = ((Number) jsonWaypoint.get("velOverride")).doubleValue();
       }
 
-      double waitTime = 0;
-      if (jsonWaypoint.get("waitTime") != null) {
-        waitTime = ((Number) jsonWaypoint.get("waitTime")).doubleValue();
+      PathPlannerTrajectory.StopEvent stopEvent = new PathPlannerTrajectory.StopEvent();
+      if (jsonWaypoint.get("stopEvent") != null) {
+        ArrayList<String> names = new ArrayList<>();
+        PathPlannerTrajectory.StopEvent.ExecutionBehavior executionBehavior =
+            PathPlannerTrajectory.StopEvent.ExecutionBehavior.PARALLEL;
+        PathPlannerTrajectory.StopEvent.WaitBehavior waitBehavior =
+            PathPlannerTrajectory.StopEvent.WaitBehavior.NONE;
+        double waitTime = 0;
+
+        JSONObject stopEventJson = (JSONObject) jsonWaypoint.get("stopEvent");
+        if (stopEventJson.get("names") != null) {
+          JSONArray namesArray = (JSONArray) stopEventJson.get("names");
+          for (Object name : namesArray) {
+            names.add(name.toString());
+          }
+        }
+        if (stopEventJson.get("executionBehavior") != null) {
+          PathPlannerTrajectory.StopEvent.ExecutionBehavior behavior =
+              PathPlannerTrajectory.StopEvent.ExecutionBehavior.fromValue(
+                  stopEventJson.get("executionBehavior").toString());
+
+          if (behavior != null) {
+            executionBehavior = behavior;
+          }
+        }
+        if (stopEventJson.get("waitBehavior") != null) {
+          PathPlannerTrajectory.StopEvent.WaitBehavior behavior =
+              PathPlannerTrajectory.StopEvent.WaitBehavior.fromValue(
+                  stopEventJson.get("waitBehavior").toString());
+
+          if (behavior != null) {
+            waitBehavior = behavior;
+          }
+        }
+        if (stopEventJson.get("waitTime") != null) {
+          waitTime = ((Number) stopEventJson.get("waitTime")).doubleValue();
+        }
+
+        stopEvent =
+            new PathPlannerTrajectory.StopEvent(names, executionBehavior, waitBehavior, waitTime);
       }
 
       waypoints.add(
@@ -451,7 +488,7 @@ public class PathPlanner {
               holonomicAngle,
               isReversal,
               isStopPoint,
-              waitTime));
+              stopEvent));
     }
 
     return waypoints;

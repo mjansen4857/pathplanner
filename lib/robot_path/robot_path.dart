@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:path/path.dart';
+import 'package:pathplanner/robot_path/stop_event.dart';
 import 'package:pathplanner/services/generator/trajectory.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_client.dart';
@@ -38,15 +39,18 @@ class RobotPath {
       Waypoint(
         anchorPoint: Point(1.0 * posScale, 3.0 * posScale),
         nextControl: Point(2.0 * posScale, 3.0 * posScale),
+        stopEvent: StopEvent(),
       ),
       Waypoint(
         prevControl: Point(3.0 * posScale, 4.0 * posScale),
         anchorPoint: Point(3.0 * posScale, 5.0 * posScale),
+        stopEvent: StopEvent(),
         isReversal: true,
       ),
       Waypoint(
         prevControl: Point(4.0 * posScale, 3.0 * posScale),
         anchorPoint: Point(5.0 * posScale, 3.0 * posScale),
+        stopEvent: StopEvent(),
       ),
     ];
     generateTrajectory();
@@ -150,12 +154,14 @@ class RobotPath {
           prevControl:
               (waypoints[waypoints.length - 1].nextControl! + anchorPos) * 0.5,
           anchorPoint: anchorPos,
+          stopEvent: StopEvent(),
         ),
       );
     } else {
       final Waypoint toAdd = Waypoint(
         prevControl: (anchorPos + waypoints[waypoint].nextControl!) * 0.5,
         anchorPoint: anchorPos,
+        stopEvent: StopEvent(),
       );
 
       waypoints.insert(waypoint + 1, toAdd);

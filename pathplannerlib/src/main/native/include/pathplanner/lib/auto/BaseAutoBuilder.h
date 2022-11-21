@@ -120,6 +120,21 @@ protected:
 			DriveTrainType drivetrainType);
 
 	/**
+	 * Construct a BaseAutoBuilder
+	 *
+	 * @param pose A function that supplies the robot pose - use one of the odometry classes
+	 *     to provide this.
+	 * @param eventMap Event map for triggering events at markers
+	 * @param drivetrainType Type of drivetrain the autobuilder is building for
+	 */
+	BaseAutoBuilder(std::function<frc::Pose2d()> pose,
+			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
+			DriveTrainType drivetrainType) : BaseAutoBuilder(pose,
+			[](frc::Pose2d pose) {
+			}, eventMap, drivetrainType) {
+	}
+
+	/**
 	 * Wrap an event command, so it can be added to a command group
 	 *
 	 * @param eventCommand The event command to wrap

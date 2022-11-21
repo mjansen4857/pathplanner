@@ -41,6 +41,21 @@ public abstract class BaseAutoBuilder {
   }
 
   /**
+   * Construct a BaseAutoBuilder
+   *
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param eventMap Event map for triggering events at markers
+   * @param drivetrainType Type of drivetrain the autobuilder is building for
+   */
+  protected BaseAutoBuilder(
+      Supplier<Pose2d> poseSupplier,
+      HashMap<String, Command> eventMap,
+      DrivetrainType drivetrainType) {
+    this(poseSupplier, (pose) -> {}, eventMap, drivetrainType);
+  }
+
+  /**
    * Create a path following command for a given trajectory. This will not trigger any events while
    * path following.
    *

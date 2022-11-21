@@ -2,7 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Enable this for app store builds and change the bool in home_page.dart -->
+    <!-- Enable this for app store builds-->
     <key>com.apple.security.app-sandbox</key>
 	<false/>
 

@@ -615,7 +615,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       widget.prefs.setDouble('robotWidth', json['robotSize']?['width'] ?? 0.75);
       widget.prefs
-          .setDouble('robotLength', json['robotSize']?['length'] ?? 0.75);
+          .setDouble('robotLength', json['robotSize']?['length'] ?? 1.0);
       widget.prefs.setBool('holonomicMode', json['holonomicMode'] ?? false);
       widget.prefs.setBool('generateJSON', json['generateJSON'] ?? false);
       widget.prefs.setBool('generateCSV', json['generateCSV'] ?? false);

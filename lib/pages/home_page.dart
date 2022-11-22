@@ -547,30 +547,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return buildFile.existsSync();
   }
 
-  void _loadSettingsFromPrefs() {
-    setState(() {
-      _robotSize = Size(
-        widget.prefs.getDouble('robotWidth') ?? 0.75,
-        widget.prefs.getDouble('robotLength') ?? 1.0,
-      );
-      _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
-      _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
-      _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
-      _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
-
-      if (_pplibClient) {
-        PPLibClient.initialize(widget.prefs);
-      } else {
-        PPLibClient.stopServer();
-      }
-    });
-  }
-
-  void _onProjectSettingsChanged() {
-    _loadSettingsFromPrefs();
-    _saveProjectSettingsToFile(_projectDir!);
-  }
-
   void _savePath(RobotPath path) async {
     if (_projectDir != null) {
       bool result = await path.savePath(
@@ -602,26 +578,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _loadProjectSettingsFromFile(Directory projectDir) async {
+  void _onProjectSettingsChanged() {
+    _loadSettingsFromPrefs();
+    _saveProjectSettingsToFile(_projectDir!);
+  }
+
+  void _loadSettingsFromPrefs() {
+    setState(() {
+      _robotSize = Size(
+        widget.prefs.getDouble('robotWidth') ?? 0.75,
+        widget.prefs.getDouble('robotLength') ?? 1.0,
+      );
+      _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
+      _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
+      _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
+      _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
+
+      if (_pplibClient) {
+        PPLibClient.initialize(widget.prefs);
+      } else {
+        PPLibClient.stopServer();
+      }
+    });
+  }
+
+  void _loadProjectSettingsFromFile(Directory projectDir) {
     File settingsFile = File(join(projectDir.path, _settingsDir));
 
-    if (!settingsFile.existsSync()) {
-      await settingsFile.create(recursive: true);
-    }
+    if (settingsFile.existsSync()) {
+      try {
+        final fileContents = settingsFile.readAsStringSync();
+        final json = jsonDecode(fileContents);
 
-    try {
-      final fileContents = await settingsFile.readAsString();
-      final json = await jsonDecode(fileContents);
-
-      widget.prefs.setDouble('robotWidth', json['robotSize']?['width'] ?? 0.75);
-      widget.prefs
-          .setDouble('robotLength', json['robotSize']?['length'] ?? 1.0);
-      widget.prefs.setBool('holonomicMode', json['holonomicMode'] ?? false);
-      widget.prefs.setBool('generateJSON', json['generateJSON'] ?? false);
-      widget.prefs.setBool('generateCSV', json['generateCSV'] ?? false);
-      widget.prefs.setBool('pplibClient', json['pplibClient'] ?? false);
-    } catch (error) {
-      Log.error('An error occurred while loading settings');
+        widget.prefs.setDouble('robotWidth', json['robotSize']?['width'] ?? 0.75);
+        widget.prefs.setDouble('robotLength', json['robotSize']?['length'] ?? 1.0);
+        widget.prefs.setBool('holonomicMode', json['holonomicMode'] ?? false);
+        widget.prefs.setBool('generateJSON', json['generateJSON'] ?? false);
+        widget.prefs.setBool('generateCSV', json['generateCSV'] ?? false);
+      } catch (error) {
+        Log.error('An error occurred while loading settings');
+      }
     }
 
     _loadSettingsFromPrefs();
@@ -644,7 +640,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       'holonomicMode': _holonomicMode,
       'generateJSON': _generateJSON,
       'generateCSV': _generateCSV,
-      'pplibClient': _pplibClient,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

@@ -602,23 +602,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  void _loadProjectSettingsFromFile(Directory projectDir) {
+  void _loadProjectSettingsFromFile(Directory projectDir) async {
     File settingsFile = File(join(projectDir.path, _settingsDir));
 
-    if (settingsFile.existsSync()) {
+    if (await settingsFile.exists()) {
       try {
-        final fileContents = settingsFile.readAsStringSync();
+        final fileContents = await settingsFile.readAsString();
         final json = jsonDecode(fileContents);
 
-        widget.prefs
-            .setDouble('robotWidth', json['robotSize']?['width'] ?? 0.75);
-        widget.prefs
-            .setDouble('robotLength', json['robotSize']?['length'] ?? 1.0);
+        widget.prefs.setDouble('robotWidth', json['robotWidth'] ?? 0.75);
+        widget.prefs.setDouble('robotLength', json['robotLength'] ?? 1.0);
         widget.prefs.setBool('holonomicMode', json['holonomicMode'] ?? false);
         widget.prefs.setBool('generateJSON', json['generateJSON'] ?? false);
         widget.prefs.setBool('generateCSV', json['generateCSV'] ?? false);
-      } catch (error) {
-        Log.error('An error occurred while loading project settings', error);
+      } catch (err) {
+        Log.error('An error occurred while loading project settings', err);
       }
     }
 

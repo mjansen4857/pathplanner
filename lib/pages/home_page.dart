@@ -618,7 +618,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         widget.prefs.setBool('generateJSON', json['generateJSON'] ?? false);
         widget.prefs.setBool('generateCSV', json['generateCSV'] ?? false);
       } catch (error) {
-        Log.error('An error occurred while loading settings');
+        Log.error('An error occurred while loading project settings', error);
       }
     }
 

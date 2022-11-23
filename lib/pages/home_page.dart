@@ -633,10 +633,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     const JsonEncoder encoder = JsonEncoder.withIndent('  ');
 
     Map<String, dynamic> settings = {
-      'robotSize': {
-        'width': _robotSize.width,
-        'length': _robotSize.height,
-      },
+      'robotWidth': _robotSize.width,
+      'robotLength': _robotSize.height,
       'holonomicMode': _holonomicMode,
       'generateJSON': _generateJSON,
       'generateCSV': _generateCSV,

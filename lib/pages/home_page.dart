@@ -645,9 +645,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {
-      Log.debug('Wrote json to file');
+      Log.debug('Wrote project settings to file');
     }).catchError((err) {
-      Log.error(err);
+      Log.error('Error writing project settings', err);
     });
   }
 

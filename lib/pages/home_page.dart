@@ -58,6 +58,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
   final GlobalKey _key = GlobalKey();
+  static const _settingsDir = '.pathplanner/settings.json';
 
   @override
   void initState() {
@@ -110,14 +111,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _paths = _loadPaths(_projectDir!);
         _isWpiLib = _isWpiLibProject(_projectDir!);
         _currentPath = _paths[0];
-        _robotSize = Size(widget.prefs.getDouble('robotWidth') ?? 0.75,
-            widget.prefs.getDouble('robotLength') ?? 1.0);
-        _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
-        _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
-        _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
-        _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
 
-        if (_pplibClient) PPLibClient.initialize(widget.prefs);
+        _loadProjectSettingsFromFile(_projectDir!);
 
         String? selectedFieldName = widget.prefs.getString('fieldImage');
         if (selectedFieldName != null) {
@@ -419,34 +414,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                           .setString('fieldImage', image.name);
                                     });
                                   },
-                                  onSettingsChanged: () {
-                                    setState(() {
-                                      _robotSize = Size(
-                                          widget.prefs
-                                                  .getDouble('robotWidth') ??
-                                              0.75,
-                                          widget.prefs
-                                                  .getDouble('robotLength') ??
-                                              1.0);
-                                      _holonomicMode = widget.prefs
-                                              .getBool('holonomicMode') ??
-                                          false;
-                                      _generateJSON = widget.prefs
-                                              .getBool('generateJSON') ??
-                                          false;
-                                      _generateCSV =
-                                          widget.prefs.getBool('generateCSV') ??
-                                              false;
-                                      _pplibClient =
-                                          widget.prefs.getBool('pplibClient') ??
-                                              false;
-                                      if (_pplibClient) {
-                                        PPLibClient.initialize(widget.prefs);
-                                      } else {
-                                        PPLibClient.stopServer();
-                                      }
-                                    });
-                                  },
+                                  onSettingsChanged: _onProjectSettingsChanged,
                                   onGenerationEnabled: () {
                                     for (RobotPath path in _paths) {
                                       _savePath(path);
@@ -610,10 +578,81 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  void _onProjectSettingsChanged() {
+    _loadSettingsFromPrefs();
+    _saveProjectSettingsToFile(_projectDir!);
+  }
+
+  void _loadSettingsFromPrefs() {
+    setState(() {
+      _robotSize = Size(
+        widget.prefs.getDouble('robotWidth') ?? 0.75,
+        widget.prefs.getDouble('robotLength') ?? 1.0,
+      );
+      _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
+      _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
+      _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
+      _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
+
+      if (_pplibClient) {
+        PPLibClient.initialize(widget.prefs);
+      } else {
+        PPLibClient.stopServer();
+      }
+    });
+  }
+
+  void _loadProjectSettingsFromFile(Directory projectDir) async {
+    File settingsFile = File(join(projectDir.path, _settingsDir));
+
+    if (await settingsFile.exists()) {
+      try {
+        final fileContents = await settingsFile.readAsString();
+        final json = jsonDecode(fileContents);
+
+        widget.prefs
+            .setDouble('robotWidth', json['robotWidth']?.toDouble() ?? 0.75);
+        widget.prefs
+            .setDouble('robotLength', json['robotLength']?.toDouble() ?? 1.0);
+        widget.prefs.setBool('holonomicMode', json['holonomicMode'] ?? false);
+        widget.prefs.setBool('generateJSON', json['generateJSON'] ?? false);
+        widget.prefs.setBool('generateCSV', json['generateCSV'] ?? false);
+      } catch (err) {
+        Log.error('An error occurred while loading project settings', err);
+      }
+    }
+
+    _loadSettingsFromPrefs();
+  }
+
+  void _saveProjectSettingsToFile(Directory projectDir) {
+    File settingsFile = File(join(projectDir.path, _settingsDir));
+
+    if (!settingsFile.existsSync()) {
+      settingsFile.createSync(recursive: true);
+    }
+
+    const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+
+    Map<String, dynamic> settings = {
+      'robotWidth': _robotSize.width,
+      'robotLength': _robotSize.height,
+      'holonomicMode': _holonomicMode,
+      'generateJSON': _generateJSON,
+      'generateCSV': _generateCSV,
+    };
+
+    settingsFile.writeAsString(encoder.convert(settings)).then((_) {
+      Log.debug('Wrote project settings to file');
+    }).catchError((err) {
+      Log.error('Error writing project settings', err);
+    });
+  }
+
   void _openProjectDialog(BuildContext context) async {
+    String initialDirectory = _projectDir?.path ?? Directory.current.path;
     String? projectFolder = await getDirectoryPath(
-        confirmButtonText: 'Open Project',
-        initialDirectory: Directory.current.path);
+        confirmButtonText: 'Open Project', initialDirectory: initialDirectory);
     if (projectFolder != null) {
       Directory pathsDir = _getPathsDir(Directory(projectFolder));
 
@@ -630,6 +669,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         _projectDir = Directory(projectFolder);
         _paths = _loadPaths(_projectDir!);
+        _loadProjectSettingsFromFile(_projectDir!);
         _isWpiLib = _isWpiLibProject(_projectDir!);
         _currentPath = _paths[0];
       });

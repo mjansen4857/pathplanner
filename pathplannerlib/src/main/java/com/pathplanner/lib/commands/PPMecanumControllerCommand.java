@@ -29,14 +29,52 @@ public class PPMecanumControllerCommand extends CommandBase {
   private final PPHolonomicDriveController controller;
   private final double maxWheelVelocityMetersPerSecond;
   private final Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds;
+  private final Consumer<ChassisSpeeds> outputChassisSpeeds;
+  private final boolean useKinematics;
   private final Field2d field = new Field2d();
 
   /**
    * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
    * trajectory. The user should implement a velocity PID on the desired output wheel velocities.
    *
-   * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path -
-   * this is left to the user, since it is not appropriate for paths with non-stationary end-states.
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path - this
+   * is left to the user, since it is not appropriate for paths with non-stationary end-states.
+   *
+   * @param trajectory The Pathplanner trajectory to follow.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param xController The Trajectory Tracker PID controller for the robot's x position.
+   * @param yController The Trajectory Tracker PID controller for the robot's y position.
+   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+   * @param outputChassisSpeeds A consumer for a ChassisSpeeds object containing the output speeds.
+   * @param requirements The subsystems to require.
+   */
+  public PPMecanumControllerCommand(
+      PathPlannerTrajectory trajectory,
+      Supplier<Pose2d> poseSupplier,
+      PIDController xController,
+      PIDController yController,
+      PIDController rotationController,
+      Consumer<ChassisSpeeds> outputChassisSpeeds,
+      Subsystem... requirements) {
+    this.trajectory = trajectory;
+    this.poseSupplier = poseSupplier;
+    this.kinematics = null;
+    this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
+    this.maxWheelVelocityMetersPerSecond = 0;
+    this.outputWheelSpeeds = null;
+    this.outputChassisSpeeds = outputChassisSpeeds;
+    this.useKinematics = false;
+
+    addRequirements(requirements);
+  }
+
+  /**
+   * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
+   * trajectory. The user should implement a velocity PID on the desired output wheel velocities.
+   *
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path - this
+   * is left to the user, since it is not appropriate for paths with non-stationary end-states.
    *
    * @param trajectory The Pathplanner trajectory to follow.
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
@@ -65,6 +103,8 @@ public class PPMecanumControllerCommand extends CommandBase {
     this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
     this.maxWheelVelocityMetersPerSecond = maxWheelVelocityMetersPerSecond;
     this.outputWheelSpeeds = outputWheelSpeeds;
+    this.outputChassisSpeeds = null;
+    this.useKinematics = true;
 
     addRequirements(requirements);
   }
@@ -100,11 +140,17 @@ public class PPMecanumControllerCommand extends CommandBase {
         currentPose.getRotation().getRadians() - desiredState.holonomicRotation.getRadians());
 
     ChassisSpeeds targetChassisSpeeds = this.controller.calculate(currentPose, desiredState);
-    MecanumDriveWheelSpeeds targetWheelSpeeds = this.kinematics.toWheelSpeeds(targetChassisSpeeds);
 
-    targetWheelSpeeds.desaturate(this.maxWheelVelocityMetersPerSecond);
+    if (this.useKinematics) {
+      MecanumDriveWheelSpeeds targetWheelSpeeds =
+          this.kinematics.toWheelSpeeds(targetChassisSpeeds);
 
-    this.outputWheelSpeeds.accept(targetWheelSpeeds);
+      targetWheelSpeeds.desaturate(this.maxWheelVelocityMetersPerSecond);
+
+      this.outputWheelSpeeds.accept(targetWheelSpeeds);
+    } else {
+      this.outputChassisSpeeds.accept(targetChassisSpeeds);
+    }
   }
 
   @Override
@@ -112,7 +158,11 @@ public class PPMecanumControllerCommand extends CommandBase {
     this.timer.stop();
 
     if (interrupted) {
-      this.outputWheelSpeeds.accept(new MecanumDriveWheelSpeeds(0, 0, 0, 0));
+      if (this.useKinematics) {
+        this.outputWheelSpeeds.accept(new MecanumDriveWheelSpeeds(0, 0, 0, 0));
+      } else {
+        this.outputChassisSpeeds.accept(new ChassisSpeeds());
+      }
     }
   }
 

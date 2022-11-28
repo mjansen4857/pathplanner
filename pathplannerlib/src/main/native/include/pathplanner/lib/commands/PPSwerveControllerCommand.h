@@ -29,11 +29,10 @@ public:
 	 * @param requirements       The subsystems to require.
 	 */
 	PPSwerveControllerCommand(PathPlannerTrajectory trajectory,
-			std::function<frc::Pose2d()> pose,
-			frc::SwerveDriveKinematics<4> kinematics,
-			frc2::PIDController xController, frc2::PIDController yController,
+			std::function<frc::Pose2d()> pose, frc2::PIDController xController,
+			frc2::PIDController yController,
 			frc2::PIDController rotationController,
-			std::function<void(std::array<frc::SwerveModuleState, 4>)> output,
+			std::function<void(frc::ChassisSpeeds)> output,
 			std::initializer_list<frc2::Subsystem*> requirements);
 
 	/**
@@ -69,7 +68,9 @@ private:
 	PathPlannerTrajectory m_trajectory;
 	std::function<frc::Pose2d()> m_pose;
 	frc::SwerveDriveKinematics<4> m_kinematics;
-	std::function<void(std::array<frc::SwerveModuleState, 4>)> m_output;
+	std::function<void(std::array<frc::SwerveModuleState, 4>)> m_outputStates;
+	std::function<void(frc::ChassisSpeeds)> m_outputChassisSpeeds;
+	bool m_useKinematics;
 
 	frc::Timer m_timer;
 	PPHolonomicDriveController m_controller;

@@ -6,16 +6,15 @@ using namespace pathplanner;
 
 PPMecanumControllerCommand::PPMecanumControllerCommand(
 		PathPlannerTrajectory trajectory, std::function<frc::Pose2d()> pose,
-		frc::MecanumDriveKinematics kinematics, frc2::PIDController xController,
-		frc2::PIDController yController, frc::PIDController thetaController,
-		units::meters_per_second_t maxWheelVelocity,
-		std::function<
-				void(units::meters_per_second_t, units::meters_per_second_t,
-						units::meters_per_second_t, units::meters_per_second_t)> output,
+		frc2::PIDController xController, frc2::PIDController yController,
+		frc::PIDController thetaController,
+		std::function<void(frc::ChassisSpeeds)> output,
 		std::initializer_list<frc2::Subsystem*> requirements) : m_trajectory(
 		std::move(trajectory)), m_pose(std::move(pose)), m_kinematics(
-		kinematics), m_controller(xController, yController, thetaController), m_maxWheelVelocity(
-		maxWheelVelocity), m_outputVel(output) {
+		frc::Translation2d(), frc::Translation2d(), frc::Translation2d(),
+		frc::Translation2d()), m_controller(xController, yController,
+		thetaController), m_maxWheelVelocity(0_mps), m_outputChassisSpeeds(
+		output), m_useKinematics(false) {
 	this->AddRequirements(requirements);
 }
 
@@ -30,7 +29,7 @@ PPMecanumControllerCommand::PPMecanumControllerCommand(
 		std::span<frc2::Subsystem* const > requirements) : m_trajectory(
 		std::move(trajectory)), m_pose(std::move(pose)), m_kinematics(
 		kinematics), m_controller(xController, yController, thetaController), m_maxWheelVelocity(
-		maxWheelVelocity), m_outputVel(output) {
+		maxWheelVelocity), m_outputVel(output), m_useKinematics(true) {
 	this->AddRequirements(requirements);
 }
 
@@ -61,16 +60,30 @@ void PPMecanumControllerCommand::Execute() {
 
 	auto targetChassisSpeeds = m_controller.calculate(currentPose,
 			desiredState);
-	auto targetWheelSpeeds = m_kinematics.ToWheelSpeeds(targetChassisSpeeds);
 
-	targetWheelSpeeds.Desaturate(m_maxWheelVelocity);
+	if (m_useKinematics) {
+		auto targetWheelSpeeds = m_kinematics.ToWheelSpeeds(
+				targetChassisSpeeds);
 
-	m_outputVel(targetWheelSpeeds.frontLeft, targetWheelSpeeds.rearLeft,
-			targetWheelSpeeds.frontRight, targetWheelSpeeds.rearRight);
+		targetWheelSpeeds.Desaturate(m_maxWheelVelocity);
+
+		m_outputVel(targetWheelSpeeds.frontLeft, targetWheelSpeeds.rearLeft,
+				targetWheelSpeeds.frontRight, targetWheelSpeeds.rearRight);
+	} else {
+		m_outputChassisSpeeds(targetChassisSpeeds);
+	}
 }
 
 void PPMecanumControllerCommand::End(bool interrupted) {
 	m_timer.Stop();
+
+	if (interrupted) {
+		if (m_useKinematics) {
+			m_outputVel(0_mps, 0_mps, 0_mps, 0_mps);
+		} else {
+			m_outputChassisSpeeds(frc::ChassisSpeeds());
+		}
+	}
 }
 
 bool PPMecanumControllerCommand::IsFinished() {

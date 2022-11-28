@@ -24,15 +24,53 @@ public class PPSwerveControllerCommand extends CommandBase {
   private final SwerveDriveKinematics kinematics;
   private final PPHolonomicDriveController controller;
   private final Consumer<SwerveModuleState[]> outputModuleStates;
+  private final Consumer<ChassisSpeeds> outputChassisSpeeds;
+  private final boolean useKinematics;
   private final Field2d field = new Field2d();
+
+  /**
+   * Constructs a new PPSwerveControllerCommand that when executed will follow the provided
+   * trajectory. This command will not return output voltages but ChassisSpeeds from the position
+   * controllers which need to be converted to module states and put into a velocity PID.
+   *
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path this is
+   * left to the user, since it is not appropriate for paths with nonstationary endstates.
+   *
+   * @param trajectory The trajectory to follow.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param xController The Trajectory Tracker PID controller for the robot's x position.
+   * @param yController The Trajectory Tracker PID controller for the robot's y position.
+   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+   * @param outputChassisSpeeds The field relative chassis speeds output consumer.
+   * @param requirements The subsystems to require.
+   */
+  public PPSwerveControllerCommand(
+      PathPlannerTrajectory trajectory,
+      Supplier<Pose2d> poseSupplier,
+      PIDController xController,
+      PIDController yController,
+      PIDController rotationController,
+      Consumer<ChassisSpeeds> outputChassisSpeeds,
+      Subsystem... requirements) {
+    this.trajectory = trajectory;
+    this.poseSupplier = poseSupplier;
+    this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
+    this.outputChassisSpeeds = outputChassisSpeeds;
+    this.outputModuleStates = null;
+    this.kinematics = null;
+    this.useKinematics = false;
+
+    addRequirements(requirements);
+  }
 
   /**
    * Constructs a new PPSwerveControllerCommand that when executed will follow the provided
    * trajectory. This command will not return output voltages but rather raw module states from the
    * position controllers which need to be put into a velocity PID.
    *
-   * <p>Note: The controllers will *not* set the outputVolts to zero upon completion of the path-
-   * this is left to the user, since it is not appropriate for paths with nonstationary endstates.
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path- this is
+   * left to the user, since it is not appropriate for paths with nonstationary endstates.
    *
    * @param trajectory The trajectory to follow.
    * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
@@ -58,6 +96,8 @@ public class PPSwerveControllerCommand extends CommandBase {
     this.kinematics = kinematics;
     this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
     this.outputModuleStates = outputModuleStates;
+    this.outputChassisSpeeds = null;
+    this.useKinematics = true;
 
     addRequirements(requirements);
   }
@@ -93,10 +133,15 @@ public class PPSwerveControllerCommand extends CommandBase {
         currentPose.getRotation().getRadians() - desiredState.holonomicRotation.getRadians());
 
     ChassisSpeeds targetChassisSpeeds = this.controller.calculate(currentPose, desiredState);
-    SwerveModuleState[] targetModuleStates =
-        this.kinematics.toSwerveModuleStates(targetChassisSpeeds);
 
-    this.outputModuleStates.accept(targetModuleStates);
+    if (this.useKinematics) {
+      SwerveModuleState[] targetModuleStates =
+          this.kinematics.toSwerveModuleStates(targetChassisSpeeds);
+
+      this.outputModuleStates.accept(targetModuleStates);
+    } else {
+      this.outputChassisSpeeds.accept(targetChassisSpeeds);
+    }
   }
 
   @Override
@@ -104,8 +149,12 @@ public class PPSwerveControllerCommand extends CommandBase {
     this.timer.stop();
 
     if (interrupted) {
-      this.outputModuleStates.accept(
-          this.kinematics.toSwerveModuleStates(new ChassisSpeeds(0, 0, 0)));
+      if (useKinematics) {
+        this.outputModuleStates.accept(
+            this.kinematics.toSwerveModuleStates(new ChassisSpeeds(0, 0, 0)));
+      } else {
+        this.outputChassisSpeeds.accept(new ChassisSpeeds());
+      }
     }
   }
 

@@ -8,13 +8,14 @@ using namespace pathplanner;
 
 PPSwerveControllerCommand::PPSwerveControllerCommand(
 		PathPlannerTrajectory trajectory, std::function<frc::Pose2d()> pose,
-		frc::SwerveDriveKinematics<4> kinematics,
 		frc2::PIDController xController, frc2::PIDController yController,
 		frc2::PIDController rotationController,
-		std::function<void(std::array<frc::SwerveModuleState, 4>)> output,
+		std::function<void(frc::ChassisSpeeds)> output,
 		std::initializer_list<frc2::Subsystem*> requirements) : m_trajectory(
-		trajectory), m_pose(pose), m_kinematics(kinematics), m_output(output), m_controller(
-		xController, yController, rotationController) {
+		trajectory), m_pose(pose), m_kinematics(frc::Translation2d(),
+		frc::Translation2d(), frc::Translation2d(), frc::Translation2d()), m_outputChassisSpeeds(
+		output), m_useKinematics(false), m_controller(xController, yController,
+		rotationController) {
 	this->AddRequirements(requirements);
 }
 
@@ -25,8 +26,9 @@ PPSwerveControllerCommand::PPSwerveControllerCommand(
 		frc2::PIDController rotationController,
 		std::function<void(std::array<frc::SwerveModuleState, 4>)> output,
 		std::span<frc2::Subsystem* const > requirements) : m_trajectory(
-		trajectory), m_pose(pose), m_kinematics(kinematics), m_output(output), m_controller(
-		xController, yController, rotationController) {
+		trajectory), m_pose(pose), m_kinematics(kinematics), m_outputStates(
+		output), m_useKinematics(true), m_controller(xController, yController,
+		rotationController) {
 	this->AddRequirements(requirements);
 }
 
@@ -57,18 +59,28 @@ void PPSwerveControllerCommand::Execute() {
 
 	frc::ChassisSpeeds targetChassisSpeeds = this->m_controller.calculate(
 			currentPose, desiredState);
-	auto targetModuleStates = this->m_kinematics.ToSwerveModuleStates(
-			targetChassisSpeeds);
 
-	this->m_output(targetModuleStates);
+	if (m_useKinematics) {
+		auto targetModuleStates = this->m_kinematics.ToSwerveModuleStates(
+				targetChassisSpeeds);
+
+		this->m_outputStates(targetModuleStates);
+	} else {
+		this->m_outputChassisSpeeds(targetChassisSpeeds);
+	}
 }
 
 void PPSwerveControllerCommand::End(bool interrupted) {
 	this->m_timer.Stop();
 
 	if (interrupted) {
-		this->m_output(
-				this->m_kinematics.ToSwerveModuleStates(frc::ChassisSpeeds()));
+		if (m_useKinematics) {
+			this->m_outputStates(
+					this->m_kinematics.ToSwerveModuleStates(
+							frc::ChassisSpeeds()));
+		} else {
+			this->m_outputChassisSpeeds(frc::ChassisSpeeds());
+		}
 	}
 }
 

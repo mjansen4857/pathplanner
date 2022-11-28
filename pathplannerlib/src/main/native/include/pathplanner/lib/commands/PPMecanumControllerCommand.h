@@ -50,27 +50,19 @@ public:
 	 * @param trajectory       The trajectory to follow.
 	 * @param pose             A function that supplies the robot pose - use one
 	 * of the odometry classes to provide this.
-	 * @param kinematics       The kinematics for the robot drivetrain.
 	 * @param xController      The Trajectory Tracker PID controller
 	 *                         for the robot's x position.
 	 * @param yController      The Trajectory Tracker PID controller
 	 *                         for the robot's y position.
 	 * @param thetaController  The Trajectory Tracker PID controller
 	 *                         for angle for the robot.
-	 * @param maxWheelVelocity The maximum velocity of a drivetrain wheel.
 	 * @param output           The output of the position PIDs.
 	 * @param requirements     The subsystems to require.
 	 */
 	PPMecanumControllerCommand(PathPlannerTrajectory trajectory,
-			std::function<frc::Pose2d()> pose,
-			frc::MecanumDriveKinematics kinematics,
-			frc2::PIDController xController, frc2::PIDController yController,
-			frc::PIDController thetaController,
-			units::meters_per_second_t maxWheelVelocity,
-			std::function<
-					void(units::meters_per_second_t, units::meters_per_second_t,
-							units::meters_per_second_t,
-							units::meters_per_second_t)> output,
+			std::function<frc::Pose2d()> pose, frc2::PIDController xController,
+			frc2::PIDController yController, frc::PIDController thetaController,
+			std::function<void(frc::ChassisSpeeds)> output,
 			std::initializer_list<frc2::Subsystem*> requirements);
 
 	/**
@@ -125,6 +117,8 @@ private:
 	std::function<
 			void(units::meters_per_second_t, units::meters_per_second_t,
 					units::meters_per_second_t, units::meters_per_second_t)> m_outputVel;
+	std::function<void(frc::ChassisSpeeds)> m_outputChassisSpeeds;
+	bool m_useKinematics;
 
 	frc::Timer m_timer;
 

@@ -2,6 +2,7 @@ package com.pathplanner.lib.auto;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.*;
 import java.util.*;
@@ -214,5 +215,9 @@ public abstract class BaseAutoBuilder {
     group.addCommands(stopEventGroup(pathGroup.get(pathGroup.size() - 1).getEndStopEvent()));
 
     return group;
+  }
+
+  protected static PIDController pidControllerFromConstants(PIDConstants constants) {
+    return new PIDController(constants.kP, constants.kI, constants.kD, constants.period);
   }
 }

@@ -1,4 +1,4 @@
-enum ExecutionBehavior { parallel, sequential }
+enum ExecutionBehavior { parallel, sequential, parallelDeadline }
 
 enum WaitBehavior { none, before, after, deadline }
 

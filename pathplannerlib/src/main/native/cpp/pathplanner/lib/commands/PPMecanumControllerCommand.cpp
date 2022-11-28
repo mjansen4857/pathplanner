@@ -23,9 +23,7 @@ PPMecanumControllerCommand::PPMecanumControllerCommand(
 		frc::MecanumDriveKinematics kinematics, frc2::PIDController xController,
 		frc2::PIDController yController, frc::PIDController thetaController,
 		units::meters_per_second_t maxWheelVelocity,
-		std::function<
-				void(units::meters_per_second_t, units::meters_per_second_t,
-						units::meters_per_second_t, units::meters_per_second_t)> output,
+		std::function<void(frc::MecanumDriveWheelSpeeds)> output,
 		std::span<frc2::Subsystem* const > requirements) : m_trajectory(
 		std::move(trajectory)), m_pose(std::move(pose)), m_kinematics(
 		kinematics), m_controller(xController, yController, thetaController), m_maxWheelVelocity(
@@ -67,8 +65,7 @@ void PPMecanumControllerCommand::Execute() {
 
 		targetWheelSpeeds.Desaturate(m_maxWheelVelocity);
 
-		m_outputVel(targetWheelSpeeds.frontLeft, targetWheelSpeeds.rearLeft,
-				targetWheelSpeeds.frontRight, targetWheelSpeeds.rearRight);
+		m_outputVel(targetWheelSpeeds);
 	} else {
 		m_outputChassisSpeeds(targetChassisSpeeds);
 	}
@@ -79,7 +76,7 @@ void PPMecanumControllerCommand::End(bool interrupted) {
 
 	if (interrupted) {
 		if (m_useKinematics) {
-			m_outputVel(0_mps, 0_mps, 0_mps, 0_mps);
+			m_outputVel(frc::MecanumDriveWheelSpeeds());
 		} else {
 			m_outputChassisSpeeds(frc::ChassisSpeeds());
 		}

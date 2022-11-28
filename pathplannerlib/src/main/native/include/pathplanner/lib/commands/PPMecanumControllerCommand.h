@@ -94,10 +94,7 @@ public:
 			frc2::PIDController xController, frc2::PIDController yController,
 			frc::PIDController thetaController,
 			units::meters_per_second_t maxWheelVelocity,
-			std::function<
-					void(units::meters_per_second_t, units::meters_per_second_t,
-							units::meters_per_second_t,
-							units::meters_per_second_t)> output,
+			std::function<void(frc::MecanumDriveWheelSpeeds)> output,
 			std::span<frc2::Subsystem* const > requirements = { });
 
 	void Initialize() override;
@@ -114,9 +111,7 @@ private:
 	frc::MecanumDriveKinematics m_kinematics;
 	PPHolonomicDriveController m_controller;
 	const units::meters_per_second_t m_maxWheelVelocity;
-	std::function<
-			void(units::meters_per_second_t, units::meters_per_second_t,
-					units::meters_per_second_t, units::meters_per_second_t)> m_outputVel;
+	std::function<void(frc::MecanumDriveWheelSpeeds)> m_outputVel;
 	std::function<void(frc::ChassisSpeeds)> m_outputChassisSpeeds;
 	bool m_useKinematics;
 

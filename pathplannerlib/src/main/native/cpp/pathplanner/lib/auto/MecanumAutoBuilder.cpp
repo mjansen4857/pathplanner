@@ -22,9 +22,7 @@ MecanumAutoBuilder::MecanumAutoBuilder(std::function<frc::Pose2d()> pose,
 		frc::MecanumDriveKinematics kinematics,
 		PIDConstants translationConstants, PIDConstants rotationConstants,
 		units::meters_per_second_t maxWheelVelocity,
-		std::function<
-				void(units::meters_per_second_t, units::meters_per_second_t,
-						units::meters_per_second_t, units::meters_per_second_t)> output,
+		std::function<void(frc::MecanumDriveWheelSpeeds)> output,
 		std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 		std::initializer_list<frc2::Subsystem*> driveRequirements) : BaseAutoBuilder(
 		pose, resetPose, eventMap, BaseAutoBuilder::DriveTrainType::HOLONOMIC), m_kinematics(

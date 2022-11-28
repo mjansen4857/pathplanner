@@ -64,10 +64,7 @@ public:
 			frc::MecanumDriveKinematics kinematics,
 			PIDConstants translationConstants, PIDConstants rotationConstants,
 			units::meters_per_second_t maxWheelVelocity,
-			std::function<
-					void(units::meters_per_second_t, units::meters_per_second_t,
-							units::meters_per_second_t,
-							units::meters_per_second_t)> output,
+			std::function<void(frc::MecanumDriveWheelSpeeds)> output,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 			std::initializer_list<frc2::Subsystem*> driveRequirements);
 
@@ -78,9 +75,7 @@ private:
 	PIDConstants m_translationConstants;
 	PIDConstants m_rotationConstants;
 	const units::meters_per_second_t m_maxWheelVelocity;
-	std::function<
-			void(units::meters_per_second_t, units::meters_per_second_t,
-					units::meters_per_second_t, units::meters_per_second_t)> m_outputVel;
+	std::function<void(frc::MecanumDriveWheelSpeeds)> m_outputVel;
 	std::function<void(frc::ChassisSpeeds)> m_outputChassisSpeeds;
 	std::initializer_list<frc2::Subsystem*> m_driveRequirements;
 

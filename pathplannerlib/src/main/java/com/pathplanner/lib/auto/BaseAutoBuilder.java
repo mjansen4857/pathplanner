@@ -182,6 +182,8 @@ public abstract class BaseAutoBuilder {
         return new SequentialCommandGroup(events, new WaitCommand(stopEvent.waitTime));
       case DEADLINE:
         return new ParallelDeadlineGroup(new WaitCommand(stopEvent.waitTime), events);
+      case MINIMUM:
+        return new ParallelCommandGroup(new WaitCommand(stopEvent.waitTime), events);
       case NONE:
       default:
         return events;

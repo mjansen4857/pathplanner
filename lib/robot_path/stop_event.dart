@@ -1,6 +1,6 @@
 enum ExecutionBehavior { parallel, sequential, parallelDeadline }
 
-enum WaitBehavior { none, before, after, deadline }
+enum WaitBehavior { none, before, after, deadline, minimum }
 
 class StopEvent {
   List<String> eventNames;

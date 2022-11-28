@@ -285,6 +285,9 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(
 				} else if (behavior == "deadline") {
 					waitBehvior =
 							PathPlannerTrajectory::StopEvent::WaitBehavior::DEADLINE;
+				} else if (behavior == "minimum") {
+					waitBehvior =
+							PathPlannerTrajectory::StopEvent::WaitBehavior::MINIMUM;
 				}
 			}
 			if (stopEventJson.find("waitTime") != stopEventJson.end()) {

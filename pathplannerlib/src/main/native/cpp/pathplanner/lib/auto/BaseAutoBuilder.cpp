@@ -130,6 +130,13 @@ frc2::CommandPtr BaseAutoBuilder::stopEventGroup(
 		return frc2::ParallelDeadlineGroup(
 				std::make_unique < frc2::WaitCommand > (stopEvent.waitTime),
 				std::move(commands)).ToPtr();
+	} else if (stopEvent.waitBehavior
+			== PathPlannerTrajectory::StopEvent::WaitBehavior::MINIMUM) {
+		std::vector < std::unique_ptr < frc2::Command >> commands;
+		commands.emplace_back(
+				std::make_unique < frc2::WaitCommand > (stopEvent.waitTime));
+		commands.emplace_back(std::move(events).Unwrap());
+		return frc2::ParallelCommandGroup(std::move(commands)).ToPtr();
 	} else {
 		return events;
 	}

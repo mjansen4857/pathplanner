@@ -580,7 +580,8 @@ public class PathPlannerTrajectory extends Trajectory {
       NONE("none"),
       BEFORE("before"),
       AFTER("after"),
-      DEADLINE("deadline");
+      DEADLINE("deadline"),
+      MINIMUM("minimum");
 
       public final String value;
 
@@ -597,6 +598,8 @@ public class PathPlannerTrajectory extends Trajectory {
           return AFTER;
         } else if (value.equals(DEADLINE.value)) {
           return DEADLINE;
+        } else if (value.equals(MINIMUM.value)) {
+          return MINIMUM;
         }
 
         return null;

@@ -90,7 +90,7 @@ public:
 			PARALLEL, SEQUENTIAL, PARALLEL_DEADLINE
 		};
 		enum class WaitBehavior {
-			NONE, BEFORE, AFTER, DEADLINE
+			NONE, BEFORE, AFTER, DEADLINE, MINIMUM
 		};
 
 		std::vector<std::string> names;

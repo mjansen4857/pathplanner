@@ -10,6 +10,28 @@
 namespace pathplanner {
 class RamseteAutoBuilder: public BaseAutoBuilder {
 public:
+	/**
+	 * Create an auto builder that will create command groups that will handle path following and
+	 * triggering events.
+	 *
+	 * <p>This auto builder will use RamseteCommand to follow paths.
+	 * 
+	 * @param pose A function that supplies the robot pose - use one of the odometry classes
+	 *     to provide this.
+	 * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+	 *     be called once at the beginning of an auto.
+	 * @param controller The RAMSETE controller used to follow the trajectory.
+	 * @param kinematics The kinematics for the robot drivetrain.
+	 * @param feedforward The feedforward to use for the drive.
+	 * @param speedsSupplier A function that supplies the speeds of the left and right sides of the
+	 *     robot drive.
+	 * @param driveConstants PIDConstants for each side of the drive train
+	 * @param output Output consumer that accepts left and right voltages
+	 * @param eventMap Map of event marker names to the commands that should run when reaching that
+	 *     marker.
+	 * @param driveRequirements The subsystems that the path following commands should require.
+	 *     Usually just a Drive subsystem.
+	 */
 	RamseteAutoBuilder(std::function<frc::Pose2d()> pose,
 			std::function<void(frc::Pose2d)> resetPose,
 			frc::RamseteController controller,
@@ -21,6 +43,24 @@ public:
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 			std::initializer_list<frc2::Subsystem*> driveRequirements);
 
+	/**
+	 * Create an auto builder that will create command groups that will handle path following and
+	 * triggering events.
+	 *
+	 * <p>This auto builder will use RamseteCommand to follow paths.
+	 * 
+	 * @param pose A function that supplies the robot pose - use one of the odometry classes
+	 *     to provide this.
+	 * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+	 *     be called once at the beginning of an auto.
+	 * @param controller The RAMSETE controller used to follow the trajectory.
+	 * @param kinematics The kinematics for the robot drivetrain.
+	 * @param output Output consumer that accepts left and right speeds
+	 * @param eventMap Map of event marker names to the commands that should run when reaching that
+	 *     marker.
+	 * @param driveRequirements The subsystems that the path following commands should require.
+	 *     Usually just a Drive subsystem.
+	 */
 	RamseteAutoBuilder(std::function<frc::Pose2d()> pose,
 			std::function<void(frc::Pose2d)> resetPose,
 			frc::RamseteController controller,

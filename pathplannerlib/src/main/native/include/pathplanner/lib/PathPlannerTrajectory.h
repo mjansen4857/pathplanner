@@ -87,7 +87,7 @@ public:
 	class StopEvent {
 	public:
 		enum class ExecutionBehavior {
-			PARALLEL, SEQUENTIAL
+			PARALLEL, SEQUENTIAL, PARALLEL_DEADLINE
 		};
 		enum class WaitBehavior {
 			NONE, BEFORE, AFTER, DEADLINE

@@ -149,12 +149,27 @@ public abstract class BaseAutoBuilder {
    */
   public CommandBase stopEventGroup(PathPlannerTrajectory.StopEvent stopEvent) {
     CommandGroupBase events = new ParallelCommandGroup();
+
     if (stopEvent.executionBehavior
         == PathPlannerTrajectory.StopEvent.ExecutionBehavior.SEQUENTIAL) {
       events = new SequentialCommandGroup();
+    } else if (stopEvent.executionBehavior
+        == PathPlannerTrajectory.StopEvent.ExecutionBehavior.PARALLEL_DEADLINE) {
+      CommandBase deadline = new InstantCommand();
+      if (eventMap.containsKey(stopEvent.names.get(0))) {
+        deadline = wrappedEventCommand(eventMap.get(stopEvent.names.get(0)));
+      }
+      events = new ParallelDeadlineGroup(deadline);
     }
 
-    for (String name : stopEvent.names) {
+    for (int i =
+            (stopEvent.executionBehavior
+                    == PathPlannerTrajectory.StopEvent.ExecutionBehavior.PARALLEL_DEADLINE
+                ? 1
+                : 0);
+        i < stopEvent.names.size();
+        i++) {
+      String name = stopEvent.names.get(i);
       if (eventMap.containsKey(name)) {
         events.addCommands(wrappedEventCommand(eventMap.get(name)));
       }

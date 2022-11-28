@@ -4,8 +4,10 @@
 #include <unordered_map>
 #include <frc/geometry/Pose2d.h>
 #include <frc2/command/CommandBase.h>
+#include <frc/controller/PIDController.h>
 
 #include "pathplanner/lib/PathPlannerTrajectory.h"
+#include "pathplanner/lib/auto/PIDConstants.h"
 
 namespace pathplanner {
 class BaseAutoBuilder {
@@ -142,6 +144,12 @@ protected:
 	 */
 	virtual frc2::CommandPtr wrappedEventCommand(
 			std::shared_ptr<frc2::Command> command);
+
+	static inline frc::PIDController pidControllerFromConstants(
+			PIDConstants constants) {
+		return frc::PIDController(constants.m_kP, constants.m_kI,
+				constants.m_kD, constants.m_period);
+	}
 
 	std::function<frc::Pose2d()> m_pose;
 	std::function<void(frc::Pose2d)> m_resetPose;

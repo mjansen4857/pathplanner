@@ -265,6 +265,9 @@ std::vector<PathPlannerTrajectory::Waypoint> PathPlanner::getWaypointsFromJson(
 				} else if (behavior == "sequential") {
 					executionBehavior =
 							PathPlannerTrajectory::StopEvent::ExecutionBehavior::SEQUENTIAL;
+				} else if (behavior == "parallelDeadline") {
+					executionBehavior =
+							PathPlannerTrajectory::StopEvent::ExecutionBehavior::PARALLEL_DEADLINE;
 				}
 			}
 			if (stopEventJson.find("waitBehavior") != stopEventJson.end()) {

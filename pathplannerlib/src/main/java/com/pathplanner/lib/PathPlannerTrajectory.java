@@ -554,7 +554,8 @@ public class PathPlannerTrajectory extends Trajectory {
   public static class StopEvent {
     public enum ExecutionBehavior {
       PARALLEL("parallel"),
-      SEQUENTIAL("sequential");
+      SEQUENTIAL("sequential"),
+      PARALLEL_DEADLINE("parallelDeadline");
 
       public final String value;
 
@@ -567,6 +568,8 @@ public class PathPlannerTrajectory extends Trajectory {
           return PARALLEL;
         } else if (value.equals(SEQUENTIAL.value)) {
           return SEQUENTIAL;
+        } else if (value.equals(PARALLEL_DEADLINE.value)) {
+          return PARALLEL_DEADLINE;
         }
 
         return null;

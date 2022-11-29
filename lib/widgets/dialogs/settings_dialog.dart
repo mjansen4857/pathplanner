@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/widgets/dialogs/edit_field_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../field_image.dart';
@@ -117,6 +118,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildFieldImageDropdown(context),
                 _buildTeamColorPicker(context),
@@ -432,6 +434,75 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 ),
               ),
             ),
+          ),
+        ),
+        Visibility(
+          visible: _selectedField.isCustom,
+          child: Row(
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return EditFieldDialog(fieldImage: _selectedField);
+                      });
+                },
+                style: ElevatedButton.styleFrom(
+                  fixedSize: const Size(80, 24),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Edit'),
+              ),
+              const SizedBox(width: 5),
+              ElevatedButton(
+                onPressed: () {
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Delete Custom Field Image'),
+                          content: Text(
+                              'Are you sure you want to delete the custom field "${_selectedField.name}"? This cannot be undone.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+
+                                Directory appDir =
+                                    await getApplicationSupportDirectory();
+                                Directory imagesDir = Directory(
+                                    join(appDir.path, 'custom_fields'));
+                                File imageFile = File(join(imagesDir.path,
+                                    '${_selectedField.name}_${_selectedField.pixelsPerMeter.toStringAsFixed(2)}.${_selectedField.extension}'));
+
+                                await imageFile.delete();
+                                widget.fieldImages.remove(_selectedField);
+                                setState(() {
+                                  _selectedField = FieldImage.defaultField;
+                                });
+                                widget.onFieldSelected(FieldImage.defaultField);
+                              },
+                              child: const Text('Confirm'),
+                            ),
+                          ],
+                        );
+                      });
+                },
+                style: ElevatedButton.styleFrom(
+                  fixedSize: const Size(80, 24),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  foregroundColor: colorScheme.error,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
         ),
       ],

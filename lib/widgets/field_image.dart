@@ -12,16 +12,20 @@ enum OfficialField {
 class FieldImage {
   late final Image image;
   late final ui.Size defaultSize;
-  late final num pixelsPerMeter;
-  late final String name;
+  late num pixelsPerMeter;
+  late String name;
+  late final bool isCustom;
+  late final String extension;
 
-  static final FieldImage defaultField =
-      FieldImage.official(OfficialField.rapidReact);
+  static List<FieldImage>? _officialFields;
+
+  static final FieldImage defaultField = offialFields()[0];
 
   static List<FieldImage> offialFields() {
-    return [
+    _officialFields ??= [
       FieldImage.official(OfficialField.rapidReact),
     ];
+    return _officialFields!;
   }
 
   FieldImage.official(OfficialField field) {
@@ -37,6 +41,8 @@ class FieldImage {
         name = 'Rapid React';
         break;
     }
+    isCustom = false;
+    extension = 'png';
   }
 
   FieldImage.custom(File imageFile) {
@@ -60,6 +66,8 @@ class FieldImage {
         fileName.lastIndexOf('_') + 1, fileName.lastIndexOf('.'));
     pixelsPerMeter = num.parse(ppm);
     name = fileName.substring(0, fileName.lastIndexOf('_'));
+    extension = fileName.substring(fileName.lastIndexOf('.') + 1);
+    isCustom = true;
   }
 
   @override

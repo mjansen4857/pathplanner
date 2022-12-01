@@ -39,18 +39,24 @@ class RobotPath {
       Waypoint(
         anchorPoint: Point(1.0 * posScale, 3.0 * posScale),
         nextControl: Point(2.0 * posScale, 3.0 * posScale),
-        stopEvent: StopEvent(),
+        stopEvent: StopEvent(
+          eventNames: [],
+        ),
       ),
       Waypoint(
         prevControl: Point(3.0 * posScale, 4.0 * posScale),
         anchorPoint: Point(3.0 * posScale, 5.0 * posScale),
-        stopEvent: StopEvent(),
+        stopEvent: StopEvent(
+          eventNames: [],
+        ),
         isReversal: true,
       ),
       Waypoint(
         prevControl: Point(4.0 * posScale, 3.0 * posScale),
         anchorPoint: Point(5.0 * posScale, 3.0 * posScale),
-        stopEvent: StopEvent(),
+        stopEvent: StopEvent(
+          eventNames: [],
+        ),
       ),
     ];
     generateTrajectory();
@@ -154,14 +160,18 @@ class RobotPath {
           prevControl:
               (waypoints[waypoints.length - 1].nextControl! + anchorPos) * 0.5,
           anchorPoint: anchorPos,
-          stopEvent: StopEvent(),
+          stopEvent: StopEvent(
+            eventNames: [],
+          ),
         ),
       );
     } else {
       final Waypoint toAdd = Waypoint(
         prevControl: (anchorPos + waypoints[waypoint].nextControl!) * 0.5,
         anchorPoint: anchorPos,
-        stopEvent: StopEvent(),
+        stopEvent: StopEvent(
+          eventNames: [],
+        ),
       );
 
       waypoints.insert(waypoint + 1, toAdd);

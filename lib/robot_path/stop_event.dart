@@ -9,7 +9,7 @@ class StopEvent {
   num waitTime;
 
   StopEvent({
-    this.eventNames = const [],
+    required this.eventNames,
     this.executionBehavior = ExecutionBehavior.parallel,
     this.waitBehavior = WaitBehavior.none,
     this.waitTime = 0,

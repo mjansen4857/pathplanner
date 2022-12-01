@@ -257,7 +257,7 @@ class _StopEventCardState extends State<StopEventCard> {
                         widget.stopEvent!.eventNames[i] = value;
                         widget.onEdited(_oldEvent!);
                       });
-                    } else if (widget.stopEvent!.eventNames.length > 1) {
+                    } else if (widget.stopEvent!.eventNames.isNotEmpty) {
                       setState(() {
                         _oldEvent = widget.stopEvent!.clone();
                         widget.stopEvent!.eventNames.removeAt(i);

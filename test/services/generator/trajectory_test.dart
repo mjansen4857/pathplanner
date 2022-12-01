@@ -15,12 +15,16 @@ void main() {
         Waypoint(
           anchorPoint: const Point(1.0, 3.0),
           nextControl: const Point(2.0, 3.0),
-          stopEvent: StopEvent(),
+          stopEvent: StopEvent(
+            eventNames: [],
+          ),
         ),
         Waypoint(
           prevControl: const Point(3.0, 4.0),
           anchorPoint: const Point(3.0, 5.0),
-          stopEvent: StopEvent(),
+          stopEvent: StopEvent(
+            eventNames: [],
+          ),
         ),
       ];
       RobotPath path =
@@ -36,18 +40,24 @@ void main() {
         Waypoint(
           anchorPoint: const Point(1.0, 3.0),
           nextControl: const Point(2.0, 3.0),
-          stopEvent: StopEvent(),
+          stopEvent: StopEvent(
+            eventNames: [],
+          ),
         ),
         Waypoint(
           prevControl: const Point(3.0, 4.0),
           anchorPoint: const Point(3.0, 5.0),
-          stopEvent: StopEvent(),
+          stopEvent: StopEvent(
+            eventNames: [],
+          ),
           isReversal: true,
         ),
         Waypoint(
           prevControl: const Point(4.0, 3.0),
           anchorPoint: const Point(5.0, 3.0),
-          stopEvent: StopEvent(),
+          stopEvent: StopEvent(
+            eventNames: [],
+          ),
         ),
       ];
       RobotPath path =

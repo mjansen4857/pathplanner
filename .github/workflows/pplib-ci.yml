@@ -65,10 +65,8 @@ jobs:
         include:
           - os: windows-2022
             artifact-name: PPLib-Win64
-            architecture: x64
           - os: macos-12
             artifact-name: PPLib-macOS
-            architecture: x64
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     runs-on: ${{ matrix.os }}
     steps:
@@ -78,9 +76,8 @@ jobs:
       - name: Setup java
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
-          architecture: ${{ matrix.architecture }}
-          distribution: 'temurin'
+          java-version: '17'
+          distribution: 'zulu'
       
       - name: Build
         run: ./gradlew build -PreleaseMode -Pbuildalldesktop
@@ -113,8 +110,8 @@ jobs:
       - name: Setup java
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
-          distribution: 'temurin'
+          java-version: '17'
+          distribution: 'zulu'
       
       - name: Combine
         run: ./gradlew publish -Pthirdparty

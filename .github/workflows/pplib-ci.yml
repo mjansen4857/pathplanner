@@ -110,7 +110,7 @@ jobs:
       - name: Setup java
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '11'
           distribution: 'zulu'
       
       - name: Combine

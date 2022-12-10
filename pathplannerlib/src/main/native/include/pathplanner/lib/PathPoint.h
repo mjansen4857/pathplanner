@@ -5,6 +5,8 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <units/velocity.h>
+#include <units/length.h>
+#include <frc/Errors.h>
 
 namespace pathplanner {
 class PathPoint {
@@ -13,6 +15,9 @@ public:
 	frc::Rotation2d m_heading;
 	frc::Rotation2d m_holonomicRotation;
 	units::meters_per_second_t m_velocityOverride;
+
+	units::meter_t m_prevControlLength = -1_m;
+	units::meter_t m_nextControlLength = -1_m;
 
 	constexpr PathPoint(frc::Translation2d const position,
 			frc::Rotation2d const heading, frc::Rotation2d holonomicRotation,
@@ -35,6 +40,38 @@ public:
 	constexpr PathPoint(frc::Translation2d const position,
 			frc::Rotation2d const heading) : PathPoint(position, heading,
 			frc::Rotation2d(), -1_mps) {
+	}
+
+	constexpr PathPoint withPrevControlLength(units::meter_t const length) {
+		if (length <= 0_m) {
+			throw FRC_MakeError(frc::err::InvalidParameter,
+					"Control point lengths must be > 0");
+		}
+
+		m_prevControlLength = length;
+		return *this;
+	}
+
+	constexpr PathPoint withNextControlLength(units::meter_t const length) {
+		if (length <= 0_m) {
+			throw FRC_MakeError(frc::err::InvalidParameter,
+					"Control point lengths must be > 0");
+		}
+
+		m_nextControlLength = length;
+		return *this;
+	}
+
+	constexpr PathPoint withControlLengths(units::meter_t const prevLength,
+			units::meter_t const nextLength) {
+		if (prevLength <= 0_m || nextLength <= 0_m) {
+			throw FRC_MakeError(frc::err::InvalidParameter,
+					"Control point lengths must be > 0");
+		}
+
+		m_prevControlLength = prevLength;
+		m_nextControlLength = nextLength;
+		return *this;
 	}
 
 	static PathPoint fromCurrentHolonomicState(frc::Pose2d const currentPose,

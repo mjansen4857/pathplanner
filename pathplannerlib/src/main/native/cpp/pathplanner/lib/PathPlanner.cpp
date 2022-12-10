@@ -146,14 +146,21 @@ PathPlannerTrajectory PathPlanner::generatePath(
 		units::meter_t thirdDistance = p1.m_position.Distance(p2.m_position)
 				/ 3.0;
 
+		units::meter_t p1NextDistance =
+				p1.m_nextControlLength <= 0_m ?
+						thirdDistance : p1.m_nextControlLength;
+		units::meter_t p2PrevDistance =
+				p2.m_prevControlLength <= 0_m ?
+						thirdDistance : p2.m_prevControlLength;
+
 		frc::Translation2d p1Next = p1.m_position
-				+ frc::Translation2d(p1.m_heading.Cos() * thirdDistance,
-						p1.m_heading.Sin() * thirdDistance);
+				+ frc::Translation2d(p1.m_heading.Cos() * p1NextDistance,
+						p1.m_heading.Sin() * p1NextDistance);
 		waypoints[i - 1].nextControl = p1Next;
 
 		frc::Translation2d p2Prev = p2.m_position
-				- frc::Translation2d(p2.m_heading.Cos() * thirdDistance,
-						p2.m_heading.Sin() * thirdDistance);
+				- frc::Translation2d(p2.m_heading.Cos() * p2PrevDistance,
+						p2.m_heading.Sin() * p2PrevDistance);
 		waypoints.emplace_back(p2.m_position, p2Prev, frc::Translation2d(),
 				p2.m_velocityOverride, p2.m_holonomicRotation, false, false,
 				PathPlannerTrajectory::StopEvent());

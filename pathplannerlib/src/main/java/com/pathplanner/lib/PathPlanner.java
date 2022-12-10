@@ -271,16 +271,19 @@ public class PathPlanner {
 
       double thirdDistance = p1.position.getDistance(p2.position) / 3.0;
 
+      double p1NextDistance = p1.nextControlLength <= 0 ? thirdDistance : p1.nextControlLength;
+      double p2PrevDistance = p2.prevControlLength <= 0 ? thirdDistance : p2.prevControlLength;
+
       Translation2d p1Next =
           p1.position.plus(
               new Translation2d(
-                  p1.heading.getCos() * thirdDistance, p1.heading.getSin() * thirdDistance));
+                  p1.heading.getCos() * p1NextDistance, p1.heading.getSin() * p1NextDistance));
       waypoints.get(i - 1).nextControl = p1Next;
 
       Translation2d p2Prev =
           p2.position.minus(
               new Translation2d(
-                  p2.heading.getCos() * thirdDistance, p2.heading.getSin() * thirdDistance));
+                  p2.heading.getCos() * p2PrevDistance, p2.heading.getSin() * p2PrevDistance));
       waypoints.add(
           new Waypoint(
               p2.position,

@@ -11,6 +11,9 @@ public class PathPoint {
   protected final Rotation2d holonomicRotation;
   protected final double velocityOverride;
 
+  protected double prevControlLength = -1;
+  protected double nextControlLength = -1;
+
   public PathPoint(
       Translation2d position,
       Rotation2d heading,
@@ -32,6 +35,35 @@ public class PathPoint {
 
   public PathPoint(Translation2d position, Rotation2d heading) {
     this(position, heading, Rotation2d.fromDegrees(0));
+  }
+
+  public PathPoint withPrevControlLength(double lengthMeters) {
+    if (lengthMeters <= 0) {
+      throw new IllegalArgumentException("Control point lengths must be > 0");
+    }
+
+    prevControlLength = lengthMeters;
+    return this;
+  }
+
+  public PathPoint withNextControlLength(double lengthMeters) {
+    if (lengthMeters <= 0) {
+      throw new IllegalArgumentException("Control point lengths must be > 0");
+    }
+
+    nextControlLength = lengthMeters;
+    return this;
+  }
+
+  public PathPoint withControlLengths(
+      double prevControlLengthMeters, double nextControlLengthMeters) {
+    if (prevControlLengthMeters <= 0 || nextControlLengthMeters <= 0) {
+      throw new IllegalArgumentException("Control point lengths must be > 0");
+    }
+
+    prevControlLength = prevControlLengthMeters;
+    nextControlLength = nextControlLengthMeters;
+    return this;
   }
 
   public static PathPoint fromCurrentHolonomicState(

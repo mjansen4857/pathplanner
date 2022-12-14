@@ -9,7 +9,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -243,11 +242,10 @@ public class PathPlanner {
    * @return The generated path
    */
   public static PathPlannerTrajectory generatePath(
-      PathConstraints constraints,
-      boolean reversed,
-      List<PathPoint> points) {
-    if(points.size() < 2) {
-      throw new IllegalArgumentException("Error generating trajectory.  List of points in trajectory must have at least two points.");
+      PathConstraints constraints, boolean reversed, List<PathPoint> points) {
+    if (points.size() < 2) {
+      throw new IllegalArgumentException(
+          "Error generating trajectory.  List of points in trajectory must have at least two points.");
     }
 
     PathPoint firstPoint = points.get(0);
@@ -311,10 +309,7 @@ public class PathPlanner {
    * @return The generated path
    */
   public static PathPlannerTrajectory generatePath(
-      double maxVel,
-      double maxAccel,
-      boolean reversed,
-      List<PathPoint> points) {
+      double maxVel, double maxAccel, boolean reversed, List<PathPoint> points) {
     return generatePath(new PathConstraints(maxVel, maxAccel), reversed, points);
   }
 

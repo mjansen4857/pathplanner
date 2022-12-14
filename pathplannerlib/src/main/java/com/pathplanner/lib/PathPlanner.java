@@ -8,6 +8,8 @@ import edu.wpi.first.wpilibj.Filesystem;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -237,37 +239,34 @@ public class PathPlanner {
    *
    * @param constraints The max velocity and max acceleration of the path
    * @param reversed Should the robot follow this path reversed
-   * @param point1 First point in the path
-   * @param point2 Second point in the path
-   * @param points Remaining points in the path
+   * @param points Points in the path
    * @return The generated path
    */
   public static PathPlannerTrajectory generatePath(
       PathConstraints constraints,
       boolean reversed,
-      PathPoint point1,
-      PathPoint point2,
-      PathPoint... points) {
-    ArrayList<PathPoint> allPoints = new ArrayList<>();
-    allPoints.add(point1);
-    allPoints.add(point2);
-    allPoints.addAll(Arrays.asList(points));
+      List<PathPoint> points) {
+    if(points.size() < 2) {
+      throw new IllegalArgumentException("Error generating trajectory.  List of points in trajectory must have at least two points.");
+    }
+
+    PathPoint firstPoint = points.get(0);
 
     ArrayList<Waypoint> waypoints = new ArrayList<>();
     waypoints.add(
         new Waypoint(
-            point1.position,
+            firstPoint.position,
             null,
             null,
-            point1.velocityOverride,
-            point1.holonomicRotation,
+            firstPoint.velocityOverride,
+            firstPoint.holonomicRotation,
             false,
             false,
             new PathPlannerTrajectory.StopEvent()));
 
-    for (int i = 1; i < allPoints.size(); i++) {
-      PathPoint p1 = allPoints.get(i - 1);
-      PathPoint p2 = allPoints.get(i);
+    for (int i = 1; i < points.size(); i++) {
+      PathPoint p1 = points.get(i - 1);
+      PathPoint p2 = points.get(i);
 
       double thirdDistance = p1.position.getDistance(p2.position) / 3.0;
 
@@ -308,19 +307,15 @@ public class PathPlanner {
    * @param maxVel The max velocity of the path
    * @param maxAccel The max acceleration of the path
    * @param reversed Should the robot follow this path reversed
-   * @param point1 First point in the path
-   * @param point2 Second point in the path
-   * @param points Remaining points in the path
+   * @param points Points in the path
    * @return The generated path
    */
   public static PathPlannerTrajectory generatePath(
       double maxVel,
       double maxAccel,
       boolean reversed,
-      PathPoint point1,
-      PathPoint point2,
-      PathPoint... points) {
-    return generatePath(new PathConstraints(maxVel, maxAccel), reversed, point1, point2, points);
+      List<PathPoint> points) {
+    return generatePath(new PathConstraints(maxVel, maxAccel), reversed, points);
   }
 
   /**
@@ -330,14 +325,12 @@ public class PathPlanner {
    * close together can lead to really janky paths.
    *
    * @param constraints The max velocity and max acceleration of the path
-   * @param point1 First point in the path
-   * @param point2 Second point in the path
-   * @param points Remaining points in the path
+   * @param points Points in the path
    * @return The generated path
    */
   public static PathPlannerTrajectory generatePath(
-      PathConstraints constraints, PathPoint point1, PathPoint point2, PathPoint... points) {
-    return generatePath(constraints, false, point1, point2, points);
+      PathConstraints constraints, List<PathPoint> points) {
+    return generatePath(constraints, false, points);
   }
 
   /**
@@ -348,14 +341,12 @@ public class PathPlanner {
    *
    * @param maxVel The max velocity of the path
    * @param maxAccel The max acceleration of the path
-   * @param point1 First point in the path
-   * @param point2 Second point in the path
-   * @param points Remaining points in the path
+   * @param points Points in the path
    * @return The generated path
    */
   public static PathPlannerTrajectory generatePath(
-      double maxVel, double maxAccel, PathPoint point1, PathPoint point2, PathPoint... points) {
-    return generatePath(new PathConstraints(maxVel, maxAccel), false, point1, point2, points);
+      double maxVel, double maxAccel, List<PathPoint> points) {
+    return generatePath(new PathConstraints(maxVel, maxAccel), false, points);
   }
 
   /**

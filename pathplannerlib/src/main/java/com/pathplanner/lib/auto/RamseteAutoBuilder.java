@@ -10,7 +10,7 @@ import edu.wpi.first.math.kinematics.DifferentialDriveWheelSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -57,7 +57,7 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
       Supplier<DifferentialDriveWheelSpeeds> speedsSupplier,
       PIDConstants driveConstants,
       BiConsumer<Double, Double> outputVolts,
-      HashMap<String, Command> eventMap,
+      Map<String, Command> eventMap,
       Subsystem... driveRequirements) {
     super(poseSupplier, resetPose, eventMap, DrivetrainType.STANDARD);
 
@@ -96,7 +96,7 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
       RamseteController controller,
       DifferentialDriveKinematics kinematics,
       BiConsumer<Double, Double> outputMetersPerSecond,
-      HashMap<String, Command> eventMap,
+      Map<String, Command> eventMap,
       Subsystem... driveRequirements) {
     super(poseSupplier, resetPose, eventMap, DrivetrainType.STANDARD);
 

@@ -50,9 +50,7 @@ public abstract class BaseAutoBuilder {
    * @param drivetrainType Type of drivetrain the autobuilder is building for
    */
   protected BaseAutoBuilder(
-      Supplier<Pose2d> poseSupplier,
-      Map<String, Command> eventMap,
-      DrivetrainType drivetrainType) {
+      Supplier<Pose2d> poseSupplier, Map<String, Command> eventMap, DrivetrainType drivetrainType) {
     this(poseSupplier, (pose) -> {}, eventMap, drivetrainType);
   }
 

@@ -345,6 +345,67 @@ public class PathPlanner {
   }
 
   /**
+   * Generate a path on-the-fly from a list of points As you can't see the path in the GUI when
+   * using this method, make sure you have a good idea of what works well and what doesn't before
+   * you use this method in competition. Points positioned in weird configurations such as being too
+   * close together can lead to really janky paths.
+   *
+   * @param constraints The max velocity and max acceleration of the path
+   * @param reversed Should the robot follow this path reversed
+   * @param point1 First point in the path
+   * @param point2 Second point in the path
+   * @param points Remaining points in the path
+   * @return The generated path
+   */
+  public static PathPlannerTrajectory generatePath(
+      PathConstraints constraints,
+      boolean reversed,
+      PathPoint point1,
+      PathPoint point2,
+      PathPoint... points) {
+    ArrayList<PathPoint> pointsList = new ArrayList<>();
+    pointsList.add(point1);
+    pointsList.add(point2);
+    pointsList.addAll(List.of(points));
+    return generatePath(constraints, reversed, pointsList);
+  }
+
+  /**
+   * Generate a path on-the-fly from a list of points As you can't see the path in the GUI when
+   * using this method, make sure you have a good idea of what works well and what doesn't before
+   * you use this method in competition. Points positioned in weird configurations such as being too
+   * close together can lead to really janky paths.
+   *
+   * @param constraints The max velocity and max acceleration of the path
+   * @param point1 First point in the path
+   * @param point2 Second point in the path
+   * @param points Remaining points in the path
+   * @return The generated path
+   */
+  public static PathPlannerTrajectory generatePath(
+      PathConstraints constraints, PathPoint point1, PathPoint point2, PathPoint... points) {
+    return generatePath(constraints, false, point1, point2, points);
+  }
+
+  /**
+   * Generate a path on-the-fly from a list of points As you can't see the path in the GUI when
+   * using this method, make sure you have a good idea of what works well and what doesn't before
+   * you use this method in competition. Points positioned in weird configurations such as being too
+   * close together can lead to really janky paths.
+   *
+   * @param maxVel The max velocity of the path
+   * @param maxAccel The max acceleration of the path
+   * @param point1 First point in the path
+   * @param point2 Second point in the path
+   * @param points Remaining points in the path
+   * @return The generated path
+   */
+  public static PathPlannerTrajectory generatePath(
+      double maxVel, double maxAccel, PathPoint point1, PathPoint point2, PathPoint... points) {
+    return generatePath(new PathConstraints(maxVel, maxAccel), point1, point2, points);
+  }
+
+  /**
    * Load path constraints from a path file in storage. This can be used to change path max
    * vel/accel in the GUI instead of updating and rebuilding code. This requires that max velocity
    * and max acceleration have been explicitly set in the GUI.

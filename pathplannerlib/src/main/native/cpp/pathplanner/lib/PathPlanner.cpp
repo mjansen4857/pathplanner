@@ -1,7 +1,12 @@
 #include "pathplanner/lib/PathPlanner.h"
+#include "pathplanner/lib/PathConstraints.h"
+#include "pathplanner/lib/PathPlannerTrajectory.h"
+#include "pathplanner/lib/PathPoint.h"
 #include <frc/geometry/Translation2d.h>
 #include <frc/geometry/Rotation2d.h>
 #include <frc/Filesystem.h>
+#include <initializer_list>
+#include <stdexcept>
 #include <wpi/SmallString.h>
 #include <wpi/raw_istream.h>
 #include <units/length.h>
@@ -126,22 +131,23 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 
 PathPlannerTrajectory PathPlanner::generatePath(
 		PathConstraints const constraints, bool const reversed,
-		PathPoint const point1, PathPoint const point2,
-		std::initializer_list<PathPoint> const points) {
-	std::vector < PathPoint > allPoints;
-	allPoints.emplace_back(point1);
-	allPoints.emplace_back(point2);
-	allPoints.insert(allPoints.end(), points);
+		std::vector<PathPoint> const points) {
+	if (points.size() < 2) {
+		throw std::invalid_argument(
+				"Error generating trajectory.  List of points in trajectory must have at least two points.");
+	}
+
+	PathPoint firstPoint = points.front();
 
 	std::vector < PathPlannerTrajectory::Waypoint > waypoints;
-	waypoints.emplace_back(point1.m_position, frc::Translation2d(),
-			frc::Translation2d(), point1.m_velocityOverride,
-			point1.m_holonomicRotation, false, false,
+	waypoints.emplace_back(firstPoint.m_position, frc::Translation2d(),
+			frc::Translation2d(), firstPoint.m_velocityOverride,
+			firstPoint.m_holonomicRotation, false, false,
 			PathPlannerTrajectory::StopEvent());
 
-	for (size_t i = 1; i < allPoints.size(); i++) {
-		PathPoint const p1 = allPoints[i - 1];
-		PathPoint const p2 = allPoints[i];
+	for (size_t i = 1; i < points.size(); i++) {
+		PathPoint const p1 = points[i - 1];
+		PathPoint const p2 = points[i];
 
 		units::meter_t thirdDistance = p1.m_position.Distance(p2.m_position)
 				/ 3.0;
@@ -169,6 +175,17 @@ PathPlannerTrajectory PathPlanner::generatePath(
 	return PathPlannerTrajectory(waypoints,
 			std::vector<PathPlannerTrajectory::EventMarker>(), constraints,
 			reversed);
+}
+
+PathPlannerTrajectory PathPlanner::generatePath(
+		PathConstraints const constraints, bool const reversed,
+		PathPoint point1, PathPoint point2,
+		std::initializer_list<PathPoint> points) {
+	std::vector < PathPoint > allPoints;
+	allPoints.emplace_back(point1);
+	allPoints.emplace_back(point2);
+	allPoints.insert(allPoints.end(), points);
+	return generatePath(constraints, reversed, allPoints);
 }
 
 PathConstraints PathPlanner::getConstraintsFromPath(std::string const &name) {

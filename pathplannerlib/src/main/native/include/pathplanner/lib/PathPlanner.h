@@ -133,7 +133,7 @@ public:
 	 * @param points Points in the path
 	 * @return The generated path
 	 */
-	 [[deprecated("Use generatePath(PathConstraints, std::vector<PathPoint>) instead")]]
+	[[deprecated("Use generatePath(PathConstraints, std::vector<PathPoint>) instead")]]
 	static PathPlannerTrajectory generatePath(
 			units::meters_per_second_t const maxVel,
 			units::meters_per_second_squared_t const maxAccel,

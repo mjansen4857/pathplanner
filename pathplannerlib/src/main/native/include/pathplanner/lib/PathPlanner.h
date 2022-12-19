@@ -92,11 +92,13 @@ public:
 	 * of what works well and what doesn't before you use this method in competition. Points positioned in weird
 	 * configurations such as being too close together can lead to really janky paths.
 	 *
-	 * @param constraints The max velocity and max acceleration of the path
+	 * @param maxVel The max velocity of the path
+	 * @param maxAccel The max acceleration of the path
 	 * @param reversed Should the robot follow this path reversed
 	 * @param points Points in the path
 	 * @return The generated path
 	 */
+	[[deprecated("Use generatePath(PathConstraints, bool, std::vector<PathPoint>) instead")]]
 	static PathPlannerTrajectory generatePath(
 			units::meters_per_second_t const maxVel,
 			units::meters_per_second_squared_t const maxAccel,
@@ -104,7 +106,6 @@ public:
 		return generatePath(PathConstraints { maxVel, maxAccel }, reversed,
 				points);
 	}
-	;
 
 	/**
 	 * @brief Generate a path on-the-fly from a list of points
@@ -128,8 +129,8 @@ public:
 	 * of what works well and what doesn't before you use this method in competition. Points positioned in weird
 	 * configurations such as being too close together can lead to really janky paths.
 	 *
-	 * @param constraints The max velocity and max acceleration of the path
-	 * @param reversed Should the robot follow this path reversed
+	 * @param maxVel The max velocity of the path
+	 * @param maxAccel The max acceleration of the path
 	 * @param points Points in the path
 	 * @return The generated path
 	 */

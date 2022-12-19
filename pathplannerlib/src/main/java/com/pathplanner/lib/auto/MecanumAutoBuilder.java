@@ -9,7 +9,7 @@ import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -49,7 +49,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
       PIDConstants translationConstants,
       PIDConstants rotationConstants,
       Consumer<ChassisSpeeds> outputChassisSpeeds,
-      HashMap<String, Command> eventMap,
+      Map<String, Command> eventMap,
       Subsystem... driveRequirements) {
     super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC);
 
@@ -94,7 +94,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
       PIDConstants rotationConstants,
       double maxWheelVelocityMetersPerSecond,
       Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
-      HashMap<String, Command> eventMap,
+      Map<String, Command> eventMap,
       Subsystem... driveRequirements) {
     super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC);
 

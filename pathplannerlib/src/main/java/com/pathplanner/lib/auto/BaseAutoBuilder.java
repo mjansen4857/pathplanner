@@ -17,7 +17,7 @@ public abstract class BaseAutoBuilder {
 
   protected final Supplier<Pose2d> poseSupplier;
   protected final Consumer<Pose2d> resetPose;
-  protected final HashMap<String, Command> eventMap;
+  protected final Map<String, Command> eventMap;
   protected final DrivetrainType drivetrainType;
 
   /**
@@ -33,7 +33,7 @@ public abstract class BaseAutoBuilder {
   protected BaseAutoBuilder(
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
-      HashMap<String, Command> eventMap,
+      Map<String, Command> eventMap,
       DrivetrainType drivetrainType) {
     this.poseSupplier = poseSupplier;
     this.resetPose = resetPose;
@@ -50,9 +50,7 @@ public abstract class BaseAutoBuilder {
    * @param drivetrainType Type of drivetrain the autobuilder is building for
    */
   protected BaseAutoBuilder(
-      Supplier<Pose2d> poseSupplier,
-      HashMap<String, Command> eventMap,
-      DrivetrainType drivetrainType) {
+      Supplier<Pose2d> poseSupplier, Map<String, Command> eventMap, DrivetrainType drivetrainType) {
     this(poseSupplier, (pose) -> {}, eventMap, drivetrainType);
   }
 

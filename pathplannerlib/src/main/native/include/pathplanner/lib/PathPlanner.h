@@ -133,6 +133,7 @@ public:
 	 * @param points Points in the path
 	 * @return The generated path
 	 */
+	 [[deprecated("Use generatePath(PathConstraints, std::vector<PathPoint>) instead")]]
 	static PathPlannerTrajectory generatePath(
 			units::meters_per_second_t const maxVel,
 			units::meters_per_second_squared_t const maxAccel,
@@ -171,6 +172,7 @@ public:
 	 * @param points Remaining points in the path
 	 * @return The generated path
 	 */
+	[[deprecated("Use generatePath(PathConstraints, bool, PathPoint, PathPoint, std::initalizer_list<PathPoint>) instead.")]]
 	static PathPlannerTrajectory generatePath(
 			units::meters_per_second_t const maxVel,
 			units::meters_per_second_squared_t const maxAccel,
@@ -211,6 +213,7 @@ public:
 	 * @param points Remaining points in the path
 	 * @return The generated path
 	 */
+	[[deprecated("Use generatePath(PathConstraints, PathPoint, PathPoint, std::initializer_list<PathPoint>) instead.")]]
 	static PathPlannerTrajectory generatePath(
 			units::meters_per_second_t const maxVel,
 			units::meters_per_second_squared_t const maxAccel,

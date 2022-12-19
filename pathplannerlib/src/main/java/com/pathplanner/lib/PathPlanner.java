@@ -307,7 +307,10 @@ public class PathPlanner {
    * @param reversed Should the robot follow this path reversed
    * @param points Points in the path
    * @return The generated path
+   * @deprecated For removal in 2024, use {@link PathPlanner#generatePath(PathConstraints, boolean,
+   *     List)} instead
    */
+  @Deprecated
   public static PathPlannerTrajectory generatePath(
       double maxVel, double maxAccel, boolean reversed, List<PathPoint> points) {
     return generatePath(new PathConstraints(maxVel, maxAccel), reversed, points);
@@ -338,7 +341,10 @@ public class PathPlanner {
    * @param maxAccel The max acceleration of the path
    * @param points Points in the path
    * @return The generated path
+   * @deprecated For removal in 2024, use {@link PathPlanner#generatePath(PathConstraints, List)}
+   *     instead
    */
+  @Deprecated
   public static PathPlannerTrajectory generatePath(
       double maxVel, double maxAccel, List<PathPoint> points) {
     return generatePath(new PathConstraints(maxVel, maxAccel), false, points);
@@ -399,7 +405,10 @@ public class PathPlanner {
    * @param point2 Second point in the path
    * @param points Remaining points in the path
    * @return The generated path
+   * @deprecated For removal in 2024, use {@link PathPlanner#generatePath(PathConstraints,
+   *     PathPoint, PathPoint, PathPoint...)} instead.
    */
+  @Deprecated
   public static PathPlannerTrajectory generatePath(
       double maxVel, double maxAccel, PathPoint point1, PathPoint point2, PathPoint... points) {
     return generatePath(new PathConstraints(maxVel, maxAccel), point1, point2, points);

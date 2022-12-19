@@ -9,9 +9,9 @@ import java.util.*;
 public class FollowPathWithEvents extends CommandBase {
   private final Command pathFollowingCommand;
   private final List<PathPlannerTrajectory.EventMarker> pathMarkers;
-  private final HashMap<String, Command> eventMap;
+  private final Map<String, Command> eventMap;
 
-  private final HashMap<Command, Boolean> currentCommands = new HashMap<>();
+  private final Map<Command, Boolean> currentCommands = new HashMap<>();
   private final List<PathPlannerTrajectory.EventMarker> unpassedMarkers = new ArrayList<>();
   private final Timer timer = new Timer();
   private boolean isFinished = true;
@@ -31,7 +31,7 @@ public class FollowPathWithEvents extends CommandBase {
   public FollowPathWithEvents(
       Command pathFollowingCommand,
       List<PathPlannerTrajectory.EventMarker> pathMarkers,
-      HashMap<String, Command> eventMap) {
+      Map<String, Command> eventMap) {
     this.pathFollowingCommand = pathFollowingCommand;
     this.pathMarkers = pathMarkers;
     this.eventMap = eventMap;

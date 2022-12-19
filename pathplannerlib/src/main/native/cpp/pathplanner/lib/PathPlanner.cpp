@@ -1,7 +1,4 @@
 #include "pathplanner/lib/PathPlanner.h"
-#include "pathplanner/lib/PathConstraints.h"
-#include "pathplanner/lib/PathPlannerTrajectory.h"
-#include "pathplanner/lib/PathPoint.h"
 #include <frc/geometry/Translation2d.h>
 #include <frc/geometry/Rotation2d.h>
 #include <frc/Filesystem.h>
@@ -11,8 +8,6 @@
 #include <wpi/raw_istream.h>
 #include <units/length.h>
 #include <units/angle.h>
-#include <units/velocity.h>
-#include <vector>
 
 using namespace pathplanner;
 

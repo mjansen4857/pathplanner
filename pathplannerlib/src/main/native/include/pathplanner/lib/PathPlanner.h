@@ -80,6 +80,76 @@ public:
 	 *
 	 * @param constraints The max velocity and max acceleration of the path
 	 * @param reversed Should the robot follow this path reversed
+	 * @param points Points in the path
+	 * @return The generated path
+	 */
+	static PathPlannerTrajectory generatePath(PathConstraints const constraints,
+			bool const reversed, std::vector<PathPoint> const points);
+
+	/**
+	 * @brief Generate a path on-the-fly from a list of points
+	 * As you can't see the path in the GUI when using this method, make sure you have a good idea
+	 * of what works well and what doesn't before you use this method in competition. Points positioned in weird
+	 * configurations such as being too close together can lead to really janky paths.
+	 *
+	 * @param maxVel The max velocity of the path
+	 * @param maxAccel The max acceleration of the path
+	 * @param reversed Should the robot follow this path reversed
+	 * @param points Points in the path
+	 * @return The generated path
+	 */
+	[[deprecated("Use generatePath(PathConstraints, bool, std::vector<PathPoint>) instead")]]
+	static PathPlannerTrajectory generatePath(
+			units::meters_per_second_t const maxVel,
+			units::meters_per_second_squared_t const maxAccel,
+			bool const reversed, std::vector<PathPoint> const points) {
+		return generatePath(PathConstraints { maxVel, maxAccel }, reversed,
+				points);
+	}
+
+	/**
+	 * @brief Generate a path on-the-fly from a list of points
+	 * As you can't see the path in the GUI when using this method, make sure you have a good idea
+	 * of what works well and what doesn't before you use this method in competition. Points positioned in weird
+	 * configurations such as being too close together can lead to really janky paths.
+	 *
+	 * @param constraints The max velocity and max acceleration of the path
+	 * @param reversed Should the robot follow this path reversed
+	 * @param points Points in the path
+	 * @return The generated path
+	 */
+	static PathPlannerTrajectory generatePath(PathConstraints const constraints,
+			std::vector<PathPoint> const points) {
+		return generatePath(constraints, false, points);
+	}
+
+	/**
+	 * @brief Generate a path on-the-fly from a list of points
+	 * As you can't see the path in the GUI when using this method, make sure you have a good idea
+	 * of what works well and what doesn't before you use this method in competition. Points positioned in weird
+	 * configurations such as being too close together can lead to really janky paths.
+	 *
+	 * @param maxVel The max velocity of the path
+	 * @param maxAccel The max acceleration of the path
+	 * @param points Points in the path
+	 * @return The generated path
+	 */
+	[[deprecated("Use generatePath(PathConstraints, std::vector<PathPoint>) instead")]]
+	static PathPlannerTrajectory generatePath(
+			units::meters_per_second_t const maxVel,
+			units::meters_per_second_squared_t const maxAccel,
+			std::vector<PathPoint> const points) {
+		return generatePath(PathConstraints { maxVel, maxAccel }, points);
+	}
+
+	/**
+	 * @brief Generate a path on-the-fly from a list of points
+	 * As you can't see the path in the GUI when using this method, make sure you have a good idea
+	 * of what works well and what doesn't before you use this method in competition. Points positioned in weird
+	 * configurations such as being too close together can lead to really janky paths.
+	 *
+	 * @param constraints The max velocity and max acceleration of the path
+	 * @param reversed Should the robot follow this path reversed
 	 * @param point1 First point in the path
 	 * @param point2 Second point in the path
 	 * @param points Remaining points in the path
@@ -103,6 +173,7 @@ public:
 	 * @param points Remaining points in the path
 	 * @return The generated path
 	 */
+	[[deprecated("Use generatePath(PathConstraints, bool, PathPoint, PathPoint, std::initalizer_list<PathPoint>) instead.")]]
 	static PathPlannerTrajectory generatePath(
 			units::meters_per_second_t const maxVel,
 			units::meters_per_second_squared_t const maxAccel,
@@ -143,6 +214,7 @@ public:
 	 * @param points Remaining points in the path
 	 * @return The generated path
 	 */
+	[[deprecated("Use generatePath(PathConstraints, PathPoint, PathPoint, std::initializer_list<PathPoint>) instead.")]]
 	static PathPlannerTrajectory generatePath(
 			units::meters_per_second_t const maxVel,
 			units::meters_per_second_squared_t const maxAccel,

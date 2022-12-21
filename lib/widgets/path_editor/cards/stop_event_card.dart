@@ -269,7 +269,7 @@ class _StopEventCardState extends State<StopEventCard> {
                     }
                   },
                   name: widget.stopEvent!.eventNames[i],
-                  label: 'Event ${i + 1}'),
+                  label: _getEventLabel(i)),
             if (widget.stopEvent!.eventNames.length < 4)
               _buildNameTextField(
                 onSubmitted: (value) {
@@ -288,6 +288,16 @@ class _StopEventCardState extends State<StopEventCard> {
         ),
       ),
     );
+  }
+
+  String _getEventLabel(int index) {
+    if (widget.stopEvent!.executionBehavior == ExecutionBehavior.parallelDeadline) {
+      if (index == 0) return 'Deadline';
+
+      return 'Event $index';
+    }
+    
+    return 'Event ${index + 1}';
   }
 
   Widget _buildNameTextField(

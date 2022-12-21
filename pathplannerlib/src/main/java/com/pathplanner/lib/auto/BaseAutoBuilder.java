@@ -1,6 +1,7 @@
 package com.pathplanner.lib.auto;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.PathPlannerTrajectory.StopEvent;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -72,14 +73,14 @@ public abstract class BaseAutoBuilder {
    * @param pathGroup The path group to follow
    * @return Command for following all paths in the group
    */
-  public CommandBase followPathGroup(ArrayList<PathPlannerTrajectory> pathGroup) {
-    SequentialCommandGroup group = new SequentialCommandGroup();
+  public CommandBase followPathGroup(List<PathPlannerTrajectory> pathGroup) {
+    List<CommandBase> commands = new ArrayList<>();
 
     for (PathPlannerTrajectory path : pathGroup) {
-      group.addCommands(followPath(path));
+      commands.add(this.followPath(path));
     }
 
-    return group;
+    return Commands.sequence(commands.toArray(CommandBase[]::new));
   }
 
   /**
@@ -99,14 +100,14 @@ public abstract class BaseAutoBuilder {
    * @param pathGroup The path group to follow
    * @return Command for following all paths in the group
    */
-  public CommandBase followPathGroupWithEvents(ArrayList<PathPlannerTrajectory> pathGroup) {
-    SequentialCommandGroup group = new SequentialCommandGroup();
+  public CommandBase followPathGroupWithEvents(List<PathPlannerTrajectory> pathGroup) {
+    List<CommandBase> commands = new ArrayList<>();
 
     for (PathPlannerTrajectory path : pathGroup) {
-      group.addCommands(followPathWithEvents(path));
+      commands.add(followPathWithEvents(path));
     }
 
-    return group;
+    return Commands.sequence(commands.toArray(CommandBase[]::new));
   }
 
   /**
@@ -118,9 +119,9 @@ public abstract class BaseAutoBuilder {
    */
   public CommandBase resetPose(PathPlannerTrajectory trajectory) {
     if (drivetrainType == DrivetrainType.HOLONOMIC) {
-      return new InstantCommand(() -> resetPose.accept(trajectory.getInitialHolonomicPose()));
+      return Commands.runOnce(() -> resetPose.accept(trajectory.getInitialHolonomicPose()));
     } else {
-      return new InstantCommand(() -> resetPose.accept(trajectory.getInitialPose()));
+      return Commands.runOnce(() -> resetPose.accept(trajectory.getInitialPose()));
     }
   }
 
@@ -130,13 +131,37 @@ public abstract class BaseAutoBuilder {
    * @param eventCommand The event command to wrap
    * @return Wrapped event command
    */
-  protected CommandBase wrappedEventCommand(Command eventCommand) {
+  protected static CommandBase wrappedEventCommand(Command eventCommand) {
     return new FunctionalCommand(
         eventCommand::initialize,
         eventCommand::execute,
         eventCommand::end,
         eventCommand::isFinished,
-        eventCommand.getRequirements().toArray(new Subsystem[0]));
+        eventCommand.getRequirements().toArray(Subsystem[]::new));
+  }
+
+  protected CommandBase getStopEventCommands(StopEvent stopEvent) {
+    List<CommandBase> commands = new ArrayList<>();
+
+    for (String eventName : stopEvent.names) {
+      if (eventMap.containsKey(eventName)) {
+        commands.add(wrappedEventCommand(eventMap.get(eventName)));
+      }
+    }
+
+    switch (stopEvent.executionBehavior) {
+      case SEQUENTIAL:
+        return Commands.sequence(commands.toArray(CommandBase[]::new));
+      case PARALLEL:
+        return Commands.parallel(commands.toArray(CommandBase[]::new));
+      case PARALLEL_DEADLINE:
+        CommandBase deadline = commands.stream().findFirst().orElseThrow();
+        CommandBase[] remainingEvents = commands.stream().skip(1).toArray(CommandBase[]::new);
+        return Commands.deadline(deadline, remainingEvents);
+      default:
+        throw new IllegalArgumentException(
+            "Invalid stop event execution behavior: " + stopEvent.executionBehavior);
+    }
   }
 
   /**
@@ -145,46 +170,25 @@ public abstract class BaseAutoBuilder {
    * @param stopEvent The stop event to create the command group for
    * @return Command group for the stop event
    */
-  public CommandBase stopEventGroup(PathPlannerTrajectory.StopEvent stopEvent) {
-    CommandGroupBase events = new ParallelCommandGroup();
-
-    if (stopEvent.executionBehavior
-        == PathPlannerTrajectory.StopEvent.ExecutionBehavior.SEQUENTIAL) {
-      events = new SequentialCommandGroup();
-    } else if (stopEvent.executionBehavior
-        == PathPlannerTrajectory.StopEvent.ExecutionBehavior.PARALLEL_DEADLINE) {
-      CommandBase deadline = new InstantCommand();
-      if (eventMap.containsKey(stopEvent.names.get(0))) {
-        deadline = wrappedEventCommand(eventMap.get(stopEvent.names.get(0)));
-      }
-      events = new ParallelDeadlineGroup(deadline);
+  public CommandBase stopEventGroup(StopEvent stopEvent) {
+    if (stopEvent.names.isEmpty()) {
+      return Commands.waitSeconds(stopEvent.waitTime);
     }
 
-    for (int i =
-            (stopEvent.executionBehavior
-                    == PathPlannerTrajectory.StopEvent.ExecutionBehavior.PARALLEL_DEADLINE
-                ? 1
-                : 0);
-        i < stopEvent.names.size();
-        i++) {
-      String name = stopEvent.names.get(i);
-      if (eventMap.containsKey(name)) {
-        events.addCommands(wrappedEventCommand(eventMap.get(name)));
-      }
-    }
+    CommandBase eventCommands = getStopEventCommands(stopEvent);
 
     switch (stopEvent.waitBehavior) {
       case BEFORE:
-        return new SequentialCommandGroup(new WaitCommand(stopEvent.waitTime), events);
+        return Commands.sequence(Commands.waitSeconds(stopEvent.waitTime), eventCommands);
       case AFTER:
-        return new SequentialCommandGroup(events, new WaitCommand(stopEvent.waitTime));
+        return Commands.sequence(eventCommands, Commands.waitSeconds(stopEvent.waitTime));
       case DEADLINE:
-        return new ParallelDeadlineGroup(new WaitCommand(stopEvent.waitTime), events);
+        return Commands.deadline(Commands.waitSeconds(stopEvent.waitTime), eventCommands);
       case MINIMUM:
-        return new ParallelCommandGroup(new WaitCommand(stopEvent.waitTime), events);
+        return Commands.parallel(Commands.waitSeconds(stopEvent.waitTime), eventCommands);
       case NONE:
       default:
-        return events;
+        return eventCommands;
     }
   }
 
@@ -219,17 +223,18 @@ public abstract class BaseAutoBuilder {
    * @return Autonomous command
    */
   public CommandBase fullAuto(ArrayList<PathPlannerTrajectory> pathGroup) {
-    SequentialCommandGroup group = new SequentialCommandGroup();
+    List<CommandBase> commands = new ArrayList<>();
 
-    group.addCommands(resetPose(pathGroup.get(0)));
+    commands.add(resetPose(pathGroup.get(0)));
 
     for (PathPlannerTrajectory traj : pathGroup) {
-      group.addCommands(stopEventGroup(traj.getStartStopEvent()), followPathWithEvents(traj));
+      commands.add(stopEventGroup(traj.getStartStopEvent()));
+      commands.add(followPathWithEvents(traj));
     }
 
-    group.addCommands(stopEventGroup(pathGroup.get(pathGroup.size() - 1).getEndStopEvent()));
+    commands.add(stopEventGroup(pathGroup.get(pathGroup.size() - 1).getEndStopEvent()));
 
-    return group;
+    return Commands.sequence(commands.toArray(CommandBase[]::new));
   }
 
   protected static PIDController pidControllerFromConstants(PIDConstants constants) {

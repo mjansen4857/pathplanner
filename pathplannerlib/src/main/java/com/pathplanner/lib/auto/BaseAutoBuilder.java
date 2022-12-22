@@ -2,6 +2,7 @@ package com.pathplanner.lib.auto;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.PathPlannerTrajectory.StopEvent;
+import com.pathplanner.lib.PathPlannerTrajectory.StopEvent.ExecutionBehavior;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -143,9 +144,11 @@ public abstract class BaseAutoBuilder {
   protected CommandBase getStopEventCommands(StopEvent stopEvent) {
     List<CommandBase> commands = new ArrayList<>();
 
-    for (String eventName : stopEvent.names) {
-      if (eventMap.containsKey(eventName)) {
-        commands.add(wrappedEventCommand(eventMap.get(eventName)));
+    int startIndex = stopEvent.executionBehavior == ExecutionBehavior.PARALLEL_DEADLINE ? 1 : 0;
+    for (int i = startIndex; i < stopEvent.names.size(); i++) {
+      String name = stopEvent.names.get(i);
+      if (eventMap.containsKey(name)) {
+        commands.add(wrappedEventCommand(eventMap.get(name)));
       }
     }
 
@@ -155,9 +158,11 @@ public abstract class BaseAutoBuilder {
       case PARALLEL:
         return Commands.parallel(commands.toArray(CommandBase[]::new));
       case PARALLEL_DEADLINE:
-        CommandBase deadline = commands.stream().findFirst().orElseThrow();
-        CommandBase[] remainingEvents = commands.stream().skip(1).toArray(CommandBase[]::new);
-        return Commands.deadline(deadline, remainingEvents);
+        Command deadline =
+            eventMap.containsKey(stopEvent.names.get(0))
+                ? eventMap.get(stopEvent.names.get(0))
+                : Commands.none();
+        return Commands.deadline(deadline, commands.toArray(CommandBase[]::new));
       default:
         throw new IllegalArgumentException(
             "Invalid stop event execution behavior: " + stopEvent.executionBehavior);

@@ -15,6 +15,8 @@ class MarkerCard extends StatefulWidget {
   final void Function(EventMarker newMarker) onAdd;
   final void Function(EventMarker oldMarker) onEdited;
   final ValueChanged<double?> onPreviewPosChanged;
+  final VoidCallback? onPrevMarker;
+  final VoidCallback? onNextMarker;
 
   const MarkerCard(
       {required this.stackKey,
@@ -26,6 +28,8 @@ class MarkerCard extends StatefulWidget {
       required this.onAdd,
       required this.onEdited,
       required this.onPreviewPosChanged,
+      this.onPrevMarker,
+      this.onNextMarker,
       super.key});
 
   @override
@@ -76,10 +80,28 @@ class _MarkerCardState extends State<MarkerCard> {
           width: 30,
           height: 30,
         ),
+        if (widget.marker != null)
+          IconButton(
+            onPressed: widget.onPrevMarker,
+            icon: const Icon(Icons.arrow_left),
+            iconSize: 20,
+            splashRadius: 20,
+            padding: const EdgeInsets.all(0),
+            tooltip: 'Previous Marker',
+          ),
         Text(
           widget.marker == null ? 'New Marker' : 'Edit Marker',
           style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
         ),
+        if (widget.marker != null)
+          IconButton(
+            onPressed: widget.onNextMarker,
+            icon: const Icon(Icons.arrow_right),
+            iconSize: 20,
+            splashRadius: 20,
+            padding: const EdgeInsets.all(0),
+            tooltip: 'Next Marker',
+          ),
         SizedBox(
           width: 30,
           height: 30,

@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  FLUTTER_VERSION: 3.3.9
+  FLUTTER_VERSION: 3.3.10
 
 jobs:
   formatting-analysis:

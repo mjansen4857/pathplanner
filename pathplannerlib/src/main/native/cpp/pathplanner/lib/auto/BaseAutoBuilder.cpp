@@ -1,12 +1,7 @@
 #include "pathplanner/lib/auto/BaseAutoBuilder.h"
 #include "pathplanner/lib/commands/FollowPathWithEvents.h"
 
-#include <frc2/command/SequentialCommandGroup.h>
-#include <frc2/command/ParallelCommandGroup.h>
-#include <frc2/command/ParallelDeadlineGroup.h>
-#include <frc2/command/InstantCommand.h>
-#include <frc2/command/WaitCommand.h>
-#include <frc2/command/FunctionalCommand.h>
+#include <frc2/command/Commands.h>
 
 using namespace pathplanner;
 
@@ -19,13 +14,13 @@ BaseAutoBuilder::BaseAutoBuilder(std::function<frc::Pose2d()> pose,
 
 frc2::CommandPtr BaseAutoBuilder::followPathGroup(
 		std::vector<PathPlannerTrajectory> pathGroup) {
-	std::vector < std::unique_ptr < frc2::Command >> commands;
+	std::vector < frc2::CommandPtr > commands;
 
 	for (PathPlannerTrajectory path : pathGroup) {
-		commands.emplace_back(followPath(path).Unwrap());
+		commands.emplace_back(followPath(path));
 	}
 
-	return frc2::SequentialCommandGroup(std::move(commands)).ToPtr();
+	return frc2::cmd::Sequence(std::move(commands));
 }
 
 frc2::CommandPtr BaseAutoBuilder::followPathWithEvents(
@@ -36,24 +31,24 @@ frc2::CommandPtr BaseAutoBuilder::followPathWithEvents(
 
 frc2::CommandPtr BaseAutoBuilder::followPathGroupWithEvents(
 		std::vector<PathPlannerTrajectory> pathGroup) {
-	std::vector < std::unique_ptr < frc2::Command >> commands;
+	std::vector < frc2::CommandPtr > commands;
 
 	for (PathPlannerTrajectory path : pathGroup) {
-		commands.emplace_back(followPathWithEvents(path).Unwrap());
+		commands.emplace_back(followPathWithEvents(path));
 	}
 
-	return frc2::SequentialCommandGroup(std::move(commands)).ToPtr();
+	return frc2::cmd::Sequence(std::move(commands));
 }
 
 frc2::CommandPtr BaseAutoBuilder::resetPose(PathPlannerTrajectory trajectory) {
 	if (m_drivetrainType == DriveTrainType::HOLONOMIC) {
-		return frc2::InstantCommand([this, trajectory]() {
+		return frc2::cmd::RunOnce([this, trajectory]() {
 			m_resetPose(trajectory.getInitialHolonomicPose());
-		}).ToPtr();
+		});
 	} else {
-		return frc2::InstantCommand([this, trajectory]() {
+		return frc2::cmd::RunOnce([this, trajectory]() {
 			m_resetPose(trajectory.getInitialPose());
-		}).ToPtr();
+		});
 	}
 }
 
@@ -77,10 +72,9 @@ frc2::CommandPtr BaseAutoBuilder::wrappedEventCommand(
 	return std::move(wrapped).ToPtr();
 }
 
-frc2::CommandPtr BaseAutoBuilder::stopEventGroup(
+frc2::CommandPtr BaseAutoBuilder::getStopEventCommands(
 		PathPlannerTrajectory::StopEvent stopEvent) {
-	std::vector < std::unique_ptr < frc2::Command >> eventCommands;
-
+	std::vector < frc2::CommandPtr > eventCommands;
 	for (size_t i =
 			(stopEvent.executionBehavior
 					== PathPlannerTrajectory::StopEvent::ExecutionBehavior::PARALLEL_DEADLINE ?
@@ -88,55 +82,56 @@ frc2::CommandPtr BaseAutoBuilder::stopEventGroup(
 		std::string name = stopEvent.names[i];
 		if (m_eventMap.find(name) != m_eventMap.end()) {
 			eventCommands.emplace_back(
-					wrappedEventCommand(m_eventMap.at(name)).Unwrap());
+					wrappedEventCommand(m_eventMap.at(name)));
 		}
 	}
 
-	frc2::CommandPtr events = frc2::InstantCommand().ToPtr();
 	if (stopEvent.executionBehavior
 			== PathPlannerTrajectory::StopEvent::ExecutionBehavior::SEQUENTIAL) {
-		events = frc2::SequentialCommandGroup(std::move(eventCommands)).ToPtr();
+		return frc2::cmd::Sequence(std::move(eventCommands));
 	} else if (stopEvent.executionBehavior
 			== PathPlannerTrajectory::StopEvent::ExecutionBehavior::PARALLEL) {
-		events = frc2::ParallelCommandGroup(std::move(eventCommands)).ToPtr();
+		return frc2::cmd::Parallel(std::move(eventCommands));
 	} else if (stopEvent.executionBehavior
 			== PathPlannerTrajectory::StopEvent::ExecutionBehavior::PARALLEL_DEADLINE) {
-		frc2::CommandPtr deadline = frc2::InstantCommand().ToPtr();
+		frc2::CommandPtr deadline = frc2::cmd::None();
 		if (m_eventMap.find(stopEvent.names[0]) != m_eventMap.end()) {
 			deadline = wrappedEventCommand(m_eventMap.at(stopEvent.names[0]));
 		}
-		events = frc2::ParallelDeadlineGroup(std::move(deadline).Unwrap(),
-				std::move(eventCommands)).ToPtr();
+		return frc2::cmd::Deadline(std::move(deadline),
+				std::move(eventCommands));
 	}
+	return frc2::cmd::None();
+}
+
+frc2::CommandPtr BaseAutoBuilder::stopEventGroup(
+		PathPlannerTrajectory::StopEvent stopEvent) {
+	frc2::CommandPtr events = this->getStopEventCommands(stopEvent);
 
 	if (stopEvent.waitBehavior
 			== PathPlannerTrajectory::StopEvent::WaitBehavior::BEFORE) {
-		std::vector < std::unique_ptr < frc2::Command >> commands;
-		commands.emplace_back(
-				std::make_unique < frc2::WaitCommand > (stopEvent.waitTime));
-		commands.emplace_back(std::move(events).Unwrap());
-		return frc2::SequentialCommandGroup(std::move(commands)).ToPtr();
+		std::vector < frc2::CommandPtr > commands;
+		commands.emplace_back(frc2::cmd::Wait(stopEvent.waitTime));
+		commands.emplace_back(std::move(events));
+		return frc2::cmd::Sequence(std::move(commands));
 	} else if (stopEvent.waitBehavior
 			== PathPlannerTrajectory::StopEvent::WaitBehavior::AFTER) {
-		std::vector < std::unique_ptr < frc2::Command >> commands;
-		commands.emplace_back(std::move(events).Unwrap());
-		commands.emplace_back(
-				std::make_unique < frc2::WaitCommand > (stopEvent.waitTime));
-		return frc2::SequentialCommandGroup(std::move(commands)).ToPtr();
+		std::vector < frc2::CommandPtr > commands;
+		commands.emplace_back(std::move(events));
+		commands.emplace_back(frc2::cmd::Wait(stopEvent.waitTime));
+		return frc2::cmd::Sequence(std::move(commands));
 	} else if (stopEvent.waitBehavior
 			== PathPlannerTrajectory::StopEvent::WaitBehavior::DEADLINE) {
-		std::vector < std::unique_ptr < frc2::Command >> commands;
-		commands.emplace_back(std::move(events).Unwrap());
-		return frc2::ParallelDeadlineGroup(
-				std::make_unique < frc2::WaitCommand > (stopEvent.waitTime),
-				std::move(commands)).ToPtr();
+		std::vector < frc2::CommandPtr > commands;
+		commands.emplace_back(std::move(events));
+		commands.emplace_back(frc2::cmd::Wait(stopEvent.waitTime));
+		return frc2::cmd::Parallel(std::move(commands));
 	} else if (stopEvent.waitBehavior
 			== PathPlannerTrajectory::StopEvent::WaitBehavior::MINIMUM) {
-		std::vector < std::unique_ptr < frc2::Command >> commands;
-		commands.emplace_back(
-				std::make_unique < frc2::WaitCommand > (stopEvent.waitTime));
-		commands.emplace_back(std::move(events).Unwrap());
-		return frc2::ParallelCommandGroup(std::move(commands)).ToPtr();
+		std::vector < frc2::CommandPtr > commands;
+		commands.emplace_back(frc2::cmd::Wait(stopEvent.waitTime));
+		commands.emplace_back(std::move(events));
+		return frc2::cmd::Parallel(std::move(commands));
 	} else {
 		return events;
 	}
@@ -150,18 +145,17 @@ frc2::CommandPtr BaseAutoBuilder::fullAuto(PathPlannerTrajectory trajectory) {
 
 frc2::CommandPtr BaseAutoBuilder::fullAuto(
 		std::vector<PathPlannerTrajectory> pathGroup) {
-	std::vector < std::unique_ptr < frc2::Command >> commands;
+	std::vector < frc2::CommandPtr > commands;
 
-	commands.emplace_back(resetPose(pathGroup[0]).Unwrap());
+	commands.emplace_back(resetPose(pathGroup[0]));
 
 	for (PathPlannerTrajectory traj : pathGroup) {
-		commands.emplace_back(
-				stopEventGroup(traj.getStartStopEvent()).Unwrap());
-		commands.emplace_back(followPathWithEvents(traj).Unwrap());
+		commands.emplace_back(stopEventGroup(traj.getStartStopEvent()));
+		commands.emplace_back(followPathWithEvents(traj));
 	}
 
 	commands.emplace_back(
-			stopEventGroup(pathGroup[pathGroup.size() - 1].getEndStopEvent()).Unwrap());
+			stopEventGroup(pathGroup[pathGroup.size() - 1].getEndStopEvent()));
 
-	return frc2::SequentialCommandGroup(std::move(commands)).ToPtr();
+	return frc2::cmd::Sequence(std::move(commands));
 }

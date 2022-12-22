@@ -94,9 +94,11 @@ frc2::CommandPtr BaseAutoBuilder::getStopEventCommands(
 		return frc2::cmd::Parallel(std::move(eventCommands));
 	} else if (stopEvent.executionBehavior
 			== PathPlannerTrajectory::StopEvent::ExecutionBehavior::PARALLEL_DEADLINE) {
-		frc2::CommandPtr *deadline = &eventCommands.front();
-		eventCommands.erase(eventCommands.begin());
-		return frc2::cmd::Deadline(std::move(*deadline),
+		frc2::CommandPtr deadline = frc2::cmd::None();
+		if (m_eventMap.find(stopEvent.names[0]) != m_eventMap.end()) {
+			deadline = wrappedEventCommand(m_eventMap.at(stopEvent.names[0]));
+		}
+		return frc2::cmd::Deadline(std::move(deadline),
 				std::move(eventCommands));
 	}
 	return frc2::cmd::None();
@@ -126,7 +128,7 @@ frc2::CommandPtr BaseAutoBuilder::stopEventGroup(
 		return frc2::cmd::Parallel(std::move(commands));
 	} else if (stopEvent.waitBehavior
 			== PathPlannerTrajectory::StopEvent::WaitBehavior::MINIMUM) {
-		std::vector < frc2::Command > commands;
+		std::vector < frc2::CommandPtr > commands;
 		commands.emplace_back(frc2::cmd::Wait(stopEvent.waitTime));
 		commands.emplace_back(std::move(events));
 		return frc2::cmd::Parallel(std::move(commands));

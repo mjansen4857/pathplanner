@@ -36,8 +36,6 @@ class _StopEventCardState extends State<StopEventCard> {
       return Container();
     }
 
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return DraggableCard(
       stackKey: widget.stackKey,
       defaultPosition: const CardPosition(top: 0, right: 0),

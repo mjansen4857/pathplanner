@@ -293,7 +293,7 @@ class _StopEventCardState extends State<StopEventCard> {
   String _getEventLabel(int index) {
     if (widget.stopEvent!.executionBehavior ==
         ExecutionBehavior.parallelDeadline) {
-      if (index == 0) return 'Deadline';
+      if (index == 0) return 'Deadline Event';
 
       return 'Event $index';
     }

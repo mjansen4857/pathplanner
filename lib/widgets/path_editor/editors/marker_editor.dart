@@ -95,20 +95,24 @@ class _MarkerEditorState extends State<MarkerEditor> {
                       }
                     }
                     for (Waypoint waypoint in widget.path.waypoints) {
-                      Offset markerPosPx = PathPainterUtil.pointToPixelOffset(
-                          waypoint.anchorPoint,
-                          _MarkerPainter.scale,
-                          widget.fieldImage);
-                      Offset markerCenterPx =
-                          markerPosPx - const Offset(-48, 20 - 48);
+                      if (waypoint.isStopPoint ||
+                          waypoint.isStartPoint() ||
+                          waypoint.isEndPoint()) {
+                        Offset markerPosPx = PathPainterUtil.pointToPixelOffset(
+                            waypoint.anchorPoint,
+                            _MarkerPainter.scale,
+                            widget.fieldImage);
+                        Offset markerCenterPx =
+                            markerPosPx - const Offset(-48, 20 - 48);
 
-                      if ((details.localPosition - markerCenterPx).distance <=
-                          40) {
-                        setState(() {
-                          _selectedMarker = null;
-                          _selectedStopEventWaypoint = waypoint;
-                        });
-                        return;
+                        if ((details.localPosition - markerCenterPx).distance <=
+                            40) {
+                          setState(() {
+                            _selectedMarker = null;
+                            _selectedStopEventWaypoint = waypoint;
+                          });
+                          return;
+                        }
                       }
                     }
                     setState(() {
@@ -186,6 +190,42 @@ class _MarkerEditorState extends State<MarkerEditor> {
             ),
           );
         },
+        onPrevStopEvent:
+            _selectedStopEventWaypoint != widget.path.waypoints.first
+                ? () {
+                    for (int i = widget.path.waypoints
+                                .indexOf(_selectedStopEventWaypoint!) -
+                            1;
+                        i >= 0;
+                        i--) {
+                      Waypoint w = widget.path.waypoints[i];
+                      if (w.isStopPoint || w.isEndPoint() || w.isStartPoint()) {
+                        setState(() {
+                          _selectedStopEventWaypoint = w;
+                        });
+                        break;
+                      }
+                    }
+                  }
+                : null,
+        onNextStopEvent:
+            _selectedStopEventWaypoint != widget.path.waypoints.last
+                ? () {
+                    for (int i = widget.path.waypoints
+                                .indexOf(_selectedStopEventWaypoint!) +
+                            1;
+                        i < widget.path.waypoints.length;
+                        i++) {
+                      Waypoint w = widget.path.waypoints[i];
+                      if (w.isStopPoint || w.isEndPoint() || w.isStartPoint()) {
+                        setState(() {
+                          _selectedStopEventWaypoint = w;
+                        });
+                        break;
+                      }
+                    }
+                  }
+                : null,
       ),
     );
   }
@@ -285,6 +325,22 @@ class _MarkerEditorState extends State<MarkerEditor> {
             _markerPreviewPos = value;
           });
         },
+        onPrevMarker: _selectedMarker != widget.path.markers.first
+            ? () {
+                setState(() {
+                  _selectedMarker = widget.path.markers[
+                      widget.path.markers.indexOf(_selectedMarker!) - 1];
+                });
+              }
+            : null,
+        onNextMarker: _selectedMarker != widget.path.markers.last
+            ? () {
+                setState(() {
+                  _selectedMarker = widget.path.markers[
+                      widget.path.markers.indexOf(_selectedMarker!) + 1];
+                });
+              }
+            : null,
       ),
     );
   }

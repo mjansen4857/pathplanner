@@ -10,12 +10,16 @@ class StopEventCard extends StatefulWidget {
   final SharedPreferences prefs;
   final StopEvent? stopEvent;
   final void Function(StopEvent oldEvent) onEdited;
+  final VoidCallback? onPrevStopEvent;
+  final VoidCallback? onNextStopEvent;
 
   const StopEventCard({
     required this.stackKey,
     required this.prefs,
     required this.stopEvent,
     required this.onEdited,
+    this.onPrevStopEvent,
+    this.onNextStopEvent,
     super.key,
   });
 
@@ -41,10 +45,7 @@ class _StopEventCardState extends State<StopEventCard> {
       prefs: widget.prefs,
       child: Column(
         children: [
-          Text(
-            'AutoBuilder Stop Event',
-            style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
-          ),
+          _buildHeader(),
           const SizedBox(height: 8),
           _buildExecutionBehaviorDropdown(),
           _buildNameFields(),
@@ -54,6 +55,39 @@ class _StopEventCardState extends State<StopEventCard> {
             _buildWaitTime(context),
         ],
       ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (widget.stopEvent != null)
+          IconButton(
+            onPressed: widget.onPrevStopEvent,
+            icon: const Icon(Icons.arrow_left),
+            iconSize: 20,
+            splashRadius: 20,
+            padding: const EdgeInsets.all(0),
+            tooltip: 'Previous Stop Event',
+          ),
+        const Text(
+          'Edit Stop Event',
+          style: TextStyle(
+            fontSize: 16,
+          ),
+        ),
+        if (widget.stopEvent != null)
+          IconButton(
+            onPressed: widget.onNextStopEvent,
+            icon: const Icon(Icons.arrow_right),
+            iconSize: 20,
+            splashRadius: 20,
+            padding: const EdgeInsets.all(0),
+            tooltip: 'Next Stop Event',
+          ),
+      ],
     );
   }
 

@@ -137,6 +137,14 @@ protected:
 	}
 
 	/**
+	 * Creates a Command Group of events on a stop event, excluding the wait
+	 * @param stopEvent The stop event to create the event command group for
+	 * @return Command group for the "stop event" events
+	 */
+	virtual frc2::CommandPtr getStopEventCommands(
+			PathPlannerTrajectory::StopEvent stopEvent);
+
+	/**
 	 * Wrap an event command, so it can be added to a command group
 	 *
 	 * @param eventCommand The event command to wrap

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pathplanner/services/log.dart';
+import 'package:process_run/shell.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -40,8 +41,6 @@ void main() async {
 
       runApp(PathPlanner(
         appVersion: packageInfo.version,
-        appStoreBuild: packageInfo.installerStore !=
-            null, // This will only be true if installed from apple app store
       ));
     },
     (Object error, StackTrace stack) {
@@ -53,10 +52,8 @@ void main() async {
 
 class PathPlanner extends StatefulWidget {
   final String appVersion;
-  final bool appStoreBuild;
 
-  const PathPlanner(
-      {required this.appVersion, required this.appStoreBuild, super.key});
+  const PathPlanner({required this.appVersion, super.key});
 
   @override
   State<PathPlanner> createState() => _PathPlannerState();
@@ -65,6 +62,7 @@ class PathPlanner extends StatefulWidget {
 class _PathPlannerState extends State<PathPlanner> {
   SharedPreferences? _prefs;
   late Color _teamColor;
+  bool _sandboxed = false;
 
   @override
   void initState() {
@@ -76,6 +74,15 @@ class _PathPlannerState extends State<PathPlanner> {
         _teamColor = Color(_prefs!.getInt('teamColor') ?? Colors.indigo.value);
       });
     });
+
+    if (Platform.isMacOS) {
+      var shell = Shell();
+      shell.run('echo test sandbox').catchError((err) {
+        setState(() {
+          _sandboxed = true;
+        });
+      });
+    }
   }
 
   @override
@@ -91,7 +98,7 @@ class _PathPlannerState extends State<PathPlanner> {
       ),
       home: HomePage(
         appVersion: widget.appVersion,
-        appStoreBuild: widget.appStoreBuild,
+        appStoreBuild: _sandboxed,
         prefs: _prefs!,
         onTeamColorChanged: (Color color) {
           setState(() {

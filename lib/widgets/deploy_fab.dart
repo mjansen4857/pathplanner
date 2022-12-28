@@ -22,11 +22,9 @@ class DeployFAB extends StatelessWidget {
           Shell shell = Shell().cd(projectDir!.path);
           _showSnackbar(context, 'Deploying robot code...',
               duration: const Duration(minutes: 10));
-          try {
-            String gradlew = Platform.isWindows ? 'gradlew' : './gradlew';
-            ProcessResult result =
-                await shell.runExecutableArguments(gradlew, ['deploy']);
 
+          String gradlew = Platform.isWindows ? 'gradlew' : './gradlew';
+          shell.runExecutableArguments(gradlew, ['deploy']).then((result) {
             if (!mounted) return;
 
             ScaffoldMessenger.of(context).removeCurrentSnackBar();
@@ -37,11 +35,13 @@ class DeployFAB extends StatelessWidget {
               _showSnackbar(context, 'Failed to deploy.',
                   textColor: colorScheme.error);
             }
-          } on ShellException catch (_) {
+          }).catchError((err, stackTrace) {
+            if (!mounted) return;
+
             ScaffoldMessenger.of(context).removeCurrentSnackBar();
             _showSnackbar(context, 'Failed to deploy.',
                 textColor: colorScheme.error);
-          }
+          });
         },
       ),
     );

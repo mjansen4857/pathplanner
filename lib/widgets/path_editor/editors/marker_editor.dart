@@ -325,7 +325,8 @@ class _MarkerEditorState extends State<MarkerEditor> {
             _markerPreviewPos = value;
           });
         },
-        onPrevMarker: _selectedMarker != widget.path.markers.first
+        onPrevMarker: widget.path.markers.isNotEmpty &&
+                _selectedMarker != widget.path.markers.first
             ? () {
                 setState(() {
                   _selectedMarker = widget.path.markers[
@@ -333,7 +334,8 @@ class _MarkerEditorState extends State<MarkerEditor> {
                 });
               }
             : null,
-        onNextMarker: _selectedMarker != widget.path.markers.last
+        onNextMarker: widget.path.markers.isNotEmpty &&
+                _selectedMarker != widget.path.markers.last
             ? () {
                 setState(() {
                   _selectedMarker = widget.path.markers[

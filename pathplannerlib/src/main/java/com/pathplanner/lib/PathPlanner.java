@@ -39,8 +39,8 @@ public class PathPlanner {
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
 
-      ArrayList<Waypoint> waypoints = getWaypointsFromJson(json);
-      ArrayList<EventMarker> markers = getMarkersFromJson(json);
+      List<Waypoint> waypoints = getWaypointsFromJson(json);
+      List<EventMarker> markers = getMarkersFromJson(json);
 
       return new PathPlannerTrajectory(waypoints, markers, constraints, reversed);
     } catch (Exception e) {
@@ -97,11 +97,11 @@ public class PathPlanner {
    * @param constraints The PathConstraints (max velocity, max acceleration) of the remaining paths
    *     in the group. If there are less constraints than paths, the last constrain given will be
    *     used for the remaining paths.
-   * @return An ArrayList of all generated paths in the group
+   * @return A List of all generated paths in the group
    */
-  public static ArrayList<PathPlannerTrajectory> loadPathGroup(
+  public static List<PathPlannerTrajectory> loadPathGroup(
       String name, boolean reversed, PathConstraints constraint, PathConstraints... constraints) {
-    ArrayList<PathConstraints> allConstraints = new ArrayList<>();
+    List<PathConstraints> allConstraints = new ArrayList<>();
     allConstraints.add(constraint);
     allConstraints.addAll(Arrays.asList(constraints));
 
@@ -118,20 +118,20 @@ public class PathPlanner {
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
 
-      ArrayList<Waypoint> waypoints = getWaypointsFromJson(json);
-      ArrayList<EventMarker> markers = getMarkersFromJson(json);
+      List<Waypoint> waypoints = getWaypointsFromJson(json);
+      List<EventMarker> markers = getMarkersFromJson(json);
 
-      ArrayList<ArrayList<Waypoint>> splitWaypoints = new ArrayList<>();
-      ArrayList<ArrayList<EventMarker>> splitMarkers = new ArrayList<>();
+      List<List<Waypoint>> splitWaypoints = new ArrayList<>();
+      List<List<EventMarker>> splitMarkers = new ArrayList<>();
 
-      ArrayList<Waypoint> currentPath = new ArrayList<>();
+      List<Waypoint> currentPath = new ArrayList<>();
       for (int i = 0; i < waypoints.size(); i++) {
         Waypoint w = waypoints.get(i);
 
         currentPath.add(w);
         if (w.isStopPoint || i == waypoints.size() - 1) {
           // Get the markers that should be part of this path and correct their positions
-          ArrayList<EventMarker> currentMarkers = new ArrayList<>();
+          List<EventMarker> currentMarkers = new ArrayList<>();
           for (EventMarker marker : markers) {
             if (marker.waypointRelativePos >= waypoints.indexOf(currentPath.get(0))
                 && marker.waypointRelativePos <= i) {
@@ -154,7 +154,7 @@ public class PathPlanner {
             "Size of splitWaypoints does not match splitMarkers. Something went very wrong");
       }
 
-      ArrayList<PathPlannerTrajectory> pathGroup = new ArrayList<>();
+      List<PathPlannerTrajectory> pathGroup = new ArrayList<>();
       boolean shouldReverse = reversed;
       for (int i = 0; i < splitWaypoints.size(); i++) {
         PathConstraints currentConstraints;
@@ -194,9 +194,9 @@ public class PathPlanner {
    * @param constraints The PathConstraints (max velocity, max acceleration) of the remaining paths
    *     in the group. If there are less constraints than paths, the last constrain given will be
    *     used for the remaining paths.
-   * @return An ArrayList of all generated paths in the group
+   * @return A List of all generated paths in the group
    */
-  public static ArrayList<PathPlannerTrajectory> loadPathGroup(
+  public static List<PathPlannerTrajectory> loadPathGroup(
       String name, PathConstraints constraint, PathConstraints... constraints) {
     return loadPathGroup(name, false, constraint, constraints);
   }
@@ -209,9 +209,9 @@ public class PathPlanner {
    * @param maxVel The max velocity of every path in the group
    * @param maxAccel The max acceleraiton of every path in the group
    * @param reversed Should the robot follow this path group reversed
-   * @return An ArrayList of all generated paths in the group
+   * @return A List of all generated paths in the group
    */
-  public static ArrayList<PathPlannerTrajectory> loadPathGroup(
+  public static List<PathPlannerTrajectory> loadPathGroup(
       String name, double maxVel, double maxAccel, boolean reversed) {
     return loadPathGroup(name, reversed, new PathConstraints(maxVel, maxAccel));
   }
@@ -223,9 +223,9 @@ public class PathPlanner {
    * @param name The name of the path group to load
    * @param maxVel The max velocity of every path in the group
    * @param maxAccel The max acceleraiton of every path in the group
-   * @return An ArrayList of all generated paths in the group
+   * @return A List of all generated paths in the group
    */
-  public static ArrayList<PathPlannerTrajectory> loadPathGroup(
+  public static List<PathPlannerTrajectory> loadPathGroup(
       String name, double maxVel, double maxAccel) {
     return loadPathGroup(name, false, new PathConstraints(maxVel, maxAccel));
   }
@@ -250,7 +250,7 @@ public class PathPlanner {
 
     PathPoint firstPoint = points.get(0);
 
-    ArrayList<Waypoint> waypoints = new ArrayList<>();
+    List<Waypoint> waypoints = new ArrayList<>();
     waypoints.add(
         new Waypoint(
             firstPoint.position,
@@ -369,7 +369,7 @@ public class PathPlanner {
       PathPoint point1,
       PathPoint point2,
       PathPoint... points) {
-    ArrayList<PathPoint> pointsList = new ArrayList<>();
+    List<PathPoint> pointsList = new ArrayList<>();
     pointsList.add(point1);
     pointsList.add(point2);
     pointsList.addAll(List.of(points));
@@ -450,10 +450,10 @@ public class PathPlanner {
     }
   }
 
-  private static ArrayList<Waypoint> getWaypointsFromJson(JSONObject json) {
+  private static List<Waypoint> getWaypointsFromJson(JSONObject json) {
     JSONArray jsonWaypoints = (JSONArray) json.get("waypoints");
 
-    ArrayList<Waypoint> waypoints = new ArrayList<>();
+    List<Waypoint> waypoints = new ArrayList<>();
 
     for (Object waypoint : jsonWaypoints) {
       JSONObject jsonWaypoint = (JSONObject) waypoint;
@@ -498,7 +498,7 @@ public class PathPlanner {
 
       PathPlannerTrajectory.StopEvent stopEvent = new PathPlannerTrajectory.StopEvent();
       if (jsonWaypoint.get("stopEvent") != null) {
-        ArrayList<String> names = new ArrayList<>();
+        List<String> names = new ArrayList<>();
         PathPlannerTrajectory.StopEvent.ExecutionBehavior executionBehavior =
             PathPlannerTrajectory.StopEvent.ExecutionBehavior.PARALLEL;
         PathPlannerTrajectory.StopEvent.WaitBehavior waitBehavior =
@@ -553,17 +553,17 @@ public class PathPlanner {
     return waypoints;
   }
 
-  private static ArrayList<EventMarker> getMarkersFromJson(JSONObject json) {
+  private static List<EventMarker> getMarkersFromJson(JSONObject json) {
     JSONArray jsonMarkers = (JSONArray) json.get("markers");
 
-    ArrayList<EventMarker> markers = new ArrayList<>();
+    List<EventMarker> markers = new ArrayList<>();
 
     if (jsonMarkers != null) {
       for (Object marker : jsonMarkers) {
         JSONObject jsonMarker = (JSONObject) marker;
 
         JSONArray eventNames = (JSONArray) jsonMarker.get("names");
-        ArrayList<String> names = new ArrayList<>();
+        List<String> names = new ArrayList<>();
         if (eventNames != null) {
           for (Object eventName : eventNames) {
             names.add((String) eventName);

@@ -227,7 +227,7 @@ public abstract class BaseAutoBuilder {
    * @param pathGroup Path group to follow during the auto
    * @return Autonomous command
    */
-  public CommandBase fullAuto(ArrayList<PathPlannerTrajectory> pathGroup) {
+  public CommandBase fullAuto(List<PathPlannerTrajectory> pathGroup) {
     List<CommandBase> commands = new ArrayList<>();
 
     commands.add(resetPose(pathGroup.get(0)));

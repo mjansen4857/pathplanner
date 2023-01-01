@@ -160,7 +160,7 @@ public abstract class BaseAutoBuilder {
       case PARALLEL_DEADLINE:
         Command deadline =
             eventMap.containsKey(stopEvent.names.get(0))
-                ? eventMap.get(stopEvent.names.get(0))
+                ? wrappedEventCommand(eventMap.get(stopEvent.names.get(0)))
                 : Commands.none();
         return Commands.deadline(deadline, commands.toArray(CommandBase[]::new));
       default:

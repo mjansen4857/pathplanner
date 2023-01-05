@@ -40,6 +40,13 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 		std::string const &name,
 		std::initializer_list<PathConstraints> const constraints,
 		bool const reversed) {
+	return loadPathGroup(name, std::vector < PathConstraints > (constraints),
+			reversed);
+}
+
+std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
+		std::string const &name, std::vector<PathConstraints> const constraints,
+		bool const reversed) {
 	if (constraints.size() == 0) {
 		throw std::runtime_error(
 				"At least one PathConstraints is required but none were provized");
@@ -101,13 +108,11 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 	}
 
 	std::vector < PathPlannerTrajectory > pathGroup;
-	std::vector < PathConstraints > constraintsVec(constraints);
 	bool shouldReverse = reversed;
 	for (size_t i = 0; i < splitWaypoints.size(); i++) {
 		PathConstraints const currentConstraints =
-				(i > constraintsVec.size() - 1) ?
-						constraintsVec[constraintsVec.size() - 1] :
-						constraintsVec[i];
+				(i > constraints.size() - 1) ?
+						constraints[constraints.size() - 1] : constraints[i];
 
 		pathGroup.emplace_back(splitWaypoints[i], splitMarkers[i],
 				currentConstraints, shouldReverse);

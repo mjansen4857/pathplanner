@@ -59,6 +59,19 @@ public:
 	 * @brief Load a path file from storage as a path group. This will separate the path into multiple paths based on the waypoints marked as "stop points"
 	 *
 	 * @param name The name of the path group to load
+	 * @param constraints Vector of path constraints for each path in the group. This requires at least one path constraint. If less constraints than paths are provided, the last constraint will be used for the rest of the paths.
+	 * @param reversed Should the robot follow the path group reversed
+	 * @return Vector of all generated paths in the group
+	 */
+	static std::vector<PathPlannerTrajectory> loadPathGroup(
+			std::string const &name,
+			std::vector<PathConstraints> const constraints,
+			bool const reversed = false);
+
+	/**
+	 * @brief Load a path file from storage as a path group. This will separate the path into multiple paths based on the waypoints marked as "stop points"
+	 *
+	 * @param name The name of the path group to load
 	 * @param maxVel Max velocity of every path in the group
 	 * @param maxAccel Max acceleration of every path in the group
 	 * @param reversed Should the robot follow the path group reversed

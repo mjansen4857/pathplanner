@@ -93,6 +93,7 @@ class _EditEditorState extends State<EditEditor> {
     return Center(
       child: InteractiveViewer(
         child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onDoubleTapDown: (details) {
             UndoRedo.addChange(Change(
               [
@@ -228,8 +229,16 @@ class _EditEditorState extends State<EditEditor> {
             if (_draggedPoint != null) {
               setState(() {
                 _draggedPoint!.dragUpdate(
-                    _xPixelsToMeters(details.localPosition.dx),
-                    _yPixelsToMeters(details.localPosition.dy));
+                    _xPixelsToMeters(min(
+                        88 +
+                            (widget.fieldImage.defaultSize.width *
+                                _EditPainter.scale),
+                        max(8, details.localPosition.dx))),
+                    _yPixelsToMeters(min(
+                        88 +
+                            (widget.fieldImage.defaultSize.height *
+                                _EditPainter.scale),
+                        max(8, details.localPosition.dy))));
               });
             }
           },
@@ -258,7 +267,7 @@ class _EditEditorState extends State<EditEditor> {
               _draggedPoint = null;
             }
           },
-          child: Padding(
+          child: Container(
             padding: const EdgeInsets.all(48),
             child: Stack(
               children: [

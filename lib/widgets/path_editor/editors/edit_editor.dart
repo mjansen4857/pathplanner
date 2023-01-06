@@ -93,6 +93,7 @@ class _EditEditorState extends State<EditEditor> {
     return Center(
       child: InteractiveViewer(
         child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onDoubleTapDown: (details) {
             UndoRedo.addChange(Change(
               [
@@ -226,11 +227,36 @@ class _EditEditorState extends State<EditEditor> {
           },
           onPanUpdate: (details) {
             if (_draggedPoint != null) {
-              setState(() {
-                _draggedPoint!.dragUpdate(
-                    _xPixelsToMeters(details.localPosition.dx),
-                    _yPixelsToMeters(details.localPosition.dy));
-              });
+              if (details.localPosition.dx >= 8 &&
+                  details.localPosition.dy >= 8 &&
+                  details.localPosition.dx <=
+                      88 +
+                          (widget.fieldImage.defaultSize.width *
+                              _EditPainter.scale) &&
+                  details.localPosition.dy <=
+                      88 +
+                          (widget.fieldImage.defaultSize.height *
+                              _EditPainter.scale)) {
+                setState(() {
+                  _draggedPoint!.dragUpdate(
+                      _xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy));
+                });
+              } else {
+                setState(() {
+                  _draggedPoint!.dragUpdate(
+                      _xPixelsToMeters(min(
+                          88 +
+                              (widget.fieldImage.defaultSize.width *
+                                  _EditPainter.scale),
+                          max(8, details.localPosition.dx))),
+                      _yPixelsToMeters(min(
+                          88 +
+                              (widget.fieldImage.defaultSize.height *
+                                  _EditPainter.scale),
+                          max(8, details.localPosition.dy))));
+                });
+              }
             }
           },
           onPanEnd: (details) {
@@ -258,7 +284,7 @@ class _EditEditorState extends State<EditEditor> {
               _draggedPoint = null;
             }
           },
-          child: Padding(
+          child: Container(
             padding: const EdgeInsets.all(48),
             child: Stack(
               children: [

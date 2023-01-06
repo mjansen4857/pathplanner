@@ -227,36 +227,19 @@ class _EditEditorState extends State<EditEditor> {
           },
           onPanUpdate: (details) {
             if (_draggedPoint != null) {
-              if (details.localPosition.dx >= 8 &&
-                  details.localPosition.dy >= 8 &&
-                  details.localPosition.dx <=
-                      88 +
-                          (widget.fieldImage.defaultSize.width *
-                              _EditPainter.scale) &&
-                  details.localPosition.dy <=
-                      88 +
-                          (widget.fieldImage.defaultSize.height *
-                              _EditPainter.scale)) {
-                setState(() {
-                  _draggedPoint!.dragUpdate(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy));
-                });
-              } else {
-                setState(() {
-                  _draggedPoint!.dragUpdate(
-                      _xPixelsToMeters(min(
-                          88 +
-                              (widget.fieldImage.defaultSize.width *
-                                  _EditPainter.scale),
-                          max(8, details.localPosition.dx))),
-                      _yPixelsToMeters(min(
-                          88 +
-                              (widget.fieldImage.defaultSize.height *
-                                  _EditPainter.scale),
-                          max(8, details.localPosition.dy))));
-                });
-              }
+              setState(() {
+                _draggedPoint!.dragUpdate(
+                    _xPixelsToMeters(min(
+                        88 +
+                            (widget.fieldImage.defaultSize.width *
+                                _EditPainter.scale),
+                        max(8, details.localPosition.dx))),
+                    _yPixelsToMeters(min(
+                        88 +
+                            (widget.fieldImage.defaultSize.height *
+                                _EditPainter.scale),
+                        max(8, details.localPosition.dy))));
+              });
             }
           },
           onPanEnd: (details) {

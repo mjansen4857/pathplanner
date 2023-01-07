@@ -91,6 +91,7 @@ class _PathPlannerState extends State<PathPlanner> {
 
     return MaterialApp(
       title: 'PathPlanner',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
         colorSchemeSeed: _teamColor,

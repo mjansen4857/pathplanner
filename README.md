@@ -9,7 +9,8 @@
 Download from one of the above app stores to receive auto-updates. Manual installs can be found [here](https://github.com/mjansen4857/pathplanner/releases).
 
 ## About
-![PathPlanner](https://user-images.githubusercontent.com/9343077/197633263-f7f26aa8-96ae-4dc6-aece-fffda87f621f.png)
+
+![PathPlanner](https://user-images.githubusercontent.com/9343077/211174347-75a2daca-e13b-4d1b-bf6e-86a7d0742b5b.png)
 PathPlanner is a motion profile generator for FRC robots created by team 3015. The main features of PathPlanner include:
 * Each path is made with Bézier curves, allowing fine tuning of the exact path shape.
 * Holonomic mode supports decoupling the robot's rotation from its direction of travel.

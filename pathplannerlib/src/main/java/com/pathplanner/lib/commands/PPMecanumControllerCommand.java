@@ -75,13 +75,11 @@ public class PPMecanumControllerCommand extends CommandBase {
 
     addRequirements(requirements);
 
-    if (useAllianceColor
-        && trajectory.fromGUI
-        && trajectory.getInitialState().poseMeters.getX() > 8.27) {
+    if (useAllianceColor && trajectory.fromGUI && trajectory.getInitialPose().getX() > 8.27) {
       DriverStation.reportWarning(
           "You have constructed a path following command that will automatically transform path states depending"
-              + "on the alliance color, however, it appears this path was created on the red side of the field"
-              + "instead of the blue side. This is likely an error.",
+              + " on the alliance color, however, it appears this path was created on the red side of the field"
+              + " instead of the blue side. This is likely an error.",
           false);
     }
   }
@@ -165,13 +163,11 @@ public class PPMecanumControllerCommand extends CommandBase {
 
     addRequirements(requirements);
 
-    if (useAllianceColor
-        && trajectory.fromGUI
-        && trajectory.getInitialState().poseMeters.getX() > 8.27) {
+    if (useAllianceColor && trajectory.fromGUI && trajectory.getInitialPose().getX() > 8.27) {
       DriverStation.reportWarning(
           "You have constructed a path following command that will automatically transform path states depending"
-              + "on the alliance color, however, it appears this path was created on the red side of the field"
-              + "instead of the blue side. This is likely an error.",
+              + " on the alliance color, however, it appears this path was created on the red side of the field"
+              + " instead of the blue side. This is likely an error.",
           false);
     }
   }

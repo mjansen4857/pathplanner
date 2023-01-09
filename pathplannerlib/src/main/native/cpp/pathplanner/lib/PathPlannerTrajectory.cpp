@@ -356,13 +356,12 @@ units::meter_t PathPlannerTrajectory::calculateRadius(
 }
 
 PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(
-		units::second_t const time,
-		frc::DriverStation::Alliance const alliance) const {
+		units::second_t const time) const {
 	if (time <= getInitialState().time) {
-		return transformForAlliance(getInitialState(), alliance);
+		return getInitialState();
 	}
 	if (time >= getTotalTime()) {
-		return transformForAlliance(getEndState(), alliance);
+		return getEndState();
 	}
 
 	int low = 1;
@@ -381,18 +380,16 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(
 	PathPlannerState const &prevSample = getState(low - 1);
 
 	if (units::math::abs(sample.time - prevSample.time) < 0.001_s) {
-		return transformForAlliance(sample, alliance);
+		return sample;
 	}
 
-	return transformForAlliance(
-			prevSample.interpolate(sample,
-					(time - prevSample.time) / (sample.time - prevSample.time)),
-			alliance);
+	return prevSample.interpolate(sample,
+			(time - prevSample.time) / (sample.time - prevSample.time));
 }
 
 PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::transformForAlliance(
 		PathPlannerState const &state,
-		frc::DriverStation::Alliance const alliance) const {
+		frc::DriverStation::Alliance const alliance) {
 	if (alliance == frc::DriverStation::Alliance::kRed) {
 		// Create a new state so that we don't overwrite the original
 		PathPlannerTrajectory::PathPlannerState transformedState;

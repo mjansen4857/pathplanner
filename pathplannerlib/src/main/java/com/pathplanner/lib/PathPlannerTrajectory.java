@@ -72,24 +72,8 @@ public class PathPlannerTrajectory extends Trajectory {
    */
   @Override
   public State sample(double time) {
-    return sample(time, DriverStation.Alliance.Blue);
-  }
-
-  /**
-   * Sample the path at the given time for the given alliance. This is useful for dealing with
-   * non-standard field mirroring, such as the 2023 game.
-   *
-   * <p>In order for this to work properly, you must create your paths on the blue side of the field
-   * in the GUI.
-   *
-   * @param time The time to sample
-   * @param alliance The current alliance color
-   * @return The state at the given point in time, transformed if for red alliance
-   */
-  public State sample(double time, DriverStation.Alliance alliance) {
-    if (time <= getInitialState().timeSeconds)
-      return transformForAlliance(getInitialState(), alliance);
-    if (time >= getTotalTimeSeconds()) return transformForAlliance(getEndState(), alliance);
+    if (time <= getInitialState().timeSeconds) return getInitialState();
+    if (time >= getTotalTimeSeconds()) return getEndState();
 
     int low = 1;
     int high = getStates().size() - 1;
@@ -106,17 +90,13 @@ public class PathPlannerTrajectory extends Trajectory {
     PathPlannerState sample = getState(low);
     PathPlannerState prevSample = getState(low - 1);
 
-    if (Math.abs(sample.timeSeconds - prevSample.timeSeconds) < 1E-3)
-      return transformForAlliance(sample, alliance);
+    if (Math.abs(sample.timeSeconds - prevSample.timeSeconds) < 1E-3) return sample;
 
-    return transformForAlliance(
-        prevSample.interpolate(
-            sample,
-            (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds)),
-        alliance);
+    return prevSample.interpolate(
+        sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
   }
 
-  private PathPlannerState transformForAlliance(
+  public static PathPlannerState transformStateForAlliance(
       PathPlannerState state, DriverStation.Alliance alliance) {
     if (alliance == DriverStation.Alliance.Red) {
       // Create a new state so that we don't overwrite the original

@@ -173,9 +173,6 @@ private:
 
 	void calculateMarkerTimes(std::vector<Waypoint> const &pathPoints);
 
-	PathPlannerState transformForAlliance(PathPlannerState const &state,
-			frc::DriverStation::Alliance const alliance) const;
-
 	friend class PathPlanner;
 
 public:
@@ -184,6 +181,9 @@ public:
 			PathConstraints const constraints, bool const reversed);
 	PathPlannerTrajectory() {
 	}
+
+	static PathPlannerState transformForAlliance(PathPlannerState const &state,
+			frc::DriverStation::Alliance const alliance);
 
 	/**
 	 * Get the "stop event" for the beginning of the path
@@ -209,22 +209,7 @@ public:
 	 * @param time The time to sample
 	 * @return The state at the given point in time
 	 */
-	PathPlannerState sample(units::second_t const time) const {
-		return sample(time, frc::DriverStation::Alliance::kBlue);
-	}
-
-	/**
-	 * @brief Sample the path at a point in time for the given alliance. This is useful for dealing with
-	 * non-standard field mirroring, such as the 2023 game.
-	 * 
-	 * <p>In order for this to work properly, you must create your paths on the blue side of the field in the GUI.
-	 *
-	 * @param time The time to sample
-	 * @param alliance The current alliance color
-	 * @return The state at the given point in time, transformed if for the red alliance
-	 */
-	PathPlannerState sample(units::second_t const time,
-			frc::DriverStation::Alliance const alliance) const;
+	PathPlannerState sample(units::second_t const time) const;
 
 	/**
 	 * @brief Get all of the states in the path

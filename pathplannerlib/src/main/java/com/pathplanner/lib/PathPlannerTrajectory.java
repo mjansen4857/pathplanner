@@ -5,11 +5,14 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.DriverStation;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
+  private static final double FIELD_WIDTH_METERS = 8.02;
+
   private final List<EventMarker> markers;
   private final StopEvent startStopEvent;
   private final StopEvent endStopEvent;
@@ -69,8 +72,24 @@ public class PathPlannerTrajectory extends Trajectory {
    */
   @Override
   public State sample(double time) {
-    if (time <= getInitialState().timeSeconds) return getInitialState();
-    if (time >= getTotalTimeSeconds()) return getEndState();
+    return sample(time, DriverStation.Alliance.Blue);
+  }
+
+  /**
+   * Sample the path at the given time for the given alliance. This is useful for dealing with
+   * non-standard field mirroring, such as the 2023 game.
+   *
+   * <p>In order for this to work properly, you must create your paths on the blue side of the field
+   * in the GUI.
+   *
+   * @param time The time to sample
+   * @param alliance The current alliance color
+   * @return The state at the given point in time, transformed if for red alliance
+   */
+  public State sample(double time, DriverStation.Alliance alliance) {
+    if (time <= getInitialState().timeSeconds)
+      return transformForAlliance(getInitialState(), alliance);
+    if (time >= getTotalTimeSeconds()) return transformForAlliance(getEndState(), alliance);
 
     int low = 1;
     int high = getStates().size() - 1;
@@ -87,10 +106,42 @@ public class PathPlannerTrajectory extends Trajectory {
     PathPlannerState sample = getState(low);
     PathPlannerState prevSample = getState(low - 1);
 
-    if (Math.abs(sample.timeSeconds - prevSample.timeSeconds) < 1E-3) return sample;
+    if (Math.abs(sample.timeSeconds - prevSample.timeSeconds) < 1E-3)
+      return transformForAlliance(sample, alliance);
 
-    return prevSample.interpolate(
-        sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
+    return transformForAlliance(
+        prevSample.interpolate(
+            sample,
+            (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds)),
+        alliance);
+  }
+
+  private PathPlannerState transformForAlliance(
+      PathPlannerState state, DriverStation.Alliance alliance) {
+    if (alliance == DriverStation.Alliance.Red) {
+      // Create a new state so that we don't overwrite the original
+      PathPlannerState transformedState = new PathPlannerState();
+
+      Translation2d transformedTranslation =
+          new Translation2d(state.poseMeters.getX(), FIELD_WIDTH_METERS - state.poseMeters.getY());
+      Rotation2d transformedHeading = state.poseMeters.getRotation().times(-1);
+      Rotation2d transformedHolonomicRotation = state.holonomicRotation.times(-1);
+
+      transformedState.timeSeconds = state.timeSeconds;
+      transformedState.velocityMetersPerSecond = state.velocityMetersPerSecond;
+      transformedState.accelerationMetersPerSecondSq = state.accelerationMetersPerSecondSq;
+      transformedState.poseMeters = new Pose2d(transformedTranslation, transformedHeading);
+      transformedState.angularVelocityRadPerSec = -state.angularVelocityRadPerSec;
+      transformedState.holonomicRotation = transformedHolonomicRotation;
+      transformedState.holonomicAngularVelocityRadPerSec = -state.holonomicAngularVelocityRadPerSec;
+      transformedState.curveRadius = -state.curveRadius;
+      transformedState.curvatureRadPerMeter = -state.curvatureRadPerMeter;
+      transformedState.deltaPos = state.deltaPos;
+
+      return transformedState;
+    } else {
+      return state;
+    }
   }
 
   /**

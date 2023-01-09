@@ -356,12 +356,13 @@ units::meter_t PathPlannerTrajectory::calculateRadius(
 }
 
 PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(
-		units::second_t const time) const {
+		units::second_t const time,
+		frc::DriverStation::Alliance const alliance) const {
 	if (time <= getInitialState().time) {
-		return getInitialState();
+		return transformForAlliance(getInitialState(), alliance);
 	}
 	if (time >= getTotalTime()) {
-		return getEndState();
+		return transformForAlliance(getEndState(), alliance);
 	}
 
 	int low = 1;
@@ -380,11 +381,45 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(
 	PathPlannerState const &prevSample = getState(low - 1);
 
 	if (units::math::abs(sample.time - prevSample.time) < 0.001_s) {
-		return sample;
+		return transformForAlliance(sample, alliance);
 	}
 
-	return prevSample.interpolate(sample,
-			(time - prevSample.time) / (sample.time - prevSample.time));
+	return transformForAlliance(
+			prevSample.interpolate(sample,
+					(time - prevSample.time) / (sample.time - prevSample.time)),
+			alliance);
+}
+
+PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::transformForAlliance(
+		PathPlannerState const &state,
+		frc::DriverStation::Alliance const alliance) const {
+	if (alliance == frc::DriverStation::Alliance::kRed) {
+		// Create a new state so that we don't overwrite the original
+		PathPlannerTrajectory::PathPlannerState transformedState;
+
+		frc::Translation2d transformedTranslation(state.pose.X(),
+				FIELD_WIDTH - state.pose.Y());
+		frc::Rotation2d transformedHeading = state.pose.Rotation() * -1;
+		frc::Rotation2d transformedHolonomicRotation = state.holonomicRotation
+				* -1;
+
+		transformedState.time = state.time;
+		transformedState.velocity = state.velocity;
+		transformedState.acceleration = state.acceleration;
+		transformedState.pose = frc::Pose2d(transformedTranslation,
+				transformedHeading);
+		transformedState.angularVelocity = -state.angularVelocity;
+		transformedState.holonomicRotation = transformedHolonomicRotation;
+		transformedState.holonomicAngularVelocity =
+				-state.holonomicAngularVelocity;
+		transformedState.curveRadius = -state.curveRadius;
+		transformedState.curvature = -state.curvature;
+		transformedState.deltaPos = state.deltaPos;
+
+		return transformedState;
+	} else {
+		return state;
+	}
 }
 
 PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState::interpolate(

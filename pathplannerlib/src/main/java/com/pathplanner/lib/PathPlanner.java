@@ -42,7 +42,7 @@ public class PathPlanner {
       List<Waypoint> waypoints = getWaypointsFromJson(json);
       List<EventMarker> markers = getMarkersFromJson(json);
 
-      return new PathPlannerTrajectory(waypoints, markers, constraints, reversed);
+      return new PathPlannerTrajectory(waypoints, markers, constraints, reversed, true);
     } catch (Exception e) {
       e.printStackTrace();
       return null;
@@ -166,7 +166,11 @@ public class PathPlanner {
 
         pathGroup.add(
             new PathPlannerTrajectory(
-                splitWaypoints.get(i), splitMarkers.get(i), currentConstraints, shouldReverse));
+                splitWaypoints.get(i),
+                splitMarkers.get(i),
+                currentConstraints,
+                shouldReverse,
+                true));
 
         // Loop through waypoints and invert shouldReverse for every reversal point.
         // This makes sure that other paths in the group are properly reversed.
@@ -293,7 +297,7 @@ public class PathPlanner {
               new PathPlannerTrajectory.StopEvent()));
     }
 
-    return new PathPlannerTrajectory(waypoints, new ArrayList<>(), constraints, reversed);
+    return new PathPlannerTrajectory(waypoints, new ArrayList<>(), constraints, reversed, false);
   }
 
   /**

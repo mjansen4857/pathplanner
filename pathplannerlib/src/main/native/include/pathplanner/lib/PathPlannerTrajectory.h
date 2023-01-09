@@ -178,9 +178,12 @@ private:
 public:
 	PathPlannerTrajectory(std::vector<Waypoint> const &waypoints,
 			std::vector<EventMarker> const &markers,
-			PathConstraints const constraints, bool const reversed);
+			PathConstraints const constraints, bool const reversed,
+			bool const fromGUI);
 	PathPlannerTrajectory() {
 	}
+
+	bool fromGUI;
 
 	static PathPlannerState transformForAlliance(PathPlannerState const &state,
 			frc::DriverStation::Alliance const alliance);

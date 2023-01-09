@@ -10,7 +10,8 @@ using namespace pathplanner;
 PathPlannerTrajectory::PathPlannerTrajectory(
 		std::vector<Waypoint> const &waypoints,
 		std::vector<EventMarker> const &markers,
-		PathConstraints const constraints, bool const reversed) {
+		PathConstraints const constraints, bool const reversed,
+		bool const fromGUI) {
 	this->states = generatePath(waypoints, constraints.maxVelocity,
 			constraints.maxAcceleration, reversed);
 
@@ -19,6 +20,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 
 	this->startStopEvent = waypoints[0].stopEvent;
 	this->endStopEvent = waypoints[waypoints.size() - 1].stopEvent;
+	this->fromGUI = fromGUI;
 }
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::generatePath(

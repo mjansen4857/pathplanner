@@ -16,25 +16,29 @@ public class PathPlannerTrajectory extends Trajectory {
   private final List<EventMarker> markers;
   private final StopEvent startStopEvent;
   private final StopEvent endStopEvent;
+  public final boolean fromGUI;
 
   public PathPlannerTrajectory() {
     super();
     this.markers = new ArrayList<>();
     this.startStopEvent = new StopEvent();
     this.endStopEvent = new StopEvent();
+    this.fromGUI = false;
   }
 
   protected PathPlannerTrajectory(
       List<Waypoint> pathPoints,
       List<EventMarker> markers,
       PathConstraints constraints,
-      boolean reversed) {
+      boolean reversed,
+      boolean fromGUI) {
     super(generatePath(pathPoints, constraints.maxVelocity, constraints.maxAcceleration, reversed));
 
     this.markers = markers;
     this.calculateMarkerTimes(pathPoints);
     this.startStopEvent = pathPoints.get(0).stopEvent;
     this.endStopEvent = pathPoints.get(pathPoints.size() - 1).stopEvent;
+    this.fromGUI = fromGUI;
   }
 
   /**

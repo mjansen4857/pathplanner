@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
 import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -31,7 +32,59 @@ public class PPMecanumControllerCommand extends CommandBase {
   private final Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds;
   private final Consumer<ChassisSpeeds> outputChassisSpeeds;
   private final boolean useKinematics;
+  private final boolean useAllianceColor;
   private final Field2d field = new Field2d();
+
+  /**
+   * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
+   * trajectory. The user should implement a velocity PID on the desired output wheel velocities.
+   *
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path - this
+   * is left to the user, since it is not appropriate for paths with non-stationary end-states.
+   *
+   * @param trajectory The Pathplanner trajectory to follow.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param xController The Trajectory Tracker PID controller for the robot's x position.
+   * @param yController The Trajectory Tracker PID controller for the robot's y position.
+   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+   * @param outputChassisSpeeds A consumer for a ChassisSpeeds object containing the output speeds.
+   * @param useAllianceColor Should the path states be automatically transformed based on alliance
+   *     color? In order for this to work properly, you MUST create your path on the blue side of
+   *     the field.
+   * @param requirements The subsystems to require.
+   */
+  public PPMecanumControllerCommand(
+      PathPlannerTrajectory trajectory,
+      Supplier<Pose2d> poseSupplier,
+      PIDController xController,
+      PIDController yController,
+      PIDController rotationController,
+      Consumer<ChassisSpeeds> outputChassisSpeeds,
+      boolean useAllianceColor,
+      Subsystem... requirements) {
+    this.trajectory = trajectory;
+    this.poseSupplier = poseSupplier;
+    this.kinematics = null;
+    this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
+    this.maxWheelVelocityMetersPerSecond = 0;
+    this.outputWheelSpeeds = null;
+    this.outputChassisSpeeds = outputChassisSpeeds;
+    this.useKinematics = false;
+    this.useAllianceColor = useAllianceColor;
+
+    addRequirements(requirements);
+
+    if (useAllianceColor
+        && trajectory.fromGUI
+        && trajectory.getInitialState().poseMeters.getX() > 8.27) {
+      DriverStation.reportWarning(
+          "You have constructed a path following command that will automatically transform path states depending"
+              + "on the alliance color, however, it appears this path was created on the red side of the field"
+              + "instead of the blue side. This is likely an error.",
+          false);
+    }
+  }
 
   /**
    * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
@@ -57,16 +110,70 @@ public class PPMecanumControllerCommand extends CommandBase {
       PIDController rotationController,
       Consumer<ChassisSpeeds> outputChassisSpeeds,
       Subsystem... requirements) {
+    this(
+        trajectory,
+        poseSupplier,
+        xController,
+        yController,
+        rotationController,
+        outputChassisSpeeds,
+        true,
+        requirements);
+  }
+
+  /**
+   * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
+   * trajectory. The user should implement a velocity PID on the desired output wheel velocities.
+   *
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path - this
+   * is left to the user, since it is not appropriate for paths with non-stationary end-states.
+   *
+   * @param trajectory The Pathplanner trajectory to follow.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param kinematics The kinematics for the robot drivetrain.
+   * @param xController The Trajectory Tracker PID controller for the robot's x position.
+   * @param yController The Trajectory Tracker PID controller for the robot's y position.
+   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+   * @param maxWheelVelocityMetersPerSecond The maximum velocity of a drivetrain wheel.
+   * @param outputWheelSpeeds A MecanumDriveWheelSpeeds object containing the output wheel speeds.
+   * @param useAllianceColor Should the path states be automatically transformed based on alliance
+   *     color? In order for this to work properly, you MUST create your path on the blue side of
+   *     the field.
+   * @param requirements The subsystems to require.
+   */
+  public PPMecanumControllerCommand(
+      PathPlannerTrajectory trajectory,
+      Supplier<Pose2d> poseSupplier,
+      MecanumDriveKinematics kinematics,
+      PIDController xController,
+      PIDController yController,
+      PIDController rotationController,
+      double maxWheelVelocityMetersPerSecond,
+      Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
+      boolean useAllianceColor,
+      Subsystem... requirements) {
     this.trajectory = trajectory;
     this.poseSupplier = poseSupplier;
-    this.kinematics = null;
+    this.kinematics = kinematics;
     this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
-    this.maxWheelVelocityMetersPerSecond = 0;
-    this.outputWheelSpeeds = null;
-    this.outputChassisSpeeds = outputChassisSpeeds;
-    this.useKinematics = false;
+    this.maxWheelVelocityMetersPerSecond = maxWheelVelocityMetersPerSecond;
+    this.outputWheelSpeeds = outputWheelSpeeds;
+    this.outputChassisSpeeds = null;
+    this.useKinematics = true;
+    this.useAllianceColor = useAllianceColor;
 
     addRequirements(requirements);
+
+    if (useAllianceColor
+        && trajectory.fromGUI
+        && trajectory.getInitialState().poseMeters.getX() > 8.27) {
+      DriverStation.reportWarning(
+          "You have constructed a path following command that will automatically transform path states depending"
+              + "on the alliance color, however, it appears this path was created on the red side of the field"
+              + "instead of the blue side. This is likely an error.",
+          false);
+    }
   }
 
   /**
@@ -97,16 +204,17 @@ public class PPMecanumControllerCommand extends CommandBase {
       double maxWheelVelocityMetersPerSecond,
       Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
       Subsystem... requirements) {
-    this.trajectory = trajectory;
-    this.poseSupplier = poseSupplier;
-    this.kinematics = kinematics;
-    this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
-    this.maxWheelVelocityMetersPerSecond = maxWheelVelocityMetersPerSecond;
-    this.outputWheelSpeeds = outputWheelSpeeds;
-    this.outputChassisSpeeds = null;
-    this.useKinematics = true;
-
-    addRequirements(requirements);
+    this(
+        trajectory,
+        poseSupplier,
+        kinematics,
+        xController,
+        yController,
+        rotationController,
+        maxWheelVelocityMetersPerSecond,
+        outputWheelSpeeds,
+        true,
+        requirements);
   }
 
   @Override
@@ -124,6 +232,11 @@ public class PPMecanumControllerCommand extends CommandBase {
   public void execute() {
     double currentTime = this.timer.get();
     PathPlannerState desiredState = (PathPlannerState) this.trajectory.sample(currentTime);
+    if (useAllianceColor && trajectory.fromGUI) {
+      desiredState =
+          PathPlannerTrajectory.transformStateForAlliance(
+              desiredState, DriverStation.getAlliance());
+    }
 
     Pose2d currentPose = this.poseSupplier.get();
     this.field.setRobotPose(currentPose);

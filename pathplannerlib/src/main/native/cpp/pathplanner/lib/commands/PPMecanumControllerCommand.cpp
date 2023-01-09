@@ -100,8 +100,8 @@ void PPMecanumControllerCommand::Execute() {
 	auto desiredState = m_trajectory.sample(currentTime);
 
 	if (m_useAllianceColor && m_trajectory.fromGUI) {
-		desiredState = PathPlannerTrajectory::transformForAlliance(desiredState,
-				frc::DriverStation::GetAlliance());
+		desiredState = PathPlannerTrajectory::transformStateForAlliance(
+				desiredState, frc::DriverStation::GetAlliance());
 	}
 
 	frc::Pose2d currentPose = m_pose();

@@ -185,7 +185,8 @@ public:
 
 	bool fromGUI;
 
-	static PathPlannerState transformForAlliance(PathPlannerState const &state,
+	static PathPlannerState transformStateForAlliance(
+			PathPlannerState const &state,
 			frc::DriverStation::Alliance const alliance);
 
 	/**

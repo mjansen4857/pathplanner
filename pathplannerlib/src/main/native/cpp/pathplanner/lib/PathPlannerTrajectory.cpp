@@ -389,7 +389,7 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(
 			(time - prevSample.time) / (sample.time - prevSample.time));
 }
 
-PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::transformForAlliance(
+PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::transformStateForAlliance(
 		PathPlannerState const &state,
 		frc::DriverStation::Alliance const alliance) {
 	if (alliance == frc::DriverStation::Alliance::kRed) {

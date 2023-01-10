@@ -10,7 +10,8 @@ using namespace pathplanner;
 PathPlannerTrajectory::PathPlannerTrajectory(
 		std::vector<Waypoint> const &waypoints,
 		std::vector<EventMarker> const &markers,
-		PathConstraints const constraints, bool const reversed) {
+		PathConstraints const constraints, bool const reversed,
+		bool const fromGUI) {
 	this->states = generatePath(waypoints, constraints.maxVelocity,
 			constraints.maxAcceleration, reversed);
 
@@ -19,6 +20,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 
 	this->startStopEvent = waypoints[0].stopEvent;
 	this->endStopEvent = waypoints[waypoints.size() - 1].stopEvent;
+	this->fromGUI = fromGUI;
 }
 
 std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::generatePath(
@@ -385,6 +387,38 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::sample(
 
 	return prevSample.interpolate(sample,
 			(time - prevSample.time) / (sample.time - prevSample.time));
+}
+
+PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::transformStateForAlliance(
+		PathPlannerState const &state,
+		frc::DriverStation::Alliance const alliance) {
+	if (alliance == frc::DriverStation::Alliance::kRed) {
+		// Create a new state so that we don't overwrite the original
+		PathPlannerTrajectory::PathPlannerState transformedState;
+
+		frc::Translation2d transformedTranslation(state.pose.X(),
+				FIELD_WIDTH - state.pose.Y());
+		frc::Rotation2d transformedHeading = state.pose.Rotation() * -1;
+		frc::Rotation2d transformedHolonomicRotation = state.holonomicRotation
+				* -1;
+
+		transformedState.time = state.time;
+		transformedState.velocity = state.velocity;
+		transformedState.acceleration = state.acceleration;
+		transformedState.pose = frc::Pose2d(transformedTranslation,
+				transformedHeading);
+		transformedState.angularVelocity = -state.angularVelocity;
+		transformedState.holonomicRotation = transformedHolonomicRotation;
+		transformedState.holonomicAngularVelocity =
+				-state.holonomicAngularVelocity;
+		transformedState.curveRadius = -state.curveRadius;
+		transformedState.curvature = -state.curvature;
+		transformedState.deltaPos = state.deltaPos;
+
+		return transformedState;
+	} else {
+		return state;
+	}
 }
 
 PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState::interpolate(

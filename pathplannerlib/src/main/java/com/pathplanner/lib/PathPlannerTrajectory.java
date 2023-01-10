@@ -5,33 +5,40 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.wpilibj.DriverStation;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
+  private static final double FIELD_WIDTH_METERS = 8.02;
+
   private final List<EventMarker> markers;
   private final StopEvent startStopEvent;
   private final StopEvent endStopEvent;
+  public final boolean fromGUI;
 
   public PathPlannerTrajectory() {
     super();
     this.markers = new ArrayList<>();
     this.startStopEvent = new StopEvent();
     this.endStopEvent = new StopEvent();
+    this.fromGUI = false;
   }
 
   protected PathPlannerTrajectory(
       List<Waypoint> pathPoints,
       List<EventMarker> markers,
       PathConstraints constraints,
-      boolean reversed) {
+      boolean reversed,
+      boolean fromGUI) {
     super(generatePath(pathPoints, constraints.maxVelocity, constraints.maxAcceleration, reversed));
 
     this.markers = markers;
     this.calculateMarkerTimes(pathPoints);
     this.startStopEvent = pathPoints.get(0).stopEvent;
     this.endStopEvent = pathPoints.get(pathPoints.size() - 1).stopEvent;
+    this.fromGUI = fromGUI;
   }
 
   /**
@@ -91,6 +98,34 @@ public class PathPlannerTrajectory extends Trajectory {
 
     return prevSample.interpolate(
         sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
+  }
+
+  public static PathPlannerState transformStateForAlliance(
+      PathPlannerState state, DriverStation.Alliance alliance) {
+    if (alliance == DriverStation.Alliance.Red) {
+      // Create a new state so that we don't overwrite the original
+      PathPlannerState transformedState = new PathPlannerState();
+
+      Translation2d transformedTranslation =
+          new Translation2d(state.poseMeters.getX(), FIELD_WIDTH_METERS - state.poseMeters.getY());
+      Rotation2d transformedHeading = state.poseMeters.getRotation().times(-1);
+      Rotation2d transformedHolonomicRotation = state.holonomicRotation.times(-1);
+
+      transformedState.timeSeconds = state.timeSeconds;
+      transformedState.velocityMetersPerSecond = state.velocityMetersPerSecond;
+      transformedState.accelerationMetersPerSecondSq = state.accelerationMetersPerSecondSq;
+      transformedState.poseMeters = new Pose2d(transformedTranslation, transformedHeading);
+      transformedState.angularVelocityRadPerSec = -state.angularVelocityRadPerSec;
+      transformedState.holonomicRotation = transformedHolonomicRotation;
+      transformedState.holonomicAngularVelocityRadPerSec = -state.holonomicAngularVelocityRadPerSec;
+      transformedState.curveRadius = -state.curveRadius;
+      transformedState.curvatureRadPerMeter = -state.curvatureRadPerMeter;
+      transformedState.deltaPos = state.deltaPos;
+
+      return transformedState;
+    } else {
+      return state;
+    }
   }
 
   /**

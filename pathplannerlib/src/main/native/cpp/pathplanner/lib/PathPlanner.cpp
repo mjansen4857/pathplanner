@@ -33,7 +33,8 @@ PathPlannerTrajectory PathPlanner::loadPath(std::string const &name,
 	std::vector < PathPlannerTrajectory::EventMarker > markers =
 			getMarkersFromJson(json);
 
-	return PathPlannerTrajectory(waypoints, markers, constraints, reversed);
+	return PathPlannerTrajectory(waypoints, markers, constraints, reversed,
+			true);
 }
 
 std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
@@ -115,7 +116,7 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 						constraints[constraints.size() - 1] : constraints[i];
 
 		pathGroup.emplace_back(splitWaypoints[i], splitMarkers[i],
-				currentConstraints, shouldReverse);
+				currentConstraints, shouldReverse, true);
 
 		// Loop through waypoints and invert shouldReverse for every reversal point.
 		// This makes sure that other paths in the group are properly reversed.
@@ -174,7 +175,7 @@ PathPlannerTrajectory PathPlanner::generatePath(
 
 	return PathPlannerTrajectory(waypoints,
 			std::vector<PathPlannerTrajectory::EventMarker>(), constraints,
-			reversed);
+			reversed, false);
 }
 
 PathPlannerTrajectory PathPlanner::generatePath(

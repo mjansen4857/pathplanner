@@ -14,9 +14,11 @@
 #include <units/area.h>
 #include <units/math.h>
 #include <units/curvature.h>
+#include <frc/DriverStation.h>
 #include "PathConstraints.h"
 
 #define PI 3.14159265358979323846
+#define FIELD_WIDTH 8.02_m
 
 namespace pathplanner {
 class PathPlannerTrajectory {
@@ -176,9 +178,16 @@ private:
 public:
 	PathPlannerTrajectory(std::vector<Waypoint> const &waypoints,
 			std::vector<EventMarker> const &markers,
-			PathConstraints const constraints, bool const reversed);
+			PathConstraints const constraints, bool const reversed,
+			bool const fromGUI);
 	PathPlannerTrajectory() {
 	}
+
+	bool fromGUI;
+
+	static PathPlannerState transformStateForAlliance(
+			PathPlannerState const &state,
+			frc::DriverStation::Alliance const alliance);
 
 	/**
 	 * Get the "stop event" for the beginning of the path

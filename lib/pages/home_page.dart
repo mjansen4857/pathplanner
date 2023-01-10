@@ -126,6 +126,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         _animController.forward();
       });
+
+      if (!(widget.prefs.getBool('seen2023Warning') ?? false)) {
+        showDialog(
+            context: this.context,
+            barrierDismissible: false,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text('Non-standard Field Mirroring'),
+                content: SizedBox(
+                  width: 300,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Text(
+                          'The 2023 FRC game has non-standard field mirroring that would prevent using the same auto path for both alliances.'),
+                      SizedBox(height: 16),
+                      Text(
+                          'To work around this, PathPlannerLib has added functionality to automatically transform paths to work for the correct alliance depending on the current alliance color while using PathPlannerLib\'s path following commands.'),
+                      SizedBox(height: 16),
+                      Text(
+                          'In order for this to work correctly, you MUST create all of your paths on the blue (left) side of the field.'),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      widget.prefs.setBool('seen2023Warning', true);
+                    },
+                    child: const Text('OK'),
+                  ),
+                ],
+              );
+            });
+      }
     });
   }
 

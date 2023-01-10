@@ -58,12 +58,47 @@ public:
 	 *                         for angle for the robot.
 	 * @param output           The output of the position PIDs.
 	 * @param requirements     The subsystems to require.
+	 * @param useAllianceColor Should the path states be automatically transformed based on alliance
+	 *     color? In order for this to work properly, you MUST create your path on the blue side of
+	 *     the field.
 	 */
 	PPMecanumControllerCommand(PathPlannerTrajectory trajectory,
 			std::function<frc::Pose2d()> pose, frc2::PIDController xController,
 			frc2::PIDController yController, frc::PIDController thetaController,
 			std::function<void(frc::ChassisSpeeds)> output,
-			std::initializer_list<frc2::Subsystem*> requirements);
+			std::initializer_list<frc2::Subsystem*> requirements,
+			bool useAllianceColor = true);
+
+	/**
+	 * Constructs a new PPMecanumControllerCommand that when executed will follow
+	 * the provided trajectory. The user should implement a velocity PID on the
+	 * desired output wheel velocities.
+	 *
+	 * <p>Note: The controllers will *not* set the outputVolts to zero upon
+	 * completion of the path - this is left to the user, since it is not
+	 * appropriate for paths with non-stationary end-states.
+	 *
+	 * @param trajectory       The trajectory to follow.
+	 * @param pose             A function that supplies the robot pose - use one
+	 * of the odometry classes to provide this.
+	 * @param xController      The Trajectory Tracker PID controller
+	 *                         for the robot's x position.
+	 * @param yController      The Trajectory Tracker PID controller
+	 *                         for the robot's y position.
+	 * @param thetaController  The Trajectory Tracker PID controller
+	 *                         for angle for the robot.
+	 * @param output           The output of the position PIDs.
+	 * @param requirements     The subsystems to require.
+	 * @param useAllianceColor Should the path states be automatically transformed based on alliance
+	 *     color? In order for this to work properly, you MUST create your path on the blue side of
+	 *     the field.
+	 */
+	PPMecanumControllerCommand(PathPlannerTrajectory trajectory,
+			std::function<frc::Pose2d()> pose, frc2::PIDController xController,
+			frc2::PIDController yController, frc::PIDController thetaController,
+			std::function<void(frc::ChassisSpeeds)> output,
+			std::span<frc2::Subsystem* const > requirements = { },
+			bool useAllianceColor = true);
 
 	/**
 	 * Constructs a new PPMecanumControllerCommand that when executed will follow
@@ -87,6 +122,9 @@ public:
 	 * @param maxWheelVelocity The maximum velocity of a drivetrain wheel.
 	 * @param output           The output of the position PIDs.
 	 * @param requirements     The subsystems to require.
+	 * @param useAllianceColor Should the path states be automatically transformed based on alliance
+	 *     color? In order for this to work properly, you MUST create your path on the blue side of
+	 *     the field.
 	 */
 	PPMecanumControllerCommand(PathPlannerTrajectory trajectory,
 			std::function<frc::Pose2d()> pose,
@@ -95,7 +133,44 @@ public:
 			frc::PIDController thetaController,
 			units::meters_per_second_t maxWheelVelocity,
 			std::function<void(frc::MecanumDriveWheelSpeeds)> output,
-			std::span<frc2::Subsystem* const > requirements = { });
+			std::initializer_list<frc2::Subsystem*> requirements,
+			bool useAllianceColor = true);
+
+	/**
+	 * Constructs a new PPMecanumControllerCommand that when executed will follow
+	 * the provided trajectory. The user should implement a velocity PID on the
+	 * desired output wheel velocities.
+	 *
+	 * <p>Note: The controllers will *not* set the outputVolts to zero upon
+	 * completion of the path - this is left to the user, since it is not
+	 * appropriate for paths with non-stationary end-states.
+	 *
+	 * @param trajectory       The trajectory to follow.
+	 * @param pose             A function that supplies the robot pose - use one
+	 * of the odometry classes to provide this.
+	 * @param kinematics       The kinematics for the robot drivetrain.
+	 * @param xController      The Trajectory Tracker PID controller
+	 *                         for the robot's x position.
+	 * @param yController      The Trajectory Tracker PID controller
+	 *                         for the robot's y position.
+	 * @param thetaController  The Trajectory Tracker PID controller
+	 *                         for angle for the robot.
+	 * @param maxWheelVelocity The maximum velocity of a drivetrain wheel.
+	 * @param output           The output of the position PIDs.
+	 * @param requirements     The subsystems to require.
+	 * @param useAllianceColor Should the path states be automatically transformed based on alliance
+	 *     color? In order for this to work properly, you MUST create your path on the blue side of
+	 *     the field.
+	 */
+	PPMecanumControllerCommand(PathPlannerTrajectory trajectory,
+			std::function<frc::Pose2d()> pose,
+			frc::MecanumDriveKinematics kinematics,
+			frc2::PIDController xController, frc2::PIDController yController,
+			frc::PIDController thetaController,
+			units::meters_per_second_t maxWheelVelocity,
+			std::function<void(frc::MecanumDriveWheelSpeeds)> output,
+			std::span<frc2::Subsystem* const > requirements = { },
+			bool useAllianceColor = true);
 
 	void Initialize() override;
 
@@ -118,5 +193,7 @@ private:
 	frc::Timer m_timer;
 
 	frc::Field2d m_field;
+
+	bool m_useAllianceColor;
 };
 }

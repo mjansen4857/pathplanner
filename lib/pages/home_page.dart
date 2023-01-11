@@ -532,7 +532,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           RobotPath p = RobotPath.fromJson(jsonDecode(json));
           p.name = basenameWithoutExtension(e.path);
           paths.add(p);
-        } catch (ex) {
+        } catch (ex, stack) {
           // Path is not in correct format. Don't add it and notify user
           showDialog(
               context: this.context,
@@ -552,7 +552,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ],
                 );
               });
-          Log.error('Failed to load path', ex);
+          Log.error('Failed to load path', ex, stack);
         }
       }
     }
@@ -653,8 +653,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         widget.prefs.setBool('holonomicMode', json['holonomicMode'] ?? false);
         widget.prefs.setBool('generateJSON', json['generateJSON'] ?? false);
         widget.prefs.setBool('generateCSV', json['generateCSV'] ?? false);
-      } catch (err) {
-        Log.error('An error occurred while loading project settings', err);
+      } catch (err, stack) {
+        Log.error(
+            'An error occurred while loading project settings', err, stack);
       }
     }
 

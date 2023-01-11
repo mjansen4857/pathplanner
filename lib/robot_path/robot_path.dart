@@ -147,7 +147,8 @@ class RobotPath {
       Log.info(
           'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
       return true;
-    } catch (e) {
+    } catch (e, stack) {
+      Log.error('Failed to save path', e, stack);
       return false;
     }
   }

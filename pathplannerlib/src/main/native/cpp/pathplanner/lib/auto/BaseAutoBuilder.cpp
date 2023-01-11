@@ -2,6 +2,7 @@
 #include "pathplanner/lib/commands/FollowPathWithEvents.h"
 
 #include <frc2/command/Commands.h>
+#include <frc/DriverStation.h>
 
 using namespace pathplanner;
 
@@ -41,13 +42,20 @@ frc2::CommandPtr BaseAutoBuilder::followPathGroupWithEvents(
 }
 
 frc2::CommandPtr BaseAutoBuilder::resetPose(PathPlannerTrajectory trajectory) {
+	PathPlannerTrajectory::PathPlannerState initialState =
+			PathPlannerTrajectory::transformStateForAlliance(
+					trajectory.getInitialState(),
+					frc::DriverStation::GetAlliance());
 	if (m_drivetrainType == DriveTrainType::HOLONOMIC) {
-		return frc2::cmd::RunOnce([this, trajectory]() {
-			m_resetPose(trajectory.getInitialHolonomicPose());
-		});
+		return frc2::cmd::RunOnce(
+				[this, initialState]() {
+					m_resetPose(
+							frc::Pose2d(initialState.pose.Translation(),
+									initialState.holonomicRotation));
+				});
 	} else {
-		return frc2::cmd::RunOnce([this, trajectory]() {
-			m_resetPose(trajectory.getInitialPose());
+		return frc2::cmd::RunOnce([this, initialState]() {
+			m_resetPose(initialState.pose);
 		});
 	}
 }

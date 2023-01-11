@@ -245,6 +245,7 @@ class _WaypointCardState extends State<WaypointCard> {
         if (val != null ||
             !(widget.waypoint!.isStartPoint() ||
                 widget.waypoint!.isEndPoint() ||
+                widget.waypoint!.isReversal ||
                 widget.waypoint!.isStopPoint)) {
           Waypoint? wRef = widget.waypoint;
           UndoRedo.addChange(_cardChange(

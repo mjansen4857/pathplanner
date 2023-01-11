@@ -6,6 +6,7 @@ import com.pathplanner.lib.PathPlannerTrajectory.StopEvent.ExecutionBehavior;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.*;
 import java.util.*;
 import java.util.function.Consumer;
@@ -119,10 +120,17 @@ public abstract class BaseAutoBuilder {
    * @return Command that will reset the pose
    */
   public CommandBase resetPose(PathPlannerTrajectory trajectory) {
+    PathPlannerTrajectory.PathPlannerState initialState =
+        PathPlannerTrajectory.transformStateForAlliance(
+            trajectory.getInitialState(), DriverStation.getAlliance());
     if (drivetrainType == DrivetrainType.HOLONOMIC) {
-      return Commands.runOnce(() -> resetPose.accept(trajectory.getInitialHolonomicPose()));
+      return Commands.runOnce(
+          () ->
+              resetPose.accept(
+                  new Pose2d(
+                      initialState.poseMeters.getTranslation(), initialState.holonomicRotation)));
     } else {
-      return Commands.runOnce(() -> resetPose.accept(trajectory.getInitialPose()));
+      return Commands.runOnce(() -> resetPose.accept(initialState.poseMeters));
     }
   }
 

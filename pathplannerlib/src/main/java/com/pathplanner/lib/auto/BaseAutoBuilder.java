@@ -120,17 +120,26 @@ public abstract class BaseAutoBuilder {
    * @return Command that will reset the pose
    */
   public CommandBase resetPose(PathPlannerTrajectory trajectory) {
-    PathPlannerTrajectory.PathPlannerState initialState =
-        PathPlannerTrajectory.transformStateForAlliance(
-            trajectory.getInitialState(), DriverStation.getAlliance());
     if (drivetrainType == DrivetrainType.HOLONOMIC) {
       return Commands.runOnce(
-          () ->
-              resetPose.accept(
-                  new Pose2d(
-                      initialState.poseMeters.getTranslation(), initialState.holonomicRotation)));
+          () -> {
+            PathPlannerTrajectory.PathPlannerState initialState =
+                PathPlannerTrajectory.transformStateForAlliance(
+                    trajectory.getInitialState(), DriverStation.getAlliance());
+
+            resetPose.accept(
+                new Pose2d(
+                    initialState.poseMeters.getTranslation(), initialState.holonomicRotation));
+          });
     } else {
-      return Commands.runOnce(() -> resetPose.accept(initialState.poseMeters));
+      return Commands.runOnce(
+          () -> {
+            PathPlannerTrajectory.PathPlannerState initialState =
+                PathPlannerTrajectory.transformStateForAlliance(
+                    trajectory.getInitialState(), DriverStation.getAlliance());
+
+            resetPose.accept(initialState.poseMeters);
+          });
     }
   }
 

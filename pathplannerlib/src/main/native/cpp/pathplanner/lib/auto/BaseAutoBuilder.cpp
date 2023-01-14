@@ -42,21 +42,26 @@ frc2::CommandPtr BaseAutoBuilder::followPathGroupWithEvents(
 }
 
 frc2::CommandPtr BaseAutoBuilder::resetPose(PathPlannerTrajectory trajectory) {
-	PathPlannerTrajectory::PathPlannerState initialState =
-			PathPlannerTrajectory::transformStateForAlliance(
-					trajectory.getInitialState(),
-					frc::DriverStation::GetAlliance());
 	if (m_drivetrainType == DriveTrainType::HOLONOMIC) {
 		return frc2::cmd::RunOnce(
-				[this, initialState]() {
+				[this, trajectory]() {
+					PathPlannerTrajectory::PathPlannerState initialState =
+							PathPlannerTrajectory::transformStateForAlliance(
+									trajectory.getInitialState(),
+									frc::DriverStation::GetAlliance());
 					m_resetPose(
 							frc::Pose2d(initialState.pose.Translation(),
 									initialState.holonomicRotation));
 				});
 	} else {
-		return frc2::cmd::RunOnce([this, initialState]() {
-			m_resetPose(initialState.pose);
-		});
+		return frc2::cmd::RunOnce(
+				[this, trajectory]() {
+					PathPlannerTrajectory::PathPlannerState initialState =
+							PathPlannerTrajectory::transformStateForAlliance(
+									trajectory.getInitialState(),
+									frc::DriverStation::GetAlliance());
+					m_resetPose(initialState.pose);
+				});
 	}
 }
 

@@ -151,6 +151,15 @@ private:
 	StopEvent startStopEvent;
 	StopEvent endStopEvent;
 
+	PathPlannerTrajectory(std::vector<PathPlannerState> const &states,
+			std::vector<EventMarker> const &markers, StopEvent startStopEvent,
+			StopEvent endStopEvent, bool fromGUI) {
+		this->states = states;
+		this->markers = markers;
+		this->startStopEvent = startStopEvent;
+		this->endStopEvent = endStopEvent;
+	}
+
 	static std::vector<PathPlannerState> generatePath(
 			std::vector<Waypoint> const &pathPoints,
 			units::meters_per_second_t const maxVel,
@@ -187,6 +196,10 @@ public:
 
 	static PathPlannerState transformStateForAlliance(
 			PathPlannerState const &state,
+			frc::DriverStation::Alliance const alliance);
+
+	static PathPlannerTrajectory transformTrajectoryForAlliance(
+			PathPlannerTrajectory const &trajectory,
 			frc::DriverStation::Alliance const alliance);
 
 	/**

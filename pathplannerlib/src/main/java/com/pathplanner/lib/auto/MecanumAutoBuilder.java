@@ -23,6 +23,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
   private final Subsystem[] driveRequirements;
 
   private final boolean useKinematics;
+  private final boolean useAllianceColor;
 
   /**
    * Create an auto builder that will create command groups that will handle path following and
@@ -51,17 +52,15 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
       Consumer<ChassisSpeeds> outputChassisSpeeds,
       Map<String, Command> eventMap,
       Subsystem... driveRequirements) {
-    super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC);
-
-    this.kinematics = null;
-    this.translationConstants = translationConstants;
-    this.rotationConstants = rotationConstants;
-    this.maxWheelVelocityMetersPerSecond = 0;
-    this.outputWheelSpeeds = null;
-    this.outputChassisSpeeds = outputChassisSpeeds;
-    this.driveRequirements = driveRequirements;
-
-    this.useKinematics = false;
+    this(
+        poseSupplier,
+        resetPose,
+        translationConstants,
+        rotationConstants,
+        outputChassisSpeeds,
+        eventMap,
+        true,
+        driveRequirements);
   }
 
   /**
@@ -96,6 +95,100 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
       Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
       Map<String, Command> eventMap,
       Subsystem... driveRequirements) {
+    this(
+        poseSupplier,
+        resetPose,
+        kinematics,
+        translationConstants,
+        rotationConstants,
+        maxWheelVelocityMetersPerSecond,
+        outputWheelSpeeds,
+        eventMap,
+        true,
+        driveRequirements);
+  }
+
+  /**
+   * Create an auto builder that will create command groups that will handle path following and
+   * triggering events.
+   *
+   * <p>This auto builder will use PPMecanumControllerCommand to follow paths.
+   *
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+   *     be called once at the beginning of an auto.
+   * @param translationConstants PID Constants for the controller that will correct for translation
+   *     error
+   * @param rotationConstants PID Constants for the controller that will correct for rotation error
+   * @param outputChassisSpeeds A consumer for a ChassisSpeeds object containing the output speeds.
+   * @param eventMap Map of event marker names to the commands that should run when reaching that
+   *     marker.
+   * @param useAllianceColor Should the path states be automatically transformed based on alliance
+   *     color? In order for this to work properly, you MUST create your path on the blue side of
+   *     the field.
+   * @param driveRequirements The subsystems that the path following commands should require.
+   *     Usually just a Drive subsystem.
+   */
+  public MecanumAutoBuilder(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      PIDConstants translationConstants,
+      PIDConstants rotationConstants,
+      Consumer<ChassisSpeeds> outputChassisSpeeds,
+      Map<String, Command> eventMap,
+      boolean useAllianceColor,
+      Subsystem... driveRequirements) {
+    super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC);
+
+    this.kinematics = null;
+    this.translationConstants = translationConstants;
+    this.rotationConstants = rotationConstants;
+    this.maxWheelVelocityMetersPerSecond = 0;
+    this.outputWheelSpeeds = null;
+    this.outputChassisSpeeds = outputChassisSpeeds;
+    this.driveRequirements = driveRequirements;
+
+    this.useKinematics = false;
+    this.useAllianceColor = useAllianceColor;
+  }
+
+  /**
+   * Create an auto builder that will create command groups that will handle path following and
+   * triggering events.
+   *
+   * <p>This auto builder will use PPMecanumControllerCommand to follow paths.
+   *
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+   *     be called once at the beginning of an auto.
+   * @param kinematics The kinematics for the robot drivetrain.
+   * @param translationConstants PID Constants for the controller that will correct for translation
+   *     error
+   * @param rotationConstants PID Constants for the controller that will correct for rotation error
+   * @param maxWheelVelocityMetersPerSecond The maximum velocity of a drivetrain wheel.
+   * @param outputWheelSpeeds A consumer for a MecanumDriveWheelSpeeds object containing the output
+   *     wheel speeds.
+   * @param eventMap Map of event marker names to the commands that should run when reaching that
+   *     marker.
+   * @param useAllianceColor Should the path states be automatically transformed based on alliance
+   *     color? In order for this to work properly, you MUST create your path on the blue side of
+   *     the field.
+   * @param driveRequirements The subsystems that the path following commands should require.
+   *     Usually just a Drive subsystem.
+   */
+  public MecanumAutoBuilder(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      MecanumDriveKinematics kinematics,
+      PIDConstants translationConstants,
+      PIDConstants rotationConstants,
+      double maxWheelVelocityMetersPerSecond,
+      Consumer<MecanumDriveWheelSpeeds> outputWheelSpeeds,
+      Map<String, Command> eventMap,
+      boolean useAllianceColor,
+      Subsystem... driveRequirements) {
     super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC);
 
     this.kinematics = kinematics;
@@ -107,6 +200,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
     this.driveRequirements = driveRequirements;
 
     this.useKinematics = true;
+    this.useAllianceColor = useAllianceColor;
   }
 
   @Override
@@ -121,6 +215,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
           pidControllerFromConstants(rotationConstants),
           maxWheelVelocityMetersPerSecond,
           outputWheelSpeeds,
+          useAllianceColor,
           driveRequirements);
     } else {
       return new PPMecanumControllerCommand(
@@ -130,6 +225,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
           pidControllerFromConstants(translationConstants),
           pidControllerFromConstants(rotationConstants),
           outputChassisSpeeds,
+          useAllianceColor,
           driveRequirements);
     }
   }

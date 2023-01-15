@@ -30,13 +30,17 @@ public:
 	 *     marker.
 	 * @param driveRequirements The subsystems that the path following commands should require.
 	 *     Usually just a Drive subsystem.
+	 * @param useAllianceColor Should the path states be automatically transformed based on alliance
+	 *     color? In order for this to work properly, you MUST create your path on the blue side of
+	 *     the field.
 	 */
 	SwerveAutoBuilder(std::function<frc::Pose2d()> pose,
 			std::function<void(frc::Pose2d)> resetPose,
 			PIDConstants translationConstants, PIDConstants rotationConstants,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
-			std::initializer_list<frc2::Subsystem*> driveRequirements);
+			std::initializer_list<frc2::Subsystem*> driveRequirements,
+			bool useAllianceColor = true);
 
 	/**
 	 * Create an auto builder that will create command groups that will handle path following and
@@ -58,6 +62,9 @@ public:
 	 *     marker.
 	 * @param driveRequirements The subsystems that the path following commands should require.
 	 *     Usually just a Drive subsystem.
+	 * @param useAllianceColor Should the path states be automatically transformed based on alliance
+	 *     color? In order for this to work properly, you MUST create your path on the blue side of
+	 *     the field.
 	 */
 	SwerveAutoBuilder(std::function<frc::Pose2d()> pose,
 			std::function<void(frc::Pose2d)> resetPose,
@@ -65,7 +72,8 @@ public:
 			PIDConstants translationConstants, PIDConstants rotationConstants,
 			std::function<void(std::array<frc::SwerveModuleState, 4>)> output,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
-			std::initializer_list<frc2::Subsystem*> driveRequirements);
+			std::initializer_list<frc2::Subsystem*> driveRequirements,
+			bool useAllianceColor = true);
 
 	frc2::CommandPtr followPath(PathPlannerTrajectory trajectory) override;
 
@@ -78,5 +86,6 @@ private:
 	std::initializer_list<frc2::Subsystem*> m_driveRequirements;
 
 	const bool m_useKinematics;
+	const bool m_useAllianceColor;
 };
 }

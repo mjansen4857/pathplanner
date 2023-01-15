@@ -421,6 +421,25 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::transformStateFor
 	}
 }
 
+PathPlannerTrajectory PathPlannerTrajectory::transformTrajectoryForAlliance(
+		PathPlannerTrajectory const &trajectory,
+		frc::DriverStation::Alliance const alliance) {
+	if (alliance == frc::DriverStation::Alliance::kRed) {
+		std::vector < PathPlannerState > transformedStates;
+
+		for (PathPlannerState state : trajectory.getStates()) {
+			transformedStates.push_back(
+					transformStateForAlliance(state, alliance));
+		}
+
+		return PathPlannerTrajectory(transformedStates, trajectory.markers,
+				trajectory.startStopEvent, trajectory.endStopEvent,
+				trajectory.fromGUI);
+	} else {
+		return trajectory;
+	}
+}
+
 PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::PathPlannerState::interpolate(
 		PathPlannerState const &endVal, double const t) const {
 	PathPlannerState lerpedState { };

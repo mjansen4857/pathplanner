@@ -90,18 +90,21 @@ PPRamseteCommand::PPRamseteCommand(PathPlannerTrajectory trajectory,
 }
 
 void PPRamseteCommand::Initialize() {
+	if (m_useAllianceColor && m_trajectory.fromGUI) {
+		m_transformedTrajectory =
+				PathPlannerTrajectory::transformTrajectoryForAlliance(
+						m_trajectory, frc::DriverStation::GetAlliance());
+	} else {
+		m_transformedTrajectory = m_trajectory;
+	}
+
 	frc::SmartDashboard::PutData("PPRamseteCommand_field", &this->m_field);
 	this->m_field.GetObject("traj")->SetTrajectory(
-			this->m_trajectory.asWPILibTrajectory());
+			m_transformedTrajectory.asWPILibTrajectory());
 
 	m_prevTime = -1_s;
-	PathPlannerTrajectory::PathPlannerState initialState = m_trajectory.sample(
-			0_s);
-
-	if (m_useAllianceColor && m_trajectory.fromGUI) {
-		initialState = PathPlannerTrajectory::transformStateForAlliance(
-				initialState, frc::DriverStation::GetAlliance());
-	}
+	PathPlannerTrajectory::PathPlannerState initialState =
+			m_transformedTrajectory.sample(0_s);
 
 	m_prevSpeeds = m_kinematics.ToWheelSpeeds(
 			frc::ChassisSpeeds { initialState.velocity, 0_mps,
@@ -129,13 +132,8 @@ void PPRamseteCommand::Execute() {
 		return;
 	}
 
-	PathPlannerTrajectory::PathPlannerState desiredState = m_trajectory.sample(
-			curTime);
-
-	if (m_useAllianceColor && m_trajectory.fromGUI) {
-		desiredState = PathPlannerTrajectory::transformStateForAlliance(
-				desiredState, frc::DriverStation::GetAlliance());
-	}
+	PathPlannerTrajectory::PathPlannerState desiredState =
+			m_transformedTrajectory.sample(curTime);
 
 	frc::Pose2d currentPose = m_pose();
 	this->m_field.SetRobotPose(currentPose);
@@ -187,5 +185,5 @@ void PPRamseteCommand::End(bool interrupted) {
 }
 
 bool PPRamseteCommand::IsFinished() {
-	return m_timer.HasElapsed(m_trajectory.getTotalTime());
+	return m_timer.HasElapsed(m_transformedTrajectory.getTotalTime());
 }

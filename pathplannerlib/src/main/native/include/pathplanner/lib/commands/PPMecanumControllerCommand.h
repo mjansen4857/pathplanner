@@ -195,5 +195,7 @@ private:
 	frc::Field2d m_field;
 
 	bool m_useAllianceColor;
+
+	PathPlannerTrajectory m_transformedTrajectory;
 };
 }

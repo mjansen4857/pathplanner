@@ -86,10 +86,18 @@ PPMecanumControllerCommand::PPMecanumControllerCommand(
 }
 
 void PPMecanumControllerCommand::Initialize() {
+	if (m_useAllianceColor && m_trajectory.fromGUI) {
+		m_transformedTrajectory =
+				PathPlannerTrajectory::transformTrajectoryForAlliance(
+						m_trajectory, frc::DriverStation::GetAlliance());
+	} else {
+		m_transformedTrajectory = m_trajectory;
+	}
+
 	frc::SmartDashboard::PutData("PPSwerveControllerCommand_field",
 			&this->m_field);
 	this->m_field.GetObject("traj")->SetTrajectory(
-			this->m_trajectory.asWPILibTrajectory());
+			m_transformedTrajectory.asWPILibTrajectory());
 
 	m_timer.Reset();
 	m_timer.Start();
@@ -97,12 +105,7 @@ void PPMecanumControllerCommand::Initialize() {
 
 void PPMecanumControllerCommand::Execute() {
 	auto currentTime = m_timer.Get();
-	auto desiredState = m_trajectory.sample(currentTime);
-
-	if (m_useAllianceColor && m_trajectory.fromGUI) {
-		desiredState = PathPlannerTrajectory::transformStateForAlliance(
-				desiredState, frc::DriverStation::GetAlliance());
-	}
+	auto desiredState = m_transformedTrajectory.sample(currentTime);
 
 	frc::Pose2d currentPose = m_pose();
 	m_field.SetRobotPose(currentPose);
@@ -143,5 +146,5 @@ void PPMecanumControllerCommand::End(bool interrupted) {
 }
 
 bool PPMecanumControllerCommand::IsFinished() {
-	return m_timer.HasElapsed(m_trajectory.getTotalTime());
+	return m_timer.HasElapsed(m_transformedTrajectory.getTotalTime());
 }

@@ -1,6 +1,6 @@
 #include "pathplanner/lib/auto/RamseteAutoBuilder.h"
 
-#include <frc2/command/RamseteCommand.h>
+#include "pathplanner/lib/commands/PPRamseteCommand.h"
 
 using namespace pathplanner;
 
@@ -37,13 +37,13 @@ RamseteAutoBuilder::RamseteAutoBuilder(std::function<frc::Pose2d()> pose,
 frc2::CommandPtr RamseteAutoBuilder::followPath(
 		PathPlannerTrajectory trajectory) {
 	if (m_usePID) {
-		return frc2::RamseteCommand(trajectory.asWPILibTrajectory(), m_pose,
-				m_controller, m_feedforward, m_kinematics, m_speeds,
+		return PPRamseteCommand(trajectory, m_pose, m_controller, m_feedforward,
+				m_kinematics, m_speeds,
 				BaseAutoBuilder::pidControllerFromConstants(m_driveConstants),
 				BaseAutoBuilder::pidControllerFromConstants(m_driveConstants),
 				m_outputVolts, m_driveRequirements).ToPtr();
 	} else {
-		return frc2::RamseteCommand(trajectory.asWPILibTrajectory(), m_pose,
-				m_controller, m_kinematics, m_outputVel, m_driveRequirements).ToPtr();
+		return PPRamseteCommand(trajectory, m_pose, m_controller, m_kinematics,
+				m_outputVel, m_driveRequirements).ToPtr();
 	}
 }

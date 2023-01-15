@@ -41,7 +41,12 @@ public class PathPlannerTrajectory extends Trajectory {
     this.fromGUI = fromGUI;
   }
 
-  private PathPlannerTrajectory(List<State> states, List<EventMarker> markers, StopEvent startStopEvent, StopEvent endStopEvent, boolean fromGUI){
+  private PathPlannerTrajectory(
+      List<State> states,
+      List<EventMarker> markers,
+      StopEvent startStopEvent,
+      StopEvent endStopEvent,
+      boolean fromGUI) {
     super(states);
 
     this.markers = markers;
@@ -137,18 +142,24 @@ public class PathPlannerTrajectory extends Trajectory {
     }
   }
 
-  public static PathPlannerTrajectory transformTrajectoryForAlliance(PathPlannerTrajectory trajectory, DriverStation.Alliance alliance){
-    if(alliance == DriverStation.Alliance.Red){
+  public static PathPlannerTrajectory transformTrajectoryForAlliance(
+      PathPlannerTrajectory trajectory, DriverStation.Alliance alliance) {
+    if (alliance == DriverStation.Alliance.Red) {
       List<State> transformedStates = new ArrayList<>();
 
-      for(State s : trajectory.getStates()){
+      for (State s : trajectory.getStates()) {
         PathPlannerState state = (PathPlannerState) s;
 
         transformedStates.add(transformStateForAlliance(state, alliance));
       }
 
-      return new PathPlannerTrajectory(transformedStates, trajectory.markers, trajectory.startStopEvent, trajectory.endStopEvent, trajectory.fromGUI);
-    }else{
+      return new PathPlannerTrajectory(
+          transformedStates,
+          trajectory.markers,
+          trajectory.startStopEvent,
+          trajectory.endStopEvent,
+          trajectory.fromGUI);
+    } else {
       return trajectory;
     }
   }

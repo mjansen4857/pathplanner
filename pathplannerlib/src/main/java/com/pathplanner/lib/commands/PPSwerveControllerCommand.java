@@ -30,6 +30,8 @@ public class PPSwerveControllerCommand extends CommandBase {
   private final boolean useAllianceColor;
   private final Field2d field = new Field2d();
 
+  private PathPlannerTrajectory transformedTrajectory;
+
   /**
    * Constructs a new PPSwerveControllerCommand that when executed will follow the provided
    * trajectory. This command will not return output voltages but ChassisSpeeds from the position
@@ -207,25 +209,27 @@ public class PPSwerveControllerCommand extends CommandBase {
 
   @Override
   public void initialize() {
+    if (useAllianceColor && trajectory.fromGUI) {
+      transformedTrajectory =
+          PathPlannerTrajectory.transformTrajectoryForAlliance(
+              trajectory, DriverStation.getAlliance());
+    } else {
+      transformedTrajectory = trajectory;
+    }
+
     SmartDashboard.putData("PPSwerveControllerCommand_field", this.field);
-    this.field.getObject("traj").setTrajectory(this.trajectory);
+    this.field.getObject("traj").setTrajectory(transformedTrajectory);
 
     this.timer.reset();
     this.timer.start();
 
-    PathPlannerServer.sendActivePath(this.trajectory.getStates());
+    PathPlannerServer.sendActivePath(transformedTrajectory.getStates());
   }
 
   @Override
   public void execute() {
     double currentTime = this.timer.get();
-    PathPlannerState desiredState = (PathPlannerState) this.trajectory.sample(currentTime);
-
-    if (useAllianceColor && trajectory.fromGUI) {
-      desiredState =
-          PathPlannerTrajectory.transformStateForAlliance(
-              desiredState, DriverStation.getAlliance());
-    }
+    PathPlannerState desiredState = (PathPlannerState) transformedTrajectory.sample(currentTime);
 
     Pose2d currentPose = this.poseSupplier.get();
     this.field.setRobotPose(currentPose);
@@ -269,6 +273,6 @@ public class PPSwerveControllerCommand extends CommandBase {
 
   @Override
   public boolean isFinished() {
-    return this.timer.hasElapsed(this.trajectory.getTotalTimeSeconds());
+    return this.timer.hasElapsed(transformedTrajectory.getTotalTimeSeconds());
   }
 }

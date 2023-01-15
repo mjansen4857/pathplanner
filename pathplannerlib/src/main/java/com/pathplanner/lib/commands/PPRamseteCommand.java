@@ -36,6 +36,8 @@ public class PPRamseteCommand extends CommandBase {
   private DifferentialDriveWheelSpeeds prevSpeeds;
   private double prevTime;
 
+  private PathPlannerTrajectory transformedTrajectory;
+
   /**
    * Constructs a new PPRamseteCommand that, when executed, will follow the provided trajectory. PID
    * control and feedforward are handled internally, and outputs are scaled -12 to 12 representing
@@ -225,17 +227,21 @@ public class PPRamseteCommand extends CommandBase {
 
   @Override
   public void initialize() {
+    if (useAllianceColor && trajectory.fromGUI) {
+      transformedTrajectory =
+          PathPlannerTrajectory.transformTrajectoryForAlliance(
+              trajectory, DriverStation.getAlliance());
+    } else {
+      transformedTrajectory = trajectory;
+    }
+
     this.prevTime = -1;
 
     SmartDashboard.putData("PPRamseteCommand_field", this.field);
-    this.field.getObject("traj").setTrajectory(this.trajectory);
+    this.field.getObject("traj").setTrajectory(transformedTrajectory);
 
-    PathPlannerTrajectory.PathPlannerState initialState = this.trajectory.getInitialState();
-    if (useAllianceColor && trajectory.fromGUI) {
-      initialState =
-          PathPlannerTrajectory.transformStateForAlliance(
-              initialState, DriverStation.getAlliance());
-    }
+    PathPlannerTrajectory.PathPlannerState initialState = transformedTrajectory.getInitialState();
+
     this.prevSpeeds =
         this.kinematics.toWheelSpeeds(
             new ChassisSpeeds(
@@ -251,7 +257,7 @@ public class PPRamseteCommand extends CommandBase {
       this.rightController.reset();
     }
 
-    PathPlannerServer.sendActivePath(this.trajectory.getStates());
+    PathPlannerServer.sendActivePath(transformedTrajectory.getStates());
   }
 
   @Override
@@ -266,12 +272,8 @@ public class PPRamseteCommand extends CommandBase {
 
     Pose2d currentPose = this.poseSupplier.get();
     PathPlannerTrajectory.PathPlannerState desiredState =
-        (PathPlannerTrajectory.PathPlannerState) this.trajectory.sample(currentTime);
-    if (useAllianceColor && trajectory.fromGUI) {
-      desiredState =
-          PathPlannerTrajectory.transformStateForAlliance(
-              desiredState, DriverStation.getAlliance());
-    }
+        (PathPlannerTrajectory.PathPlannerState) transformedTrajectory.sample(currentTime);
+
     this.field.setRobotPose(currentPose);
     PathPlannerServer.sendPathFollowingData(desiredState.poseMeters, currentPose);
 
@@ -330,6 +332,6 @@ public class PPRamseteCommand extends CommandBase {
 
   @Override
   public boolean isFinished() {
-    return this.timer.hasElapsed(this.trajectory.getTotalTimeSeconds());
+    return this.timer.hasElapsed(transformedTrajectory.getTotalTimeSeconds());
   }
 }

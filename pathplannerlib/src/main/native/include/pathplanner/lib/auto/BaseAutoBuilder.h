@@ -115,11 +115,14 @@ protected:
 	 *     be called once ath the beginning of an auto.
 	 * @param eventMap Event map for triggering events at markers
 	 * @param drivetrainType Type of drivetrain the autobuilder is building for
+	 * @param useAllianceColor Should the path states be automatically transformed based on alliance
+	 *     color? In order for this to work properly, you MUST create your path on the blue side of
+	 *     the field.
 	 */
 	BaseAutoBuilder(std::function<frc::Pose2d()> pose,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
-			DriveTrainType drivetrainType);
+			DriveTrainType drivetrainType, bool useAllianceColor = true);
 
 	/**
 	 * Construct a BaseAutoBuilder
@@ -128,12 +131,15 @@ protected:
 	 *     to provide this.
 	 * @param eventMap Event map for triggering events at markers
 	 * @param drivetrainType Type of drivetrain the autobuilder is building for
+	 * @param useAllianceColor Should the path states be automatically transformed based on alliance
+	 *     color? In order for this to work properly, you MUST create your path on the blue side of
+	 *     the field.
 	 */
 	BaseAutoBuilder(std::function<frc::Pose2d()> pose,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
-			DriveTrainType drivetrainType) : BaseAutoBuilder(pose,
-			[](frc::Pose2d pose) {
-			}, eventMap, drivetrainType) {
+			DriveTrainType drivetrainType, bool useAllianceColor = true) : BaseAutoBuilder(
+			pose, [](frc::Pose2d pose) {
+			}, eventMap, drivetrainType, useAllianceColor) {
 	}
 
 	/**
@@ -163,5 +169,6 @@ protected:
 	std::function<void(frc::Pose2d)> m_resetPose;
 	std::unordered_map<std::string, std::shared_ptr<frc2::Command>> m_eventMap;
 	DriveTrainType m_drivetrainType;
+	const bool m_useAllianceColor;
 };
 }

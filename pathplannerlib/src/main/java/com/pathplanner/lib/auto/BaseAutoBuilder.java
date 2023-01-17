@@ -22,6 +22,52 @@ public abstract class BaseAutoBuilder {
   protected final Consumer<Pose2d> resetPose;
   protected final Map<String, Command> eventMap;
   protected final DrivetrainType drivetrainType;
+  protected final boolean useAllianceColor;
+
+  /**
+   * Construct a BaseAutoBuilder
+   *
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param resetPose A consumer that accepts a Pose2d to reset robot odometry. This will typically
+   *     be called once ath the beginning of an auto.
+   * @param eventMap Event map for triggering events at markers
+   * @param drivetrainType Type of drivetrain the autobuilder is building for
+   * @param useAllianceColor Should the path states be automatically transformed based on alliance
+   *     color? In order for this to work properly, you MUST create your path on the blue side of
+   *     the field.
+   */
+  protected BaseAutoBuilder(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Map<String, Command> eventMap,
+      DrivetrainType drivetrainType,
+      boolean useAllianceColor) {
+    this.poseSupplier = poseSupplier;
+    this.resetPose = resetPose;
+    this.eventMap = eventMap;
+    this.drivetrainType = drivetrainType;
+    this.useAllianceColor = useAllianceColor;
+  }
+
+  /**
+   * Construct a BaseAutoBuilder
+   *
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param eventMap Event map for triggering events at markers
+   * @param drivetrainType Type of drivetrain the autobuilder is building for
+   * @param useAllianceColor Should the path states be automatically transformed based on alliance
+   *     color? In order for this to work properly, you MUST create your path on the blue side of
+   *     the field.
+   */
+  protected BaseAutoBuilder(
+      Supplier<Pose2d> poseSupplier,
+      Map<String, Command> eventMap,
+      DrivetrainType drivetrainType,
+      boolean useAllianceColor) {
+    this(poseSupplier, (pose) -> {}, eventMap, drivetrainType, useAllianceColor);
+  }
 
   /**
    * Construct a BaseAutoBuilder
@@ -38,10 +84,7 @@ public abstract class BaseAutoBuilder {
       Consumer<Pose2d> resetPose,
       Map<String, Command> eventMap,
       DrivetrainType drivetrainType) {
-    this.poseSupplier = poseSupplier;
-    this.resetPose = resetPose;
-    this.eventMap = eventMap;
-    this.drivetrainType = drivetrainType;
+    this(poseSupplier, resetPose, eventMap, drivetrainType, true);
   }
 
   /**
@@ -54,7 +97,7 @@ public abstract class BaseAutoBuilder {
    */
   protected BaseAutoBuilder(
       Supplier<Pose2d> poseSupplier, Map<String, Command> eventMap, DrivetrainType drivetrainType) {
-    this(poseSupplier, (pose) -> {}, eventMap, drivetrainType);
+    this(poseSupplier, (pose) -> {}, eventMap, drivetrainType, true);
   }
 
   /**
@@ -123,9 +166,12 @@ public abstract class BaseAutoBuilder {
     if (drivetrainType == DrivetrainType.HOLONOMIC) {
       return Commands.runOnce(
           () -> {
-            PathPlannerTrajectory.PathPlannerState initialState =
-                PathPlannerTrajectory.transformStateForAlliance(
-                    trajectory.getInitialState(), DriverStation.getAlliance());
+            PathPlannerTrajectory.PathPlannerState initialState = trajectory.getInitialState();
+            if (useAllianceColor) {
+              initialState =
+                  PathPlannerTrajectory.transformStateForAlliance(
+                      initialState, DriverStation.getAlliance());
+            }
 
             resetPose.accept(
                 new Pose2d(
@@ -134,9 +180,12 @@ public abstract class BaseAutoBuilder {
     } else {
       return Commands.runOnce(
           () -> {
-            PathPlannerTrajectory.PathPlannerState initialState =
-                PathPlannerTrajectory.transformStateForAlliance(
-                    trajectory.getInitialState(), DriverStation.getAlliance());
+            PathPlannerTrajectory.PathPlannerState initialState = trajectory.getInitialState();
+            if (useAllianceColor) {
+              initialState =
+                  PathPlannerTrajectory.transformStateForAlliance(
+                      initialState, DriverStation.getAlliance());
+            }
 
             resetPose.accept(initialState.poseMeters);
           });

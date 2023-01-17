@@ -9,8 +9,9 @@ using namespace pathplanner;
 BaseAutoBuilder::BaseAutoBuilder(std::function<frc::Pose2d()> pose,
 		std::function<void(frc::Pose2d)> resetPose,
 		std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
-		DriveTrainType drivetrainType) : m_pose(std::move(pose)), m_resetPose(
-		std::move(resetPose)), m_eventMap(eventMap) {
+		DriveTrainType drivetrainType, bool useAllianceColor) : m_pose(
+		std::move(pose)), m_resetPose(std::move(resetPose)), m_eventMap(
+		eventMap), m_useAllianceColor(useAllianceColor) {
 }
 
 frc2::CommandPtr BaseAutoBuilder::followPathGroup(
@@ -46,9 +47,14 @@ frc2::CommandPtr BaseAutoBuilder::resetPose(PathPlannerTrajectory trajectory) {
 		return frc2::cmd::RunOnce(
 				[this, trajectory]() {
 					PathPlannerTrajectory::PathPlannerState initialState =
-							PathPlannerTrajectory::transformStateForAlliance(
-									trajectory.getInitialState(),
-									frc::DriverStation::GetAlliance());
+							trajectory.getInitialState();
+					if (m_useAllianceColor) {
+						initialState =
+								PathPlannerTrajectory::transformStateForAlliance(
+										initialState,
+										frc::DriverStation::GetAlliance());
+					}
+
 					m_resetPose(
 							frc::Pose2d(initialState.pose.Translation(),
 									initialState.holonomicRotation));
@@ -57,9 +63,14 @@ frc2::CommandPtr BaseAutoBuilder::resetPose(PathPlannerTrajectory trajectory) {
 		return frc2::cmd::RunOnce(
 				[this, trajectory]() {
 					PathPlannerTrajectory::PathPlannerState initialState =
-							PathPlannerTrajectory::transformStateForAlliance(
-									trajectory.getInitialState(),
-									frc::DriverStation::GetAlliance());
+							trajectory.getInitialState();
+					if (m_useAllianceColor) {
+						initialState =
+								PathPlannerTrajectory::transformStateForAlliance(
+										initialState,
+										frc::DriverStation::GetAlliance());
+					}
+
 					m_resetPose(initialState.pose);
 				});
 	}

@@ -11,12 +11,11 @@ SwerveAutoBuilder::SwerveAutoBuilder(std::function<frc::Pose2d()> pose,
 		std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 		std::initializer_list<frc2::Subsystem*> driveRequirements,
 		bool useAllianceColor) : BaseAutoBuilder(pose, resetPose, eventMap,
-		BaseAutoBuilder::DriveTrainType::HOLONOMIC), m_kinematics(
+		BaseAutoBuilder::DriveTrainType::HOLONOMIC, useAllianceColor), m_kinematics(
 		frc::Translation2d(), frc::Translation2d(), frc::Translation2d(),
 		frc::Translation2d()), m_translationConstants(translationConstants), m_rotationConstants(
 		rotationConstants), m_outputSpeeds(output), m_driveRequirements(
-		driveRequirements), m_useKinematics(false), m_useAllianceColor(
-		useAllianceColor) {
+		driveRequirements), m_useKinematics(false) {
 
 }
 
@@ -28,10 +27,10 @@ SwerveAutoBuilder::SwerveAutoBuilder(std::function<frc::Pose2d()> pose,
 		std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 		std::initializer_list<frc2::Subsystem*> driveRequirements,
 		bool useAllianceColor) : BaseAutoBuilder(pose, resetPose, eventMap,
-		BaseAutoBuilder::DriveTrainType::HOLONOMIC), m_kinematics(kinematics), m_translationConstants(
-		translationConstants), m_rotationConstants(rotationConstants), m_outputStates(
-		output), m_driveRequirements(driveRequirements), m_useKinematics(true), m_useAllianceColor(
-		useAllianceColor) {
+		BaseAutoBuilder::DriveTrainType::HOLONOMIC, useAllianceColor), m_kinematics(
+		kinematics), m_translationConstants(translationConstants), m_rotationConstants(
+		rotationConstants), m_outputStates(output), m_driveRequirements(
+		driveRequirements), m_useKinematics(true) {
 
 }
 

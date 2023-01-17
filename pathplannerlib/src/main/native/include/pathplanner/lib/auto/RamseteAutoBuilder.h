@@ -91,6 +91,5 @@ private:
 	std::initializer_list<frc2::Subsystem*> m_driveRequirements;
 
 	const bool m_usePID;
-	const bool m_useAllianceColor;
 };
 }

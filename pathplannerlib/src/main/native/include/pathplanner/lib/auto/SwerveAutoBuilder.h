@@ -86,6 +86,5 @@ private:
 	std::initializer_list<frc2::Subsystem*> m_driveRequirements;
 
 	const bool m_useKinematics;
-	const bool m_useAllianceColor;
 };
 }

@@ -11,12 +11,11 @@ MecanumAutoBuilder::MecanumAutoBuilder(std::function<frc::Pose2d()> pose,
 		std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 		std::initializer_list<frc2::Subsystem*> driveRequirements,
 		bool useAllianceColor) : BaseAutoBuilder(pose, resetPose, eventMap,
-		BaseAutoBuilder::DriveTrainType::HOLONOMIC), m_kinematics(
+		BaseAutoBuilder::DriveTrainType::HOLONOMIC, useAllianceColor), m_kinematics(
 		frc::Translation2d(), frc::Translation2d(), frc::Translation2d(),
 		frc::Translation2d()), m_translationConstants(translationConstants), m_rotationConstants(
 		rotationConstants), m_maxWheelVelocity(0_mps), m_outputChassisSpeeds(
-		output), m_driveRequirements(driveRequirements), m_useKinematics(false), m_useAllianceColor(
-		useAllianceColor) {
+		output), m_driveRequirements(driveRequirements), m_useKinematics(false) {
 }
 
 MecanumAutoBuilder::MecanumAutoBuilder(std::function<frc::Pose2d()> pose,
@@ -28,11 +27,10 @@ MecanumAutoBuilder::MecanumAutoBuilder(std::function<frc::Pose2d()> pose,
 		std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 		std::initializer_list<frc2::Subsystem*> driveRequirements,
 		bool useAllianceColor) : BaseAutoBuilder(pose, resetPose, eventMap,
-		BaseAutoBuilder::DriveTrainType::HOLONOMIC), m_kinematics(kinematics), m_translationConstants(
-		translationConstants), m_rotationConstants(rotationConstants), m_maxWheelVelocity(
-		maxWheelVelocity), m_outputVel(output), m_driveRequirements(
-		driveRequirements), m_useKinematics(true), m_useAllianceColor(
-		useAllianceColor) {
+		BaseAutoBuilder::DriveTrainType::HOLONOMIC, useAllianceColor), m_kinematics(
+		kinematics), m_translationConstants(translationConstants), m_rotationConstants(
+		rotationConstants), m_maxWheelVelocity(maxWheelVelocity), m_outputVel(
+		output), m_driveRequirements(driveRequirements), m_useKinematics(true) {
 }
 
 frc2::CommandPtr MecanumAutoBuilder::followPath(

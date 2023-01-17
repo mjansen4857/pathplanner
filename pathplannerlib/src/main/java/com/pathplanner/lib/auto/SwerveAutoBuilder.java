@@ -22,7 +22,6 @@ public class SwerveAutoBuilder extends BaseAutoBuilder {
   private final Subsystem[] driveRequirements;
 
   private final boolean useKinematics;
-  private final boolean useAllianceColor;
 
   /**
    * Create an auto builder that will create command groups that will handle path following and
@@ -137,7 +136,7 @@ public class SwerveAutoBuilder extends BaseAutoBuilder {
       Map<String, Command> eventMap,
       boolean useAllianceColor,
       Subsystem... driveRequirements) {
-    super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC);
+    super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC, useAllianceColor);
 
     this.kinematics = null;
     this.translationConstants = translationConstants;
@@ -147,7 +146,6 @@ public class SwerveAutoBuilder extends BaseAutoBuilder {
     this.driveRequirements = driveRequirements;
 
     this.useKinematics = false;
-    this.useAllianceColor = useAllianceColor;
   }
 
   /**
@@ -184,7 +182,7 @@ public class SwerveAutoBuilder extends BaseAutoBuilder {
       Map<String, Command> eventMap,
       boolean useAllianceColor,
       Subsystem... driveRequirements) {
-    super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC);
+    super(poseSupplier, resetPose, eventMap, DrivetrainType.HOLONOMIC, useAllianceColor);
 
     this.kinematics = kinematics;
     this.translationConstants = translationConstants;
@@ -194,7 +192,6 @@ public class SwerveAutoBuilder extends BaseAutoBuilder {
     this.driveRequirements = driveRequirements;
 
     this.useKinematics = true;
-    this.useAllianceColor = useAllianceColor;
   }
 
   @Override

@@ -25,7 +25,6 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
   private final Subsystem[] driveRequirements;
 
   private final boolean usePID;
-  private final boolean useAllianceColor;
 
   /**
    * Create an auto builder that will create command groups that will handle path following and
@@ -148,7 +147,7 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
       Map<String, Command> eventMap,
       boolean useAllianceColor,
       Subsystem... driveRequirements) {
-    super(poseSupplier, resetPose, eventMap, DrivetrainType.STANDARD);
+    super(poseSupplier, resetPose, eventMap, DrivetrainType.STANDARD, useAllianceColor);
 
     this.controller = controller;
     this.kinematics = kinematics;
@@ -159,7 +158,6 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
     this.driveRequirements = driveRequirements;
 
     this.usePID = true;
-    this.useAllianceColor = useAllianceColor;
   }
 
   /**
@@ -192,7 +190,7 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
       Map<String, Command> eventMap,
       boolean useAllianceColor,
       Subsystem... driveRequirements) {
-    super(poseSupplier, resetPose, eventMap, DrivetrainType.STANDARD);
+    super(poseSupplier, resetPose, eventMap, DrivetrainType.STANDARD, useAllianceColor);
 
     this.controller = controller;
     this.kinematics = kinematics;
@@ -203,7 +201,6 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
     this.driveRequirements = driveRequirements;
 
     this.usePID = false;
-    this.useAllianceColor = useAllianceColor;
   }
 
   @Override

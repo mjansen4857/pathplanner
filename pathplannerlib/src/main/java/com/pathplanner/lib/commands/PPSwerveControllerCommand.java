@@ -37,7 +37,8 @@ public class PPSwerveControllerCommand extends CommandBase {
 
   private static Consumer<PathPlannerTrajectory> logActiveTrajectory = null;
   private static Consumer<Pose2d> logTargetPose = null;
-  private static BiConsumer<Translation2d, Rotation2d> logError;
+  private static BiConsumer<Translation2d, Rotation2d> logError =
+      PPSwerveControllerCommand::defaultLogError;
   private static boolean pushField2d = true;
 
   /**

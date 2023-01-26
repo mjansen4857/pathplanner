@@ -69,7 +69,7 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
         driveConstants,
         outputVolts,
         eventMap,
-        true,
+        false,
         driveRequirements);
   }
 
@@ -106,7 +106,7 @@ public class RamseteAutoBuilder extends BaseAutoBuilder {
         kinematics,
         outputMetersPerSecond,
         eventMap,
-        true,
+        false,
         driveRequirements);
   }
 

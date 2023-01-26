@@ -113,7 +113,7 @@ public class PPSwerveControllerCommand extends CommandBase {
         yController,
         rotationController,
         outputChassisSpeeds,
-        true,
+        false,
         requirements);
   }
 
@@ -203,7 +203,7 @@ public class PPSwerveControllerCommand extends CommandBase {
         yController,
         rotationController,
         outputModuleStates,
-        true,
+        false,
         requirements);
   }
 

@@ -83,7 +83,7 @@ public:
 			frc2::PIDController rightController,
 			std::function<void(units::volt_t, units::volt_t)> output,
 			std::initializer_list<frc2::Subsystem*> requirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * Constructs a new RamseteCommand that, when executed, will follow the
@@ -125,7 +125,7 @@ public:
 			frc2::PIDController rightController,
 			std::function<void(units::volt_t, units::volt_t)> output,
 			std::span<frc2::Subsystem* const > requirements = { },
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * Constructs a new RamseteCommand that, when executed, will follow the
@@ -153,7 +153,7 @@ public:
 			std::function<
 					void(units::meters_per_second_t, units::meters_per_second_t)> output,
 			std::initializer_list<frc2::Subsystem*> requirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * Constructs a new RamseteCommand that, when executed, will follow the
@@ -181,7 +181,7 @@ public:
 			std::function<
 					void(units::meters_per_second_t, units::meters_per_second_t)> output,
 			std::span<frc2::Subsystem* const > requirements = { },
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	void Initialize() override;
 

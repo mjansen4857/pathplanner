@@ -40,7 +40,7 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 			std::initializer_list<frc2::Subsystem*> driveRequirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * Create an auto builder that will create command groups that will handle path following and
@@ -74,7 +74,7 @@ public:
 			std::function<void(frc::MecanumDriveWheelSpeeds)> output,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 			std::initializer_list<frc2::Subsystem*> driveRequirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	frc2::CommandPtr followPath(PathPlannerTrajectory trajectory) override;
 

@@ -142,7 +142,7 @@ public class PPRamseteCommand extends CommandBase {
         leftController,
         rightController,
         outputVolts,
-        true,
+        false,
         requirements);
   }
 
@@ -221,7 +221,7 @@ public class PPRamseteCommand extends CommandBase {
         controller,
         kinematics,
         outputMetersPerSecond,
-        true,
+        false,
         requirements);
   }
 

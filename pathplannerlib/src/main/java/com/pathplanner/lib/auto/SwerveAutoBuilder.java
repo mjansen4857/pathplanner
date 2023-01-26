@@ -58,7 +58,7 @@ public class SwerveAutoBuilder extends BaseAutoBuilder {
         rotationConstants,
         outputChassisSpeeds,
         eventMap,
-        true,
+        false,
         driveRequirements);
   }
 
@@ -100,7 +100,7 @@ public class SwerveAutoBuilder extends BaseAutoBuilder {
         rotationConstants,
         outputModuleStates,
         eventMap,
-        true,
+        false,
         driveRequirements);
   }
 

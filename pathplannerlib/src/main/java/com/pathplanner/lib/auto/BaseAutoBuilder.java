@@ -84,7 +84,7 @@ public abstract class BaseAutoBuilder {
       Consumer<Pose2d> resetPose,
       Map<String, Command> eventMap,
       DrivetrainType drivetrainType) {
-    this(poseSupplier, resetPose, eventMap, drivetrainType, true);
+    this(poseSupplier, resetPose, eventMap, drivetrainType, false);
   }
 
   /**

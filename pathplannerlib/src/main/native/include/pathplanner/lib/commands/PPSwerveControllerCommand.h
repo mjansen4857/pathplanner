@@ -37,7 +37,7 @@ public:
 			frc2::PIDController rotationController,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::initializer_list<frc2::Subsystem*> requirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * @brief Constructs a new PPSwerveControllerCommand that when executed will follow the
@@ -61,7 +61,7 @@ public:
 			frc2::PIDController rotationController,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::span<frc2::Subsystem* const > requirements = { },
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * @brief Constructs a new PPSwerveControllerCommand that when executed will follow the
@@ -86,7 +86,7 @@ public:
 			frc2::PIDController rotationController,
 			std::function<void(std::array<frc::SwerveModuleState, 4>)> output,
 			std::initializer_list<frc2::Subsystem*> requirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * @brief Constructs a new PPSwerveControllerCommand that when executed will follow the
@@ -111,7 +111,7 @@ public:
 			frc2::PIDController rotationController,
 			std::function<void(std::array<frc::SwerveModuleState, 4>)> output,
 			std::span<frc2::Subsystem* const > requirements = { },
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	void Initialize() override;
 

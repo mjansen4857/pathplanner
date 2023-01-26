@@ -316,7 +316,8 @@ public class PPMecanumControllerCommand extends CommandBase {
    *     active path. This will be called whenever a PPMecanumControllerCommand starts
    * @param logTargetPose Consumer that accepts a Pose2d representing the target pose while path
    *     following
-   * @param logSetpoint Consumer that accepts a ChassisSpeeds object representing the setpoint speeds
+   * @param logSetpoint Consumer that accepts a ChassisSpeeds object representing the setpoint
+   *     speeds
    * @param logError BiConsumer that accepts a Translation2d and Rotation2d representing the error
    *     while path following
    */

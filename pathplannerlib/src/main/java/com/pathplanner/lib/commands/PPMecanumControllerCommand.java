@@ -271,7 +271,8 @@ public class PPMecanumControllerCommand extends CommandBase {
   public void end(boolean interrupted) {
     this.timer.stop();
 
-    if (interrupted) {
+    if (interrupted
+        || Math.abs(transformedTrajectory.getEndState().velocityMetersPerSecond) < 0.1) {
       if (this.useKinematics) {
         this.outputWheelSpeeds.accept(new MecanumDriveWheelSpeeds(0, 0, 0, 0));
       } else {

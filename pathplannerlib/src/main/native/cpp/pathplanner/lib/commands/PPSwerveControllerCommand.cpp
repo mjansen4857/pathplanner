@@ -134,7 +134,9 @@ void PPSwerveControllerCommand::Execute() {
 void PPSwerveControllerCommand::End(bool interrupted) {
 	this->m_timer.Stop();
 
-	if (interrupted) {
+	if (interrupted
+			|| std::abs(m_transformedTrajectory.getEndState().velocity())
+					< 0.1) {
 		if (m_useKinematics) {
 			this->m_outputStates(
 					this->m_kinematics.ToSwerveModuleStates(

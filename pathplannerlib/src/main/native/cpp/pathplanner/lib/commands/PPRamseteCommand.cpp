@@ -175,7 +175,9 @@ void PPRamseteCommand::Execute() {
 void PPRamseteCommand::End(bool interrupted) {
 	m_timer.Stop();
 
-	if (interrupted) {
+	if (interrupted
+			|| std::abs(m_transformedTrajectory.getEndState().velocity())
+					< 0.1) {
 		if (m_usePID) {
 			m_outputVolts(0_V, 0_V);
 		} else {

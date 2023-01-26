@@ -136,7 +136,9 @@ void PPMecanumControllerCommand::Execute() {
 void PPMecanumControllerCommand::End(bool interrupted) {
 	m_timer.Stop();
 
-	if (interrupted) {
+	if (interrupted
+			|| std::abs(m_transformedTrajectory.getEndState().velocity())
+					< 0.1) {
 		if (m_useKinematics) {
 			m_outputVel(frc::MecanumDriveWheelSpeeds());
 		} else {

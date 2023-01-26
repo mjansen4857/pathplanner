@@ -122,7 +122,7 @@ protected:
 	BaseAutoBuilder(std::function<frc::Pose2d()> pose,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
-			DriveTrainType drivetrainType, bool useAllianceColor = true);
+			DriveTrainType drivetrainType, bool useAllianceColor = false);
 
 	/**
 	 * Construct a BaseAutoBuilder
@@ -137,7 +137,7 @@ protected:
 	 */
 	BaseAutoBuilder(std::function<frc::Pose2d()> pose,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
-			DriveTrainType drivetrainType, bool useAllianceColor = true) : BaseAutoBuilder(
+			DriveTrainType drivetrainType, bool useAllianceColor = false) : BaseAutoBuilder(
 			pose, [](frc::Pose2d pose) {
 			}, eventMap, drivetrainType, useAllianceColor) {
 	}

@@ -58,7 +58,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
         rotationConstants,
         outputChassisSpeeds,
         eventMap,
-        true,
+        false,
         driveRequirements);
   }
 
@@ -103,7 +103,7 @@ public class MecanumAutoBuilder extends BaseAutoBuilder {
         maxWheelVelocityMetersPerSecond,
         outputWheelSpeeds,
         eventMap,
-        true,
+        false,
         driveRequirements);
   }
 

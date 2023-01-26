@@ -119,7 +119,7 @@ public class PPSwerveControllerCommand extends CommandBase {
         yController,
         rotationController,
         outputChassisSpeeds,
-        true,
+        false,
         requirements);
   }
 
@@ -209,7 +209,7 @@ public class PPSwerveControllerCommand extends CommandBase {
         yController,
         rotationController,
         outputModuleStates,
-        true,
+        false,
         requirements);
   }
 
@@ -271,7 +271,8 @@ public class PPSwerveControllerCommand extends CommandBase {
   public void end(boolean interrupted) {
     this.timer.stop();
 
-    if (interrupted) {
+    if (interrupted
+        || Math.abs(transformedTrajectory.getEndState().velocityMetersPerSecond) < 0.1) {
       if (useKinematics) {
         this.outputModuleStates.accept(
             this.kinematics.toSwerveModuleStates(new ChassisSpeeds(0, 0, 0)));

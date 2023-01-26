@@ -45,7 +45,7 @@ public:
 			std::function<void(units::volt_t, units::volt_t)> output,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 			std::initializer_list<frc2::Subsystem*> driveRequirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * Create an auto builder that will create command groups that will handle path following and
@@ -76,7 +76,7 @@ public:
 					void(units::meters_per_second_t, units::meters_per_second_t)> output,
 			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 			std::initializer_list<frc2::Subsystem*> driveRequirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	frc2::CommandPtr followPath(PathPlannerTrajectory trajectory) override;
 

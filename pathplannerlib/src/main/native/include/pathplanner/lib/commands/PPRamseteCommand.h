@@ -191,6 +191,17 @@ public:
 
 	bool IsFinished() override;
 
+	static void setLoggingCallbacks(
+			std::function<void(PathPlannerTrajectory)> logActiveTrajectory,
+			std::function<void(frc::Pose2d)> logTargetPose,
+			std::function<void(frc::ChassisSpeeds)> logSetpoint,
+			std::function<void(frc::Translation2d, frc::Rotation2d)> logError) {
+		PPRamseteCommand::logActiveTrajectory = logActiveTrajectory;
+		PPRamseteCommand::logTargetPose = logTargetPose;
+		PPRamseteCommand::logSetpoint = logSetpoint;
+		PPRamseteCommand::logError = logError;
+	}
+
 private:
 	PathPlannerTrajectory m_trajectory;
 	std::function<frc::Pose2d()> m_pose;
@@ -208,9 +219,13 @@ private:
 	frc::DifferentialDriveWheelSpeeds m_prevSpeeds;
 	bool m_usePID;
 
-	frc::Field2d m_field;
 	bool m_useAllianceColor;
 
 	PathPlannerTrajectory m_transformedTrajectory;
+
+	static std::function<void(PathPlannerTrajectory)> logActiveTrajectory;
+	static std::function<void(frc::Pose2d)> logTargetPose;
+	static std::function<void(frc::ChassisSpeeds)> logSetpoint;
+	static std::function<void(frc::Translation2d, frc::Rotation2d)> logError;
 };
 }

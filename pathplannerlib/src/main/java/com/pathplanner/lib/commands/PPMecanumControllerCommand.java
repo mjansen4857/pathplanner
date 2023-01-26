@@ -10,14 +10,16 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.server.PathPlannerServer;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.MecanumDriveKinematics;
 import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -33,9 +35,14 @@ public class PPMecanumControllerCommand extends CommandBase {
   private final Consumer<ChassisSpeeds> outputChassisSpeeds;
   private final boolean useKinematics;
   private final boolean useAllianceColor;
-  private final Field2d field = new Field2d();
 
   private PathPlannerTrajectory transformedTrajectory;
+
+  private static Consumer<PathPlannerTrajectory> logActiveTrajectory = null;
+  private static Consumer<Pose2d> logTargetPose = null;
+  private static Consumer<ChassisSpeeds> logSetpoint = null;
+  private static BiConsumer<Translation2d, Rotation2d> logError =
+      PPMecanumControllerCommand::defaultLogError;
 
   /**
    * Constructs a new PPMecanumControllerCommand that when executed will follow the provided
@@ -225,8 +232,9 @@ public class PPMecanumControllerCommand extends CommandBase {
       transformedTrajectory = trajectory;
     }
 
-    SmartDashboard.putData("PPMecanumControllerCommand_field", this.field);
-    this.field.getObject("traj").setTrajectory(transformedTrajectory);
+    if (logActiveTrajectory != null) {
+      logActiveTrajectory.accept(transformedTrajectory);
+    }
 
     this.timer.reset();
     this.timer.start();
@@ -240,18 +248,10 @@ public class PPMecanumControllerCommand extends CommandBase {
     PathPlannerState desiredState = (PathPlannerState) transformedTrajectory.sample(currentTime);
 
     Pose2d currentPose = this.poseSupplier.get();
-    this.field.setRobotPose(currentPose);
+
     PathPlannerServer.sendPathFollowingData(
         new Pose2d(desiredState.poseMeters.getTranslation(), desiredState.holonomicRotation),
         currentPose);
-
-    SmartDashboard.putNumber(
-        "PPMecanumControllerCommand_xError", currentPose.getX() - desiredState.poseMeters.getX());
-    SmartDashboard.putNumber(
-        "PPMecanumControllerCommand_yError", currentPose.getY() - desiredState.poseMeters.getY());
-    SmartDashboard.putNumber(
-        "PPMecanumControllerCommand_rotationError",
-        currentPose.getRotation().getRadians() - desiredState.holonomicRotation.getRadians());
 
     ChassisSpeeds targetChassisSpeeds = this.controller.calculate(currentPose, desiredState);
 
@@ -264,6 +264,21 @@ public class PPMecanumControllerCommand extends CommandBase {
       this.outputWheelSpeeds.accept(targetWheelSpeeds);
     } else {
       this.outputChassisSpeeds.accept(targetChassisSpeeds);
+    }
+
+    if (logTargetPose != null) {
+      logTargetPose.accept(
+          new Pose2d(desiredState.poseMeters.getTranslation(), desiredState.holonomicRotation));
+    }
+
+    if (logError != null) {
+      logError.accept(
+          currentPose.getTranslation().minus(desiredState.poseMeters.getTranslation()),
+          currentPose.getRotation().minus(desiredState.holonomicRotation));
+    }
+
+    if (logSetpoint != null) {
+      logSetpoint.accept(targetChassisSpeeds);
     }
   }
 
@@ -284,5 +299,36 @@ public class PPMecanumControllerCommand extends CommandBase {
   @Override
   public boolean isFinished() {
     return this.timer.hasElapsed(transformedTrajectory.getTotalTimeSeconds());
+  }
+
+  private static void defaultLogError(Translation2d translationError, Rotation2d rotationError) {
+    SmartDashboard.putNumber("PPMecanumControllerCommand/xErrorMeters", translationError.getX());
+    SmartDashboard.putNumber("PPMecanumControllerCommand/yErrorMeters", translationError.getY());
+    SmartDashboard.putNumber(
+        "PPMecanumControllerCommand/rotationErrorDegrees", rotationError.getDegrees());
+  }
+
+  /**
+   * Set custom logging callbacks for this command to use instead of the default configuration of
+   * pushing values to SmartDashboard
+   *
+   * @param logActiveTrajectory Consumer that accepts a PathPlannerTrajectory representing the
+   *     active path. This will be called whenever a PPMecanumControllerCommand starts
+   * @param logTargetPose Consumer that accepts a Pose2d representing the target pose while path
+   *     following
+   * @param logSetpoint Consumer that accepts a ChassisSpeeds object representing the setpoint
+   *     speeds
+   * @param logError BiConsumer that accepts a Translation2d and Rotation2d representing the error
+   *     while path following
+   */
+  public static void setLoggingCallbacks(
+      Consumer<PathPlannerTrajectory> logActiveTrajectory,
+      Consumer<Pose2d> logTargetPose,
+      Consumer<ChassisSpeeds> logSetpoint,
+      BiConsumer<Translation2d, Rotation2d> logError) {
+    PPMecanumControllerCommand.logActiveTrajectory = logActiveTrajectory;
+    PPMecanumControllerCommand.logTargetPose = logTargetPose;
+    PPMecanumControllerCommand.logSetpoint = logSetpoint;
+    PPMecanumControllerCommand.logError = logError;
   }
 }

@@ -5,6 +5,28 @@
 
 using namespace pathplanner;
 
+std::function<void(PathPlannerTrajectory)> PPMecanumControllerCommand::logActiveTrajectory =
+		[](auto traj) {
+		};
+std::function<void(frc::Pose2d)> PPMecanumControllerCommand::logTargetPose = [](
+		auto pose) {
+};
+std::function<void(frc::ChassisSpeeds)> PPMecanumControllerCommand::logSetpoint =
+		[](auto speeds) {
+		};
+std::function<void(frc::Translation2d, frc::Rotation2d)> PPMecanumControllerCommand::logError =
+		[](auto transError, auto rotError) {
+			frc::SmartDashboard::PutNumber(
+					"PPMecanumControllerCommand/xErrorMeters",
+					transError.X()());
+			frc::SmartDashboard::PutNumber(
+					"PPMecanumControllerCommand/yErrorMeters",
+					transError.Y()());
+			frc::SmartDashboard::PutNumber(
+					"PPMecanumControllerCommand/rotationErrorDegrees",
+					rotError.Degrees()());
+		};
+
 PPMecanumControllerCommand::PPMecanumControllerCommand(
 		PathPlannerTrajectory trajectory, std::function<frc::Pose2d()> pose,
 		frc2::PIDController xController, frc2::PIDController yController,
@@ -94,13 +116,12 @@ void PPMecanumControllerCommand::Initialize() {
 		m_transformedTrajectory = m_trajectory;
 	}
 
-	frc::SmartDashboard::PutData("PPSwerveControllerCommand_field",
-			&this->m_field);
-	this->m_field.GetObject("traj")->SetTrajectory(
-			m_transformedTrajectory.asWPILibTrajectory());
-
 	m_timer.Reset();
 	m_timer.Start();
+
+	if (PPMecanumControllerCommand::logActiveTrajectory) {
+		PPMecanumControllerCommand::logActiveTrajectory (m_transformedTrajectory);
+	}
 }
 
 void PPMecanumControllerCommand::Execute() {
@@ -108,15 +129,6 @@ void PPMecanumControllerCommand::Execute() {
 	auto desiredState = m_transformedTrajectory.sample(currentTime);
 
 	frc::Pose2d currentPose = m_pose();
-	m_field.SetRobotPose(currentPose);
-
-	frc::SmartDashboard::PutNumber("PPMecanumControllerCommand_xError",
-			(currentPose.X() - desiredState.pose.X())());
-	frc::SmartDashboard::PutNumber("PPMecanumControllerCommand_yError",
-			(currentPose.Y() - desiredState.pose.Y())());
-	frc::SmartDashboard::PutNumber("PPMecanumControllerCommand_rotationError",
-			(currentPose.Rotation().Radians()
-					- desiredState.holonomicRotation.Radians())());
 
 	auto targetChassisSpeeds = m_controller.calculate(currentPose,
 			desiredState);
@@ -130,6 +142,22 @@ void PPMecanumControllerCommand::Execute() {
 		m_outputVel(targetWheelSpeeds);
 	} else {
 		m_outputChassisSpeeds(targetChassisSpeeds);
+	}
+
+	if (PPMecanumControllerCommand::logTargetPose) {
+		PPMecanumControllerCommand::logTargetPose(
+				frc::Pose2d(desiredState.pose.Translation(),
+						desiredState.holonomicRotation));
+	}
+
+	if (PPMecanumControllerCommand::logError) {
+		PPMecanumControllerCommand::logError(
+				currentPose.Translation() - desiredState.pose.Translation(),
+				currentPose.Rotation() - desiredState.holonomicRotation);
+	}
+
+	if (PPMecanumControllerCommand::logSetpoint) {
+		PPMecanumControllerCommand::logSetpoint(targetChassisSpeeds);
 	}
 }
 

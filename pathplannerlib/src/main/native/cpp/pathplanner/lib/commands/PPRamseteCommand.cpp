@@ -6,6 +6,26 @@
 
 using namespace pathplanner;
 
+std::function<void(PathPlannerTrajectory)> PPRamseteCommand::logActiveTrajectory =
+		[](auto traj) {
+		};
+std::function<void(frc::Pose2d)> PPRamseteCommand::logTargetPose = [](
+		auto pose) {
+};
+std::function<void(frc::ChassisSpeeds)> PPRamseteCommand::logSetpoint = [](
+		auto speeds) {
+};
+std::function<void(frc::Translation2d, frc::Rotation2d)> PPRamseteCommand::logError =
+		[](auto transError, auto rotError) {
+			frc::SmartDashboard::PutNumber("PPRamseteCommand/xErrorMeters",
+					transError.X()());
+			frc::SmartDashboard::PutNumber("PPRamseteCommand/yErrorMeters",
+					transError.Y()());
+			frc::SmartDashboard::PutNumber(
+					"PPRamseteCommand/rotationErrorDegrees",
+					rotError.Degrees()());
+		};
+
 PPRamseteCommand::PPRamseteCommand(PathPlannerTrajectory trajectory,
 		std::function<frc::Pose2d()> pose, frc::RamseteController controller,
 		frc::SimpleMotorFeedforward<units::meters> feedforward,
@@ -98,10 +118,6 @@ void PPRamseteCommand::Initialize() {
 		m_transformedTrajectory = m_trajectory;
 	}
 
-	frc::SmartDashboard::PutData("PPRamseteCommand_field", &this->m_field);
-	this->m_field.GetObject("traj")->SetTrajectory(
-			m_transformedTrajectory.asWPILibTrajectory());
-
 	m_prevTime = -1_s;
 	PathPlannerTrajectory::PathPlannerState initialState =
 			m_transformedTrajectory.sample(0_s);
@@ -114,6 +130,10 @@ void PPRamseteCommand::Initialize() {
 	if (m_usePID) {
 		m_leftController->Reset();
 		m_rightController->Reset();
+	}
+
+	if (PPRamseteCommand::logActiveTrajectory) {
+		PPRamseteCommand::logActiveTrajectory (m_transformedTrajectory);
 	}
 }
 
@@ -136,18 +156,10 @@ void PPRamseteCommand::Execute() {
 			m_transformedTrajectory.sample(curTime);
 
 	frc::Pose2d currentPose = m_pose();
-	this->m_field.SetRobotPose(currentPose);
 
-	frc::SmartDashboard::PutNumber("PPRamseteCommand_xError",
-			(currentPose.X() - desiredState.pose.X())());
-	frc::SmartDashboard::PutNumber("PPRamseteCommand_yError",
-			(currentPose.Y() - desiredState.pose.Y())());
-	frc::SmartDashboard::PutNumber("PPRamseteCommand_headingError",
-			(currentPose.Rotation().Radians()
-					- desiredState.pose.Rotation().Radians())());
-
-	auto targetWheelSpeeds = m_kinematics.ToWheelSpeeds(
-			m_controller.Calculate(currentPose, desiredState.asWPILibState()));
+	auto targetChassisSpeeds = m_controller.Calculate(currentPose,
+			desiredState.asWPILibState());
+	auto targetWheelSpeeds = m_kinematics.ToWheelSpeeds(targetChassisSpeeds);
 
 	if (m_usePID) {
 		auto leftFeedforward = m_feedforward.Calculate(targetWheelSpeeds.left,
@@ -170,6 +182,20 @@ void PPRamseteCommand::Execute() {
 	}
 	m_prevSpeeds = targetWheelSpeeds;
 	m_prevTime = curTime;
+
+	if (PPRamseteCommand::logTargetPose) {
+		PPRamseteCommand::logTargetPose(desiredState.pose);
+	}
+
+	if (PPRamseteCommand::logError) {
+		PPRamseteCommand::logError(
+				currentPose.Translation() - desiredState.pose.Translation(),
+				currentPose.Rotation() - desiredState.pose.Rotation());
+	}
+
+	if (PPRamseteCommand::logSetpoint) {
+		PPRamseteCommand::logSetpoint(targetChassisSpeeds);
+	}
 }
 
 void PPRamseteCommand::End(bool interrupted) {

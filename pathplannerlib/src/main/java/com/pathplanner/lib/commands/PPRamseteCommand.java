@@ -41,6 +41,7 @@ public class PPRamseteCommand extends CommandBase {
 
   private static Consumer<PathPlannerTrajectory> logActiveTrajectory = null;
   private static Consumer<Pose2d> logTargetPose = null;
+  private static Consumer<ChassisSpeeds> logSetpoint = null;
   private static BiConsumer<Translation2d, Rotation2d> logError = PPRamseteCommand::defaultLogError;
 
   /**
@@ -282,18 +283,9 @@ public class PPRamseteCommand extends CommandBase {
 
     PathPlannerServer.sendPathFollowingData(desiredState.poseMeters, currentPose);
 
-    if (logTargetPose != null) {
-      logTargetPose.accept(desiredState.poseMeters);
-    }
-
-    if (logError != null) {
-      logError.accept(
-          currentPose.getTranslation().minus(desiredState.poseMeters.getTranslation()),
-          currentPose.getRotation().minus(desiredState.poseMeters.getRotation()));
-    }
-
+    ChassisSpeeds targetChassisSpeeds = this.controller.calculate(currentPose, desiredState);
     DifferentialDriveWheelSpeeds targetWheelSpeeds =
-        this.kinematics.toWheelSpeeds(this.controller.calculate(currentPose, desiredState));
+        this.kinematics.toWheelSpeeds(targetChassisSpeeds);
 
     double leftSpeedSetpoint = targetWheelSpeeds.leftMetersPerSecond;
     double rightSpeedSetpoint = targetWheelSpeeds.rightMetersPerSecond;
@@ -325,6 +317,20 @@ public class PPRamseteCommand extends CommandBase {
     this.output.accept(leftOutput, rightOutput);
     this.prevSpeeds = targetWheelSpeeds;
     this.prevTime = currentTime;
+
+    if (logTargetPose != null) {
+      logTargetPose.accept(desiredState.poseMeters);
+    }
+
+    if (logError != null) {
+      logError.accept(
+          currentPose.getTranslation().minus(desiredState.poseMeters.getTranslation()),
+          currentPose.getRotation().minus(desiredState.poseMeters.getRotation()));
+    }
+
+    if (logSetpoint != null) {
+      logSetpoint.accept(targetChassisSpeeds);
+    }
   }
 
   @Override
@@ -356,15 +362,18 @@ public class PPRamseteCommand extends CommandBase {
    *     active path. This will be called whenever a PPRamseteCommand starts
    * @param logTargetPose Consumer that accepts a Pose2d representing the target pose while path
    *     following
+   * @param logSetpoint Consumer that accepts a ChassisSpeeds object representing the setpoint speeds
    * @param logError BiConsumer that accepts a Translation2d and Rotation2d representing the error
    *     while path following
    */
   public static void setLoggingCallbacks(
       Consumer<PathPlannerTrajectory> logActiveTrajectory,
       Consumer<Pose2d> logTargetPose,
+      Consumer<ChassisSpeeds> logSetpoint,
       BiConsumer<Translation2d, Rotation2d> logError) {
     PPRamseteCommand.logActiveTrajectory = logActiveTrajectory;
     PPRamseteCommand.logTargetPose = logTargetPose;
+    PPRamseteCommand.logSetpoint = logSetpoint;
     PPRamseteCommand.logError = logError;
   }
 }

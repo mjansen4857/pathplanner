@@ -35,6 +35,7 @@ public class PPSwerveControllerCommand extends CommandBase {
 
   private static Consumer<PathPlannerTrajectory> logActiveTrajectory = null;
   private static Consumer<Pose2d> logTargetPose = null;
+  private static Consumer<ChassisSpeeds> logSetpoint = null;
   private static BiConsumer<Translation2d, Rotation2d> logError =
       PPSwerveControllerCommand::defaultLogError;
 
@@ -244,6 +245,17 @@ public class PPSwerveControllerCommand extends CommandBase {
         new Pose2d(desiredState.poseMeters.getTranslation(), desiredState.holonomicRotation),
         currentPose);
 
+    ChassisSpeeds targetChassisSpeeds = this.controller.calculate(currentPose, desiredState);
+
+    if (this.useKinematics) {
+      SwerveModuleState[] targetModuleStates =
+          this.kinematics.toSwerveModuleStates(targetChassisSpeeds);
+
+      this.outputModuleStates.accept(targetModuleStates);
+    } else {
+      this.outputChassisSpeeds.accept(targetChassisSpeeds);
+    }
+
     if (logTargetPose != null) {
       logTargetPose.accept(
           new Pose2d(desiredState.poseMeters.getTranslation(), desiredState.holonomicRotation));
@@ -255,15 +267,8 @@ public class PPSwerveControllerCommand extends CommandBase {
           currentPose.getRotation().minus(desiredState.holonomicRotation));
     }
 
-    ChassisSpeeds targetChassisSpeeds = this.controller.calculate(currentPose, desiredState);
-
-    if (this.useKinematics) {
-      SwerveModuleState[] targetModuleStates =
-          this.kinematics.toSwerveModuleStates(targetChassisSpeeds);
-
-      this.outputModuleStates.accept(targetModuleStates);
-    } else {
-      this.outputChassisSpeeds.accept(targetChassisSpeeds);
+    if (logSetpoint != null) {
+      logSetpoint.accept(targetChassisSpeeds);
     }
   }
 
@@ -302,15 +307,18 @@ public class PPSwerveControllerCommand extends CommandBase {
    *     active path. This will be called whenever a PPSwerveControllerCommand starts
    * @param logTargetPose Consumer that accepts a Pose2d representing the target pose while path
    *     following
+   * @param logSetpoint Consumer that accepts a ChassisSpeeds object representing the setpoint speeds
    * @param logError BiConsumer that accepts a Translation2d and Rotation2d representing the error
    *     while path following
    */
   public static void setLoggingCallbacks(
       Consumer<PathPlannerTrajectory> logActiveTrajectory,
       Consumer<Pose2d> logTargetPose,
+      Consumer<ChassisSpeeds> logSetpoint,
       BiConsumer<Translation2d, Rotation2d> logError) {
     PPSwerveControllerCommand.logActiveTrajectory = logActiveTrajectory;
     PPSwerveControllerCommand.logTargetPose = logTargetPose;
+    PPSwerveControllerCommand.logSetpoint = logSetpoint;
     PPSwerveControllerCommand.logError = logError;
   }
 }

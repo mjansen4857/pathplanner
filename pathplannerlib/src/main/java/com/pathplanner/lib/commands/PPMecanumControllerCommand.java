@@ -117,7 +117,7 @@ public class PPMecanumControllerCommand extends CommandBase {
         yController,
         rotationController,
         outputChassisSpeeds,
-        true,
+        false,
         requirements);
   }
 
@@ -211,7 +211,7 @@ public class PPMecanumControllerCommand extends CommandBase {
         rotationController,
         maxWheelVelocityMetersPerSecond,
         outputWheelSpeeds,
-        true,
+        false,
         requirements);
   }
 

@@ -67,7 +67,7 @@ public:
 			frc2::PIDController yController, frc::PIDController thetaController,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::initializer_list<frc2::Subsystem*> requirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * Constructs a new PPMecanumControllerCommand that when executed will follow
@@ -98,7 +98,7 @@ public:
 			frc2::PIDController yController, frc::PIDController thetaController,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::span<frc2::Subsystem* const > requirements = { },
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * Constructs a new PPMecanumControllerCommand that when executed will follow
@@ -134,7 +134,7 @@ public:
 			units::meters_per_second_t maxWheelVelocity,
 			std::function<void(frc::MecanumDriveWheelSpeeds)> output,
 			std::initializer_list<frc2::Subsystem*> requirements,
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	/**
 	 * Constructs a new PPMecanumControllerCommand that when executed will follow
@@ -170,7 +170,7 @@ public:
 			units::meters_per_second_t maxWheelVelocity,
 			std::function<void(frc::MecanumDriveWheelSpeeds)> output,
 			std::span<frc2::Subsystem* const > requirements = { },
-			bool useAllianceColor = true);
+			bool useAllianceColor = false);
 
 	void Initialize() override;
 

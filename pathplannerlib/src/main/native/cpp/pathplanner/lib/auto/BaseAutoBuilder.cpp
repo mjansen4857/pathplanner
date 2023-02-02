@@ -11,7 +11,7 @@ BaseAutoBuilder::BaseAutoBuilder(std::function<frc::Pose2d()> pose,
 		std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap,
 		DriveTrainType drivetrainType, bool useAllianceColor) : m_pose(
 		std::move(pose)), m_resetPose(std::move(resetPose)), m_eventMap(
-		eventMap), m_useAllianceColor(useAllianceColor) {
+		eventMap), m_useAllianceColor(useAllianceColor), m_drivetrainType(drivetrainType) {
 }
 
 frc2::CommandPtr BaseAutoBuilder::followPathGroup(

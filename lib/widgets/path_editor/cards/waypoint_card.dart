@@ -14,6 +14,8 @@ class WaypointCard extends StatefulWidget {
   final bool deleteEnabled;
   final VoidCallback onDelete;
   final VoidCallback onShouldSave;
+  final VoidCallback? onPrevWaypoint;
+  final VoidCallback? onNextWaypoint;
   final GlobalKey stackKey;
   final SharedPreferences prefs;
 
@@ -26,6 +28,8 @@ class WaypointCard extends StatefulWidget {
       required this.onDelete,
       required this.onShouldSave,
       required this.prefs,
+      this.onPrevWaypoint,
+      this.onNextWaypoint,
       super.key});
 
   @override
@@ -117,9 +121,25 @@ class _WaypointCardState extends State<WaypointCard> {
             ),
           ),
         ),
+        IconButton(
+          onPressed: widget.onPrevWaypoint,
+          icon: const Icon(Icons.arrow_left),
+          iconSize: 20,
+          splashRadius: 20,
+          padding: const EdgeInsets.all(0),
+          tooltip: 'Previous Waypoint',
+        ),
         Text(
-          widget.label ?? 'Waypoint Label',
+          widget.label ?? 'Edit Waypoint',
           style: TextStyle(color: colorScheme.onSurface),
+        ),
+        IconButton(
+          onPressed: widget.onNextWaypoint,
+          icon: const Icon(Icons.arrow_right),
+          iconSize: 20,
+          splashRadius: 20,
+          padding: const EdgeInsets.all(0),
+          tooltip: 'Next Waypoint',
         ),
         SizedBox(
           height: 30,

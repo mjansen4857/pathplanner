@@ -39,6 +39,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late double _width;
   late double _length;
   late bool _holonomicMode;
+  late bool _focusedSelection;
   late bool _generateJSON;
   late bool _generateCSV;
   late bool _pplibClient;
@@ -54,6 +55,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     _width = widget.prefs.getDouble('robotWidth') ?? 0.75;
     _length = widget.prefs.getDouble('robotLength') ?? 1.0;
     _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
+    _focusedSelection = widget.prefs.getBool('focusedSelection') ?? false;
     _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
     _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
     _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
@@ -253,6 +255,30 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         widget.prefs.setBool('holonomicMode', value);
                         setState(() {
                           _holonomicMode = value;
+                        });
+                        widget.onSettingsChanged();
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('Focused Selection'),
+                      labelStyle: TextStyle(
+                          color: _focusedSelection
+                              ? colorScheme.onPrimaryContainer
+                              : colorScheme.onSurface),
+                      selected: _focusedSelection,
+                      backgroundColor: colorScheme.surface,
+                      selectedColor: colorScheme.primaryContainer,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                              color: _focusedSelection
+                                  ? colorScheme.primaryContainer
+                                  : colorScheme.outline,
+                              width: 1)),
+                      onSelected: (value) {
+                        widget.prefs.setBool('focusedSelection', value);
+                        setState(() {
+                          _focusedSelection = value;
                         });
                         widget.onSettingsChanged();
                       },

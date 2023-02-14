@@ -125,8 +125,7 @@ class _EditEditorState extends State<EditEditor> {
                       Point(_xPixelsToMeters(details.localPosition.dx),
                           _yPixelsToMeters(details.localPosition.dy)),
                       _selectedPointIndex == -1 ||
-                              _selectedPointIndex >=
-                                  waypoints.length
+                              _selectedPointIndex >= waypoints.length
                           ? waypoints.length - 1
                           : _selectedPointIndex);
                   widget.savePath(widget.path);
@@ -283,13 +282,12 @@ class _EditEditorState extends State<EditEditor> {
                 Positioned.fill(
                   child: CustomPaint(
                     painter: _EditPainter(
-                      widget.path,
-                      widget.fieldImage,
-                      widget.robotSize,
-                      widget.holonomicMode,
-                      _selectedWaypoint,
-                      widget.focusedSelection
-                    ),
+                        widget.path,
+                        widget.fieldImage,
+                        widget.robotSize,
+                        widget.holonomicMode,
+                        _selectedWaypoint,
+                        widget.focusedSelection),
                   ),
                 ),
               ],
@@ -318,7 +316,8 @@ class _EditEditorState extends State<EditEditor> {
       onShouldSave: () {
         widget.savePath(widget.path);
       },
-      onNextWaypoint: _selectedPointIndex < waypoints.length - 1 ? nextWaypoint : null,
+      onNextWaypoint:
+          _selectedPointIndex < waypoints.length - 1 ? nextWaypoint : null,
       onPrevWaypoint: _selectedPointIndex > 0 ? previousWaypoint : null,
     );
   }
@@ -357,14 +356,10 @@ class _EditEditorState extends State<EditEditor> {
         setState(() {
           Waypoint w = waypoints.removeAt(delIndex);
           if (w.isEndPoint()) {
-            waypoints[waypoints.length - 1]
-                .nextControl = null;
-            waypoints[waypoints.length - 1].isReversal =
-                false;
-            waypoints[waypoints.length - 1]
-                .isStopPoint = false;
-            waypoints[waypoints.length - 1]
-                .holonomicAngle ??= 0;
+            waypoints[waypoints.length - 1].nextControl = null;
+            waypoints[waypoints.length - 1].isReversal = false;
+            waypoints[waypoints.length - 1].isStopPoint = false;
+            waypoints[waypoints.length - 1].holonomicAngle ??= 0;
           } else if (w.isStartPoint()) {
             waypoints[0].prevControl = null;
             waypoints[0].isReversal = false;
@@ -435,10 +430,14 @@ class _EditPainter extends CustomPainter {
 
     if (holonomicMode) {
       PathPainterUtil.paintCenterPath(
-          path, canvas, scale, Colors.grey[300]!, fieldImage);
+          path, canvas, scale, Colors.grey[300]!, fieldImage,
+          selectedWaypoint: selectedWaypoint,
+          focusedSelection: focusedSelection);
     } else {
       PathPainterUtil.paintDualPaths(
-          path, robotSize, canvas, scale, Colors.grey[300]!, fieldImage);
+          path, robotSize, canvas, scale, Colors.grey[300]!, fieldImage,
+          selectedWaypoint: selectedWaypoint,
+          focusedSelection: focusedSelection);
     }
 
     int waypointsMinIndex = 0;
@@ -450,7 +449,8 @@ class _EditPainter extends CustomPainter {
       waypointsMaxIndex = min(selectedIndex + 2, waypointsMaxIndex);
     }
 
-    for (Waypoint w in path.waypoints.sublist(waypointsMinIndex, waypointsMaxIndex)) {
+    for (Waypoint w
+        in path.waypoints.sublist(waypointsMinIndex, waypointsMaxIndex)) {
       Color color = Colors.grey[300]!;
 
       if (w.isStopPoint) {

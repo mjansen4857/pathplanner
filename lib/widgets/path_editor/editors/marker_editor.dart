@@ -69,84 +69,96 @@ class _MarkerEditorState extends State<MarkerEditor> {
           });
           UndoRedo.redo();
         },
-        child: Stack(
-          key: _key,
-          children: [
-            Center(
-              child: InteractiveViewer(
-                child: GestureDetector(
-                  onTapUp: (TapUpDetails details) {
-                    for (EventMarker marker in widget.path.markers) {
-                      Offset markerPosPx = PathPainterUtil.getMarkerLocation(
-                          marker,
-                          widget.path,
-                          widget.fieldImage,
-                          _MarkerPainter.scale);
-                      Offset markerCenterPx =
-                          markerPosPx - const Offset(-48, 20 - 48);
-
-                      if ((details.localPosition - markerCenterPx).distance <=
-                          40) {
-                        setState(() {
-                          _selectedMarker = marker;
-                          _selectedStopEventWaypoint = null;
-                        });
-                        return;
-                      }
-                    }
-                    for (Waypoint waypoint in widget.path.waypoints) {
-                      if (waypoint.isStopPoint ||
-                          waypoint.isStartPoint() ||
-                          waypoint.isEndPoint()) {
-                        Offset markerPosPx = PathPainterUtil.pointToPixelOffset(
-                            waypoint.anchorPoint,
-                            _MarkerPainter.scale,
-                            widget.fieldImage);
+        child: KeyBoardShortcuts(
+          keysToPress: Platform.isMacOS
+              ? {LogicalKeyboardKey.meta, LogicalKeyboardKey.backspace}
+              : {LogicalKeyboardKey.delete},
+          onKeysPressed: () {
+            if (_selectedMarker != null) {
+              _deleteMarker();
+            }
+          },
+          child: Stack(
+            key: _key,
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  child: GestureDetector(
+                    onTapUp: (TapUpDetails details) {
+                      for (EventMarker marker in widget.path.markers) {
+                        Offset markerPosPx = PathPainterUtil.getMarkerLocation(
+                            marker,
+                            widget.path,
+                            widget.fieldImage,
+                            _MarkerPainter.scale);
                         Offset markerCenterPx =
                             markerPosPx - const Offset(-48, 20 - 48);
 
                         if ((details.localPosition - markerCenterPx).distance <=
                             40) {
                           setState(() {
-                            _selectedMarker = null;
-                            _selectedStopEventWaypoint = waypoint;
+                            _selectedMarker = marker;
+                            _selectedStopEventWaypoint = null;
                           });
                           return;
                         }
                       }
-                    }
-                    setState(() {
-                      _selectedMarker = null;
-                      _selectedStopEventWaypoint = null;
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(48),
-                    child: Stack(
-                      children: [
-                        widget.fieldImage.getWidget(),
-                        Positioned.fill(
-                          child: CustomPaint(
-                            painter: _MarkerPainter(
-                              widget.path,
-                              widget.fieldImage,
-                              widget.robotSize,
-                              widget.holonomicMode,
-                              _selectedMarker,
-                              _selectedStopEventWaypoint,
-                              _markerPreviewPos,
+                      for (Waypoint waypoint in widget.path.waypoints) {
+                        if (waypoint.isStopPoint ||
+                            waypoint.isStartPoint() ||
+                            waypoint.isEndPoint()) {
+                          Offset markerPosPx =
+                              PathPainterUtil.pointToPixelOffset(
+                                  waypoint.anchorPoint,
+                                  _MarkerPainter.scale,
+                                  widget.fieldImage);
+                          Offset markerCenterPx =
+                              markerPosPx - const Offset(-48, 20 - 48);
+
+                          if ((details.localPosition - markerCenterPx)
+                                  .distance <=
+                              40) {
+                            setState(() {
+                              _selectedMarker = null;
+                              _selectedStopEventWaypoint = waypoint;
+                            });
+                            return;
+                          }
+                        }
+                      }
+                      setState(() {
+                        _selectedMarker = null;
+                        _selectedStopEventWaypoint = null;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(48),
+                      child: Stack(
+                        children: [
+                          widget.fieldImage.getWidget(),
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: _MarkerPainter(
+                                widget.path,
+                                widget.fieldImage,
+                                widget.robotSize,
+                                widget.holonomicMode,
+                                _selectedMarker,
+                                _selectedStopEventWaypoint,
+                                _markerPreviewPos,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            _buildMarkerCard(),
-            _buildStopEventCard(),
-          ],
+              _buildMarkerCard(),
+              _buildStopEventCard(),
+            ],
+          ),
         ),
       ),
     );
@@ -230,6 +242,35 @@ class _MarkerEditorState extends State<MarkerEditor> {
     );
   }
 
+  void _deleteMarker() {
+    UndoRedo.addChange(CustomChange(
+      [
+        RobotPath.cloneMarkerList(widget.path.markers),
+        _selectedMarker,
+      ],
+      (oldValue) {
+        // Execute
+        widget.path.markers.remove(oldValue[1]);
+        widget.savePath(widget.path);
+        setState(() {
+          _selectedMarker = null;
+          _selectedStopEventWaypoint = null;
+          _markerPreviewPos = null;
+        });
+      },
+      (oldValue) {
+        // Undo
+        widget.path.markers = RobotPath.cloneMarkerList(oldValue[0]);
+        widget.savePath(widget.path);
+        setState(() {
+          _selectedMarker = oldValue[1];
+          _selectedStopEventWaypoint = null;
+          _markerPreviewPos = null;
+        });
+      },
+    ));
+  }
+
   Widget _buildMarkerCard() {
     return Visibility(
       visible: _selectedStopEventWaypoint == null,
@@ -240,34 +281,7 @@ class _MarkerEditorState extends State<MarkerEditor> {
         path: widget.path,
         marker: _selectedMarker,
         maxMarkerPos: widget.path.waypoints.length - 1,
-        onDelete: () {
-          UndoRedo.addChange(CustomChange(
-            [
-              RobotPath.cloneMarkerList(widget.path.markers),
-              _selectedMarker,
-            ],
-            (oldValue) {
-              // Execute
-              widget.path.markers.remove(oldValue[1]);
-              widget.savePath(widget.path);
-              setState(() {
-                _selectedMarker = null;
-                _selectedStopEventWaypoint = null;
-                _markerPreviewPos = null;
-              });
-            },
-            (oldValue) {
-              // Undo
-              widget.path.markers = RobotPath.cloneMarkerList(oldValue[0]);
-              widget.savePath(widget.path);
-              setState(() {
-                _selectedMarker = oldValue[1];
-                _selectedStopEventWaypoint = null;
-                _markerPreviewPos = null;
-              });
-            },
-          ));
-        },
+        onDelete: _deleteMarker,
         onAdd: (EventMarker newMarker) {
           UndoRedo.addChange(CustomChange(
             [

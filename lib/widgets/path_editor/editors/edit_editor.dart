@@ -78,7 +78,9 @@ class _EditEditorState extends State<EditEditor> {
           UndoRedo.redo();
         },
         child: KeyBoardShortcuts(
-          keysToPress: {LogicalKeyboardKey.control, LogicalKeyboardKey.delete},
+          keysToPress: Platform.isMacOS
+              ? {LogicalKeyboardKey.meta, LogicalKeyboardKey.backspace}
+              : {LogicalKeyboardKey.delete},
           onKeysPressed: () {
             if (_selectedWaypoint != null) {
               removeWaypoint(_selectedWaypoint!);

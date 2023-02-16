@@ -8,13 +8,22 @@ import 'package:pathplanner/widgets/field_image.dart';
 
 class PathPainterUtil {
   static void paintCenterPath(RobotPath path, Canvas canvas, double scale,
-      Color color, FieldImage fieldImage) {
+      Color color, FieldImage fieldImage,
+      {Waypoint? selectedWaypoint, bool? focusedSelection}) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = color
       ..strokeWidth = 2;
 
     for (int i = 0; i < path.waypoints.length - 1; i++) {
+      if ((focusedSelection ?? false) && selectedWaypoint != null) {
+        int index = path.waypoints.indexOf(selectedWaypoint);
+        int difference = index - i;
+        paint.color =
+            0 <= difference && difference <= 1 ? color : color.withAlpha(20);
+      } else {
+        paint.color = color;
+      }
       Path p = Path();
       Offset p0 =
           pointToPixelOffset(path.waypoints[i].anchorPoint, scale, fieldImage);
@@ -32,13 +41,22 @@ class PathPainterUtil {
   }
 
   static void paintDualPaths(RobotPath path, Size robotSize, Canvas canvas,
-      double scale, Color color, FieldImage fieldImage) {
+      double scale, Color color, FieldImage fieldImage,
+      {Waypoint? selectedWaypoint, bool? focusedSelection}) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = color
       ..strokeWidth = 2;
 
     for (int i = 0; i < path.waypoints.length - 1; i++) {
+      if ((focusedSelection ?? false) && selectedWaypoint != null) {
+        int index = path.waypoints.indexOf(selectedWaypoint);
+        int difference = index - i;
+        paint.color =
+            0 <= difference && difference <= 1 ? color : color.withAlpha(20);
+      } else {
+        paint.color = color;
+      }
       Path p = Path();
 
       double halfWidth = metersToPixels(robotSize.width / 2, scale, fieldImage);

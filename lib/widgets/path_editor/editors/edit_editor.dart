@@ -215,7 +215,7 @@ class _EditEditorState extends State<EditEditor> {
             deselectWaypoint();
           },
           onPanStart: (details) {
-            for (int i = waypointsMaxIndex - 2; i >= waypointsMinIndex; i--) {
+            for (int i = waypointsMaxIndex - 1; i >= waypointsMinIndex; i--) {
               Waypoint w = waypoints[i];
               if (w.startDragging(
                   _xPixelsToMeters(details.localPosition.dx),

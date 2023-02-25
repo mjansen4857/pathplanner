@@ -122,8 +122,8 @@ public class PathPlannerTrajectory extends Trajectory {
 
       Translation2d transformedTranslation =
           new Translation2d(state.poseMeters.getX(), FIELD_WIDTH_METERS - state.poseMeters.getY());
-      Rotation2d transformedHeading = state.poseMeters.getRotation().times(-1);
-      Rotation2d transformedHolonomicRotation = state.holonomicRotation.times(-1);
+      Rotation2d transformedHeading = state.poseMeters.getRotation().plus(Rotation2d.fromRadians(Math.PI);
+      Rotation2d transformedHolonomicRotation = state.holonomicRotation.plus(Rotation2d.fromRadians(Math.PI);
 
       transformedState.timeSeconds = state.timeSeconds;
       transformedState.velocityMetersPerSecond = state.velocityMetersPerSecond;

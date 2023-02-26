@@ -11,7 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class PathPlannerTrajectory extends Trajectory {
-  private static final double FIELD_WIDTH_METERS = 8.02;
+  private static final double FIELD_WIDTH_METERS = 16.53;
 
   private final List<EventMarker> markers;
   private final StopEvent startStopEvent;
@@ -121,7 +121,7 @@ public class PathPlannerTrajectory extends Trajectory {
       PathPlannerState transformedState = new PathPlannerState();
 
       Translation2d transformedTranslation =
-          new Translation2d(state.poseMeters.getX(), FIELD_WIDTH_METERS - state.poseMeters.getY());
+          new Translation2d(FIELD_WIDTH_METERS - state.poseMeters.getX(), state.poseMeters.getY());
       Rotation2d transformedHeading = state.poseMeters.getRotation().plus(Rotation2d.fromRadians(Math.PI);
       Rotation2d transformedHolonomicRotation = state.holonomicRotation.plus(Rotation2d.fromRadians(Math.PI);
 

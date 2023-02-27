@@ -18,7 +18,7 @@
 #include "PathConstraints.h"
 
 #define PI 3.14159265358979323846
-#define FIELD_WIDTH 8.02_m
+#define FIELD_WIDTH 16.53_m
 
 namespace pathplanner {
 class PathPlannerTrajectory {

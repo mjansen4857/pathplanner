@@ -4,6 +4,7 @@
 #include "pathplanner/lib/PathPlanner.h"
 #include <math.h>
 #include <limits>
+#include <sys/resource.h>
 
 using namespace pathplanner;
 
@@ -396,11 +397,11 @@ PathPlannerTrajectory::PathPlannerState PathPlannerTrajectory::transformStateFor
 		// Create a new state so that we don't overwrite the original
 		PathPlannerTrajectory::PathPlannerState transformedState;
 
-		frc::Translation2d transformedTranslation(state.pose.X(),
-				FIELD_WIDTH - state.pose.Y());
-		frc::Rotation2d transformedHeading = state.pose.Rotation() * -1;
+		frc::Translation2d transformedTranslation(FIELD_WIDTH - state.pose.X(),
+				state.pose.Y());
+		frc::Rotation2d transformedHeading = state.pose.Rotation() + 180_deg;
 		frc::Rotation2d transformedHolonomicRotation = state.holonomicRotation
-				* -1;
+				+ 180_deg;
 
 		transformedState.time = state.time;
 		transformedState.velocity = state.velocity;

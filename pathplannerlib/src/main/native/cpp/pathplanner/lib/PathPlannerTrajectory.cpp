@@ -4,7 +4,6 @@
 #include "pathplanner/lib/PathPlanner.h"
 #include <math.h>
 #include <limits>
-#include <sys/resource.h>
 
 using namespace pathplanner;
 

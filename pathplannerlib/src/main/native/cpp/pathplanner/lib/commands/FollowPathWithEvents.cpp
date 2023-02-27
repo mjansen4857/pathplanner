@@ -50,7 +50,7 @@ void FollowPathWithEvents::Execute() {
 		m_isFinished = true;
 	}
 
-	for (std::pair<std::shared_ptr<frc2::Command>, bool> runningCommand : m_currentCommands) {
+	for (std::pair<std::shared_ptr<frc2::Command>, bool>& runningCommand : m_currentCommands) {
 		if (!runningCommand.second) {
 			continue;
 		}
@@ -72,7 +72,7 @@ void FollowPathWithEvents::Execute() {
 			if (m_eventMap.find(name) != m_eventMap.end()) {
 				auto eventCommand = m_eventMap[name];
 
-				for (std::pair<std::shared_ptr<frc2::Command>, bool> runningCommand : m_currentCommands) {
+				for (std::pair<std::shared_ptr<frc2::Command>, bool>& runningCommand : m_currentCommands) {
 					if (!runningCommand.second) {
 						continue;
 					}
@@ -96,7 +96,7 @@ void FollowPathWithEvents::End(bool interrupted) {
 		m_pathFollowingCommand->End(true);
 	}
 
-	for (std::pair<std::shared_ptr<frc2::Command>, bool> runningCommand : m_currentCommands) {
+	for (std::pair<std::shared_ptr<frc2::Command>, bool>& runningCommand : m_currentCommands) {
 		if (runningCommand.second) {
 			runningCommand.first->End(true);
 		}

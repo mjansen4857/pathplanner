@@ -113,18 +113,29 @@ public class PathPlannerTrajectory extends Trajectory {
     return prevSample.interpolate(
         sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
   }
-
+  
+  /**
+   * Transform a PathPlannerState to the other alliance's perspective
+   * This allows for all paths to be generated for the blue alliance, and then easily carried over.
+   * @param state The state to transform
+   * @param alliance The alliance to transform to (commonly DriverStation.getInstance().getAlliance())
+   * @return The transformed state depending on the alliance
+   */
   public static PathPlannerState transformStateForAlliance(
       PathPlannerState state, DriverStation.Alliance alliance) {
     if (alliance == DriverStation.Alliance.Red) {
       // Create a new state so that we don't overwrite the original
       PathPlannerState transformedState = new PathPlannerState();
-
+      
+      // Mirror across the y axis and flip the rotation by adding 180 degrees (pi radians)
+      // This makes it so that a robot that is facing the grid on the blue alliacne 
+      // would still be doing so on the red alliance.
       Translation2d transformedTranslation =
           new Translation2d(FIELD_WIDTH_METERS - state.poseMeters.getX(), state.poseMeters.getY());
       Rotation2d transformedHeading = state.poseMeters.getRotation().plus(Rotation2d.fromRadians(Math.PI);
       Rotation2d transformedHolonomicRotation = state.holonomicRotation.plus(Rotation2d.fromRadians(Math.PI);
-
+      
+      // Set all of the values to the new state accordingly
       transformedState.timeSeconds = state.timeSeconds;
       transformedState.velocityMetersPerSecond = state.velocityMetersPerSecond;
       transformedState.accelerationMetersPerSecondSq = state.accelerationMetersPerSecondSq;
@@ -142,6 +153,14 @@ public class PathPlannerTrajectory extends Trajectory {
     }
   }
 
+  /**
+   * Transform an entire PathPlannerTrajectory to the other alliance's perspective 
+   * by looping through each state
+   * This allows for all paths to be generated for the blue alliance, and then easily carried over.
+   * @param trajectory The trajectory to transform
+   * @param alliance The alliance to transform to (commonly DriverStation.getInstance().getAlliance())
+   * @return The transformed trajectory depending on the alliance
+   */
   public static PathPlannerTrajectory transformTrajectoryForAlliance(
       PathPlannerTrajectory trajectory, DriverStation.Alliance alliance) {
     if (alliance == DriverStation.Alliance.Red) {

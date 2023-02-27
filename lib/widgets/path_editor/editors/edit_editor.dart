@@ -18,6 +18,7 @@ class EditEditor extends StatefulWidget {
   final RobotPath path;
   final Size robotSize;
   final bool holonomicMode;
+  final bool focusedSelection;
   final FieldImage fieldImage;
   final void Function(RobotPath path) savePath;
   final bool showGeneratorSettings;
@@ -30,6 +31,7 @@ class EditEditor extends StatefulWidget {
       required this.fieldImage,
       required this.savePath,
       this.showGeneratorSettings = false,
+      this.focusedSelection = false,
       required this.prefs,
       super.key});
 
@@ -43,6 +45,8 @@ class _EditEditorState extends State<EditEditor> {
   int _selectedPointIndex = -1;
   Waypoint? _dragOldValue;
   final GlobalKey _key = GlobalKey();
+
+  List<Waypoint> get waypoints => widget.path.waypoints;
 
   @override
   void initState() {
@@ -59,9 +63,7 @@ class _EditEditorState extends State<EditEditor> {
         LogicalKeyboardKey.keyZ
       },
       onKeysPressed: () {
-        setState(() {
-          _selectedWaypoint = null;
-        });
+        deselectWaypoint();
         UndoRedo.undo();
       },
       child: KeyBoardShortcuts(
@@ -72,24 +74,40 @@ class _EditEditorState extends State<EditEditor> {
           LogicalKeyboardKey.keyY
         },
         onKeysPressed: () {
-          setState(() {
-            _selectedWaypoint = null;
-          });
+          deselectWaypoint();
           UndoRedo.redo();
         },
-        child: Stack(
-          key: _key,
-          children: [
-            _buildEditor(),
-            _buildWaypointCard(),
-            _buildGeneratorSettingsCard(),
-          ],
+        child: KeyBoardShortcuts(
+          keysToPress: Platform.isMacOS
+              ? {LogicalKeyboardKey.meta, LogicalKeyboardKey.backspace}
+              : {LogicalKeyboardKey.delete},
+          onKeysPressed: () {
+            if (_selectedWaypoint != null) {
+              removeWaypoint(_selectedWaypoint!);
+            }
+          },
+          child: Stack(
+            key: _key,
+            children: [
+              _buildEditor(),
+              _buildWaypointCard(),
+              _buildGeneratorSettingsCard(),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildEditor() {
+    int waypointsMinIndex = 0;
+    int waypointsMaxIndex = waypoints.length;
+
+    if (widget.focusedSelection && _selectedWaypoint != null) {
+      waypointsMinIndex = max(0, _selectedPointIndex - 1);
+      waypointsMaxIndex = min(_selectedPointIndex + 2, waypointsMaxIndex);
+    }
+
     return Center(
       child: InteractiveViewer(
         child: GestureDetector(
@@ -97,10 +115,10 @@ class _EditEditorState extends State<EditEditor> {
           onDoubleTapDown: (details) {
             UndoRedo.addChange(Change(
               [
-                RobotPath.cloneWaypointList(widget.path.waypoints),
+                RobotPath.cloneWaypointList(waypoints),
                 _selectedPointIndex == -1 ||
-                        _selectedPointIndex >= widget.path.waypoints.length
-                    ? widget.path.waypoints.length - 1
+                        _selectedPointIndex >= waypoints.length
+                    ? waypoints.length - 1
                     : _selectedPointIndex
               ],
               () {
@@ -109,9 +127,8 @@ class _EditEditorState extends State<EditEditor> {
                       Point(_xPixelsToMeters(details.localPosition.dx),
                           _yPixelsToMeters(details.localPosition.dy)),
                       _selectedPointIndex == -1 ||
-                              _selectedPointIndex >=
-                                  widget.path.waypoints.length
-                          ? widget.path.waypoints.length - 1
+                              _selectedPointIndex >= waypoints.length
+                          ? waypoints.length - 1
                           : _selectedPointIndex);
                   widget.savePath(widget.path);
                 });
@@ -119,13 +136,13 @@ class _EditEditorState extends State<EditEditor> {
               (oldValue) {
                 setState(() {
                   if (oldValue[1] == oldValue[0].length - 1) {
-                    widget.path.waypoints.removeLast();
-                    widget.path.waypoints.last.nextControl = null;
+                    waypoints.removeLast();
+                    waypoints.last.nextControl = null;
                   } else {
-                    widget.path.waypoints.removeAt(oldValue[1] + 1);
-                    widget.path.waypoints[oldValue[1]].nextControl =
+                    waypoints.removeAt(oldValue[1] + 1);
+                    waypoints[oldValue[1]].nextControl =
                         oldValue[0][oldValue[1]].nextControl;
-                    widget.path.waypoints[oldValue[1] + 1].prevControl =
+                    waypoints[oldValue[1] + 1].prevControl =
                         oldValue[0][oldValue[1] + 1].prevControl;
                   }
                   _selectedPointIndex = -1;
@@ -134,8 +151,8 @@ class _EditEditorState extends State<EditEditor> {
               },
             ));
             setState(() {
-              for (var i = 0; i < widget.path.waypoints.length; i++) {
-                Waypoint w = widget.path.waypoints[i];
+              for (var i = waypointsMinIndex; i < waypointsMaxIndex; i++) {
+                Waypoint w = waypoints[i];
                 if (w.isPointInAnchor(
                         _xPixelsToMeters(details.localPosition.dx),
                         _yPixelsToMeters(details.localPosition.dy),
@@ -157,10 +174,7 @@ class _EditEditorState extends State<EditEditor> {
                         _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                             15, _EditPainter.scale, widget.fieldImage)),
                         widget.robotSize.height)) {
-                  setState(() {
-                    _selectedWaypoint = w;
-                    _selectedPointIndex = i;
-                  });
+                  setSelectedWaypointIndex(i);
                 }
               }
             });
@@ -171,8 +185,8 @@ class _EditEditorState extends State<EditEditor> {
             if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
               FocusManager.instance.primaryFocus!.unfocus();
             }
-            for (var i = 0; i < widget.path.waypoints.length; i++) {
-              Waypoint w = widget.path.waypoints[i];
+            for (var i = waypointsMinIndex; i < waypointsMaxIndex; i++) {
+              Waypoint w = waypoints[i];
               if (w.isPointInAnchor(
                       _xPixelsToMeters(details.localPosition.dx),
                       _yPixelsToMeters(details.localPosition.dy),
@@ -194,20 +208,15 @@ class _EditEditorState extends State<EditEditor> {
                       _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                           15, _EditPainter.scale, widget.fieldImage)),
                       widget.robotSize.height)) {
-                setState(() {
-                  _selectedWaypoint = w;
-                  _selectedPointIndex = i;
-                });
+                setSelectedWaypointIndex(i);
                 return;
               }
             }
-            setState(() {
-              _selectedWaypoint = null;
-              _selectedPointIndex = -1;
-            });
+            deselectWaypoint();
           },
           onPanStart: (details) {
-            for (Waypoint w in widget.path.waypoints.reversed) {
+            for (int i = waypointsMaxIndex - 1; i >= waypointsMinIndex; i--) {
+              Waypoint w = waypoints[i];
               if (w.startDragging(
                   _xPixelsToMeters(details.localPosition.dx),
                   _yPixelsToMeters(details.localPosition.dy),
@@ -245,21 +254,21 @@ class _EditEditorState extends State<EditEditor> {
           onPanEnd: (details) {
             if (_draggedPoint != null) {
               _draggedPoint!.stopDragging();
-              int index = widget.path.waypoints.indexOf(_draggedPoint!);
+              int index = waypoints.indexOf(_draggedPoint!);
               Waypoint dragEnd = _draggedPoint!.clone();
               UndoRedo.addChange(Change(
                 _dragOldValue,
                 () {
                   setState(() {
-                    if (widget.path.waypoints[index] != _draggedPoint) {
-                      widget.path.waypoints[index] = dragEnd.clone();
+                    if (waypoints[index] != _draggedPoint) {
+                      waypoints[index] = dragEnd.clone();
                     }
                     widget.savePath(widget.path);
                   });
                 },
                 (oldValue) {
                   setState(() {
-                    widget.path.waypoints[index] = oldValue.clone();
+                    waypoints[index] = oldValue.clone();
                     widget.savePath(widget.path);
                   });
                 },
@@ -275,12 +284,12 @@ class _EditEditorState extends State<EditEditor> {
                 Positioned.fill(
                   child: CustomPaint(
                     painter: _EditPainter(
-                      widget.path,
-                      widget.fieldImage,
-                      widget.robotSize,
-                      widget.holonomicMode,
-                      _selectedWaypoint,
-                    ),
+                        widget.path,
+                        widget.fieldImage,
+                        widget.robotSize,
+                        widget.holonomicMode,
+                        _selectedWaypoint,
+                        widget.focusedSelection),
                   ),
                 ),
               ],
@@ -295,10 +304,7 @@ class _EditEditorState extends State<EditEditor> {
     String? waypointLabel = widget.path.getWaypointLabel(_selectedWaypoint);
     if (waypointLabel == null) {
       // Somehow the selected waypoint is not in the path. Reset selected point.
-      setState(() {
-        _selectedPointIndex = -1;
-        _selectedWaypoint = null;
-      });
+      deselectWaypoint();
     }
 
     return WaypointCard(
@@ -306,49 +312,74 @@ class _EditEditorState extends State<EditEditor> {
       stackKey: _key,
       label: waypointLabel,
       holonomicEnabled: widget.holonomicMode,
-      deleteEnabled: widget.path.waypoints.length > 2,
+      deleteEnabled: waypoints.length > 2,
       prefs: widget.prefs,
-      onDelete: () {
-        int delIndex = widget.path.waypoints.indexOf(_selectedWaypoint!);
-        UndoRedo.addChange(Change(
-          RobotPath.cloneWaypointList(widget.path.waypoints),
-          () {
-            setState(() {
-              Waypoint w = widget.path.waypoints.removeAt(delIndex);
-              if (w.isEndPoint()) {
-                widget.path.waypoints[widget.path.waypoints.length - 1]
-                    .nextControl = null;
-                widget.path.waypoints[widget.path.waypoints.length - 1]
-                    .isReversal = false;
-                widget.path.waypoints[widget.path.waypoints.length - 1]
-                    .isStopPoint = false;
-                widget.path.waypoints[widget.path.waypoints.length - 1]
-                    .holonomicAngle ??= 0;
-              } else if (w.isStartPoint()) {
-                widget.path.waypoints[0].prevControl = null;
-                widget.path.waypoints[0].isReversal = false;
-                widget.path.waypoints[0].isStopPoint = false;
-                widget.path.waypoints[0].holonomicAngle ??= 0;
-              }
-
-              widget.savePath(widget.path);
-            });
-          },
-          (oldValue) {
-            setState(() {
-              widget.path.waypoints = RobotPath.cloneWaypointList(oldValue);
-              widget.savePath(widget.path);
-            });
-          },
-        ));
-        setState(() {
-          _selectedWaypoint = null;
-        });
-      },
+      onDelete: () => removeWaypoint(_selectedWaypoint!),
       onShouldSave: () {
         widget.savePath(widget.path);
       },
+      onNextWaypoint:
+          _selectedPointIndex < waypoints.length - 1 ? nextWaypoint : null,
+      onPrevWaypoint: _selectedPointIndex > 0 ? previousWaypoint : null,
     );
+  }
+
+  void previousWaypoint() {
+    setSelectedWaypointIndex(_selectedPointIndex - 1);
+  }
+
+  void nextWaypoint() {
+    setSelectedWaypointIndex(_selectedPointIndex + 1);
+  }
+
+  void setSelectedWaypointIndex(int index) {
+    if (waypoints.isEmpty) {
+      return deselectWaypoint();
+    }
+
+    setState(() {
+      _selectedPointIndex = index.clamp(0, waypoints.length - 1);
+      _selectedWaypoint = waypoints[_selectedPointIndex];
+    });
+  }
+
+  void deselectWaypoint() {
+    setState(() {
+      _selectedPointIndex = -1;
+      _selectedWaypoint = null;
+    });
+  }
+
+  void removeWaypoint(Waypoint waypoint) {
+    int delIndex = waypoints.indexOf(waypoint);
+    UndoRedo.addChange(Change(
+      RobotPath.cloneWaypointList(waypoints),
+      () {
+        setState(() {
+          Waypoint w = waypoints.removeAt(delIndex);
+          if (w.isEndPoint()) {
+            waypoints[waypoints.length - 1].nextControl = null;
+            waypoints[waypoints.length - 1].isReversal = false;
+            waypoints[waypoints.length - 1].isStopPoint = false;
+            waypoints[waypoints.length - 1].holonomicAngle ??= 0;
+          } else if (w.isStartPoint()) {
+            waypoints[0].prevControl = null;
+            waypoints[0].isReversal = false;
+            waypoints[0].isStopPoint = false;
+            waypoints[0].holonomicAngle ??= 0;
+          }
+
+          widget.savePath(widget.path);
+        });
+      },
+      (oldValue) {
+        setState(() {
+          widget.path.waypoints = RobotPath.cloneWaypointList(oldValue);
+          widget.savePath(widget.path);
+        });
+      },
+    ));
+    deselectWaypoint();
   }
 
   Widget _buildGeneratorSettingsCard() {
@@ -387,12 +418,13 @@ class _EditPainter extends CustomPainter {
   final FieldImage fieldImage;
   final Size robotSize;
   final bool holonomicMode;
+  final bool focusedSelection;
   final Waypoint? selectedWaypoint;
 
   static double scale = 1;
 
   _EditPainter(this.path, this.fieldImage, this.robotSize, this.holonomicMode,
-      this.selectedWaypoint);
+      this.selectedWaypoint, this.focusedSelection);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -400,13 +432,27 @@ class _EditPainter extends CustomPainter {
 
     if (holonomicMode) {
       PathPainterUtil.paintCenterPath(
-          path, canvas, scale, Colors.grey[300]!, fieldImage);
+          path, canvas, scale, Colors.grey[300]!, fieldImage,
+          selectedWaypoint: selectedWaypoint,
+          focusedSelection: focusedSelection);
     } else {
       PathPainterUtil.paintDualPaths(
-          path, robotSize, canvas, scale, Colors.grey[300]!, fieldImage);
+          path, robotSize, canvas, scale, Colors.grey[300]!, fieldImage,
+          selectedWaypoint: selectedWaypoint,
+          focusedSelection: focusedSelection);
     }
 
-    for (Waypoint w in path.waypoints) {
+    int waypointsMinIndex = 0;
+    int waypointsMaxIndex = path.waypoints.length;
+
+    if (focusedSelection && selectedWaypoint != null) {
+      int selectedIndex = path.waypoints.indexOf(selectedWaypoint!);
+      waypointsMinIndex = max(0, selectedIndex - 1);
+      waypointsMaxIndex = min(selectedIndex + 2, waypointsMaxIndex);
+    }
+
+    for (Waypoint w
+        in path.waypoints.sublist(waypointsMinIndex, waypointsMaxIndex)) {
       Color color = Colors.grey[300]!;
 
       if (w.isStopPoint) {

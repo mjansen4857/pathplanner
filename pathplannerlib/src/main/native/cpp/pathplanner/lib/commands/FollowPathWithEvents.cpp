@@ -16,7 +16,8 @@ FollowPathWithEvents::FollowPathWithEvents(
 			if (m_eventMap.find(name) != m_eventMap.end()) {
 				auto reqs = m_eventMap[name]->GetRequirements();
 
-				if (!frc2::RequirementsDisjoint(this, m_eventMap[name].get())) {
+				if (!frc2::RequirementsDisjoint(m_pathFollowingCommand.get(),
+						m_eventMap[name].get())) {
 					throw FRC_MakeError(frc::err::CommandIllegalUse,
 							"Events that are triggered during path following cannot require the drive subsystem");
 				}

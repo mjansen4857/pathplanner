@@ -47,6 +47,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   RobotPath? _currentPath;
   Size _robotSize = const Size(0.75, 1.0);
   bool _holonomicMode = false;
+  bool _focusedSelection = false;
   bool _generateJSON = false;
   bool _generateCSV = false;
   bool _pplibClient = false;
@@ -493,6 +494,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               robotSize: _robotSize,
               holonomicMode: _holonomicMode,
               showGeneratorSettings: _generateJSON || _generateCSV,
+              focusedSelection: _focusedSelection,
               savePath: (path) => _savePath(path),
               prefs: widget.prefs,
             ),
@@ -626,6 +628,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         widget.prefs.getDouble('robotLength') ?? 1.0,
       );
       _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
+      _focusedSelection = widget.prefs.getBool('focusedSelection') ?? false;
       _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
       _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
       _pplibClient = widget.prefs.getBool('pplibClient') ?? false;

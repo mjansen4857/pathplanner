@@ -246,7 +246,10 @@ public class PathPlanner {
    * @return The generated path
    */
   public static PathPlannerTrajectory generatePath(
-      PathConstraints constraints, boolean reversed, List<PathPoint> points) {
+      PathConstraints constraints,
+      boolean reversed,
+      List<PathPoint> points,
+      List<EventMarker> eventMarkers) {
     if (points.size() < 2) {
       throw new IllegalArgumentException(
           "Error generating trajectory.  List of points in trajectory must have at least two points.");
@@ -297,7 +300,12 @@ public class PathPlanner {
               new PathPlannerTrajectory.StopEvent()));
     }
 
-    return new PathPlannerTrajectory(waypoints, new ArrayList<>(), constraints, reversed, false);
+    return new PathPlannerTrajectory(waypoints, eventMarkers, constraints, reversed, false);
+  }
+
+  public static PathPlannerTrajectory generatePath(
+      PathConstraints constraints, boolean reversed, List<PathPoint> points) {
+    return generatePath(constraints, reversed, points, new ArrayList<>());
   }
 
   /**
@@ -333,6 +341,11 @@ public class PathPlanner {
   public static PathPlannerTrajectory generatePath(
       PathConstraints constraints, List<PathPoint> points) {
     return generatePath(constraints, false, points);
+  }
+
+  public static PathPlannerTrajectory generatePath(
+      PathConstraints constraints, List<PathPoint> points, List<EventMarker> markers) {
+    return generatePath(constraints, false, points, markers);
   }
 
   /**
@@ -380,6 +393,20 @@ public class PathPlanner {
     return generatePath(constraints, reversed, pointsList);
   }
 
+  public static PathPlannerTrajectory generatePath(
+      PathConstraints constraints,
+      boolean reversed,
+      List<EventMarker> markers,
+      PathPoint point1,
+      PathPoint point2,
+      PathPoint... points) {
+    List<PathPoint> pointsList = new ArrayList<>();
+    pointsList.add(point1);
+    pointsList.add(point2);
+    pointsList.addAll(List.of(points));
+    return generatePath(constraints, reversed, pointsList, markers);
+  }
+
   /**
    * Generate a path on-the-fly from a list of points As you can't see the path in the GUI when
    * using this method, make sure you have a good idea of what works well and what doesn't before
@@ -395,6 +422,15 @@ public class PathPlanner {
   public static PathPlannerTrajectory generatePath(
       PathConstraints constraints, PathPoint point1, PathPoint point2, PathPoint... points) {
     return generatePath(constraints, false, point1, point2, points);
+  }
+
+  public static PathPlannerTrajectory generatePath(
+      PathConstraints constraints,
+      List<EventMarker> markers,
+      PathPoint point1,
+      PathPoint point2,
+      PathPoint... points) {
+    return generatePath(constraints, false, markers, point1, point2, points);
   }
 
   /**

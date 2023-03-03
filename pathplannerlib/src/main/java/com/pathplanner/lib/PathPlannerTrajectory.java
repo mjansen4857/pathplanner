@@ -26,7 +26,7 @@ public class PathPlannerTrajectory extends Trajectory {
     this.fromGUI = false;
   }
 
-  protected PathPlannerTrajectory(
+  public PathPlannerTrajectory(
       List<Waypoint> pathPoints,
       List<EventMarker> markers,
       PathConstraints constraints,
@@ -41,7 +41,7 @@ public class PathPlannerTrajectory extends Trajectory {
     this.fromGUI = fromGUI;
   }
 
-  private PathPlannerTrajectory(
+  public PathPlannerTrajectory(
       List<State> states,
       List<EventMarker> markers,
       StopEvent startStopEvent,
@@ -572,17 +572,17 @@ public class PathPlannerTrajectory extends Trajectory {
     }
   }
 
-  protected static class Waypoint {
-    protected Translation2d anchorPoint;
-    protected Translation2d prevControl;
-    protected Translation2d nextControl;
-    protected double velOverride;
-    protected Rotation2d holonomicRotation;
-    protected boolean isReversal;
-    protected boolean isStopPoint;
-    protected StopEvent stopEvent;
+  public static class Waypoint {
+    public Translation2d anchorPoint;
+    public Translation2d prevControl;
+    public Translation2d nextControl;
+    public double velOverride;
+    public Rotation2d holonomicRotation;
+    public boolean isReversal;
+    public boolean isStopPoint;
+    public StopEvent stopEvent;
 
-    protected Waypoint(
+    public Waypoint(
         Translation2d anchorPoint,
         Translation2d prevControl,
         Translation2d nextControl,
@@ -606,9 +606,9 @@ public class PathPlannerTrajectory extends Trajectory {
     public List<String> names;
     public double timeSeconds;
     public Translation2d positionMeters;
-    protected double waypointRelativePos;
+    public double waypointRelativePos;
 
-    protected EventMarker(List<String> names, double waypointRelativePos) {
+    public EventMarker(List<String> names, double waypointRelativePos) {
       this.names = names;
       this.waypointRelativePos = waypointRelativePos;
     }

@@ -6,13 +6,13 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class PathPoint {
-  protected final Translation2d position;
-  protected final Rotation2d heading;
-  protected final Rotation2d holonomicRotation;
-  protected final double velocityOverride;
+  public final Translation2d position;
+  public final Rotation2d heading;
+  public final Rotation2d holonomicRotation;
+  public final double velocityOverride;
 
-  protected double prevControlLength = -1;
-  protected double nextControlLength = -1;
+  public double prevControlLength = -1;
+  public double nextControlLength = -1;
 
   public PathPoint(
       Translation2d position,

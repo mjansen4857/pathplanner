@@ -1,10 +1,15 @@
 package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class FollowPathWithEvents extends CommandBase {
   private final Command pathFollowingCommand;
@@ -109,6 +114,10 @@ public class FollowPathWithEvents extends CommandBase {
 
           eventCommand.initialize();
           currentCommands.put(eventCommand, true);
+        } else {
+          DriverStation.reportWarning(
+              "PathPlanner attempted to schedule an event missing from the event map: " + name,
+              false);
         }
       }
     }

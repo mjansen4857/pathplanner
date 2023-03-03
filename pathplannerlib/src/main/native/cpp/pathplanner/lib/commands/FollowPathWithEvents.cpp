@@ -1,5 +1,7 @@
 #include "pathplanner/lib/commands/FollowPathWithEvents.h"
 
+#include <frc/DriverStation.h>
+
 using namespace pathplanner;
 
 FollowPathWithEvents::FollowPathWithEvents(
@@ -86,6 +88,10 @@ void FollowPathWithEvents::Execute() {
 
 				eventCommand->Initialize();
 				m_currentCommands.emplace_back(eventCommand, true);
+			} else {
+				FRC_ReportError(frc::warn::Warning,
+						"PathPlanner attempted to schedule an event missing from the event map: {}",
+						name);
 			}
 		}
 	}

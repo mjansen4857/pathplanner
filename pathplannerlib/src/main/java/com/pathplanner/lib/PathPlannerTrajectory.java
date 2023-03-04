@@ -453,7 +453,7 @@ public class PathPlannerTrajectory extends Trajectory {
         } else if (t >= 1.0) {
           state.velocityMetersPerSecond = endPoint.velOverride;
         } else {
-          state.velocityMetersPerSecond = maxVel;
+          state.velocityMetersPerSecond = Math.max(startPoint.velOverride, endPoint.velOverride);
         }
 
         if (state.velocityMetersPerSecond == -1) state.velocityMetersPerSecond = maxVel;

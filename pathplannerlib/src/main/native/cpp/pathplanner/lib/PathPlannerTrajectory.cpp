@@ -195,7 +195,7 @@ std::vector<PathPlannerTrajectory::PathPlannerState> PathPlannerTrajectory::join
 			} else if (t >= 1.0) {
 				state.velocity = endPoint.velocityOverride;
 			} else {
-				state.velocity = maxVel;
+				state.velocity = max(startPoint.velocityOverride, endPoint.velocityOverride);
 			}
 
 			if (state.velocity == -1_mps) {

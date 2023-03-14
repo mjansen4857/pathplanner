@@ -174,9 +174,8 @@ PathPlannerTrajectory PathPlanner::generatePath(
 				PathPlannerTrajectory::StopEvent());
 	}
 
-	return PathPlannerTrajectory(waypoints,
-			std::vector<PathPlannerTrajectory::EventMarker>(), constraints,
-			reversed, false);
+	return PathPlannerTrajectory(waypoints, eventMarkers, constraints, reversed,
+			false);
 }
 
 PathPlannerTrajectory PathPlanner::generatePath(

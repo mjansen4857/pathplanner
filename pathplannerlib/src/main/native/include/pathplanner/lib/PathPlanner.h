@@ -94,10 +94,28 @@ public:
 	 * @param constraints The max velocity and max acceleration of the path
 	 * @param reversed Should the robot follow this path reversed
 	 * @param points Points in the path
+	 * @param eventMarkers Markers in the path
 	 * @return The generated path
 	 */
 	static PathPlannerTrajectory generatePath(PathConstraints const constraints,
-			bool const reversed, std::vector<PathPoint> const points);
+			bool const reversed, std::vector<PathPoint> const points,
+			std::vector<PathPlannerTrajectory::EventMarker> const eventMarkers);
+
+	/**
+	 * @brief Generate a path on-the-fly from a list of points
+	 * As you can't see the path in the GUI when using this method, make sure you have a good idea
+	 * of what works well and what doesn't before you use this method in competition. Points positioned in weird
+	 * configurations such as being too close together can lead to really janky paths.
+	 *
+	 * @param constraints The max velocity and max acceleration of the path
+	 * @param reversed Should the robot follow this path reversed
+	 * @param points Points in the path
+	 * @return The generated path
+	 */
+	static PathPlannerTrajectory generatePath(PathConstraints const constraints,
+			bool const reversed, std::vector<PathPoint> const points) {
+		return generatePath(constraints, reversed, points, { });
+	}
 
 	/**
 	 * @brief Generate a path on-the-fly from a list of points

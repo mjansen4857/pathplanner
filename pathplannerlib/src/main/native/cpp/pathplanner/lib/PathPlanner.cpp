@@ -132,7 +132,8 @@ std::vector<PathPlannerTrajectory> PathPlanner::loadPathGroup(
 
 PathPlannerTrajectory PathPlanner::generatePath(
 		PathConstraints const constraints, bool const reversed,
-		std::vector<PathPoint> const points) {
+		std::vector<PathPoint> const points,
+		std::vector<PathPlannerTrajectory::EventMarker> const eventMarkers) {
 	if (points.size() < 2) {
 		throw std::invalid_argument(
 				"Error generating trajectory.  List of points in trajectory must have at least two points.");

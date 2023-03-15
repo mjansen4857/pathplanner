@@ -67,7 +67,6 @@ public:
 		units::second_t time;
 		frc::Translation2d position;
 
-	private:
 		double waypointRelativePos;
 
 		EventMarker(std::vector<std::string> &&names,
@@ -117,7 +116,6 @@ public:
 		}
 	};
 
-private:
 	class Waypoint {
 	public:
 		frc::Translation2d anchorPoint;
@@ -146,25 +144,12 @@ private:
 		}
 	};
 
+private:
 	std::vector<PathPlannerState> states;
 	std::vector<EventMarker> markers;
 	StopEvent startStopEvent;
 	StopEvent endStopEvent;
 
-	PathPlannerTrajectory(std::vector<PathPlannerState> const &states,
-			std::vector<EventMarker> const &markers, StopEvent startStopEvent,
-			StopEvent endStopEvent, bool fromGUI) {
-		this->states = states;
-		this->markers = markers;
-		this->startStopEvent = startStopEvent;
-		this->endStopEvent = endStopEvent;
-	}
-
-	static std::vector<PathPlannerState> generatePath(
-			std::vector<Waypoint> const &pathPoints,
-			units::meters_per_second_t const maxVel,
-			units::meters_per_second_squared_t const maxAccel,
-			bool const reversed);
 	static std::vector<PathPlannerState> joinSplines(
 			std::vector<Waypoint> const &pathPoints,
 			units::meters_per_second_t const maxVel, double step);
@@ -185,6 +170,15 @@ private:
 	friend class PathPlanner;
 
 public:
+	PathPlannerTrajectory(std::vector<PathPlannerState> const &states,
+			std::vector<EventMarker> const &markers, StopEvent startStopEvent,
+			StopEvent endStopEvent, bool fromGUI) {
+		this->states = states;
+		this->markers = markers;
+		this->startStopEvent = startStopEvent;
+		this->endStopEvent = endStopEvent;
+	}
+
 	PathPlannerTrajectory(std::vector<Waypoint> const &waypoints,
 			std::vector<EventMarker> const &markers,
 			PathConstraints const constraints, bool const reversed,
@@ -193,6 +187,12 @@ public:
 	}
 
 	bool fromGUI;
+
+	static std::vector<PathPlannerState> generatePath(
+			std::vector<Waypoint> const &pathPoints,
+			units::meters_per_second_t const maxVel,
+			units::meters_per_second_squared_t const maxAccel,
+			bool const reversed);
 
 	static PathPlannerState transformStateForAlliance(
 			PathPlannerState const &state,

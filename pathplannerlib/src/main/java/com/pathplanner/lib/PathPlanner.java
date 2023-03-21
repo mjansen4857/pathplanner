@@ -205,6 +205,26 @@ public class PathPlanner {
     return loadPathGroup(name, false, constraint, constraints);
   }
 
+
+  /**
+   * Load a path file from storage as a path group. This will separate the path into multiple paths
+   * based on the waypoints marked as "stop points"
+   *
+   * @param name The name of the path group to load
+   * @param constraints A List of PathConstraints (max velocity, max acceleration) of the paths
+   *     in the group. If there are less constraints than paths, the last constrain given will be
+   *     used for the remaining paths.
+   * @return A List of all generated paths in the group
+   */
+  public static List<PathPlannerTrajectory> loadPathGroup(
+      String name, List<PathConstraints> constraints) {
+    if (constraints == null || constraints.isEmpty()) {
+      throw new IllegalArgumentException("You must specify at least one PathConstraints object in order to load your path group.");
+    }
+    return loadPathGroup(name, false, constraints.get(0),
+            constraints.subList(1, constraints.size()).stream().toArray(PathConstraints[]::new));
+  }
+
   /**
    * Load a path file from storage as a path group. This will separate the path into multiple paths
    * based on the waypoints marked as "stop points"

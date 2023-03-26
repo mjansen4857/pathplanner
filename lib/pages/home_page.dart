@@ -379,6 +379,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           _paths.add(RobotPath(
                             waypoints: RobotPath.cloneWaypointList(
                                 _paths[i].waypoints),
+                            maxVelocity: _paths[i].maxVelocity,
+                            maxAcceleration: _paths[i].maxAcceleration,
+                            isReversed: _paths[i].isReversed,
                             name: pathName,
                             markers: RobotPath.cloneMarkerList(
                               _paths[i].markers

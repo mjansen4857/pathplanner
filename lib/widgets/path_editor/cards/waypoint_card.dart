@@ -237,7 +237,7 @@ class _WaypointCardState extends State<WaypointCard> {
               ? _getController('')
               : _getController(
                   widget.waypoint!.velOverride!.toStringAsFixed(2)),
-          'V Override',
+          'Vel Override',
           enabled: !widget.waypoint!.isReversal,
           width: 105,
           onSubmitted: (val) {

@@ -175,7 +175,7 @@ class _WaypointCardState extends State<WaypointCard> {
         _buildTextField(
           context,
           _getController(widget.waypoint!.getXPos().toStringAsFixed(2)),
-          'X Position',
+          'X Position (m)',
           width: 105,
           onSubmitted: (val) {
             if (val != null) {
@@ -192,7 +192,7 @@ class _WaypointCardState extends State<WaypointCard> {
         _buildTextField(
           context,
           _getController(widget.waypoint!.getYPos().toStringAsFixed(2)),
-          'Y Position',
+          'Y Position (m)',
           width: 105,
           onSubmitted: (val) {
             if (val != null) {
@@ -218,7 +218,7 @@ class _WaypointCardState extends State<WaypointCard> {
           context,
           _getController(
               widget.waypoint!.getHeadingDegrees().toStringAsFixed(2)),
-          'Heading',
+          'Heading (deg)',
           width: 105,
           onSubmitted: (val) {
             if (val != null) {
@@ -259,7 +259,7 @@ class _WaypointCardState extends State<WaypointCard> {
       !widget.holonomicEnabled || widget.waypoint!.holonomicAngle == null
           ? _getController('')
           : _getController(widget.waypoint!.holonomicAngle!.toStringAsFixed(2)),
-      'Holonomic Rotation',
+      'Holonomic Rotation (deg)',
       enabled: widget.holonomicEnabled,
       onSubmitted: (val) {
         if (val != null ||

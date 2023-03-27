@@ -375,10 +375,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           while (pathNames.contains(pathName)) {
                             pathName = '$pathName Copy';
                           }
+
                           _paths.add(RobotPath(
                             waypoints: RobotPath.cloneWaypointList(
                                 _paths[i].waypoints),
+                            maxVelocity: _paths[i].maxVelocity,
+                            maxAcceleration: _paths[i].maxAcceleration,
+                            isReversed: _paths[i].isReversed,
                             name: pathName,
+                            markers:
+                                RobotPath.cloneMarkerList(_paths[i].markers),
                           ));
                           _currentPath = _paths.last;
                           _savePath(_currentPath!);

@@ -4,8 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-// ignore: implementation_imports
-import 'package:logger/src/outputs/file_output.dart';
 
 class Log {
   static Logger? logger;

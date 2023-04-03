@@ -100,5 +100,4 @@ public class PathPoint {
     }
     return false;
   }
-
 }

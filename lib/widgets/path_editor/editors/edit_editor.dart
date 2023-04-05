@@ -47,6 +47,7 @@ class _EditEditorState extends State<EditEditor> {
   final GlobalKey _key = GlobalKey();
 
   List<Waypoint> get waypoints => widget.path.waypoints;
+  List<EventMarker> get markers => widget.path.markers;
 
   @override
   void initState() {
@@ -119,7 +120,8 @@ class _EditEditorState extends State<EditEditor> {
                 _selectedPointIndex == -1 ||
                         _selectedPointIndex >= waypoints.length
                     ? waypoints.length - 1
-                    : _selectedPointIndex
+                    : _selectedPointIndex,
+                RobotPath.cloneMarkerList(markers),
               ],
               () {
                 setState(() {
@@ -146,6 +148,7 @@ class _EditEditorState extends State<EditEditor> {
                         oldValue[0][oldValue[1] + 1].prevControl;
                   }
                   _selectedPointIndex = -1;
+                  widget.path.markers = RobotPath.cloneMarkerList(oldValue[2]);
                   widget.savePath(widget.path);
                 });
               },
@@ -353,7 +356,10 @@ class _EditEditorState extends State<EditEditor> {
   void removeWaypoint(Waypoint waypoint) {
     int delIndex = waypoints.indexOf(waypoint);
     UndoRedo.addChange(Change(
-      RobotPath.cloneWaypointList(waypoints),
+      [
+        RobotPath.cloneWaypointList(waypoints),
+        RobotPath.cloneMarkerList(markers),
+      ],
       () {
         setState(() {
           Waypoint w = waypoints.removeAt(delIndex);
@@ -369,12 +375,19 @@ class _EditEditorState extends State<EditEditor> {
             waypoints[0].holonomicAngle ??= 0;
           }
 
+          for (EventMarker marker in markers) {
+            if (marker.position >= delIndex) {
+              marker.position -= 1.0;
+            }
+          }
+
           widget.savePath(widget.path);
         });
       },
       (oldValue) {
         setState(() {
-          widget.path.waypoints = RobotPath.cloneWaypointList(oldValue);
+          widget.path.waypoints = RobotPath.cloneWaypointList(oldValue[0]);
+          widget.path.markers = RobotPath.cloneMarkerList(oldValue[1]);
           widget.savePath(widget.path);
         });
       },

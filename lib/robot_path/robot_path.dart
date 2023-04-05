@@ -178,6 +178,12 @@ class RobotPath {
       waypoints.insert(waypoint + 1, toAdd);
 
       toAdd.addNextControl();
+
+      for (EventMarker marker in markers) {
+        if (marker.position >= waypoint + 1) {
+          marker.position += 1.0;
+        }
+      }
     }
   }
 

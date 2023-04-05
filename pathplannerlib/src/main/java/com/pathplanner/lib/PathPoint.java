@@ -84,4 +84,20 @@ public class PathPoint {
     return new PathPoint(
         currentPose.getTranslation(), currentPose.getRotation(), currentSpeeds.vxMetersPerSecond);
   }
+
+  /**
+   * Checks equality between this PathPoint and another object.
+   *
+   * @param obj The other object.
+   * @return Whether the two objects are equal or not.
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof PathPoint) {
+      return ((PathPoint) obj).position.equals(position)
+          && ((PathPoint) obj).heading.equals(heading)
+          && ((PathPoint) obj).holonomicRotation.equals(holonomicRotation);
+    }
+    return false;
+  }
 }

@@ -502,6 +502,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               showGeneratorSettings: _generateJSON || _generateCSV,
               focusedSelection: _focusedSelection,
               savePath: (path) => _savePath(path),
+              generateTrajectory: (path) => _generateTrajectory(path),
               prefs: widget.prefs,
             ),
           ),
@@ -602,6 +603,37 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           builder: (context) {
             return AlertDialog(
               title: const Text('Failed to save path'),
+              content: const SizedBox(
+                width: 400,
+                child: Text(
+                    'This is likely because you have a file for this path open in another program. Please close the program and try again.'),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    }
+  }
+
+  void _generateTrajectory(RobotPath path) async {
+    if (_projectDir != null) {
+      bool result = await path.savePath(
+          _getPathsDir(_projectDir!), false, false);
+
+      if (!result) {
+        showDialog(
+          context: this.context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Failed to generate trajectory'),
               content: const SizedBox(
                 width: 400,
                 child: Text(

@@ -31,6 +31,7 @@ class PathEditor extends StatefulWidget {
   final FieldImage fieldImage;
   final bool showGeneratorSettings;
   final void Function(RobotPath path) savePath;
+  final void Function(RobotPath path) generateTrajectory;
   final SharedPreferences prefs;
 
   const PathEditor(
@@ -38,6 +39,7 @@ class PathEditor extends StatefulWidget {
       required this.path,
       required this.robotSize,
       required this.holonomicMode,
+      required this.generateTrajectory,
       this.showGeneratorSettings = false,
       this.focusedSelection = false,
       required this.savePath,
@@ -106,6 +108,7 @@ class _PathEditorState extends State<PathEditor> {
           holonomicMode: widget.holonomicMode,
           fieldImage: widget.fieldImage,
           showGeneratorSettings: widget.showGeneratorSettings,
+          generateTrajectory: widget.generateTrajectory,
           focusedSelection: widget.focusedSelection,
           savePath: widget.savePath,
           prefs: widget.prefs,

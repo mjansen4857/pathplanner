@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/material.dart';
 import 'package:pathplanner/robot_path/stop_event.dart';
 
 class Waypoint {

@@ -11,6 +11,7 @@ import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/path_editor/cards/generator_settings_card.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 import 'package:pathplanner/widgets/path_editor/cards/waypoint_card.dart';
+import 'package:pathplanner/widgets/path_editor/cards/simple_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
@@ -21,6 +22,7 @@ class EditEditor extends StatefulWidget {
   final bool focusedSelection;
   final FieldImage fieldImage;
   final void Function(RobotPath path) savePath;
+  final void Function(RobotPath path) generateTrajectory;
   final bool showGeneratorSettings;
   final SharedPreferences prefs;
 
@@ -30,6 +32,7 @@ class EditEditor extends StatefulWidget {
       required this.holonomicMode,
       required this.fieldImage,
       required this.savePath,
+      required this.generateTrajectory,
       this.showGeneratorSettings = false,
       this.focusedSelection = false,
       required this.prefs,
@@ -45,6 +48,8 @@ class _EditEditorState extends State<EditEditor> {
   int _selectedPointIndex = -1;
   Waypoint? _dragOldValue;
   final GlobalKey _key = GlobalKey();
+  UniqueKey _pathRuntimeKey = UniqueKey();
+  
 
   List<Waypoint> get waypoints => widget.path.waypoints;
   List<EventMarker> get markers => widget.path.markers;
@@ -93,6 +98,7 @@ class _EditEditorState extends State<EditEditor> {
               _buildEditor(),
               _buildWaypointCard(),
               _buildGeneratorSettingsCard(),
+              _buildRuntimeCard(),
             ],
           ),
         ),
@@ -251,6 +257,10 @@ class _EditEditorState extends State<EditEditor> {
                             (widget.fieldImage.defaultSize.height *
                                 _EditPainter.scale),
                         max(8, details.localPosition.dy))));
+
+                widget.generateTrajectory(widget.path);
+                // Update the runtime since the path is changing
+                _pathRuntimeKey = UniqueKey();
               });
             }
           },
@@ -403,9 +413,29 @@ class _EditEditorState extends State<EditEditor> {
         holonomicMode: widget.holonomicMode,
         stackKey: _key,
         onShouldSave: () {
+
+          setState(() {
+            // Force rebuild card to update runtime
+            _pathRuntimeKey = UniqueKey();
+          });
+          
           widget.savePath(widget.path);
         },
         prefs: widget.prefs,
+      ),
+    );
+  }
+
+  Widget _buildRuntimeCard() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return SimpleCard(
+      stackKey: _key,
+      prefs: widget.prefs,
+      key: _pathRuntimeKey,
+      child: Text(
+        'Total Runtime: ${widget.path.generatedTrajectory.getRuntime().toStringAsFixed(2)}s',
+        style: TextStyle(color: colorScheme.onSurface),
       ),
     );
   }

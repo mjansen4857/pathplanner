@@ -87,13 +87,71 @@ class _EditEditorState extends State<EditEditor> {
               removeWaypoint(_selectedWaypoint!);
             }
           },
-          child: Stack(
-            key: _key,
-            children: [
-              _buildEditor(),
-              _buildWaypointCard(),
-              _buildGeneratorSettingsCard(),
-            ],
+          child: KeyBoardShortcuts(
+            keysToPress: {
+              (Platform.isMacOS)
+                  ? LogicalKeyboardKey.meta
+                  : LogicalKeyboardKey.control,
+              LogicalKeyboardKey.keyS
+            },
+            onKeysPressed: () {
+              widget.savePath(widget.path);
+            },
+            child: CallbackShortcuts(
+              // Use arrow keys to move selected waypoint
+              bindings: <ShortcutActivator, VoidCallback>{
+                const SingleActivator(LogicalKeyboardKey.arrowUp): () {
+                  if (_selectedWaypoint != null) {
+                    if (!_selectedWaypoint!.isLocked) {
+                      setState(() {
+                        _selectedWaypoint!.move(_selectedWaypoint!.getXPos(),
+                            _selectedWaypoint!.getYPos() + 0.01);
+                      });
+                    }
+                  }
+                },
+                const SingleActivator(LogicalKeyboardKey.arrowDown): () {
+                  if (_selectedWaypoint != null) {
+                    if (!_selectedWaypoint!.isLocked) {
+                      setState(() {
+                        _selectedWaypoint!.move(_selectedWaypoint!.getXPos(),
+                            _selectedWaypoint!.getYPos() - 0.01);
+                      });
+                    }
+                  }
+                },
+                const SingleActivator(LogicalKeyboardKey.arrowLeft): () {
+                  if (_selectedWaypoint != null) {
+                    if (!_selectedWaypoint!.isLocked) {
+                      setState(() {
+                        _selectedWaypoint!.move(
+                            _selectedWaypoint!.getXPos() - 0.01,
+                            _selectedWaypoint!.getYPos());
+                      });
+                    }
+                  }
+                },
+                const SingleActivator(LogicalKeyboardKey.arrowRight): () {
+                  if (_selectedWaypoint != null) {
+                    if (!_selectedWaypoint!.isLocked) {
+                      setState(() {
+                        _selectedWaypoint!.move(
+                            _selectedWaypoint!.getXPos() + 0.01,
+                            _selectedWaypoint!.getYPos());
+                      });
+                    }
+                  }
+                },
+              },
+              child: Stack(
+                key: _key,
+                children: [
+                  _buildEditor(),
+                  _buildWaypointCard(),
+                  _buildGeneratorSettingsCard(),
+                ],
+              ),
+            ),
           ),
         ),
       ),

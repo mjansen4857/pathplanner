@@ -502,6 +502,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               showGeneratorSettings: _generateJSON || _generateCSV,
               focusedSelection: _focusedSelection,
               savePath: (path) => _savePath(path),
+              saveNavGrid: (grid, nodeSizeMeters) =>
+                  _saveNavGrid(grid, nodeSizeMeters),
               prefs: widget.prefs,
             ),
           ),
@@ -589,6 +591,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     File buildFile = File(join(projectDir.path, 'build.gradle'));
 
     return buildFile.existsSync();
+  }
+
+  void _saveNavGrid(List<List<bool>> grid, double nodeSizeMeters) {
+    if (_projectDir != null) {
+      Directory saveDir = _getPathsDir(_projectDir!);
+
+      var json = {
+        'nodeSizeMeters': nodeSizeMeters,
+        'grid': grid,
+      };
+
+      String content = jsonEncode(json);
+      File navGridFile = File(join(saveDir.path, 'navgrid.json'));
+
+      navGridFile.writeAsString(content);
+    }
   }
 
   void _savePath(RobotPath path) async {

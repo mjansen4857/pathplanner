@@ -10,6 +10,7 @@ import 'package:pathplanner/widgets/path_editor/editors/edit_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/graph_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/marker_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/measure_editor.dart';
+import 'package:pathplanner/widgets/path_editor/editors/navigation_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/path_following_editor.dart';
 import 'package:pathplanner/widgets/path_editor/editors/preview_editor.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +22,7 @@ enum EditorMode {
   measure,
   pathFollowing,
   graph,
+  navigation,
 }
 
 class PathEditor extends StatefulWidget {
@@ -31,6 +33,7 @@ class PathEditor extends StatefulWidget {
   final FieldImage fieldImage;
   final bool showGeneratorSettings;
   final void Function(RobotPath path) savePath;
+  final Function(List<List<bool>> grid, double nodeSizeMeters) saveNavGrid;
   final SharedPreferences prefs;
 
   const PathEditor(
@@ -41,6 +44,7 @@ class PathEditor extends StatefulWidget {
       this.showGeneratorSettings = false,
       this.focusedSelection = false,
       required this.savePath,
+      required this.saveNavGrid,
       required this.prefs,
       super.key});
 
@@ -155,6 +159,12 @@ class _PathEditorState extends State<PathEditor> {
           savePath: widget.savePath,
           prefs: widget.prefs,
           key: ValueKey(widget.path),
+        );
+      case EditorMode.navigation:
+        return NavigationEditor(
+          fieldImage: widget.fieldImage,
+          prefs: widget.prefs,
+          saveNavGrid: widget.saveNavGrid,
         );
     }
   }
@@ -277,6 +287,24 @@ class _PathEditorState extends State<PathEditor> {
                       child: const Icon(Icons.route),
                     ),
                   ),
+                const VerticalDivider(width: 1),
+                Tooltip(
+                  message: 'Navigation',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: MaterialButton(
+                    height: 50,
+                    minWidth: 50,
+                    onPressed: _mode == EditorMode.navigation
+                        ? null
+                        : () {
+                            UndoRedo.clearHistory();
+                            setState(() {
+                              _mode = EditorMode.navigation;
+                            });
+                          },
+                    child: const Icon(Icons.navigation_rounded),
+                  ),
+                ),
               ],
             ),
           ),

@@ -10,12 +10,10 @@ import 'package:window_manager/window_manager.dart';
 import 'pages/home_page.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Log.init();
-
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      await Log.init();
       await windowManager.ensureInitialized();
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
 

@@ -37,7 +37,7 @@ class _NavigationEditorState extends State<NavigationEditor> {
     widget.loadNavGrid().then((value) {
       if (value == null) {
         setState(() {
-          _nodeSizeMeters = 0.25;
+          _nodeSizeMeters = 0.2;
           int rows = (widget.fieldImage.defaultSize.height /
                   widget.fieldImage.pixelsPerMeter /
                   _nodeSizeMeters)

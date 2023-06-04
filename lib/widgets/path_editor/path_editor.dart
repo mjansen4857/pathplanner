@@ -34,6 +34,7 @@ class PathEditor extends StatefulWidget {
   final bool showGeneratorSettings;
   final void Function(RobotPath path) savePath;
   final Function(List<List<bool>> grid, double nodeSizeMeters) saveNavGrid;
+  final Future<(List<List<bool>>, double)?> Function() loadNavGrid;
   final SharedPreferences prefs;
 
   const PathEditor(
@@ -45,6 +46,7 @@ class PathEditor extends StatefulWidget {
       this.focusedSelection = false,
       required this.savePath,
       required this.saveNavGrid,
+      required this.loadNavGrid,
       required this.prefs,
       super.key});
 
@@ -165,6 +167,7 @@ class _PathEditorState extends State<PathEditor> {
           fieldImage: widget.fieldImage,
           prefs: widget.prefs,
           saveNavGrid: widget.saveNavGrid,
+          loadNavGrid: widget.loadNavGrid,
         );
     }
   }

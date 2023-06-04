@@ -128,18 +128,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _animController.forward();
       });
 
-      if (!(widget.prefs.getBool('seen2023Warning') ?? false)) {
+      if (!(widget.prefs.getBool('seen2023Warning') ?? false) && mounted) {
         showDialog(
             context: this.context,
             barrierDismissible: false,
             builder: (context) {
               return AlertDialog(
                 title: const Text('Non-standard Field Mirroring'),
-                content: SizedBox(
+                content: const SizedBox(
                   width: 300,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Text(
                           'The 2023 FRC game has non-standard field mirroring that would prevent using the same auto path for both alliances.'),
                       SizedBox(height: 16),
@@ -504,6 +504,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               savePath: (path) => _savePath(path),
               saveNavGrid: (grid, nodeSizeMeters) =>
                   _saveNavGrid(grid, nodeSizeMeters),
+              loadNavGrid: () => _loadNavGrid(),
               prefs: widget.prefs,
             ),
           ),
@@ -609,12 +610,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
+  Future<(List<List<bool>>, double)?> _loadNavGrid() async {
+    if (_projectDir != null) {
+      Directory saveDir = _getPathsDir(_projectDir!);
+      File navGridFile = File(join(saveDir.path, 'navgrid.json'));
+
+      if (await navGridFile.exists()) {
+        String content = await navGridFile.readAsString();
+
+        Map<String, dynamic> json = jsonDecode(content);
+        List<List<bool>> grid = (json['grid'] as List)
+            .map((r) => (r as List).map((c) => c as bool).toList())
+            .toList(); // yikes
+        double nodeSizeMeters = (json['nodeSizeMeters'] as num).toDouble();
+        return (grid, nodeSizeMeters);
+      }
+    }
+    return null;
+  }
+
   void _savePath(RobotPath path) async {
     if (_projectDir != null) {
       bool result = await path.savePath(
           _getPathsDir(_projectDir!), _generateJSON, _generateCSV);
 
-      if (!result) {
+      if (!result && mounted) {
         showDialog(
           context: this.context,
           builder: (context) {

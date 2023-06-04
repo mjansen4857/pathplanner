@@ -9,12 +9,14 @@ class NavigationEditor extends StatefulWidget {
   final FieldImage fieldImage;
   final SharedPreferences prefs;
   final Function(List<List<bool>> grid, double nodeSizeMeters) saveNavGrid;
+  final Future<(List<List<bool>>, double)?> Function() loadNavGrid;
 
   const NavigationEditor({
     super.key,
     required this.fieldImage,
     required this.prefs,
     required this.saveNavGrid,
+    required this.loadNavGrid,
   });
 
   @override
@@ -32,18 +34,31 @@ class _NavigationEditorState extends State<NavigationEditor> {
   void initState() {
     super.initState();
 
-    int rows = (widget.fieldImage.defaultSize.height /
-            widget.fieldImage.pixelsPerMeter /
-            _nodeSizeMeters)
-        .ceil();
-    int cols = (widget.fieldImage.defaultSize.width /
-            widget.fieldImage.pixelsPerMeter /
-            _nodeSizeMeters)
-        .ceil();
+    widget.loadNavGrid().then((value) {
+      if (value == null) {
+        setState(() {
+          _nodeSizeMeters = 0.25;
+          int rows = (widget.fieldImage.defaultSize.height /
+                  widget.fieldImage.pixelsPerMeter /
+                  _nodeSizeMeters)
+              .ceil();
+          int cols = (widget.fieldImage.defaultSize.width /
+                  widget.fieldImage.pixelsPerMeter /
+                  _nodeSizeMeters)
+              .ceil();
 
-    for (int row = 0; row < rows; row++) {
-      _grid.add(List.filled(cols, false));
-    }
+          for (int row = 0; row < rows; row++) {
+            _grid.add(List.filled(cols, false));
+          }
+        });
+      } else {
+        var (grid, nodeSizeMeters) = value;
+        setState(() {
+          _grid = grid;
+          _nodeSizeMeters = nodeSizeMeters;
+        });
+      }
+    });
   }
 
   @override

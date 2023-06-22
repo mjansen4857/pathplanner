@@ -266,7 +266,7 @@ class Trajectory {
       }
 
       if (now.curveRadius == double.infinity ||
-          now.curveRadius == double.nan ||
+          now.curveRadius.isNaN ||
           now.curveRadius == 0) {
         now.curvatureRadPerMeter = 0;
       } else {

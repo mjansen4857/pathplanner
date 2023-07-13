@@ -49,6 +49,7 @@ dependencies:
   fl_chart: ^0.55.1
   package_info_plus: ^3.0.1
   multi_split_view: ^2.4.0
+  flutter_simple_treeview: ^3.0.2
 
 dev_dependencies:
   flutter_test:

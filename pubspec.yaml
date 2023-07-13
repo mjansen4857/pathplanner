@@ -48,6 +48,7 @@ dependencies:
   http: ^0.13.4
   fl_chart: ^0.55.1
   package_info_plus: ^3.0.1
+  multi_split_view: ^2.4.0
 
 dev_dependencies:
   flutter_test:

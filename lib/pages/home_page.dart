@@ -14,6 +14,7 @@ import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/deploy_fab.dart';
+import 'package:pathplanner/widgets/path_editor/split_editor.dart';
 import 'package:pathplanner/widgets/path_tile.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
@@ -187,10 +188,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         scale: _scaleAnimation,
         child: _buildBody(context),
       ),
-      floatingActionButton: Visibility(
-        visible: _isWpiLib && _projectDir != null && !widget.appStoreBuild,
-        child: DeployFAB(projectDir: _projectDir),
-      ),
+      // floatingActionButton: Visibility(
+      //   visible: _isWpiLib && _projectDir != null && !widget.appStoreBuild,
+      //   child: DeployFAB(projectDir: _projectDir),
+      // ),
     );
   }
 
@@ -494,19 +495,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return Stack(
         children: [
           Center(
-            child: PathEditor(
-              fieldImage: _fieldImage ?? FieldImage.defaultField,
-              path: _currentPath!,
-              robotSize: _robotSize,
-              holonomicMode: _holonomicMode,
-              showGeneratorSettings: _generateJSON || _generateCSV,
-              focusedSelection: _focusedSelection,
-              savePath: (path) => _savePath(path),
-              saveNavGrid: (grid, nodeSizeMeters) =>
-                  _saveNavGrid(grid, nodeSizeMeters),
-              loadNavGrid: () => _loadNavGrid(),
+            child: SplitEditor(
               prefs: widget.prefs,
             ),
+            // child: PathEditor(
+            //   fieldImage: _fieldImage ?? FieldImage.defaultField,
+            //   path: _currentPath!,
+            //   robotSize: _robotSize,
+            //   holonomicMode: _holonomicMode,
+            //   showGeneratorSettings: _generateJSON || _generateCSV,
+            //   focusedSelection: _focusedSelection,
+            //   savePath: (path) => _savePath(path),
+            //   saveNavGrid: (grid, nodeSizeMeters) =>
+            //       _saveNavGrid(grid, nodeSizeMeters),
+            //   loadNavGrid: () => _loadNavGrid(),
+            //   prefs: widget.prefs,
+            // ),
           ),
           Align(
             alignment: FractionalOffset.topLeft,

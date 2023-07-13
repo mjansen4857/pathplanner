@@ -8,13 +8,14 @@ import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
+import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/deploy_fab.dart';
-import 'package:pathplanner/widgets/path_editor/split_editor.dart';
+import 'package:pathplanner/widgets/editor/split_editor.dart';
 import 'package:pathplanner/widgets/path_tile.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
@@ -497,6 +498,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           Center(
             child: SplitEditor(
               prefs: widget.prefs,
+              path: PathPlannerPath.defaultPath(),
+              fieldImage: _fieldImage ?? FieldImage.defaultField,
             ),
             // child: PathEditor(
             //   fieldImage: _fieldImage ?? FieldImage.defaultField,

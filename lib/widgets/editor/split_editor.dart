@@ -27,20 +27,23 @@ class SplitEditor extends StatefulWidget {
 class _SplitEditorState extends State<SplitEditor> {
   final MultiSplitViewController _controller = MultiSplitViewController();
   int? _hoveredWaypoint;
+  late bool _treeOnRight;
 
   @override
   void initState() {
     super.initState();
 
-    double leftWeight =
-        widget.prefs.getDouble(PrefsKeys.editorLeftWeight) ?? 0.5;
+    _treeOnRight = widget.prefs.getBool(PrefsKeys.treeOnRight) ?? true;
+
+    double treeWeight =
+        widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ?? 0.5;
     _controller.areas = [
       Area(
-        weight: leftWeight,
+        weight: _treeOnRight ? (1.0 - treeWeight) : treeWeight,
         minimalWeight: 0.25,
       ),
       Area(
-        weight: 1.0 - leftWeight,
+        weight: _treeOnRight ? treeWeight : (1.0 - treeWeight),
         minimalWeight: 0.25,
       ),
     ];
@@ -82,24 +85,38 @@ class _SplitEditorState extends State<SplitEditor> {
             axis: Axis.horizontal,
             controller: _controller,
             onWeightChange: () {
-              widget.prefs.setDouble(PrefsKeys.editorLeftWeight,
-                  _controller.areas[0].weight ?? 0.5);
+              double? newWeight = _treeOnRight
+                  ? _controller.areas[1].weight
+                  : _controller.areas[0].weight;
+              widget.prefs
+                  .setDouble(PrefsKeys.editorTreeWeight, newWeight ?? 0.5);
             },
             children: [
-              Container(),
+              if (_treeOnRight) Container(),
               Card(
                 margin: const EdgeInsets.all(0),
                 elevation: 4.0,
-                shape: const RoundedRectangleBorder(
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    bottomLeft: Radius.circular(12),
+                    topLeft:
+                        _treeOnRight ? const Radius.circular(12) : Radius.zero,
+                    topRight:
+                        _treeOnRight ? Radius.zero : const Radius.circular(12),
+                    bottomLeft:
+                        _treeOnRight ? const Radius.circular(12) : Radius.zero,
+                    bottomRight:
+                        _treeOnRight ? Radius.zero : const Radius.circular(12),
                   ),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
+                    onSideSwapped: () => setState(() {
+                      _treeOnRight = !_treeOnRight;
+                      widget.prefs.setBool(PrefsKeys.treeOnRight, _treeOnRight);
+                      _controller.areas = _controller.areas.reversed.toList();
+                    }),
                     onWaypointHover: (value) {
                       setState(() {
                         _hoveredWaypoint = value;
@@ -108,6 +125,7 @@ class _SplitEditorState extends State<SplitEditor> {
                   ),
                 ),
               ),
+              if (!_treeOnRight) Container(),
             ],
           ),
         ),

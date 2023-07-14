@@ -4,16 +4,12 @@ class Waypoint {
   Point anchor;
   Point? prevControl;
   Point? nextControl;
-  bool isReversal;
-  bool isStopPoint;
   bool isLocked;
 
   Waypoint({
     required this.anchor,
     this.prevControl,
     this.nextControl,
-    this.isReversal = false,
-    this.isStopPoint = false,
     this.isLocked = false,
   });
 
@@ -48,6 +44,18 @@ class Waypoint {
     return anchor.distanceTo(nextControl!);
   }
 
+  void move(num x, num y) {
+    num dx = x - anchor.x;
+    num dy = y - anchor.y;
+    anchor = Point(x, y);
+    if (nextControl != null) {
+      nextControl = Point(nextControl!.x + dx, nextControl!.y + dy);
+    }
+    if (prevControl != null) {
+      prevControl = Point(prevControl!.x + dx, prevControl!.y + dy);
+    }
+  }
+
   Waypoint clone() {
     Point anchorPt = Point(anchor.x, anchor.y);
     Point? prev =
@@ -60,5 +68,58 @@ class Waypoint {
       prevControl: prev,
       nextControl: next,
     );
+  }
+
+  void setHeading(num headingDegrees) {
+    var theta = headingDegrees * pi / 180;
+    if (nextControl != null) {
+      var h = (anchor - nextControl!).magnitude;
+      var o = sin(theta) * h;
+      var a = cos(theta) * h;
+
+      nextControl = anchor + Point(a, o);
+      updatePrevControlFromNext();
+    } else if (prevControl != null) {
+      var h = (anchor - prevControl!).magnitude;
+      var o = sin(theta) * h;
+      var a = cos(theta) * h;
+
+      prevControl = anchor - Point(a, o);
+      updateNextControlFromPrev();
+    }
+  }
+
+  void updatePrevControlFromNext() {
+    if (prevControl != null) {
+      var dst = anchor.distanceTo(prevControl!);
+      var dir = anchor - nextControl!;
+      var mag = dir.magnitude;
+      dir = Point(dir.x / mag, dir.y / mag);
+
+      var control = Point(dir.x * dst, dir.y * dst);
+      prevControl = Point(anchor.x + control.x, anchor.y + control.y);
+    }
+  }
+
+  void updateNextControlFromPrev() {
+    if (nextControl != null) {
+      var dst = anchor.distanceTo(nextControl!);
+      var dir = (anchor - prevControl!);
+      var mag = dir.magnitude;
+      dir = Point(dir.x / mag, dir.y / mag);
+
+      var control = Point(dir.x * dst, dir.y * dst);
+      nextControl = Point(anchor.x + control.x, anchor.y + control.y);
+    }
+  }
+
+  void addNextControl() {
+    var dst = anchor.distanceTo(prevControl!);
+    var dir = (anchor - prevControl!);
+    var mag = dir.magnitude;
+    dir = Point(dir.x / mag, dir.y / mag);
+
+    var control = Point(dir.x * dst, dir.y * dst);
+    nextControl = Point(anchor.x + control.x, anchor.y + control.y);
   }
 }

@@ -31,6 +31,8 @@ class _ProjectPageState extends State<ProjectPage> {
   void initState() {
     super.initState();
 
+    print('init');
+
     double leftWeight =
         widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ?? 0.5;
     _pathGridCount = _getCrossAxisCountForWeight(leftWeight);
@@ -111,8 +113,8 @@ class _ProjectPageState extends State<ProjectPage> {
                     name: path.name,
                     fieldImage: widget.fieldImage,
                     path: path,
-                    onOpened: () {
-                      Navigator.push(
+                    onOpened: () async {
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => EditorPage(
@@ -122,6 +124,9 @@ class _ProjectPageState extends State<ProjectPage> {
                           ),
                         ),
                       );
+
+                      // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
+                      setState(() {});
                     },
                   ),
               ],

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tuple/tuple.dart';
@@ -17,6 +19,8 @@ enum BasicShortCuts {
   previousPage,
   nextPage,
   save,
+  undo,
+  redo,
 }
 
 void initShortCuts(
@@ -295,6 +299,18 @@ Widget? _helpWidget(_KeyBoardShortcuts widget) {
 
 Set<LogicalKeyboardKey> shortCut(BasicShortCuts basicShortCuts) {
   switch (basicShortCuts) {
+    case BasicShortCuts.undo:
+      if (Platform.isMacOS) {
+        return {LogicalKeyboardKey.meta, LogicalKeyboardKey.keyZ};
+      } else {
+        return {LogicalKeyboardKey.control, LogicalKeyboardKey.keyZ};
+      }
+    case BasicShortCuts.redo:
+      if (Platform.isMacOS) {
+        return {LogicalKeyboardKey.meta, LogicalKeyboardKey.keyY};
+      } else {
+        return {LogicalKeyboardKey.control, LogicalKeyboardKey.keyY};
+      }
     case BasicShortCuts.creation:
       return {LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.keyN};
     case BasicShortCuts.previousPage:

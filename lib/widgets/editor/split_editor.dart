@@ -112,6 +112,11 @@ class _SplitEditorState extends State<SplitEditor> {
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
+                    onPathChanged: () {
+                      setState(() {
+                        widget.path.generateAndSavePath();
+                      });
+                    },
                     onSideSwapped: () => setState(() {
                       _treeOnRight = !_treeOnRight;
                       widget.prefs.setBool(PrefsKeys.treeOnRight, _treeOnRight);

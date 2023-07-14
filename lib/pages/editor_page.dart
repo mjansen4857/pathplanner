@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_editor.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EditorPage extends StatelessWidget {
@@ -30,7 +34,19 @@ class EditorPage extends StatelessWidget {
           },
         ),
       ),
-      body: SplitEditor(prefs: prefs, path: path, fieldImage: fieldImage),
+      body: KeyBoardShortcuts(
+        keysToPress: shortCut(BasicShortCuts.undo),
+        onKeysPressed: UndoRedo.undo,
+        child: KeyBoardShortcuts(
+          keysToPress: shortCut(BasicShortCuts.redo),
+          onKeysPressed: UndoRedo.redo,
+          child: SplitEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: fieldImage,
+          ),
+        ),
+      ),
     );
   }
 }

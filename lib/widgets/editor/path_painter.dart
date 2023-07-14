@@ -9,11 +9,13 @@ import '../../path/waypoint.dart';
 class PathPainter extends StatelessWidget {
   final PathPlannerPath path;
   final FieldImage fieldImage;
+  final int? hoveredWaypoint;
 
   const PathPainter({
     super.key,
     required this.path,
     required this.fieldImage,
+    this.hoveredWaypoint,
   });
 
   @override
@@ -22,6 +24,7 @@ class PathPainter extends StatelessWidget {
       painter: _Painter(
         path: path,
         fieldImage: fieldImage,
+        hoveredWaypoint: hoveredWaypoint,
       ),
     );
   }
@@ -30,12 +33,14 @@ class PathPainter extends StatelessWidget {
 class _Painter extends CustomPainter {
   final PathPlannerPath path;
   final FieldImage fieldImage;
+  final int? hoveredWaypoint;
 
   static double scale = 1;
 
   const _Painter({
     required this.path,
     required this.fieldImage,
+    this.hoveredWaypoint,
   });
 
   @override
@@ -81,7 +86,8 @@ class _Painter extends CustomPainter {
   void _paintWaypoint(Canvas canvas, double scale, int waypointIdx) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Colors.black
+      ..color =
+          (waypointIdx == hoveredWaypoint) ? Colors.orange : Colors.grey[700]!
       ..strokeWidth = 2;
 
     Waypoint waypoint = path.waypoints[waypointIdx];
@@ -112,6 +118,10 @@ class _Painter extends CustomPainter {
       paint.color = Colors.grey[300]!;
     }
 
+    if (waypointIdx == hoveredWaypoint) {
+      paint.color = Colors.orange;
+    }
+
     // draw anchor point
     paint.style = PaintingStyle.fill;
     canvas.drawCircle(
@@ -128,7 +138,8 @@ class _Painter extends CustomPainter {
     // draw control points
     if (waypoint.nextControl != null) {
       paint.style = PaintingStyle.fill;
-      paint.color = Colors.grey[300]!;
+      paint.color =
+          (waypointIdx == hoveredWaypoint) ? Colors.orange : Colors.grey[300]!;
 
       canvas.drawCircle(
           PathPainterUtil.pointToPixelOffset(
@@ -145,7 +156,8 @@ class _Painter extends CustomPainter {
     }
     if (waypoint.prevControl != null) {
       paint.style = PaintingStyle.fill;
-      paint.color = Colors.grey[300]!;
+      paint.color =
+          (waypointIdx == hoveredWaypoint) ? Colors.orange : Colors.grey[300]!;
 
       canvas.drawCircle(
           PathPainterUtil.pointToPixelOffset(

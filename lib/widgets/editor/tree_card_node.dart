@@ -7,6 +7,7 @@ class TreeCardNode extends StatelessWidget {
   final VoidCallback? onHoverStart;
   final VoidCallback? onHoverEnd;
   final double indent;
+  final bool initiallyExpanded;
 
   const TreeCardNode({
     super.key,
@@ -16,6 +17,7 @@ class TreeCardNode extends StatelessWidget {
     this.onHoverStart,
     this.onHoverEnd,
     this.indent = 16,
+    this.initiallyExpanded = false,
   });
 
   @override
@@ -30,6 +32,7 @@ class TreeCardNode extends StatelessWidget {
           onExit: (event) => onHoverEnd?.call(),
           child: ExpansionTile(
             title: title,
+            initiallyExpanded: initiallyExpanded,
             controlAffinity: ListTileControlAffinity.leading,
             childrenPadding: EdgeInsets.fromLTRB(indent, 8, 8, 8),
             expandedCrossAxisAlignment: CrossAxisAlignment.start,

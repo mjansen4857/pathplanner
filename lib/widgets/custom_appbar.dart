@@ -14,6 +14,7 @@ class CustomAppBar extends AppBar {
       {this.titleText = 'PathPlanner',
       this.pplibClient = false,
       super.key,
+      super.leading,
       super.automaticallyImplyLeading})
       : super(
           actions: [

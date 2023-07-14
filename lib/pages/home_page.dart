@@ -182,7 +182,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Scaffold(
       key: _key,
       appBar: CustomAppBar(
-        titleText: _currentPath == null ? 'PathPlanner' : _currentPath!.name,
+        titleText:
+            _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),
         pplibClient: _pplibClient,
       ),
       drawer: _projectDir == null ? null : _buildDrawer(context),
@@ -499,6 +500,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           Center(
             child: ProjectPage(
               prefs: widget.prefs,
+              fieldImage: _fieldImage ?? FieldImage.defaultField,
             ),
             // child: SplitEditor(
             //   prefs: widget.prefs,

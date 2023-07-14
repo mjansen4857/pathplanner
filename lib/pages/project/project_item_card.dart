@@ -1,23 +1,23 @@
 import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:pathplanner/path/path_point.dart';
+import 'package:pathplanner/pages/editor_page.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/field_image.dart';
-import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
+import 'package:pathplanner/widgets/mini_path_preview.dart';
 
 class ProjectItemCard extends StatefulWidget {
   final String name;
   final FieldImage fieldImage;
   final PathPlannerPath path;
+  final VoidCallback onOpened;
 
   const ProjectItemCard({
     super.key,
     required this.name,
     required this.fieldImage,
     required this.path,
+    required this.onOpened,
   });
 
   @override
@@ -82,9 +82,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                 _hovering = false;
               }),
               child: GestureDetector(
-                onTap: () {
-                  print('${widget.name} opened');
-                },
+                onTap: widget.onOpened,
                 child: Container(
                   clipBehavior: Clip.hardEdge,
                   decoration: const BoxDecoration(),
@@ -93,12 +91,9 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                       padding: const EdgeInsets.all(12.0),
                       child: Stack(
                         children: [
-                          widget.fieldImage.getWidget(),
-                          Positioned.fill(
-                            child: _PathPreviewPainter(
-                              path: widget.path,
-                              fieldImage: widget.fieldImage,
-                            ),
+                          MiniPathPreview(
+                            path: widget.path,
+                            fieldImage: widget.fieldImage,
                           ),
                           Positioned.fill(
                             child: AnimatedOpacity(
@@ -137,107 +132,5 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
         ],
       ),
     );
-  }
-}
-
-class _PathPreviewPainter extends StatelessWidget {
-  final PathPlannerPath path;
-  final FieldImage fieldImage;
-
-  const _PathPreviewPainter({
-    super.key,
-    required this.path,
-    required this.fieldImage,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _Painter(
-        path: path,
-        fieldImage: fieldImage,
-      ),
-    );
-  }
-}
-
-class _Painter extends CustomPainter {
-  final PathPlannerPath path;
-  final FieldImage fieldImage;
-
-  static double scale = 1;
-
-  const _Painter({
-    required this.path,
-    required this.fieldImage,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    scale = size.width / fieldImage.defaultSize.width;
-
-    _paintPathPoints(
-        path.pathPoints, canvas, scale, Colors.grey[300]!, fieldImage);
-
-    _paintWaypoint(canvas, scale, 0);
-    _paintWaypoint(canvas, scale, path.waypoints.length - 1);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
-
-  static void _paintPathPoints(List<PathPoint> pathPoints, Canvas canvas,
-      double scale, Color baseColor, FieldImage fieldImage) {
-    var paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = baseColor
-      ..strokeWidth = 1.5;
-
-    Path p = Path();
-
-    Offset start = PathPainterUtil.pointToPixelOffset(
-        pathPoints[0].position, scale, fieldImage);
-    p.moveTo(start.dx, start.dy);
-
-    for (int i = 1; i < pathPoints.length; i++) {
-      Offset pos = PathPainterUtil.pointToPixelOffset(
-          pathPoints[i].position, scale, fieldImage);
-
-      p.lineTo(pos.dx, pos.dy);
-    }
-
-    canvas.drawPath(p, paint);
-  }
-
-  void _paintWaypoint(Canvas canvas, double scale, int waypointIdx) {
-    var paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = Colors.black
-      ..strokeWidth = 1;
-
-    Waypoint waypoint = path.waypoints[waypointIdx];
-
-    if (waypointIdx == 0) {
-      paint.color = Colors.green;
-    } else if (waypointIdx == path.waypoints.length - 1) {
-      paint.color = Colors.red;
-    } else {
-      paint.color = Colors.grey[300]!;
-    }
-
-    // draw anchor point
-    paint.style = PaintingStyle.fill;
-    canvas.drawCircle(
-        PathPainterUtil.pointToPixelOffset(waypoint.anchor, scale, fieldImage),
-        PathPainterUtil.uiPointSizeToPixels(35, scale, fieldImage),
-        paint);
-    paint.style = PaintingStyle.stroke;
-    paint.color = Colors.black;
-    canvas.drawCircle(
-        PathPainterUtil.pointToPixelOffset(waypoint.anchor, scale, fieldImage),
-        PathPainterUtil.uiPointSizeToPixels(35, scale, fieldImage),
-        paint);
   }
 }

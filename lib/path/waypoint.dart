@@ -47,4 +47,18 @@ class Waypoint {
 
     return anchor.distanceTo(nextControl!);
   }
+
+  Waypoint clone() {
+    Point anchorPt = Point(anchor.x, anchor.y);
+    Point? prev =
+        prevControl == null ? null : Point(prevControl!.x, prevControl!.y);
+    Point? next =
+        nextControl == null ? null : Point(nextControl!.x, nextControl!.y);
+
+    return Waypoint(
+      anchor: anchorPt,
+      prevControl: prev,
+      nextControl: next,
+    );
+  }
 }

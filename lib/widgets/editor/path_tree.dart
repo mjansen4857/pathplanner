@@ -4,14 +4,19 @@ import 'package:flutter_simple_treeview/flutter_simple_treeview.dart';
 import 'package:function_tree/function_tree.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/services/undo_redo.dart';
+import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_card_node.dart';
+import 'package:undo/undo.dart';
 
 class PathTree extends StatefulWidget {
   final PathPlannerPath path;
+  final ValueChanged<int?>? onWaypointHover;
 
   const PathTree({
     super.key,
     required this.path,
+    this.onWaypointHover,
   });
 
   @override
@@ -28,6 +33,7 @@ class _PathTreeState extends State<PathTree> {
         children: [
           TreeCardNode(
             title: const Text('Waypoints'),
+            initiallyExpanded: true,
             elevation: 1.0,
             children: [
               for (int w = 0; w < waypoints.length; w++)
@@ -161,15 +167,29 @@ class _PathTreeState extends State<PathTree> {
       name = 'End Point';
     }
 
-    bool isStopPoint = (waypointIdx == 0 || waypointIdx == waypoints.length - 1)
-        ? true
-        : waypoints[waypointIdx].isStopPoint;
+    Waypoint waypoint = waypoints[waypointIdx];
 
     return TreeCardNode(
+      onHoverStart: () => widget.onWaypointHover?.call(waypointIdx),
+      onHoverEnd: () => widget.onWaypointHover?.call(null),
       title: Row(
         children: [
           Text(name),
           Expanded(child: Container()),
+          Tooltip(
+            message: waypoint.isLocked ? 'Unlock' : 'Lock',
+            waitDuration: const Duration(seconds: 1),
+            child: IconButton(
+              onPressed: () {
+                setState(() {
+                  waypoint.isLocked = !waypoint.isLocked;
+                });
+                widget.path.savePath();
+              },
+              icon: Icon(waypoint.isLocked ? Icons.lock : Icons.lock_open,
+                  color: colorScheme.onSurface),
+            ),
+          ),
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.delete_forever),
@@ -185,23 +205,20 @@ class _PathTreeState extends State<PathTree> {
             children: [
               Expanded(
                 child: _buildTextField(
-                    _getController(
-                        waypoints[waypointIdx].anchor.x.toStringAsFixed(2)),
+                    _getController(waypoint.anchor.x.toStringAsFixed(2)),
                     'X Position (M)'),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildTextField(
-                    _getController(
-                        waypoints[waypointIdx].anchor.y.toStringAsFixed(2)),
+                    _getController(waypoint.anchor.y.toStringAsFixed(2)),
                     'Y Position (M)'),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildTextField(
-                    _getController(waypoints[waypointIdx]
-                        .getHeadingDegrees()
-                        .toStringAsFixed(2)),
+                    _getController(
+                        waypoint.getHeadingDegrees().toStringAsFixed(2)),
                     'Heading (Deg)'),
               ),
             ],
@@ -216,9 +233,8 @@ class _PathTreeState extends State<PathTree> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: _buildTextField(
-                        _getController(waypoints[waypointIdx]
-                            .getNextControlLength()
-                            .toStringAsFixed(2)),
+                        _getController(
+                            waypoint.getNextControlLength().toStringAsFixed(2)),
                         'Next Control Length (M)'),
                   ),
                 ),
@@ -234,9 +250,8 @@ class _PathTreeState extends State<PathTree> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: _buildTextField(
-                        _getController(waypoints[waypointIdx]
-                            .getPrevControlLength()
-                            .toStringAsFixed(2)),
+                        _getController(
+                            waypoint.getPrevControlLength().toStringAsFixed(2)),
                         'Previous Control Length (M)'),
                   ),
                 ),
@@ -252,17 +267,15 @@ class _PathTreeState extends State<PathTree> {
                 children: [
                   Expanded(
                     child: _buildTextField(
-                        _getController(waypoints[waypointIdx]
-                            .getPrevControlLength()
-                            .toStringAsFixed(2)),
+                        _getController(
+                            waypoint.getPrevControlLength().toStringAsFixed(2)),
                         'Previous Control Length (M)'),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: _buildTextField(
-                        _getController(waypoints[waypointIdx]
-                            .getNextControlLength()
-                            .toStringAsFixed(2)),
+                        _getController(
+                            waypoint.getNextControlLength().toStringAsFixed(2)),
                         'Next Control Length (M)'),
                   ),
                 ],
@@ -277,22 +290,13 @@ class _PathTreeState extends State<PathTree> {
               runSpacing: 8,
               children: [
                 FilterChip(
-                  label: const Text('Is Locked'),
-                  selected: waypoints[waypointIdx].isLocked,
-                  onSelected: (selected) {
-                    setState(() {
-                      waypoints[waypointIdx].isLocked = selected;
-                    });
-                  },
-                ),
-                FilterChip(
                   label: const Text('Is Reversal'),
-                  selected: waypoints[waypointIdx].isReversal,
+                  selected: waypoint.isReversal,
                   onSelected: (selected) {},
                 ),
                 FilterChip(
                   label: const Text('Is Stop Point'),
-                  selected: waypoints[waypointIdx].isStopPoint,
+                  selected: waypoint.isStopPoint,
                   onSelected: (selected) {},
                 ),
               ],

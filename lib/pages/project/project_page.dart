@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:pathplanner/pages/editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/prefs_keys.dart';
@@ -8,10 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ProjectPage extends StatefulWidget {
   final SharedPreferences prefs;
+  final FieldImage fieldImage;
 
   const ProjectPage({
     super.key,
     required this.prefs,
+    required this.fieldImage,
   });
 
   @override
@@ -22,7 +25,6 @@ class _ProjectPageState extends State<ProjectPage> {
   final MultiSplitViewController _controller = MultiSplitViewController();
   List<PathPlannerPath> _paths = List.generate(
       10, (index) => PathPlannerPath.defaultPath(name: 'Path $index'));
-  FieldImage _fieldImageSmall = FieldImage.defaultFieldSmall;
   int _pathGridCount = 2;
 
   @override
@@ -91,6 +93,7 @@ class _ProjectPageState extends State<ProjectPage> {
               ),
               Expanded(child: Container()),
               FloatingActionButton.extended(
+                heroTag: 'newPathBtn',
                 onPressed: () {},
                 label: const Text('New Path'),
                 icon: const Icon(Icons.add),
@@ -105,9 +108,22 @@ class _ProjectPageState extends State<ProjectPage> {
               children: [
                 for (PathPlannerPath path in _paths)
                   ProjectItemCard(
-                      name: path.name,
-                      fieldImage: _fieldImageSmall,
-                      path: path),
+                    name: path.name,
+                    fieldImage: widget.fieldImage,
+                    path: path,
+                    onOpened: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditorPage(
+                            prefs: widget.prefs,
+                            path: path,
+                            fieldImage: widget.fieldImage,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
               ],
             ),
           ),
@@ -140,6 +156,7 @@ class _ProjectPageState extends State<ProjectPage> {
               ),
               Expanded(child: Container()),
               FloatingActionButton.extended(
+                heroTag: 'newAutoBtn',
                 onPressed: () {},
                 label: const Text('New Auto'),
                 icon: const Icon(Icons.add),

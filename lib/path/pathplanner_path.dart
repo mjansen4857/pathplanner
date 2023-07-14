@@ -36,6 +36,8 @@ class PathPlannerPath {
     _generatePathPoints();
   }
 
+  void savePath() {}
+
   void _generatePathPoints() {
     pathPoints.clear();
 

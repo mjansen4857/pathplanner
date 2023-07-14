@@ -8,13 +8,15 @@ import 'package:image_size_getter/image_size_getter.dart';
 enum OfficialField {
   rapidReact,
   chargedUp,
-  chargedUpSmall,
 }
 
 class FieldImage {
   late final Image image;
+  late final Image? imageSmall;
   late final ui.Size defaultSize;
+  late final ui.Size? defaultSizeSmall;
   late num pixelsPerMeter;
+  late num? pixelsPerMeterSmall;
   late String name;
   late final bool isCustom;
   late final String extension;
@@ -22,8 +24,6 @@ class FieldImage {
   static List<FieldImage>? _officialFields;
 
   static final FieldImage defaultField = offialFields()[1];
-  static final FieldImage defaultFieldSmall =
-      FieldImage.official(OfficialField.chargedUpSmall);
 
   static List<FieldImage> offialFields() {
     _officialFields ??= [
@@ -44,23 +44,20 @@ class FieldImage {
         pixelsPerMeter = 196.85;
         name = 'Rapid React';
         break;
-      case OfficialField.chargedUpSmall:
-        image = Image.asset(
-          'images/field23small.png',
-          fit: BoxFit.contain,
-        );
-        defaultSize = const ui.Size(407, 197);
-        pixelsPerMeter = 24.6;
-        name = 'Charged Up Small';
-        break;
       case OfficialField.chargedUp:
       default:
         image = Image.asset(
           'images/field23.png',
           fit: BoxFit.contain,
         );
+        imageSmall = Image.asset(
+          'images/field23small.png',
+          fit: BoxFit.contain,
+        );
         defaultSize = const ui.Size(3256, 1578);
+        defaultSizeSmall = const ui.Size(407, 197);
         pixelsPerMeter = 196.85;
+        pixelsPerMeterSmall = 24.6;
         name = 'Charged Up';
         break;
     }
@@ -108,11 +105,11 @@ class FieldImage {
   int get hashCode => Object.hash(image.hashCode, defaultSize.hashCode,
       pixelsPerMeter.hashCode, name.hashCode);
 
-  Widget getWidget() {
+  Widget getWidget({bool small = false}) {
     return AspectRatio(
       aspectRatio: defaultSize.width / defaultSize.height,
       child: SizedBox.expand(
-        child: image,
+        child: (small && imageSmall != null) ? imageSmall : image,
       ),
     );
   }

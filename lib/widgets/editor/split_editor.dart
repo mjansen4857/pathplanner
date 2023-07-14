@@ -26,6 +26,7 @@ class SplitEditor extends StatefulWidget {
 
 class _SplitEditorState extends State<SplitEditor> {
   final MultiSplitViewController _controller = MultiSplitViewController();
+  int? _hoveredWaypoint;
 
   @override
   void initState() {
@@ -62,6 +63,7 @@ class _SplitEditorState extends State<SplitEditor> {
                     child: PathPainter(
                       path: widget.path,
                       fieldImage: widget.fieldImage,
+                      hoveredWaypoint: _hoveredWaypoint,
                     ),
                   ),
                 ],
@@ -98,6 +100,11 @@ class _SplitEditorState extends State<SplitEditor> {
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
+                    onWaypointHover: (value) {
+                      setState(() {
+                        _hoveredWaypoint = value;
+                      });
+                    },
                   ),
                 ),
               ),

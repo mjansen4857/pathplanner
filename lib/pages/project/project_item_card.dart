@@ -46,9 +46,11 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                   Tooltip(
                     message: 'Duplicate',
                     waitDuration: const Duration(seconds: 1),
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.copy),
+                    child: FittedBox(
+                      child: IconButton(
+                        onPressed: () {},
+                        icon: const Icon(Icons.copy),
+                      ),
                     ),
                   ),
                   Text(
@@ -58,9 +60,11 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                   Tooltip(
                     message: 'Delete',
                     waitDuration: const Duration(seconds: 1),
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: const Icon(Icons.delete_forever),
+                    child: FittedBox(
+                      child: IconButton(
+                        onPressed: () {},
+                        icon: const Icon(Icons.delete_forever),
+                      ),
                     ),
                   ),
                 ],

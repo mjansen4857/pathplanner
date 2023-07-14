@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/robot_path/robot_path.dart';
@@ -496,11 +497,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return Stack(
         children: [
           Center(
-            child: SplitEditor(
+            child: ProjectPage(
               prefs: widget.prefs,
-              path: PathPlannerPath.defaultPath(),
-              fieldImage: _fieldImage ?? FieldImage.defaultField,
             ),
+            // child: SplitEditor(
+            //   prefs: widget.prefs,
+            //   path: PathPlannerPath.defaultPath(),
+            //   fieldImage: _fieldImage ?? FieldImage.defaultField,
+            // ),
             // child: PathEditor(
             //   fieldImage: _fieldImage ?? FieldImage.defaultField,
             //   path: _currentPath!,

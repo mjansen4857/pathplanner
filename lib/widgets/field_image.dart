@@ -8,6 +8,7 @@ import 'package:image_size_getter/image_size_getter.dart';
 enum OfficialField {
   rapidReact,
   chargedUp,
+  chargedUpSmall,
 }
 
 class FieldImage {
@@ -21,6 +22,8 @@ class FieldImage {
   static List<FieldImage>? _officialFields;
 
   static final FieldImage defaultField = offialFields()[1];
+  static final FieldImage defaultFieldSmall =
+      FieldImage.official(OfficialField.chargedUpSmall);
 
   static List<FieldImage> offialFields() {
     _officialFields ??= [
@@ -40,6 +43,15 @@ class FieldImage {
         defaultSize = const ui.Size(3240, 1620);
         pixelsPerMeter = 196.85;
         name = 'Rapid React';
+        break;
+      case OfficialField.chargedUpSmall:
+        image = Image.asset(
+          'images/field23small.png',
+          fit: BoxFit.contain,
+        );
+        defaultSize = const ui.Size(407, 197);
+        pixelsPerMeter = 24.6;
+        name = 'Charged Up Small';
         break;
       case OfficialField.chargedUp:
       default:

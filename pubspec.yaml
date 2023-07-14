@@ -72,6 +72,7 @@ flutter:
   assets:
     - images/field22.png
     - images/field23.png
+    - images/field23small.png
     - images/icon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see

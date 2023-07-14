@@ -222,7 +222,7 @@ class _PathTreeState extends State<PathTree> {
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: null,
             icon: const Icon(Icons.delete_forever),
             color: colorScheme.error,
           ),
@@ -299,6 +299,17 @@ class _PathTreeState extends State<PathTree> {
                       _getController(
                           waypoint.getNextControlLength().toStringAsFixed(2)),
                       'Next Control Length (M)',
+                      onSubmitted: (value) {
+                        if (value != null) {
+                          Waypoint wRef = waypoints[waypointIdx];
+                          UndoRedo.addChange(_waypointChange(
+                            wRef,
+                            () => wRef.setNextControlLength(value),
+                            (oldVal) => wRef.setNextControlLength(
+                                oldVal.getNextControlLength()),
+                          ));
+                        }
+                      },
                     ),
                   ),
                 ),
@@ -317,6 +328,17 @@ class _PathTreeState extends State<PathTree> {
                       _getController(
                           waypoint.getPrevControlLength().toStringAsFixed(2)),
                       'Previous Control Length (M)',
+                      onSubmitted: (value) {
+                        if (value != null) {
+                          Waypoint wRef = waypoints[waypointIdx];
+                          UndoRedo.addChange(_waypointChange(
+                            wRef,
+                            () => wRef.setPrevControlLength(value),
+                            (oldVal) => wRef.setPrevControlLength(
+                                oldVal.getPrevControlLength()),
+                          ));
+                        }
+                      },
                     ),
                   ),
                 ),
@@ -335,6 +357,17 @@ class _PathTreeState extends State<PathTree> {
                       _getController(
                           waypoint.getPrevControlLength().toStringAsFixed(2)),
                       'Previous Control Length (M)',
+                      onSubmitted: (value) {
+                        if (value != null) {
+                          Waypoint wRef = waypoints[waypointIdx];
+                          UndoRedo.addChange(_waypointChange(
+                            wRef,
+                            () => wRef.setPrevControlLength(value),
+                            (oldVal) => wRef.setPrevControlLength(
+                                oldVal.getPrevControlLength()),
+                          ));
+                        }
+                      },
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -343,12 +376,33 @@ class _PathTreeState extends State<PathTree> {
                       _getController(
                           waypoint.getNextControlLength().toStringAsFixed(2)),
                       'Next Control Length (M)',
+                      onSubmitted: (value) {
+                        if (value != null) {
+                          Waypoint wRef = waypoints[waypointIdx];
+                          UndoRedo.addChange(_waypointChange(
+                            wRef,
+                            () => wRef.setNextControlLength(value),
+                            (oldVal) => wRef.setNextControlLength(
+                                oldVal.getNextControlLength()),
+                          ));
+                        }
+                      },
                     ),
                   ),
                 ],
               ),
             ),
           ),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: ElevatedButton.icon(
+              onPressed: null,
+              icon: const Icon(Icons.add),
+              label: const Text('Insert New Waypoint'),
+            ),
+          ),
+        ),
       ],
     );
   }

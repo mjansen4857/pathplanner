@@ -122,4 +122,26 @@ class Waypoint {
     var control = Point(dir.x * dst, dir.y * dst);
     nextControl = Point(anchor.x + control.x, anchor.y + control.y);
   }
+
+  void setPrevControlLength(num length) {
+    if (prevControl != null) {
+      var dir = prevControl! - anchor;
+      var mag = dir.magnitude;
+      dir = Point(dir.x / mag, dir.y / mag);
+
+      var control = Point(dir.x * length, dir.y * length);
+      prevControl = Point(anchor.x + control.x, anchor.y + control.y);
+    }
+  }
+
+  void setNextControlLength(num length) {
+    if (nextControl != null) {
+      var dir = nextControl! - anchor;
+      var mag = dir.magnitude;
+      dir = Point(dir.x / mag, dir.y / mag);
+
+      var control = Point(dir.x * length, dir.y * length);
+      nextControl = Point(anchor.x + control.x, anchor.y + control.y);
+    }
+  }
 }

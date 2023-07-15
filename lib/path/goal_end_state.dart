@@ -1,9 +1,6 @@
 class GoalEndState {
-  num velocity;
-  num rotation;
+  num velocity = 0;
+  num rotation = 0;
 
-  GoalEndState({
-    this.velocity = 0.0,
-    this.rotation = 0.0,
-  });
+  GoalEndState();
 }

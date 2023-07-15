@@ -10,4 +10,13 @@ class PathConstraints {
     this.maxAngularVelocity = 540,
     this.maxAngularAcceleration = 720,
   });
+
+  PathConstraints clone() {
+    return PathConstraints(
+      maxVelocity: maxVelocity,
+      maxAcceleration: maxAcceleration,
+      maxAngularVelocity: maxAngularVelocity,
+      maxAngularAcceleration: maxAngularAcceleration,
+    );
+  }
 }

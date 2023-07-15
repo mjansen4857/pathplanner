@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
@@ -8,15 +9,13 @@ import 'package:pathplanner/services/generator/geometry_util.dart';
 
 class PathPlannerPath {
   String name;
-  List<Waypoint> waypoints;
+  List<Waypoint> waypoints = [];
   List<PathPoint> pathPoints = [];
-  PathConstraints globalConstraints;
-  GoalEndState goalEndState;
+  PathConstraints globalConstraints = PathConstraints();
+  GoalEndState goalEndState = GoalEndState();
+  List<ConstraintsZone> constraintZones = [];
 
-  PathPlannerPath.defaultPath({this.name = 'New Path'})
-      : waypoints = [],
-        globalConstraints = PathConstraints(),
-        goalEndState = GoalEndState() {
+  PathPlannerPath.defaultPath({this.name = 'New Path'}) {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),
@@ -61,5 +60,16 @@ class PathPlannerPath {
         ));
       }
     }
+  }
+
+  static List<ConstraintsZone> cloneConstraintZones(
+      List<ConstraintsZone> zones) {
+    List<ConstraintsZone> ret = [];
+
+    for (ConstraintsZone zone in zones) {
+      ret.add(zone.clone());
+    }
+
+    return ret;
   }
 }

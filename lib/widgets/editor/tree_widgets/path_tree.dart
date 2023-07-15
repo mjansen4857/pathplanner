@@ -4,19 +4,20 @@ import 'package:pathplanner/widgets/editor/tree_widgets/constraint_zones_tree.da
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
-import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
-import 'package:pathplanner/widgets/number_text_field.dart';
 
 class PathTree extends StatefulWidget {
   final PathPlannerPath path;
   final ValueChanged<int?>? onWaypointHovered;
   final ValueChanged<int?>? onWaypointSelected;
+  final ValueChanged<int?>? onZoneHovered;
+  final ValueChanged<int?>? onZoneSelected;
   final ValueChanged<int>? onWaypointDeleted;
   final VoidCallback? onSideSwapped;
   final VoidCallback? onPathChanged;
   final WaypointsTreeController? waypointsTreeController;
   final int? initiallySelectedWaypoint;
+  final int? initiallySelectedZone;
 
   const PathTree({
     super.key,
@@ -28,6 +29,9 @@ class PathTree extends StatefulWidget {
     this.waypointsTreeController,
     this.initiallySelectedWaypoint,
     this.onWaypointDeleted,
+    this.onZoneHovered,
+    this.onZoneSelected,
+    this.initiallySelectedZone,
   });
 
   @override
@@ -65,7 +69,7 @@ class _PathTreeState extends State<PathTree> {
             child: Column(
               children: [
                 WaypointsTree(
-                  key: ValueKey(widget.path.waypoints.length),
+                  key: ValueKey('waypoints${widget.path.waypoints.length}'),
                   onWaypointDeleted: widget.onWaypointDeleted,
                   initialSelectedWaypoint: widget.initiallySelectedWaypoint,
                   controller: widget.waypointsTreeController,
@@ -83,7 +87,14 @@ class _PathTreeState extends State<PathTree> {
                   onPathChanged: widget.onPathChanged,
                 ),
                 const EventMarkersTree(),
-                const ConstraintZonesTree(),
+                ConstraintZonesTree(
+                  key: ValueKey('zones${widget.path.constraintZones.length}'),
+                  path: widget.path,
+                  onPathChanged: widget.onPathChanged,
+                  onZoneHovered: widget.onZoneHovered,
+                  onZoneSelected: widget.onZoneSelected,
+                  initiallySelectedZone: widget.initiallySelectedZone,
+                ),
                 // TreeView(
                 //   indent: 16,
                 //   nodes: [

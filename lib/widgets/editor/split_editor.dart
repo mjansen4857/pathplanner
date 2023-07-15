@@ -37,6 +37,8 @@ class _SplitEditorState extends State<SplitEditor> {
       WaypointsTreeController();
   int? _hoveredWaypoint;
   int? _selectedWaypoint;
+  int? _hoveredZone;
+  int? _selectedZone;
   late bool _treeOnRight;
   Waypoint? _draggedPoint;
   Waypoint? _dragOldValue;
@@ -173,6 +175,8 @@ class _SplitEditorState extends State<SplitEditor> {
                           fieldImage: widget.fieldImage,
                           hoveredWaypoint: _hoveredWaypoint,
                           selectedWaypoint: _selectedWaypoint,
+                          hoveredZone: _hoveredZone,
+                          selectedZone: _selectedZone,
                         ),
                       ),
                     ),
@@ -221,6 +225,7 @@ class _SplitEditorState extends State<SplitEditor> {
                   child: PathTree(
                     path: widget.path,
                     initiallySelectedWaypoint: _selectedWaypoint,
+                    initiallySelectedZone: _selectedZone,
                     waypointsTreeController: _waypointsTreeController,
                     onPathChanged: () {
                       setState(() {
@@ -241,6 +246,16 @@ class _SplitEditorState extends State<SplitEditor> {
                     onWaypointSelected: (value) {
                       setState(() {
                         _selectedWaypoint = value;
+                      });
+                    },
+                    onZoneHovered: (value) {
+                      setState(() {
+                        _hoveredZone = value;
+                      });
+                    },
+                    onZoneSelected: (value) {
+                      setState(() {
+                        _selectedZone = value;
                       });
                     },
                   ),
@@ -282,6 +297,8 @@ class _PathPainter extends CustomPainter {
   final FieldImage fieldImage;
   final int? hoveredWaypoint;
   final int? selectedWaypoint;
+  final int? hoveredZone;
+  final int? selectedZone;
 
   static double scale = 1;
 
@@ -290,6 +307,8 @@ class _PathPainter extends CustomPainter {
     required this.fieldImage,
     this.hoveredWaypoint,
     this.selectedWaypoint,
+    this.hoveredZone,
+    this.selectedZone,
   });
 
   @override
@@ -329,6 +348,57 @@ class _PathPainter extends CustomPainter {
     }
 
     canvas.drawPath(p, paint);
+
+    if (selectedZone != null) {
+      paint.color = Colors.orange;
+      paint.strokeWidth = 4;
+      p.reset();
+
+      int startIdx =
+          (path.constraintZones[selectedZone!].minWaypointRelativePos / 0.05)
+              .round();
+      int endIdx = min(
+          (path.constraintZones[selectedZone!].maxWaypointRelativePos / 0.05)
+              .round(),
+          pathPoints.length - 1);
+      Offset start = PathPainterUtil.pointToPixelOffset(
+          pathPoints[startIdx].position, scale, fieldImage);
+      p.moveTo(start.dx, start.dy);
+
+      for (int i = startIdx; i <= endIdx; i++) {
+        Offset pos = PathPainterUtil.pointToPixelOffset(
+            pathPoints[i].position, scale, fieldImage);
+
+        p.lineTo(pos.dx, pos.dy);
+      }
+
+      canvas.drawPath(p, paint);
+    }
+    if (hoveredZone != null && selectedZone != hoveredZone) {
+      paint.color = Colors.deepPurpleAccent;
+      paint.strokeWidth = 4;
+      p.reset();
+
+      int startIdx =
+          (path.constraintZones[hoveredZone!].minWaypointRelativePos / 0.05)
+              .round();
+      int endIdx = min(
+          (path.constraintZones[hoveredZone!].maxWaypointRelativePos / 0.05)
+              .round(),
+          pathPoints.length - 1);
+      Offset start = PathPainterUtil.pointToPixelOffset(
+          pathPoints[startIdx].position, scale, fieldImage);
+      p.moveTo(start.dx, start.dy);
+
+      for (int i = startIdx; i <= endIdx; i++) {
+        Offset pos = PathPainterUtil.pointToPixelOffset(
+            pathPoints[i].position, scale, fieldImage);
+
+        p.lineTo(pos.dx, pos.dy);
+      }
+
+      canvas.drawPath(p, paint);
+    }
   }
 
   void _paintWaypoint(Canvas canvas, double scale, int waypointIdx) {

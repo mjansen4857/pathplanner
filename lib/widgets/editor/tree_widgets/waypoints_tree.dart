@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:function_tree/function_tree.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
@@ -72,7 +70,9 @@ class _WaypointsTreeState extends State<WaypointsTree> {
       _controllers[_selectedWaypoint!].collapse();
     }
     _selectedWaypoint = waypointIdx;
-    _controllers[waypointIdx!].expand();
+    if (waypointIdx != null) {
+      _controllers[waypointIdx].expand();
+    }
     _ignoreExpansionFromTile = false;
   }
 

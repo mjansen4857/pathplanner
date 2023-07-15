@@ -227,6 +227,7 @@ class _SplitEditorState extends State<SplitEditor> {
                         widget.path.generateAndSavePath();
                       });
                     },
+                    onWaypointDeleted: null,
                     onSideSwapped: () => setState(() {
                       _treeOnRight = !_treeOnRight;
                       widget.prefs.setBool(PrefsKeys.treeOnRight, _treeOnRight);

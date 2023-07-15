@@ -11,6 +11,7 @@ class WaypointsTree extends StatefulWidget {
   final PathPlannerPath path;
   final ValueChanged<int?>? onWaypointHovered;
   final ValueChanged<int?>? onWaypointSelected;
+  final ValueChanged<int>? onWaypointDeleted;
   final VoidCallback? onPathChanged;
   final WaypointsTreeController? controller;
   final int? initialSelectedWaypoint;
@@ -23,6 +24,7 @@ class WaypointsTree extends StatefulWidget {
     this.onPathChanged,
     this.controller,
     this.initialSelectedWaypoint,
+    this.onWaypointDeleted,
   });
 
   @override
@@ -126,7 +128,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             ),
           ),
           IconButton(
-            onPressed: null,
+            onPressed: () => widget.onWaypointDeleted?.call(waypointIdx),
             icon: const Icon(Icons.delete_forever),
             color: colorScheme.error,
           ),

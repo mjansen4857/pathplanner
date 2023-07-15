@@ -6,6 +6,7 @@ class PathTree extends StatefulWidget {
   final PathPlannerPath path;
   final ValueChanged<int?>? onWaypointHovered;
   final ValueChanged<int?>? onWaypointSelected;
+  final ValueChanged<int>? onWaypointDeleted;
   final VoidCallback? onSideSwapped;
   final VoidCallback? onPathChanged;
   final WaypointsTreeController? waypointsTreeController;
@@ -20,6 +21,7 @@ class PathTree extends StatefulWidget {
     this.onWaypointSelected,
     this.waypointsTreeController,
     this.initiallySelectedWaypoint,
+    this.onWaypointDeleted,
   });
 
   @override
@@ -57,6 +59,7 @@ class _PathTreeState extends State<PathTree> {
               children: [
                 WaypointsTree(
                   key: ValueKey(widget.path.waypoints.length),
+                  onWaypointDeleted: widget.onWaypointDeleted,
                   initialSelectedWaypoint: widget.initiallySelectedWaypoint,
                   controller: widget.waypointsTreeController,
                   path: widget.path,

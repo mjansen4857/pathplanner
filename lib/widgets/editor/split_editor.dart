@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_simple_treeview/flutter_simple_treeview.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/prefs_keys.dart';
-import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/path_tree.dart';
+import 'package:pathplanner/widgets/editor/waypoints_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SplitEditor extends StatefulWidget {
@@ -26,8 +29,13 @@ class SplitEditor extends StatefulWidget {
 
 class _SplitEditorState extends State<SplitEditor> {
   final MultiSplitViewController _controller = MultiSplitViewController();
+  final WaypointsTreeController _waypointsTreeController =
+      WaypointsTreeController();
   int? _hoveredWaypoint;
+  int? _selectedWaypoint;
   late bool _treeOnRight;
+
+  List<Waypoint> get waypoints => widget.path.waypoints;
 
   @override
   void initState() {
@@ -57,19 +65,51 @@ class _SplitEditorState extends State<SplitEditor> {
       children: [
         Center(
           child: InteractiveViewer(
-            child: Padding(
-              padding: const EdgeInsets.all(48),
-              child: Stack(
-                children: [
-                  widget.fieldImage.getWidget(),
-                  Positioned.fill(
-                    child: PathPainter(
-                      path: widget.path,
-                      fieldImage: widget.fieldImage,
-                      hoveredWaypoint: _hoveredWaypoint,
+            child: GestureDetector(
+              onTapDown: (details) {
+                FocusScopeNode currentScope = FocusScope.of(context);
+                if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+                  FocusManager.instance.primaryFocus!.unfocus();
+                }
+                for (var i = 0; i < waypoints.length; i++) {
+                  Waypoint w = waypoints[i];
+                  if (w.isPointInAnchor(
+                          _xPixelsToMeters(details.localPosition.dx),
+                          _yPixelsToMeters(details.localPosition.dy),
+                          _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                              25, _PathPainter.scale, widget.fieldImage))) ||
+                      w.isPointInNextControl(
+                          _xPixelsToMeters(details.localPosition.dx),
+                          _yPixelsToMeters(details.localPosition.dy),
+                          _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                              20, _PathPainter.scale, widget.fieldImage))) ||
+                      w.isPointInPrevControl(
+                          _xPixelsToMeters(details.localPosition.dx),
+                          _yPixelsToMeters(details.localPosition.dy),
+                          _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                              20, _PathPainter.scale, widget.fieldImage)))) {
+                    _setSelectedWaypoint(i);
+                    return;
+                  }
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(48),
+                child: Stack(
+                  children: [
+                    widget.fieldImage.getWidget(),
+                    Positioned.fill(
+                      child: CustomPaint(
+                        painter: _PathPainter(
+                          path: widget.path,
+                          fieldImage: widget.fieldImage,
+                          hoveredWaypoint: _hoveredWaypoint,
+                          selectedWaypoint: _selectedWaypoint,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -112,6 +152,7 @@ class _SplitEditorState extends State<SplitEditor> {
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
+                    waypointsTreeController: _waypointsTreeController,
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();
@@ -122,9 +163,14 @@ class _SplitEditorState extends State<SplitEditor> {
                       widget.prefs.setBool(PrefsKeys.treeOnRight, _treeOnRight);
                       _controller.areas = _controller.areas.reversed.toList();
                     }),
-                    onWaypointHover: (value) {
+                    onWaypointHovered: (value) {
                       setState(() {
                         _hoveredWaypoint = value;
+                      });
+                    },
+                    onWaypointSelected: (value) {
+                      setState(() {
+                        _selectedWaypoint = value;
                       });
                     },
                   ),
@@ -136,5 +182,191 @@ class _SplitEditorState extends State<SplitEditor> {
         ),
       ],
     );
+  }
+
+  void _setSelectedWaypoint(int? waypointIdx) {
+    setState(() {
+      _selectedWaypoint = waypointIdx;
+    });
+    _waypointsTreeController.setSelectedWaypoint(waypointIdx);
+  }
+
+  double _xPixelsToMeters(double pixels) {
+    return ((pixels - 48) / _PathPainter.scale) /
+        widget.fieldImage.pixelsPerMeter;
+  }
+
+  double _yPixelsToMeters(double pixels) {
+    return (widget.fieldImage.defaultSize.height -
+            ((pixels - 48) / _PathPainter.scale)) /
+        widget.fieldImage.pixelsPerMeter;
+  }
+
+  double _pixelsToMeters(double pixels) {
+    return (pixels / _PathPainter.scale) / widget.fieldImage.pixelsPerMeter;
+  }
+}
+
+class _PathPainter extends CustomPainter {
+  final PathPlannerPath path;
+  final FieldImage fieldImage;
+  final int? hoveredWaypoint;
+  final int? selectedWaypoint;
+
+  static double scale = 1;
+
+  const _PathPainter({
+    required this.path,
+    required this.fieldImage,
+    this.hoveredWaypoint,
+    this.selectedWaypoint,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    scale = size.width / fieldImage.defaultSize.width;
+
+    _paintPathPoints(path.pathPoints, canvas, scale, Colors.grey[300]!);
+
+    for (int i = 0; i < path.waypoints.length; i++) {
+      _paintWaypoint(canvas, scale, i);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return true;
+  }
+
+  void _paintPathPoints(List<PathPoint> pathPoints, Canvas canvas, double scale,
+      Color baseColor) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = baseColor
+      ..strokeWidth = 2;
+
+    Path p = Path();
+
+    Offset start = PathPainterUtil.pointToPixelOffset(
+        pathPoints[0].position, scale, fieldImage);
+    p.moveTo(start.dx, start.dy);
+
+    for (int i = 1; i < pathPoints.length; i++) {
+      Offset pos = PathPainterUtil.pointToPixelOffset(
+          pathPoints[i].position, scale, fieldImage);
+
+      p.lineTo(pos.dx, pos.dy);
+    }
+
+    canvas.drawPath(p, paint);
+  }
+
+  void _paintWaypoint(Canvas canvas, double scale, int waypointIdx) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    if (waypointIdx == selectedWaypoint) {
+      paint.color = Colors.orange;
+    } else if (waypointIdx == hoveredWaypoint) {
+      paint.color = Colors.deepPurpleAccent;
+    } else {
+      paint.color = Colors.grey[700]!;
+    }
+
+    Waypoint waypoint = path.waypoints[waypointIdx];
+
+    //draw control point lines
+    if (waypoint.nextControl != null) {
+      canvas.drawLine(
+          PathPainterUtil.pointToPixelOffset(
+              waypoint.anchor, scale, fieldImage),
+          PathPainterUtil.pointToPixelOffset(
+              waypoint.nextControl!, scale, fieldImage),
+          paint);
+    }
+    if (waypoint.prevControl != null) {
+      canvas.drawLine(
+          PathPainterUtil.pointToPixelOffset(
+              waypoint.anchor, scale, fieldImage),
+          PathPainterUtil.pointToPixelOffset(
+              waypoint.prevControl!, scale, fieldImage),
+          paint);
+    }
+
+    if (waypointIdx == 0) {
+      paint.color = Colors.green;
+    } else if (waypointIdx == path.waypoints.length - 1) {
+      paint.color = Colors.red;
+    } else {
+      paint.color = Colors.grey[300]!;
+    }
+
+    if (waypointIdx == selectedWaypoint) {
+      paint.color = Colors.orange;
+    } else if (waypointIdx == hoveredWaypoint) {
+      paint.color = Colors.deepPurpleAccent;
+    }
+
+    // draw anchor point
+    paint.style = PaintingStyle.fill;
+    canvas.drawCircle(
+        PathPainterUtil.pointToPixelOffset(waypoint.anchor, scale, fieldImage),
+        PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+        paint);
+    paint.style = PaintingStyle.stroke;
+    paint.color = Colors.black;
+    canvas.drawCircle(
+        PathPainterUtil.pointToPixelOffset(waypoint.anchor, scale, fieldImage),
+        PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+        paint);
+
+    // draw control points
+    if (waypoint.nextControl != null) {
+      paint.style = PaintingStyle.fill;
+      if (waypointIdx == selectedWaypoint) {
+        paint.color = Colors.orange;
+      } else if (waypointIdx == hoveredWaypoint) {
+        paint.color = Colors.deepPurpleAccent;
+      } else {
+        paint.color = Colors.grey[300]!;
+      }
+
+      canvas.drawCircle(
+          PathPainterUtil.pointToPixelOffset(
+              waypoint.nextControl!, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
+          paint);
+      paint.style = PaintingStyle.stroke;
+      paint.color = Colors.black;
+      canvas.drawCircle(
+          PathPainterUtil.pointToPixelOffset(
+              waypoint.nextControl!, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
+          paint);
+    }
+    if (waypoint.prevControl != null) {
+      paint.style = PaintingStyle.fill;
+      if (waypointIdx == selectedWaypoint) {
+        paint.color = Colors.orange;
+      } else if (waypointIdx == hoveredWaypoint) {
+        paint.color = Colors.deepPurpleAccent;
+      } else {
+        paint.color = Colors.grey[300]!;
+      }
+
+      canvas.drawCircle(
+          PathPainterUtil.pointToPixelOffset(
+              waypoint.prevControl!, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
+          paint);
+      paint.style = PaintingStyle.stroke;
+      paint.color = Colors.black;
+      canvas.drawCircle(
+          PathPainterUtil.pointToPixelOffset(
+              waypoint.prevControl!, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
+          paint);
+    }
   }
 }

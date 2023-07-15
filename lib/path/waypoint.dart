@@ -144,4 +144,24 @@ class Waypoint {
       nextControl = Point(anchor.x + control.x, anchor.y + control.y);
     }
   }
+
+  bool isPointInAnchor(num xPos, num yPos, num radius) {
+    return pow(xPos - anchor.x, 2) + pow(yPos - anchor.y, 2) < pow(radius, 2);
+  }
+
+  bool isPointInNextControl(num xPos, num yPos, num radius) {
+    if (nextControl != null) {
+      return pow(xPos - nextControl!.x, 2) + pow(yPos - nextControl!.y, 2) <
+          pow(radius, 2);
+    }
+    return false;
+  }
+
+  bool isPointInPrevControl(num xPos, num yPos, num radius) {
+    if (prevControl != null) {
+      return pow(xPos - prevControl!.x, 2) + pow(yPos - prevControl!.y, 2) <
+          pow(radius, 2);
+    }
+    return false;
+  }
 }

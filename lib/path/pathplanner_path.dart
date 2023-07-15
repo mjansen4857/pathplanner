@@ -13,7 +13,7 @@ class PathPlannerPath {
     required this.waypoints,
     this.name = 'New Path',
   }) {
-    _generatePathPoints();
+    generatePathPoints();
   }
 
   PathPlannerPath.defaultPath({this.name = 'New Path'}) : waypoints = [] {
@@ -33,14 +33,14 @@ class PathPlannerPath {
       ),
     ]);
 
-    _generatePathPoints();
+    generatePathPoints();
   }
 
   void generateAndSavePath() {
-    _generatePathPoints();
+    generatePathPoints();
   }
 
-  void _generatePathPoints() {
+  void generatePathPoints() {
     pathPoints.clear();
 
     for (int i = 0; i < waypoints.length - 1; i++) {

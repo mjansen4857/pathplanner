@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_simple_treeview/flutter_simple_treeview.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -5,11 +7,13 @@ import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/prefs_keys.dart';
+import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/path_tree.dart';
 import 'package:pathplanner/widgets/editor/waypoints_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:undo/undo.dart';
 
 class SplitEditor extends StatefulWidget {
   final SharedPreferences prefs;
@@ -34,6 +38,8 @@ class _SplitEditorState extends State<SplitEditor> {
   int? _hoveredWaypoint;
   int? _selectedWaypoint;
   late bool _treeOnRight;
+  Waypoint? _draggedPoint;
+  Waypoint? _dragOldValue;
 
   List<Waypoint> get waypoints => widget.path.waypoints;
 
@@ -66,12 +72,13 @@ class _SplitEditorState extends State<SplitEditor> {
         Center(
           child: InteractiveViewer(
             child: GestureDetector(
+              onDoubleTap: () {},
               onTapDown: (details) {
                 FocusScopeNode currentScope = FocusScope.of(context);
                 if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
                   FocusManager.instance.primaryFocus!.unfocus();
                 }
-                for (var i = 0; i < waypoints.length; i++) {
+                for (int i = waypoints.length - 1; i >= 0; i--) {
                   Waypoint w = waypoints[i];
                   if (w.isPointInAnchor(
                           _xPixelsToMeters(details.localPosition.dx),
@@ -91,6 +98,67 @@ class _SplitEditorState extends State<SplitEditor> {
                     _setSelectedWaypoint(i);
                     return;
                   }
+                }
+              },
+              onPanStart: (details) {
+                for (int i = waypoints.length - 1; i >= 0; i--) {
+                  Waypoint w = waypoints[i];
+                  if (w.startDragging(
+                      _xPixelsToMeters(details.localPosition.dx),
+                      _yPixelsToMeters(details.localPosition.dy),
+                      _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                          25, _PathPainter.scale, widget.fieldImage)),
+                      _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                          20, _PathPainter.scale, widget.fieldImage)),
+                      _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
+                          15, _PathPainter.scale, widget.fieldImage)))) {
+                    _draggedPoint = w;
+                    _dragOldValue = w.clone();
+                    break;
+                  }
+                }
+              },
+              onPanUpdate: (details) {
+                if (_draggedPoint != null) {
+                  setState(() {
+                    _draggedPoint!.dragUpdate(
+                        _xPixelsToMeters(min(
+                            88 +
+                                (widget.fieldImage.defaultSize.width *
+                                    _PathPainter.scale),
+                            max(8, details.localPosition.dx))),
+                        _yPixelsToMeters(min(
+                            88 +
+                                (widget.fieldImage.defaultSize.height *
+                                    _PathPainter.scale),
+                            max(8, details.localPosition.dy))));
+                    widget.path.generatePathPoints();
+                  });
+                }
+              },
+              onPanEnd: (details) {
+                if (_draggedPoint != null) {
+                  _draggedPoint!.stopDragging();
+                  int index = waypoints.indexOf(_draggedPoint!);
+                  Waypoint dragEnd = _draggedPoint!.clone();
+                  UndoRedo.addChange(Change(
+                    _dragOldValue,
+                    () {
+                      setState(() {
+                        if (waypoints[index] != _draggedPoint) {
+                          waypoints[index] = dragEnd.clone();
+                        }
+                        widget.path.generateAndSavePath();
+                      });
+                    },
+                    (oldValue) {
+                      setState(() {
+                        waypoints[index] = oldValue.clone();
+                        widget.path.generateAndSavePath();
+                      });
+                    },
+                  ));
+                  _draggedPoint = null;
                 }
               },
               child: Padding(

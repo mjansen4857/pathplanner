@@ -6,6 +6,10 @@ class Waypoint {
   Point? nextControl;
   bool isLocked;
 
+  bool _isAnchorDragging = false;
+  bool _isPrevControlDragging = false;
+  bool _isNextControlDragging = false;
+
   Waypoint({
     required this.anchor,
     this.prevControl,
@@ -163,5 +167,75 @@ class Waypoint {
           pow(radius, 2);
     }
     return false;
+  }
+
+  bool startDragging(num xPos, num yPos, num anchorRadius, num controlRadius,
+      num holonomicThingRadius) {
+    if (isPointInAnchor(xPos, yPos, anchorRadius)) {
+      return _isAnchorDragging = true;
+    } else if (isPointInNextControl(xPos, yPos, controlRadius)) {
+      return _isNextControlDragging = true;
+    } else if (isPointInPrevControl(xPos, yPos, controlRadius)) {
+      return _isPrevControlDragging = true;
+    }
+    return false;
+  }
+
+  void dragUpdate(num x, num y) {
+    if (_isAnchorDragging && !isLocked) {
+      move(x, y);
+    } else if (_isNextControlDragging) {
+      if (isLocked) {
+        Point lineEnd = nextControl! + (nextControl! - anchor);
+        Point newPoint = _closestPointOnLine(anchor, lineEnd, Point(x, y));
+        if (newPoint.x - anchor.x != 0 || newPoint.y - anchor.y != 0) {
+          nextControl = newPoint;
+        }
+      } else {
+        nextControl = Point(x, y);
+      }
+
+      updatePrevControlFromNext();
+    } else if (_isPrevControlDragging) {
+      if (isLocked) {
+        Point lineEnd = prevControl! + (prevControl! - anchor);
+        Point newPoint = _closestPointOnLine(anchor, lineEnd, Point(x, y));
+        if (newPoint.x - anchor.x != 0 || newPoint.y - anchor.y != 0) {
+          prevControl = newPoint;
+        }
+      } else {
+        prevControl = Point(x, y);
+      }
+
+      updateNextControlFromPrev();
+    }
+  }
+
+  void stopDragging() {
+    _isPrevControlDragging = false;
+    _isNextControlDragging = false;
+    _isAnchorDragging = false;
+  }
+
+  Point _closestPointOnLine(Point lineStart, Point lineEnd, Point p) {
+    var dx = lineEnd.x - lineStart.x;
+    var dy = lineEnd.y - lineStart.y;
+
+    if (dx == 0 || dy == 0) {
+      return lineStart;
+    }
+
+    num t = ((p.x - lineStart.x) * dx + (p.y - lineStart.y) * dy) /
+        (dx * dx + dy * dy);
+
+    Point closestPoint;
+    if (t < 0) {
+      closestPoint = lineStart;
+    } else if (t > 1) {
+      closestPoint = lineEnd;
+    } else {
+      closestPoint = lineStart + ((lineEnd - lineStart) * t);
+    }
+    return closestPoint;
   }
 }

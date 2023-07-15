@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/widgets/editor/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_card_node.dart';
 import 'package:pathplanner/widgets/editor/waypoints_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -55,6 +56,7 @@ class _PathTreeState extends State<PathTree> {
             ],
           ),
         ),
+        const SizedBox(height: 4.0),
         Expanded(
           child: SingleChildScrollView(
             child: Column(
@@ -69,9 +71,13 @@ class _PathTreeState extends State<PathTree> {
                   onWaypointSelected: widget.onWaypointSelected,
                   onPathChanged: widget.onPathChanged,
                 ),
+                GlobalConstraintsTree(
+                  path: widget.path,
+                  onPathChanged: widget.onPathChanged,
+                ),
                 TreeCardNode(
-                  title: const Text('Global Constraints'),
-                  initiallyExpanded: true,
+                  title: const Text('Goal End State'),
+                  initiallyExpanded: false,
                   elevation: 1.0,
                   children: [
                     Padding(
@@ -80,78 +86,35 @@ class _PathTreeState extends State<PathTree> {
                         children: [
                           Expanded(
                             child: NumberTextField(
-                              initialText: widget
-                                  .path.globalConstraints.maxVelocity
-                                  .toStringAsFixed(2),
-                              label: 'Max Velocity (M/S)',
-                              onSubmitted: (value) {
-                                if (value != null) {
-                                  widget.path.globalConstraints.maxVelocity =
-                                      value;
-                                  widget.onPathChanged?.call();
-                                }
-                              },
+                              initialText: 0.toStringAsFixed(2),
+                              label: 'Velocity (M/S)',
+                              onSubmitted: (value) {},
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: NumberTextField(
-                              initialText: widget
-                                  .path.globalConstraints.maxAcceleration
-                                  .toStringAsFixed(2),
-                              label: 'Max Acceleration (M/S²)',
-                              onSubmitted: (value) {
-                                if (value != null) {
-                                  widget.path.globalConstraints
-                                      .maxAcceleration = value;
-                                  widget.onPathChanged?.call();
-                                }
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: NumberTextField(
-                              initialText: widget
-                                  .path.globalConstraints.maxAngularVelocity
-                                  .toStringAsFixed(2),
-                              label: 'Max Angular Velocity (Deg/S)',
-                              onSubmitted: (value) {
-                                if (value != null) {
-                                  widget.path.globalConstraints
-                                      .maxAngularVelocity = value;
-                                  widget.onPathChanged?.call();
-                                }
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: NumberTextField(
-                              initialText: widget
-                                  .path.globalConstraints.maxAngularAcceleration
-                                  .toStringAsFixed(2),
-                              label: 'Max Angular Acceleration (Deg/S²)',
-                              onSubmitted: (value) {
-                                if (value != null) {
-                                  widget.path.globalConstraints
-                                      .maxAngularAcceleration = value;
-                                  widget.onPathChanged?.call();
-                                }
-                              },
+                              initialText: 0.toStringAsFixed(2),
+                              label: 'Rotation (Deg)',
+                              onSubmitted: (value) {},
                             ),
                           ),
                         ],
                       ),
                     ),
                   ],
+                ),
+                const TreeCardNode(
+                  title: Text('Event Markers'),
+                  initiallyExpanded: false,
+                  elevation: 1.0,
+                  children: [],
+                ),
+                const TreeCardNode(
+                  title: Text('Constraint Zones'),
+                  initiallyExpanded: false,
+                  elevation: 1.0,
+                  children: [],
                 ),
                 // TreeView(
                 //   indent: 16,

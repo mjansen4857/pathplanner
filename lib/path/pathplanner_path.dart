@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
@@ -8,15 +9,18 @@ class PathPlannerPath {
   String name;
   List<Waypoint> waypoints;
   List<PathPoint> pathPoints = [];
+  PathConstraints globalConstraints;
 
   PathPlannerPath({
     required this.waypoints,
     this.name = 'New Path',
-  }) {
+  }) : globalConstraints = PathConstraints() {
     generatePathPoints();
   }
 
-  PathPlannerPath.defaultPath({this.name = 'New Path'}) : waypoints = [] {
+  PathPlannerPath.defaultPath({this.name = 'New Path'})
+      : waypoints = [],
+        globalConstraints = PathConstraints() {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),

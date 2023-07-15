@@ -5,6 +5,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_card_node.dart';
+import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
 class WaypointsTree extends StatefulWidget {
@@ -140,9 +141,9 @@ class _WaypointsTreeState extends State<WaypointsTree> {
           child: Row(
             children: [
               Expanded(
-                child: _buildTextField(
-                  _getController(waypoint.anchor.x.toStringAsFixed(2)),
-                  'X Position (M)',
+                child: NumberTextField(
+                  initialText: waypoint.anchor.x.toStringAsFixed(2),
+                  label: 'X Position (M)',
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];
@@ -157,9 +158,9 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildTextField(
-                  _getController(waypoint.anchor.y.toStringAsFixed(2)),
-                  'Y Position (M)',
+                child: NumberTextField(
+                  initialText: waypoint.anchor.y.toStringAsFixed(2),
+                  label: 'Y Position (M)',
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];
@@ -174,10 +175,9 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildTextField(
-                  _getController(
-                      waypoint.getHeadingDegrees().toStringAsFixed(2)),
-                  'Heading (Deg)',
+                child: NumberTextField(
+                  initialText: waypoint.getHeadingDegrees().toStringAsFixed(2),
+                  label: 'Heading (Deg)',
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];
@@ -201,10 +201,10 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
-                    child: _buildTextField(
-                      _getController(
-                          waypoint.getNextControlLength().toStringAsFixed(2)),
-                      'Next Control Length (M)',
+                    child: NumberTextField(
+                      initialText:
+                          waypoint.getNextControlLength().toStringAsFixed(2),
+                      label: 'Next Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
@@ -230,10 +230,10 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
-                    child: _buildTextField(
-                      _getController(
-                          waypoint.getPrevControlLength().toStringAsFixed(2)),
-                      'Previous Control Length (M)',
+                    child: NumberTextField(
+                      initialText:
+                          waypoint.getPrevControlLength().toStringAsFixed(2),
+                      label: 'Previous Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
@@ -259,10 +259,10 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               child: Row(
                 children: [
                   Expanded(
-                    child: _buildTextField(
-                      _getController(
-                          waypoint.getPrevControlLength().toStringAsFixed(2)),
-                      'Previous Control Length (M)',
+                    child: NumberTextField(
+                      initialText:
+                          waypoint.getPrevControlLength().toStringAsFixed(2),
+                      label: 'Previous Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
@@ -278,10 +278,10 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: _buildTextField(
-                      _getController(
-                          waypoint.getNextControlLength().toStringAsFixed(2)),
-                      'Next Control Length (M)',
+                    child: NumberTextField(
+                      initialText:
+                          waypoint.getNextControlLength().toStringAsFixed(2),
+                      label: 'Next Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
@@ -311,48 +311,6 @@ class _WaypointsTreeState extends State<WaypointsTree> {
         ),
       ],
     );
-  }
-
-  Widget _buildTextField(TextEditingController? controller, String label,
-      {ValueChanged? onSubmitted}) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-    return SizedBox(
-      height: 42,
-      child: TextField(
-        onSubmitted: (val) {
-          if (onSubmitted != null) {
-            if (val.isEmpty) {
-              onSubmitted(null);
-            } else {
-              num parsed = val.interpret();
-              onSubmitted(parsed);
-            }
-          }
-          FocusScopeNode currentScope = FocusScope.of(context);
-          if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-            FocusManager.instance.primaryFocus!.unfocus();
-          }
-        },
-        controller: controller,
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(
-              RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
-        ],
-        style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
-        ),
-      ),
-    );
-  }
-
-  TextEditingController _getController(String text) {
-    return TextEditingController(text: text)
-      ..selection =
-          TextSelection.fromPosition(TextPosition(offset: text.length));
   }
 
   Change _waypointChange(

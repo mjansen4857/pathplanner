@@ -13,6 +13,7 @@ class WaypointsTree extends StatefulWidget {
   final ValueChanged<int?>? onWaypointSelected;
   final VoidCallback? onPathChanged;
   final WaypointsTreeController? controller;
+  final int? initialSelectedWaypoint;
 
   const WaypointsTree({
     super.key,
@@ -21,6 +22,7 @@ class WaypointsTree extends StatefulWidget {
     this.onWaypointSelected,
     this.onPathChanged,
     this.controller,
+    this.initialSelectedWaypoint,
   });
 
   @override
@@ -39,10 +41,11 @@ class _WaypointsTreeState extends State<WaypointsTree> {
   void initState() {
     super.initState();
 
+    _selectedWaypoint = widget.initialSelectedWaypoint;
+
     _controllers =
         List.generate(waypoints.length, (index) => ExpansionTileController());
 
-    assert(widget.controller?._state == null);
     _treeController = widget.controller ?? WaypointsTreeController();
     _treeController._state = this;
   }
@@ -87,6 +90,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
       onHoverEnd: () => widget.onWaypointHovered?.call(null),
       elevation: 4.0,
       controller: _controllers[waypointIdx],
+      initiallyExpanded: waypointIdx == _selectedWaypoint,
       onExpansionChanged: (expanded) {
         if (!_ignoreExpansionFromTile) {
           if (expanded ?? false) {

@@ -1,14 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_simple_treeview/flutter_simple_treeview.dart';
-import 'package:function_tree/function_tree.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/undo_redo.dart';
-import 'package:pathplanner/widgets/conditional_widget.dart';
-import 'package:pathplanner/widgets/editor/tree_card_node.dart';
 import 'package:pathplanner/widgets/editor/waypoints_tree.dart';
-import 'package:undo/undo.dart';
 
 class PathTree extends StatefulWidget {
   final PathPlannerPath path;
@@ -17,6 +9,7 @@ class PathTree extends StatefulWidget {
   final VoidCallback? onSideSwapped;
   final VoidCallback? onPathChanged;
   final WaypointsTreeController? waypointsTreeController;
+  final int? initiallySelectedWaypoint;
 
   const PathTree({
     super.key,
@@ -26,6 +19,7 @@ class PathTree extends StatefulWidget {
     this.onPathChanged,
     this.onWaypointSelected,
     this.waypointsTreeController,
+    this.initiallySelectedWaypoint,
   });
 
   @override
@@ -63,6 +57,7 @@ class _PathTreeState extends State<PathTree> {
               children: [
                 WaypointsTree(
                   key: ValueKey(widget.path.waypoints.length),
+                  initialSelectedWaypoint: widget.initiallySelectedWaypoint,
                   controller: widget.waypointsTreeController,
                   path: widget.path,
                   onWaypointHovered: widget.onWaypointHovered,

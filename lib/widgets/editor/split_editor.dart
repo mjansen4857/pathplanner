@@ -220,6 +220,7 @@ class _SplitEditorState extends State<SplitEditor> {
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
+                    initiallySelectedWaypoint: _selectedWaypoint,
                     waypointsTreeController: _waypointsTreeController,
                     onPathChanged: () {
                       setState(() {

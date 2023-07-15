@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/widgets/editor/global_constraints_tree.dart';
-import 'package:pathplanner/widgets/editor/tree_card_node.dart';
-import 'package:pathplanner/widgets/editor/waypoints_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/constraint_zones_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 
 class PathTree extends StatefulWidget {
@@ -75,47 +78,12 @@ class _PathTreeState extends State<PathTree> {
                   path: widget.path,
                   onPathChanged: widget.onPathChanged,
                 ),
-                TreeCardNode(
-                  title: const Text('Goal End State'),
-                  initiallyExpanded: false,
-                  elevation: 1.0,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: NumberTextField(
-                              initialText: 0.toStringAsFixed(2),
-                              label: 'Velocity (M/S)',
-                              onSubmitted: (value) {},
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: NumberTextField(
-                              initialText: 0.toStringAsFixed(2),
-                              label: 'Rotation (Deg)',
-                              onSubmitted: (value) {},
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                GoalEndStateTree(
+                  path: widget.path,
+                  onPathChanged: widget.onPathChanged,
                 ),
-                const TreeCardNode(
-                  title: Text('Event Markers'),
-                  initiallyExpanded: false,
-                  elevation: 1.0,
-                  children: [],
-                ),
-                const TreeCardNode(
-                  title: Text('Constraint Zones'),
-                  initiallyExpanded: false,
-                  elevation: 1.0,
-                  children: [],
-                ),
+                const EventMarkersTree(),
+                const ConstraintZonesTree(),
                 // TreeView(
                 //   indent: 16,
                 //   nodes: [

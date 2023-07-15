@@ -4,7 +4,7 @@ import 'package:function_tree/function_tree.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
-import 'package:pathplanner/widgets/editor/tree_card_node.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 

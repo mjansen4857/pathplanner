@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/widgets/editor/tree_card_node.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 
 class GlobalConstraintsTree extends StatelessWidget {

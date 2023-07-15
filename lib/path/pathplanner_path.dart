@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -10,17 +11,12 @@ class PathPlannerPath {
   List<Waypoint> waypoints;
   List<PathPoint> pathPoints = [];
   PathConstraints globalConstraints;
-
-  PathPlannerPath({
-    required this.waypoints,
-    this.name = 'New Path',
-  }) : globalConstraints = PathConstraints() {
-    generatePathPoints();
-  }
+  GoalEndState goalEndState;
 
   PathPlannerPath.defaultPath({this.name = 'New Path'})
       : waypoints = [],
-        globalConstraints = PathConstraints() {
+        globalConstraints = PathConstraints(),
+        goalEndState = GoalEndState() {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),

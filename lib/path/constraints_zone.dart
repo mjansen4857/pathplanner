@@ -15,6 +15,12 @@ class ConstraintsZone {
 
   ConstraintsZone.defaultZone() : this(constraints: PathConstraints());
 
+  ConstraintsZone.fromJson(Map<String, dynamic> json)
+      : name = json['name'] ?? 'New Constraints Zone',
+        minWaypointRelativePos = json['minWaypointRelativePos'],
+        maxWaypointRelativePos = json['maxWaypointRelativePos'],
+        constraints = PathConstraints.fromJson(json['constraints'] ?? {});
+
   ConstraintsZone clone() {
     return ConstraintsZone(
       minWaypointRelativePos: minWaypointRelativePos,
@@ -22,5 +28,14 @@ class ConstraintsZone {
       constraints: constraints.clone(),
       name: name,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'minWaypointRelativePos': minWaypointRelativePos,
+      'maxWaypointRelativePos': maxWaypointRelativePos,
+      'constraints': constraints.toJson(),
+    };
   }
 }

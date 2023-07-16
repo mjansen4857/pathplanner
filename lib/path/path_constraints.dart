@@ -11,6 +11,12 @@ class PathConstraints {
     this.maxAngularAcceleration = 720,
   });
 
+  PathConstraints.fromJson(Map<String, dynamic> json)
+      : maxVelocity = json['maxVelocity'] ?? 3,
+        maxAcceleration = json['maxAcceleration'] ?? 3,
+        maxAngularVelocity = json['maxAngularVelocity'] ?? 540,
+        maxAngularAcceleration = json['maxAngularAcceleration'] ?? 720;
+
   PathConstraints clone() {
     return PathConstraints(
       maxVelocity: maxVelocity,
@@ -18,5 +24,14 @@ class PathConstraints {
       maxAngularVelocity: maxAngularVelocity,
       maxAngularAcceleration: maxAngularAcceleration,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'maxVelocity': maxVelocity,
+      'maxAcceleration': maxAcceleration,
+      'maxAngularVelocity': maxAngularVelocity,
+      'maxAngularAcceleration': maxAngularAcceleration,
+    };
   }
 }

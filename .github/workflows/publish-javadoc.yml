@@ -1,8 +1,7 @@
 name: Publish PathPlannerLib Javadoc
 
 on:
-  release:
-    types: [released]
+  workflow_dispatch
 
 jobs:
   build-and-deploy:

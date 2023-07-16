@@ -22,3 +22,4 @@ jobs:
           BRANCH: gh-pages
           FOLDER: pathplannerlib/build/docs/javadoc
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
+          MESSAGE: Publish docs from PathPlannerLib version ${{ github.event.release.tag_name }}

@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_simple_treeview/flutter_simple_treeview.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -43,6 +42,8 @@ class _SplitEditorState extends State<SplitEditor> {
   Waypoint? _draggedPoint;
   Waypoint? _dragOldValue;
 
+  late num _robotRadius;
+
   List<Waypoint> get waypoints => widget.path.waypoints;
 
   @override
@@ -50,6 +51,10 @@ class _SplitEditorState extends State<SplitEditor> {
     super.initState();
 
     _treeOnRight = widget.prefs.getBool(PrefsKeys.treeOnRight) ?? true;
+
+    var width = widget.prefs.getDouble(PrefsKeys.robotWidth) ?? 0.75;
+    var length = widget.prefs.getDouble(PrefsKeys.robotLength) ?? 1.0;
+    _robotRadius = sqrt((width * width) + (length * length)) / 2.0;
 
     double treeWeight =
         widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ?? 0.5;
@@ -177,6 +182,7 @@ class _SplitEditorState extends State<SplitEditor> {
                           selectedWaypoint: _selectedWaypoint,
                           hoveredZone: _hoveredZone,
                           selectedZone: _selectedZone,
+                          robotRadius: _robotRadius,
                         ),
                       ),
                     ),
@@ -299,6 +305,7 @@ class _PathPainter extends CustomPainter {
   final int? selectedWaypoint;
   final int? hoveredZone;
   final int? selectedZone;
+  final num? robotRadius;
 
   static double scale = 1;
 
@@ -309,11 +316,14 @@ class _PathPainter extends CustomPainter {
     this.selectedWaypoint,
     this.hoveredZone,
     this.selectedZone,
+    this.robotRadius,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     scale = size.width / fieldImage.defaultSize.width;
+
+    _paintRadius(canvas, scale);
 
     _paintPathPoints(path.pathPoints, canvas, scale, Colors.grey[300]!);
 
@@ -325,6 +335,22 @@ class _PathPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true;
+  }
+
+  void _paintRadius(Canvas canvas, double scale) {
+    if (robotRadius != null && selectedWaypoint != null) {
+      var paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..color = Colors.grey[800]!
+        ..strokeWidth = 2;
+
+      canvas.drawCircle(
+          PathPainterUtil.pointToPixelOffset(
+              path.waypoints[selectedWaypoint!].anchor, scale, fieldImage),
+          PathPainterUtil.metersToPixels(
+              robotRadius!.toDouble(), scale, fieldImage),
+          paint);
+    }
   }
 
   void _paintPathPoints(List<PathPoint> pathPoints, Canvas canvas, double scale,

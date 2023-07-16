@@ -5,6 +5,7 @@ import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
+import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:undo/undo.dart';
 
 class ConstraintZonesTree extends StatefulWidget {
@@ -94,7 +95,13 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
       },
       title: Row(
         children: [
-          Text('Constraints Zone $zoneIdx'),
+          RenamableTitle(
+            title: constraintZones[zoneIdx].name,
+            onRename: (value) {
+              constraintZones[zoneIdx].name = value;
+              widget.onPathChanged?.call();
+            },
+          ),
           Expanded(child: Container()),
           Visibility(
             visible: _selectedZone == null,

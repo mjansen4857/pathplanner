@@ -5,11 +5,13 @@ class ConstraintsZone {
   num maxWaypointRelativePos;
   PathConstraints constraints;
 
-  ConstraintsZone({
-    this.minWaypointRelativePos = 0,
-    this.maxWaypointRelativePos = 0,
-    required this.constraints,
-  });
+  String name;
+
+  ConstraintsZone(
+      {this.minWaypointRelativePos = 0,
+      this.maxWaypointRelativePos = 0,
+      required this.constraints,
+      this.name = 'New Constraints Zone'});
 
   ConstraintsZone.defaultZone() : this(constraints: PathConstraints());
 
@@ -18,6 +20,7 @@ class ConstraintsZone {
       minWaypointRelativePos: minWaypointRelativePos,
       maxWaypointRelativePos: maxWaypointRelativePos,
       constraints: constraints.clone(),
+      name: name,
     );
   }
 }

@@ -1,0 +1,26 @@
+name: Publish PathPlannerLib Javadoc
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Build PathPlannerLib
+        working-directory: pathplannerlib
+        run: |
+            ./gradlew build -PreleaseMode
+            ./gradlew publish -PreleaseMode
+  push-docs:
+    needs: [build]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Deploy generated Javadoc to GitHub Pages
+        uses: s0/git-publish-subdir-action@v2.6.0
+        env:
+          REPO: git@github.com:jasonli0616/pathplanner.git #change to git@github.com:mjansen4857/pathplanner.git before merge
+          BRANCH: gh-pages
+          FOLDER: pathplannerlib/build/docs/javadoc
+          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}

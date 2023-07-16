@@ -4,18 +4,26 @@ import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
+import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
 
 class PathPlannerPath {
   String name;
-  List<Waypoint> waypoints = [];
-  List<PathPoint> pathPoints = [];
-  PathConstraints globalConstraints = PathConstraints();
-  GoalEndState goalEndState = GoalEndState();
-  List<ConstraintsZone> constraintZones = [];
+  List<Waypoint> waypoints;
+  List<PathPoint> pathPoints;
+  PathConstraints globalConstraints;
+  GoalEndState goalEndState;
+  List<ConstraintsZone> constraintZones;
+  List<RotationTarget> rotationTargets;
 
-  PathPlannerPath.defaultPath({this.name = 'New Path'}) {
+  PathPlannerPath.defaultPath({this.name = 'New Path'})
+      : waypoints = [],
+        pathPoints = [],
+        globalConstraints = PathConstraints(),
+        goalEndState = GoalEndState(),
+        constraintZones = [],
+        rotationTargets = [] {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),

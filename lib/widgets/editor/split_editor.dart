@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/prefs_keys.dart';
 import 'package:pathplanner/services/undo_redo.dart';
@@ -38,6 +39,8 @@ class _SplitEditorState extends State<SplitEditor> {
   int? _selectedWaypoint;
   int? _hoveredZone;
   int? _selectedZone;
+  int? _hoveredRotTarget;
+  int? _selectedRotTarget;
   late bool _treeOnRight;
   Waypoint? _draggedPoint;
   Waypoint? _dragOldValue;
@@ -182,6 +185,8 @@ class _SplitEditorState extends State<SplitEditor> {
                           selectedWaypoint: _selectedWaypoint,
                           hoveredZone: _hoveredZone,
                           selectedZone: _selectedZone,
+                          hoveredRotTarget: _hoveredRotTarget,
+                          selectedRotTarget: _selectedRotTarget,
                           robotSize: _robotSize,
                         ),
                       ),
@@ -232,6 +237,7 @@ class _SplitEditorState extends State<SplitEditor> {
                     path: widget.path,
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
+                    initiallySelectedRotTarget: _selectedRotTarget,
                     waypointsTreeController: _waypointsTreeController,
                     onPathChanged: () {
                       setState(() {
@@ -262,6 +268,16 @@ class _SplitEditorState extends State<SplitEditor> {
                     onZoneSelected: (value) {
                       setState(() {
                         _selectedZone = value;
+                      });
+                    },
+                    onRotTargetHovered: (value) {
+                      setState(() {
+                        _hoveredRotTarget = value;
+                      });
+                    },
+                    onRotTargetSelected: (value) {
+                      setState(() {
+                        _selectedRotTarget = value;
                       });
                     },
                   ),
@@ -305,6 +321,8 @@ class _PathPainter extends CustomPainter {
   final int? selectedWaypoint;
   final int? hoveredZone;
   final int? selectedZone;
+  final int? hoveredRotTarget;
+  final int? selectedRotTarget;
   final Size robotSize;
 
   late num robotRadius;
@@ -318,6 +336,8 @@ class _PathPainter extends CustomPainter {
     this.selectedWaypoint,
     this.hoveredZone,
     this.selectedZone,
+    this.hoveredRotTarget,
+    this.selectedRotTarget,
     required this.robotSize,
   }) {
     robotRadius = sqrt((robotSize.width * robotSize.width) +
@@ -346,6 +366,27 @@ class _PathPainter extends CustomPainter {
   }
 
   void _paintRotations(Canvas canvas, double scale) {
+    for (int i = 0; i < path.rotationTargets.length; i++) {
+      int pointIdx =
+          (path.rotationTargets[i].waypointRelativePos / 0.05).round();
+
+      Color rotationColor = Colors.grey[700]!;
+      if (selectedRotTarget == i) {
+        rotationColor = Colors.orange;
+      } else if (hoveredRotTarget == i) {
+        rotationColor = Colors.deepPurpleAccent;
+      }
+
+      _paintRobotOutline(
+          path.pathPoints[pointIdx].position,
+          path.rotationTargets[i].rotationDegrees,
+          robotSize,
+          canvas,
+          scale,
+          rotationColor,
+          fieldImage);
+    }
+
     _paintRobotOutline(
         path.waypoints[path.waypoints.length - 1].anchor,
         path.goalEndState.rotation,

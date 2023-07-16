@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
-import 'package:undo/undo.dart';
 
 class ConstraintZonesTree extends StatefulWidget {
   final PathPlannerPath path;
@@ -49,7 +47,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Constraint Zones'),
-      initiallyExpanded: true,
+      initiallyExpanded: false,
       elevation: 1.0,
       children: [
         const Center(
@@ -172,7 +170,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             },
           ),
         ],
-      ), // TODO: Allow custom names
+      ),
       initiallyExpanded: zoneIdx == _selectedZone,
       elevation: 4.0,
       children: [

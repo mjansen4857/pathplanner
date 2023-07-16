@@ -42,7 +42,7 @@ class _SplitEditorState extends State<SplitEditor> {
   Waypoint? _draggedPoint;
   Waypoint? _dragOldValue;
 
-  late num _robotRadius;
+  late Size _robotSize;
 
   List<Waypoint> get waypoints => widget.path.waypoints;
 
@@ -54,7 +54,7 @@ class _SplitEditorState extends State<SplitEditor> {
 
     var width = widget.prefs.getDouble(PrefsKeys.robotWidth) ?? 0.75;
     var length = widget.prefs.getDouble(PrefsKeys.robotLength) ?? 1.0;
-    _robotRadius = sqrt((width * width) + (length * length)) / 2.0;
+    _robotSize = Size(width, length);
 
     double treeWeight =
         widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ?? 0.5;
@@ -182,7 +182,7 @@ class _SplitEditorState extends State<SplitEditor> {
                           selectedWaypoint: _selectedWaypoint,
                           hoveredZone: _hoveredZone,
                           selectedZone: _selectedZone,
-                          robotRadius: _robotRadius,
+                          robotSize: _robotSize,
                         ),
                       ),
                     ),
@@ -305,19 +305,25 @@ class _PathPainter extends CustomPainter {
   final int? selectedWaypoint;
   final int? hoveredZone;
   final int? selectedZone;
-  final num? robotRadius;
+  final Size robotSize;
+
+  late num robotRadius;
 
   static double scale = 1;
 
-  const _PathPainter({
+  _PathPainter({
     required this.path,
     required this.fieldImage,
     this.hoveredWaypoint,
     this.selectedWaypoint,
     this.hoveredZone,
     this.selectedZone,
-    this.robotRadius,
-  });
+    required this.robotSize,
+  }) {
+    robotRadius = sqrt((robotSize.width * robotSize.width) +
+            (robotSize.height * robotSize.height)) /
+        2.0;
+  }
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -326,6 +332,8 @@ class _PathPainter extends CustomPainter {
     _paintRadius(canvas, scale);
 
     _paintPathPoints(path.pathPoints, canvas, scale, Colors.grey[300]!);
+
+    _paintRotations(canvas, scale);
 
     for (int i = 0; i < path.waypoints.length; i++) {
       _paintWaypoint(canvas, scale, i);
@@ -337,8 +345,64 @@ class _PathPainter extends CustomPainter {
     return true;
   }
 
+  void _paintRotations(Canvas canvas, double scale) {
+    _paintRobotOutline(
+        path.waypoints[path.waypoints.length - 1].anchor,
+        path.goalEndState.rotation,
+        robotSize,
+        canvas,
+        scale,
+        Colors.red.withOpacity(0.5),
+        fieldImage);
+  }
+
+  void _paintRobotOutline(Point position, num rotationDegrees, Size robotSize,
+      Canvas canvas, double scale, Color color, FieldImage fieldImage) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = color
+      ..strokeWidth = 2;
+
+    Offset center =
+        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage);
+    num angle = -rotationDegrees / 180 * pi;
+    double halfWidth =
+        PathPainterUtil.metersToPixels(robotSize.width / 2, scale, fieldImage);
+    double halfLength =
+        PathPainterUtil.metersToPixels(robotSize.height / 2, scale, fieldImage);
+
+    Offset l = Offset(center.dx + (halfWidth * sin(angle)),
+        center.dy - (halfWidth * cos(angle)));
+    Offset r = Offset(center.dx - (halfWidth * sin(angle)),
+        center.dy + (halfWidth * cos(angle)));
+
+    Offset frontLeft = Offset(
+        l.dx + (halfLength * cos(angle)), l.dy + (halfLength * sin(angle)));
+    Offset backLeft = Offset(
+        l.dx - (halfLength * cos(angle)), l.dy - (halfLength * sin(angle)));
+    Offset frontRight = Offset(
+        r.dx + (halfLength * cos(angle)), r.dy + (halfLength * sin(angle)));
+    Offset backRight = Offset(
+        r.dx - (halfLength * cos(angle)), r.dy - (halfLength * sin(angle)));
+
+    canvas.drawLine(backLeft, frontLeft, paint);
+    canvas.drawLine(frontLeft, frontRight, paint);
+    canvas.drawLine(frontRight, backRight, paint);
+    canvas.drawLine(backRight, backLeft, paint);
+
+    Offset frontMiddle = frontLeft + ((frontRight - frontLeft) * 0.5);
+    paint.style = PaintingStyle.fill;
+    canvas.drawCircle(frontMiddle,
+        PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
+    paint.style = PaintingStyle.stroke;
+    paint.strokeWidth = 1;
+    paint.color = Colors.black;
+    canvas.drawCircle(frontMiddle,
+        PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
+  }
+
   void _paintRadius(Canvas canvas, double scale) {
-    if (robotRadius != null && selectedWaypoint != null) {
+    if (selectedWaypoint != null) {
       var paint = Paint()
         ..style = PaintingStyle.stroke
         ..color = Colors.grey[800]!

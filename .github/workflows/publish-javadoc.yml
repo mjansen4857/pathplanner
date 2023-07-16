@@ -17,7 +17,7 @@ jobs:
       - name: Deploy generated Javadoc to GitHub Pages
         uses: s0/git-publish-subdir-action@v2.6.0
         env:
-          REPO: git@github.com:jasonli0616/pathplanner.git #change to git@github.com:mjansen4857/pathplanner.git before merge
+          REPO: git@github.com:mjansen4857/pathplanner.git
           FOLDER: pathplannerlib/build/docs/javadoc
           BRANCH: gh-pages
           TARGET_DIR: docs/java

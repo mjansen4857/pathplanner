@@ -96,6 +96,62 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
         children: [
           Text('Constraints Zone $zoneIdx'),
           Expanded(child: Container()),
+          Visibility(
+            visible: _selectedZone == null,
+            child: IconButton(
+              icon: const Icon(Icons.expand_less),
+              color: colorScheme.onSurface,
+              onPressed: zoneIdx == 0
+                  ? null
+                  : () {
+                      var temp = constraintZones[zoneIdx - 1];
+                      constraintZones[zoneIdx - 1] = constraintZones[zoneIdx];
+                      constraintZones[zoneIdx] = temp;
+
+                      var tempController = _controllers[zoneIdx - 1];
+                      _controllers[zoneIdx - 1] = _controllers[zoneIdx];
+                      _controllers[zoneIdx] = tempController;
+
+                      if (_selectedZone == zoneIdx) {
+                        _selectedZone = zoneIdx - 1;
+                        widget.onZoneSelected?.call(_selectedZone);
+                      } else if (_selectedZone == zoneIdx - 1) {
+                        _selectedZone = zoneIdx;
+                        widget.onZoneSelected?.call(_selectedZone);
+                      }
+
+                      widget.onPathChanged?.call();
+                    },
+            ),
+          ),
+          Visibility(
+            visible: _selectedZone == null,
+            child: IconButton(
+              icon: const Icon(Icons.expand_more),
+              color: colorScheme.onSurface,
+              onPressed: zoneIdx == constraintZones.length - 1
+                  ? null
+                  : () {
+                      var temp = constraintZones[zoneIdx + 1];
+                      constraintZones[zoneIdx + 1] = constraintZones[zoneIdx];
+                      constraintZones[zoneIdx] = temp;
+
+                      var tempController = _controllers[zoneIdx + 1];
+                      _controllers[zoneIdx + 1] = _controllers[zoneIdx];
+                      _controllers[zoneIdx] = tempController;
+
+                      if (_selectedZone == zoneIdx) {
+                        _selectedZone = zoneIdx + 1;
+                        widget.onZoneSelected?.call(_selectedZone);
+                      } else if (_selectedZone == zoneIdx + 1) {
+                        _selectedZone = zoneIdx;
+                        widget.onZoneSelected?.call(_selectedZone);
+                      }
+
+                      widget.onPathChanged?.call();
+                    },
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.delete_forever),
             color: colorScheme.error,

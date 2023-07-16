@@ -19,7 +19,8 @@ jobs:
         uses: s0/git-publish-subdir-action@v2.6.0
         env:
           REPO: git@github.com:jasonli0616/pathplanner.git #change to git@github.com:mjansen4857/pathplanner.git before merge
-          BRANCH: gh-pages
           FOLDER: pathplannerlib/build/docs/javadoc
+          BRANCH: gh-pages
+          TARGET_DIR: docs/java
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
           MESSAGE: Publish docs from PathPlannerLib version ${{ github.event.release.tag_name }}

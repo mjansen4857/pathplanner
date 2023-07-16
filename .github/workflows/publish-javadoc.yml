@@ -5,7 +5,7 @@ on:
     types: [released]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repo
@@ -15,10 +15,6 @@ jobs:
         run: |
             ./gradlew build -PreleaseMode
             ./gradlew publish -PreleaseMode
-  push-docs:
-    needs: [build]
-    runs-on: ubuntu-22.04
-    steps:
       - name: Deploy generated Javadoc to GitHub Pages
         uses: s0/git-publish-subdir-action@v2.6.0
         env:

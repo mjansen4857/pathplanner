@@ -1,4 +1,4 @@
-name: Publish PathPlannerLib Javadoc
+name: Publish documentation to GitHub Pages
 
 on:
   workflow_dispatch
@@ -14,6 +14,16 @@ jobs:
         run: |
             ./gradlew build -PreleaseMode
             ./gradlew publish -PreleaseMode
+      - name: Get Doxygen theme
+        working-directory: pathplannerlib
+        run: |
+            git submodule add https://github.com/jothepro/doxygen-awesome-css.git
+            cd doxygen-awesome-css
+            git checkout v2.2.1
+      - name: Generate Doxygen docs
+        uses: mattnotmitt/doxygen-action@v1.9.5
+        with:
+          working-directory: pathplannerlib
       - name: Deploy generated Javadoc to GitHub Pages
         uses: s0/git-publish-subdir-action@v2.6.0
         env:

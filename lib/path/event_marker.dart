@@ -13,7 +13,7 @@ class EventMarker {
   });
 
   EventMarker.defaultMarker()
-      : this(command: ParallelCommandGroup(commands: []));
+      : this(command: SequentialCommandGroup(commands: []));
 
   EventMarker.fromJson(Map<String, dynamic> json)
       : this(

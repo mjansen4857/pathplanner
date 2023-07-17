@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/command.dart';
+import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/named_command.dart';
+import 'package:pathplanner/commands/none_command.dart';
+import 'package:pathplanner/commands/wait_command.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/widgets/editor/tree_widgets/command_card.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/sequential_group_widget.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 
@@ -132,14 +139,73 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             widget.onPathChanged?.call();
           },
         ),
-        CommandCard(
-          command: markers[markerIdx].command,
-          onCommandChanged: (cmd) {
-            markers[markerIdx].command = cmd;
+        _buildCommandCard(markerIdx),
+      ],
+    );
+  }
+
+  Widget _buildCommandCard(int markerIdx) {
+    Command command = markers[markerIdx].command;
+
+    if (command is WaitCommand) {
+      return Card(
+        elevation: 1.0,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+          child: WaitCommandWidget(
+            command: command,
+            onUpdated: () => widget.onPathChanged?.call(),
+            onRemoved: () {
+              markers[markerIdx].command = const NoneCommand();
+              widget.onPathChanged?.call();
+            },
+          ),
+        ),
+      );
+    } else if (command is NamedCommand) {
+      return Card(
+        elevation: 1.0,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
+          child: NamedCommandWidget(
+            command: command,
+            onUpdated: () => widget.onPathChanged?.call(),
+            onRemoved: () {
+              markers[markerIdx].command = const NoneCommand();
+              widget.onPathChanged?.call();
+            },
+          ),
+        ),
+      );
+    } else if (command is SequentialCommandGroup) {
+      return Card(
+        elevation: 1.0,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SequentialGroupWidget(
+            command: command,
+            removable: false,
+            onUpdated: () => widget.onPathChanged?.call(),
+            onRemoved: () {
+              markers[markerIdx].command = const NoneCommand();
+              widget.onPathChanged?.call();
+            },
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      elevation: 1.0,
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
+        child: AddCommandButton(
+          onTypeChosen: (type) {
+            markers[markerIdx].command = Command.defaultFromType(type);
             widget.onPathChanged?.call();
           },
         ),
-      ],
+      ),
     );
   }
 }

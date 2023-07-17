@@ -43,19 +43,18 @@ abstract class Command {
     return const NoneCommand();
   }
 
-  Command switchType(String newType) {
-    // TODO: change to preserve commands if switching type of group
-    if (newType == 'named') {
+  static Command defaultFromType(String type) {
+    if (type == 'named') {
       return NamedCommand();
-    } else if (newType == 'wait') {
+    } else if (type == 'wait') {
       return WaitCommand();
-    } else if (newType == 'sequential') {
+    } else if (type == 'sequential') {
       return SequentialCommandGroup(commands: []);
-    } else if (newType == 'parallel') {
+    } else if (type == 'parallel') {
       return ParallelCommandGroup(commands: []);
-    } else if (newType == 'race') {
+    } else if (type == 'race') {
       return RaceCommandGroup(commands: []);
-    } else if (newType == 'deadline') {
+    } else if (type == 'deadline') {
       return DeadlineCommandGroup(deadline: WaitCommand(), commands: []);
     }
 

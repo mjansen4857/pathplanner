@@ -5,12 +5,14 @@ import 'package:function_tree/function_tree.dart';
 class NumberTextField extends StatelessWidget {
   final String initialText;
   final String label;
+  final double height;
   final ValueChanged<num?>? onSubmitted;
 
   const NumberTextField({
     super.key,
     required this.initialText,
     required this.label,
+    this.height = 42,
     this.onSubmitted,
   });
 
@@ -19,7 +21,7 @@ class NumberTextField extends StatelessWidget {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return SizedBox(
-      height: 42,
+      height: height,
       child: TextField(
         onSubmitted: (val) {
           if (val.isEmpty) {
@@ -42,7 +44,7 @@ class NumberTextField extends StatelessWidget {
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
           labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(4)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );

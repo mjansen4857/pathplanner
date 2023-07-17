@@ -30,13 +30,6 @@ jobs:
         with:
           working-directory: pathplannerlib
 
-      - name: Modify cpp documentation file structure
-        working-directory: pathplannerlib
-        run: |
-          mv build/docs/cpp/html build/docs/tempcpp
-          rmdir build/docs/cpp
-          mv build/docs/tempcpp build/docs/cpp
-
       - name: Deploy generated documentation to GitHub Pages
         uses: s0/git-publish-subdir-action@v2.6.0
         env:

@@ -1,7 +1,8 @@
 name: Publish documentation to GitHub Pages
 
 on:
-  workflow_dispatch
+  release:
+    types: [released]
 
 jobs:
   build-and-deploy:
@@ -27,7 +28,7 @@ jobs:
       - name: Deploy generated documentation to GitHub Pages
         uses: s0/git-publish-subdir-action@v2.6.0
         env:
-          REPO: git@github.com:mjansen4857/pathplanner.git
+          REPO: git@github.com:jasonli0616/pathplanner.git
           FOLDER: pathplannerlib/build/docs
           BRANCH: gh-pages
           TARGET_DIR: docs

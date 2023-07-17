@@ -11,6 +11,7 @@ class CommandGroupWidget extends StatelessWidget {
   final CommandGroup command;
   final VoidCallback onUpdated;
   final VoidCallback? onRemoved;
+  final ValueChanged<String> onGroupTypeChanged;
   final double subCommandElevation;
   final bool removable;
 
@@ -18,6 +19,7 @@ class CommandGroupWidget extends StatelessWidget {
     super.key,
     required this.command,
     required this.onUpdated,
+    required this.onGroupTypeChanged,
     this.onRemoved,
     this.subCommandElevation = 4.0,
     this.removable = true,
@@ -34,14 +36,58 @@ class CommandGroupWidget extends StatelessWidget {
       children: [
         Row(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 8.0),
-              child: Text('$type Group', style: const TextStyle(fontSize: 16)),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Material(
+                color: Colors.transparent,
+                child: PopupMenuButton(
+                  initialValue: command.type,
+                  tooltip: '',
+                  elevation: 12.0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  onSelected: onGroupTypeChanged,
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'sequential',
+                      child: Text('Sequential Group'),
+                    ),
+                    PopupMenuItem(
+                      value: 'parallel',
+                      child: Text('Parallel Group'),
+                    ),
+                    PopupMenuItem(
+                      value: 'deadline',
+                      child: Text('Deadline Group'),
+                    ),
+                    PopupMenuItem(
+                      value: 'race',
+                      child: Text('Race Group'),
+                    ),
+                  ],
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('$type Group',
+                            style: const TextStyle(fontSize: 16)),
+                        const Icon(Icons.arrow_drop_down),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
+            // Padding(
+            //   padding: const EdgeInsets.only(left: 8.0),
+            //   child: Text('$type Group', style: const TextStyle(fontSize: 16)),
+            // ),
             Expanded(child: Container()),
             AddCommandButton(
               onTypeChosen: (value) {
-                command.commands.add(Command.defaultFromType(value));
+                command.commands.add(Command.fromType(value));
                 onUpdated.call();
               },
             ),
@@ -129,6 +175,12 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated: onUpdated,
         onRemoved: () {
           command.commands.removeAt(cmdIndex);
+          onUpdated.call();
+        },
+        onGroupTypeChanged: (value) {
+          List<Command> cmds =
+              (command.commands[cmdIndex] as CommandGroup).commands;
+          command.commands[cmdIndex] = Command.fromType(value, commands: cmds);
           onUpdated.call();
         },
       );

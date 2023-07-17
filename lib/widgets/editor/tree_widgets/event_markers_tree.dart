@@ -186,6 +186,12 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             command: command,
             removable: false,
             onUpdated: () => widget.onPathChanged?.call(),
+            onGroupTypeChanged: (value) {
+              List<Command> cmds = command.commands;
+              markers[markerIdx].command =
+                  Command.fromType(value, commands: cmds);
+              widget.onPathChanged?.call();
+            },
           ),
         ),
       );
@@ -197,7 +203,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
         padding: const EdgeInsets.all(14.0),
         child: AddCommandButton(
           onTypeChosen: (type) {
-            markers[markerIdx].command = Command.defaultFromType(type);
+            markers[markerIdx].command = Command.fromType(type);
             widget.onPathChanged?.call();
           },
         ),

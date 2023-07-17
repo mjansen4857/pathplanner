@@ -43,19 +43,19 @@ abstract class Command {
     return const NoneCommand();
   }
 
-  static Command defaultFromType(String type) {
+  static Command fromType(String type, {List<Command>? commands}) {
     if (type == 'named') {
       return NamedCommand();
     } else if (type == 'wait') {
       return WaitCommand();
     } else if (type == 'sequential') {
-      return SequentialCommandGroup(commands: []);
+      return SequentialCommandGroup(commands: commands ?? []);
     } else if (type == 'parallel') {
-      return ParallelCommandGroup(commands: []);
+      return ParallelCommandGroup(commands: commands ?? []);
     } else if (type == 'race') {
-      return RaceCommandGroup(commands: []);
+      return RaceCommandGroup(commands: commands ?? []);
     } else if (type == 'deadline') {
-      return DeadlineCommandGroup(commands: []);
+      return DeadlineCommandGroup(commands: commands ?? []);
     }
 
     return const NoneCommand();

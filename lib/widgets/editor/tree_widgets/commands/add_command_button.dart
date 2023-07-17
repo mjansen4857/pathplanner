@@ -14,6 +14,10 @@ class AddCommandButton extends StatelessWidget {
 
     return PopupMenuButton(
       tooltip: 'Add Command',
+      elevation: 12.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       icon: Icon(Icons.add, color: colorScheme.primary),
       itemBuilder: (context) => _getMenuEntries(),
       position: PopupMenuPosition.under,

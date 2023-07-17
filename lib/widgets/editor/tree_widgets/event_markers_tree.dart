@@ -9,7 +9,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
-import 'package:pathplanner/widgets/editor/tree_widgets/commands/sequential_group_widget.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -177,19 +177,15 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
           ),
         ),
       );
-    } else if (command is SequentialCommandGroup) {
+    } else if (command is CommandGroup) {
       return Card(
         elevation: 1.0,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: SequentialGroupWidget(
+          child: CommandGroupWidget(
             command: command,
             removable: false,
             onUpdated: () => widget.onPathChanged?.call(),
-            onRemoved: () {
-              markers[markerIdx].command = const NoneCommand();
-              widget.onPathChanged?.call();
-            },
           ),
         ),
       );

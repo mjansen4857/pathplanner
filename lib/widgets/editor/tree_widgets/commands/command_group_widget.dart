@@ -7,14 +7,14 @@ import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_but
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
 
-class SequentialGroupWidget extends StatelessWidget {
-  final SequentialCommandGroup command;
+class CommandGroupWidget extends StatelessWidget {
+  final CommandGroup command;
   final VoidCallback onUpdated;
   final VoidCallback? onRemoved;
   final double subCommandElevation;
   final bool removable;
 
-  const SequentialGroupWidget({
+  const CommandGroupWidget({
     super.key,
     required this.command,
     required this.onUpdated,
@@ -27,13 +27,16 @@ class SequentialGroupWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
+    String type =
+        '${command.type[0].toUpperCase()}${command.type.substring(1)}';
+
     return Column(
       children: [
         Row(
           children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 8.0),
-              child: Text('Sequential Group', style: TextStyle(fontSize: 16)),
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Text('$type Group', style: const TextStyle(fontSize: 16)),
             ),
             Expanded(child: Container()),
             AddCommandButton(
@@ -119,9 +122,9 @@ class SequentialGroupWidget extends StatelessWidget {
           onUpdated.call();
         },
       );
-    } else if (command.commands[cmdIndex] is SequentialCommandGroup) {
-      return SequentialGroupWidget(
-        command: command.commands[cmdIndex] as SequentialCommandGroup,
+    } else if (command.commands[cmdIndex] is CommandGroup) {
+      return CommandGroupWidget(
+        command: command.commands[cmdIndex] as CommandGroup,
         subCommandElevation: (subCommandElevation == 1.0) ? 4.0 : 1.0,
         onUpdated: onUpdated,
         onRemoved: () {

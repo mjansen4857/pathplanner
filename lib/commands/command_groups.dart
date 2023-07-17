@@ -64,28 +64,14 @@ class RaceCommandGroup extends CommandGroup {
 }
 
 class DeadlineCommandGroup extends CommandGroup {
-  Command deadline;
-
-  DeadlineCommandGroup({required this.deadline, required super.commands})
-      : super(type: 'deadline');
+  DeadlineCommandGroup({required super.commands}) : super(type: 'deadline');
 
   DeadlineCommandGroup.fromDataJson(Map<String, dynamic> json)
-      : deadline = Command.fromJson(json['deadlineCmd'] ?? {}),
-        super.fromDataJson(json, type: 'deadline');
-
-  @override
-  Map<String, dynamic> dataToJson() {
-    return {
-      'deadlineCmd': deadline.toJson(),
-      'commands': [
-        for (Command command in commands) command.toJson(),
-      ],
-    };
-  }
+      : super.fromDataJson(json, type: 'deadline');
 
   @override
   Command clone() {
-    return DeadlineCommandGroup(deadline: deadline, commands: [
+    return DeadlineCommandGroup(commands: [
       for (Command command in commands) command.clone(),
     ]);
   }

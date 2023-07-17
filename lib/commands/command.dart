@@ -55,7 +55,7 @@ abstract class Command {
     } else if (type == 'race') {
       return RaceCommandGroup(commands: []);
     } else if (type == 'deadline') {
-      return DeadlineCommandGroup(deadline: WaitCommand(), commands: []);
+      return DeadlineCommandGroup(commands: []);
     }
 
     return const NoneCommand();

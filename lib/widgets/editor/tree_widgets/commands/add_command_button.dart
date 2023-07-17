@@ -41,10 +41,10 @@ class AddCommandButton extends StatelessWidget {
         value: 'parallel',
         child: Text('Parallel Command Group'),
       ),
-      // PopupMenuItem(
-      //   value: 'deadline',
-      //   child: Text('Parallel Deadline Group'),
-      // ),
+      PopupMenuItem(
+        value: 'deadline',
+        child: Text('Parallel Deadline Group'),
+      ),
       PopupMenuItem(
         value: 'race',
         child: Text('Parallel Race Group'),

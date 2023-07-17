@@ -24,13 +24,13 @@ jobs:
         uses: mattnotmitt/doxygen-action@v1.9.5
         with:
           working-directory: pathplannerlib
-      - name: Deploy generated Javadoc to GitHub Pages
+      - name: Deploy generated documentation to GitHub Pages
         uses: s0/git-publish-subdir-action@v2.6.0
         env:
           REPO: git@github.com:mjansen4857/pathplanner.git
-          FOLDER: pathplannerlib/build/docs/javadoc
+          FOLDER: pathplannerlib/build/docs
           BRANCH: gh-pages
-          TARGET_DIR: docs/java
+          TARGET_DIR: docs
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
-          MESSAGE: Publish Java docs from PathPlannerLib
+          MESSAGE: Publish docs from PathPlannerLib
           SQUASH_HISTORY: true

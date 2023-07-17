@@ -46,7 +46,13 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Rotation Targets'),
-      initiallyExpanded: true,
+      initiallyExpanded: widget.path.rotationTargetsExpanded,
+      onExpansionChanged: (value) {
+        if (value != null) {
+          widget.path.rotationTargetsExpanded = value;
+          widget.onPathChanged?.call();
+        }
+      },
       elevation: 1.0,
       children: [
         for (int i = 0; i < rotations.length; i++) _buildRotationCard(i),

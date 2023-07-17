@@ -17,7 +17,13 @@ class GlobalConstraintsTree extends StatelessWidget {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Global Constraints'),
-      initiallyExpanded: false,
+      initiallyExpanded: path.globalConstraintsExpanded,
+      onExpansionChanged: (value) {
+        if (value != null) {
+          path.globalConstraintsExpanded = value;
+          onPathChanged?.call();
+        }
+      },
       elevation: 1.0,
       children: [
         Padding(

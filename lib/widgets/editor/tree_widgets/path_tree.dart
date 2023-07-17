@@ -15,6 +15,8 @@ class PathTree extends StatefulWidget {
   final ValueChanged<int?>? onZoneSelected;
   final ValueChanged<int?>? onRotTargetHovered;
   final ValueChanged<int?>? onRotTargetSelected;
+  final ValueChanged<int?>? onMarkerHovered;
+  final ValueChanged<int?>? onMarkerSelected;
   final ValueChanged<int>? onWaypointDeleted;
   final VoidCallback? onSideSwapped;
   final VoidCallback? onPathChanged;
@@ -22,6 +24,7 @@ class PathTree extends StatefulWidget {
   final int? initiallySelectedWaypoint;
   final int? initiallySelectedZone;
   final int? initiallySelectedRotTarget;
+  final int? initiallySelectedMarker;
 
   const PathTree({
     super.key,
@@ -39,6 +42,9 @@ class PathTree extends StatefulWidget {
     this.onRotTargetHovered,
     this.onRotTargetSelected,
     this.initiallySelectedRotTarget,
+    this.onMarkerHovered,
+    this.onMarkerSelected,
+    this.initiallySelectedMarker,
   });
 
   @override
@@ -102,7 +108,14 @@ class _PathTreeState extends State<PathTree> {
                   onTargetSelected: widget.onRotTargetSelected,
                   initiallySelectedTarget: widget.initiallySelectedRotTarget,
                 ),
-                const EventMarkersTree(),
+                EventMarkersTree(
+                  key: ValueKey('markers${widget.path.eventMarkers.length}'),
+                  path: widget.path,
+                  onPathChanged: widget.onPathChanged,
+                  onMarkerHovered: widget.onMarkerHovered,
+                  onMarkerSelected: widget.onMarkerSelected,
+                  initiallySelectedMarker: widget.initiallySelectedMarker,
+                ),
                 ConstraintZonesTree(
                   key: ValueKey('zones${widget.path.constraintZones.length}'),
                   path: widget.path,

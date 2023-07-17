@@ -47,7 +47,13 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Constraint Zones'),
-      initiallyExpanded: false,
+      initiallyExpanded: widget.path.constraintZonesExpanded,
+      onExpansionChanged: (value) {
+        if (value != null) {
+          widget.path.constraintZonesExpanded = value;
+          widget.onPathChanged?.call();
+        }
+      },
       elevation: 1.0,
       children: [
         const Center(

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:pathplanner/path/constraints_zone.dart';
+import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
@@ -16,6 +17,15 @@ class PathPlannerPath {
   GoalEndState goalEndState;
   List<ConstraintsZone> constraintZones;
   List<RotationTarget> rotationTargets;
+  List<EventMarker> eventMarkers;
+
+  // Stuff used for UI
+  bool waypointsExpanded = false;
+  bool globalConstraintsExpanded = false;
+  bool goalEndStateExpanded = false;
+  bool rotationTargetsExpanded = false;
+  bool eventMarkersExpanded = false;
+  bool constraintZonesExpanded = false;
 
   PathPlannerPath.defaultPath({this.name = 'New Path'})
       : waypoints = [],
@@ -23,7 +33,8 @@ class PathPlannerPath {
         globalConstraints = PathConstraints(),
         goalEndState = GoalEndState(),
         constraintZones = [],
-        rotationTargets = [] {
+        rotationTargets = [],
+        eventMarkers = [] {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),
@@ -70,14 +81,29 @@ class PathPlannerPath {
     }
   }
 
+  static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {
+    return [
+      for (Waypoint waypoint in waypoints) waypoint.clone(),
+    ];
+  }
+
   static List<ConstraintsZone> cloneConstraintZones(
       List<ConstraintsZone> zones) {
-    List<ConstraintsZone> ret = [];
+    return [
+      for (ConstraintsZone zone in zones) zone.clone(),
+    ];
+  }
 
-    for (ConstraintsZone zone in zones) {
-      ret.add(zone.clone());
-    }
+  static List<RotationTarget> cloneRotationTargets(
+      List<RotationTarget> targets) {
+    return [
+      for (RotationTarget target in targets) target.clone(),
+    ];
+  }
 
-    return ret;
+  static List<EventMarker> cloneEventMarkers(List<EventMarker> markers) {
+    return [
+      for (EventMarker marker in markers) marker.clone(),
+    ];
   }
 }

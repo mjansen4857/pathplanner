@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
-import 'package:undo/undo.dart';
 
 class GoalEndStateTree extends StatelessWidget {
   final PathPlannerPath path;
@@ -19,7 +17,13 @@ class GoalEndStateTree extends StatelessWidget {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Goal End State'),
-      initiallyExpanded: false,
+      initiallyExpanded: path.goalEndStateExpanded,
+      onExpansionChanged: (value) {
+        if (value != null) {
+          path.goalEndStateExpanded = value;
+          onPathChanged?.call();
+        }
+      },
       elevation: 1.0,
       children: [
         Padding(

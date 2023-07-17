@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/prefs_keys.dart';
 import 'package:pathplanner/services/undo_redo.dart';
@@ -41,6 +40,8 @@ class _SplitEditorState extends State<SplitEditor> {
   int? _selectedZone;
   int? _hoveredRotTarget;
   int? _selectedRotTarget;
+  int? _hoveredMarker;
+  int? _selectedMarker;
   late bool _treeOnRight;
   Waypoint? _draggedPoint;
   Waypoint? _dragOldValue;
@@ -187,6 +188,8 @@ class _SplitEditorState extends State<SplitEditor> {
                           selectedZone: _selectedZone,
                           hoveredRotTarget: _hoveredRotTarget,
                           selectedRotTarget: _selectedRotTarget,
+                          hoveredMarker: _hoveredMarker,
+                          selectedMarker: _selectedMarker,
                           robotSize: _robotSize,
                         ),
                       ),
@@ -238,6 +241,7 @@ class _SplitEditorState extends State<SplitEditor> {
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
                     initiallySelectedRotTarget: _selectedRotTarget,
+                    initiallySelectedMarker: _selectedMarker,
                     waypointsTreeController: _waypointsTreeController,
                     onPathChanged: () {
                       setState(() {
@@ -278,6 +282,16 @@ class _SplitEditorState extends State<SplitEditor> {
                     onRotTargetSelected: (value) {
                       setState(() {
                         _selectedRotTarget = value;
+                      });
+                    },
+                    onMarkerHovered: (value) {
+                      setState(() {
+                        _hoveredMarker = value;
+                      });
+                    },
+                    onMarkerSelected: (value) {
+                      setState(() {
+                        _selectedMarker = value;
                       });
                     },
                   ),
@@ -323,6 +337,8 @@ class _PathPainter extends CustomPainter {
   final int? selectedZone;
   final int? hoveredRotTarget;
   final int? selectedRotTarget;
+  final int? hoveredMarker;
+  final int? selectedMarker;
   final Size robotSize;
 
   late num robotRadius;
@@ -338,6 +354,8 @@ class _PathPainter extends CustomPainter {
     this.selectedZone,
     this.hoveredRotTarget,
     this.selectedRotTarget,
+    this.hoveredMarker,
+    this.selectedMarker,
     required this.robotSize,
   }) {
     robotRadius = sqrt((robotSize.width * robotSize.width) +
@@ -355,6 +373,8 @@ class _PathPainter extends CustomPainter {
 
     _paintRotations(canvas, scale);
 
+    _paintMarkers(canvas);
+
     for (int i = 0; i < path.waypoints.length; i++) {
       _paintWaypoint(canvas, scale, i);
     }
@@ -363,6 +383,24 @@ class _PathPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true;
+  }
+
+  void _paintMarkers(Canvas canvas) {
+    for (int i = 0; i < path.eventMarkers.length; i++) {
+      int pointIdx = (path.eventMarkers[i].waypointRelativePos / 0.05).round();
+
+      Color markerColor = Colors.grey[700]!;
+      if (selectedMarker == i) {
+        markerColor = Colors.orange;
+      } else if (hoveredMarker == i) {
+        markerColor = Colors.deepPurpleAccent;
+      }
+
+      Offset markerPos = PathPainterUtil.pointToPixelOffset(
+          path.pathPoints[pointIdx].position, scale, fieldImage);
+
+      PathPainterUtil.paintMarker(canvas, markerPos, markerColor);
+    }
   }
 
   void _paintRotations(Canvas canvas, double scale) {
@@ -377,28 +415,16 @@ class _PathPainter extends CustomPainter {
         rotationColor = Colors.deepPurpleAccent;
       }
 
-      _paintRobotOutline(
-          path.pathPoints[pointIdx].position,
-          path.rotationTargets[i].rotationDegrees,
-          robotSize,
-          canvas,
-          scale,
-          rotationColor,
-          fieldImage);
+      _paintRobotOutline(path.pathPoints[pointIdx].position,
+          path.rotationTargets[i].rotationDegrees, canvas, rotationColor);
     }
 
-    _paintRobotOutline(
-        path.waypoints[path.waypoints.length - 1].anchor,
-        path.goalEndState.rotation,
-        robotSize,
-        canvas,
-        scale,
-        Colors.red.withOpacity(0.5),
-        fieldImage);
+    _paintRobotOutline(path.waypoints[path.waypoints.length - 1].anchor,
+        path.goalEndState.rotation, canvas, Colors.red.withOpacity(0.5));
   }
 
-  void _paintRobotOutline(Point position, num rotationDegrees, Size robotSize,
-      Canvas canvas, double scale, Color color, FieldImage fieldImage) {
+  void _paintRobotOutline(
+      Point position, num rotationDegrees, Canvas canvas, Color color) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = color
@@ -453,7 +479,7 @@ class _PathPainter extends CustomPainter {
           PathPainterUtil.pointToPixelOffset(
               path.waypoints[selectedWaypoint!].anchor, scale, fieldImage),
           PathPainterUtil.metersToPixels(
-              robotRadius!.toDouble(), scale, fieldImage),
+              robotRadius.toDouble(), scale, fieldImage),
           paint);
     }
   }

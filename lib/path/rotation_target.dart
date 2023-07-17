@@ -17,4 +17,11 @@ class RotationTarget {
       'rotationDegrees': rotationDegrees,
     };
   }
+
+  RotationTarget clone() {
+    return RotationTarget(
+      waypointRelativePos: waypointRelativePos,
+      rotationDegrees: rotationDegrees,
+    );
+  }
 }

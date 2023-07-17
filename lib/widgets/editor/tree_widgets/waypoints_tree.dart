@@ -55,7 +55,13 @@ class _WaypointsTreeState extends State<WaypointsTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Waypoints'),
-      initiallyExpanded: true,
+      initiallyExpanded: widget.path.waypointsExpanded,
+      onExpansionChanged: (value) {
+        if (value != null) {
+          widget.path.waypointsExpanded = value;
+          widget.onPathChanged?.call();
+        }
+      },
       elevation: 1.0,
       children: [
         for (int w = 0; w < waypoints.length; w++) _buildWaypointTreeNode(w),

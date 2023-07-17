@@ -8,26 +8,35 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-22.04
     steps:
+
       - name: Checkout repo
         uses: actions/checkout@v3
+
       - name: Build PathPlannerLib
         working-directory: pathplannerlib
         run: |
             ./gradlew build -PreleaseMode
             ./gradlew publish -PreleaseMode
+
       - name: Get Doxygen theme
         working-directory: pathplannerlib
         run: |
             git submodule add https://github.com/jothepro/doxygen-awesome-css.git
             cd doxygen-awesome-css
             git checkout v2.2.1
+
       - name: Generate Doxygen docs
         uses: mattnotmitt/doxygen-action@v1.9.5
         with:
           working-directory: pathplannerlib
+
       - name: Modify cpp documentation file structure
         working-directory: pathplannerlib
-        run: mv build/docs/cpp/html/* build/docs/cpp/*
+        run: |
+          mv build/docs/cpp/html build/docs/tempcpp
+          rmdir build/docs/cpp
+          mv build/docs/tempcpp build/docs/cpp
+
       - name: Deploy generated documentation to GitHub Pages
         uses: s0/git-publish-subdir-action@v2.6.0
         env:

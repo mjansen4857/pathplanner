@@ -28,6 +28,14 @@ class Waypoint {
     return heading;
   }
 
+  bool isStartPoint() {
+    return prevControl == null;
+  }
+
+  bool isEndPoint() {
+    return nextControl == null;
+  }
+
   num getHeadingDegrees() {
     return getHeadingRadians() * 180 / pi;
   }

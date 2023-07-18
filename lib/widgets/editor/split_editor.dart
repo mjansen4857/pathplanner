@@ -2,8 +2,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
+import 'package:pathplanner/path/constraints_zone.dart';
+import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/prefs_keys.dart';
 import 'package:pathplanner/services/undo_redo.dart';
@@ -248,7 +251,80 @@ class _SplitEditorState extends State<SplitEditor> {
                         widget.path.generateAndSavePath();
                       });
                     },
-                    onWaypointDeleted: null,
+                    onWaypointDeleted: (waypointIdx) {
+                      UndoRedo.addChange(Change(
+                        [
+                          PathPlannerPath.cloneWaypoints(widget.path.waypoints),
+                          PathPlannerPath.cloneConstraintZones(
+                              widget.path.constraintZones),
+                          PathPlannerPath.cloneEventMarkers(
+                              widget.path.eventMarkers),
+                          PathPlannerPath.cloneRotationTargets(
+                              widget.path.rotationTargets),
+                        ],
+                        () {
+                          setState(() {
+                            _selectedWaypoint = null;
+                            _hoveredWaypoint = null;
+                            _waypointsTreeController.setSelectedWaypoint(null);
+
+                            Waypoint w =
+                                widget.path.waypoints.removeAt(waypointIdx);
+
+                            if (w.isEndPoint()) {
+                              waypoints[widget.path.waypoints.length - 1]
+                                  .nextControl = null;
+                            } else if (w.isStartPoint()) {
+                              waypoints[0].prevControl = null;
+                            }
+
+                            for (ConstraintsZone zone
+                                in widget.path.constraintZones) {
+                              zone.minWaypointRelativePos =
+                                  _adjustWaypointRelativePos(
+                                      zone.minWaypointRelativePos, waypointIdx);
+                              zone.maxWaypointRelativePos =
+                                  _adjustWaypointRelativePos(
+                                      zone.maxWaypointRelativePos, waypointIdx);
+                            }
+
+                            for (EventMarker m in widget.path.eventMarkers) {
+                              m.waypointRelativePos =
+                                  _adjustWaypointRelativePos(
+                                      m.waypointRelativePos, waypointIdx);
+                            }
+
+                            for (RotationTarget t
+                                in widget.path.rotationTargets) {
+                              t.waypointRelativePos =
+                                  _adjustWaypointRelativePos(
+                                      t.waypointRelativePos, waypointIdx);
+                            }
+
+                            widget.path.generateAndSavePath();
+                          });
+                        },
+                        (oldValue) {
+                          setState(() {
+                            _selectedWaypoint = null;
+                            _hoveredWaypoint = null;
+                            _waypointsTreeController.setSelectedWaypoint(null);
+
+                            widget.path.waypoints =
+                                PathPlannerPath.cloneWaypoints(oldValue[0]);
+                            widget.path.constraintZones =
+                                PathPlannerPath.cloneConstraintZones(
+                                    oldValue[1]);
+                            widget.path.eventMarkers =
+                                PathPlannerPath.cloneEventMarkers(oldValue[2]);
+                            widget.path.rotationTargets =
+                                PathPlannerPath.cloneRotationTargets(
+                                    oldValue[3]);
+                            widget.path.generateAndSavePath();
+                          });
+                        },
+                      ));
+                    },
                     onSideSwapped: () => setState(() {
                       _treeOnRight = !_treeOnRight;
                       widget.prefs.setBool(PrefsKeys.treeOnRight, _treeOnRight);
@@ -303,6 +379,26 @@ class _SplitEditorState extends State<SplitEditor> {
         ),
       ],
     );
+  }
+
+  num _adjustWaypointRelativePos(num pos, int deletedWaypointIdx) {
+    if (pos >= deletedWaypointIdx + 1) {
+      return pos - 1.0;
+    } else if (pos >= deletedWaypointIdx) {
+      int segment = pos.floor();
+      double segmentPct = pos % 1.0;
+
+      return max(
+          (((segment - 0.5) + (segmentPct / 2.0)) * 20).round() / 20.0, 0.0);
+    } else if (pos > deletedWaypointIdx - 1) {
+      int segment = pos.floor();
+      double segmentPct = pos % 1.0;
+
+      return min(widget.path.waypoints.length - 1,
+          ((segment + (0.5 * segmentPct)) * 20).round() / 20.0);
+    }
+
+    return pos;
   }
 
   void _setSelectedWaypoint(int? waypointIdx) {

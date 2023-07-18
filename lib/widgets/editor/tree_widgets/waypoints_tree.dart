@@ -314,7 +314,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               style: ElevatedButton.styleFrom(
                 elevation: 4.0,
               ),
-              label: const Text('Insert New Waypoint'),
+              label: const Text('Insert New Waypoint After'),
             ),
           ),
         ),

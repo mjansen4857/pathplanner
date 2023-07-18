@@ -37,6 +37,7 @@ class TreeCardNode extends StatelessWidget {
           child: ExpansionTile(
             title: title,
             controller: controller,
+            maintainState: true,
             onExpansionChanged: onExpansionChanged,
             initiallyExpanded: initiallyExpanded,
             controlAffinity: ListTileControlAffinity.leading,

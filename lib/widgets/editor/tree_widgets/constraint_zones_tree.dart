@@ -53,6 +53,10 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
       onExpansionChanged: (value) {
         if (value != null) {
           widget.path.constraintZonesExpanded = value;
+          if (value == false) {
+            _selectedZone = null;
+            widget.onZoneSelected?.call(null);
+          }
           widget.onPathChanged?.call();
         }
       },

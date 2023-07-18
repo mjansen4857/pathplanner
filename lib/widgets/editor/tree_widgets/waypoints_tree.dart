@@ -37,6 +37,8 @@ class _WaypointsTreeState extends State<WaypointsTree> {
   int? _selectedWaypoint;
   late WaypointsTreeController _treeController;
   bool _ignoreExpansionFromTile = false;
+  final ExpansionTileController _expansionController =
+      ExpansionTileController();
 
   @override
   void initState() {
@@ -56,9 +58,14 @@ class _WaypointsTreeState extends State<WaypointsTree> {
     return TreeCardNode(
       title: const Text('Waypoints'),
       initiallyExpanded: widget.path.waypointsExpanded,
+      controller: _expansionController,
       onExpansionChanged: (value) {
         if (value != null) {
           widget.path.waypointsExpanded = value;
+          if (value == false) {
+            _selectedWaypoint = null;
+            widget.onWaypointSelected?.call(null);
+          }
           widget.onPathChanged?.call();
         }
       },
@@ -305,16 +312,19 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               ),
             ),
           ),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: ElevatedButton.icon(
-              onPressed: null,
-              icon: const Icon(Icons.add),
-              style: ElevatedButton.styleFrom(
-                elevation: 4.0,
+        Visibility(
+          visible: waypointIdx != waypoints.length - 1,
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: ElevatedButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.add),
+                style: ElevatedButton.styleFrom(
+                  elevation: 4.0,
+                ),
+                label: const Text('Insert New Waypoint After'),
               ),
-              label: const Text('Insert New Waypoint After'),
             ),
           ),
         ),
@@ -350,5 +360,8 @@ class WaypointsTreeController {
   void setSelectedWaypoint(int? waypointIdx) {
     assert(_state != null);
     _state!._setSelectedWaypoint(waypointIdx);
+    if (waypointIdx != null) {
+      _state!._expansionController.expand();
+    }
   }
 }

@@ -61,6 +61,10 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
       onExpansionChanged: (value) {
         if (value != null) {
           widget.path.eventMarkersExpanded = value;
+          if (value == false) {
+            _selectedMarker = null;
+            widget.onMarkerSelected?.call(null);
+          }
           widget.onPathChanged?.call();
         }
       },

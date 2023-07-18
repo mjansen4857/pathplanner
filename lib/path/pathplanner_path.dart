@@ -61,6 +61,17 @@ class PathPlannerPath {
     generatePathPoints();
   }
 
+  void addWaypoint(Point anchorPos) {
+    waypoints[waypoints.length - 1].addNextControl();
+    waypoints.add(
+      Waypoint(
+        prevControl:
+            (waypoints[waypoints.length - 1].nextControl! + anchorPos) * 0.5,
+        anchor: anchorPos,
+      ),
+    );
+  }
+
   void _addNamedCommandsToSet(Command command) {
     if (command is NamedCommand) {
       if (command.name != null) {

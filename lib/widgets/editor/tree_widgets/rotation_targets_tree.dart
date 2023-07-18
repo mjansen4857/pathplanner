@@ -52,6 +52,10 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
       onExpansionChanged: (value) {
         if (value != null) {
           widget.path.rotationTargetsExpanded = value;
+          if (value == false) {
+            _selectedTarget = null;
+            widget.onTargetSelected?.call(null);
+          }
           widget.onPathChanged?.call();
         }
       },

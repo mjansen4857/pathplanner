@@ -113,6 +113,28 @@ class _SplitEditorState extends State<SplitEditor> {
                     return;
                   }
                 }
+                _setSelectedWaypoint(null);
+              },
+              onDoubleTapDown: (details) {
+                UndoRedo.addChange(Change(
+                  PathPlannerPath.cloneWaypoints(waypoints),
+                  () {
+                    setState(() {
+                      widget.path.addWaypoint(Point(
+                          _xPixelsToMeters(details.localPosition.dx),
+                          _yPixelsToMeters(details.localPosition.dy)));
+                      widget.path.generateAndSavePath();
+                    });
+                  },
+                  (oldValue) {
+                    setState(() {
+                      widget.path.waypoints =
+                          PathPlannerPath.cloneWaypoints(oldValue);
+                      _setSelectedWaypoint(null);
+                      widget.path.generateAndSavePath();
+                    });
+                  },
+                ));
               },
               onPanStart: (details) {
                 for (int i = waypoints.length - 1; i >= 0; i--) {
@@ -281,23 +303,23 @@ class _SplitEditorState extends State<SplitEditor> {
                             for (ConstraintsZone zone
                                 in widget.path.constraintZones) {
                               zone.minWaypointRelativePos =
-                                  _adjustWaypointRelativePos(
+                                  _adjustDeletedWaypointRelativePos(
                                       zone.minWaypointRelativePos, waypointIdx);
                               zone.maxWaypointRelativePos =
-                                  _adjustWaypointRelativePos(
+                                  _adjustDeletedWaypointRelativePos(
                                       zone.maxWaypointRelativePos, waypointIdx);
                             }
 
                             for (EventMarker m in widget.path.eventMarkers) {
                               m.waypointRelativePos =
-                                  _adjustWaypointRelativePos(
+                                  _adjustDeletedWaypointRelativePos(
                                       m.waypointRelativePos, waypointIdx);
                             }
 
                             for (RotationTarget t
                                 in widget.path.rotationTargets) {
                               t.waypointRelativePos =
-                                  _adjustWaypointRelativePos(
+                                  _adjustDeletedWaypointRelativePos(
                                       t.waypointRelativePos, waypointIdx);
                             }
 
@@ -381,7 +403,7 @@ class _SplitEditorState extends State<SplitEditor> {
     );
   }
 
-  num _adjustWaypointRelativePos(num pos, int deletedWaypointIdx) {
+  num _adjustDeletedWaypointRelativePos(num pos, int deletedWaypointIdx) {
     if (pos >= deletedWaypointIdx + 1) {
       return pos - 1.0;
     } else if (pos >= deletedWaypointIdx) {
@@ -405,6 +427,7 @@ class _SplitEditorState extends State<SplitEditor> {
     setState(() {
       _selectedWaypoint = waypointIdx;
     });
+
     _waypointsTreeController.setSelectedWaypoint(waypointIdx);
   }
 

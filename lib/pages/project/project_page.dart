@@ -31,8 +31,6 @@ class _ProjectPageState extends State<ProjectPage> {
   void initState() {
     super.initState();
 
-    print('init');
-
     double leftWeight =
         widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ?? 0.5;
     _pathGridCount = _getCrossAxisCountForWeight(leftWeight);

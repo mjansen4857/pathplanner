@@ -35,7 +35,6 @@ class _PathPreviewPainter extends StatelessWidget {
   final FieldImage fieldImage;
 
   const _PathPreviewPainter({
-    super.key,
     required this.path,
     required this.fieldImage,
   });

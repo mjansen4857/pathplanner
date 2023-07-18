@@ -17,4 +17,8 @@ class GoalEndState {
       'rotation': rotation,
     };
   }
+
+  GoalEndState clone() {
+    return GoalEndState(velocity: velocity, rotation: rotation);
+  }
 }

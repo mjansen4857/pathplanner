@@ -38,7 +38,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                       path.globalConstraints.maxVelocity.toStringAsFixed(2),
                   label: 'Max Velocity (M/S)',
                   onSubmitted: (value) {
-                    if (value != null) {
+                    if (value != null && value > 0) {
                       _addChange(
                           () => path.globalConstraints.maxVelocity = value);
                     }
@@ -52,7 +52,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                       path.globalConstraints.maxAcceleration.toStringAsFixed(2),
                   label: 'Max Acceleration (M/S²)',
                   onSubmitted: (value) {
-                    if (value != null) {
+                    if (value != null && value > 0) {
                       _addChange(
                           () => path.globalConstraints.maxAcceleration = value);
                     }
@@ -73,7 +73,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                       .toStringAsFixed(2),
                   label: 'Max Angular Velocity (Deg/S)',
                   onSubmitted: (value) {
-                    if (value != null) {
+                    if (value != null && value > 0) {
                       _addChange(() =>
                           path.globalConstraints.maxAngularVelocity = value);
                     }
@@ -87,7 +87,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                       .toStringAsFixed(2),
                   label: 'Max Angular Acceleration (Deg/S²)',
                   onSubmitted: (value) {
-                    if (value != null) {
+                    if (value != null && value > 0) {
                       _addChange(() => path
                           .globalConstraints.maxAngularAcceleration = value);
                     }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
+import 'package:undo/undo.dart';
 
 class GoalEndStateTree extends StatelessWidget {
   final PathPlannerPath path;
@@ -35,9 +37,8 @@ class GoalEndStateTree extends StatelessWidget {
                   initialText: path.goalEndState.velocity.toStringAsFixed(2),
                   label: 'Velocity (M/S)',
                   onSubmitted: (value) {
-                    if (value != null) {
-                      path.goalEndState.velocity = value;
-                      onPathChanged?.call();
+                    if (value != null && value >= 0) {
+                      _addChange(() => path.goalEndState.velocity = value);
                     }
                   },
                 ),
@@ -49,8 +50,7 @@ class GoalEndStateTree extends StatelessWidget {
                   label: 'Rotation (Deg)',
                   onSubmitted: (value) {
                     if (value != null) {
-                      path.goalEndState.rotation = value;
-                      onPathChanged?.call();
+                      _addChange(() => path.goalEndState.rotation = value);
                     }
                   },
                 ),
@@ -60,5 +60,19 @@ class GoalEndStateTree extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _addChange(VoidCallback execute) {
+    UndoRedo.addChange(Change(
+      path.goalEndState.clone(),
+      () {
+        execute.call();
+        onPathChanged?.call();
+      },
+      (oldValue) {
+        path.goalEndState = oldValue.clone();
+        onPathChanged?.call();
+      },
+    ));
   }
 }

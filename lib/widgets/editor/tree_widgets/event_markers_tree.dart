@@ -130,8 +130,17 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
           RenamableTitle(
             title: markers[markerIdx].name,
             onRename: (value) {
-              markers[markerIdx].name = value;
-              widget.onPathChanged?.call();
+              UndoRedo.addChange(Change(
+                markers[markerIdx].name,
+                () {
+                  markers[markerIdx].name = value;
+                  widget.onPathChanged?.call();
+                },
+                (oldValue) {
+                  markers[markerIdx].name = oldValue;
+                  widget.onPathChanged?.call();
+                },
+              ));
             },
           ),
           Expanded(child: Container()),

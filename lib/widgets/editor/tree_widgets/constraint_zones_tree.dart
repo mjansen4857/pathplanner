@@ -126,8 +126,17 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
           RenamableTitle(
             title: constraintZones[zoneIdx].name,
             onRename: (value) {
-              constraintZones[zoneIdx].name = value;
-              widget.onPathChanged?.call();
+              UndoRedo.addChange(Change(
+                constraintZones[zoneIdx].name,
+                () {
+                  constraintZones[zoneIdx].name = value;
+                  widget.onPathChanged?.call();
+                },
+                (oldValue) {
+                  constraintZones[zoneIdx].name = oldValue;
+                  widget.onPathChanged?.call();
+                },
+              ));
             },
           ),
           Expanded(child: Container()),

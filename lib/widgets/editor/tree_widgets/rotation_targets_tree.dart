@@ -34,6 +34,8 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
   late List<ExpansionTileController> _controllers;
   int? _selectedTarget;
 
+  double _sliderChangeStart = 0;
+
   @override
   void initState() {
     super.initState();
@@ -71,8 +73,21 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             ),
             label: const Text('Add New Rotation Target'),
             onPressed: () {
-              rotations.add(RotationTarget());
-              widget.onPathChanged?.call();
+              UndoRedo.addChange(Change(
+                PathPlannerPath.cloneRotationTargets(rotations),
+                () {
+                  rotations.add(RotationTarget());
+                  widget.onPathChanged?.call();
+                },
+                (oldValue) {
+                  _selectedTarget = null;
+                  widget.onTargetHovered?.call(null);
+                  widget.onTargetSelected?.call(null);
+                  widget.path.rotationTargets =
+                      PathPlannerPath.cloneRotationTargets(oldValue);
+                  widget.onPathChanged?.call();
+                },
+              ));
             },
           ),
         ),
@@ -145,8 +160,18 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                   label: 'Rotation (Deg)',
                   onSubmitted: (value) {
                     if (value != null) {
-                      rotations[targetIdx].rotationDegrees = value;
-                      widget.onPathChanged?.call();
+                      UndoRedo.addChange(Change(
+                        rotations[targetIdx].clone(),
+                        () {
+                          rotations[targetIdx].rotationDegrees = value;
+                          widget.onPathChanged?.call();
+                        },
+                        (oldValue) {
+                          rotations[targetIdx].rotationDegrees =
+                              oldValue.rotationDegrees;
+                          widget.onPathChanged?.call();
+                        },
+                      ));
                     }
                   },
                 ),
@@ -161,6 +186,25 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
           max: waypoints.length - 1.0,
           divisions: (waypoints.length - 1) * 20,
           label: rotations[targetIdx].waypointRelativePos.toStringAsFixed(2),
+          onChangeStart: (value) {
+            _sliderChangeStart = value;
+          },
+          onChangeEnd: (value) {
+            double startVal = _sliderChangeStart;
+            double endVal = value;
+
+            UndoRedo.addChange(CustomChange(
+              [startVal, endVal],
+              (vals) {
+                rotations[targetIdx].waypointRelativePos = vals[1];
+                widget.onPathChanged?.call();
+              },
+              (vals) {
+                rotations[targetIdx].waypointRelativePos = vals[0];
+                widget.onPathChanged?.call();
+              },
+            ));
+          },
           onChanged: (value) {
             rotations[targetIdx].waypointRelativePos = value;
             widget.onPathChanged?.call();

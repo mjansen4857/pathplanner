@@ -72,6 +72,66 @@ class PathPlannerPath {
     );
   }
 
+  void insertWaypointAfter(int waypointIdx) {
+    if (waypointIdx == waypoints.length - 1) {
+      return;
+    }
+
+    Waypoint before = waypoints[waypointIdx];
+    Waypoint after = waypoints[waypointIdx + 1];
+    Point anchorPos = GeometryUtil.cubicLerp(before.anchor, before.nextControl!,
+        after.prevControl!, after.anchor, 0.5);
+
+    Waypoint toAdd = Waypoint(
+      anchor: anchorPos,
+      prevControl: (anchorPos + before.nextControl!) * 0.5,
+    );
+    toAdd.addNextControl();
+
+    waypoints.insert(waypointIdx + 1, toAdd);
+
+    for (RotationTarget t in rotationTargets) {
+      t.waypointRelativePos = _adjustInsertedWaypointRelativePos(
+          t.waypointRelativePos, waypointIdx + 1);
+    }
+
+    for (EventMarker m in eventMarkers) {
+      m.waypointRelativePos = _adjustInsertedWaypointRelativePos(
+          m.waypointRelativePos, waypointIdx + 1);
+    }
+
+    for (ConstraintsZone z in constraintZones) {
+      z.minWaypointRelativePos = _adjustInsertedWaypointRelativePos(
+          z.minWaypointRelativePos, waypointIdx + 1);
+      z.maxWaypointRelativePos = _adjustInsertedWaypointRelativePos(
+          z.maxWaypointRelativePos, waypointIdx + 1);
+    }
+  }
+
+  num _adjustInsertedWaypointRelativePos(num pos, int insertedWaypointIdx) {
+    if (pos >= insertedWaypointIdx) {
+      return pos + 1.0;
+    } else if (pos >= insertedWaypointIdx - 0.5) {
+      int segment = pos.floor();
+      double segmentPct = pos % 1.0;
+
+      num newPos = (segment + 1) + ((segmentPct - 0.5) * 2.0);
+      newPos = (newPos * 20).round() / 20.0;
+
+      return min(waypoints.length - 1, max(0, newPos));
+    } else if (pos > insertedWaypointIdx - 1) {
+      int segment = pos.floor();
+      double segmentPct = pos % 1.0;
+
+      double newPos = segment + (segmentPct * 2.0);
+      newPos = (newPos * 20).round() / 20.0;
+
+      return min(waypoints.length - 1, max(0, newPos));
+    }
+
+    return pos;
+  }
+
   void _addNamedCommandsToSet(Command command) {
     if (command is NamedCommand) {
       if (command.name != null) {

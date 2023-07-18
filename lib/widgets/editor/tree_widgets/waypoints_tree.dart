@@ -318,10 +318,42 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             child: Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: ElevatedButton.icon(
-                onPressed: null,
+                onPressed: () {
+                  UndoRedo.addChange(Change(
+                    [
+                      PathPlannerPath.cloneWaypoints(widget.path.waypoints),
+                      PathPlannerPath.cloneConstraintZones(
+                          widget.path.constraintZones),
+                      PathPlannerPath.cloneEventMarkers(
+                          widget.path.eventMarkers),
+                      PathPlannerPath.cloneRotationTargets(
+                          widget.path.rotationTargets),
+                    ],
+                    () {
+                      widget.path.insertWaypointAfter(waypointIdx);
+                      widget.onPathChanged?.call();
+                    },
+                    (oldValue) {
+                      _selectedWaypoint = null;
+                      widget.onWaypointHovered?.call(null);
+                      widget.onWaypointSelected?.call(null);
+
+                      widget.path.waypoints =
+                          PathPlannerPath.cloneWaypoints(oldValue[0]);
+                      widget.path.constraintZones =
+                          PathPlannerPath.cloneConstraintZones(oldValue[1]);
+                      widget.path.eventMarkers =
+                          PathPlannerPath.cloneEventMarkers(oldValue[2]);
+                      widget.path.rotationTargets =
+                          PathPlannerPath.cloneRotationTargets(oldValue[3]);
+
+                      widget.onPathChanged?.call();
+                    },
+                  ));
+                },
                 icon: const Icon(Icons.add),
                 style: ElevatedButton.styleFrom(
-                  elevation: 4.0,
+                  elevation: 1.0,
                 ),
                 label: const Text('Insert New Waypoint After'),
               ),

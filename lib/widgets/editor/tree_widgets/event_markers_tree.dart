@@ -43,6 +43,8 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
   late List<ExpansionTileController> _controllers;
   int? _selectedMarker;
 
+  double _sliderChangeStart = 0;
+
   @override
   void initState() {
     super.initState();
@@ -80,8 +82,21 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             icon: const Icon(Icons.add),
             label: const Text('Add New Marker'),
             onPressed: () {
-              markers.add(EventMarker.defaultMarker());
-              widget.onPathChanged?.call();
+              UndoRedo.addChange(Change(
+                PathPlannerPath.cloneEventMarkers(markers),
+                () {
+                  markers.add(EventMarker.defaultMarker());
+                  widget.onPathChanged?.call();
+                },
+                (oldValue) {
+                  _selectedMarker = null;
+                  widget.onMarkerHovered?.call(null);
+                  widget.onMarkerSelected?.call(null);
+                  widget.path.eventMarkers =
+                      PathPlannerPath.cloneEventMarkers(oldValue);
+                  widget.onPathChanged?.call();
+                },
+              ));
             },
           ),
         ),
@@ -153,6 +168,25 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
           max: waypoints.length - 1.0,
           divisions: (waypoints.length - 1) * 20,
           label: markers[markerIdx].waypointRelativePos.toStringAsFixed(2),
+          onChangeStart: (value) {
+            _sliderChangeStart = value;
+          },
+          onChangeEnd: (value) {
+            double startVal = _sliderChangeStart;
+            double endVal = value;
+
+            UndoRedo.addChange(CustomChange(
+              [startVal, endVal],
+              (vals) {
+                markers[markerIdx].waypointRelativePos = vals[1];
+                widget.onPathChanged?.call();
+              },
+              (vals) {
+                markers[markerIdx].waypointRelativePos = vals[0];
+                widget.onPathChanged?.call();
+              },
+            ));
+          },
           onChanged: (value) {
             markers[markerIdx].waypointRelativePos = value;
             widget.onPathChanged?.call();

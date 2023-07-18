@@ -35,6 +35,8 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
   late List<ExpansionTileController> _controllers;
   int? _selectedZone;
 
+  double _sliderChangeStart = 0;
+
   @override
   void initState() {
     super.initState();
@@ -76,8 +78,21 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             ),
             label: const Text('Add New Zone'),
             onPressed: () {
-              constraintZones.add(ConstraintsZone.defaultZone());
-              widget.onPathChanged?.call();
+              UndoRedo.addChange(Change(
+                PathPlannerPath.cloneConstraintZones(constraintZones),
+                () {
+                  constraintZones.add(ConstraintsZone.defaultZone());
+                  widget.onPathChanged?.call();
+                },
+                (oldValue) {
+                  _selectedZone = null;
+                  widget.onZoneHovered?.call(null);
+                  widget.onZoneSelected?.call(null);
+                  widget.path.constraintZones =
+                      PathPlannerPath.cloneConstraintZones(oldValue);
+                  widget.onPathChanged?.call();
+                },
+              ));
             },
           ),
         ),
@@ -212,9 +227,12 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                       .toStringAsFixed(2),
                   label: 'Max Velocity (M/S)',
                   onSubmitted: (value) {
-                    if (value != null) {
-                      constraintZones[zoneIdx].constraints.maxVelocity = value;
-                      widget.onPathChanged?.call();
+                    if (value != null && value > 0) {
+                      _addConstraintsChange(
+                          zoneIdx,
+                          () => constraintZones[zoneIdx]
+                              .constraints
+                              .maxVelocity = value);
                     }
                   },
                 ),
@@ -228,10 +246,12 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                       .toStringAsFixed(2),
                   label: 'Max Acceleration (M/S²)',
                   onSubmitted: (value) {
-                    if (value != null) {
-                      constraintZones[zoneIdx].constraints.maxAcceleration =
-                          value;
-                      widget.onPathChanged?.call();
+                    if (value != null && value > 0) {
+                      _addConstraintsChange(
+                          zoneIdx,
+                          () => constraintZones[zoneIdx]
+                              .constraints
+                              .maxAcceleration = value);
                     }
                   },
                 ),
@@ -252,10 +272,12 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                       .toStringAsFixed(2),
                   label: 'Max Angular Velocity (Deg/S)',
                   onSubmitted: (value) {
-                    if (value != null) {
-                      constraintZones[zoneIdx].constraints.maxAngularVelocity =
-                          value;
-                      widget.onPathChanged?.call();
+                    if (value != null && value > 0) {
+                      _addConstraintsChange(
+                          zoneIdx,
+                          () => constraintZones[zoneIdx]
+                              .constraints
+                              .maxAngularVelocity = value);
                     }
                   },
                 ),
@@ -269,11 +291,12 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                       .toStringAsFixed(2),
                   label: 'Max Angular Acceleration (Deg/S²)',
                   onSubmitted: (value) {
-                    if (value != null) {
-                      constraintZones[zoneIdx]
-                          .constraints
-                          .maxAngularAcceleration = value;
-                      widget.onPathChanged?.call();
+                    if (value != null && value > 0) {
+                      _addConstraintsChange(
+                          zoneIdx,
+                          () => constraintZones[zoneIdx]
+                              .constraints
+                              .maxAngularAcceleration = value);
                     }
                   },
                 ),
@@ -292,6 +315,25 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
           label: constraintZones[zoneIdx]
               .minWaypointRelativePos
               .toStringAsFixed(2),
+          onChangeStart: (value) {
+            _sliderChangeStart = value;
+          },
+          onChangeEnd: (value) {
+            double startVal = _sliderChangeStart;
+            double endVal = value;
+
+            UndoRedo.addChange(CustomChange(
+              [startVal, endVal],
+              (vals) {
+                constraintZones[zoneIdx].minWaypointRelativePos = vals[1];
+                widget.onPathChanged?.call();
+              },
+              (vals) {
+                constraintZones[zoneIdx].minWaypointRelativePos = vals[0];
+                widget.onPathChanged?.call();
+              },
+            ));
+          },
           onChanged: (value) {
             if (value <= constraintZones[zoneIdx].maxWaypointRelativePos) {
               constraintZones[zoneIdx].minWaypointRelativePos = value;
@@ -307,6 +349,25 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
           label: constraintZones[zoneIdx]
               .maxWaypointRelativePos
               .toStringAsFixed(2),
+          onChangeStart: (value) {
+            _sliderChangeStart = value;
+          },
+          onChangeEnd: (value) {
+            double startVal = _sliderChangeStart;
+            double endVal = value;
+
+            UndoRedo.addChange(CustomChange(
+              [startVal, endVal],
+              (vals) {
+                constraintZones[zoneIdx].maxWaypointRelativePos = vals[1];
+                widget.onPathChanged?.call();
+              },
+              (vals) {
+                constraintZones[zoneIdx].maxWaypointRelativePos = vals[0];
+                widget.onPathChanged?.call();
+              },
+            ));
+          },
           onChanged: (value) {
             if (value >= constraintZones[zoneIdx].minWaypointRelativePos) {
               constraintZones[zoneIdx].maxWaypointRelativePos = value;
@@ -316,5 +377,19 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
         ),
       ],
     );
+  }
+
+  void _addConstraintsChange(int zoneIdx, VoidCallback execute) {
+    UndoRedo.addChange(Change(
+      constraintZones[zoneIdx].constraints.clone(),
+      () {
+        execute.call();
+        widget.onPathChanged?.call();
+      },
+      (oldValue) {
+        constraintZones[zoneIdx].constraints = oldValue.clone();
+        widget.onPathChanged?.call();
+      },
+    ));
   }
 }

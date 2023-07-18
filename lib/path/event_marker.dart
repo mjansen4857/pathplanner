@@ -31,6 +31,7 @@ class EventMarker {
 
   EventMarker clone() {
     return EventMarker(
+      name: name,
       waypointRelativePos: waypointRelativePos,
       command: command.clone(),
     );

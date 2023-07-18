@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
+import 'package:undo/undo.dart';
 
 class ConstraintZonesTree extends StatefulWidget {
   final PathPlannerPath path;
@@ -65,6 +67,9 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
         Center(
           child: ElevatedButton.icon(
             icon: const Icon(Icons.add),
+            style: ElevatedButton.styleFrom(
+              elevation: 4.0,
+            ),
             label: const Text('Add New Zone'),
             onPressed: () {
               constraintZones.add(ConstraintsZone.defaultZone());
@@ -167,12 +172,23 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             icon: const Icon(Icons.delete_forever),
             color: colorScheme.error,
             onPressed: () {
-              constraintZones.removeAt(zoneIdx);
-              if (_selectedZone == zoneIdx) {
-                widget.onZoneSelected?.call(null);
-              }
-              widget.onZoneHovered?.call(null);
-              widget.onPathChanged?.call();
+              UndoRedo.addChange(Change(
+                PathPlannerPath.cloneConstraintZones(
+                    widget.path.constraintZones),
+                () {
+                  constraintZones.removeAt(zoneIdx);
+                  widget.onZoneSelected?.call(null);
+                  widget.onZoneHovered?.call(null);
+                  widget.onPathChanged?.call();
+                },
+                (oldValue) {
+                  widget.path.constraintZones =
+                      PathPlannerPath.cloneConstraintZones(oldValue);
+                  widget.onZoneSelected?.call(null);
+                  widget.onZoneHovered?.call(null);
+                  widget.onPathChanged?.call();
+                },
+              ));
             },
           ),
         ],

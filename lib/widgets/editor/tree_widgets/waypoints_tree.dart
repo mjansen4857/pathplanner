@@ -311,6 +311,9 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             child: ElevatedButton.icon(
               onPressed: null,
               icon: const Icon(Icons.add),
+              style: ElevatedButton.styleFrom(
+                elevation: 4.0,
+              ),
               label: const Text('Insert New Waypoint'),
             ),
           ),

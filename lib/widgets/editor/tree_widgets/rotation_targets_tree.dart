@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
+import 'package:undo/undo.dart';
 
 class RotationTargetsTree extends StatefulWidget {
   final PathPlannerPath path;
@@ -60,6 +62,9 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
         Center(
           child: ElevatedButton.icon(
             icon: const Icon(Icons.add),
+            style: ElevatedButton.styleFrom(
+              elevation: 4.0,
+            ),
             label: const Text('Add New Rotation Target'),
             onPressed: () {
               rotations.add(RotationTarget());
@@ -101,12 +106,23 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             icon: const Icon(Icons.delete_forever),
             color: colorScheme.error,
             onPressed: () {
-              rotations.removeAt(targetIdx);
-              if (_selectedTarget == targetIdx) {
-                widget.onTargetSelected?.call(null);
-              }
-              widget.onTargetHovered?.call(null);
-              widget.onPathChanged?.call();
+              UndoRedo.addChange(Change(
+                PathPlannerPath.cloneRotationTargets(
+                    widget.path.rotationTargets),
+                () {
+                  rotations.removeAt(targetIdx);
+                  widget.onTargetSelected?.call(null);
+                  widget.onTargetHovered?.call(null);
+                  widget.onPathChanged?.call();
+                },
+                (oldValue) {
+                  widget.path.rotationTargets =
+                      PathPlannerPath.cloneRotationTargets(oldValue);
+                  widget.onTargetSelected?.call(null);
+                  widget.onTargetHovered?.call(null);
+                  widget.onPathChanged?.call();
+                },
+              ));
             },
           ),
         ],

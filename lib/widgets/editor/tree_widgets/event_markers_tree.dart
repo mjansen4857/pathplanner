@@ -7,12 +7,14 @@ import 'package:pathplanner/commands/wait_command.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
+import 'package:undo/undo.dart';
 
 class EventMarkersTree extends StatefulWidget {
   final PathPlannerPath path;
@@ -68,6 +70,9 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
         const SizedBox(height: 12),
         Center(
           child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              elevation: 4.0,
+            ),
             icon: const Icon(Icons.add),
             label: const Text('Add New Marker'),
             onPressed: () {
@@ -115,12 +120,22 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             icon: const Icon(Icons.delete_forever),
             color: colorScheme.error,
             onPressed: () {
-              markers.removeAt(markerIdx);
-              if (_selectedMarker == markerIdx) {
-                widget.onMarkerSelected?.call(null);
-              }
-              widget.onMarkerHovered?.call(null);
-              widget.onPathChanged?.call();
+              UndoRedo.addChange(Change(
+                PathPlannerPath.cloneEventMarkers(widget.path.eventMarkers),
+                () {
+                  markers.removeAt(markerIdx);
+                  widget.onMarkerSelected?.call(null);
+                  widget.onMarkerHovered?.call(null);
+                  widget.onPathChanged?.call();
+                },
+                (oldValue) {
+                  widget.path.eventMarkers =
+                      PathPlannerPath.cloneEventMarkers(oldValue);
+                  widget.onMarkerSelected?.call(null);
+                  widget.onMarkerHovered?.call(null);
+                  widget.onPathChanged?.call();
+                },
+              ));
             },
           ),
         ],

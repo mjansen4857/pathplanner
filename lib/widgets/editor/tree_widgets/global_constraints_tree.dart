@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
+import 'package:undo/undo.dart';
 
 class GlobalConstraintsTree extends StatelessWidget {
   final PathPlannerPath path;
@@ -37,8 +39,8 @@ class GlobalConstraintsTree extends StatelessWidget {
                   label: 'Max Velocity (M/S)',
                   onSubmitted: (value) {
                     if (value != null) {
-                      path.globalConstraints.maxVelocity = value;
-                      onPathChanged?.call();
+                      _addChange(
+                          () => path.globalConstraints.maxVelocity = value);
                     }
                   },
                 ),
@@ -51,8 +53,8 @@ class GlobalConstraintsTree extends StatelessWidget {
                   label: 'Max Acceleration (M/S²)',
                   onSubmitted: (value) {
                     if (value != null) {
-                      path.globalConstraints.maxAcceleration = value;
-                      onPathChanged?.call();
+                      _addChange(
+                          () => path.globalConstraints.maxAcceleration = value);
                     }
                   },
                 ),
@@ -72,8 +74,8 @@ class GlobalConstraintsTree extends StatelessWidget {
                   label: 'Max Angular Velocity (Deg/S)',
                   onSubmitted: (value) {
                     if (value != null) {
-                      path.globalConstraints.maxAngularVelocity = value;
-                      onPathChanged?.call();
+                      _addChange(() =>
+                          path.globalConstraints.maxAngularVelocity = value);
                     }
                   },
                 ),
@@ -86,8 +88,8 @@ class GlobalConstraintsTree extends StatelessWidget {
                   label: 'Max Angular Acceleration (Deg/S²)',
                   onSubmitted: (value) {
                     if (value != null) {
-                      path.globalConstraints.maxAngularAcceleration = value;
-                      onPathChanged?.call();
+                      _addChange(() => path
+                          .globalConstraints.maxAngularAcceleration = value);
                     }
                   },
                 ),
@@ -97,5 +99,19 @@ class GlobalConstraintsTree extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void _addChange(VoidCallback execute) {
+    UndoRedo.addChange(Change(
+      path.globalConstraints.clone(),
+      () {
+        execute.call();
+        onPathChanged?.call();
+      },
+      (oldValue) {
+        path.globalConstraints = oldValue.clone();
+        onPathChanged?.call();
+      },
+    ));
   }
 }

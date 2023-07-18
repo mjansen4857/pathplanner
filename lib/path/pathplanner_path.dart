@@ -1,5 +1,8 @@
 import 'dart:math';
 
+import 'package:pathplanner/commands/command.dart';
+import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
@@ -58,7 +61,27 @@ class PathPlannerPath {
     generatePathPoints();
   }
 
+  void _addNamedCommandsToSet(Command command) {
+    if (command is NamedCommand) {
+      if (command.name != null) {
+        Command.named.add(command.name!);
+        return;
+      }
+    }
+
+    if (command is CommandGroup) {
+      for (Command cmd in command.commands) {
+        _addNamedCommandsToSet(cmd);
+      }
+    }
+  }
+
   void generatePathPoints() {
+    // Add all command names in this path to the available names
+    for (EventMarker m in eventMarkers) {
+      _addNamedCommandsToSet(m.command);
+    }
+
     pathPoints.clear();
 
     for (int i = 0; i < waypoints.length - 1; i++) {

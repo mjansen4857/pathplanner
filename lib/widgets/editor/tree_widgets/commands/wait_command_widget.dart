@@ -24,7 +24,6 @@ class WaitCommandWidget extends StatelessWidget {
           child: NumberTextField(
             initialText: command.waitTime.toStringAsFixed(2),
             label: 'Wait Time (S)',
-            height: 36,
             onSubmitted: (value) {
               if (value != null) {
                 command.waitTime = value;

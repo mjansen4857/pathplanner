@@ -5,6 +5,8 @@ import 'package:pathplanner/commands/none_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 
 abstract class Command {
+  static Set<String> named = {'placeholder_cmd'};
+
   final String type;
 
   const Command({

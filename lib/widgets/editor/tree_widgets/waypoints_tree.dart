@@ -66,7 +66,6 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             _selectedWaypoint = null;
             widget.onWaypointSelected?.call(null);
           }
-          widget.onPathChanged?.call();
         }
       },
       elevation: 1.0,

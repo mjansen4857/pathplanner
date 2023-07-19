@@ -1,5 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
+import 'package:path/path.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
@@ -11,6 +14,7 @@ import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/generator/geometry_util.dart';
+import 'package:pathplanner/services/log.dart';
 
 class PathPlannerPath {
   String name;
@@ -22,6 +26,8 @@ class PathPlannerPath {
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
 
+  Directory pathDirectory;
+
   // Stuff used for UI
   bool waypointsExpanded = false;
   bool globalConstraintsExpanded = false;
@@ -30,7 +36,8 @@ class PathPlannerPath {
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
 
-  PathPlannerPath.defaultPath({this.name = 'New Path'})
+  PathPlannerPath.defaultPath(
+      {required this.pathDirectory, this.name = 'New Path'})
       : waypoints = [],
         pathPoints = [],
         globalConstraints = PathConstraints(),
@@ -57,8 +64,121 @@ class PathPlannerPath {
     generatePathPoints();
   }
 
-  void generateAndSavePath() {
+  PathPlannerPath({
+    required this.name,
+    required this.waypoints,
+    required this.globalConstraints,
+    required this.goalEndState,
+    required this.constraintZones,
+    required this.rotationTargets,
+    required this.eventMarkers,
+    required this.pathDirectory,
+  }) : pathPoints = [] {
     generatePathPoints();
+  }
+
+  PathPlannerPath._fromJsonV1(
+      Map<String, dynamic> json, String name, Directory pathsDir)
+      : this(
+          pathDirectory: pathsDir,
+          name: name,
+          waypoints: [
+            for (var waypointJson in json['waypoints'])
+              Waypoint.fromJson(waypointJson),
+          ],
+          globalConstraints:
+              PathConstraints.fromJson(json['globalConstraints'] ?? {}),
+          goalEndState: GoalEndState.fromJson(json['goalEndState'] ?? {}),
+          constraintZones: [
+            for (var zoneJson in json['constraintZones'] ?? [])
+              ConstraintsZone.fromJson(zoneJson),
+          ],
+          rotationTargets: [
+            for (var targetJson in json['rotationTargets'] ?? [])
+              RotationTarget.fromJson(targetJson),
+          ],
+          eventMarkers: [
+            for (var markerJson in json['eventMarkers'] ?? [])
+              EventMarker.fromJson(markerJson),
+          ],
+        );
+
+  void generateAndSavePath() {
+    Stopwatch s = Stopwatch()..start();
+
+    generatePathPoints();
+
+    try {
+      File pathFile = File(join(pathDirectory.path, '$name.path'));
+      const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+      pathFile.writeAsString(encoder.convert(this));
+      Log.debug(
+          'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
+    } catch (ex, stack) {
+      Log.error('Failed to save path', ex, stack);
+    }
+  }
+
+  void deletePath() {
+    File pathFile = File(join(pathDirectory.path, '$name.path'));
+
+    if (pathFile.existsSync()) {
+      pathFile.delete();
+    }
+  }
+
+  void renamePath(String name) {
+    File pathFile = File(join(pathDirectory.path, '${this.name}.path'));
+
+    if (pathFile.existsSync()) {
+      pathFile.rename(join(pathDirectory.path, '$name.path'));
+      this.name = name;
+    }
+  }
+
+  static Future<List<PathPlannerPath>> loadAllPathsInDir(
+      Directory pathsDir) async {
+    List<PathPlannerPath> paths = [];
+
+    List<FileSystemEntity> files = pathsDir.listSync();
+    for (FileSystemEntity e in files) {
+      if (e.path.endsWith('.path')) {
+        String jsonStr = await File(e.path).readAsString();
+        try {
+          Map<String, dynamic> json = jsonDecode(jsonStr);
+          String pathName = basenameWithoutExtension(e.path);
+
+          if (json['version'] == 1.0) {
+            paths.add(PathPlannerPath._fromJsonV1(json, pathName, pathsDir));
+          } else {
+            Log.error('Unknown path version');
+          }
+        } catch (ex, stack) {
+          Log.error('Failed to load path', ex, stack);
+        }
+      }
+    }
+    return paths;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'version': 1.0,
+      'waypoints': [
+        for (Waypoint w in waypoints) w.toJson(),
+      ],
+      'rotationTargets': [
+        for (RotationTarget t in rotationTargets) t.toJson(),
+      ],
+      'constraintZones': [
+        for (ConstraintsZone z in constraintZones) z.toJson(),
+      ],
+      'eventMarkers': [
+        for (EventMarker m in eventMarkers) m.toJson(),
+      ],
+      'globalConstraints': globalConstraints.toJson(),
+      'goalEndState': goalEndState.toJson(),
+    };
   }
 
   void addWaypoint(Point anchorPos) {
@@ -173,6 +293,19 @@ class PathPlannerPath {
         ));
       }
     }
+  }
+
+  PathPlannerPath duplicate(String newName) {
+    return PathPlannerPath(
+      name: newName,
+      waypoints: cloneWaypoints(waypoints),
+      globalConstraints: globalConstraints.clone(),
+      goalEndState: goalEndState.clone(),
+      constraintZones: cloneConstraintZones(constraintZones),
+      rotationTargets: cloneRotationTargets(rotationTargets),
+      eventMarkers: cloneEventMarkers(eventMarkers),
+      pathDirectory: pathDirectory,
+    );
   }
 
   static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {

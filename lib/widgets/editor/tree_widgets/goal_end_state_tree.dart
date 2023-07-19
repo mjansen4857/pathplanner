@@ -23,7 +23,6 @@ class GoalEndStateTree extends StatelessWidget {
       onExpansionChanged: (value) {
         if (value != null) {
           path.goalEndStateExpanded = value;
-          onPathChanged?.call();
         }
       },
       elevation: 1.0,

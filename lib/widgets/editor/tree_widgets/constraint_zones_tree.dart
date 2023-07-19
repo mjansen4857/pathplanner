@@ -59,7 +59,6 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             _selectedZone = null;
             widget.onZoneSelected?.call(null);
           }
-          widget.onPathChanged?.call();
         }
       },
       elevation: 1.0,

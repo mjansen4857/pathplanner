@@ -4,11 +4,15 @@ import 'package:flutter/services.dart';
 class RenamableTitle extends StatelessWidget {
   final String title;
   final ValueChanged<String>? onRename;
+  final TextStyle? textStyle;
+  final EdgeInsets? contentPadding;
 
   const RenamableTitle({
     super.key,
     required this.title,
     this.onRename,
+    this.textStyle,
+    this.contentPadding,
   });
 
   @override
@@ -26,7 +30,7 @@ class RenamableTitle extends StatelessWidget {
             onRename?.call(text);
           }
         },
-        style: TextStyle(color: colorScheme.onSurface),
+        style: textStyle ?? TextStyle(color: colorScheme.onSurface),
         controller: TextEditingController(text: title)
           ..selection =
               TextSelection.fromPosition(TextPosition(offset: title.length)),
@@ -43,7 +47,7 @@ class RenamableTitle extends StatelessWidget {
               color: Colors.transparent,
             ),
           ),
-          contentPadding:
+          contentPadding: contentPadding ??
               const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         ),
         inputFormatters: [

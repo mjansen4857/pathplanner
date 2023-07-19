@@ -23,7 +23,6 @@ class GlobalConstraintsTree extends StatelessWidget {
       onExpansionChanged: (value) {
         if (value != null) {
           path.globalConstraintsExpanded = value;
-          onPathChanged?.call();
         }
       },
       elevation: 1.0,

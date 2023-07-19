@@ -62,7 +62,6 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             _selectedMarker = null;
             widget.onMarkerSelected?.call(null);
           }
-          widget.onPathChanged?.call();
         }
       },
       elevation: 1.0,

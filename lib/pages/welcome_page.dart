@@ -47,7 +47,10 @@ class _WelcomePageState extends State<WelcomePage>
 
     return Scaffold(
       appBar: CustomAppBar(
-        titleText: 'PathPlanner',
+        titleWidget: const Text(
+          'PathPlanner',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+        ),
         automaticallyImplyLeading: false,
       ),
       body: Stack(

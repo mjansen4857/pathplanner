@@ -17,6 +17,36 @@ class Waypoint {
     this.isLocked = false,
   });
 
+  Waypoint.fromJson(Map<String, dynamic> json)
+      : this(
+          anchor: _pointFromJson(json['anchor'])!,
+          prevControl: _pointFromJson(json['prevControl']),
+          nextControl: _pointFromJson(json['nextControl']),
+          isLocked: json['isLocked'] ?? false,
+        );
+
+  Map<String, dynamic> toJson() {
+    return {
+      'anchor': _pointToJson(anchor),
+      'prevControl': _pointToJson(prevControl),
+      'nextControl': _pointToJson(nextControl),
+      'isLocked': isLocked,
+    };
+  }
+
+  static Map<String, dynamic>? _pointToJson(Point? point) {
+    return point == null
+        ? null
+        : {
+            'x': point.x,
+            'y': point.y,
+          };
+  }
+
+  static Point? _pointFromJson(Map<String, dynamic>? pointJson) {
+    return pointJson == null ? null : Point(pointJson['x'], pointJson['y']);
+  }
+
   num getHeadingRadians() {
     num heading;
     if (nextControl != null) {

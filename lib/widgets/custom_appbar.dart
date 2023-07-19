@@ -7,11 +7,11 @@ import 'package:window_manager/window_manager.dart';
 import 'window_buttons.dart';
 
 class CustomAppBar extends AppBar {
-  final String titleText;
+  final Widget titleWidget;
   final bool pplibClient;
 
   CustomAppBar(
-      {this.titleText = 'PathPlanner',
+      {this.titleWidget = const Text('PathPlanner'),
       this.pplibClient = false,
       super.key,
       super.leading,
@@ -58,11 +58,7 @@ class CustomAppBar extends AppBar {
                   child: _MoveWindowArea(
                     child: Container(
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        titleText,
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.w500),
-                      ),
+                      child: titleWidget,
                     ),
                   ),
                 ),

@@ -4,12 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/mini_path_preview.dart';
+import 'package:pathplanner/widgets/renamable_title.dart';
 
 class ProjectItemCard extends StatefulWidget {
   final String name;
   final FieldImage fieldImage;
   final PathPlannerPath path;
   final VoidCallback onOpened;
+  final VoidCallback onDuplicated;
+  final VoidCallback onDeleted;
+  final ValueChanged<String> onRenamed;
 
   const ProjectItemCard({
     super.key,
@@ -17,6 +21,9 @@ class ProjectItemCard extends StatefulWidget {
     required this.fieldImage,
     required this.path,
     required this.onOpened,
+    required this.onDuplicated,
+    required this.onDeleted,
+    required this.onRenamed,
   });
 
   @override
@@ -47,21 +54,53 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                     waitDuration: const Duration(seconds: 1),
                     child: FittedBox(
                       child: IconButton(
-                        onPressed: () {},
+                        onPressed: widget.onDuplicated,
                         icon: const Icon(Icons.copy),
                       ),
                     ),
                   ),
-                  Text(
-                    widget.name,
-                    style: const TextStyle(fontSize: 24),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: RenamableTitle(
+                        title: widget.name,
+                        textStyle: const TextStyle(fontSize: 28),
+                        onRename: widget.onRenamed,
+                      ),
+                    ),
                   ),
                   Tooltip(
                     message: 'Delete',
                     waitDuration: const Duration(seconds: 1),
                     child: FittedBox(
                       child: IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: const Text('Delete Path'),
+                                content: Text(
+                                    'Are you sure you want to delete the path: ${widget.name}? This cannot be undone.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('CANCEL'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                      widget.onDeleted.call();
+                                    },
+                                    child: const Text('DELETE'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                         icon: const Icon(Icons.delete_forever),
                       ),
                     ),

@@ -58,7 +58,6 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             _selectedTarget = null;
             widget.onTargetSelected?.call(null);
           }
-          widget.onPathChanged?.call();
         }
       },
       elevation: 1.0,

@@ -19,6 +19,12 @@ abstract class CommandGroup extends Command {
       ],
     };
   }
+
+  static List<Command> cloneCommandsList(List<Command> commands) {
+    return [
+      for (Command command in commands) command.clone(),
+    ];
+  }
 }
 
 class SequentialCommandGroup extends CommandGroup {
@@ -29,9 +35,8 @@ class SequentialCommandGroup extends CommandGroup {
 
   @override
   Command clone() {
-    return SequentialCommandGroup(commands: [
-      for (Command command in commands) command.clone(),
-    ]);
+    return SequentialCommandGroup(
+        commands: CommandGroup.cloneCommandsList(commands));
   }
 }
 
@@ -43,9 +48,8 @@ class ParallelCommandGroup extends CommandGroup {
 
   @override
   Command clone() {
-    return ParallelCommandGroup(commands: [
-      for (Command command in commands) command.clone(),
-    ]);
+    return ParallelCommandGroup(
+        commands: CommandGroup.cloneCommandsList(commands));
   }
 }
 
@@ -57,9 +61,7 @@ class RaceCommandGroup extends CommandGroup {
 
   @override
   Command clone() {
-    return RaceCommandGroup(commands: [
-      for (Command command in commands) command.clone(),
-    ]);
+    return RaceCommandGroup(commands: CommandGroup.cloneCommandsList(commands));
   }
 }
 
@@ -71,8 +73,7 @@ class DeadlineCommandGroup extends CommandGroup {
 
   @override
   Command clone() {
-    return DeadlineCommandGroup(commands: [
-      for (Command command in commands) command.clone(),
-    ]);
+    return DeadlineCommandGroup(
+        commands: CommandGroup.cloneCommandsList(commands));
   }
 }

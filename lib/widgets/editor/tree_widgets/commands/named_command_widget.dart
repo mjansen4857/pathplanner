@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/named_command.dart';
+import 'package:pathplanner/services/undo_redo.dart';
+import 'package:undo/undo.dart';
 
 class NamedCommandWidget extends StatefulWidget {
   final NamedCommand command;
@@ -57,17 +59,30 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                     ),
                   ),
                   onSelected: (value) {
-                    if (value != null) {
-                      widget.command.name = value;
-                    } else if (_controller.text.isNotEmpty) {
-                      widget.command.name = _controller.text;
-                    }
                     FocusScopeNode currentScope = FocusScope.of(context);
                     if (!currentScope.hasPrimaryFocus &&
                         currentScope.hasFocus) {
                       FocusManager.instance.primaryFocus!.unfocus();
                     }
-                    widget.onUpdated.call();
+
+                    String text = _controller.text;
+                    UndoRedo.addChange(Change(
+                      widget.command.name,
+                      () {
+                        if (value != null) {
+                          widget.command.name = value;
+                        } else if (text.isNotEmpty) {
+                          widget.command.name = text;
+                        }
+                        _controller.text = text;
+                        widget.onUpdated.call();
+                      },
+                      (oldValue) {
+                        widget.command.name = oldValue;
+                        _controller.text = oldValue ?? '';
+                        widget.onUpdated.call();
+                      },
+                    ));
                   },
                 ),
               ),

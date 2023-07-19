@@ -3,9 +3,11 @@ import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
+import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
+import 'package:undo/undo.dart';
 
 class CommandGroupWidget extends StatelessWidget {
   final CommandGroup command;
@@ -80,15 +82,20 @@ class CommandGroupWidget extends StatelessWidget {
                 ),
               ),
             ),
-            // Padding(
-            //   padding: const EdgeInsets.only(left: 8.0),
-            //   child: Text('$type Group', style: const TextStyle(fontSize: 16)),
-            // ),
             Expanded(child: Container()),
             AddCommandButton(
               onTypeChosen: (value) {
-                command.commands.add(Command.fromType(value));
-                onUpdated.call();
+                UndoRedo.addChange(Change(
+                  CommandGroup.cloneCommandsList(command.commands),
+                  () {
+                    command.commands.add(Command.fromType(value));
+                    onUpdated.call();
+                  },
+                  (oldValue) {
+                    command.commands = CommandGroup.cloneCommandsList(oldValue);
+                    onUpdated.call();
+                  },
+                ));
               },
             ),
             Visibility(
@@ -103,7 +110,6 @@ class CommandGroupWidget extends StatelessWidget {
             ),
           ],
         ),
-        // if (command.commands.isNotEmpty) const Divider(),
         _buildReorderableList(),
       ],
     );
@@ -140,11 +146,20 @@ class CommandGroupWidget extends StatelessWidget {
           newIndex = command.commands.length - 1;
         }
 
-        List<Command> cmds = List.of(command.commands);
-        Command temp = cmds.removeAt(oldIndex);
-        cmds.insert(newIndex, temp);
-        command.commands = cmds;
-        onUpdated.call();
+        UndoRedo.addChange(Change(
+          CommandGroup.cloneCommandsList(command.commands),
+          () {
+            List<Command> cmds = List.of(command.commands);
+            Command temp = cmds.removeAt(oldIndex);
+            cmds.insert(newIndex, temp);
+            command.commands = cmds;
+            onUpdated.call();
+          },
+          (oldValue) {
+            command.commands = CommandGroup.cloneCommandsList(oldValue);
+            onUpdated.call();
+          },
+        ));
       },
     );
   }
@@ -154,38 +169,56 @@ class CommandGroupWidget extends StatelessWidget {
       return NamedCommandWidget(
         command: command.commands[cmdIndex] as NamedCommand,
         onUpdated: onUpdated,
-        onRemoved: () {
-          command.commands.removeAt(cmdIndex);
-          onUpdated.call();
-        },
+        onRemoved: () => _removeCommand(cmdIndex),
       );
     } else if (command.commands[cmdIndex] is WaitCommand) {
       return WaitCommandWidget(
         command: command.commands[cmdIndex] as WaitCommand,
         onUpdated: onUpdated,
-        onRemoved: () {
-          command.commands.removeAt(cmdIndex);
-          onUpdated.call();
-        },
+        onRemoved: () => _removeCommand(cmdIndex),
       );
     } else if (command.commands[cmdIndex] is CommandGroup) {
       return CommandGroupWidget(
         command: command.commands[cmdIndex] as CommandGroup,
         subCommandElevation: (subCommandElevation == 1.0) ? 4.0 : 1.0,
         onUpdated: onUpdated,
-        onRemoved: () {
-          command.commands.removeAt(cmdIndex);
-          onUpdated.call();
-        },
+        onRemoved: () => _removeCommand(cmdIndex),
         onGroupTypeChanged: (value) {
-          List<Command> cmds =
-              (command.commands[cmdIndex] as CommandGroup).commands;
-          command.commands[cmdIndex] = Command.fromType(value, commands: cmds);
-          onUpdated.call();
+          UndoRedo.addChange(Change(
+            command.commands[cmdIndex].type,
+            () {
+              List<Command> cmds =
+                  (command.commands[cmdIndex] as CommandGroup).commands;
+              command.commands[cmdIndex] =
+                  Command.fromType(value, commands: cmds);
+              onUpdated.call();
+            },
+            (oldValue) {
+              List<Command> cmds =
+                  (command.commands[cmdIndex] as CommandGroup).commands;
+              command.commands[cmdIndex] =
+                  Command.fromType(oldValue, commands: cmds);
+              onUpdated.call();
+            },
+          ));
         },
       );
     }
 
     return Container();
+  }
+
+  void _removeCommand(int idx) {
+    UndoRedo.addChange(Change(
+      CommandGroup.cloneCommandsList(command.commands),
+      () {
+        command.commands.removeAt(idx);
+        onUpdated.call();
+      },
+      (oldValue) {
+        command.commands = CommandGroup.cloneCommandsList(oldValue);
+        onUpdated.call();
+      },
+    ));
   }
 }

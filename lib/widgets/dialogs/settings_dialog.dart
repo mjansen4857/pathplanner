@@ -14,7 +14,7 @@ import '../keyboard_shortcuts.dart';
 
 class SettingsDialog extends StatefulWidget {
   final VoidCallback onSettingsChanged;
-  final VoidCallback onGenerationEnabled;
+  final VoidCallback? onGenerationEnabled;
   final ValueChanged<FieldImage> onFieldSelected;
   final List<FieldImage> fieldImages;
   final FieldImage selectedField;
@@ -23,7 +23,7 @@ class SettingsDialog extends StatefulWidget {
 
   const SettingsDialog(
       {required this.onSettingsChanged,
-      required this.onGenerationEnabled,
+      this.onGenerationEnabled,
       required this.onFieldSelected,
       required this.fieldImages,
       required this.selectedField,
@@ -204,7 +204,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         });
                         widget.onSettingsChanged();
                         if (value) {
-                          widget.onGenerationEnabled();
+                          widget.onGenerationEnabled?.call();
                         }
                       },
                     ),
@@ -231,7 +231,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         });
                         widget.onSettingsChanged();
                         if (value) {
-                          widget.onGenerationEnabled();
+                          widget.onGenerationEnabled?.call();
                         }
                       },
                     ),

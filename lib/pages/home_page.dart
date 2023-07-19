@@ -3,20 +3,15 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
-import 'package:pathplanner/robot_path/robot_path.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_client.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
-import 'package:pathplanner/widgets/path_tile.dart';
 import 'package:pathplanner/widgets/field_image.dart';
-import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
 import 'package:pathplanner/widgets/pplib_update_card.dart';
 import 'package:pathplanner/widgets/update_card.dart';
@@ -42,13 +37,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Directory? _projectDir;
-  List<RobotPath> _paths = [];
-  RobotPath? _currentPath;
   Size _robotSize = const Size(0.75, 1.0);
   bool _holonomicMode = false;
-  bool _focusedSelection = false;
-  bool _generateJSON = false;
-  bool _generateCSV = false;
   bool _pplibClient = false;
   bool _isWpiLib = false;
   final SecureBookmarks? _bookmarks =
@@ -107,10 +97,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       setState(() {
         _projectDir = Directory(projectDir!);
-
-        _paths = _loadPaths(_projectDir!);
-        _isWpiLib = _isWpiLibProject(_projectDir!);
-        _currentPath = _paths[0];
 
         _loadProjectSettingsFromFile(_projectDir!);
 
@@ -189,22 +175,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         scale: _scaleAnimation,
         child: _buildBody(context),
       ),
-      // floatingActionButton: Visibility(
-      //   visible: _isWpiLib && _projectDir != null && !widget.appStoreBuild,
-      //   child: DeployFAB(projectDir: _projectDir),
-      // ),
     );
   }
 
   Widget _buildDrawer(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topRight: Radius.circular(16),
-        bottomRight: Radius.circular(16),
-      ),
-      child: Drawer(
-        child: Column(
+    return Stack(
+      children: [
+        NavigationDrawer(
+          selectedIndex: 0,
+          onDestinationSelected: (idx) {},
           children: [
             DrawerHeader(
               child: Stack(
@@ -240,10 +220,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             onPressed: () {
                               _openProjectDialog(context);
                             },
-                            child: const Padding(
-                              padding: EdgeInsets.only(bottom: 3.0),
-                              child: Text('Switch Project'),
-                            )),
+                            child: const Text('Switch Project')),
                         Expanded(
                           flex: 4,
                           child: Container(),
@@ -254,240 +231,62 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  for (int i = 0; i < _paths.length; i++)
-                    PathTile(
-                      path: _paths[i],
-                      key: Key('$i'),
-                      isSelected: _paths[i] == _currentPath,
-                      onRename: (name) {
-                        Directory pathsDir = _getPathsDir(_projectDir!);
-
-                        File pathFile =
-                            File(join(pathsDir.path, '${_paths[i].name}.path'));
-                        File newPathFile =
-                            File(join(pathsDir.path, '$name.path'));
-                        if (newPathFile.existsSync() &&
-                            newPathFile.path != pathFile.path) {
-                          Navigator.of(context).pop();
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return KeyBoardShortcuts(
-                                  keysToPress: {LogicalKeyboardKey.enter},
-                                  onKeysPressed: Navigator.of(context).pop,
-                                  child: AlertDialog(
-                                    title: const Text('Unable to Rename'),
-                                    content: Text(
-                                        'The file "${basename(newPathFile.path)}" already exists'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: Navigator.of(context).pop,
-                                        child: const Text('OK'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              });
-                          return false;
-                        } else {
-                          pathFile.rename(join(pathsDir.path, '$name.path'));
-                          setState(() {
-                            //flutter weird
-                            _currentPath!.name = _currentPath!.name;
-                          });
-                          return true;
-                        }
-                      },
-                      onTap: () {
-                        setState(() {
-                          _currentPath = _paths[i];
-                          UndoRedo.clearHistory();
-                        });
-                      },
-                      onDelete: () {
-                        UndoRedo.clearHistory();
-
-                        Directory pathsDir = _getPathsDir(_projectDir!);
-
-                        File pathFile =
-                            File(join(pathsDir.path, '${_paths[i].name}.path'));
-
-                        if (pathFile.existsSync()) {
-                          // The fitted text field container does not rebuild
-                          // itself correctly so this is a way to hide it and
-                          // avoid confusion. (Hides drawer)
-                          Navigator.of(context).pop();
-
-                          showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                void confirm() {
-                                  Navigator.of(context).pop();
-                                  pathFile.delete();
-                                  setState(() {
-                                    if (_currentPath == _paths.removeAt(i)) {
-                                      _currentPath = _paths.first;
-                                    }
-                                  });
-                                }
-
-                                return KeyBoardShortcuts(
-                                  keysToPress: {LogicalKeyboardKey.enter},
-                                  onKeysPressed: confirm,
-                                  child: AlertDialog(
-                                    title: const Text('Delete Path'),
-                                    content: Text(
-                                        'Are you sure you want to delete "${_paths[i].name}"? This cannot be undone.'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: confirm,
-                                        child: const Text('Confirm'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              });
-                        } else {
-                          setState(() {
-                            if (_currentPath == _paths.removeAt(i)) {
-                              _currentPath = _paths.first;
-                            }
-                          });
-                        }
-                      },
-                      onDuplicate: () {
-                        UndoRedo.clearHistory();
-
-                        setState(() {
-                          List<String> pathNames = [];
-                          for (RobotPath path in _paths) {
-                            pathNames.add(path.name);
-                          }
-                          String pathName = '${_paths[i].name} Copy';
-                          while (pathNames.contains(pathName)) {
-                            pathName = '$pathName Copy';
-                          }
-
-                          _paths.add(RobotPath(
-                            waypoints: RobotPath.cloneWaypointList(
-                                _paths[i].waypoints),
-                            maxVelocity: _paths[i].maxVelocity,
-                            maxAcceleration: _paths[i].maxAcceleration,
-                            isReversed: _paths[i].isReversed,
-                            name: pathName,
-                            markers:
-                                RobotPath.cloneMarkerList(_paths[i].markers),
-                          ));
-                          _currentPath = _paths.last;
-                          _savePath(_currentPath!);
-                        });
-                      },
-                    ),
-                ],
-              ),
+            const NavigationDrawerDestination(
+              icon: Icon(Icons.folder_outlined),
+              label: Text('Project Browser'),
             ),
-            Align(
-              alignment: FractionalOffset.bottomCenter,
-              child: Column(
-                children: [
-                  const Divider(),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0, top: 4.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            List<String> pathNames = [];
-                            for (RobotPath path in _paths) {
-                              pathNames.add(path.name);
-                            }
-                            String pathName = 'New Path';
-                            while (pathNames.contains(pathName)) {
-                              pathName = 'New $pathName';
-                            }
-                            setState(() {
-                              _paths.add(RobotPath.defaultPath(
-                                  name: pathName,
-                                  fieldImage:
-                                      _fieldImage ?? FieldImage.defaultField));
-                              _currentPath = _paths.last;
-                              _savePath(_currentPath!);
-                              UndoRedo.clearHistory();
-                            });
-                          },
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add Path'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primaryContainer,
-                            foregroundColor: colorScheme.onPrimaryContainer,
-                            fixedSize: const Size(135, 56),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16)),
-                          ),
-                        ),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return SettingsDialog(
-                                  prefs: widget.prefs,
-                                  onTeamColorChanged: widget.onTeamColorChanged,
-                                  fieldImages: _fieldImages,
-                                  selectedField:
-                                      _fieldImage ?? FieldImage.defaultField,
-                                  onFieldSelected: (FieldImage image) {
-                                    setState(() {
-                                      _fieldImage = image;
-                                      if (!_fieldImages.contains(image)) {
-                                        _fieldImages.add(image);
-                                      }
-                                      widget.prefs
-                                          .setString('fieldImage', image.name);
-                                    });
-                                  },
-                                  onSettingsChanged: _onProjectSettingsChanged,
-                                  onGenerationEnabled: () {
-                                    for (RobotPath path in _paths) {
-                                      _savePath(path);
-                                    }
-                                  },
-                                );
-                              },
-                            );
-                          },
-                          icon: const Icon(Icons.settings),
-                          label: const Text('Settings'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.surface,
-                            foregroundColor: colorScheme.onSurface,
-                            fixedSize: const Size(135, 56),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            const NavigationDrawerDestination(
+              icon: Icon(Icons.bar_chart),
+              label: Text('Telemetry'),
+            ),
+            const NavigationDrawerDestination(
+              icon: Icon(Icons.grid_on),
+              label: Text('Navigation Grid'),
             ),
           ],
         ),
-      ),
+        Align(
+          alignment: Alignment.bottomLeft,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12.0, left: 16.0),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return SettingsDialog(
+                      prefs: widget.prefs,
+                      onTeamColorChanged: widget.onTeamColorChanged,
+                      fieldImages: _fieldImages,
+                      selectedField: _fieldImage ?? FieldImage.defaultField,
+                      onFieldSelected: (FieldImage image) {
+                        setState(() {
+                          _fieldImage = image;
+                          if (!_fieldImages.contains(image)) {
+                            _fieldImages.add(image);
+                          }
+                          widget.prefs.setString('fieldImage', image.name);
+                        });
+                      },
+                      onSettingsChanged: _onProjectSettingsChanged,
+                    );
+                  },
+                );
+              },
+              icon: const Icon(Icons.settings),
+              label: const Text('Settings'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.surface,
+                foregroundColor: colorScheme.onSurface,
+                elevation: 4.0,
+                fixedSize: const Size(270, 56),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16)),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -497,28 +296,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         children: [
           Center(
             child: ProjectPage(
+              key: ValueKey(_projectDir!.path),
               prefs: widget.prefs,
               fieldImage: _fieldImage ?? FieldImage.defaultField,
               projectDirectory: _projectDir!,
             ),
-            // child: SplitEditor(
-            //   prefs: widget.prefs,
-            //   path: PathPlannerPath.defaultPath(),
-            //   fieldImage: _fieldImage ?? FieldImage.defaultField,
-            // ),
-            // child: PathEditor(
-            //   fieldImage: _fieldImage ?? FieldImage.defaultField,
-            //   path: _currentPath!,
-            //   robotSize: _robotSize,
-            //   holonomicMode: _holonomicMode,
-            //   showGeneratorSettings: _generateJSON || _generateCSV,
-            //   focusedSelection: _focusedSelection,
-            //   savePath: (path) => _savePath(path),
-            //   saveNavGrid: (grid, nodeSizeMeters) =>
-            //       _saveNavGrid(grid, nodeSizeMeters),
-            //   loadNavGrid: () => _loadNavGrid(),
-            //   prefs: widget.prefs,
-            // ),
           ),
           Align(
             alignment: FractionalOffset.topLeft,
@@ -539,67 +321,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  List<RobotPath> _loadPaths(Directory projectDir) {
-    List<RobotPath> paths = [];
-
-    Directory pathsDir = _getPathsDir(projectDir);
-    if (!pathsDir.existsSync()) {
-      pathsDir.createSync(recursive: true);
-    }
-
-    List<FileSystemEntity> pathFiles = pathsDir.listSync();
-    for (FileSystemEntity e in pathFiles) {
-      if (e.path.endsWith('.path')) {
-        String json = File(e.path).readAsStringSync();
-        try {
-          RobotPath p = RobotPath.fromJson(jsonDecode(json));
-          p.name = basenameWithoutExtension(e.path);
-          paths.add(p);
-        } catch (ex, stack) {
-          // Path is not in correct format. Don't add it and notify user
-          showDialog(
-              context: this.context,
-              builder: (context) {
-                return AlertDialog(
-                  title: Text('Error loading ${basename(e.path)}'),
-                  content: Text(ex is RobotPathJsonException
-                      ? ex.cause
-                      : 'Can\'t parse JSON'),
-                  actions: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('OK'),
-                    ),
-                  ],
-                );
-              });
-          Log.error('Failed to load path', ex, stack);
-        }
-      }
-    }
-
-    if (paths.isEmpty) {
-      paths.add(RobotPath.defaultPath(
-          fieldImage: _fieldImage ?? FieldImage.defaultField));
-      _savePath(paths.last);
-    }
-
-    return paths;
-  }
-
-  Directory _getPathsDir(Directory projectDir) {
-    if (_isWpiLibProject(projectDir)) {
-      // Java or C++ project
-      return Directory(
-          join(projectDir.path, 'src', 'main', 'deploy', 'pathplanner'));
-    } else {
-      // Other language
-      return Directory(join(projectDir.path, 'deploy', 'pathplanner'));
-    }
-  }
-
   bool _isWpiLibProject(Directory projectDir) {
     File buildFile = File(join(projectDir.path, 'build.gradle'));
 
@@ -607,69 +328,40 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _saveNavGrid(List<List<bool>> grid, double nodeSizeMeters) {
-    if (_projectDir != null) {
-      Directory saveDir = _getPathsDir(_projectDir!);
+    // TODO
+    // if (_projectDir != null) {
+    //   Directory saveDir = _getPathsDir(_projectDir!);
 
-      var json = {
-        'nodeSizeMeters': nodeSizeMeters,
-        'grid': grid,
-      };
+    //   var json = {
+    //     'nodeSizeMeters': nodeSizeMeters,
+    //     'grid': grid,
+    //   };
 
-      String content = jsonEncode(json);
-      File navGridFile = File(join(saveDir.path, 'navgrid.json'));
+    //   String content = jsonEncode(json);
+    //   File navGridFile = File(join(saveDir.path, 'navgrid.json'));
 
-      navGridFile.writeAsString(content);
-    }
+    //   navGridFile.writeAsString(content);
+    // }
   }
 
   Future<(List<List<bool>>, double)?> _loadNavGrid() async {
-    if (_projectDir != null) {
-      Directory saveDir = _getPathsDir(_projectDir!);
-      File navGridFile = File(join(saveDir.path, 'navgrid.json'));
+    // TODO
+    // if (_projectDir != null) {
+    //   Directory saveDir = _getPathsDir(_projectDir!);
+    //   File navGridFile = File(join(saveDir.path, 'navgrid.json'));
 
-      if (await navGridFile.exists()) {
-        String content = await navGridFile.readAsString();
+    //   if (await navGridFile.exists()) {
+    //     String content = await navGridFile.readAsString();
 
-        Map<String, dynamic> json = jsonDecode(content);
-        List<List<bool>> grid = (json['grid'] as List)
-            .map((r) => (r as List).map((c) => c as bool).toList())
-            .toList(); // yikes
-        double nodeSizeMeters = (json['nodeSizeMeters'] as num).toDouble();
-        return (grid, nodeSizeMeters);
-      }
-    }
+    //     Map<String, dynamic> json = jsonDecode(content);
+    //     List<List<bool>> grid = (json['grid'] as List)
+    //         .map((r) => (r as List).map((c) => c as bool).toList())
+    //         .toList(); // yikes
+    //     double nodeSizeMeters = (json['nodeSizeMeters'] as num).toDouble();
+    //     return (grid, nodeSizeMeters);
+    //   }
+    // }
     return null;
-  }
-
-  void _savePath(RobotPath path) async {
-    if (_projectDir != null) {
-      bool result = await path.savePath(
-          _getPathsDir(_projectDir!), _generateJSON, _generateCSV);
-
-      if (!result && mounted) {
-        showDialog(
-          context: this.context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Failed to save path'),
-              content: const SizedBox(
-                width: 400,
-                child: Text(
-                    'This is likely because you have a file for this path open in another program. Please close the program and try again.'),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      }
-    }
   }
 
   void _onProjectSettingsChanged() {
@@ -684,9 +376,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         widget.prefs.getDouble('robotLength') ?? 1.0,
       );
       _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
-      _focusedSelection = widget.prefs.getBool('focusedSelection') ?? false;
-      _generateJSON = widget.prefs.getBool('generateJSON') ?? false;
-      _generateCSV = widget.prefs.getBool('generateCSV') ?? false;
       _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
 
       if (_pplibClient) {
@@ -734,8 +423,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       'robotWidth': _robotSize.width,
       'robotLength': _robotSize.height,
       'holonomicMode': _holonomicMode,
-      'generateJSON': _generateJSON,
-      'generateCSV': _generateCSV,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {
@@ -750,11 +437,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String? projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project', initialDirectory: initialDirectory);
     if (projectFolder != null) {
-      Directory pathsDir = _getPathsDir(Directory(projectFolder));
-
-      pathsDir.createSync(recursive: true);
       widget.prefs.setString('currentProjectDir', projectFolder);
-      widget.prefs.remove('pathOrder');
 
       if (Platform.isMacOS) {
         // Bookmark project on macos so it can be accessed again later
@@ -764,10 +447,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       setState(() {
         _projectDir = Directory(projectFolder);
-        _paths = _loadPaths(_projectDir!);
         _loadProjectSettingsFromFile(_projectDir!);
         _isWpiLib = _isWpiLibProject(_projectDir!);
-        _currentPath = _paths[0];
       });
     }
   }

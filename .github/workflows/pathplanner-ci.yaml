@@ -53,9 +53,19 @@ jobs:
 
       - name: Get dependencies
         run: flutter pub get
+      
+      - name: Generate full coverage test
+        run: dart run full_coverage
 
       - name: Run tests
-        run: flutter test
+        run: flutter test --coverage
+      
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: flutter-coverage
+          files: coverage/lcov.info
   
   build:
     strategy:

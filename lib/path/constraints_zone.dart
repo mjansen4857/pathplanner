@@ -38,4 +38,17 @@ class ConstraintsZone {
       'constraints': constraints.toJson(),
     };
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ConstraintsZone &&
+      other.runtimeType == runtimeType &&
+      other.name == name &&
+      other.minWaypointRelativePos == minWaypointRelativePos &&
+      other.maxWaypointRelativePos == maxWaypointRelativePos &&
+      other.constraints == constraints;
+
+  @override
+  int get hashCode => Object.hash(
+      name, minWaypointRelativePos, maxWaypointRelativePos, constraints);
 }

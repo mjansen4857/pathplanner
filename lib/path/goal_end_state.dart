@@ -21,4 +21,14 @@ class GoalEndState {
   GoalEndState clone() {
     return GoalEndState(velocity: velocity, rotation: rotation);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is GoalEndState &&
+      other.runtimeType == runtimeType &&
+      other.velocity == velocity &&
+      other.rotation == rotation;
+
+  @override
+  int get hashCode => Object.hash(velocity, rotation);
 }

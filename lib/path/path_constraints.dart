@@ -34,4 +34,17 @@ class PathConstraints {
       'maxAngularAcceleration': maxAngularAcceleration,
     };
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is PathConstraints &&
+      other.runtimeType == runtimeType &&
+      other.maxVelocity == maxVelocity &&
+      other.maxAcceleration == maxAcceleration &&
+      other.maxAngularVelocity == maxAngularVelocity &&
+      other.maxAngularAcceleration == other.maxAngularAcceleration;
+
+  @override
+  int get hashCode => Object.hash(
+      maxVelocity, maxAcceleration, maxAngularVelocity, maxAngularAcceleration);
 }

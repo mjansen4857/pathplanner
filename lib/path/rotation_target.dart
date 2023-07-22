@@ -24,4 +24,14 @@ class RotationTarget {
       rotationDegrees: rotationDegrees,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is RotationTarget &&
+      other.runtimeType == runtimeType &&
+      other.waypointRelativePos == waypointRelativePos &&
+      other.rotationDegrees == rotationDegrees;
+
+  @override
+  int get hashCode => Object.hash(waypointRelativePos, rotationDegrees);
 }

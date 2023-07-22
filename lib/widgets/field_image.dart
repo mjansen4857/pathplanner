@@ -12,11 +12,11 @@ enum OfficialField {
 
 class FieldImage {
   late final Image image;
-  late final Image? imageSmall;
+  Image? imageSmall;
   late final ui.Size defaultSize;
-  late final ui.Size? defaultSizeSmall;
+  ui.Size? defaultSizeSmall;
   late num pixelsPerMeter;
-  late num? pixelsPerMeterSmall;
+  num? pixelsPerMeterSmall;
   late String name;
   late final bool isCustom;
   late final String extension;

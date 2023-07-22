@@ -47,7 +47,7 @@ class _EditFieldDialogState extends State<EditFieldDialog> {
             Row(
               children: [
                 SizedBox(
-                  height: 40,
+                  height: 42,
                   width: 200,
                   child: TextField(
                     controller: _nameController,
@@ -60,13 +60,13 @@ class _EditFieldDialogState extends State<EditFieldDialog> {
                       contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Field Name',
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(4)),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 SizedBox(
-                  height: 40,
+                  height: 42,
                   width: 200,
                   child: TextField(
                     controller: _ppmController,
@@ -79,7 +79,7 @@ class _EditFieldDialogState extends State<EditFieldDialog> {
                       contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
                       labelText: 'Pixels Per Meter',
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(4)),
+                          borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
                 ),

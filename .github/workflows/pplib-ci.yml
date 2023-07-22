@@ -26,6 +26,30 @@ jobs:
         run: ./gradlew spotlessCheck
         working-directory: ./pathplannerlib
   
+  test:
+    name: "[PPLib] Unit Tests & Coverage"
+    runs-on: ubuntu-22.04
+    container: wpilib/ubuntu-base:22.04
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        working-directory: ./pathplannerlib
+      
+      - name: Build & Test
+        run: ./gradlew build -PreleaseMode
+        working-directory: ./pathplannerlib
+      
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: pplib-coverage
+          files: pathplannerlib/build/reports/jacoco/test/jacocoTestReport.xml
+  
   build-docker:
     strategy:
       fail-fast: false
@@ -48,16 +72,9 @@ jobs:
         run: chmod +x gradlew
         working-directory: ./pathplannerlib
       
-      - name: Build and test
+      - name: Build
         run: ./gradlew build --max-workers 1 -PreleaseMode ${{ matrix.build-options }}
         working-directory: ./pathplannerlib
-
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          name: pplib-coverage
-          files: pathplannerlib/build/reports/jacoco/test/jacocoTestReport.xml
       
       - name: Upload artifact
         uses: actions/upload-artifact@v3

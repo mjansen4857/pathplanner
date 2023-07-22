@@ -35,6 +35,6 @@ jobs:
           REPO: self
           FOLDER: pathplannerlib/build/docs
           BRANCH: gh-pages
-          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MESSAGE: Publish docs from PathPlannerLib
           SQUASH_HISTORY: true

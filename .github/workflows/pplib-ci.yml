@@ -48,9 +48,16 @@ jobs:
         run: chmod +x gradlew
         working-directory: ./pathplannerlib
       
-      - name: Build
+      - name: Build and test
         run: ./gradlew build --max-workers 1 -PreleaseMode ${{ matrix.build-options }}
         working-directory: ./pathplannerlib
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: pplib-coverage
+          files: pathplannerlib/build/reports/jacoco/test/jacocoTestReport.xml
       
       - name: Upload artifact
         uses: actions/upload-artifact@v3

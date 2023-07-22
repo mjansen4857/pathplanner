@@ -6,7 +6,8 @@ plugins {
     id 'edu.wpi.first.NativeUtils' version '2023.7.0'
     id 'edu.wpi.first.GradleJni' version '1.0.0'
     id 'edu.wpi.first.GradleVsCode' version '1.3.0'
-    id "com.diffplug.spotless" version "6.11.0"
+    id 'com.diffplug.spotless' version '6.11.0'
+    id 'jacoco'
 }
 
 sourceCompatibility = JavaVersion.VERSION_11
@@ -162,6 +163,14 @@ wrapper {
     gradleVersion '7.5.1'
 }
 
+jacocoTestReport {
+    reports {
+        xml.required.set(true)
+    }
+}
+
 test {
     useJUnitPlatform()
+
+    finalizedBy jacocoTestReport
 }

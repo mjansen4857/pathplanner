@@ -52,6 +52,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  full_coverage: ^1.0.0
   msix: ^3.7.0
   flutter_lints: ^2.0.0
 

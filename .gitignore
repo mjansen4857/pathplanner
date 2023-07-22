@@ -8,6 +8,7 @@
 .buildlog/
 .history
 .svn/
+coverage/
 
 # Old version stuff
 /dist/

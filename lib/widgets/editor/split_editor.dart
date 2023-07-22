@@ -231,7 +231,6 @@ class _SplitEditorState extends State<SplitEditor> {
                       widget.path.rotationTargets[_draggedRotationIdx!]
                           .rotationDegrees = rotationDeg;
                     }
-                    // widget.path.generatePathPoints();
                   });
                 }
               },

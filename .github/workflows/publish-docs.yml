@@ -1,0 +1,47 @@
+name: Publish documentation to GitHub Pages
+
+on:
+  workflow_dispatch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-22.04
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Build PathPlannerLib
+        working-directory: pathplannerlib
+        run: |
+            ./gradlew build -PreleaseMode
+            ./gradlew publish -PreleaseMode
+
+      - name: Get Doxygen theme
+        working-directory: pathplannerlib
+        run: |
+            git submodule add https://github.com/jothepro/doxygen-awesome-css.git
+            cd doxygen-awesome-css
+            git checkout v2.2.1
+
+      - name: Generate Doxygen docs
+        uses: mattnotmitt/doxygen-action@v1.9.5
+        with:
+          working-directory: pathplannerlib
+      
+      - name: Move to docs dir
+        working-directory: pathplannerlib/build/docs
+        run: |
+            mkdir docs
+            sudo mv javadoc docs/java
+            sudo mv cpp/html docs/cpp
+
+      - name: Deploy generated documentation to GitHub Pages
+        uses: s0/git-publish-subdir-action@v2.6.0
+        env:
+          REPO: self
+          FOLDER: pathplannerlib/build/docs
+          BRANCH: gh-pages
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MESSAGE: Publish docs from PathPlannerLib
+          SQUASH_HISTORY: true

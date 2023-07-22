@@ -150,6 +150,12 @@ spotless {
     }
 }
 
+javadoc {
+    options {
+        links 'https://docs.oracle.com/en/java/javase/11/docs/api/', 'https://github.wpilib.org/allwpilib/docs/release/java/'
+    }
+}
+
 apply from: 'publish.gradle'
 
 wrapper {

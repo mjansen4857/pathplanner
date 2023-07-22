@@ -32,10 +32,9 @@ jobs:
       - name: Deploy generated documentation to GitHub Pages
         uses: s0/git-publish-subdir-action@v2.6.0
         env:
-          REPO: git@github.com:mjansen4857/pathplanner.git
+          REPO: self
           FOLDER: pathplannerlib/build/docs
           BRANCH: gh-pages
-          TARGET_DIR: docs
           SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_PRIVATE_KEY }}
           MESSAGE: Publish docs from PathPlannerLib
           SQUASH_HISTORY: true

@@ -207,8 +207,7 @@ class Waypoint {
     return false;
   }
 
-  bool startDragging(num xPos, num yPos, num anchorRadius, num controlRadius,
-      num holonomicThingRadius) {
+  bool startDragging(num xPos, num yPos, num anchorRadius, num controlRadius) {
     if (isPointInAnchor(xPos, yPos, anchorRadius)) {
       return _isAnchorDragging = true;
     } else if (isPointInNextControl(xPos, yPos, controlRadius)) {

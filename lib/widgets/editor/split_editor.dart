@@ -48,6 +48,8 @@ class _SplitEditorState extends State<SplitEditor> {
   late bool _treeOnRight;
   Waypoint? _draggedPoint;
   Waypoint? _dragOldValue;
+  int? _draggedRotationIdx;
+  num? _dragRotationOldValue;
 
   late Size _robotSize;
 
@@ -137,20 +139,53 @@ class _SplitEditorState extends State<SplitEditor> {
                 ));
               },
               onPanStart: (details) {
+                double xPos = _xPixelsToMeters(details.localPosition.dx);
+                double yPos = _yPixelsToMeters(details.localPosition.dy);
+
                 for (int i = waypoints.length - 1; i >= 0; i--) {
                   Waypoint w = waypoints[i];
                   if (w.startDragging(
-                      _xPixelsToMeters(details.localPosition.dx),
-                      _yPixelsToMeters(details.localPosition.dy),
+                      xPos,
+                      yPos,
                       _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
                           25, _PathPainter.scale, widget.fieldImage)),
                       _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
-                          20, _PathPainter.scale, widget.fieldImage)),
-                      _pixelsToMeters(PathPainterUtil.uiPointSizeToPixels(
-                          15, _PathPainter.scale, widget.fieldImage)))) {
+                          20, _PathPainter.scale, widget.fieldImage)))) {
                     _draggedPoint = w;
                     _dragOldValue = w.clone();
                     break;
+                  }
+                }
+
+                // Not dragging any waypoints, check rotations
+                num dotRadius = _pixelsToMeters(
+                    PathPainterUtil.uiPointSizeToPixels(
+                        15, _PathPainter.scale, widget.fieldImage));
+                // This is a little bit stupid but whatever
+                for (int i = -1; i < widget.path.rotationTargets.length; i++) {
+                  num rotation;
+                  Point pos;
+                  if (i == -1) {
+                    rotation = widget.path.goalEndState.rotation;
+                    pos = widget.path.waypoints.last.anchor;
+                  } else {
+                    rotation = widget.path.rotationTargets[i].rotationDegrees;
+                    int pointIdx =
+                        (widget.path.rotationTargets[i].waypointRelativePos /
+                                0.05)
+                            .round();
+                    pos = widget.path.pathPoints[pointIdx].position;
+                  }
+
+                  num angleRadians = rotation / 180.0 * pi;
+                  num dotX =
+                      pos.x + (_robotSize.height / 2 * cos(angleRadians));
+                  num dotY =
+                      pos.y + (_robotSize.height / 2 * sin(angleRadians));
+                  if (pow(xPos - dotX, 2) + pow(yPos - dotY, 2) <
+                      pow(dotRadius, 2)) {
+                    _draggedRotationIdx = i;
+                    _dragRotationOldValue = rotation;
                   }
                 }
               },
@@ -169,6 +204,34 @@ class _SplitEditorState extends State<SplitEditor> {
                                     _PathPainter.scale),
                             max(8, details.localPosition.dy))));
                     widget.path.generatePathPoints();
+                  });
+                } else if (_draggedRotationIdx != null) {
+                  Point pos;
+                  if (_draggedRotationIdx == -1) {
+                    pos = widget.path.waypoints.last.anchor;
+                  } else {
+                    int pointIdx = (widget
+                                .path
+                                .rotationTargets[_draggedRotationIdx!]
+                                .waypointRelativePos /
+                            0.05)
+                        .round();
+                    pos = widget.path.pathPoints[pointIdx].position;
+                  }
+
+                  double x = _xPixelsToMeters(details.localPosition.dx);
+                  double y = _yPixelsToMeters(details.localPosition.dy);
+                  num rotation = atan2(y - pos.y, x - pos.x);
+                  num rotationDeg = (rotation * 180 / pi);
+
+                  setState(() {
+                    if (_draggedRotationIdx == -1) {
+                      widget.path.goalEndState.rotation = rotationDeg;
+                    } else {
+                      widget.path.rotationTargets[_draggedRotationIdx!]
+                          .rotationDegrees = rotationDeg;
+                    }
+                    // widget.path.generatePathPoints();
                   });
                 }
               },
@@ -195,6 +258,47 @@ class _SplitEditorState extends State<SplitEditor> {
                     },
                   ));
                   _draggedPoint = null;
+                } else if (_draggedRotationIdx != null) {
+                  if (_draggedRotationIdx == -1) {
+                    num endRotation = widget.path.goalEndState.rotation;
+                    UndoRedo.addChange(Change(
+                      _dragRotationOldValue,
+                      () {
+                        setState(() {
+                          widget.path.goalEndState.rotation = endRotation;
+                          widget.path.generateAndSavePath();
+                        });
+                      },
+                      (oldValue) {
+                        setState(() {
+                          widget.path.goalEndState.rotation = oldValue;
+                          widget.path.generateAndSavePath();
+                        });
+                      },
+                    ));
+                  } else {
+                    int rotationIdx = _draggedRotationIdx!;
+                    num endRotation = widget
+                        .path.rotationTargets[rotationIdx].rotationDegrees;
+                    UndoRedo.addChange(Change(
+                      _dragRotationOldValue,
+                      () {
+                        setState(() {
+                          widget.path.rotationTargets[rotationIdx]
+                              .rotationDegrees = endRotation;
+                          widget.path.generateAndSavePath();
+                        });
+                      },
+                      (oldValue) {
+                        setState(() {
+                          widget.path.rotationTargets[rotationIdx]
+                              .rotationDegrees = oldValue;
+                          widget.path.generateAndSavePath();
+                        });
+                      },
+                    ));
+                  }
+                  _draggedRotationIdx = null;
                 }
               },
               child: Padding(

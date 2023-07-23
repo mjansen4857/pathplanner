@@ -84,7 +84,7 @@ void main() {
     });
 
     test('-pi radians = -180 degrees', () {
-      expect(GeometryUtil.toRadians(-180), -180);
+      expect(GeometryUtil.toRadians(-180), -pi);
     });
   });
 }

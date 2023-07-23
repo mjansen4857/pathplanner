@@ -51,6 +51,7 @@ dependencies:
   multi_split_view: ^2.4.0
   flutter_simple_treeview: ^3.0.2
   file: ^6.1.4
+  collection: ^1.17.1
 
 dev_dependencies:
   flutter_test:

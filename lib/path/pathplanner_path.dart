@@ -28,7 +28,7 @@ class PathPlannerPath {
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
 
-  Directory? pathDirectory;
+  String? pathDir;
 
   // Stuff used for UI
   bool waypointsExpanded = false;
@@ -38,7 +38,7 @@ class PathPlannerPath {
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
 
-  PathPlannerPath.defaultPath({this.pathDirectory, this.name = 'New Path'})
+  PathPlannerPath.defaultPath({this.pathDir, this.name = 'New Path'})
       : waypoints = [],
         pathPoints = [],
         globalConstraints = PathConstraints(),
@@ -73,15 +73,15 @@ class PathPlannerPath {
     required this.constraintZones,
     required this.rotationTargets,
     required this.eventMarkers,
-    this.pathDirectory,
+    this.pathDir,
   }) : pathPoints = [] {
     generatePathPoints();
   }
 
   PathPlannerPath.fromJsonV1(Map<String, dynamic> json, String name,
-      [Directory? pathsDir])
+      [String? pathsDir])
       : this(
-          pathDirectory: pathsDir,
+          pathDir: pathsDir,
           name: name,
           waypoints: [
             for (var waypointJson in json['waypoints'])
@@ -109,9 +109,9 @@ class PathPlannerPath {
 
     generatePathPoints();
 
-    if (pathDirectory != null) {
+    if (pathDir != null) {
       try {
-        File pathFile = fs.file(join(pathDirectory!.path, '$name.path'));
+        File pathFile = fs.file(join(pathDir!, '$name.path'));
         const JsonEncoder encoder = JsonEncoder.withIndent('  ');
         pathFile.writeAsString(encoder.convert(this));
         Log.debug(
@@ -122,11 +122,11 @@ class PathPlannerPath {
     }
   }
 
-  static Future<List<PathPlannerPath>> loadAllPathsInDir(Directory pathsDir,
+  static Future<List<PathPlannerPath>> loadAllPathsInDir(String pathsDir,
       {FileSystem fs = const LocalFileSystem()}) async {
     List<PathPlannerPath> paths = [];
 
-    List<FileSystemEntity> files = pathsDir.listSync();
+    List<FileSystemEntity> files = fs.directory(pathsDir).listSync();
     for (FileSystemEntity e in files) {
       if (e.path.endsWith('.path')) {
         String jsonStr = await fs.file(e.path).readAsString();
@@ -148,8 +148,8 @@ class PathPlannerPath {
   }
 
   void deletePath({FileSystem fs = const LocalFileSystem()}) {
-    if (pathDirectory != null) {
-      File pathFile = fs.file(join(pathDirectory!.path, '$name.path'));
+    if (pathDir != null) {
+      File pathFile = fs.file(join(pathDir!, '$name.path'));
 
       if (pathFile.existsSync()) {
         pathFile.delete();
@@ -158,11 +158,11 @@ class PathPlannerPath {
   }
 
   void renamePath(String name, {FileSystem fs = const LocalFileSystem()}) {
-    if (pathDirectory != null) {
-      File pathFile = fs.file(join(pathDirectory!.path, '${this.name}.path'));
+    if (pathDir != null) {
+      File pathFile = fs.file(join(pathDir!, '${this.name}.path'));
 
       if (pathFile.existsSync()) {
-        pathFile.rename(join(pathDirectory!.path, '$name.path'));
+        pathFile.rename(join(pathDir!, '$name.path'));
         this.name = name;
       }
     }
@@ -311,7 +311,7 @@ class PathPlannerPath {
       constraintZones: cloneConstraintZones(constraintZones),
       rotationTargets: cloneRotationTargets(rotationTargets),
       eventMarkers: cloneEventMarkers(eventMarkers),
-      pathDirectory: pathDirectory,
+      pathDir: pathDir,
     );
   }
 

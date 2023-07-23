@@ -71,14 +71,14 @@ class _ProjectPageState extends State<ProjectPage> {
       _pathsDirectory = fs.directory(join(deployDir.path, 'paths'));
       _pathsDirectory.createSync(recursive: true);
 
-      var paths = await PathPlannerPath.loadAllPathsInDir(_pathsDirectory);
+      var paths = await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path);
 
       setState(() {
         _paths = paths;
 
         if (_paths.isEmpty) {
           _paths.add(PathPlannerPath.defaultPath(
-            pathDirectory: _pathsDirectory,
+            pathDir: _pathsDirectory.path,
             name: 'Example Path',
           ));
         }
@@ -154,7 +154,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
                   setState(() {
                     _paths.add(PathPlannerPath.defaultPath(
-                      pathDirectory: _pathsDirectory,
+                      pathDir: _pathsDirectory.path,
                       name: pathName,
                     ));
                   });

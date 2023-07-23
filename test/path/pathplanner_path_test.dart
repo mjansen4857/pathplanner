@@ -1,6 +1,11 @@
+import 'dart:convert';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
+import 'package:file/file.dart';
+import 'package:file/memory.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
@@ -247,5 +252,89 @@ void main() {
     path.insertWaypointAfter(0);
     expect(path.waypoints.length, 4);
     expect(path.rotationTargets[0].waypointRelativePos, 2.2);
+  });
+
+  group('file management', () {
+    test('rename', () {
+      var fs = MemoryFileSystem();
+
+      Directory pathDir = fs.directory('/paths');
+      fs.file(join(pathDir.path, 'test.path')).createSync(recursive: true);
+
+      PathPlannerPath path =
+          PathPlannerPath.defaultPath(name: 'test', pathDir: pathDir.path);
+
+      path.renamePath('renamed', fs: fs);
+
+      expect(path.name, 'renamed');
+      expect(fs.file(join(pathDir.path, 'test.path')).existsSync(), false);
+      expect(fs.file(join(pathDir.path, 'renamed.path')).existsSync(), true);
+    });
+
+    test('delete', () {
+      var fs = MemoryFileSystem();
+
+      Directory pathDir = fs.directory('/paths');
+      fs.file(join(pathDir.path, 'test.path')).createSync(recursive: true);
+
+      PathPlannerPath path =
+          PathPlannerPath.defaultPath(name: 'test', pathDir: pathDir.path);
+
+      path.deletePath(fs: fs);
+
+      expect(fs.file(join(pathDir.path, 'test.path')).existsSync(), false);
+    });
+
+    test('load paths in dir', () async {
+      var fs = MemoryFileSystem();
+
+      Directory pathDir = fs.directory('/paths');
+      pathDir.createSync(recursive: true);
+
+      PathPlannerPath path1 =
+          PathPlannerPath.defaultPath(name: 'test1', pathDir: pathDir.path);
+      PathPlannerPath path2 =
+          PathPlannerPath.defaultPath(name: 'test2', pathDir: pathDir.path);
+      path2.eventMarkers.add(EventMarker.defaultMarker());
+
+      fs
+          .file(join(pathDir.path, 'test1.path'))
+          .writeAsStringSync(jsonEncode(path1.toJson()));
+      fs
+          .file(join(pathDir.path, 'test2.path'))
+          .writeAsStringSync(jsonEncode(path2.toJson()));
+
+      List<PathPlannerPath> loaded =
+          await PathPlannerPath.loadAllPathsInDir(pathDir.path, fs: fs);
+
+      expect(loaded.length, 2);
+
+      // Sort paths by name so they should be in the order: path1, path2
+      loaded.sort((a, b) => a.name.compareTo(b.name));
+
+      expect(loaded[0], path1);
+      expect(loaded[1], path2);
+    });
+
+    test('generate and save', () {
+      var fs = MemoryFileSystem();
+
+      Directory pathDir = fs.directory('/paths');
+      pathDir.createSync(recursive: true);
+
+      PathPlannerPath path =
+          PathPlannerPath.defaultPath(name: 'test', pathDir: pathDir.path);
+      path.constraintZones.add(ConstraintsZone.defaultZone());
+
+      path.generateAndSavePath(fs: fs);
+
+      File pathFile = fs.file(join(pathDir.path, 'test.path'));
+      expect(pathFile.existsSync(), true);
+
+      String fileContent = pathFile.readAsStringSync();
+      Map<String, dynamic> fileJson = jsonDecode(fileContent);
+      expect(
+          const DeepCollectionEquality().equals(fileJson, path.toJson()), true);
+    });
   });
 }

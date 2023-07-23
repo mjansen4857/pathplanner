@@ -1,7 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
+import 'package:file/file.dart';
+import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/command.dart';
@@ -103,14 +104,14 @@ class PathPlannerPath {
           ],
         );
 
-  void generateAndSavePath() {
+  void generateAndSavePath({FileSystem fs = const LocalFileSystem()}) {
     Stopwatch s = Stopwatch()..start();
 
     generatePathPoints();
 
     if (pathDirectory != null) {
       try {
-        File pathFile = File(join(pathDirectory!.path, '$name.path'));
+        File pathFile = fs.file(join(pathDirectory!.path, '$name.path'));
         const JsonEncoder encoder = JsonEncoder.withIndent('  ');
         pathFile.writeAsString(encoder.convert(this));
         Log.debug(
@@ -121,35 +122,14 @@ class PathPlannerPath {
     }
   }
 
-  void deletePath() {
-    if (pathDirectory != null) {
-      File pathFile = File(join(pathDirectory!.path, '$name.path'));
-
-      if (pathFile.existsSync()) {
-        pathFile.delete();
-      }
-    }
-  }
-
-  void renamePath(String name) {
-    if (pathDirectory != null) {
-      File pathFile = File(join(pathDirectory!.path, '${this.name}.path'));
-
-      if (pathFile.existsSync()) {
-        pathFile.rename(join(pathDirectory!.path, '$name.path'));
-        this.name = name;
-      }
-    }
-  }
-
-  static Future<List<PathPlannerPath>> loadAllPathsInDir(
-      Directory pathsDir) async {
+  static Future<List<PathPlannerPath>> loadAllPathsInDir(Directory pathsDir,
+      {FileSystem fs = const LocalFileSystem()}) async {
     List<PathPlannerPath> paths = [];
 
     List<FileSystemEntity> files = pathsDir.listSync();
     for (FileSystemEntity e in files) {
       if (e.path.endsWith('.path')) {
-        String jsonStr = await File(e.path).readAsString();
+        String jsonStr = await fs.file(e.path).readAsString();
         try {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String pathName = basenameWithoutExtension(e.path);
@@ -165,6 +145,27 @@ class PathPlannerPath {
       }
     }
     return paths;
+  }
+
+  void deletePath({FileSystem fs = const LocalFileSystem()}) {
+    if (pathDirectory != null) {
+      File pathFile = fs.file(join(pathDirectory!.path, '$name.path'));
+
+      if (pathFile.existsSync()) {
+        pathFile.delete();
+      }
+    }
+  }
+
+  void renamePath(String name, {FileSystem fs = const LocalFileSystem()}) {
+    if (pathDirectory != null) {
+      File pathFile = fs.file(join(pathDirectory!.path, '${this.name}.path'));
+
+      if (pathFile.existsSync()) {
+        pathFile.rename(join(pathDirectory!.path, '$name.path'));
+        this.name = name;
+      }
+    }
   }
 
   Map<String, dynamic> toJson() {

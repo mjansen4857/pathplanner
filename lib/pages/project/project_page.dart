@@ -1,5 +1,5 @@
-import 'dart:io';
-
+import 'package:file/file.dart';
+import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:path/path.dart';
@@ -53,20 +53,22 @@ class _ProjectPageState extends State<ProjectPage> {
     ];
 
     // Check if WPILib project
-    File(join(widget.projectDirectory.path, 'build.gradle'))
+    var fs = const LocalFileSystem();
+    fs
+        .file(join(widget.projectDirectory.path, 'build.gradle'))
         .exists()
         .then((exists) async {
       Directory deployDir;
       if (exists) {
-        deployDir = Directory(join(widget.projectDirectory.path, 'src', 'main',
-            'deploy', 'pathplanner'));
+        deployDir = fs.directory(join(widget.projectDirectory.path, 'src',
+            'main', 'deploy', 'pathplanner'));
       } else {
-        deployDir = Directory(
+        deployDir = fs.directory(
             join(widget.projectDirectory.path, 'deploy', 'pathplanner'));
       }
 
       // Make sure paths dir exists
-      _pathsDirectory = Directory(join(deployDir.path, 'paths'));
+      _pathsDirectory = fs.directory(join(deployDir.path, 'paths'));
       _pathsDirectory.createSync(recursive: true);
 
       var paths = await PathPlannerPath.loadAllPathsInDir(_pathsDirectory);

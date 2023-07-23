@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:file/file.dart';
+import 'package:file/local.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
@@ -58,6 +60,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _scaleAnimation =
         CurvedAnimation(parent: _animController, curve: Curves.ease);
 
+    var fs = const LocalFileSystem();
+
     _loadFieldImages().then((_) async {
       String? projectDir = widget.prefs.getString('currentProjectDir');
       if (projectDir != null && Platform.isMacOS) {
@@ -66,13 +70,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               .resolveBookmark(widget.prefs.getString('macOSBookmark')!);
 
           await _bookmarks!
-              .startAccessingSecurityScopedResource(File(projectDir));
+              .startAccessingSecurityScopedResource(fs.file(projectDir));
         } else {
           projectDir = null;
         }
       }
 
-      if (projectDir == null || !Directory(projectDir).existsSync()) {
+      if (projectDir == null || !fs.directory(projectDir).existsSync()) {
         projectDir = await Navigator.push(
           _key.currentContext!,
           PageRouteBuilder(
@@ -89,13 +93,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         if (Platform.isMacOS) {
           // Bookmark project on macos so it can be accessed again later
-          String bookmark = await _bookmarks!.bookmark(File(projectDir));
+          String bookmark = await _bookmarks!.bookmark(fs.file(projectDir));
           widget.prefs.setString('macOSBookmark', bookmark);
         }
       }
 
       setState(() {
-        _projectDir = Directory(projectDir!);
+        _projectDir = fs.directory(projectDir!);
 
         _loadProjectSettingsFromFile(_projectDir!);
 
@@ -152,10 +156,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    super.dispose();
+    var fs = const LocalFileSystem();
+
     if (Platform.isMacOS && _projectDir != null) {
-      _bookmarks!.stopAccessingSecurityScopedResource(File(_projectDir!.path));
+      _bookmarks!
+          .stopAccessingSecurityScopedResource(fs.file(_projectDir!.path));
     }
+
+    super.dispose();
   }
 
   @override
@@ -321,7 +329,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   bool _isWpiLibProject(Directory projectDir) {
-    File buildFile = File(join(projectDir.path, 'build.gradle'));
+    var fs = const LocalFileSystem();
+    File buildFile = fs.file(join(projectDir.path, 'build.gradle'));
 
     return buildFile.existsSync();
   }
@@ -386,7 +395,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _loadProjectSettingsFromFile(Directory projectDir) async {
-    File settingsFile = File(join(projectDir.path, _settingsDir));
+    var fs = const LocalFileSystem();
+    File settingsFile = fs.file(join(projectDir.path, _settingsDir));
 
     if (await settingsFile.exists()) {
       try {
@@ -410,7 +420,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
-    File settingsFile = File(join(projectDir.path, _settingsDir));
+    var fs = const LocalFileSystem();
+    File settingsFile = fs.file(join(projectDir.path, _settingsDir));
 
     if (!settingsFile.existsSync()) {
       settingsFile.createSync(recursive: true);
@@ -432,7 +443,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _openProjectDialog(BuildContext context) async {
-    String initialDirectory = _projectDir?.path ?? Directory.current.path;
+    var fs = const LocalFileSystem();
+    String initialDirectory = _projectDir?.path ?? fs.currentDirectory.path;
     String? projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project', initialDirectory: initialDirectory);
     if (projectFolder != null) {
@@ -440,12 +452,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       if (Platform.isMacOS) {
         // Bookmark project on macos so it can be accessed again later
-        String bookmark = await _bookmarks!.bookmark(File(projectFolder));
+        String bookmark = await _bookmarks!.bookmark(fs.file(projectFolder));
         widget.prefs.setString('macOSBookmark', bookmark);
       }
 
       setState(() {
-        _projectDir = Directory(projectFolder);
+        _projectDir = fs.directory(projectFolder);
         _loadProjectSettingsFromFile(_projectDir!);
         _isWpiLib = _isWpiLibProject(_projectDir!);
       });
@@ -453,14 +465,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadFieldImages() async {
-    Directory appDir = await getApplicationSupportDirectory();
-    Directory imagesDir = Directory(join(appDir.path, 'custom_fields'));
+    var fs = const LocalFileSystem();
+    Directory appDir =
+        fs.directory((await getApplicationSupportDirectory()).path);
+    Directory imagesDir = fs.directory(join(appDir.path, 'custom_fields'));
 
     imagesDir.createSync(recursive: true);
 
     List<FileSystemEntity> fileEntities = imagesDir.listSync();
     for (FileSystemEntity e in fileEntities) {
-      _fieldImages.add(FieldImage.custom(File(e.path)));
+      _fieldImages.add(FieldImage.custom(fs.file(e.path)));
     }
   }
 }

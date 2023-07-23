@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pathplanner/commands/none_command.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
@@ -224,7 +224,7 @@ void main() {
       eventMarkers: [
         EventMarker(
           waypointRelativePos: 0.5,
-          command: const NoneCommand(),
+          command: NamedCommand(name: 'testcmd'),
         ),
       ],
     );

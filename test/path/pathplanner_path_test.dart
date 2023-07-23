@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
@@ -224,7 +225,8 @@ void main() {
       eventMarkers: [
         EventMarker(
           waypointRelativePos: 0.5,
-          command: NamedCommand(name: 'testcmd'),
+          command:
+              SequentialCommandGroup(commands: [NamedCommand(name: 'testcmd')]),
         ),
       ],
     );
@@ -241,5 +243,9 @@ void main() {
     expect(path.constraintZones[0].maxWaypointRelativePos, 0.8);
     expect(path.rotationTargets[0].waypointRelativePos, 1.2);
     expect(path.eventMarkers[0].waypointRelativePos, 1.0);
+
+    path.insertWaypointAfter(0);
+    expect(path.waypoints.length, 4);
+    expect(path.rotationTargets[0].waypointRelativePos, 2.2);
   });
 }

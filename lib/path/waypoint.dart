@@ -120,18 +120,18 @@ class Waypoint {
       var a = cos(theta) * h;
 
       nextControl = anchor + Point(a, o);
-      updatePrevControlFromNext();
+      _updatePrevControlFromNext();
     } else if (prevControl != null) {
       var h = (anchor - prevControl!).magnitude;
       var o = sin(theta) * h;
       var a = cos(theta) * h;
 
       prevControl = anchor - Point(a, o);
-      updateNextControlFromPrev();
+      _updateNextControlFromPrev();
     }
   }
 
-  void updatePrevControlFromNext() {
+  void _updatePrevControlFromNext() {
     if (prevControl != null) {
       var dst = anchor.distanceTo(prevControl!);
       var dir = anchor - nextControl!;
@@ -143,7 +143,7 @@ class Waypoint {
     }
   }
 
-  void updateNextControlFromPrev() {
+  void _updateNextControlFromPrev() {
     if (nextControl != null) {
       var dst = anchor.distanceTo(nextControl!);
       var dir = (anchor - prevControl!);
@@ -232,7 +232,7 @@ class Waypoint {
         nextControl = Point(x, y);
       }
 
-      updatePrevControlFromNext();
+      _updatePrevControlFromNext();
     } else if (_isPrevControlDragging) {
       if (isLocked) {
         Point lineEnd = prevControl! + (prevControl! - anchor);
@@ -244,7 +244,7 @@ class Waypoint {
         prevControl = Point(x, y);
       }
 
-      updateNextControlFromPrev();
+      _updateNextControlFromPrev();
     }
   }
 
@@ -275,4 +275,15 @@ class Waypoint {
     }
     return closestPoint;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is Waypoint &&
+      other.runtimeType == runtimeType &&
+      other.anchor == anchor &&
+      other.prevControl == prevControl &&
+      other.nextControl == nextControl;
+
+  @override
+  int get hashCode => Object.hash(anchor, prevControl, nextControl);
 }

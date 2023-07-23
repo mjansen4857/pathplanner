@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
@@ -26,7 +27,7 @@ class PathPlannerPath {
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
 
-  Directory pathDirectory;
+  Directory? pathDirectory;
 
   // Stuff used for UI
   bool waypointsExpanded = false;
@@ -36,8 +37,7 @@ class PathPlannerPath {
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
 
-  PathPlannerPath.defaultPath(
-      {required this.pathDirectory, this.name = 'New Path'})
+  PathPlannerPath.defaultPath({this.pathDirectory, this.name = 'New Path'})
       : waypoints = [],
         pathPoints = [],
         globalConstraints = PathConstraints(),
@@ -72,13 +72,13 @@ class PathPlannerPath {
     required this.constraintZones,
     required this.rotationTargets,
     required this.eventMarkers,
-    required this.pathDirectory,
+    this.pathDirectory,
   }) : pathPoints = [] {
     generatePathPoints();
   }
 
-  PathPlannerPath._fromJsonV1(
-      Map<String, dynamic> json, String name, Directory pathsDir)
+  PathPlannerPath.fromJsonV1(Map<String, dynamic> json, String name,
+      [Directory? pathsDir])
       : this(
           pathDirectory: pathsDir,
           name: name,
@@ -108,31 +108,37 @@ class PathPlannerPath {
 
     generatePathPoints();
 
-    try {
-      File pathFile = File(join(pathDirectory.path, '$name.path'));
-      const JsonEncoder encoder = JsonEncoder.withIndent('  ');
-      pathFile.writeAsString(encoder.convert(this));
-      Log.debug(
-          'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
-    } catch (ex, stack) {
-      Log.error('Failed to save path', ex, stack);
+    if (pathDirectory != null) {
+      try {
+        File pathFile = File(join(pathDirectory!.path, '$name.path'));
+        const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+        pathFile.writeAsString(encoder.convert(this));
+        Log.debug(
+            'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
+      } catch (ex, stack) {
+        Log.error('Failed to save path', ex, stack);
+      }
     }
   }
 
   void deletePath() {
-    File pathFile = File(join(pathDirectory.path, '$name.path'));
+    if (pathDirectory != null) {
+      File pathFile = File(join(pathDirectory!.path, '$name.path'));
 
-    if (pathFile.existsSync()) {
-      pathFile.delete();
+      if (pathFile.existsSync()) {
+        pathFile.delete();
+      }
     }
   }
 
   void renamePath(String name) {
-    File pathFile = File(join(pathDirectory.path, '${this.name}.path'));
+    if (pathDirectory != null) {
+      File pathFile = File(join(pathDirectory!.path, '${this.name}.path'));
 
-    if (pathFile.existsSync()) {
-      pathFile.rename(join(pathDirectory.path, '$name.path'));
-      this.name = name;
+      if (pathFile.existsSync()) {
+        pathFile.rename(join(pathDirectory!.path, '$name.path'));
+        this.name = name;
+      }
     }
   }
 
@@ -149,7 +155,7 @@ class PathPlannerPath {
           String pathName = basenameWithoutExtension(e.path);
 
           if (json['version'] == 1.0) {
-            paths.add(PathPlannerPath._fromJsonV1(json, pathName, pathsDir));
+            paths.add(PathPlannerPath.fromJsonV1(json, pathName, pathsDir));
           } else {
             Log.error('Unknown path version');
           }
@@ -193,7 +199,7 @@ class PathPlannerPath {
   }
 
   void insertWaypointAfter(int waypointIdx) {
-    if (waypointIdx == waypoints.length - 1) {
+    if (waypointIdx >= waypoints.length - 1 || waypointIdx < 0) {
       return;
     }
 
@@ -333,4 +339,20 @@ class PathPlannerPath {
       for (EventMarker marker in markers) marker.clone(),
     ];
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is PathPlannerPath &&
+      other.runtimeType == runtimeType &&
+      other.name == name &&
+      other.globalConstraints == globalConstraints &&
+      other.goalEndState == goalEndState &&
+      listEquals(other.waypoints, waypoints) &&
+      listEquals(other.constraintZones, constraintZones) &&
+      listEquals(other.eventMarkers, eventMarkers) &&
+      listEquals(other.rotationTargets, rotationTargets);
+
+  @override
+  int get hashCode => Object.hash(name, globalConstraints, goalEndState,
+      waypoints, constraintZones, eventMarkers, rotationTargets);
 }

@@ -36,4 +36,15 @@ class EventMarker {
       command: command.clone(),
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is EventMarker &&
+      other.runtimeType == runtimeType &&
+      other.name == name &&
+      other.waypointRelativePos == waypointRelativePos &&
+      other.command == command;
+
+  @override
+  int get hashCode => Object.hash(name, waypointRelativePos, command);
 }

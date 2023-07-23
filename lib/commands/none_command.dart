@@ -12,4 +12,11 @@ class NoneCommand extends Command {
   Command clone() {
     return const NoneCommand();
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is NoneCommand && other.runtimeType == runtimeType;
+
+  @override
+  int get hashCode => type.hashCode;
 }

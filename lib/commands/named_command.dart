@@ -19,4 +19,13 @@ class NamedCommand extends Command {
   Command clone() {
     return NamedCommand(name: name);
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is NamedCommand &&
+      other.runtimeType == runtimeType &&
+      other.name == name;
+
+  @override
+  int get hashCode => Object.hash(type, name);
 }

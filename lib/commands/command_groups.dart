@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:pathplanner/commands/command.dart';
 
 abstract class CommandGroup extends Command {
@@ -38,6 +39,15 @@ class SequentialCommandGroup extends CommandGroup {
     return SequentialCommandGroup(
         commands: CommandGroup.cloneCommandsList(commands));
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is SequentialCommandGroup &&
+      other.runtimeType == runtimeType &&
+      listEquals(other.commands, commands);
+
+  @override
+  int get hashCode => Object.hash(type, commands);
 }
 
 class ParallelCommandGroup extends CommandGroup {
@@ -51,6 +61,15 @@ class ParallelCommandGroup extends CommandGroup {
     return ParallelCommandGroup(
         commands: CommandGroup.cloneCommandsList(commands));
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ParallelCommandGroup &&
+      other.runtimeType == runtimeType &&
+      listEquals(other.commands, commands);
+
+  @override
+  int get hashCode => Object.hash(type, commands);
 }
 
 class RaceCommandGroup extends CommandGroup {
@@ -63,6 +82,15 @@ class RaceCommandGroup extends CommandGroup {
   Command clone() {
     return RaceCommandGroup(commands: CommandGroup.cloneCommandsList(commands));
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is RaceCommandGroup &&
+      other.runtimeType == runtimeType &&
+      listEquals(other.commands, commands);
+
+  @override
+  int get hashCode => Object.hash(type, commands);
 }
 
 class DeadlineCommandGroup extends CommandGroup {
@@ -76,4 +104,13 @@ class DeadlineCommandGroup extends CommandGroup {
     return DeadlineCommandGroup(
         commands: CommandGroup.cloneCommandsList(commands));
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is DeadlineCommandGroup &&
+      other.runtimeType == runtimeType &&
+      listEquals(other.commands, commands);
+
+  @override
+  int get hashCode => Object.hash(type, commands);
 }

@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pathplanner/services/generator/geometry_util.dart';
+import 'package:pathplanner/util/geometry_util.dart';
 
 void main() {
   group('numLerp', () {
@@ -71,6 +71,20 @@ void main() {
 
     test('-pi radians = -180 degrees', () {
       expect(GeometryUtil.toDegrees(-pi), -180);
+    });
+  });
+
+  group('toRadians', () {
+    test('0 radians = 0 degrees', () {
+      expect(GeometryUtil.toRadians(0), 0);
+    });
+
+    test('pi radians = 180 degrees', () {
+      expect(GeometryUtil.toRadians(180), pi);
+    });
+
+    test('-pi radians = -180 degrees', () {
+      expect(GeometryUtil.toRadians(-180), -180);
     });
   });
 }

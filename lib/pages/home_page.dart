@@ -9,7 +9,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/services/log.dart';
-import 'package:pathplanner/services/pplib_client.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
@@ -379,9 +378,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
 
       if (_pplibClient) {
-        PPLibClient.initialize(widget.prefs);
+        // PPLibClient.initialize(widget.prefs); TODO
       } else {
-        PPLibClient.stopServer();
+        // PPLibClient.stopServer(); TODO
       }
     });
   }

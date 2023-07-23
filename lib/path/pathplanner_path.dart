@@ -14,8 +14,8 @@ import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/generator/geometry_util.dart';
 import 'package:pathplanner/services/log.dart';
+import 'package:pathplanner/util/geometry_util.dart';
 
 class PathPlannerPath {
   String name;

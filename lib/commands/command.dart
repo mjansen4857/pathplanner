@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/none_command.dart';
+import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 
 abstract class Command {
@@ -32,6 +33,8 @@ abstract class Command {
       return WaitCommand.fromDataJson(json['data'] ?? {});
     } else if (type == 'named') {
       return NamedCommand.fromDataJson(json['data'] ?? {});
+    } else if (type == 'path') {
+      return PathCommand.fromDataJson(json['data'] ?? {});
     } else if (type == 'sequential') {
       return SequentialCommandGroup.fromDataJson(json['data'] ?? {});
     } else if (type == 'parallel') {
@@ -50,6 +53,8 @@ abstract class Command {
       return NamedCommand();
     } else if (type == 'wait') {
       return WaitCommand();
+    } else if (type == 'path') {
+      return PathCommand();
     } else if (type == 'sequential') {
       return SequentialCommandGroup(commands: commands ?? []);
     } else if (type == 'parallel') {

@@ -78,6 +78,7 @@ flutter:
     - images/field23.png
     - images/field23small.png
     - images/icon.png
+    - resources/default_navgrid.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

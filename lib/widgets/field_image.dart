@@ -90,6 +90,10 @@ class FieldImage {
     isCustom = true;
   }
 
+  ui.Size getFieldSizeMeters() {
+    return defaultSize / pixelsPerMeter.toDouble();
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) {

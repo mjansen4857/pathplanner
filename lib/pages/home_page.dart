@@ -40,6 +40,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Directory? _projectDir;
+  late Directory _deployDir;
   Size _robotSize = const Size(0.75, 1.0);
   bool _holonomicMode = false;
   bool _pplibClient = false;
@@ -101,6 +102,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           widget.prefs.setString('macOSBookmark', bookmark);
         }
       }
+
+      // Check if WPILib project
+      if (fs.file(join(projectDir, 'build.gradle')).existsSync()) {
+        _deployDir = fs.directory(
+            join(projectDir, 'src', 'main', 'deploy', 'pathplanner'));
+      } else {
+        _deployDir = fs.directory(join(projectDir, 'deploy', 'pathplanner'));
+      }
+
+      // Assure that a navgrid file is present
+      File navgridFile = fs.file(join(_deployDir.path, 'navgrid.json'));
+      navgridFile.exists().then((value) async {
+        if (!value) {
+          // Load default grid
+          String fileContent = await DefaultAssetBundle.of(this.context)
+              .loadString('resources/default_navgrid.json');
+          fs
+              .file(join(_deployDir.path, 'navgrid.json'))
+              .writeAsString(fileContent);
+        }
+      });
 
       setState(() {
         _projectDir = fs.directory(projectDir!);
@@ -323,10 +345,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   key: ValueKey(_projectDir!.path),
                   prefs: widget.prefs,
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
-                  projectDirectory: _projectDir!,
+                  deployDirectory: _deployDir,
                 ),
                 const TelemetryPage(),
-                const NavGridPage(),
+                NavGridPage(
+                  deployDirectory: _deployDir,
+                ),
               ],
             ),
           ),

@@ -15,13 +15,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ProjectPage extends StatefulWidget {
   final SharedPreferences prefs;
   final FieldImage fieldImage;
-  final Directory projectDirectory;
+  final Directory deployDirectory;
 
   const ProjectPage({
     super.key,
     required this.prefs,
     required this.fieldImage,
-    required this.projectDirectory,
+    required this.deployDirectory,
   });
 
   @override
@@ -56,45 +56,35 @@ class _ProjectPageState extends State<ProjectPage> {
       ),
     ];
 
-    // Check if WPILib project
+    _load();
+  }
+
+  void _load() async {
     var fs = const LocalFileSystem();
-    fs
-        .file(join(widget.projectDirectory.path, 'build.gradle'))
-        .exists()
-        .then((exists) async {
-      Directory deployDir;
-      if (exists) {
-        deployDir = fs.directory(join(widget.projectDirectory.path, 'src',
-            'main', 'deploy', 'pathplanner'));
-      } else {
-        deployDir = fs.directory(
-            join(widget.projectDirectory.path, 'deploy', 'pathplanner'));
+
+    // Make sure dirs exist
+    _pathsDirectory = fs.directory(join(widget.deployDirectory.path, 'paths'));
+    _pathsDirectory.createSync(recursive: true);
+    _autosDirectory = fs.directory(join(widget.deployDirectory.path, 'autos'));
+    _autosDirectory.createSync(recursive: true);
+
+    var paths = await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path);
+    paths.sort((a, b) => a.name.compareTo(b.name));
+    var autos = await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path);
+    autos.sort((a, b) => a.name.compareTo(b.name));
+
+    setState(() {
+      _paths = paths;
+      _autos = autos;
+
+      if (_paths.isEmpty) {
+        _paths.add(PathPlannerPath.defaultPath(
+          pathDir: _pathsDirectory.path,
+          name: 'Example Path',
+        ));
       }
 
-      // Make sure dirs exist
-      _pathsDirectory = fs.directory(join(deployDir.path, 'paths'));
-      _pathsDirectory.createSync(recursive: true);
-      _autosDirectory = fs.directory(join(deployDir.path, 'autos'));
-      _autosDirectory.createSync(recursive: true);
-
-      var paths = await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path);
-      paths.sort((a, b) => a.name.compareTo(b.name));
-      var autos = await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path);
-      autos.sort((a, b) => a.name.compareTo(b.name));
-
-      setState(() {
-        _paths = paths;
-        _autos = autos;
-
-        if (_paths.isEmpty) {
-          _paths.add(PathPlannerPath.defaultPath(
-            pathDir: _pathsDirectory.path,
-            name: 'Example Path',
-          ));
-        }
-
-        _loading = false;
-      });
+      _loading = false;
     });
   }
 

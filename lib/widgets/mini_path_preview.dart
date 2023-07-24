@@ -3,7 +3,7 @@ import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/field_image.dart';
-import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
+import 'package:pathplanner/util/path_painter_util.dart';
 
 class MiniPathsPreview extends StatelessWidget {
   final List<PathPlannerPath> paths;

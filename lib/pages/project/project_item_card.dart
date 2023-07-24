@@ -9,7 +9,7 @@ import 'package:pathplanner/widgets/renamable_title.dart';
 class ProjectItemCard extends StatefulWidget {
   final String name;
   final FieldImage fieldImage;
-  final PathPlannerPath path;
+  final List<PathPlannerPath> paths;
   final VoidCallback onOpened;
   final VoidCallback onDuplicated;
   final VoidCallback onDeleted;
@@ -19,7 +19,7 @@ class ProjectItemCard extends StatefulWidget {
     super.key,
     required this.name,
     required this.fieldImage,
-    required this.path,
+    required this.paths,
     required this.onOpened,
     required this.onDuplicated,
     required this.onDeleted,
@@ -120,8 +120,8 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                       padding: const EdgeInsets.all(12.0),
                       child: Stack(
                         children: [
-                          MiniPathPreview(
-                            path: widget.path,
+                          MiniPathsPreview(
+                            paths: widget.paths,
                             fieldImage: widget.fieldImage,
                           ),
                           Positioned.fill(

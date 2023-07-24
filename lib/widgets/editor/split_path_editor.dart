@@ -17,12 +17,12 @@ import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
-class SplitEditor extends StatefulWidget {
+class SplitPathEditor extends StatefulWidget {
   final SharedPreferences prefs;
   final PathPlannerPath path;
   final FieldImage fieldImage;
 
-  const SplitEditor({
+  const SplitPathEditor({
     required this.prefs,
     required this.path,
     required this.fieldImage,
@@ -30,10 +30,10 @@ class SplitEditor extends StatefulWidget {
   });
 
   @override
-  State<SplitEditor> createState() => _SplitEditorState();
+  State<SplitPathEditor> createState() => _SplitPathEditorState();
 }
 
-class _SplitEditorState extends State<SplitEditor> {
+class _SplitPathEditorState extends State<SplitPathEditor> {
   final MultiSplitViewController _controller = MultiSplitViewController();
   final WaypointsTreeController _waypointsTreeController =
       WaypointsTreeController();

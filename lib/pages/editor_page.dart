@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
-import 'package:pathplanner/widgets/editor/split_editor.dart';
+import 'package:pathplanner/widgets/editor/split_path_editor.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/keyboard_shortcuts.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -58,7 +58,7 @@ class _EditorPageState extends State<EditorPage> {
         child: KeyBoardShortcuts(
           keysToPress: shortCut(BasicShortCuts.redo),
           onKeysPressed: UndoRedo.redo,
-          child: SplitEditor(
+          child: SplitPathEditor(
             prefs: widget.prefs,
             path: widget.path,
             fieldImage: widget.fieldImage,

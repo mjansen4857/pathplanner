@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/path_editor/path_painter_util.dart';
 
-class MiniPathPreview extends StatelessWidget {
-  final PathPlannerPath path;
+class MiniPathsPreview extends StatelessWidget {
+  final List<PathPlannerPath> paths;
   final FieldImage fieldImage;
 
-  const MiniPathPreview({
+  const MiniPathsPreview({
     super.key,
-    required this.path,
+    required this.paths,
     required this.fieldImage,
   });
 
@@ -21,7 +22,7 @@ class MiniPathPreview extends StatelessWidget {
         fieldImage.getWidget(small: true),
         Positioned.fill(
           child: _PathPreviewPainter(
-            path: path,
+            paths: paths,
             fieldImage: fieldImage,
           ),
         ),
@@ -31,11 +32,11 @@ class MiniPathPreview extends StatelessWidget {
 }
 
 class _PathPreviewPainter extends StatelessWidget {
-  final PathPlannerPath path;
+  final List<PathPlannerPath> paths;
   final FieldImage fieldImage;
 
   const _PathPreviewPainter({
-    required this.path,
+    required this.paths,
     required this.fieldImage,
   });
 
@@ -43,7 +44,7 @@ class _PathPreviewPainter extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: _Painter(
-        path: path,
+        paths: paths,
         fieldImage: fieldImage,
       ),
     );
@@ -51,11 +52,11 @@ class _PathPreviewPainter extends StatelessWidget {
 }
 
 class _Painter extends CustomPainter {
-  final PathPlannerPath path;
+  final List<PathPlannerPath> paths;
   final FieldImage fieldImage;
 
   const _Painter({
-    required this.path,
+    required this.paths,
     required this.fieldImage,
   });
 
@@ -69,10 +70,12 @@ class _Painter extends CustomPainter {
       scale = size.width / fieldImage.defaultSize.width;
     }
 
-    _paintPathPoints(canvas, scale, Colors.grey[300]!);
+    for (PathPlannerPath path in paths) {
+      _paintPathPoints(canvas, scale, Colors.grey[300]!, path.pathPoints);
 
-    _paintWaypoint(canvas, scale, 0);
-    _paintWaypoint(canvas, scale, path.waypoints.length - 1);
+      _paintWaypoint(canvas, scale, path, 0);
+      _paintWaypoint(canvas, scale, path, path.waypoints.length - 1);
+    }
   }
 
   @override
@@ -80,7 +83,8 @@ class _Painter extends CustomPainter {
     return false;
   }
 
-  void _paintPathPoints(Canvas canvas, double scale, Color baseColor) {
+  void _paintPathPoints(Canvas canvas, double scale, Color baseColor,
+      List<PathPoint> pathPoints) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
@@ -89,13 +93,13 @@ class _Painter extends CustomPainter {
     Path p = Path();
 
     Offset start = PathPainterUtil.pointToPixelOffset(
-        path.pathPoints[0].position, scale, fieldImage,
+        pathPoints[0].position, scale, fieldImage,
         small: true);
     p.moveTo(start.dx, start.dy);
 
-    for (int i = 1; i < path.pathPoints.length; i++) {
+    for (int i = 1; i < pathPoints.length; i++) {
       Offset pos = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[i].position, scale, fieldImage,
+          pathPoints[i].position, scale, fieldImage,
           small: true);
 
       p.lineTo(pos.dx, pos.dy);
@@ -104,7 +108,8 @@ class _Painter extends CustomPainter {
     canvas.drawPath(p, paint);
   }
 
-  void _paintWaypoint(Canvas canvas, double scale, int waypointIdx) {
+  void _paintWaypoint(
+      Canvas canvas, double scale, PathPlannerPath path, int waypointIdx) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = Colors.black

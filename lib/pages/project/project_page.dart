@@ -140,27 +140,29 @@ class _ProjectPageState extends State<ProjectPage> {
                 style: TextStyle(fontSize: 32),
               ),
               Expanded(child: Container()),
-              FloatingActionButton.extended(
-                heroTag: 'newPathBtn',
-                onPressed: () {
-                  List<String> pathNames = [];
-                  for (PathPlannerPath path in _paths) {
-                    pathNames.add(path.name);
-                  }
-                  String pathName = 'New Path';
-                  while (pathNames.contains(pathName)) {
-                    pathName = 'New $pathName';
-                  }
+              Tooltip(
+                message: 'Add new path',
+                waitDuration: const Duration(seconds: 1),
+                child: IconButton.filledTonal(
+                  onPressed: () {
+                    List<String> pathNames = [];
+                    for (PathPlannerPath path in _paths) {
+                      pathNames.add(path.name);
+                    }
+                    String pathName = 'New Path';
+                    while (pathNames.contains(pathName)) {
+                      pathName = 'New $pathName';
+                    }
 
-                  setState(() {
-                    _paths.add(PathPlannerPath.defaultPath(
-                      pathDir: _pathsDirectory.path,
-                      name: pathName,
-                    ));
-                  });
-                },
-                label: const Text('New Path'),
-                icon: const Icon(Icons.add),
+                    setState(() {
+                      _paths.add(PathPlannerPath.defaultPath(
+                        pathDir: _pathsDirectory.path,
+                        name: pathName,
+                      ));
+                    });
+                  },
+                  icon: const Icon(Icons.add),
+                ),
               ),
             ],
           ),
@@ -174,7 +176,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   ProjectItemCard(
                     name: _paths[i].name,
                     fieldImage: widget.fieldImage,
-                    path: _paths[i],
+                    paths: [_paths[i]],
                     onDuplicated: () {
                       List<String> pathNames = [];
                       for (PathPlannerPath path in _paths) {
@@ -277,11 +279,13 @@ class _ProjectPageState extends State<ProjectPage> {
                 style: TextStyle(fontSize: 32),
               ),
               Expanded(child: Container()),
-              FloatingActionButton.extended(
-                heroTag: 'newAutoBtn',
-                onPressed: () {},
-                label: const Text('New Auto'),
-                icon: const Icon(Icons.add),
+              Tooltip(
+                message: 'Add new auto',
+                waitDuration: const Duration(seconds: 1),
+                child: IconButton.filledTonal(
+                  onPressed: () {},
+                  icon: const Icon(Icons.add),
+                ),
               ),
             ],
           ),
@@ -290,7 +294,40 @@ class _ProjectPageState extends State<ProjectPage> {
             child: GridView.count(
               crossAxisCount: 4 - _pathGridCount,
               childAspectRatio: 1.55,
-              children: List.generate(5, (index) => const Card()),
+              children: [
+                ProjectItemCard(
+                  name: 'Placeholder', // TODO
+                  fieldImage: widget.fieldImage,
+                  paths: [], // TODO
+                  onDuplicated: () {
+                    // TODO
+                  },
+                  onDeleted: () {
+                    // TODO
+                  },
+                  onRenamed: (value) {
+                    // TODO
+                  },
+                  onOpened: () async {
+                    // await Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (context) => EditorPage(
+                    //       prefs: widget.prefs,
+                    //       path: _paths[i],
+                    //       fieldImage: widget.fieldImage,
+                    //       onRenamed: (value) {
+                    //         _renamePath(i, value, context);
+                    //       },
+                    //     ),
+                    //   ),
+                    // );
+
+                    // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
+                    setState(() {});
+                  },
+                ),
+              ],
             ),
           ),
         ],

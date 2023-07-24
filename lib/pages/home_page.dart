@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/pages/nav_grid_page.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
+import 'package:pathplanner/pages/telemetry_page.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
@@ -50,6 +52,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Animation<double> _scaleAnimation;
   final GlobalKey _key = GlobalKey();
   static const _settingsDir = '.pathplanner/settings.json';
+  int _selectedPage = 0;
+  final PageController _pageController = PageController();
 
   @override
   void initState() {
@@ -163,6 +167,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           .stopAccessingSecurityScopedResource(fs.file(_projectDir!.path));
     }
 
+    _pageController.dispose();
+
     super.dispose();
   }
 
@@ -190,8 +196,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Stack(
       children: [
         NavigationDrawer(
-          selectedIndex: 0,
-          onDestinationSelected: (idx) {},
+          selectedIndex: _selectedPage,
+          onDestinationSelected: (idx) {
+            setState(() {
+              _selectedPage = idx;
+              _pageController.animateToPage(_selectedPage,
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeInOut);
+            });
+          },
           children: [
             DrawerHeader(
               child: Stack(
@@ -302,11 +315,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return Stack(
         children: [
           Center(
-            child: ProjectPage(
-              key: ValueKey(_projectDir!.path),
-              prefs: widget.prefs,
-              fieldImage: _fieldImage ?? FieldImage.defaultField,
-              projectDirectory: _projectDir!,
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                ProjectPage(
+                  key: ValueKey(_projectDir!.path),
+                  prefs: widget.prefs,
+                  fieldImage: _fieldImage ?? FieldImage.defaultField,
+                  projectDirectory: _projectDir!,
+                ),
+                const TelemetryPage(),
+                const NavGridPage(),
+              ],
             ),
           ),
           Align(
@@ -335,42 +356,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return buildFile.existsSync();
   }
 
-  void _saveNavGrid(List<List<bool>> grid, double nodeSizeMeters) {
-    // TODO
-    // if (_projectDir != null) {
-    //   Directory saveDir = _getPathsDir(_projectDir!);
+  // void _saveNavGrid(List<List<bool>> grid, double nodeSizeMeters) {
+  // TODO
+  // if (_projectDir != null) {
+  //   Directory saveDir = _getPathsDir(_projectDir!);
 
-    //   var json = {
-    //     'nodeSizeMeters': nodeSizeMeters,
-    //     'grid': grid,
-    //   };
+  //   var json = {
+  //     'nodeSizeMeters': nodeSizeMeters,
+  //     'grid': grid,
+  //   };
 
-    //   String content = jsonEncode(json);
-    //   File navGridFile = File(join(saveDir.path, 'navgrid.json'));
+  //   String content = jsonEncode(json);
+  //   File navGridFile = File(join(saveDir.path, 'navgrid.json'));
 
-    //   navGridFile.writeAsString(content);
-    // }
-  }
+  //   navGridFile.writeAsString(content);
+  // }
+  // }
 
-  Future<(List<List<bool>>, double)?> _loadNavGrid() async {
-    // TODO
-    // if (_projectDir != null) {
-    //   Directory saveDir = _getPathsDir(_projectDir!);
-    //   File navGridFile = File(join(saveDir.path, 'navgrid.json'));
+  // Future<(List<List<bool>>, double)?> _loadNavGrid() async {
+  // TODO
+  // if (_projectDir != null) {
+  //   Directory saveDir = _getPathsDir(_projectDir!);
+  //   File navGridFile = File(join(saveDir.path, 'navgrid.json'));
 
-    //   if (await navGridFile.exists()) {
-    //     String content = await navGridFile.readAsString();
+  //   if (await navGridFile.exists()) {
+  //     String content = await navGridFile.readAsString();
 
-    //     Map<String, dynamic> json = jsonDecode(content);
-    //     List<List<bool>> grid = (json['grid'] as List)
-    //         .map((r) => (r as List).map((c) => c as bool).toList())
-    //         .toList(); // yikes
-    //     double nodeSizeMeters = (json['nodeSizeMeters'] as num).toDouble();
-    //     return (grid, nodeSizeMeters);
-    //   }
-    // }
-    return null;
-  }
+  //     Map<String, dynamic> json = jsonDecode(content);
+  //     List<List<bool>> grid = (json['grid'] as List)
+  //         .map((r) => (r as List).map((c) => c as bool).toList())
+  //         .toList(); // yikes
+  //     double nodeSizeMeters = (json['nodeSizeMeters'] as num).toDouble();
+  //     return (grid, nodeSizeMeters);
+  //   }
+  // }
+  // return null;
+  // }
 
   void _onProjectSettingsChanged() {
     _loadSettingsFromPrefs();

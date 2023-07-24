@@ -47,21 +47,12 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
               height: 38,
               color: Colors.white.withOpacity(0.05),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Tooltip(
-                    message: 'Duplicate',
-                    waitDuration: const Duration(seconds: 1),
-                    child: FittedBox(
-                      child: IconButton(
-                        onPressed: widget.onDuplicated,
-                        icon: const Icon(Icons.copy),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
                       child: RenamableTitle(
                         title: widget.name,
                         textStyle: const TextStyle(fontSize: 28),
@@ -69,40 +60,40 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                       ),
                     ),
                   ),
-                  Tooltip(
-                    message: 'Delete',
-                    waitDuration: const Duration(seconds: 1),
-                    child: FittedBox(
-                      child: IconButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text('Delete Path'),
-                                content: Text(
-                                    'Are you sure you want to delete the path: ${widget.name}? This cannot be undone.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('CANCEL'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                      widget.onDeleted.call();
-                                    },
-                                    child: const Text('DELETE'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                        icon: const Icon(Icons.delete_forever),
-                      ),
+                  FittedBox(
+                    child: PopupMenuButton(
+                      tooltip: '',
+                      onSelected: (value) {
+                        if (value == 'duplicate') {
+                          widget.onDuplicated();
+                        } else if (value == 'delete') {
+                          _showDeleteDialog();
+                        }
+                      },
+                      itemBuilder: (_) {
+                        return const [
+                          PopupMenuItem(
+                            value: 'duplicate',
+                            child: Row(
+                              children: [
+                                Icon(Icons.copy),
+                                SizedBox(width: 12),
+                                Text('Duplicate'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete_forever),
+                                SizedBox(width: 12),
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ];
+                      },
                     ),
                   ),
                 ],
@@ -169,6 +160,35 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showDeleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        print('hello???');
+        return AlertDialog(
+          title: const Text('Delete Path'),
+          content: Text(
+              'Are you sure you want to delete the path: ${widget.name}? This cannot be undone.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('CANCEL'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                widget.onDeleted.call();
+              },
+              child: const Text('DELETE'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

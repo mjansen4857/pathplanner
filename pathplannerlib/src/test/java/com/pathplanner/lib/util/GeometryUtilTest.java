@@ -1,4 +1,4 @@
-package com.pathplanner.lib;
+package com.pathplanner.lib.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

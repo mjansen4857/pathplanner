@@ -131,4 +131,14 @@ class PathPlannerAuto {
     }
     return names;
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is PathPlannerAuto &&
+      other.runtimeType == runtimeType &&
+      other.name == name &&
+      other.sequence == sequence;
+
+  @override
+  int get hashCode => Object.hash(name, sequence);
 }

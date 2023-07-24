@@ -163,9 +163,9 @@ class PathPlannerPath {
 
       if (pathFile.existsSync()) {
         pathFile.rename(join(pathDir!, '$name.path'));
-        this.name = name;
       }
     }
+    this.name = name;
   }
 
   Map<String, dynamic> toJson() {

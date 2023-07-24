@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
+import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 import 'package:pathplanner/services/undo_redo.dart';
+import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/path_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
 import 'package:undo/undo.dart';
 
@@ -13,18 +16,20 @@ class CommandGroupWidget extends StatelessWidget {
   final CommandGroup command;
   final VoidCallback onUpdated;
   final VoidCallback? onRemoved;
-  final ValueChanged<String> onGroupTypeChanged;
+  final ValueChanged<String>? onGroupTypeChanged;
   final double subCommandElevation;
   final bool removable;
+  final List<String>? allPathNames;
 
   const CommandGroupWidget({
     super.key,
     required this.command,
     required this.onUpdated,
-    required this.onGroupTypeChanged,
+    this.onGroupTypeChanged,
     this.onRemoved,
     this.subCommandElevation = 4.0,
     this.removable = true,
+    this.allPathNames,
   });
 
   @override
@@ -42,41 +47,46 @@ class CommandGroupWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: Material(
                 color: Colors.transparent,
-                child: PopupMenuButton(
-                  initialValue: command.type,
-                  tooltip: '',
-                  elevation: 12.0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  onSelected: onGroupTypeChanged,
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(
-                      value: 'sequential',
-                      child: Text('Sequential Group'),
+                child: ConditionalWidget(
+                  condition: onGroupTypeChanged != null,
+                  falseChild:
+                      Text('$type Group', style: const TextStyle(fontSize: 16)),
+                  trueChild: PopupMenuButton(
+                    initialValue: command.type,
+                    tooltip: '',
+                    elevation: 12.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    PopupMenuItem(
-                      value: 'parallel',
-                      child: Text('Parallel Group'),
-                    ),
-                    PopupMenuItem(
-                      value: 'deadline',
-                      child: Text('Deadline Group'),
-                    ),
-                    PopupMenuItem(
-                      value: 'race',
-                      child: Text('Race Group'),
-                    ),
-                  ],
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('$type Group',
-                            style: const TextStyle(fontSize: 16)),
-                        const Icon(Icons.arrow_drop_down),
-                      ],
+                    onSelected: onGroupTypeChanged,
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: 'sequential',
+                        child: Text('Sequential Group'),
+                      ),
+                      PopupMenuItem(
+                        value: 'parallel',
+                        child: Text('Parallel Group'),
+                      ),
+                      PopupMenuItem(
+                        value: 'deadline',
+                        child: Text('Deadline Group'),
+                      ),
+                      PopupMenuItem(
+                        value: 'race',
+                        child: Text('Race Group'),
+                      ),
+                    ],
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('$type Group',
+                              style: const TextStyle(fontSize: 16)),
+                          const Icon(Icons.arrow_drop_down),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -84,6 +94,7 @@ class CommandGroupWidget extends StatelessWidget {
             ),
             Expanded(child: Container()),
             AddCommandButton(
+              allowPathCommand: allPathNames != null,
               onTypeChosen: (value) {
                 UndoRedo.addChange(Change(
                   CommandGroup.cloneCommandsList(command.commands),
@@ -177,12 +188,20 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
       );
+    } else if (command.commands[cmdIndex] is PathCommand) {
+      return PathCommandWidget(
+        command: command.commands[cmdIndex] as PathCommand,
+        allPathNames: allPathNames ?? [],
+        onUpdated: onUpdated,
+        onRemoved: () => _removeCommand(cmdIndex),
+      );
     } else if (command.commands[cmdIndex] is CommandGroup) {
       return CommandGroupWidget(
         command: command.commands[cmdIndex] as CommandGroup,
         subCommandElevation: (subCommandElevation == 1.0) ? 4.0 : 1.0,
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
+        allPathNames: allPathNames,
         onGroupTypeChanged: (value) {
           UndoRedo.addChange(Change(
             command.commands[cmdIndex].type,

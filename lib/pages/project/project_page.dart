@@ -3,8 +3,10 @@ import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:path/path.dart';
-import 'package:pathplanner/pages/editor_page.dart';
+import 'package:pathplanner/pages/auto_editor_page.dart';
+import 'package:pathplanner/pages/path_editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
+import 'package:pathplanner/path/pathplanner_auto.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/prefs_keys.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -29,8 +31,10 @@ class ProjectPage extends StatefulWidget {
 class _ProjectPageState extends State<ProjectPage> {
   final MultiSplitViewController _controller = MultiSplitViewController();
   List<PathPlannerPath> _paths = [];
+  List<PathPlannerAuto> _autos = [];
   int _pathGridCount = 2;
   late Directory _pathsDirectory;
+  late Directory _autosDirectory;
 
   bool _loading = true;
 
@@ -67,14 +71,20 @@ class _ProjectPageState extends State<ProjectPage> {
             join(widget.projectDirectory.path, 'deploy', 'pathplanner'));
       }
 
-      // Make sure paths dir exists
+      // Make sure dirs exist
       _pathsDirectory = fs.directory(join(deployDir.path, 'paths'));
       _pathsDirectory.createSync(recursive: true);
+      _autosDirectory = fs.directory(join(deployDir.path, 'autos'));
+      _autosDirectory.createSync(recursive: true);
 
       var paths = await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path);
+      paths.sort((a, b) => a.name.compareTo(b.name));
+      var autos = await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path);
+      autos.sort((a, b) => a.name.compareTo(b.name));
 
       setState(() {
         _paths = paths;
+        _autos = autos;
 
         if (_paths.isEmpty) {
           _paths.add(PathPlannerPath.defaultPath(
@@ -98,8 +108,8 @@ class _ProjectPageState extends State<ProjectPage> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 0.0),
+    return Container(
+      color: colorScheme.surfaceTint.withOpacity(0.05),
       child: MultiSplitViewTheme(
         data: MultiSplitViewThemeData(
           dividerPainter: DividerPainters.grooved1(
@@ -120,7 +130,7 @@ class _ProjectPageState extends State<ProjectPage> {
           },
           children: [
             _buildPathsGrid(context),
-            _buildAutosGrid(),
+            _buildAutosGrid(context),
           ],
         ),
       ),
@@ -129,100 +139,107 @@ class _ProjectPageState extends State<ProjectPage> {
 
   Widget _buildPathsGrid(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+      child: Card(
+        elevation: 0.0,
+        margin: const EdgeInsets.all(0),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Paths',
-                style: TextStyle(fontSize: 32),
-              ),
-              Expanded(child: Container()),
-              Tooltip(
-                message: 'Add new path',
-                waitDuration: const Duration(seconds: 1),
-                child: IconButton.filledTonal(
-                  onPressed: () {
-                    List<String> pathNames = [];
-                    for (PathPlannerPath path in _paths) {
-                      pathNames.add(path.name);
-                    }
-                    String pathName = 'New Path';
-                    while (pathNames.contains(pathName)) {
-                      pathName = 'New $pathName';
-                    }
+              Row(
+                children: [
+                  const Text(
+                    'Paths',
+                    style: TextStyle(fontSize: 32),
+                  ),
+                  Expanded(child: Container()),
+                  Tooltip(
+                    message: 'Add new path',
+                    waitDuration: const Duration(seconds: 1),
+                    child: IconButton.filledTonal(
+                      onPressed: () {
+                        List<String> pathNames = [];
+                        for (PathPlannerPath path in _paths) {
+                          pathNames.add(path.name);
+                        }
+                        String pathName = 'New Path';
+                        while (pathNames.contains(pathName)) {
+                          pathName = 'New $pathName';
+                        }
 
-                    setState(() {
-                      _paths.add(PathPlannerPath.defaultPath(
-                        pathDir: _pathsDirectory.path,
-                        name: pathName,
-                      ));
-                    });
-                  },
-                  icon: const Icon(Icons.add),
+                        setState(() {
+                          _paths.add(PathPlannerPath.defaultPath(
+                            pathDir: _pathsDirectory.path,
+                            name: pathName,
+                          ));
+                        });
+                      },
+                      icon: const Icon(Icons.add),
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: _pathGridCount,
+                  childAspectRatio: 1.55,
+                  children: [
+                    for (int i = 0; i < _paths.length; i++)
+                      ProjectItemCard(
+                        name: _paths[i].name,
+                        fieldImage: widget.fieldImage,
+                        paths: [_paths[i]],
+                        onDuplicated: () {
+                          List<String> pathNames = [];
+                          for (PathPlannerPath path in _paths) {
+                            pathNames.add(path.name);
+                          }
+                          String pathName = 'Copy of ${_paths[i].name}';
+                          while (pathNames.contains(pathName)) {
+                            pathName = 'Copy of $pathName';
+                          }
+
+                          setState(() {
+                            _paths.add(_paths[i].duplicate(pathName));
+                          });
+                        },
+                        onDeleted: () {
+                          _paths[i].deletePath();
+                          setState(() {
+                            _paths.removeAt(i);
+                          });
+                        },
+                        onRenamed: (value) {
+                          _renamePath(i, value, context);
+                        },
+                        onOpened: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PathEditorPage(
+                                prefs: widget.prefs,
+                                path: _paths[i],
+                                fieldImage: widget.fieldImage,
+                                onRenamed: (value) {
+                                  _renamePath(i, value, context);
+                                },
+                              ),
+                            ),
+                          );
+
+                          // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
+                          setState(() {});
+                        },
+                      ),
+                  ],
                 ),
               ),
             ],
           ),
-          const Divider(),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: _pathGridCount,
-              childAspectRatio: 1.55,
-              children: [
-                for (int i = 0; i < _paths.length; i++)
-                  ProjectItemCard(
-                    name: _paths[i].name,
-                    fieldImage: widget.fieldImage,
-                    paths: [_paths[i]],
-                    onDuplicated: () {
-                      List<String> pathNames = [];
-                      for (PathPlannerPath path in _paths) {
-                        pathNames.add(path.name);
-                      }
-                      String pathName = 'Copy of ${_paths[i].name}';
-                      while (pathNames.contains(pathName)) {
-                        pathName = 'Copy of $pathName';
-                      }
-
-                      setState(() {
-                        _paths.add(_paths[i].duplicate(pathName));
-                      });
-                    },
-                    onDeleted: () {
-                      _paths[i].deletePath();
-                      setState(() {
-                        _paths.removeAt(i);
-                      });
-                    },
-                    onRenamed: (value) {
-                      _renamePath(i, value, context);
-                    },
-                    onOpened: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditorPage(
-                            prefs: widget.prefs,
-                            path: _paths[i],
-                            fieldImage: widget.fieldImage,
-                            onRenamed: (value) {
-                              _renamePath(i, value, context);
-                            },
-                          ),
-                        ),
-                      );
-
-                      // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
-                      setState(() {});
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -250,9 +267,12 @@ class _ProjectPageState extends State<ProjectPage> {
           });
     } else {
       setState(() {
+        String oldName = _paths[pathIdx].name;
         _paths[pathIdx].renamePath(newName);
+        for (PathPlannerAuto auto in _autos) {
+          auto.updatePathName(oldName, newName);
+        }
       });
-      // TODO: save all autos with updated name
     }
   }
 
@@ -266,72 +286,153 @@ class _ProjectPageState extends State<ProjectPage> {
     }
   }
 
-  Widget _buildAutosGrid() {
+  Widget _buildAutosGrid(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
+      child: Card(
+        elevation: 0.0,
+        margin: const EdgeInsets.all(0),
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Autos',
-                style: TextStyle(fontSize: 32),
+              Row(
+                children: [
+                  const Text(
+                    'Autos',
+                    style: TextStyle(fontSize: 32),
+                  ),
+                  Expanded(child: Container()),
+                  Tooltip(
+                    message: 'Add new auto',
+                    waitDuration: const Duration(seconds: 1),
+                    child: IconButton.filledTonal(
+                      onPressed: () {
+                        List<String> autoNames = [];
+                        for (PathPlannerAuto auto in _autos) {
+                          autoNames.add(auto.name);
+                        }
+                        String autoName = 'New Auto';
+                        while (autoNames.contains(autoName)) {
+                          autoName = 'New $autoName';
+                        }
+
+                        setState(() {
+                          _autos.add(PathPlannerAuto.defaultAuto(
+                            autoDir: _autosDirectory.path,
+                            name: autoName,
+                          ));
+                        });
+                      },
+                      icon: const Icon(Icons.add),
+                    ),
+                  ),
+                ],
               ),
-              Expanded(child: Container()),
-              Tooltip(
-                message: 'Add new auto',
-                waitDuration: const Duration(seconds: 1),
-                child: IconButton.filledTonal(
-                  onPressed: () {},
-                  icon: const Icon(Icons.add),
+              const Divider(),
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 4 - _pathGridCount,
+                  childAspectRatio: 1.55,
+                  children: [
+                    for (int i = 0; i < _autos.length; i++)
+                      ProjectItemCard(
+                        name: _autos[i].name,
+                        fieldImage: widget.fieldImage,
+                        paths: _getPathsFromNames(_autos[i].getAllPathNames()),
+                        onDuplicated: () {
+                          List<String> autoNames = [];
+                          for (PathPlannerAuto auto in _autos) {
+                            autoNames.add(auto.name);
+                          }
+                          String autoName = 'Copy of ${_autos[i].name}';
+                          while (autoNames.contains(autoName)) {
+                            autoName = 'Copy of $autoName';
+                          }
+
+                          setState(() {
+                            _autos.add(_autos[i].duplicate(autoName));
+                          });
+                        },
+                        onDeleted: () {
+                          _autos[i].delete();
+                          setState(() {
+                            _autos.removeAt(i);
+                          });
+                        },
+                        onRenamed: (value) {
+                          _renameAuto(i, value, context);
+                        },
+                        onOpened: () async {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AutoEditorPage(
+                                prefs: widget.prefs,
+                                auto: _autos[i],
+                                allPaths: _paths,
+                                allPathNames:
+                                    _paths.map((e) => e.name).toList(),
+                                fieldImage: widget.fieldImage,
+                                onRenamed: (value) {
+                                  _renameAuto(i, value, context);
+                                },
+                              ),
+                            ),
+                          );
+
+                          // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
+                          setState(() {});
+                        },
+                      ),
+                  ],
                 ),
               ),
             ],
           ),
-          const Divider(),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 4 - _pathGridCount,
-              childAspectRatio: 1.55,
-              children: [
-                ProjectItemCard(
-                  name: 'Placeholder', // TODO
-                  fieldImage: widget.fieldImage,
-                  paths: [], // TODO
-                  onDuplicated: () {
-                    // TODO
-                  },
-                  onDeleted: () {
-                    // TODO
-                  },
-                  onRenamed: (value) {
-                    // TODO
-                  },
-                  onOpened: () async {
-                    // await Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => EditorPage(
-                    //       prefs: widget.prefs,
-                    //       path: _paths[i],
-                    //       fieldImage: widget.fieldImage,
-                    //       onRenamed: (value) {
-                    //         _renamePath(i, value, context);
-                    //       },
-                    //     ),
-                    //   ),
-                    // );
-
-                    // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
-                    setState(() {});
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  List<PathPlannerPath> _getPathsFromNames(List<String> names) {
+    List<PathPlannerPath> paths = [];
+    for (String name in names) {
+      List<PathPlannerPath> matched =
+          _paths.where((path) => path.name == name).toList();
+      if (matched.isNotEmpty) {
+        paths.add(matched[0]);
+      }
+    }
+    return paths;
+  }
+
+  void _renameAuto(int autoIdx, String newName, BuildContext context) {
+    List<String> autoNames = [];
+    for (PathPlannerAuto auto in _autos) {
+      autoNames.add(auto.name);
+    }
+
+    if (autoNames.contains(newName)) {
+      showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Unable to Rename'),
+              content: Text('The file "$newName.auto" already exists'),
+              actions: [
+                TextButton(
+                  onPressed: Navigator.of(context).pop,
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          });
+    } else {
+      setState(() {
+        _autos[autoIdx].rename(newName);
+      });
+    }
   }
 }

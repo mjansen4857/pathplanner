@@ -239,6 +239,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
       child: Padding(
         padding: const EdgeInsets.all(14.0),
         child: AddCommandButton(
+          allowPathCommand: false,
           onTypeChosen: (type) {
             markers[markerIdx].command = Command.fromType(type);
             widget.onPathChanged?.call();

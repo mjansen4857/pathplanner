@@ -167,11 +167,10 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
     showDialog(
       context: context,
       builder: (context) {
-        print('hello???');
         return AlertDialog(
-          title: const Text('Delete Path'),
+          title: const Text('Delete File'),
           content: Text(
-              'Are you sure you want to delete the path: ${widget.name}? This cannot be undone.'),
+              'Are you sure you want to delete the file: ${widget.name}? This cannot be undone.'),
           actions: [
             TextButton(
               onPressed: () {

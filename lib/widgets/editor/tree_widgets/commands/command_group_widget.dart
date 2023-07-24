@@ -20,6 +20,7 @@ class CommandGroupWidget extends StatelessWidget {
   final double subCommandElevation;
   final bool removable;
   final List<String>? allPathNames;
+  final ValueChanged<String?>? onPathCommandHovered;
 
   const CommandGroupWidget({
     super.key,
@@ -30,6 +31,7 @@ class CommandGroupWidget extends StatelessWidget {
     this.subCommandElevation = 4.0,
     this.removable = true,
     this.allPathNames,
+    this.onPathCommandHovered,
   });
 
   @override
@@ -121,34 +123,71 @@ class CommandGroupWidget extends StatelessWidget {
             ),
           ],
         ),
-        _buildReorderableList(),
+        _buildReorderableList(context),
       ],
     );
   }
 
-  Widget _buildReorderableList() {
+  Widget _buildReorderableList(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return ReorderableListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       buildDefaultDragHandles: false,
       itemBuilder: (context, index) {
-        return Card(
-          elevation: subCommandElevation,
-          key: Key('$index'),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16.0),
-            child: Row(
-              children: [
-                ReorderableDragStartListener(
-                  index: index,
-                  child: const Icon(Icons.drag_handle),
+        if (command.commands[index] is PathCommand) {
+          return MouseRegion(
+            onEnter: (event) => onPathCommandHovered
+                ?.call((command.commands[index] as PathCommand).pathName),
+            onExit: (event) => onPathCommandHovered?.call(null),
+            key: Key('$index'),
+            child: Card(
+              elevation: subCommandElevation,
+              color: colorScheme.primaryContainer,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16.0),
+                child: Row(
+                  children: [
+                    ReorderableDragStartListener(
+                      index: index,
+                      child: const Icon(Icons.drag_handle),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: PathCommandWidget(
+                        command: command.commands[index] as PathCommand,
+                        allPathNames: allPathNames ?? [],
+                        onUpdated: onUpdated,
+                        onRemoved: () => _removeCommand(index),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Expanded(child: _buildSubCommand(index)),
-              ],
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          return Card(
+            elevation: subCommandElevation,
+            key: Key('$index'),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 16.0),
+              child: Row(
+                children: [
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: const Icon(Icons.drag_handle),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildSubCommand(index)),
+                ],
+              ),
+            ),
+          );
+        }
       },
       itemCount: command.commands.length,
       onReorder: (oldIndex, newIndex) {
@@ -188,13 +227,6 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
       );
-    } else if (command.commands[cmdIndex] is PathCommand) {
-      return PathCommandWidget(
-        command: command.commands[cmdIndex] as PathCommand,
-        allPathNames: allPathNames ?? [],
-        onUpdated: onUpdated,
-        onRemoved: () => _removeCommand(cmdIndex),
-      );
     } else if (command.commands[cmdIndex] is CommandGroup) {
       return CommandGroupWidget(
         command: command.commands[cmdIndex] as CommandGroup,
@@ -202,6 +234,7 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
         allPathNames: allPathNames,
+        onPathCommandHovered: onPathCommandHovered,
         onGroupTypeChanged: (value) {
           UndoRedo.addChange(Change(
             command.commands[cmdIndex].type,

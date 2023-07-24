@@ -22,78 +22,73 @@ class PathCommandWidget extends StatefulWidget {
 }
 
 class _PathCommandWidgetState extends State<PathCommandWidget> {
-  TextEditingController _controller = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                child: DropdownMenu<String>(
-                  label: const Text('Path Name'),
-                  controller: _controller,
-                  initialSelection: widget.command.pathName,
-                  // TODO: flutter is busted (shocker) and hasn't released
-                  // the fix for DropdownMenu width stuff yet even though it was
-                  // merged 3 months ago :). Check back later
-                  // width: Command.named.isEmpty ? 250 : null,
-                  dropdownMenuEntries: List.generate(
-                    widget.allPathNames.length,
-                    (index) => DropdownMenuEntry(
-                      value: widget.allPathNames[index],
-                      label: widget.allPathNames[index],
-                    ),
-                  ),
-                  inputDecorationTheme: InputDecorationTheme(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    contentPadding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                    isDense: true,
-                    constraints: const BoxConstraints(
-                      maxHeight: 42,
-                    ),
-                  ),
-                  onSelected: (value) {
-                    FocusScopeNode currentScope = FocusScope.of(context);
-                    if (!currentScope.hasPrimaryFocus &&
-                        currentScope.hasFocus) {
-                      FocusManager.instance.primaryFocus!.unfocus();
-                    }
-
-                    if (value != null) {
-                      UndoRedo.addChange(Change(
-                        widget.command.pathName,
-                        () {
-                          widget.command.pathName = value;
-                          widget.onUpdated.call();
-                        },
-                        (oldValue) {
-                          widget.command.pathName = oldValue;
-                          widget.onUpdated.call();
-                        },
-                      ));
-                    } else if (widget.command.pathName != null) {
-                      _controller.text = widget.command.pathName!;
-                    }
-                  },
+        Expanded(
+          child: SizedBox(
+            child: DropdownMenu<String>(
+              label: const Text('Path Name'),
+              controller: _controller,
+              initialSelection: widget.command.pathName,
+              // TODO: flutter is busted (shocker) and hasn't released
+              // the fix for DropdownMenu width stuff yet even though it was
+              // merged 3 months ago :). Check back later
+              // width: Command.named.isEmpty ? 250 : null,
+              dropdownMenuEntries: List.generate(
+                widget.allPathNames.length,
+                (index) => DropdownMenuEntry(
+                  value: widget.allPathNames[index],
+                  label: widget.allPathNames[index],
                 ),
               ),
+              inputDecorationTheme: InputDecorationTheme(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                isDense: true,
+                constraints: const BoxConstraints(
+                  maxHeight: 42,
+                ),
+              ),
+              onSelected: (value) {
+                FocusScopeNode currentScope = FocusScope.of(context);
+                if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+                  FocusManager.instance.primaryFocus!.unfocus();
+                }
+
+                if (value != null) {
+                  UndoRedo.addChange(Change(
+                    widget.command.pathName,
+                    () {
+                      widget.command.pathName = value;
+                      widget.onUpdated.call();
+                    },
+                    (oldValue) {
+                      widget.command.pathName = oldValue;
+                      widget.onUpdated.call();
+                    },
+                  ));
+                } else if (widget.command.pathName != null) {
+                  _controller.text = widget.command.pathName!;
+                }
+              },
             ),
-            IconButton(
-              onPressed: widget.onRemoved,
-              visualDensity: const VisualDensity(
-                  horizontal: VisualDensity.minimumDensity,
-                  vertical: VisualDensity.minimumDensity),
-              icon: Icon(Icons.close, color: colorScheme.error),
-            ),
-          ],
-        )
+          ),
+        ),
+        IconButton(
+          onPressed: widget.onRemoved,
+          visualDensity: const VisualDensity(
+              horizontal: VisualDensity.minimumDensity,
+              vertical: VisualDensity.minimumDensity),
+          icon: Icon(Icons.close, color: colorScheme.error),
+        ),
       ],
     );
   }

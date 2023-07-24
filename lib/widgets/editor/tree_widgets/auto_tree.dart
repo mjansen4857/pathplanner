@@ -59,6 +59,7 @@ class _AutoTreeState extends State<AutoTree> {
                     child: CommandGroupWidget(
                       command: widget.auto.sequence,
                       allPathNames: widget.allPathNames,
+                      onPathCommandHovered: widget.onPathHovered,
                       removable: false,
                       onUpdated: () {
                         widget.onAutoChanged?.call();

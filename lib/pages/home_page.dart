@@ -86,7 +86,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _key.currentContext!,
           PageRouteBuilder(
             pageBuilder: (context, anim1, anim2) => WelcomePage(
-              backgroundImage: FieldImage.defaultField,
               appVersion: widget.appVersion,
             ),
             transitionDuration: Duration.zero,

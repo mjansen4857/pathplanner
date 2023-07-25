@@ -12,10 +12,12 @@ import 'package:pathplanner/util/path_painter_util.dart';
 class NavGridPage extends StatefulWidget {
   final Directory deployDirectory;
   final FieldImage fieldImage;
+  final FileSystem fs;
 
   NavGridPage({
     super.key,
     required this.deployDirectory,
+    this.fs = const LocalFileSystem(),
   }) : fieldImage = FieldImage.defaultField;
 
   @override
@@ -31,8 +33,8 @@ class _NavGridPageState extends State<NavGridPage> {
   void initState() {
     super.initState();
 
-    var fs = const LocalFileSystem();
-    File gridFile = fs.file(join(widget.deployDirectory.path, 'navgrid.json'));
+    File gridFile =
+        widget.fs.file(join(widget.deployDirectory.path, 'navgrid.json'));
     gridFile.exists().then((value) async {
       if (value) {
         String fileContent = gridFile.readAsStringSync();
@@ -145,8 +147,7 @@ class _NavGridPageState extends State<NavGridPage> {
   }
 
   void _saveNavGrid() {
-    var fs = const LocalFileSystem();
-    fs
+    widget.fs
         .file(join(widget.deployDirectory.path, 'navgrid.json'))
         .writeAsString(jsonEncode(_grid));
   }

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 class NavGrid {
@@ -14,8 +15,7 @@ class NavGrid {
   });
 
   NavGrid.fromJson(Map<String, dynamic> json)
-      : fieldSize = sizeFromJson(json['field_size']) ??
-            FieldImage.defaultField.getFieldSizeMeters(),
+      : fieldSize = _sizeFromJson(json['field_size']),
         nodeSizeMeters = json['nodeSizeMeters'] ?? 0.2,
         grid = [] {
     grid = [
@@ -46,11 +46,22 @@ class NavGrid {
     };
   }
 
-  static Size? sizeFromJson(Map<String, dynamic> sizeJson) {
-    if (sizeJson['x'] == null || sizeJson['y'] == null) {
-      return null;
+  static Size _sizeFromJson(Map<String, dynamic>? sizeJson) {
+    if (sizeJson == null || sizeJson['x'] == null || sizeJson['y'] == null) {
+      return FieldImage.defaultField.getFieldSizeMeters();
     }
     return Size(
         (sizeJson['x'] as num).toDouble(), (sizeJson['y'] as num).toDouble());
   }
+
+  @override
+  bool operator ==(Object other) =>
+      other is NavGrid &&
+      other.runtimeType == runtimeType &&
+      other.fieldSize == fieldSize &&
+      other.nodeSizeMeters == nodeSizeMeters &&
+      const DeepCollectionEquality().equals(other.grid, grid);
+
+  @override
+  int get hashCode => Object.hash(fieldSize, nodeSizeMeters, grid);
 }

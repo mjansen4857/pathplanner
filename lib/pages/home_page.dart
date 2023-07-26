@@ -14,6 +14,7 @@ import 'package:pathplanner/pages/telemetry_page.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
@@ -238,32 +239,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   Align(
                     alignment: FractionalOffset.bottomRight,
-                    child: StreamBuilder(
-                      stream: PPLibTelemetry.connectionStatusStream(),
-                      builder: (context, snapshot) {
-                        bool connected =
-                            snapshot.hasData ? snapshot.data! : false;
-
-                        if (connected) {
-                          return const Tooltip(
-                            message: 'Connected to Robot',
-                            child: Icon(
-                              Icons.lan,
-                              size: 20,
-                              color: Colors.green,
-                            ),
-                          );
-                        } else {
-                          return const Tooltip(
-                            message: 'Not Connected to Robot',
-                            child: Icon(
-                              Icons.lan_outlined,
-                              size: 20,
-                              color: Colors.red,
-                            ),
-                          );
-                        }
-                      },
+                    child: ConditionalWidget(
+                      condition: PPLibTelemetry.isConnected,
+                      trueChild: const Tooltip(
+                        message: 'Connected to Robot',
+                        child: Icon(
+                          Icons.lan,
+                          size: 20,
+                          color: Colors.green,
+                        ),
+                      ),
+                      falseChild: const Tooltip(
+                        message: 'Not Connected to Robot',
+                        child: Icon(
+                          Icons.lan_outlined,
+                          size: 20,
+                          color: Colors.red,
+                        ),
+                      ),
                     ),
                   ),
                   Center(
@@ -376,7 +369,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
                   deployDirectory: _deployDir,
                 ),
-                const TelemetryPage(),
+                TelemetryPage(
+                  fieldImage: _fieldImage ?? FieldImage.defaultField,
+                ),
                 NavGridPage(
                   deployDirectory: _deployDir,
                 ),

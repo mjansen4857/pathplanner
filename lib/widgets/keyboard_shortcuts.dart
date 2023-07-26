@@ -7,11 +7,7 @@ import 'package:visibility_detector/visibility_detector.dart';
 
 Widget? _homeWidget;
 List<_KeyBoardShortcuts> _keyBoardShortcuts = [];
-Widget? _customGlobal;
-String? _customTitle;
-IconData? _customIcon;
-bool _helperIsOpen = false;
-List<Tuple3<Set<LogicalKeyboardKey>, Function(BuildContext context), String>>
+List<Tuple2<Set<LogicalKeyboardKey>, Function(BuildContext context)>>
     _newGlobal = [];
 
 enum BasicShortCuts {
@@ -27,26 +23,17 @@ void initShortCuts(
   Widget homePage, {
   Set<Set<LogicalKeyboardKey>>? keysToPress,
   Set<Function(BuildContext context)>? onKeysPressed,
-  Set<String>? helpLabel,
-  Widget? helpGlobal,
-  String? helpTitle,
-  IconData? helpIcon,
 }) async {
   if (keysToPress != null &&
       onKeysPressed != null &&
-      helpLabel != null &&
-      keysToPress.length == onKeysPressed.length &&
-      onKeysPressed.length == helpLabel.length) {
+      keysToPress.length == onKeysPressed.length) {
     _newGlobal = [];
     for (var i = 0; i < keysToPress.length; i++) {
-      _newGlobal.add(Tuple3(keysToPress.elementAt(i),
-          onKeysPressed.elementAt(i), helpLabel.elementAt(i)));
+      _newGlobal
+          .add(Tuple2(keysToPress.elementAt(i), onKeysPressed.elementAt(i)));
     }
   }
   _homeWidget = homePage;
-  _customGlobal = helpGlobal;
-  _customTitle = helpTitle;
-  _customIcon = helpIcon;
 }
 
 bool _isPressed(
@@ -68,16 +55,12 @@ class KeyBoardShortcuts extends StatefulWidget {
   /// Function when keys are pressed
   final VoidCallback? onKeysPressed;
 
-  /// Label who will be displayed in helper
-  final String? helpLabel;
-
   /// Activate when this widget is the first of the page
   final bool globalShortcuts;
 
   const KeyBoardShortcuts(
       {this.keysToPress,
       this.onKeysPressed,
-      this.helpLabel,
       this.globalShortcuts = false,
       required this.child,
       super.key});
@@ -92,6 +75,7 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
   bool controllerIsReady = false;
   bool listening = false;
   late Key key;
+
   @override
   void initState() {
     _controller.addListener(() {
@@ -124,7 +108,7 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
   }
 
   void listener(RawKeyEvent v) async {
-    if (!mounted || _helperIsOpen) return;
+    if (!mounted) return;
 
     Set<LogicalKeyboardKey> keysPressed = RawKeyboard.instance.keysPressed;
     if (v.runtimeType == RawKeyDownEvent) {
@@ -133,95 +117,6 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
           widget.onKeysPressed != null &&
           _isPressed(keysPressed, widget.keysToPress!)) {
         widget.onKeysPressed!();
-      }
-
-      // when user request help menu
-      else if (_isPressed(keysPressed,
-          {LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.keyH})) {
-        List<Widget> activeHelp = [];
-
-        //verify if element is visible or not
-        List<_KeyBoardShortcuts> toRemove = [];
-        for (var element in _keyBoardShortcuts) {
-          if (VisibilityDetectorController.instance
-                  .widgetBoundsFor(element.key) ==
-              null) {
-            element.listening = false;
-            toRemove.add(element);
-          }
-        }
-
-        _keyBoardShortcuts.removeWhere((element) => toRemove.contains(element));
-        for (var element in _keyBoardShortcuts) {
-          Widget? elementWidget = _helpWidget(element);
-          if (elementWidget != null) activeHelp.add(elementWidget);
-        } // get all custom shortcuts
-
-        bool showGlobalShort =
-            _keyBoardShortcuts.any((element) => element.widget.globalShortcuts);
-
-        if (!_helperIsOpen && (activeHelp.isNotEmpty || showGlobalShort)) {
-          _helperIsOpen = true;
-
-          await showDialog<void>(
-            context: context,
-            builder: (BuildContext context) => AlertDialog(
-              key: UniqueKey(),
-              title: Text(_customTitle ?? 'Keyboard Shortcuts'),
-              content: SingleChildScrollView(
-                child: ListBody(
-                  children: <Widget?>[
-                    if (activeHelp.isNotEmpty)
-                      ListBody(
-                        children: [
-                          for (final i in activeHelp) i,
-                          const Divider(),
-                        ],
-                      ),
-                    if (showGlobalShort)
-                      _customGlobal ??
-                          ListBody(
-                            children: [
-                              for (final newElement in _newGlobal)
-                                ListTile(
-                                  leading: Icon(_customIcon ?? Icons.settings),
-                                  title: Text(newElement.item3),
-                                  subtitle:
-                                      Text(_getKeysToPress(newElement.item1)),
-                                ),
-                              ListTile(
-                                leading: const Icon(Icons.home),
-                                title: const Text('Go on Home page'),
-                                subtitle:
-                                    Text(LogicalKeyboardKey.home.debugName!),
-                              ),
-                              ListTile(
-                                leading:
-                                    const Icon(Icons.subdirectory_arrow_left),
-                                title: const Text('Go on last page'),
-                                subtitle:
-                                    Text(LogicalKeyboardKey.escape.debugName!),
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.keyboard_arrow_up),
-                                title: const Text('Scroll to top'),
-                                subtitle:
-                                    Text(LogicalKeyboardKey.pageUp.debugName!),
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.keyboard_arrow_down),
-                                title: const Text('Scroll to bottom'),
-                                subtitle: Text(
-                                    LogicalKeyboardKey.pageDown.debugName!),
-                              ),
-                            ],
-                          ),
-                  ] as List<Widget>,
-                ),
-              ),
-            ),
-          ).then((value) => _helperIsOpen = false);
-        }
       } else if (widget.globalShortcuts) {
         if (_homeWidget != null &&
             _isPressed(keysPressed, {LogicalKeyboardKey.home})) {
@@ -272,29 +167,6 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
       },
     );
   }
-}
-
-String _getKeysToPress(Set<LogicalKeyboardKey>? keysToPress) {
-  String text = '';
-  if (keysToPress != null) {
-    for (final i in keysToPress) {
-      text += '${i.debugName!} + ';
-    }
-    text = text.substring(0, text.lastIndexOf(' + '));
-  }
-  return text;
-}
-
-Widget? _helpWidget(_KeyBoardShortcuts widget) {
-  String text = _getKeysToPress(widget.widget.keysToPress);
-  if (widget.widget.helpLabel != null && text != '') {
-    return ListTile(
-      leading: Icon(_customIcon ?? Icons.settings),
-      title: Text(widget.widget.helpLabel!),
-      subtitle: Text(text),
-    );
-  }
-  return null;
 }
 
 Set<LogicalKeyboardKey> shortCut(BasicShortCuts basicShortCuts) {

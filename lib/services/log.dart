@@ -25,7 +25,7 @@ class Log {
             file: logFile,
           ),
       ]),
-      level: kDebugMode ? Level.verbose : Level.info,
+      level: kDebugMode ? Level.trace : Level.info,
       filter: ProductionFilter(),
     );
 
@@ -35,13 +35,13 @@ class Log {
   static void log(Level level, dynamic message,
       [dynamic error, StackTrace? stackTrace]) {
     if (logger != null) {
-      logger!.log(level, message, error, stackTrace);
+      logger!.log(level, message, error: error, stackTrace: stackTrace);
     }
   }
 
   static void verbose(dynamic message,
       [dynamic error, StackTrace? stackTrace]) {
-    log(Level.verbose, message, error, stackTrace);
+    log(Level.trace, message, error, stackTrace);
   }
 
   static void debug(dynamic message, [dynamic error, StackTrace? stackTrace]) {

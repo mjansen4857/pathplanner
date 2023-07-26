@@ -480,6 +480,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.0"
+  messagepack:
+    dependency: transitive
+    description:
+      name: messagepack
+      sha256: "11e69dd79ba84ba901261558881b42ac8b24155a7846a344875a32c8b0866d71"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.2.1"
   meta:
     dependency: transitive
     description:
@@ -496,6 +504,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.4.2"
+  msgpack_dart:
+    dependency: transitive
+    description:
+      name: msgpack_dart
+      sha256: c2d235ed01f364719b5296aecf43ac330f0d7bc865fa134d0d7910a40454dffb
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.1"
   msix:
     dependency: "direct dev"
     description:
@@ -512,6 +528,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.4.0"
+  nt4:
+    dependency: "direct main"
+    description:
+      name: nt4
+      sha256: "8cdbd55c1d94fafa87616efcfa53938d9f6b810d25f9b696b828fc73765dc6bb"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   package_config:
     dependency: transitive
     description:
@@ -893,6 +917,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.0"
+  web_socket_channel:
+    dependency: transitive
+    description:
+      name: web_socket_channel
+      sha256: d88238e5eac9a42bb43ca4e721edba3c08c6354d4a53063afaa568516217621b
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.0"
   win32:
     dependency: transitive
     description:
@@ -934,5 +966,5 @@ packages:
     source: hosted
     version: "3.1.2"
 sdks:
-  dart: ">=3.0.0 <4.0.0"
+  dart: ">=3.0.6 <4.0.0"
   flutter: ">=3.10.0"

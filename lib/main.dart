@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pathplanner/services/log.dart';
+import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -13,6 +14,7 @@ void main() async {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      PPLibTelemetry.init();
       await Log.init();
       await windowManager.ensureInitialized();
       PackageInfo packageInfo = await PackageInfo.fromPlatform();

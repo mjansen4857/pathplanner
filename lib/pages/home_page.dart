@@ -13,6 +13,7 @@ import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/pages/telemetry_page.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/services/log.dart';
+import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
@@ -43,7 +44,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late Directory _deployDir;
   Size _robotSize = const Size(0.75, 1.0);
   bool _holonomicMode = false;
-  bool _pplibClient = false;
   bool _isWpiLib = false;
   final SecureBookmarks? _bookmarks =
       Platform.isMacOS ? SecureBookmarks() : null;
@@ -202,7 +202,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
         ),
-        pplibClient: _pplibClient,
       ),
       drawer: _projectDir == null ? null : _buildDrawer(context),
       body: ScaleTransition(
@@ -231,11 +230,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               child: Stack(
                 children: [
                   Align(
-                      alignment: FractionalOffset.bottomRight,
-                      child: Text(
-                        'v${widget.appVersion}',
-                        style: TextStyle(color: colorScheme.onSurface),
-                      )),
+                    alignment: FractionalOffset.bottomLeft,
+                    child: Text(
+                      'v${widget.appVersion}',
+                      style: TextStyle(color: colorScheme.onSurface),
+                    ),
+                  ),
+                  Align(
+                    alignment: FractionalOffset.bottomRight,
+                    child: StreamBuilder(
+                      stream: PPLibTelemetry.connectionStatusStream(),
+                      builder: (context, snapshot) {
+                        bool connected =
+                            snapshot.hasData ? snapshot.data! : false;
+
+                        if (connected) {
+                          return const Tooltip(
+                            message: 'Connected to Robot',
+                            child: Icon(
+                              Icons.lan,
+                              size: 20,
+                              color: Colors.green,
+                            ),
+                          );
+                        } else {
+                          return const Tooltip(
+                            message: 'Not Connected to Robot',
+                            child: Icon(
+                              Icons.lan_outlined,
+                              size: 20,
+                              color: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
                   Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -379,43 +409,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return buildFile.existsSync();
   }
 
-  // void _saveNavGrid(List<List<bool>> grid, double nodeSizeMeters) {
-  // TODO
-  // if (_projectDir != null) {
-  //   Directory saveDir = _getPathsDir(_projectDir!);
-
-  //   var json = {
-  //     'nodeSizeMeters': nodeSizeMeters,
-  //     'grid': grid,
-  //   };
-
-  //   String content = jsonEncode(json);
-  //   File navGridFile = File(join(saveDir.path, 'navgrid.json'));
-
-  //   navGridFile.writeAsString(content);
-  // }
-  // }
-
-  // Future<(List<List<bool>>, double)?> _loadNavGrid() async {
-  // TODO
-  // if (_projectDir != null) {
-  //   Directory saveDir = _getPathsDir(_projectDir!);
-  //   File navGridFile = File(join(saveDir.path, 'navgrid.json'));
-
-  //   if (await navGridFile.exists()) {
-  //     String content = await navGridFile.readAsString();
-
-  //     Map<String, dynamic> json = jsonDecode(content);
-  //     List<List<bool>> grid = (json['grid'] as List)
-  //         .map((r) => (r as List).map((c) => c as bool).toList())
-  //         .toList(); // yikes
-  //     double nodeSizeMeters = (json['nodeSizeMeters'] as num).toDouble();
-  //     return (grid, nodeSizeMeters);
-  //   }
-  // }
-  // return null;
-  // }
-
   void _onProjectSettingsChanged() {
     _loadSettingsFromPrefs();
     _saveProjectSettingsToFile(_projectDir!);
@@ -428,13 +421,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         widget.prefs.getDouble('robotLength') ?? 1.0,
       );
       _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
-      _pplibClient = widget.prefs.getBool('pplibClient') ?? false;
-
-      if (_pplibClient) {
-        // PPLibClient.initialize(widget.prefs); TODO
-      } else {
-        // PPLibClient.stopServer(); TODO
-      }
     });
   }
 
@@ -452,8 +438,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         widget.prefs
             .setDouble('robotLength', json['robotLength']?.toDouble() ?? 1.0);
         widget.prefs.setBool('holonomicMode', json['holonomicMode'] ?? false);
-        widget.prefs.setBool('generateJSON', json['generateJSON'] ?? false);
-        widget.prefs.setBool('generateCSV', json['generateCSV'] ?? false);
       } catch (err, stack) {
         Log.error(
             'An error occurred while loading project settings', err, stack);

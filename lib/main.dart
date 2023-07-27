@@ -40,8 +40,11 @@ void main() async {
         await windowManager.focus();
       });
 
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
       runApp(PathPlanner(
         appVersion: packageInfo.version,
+        prefs: prefs,
       ));
     },
     (Object error, StackTrace stack) {
@@ -54,9 +57,11 @@ void main() async {
 class PathPlanner extends StatefulWidget {
   final String appVersion;
   final FileSystem fs;
+  final SharedPreferences prefs;
 
   const PathPlanner({
     required this.appVersion,
+    required this.prefs,
     this.fs = const LocalFileSystem(),
     super.key,
   });
@@ -66,26 +71,12 @@ class PathPlanner extends StatefulWidget {
 }
 
 class _PathPlannerState extends State<PathPlanner> {
-  SharedPreferences? _prefs;
-  late Color _teamColor;
+  late Color _teamColor =
+      Color(widget.prefs.getInt('teamColor') ?? Colors.indigo.value);
   final bool _sandboxed = false;
 
   @override
-  void initState() {
-    super.initState();
-
-    SharedPreferences.getInstance().then((prefs) {
-      setState(() {
-        _prefs = prefs;
-        _teamColor = Color(_prefs!.getInt('teamColor') ?? Colors.indigo.value);
-      });
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    if (_prefs == null) return Container();
-
     return MaterialApp(
       title: 'PathPlanner',
       theme: ThemeData(
@@ -96,12 +87,12 @@ class _PathPlannerState extends State<PathPlanner> {
       home: HomePage(
         appVersion: widget.appVersion,
         appStoreBuild: _sandboxed,
-        prefs: _prefs!,
+        prefs: widget.prefs,
         fs: widget.fs,
         onTeamColorChanged: (Color color) {
           setState(() {
             _teamColor = color;
-            _prefs!.setInt('teamColor', _teamColor.value);
+            widget.prefs.setInt('teamColor', _teamColor.value);
           });
         },
       ),

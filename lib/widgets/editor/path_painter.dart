@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:pathplanner/auto/starting_pose.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -20,6 +21,7 @@ class PathPainter extends CustomPainter {
   final int? hoveredMarker;
   final int? selectedMarker;
   final Size robotSize;
+  final StartingPose? startingPose;
 
   late num robotRadius;
 
@@ -39,6 +41,7 @@ class PathPainter extends CustomPainter {
     this.hoveredMarker,
     this.selectedMarker,
     required this.robotSize,
+    this.startingPose,
   }) {
     robotRadius = sqrt((robotSize.width * robotSize.width) +
             (robotSize.height * robotSize.height)) /
@@ -68,6 +71,29 @@ class PathPainter extends CustomPainter {
       } else {
         _paintWaypoint(paths[i], canvas, scale, 0);
         _paintWaypoint(paths[i], canvas, scale, paths[i].waypoints.length - 1);
+      }
+
+      if (startingPose != null) {
+        _paintRobotOutline(startingPose!.position, startingPose!.rotation,
+            canvas, Colors.green.withOpacity(0.5));
+
+        var paint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = Colors.green.withOpacity(0.5)
+          ..strokeWidth = 2;
+
+        canvas.drawCircle(
+            PathPainterUtil.pointToPixelOffset(
+                startingPose!.position, scale, fieldImage),
+            PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+            paint);
+        paint.style = PaintingStyle.stroke;
+        paint.color = Colors.black;
+        canvas.drawCircle(
+            PathPainterUtil.pointToPixelOffset(
+                startingPose!.position, scale, fieldImage),
+            PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+            paint);
       }
     }
   }

@@ -5,7 +5,7 @@ import 'package:path/path.dart';
 import 'package:pathplanner/pages/auto_editor_page.dart';
 import 'package:pathplanner/pages/path_editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
-import 'package:pathplanner/path/pathplanner_auto.dart';
+import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/field_image.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pathplanner/path/pathplanner_auto.dart';
+import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';

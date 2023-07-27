@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/auto/starting_pose.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -9,6 +10,7 @@ import 'package:pathplanner/services/log.dart';
 
 class PathPlannerAuto {
   String name;
+  StartingPose? startingPose;
   SequentialCommandGroup sequence;
 
   FileSystem fs;
@@ -19,6 +21,7 @@ class PathPlannerAuto {
     required this.sequence,
     required this.autoDir,
     required this.fs,
+    this.startingPose,
   });
 
   PathPlannerAuto.defaultAuto({
@@ -33,21 +36,27 @@ class PathPlannerAuto {
       sequence: sequence.clone() as SequentialCommandGroup,
       autoDir: autoDir,
       fs: fs,
+      startingPose: startingPose,
     );
   }
 
   PathPlannerAuto.fromJsonV1(
       Map<String, dynamic> json, String name, String autosDir, FileSystem fs)
       : this(
-            autoDir: autosDir,
-            fs: fs,
-            name: name,
-            sequence: Command.fromJson(json['command'] ?? {})
-                as SequentialCommandGroup);
+          autoDir: autosDir,
+          fs: fs,
+          name: name,
+          startingPose: json['startingPose'] == null
+              ? null
+              : StartingPose.fromJson(json['startingPose']),
+          sequence:
+              Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
+        );
 
   Map<String, dynamic> toJson() {
     return {
       'version': 1.0,
+      'startingPose': startingPose?.toJson(),
       'command': sequence.toJson(),
     };
   }
@@ -142,8 +151,9 @@ class PathPlannerAuto {
       other is PathPlannerAuto &&
       other.runtimeType == runtimeType &&
       other.name == name &&
+      other.startingPose == startingPose &&
       other.sequence == sequence;
 
   @override
-  int get hashCode => Object.hash(name, sequence);
+  int get hashCode => Object.hash(name, startingPose, sequence);
 }

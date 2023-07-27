@@ -1,12 +1,18 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
-import 'package:pathplanner/path/pathplanner_auto.dart';
+import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/auto/starting_pose.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/services/undo_redo.dart';
+import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:undo/undo.dart';
 
 class SplitAutoEditor extends StatefulWidget {
   final SharedPreferences prefs;
@@ -34,6 +40,9 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
   final MultiSplitViewController _controller = MultiSplitViewController();
   String? _hoveredPath;
   late bool _treeOnRight;
+  bool _draggingStartPos = false;
+  bool _draggingStartRot = false;
+  StartingPose? _dragOldValue;
 
   late Size _robotSize;
 
@@ -73,6 +82,85 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
         Center(
           child: InteractiveViewer(
             child: GestureDetector(
+              onPanStart: (details) {
+                if (widget.auto.startingPose != null) {
+                  double xPos = _xPixelsToMeters(details.localPosition.dx);
+                  double yPos = _yPixelsToMeters(details.localPosition.dy);
+
+                  double posRadius = _pixelsToMeters(
+                      PathPainterUtil.uiPointSizeToPixels(
+                          25, PathPainter.scale, widget.fieldImage));
+                  if (pow(xPos - widget.auto.startingPose!.position.x, 2) +
+                          pow(yPos - widget.auto.startingPose!.position.y, 2) <
+                      pow(posRadius, 2)) {
+                    _draggingStartPos = true;
+                    _dragOldValue = widget.auto.startingPose!.clone();
+                  } else {
+                    double rotRadius = _pixelsToMeters(
+                        PathPainterUtil.uiPointSizeToPixels(
+                            15, PathPainter.scale, widget.fieldImage));
+                    num angleRadians =
+                        widget.auto.startingPose!.rotation / 180.0 * pi;
+                    num dotX = widget.auto.startingPose!.position.x +
+                        (_robotSize.height / 2 * cos(angleRadians));
+                    num dotY = widget.auto.startingPose!.position.y +
+                        (_robotSize.height / 2 * sin(angleRadians));
+                    if (pow(xPos - dotX, 2) + pow(yPos - dotY, 2) <
+                        pow(rotRadius, 2)) {
+                      _draggingStartRot = true;
+                      _dragOldValue = widget.auto.startingPose!.clone();
+                    }
+                  }
+                }
+              },
+              onPanUpdate: (details) {
+                if (_draggingStartPos && widget.auto.startingPose != null) {
+                  double x = _xPixelsToMeters(min(
+                      88 +
+                          (widget.fieldImage.defaultSize.width *
+                              PathPainter.scale),
+                      max(8, details.localPosition.dx)));
+                  double y = _yPixelsToMeters(min(
+                      88 +
+                          (widget.fieldImage.defaultSize.height *
+                              PathPainter.scale),
+                      max(8, details.localPosition.dy)));
+
+                  setState(() {
+                    widget.auto.startingPose!.position = Point(x, y);
+                  });
+                } else if (_draggingStartRot &&
+                    widget.auto.startingPose != null) {
+                  double x = _xPixelsToMeters(details.localPosition.dx);
+                  double y = _yPixelsToMeters(details.localPosition.dy);
+                  num rotation = atan2(y - widget.auto.startingPose!.position.y,
+                      x - widget.auto.startingPose!.position.x);
+                  num rotationDeg = (rotation * 180 / pi);
+
+                  setState(() {
+                    widget.auto.startingPose!.rotation = rotationDeg;
+                  });
+                }
+              },
+              onPanEnd: (details) {
+                if (widget.auto.startingPose != null &&
+                    (_draggingStartPos || _draggingStartRot)) {
+                  StartingPose dragEnd = widget.auto.startingPose!.clone();
+                  UndoRedo.addChange(Change(
+                    _dragOldValue,
+                    () {
+                      widget.auto.startingPose = dragEnd.clone();
+                      widget.onAutoChanged?.call();
+                    },
+                    (oldValue) {
+                      widget.auto.startingPose = oldValue.clone();
+                      widget.onAutoChanged?.call();
+                    },
+                  ));
+                  _draggingStartPos = false;
+                  _draggingStartRot = false;
+                }
+              },
               child: Padding(
                 padding: const EdgeInsets.all(48),
                 child: Stack(
@@ -86,6 +174,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
                           hoveredPath: _hoveredPath,
                           fieldImage: widget.fieldImage,
                           robotSize: _robotSize,
+                          startingPose: widget.auto.startingPose,
                         ),
                       ),
                     ),
@@ -154,5 +243,20 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
         ),
       ],
     );
+  }
+
+  double _xPixelsToMeters(double pixels) {
+    return ((pixels - 48) / PathPainter.scale) /
+        widget.fieldImage.pixelsPerMeter;
+  }
+
+  double _yPixelsToMeters(double pixels) {
+    return (widget.fieldImage.defaultSize.height -
+            ((pixels - 48) / PathPainter.scale)) /
+        widget.fieldImage.pixelsPerMeter;
+  }
+
+  double _pixelsToMeters(double pixels) {
+    return (pixels / PathPainter.scale) / widget.fieldImage.pixelsPerMeter;
   }
 }

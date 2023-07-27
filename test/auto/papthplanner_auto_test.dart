@@ -6,10 +6,11 @@ import 'package:file/memory.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/auto/starting_pose.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
-import 'package:pathplanner/path/pathplanner_auto.dart';
+import 'package:pathplanner/auto/pathplanner_auto.dart';
 
 void main() {
   group('Basic functions', () {
@@ -20,6 +21,7 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
+        startingPose: StartingPose.defaultPose(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );
@@ -27,6 +29,7 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
+        startingPose: StartingPose.defaultPose(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );
@@ -50,6 +53,7 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
+        startingPose: StartingPose.defaultPose(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );
@@ -106,6 +110,9 @@ void main() {
 
   test('updatePathName', () {
     var fs = MemoryFileSystem();
+
+    Directory autoDir = fs.directory('/autos');
+    fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
     PathPlannerAuto auto = PathPlannerAuto(
         name: 'test',

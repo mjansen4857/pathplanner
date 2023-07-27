@@ -6,6 +6,7 @@ class NumberTextField extends StatelessWidget {
   final String initialText;
   final String label;
   final double height;
+  final bool enabled;
   final ValueChanged<num?>? onSubmitted;
 
   const NumberTextField({
@@ -14,6 +15,7 @@ class NumberTextField extends StatelessWidget {
     required this.label,
     this.height = 42,
     this.onSubmitted,
+    this.enabled = true,
   });
 
   @override
@@ -23,6 +25,7 @@ class NumberTextField extends StatelessWidget {
     return SizedBox(
       height: height,
       child: TextField(
+        enabled: enabled,
         onSubmitted: (val) {
           if (val.isEmpty) {
             onSubmitted?.call(null);

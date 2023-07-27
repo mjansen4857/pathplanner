@@ -7,7 +7,7 @@ import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart
 import 'package:pathplanner/widgets/number_text_field.dart';
 
 void main() {
-  testWidgets('global constraints tree', (widgetTester) async {
+  testWidgets('goal end state tree', (widgetTester) async {
     PathPlannerPath path =
         PathPlannerPath.defaultPath(pathDir: '/paths', fs: MemoryFileSystem());
     path.goalEndState = GoalEndState(

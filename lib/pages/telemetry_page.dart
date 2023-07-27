@@ -21,6 +21,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     return StreamBuilder(
         stream: PPLibTelemetry.connectionStatusStream(),
         builder: (context, snapshot) {
+          ColorScheme colorScheme = Theme.of(context).colorScheme;
           // bool connected = snapshot.data ?? false;
 
           // if (!connected) {
@@ -58,10 +59,26 @@ class _TelemetryPageState extends State<TelemetryPage> {
                         ),
                       ),
                     ),
-                    const Expanded(
+                    Expanded(
                       flex: 2,
                       child: Center(
-                        child: Text('Path following testing/config'),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: colorScheme.primary,
+                              size: 76,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                                'No auto builder detected in robot code.'),
+                            const SizedBox(height: 16),
+                            const Text(
+                                'An auto builder is required to test path following'),
+                            const Text('commands from the GUI.'),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -71,189 +88,104 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 flex: 4,
                 child: Row(
                   children: [
-                    Expanded(
-                      child: Card(
-                        clipBehavior: Clip.antiAlias,
-                        margin: const EdgeInsets.fromLTRB(4.0, 0.0, 4.0, 4.0),
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: LineChart(_testVelData()),
-                            ),
-                            const Align(
-                              alignment: Alignment.topCenter,
-                              child: Padding(
-                                padding: EdgeInsets.all(4.0),
-                                child: Text(
-                                  'Robot Velocity',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Padding(
-                                padding: const EdgeInsets.all(4.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Container(
-                                              width: 16,
-                                              height: 16,
-                                              decoration: BoxDecoration(
-                                                color: Colors.green,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Text('Actual'),
-                                          ],
-                                        ),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Container(
-                                              width: 16,
-                                              height: 16,
-                                              decoration: BoxDecoration(
-                                                color: Colors.deepPurple,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Text('Commanded'),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                    _buildGraph(
+                      title: 'Robot Velocity',
+                      legend: _buildLegend(Colors.green, Colors.deepPurple),
+                      data: _buildData(
+                        maxY: 6.0,
+                        horizontalInterval: 1.5,
+                        spots: const [
+                          [
+                            FlSpot(0, 3),
+                            FlSpot(3, 2),
+                            FlSpot(7, 5),
+                            FlSpot(12, 3.5),
+                            FlSpot(15, 1),
                           ],
-                        ),
+                          [
+                            FlSpot(0, 4),
+                            FlSpot(3, 3),
+                            FlSpot(7, 2.5),
+                            FlSpot(12, 4.5),
+                            FlSpot(15, 2),
+                          ],
+                        ],
+                        lineGradients: const [
+                          LinearGradient(
+                            colors: [
+                              Colors.deepPurple,
+                              Colors.deepPurpleAccent,
+                            ],
+                          ),
+                          LinearGradient(
+                            colors: [
+                              Colors.green,
+                              Colors.greenAccent,
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    Expanded(
-                      child: Card(
-                        clipBehavior: Clip.antiAlias,
-                        margin: const EdgeInsets.fromLTRB(4.0, 0.0, 4.0, 4.0),
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: LineChart(_testAngVelData()),
-                            ),
-                            const Align(
-                              alignment: Alignment.topCenter,
-                              child: Padding(
-                                padding: EdgeInsets.all(4.0),
-                                child: Text(
-                                  'Angular Velocity',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Padding(
-                                padding: const EdgeInsets.all(4.0),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Container(
-                                              width: 16,
-                                              height: 16,
-                                              decoration: BoxDecoration(
-                                                color: Colors.orange,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Text('Actual'),
-                                          ],
-                                        ),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Container(
-                                              width: 16,
-                                              height: 16,
-                                              decoration: BoxDecoration(
-                                                color: Colors.blue,
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            const Text('Commanded'),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
+                    _buildGraph(
+                      title: 'Angular Velocity',
+                      legend: _buildLegend(Colors.orange, Colors.blue),
+                      data: _buildData(
+                        maxY: 720,
+                        horizontalInterval: 180,
+                        spots: const [
+                          [
+                            FlSpot(0, 400),
+                            FlSpot(3, 300),
+                            FlSpot(7, 600),
+                            FlSpot(12, 450),
+                            FlSpot(15, 200),
                           ],
-                        ),
+                          [
+                            FlSpot(0, 500),
+                            FlSpot(3, 400),
+                            FlSpot(7, 350),
+                            FlSpot(12, 550),
+                            FlSpot(15, 300),
+                          ],
+                        ],
+                        lineGradients: const [
+                          LinearGradient(
+                            colors: [
+                              Colors.blue,
+                              Colors.blueAccent,
+                            ],
+                          ),
+                          LinearGradient(
+                            colors: [
+                              Colors.orange,
+                              Colors.orangeAccent,
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    Expanded(
-                      child: Card(
-                        clipBehavior: Clip.antiAlias,
-                        margin: const EdgeInsets.fromLTRB(4.0, 0.0, 4.0, 4.0),
-                        child: Stack(
-                          children: [
-                            Center(
-                              child: LineChart(_testInnaccuracyData()),
-                            ),
-                            const Align(
-                              alignment: Alignment.topCenter,
-                              child: Padding(
-                                padding: EdgeInsets.all(4.0),
-                                child: Text(
-                                  'Path Innaccuracy',
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                              ),
-                            ),
+                    _buildGraph(
+                      title: 'Path Innaccuracy',
+                      data: _buildData(
+                        maxY: 1.0,
+                        horizontalInterval: 0.25,
+                        spots: const [
+                          [
+                            FlSpot(0, 0.2),
+                            FlSpot(3, 0.3),
+                            FlSpot(7, 0.3),
+                            FlSpot(12, 0.45),
+                            FlSpot(15, 0.2),
                           ],
-                        ),
+                        ],
+                        lineGradients: const [
+                          LinearGradient(
+                            colors: [
+                              Colors.red,
+                              Colors.redAccent,
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -264,14 +196,59 @@ class _TelemetryPageState extends State<TelemetryPage> {
         });
   }
 
-  LineChartData _testVelData() {
+  Widget _buildGraph({
+    required String title,
+    required LineChartData data,
+    Widget? legend,
+  }) {
+    return Expanded(
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.fromLTRB(4.0, 0.0, 4.0, 4.0),
+        child: Stack(
+          children: [
+            Center(
+              child: LineChart(data),
+            ),
+            Align(
+              alignment: Alignment.topCenter,
+              child: Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: Text(
+                  title,
+                  style: const TextStyle(fontSize: 18),
+                ),
+              ),
+            ),
+            if (legend != null)
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: legend,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  LineChartData _buildData({
+    required List<List<FlSpot>> spots,
+    required List<LinearGradient> lineGradients,
+    required double maxY,
+    double? horizontalInterval,
+  }) {
+    assert(spots.length == lineGradients.length);
+
     return LineChartData(
-      gridData: const FlGridData(
+      gridData: FlGridData(
         show: true,
         drawVerticalLine: true,
         drawHorizontalLine: true,
         verticalInterval: 3,
-        horizontalInterval: 1,
+        horizontalInterval: horizontalInterval,
       ),
       lineTouchData: const LineTouchData(enabled: false),
       titlesData: const FlTitlesData(
@@ -283,159 +260,69 @@ class _TelemetryPageState extends State<TelemetryPage> {
       minX: 0,
       maxX: 15,
       minY: 0,
-      maxY: 6,
+      maxY: maxY,
       lineBarsData: [
-        LineChartBarData(
-          spots: const [
-            FlSpot(0, 3),
-            FlSpot(3, 2),
-            FlSpot(7, 5),
-            FlSpot(12, 3.5),
-            FlSpot(15, 1),
-          ],
-          shadow: const Shadow(offset: Offset(0, 5), blurRadius: 4),
-          isCurved: true,
-          gradient: const LinearGradient(
-            colors: [
-              Colors.deepPurple,
-              Colors.deepPurpleAccent,
-            ],
+        for (int i = 0; i < spots.length; i++)
+          LineChartBarData(
+            spots: spots[i],
+            shadow: const Shadow(offset: Offset(0, 5), blurRadius: 5),
+            isCurved: true,
+            gradient: lineGradients[i],
+            barWidth: 5,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
           ),
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: const FlDotData(show: false),
-        ),
-        LineChartBarData(
-          spots: const [
-            FlSpot(0, 4),
-            FlSpot(3, 3),
-            FlSpot(7, 2.5),
-            FlSpot(12, 4.5),
-            FlSpot(15, 2),
-          ],
-          isCurved: true,
-          shadow: const Shadow(offset: Offset(0, 5), blurRadius: 4),
-          gradient: const LinearGradient(
-            colors: [
-              Colors.green,
-              Colors.greenAccent,
-            ],
-          ),
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: const FlDotData(show: false),
-        ),
       ],
     );
   }
 
-  LineChartData _testAngVelData() {
-    return LineChartData(
-      gridData: const FlGridData(
-        show: true,
-        drawVerticalLine: true,
-        drawHorizontalLine: true,
-        verticalInterval: 3,
-        horizontalInterval: 180,
+  Widget _buildLegend(Color actualColor, Color commandedColor) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
       ),
-      lineTouchData: const LineTouchData(enabled: false),
-      titlesData: const FlTitlesData(
-        show: false,
-      ),
-      borderData: FlBorderData(
-        show: false,
-      ),
-      minX: 0,
-      maxX: 15,
-      minY: 0,
-      maxY: 720,
-      lineBarsData: [
-        LineChartBarData(
-          spots: const [
-            FlSpot(0, 400),
-            FlSpot(3, 300),
-            FlSpot(7, 600),
-            FlSpot(12, 450),
-            FlSpot(15, 200),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: actualColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Text('Actual'),
+              ],
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: commandedColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Text('Commanded'),
+              ],
+            ),
           ],
-          shadow: const Shadow(offset: Offset(0, 5), blurRadius: 4),
-          isCurved: true,
-          gradient: const LinearGradient(
-            colors: [
-              Colors.blue,
-              Colors.blueAccent,
-            ],
-          ),
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: const FlDotData(show: false),
         ),
-        LineChartBarData(
-          spots: const [
-            FlSpot(0, 500),
-            FlSpot(3, 400),
-            FlSpot(7, 350),
-            FlSpot(12, 550),
-            FlSpot(15, 300),
-          ],
-          isCurved: true,
-          shadow: const Shadow(offset: Offset(0, 5), blurRadius: 4),
-          gradient: const LinearGradient(
-            colors: [
-              Colors.orange,
-              Colors.orangeAccent,
-            ],
-          ),
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: const FlDotData(show: false),
-        ),
-      ],
-    );
-  }
-
-  LineChartData _testInnaccuracyData() {
-    return LineChartData(
-      gridData: const FlGridData(
-        show: true,
-        drawVerticalLine: true,
-        drawHorizontalLine: true,
-        verticalInterval: 3,
-        horizontalInterval: 0.25,
       ),
-      lineTouchData: const LineTouchData(enabled: false),
-      titlesData: const FlTitlesData(
-        show: false,
-      ),
-      borderData: FlBorderData(
-        show: false,
-      ),
-      minX: 0,
-      maxX: 15,
-      minY: 0,
-      maxY: 1,
-      lineBarsData: [
-        LineChartBarData(
-          spots: const [
-            FlSpot(0, 0.2),
-            FlSpot(3, 0.3),
-            FlSpot(7, 0.3),
-            FlSpot(12, 0.45),
-            FlSpot(15, 0.2),
-          ],
-          shadow: const Shadow(offset: Offset(0, 5), blurRadius: 4),
-          isCurved: true,
-          gradient: const LinearGradient(
-            colors: [
-              Colors.red,
-              Colors.redAccent,
-            ],
-          ),
-          barWidth: 5,
-          isStrokeCapRound: true,
-          dotData: const FlDotData(show: false),
-        ),
-      ],
     );
   }
 }

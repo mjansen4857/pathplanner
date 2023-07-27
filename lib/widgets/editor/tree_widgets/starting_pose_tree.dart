@@ -70,9 +70,8 @@ class StartingPoseTree extends StatelessWidget {
                       num rot = value % 360;
                       if (rot > 180) {
                         rot -= 360;
-                      } else if (rot <= -180) {
-                        rot += 360;
                       }
+
                       _addChange(() => auto.startingPose!.rotation = rot);
                     }
                   },

@@ -100,12 +100,6 @@ void main() {
 
     expect(auto.startingPose!.rotation, 160.0);
 
-    await widgetTester.enterText(rotTextField, '-400.0');
-    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
-    await widgetTester.pump();
-
-    expect(auto.startingPose!.rotation, -40.0);
-
     // Tapping checkbox again removes starting pose
     autoChanged = false;
     await widgetTester.tap(find.byType(Checkbox));

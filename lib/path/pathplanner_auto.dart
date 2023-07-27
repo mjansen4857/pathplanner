@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:file/file.dart';
-import 'package:file/local.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
@@ -12,24 +11,36 @@ class PathPlannerAuto {
   String name;
   SequentialCommandGroup sequence;
 
-  String? autoDir;
+  FileSystem fs;
+  String autoDir;
 
-  PathPlannerAuto({required this.name, required this.sequence, this.autoDir});
+  PathPlannerAuto({
+    required this.name,
+    required this.sequence,
+    required this.autoDir,
+    required this.fs,
+  });
 
-  PathPlannerAuto.defaultAuto({this.name = 'New Auto', this.autoDir})
-      : sequence = SequentialCommandGroup(commands: []);
+  PathPlannerAuto.defaultAuto({
+    this.name = 'New Auto',
+    required this.autoDir,
+    required this.fs,
+  }) : sequence = SequentialCommandGroup(commands: []);
 
   PathPlannerAuto duplicate(String newName) {
     return PathPlannerAuto(
-        name: newName,
-        sequence: sequence.clone() as SequentialCommandGroup,
-        autoDir: autoDir);
+      name: newName,
+      sequence: sequence.clone() as SequentialCommandGroup,
+      autoDir: autoDir,
+      fs: fs,
+    );
   }
 
-  PathPlannerAuto.fromJsonV1(Map<String, dynamic> json, String name,
-      [String? autosDir])
+  PathPlannerAuto.fromJsonV1(
+      Map<String, dynamic> json, String name, String autosDir, FileSystem fs)
       : this(
             autoDir: autosDir,
+            fs: fs,
             name: name,
             sequence: Command.fromJson(json['command'] ?? {})
                 as SequentialCommandGroup);
@@ -41,8 +52,8 @@ class PathPlannerAuto {
     };
   }
 
-  static Future<List<PathPlannerAuto>> loadAllAutosInDir(String autosDir,
-      {FileSystem fs = const LocalFileSystem()}) async {
+  static Future<List<PathPlannerAuto>> loadAllAutosInDir(
+      String autosDir, FileSystem fs) async {
     List<PathPlannerAuto> autos = [];
 
     List<FileSystemEntity> files = fs.directory(autosDir).listSync();
@@ -54,7 +65,7 @@ class PathPlannerAuto {
           String autoName = basenameWithoutExtension(e.path);
 
           if (json['version'] == 1.0) {
-            autos.add(PathPlannerAuto.fromJsonV1(json, autoName, autosDir));
+            autos.add(PathPlannerAuto.fromJsonV1(json, autoName, autosDir, fs));
           } else {
             Log.error('Unknown auto version');
           }
@@ -66,37 +77,31 @@ class PathPlannerAuto {
     return autos;
   }
 
-  void rename(String name, {FileSystem fs = const LocalFileSystem()}) {
-    if (autoDir != null) {
-      File autoFile = fs.file(join(autoDir!, '${this.name}.auto'));
+  void rename(String name) {
+    File autoFile = fs.file(join(autoDir, '${this.name}.auto'));
 
-      if (autoFile.existsSync()) {
-        autoFile.rename(join(autoDir!, '$name.auto'));
-      }
+    if (autoFile.existsSync()) {
+      autoFile.rename(join(autoDir, '$name.auto'));
     }
     this.name = name;
   }
 
-  void delete({FileSystem fs = const LocalFileSystem()}) {
-    if (autoDir != null) {
-      File autoFile = fs.file(join(autoDir!, '$name.auto'));
+  void delete() {
+    File autoFile = fs.file(join(autoDir, '$name.auto'));
 
-      if (autoFile.existsSync()) {
-        autoFile.delete();
-      }
+    if (autoFile.existsSync()) {
+      autoFile.delete();
     }
   }
 
-  void saveFile({FileSystem fs = const LocalFileSystem()}) {
-    if (autoDir != null) {
-      try {
-        File autoFile = fs.file(join(autoDir!, '$name.auto'));
-        const JsonEncoder encoder = JsonEncoder.withIndent('  ');
-        autoFile.writeAsString(encoder.convert(this));
-        Log.debug('Saved "$name.auto"');
-      } catch (ex, stack) {
-        Log.error('Failed to save auto', ex, stack);
-      }
+  void saveFile() {
+    try {
+      File autoFile = fs.file(join(autoDir, '$name.auto'));
+      const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+      autoFile.writeAsString(encoder.convert(this));
+      Log.debug('Saved "$name.auto"');
+    } catch (ex, stack) {
+      Log.error('Failed to save auto', ex, stack);
     }
   }
 

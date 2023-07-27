@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file/file.dart';
-import 'package:file/local.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
@@ -27,12 +26,14 @@ class HomePage extends StatefulWidget {
   final bool appStoreBuild;
   final SharedPreferences prefs;
   final ValueChanged<Color> onTeamColorChanged;
+  final FileSystem fs;
 
   const HomePage({
     required this.appVersion,
     required this.appStoreBuild,
     required this.prefs,
     required this.onTeamColorChanged,
+    required this.fs,
     super.key,
   });
 
@@ -57,6 +58,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _selectedPage = 0;
   final PageController _pageController = PageController();
 
+  FileSystem get fs => widget.fs;
+
   @override
   void initState() {
     super.initState();
@@ -65,8 +68,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         vsync: this, duration: const Duration(milliseconds: 250));
     _scaleAnimation =
         CurvedAnimation(parent: _animController, curve: Curves.ease);
-
-    var fs = const LocalFileSystem();
 
     _loadFieldImages().then((_) async {
       String? projectDir = widget.prefs.getString('currentProjectDir');
@@ -182,8 +183,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    var fs = const LocalFileSystem();
-
     if (Platform.isMacOS && _projectDir != null) {
       _bookmarks!
           .stopAccessingSecurityScopedResource(fs.file(_projectDir!.path));
@@ -368,12 +367,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   prefs: widget.prefs,
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
                   deployDirectory: _deployDir,
+                  fs: fs,
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
                 ),
                 NavGridPage(
                   deployDirectory: _deployDir,
+                  fs: fs,
                 ),
               ],
             ),
@@ -398,7 +399,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   bool _isWpiLibProject(Directory projectDir) {
-    var fs = const LocalFileSystem();
     File buildFile = fs.file(join(projectDir.path, 'build.gradle'));
 
     return buildFile.existsSync();
@@ -420,7 +420,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _loadProjectSettingsFromFile(Directory projectDir) async {
-    var fs = const LocalFileSystem();
     File settingsFile = fs.file(join(projectDir.path, _settingsDir));
 
     if (await settingsFile.exists()) {
@@ -443,7 +442,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
-    var fs = const LocalFileSystem();
     File settingsFile = fs.file(join(projectDir.path, _settingsDir));
 
     if (!settingsFile.existsSync()) {
@@ -466,7 +464,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _openProjectDialog(BuildContext context) async {
-    var fs = const LocalFileSystem();
     String initialDirectory = _projectDir?.path ?? fs.currentDirectory.path;
     String? projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project', initialDirectory: initialDirectory);
@@ -488,7 +485,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadFieldImages() async {
-    var fs = const LocalFileSystem();
     Directory appDir =
         fs.directory((await getApplicationSupportDirectory()).path);
     Directory imagesDir = fs.directory(join(appDir.path, 'custom_fields'));

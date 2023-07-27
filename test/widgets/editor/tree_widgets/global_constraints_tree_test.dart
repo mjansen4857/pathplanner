@@ -1,3 +1,4 @@
+import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/path_constraints.dart';
@@ -7,7 +8,10 @@ import 'package:pathplanner/widgets/number_text_field.dart';
 
 void main() {
   testWidgets('global constraints tree', (widgetTester) async {
-    PathPlannerPath path = PathPlannerPath.defaultPath();
+    PathPlannerPath path = PathPlannerPath.defaultPath(
+      pathDir: '/paths',
+      fs: MemoryFileSystem(),
+    );
     path.globalConstraints = PathConstraints(
       maxVelocity: 1.0,
       maxAcceleration: 2.0,

@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:file/file.dart';
-import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
@@ -17,7 +16,7 @@ class NavGridPage extends StatefulWidget {
   NavGridPage({
     super.key,
     required this.deployDirectory,
-    this.fs = const LocalFileSystem(),
+    required this.fs,
   }) : fieldImage = FieldImage.defaultField;
 
   @override

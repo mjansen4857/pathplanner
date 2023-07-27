@@ -14,18 +14,26 @@ import 'package:pathplanner/path/pathplanner_auto.dart';
 void main() {
   group('Basic functions', () {
     test('equals/hashCode', () {
+      var fs = MemoryFileSystem();
+
       PathPlannerAuto auto1 = PathPlannerAuto(
         name: 'test',
+        autoDir: '/autos',
+        fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );
       PathPlannerAuto auto2 = PathPlannerAuto(
         name: 'test',
+        autoDir: '/autos',
+        fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );
       PathPlannerAuto auto3 = PathPlannerAuto(
         name: 'test2',
+        autoDir: '/autos',
+        fs: fs,
         sequence: SequentialCommandGroup(commands: []),
       );
 
@@ -36,21 +44,30 @@ void main() {
     });
 
     test('toJson/fromJson interoperability', () {
+      var fs = MemoryFileSystem();
+
       PathPlannerAuto auto = PathPlannerAuto(
         name: 'test',
+        autoDir: '/autos',
+        fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );
 
       Map<String, dynamic> json = auto.toJson();
-      PathPlannerAuto fromJson = PathPlannerAuto.fromJsonV1(json, auto.name);
+      PathPlannerAuto fromJson =
+          PathPlannerAuto.fromJsonV1(json, auto.name, '/autos', fs);
 
       expect(fromJson, auto);
     });
 
     test('duplication', () {
+      var fs = MemoryFileSystem();
+
       PathPlannerAuto auto = PathPlannerAuto(
         name: 'test',
+        autoDir: '/autos',
+        fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );
@@ -65,8 +82,12 @@ void main() {
   });
 
   test('getAllPathNames', () {
+    var fs = MemoryFileSystem();
+
     PathPlannerAuto auto = PathPlannerAuto(
         name: 'test',
+        autoDir: '/autos',
+        fs: fs,
         sequence: SequentialCommandGroup(
           commands: [
             PathCommand(pathName: 'path1'),
@@ -84,8 +105,12 @@ void main() {
   });
 
   test('updatePathName', () {
+    var fs = MemoryFileSystem();
+
     PathPlannerAuto auto = PathPlannerAuto(
         name: 'test',
+        autoDir: '/autos',
+        fs: fs,
         sequence: SequentialCommandGroup(
           commands: [
             PathCommand(pathName: 'path1'),
@@ -126,10 +151,10 @@ void main() {
       Directory autoDir = fs.directory('/autos');
       fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
-      PathPlannerAuto auto =
-          PathPlannerAuto.defaultAuto(name: 'test', autoDir: autoDir.path);
+      PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
+          name: 'test', autoDir: autoDir.path, fs: fs);
 
-      auto.rename('renamed', fs: fs);
+      auto.rename('renamed');
 
       expect(auto.name, 'renamed');
       expect(fs.file(join(autoDir.path, 'test.auto')).existsSync(), false);
@@ -142,10 +167,10 @@ void main() {
       Directory autoDir = fs.directory('/autos');
       fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
-      PathPlannerAuto auto =
-          PathPlannerAuto.defaultAuto(name: 'test', autoDir: autoDir.path);
+      PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
+          name: 'test', autoDir: autoDir.path, fs: fs);
 
-      auto.delete(fs: fs);
+      auto.delete();
 
       expect(fs.file(join(autoDir.path, 'test.auto')).existsSync(), false);
     });
@@ -156,10 +181,10 @@ void main() {
       Directory autoDir = fs.directory('/autos');
       autoDir.createSync(recursive: true);
 
-      PathPlannerAuto auto1 =
-          PathPlannerAuto.defaultAuto(name: 'test1', autoDir: autoDir.path);
-      PathPlannerAuto auto2 =
-          PathPlannerAuto.defaultAuto(name: 'test2', autoDir: autoDir.path);
+      PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
+          name: 'test1', autoDir: autoDir.path, fs: fs);
+      PathPlannerAuto auto2 = PathPlannerAuto.defaultAuto(
+          name: 'test2', autoDir: autoDir.path, fs: fs);
       auto2.sequence.commands.add(WaitCommand(waitTime: 0.5));
 
       fs
@@ -170,7 +195,7 @@ void main() {
           .writeAsStringSync(jsonEncode(auto2.toJson()));
 
       List<PathPlannerAuto> loaded =
-          await PathPlannerAuto.loadAllAutosInDir(autoDir.path, fs: fs);
+          await PathPlannerAuto.loadAllAutosInDir(autoDir.path, fs);
 
       expect(loaded.length, 2);
 
@@ -187,11 +212,11 @@ void main() {
       Directory autoDir = fs.directory('/autos');
       autoDir.createSync(recursive: true);
 
-      PathPlannerAuto auto =
-          PathPlannerAuto.defaultAuto(name: 'test', autoDir: autoDir.path);
+      PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
+          name: 'test', autoDir: autoDir.path, fs: fs);
       auto.sequence.commands.add(WaitCommand(waitTime: 1.0));
 
-      auto.saveFile(fs: fs);
+      auto.saveFile();
 
       File autoFile = fs.file(join(autoDir.path, 'test.auto'));
       expect(autoFile.existsSync(), true);

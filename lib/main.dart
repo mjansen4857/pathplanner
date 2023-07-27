@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:file/file.dart';
+import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pathplanner/services/log.dart';
@@ -51,8 +53,13 @@ void main() async {
 
 class PathPlanner extends StatefulWidget {
   final String appVersion;
+  final FileSystem fs;
 
-  const PathPlanner({required this.appVersion, super.key});
+  const PathPlanner({
+    required this.appVersion,
+    this.fs = const LocalFileSystem(),
+    super.key,
+  });
 
   @override
   State<PathPlanner> createState() => _PathPlannerState();
@@ -90,6 +97,7 @@ class _PathPlannerState extends State<PathPlanner> {
         appVersion: widget.appVersion,
         appStoreBuild: _sandboxed,
         prefs: _prefs!,
+        fs: widget.fs,
         onTeamColorChanged: (Color color) {
           setState(() {
             _teamColor = color;

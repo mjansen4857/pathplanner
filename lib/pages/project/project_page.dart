@@ -1,5 +1,4 @@
 import 'package:file/file.dart';
-import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:path/path.dart';
@@ -16,12 +15,14 @@ class ProjectPage extends StatefulWidget {
   final SharedPreferences prefs;
   final FieldImage fieldImage;
   final Directory deployDirectory;
+  final FileSystem fs;
 
   const ProjectPage({
     super.key,
     required this.prefs,
     required this.fieldImage,
     required this.deployDirectory,
+    required this.fs,
   });
 
   @override
@@ -37,6 +38,8 @@ class _ProjectPageState extends State<ProjectPage> {
   late Directory _autosDirectory;
 
   bool _loading = true;
+
+  FileSystem get fs => widget.fs;
 
   @override
   void initState() {
@@ -60,17 +63,17 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   void _load() async {
-    var fs = const LocalFileSystem();
-
     // Make sure dirs exist
     _pathsDirectory = fs.directory(join(widget.deployDirectory.path, 'paths'));
     _pathsDirectory.createSync(recursive: true);
     _autosDirectory = fs.directory(join(widget.deployDirectory.path, 'autos'));
     _autosDirectory.createSync(recursive: true);
 
-    var paths = await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path);
+    var paths =
+        await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path, fs);
     paths.sort((a, b) => a.name.compareTo(b.name));
-    var autos = await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path);
+    var autos =
+        await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path, fs);
     autos.sort((a, b) => a.name.compareTo(b.name));
 
     setState(() {
@@ -81,6 +84,7 @@ class _ProjectPageState extends State<ProjectPage> {
         _paths.add(PathPlannerPath.defaultPath(
           pathDir: _pathsDirectory.path,
           name: 'Example Path',
+          fs: fs,
         ));
       }
 
@@ -163,6 +167,7 @@ class _ProjectPageState extends State<ProjectPage> {
                           _paths.add(PathPlannerPath.defaultPath(
                             pathDir: _pathsDirectory.path,
                             name: pathName,
+                            fs: fs,
                           ));
                         });
                       },
@@ -312,6 +317,7 @@ class _ProjectPageState extends State<ProjectPage> {
                           _autos.add(PathPlannerAuto.defaultAuto(
                             autoDir: _autosDirectory.path,
                             name: autoName,
+                            fs: fs,
                           ));
                         });
                       },

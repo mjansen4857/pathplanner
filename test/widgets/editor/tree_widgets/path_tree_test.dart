@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/wait_command.dart';
@@ -7,6 +10,7 @@ import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
+import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 
@@ -14,7 +18,23 @@ void main() {
   testWidgets('test path tree', (widgetTester) async {
     PathPlannerPath path = PathPlannerPath(
       name: 'test',
-      waypoints: PathPlannerPath.defaultPath().waypoints,
+      pathDir: '/paths',
+      fs: MemoryFileSystem(),
+      waypoints: [
+        Waypoint(
+          anchor: const Point(2.0, 7.0),
+          nextControl: const Point(3.0, 6.5),
+        ),
+        Waypoint(
+          prevControl: const Point(4.0, 6.0),
+          anchor: const Point(5.0, 5.0),
+          nextControl: const Point(6.0, 4.0),
+        ),
+        Waypoint(
+          prevControl: const Point(6.75, 2.5),
+          anchor: const Point(7.0, 1.0),
+        ),
+      ],
       globalConstraints: PathConstraints(
         maxVelocity: 10.11,
         maxAcceleration: 10.22,

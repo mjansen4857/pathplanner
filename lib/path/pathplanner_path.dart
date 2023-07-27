@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:file/file.dart';
-import 'package:file/local.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/command.dart';
@@ -28,7 +27,8 @@ class PathPlannerPath {
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
 
-  String? pathDir;
+  FileSystem fs;
+  String pathDir;
 
   // Stuff used for UI
   bool waypointsExpanded = false;
@@ -38,7 +38,8 @@ class PathPlannerPath {
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
 
-  PathPlannerPath.defaultPath({this.pathDir, this.name = 'New Path'})
+  PathPlannerPath.defaultPath(
+      {required this.pathDir, required this.fs, this.name = 'New Path'})
       : waypoints = [],
         pathPoints = [],
         globalConstraints = PathConstraints(),
@@ -73,15 +74,17 @@ class PathPlannerPath {
     required this.constraintZones,
     required this.rotationTargets,
     required this.eventMarkers,
-    this.pathDir,
+    required this.pathDir,
+    required this.fs,
   }) : pathPoints = [] {
     generatePathPoints();
   }
 
-  PathPlannerPath.fromJsonV1(Map<String, dynamic> json, String name,
-      [String? pathsDir])
+  PathPlannerPath.fromJsonV1(
+      Map<String, dynamic> json, String name, String pathsDir, FileSystem fs)
       : this(
           pathDir: pathsDir,
+          fs: fs,
           name: name,
           waypoints: [
             for (var waypointJson in json['waypoints'])
@@ -104,26 +107,24 @@ class PathPlannerPath {
           ],
         );
 
-  void generateAndSavePath({FileSystem fs = const LocalFileSystem()}) {
+  void generateAndSavePath() {
     Stopwatch s = Stopwatch()..start();
 
     generatePathPoints();
 
-    if (pathDir != null) {
-      try {
-        File pathFile = fs.file(join(pathDir!, '$name.path'));
-        const JsonEncoder encoder = JsonEncoder.withIndent('  ');
-        pathFile.writeAsString(encoder.convert(this));
-        Log.debug(
-            'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
-      } catch (ex, stack) {
-        Log.error('Failed to save path', ex, stack);
-      }
+    try {
+      File pathFile = fs.file(join(pathDir, '$name.path'));
+      const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+      pathFile.writeAsString(encoder.convert(this));
+      Log.debug(
+          'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
+    } catch (ex, stack) {
+      Log.error('Failed to save path', ex, stack);
     }
   }
 
-  static Future<List<PathPlannerPath>> loadAllPathsInDir(String pathsDir,
-      {FileSystem fs = const LocalFileSystem()}) async {
+  static Future<List<PathPlannerPath>> loadAllPathsInDir(
+      String pathsDir, FileSystem fs) async {
     List<PathPlannerPath> paths = [];
 
     List<FileSystemEntity> files = fs.directory(pathsDir).listSync();
@@ -135,7 +136,7 @@ class PathPlannerPath {
           String pathName = basenameWithoutExtension(e.path);
 
           if (json['version'] == 1.0) {
-            paths.add(PathPlannerPath.fromJsonV1(json, pathName, pathsDir));
+            paths.add(PathPlannerPath.fromJsonV1(json, pathName, pathsDir, fs));
           } else {
             Log.error('Unknown path version');
           }
@@ -147,23 +148,19 @@ class PathPlannerPath {
     return paths;
   }
 
-  void deletePath({FileSystem fs = const LocalFileSystem()}) {
-    if (pathDir != null) {
-      File pathFile = fs.file(join(pathDir!, '$name.path'));
+  void deletePath() {
+    File pathFile = fs.file(join(pathDir, '$name.path'));
 
-      if (pathFile.existsSync()) {
-        pathFile.delete();
-      }
+    if (pathFile.existsSync()) {
+      pathFile.delete();
     }
   }
 
-  void renamePath(String name, {FileSystem fs = const LocalFileSystem()}) {
-    if (pathDir != null) {
-      File pathFile = fs.file(join(pathDir!, '${this.name}.path'));
+  void renamePath(String name) {
+    File pathFile = fs.file(join(pathDir, '${this.name}.path'));
 
-      if (pathFile.existsSync()) {
-        pathFile.rename(join(pathDir!, '$name.path'));
-      }
+    if (pathFile.existsSync()) {
+      pathFile.rename(join(pathDir, '$name.path'));
     }
     this.name = name;
   }
@@ -312,6 +309,7 @@ class PathPlannerPath {
       rotationTargets: cloneRotationTargets(rotationTargets),
       eventMarkers: cloneEventMarkers(eventMarkers),
       pathDir: pathDir,
+      fs: fs,
     );
   }
 

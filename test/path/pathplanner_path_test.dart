@@ -21,13 +21,21 @@ const num epsilon = 0.01;
 void main() {
   group('Basic functions', () {
     test('Constructor functions', () {
-      PathPlannerPath path = PathPlannerPath.defaultPath(name: 'test');
+      var fs = MemoryFileSystem();
+
+      PathPlannerPath path = PathPlannerPath.defaultPath(
+        name: 'test',
+        pathDir: '/paths',
+        fs: fs,
+      );
 
       expect(path.name, 'test');
       expect(path.pathPoints.isNotEmpty, true);
 
       path = PathPlannerPath(
         name: 'test',
+        pathDir: '/paths',
+        fs: fs,
         waypoints: [
           Waypoint(
             anchor: const Point(1.0, 1.0),
@@ -57,8 +65,12 @@ void main() {
     });
 
     test('toJson/fromJson interoperability', () {
+      var fs = MemoryFileSystem();
+
       PathPlannerPath path = PathPlannerPath(
         name: 'test',
+        pathDir: '/paths',
+        fs: fs,
         waypoints: [
           Waypoint(
             anchor: const Point(1.0, 1.0),
@@ -77,14 +89,19 @@ void main() {
       );
 
       Map<String, dynamic> json = path.toJson();
-      PathPlannerPath fromJson = PathPlannerPath.fromJsonV1(json, path.name);
+      PathPlannerPath fromJson =
+          PathPlannerPath.fromJsonV1(json, path.name, '/paths', fs);
 
       expect(fromJson, path);
     });
 
     test('proper cloning', () {
+      var fs = MemoryFileSystem();
+
       PathPlannerPath path = PathPlannerPath(
         name: 'test',
+        pathDir: '/paths',
+        fs: fs,
         waypoints: [
           Waypoint(
             anchor: const Point(1.0, 1.0),
@@ -111,8 +128,12 @@ void main() {
     });
 
     test('equals/hashCode', () {
+      var fs = MemoryFileSystem();
+
       PathPlannerPath path1 = PathPlannerPath(
         name: 'test',
+        pathDir: '/paths',
+        fs: fs,
         waypoints: [
           Waypoint(
             anchor: const Point(1.0, 1.0),
@@ -131,6 +152,8 @@ void main() {
       );
       PathPlannerPath path2 = PathPlannerPath(
         name: 'test',
+        pathDir: '/paths',
+        fs: fs,
         waypoints: [
           Waypoint(
             anchor: const Point(1.0, 1.0),
@@ -149,6 +172,8 @@ void main() {
       );
       PathPlannerPath path3 = PathPlannerPath(
         name: 'test2',
+        pathDir: '/paths',
+        fs: fs,
         waypoints: [
           Waypoint(
             anchor: const Point(1.0, 1.5),
@@ -175,8 +200,12 @@ void main() {
   });
 
   test('add waypoint', () {
+    var fs = MemoryFileSystem();
+
     PathPlannerPath path = PathPlannerPath(
       name: 'test',
+      pathDir: '/paths',
+      fs: fs,
       waypoints: [
         Waypoint(
           anchor: const Point(1.0, 1.0),
@@ -205,8 +234,12 @@ void main() {
   });
 
   test('insert waypoint', () {
+    var fs = MemoryFileSystem();
+
     PathPlannerPath path = PathPlannerPath(
       name: 'test',
+      pathDir: '/paths',
+      fs: fs,
       waypoints: [
         Waypoint(
           anchor: const Point(1.0, 1.0),
@@ -261,10 +294,10 @@ void main() {
       Directory pathDir = fs.directory('/paths');
       fs.file(join(pathDir.path, 'test.path')).createSync(recursive: true);
 
-      PathPlannerPath path =
-          PathPlannerPath.defaultPath(name: 'test', pathDir: pathDir.path);
+      PathPlannerPath path = PathPlannerPath.defaultPath(
+          name: 'test', pathDir: pathDir.path, fs: fs);
 
-      path.renamePath('renamed', fs: fs);
+      path.renamePath('renamed');
 
       expect(path.name, 'renamed');
       expect(fs.file(join(pathDir.path, 'test.path')).existsSync(), false);
@@ -277,10 +310,10 @@ void main() {
       Directory pathDir = fs.directory('/paths');
       fs.file(join(pathDir.path, 'test.path')).createSync(recursive: true);
 
-      PathPlannerPath path =
-          PathPlannerPath.defaultPath(name: 'test', pathDir: pathDir.path);
+      PathPlannerPath path = PathPlannerPath.defaultPath(
+          name: 'test', pathDir: pathDir.path, fs: fs);
 
-      path.deletePath(fs: fs);
+      path.deletePath();
 
       expect(fs.file(join(pathDir.path, 'test.path')).existsSync(), false);
     });
@@ -291,10 +324,10 @@ void main() {
       Directory pathDir = fs.directory('/paths');
       pathDir.createSync(recursive: true);
 
-      PathPlannerPath path1 =
-          PathPlannerPath.defaultPath(name: 'test1', pathDir: pathDir.path);
-      PathPlannerPath path2 =
-          PathPlannerPath.defaultPath(name: 'test2', pathDir: pathDir.path);
+      PathPlannerPath path1 = PathPlannerPath.defaultPath(
+          name: 'test1', pathDir: pathDir.path, fs: fs);
+      PathPlannerPath path2 = PathPlannerPath.defaultPath(
+          name: 'test2', pathDir: pathDir.path, fs: fs);
       path2.eventMarkers.add(EventMarker.defaultMarker());
 
       fs
@@ -305,7 +338,7 @@ void main() {
           .writeAsStringSync(jsonEncode(path2.toJson()));
 
       List<PathPlannerPath> loaded =
-          await PathPlannerPath.loadAllPathsInDir(pathDir.path, fs: fs);
+          await PathPlannerPath.loadAllPathsInDir(pathDir.path, fs);
 
       expect(loaded.length, 2);
 
@@ -322,11 +355,11 @@ void main() {
       Directory pathDir = fs.directory('/paths');
       pathDir.createSync(recursive: true);
 
-      PathPlannerPath path =
-          PathPlannerPath.defaultPath(name: 'test', pathDir: pathDir.path);
+      PathPlannerPath path = PathPlannerPath.defaultPath(
+          name: 'test', pathDir: pathDir.path, fs: fs);
       path.constraintZones.add(ConstraintsZone.defaultZone());
 
-      path.generateAndSavePath(fs: fs);
+      path.generateAndSavePath();
 
       File pathFile = fs.file(join(pathDir.path, 'test.path'));
       expect(pathFile.existsSync(), true);

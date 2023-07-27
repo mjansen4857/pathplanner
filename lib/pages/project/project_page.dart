@@ -7,7 +7,7 @@ import 'package:pathplanner/pages/path_editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/path/pathplanner_auto.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/services/prefs_keys.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -45,8 +45,8 @@ class _ProjectPageState extends State<ProjectPage> {
   void initState() {
     super.initState();
 
-    double leftWeight =
-        widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ?? 0.5;
+    double leftWeight = widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ??
+        Defaults.projectLeftWeight;
     _pathGridCount = _getCrossAxisCountForWeight(leftWeight);
     _controller.areas = [
       Area(
@@ -120,7 +120,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   _getCrossAxisCountForWeight(_controller.areas[0].weight!);
             });
             widget.prefs.setDouble(PrefsKeys.projectLeftWeight,
-                _controller.areas[0].weight ?? 0.5);
+                _controller.areas[0].weight ?? Defaults.projectLeftWeight);
           },
           children: [
             _buildPathsGrid(context),

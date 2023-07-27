@@ -7,7 +7,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/prefs_keys.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
@@ -59,14 +59,17 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
   void initState() {
     super.initState();
 
-    _treeOnRight = widget.prefs.getBool(PrefsKeys.treeOnRight) ?? true;
+    _treeOnRight =
+        widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
 
-    var width = widget.prefs.getDouble(PrefsKeys.robotWidth) ?? 0.75;
-    var length = widget.prefs.getDouble(PrefsKeys.robotLength) ?? 1.0;
+    var width =
+        widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
+    var length =
+        widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
     _robotSize = Size(width, length);
 
-    double treeWeight =
-        widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ?? 0.5;
+    double treeWeight = widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
+        Defaults.editorTreeWeight;
     _controller.areas = [
       Area(
         weight: _treeOnRight ? (1.0 - treeWeight) : treeWeight,

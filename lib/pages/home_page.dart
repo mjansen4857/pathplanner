@@ -13,6 +13,7 @@ import 'package:pathplanner/pages/telemetry_page.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -70,11 +71,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         CurvedAnimation(parent: _animController, curve: Curves.ease);
 
     _loadFieldImages().then((_) async {
-      String? projectDir = widget.prefs.getString('currentProjectDir');
+      String? projectDir = widget.prefs.getString(PrefsKeys.currentProjectDir);
       if (projectDir != null && Platform.isMacOS) {
-        if (widget.prefs.getString('macOSBookmark') != null) {
-          await _bookmarks!
-              .resolveBookmark(widget.prefs.getString('macOSBookmark')!);
+        if (widget.prefs.getString(PrefsKeys.macOSBookmark) != null) {
+          await _bookmarks!.resolveBookmark(
+              widget.prefs.getString(PrefsKeys.macOSBookmark)!);
 
           await _bookmarks!
               .startAccessingSecurityScopedResource(fs.file(projectDir));
@@ -95,12 +96,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         );
 
-        widget.prefs.setString('currentProjectDir', projectDir!);
+        widget.prefs.setString(PrefsKeys.currentProjectDir, projectDir!);
 
         if (Platform.isMacOS) {
           // Bookmark project on macos so it can be accessed again later
           String bookmark = await _bookmarks!.bookmark(fs.file(projectDir));
-          widget.prefs.setString('macOSBookmark', bookmark);
+          widget.prefs.setString(PrefsKeys.macOSBookmark, bookmark);
         }
       }
 
@@ -130,7 +131,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         _loadProjectSettingsFromFile(_projectDir!);
 
-        String? selectedFieldName = widget.prefs.getString('fieldImage');
+        String? selectedFieldName =
+            widget.prefs.getString(PrefsKeys.fieldImage);
         if (selectedFieldName != null) {
           for (FieldImage image in _fieldImages) {
             if (image.name == selectedFieldName) {
@@ -143,7 +145,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _animController.forward();
       });
 
-      if (!(widget.prefs.getBool('seen2023Warning') ?? false) && mounted) {
+      if (!(widget.prefs.getBool(PrefsKeys.seen2023Warning) ?? false) &&
+          mounted) {
         showDialog(
             context: this.context,
             barrierDismissible: false,
@@ -170,7 +173,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      widget.prefs.setBool('seen2023Warning', true);
+                      widget.prefs.setBool(PrefsKeys.seen2023Warning, true);
                     },
                     child: const Text('OK'),
                   ),
@@ -328,7 +331,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           if (!_fieldImages.contains(image)) {
                             _fieldImages.add(image);
                           }
-                          widget.prefs.setString('fieldImage', image.name);
+                          widget.prefs
+                              .setString(PrefsKeys.fieldImage, image.name);
                         });
                       },
                       onSettingsChanged: _onProjectSettingsChanged,
@@ -412,10 +416,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _loadSettingsFromPrefs() {
     setState(() {
       _robotSize = Size(
-        widget.prefs.getDouble('robotWidth') ?? 0.75,
-        widget.prefs.getDouble('robotLength') ?? 1.0,
+        widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth,
+        widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength,
       );
-      _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
+      _holonomicMode = widget.prefs.getBool(PrefsKeys.holonomicMode) ??
+          Defaults.holonomicMode;
     });
   }
 
@@ -427,11 +432,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final fileContents = await settingsFile.readAsString();
         final json = jsonDecode(fileContents);
 
-        widget.prefs
-            .setDouble('robotWidth', json['robotWidth']?.toDouble() ?? 0.75);
-        widget.prefs
-            .setDouble('robotLength', json['robotLength']?.toDouble() ?? 1.0);
-        widget.prefs.setBool('holonomicMode', json['holonomicMode'] ?? false);
+        widget.prefs.setDouble(PrefsKeys.robotWidth,
+            json['robotWidth']?.toDouble() ?? Defaults.robotWidth);
+        widget.prefs.setDouble(PrefsKeys.robotLength,
+            json['robotLength']?.toDouble() ?? Defaults.robotLength);
+        widget.prefs.setBool(PrefsKeys.holonomicMode,
+            json['holonomicMode'] ?? Defaults.holonomicMode);
       } catch (err, stack) {
         Log.error(
             'An error occurred while loading project settings', err, stack);
@@ -468,12 +474,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String? projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project', initialDirectory: initialDirectory);
     if (projectFolder != null) {
-      widget.prefs.setString('currentProjectDir', projectFolder);
+      widget.prefs.setString(PrefsKeys.currentProjectDir, projectFolder);
 
       if (Platform.isMacOS) {
         // Bookmark project on macos so it can be accessed again later
         String bookmark = await _bookmarks!.bookmark(fs.file(projectFolder));
-        widget.prefs.setString('macOSBookmark', bookmark);
+        widget.prefs.setString(PrefsKeys.macOSBookmark, bookmark);
       }
 
       setState(() {

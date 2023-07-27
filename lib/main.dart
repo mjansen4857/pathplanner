@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -72,7 +73,7 @@ class PathPlanner extends StatefulWidget {
 
 class _PathPlannerState extends State<PathPlanner> {
   late Color _teamColor =
-      Color(widget.prefs.getInt('teamColor') ?? Colors.indigo.value);
+      Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
   final bool _sandboxed = false;
 
   @override
@@ -92,7 +93,7 @@ class _PathPlannerState extends State<PathPlanner> {
         onTeamColorChanged: (Color color) {
           setState(() {
             _teamColor = color;
-            widget.prefs.setInt('teamColor', _teamColor.value);
+            widget.prefs.setInt(PrefsKeys.teamColor, _teamColor.value);
           });
         },
       ),

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/dialogs/edit_field_dialog.dart';
 import 'package:pathplanner/widgets/dialogs/import_field_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -45,12 +46,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
   void initState() {
     super.initState();
 
-    _width = widget.prefs.getDouble('robotWidth') ?? 0.75;
-    _length = widget.prefs.getDouble('robotLength') ?? 1.0;
-    _holonomicMode = widget.prefs.getBool('holonomicMode') ?? false;
+    _width =
+        widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
+    _length =
+        widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
+    _holonomicMode =
+        widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
     _selectedField = widget.selectedField;
-    _teamColor = Color(widget.prefs.getInt('teamColor') ?? Colors.indigo.value);
-    _pplibClientHost = widget.prefs.getString('pplibClientHost') ?? 'localhost';
+    _teamColor =
+        Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
+    _pplibClientHost = widget.prefs.getString(PrefsKeys.pplibClientHost) ??
+        Defaults.pplibClientHost;
   }
 
   @override
@@ -73,7 +79,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     label: 'Width (M)',
                     onSubmitted: (value) {
                       if (value != null) {
-                        widget.prefs.setDouble('robotWidth', value.toDouble());
+                        widget.prefs
+                            .setDouble(PrefsKeys.robotWidth, value.toDouble());
                         setState(() {
                           _width = value;
                         });
@@ -89,7 +96,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     label: 'Length (M)',
                     onSubmitted: (value) {
                       if (value != null) {
-                        widget.prefs.setDouble('robotLength', value.toDouble());
+                        widget.prefs
+                            .setDouble(PrefsKeys.robotLength, value.toDouble());
                         setState(() {
                           _length = value;
                         });
@@ -123,7 +131,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         context,
                         'Host',
                         (value) {
-                          widget.prefs.setString('pplibClientHost', value);
+                          widget.prefs
+                              .setString(PrefsKeys.pplibClientHost, value);
                           setState(() {
                             _pplibClientHost = value;
                           });
@@ -152,7 +161,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       label: const Text('Holonomic Mode'),
                       selected: _holonomicMode,
                       onSelected: (value) {
-                        widget.prefs.setBool('holonomicMode', value);
+                        widget.prefs.setBool(PrefsKeys.holonomicMode, value);
                         setState(() {
                           _holonomicMode = value;
                         });
@@ -374,7 +383,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           onPressed: () {
                             Navigator.of(context).pop();
                             setState(() {
-                              _teamColor = Colors.indigo;
+                              _teamColor = const Color(Defaults.teamColor);
                               widget.onTeamColorChanged(_teamColor);
                             });
                           },

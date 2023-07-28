@@ -18,184 +18,197 @@ class TelemetryPage extends StatefulWidget {
 }
 
 class _TelemetryPageState extends State<TelemetryPage> {
+  bool _connected = false;
+  final List<List<num>> _velData = [];
+  final List<num> _inaccuracyData = [];
+
+  @override
+  void initState() {
+    super.initState();
+
+    widget.telemetry.connectionStatusStream().listen((connected) {
+      setState(() {
+        _connected = connected;
+      });
+    });
+
+    widget.telemetry.velocitiesStream().listen((vels) {
+      setState(() {
+        _velData.add(vels);
+        if (_velData.length > 150) {
+          _velData.removeAt(0);
+        }
+      });
+    });
+
+    widget.telemetry.inaccuracyStream().listen((inaccuracy) {
+      setState(() {
+        _inaccuracyData.add(inaccuracy);
+        if (_inaccuracyData.length > 150) {
+          _inaccuracyData.removeAt(0);
+        }
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-        stream: widget.telemetry.connectionStatusStream(),
-        builder: (context, snapshot) {
-          ColorScheme colorScheme = Theme.of(context).colorScheme;
-          // bool connected = snapshot.data ?? false;
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-          // if (!connected) {
-          //   return const Center(
-          //     child: Column(
-          //       mainAxisAlignment: MainAxisAlignment.center,
-          //       children: [
-          //         CircularProgressIndicator(),
-          //         SizedBox(height: 16),
-          //         Text('Attempting to connect to robot...'),
-          //       ],
-          //     ),
-          //   );
-          // }
+    if (!_connected) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Attempting to connect to robot...'),
+          ],
+        ),
+      );
+    }
 
-          return Column(
+    return Column(
+      children: [
+        Expanded(
+          flex: 7,
+          child: Row(
             children: [
               Expanded(
-                flex: 7,
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Stack(
-                          children: [
-                            widget.fieldImage.getWidget(),
-                            const Positioned.fill(
-                              child: CustomPaint(
-                                painter: TelemetryPainter(),
-                              ),
-                            ),
-                          ],
+                flex: 3,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Stack(
+                    children: [
+                      widget.fieldImage.getWidget(),
+                      const Positioned.fill(
+                        child: CustomPaint(
+                          painter: TelemetryPainter(),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 2,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: colorScheme.primary,
+                        size: 76,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('No auto builder detected in robot code.'),
+                      const SizedBox(height: 16),
+                      const Text(
+                          'An auto builder is required to test path following'),
+                      const Text('commands from the GUI.'),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          flex: 4,
+          child: Row(
+            children: [
+              _buildGraph(
+                title: 'Robot Velocity',
+                legend: _buildLegend(Colors.green, Colors.deepPurple),
+                data: _buildData(
+                  maxY: 6.0,
+                  horizontalInterval: 1.5,
+                  spots: [
+                    [
+                      for (int i = 0; i < _velData.length; i++)
+                        FlSpot(i * 0.033, _velData[i][1].toDouble()),
+                    ],
+                    [
+                      for (int i = 0; i < _velData.length; i++)
+                        FlSpot(i * 0.033, _velData[i][0].toDouble()),
+                    ],
+                  ],
+                  lineGradients: const [
+                    LinearGradient(
+                      colors: [
+                        Colors.deepPurple,
+                        Colors.deepPurpleAccent,
+                      ],
                     ),
-                    Expanded(
-                      flex: 2,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: colorScheme.primary,
-                              size: 76,
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                                'No auto builder detected in robot code.'),
-                            const SizedBox(height: 16),
-                            const Text(
-                                'An auto builder is required to test path following'),
-                            const Text('commands from the GUI.'),
-                          ],
-                        ),
-                      ),
+                    LinearGradient(
+                      colors: [
+                        Colors.green,
+                        Colors.greenAccent,
+                      ],
                     ),
                   ],
                 ),
               ),
-              Expanded(
-                flex: 4,
-                child: Row(
-                  children: [
-                    _buildGraph(
-                      title: 'Robot Velocity',
-                      legend: _buildLegend(Colors.green, Colors.deepPurple),
-                      data: _buildData(
-                        maxY: 6.0,
-                        horizontalInterval: 1.5,
-                        spots: const [
-                          [
-                            FlSpot(0, 3),
-                            FlSpot(3, 2),
-                            FlSpot(7, 5),
-                            FlSpot(12, 3.5),
-                            FlSpot(15, 1),
-                          ],
-                          [
-                            FlSpot(0, 4),
-                            FlSpot(3, 3),
-                            FlSpot(7, 2.5),
-                            FlSpot(12, 4.5),
-                            FlSpot(15, 2),
-                          ],
-                        ],
-                        lineGradients: const [
-                          LinearGradient(
-                            colors: [
-                              Colors.deepPurple,
-                              Colors.deepPurpleAccent,
-                            ],
-                          ),
-                          LinearGradient(
-                            colors: [
-                              Colors.green,
-                              Colors.greenAccent,
-                            ],
-                          ),
-                        ],
-                      ),
+              _buildGraph(
+                title: 'Angular Velocity',
+                legend: _buildLegend(Colors.orange, Colors.blue),
+                data: _buildData(
+                  minY: -360,
+                  maxY: 360,
+                  horizontalInterval: 180,
+                  spots: [
+                    [
+                      for (int i = 0; i < _velData.length; i++)
+                        FlSpot(i * 0.033, _velData[i][3].toDouble()),
+                    ],
+                    [
+                      for (int i = 0; i < _velData.length; i++)
+                        FlSpot(i * 0.033, _velData[i][2].toDouble()),
+                    ],
+                  ],
+                  lineGradients: const [
+                    LinearGradient(
+                      colors: [
+                        Colors.blue,
+                        Colors.blueAccent,
+                      ],
                     ),
-                    _buildGraph(
-                      title: 'Angular Velocity',
-                      legend: _buildLegend(Colors.orange, Colors.blue),
-                      data: _buildData(
-                        maxY: 720,
-                        horizontalInterval: 180,
-                        spots: const [
-                          [
-                            FlSpot(0, 400),
-                            FlSpot(3, 300),
-                            FlSpot(7, 600),
-                            FlSpot(12, 450),
-                            FlSpot(15, 200),
-                          ],
-                          [
-                            FlSpot(0, 500),
-                            FlSpot(3, 400),
-                            FlSpot(7, 350),
-                            FlSpot(12, 550),
-                            FlSpot(15, 300),
-                          ],
-                        ],
-                        lineGradients: const [
-                          LinearGradient(
-                            colors: [
-                              Colors.blue,
-                              Colors.blueAccent,
-                            ],
-                          ),
-                          LinearGradient(
-                            colors: [
-                              Colors.orange,
-                              Colors.orangeAccent,
-                            ],
-                          ),
-                        ],
-                      ),
+                    LinearGradient(
+                      colors: [
+                        Colors.orange,
+                        Colors.orangeAccent,
+                      ],
                     ),
-                    _buildGraph(
-                      title: 'Path Innaccuracy',
-                      data: _buildData(
-                        maxY: 1.0,
-                        horizontalInterval: 0.25,
-                        spots: const [
-                          [
-                            FlSpot(0, 0.2),
-                            FlSpot(3, 0.3),
-                            FlSpot(7, 0.3),
-                            FlSpot(12, 0.45),
-                            FlSpot(15, 0.2),
-                          ],
-                        ],
-                        lineGradients: const [
-                          LinearGradient(
-                            colors: [
-                              Colors.red,
-                              Colors.redAccent,
-                            ],
-                          ),
-                        ],
-                      ),
+                  ],
+                ),
+              ),
+              _buildGraph(
+                title: 'Path Inaccuracy',
+                data: _buildData(
+                  maxY: 1.0,
+                  horizontalInterval: 0.25,
+                  spots: [
+                    [
+                      for (int i = 0; i < _inaccuracyData.length; i++)
+                        FlSpot(i * 0.033, _inaccuracyData[i].toDouble()),
+                    ],
+                  ],
+                  lineGradients: const [
+                    LinearGradient(
+                      colors: [
+                        Colors.red,
+                        Colors.redAccent,
+                      ],
                     ),
                   ],
                 ),
               ),
             ],
-          );
-        });
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildGraph({
@@ -210,7 +223,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
         child: Stack(
           children: [
             Center(
-              child: LineChart(data),
+              child: LineChart(
+                data,
+                duration: const Duration(milliseconds: 0),
+              ),
             ),
             Align(
               alignment: Alignment.topCenter,
@@ -240,6 +256,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     required List<List<FlSpot>> spots,
     required List<LinearGradient> lineGradients,
     required double maxY,
+    double minY = 0,
     double? horizontalInterval,
   }) {
     assert(spots.length == lineGradients.length);
@@ -249,7 +266,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
         show: true,
         drawVerticalLine: true,
         drawHorizontalLine: true,
-        verticalInterval: 3,
+        verticalInterval: 1,
         horizontalInterval: horizontalInterval,
       ),
       lineTouchData: const LineTouchData(enabled: false),
@@ -260,8 +277,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
         show: false,
       ),
       minX: 0,
-      maxX: 15,
-      minY: 0,
+      maxX: 5,
+      minY: minY,
       maxY: maxY,
       lineBarsData: [
         for (int i = 0; i < spots.length; i++)

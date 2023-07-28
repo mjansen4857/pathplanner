@@ -57,7 +57,13 @@ class PathPainter extends CustomPainter {
         _paintRadius(paths[i], canvas, scale);
       }
 
-      _paintPathPoints(paths[i], canvas, scale,
+      PathPainterUtil.paintPathPoints(
+          paths[i],
+          fieldImage,
+          selectedZone,
+          hoveredZone,
+          canvas,
+          scale,
           (hoveredPath == paths[i].name) ? Colors.orange : Colors.grey[300]!);
 
       _paintRotations(paths[i], canvas, scale);
@@ -74,8 +80,14 @@ class PathPainter extends CustomPainter {
       }
 
       if (startingPose != null) {
-        _paintRobotOutline(startingPose!.position, startingPose!.rotation,
-            canvas, Colors.green.withOpacity(0.5));
+        PathPainterUtil.paintRobotOutline(
+            startingPose!.position,
+            startingPose!.rotation,
+            fieldImage,
+            robotSize,
+            scale,
+            canvas,
+            Colors.green.withOpacity(0.5));
 
         var paint = Paint()
           ..style = PaintingStyle.fill
@@ -133,57 +145,24 @@ class PathPainter extends CustomPainter {
         rotationColor = Colors.deepPurpleAccent;
       }
 
-      _paintRobotOutline(path.pathPoints[pointIdx].position,
-          path.rotationTargets[i].rotationDegrees, canvas, rotationColor);
+      PathPainterUtil.paintRobotOutline(
+          path.pathPoints[pointIdx].position,
+          path.rotationTargets[i].rotationDegrees,
+          fieldImage,
+          robotSize,
+          scale,
+          canvas,
+          rotationColor);
     }
 
-    _paintRobotOutline(path.waypoints[path.waypoints.length - 1].anchor,
-        path.goalEndState.rotation, canvas, Colors.red.withOpacity(0.5));
-  }
-
-  void _paintRobotOutline(
-      Point position, num rotationDegrees, Canvas canvas, Color color) {
-    var paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = color
-      ..strokeWidth = 2;
-
-    Offset center =
-        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage);
-    num angle = -rotationDegrees / 180 * pi;
-    double halfWidth =
-        PathPainterUtil.metersToPixels(robotSize.width / 2, scale, fieldImage);
-    double halfLength =
-        PathPainterUtil.metersToPixels(robotSize.height / 2, scale, fieldImage);
-
-    Offset l = Offset(center.dx + (halfWidth * sin(angle)),
-        center.dy - (halfWidth * cos(angle)));
-    Offset r = Offset(center.dx - (halfWidth * sin(angle)),
-        center.dy + (halfWidth * cos(angle)));
-
-    Offset frontLeft = Offset(
-        l.dx + (halfLength * cos(angle)), l.dy + (halfLength * sin(angle)));
-    Offset backLeft = Offset(
-        l.dx - (halfLength * cos(angle)), l.dy - (halfLength * sin(angle)));
-    Offset frontRight = Offset(
-        r.dx + (halfLength * cos(angle)), r.dy + (halfLength * sin(angle)));
-    Offset backRight = Offset(
-        r.dx - (halfLength * cos(angle)), r.dy - (halfLength * sin(angle)));
-
-    canvas.drawLine(backLeft, frontLeft, paint);
-    canvas.drawLine(frontLeft, frontRight, paint);
-    canvas.drawLine(frontRight, backRight, paint);
-    canvas.drawLine(backRight, backLeft, paint);
-
-    Offset frontMiddle = frontLeft + ((frontRight - frontLeft) * 0.5);
-    paint.style = PaintingStyle.fill;
-    canvas.drawCircle(frontMiddle,
-        PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
-    paint.style = PaintingStyle.stroke;
-    paint.strokeWidth = 1;
-    paint.color = Colors.black;
-    canvas.drawCircle(frontMiddle,
-        PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
+    PathPainterUtil.paintRobotOutline(
+        path.waypoints[path.waypoints.length - 1].anchor,
+        path.goalEndState.rotation,
+        fieldImage,
+        robotSize,
+        scale,
+        canvas,
+        Colors.red.withOpacity(0.5));
   }
 
   void _paintRadius(PathPlannerPath path, Canvas canvas, double scale) {
@@ -199,80 +178,6 @@ class PathPainter extends CustomPainter {
           PathPainterUtil.metersToPixels(
               robotRadius.toDouble(), scale, fieldImage),
           paint);
-    }
-  }
-
-  void _paintPathPoints(
-      PathPlannerPath path, Canvas canvas, double scale, Color baseColor) {
-    var paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = baseColor
-      ..strokeWidth = 2;
-
-    Path p = Path();
-
-    Offset start = PathPainterUtil.pointToPixelOffset(
-        path.pathPoints[0].position, scale, fieldImage);
-    p.moveTo(start.dx, start.dy);
-
-    for (int i = 1; i < path.pathPoints.length; i++) {
-      Offset pos = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[i].position, scale, fieldImage);
-
-      p.lineTo(pos.dx, pos.dy);
-    }
-
-    canvas.drawPath(p, paint);
-
-    if (selectedZone != null) {
-      paint.color = Colors.orange;
-      paint.strokeWidth = 4;
-      p.reset();
-
-      int startIdx =
-          (path.constraintZones[selectedZone!].minWaypointRelativePos / 0.05)
-              .round();
-      int endIdx = min(
-          (path.constraintZones[selectedZone!].maxWaypointRelativePos / 0.05)
-              .round(),
-          path.pathPoints.length - 1);
-      Offset start = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[startIdx].position, scale, fieldImage);
-      p.moveTo(start.dx, start.dy);
-
-      for (int i = startIdx; i <= endIdx; i++) {
-        Offset pos = PathPainterUtil.pointToPixelOffset(
-            path.pathPoints[i].position, scale, fieldImage);
-
-        p.lineTo(pos.dx, pos.dy);
-      }
-
-      canvas.drawPath(p, paint);
-    }
-    if (hoveredZone != null && selectedZone != hoveredZone) {
-      paint.color = Colors.deepPurpleAccent;
-      paint.strokeWidth = 4;
-      p.reset();
-
-      int startIdx =
-          (path.constraintZones[hoveredZone!].minWaypointRelativePos / 0.05)
-              .round();
-      int endIdx = min(
-          (path.constraintZones[hoveredZone!].maxWaypointRelativePos / 0.05)
-              .round(),
-          path.pathPoints.length - 1);
-      Offset start = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[startIdx].position, scale, fieldImage);
-      p.moveTo(start.dx, start.dy);
-
-      for (int i = startIdx; i <= endIdx; i++) {
-        Offset pos = PathPainterUtil.pointToPixelOffset(
-            path.pathPoints[i].position, scale, fieldImage);
-
-        p.lineTo(pos.dx, pos.dy);
-      }
-
-      canvas.drawPath(p, paint);
     }
   }
 

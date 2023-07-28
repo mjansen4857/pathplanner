@@ -382,6 +382,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
                   telemetry: widget.telemetry,
+                  prefs: widget.prefs,
                 ),
                 NavGridPage(
                   deployDirectory: _deployDir,

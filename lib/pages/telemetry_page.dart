@@ -1,16 +1,23 @@
+import 'dart:math';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/util/path_painter_util.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TelemetryPage extends StatefulWidget {
   final FieldImage fieldImage;
   final PPLibTelemetry telemetry;
+  final SharedPreferences prefs;
 
   const TelemetryPage({
     super.key,
     required this.fieldImage,
     required this.telemetry,
+    required this.prefs,
   });
 
   @override
@@ -21,10 +28,21 @@ class _TelemetryPageState extends State<TelemetryPage> {
   bool _connected = false;
   final List<List<num>> _velData = [];
   final List<num> _inaccuracyData = [];
+  List<num>? _currentPath;
+  List<num>? _lookahead;
+  Point? _robotPos;
+  num? _robotRotation;
+  late final Size _robotSize;
 
   @override
   void initState() {
     super.initState();
+
+    var width =
+        widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
+    var length =
+        widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
+    _robotSize = Size(width, length);
 
     widget.telemetry.connectionStatusStream().listen((connected) {
       setState(() {
@@ -47,6 +65,30 @@ class _TelemetryPageState extends State<TelemetryPage> {
         if (_inaccuracyData.length > 150) {
           _inaccuracyData.removeAt(0);
         }
+      });
+    });
+
+    widget.telemetry.currentPoseStream().listen((pose) {
+      setState(() {
+        if (pose == null) {
+          _robotPos = null;
+          _robotRotation = null;
+        } else {
+          _robotPos = Point(pose[0], pose[1]);
+          _robotRotation = pose[2];
+        }
+      });
+    });
+
+    widget.telemetry.currentPathStream().listen((path) {
+      setState(() {
+        _currentPath = path;
+      });
+    });
+
+    widget.telemetry.lookaheadStream().listen((lookahead) {
+      setState(() {
+        _lookahead = lookahead;
       });
     });
   }
@@ -81,9 +123,16 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   child: Stack(
                     children: [
                       widget.fieldImage.getWidget(),
-                      const Positioned.fill(
+                      Positioned.fill(
                         child: CustomPaint(
-                          painter: TelemetryPainter(),
+                          painter: TelemetryPainter(
+                            fieldImage: widget.fieldImage,
+                            robotSize: _robotSize,
+                            robotPos: _robotPos,
+                            robotRotation: _robotRotation,
+                            currentPath: _currentPath,
+                            lookahead: _lookahead,
+                          ),
                         ),
                       ),
                     ],
@@ -100,6 +149,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
                         Icons.error_outline,
                         color: colorScheme.primary,
                         size: 76,
+                        shadows: const [
+                          Shadow(
+                            color: Colors.black,
+                            blurRadius: 10.0,
+                            offset: Offset(0, 5.0),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       const Text('No auto builder detected in robot code.'),
@@ -347,12 +403,72 @@ class _TelemetryPageState extends State<TelemetryPage> {
 }
 
 class TelemetryPainter extends CustomPainter {
+  final FieldImage fieldImage;
+  final Size robotSize;
+  final Point? robotPos;
+  final num? robotRotation;
+  final List<num>? currentPath;
+  final List<num>? lookahead;
+
   static double scale = 1;
 
-  const TelemetryPainter();
+  const TelemetryPainter({
+    required this.fieldImage,
+    required this.robotSize,
+    this.robotPos,
+    this.robotRotation,
+    this.currentPath,
+    this.lookahead,
+  });
 
   @override
-  void paint(Canvas canvas, Size size) {}
+  void paint(Canvas canvas, Size size) {
+    scale = size.width / fieldImage.defaultSize.width;
+
+    if (currentPath != null) {
+      Paint p = Paint()
+        ..color = Colors.grey[700]!
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2;
+
+      Path path = Path();
+      for (int i = 0; i < currentPath!.length; i += 2) {
+        Offset offset = PathPainterUtil.pointToPixelOffset(
+            Point(currentPath![i], currentPath![i + 1]), scale, fieldImage);
+        if (i == 0) {
+          path.moveTo(offset.dx, offset.dy);
+        } else {
+          path.lineTo(offset.dx, offset.dy);
+        }
+      }
+
+      canvas.drawPath(path, p);
+    }
+
+    if (robotPos != null && robotRotation != null) {
+      PathPainterUtil.paintRobotOutline(robotPos!, robotRotation!, fieldImage,
+          robotSize, scale, canvas, Colors.grey[400]!);
+    }
+
+    if (lookahead != null) {
+      Offset offset = PathPainterUtil.pointToPixelOffset(
+          Point(lookahead![0], lookahead![1]), scale, fieldImage);
+      double radius =
+          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage);
+
+      Paint p = Paint()
+        ..color = Colors.deepPurpleAccent
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(offset, radius, p);
+
+      p.color = Colors.black;
+      p.style = PaintingStyle.stroke;
+      p.strokeWidth = 1;
+
+      canvas.drawCircle(offset, radius, p);
+    }
+  }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {

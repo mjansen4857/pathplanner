@@ -4,7 +4,6 @@ import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
@@ -17,6 +16,7 @@ class EventMarkersTree extends StatefulWidget {
   final ValueChanged<int?>? onMarkerHovered;
   final ValueChanged<int?>? onMarkerSelected;
   final int? initiallySelectedMarker;
+  final ChangeStack undoStack;
 
   const EventMarkersTree({
     super.key,
@@ -25,6 +25,7 @@ class EventMarkersTree extends StatefulWidget {
     this.onMarkerHovered,
     this.onMarkerSelected,
     this.initiallySelectedMarker,
+    required this.undoStack,
   });
 
   @override
@@ -76,7 +77,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             icon: const Icon(Icons.add),
             label: const Text('Add New Marker'),
             onPressed: () {
-              UndoRedo.addChange(Change(
+              widget.undoStack.add(Change(
                 PathPlannerPath.cloneEventMarkers(markers),
                 () {
                   markers.add(EventMarker.defaultMarker());
@@ -124,7 +125,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
           RenamableTitle(
             title: markers[markerIdx].name,
             onRename: (value) {
-              UndoRedo.addChange(Change(
+              widget.undoStack.add(Change(
                 markers[markerIdx].name,
                 () {
                   markers[markerIdx].name = value;
@@ -142,7 +143,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             icon: const Icon(Icons.delete_forever),
             color: colorScheme.error,
             onPressed: () {
-              UndoRedo.addChange(Change(
+              widget.undoStack.add(Change(
                 PathPlannerPath.cloneEventMarkers(widget.path.eventMarkers),
                 () {
                   markers.removeAt(markerIdx);
@@ -175,17 +176,14 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             _sliderChangeStart = value;
           },
           onChangeEnd: (value) {
-            double startVal = _sliderChangeStart;
-            double endVal = value;
-
-            UndoRedo.addChange(CustomChange(
-              [startVal, endVal],
-              (vals) {
-                markers[markerIdx].waypointRelativePos = vals[1];
+            widget.undoStack.add(Change(
+              _sliderChangeStart,
+              () {
+                markers[markerIdx].waypointRelativePos = value;
                 widget.onPathChanged?.call();
               },
-              (vals) {
-                markers[markerIdx].waypointRelativePos = vals[0];
+              (oldValue) {
+                markers[markerIdx].waypointRelativePos = oldValue;
                 widget.onPathChanged?.call();
               },
             ));
@@ -211,9 +209,10 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
           child: CommandGroupWidget(
             command: command,
             removable: false,
+            undoStack: widget.undoStack,
             onUpdated: () => widget.onPathChanged?.call(),
             onGroupTypeChanged: (value) {
-              UndoRedo.addChange(Change(
+              widget.undoStack.add(Change(
                 command.type,
                 () {
                   List<Command> cmds = command.commands;

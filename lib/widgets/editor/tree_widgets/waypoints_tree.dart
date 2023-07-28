@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pathplanner/path/constraints_zone.dart';
+import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -14,6 +16,7 @@ class WaypointsTree extends StatefulWidget {
   final VoidCallback? onPathChanged;
   final WaypointsTreeController? controller;
   final int? initialSelectedWaypoint;
+  final ChangeStack undoStack;
 
   const WaypointsTree({
     super.key,
@@ -24,6 +27,7 @@ class WaypointsTree extends StatefulWidget {
     this.controller,
     this.initialSelectedWaypoint,
     this.onWaypointDeleted,
+    required this.undoStack,
   });
 
   @override
@@ -159,7 +163,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];
-                      UndoRedo.addChange(_waypointChange(
+                      widget.undoStack.add(_waypointChange(
                         wRef,
                         () => wRef.move(value, wRef.anchor.y),
                         (oldVal) => wRef.move(oldVal.anchor.x, oldVal.anchor.y),
@@ -176,7 +180,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];
-                      UndoRedo.addChange(_waypointChange(
+                      widget.undoStack.add(_waypointChange(
                         wRef,
                         () => wRef.move(wRef.anchor.x, value),
                         (oldVal) => wRef.move(oldVal.anchor.x, oldVal.anchor.y),
@@ -193,7 +197,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];
-                      UndoRedo.addChange(_waypointChange(
+                      widget.undoStack.add(_waypointChange(
                         wRef,
                         () => wRef.setHeading(value),
                         (oldVal) => wRef.setHeading(oldVal.getHeadingDegrees()),
@@ -220,7 +224,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
-                          UndoRedo.addChange(_waypointChange(
+                          widget.undoStack.add(_waypointChange(
                             wRef,
                             () => wRef.setNextControlLength(value),
                             (oldVal) => wRef.setNextControlLength(
@@ -249,7 +253,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
-                          UndoRedo.addChange(_waypointChange(
+                          widget.undoStack.add(_waypointChange(
                             wRef,
                             () => wRef.setPrevControlLength(value),
                             (oldVal) => wRef.setPrevControlLength(
@@ -278,7 +282,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
-                          UndoRedo.addChange(_waypointChange(
+                          widget.undoStack.add(_waypointChange(
                             wRef,
                             () => wRef.setPrevControlLength(value),
                             (oldVal) => wRef.setPrevControlLength(
@@ -297,7 +301,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       onSubmitted: (value) {
                         if (value != null) {
                           Waypoint wRef = waypoints[waypointIdx];
-                          UndoRedo.addChange(_waypointChange(
+                          widget.undoStack.add(_waypointChange(
                             wRef,
                             () => wRef.setNextControlLength(value),
                             (oldVal) => wRef.setNextControlLength(
@@ -318,7 +322,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               padding: const EdgeInsets.only(top: 8.0),
               child: ElevatedButton.icon(
                 onPressed: () {
-                  UndoRedo.addChange(Change(
+                  widget.undoStack.add(Change(
                     [
                       PathPlannerPath.cloneWaypoints(widget.path.waypoints),
                       PathPlannerPath.cloneConstraintZones(
@@ -337,14 +341,17 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       widget.onWaypointHovered?.call(null);
                       widget.onWaypointSelected?.call(null);
 
-                      widget.path.waypoints =
-                          PathPlannerPath.cloneWaypoints(oldValue[0]);
+                      widget.path.waypoints = PathPlannerPath.cloneWaypoints(
+                          oldValue[0] as List<Waypoint>);
                       widget.path.constraintZones =
-                          PathPlannerPath.cloneConstraintZones(oldValue[1]);
+                          PathPlannerPath.cloneConstraintZones(
+                              oldValue[1] as List<ConstraintsZone>);
                       widget.path.eventMarkers =
-                          PathPlannerPath.cloneEventMarkers(oldValue[2]);
+                          PathPlannerPath.cloneEventMarkers(
+                              oldValue[2] as List<EventMarker>);
                       widget.path.rotationTargets =
-                          PathPlannerPath.cloneRotationTargets(oldValue[3]);
+                          PathPlannerPath.cloneRotationTargets(
+                              oldValue[3] as List<RotationTarget>);
 
                       widget.onPathChanged?.call();
                     },

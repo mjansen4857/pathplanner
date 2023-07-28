@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/starting_pose_tree.dart';
+import 'package:undo/undo.dart';
 
 class AutoTree extends StatefulWidget {
   final PathPlannerAuto auto;
@@ -9,6 +10,7 @@ class AutoTree extends StatefulWidget {
   final ValueChanged<String?>? onPathHovered;
   final VoidCallback? onSideSwapped;
   final VoidCallback? onAutoChanged;
+  final ChangeStack undoStack;
 
   const AutoTree({
     super.key,
@@ -17,6 +19,7 @@ class AutoTree extends StatefulWidget {
     this.onPathHovered,
     this.onSideSwapped,
     this.onAutoChanged,
+    required this.undoStack,
   });
 
   @override
@@ -56,6 +59,7 @@ class _AutoTreeState extends State<AutoTree> {
                 StartingPoseTree(
                   auto: widget.auto,
                   onAutoChanged: widget.onAutoChanged,
+                  undoStack: widget.undoStack,
                 ),
                 Card(
                   elevation: 1.0,
@@ -69,6 +73,7 @@ class _AutoTreeState extends State<AutoTree> {
                       onUpdated: () {
                         widget.onAutoChanged?.call();
                       },
+                      undoStack: widget.undoStack,
                     ),
                   ),
                 ),

@@ -5,6 +5,7 @@ import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
+import 'package:undo/undo.dart';
 
 void main() {
   testWidgets('global constraints tree', (widgetTester) async {
@@ -26,6 +27,7 @@ void main() {
         body: GlobalConstraintsTree(
           path: path,
           onPathChanged: () => pathChanged = true,
+          undoStack: ChangeStack(),
         ),
       ),
     ));

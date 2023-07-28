@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/named_command.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:undo/undo.dart';
 
 class NamedCommandWidget extends StatefulWidget {
   final NamedCommand command;
   final VoidCallback onUpdated;
   final VoidCallback onRemoved;
+  final ChangeStack undoStack;
 
   const NamedCommandWidget({
     super.key,
     required this.command,
     required this.onUpdated,
     required this.onRemoved,
+    required this.undoStack,
   });
 
   @override
@@ -66,7 +67,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                     }
 
                     String text = _controller.text;
-                    UndoRedo.addChange(Change(
+                    widget.undoStack.add(Change(
                       widget.command.name,
                       () {
                         if (value != null) {

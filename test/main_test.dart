@@ -2,6 +2,7 @@ import 'package:file/memory.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:undo/undo.dart';
 
 void main() {
   // Basic full-app integration test for not
@@ -17,6 +18,7 @@ void main() {
       appVersion: '2077.1.0',
       fs: fs,
       prefs: prefs,
+      undoStack: ChangeStack(),
     ));
   });
 }

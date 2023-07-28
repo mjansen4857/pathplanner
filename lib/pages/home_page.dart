@@ -21,6 +21,7 @@ import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
 import 'package:pathplanner/widgets/pplib_update_card.dart';
 import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:undo/undo.dart';
 
 class HomePage extends StatefulWidget {
   final String appVersion;
@@ -28,6 +29,7 @@ class HomePage extends StatefulWidget {
   final SharedPreferences prefs;
   final ValueChanged<Color> onTeamColorChanged;
   final FileSystem fs;
+  final ChangeStack undoStack;
 
   const HomePage({
     required this.appVersion,
@@ -35,6 +37,7 @@ class HomePage extends StatefulWidget {
     required this.prefs,
     required this.onTeamColorChanged,
     required this.fs,
+    required this.undoStack,
     super.key,
   });
 
@@ -372,6 +375,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
                   deployDirectory: _deployDir,
                   fs: fs,
+                  undoStack: widget.undoStack,
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,

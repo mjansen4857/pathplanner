@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -14,6 +13,7 @@ class ConstraintZonesTree extends StatefulWidget {
   final ValueChanged<int?>? onZoneHovered;
   final ValueChanged<int?>? onZoneSelected;
   final int? initiallySelectedZone;
+  final ChangeStack undoStack;
 
   const ConstraintZonesTree({
     super.key,
@@ -22,6 +22,7 @@ class ConstraintZonesTree extends StatefulWidget {
     this.onZoneHovered,
     this.onZoneSelected,
     this.initiallySelectedZone,
+    required this.undoStack,
   });
 
   @override
@@ -77,7 +78,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             ),
             label: const Text('Add New Zone'),
             onPressed: () {
-              UndoRedo.addChange(Change(
+              widget.undoStack.add(Change(
                 PathPlannerPath.cloneConstraintZones(constraintZones),
                 () {
                   constraintZones.add(ConstraintsZone.defaultZone());
@@ -125,7 +126,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
           RenamableTitle(
             title: constraintZones[zoneIdx].name,
             onRename: (value) {
-              UndoRedo.addChange(Change(
+              widget.undoStack.add(Change(
                 constraintZones[zoneIdx].name,
                 () {
                   constraintZones[zoneIdx].name = value;
@@ -199,7 +200,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             icon: const Icon(Icons.delete_forever),
             color: colorScheme.error,
             onPressed: () {
-              UndoRedo.addChange(Change(
+              widget.undoStack.add(Change(
                 PathPlannerPath.cloneConstraintZones(
                     widget.path.constraintZones),
                 () {
@@ -327,17 +328,14 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             _sliderChangeStart = value;
           },
           onChangeEnd: (value) {
-            double startVal = _sliderChangeStart;
-            double endVal = value;
-
-            UndoRedo.addChange(CustomChange(
-              [startVal, endVal],
-              (vals) {
-                constraintZones[zoneIdx].minWaypointRelativePos = vals[1];
+            widget.undoStack.add(Change(
+              _sliderChangeStart,
+              () {
+                constraintZones[zoneIdx].minWaypointRelativePos = value;
                 widget.onPathChanged?.call();
               },
-              (vals) {
-                constraintZones[zoneIdx].minWaypointRelativePos = vals[0];
+              (oldValue) {
+                constraintZones[zoneIdx].minWaypointRelativePos = oldValue;
                 widget.onPathChanged?.call();
               },
             ));
@@ -361,17 +359,14 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             _sliderChangeStart = value;
           },
           onChangeEnd: (value) {
-            double startVal = _sliderChangeStart;
-            double endVal = value;
-
-            UndoRedo.addChange(CustomChange(
-              [startVal, endVal],
-              (vals) {
-                constraintZones[zoneIdx].maxWaypointRelativePos = vals[1];
+            widget.undoStack.add(Change(
+              _sliderChangeStart,
+              () {
+                constraintZones[zoneIdx].maxWaypointRelativePos = value;
                 widget.onPathChanged?.call();
               },
-              (vals) {
-                constraintZones[zoneIdx].maxWaypointRelativePos = vals[0];
+              (oldValue) {
+                constraintZones[zoneIdx].maxWaypointRelativePos = oldValue;
                 widget.onPathChanged?.call();
               },
             ));
@@ -388,7 +383,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
   }
 
   void _addConstraintsChange(int zoneIdx, VoidCallback execute) {
-    UndoRedo.addChange(Change(
+    widget.undoStack.add(Change(
       constraintZones[zoneIdx].constraints.clone(),
       () {
         execute.call();

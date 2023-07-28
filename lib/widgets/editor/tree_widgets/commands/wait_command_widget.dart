@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/wait_command.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
@@ -8,12 +7,14 @@ class WaitCommandWidget extends StatelessWidget {
   final WaitCommand command;
   final VoidCallback onUpdated;
   final VoidCallback onRemoved;
+  final ChangeStack undoStack;
 
   const WaitCommandWidget({
     super.key,
     required this.command,
     required this.onUpdated,
     required this.onRemoved,
+    required this.undoStack,
   });
 
   @override
@@ -28,7 +29,7 @@ class WaitCommandWidget extends StatelessWidget {
             label: 'Wait Time (S)',
             onSubmitted: (value) {
               if (value != null && value >= 0) {
-                UndoRedo.addChange(Change(
+                undoStack.add(Change(
                   command.waitTime,
                   () {
                     command.waitTime = value;

@@ -13,6 +13,7 @@ import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
+import 'package:undo/undo.dart';
 
 void main() {
   testWidgets('test path tree', (widgetTester) async {
@@ -100,6 +101,7 @@ void main() {
       home: Scaffold(
         body: PathTree(
           path: path,
+          undoStack: ChangeStack(),
         ),
       ),
     ));

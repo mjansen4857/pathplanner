@@ -10,12 +10,14 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:undo/undo.dart';
 
 class ProjectPage extends StatefulWidget {
   final SharedPreferences prefs;
   final FieldImage fieldImage;
   final Directory deployDirectory;
   final FileSystem fs;
+  final ChangeStack undoStack;
 
   const ProjectPage({
     super.key,
@@ -23,6 +25,7 @@ class ProjectPage extends StatefulWidget {
     required this.fieldImage,
     required this.deployDirectory,
     required this.fs,
+    required this.undoStack,
   });
 
   @override
@@ -218,6 +221,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                 prefs: widget.prefs,
                                 path: _paths[i],
                                 fieldImage: widget.fieldImage,
+                                undoStack: widget.undoStack,
                                 onRenamed: (value) {
                                   _renamePath(i, value, context);
                                 },
@@ -368,6 +372,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                 prefs: widget.prefs,
                                 auto: _autos[i],
                                 allPaths: _paths,
+                                undoStack: widget.undoStack,
                                 allPathNames:
                                     _paths.map((e) => e.name).toList(),
                                 fieldImage: widget.fieldImage,

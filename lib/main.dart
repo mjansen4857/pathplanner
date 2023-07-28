@@ -9,6 +9,7 @@ import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:undo/undo.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'pages/home_page.dart';
@@ -46,6 +47,7 @@ void main() async {
       runApp(PathPlanner(
         appVersion: packageInfo.version,
         prefs: prefs,
+        undoStack: ChangeStack(),
       ));
     },
     (Object error, StackTrace stack) {
@@ -59,10 +61,12 @@ class PathPlanner extends StatefulWidget {
   final String appVersion;
   final FileSystem fs;
   final SharedPreferences prefs;
+  final ChangeStack undoStack;
 
   const PathPlanner({
     required this.appVersion,
     required this.prefs,
+    required this.undoStack,
     this.fs = const LocalFileSystem(),
     super.key,
   });
@@ -90,6 +94,7 @@ class _PathPlannerState extends State<PathPlanner> {
         appStoreBuild: _sandboxed,
         prefs: widget.prefs,
         fs: widget.fs,
+        undoStack: widget.undoStack,
         onTeamColorChanged: (Color color) {
           setState(() {
             _teamColor = color;

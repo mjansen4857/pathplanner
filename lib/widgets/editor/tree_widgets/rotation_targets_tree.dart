@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -13,6 +12,7 @@ class RotationTargetsTree extends StatefulWidget {
   final ValueChanged<int?>? onTargetHovered;
   final ValueChanged<int?>? onTargetSelected;
   final int? initiallySelectedTarget;
+  final ChangeStack undoStack;
 
   const RotationTargetsTree({
     super.key,
@@ -21,6 +21,7 @@ class RotationTargetsTree extends StatefulWidget {
     this.onTargetHovered,
     this.onTargetSelected,
     this.initiallySelectedTarget,
+    required this.undoStack,
   });
 
   @override
@@ -72,7 +73,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             ),
             label: const Text('Add New Rotation Target'),
             onPressed: () {
-              UndoRedo.addChange(Change(
+              widget.undoStack.add(Change(
                 PathPlannerPath.cloneRotationTargets(rotations),
                 () {
                   rotations.add(RotationTarget());
@@ -124,7 +125,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             icon: const Icon(Icons.delete_forever),
             color: colorScheme.error,
             onPressed: () {
-              UndoRedo.addChange(Change(
+              widget.undoStack.add(Change(
                 PathPlannerPath.cloneRotationTargets(
                     widget.path.rotationTargets),
                 () {
@@ -159,7 +160,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                   label: 'Rotation (Deg)',
                   onSubmitted: (value) {
                     if (value != null) {
-                      UndoRedo.addChange(Change(
+                      widget.undoStack.add(Change(
                         rotations[targetIdx].clone(),
                         () {
                           rotations[targetIdx].rotationDegrees = value;
@@ -189,17 +190,14 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             _sliderChangeStart = value;
           },
           onChangeEnd: (value) {
-            double startVal = _sliderChangeStart;
-            double endVal = value;
-
-            UndoRedo.addChange(CustomChange(
-              [startVal, endVal],
-              (vals) {
-                rotations[targetIdx].waypointRelativePos = vals[1];
+            widget.undoStack.add(Change(
+              _sliderChangeStart,
+              () {
+                rotations[targetIdx].waypointRelativePos = value;
                 widget.onPathChanged?.call();
               },
-              (vals) {
-                rotations[targetIdx].waypointRelativePos = vals[0];
+              (oldValue) {
+                rotations[targetIdx].waypointRelativePos = oldValue;
                 widget.onPathChanged?.call();
               },
             ));

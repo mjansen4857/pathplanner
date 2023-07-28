@@ -6,6 +6,7 @@ import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
+import 'package:undo/undo.dart';
 
 class PathTree extends StatefulWidget {
   final PathPlannerPath path;
@@ -25,6 +26,7 @@ class PathTree extends StatefulWidget {
   final int? initiallySelectedZone;
   final int? initiallySelectedRotTarget;
   final int? initiallySelectedMarker;
+  final ChangeStack undoStack;
 
   const PathTree({
     super.key,
@@ -45,6 +47,7 @@ class PathTree extends StatefulWidget {
     this.onMarkerHovered,
     this.onMarkerSelected,
     this.initiallySelectedMarker,
+    required this.undoStack,
   });
 
   @override
@@ -90,14 +93,17 @@ class _PathTreeState extends State<PathTree> {
                   onWaypointHovered: widget.onWaypointHovered,
                   onWaypointSelected: widget.onWaypointSelected,
                   onPathChanged: widget.onPathChanged,
+                  undoStack: widget.undoStack,
                 ),
                 GlobalConstraintsTree(
                   path: widget.path,
                   onPathChanged: widget.onPathChanged,
+                  undoStack: widget.undoStack,
                 ),
                 GoalEndStateTree(
                   path: widget.path,
                   onPathChanged: widget.onPathChanged,
+                  undoStack: widget.undoStack,
                 ),
                 RotationTargetsTree(
                   key: ValueKey(
@@ -107,6 +113,7 @@ class _PathTreeState extends State<PathTree> {
                   onTargetHovered: widget.onRotTargetHovered,
                   onTargetSelected: widget.onRotTargetSelected,
                   initiallySelectedTarget: widget.initiallySelectedRotTarget,
+                  undoStack: widget.undoStack,
                 ),
                 EventMarkersTree(
                   key: ValueKey('markers${widget.path.eventMarkers.length}'),
@@ -115,6 +122,7 @@ class _PathTreeState extends State<PathTree> {
                   onMarkerHovered: widget.onMarkerHovered,
                   onMarkerSelected: widget.onMarkerSelected,
                   initiallySelectedMarker: widget.initiallySelectedMarker,
+                  undoStack: widget.undoStack,
                 ),
                 ConstraintZonesTree(
                   key: ValueKey('zones${widget.path.constraintZones.length}'),
@@ -123,6 +131,7 @@ class _PathTreeState extends State<PathTree> {
                   onZoneHovered: widget.onZoneHovered,
                   onZoneSelected: widget.onZoneSelected,
                   initiallySelectedZone: widget.initiallySelectedZone,
+                  undoStack: widget.undoStack,
                 ),
               ],
             ),

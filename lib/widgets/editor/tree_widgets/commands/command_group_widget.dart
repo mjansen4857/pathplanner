@@ -4,7 +4,6 @@ import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
@@ -21,6 +20,7 @@ class CommandGroupWidget extends StatelessWidget {
   final bool removable;
   final List<String>? allPathNames;
   final ValueChanged<String?>? onPathCommandHovered;
+  final ChangeStack undoStack;
 
   const CommandGroupWidget({
     super.key,
@@ -32,6 +32,7 @@ class CommandGroupWidget extends StatelessWidget {
     this.removable = true,
     this.allPathNames,
     this.onPathCommandHovered,
+    required this.undoStack,
   });
 
   @override
@@ -98,7 +99,7 @@ class CommandGroupWidget extends StatelessWidget {
             AddCommandButton(
               allowPathCommand: allPathNames != null,
               onTypeChosen: (value) {
-                UndoRedo.addChange(Change(
+                undoStack.add(Change(
                   CommandGroup.cloneCommandsList(command.commands),
                   () {
                     command.commands.add(Command.fromType(value));
@@ -161,6 +162,7 @@ class CommandGroupWidget extends StatelessWidget {
                         allPathNames: allPathNames ?? [],
                         onUpdated: onUpdated,
                         onRemoved: () => _removeCommand(index),
+                        undoStack: undoStack,
                       ),
                     ),
                   ],
@@ -196,7 +198,7 @@ class CommandGroupWidget extends StatelessWidget {
           newIndex = command.commands.length - 1;
         }
 
-        UndoRedo.addChange(Change(
+        undoStack.add(Change(
           CommandGroup.cloneCommandsList(command.commands),
           () {
             List<Command> cmds = List.of(command.commands);
@@ -220,23 +222,26 @@ class CommandGroupWidget extends StatelessWidget {
         command: command.commands[cmdIndex] as NamedCommand,
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
+        undoStack: undoStack,
       );
     } else if (command.commands[cmdIndex] is WaitCommand) {
       return WaitCommandWidget(
         command: command.commands[cmdIndex] as WaitCommand,
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
+        undoStack: undoStack,
       );
     } else if (command.commands[cmdIndex] is CommandGroup) {
       return CommandGroupWidget(
         command: command.commands[cmdIndex] as CommandGroup,
+        undoStack: undoStack,
         subCommandElevation: (subCommandElevation == 1.0) ? 4.0 : 1.0,
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
         allPathNames: allPathNames,
         onPathCommandHovered: onPathCommandHovered,
         onGroupTypeChanged: (value) {
-          UndoRedo.addChange(Change(
+          undoStack.add(Change(
             command.commands[cmdIndex].type,
             () {
               List<Command> cmds =
@@ -261,7 +266,7 @@ class CommandGroupWidget extends StatelessWidget {
   }
 
   void _removeCommand(int idx) {
-    UndoRedo.addChange(Change(
+    undoStack.add(Change(
       CommandGroup.cloneCommandsList(command.commands),
       () {
         command.commands.removeAt(idx);

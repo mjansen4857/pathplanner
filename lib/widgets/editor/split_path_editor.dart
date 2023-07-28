@@ -8,7 +8,6 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/util/prefs.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
@@ -21,11 +20,13 @@ class SplitPathEditor extends StatefulWidget {
   final SharedPreferences prefs;
   final PathPlannerPath path;
   final FieldImage fieldImage;
+  final ChangeStack undoStack;
 
   const SplitPathEditor({
     required this.prefs,
     required this.path,
     required this.fieldImage,
+    required this.undoStack,
     super.key,
   });
 
@@ -121,7 +122,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                 _setSelectedWaypoint(null);
               },
               onDoubleTapDown: (details) {
-                UndoRedo.addChange(Change(
+                widget.undoStack.add(Change(
                   PathPlannerPath.cloneWaypoints(waypoints),
                   () {
                     setState(() {
@@ -242,7 +243,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                   _draggedPoint!.stopDragging();
                   int index = waypoints.indexOf(_draggedPoint!);
                   Waypoint dragEnd = _draggedPoint!.clone();
-                  UndoRedo.addChange(Change(
+                  widget.undoStack.add(Change(
                     _dragOldValue,
                     () {
                       setState(() {
@@ -254,7 +255,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                     },
                     (oldValue) {
                       setState(() {
-                        waypoints[index] = oldValue.clone();
+                        waypoints[index] = oldValue!.clone();
                         widget.path.generateAndSavePath();
                       });
                     },
@@ -263,7 +264,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                 } else if (_draggedRotationIdx != null) {
                   if (_draggedRotationIdx == -1) {
                     num endRotation = widget.path.goalEndState.rotation;
-                    UndoRedo.addChange(Change(
+                    widget.undoStack.add(Change(
                       _dragRotationOldValue,
                       () {
                         setState(() {
@@ -273,7 +274,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                       },
                       (oldValue) {
                         setState(() {
-                          widget.path.goalEndState.rotation = oldValue;
+                          widget.path.goalEndState.rotation = oldValue!;
                           widget.path.generateAndSavePath();
                         });
                       },
@@ -282,7 +283,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                     int rotationIdx = _draggedRotationIdx!;
                     num endRotation = widget
                         .path.rotationTargets[rotationIdx].rotationDegrees;
-                    UndoRedo.addChange(Change(
+                    widget.undoStack.add(Change(
                       _dragRotationOldValue,
                       () {
                         setState(() {
@@ -294,7 +295,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                       (oldValue) {
                         setState(() {
                           widget.path.rotationTargets[rotationIdx]
-                              .rotationDegrees = oldValue;
+                              .rotationDegrees = oldValue!;
                           widget.path.generateAndSavePath();
                         });
                       },
@@ -375,13 +376,14 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                     initiallySelectedRotTarget: _selectedRotTarget,
                     initiallySelectedMarker: _selectedMarker,
                     waypointsTreeController: _waypointsTreeController,
+                    undoStack: widget.undoStack,
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();
                       });
                     },
                     onWaypointDeleted: (waypointIdx) {
-                      UndoRedo.addChange(Change(
+                      widget.undoStack.add(Change(
                         [
                           PathPlannerPath.cloneWaypoints(widget.path.waypoints),
                           PathPlannerPath.cloneConstraintZones(
@@ -440,15 +442,17 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                             _waypointsTreeController.setSelectedWaypoint(null);
 
                             widget.path.waypoints =
-                                PathPlannerPath.cloneWaypoints(oldValue[0]);
+                                PathPlannerPath.cloneWaypoints(
+                                    oldValue[0] as List<Waypoint>);
                             widget.path.constraintZones =
                                 PathPlannerPath.cloneConstraintZones(
-                                    oldValue[1]);
+                                    oldValue[1] as List<ConstraintsZone>);
                             widget.path.eventMarkers =
-                                PathPlannerPath.cloneEventMarkers(oldValue[2]);
+                                PathPlannerPath.cloneEventMarkers(
+                                    oldValue[2] as List<EventMarker>);
                             widget.path.rotationTargets =
                                 PathPlannerPath.cloneRotationTargets(
-                                    oldValue[3]);
+                                    oldValue[3] as List<RotationTarget>);
                             widget.path.generateAndSavePath();
                           });
                         },

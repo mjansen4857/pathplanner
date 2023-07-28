@@ -5,6 +5,7 @@ import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
+import 'package:undo/undo.dart';
 
 void main() {
   testWidgets('goal end state tree', (widgetTester) async {
@@ -22,6 +23,7 @@ void main() {
         body: GoalEndStateTree(
           path: path,
           onPathChanged: () => pathChanged = true,
+          undoStack: ChangeStack(),
         ),
       ),
     ));

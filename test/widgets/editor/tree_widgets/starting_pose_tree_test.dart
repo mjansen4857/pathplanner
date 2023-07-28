@@ -7,6 +7,7 @@ import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/auto/starting_pose.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/starting_pose_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
+import 'package:undo/undo.dart';
 
 void main() {
   testWidgets('starting pose tree', (widgetTester) async {
@@ -20,6 +21,7 @@ void main() {
         body: StartingPoseTree(
           auto: auto,
           onAutoChanged: () => autoChanged = true,
+          undoStack: ChangeStack(),
         ),
       ),
     ));
@@ -48,6 +50,7 @@ void main() {
         body: StartingPoseTree(
           auto: auto,
           onAutoChanged: () => autoChanged = true,
+          undoStack: ChangeStack(),
         ),
       ),
     ));

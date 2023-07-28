@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/path_command.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:undo/undo.dart';
 
 class PathCommandWidget extends StatefulWidget {
@@ -8,6 +7,7 @@ class PathCommandWidget extends StatefulWidget {
   final List<String> allPathNames;
   final VoidCallback onUpdated;
   final VoidCallback onRemoved;
+  final ChangeStack undoStack;
 
   const PathCommandWidget({
     super.key,
@@ -15,6 +15,7 @@ class PathCommandWidget extends StatefulWidget {
     required this.allPathNames,
     required this.onUpdated,
     required this.onRemoved,
+    required this.undoStack,
   });
 
   @override
@@ -64,7 +65,7 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
                 }
 
                 if (value != null) {
-                  UndoRedo.addChange(Change(
+                  widget.undoStack.add(Change(
                     widget.command.pathName,
                     () {
                       widget.command.pathName = value;

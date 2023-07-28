@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/auto/starting_pose.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -11,11 +10,13 @@ import 'package:undo/undo.dart';
 class StartingPoseTree extends StatelessWidget {
   final PathPlannerAuto auto;
   final VoidCallback? onAutoChanged;
+  final ChangeStack undoStack;
 
   const StartingPoseTree({
     super.key,
     required this.auto,
     this.onAutoChanged,
+    required this.undoStack,
   });
 
   @override
@@ -109,7 +110,7 @@ class StartingPoseTree extends StatelessWidget {
   }
 
   void _addChange(VoidCallback execute) {
-    UndoRedo.addChange(Change(
+    undoStack.add(Change(
       auto.startingPose?.clone(),
       () {
         execute.call();

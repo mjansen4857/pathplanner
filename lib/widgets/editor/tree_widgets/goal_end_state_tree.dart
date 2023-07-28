@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -8,11 +7,13 @@ import 'package:undo/undo.dart';
 class GoalEndStateTree extends StatelessWidget {
   final PathPlannerPath path;
   final VoidCallback? onPathChanged;
+  final ChangeStack undoStack;
 
   const GoalEndStateTree({
     super.key,
     required this.path,
     this.onPathChanged,
+    required this.undoStack,
   });
 
   @override
@@ -62,7 +63,7 @@ class GoalEndStateTree extends StatelessWidget {
   }
 
   void _addChange(VoidCallback execute) {
-    UndoRedo.addChange(Change(
+    undoStack.add(Change(
       path.goalEndState.clone(),
       () {
         execute.call();

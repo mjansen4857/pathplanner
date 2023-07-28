@@ -5,7 +5,6 @@ import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/auto/starting_pose.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/services/undo_redo.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
@@ -21,6 +20,7 @@ class SplitAutoEditor extends StatefulWidget {
   final List<String> allPathNames;
   final VoidCallback? onAutoChanged;
   final FieldImage fieldImage;
+  final ChangeStack undoStack;
 
   const SplitAutoEditor({
     required this.prefs,
@@ -28,6 +28,7 @@ class SplitAutoEditor extends StatefulWidget {
     required this.autoPaths,
     required this.allPathNames,
     required this.fieldImage,
+    required this.undoStack,
     this.onAutoChanged,
     super.key,
   });
@@ -146,14 +147,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
                 if (widget.auto.startingPose != null &&
                     (_draggingStartPos || _draggingStartRot)) {
                   StartingPose dragEnd = widget.auto.startingPose!.clone();
-                  UndoRedo.addChange(Change(
+                  widget.undoStack.add(Change(
                     _dragOldValue,
                     () {
                       widget.auto.startingPose = dragEnd.clone();
                       widget.onAutoChanged?.call();
                     },
                     (oldValue) {
-                      widget.auto.startingPose = oldValue.clone();
+                      widget.auto.startingPose = oldValue!.clone();
                       widget.onAutoChanged?.call();
                     },
                   ));
@@ -234,6 +235,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
                       widget.prefs.setBool(PrefsKeys.treeOnRight, _treeOnRight);
                       _controller.areas = _controller.areas.reversed.toList();
                     }),
+                    undoStack: widget.undoStack,
                   ),
                 ),
               ),

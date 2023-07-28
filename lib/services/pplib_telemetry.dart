@@ -1,20 +1,20 @@
 import 'package:nt4/nt4.dart';
 
 class PPLibTelemetry {
-  static late NT4Client _client;
-  static bool _isConnected = false;
+  late NT4Client _client;
+  bool _isConnected = false;
 
-  static void init() {
+  PPLibTelemetry({required String serverBaseAddress}) {
     _client = NT4Client(
-      serverBaseAddress: 'localhost',
+      serverBaseAddress: serverBaseAddress,
       onConnect: () => _isConnected = true,
       onDisconnect: () => _isConnected = false,
     );
   }
 
-  static Stream<bool> connectionStatusStream() {
+  Stream<bool> connectionStatusStream() {
     return _client.connectionStatusStream();
   }
 
-  static bool get isConnected => _isConnected;
+  bool get isConnected => _isConnected;
 }

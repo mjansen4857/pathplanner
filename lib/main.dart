@@ -18,7 +18,6 @@ void main() async {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
-      PPLibTelemetry.init();
       await Log.init();
       await windowManager.ensureInitialized();
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -44,10 +43,15 @@ void main() async {
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
+      PPLibTelemetry telemetry = PPLibTelemetry(
+          serverBaseAddress: prefs.getString(PrefsKeys.pplibClientHost) ??
+              Defaults.pplibClientHost);
+
       runApp(PathPlanner(
         appVersion: packageInfo.version,
         prefs: prefs,
         undoStack: ChangeStack(),
+        telemetry: telemetry,
       ));
     },
     (Object error, StackTrace stack) {
@@ -62,11 +66,13 @@ class PathPlanner extends StatefulWidget {
   final FileSystem fs;
   final SharedPreferences prefs;
   final ChangeStack undoStack;
+  final PPLibTelemetry telemetry;
 
   const PathPlanner({
     required this.appVersion,
     required this.prefs,
     required this.undoStack,
+    required this.telemetry,
     this.fs = const LocalFileSystem(),
     super.key,
   });
@@ -95,6 +101,7 @@ class _PathPlannerState extends State<PathPlanner> {
         prefs: widget.prefs,
         fs: widget.fs,
         undoStack: widget.undoStack,
+        telemetry: widget.telemetry,
         onTeamColorChanged: (Color color) {
           setState(() {
             _teamColor = color;

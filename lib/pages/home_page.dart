@@ -30,6 +30,7 @@ class HomePage extends StatefulWidget {
   final ValueChanged<Color> onTeamColorChanged;
   final FileSystem fs;
   final ChangeStack undoStack;
+  final PPLibTelemetry telemetry;
 
   const HomePage({
     required this.appVersion,
@@ -38,6 +39,7 @@ class HomePage extends StatefulWidget {
     required this.onTeamColorChanged,
     required this.fs,
     required this.undoStack,
+    required this.telemetry,
     super.key,
   });
 
@@ -245,7 +247,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   Align(
                     alignment: FractionalOffset.bottomRight,
                     child: ConditionalWidget(
-                      condition: PPLibTelemetry.isConnected,
+                      condition: widget.telemetry.isConnected,
                       trueChild: const Tooltip(
                         message: 'Connected to Robot',
                         child: Icon(
@@ -379,6 +381,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
+                  telemetry: widget.telemetry,
                 ),
                 NavGridPage(
                   deployDirectory: _deployDir,

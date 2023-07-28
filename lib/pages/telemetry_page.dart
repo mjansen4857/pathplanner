@@ -5,10 +5,12 @@ import 'package:pathplanner/widgets/field_image.dart';
 
 class TelemetryPage extends StatefulWidget {
   final FieldImage fieldImage;
+  final PPLibTelemetry telemetry;
 
   const TelemetryPage({
     super.key,
     required this.fieldImage,
+    required this.telemetry,
   });
 
   @override
@@ -19,7 +21,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-        stream: PPLibTelemetry.connectionStatusStream(),
+        stream: widget.telemetry.connectionStatusStream(),
         builder: (context, snapshot) {
           ColorScheme colorScheme = Theme.of(context).colorScheme;
           // bool connected = snapshot.data ?? false;

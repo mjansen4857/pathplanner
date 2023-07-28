@@ -30,6 +30,9 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
       
+      - name: Generate mocks
+        run: dart run build_runner build
+      
       - name: Analyze
         run: flutter analyze
       
@@ -56,6 +59,9 @@ jobs:
       
       - name: Generate full coverage test
         run: dart run full_coverage
+      
+      - name: Generate mocks
+        run: dart run build_runner build
 
       - name: Run tests
         run: flutter test --coverage

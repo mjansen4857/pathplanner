@@ -160,10 +160,15 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                   label: 'Rotation (Deg)',
                   onSubmitted: (value) {
                     if (value != null) {
+                      num rot = value % 360;
+                      if (rot > 180) {
+                        rot -= 360;
+                      }
+
                       widget.undoStack.add(Change(
                         rotations[targetIdx].clone(),
                         () {
-                          rotations[targetIdx].rotationDegrees = value;
+                          rotations[targetIdx].rotationDegrees = rot;
                           widget.onPathChanged?.call();
                         },
                         (oldValue) {

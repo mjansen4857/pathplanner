@@ -10,27 +10,30 @@ import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
 void main() {
-  testWidgets('constraint zones tree', (widgetTester) async {
-    PathPlannerPath path = PathPlannerPath.defaultPath(
+  late ChangeStack undoStack;
+  late PathPlannerPath path;
+  late bool pathChanged;
+  int? hoveredTarget;
+  int? selectedTarget;
+
+  setUp(() {
+    undoStack = ChangeStack();
+    path = PathPlannerPath.defaultPath(
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
     path.rotationTargets = [
-      RotationTarget(
-        waypointRelativePos: 0.2,
-        rotationDegrees: 0.0,
-      ),
-      RotationTarget(
-        waypointRelativePos: 1.2,
-        rotationDegrees: 90.0,
-      ),
+      RotationTarget(waypointRelativePos: 0.5, rotationDegrees: 0.0),
+      RotationTarget(waypointRelativePos: 1.5, rotationDegrees: 0.0),
     ];
-    var undoStack = ChangeStack();
+    path.rotationTargetsExpanded = true;
+    pathChanged = false;
+    hoveredTarget = null;
+    selectedTarget = null;
+  });
 
-    bool pathChanged = false;
-    int? hoveredTarget;
-    int? selectedTarget;
-
+  testWidgets('tapping expands/collapses tree', (widgetTester) async {
+    path.rotationTargetsExpanded = false;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: RotationTargetsTree(
@@ -44,26 +47,80 @@ void main() {
     ));
 
     // Tree initially collapsed, expect to find nothing
-    expect(find.textContaining('Rotation Target at'), findsNothing);
+    expect(
+        find.descendant(
+            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
+        findsNothing);
 
     await widgetTester.tap(find.byType(RotationTargetsTree));
     await widgetTester.pumpAndSettle();
 
     expect(path.rotationTargetsExpanded, true);
 
-    var targetTrees = find.ancestor(
-        of: find.textContaining('Rotation Target at'),
-        matching: find.descendant(
-            of: find.byType(TreeCardNode),
-            matching: find.byType(TreeCardNode)));
-    expect(targetTrees, findsNWidgets(2));
+    await widgetTester.tap(find.text(
+        'Rotation Targets')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.pumpAndSettle();
+    expect(path.rotationTargetsExpanded, false);
+  });
+
+  testWidgets('Target card for each zone', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    expect(
+        find.descendant(
+            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
+        findsNWidgets(2));
+  });
+
+  testWidgets('Target card titles', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    expect(find.text('Rotation Target at 0.50'), findsOneWidget);
+    expect(find.text('Rotation Target at 1.50'), findsOneWidget);
+  });
+
+  testWidgets('Target card hover', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
 
     final gesture =
         await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
-    await gesture.moveTo(widgetTester.getCenter(targetTrees.first));
+    var targetCards = find.descendant(
+        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+
+    await gesture.moveTo(widgetTester.getCenter(targetCards.at(0)));
     await widgetTester.pump();
 
     expect(hoveredTarget, 0);
@@ -72,23 +129,59 @@ void main() {
     await widgetTester.pump();
 
     expect(hoveredTarget, isNull);
+  });
 
-    await widgetTester.tap(targetTrees.first);
+  testWidgets('tapping expands/collapses zone cards', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    var targetCards = find.descendant(
+        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+
+    expect(find.byType(NumberTextField), findsNothing);
+
+    await widgetTester.tap(targetCards.at(0));
     await widgetTester.pumpAndSettle();
-
     expect(selectedTarget, 0);
+    expect(find.byType(NumberTextField), findsWidgets);
 
-    var rotationField = find.widgetWithText(NumberTextField, 'Rotation (Deg)');
-    var slider = find.byType(Slider);
-    var newTargetButton = find.text('Add New Rotation Target');
+    await widgetTester.tap(targetCards.at(1));
+    await widgetTester.pump();
+    expect(selectedTarget, 1);
 
-    expect(rotationField, findsOneWidget);
-    expect(slider, findsOneWidget);
-    expect(newTargetButton, findsOneWidget);
+    await widgetTester.tap(targetCards.at(1));
+    await widgetTester.pumpAndSettle();
+    expect(selectedTarget, isNull);
+  });
 
-    // Test rotation text field
-    pathChanged = false;
-    await widgetTester.enterText(rotationField, '200.0');
+  testWidgets('Rotation text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+          initiallySelectedTarget: 0,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'Rotation (Deg)');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '200.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
@@ -98,10 +191,27 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.rotationTargets[0].rotationDegrees, 0.0);
+  });
 
-    // test slider
-    pathChanged = false;
-    await widgetTester.tap(slider); // will tap the center
+  testWidgets('pos slider', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+          initiallySelectedTarget: 0,
+        ),
+      ),
+    ));
+
+    var slider = find.byType(Slider);
+
+    expect(slider, findsOneWidget);
+
+    await widgetTester.tap(slider.first); // will tap the center
     await widgetTester.pump();
 
     expect(pathChanged, true);
@@ -110,29 +220,57 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
 
-    expect(path.rotationTargets[0].waypointRelativePos, 0.2);
+    expect(path.rotationTargets[0].waypointRelativePos, 0.5);
+  });
 
-    // test delete button
-    pathChanged = false;
-    var deleteButton = find.descendant(
-        of: targetTrees.first, matching: find.byType(IconButton));
-    expect(deleteButton, findsOneWidget);
+  testWidgets('Delete target button', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+          initiallySelectedTarget: 0,
+        ),
+      ),
+    ));
 
-    await widgetTester.tap(deleteButton);
+    var deleteButtons = find.byTooltip('Delete Target');
+
+    expect(deleteButtons, findsNWidgets(2));
+
+    await widgetTester.tap(deleteButtons.at(1));
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(selectedTarget, isNull);
     expect(path.rotationTargets.length, 1);
 
     undoStack.undo();
-
     await widgetTester.pump();
     expect(path.rotationTargets.length, 2);
     expect(selectedTarget, isNull);
+  });
 
-    // test add new target button
-    pathChanged = false;
+  testWidgets('add new target', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+          initiallySelectedTarget: 0,
+        ),
+      ),
+    ));
+
+    var newTargetButton = find.text('Add New Rotation Target');
+
+    expect(newTargetButton, findsOneWidget);
+
     await widgetTester.tap(newTargetButton);
     await widgetTester.pump();
 
@@ -142,67 +280,5 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.rotationTargets.length, 2);
-  });
-
-  testWidgets('various expansion tests', (widgetTester) async {
-    PathPlannerPath path = PathPlannerPath.defaultPath(
-      pathDir: '/paths',
-      fs: MemoryFileSystem(),
-    );
-    path.rotationTargets = [
-      RotationTarget(
-        waypointRelativePos: 0.2,
-        rotationDegrees: 0.0,
-      ),
-      RotationTarget(
-        waypointRelativePos: 1.2,
-        rotationDegrees: 90.0,
-      ),
-    ];
-    var undoStack = ChangeStack();
-    int? selectedTarget;
-
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
-        ),
-      ),
-    ));
-
-    await widgetTester.tap(find.byType(RotationTargetsTree));
-    await widgetTester.pumpAndSettle();
-
-    expect(path.rotationTargetsExpanded, true);
-
-    await widgetTester.tap(find.text('Rotation Targets'));
-    await widgetTester.pumpAndSettle();
-    expect(path.rotationTargetsExpanded, false);
-
-    await widgetTester.tap(find.byType(RotationTargetsTree));
-    await widgetTester.pumpAndSettle();
-
-    var targetTrees = find.ancestor(
-        of: find.textContaining('Rotation Target at'),
-        matching: find.descendant(
-            of: find.byType(TreeCardNode),
-            matching: find.byType(TreeCardNode)));
-    expect(targetTrees, findsNWidgets(2));
-    expect(selectedTarget, isNull);
-    await widgetTester.tap(targetTrees.first);
-    await widgetTester.pumpAndSettle();
-    expect(selectedTarget, 0);
-
-    await widgetTester.tap(targetTrees.last);
-    // Don't settle here so that card doesn't fully expand, allowing
-    // us to easily tap it again to close it
-    await widgetTester.pump();
-    expect(selectedTarget, 1);
-
-    await widgetTester.tap(targetTrees.last);
-    await widgetTester.pumpAndSettle();
-    expect(selectedTarget, isNull);
   });
 }

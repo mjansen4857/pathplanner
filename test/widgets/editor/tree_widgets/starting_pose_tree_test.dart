@@ -10,13 +10,21 @@ import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
 void main() {
-  testWidgets('starting pose tree', (widgetTester) async {
-    PathPlannerAuto auto =
-        PathPlannerAuto.defaultAuto(autoDir: '/autos', fs: MemoryFileSystem());
+  late ChangeStack undoStack;
+  late PathPlannerAuto auto;
+  late bool autoChanged;
 
-    bool autoChanged = false;
-    var undoStack = ChangeStack();
+  setUp(() {
+    undoStack = ChangeStack();
+    auto = PathPlannerAuto.defaultAuto(
+      autoDir: '/paths',
+      fs: MemoryFileSystem(),
+    );
+    auto.startingPose = StartingPose(position: const Point(0, 0), rotation: 0);
+    autoChanged = false;
+  });
 
+  testWidgets('tapping expands/collapses tree', (widgetTester) async {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: StartingPoseTree(
@@ -33,96 +41,148 @@ void main() {
     await widgetTester.tap(find.byType(StartingPoseTree));
     await widgetTester.pumpAndSettle();
 
-    expect(find.byType(NumberTextField), findsNWidgets(3));
-    expect(find.byType(Checkbox), findsOneWidget);
-    expect(auto.startingPose, isNull);
+    expect(find.byType(NumberTextField), findsWidgets);
 
-    await widgetTester.tap(find.byType(Checkbox));
+    await widgetTester.tap(find.text(
+        'Starting Pose')); // Use text so it doesn't tap middle of expanded card
     await widgetTester.pumpAndSettle();
+    expect(find.byType(NumberTextField), findsNothing);
+  });
 
-    expect(autoChanged, true);
-    expect(auto.startingPose, isNotNull);
-    autoChanged = false;
-
-    auto.startingPose =
-        StartingPose(position: const Point(1.0, 2.0), rotation: 3.0);
+  testWidgets('x position text field', (widgetTester) async {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: StartingPoseTree(
           auto: auto,
           onAutoChanged: () => autoChanged = true,
           undoStack: undoStack,
+          initiallyExpanded: true,
         ),
       ),
     ));
 
-    // X text field
-    final xTextField = find.widgetWithText(NumberTextField, 'X Position (M)');
-    expect(xTextField, findsOneWidget);
-    expect(find.descendant(of: xTextField, matching: find.text('1.00')),
-        findsOneWidget);
-    await widgetTester.enterText(xTextField, '4.0');
+    final textField = find.widgetWithText(NumberTextField, 'X Position (M)');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
+
     expect(autoChanged, true);
-    expect(auto.startingPose!.position.x, 4.0);
-    undoStack.undo();
-    await widgetTester.pump();
     expect(auto.startingPose!.position.x, 1.0);
-    autoChanged = false;
 
-    // Y text field
-    final yTextField = find.widgetWithText(NumberTextField, 'Y Position (M)');
-    expect(yTextField, findsOneWidget);
-    expect(find.descendant(of: yTextField, matching: find.text('2.00')),
-        findsOneWidget);
-    await widgetTester.enterText(yTextField, '5.0');
-    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
-    await widgetTester.pump();
-    expect(autoChanged, true);
-    expect(auto.startingPose!.position.y, 5.0);
     undoStack.undo();
     await widgetTester.pump();
-    expect(auto.startingPose!.position.y, 2.0);
-    autoChanged = false;
+    expect(auto.startingPose!.position.x, 0.0);
+  });
 
-    // Rotation text field
-    final rotTextField = find.widgetWithText(NumberTextField, 'Rotation (Deg)');
-    expect(rotTextField, findsOneWidget);
-    expect(find.descendant(of: rotTextField, matching: find.text('3.00')),
-        findsOneWidget);
-    await widgetTester.enterText(rotTextField, '6.0');
+  testWidgets('y position text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: StartingPoseTree(
+          auto: auto,
+          onAutoChanged: () => autoChanged = true,
+          undoStack: undoStack,
+          initiallyExpanded: true,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Y Position (M)');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
+
     expect(autoChanged, true);
-    expect(auto.startingPose!.rotation, 6.0);
+    expect(auto.startingPose!.position.y, 1.0);
+
     undoStack.undo();
     await widgetTester.pump();
-    expect(auto.startingPose!.rotation, 3.0);
+    expect(auto.startingPose!.position.y, 0.0);
+  });
 
-    // Make sure rotation values wrap
-    await widgetTester.enterText(rotTextField, '200.0');
+  testWidgets('rotation text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: StartingPoseTree(
+          auto: auto,
+          onAutoChanged: () => autoChanged = true,
+          undoStack: undoStack,
+          initiallyExpanded: true,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Rotation (Deg)');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '200.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
+    expect(autoChanged, true);
     expect(auto.startingPose!.rotation, -160.0);
 
-    await widgetTester.enterText(rotTextField, '-200.0');
-    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    undoStack.undo();
     await widgetTester.pump();
+    expect(auto.startingPose!.rotation, 0.0);
+  });
 
-    expect(auto.startingPose!.rotation, 160.0);
+  testWidgets('checkbox adds pose', (widgetTester) async {
+    auto.startingPose = null;
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: StartingPoseTree(
+          auto: auto,
+          onAutoChanged: () => autoChanged = true,
+          undoStack: undoStack,
+          initiallyExpanded: true,
+        ),
+      ),
+    ));
 
-    // Tapping checkbox again removes starting pose
-    autoChanged = false;
-    await widgetTester.tap(find.byType(Checkbox));
+    final checkbox = find.byType(Checkbox);
+
+    expect(checkbox, findsOneWidget);
+
+    await widgetTester.tap(checkbox);
+    await widgetTester.pumpAndSettle();
+
+    expect(autoChanged, true);
+    expect(auto.startingPose, isNotNull);
+
+    undoStack.undo();
+    expect(auto.startingPose, isNull);
+  });
+
+  testWidgets('checkbox removes pose', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: StartingPoseTree(
+          auto: auto,
+          onAutoChanged: () => autoChanged = true,
+          undoStack: undoStack,
+          initiallyExpanded: true,
+        ),
+      ),
+    ));
+
+    final checkbox = find.byType(Checkbox);
+
+    expect(checkbox, findsOneWidget);
+
+    await widgetTester.tap(checkbox);
     await widgetTester.pumpAndSettle();
 
     expect(autoChanged, true);
     expect(auto.startingPose, isNull);
 
     undoStack.undo();
-    await widgetTester.pump();
     expect(auto.startingPose, isNotNull);
   });
 }

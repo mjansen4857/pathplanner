@@ -5,15 +5,15 @@ import 'package:undo/undo.dart';
 
 class WaitCommandWidget extends StatelessWidget {
   final WaitCommand command;
-  final VoidCallback onUpdated;
-  final VoidCallback onRemoved;
+  final VoidCallback? onUpdated;
+  final VoidCallback? onRemoved;
   final ChangeStack undoStack;
 
   const WaitCommandWidget({
     super.key,
     required this.command,
-    required this.onUpdated,
-    required this.onRemoved,
+    this.onUpdated,
+    this.onRemoved,
     required this.undoStack,
   });
 
@@ -33,11 +33,11 @@ class WaitCommandWidget extends StatelessWidget {
                   command.waitTime,
                   () {
                     command.waitTime = value;
-                    onUpdated.call();
+                    onUpdated?.call();
                   },
                   (oldValue) {
                     command.waitTime = oldValue;
-                    onUpdated.call();
+                    onUpdated?.call();
                   },
                 ));
               }

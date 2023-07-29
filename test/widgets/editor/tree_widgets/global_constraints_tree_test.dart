@@ -8,21 +8,28 @@ import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
 void main() {
-  testWidgets('global constraints tree', (widgetTester) async {
-    PathPlannerPath path = PathPlannerPath.defaultPath(
+  late ChangeStack undoStack;
+  late PathPlannerPath path;
+  late bool pathChanged;
+
+  setUp(() {
+    undoStack = ChangeStack();
+    path = PathPlannerPath.defaultPath(
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
+    path.globalConstraintsExpanded = true;
     path.globalConstraints = PathConstraints(
       maxVelocity: 1.0,
-      maxAcceleration: 2.0,
-      maxAngularVelocity: 3.0,
-      maxAngularAcceleration: 4.0,
+      maxAcceleration: 1.0,
+      maxAngularVelocity: 1.0,
+      maxAngularAcceleration: 1.0,
     );
+    pathChanged = false;
+  });
 
-    bool pathChanged = false;
-    var undoStack = ChangeStack();
-
+  testWidgets('tapping expands/collapses tree', (widgetTester) async {
+    path.globalConstraintsExpanded = false;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -40,70 +47,122 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(path.globalConstraintsExpanded, true);
-    expect(find.byType(NumberTextField), findsNWidgets(4));
 
-    // Max vel text field
-    final maxVelTextField =
+    await widgetTester.tap(find.text(
+        'Global Constraints')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.pumpAndSettle();
+    expect(path.globalConstraintsExpanded, false);
+  });
+
+  testWidgets('max vel text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GlobalConstraintsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    final textField =
         find.widgetWithText(NumberTextField, 'Max Velocity (M/S)');
-    expect(maxVelTextField, findsOneWidget);
-    expect(find.descendant(of: maxVelTextField, matching: find.text('1.00')),
-        findsOneWidget);
-    await widgetTester.enterText(maxVelTextField, '5.0');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '2.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
+
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxVelocity, 5.0);
+    expect(path.globalConstraints.maxVelocity, 2.0);
+
     undoStack.undo();
     await widgetTester.pump();
     expect(path.globalConstraints.maxVelocity, 1.0);
-    pathChanged = false;
+  });
 
-    // Max accel text field
-    final maxAccelTextField =
+  testWidgets('max accel text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GlobalConstraintsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    final textField =
         find.widgetWithText(NumberTextField, 'Max Acceleration (M/S²)');
-    expect(maxAccelTextField, findsOneWidget);
-    expect(find.descendant(of: maxAccelTextField, matching: find.text('2.00')),
-        findsOneWidget);
-    await widgetTester.enterText(maxAccelTextField, '6.0');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '2.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
+
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxAcceleration, 6.0);
-    undoStack.undo();
-    await widgetTester.pump();
     expect(path.globalConstraints.maxAcceleration, 2.0);
-    pathChanged = false;
 
-    // Max angular vel text field
-    final maxAngVelTextField =
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.maxAcceleration, 1.0);
+  });
+
+  testWidgets('max ang vel text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GlobalConstraintsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    final textField =
         find.widgetWithText(NumberTextField, 'Max Angular Velocity (Deg/S)');
-    expect(maxAngVelTextField, findsOneWidget);
-    expect(find.descendant(of: maxAngVelTextField, matching: find.text('3.00')),
-        findsOneWidget);
-    await widgetTester.enterText(maxAngVelTextField, '7.0');
-    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
-    await widgetTester.pump();
-    expect(pathChanged, true);
-    expect(path.globalConstraints.maxAngularVelocity, 7.0);
-    undoStack.undo();
-    await widgetTester.pump();
-    expect(path.globalConstraints.maxAngularVelocity, 3.0);
-    pathChanged = false;
 
-    // Max angular accel text field
-    final maxAngAccelTextField = find.widgetWithText(
-        NumberTextField, 'Max Angular Acceleration (Deg/S²)');
-    expect(maxAngAccelTextField, findsOneWidget);
-    expect(
-        find.descendant(of: maxAngAccelTextField, matching: find.text('4.00')),
-        findsOneWidget);
-    await widgetTester.enterText(maxAngAccelTextField, '8.0');
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '2.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
+
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxAngularAcceleration, 8.0);
+    expect(path.globalConstraints.maxAngularVelocity, 2.0);
+
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.globalConstraints.maxAngularAcceleration, 4.0);
+    expect(path.globalConstraints.maxAngularVelocity, 1.0);
+  });
+
+  testWidgets('max ang accel text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GlobalConstraintsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(
+        NumberTextField, 'Max Angular Acceleration (Deg/S²)');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '2.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(pathChanged, true);
+    expect(path.globalConstraints.maxAngularAcceleration, 2.0);
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.maxAngularAcceleration, 1.0);
   });
 }

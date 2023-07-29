@@ -11,19 +11,21 @@ class StartingPoseTree extends StatelessWidget {
   final PathPlannerAuto auto;
   final VoidCallback? onAutoChanged;
   final ChangeStack undoStack;
+  final bool initiallyExpanded;
 
   const StartingPoseTree({
     super.key,
     required this.auto,
     this.onAutoChanged,
     required this.undoStack,
+    this.initiallyExpanded = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Starting Pose'),
-      initiallyExpanded: false,
+      initiallyExpanded: initiallyExpanded,
       elevation: 1.0,
       children: [
         Padding(

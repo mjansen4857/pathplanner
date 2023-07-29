@@ -70,9 +70,7 @@ class _AutoTreeState extends State<AutoTree> {
                       allPathNames: widget.allPathNames,
                       onPathCommandHovered: widget.onPathHovered,
                       removable: false,
-                      onUpdated: () {
-                        widget.onAutoChanged?.call();
-                      },
+                      onUpdated: widget.onAutoChanged,
                       undoStack: widget.undoStack,
                     ),
                   ),

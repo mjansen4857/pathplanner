@@ -5,16 +5,16 @@ import 'package:undo/undo.dart';
 class PathCommandWidget extends StatefulWidget {
   final PathCommand command;
   final List<String> allPathNames;
-  final VoidCallback onUpdated;
-  final VoidCallback onRemoved;
+  final VoidCallback? onUpdated;
+  final VoidCallback? onRemoved;
   final ChangeStack undoStack;
 
   const PathCommandWidget({
     super.key,
     required this.command,
     required this.allPathNames,
-    required this.onUpdated,
-    required this.onRemoved,
+    this.onUpdated,
+    this.onRemoved,
     required this.undoStack,
   });
 
@@ -69,11 +69,11 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
                     widget.command.pathName,
                     () {
                       widget.command.pathName = value;
-                      widget.onUpdated.call();
+                      widget.onUpdated?.call();
                     },
                     (oldValue) {
                       widget.command.pathName = oldValue;
-                      widget.onUpdated.call();
+                      widget.onUpdated?.call();
                     },
                   ));
                 } else if (widget.command.pathName != null) {

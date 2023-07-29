@@ -142,66 +142,78 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
           Expanded(child: Container()),
           Visibility(
             visible: _selectedZone == null,
-            child: IconButton(
-              icon: const Icon(Icons.expand_less),
-              color: colorScheme.onSurface,
-              onPressed: zoneIdx == 0
-                  ? null
-                  : () {
-                      var temp = constraintZones[zoneIdx - 1];
-                      constraintZones[zoneIdx - 1] = constraintZones[zoneIdx];
-                      constraintZones[zoneIdx] = temp;
+            child: Tooltip(
+              message: 'Move Zone Up',
+              waitDuration: const Duration(seconds: 1),
+              child: IconButton(
+                icon: const Icon(Icons.expand_less),
+                color: colorScheme.onSurface,
+                onPressed: zoneIdx == 0
+                    ? null
+                    : () {
+                        var temp = constraintZones[zoneIdx - 1];
+                        constraintZones[zoneIdx - 1] = constraintZones[zoneIdx];
+                        constraintZones[zoneIdx] = temp;
 
-                      var tempController = _controllers[zoneIdx - 1];
-                      _controllers[zoneIdx - 1] = _controllers[zoneIdx];
-                      _controllers[zoneIdx] = tempController;
+                        var tempController = _controllers[zoneIdx - 1];
+                        _controllers[zoneIdx - 1] = _controllers[zoneIdx];
+                        _controllers[zoneIdx] = tempController;
 
-                      widget.onPathChanged?.call();
-                    },
+                        widget.onPathChanged?.call();
+                      },
+              ),
             ),
           ),
           Visibility(
             visible: _selectedZone == null,
-            child: IconButton(
-              icon: const Icon(Icons.expand_more),
-              color: colorScheme.onSurface,
-              onPressed: zoneIdx == constraintZones.length - 1
-                  ? null
-                  : () {
-                      var temp = constraintZones[zoneIdx + 1];
-                      constraintZones[zoneIdx + 1] = constraintZones[zoneIdx];
-                      constraintZones[zoneIdx] = temp;
+            child: Tooltip(
+              message: 'Move Zone Down',
+              waitDuration: const Duration(seconds: 1),
+              child: IconButton(
+                icon: const Icon(Icons.expand_more),
+                color: colorScheme.onSurface,
+                onPressed: zoneIdx == constraintZones.length - 1
+                    ? null
+                    : () {
+                        var temp = constraintZones[zoneIdx + 1];
+                        constraintZones[zoneIdx + 1] = constraintZones[zoneIdx];
+                        constraintZones[zoneIdx] = temp;
 
-                      var tempController = _controllers[zoneIdx + 1];
-                      _controllers[zoneIdx + 1] = _controllers[zoneIdx];
-                      _controllers[zoneIdx] = tempController;
+                        var tempController = _controllers[zoneIdx + 1];
+                        _controllers[zoneIdx + 1] = _controllers[zoneIdx];
+                        _controllers[zoneIdx] = tempController;
 
-                      widget.onPathChanged?.call();
-                    },
+                        widget.onPathChanged?.call();
+                      },
+              ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            color: colorScheme.error,
-            onPressed: () {
-              widget.undoStack.add(Change(
-                PathPlannerPath.cloneConstraintZones(
-                    widget.path.constraintZones),
-                () {
-                  constraintZones.removeAt(zoneIdx);
-                  widget.onZoneSelected?.call(null);
-                  widget.onZoneHovered?.call(null);
-                  widget.onPathChanged?.call();
-                },
-                (oldValue) {
-                  widget.path.constraintZones =
-                      PathPlannerPath.cloneConstraintZones(oldValue);
-                  widget.onZoneSelected?.call(null);
-                  widget.onZoneHovered?.call(null);
-                  widget.onPathChanged?.call();
-                },
-              ));
-            },
+          Tooltip(
+            message: 'Delete Zone',
+            waitDuration: const Duration(seconds: 1),
+            child: IconButton(
+              icon: const Icon(Icons.delete_forever),
+              color: colorScheme.error,
+              onPressed: () {
+                widget.undoStack.add(Change(
+                  PathPlannerPath.cloneConstraintZones(
+                      widget.path.constraintZones),
+                  () {
+                    constraintZones.removeAt(zoneIdx);
+                    widget.onZoneSelected?.call(null);
+                    widget.onZoneHovered?.call(null);
+                    widget.onPathChanged?.call();
+                  },
+                  (oldValue) {
+                    widget.path.constraintZones =
+                        PathPlannerPath.cloneConstraintZones(oldValue);
+                    widget.onZoneSelected?.call(null);
+                    widget.onZoneHovered?.call(null);
+                    widget.onPathChanged?.call();
+                  },
+                ));
+              },
+            ),
           ),
         ],
       ),

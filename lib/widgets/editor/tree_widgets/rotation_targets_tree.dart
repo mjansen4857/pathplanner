@@ -121,28 +121,32 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
           Text(
               'Rotation Target at ${rotations[targetIdx].waypointRelativePos.toStringAsFixed(2)}'),
           Expanded(child: Container()),
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            color: colorScheme.error,
-            onPressed: () {
-              widget.undoStack.add(Change(
-                PathPlannerPath.cloneRotationTargets(
-                    widget.path.rotationTargets),
-                () {
-                  rotations.removeAt(targetIdx);
-                  widget.onTargetSelected?.call(null);
-                  widget.onTargetHovered?.call(null);
-                  widget.onPathChanged?.call();
-                },
-                (oldValue) {
-                  widget.path.rotationTargets =
-                      PathPlannerPath.cloneRotationTargets(oldValue);
-                  widget.onTargetSelected?.call(null);
-                  widget.onTargetHovered?.call(null);
-                  widget.onPathChanged?.call();
-                },
-              ));
-            },
+          Tooltip(
+            message: 'Delete Target',
+            waitDuration: const Duration(seconds: 1),
+            child: IconButton(
+              icon: const Icon(Icons.delete_forever),
+              color: colorScheme.error,
+              onPressed: () {
+                widget.undoStack.add(Change(
+                  PathPlannerPath.cloneRotationTargets(
+                      widget.path.rotationTargets),
+                  () {
+                    rotations.removeAt(targetIdx);
+                    widget.onTargetSelected?.call(null);
+                    widget.onTargetHovered?.call(null);
+                    widget.onPathChanged?.call();
+                  },
+                  (oldValue) {
+                    widget.path.rotationTargets =
+                        PathPlannerPath.cloneRotationTargets(oldValue);
+                    widget.onTargetSelected?.call(null);
+                    widget.onTargetHovered?.call(null);
+                    widget.onPathChanged?.call();
+                  },
+                ));
+              },
+            ),
           ),
         ],
       ),

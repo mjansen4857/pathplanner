@@ -5,15 +5,15 @@ import 'package:undo/undo.dart';
 
 class NamedCommandWidget extends StatefulWidget {
   final NamedCommand command;
-  final VoidCallback onUpdated;
-  final VoidCallback onRemoved;
+  final VoidCallback? onUpdated;
+  final VoidCallback? onRemoved;
   final ChangeStack undoStack;
 
   const NamedCommandWidget({
     super.key,
     required this.command,
-    required this.onUpdated,
-    required this.onRemoved,
+    this.onUpdated,
+    this.onRemoved,
     required this.undoStack,
   });
 
@@ -76,12 +76,12 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                           widget.command.name = text;
                         }
                         _controller.text = text;
-                        widget.onUpdated.call();
+                        widget.onUpdated?.call();
                       },
                       (oldValue) {
                         widget.command.name = oldValue;
                         _controller.text = oldValue ?? '';
-                        widget.onUpdated.call();
+                        widget.onUpdated?.call();
                       },
                     ));
                   },

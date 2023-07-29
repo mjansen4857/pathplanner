@@ -13,7 +13,7 @@ import 'package:undo/undo.dart';
 
 class CommandGroupWidget extends StatelessWidget {
   final CommandGroup command;
-  final VoidCallback onUpdated;
+  final VoidCallback? onUpdated;
   final VoidCallback? onRemoved;
   final ValueChanged<String>? onGroupTypeChanged;
   final double subCommandElevation;
@@ -25,7 +25,7 @@ class CommandGroupWidget extends StatelessWidget {
   const CommandGroupWidget({
     super.key,
     required this.command,
-    required this.onUpdated,
+    this.onUpdated,
     this.onGroupTypeChanged,
     this.onRemoved,
     this.subCommandElevation = 4.0,
@@ -103,11 +103,11 @@ class CommandGroupWidget extends StatelessWidget {
                   CommandGroup.cloneCommandsList(command.commands),
                   () {
                     command.commands.add(Command.fromType(value));
-                    onUpdated.call();
+                    onUpdated?.call();
                   },
                   (oldValue) {
                     command.commands = CommandGroup.cloneCommandsList(oldValue);
-                    onUpdated.call();
+                    onUpdated?.call();
                   },
                 ));
               },
@@ -205,11 +205,11 @@ class CommandGroupWidget extends StatelessWidget {
             Command temp = cmds.removeAt(oldIndex);
             cmds.insert(newIndex, temp);
             command.commands = cmds;
-            onUpdated.call();
+            onUpdated?.call();
           },
           (oldValue) {
             command.commands = CommandGroup.cloneCommandsList(oldValue);
-            onUpdated.call();
+            onUpdated?.call();
           },
         ));
       },
@@ -248,14 +248,14 @@ class CommandGroupWidget extends StatelessWidget {
                   (command.commands[cmdIndex] as CommandGroup).commands;
               command.commands[cmdIndex] =
                   Command.fromType(value, commands: cmds);
-              onUpdated.call();
+              onUpdated?.call();
             },
             (oldValue) {
               List<Command> cmds =
                   (command.commands[cmdIndex] as CommandGroup).commands;
               command.commands[cmdIndex] =
                   Command.fromType(oldValue, commands: cmds);
-              onUpdated.call();
+              onUpdated?.call();
             },
           ));
         },
@@ -270,11 +270,11 @@ class CommandGroupWidget extends StatelessWidget {
       CommandGroup.cloneCommandsList(command.commands),
       () {
         command.commands.removeAt(idx);
-        onUpdated.call();
+        onUpdated?.call();
       },
       (oldValue) {
         command.commands = CommandGroup.cloneCommandsList(oldValue);
-        onUpdated.call();
+        onUpdated?.call();
       },
     ));
   }

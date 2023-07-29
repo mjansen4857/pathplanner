@@ -8,17 +8,23 @@ import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
 void main() {
-  testWidgets('goal end state tree', (widgetTester) async {
-    PathPlannerPath path =
-        PathPlannerPath.defaultPath(pathDir: '/paths', fs: MemoryFileSystem());
-    path.goalEndState = GoalEndState(
-      velocity: 1.0,
-      rotation: 2.0,
+  late ChangeStack undoStack;
+  late PathPlannerPath path;
+  late bool pathChanged;
+
+  setUp(() {
+    undoStack = ChangeStack();
+    path = PathPlannerPath.defaultPath(
+      pathDir: '/paths',
+      fs: MemoryFileSystem(),
     );
+    path.goalEndStateExpanded = true;
+    path.goalEndState = GoalEndState(velocity: 1.0, rotation: 1.0);
+    pathChanged = false;
+  });
 
-    bool pathChanged = false;
-    var undoStack = ChangeStack();
-
+  testWidgets('tapping expands/collapses tree', (widgetTester) async {
+    path.goalEndStateExpanded = false;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GoalEndStateTree(
@@ -36,35 +42,64 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(path.goalEndStateExpanded, true);
-    expect(find.byType(NumberTextField), findsNWidgets(2));
 
-    // Vel text field
-    final velTextField = find.widgetWithText(NumberTextField, 'Velocity (M/S)');
-    expect(velTextField, findsOneWidget);
-    expect(find.descendant(of: velTextField, matching: find.text('1.00')),
-        findsOneWidget);
-    await widgetTester.enterText(velTextField, '3.0');
+    await widgetTester.tap(find.text(
+        'Goal End State')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.pumpAndSettle();
+    expect(path.goalEndStateExpanded, false);
+  });
+
+  testWidgets('vel text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GoalEndStateTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Velocity (M/S)');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '2.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
+
     expect(pathChanged, true);
-    expect(path.goalEndState.velocity, 3.0);
+    expect(path.goalEndState.velocity, 2.0);
+
     undoStack.undo();
     await widgetTester.pump();
     expect(path.goalEndState.velocity, 1.0);
-    pathChanged = false;
+  });
 
-    // Rotation text field
-    final rotTextField = find.widgetWithText(NumberTextField, 'Rotation (Deg)');
-    expect(rotTextField, findsOneWidget);
-    expect(find.descendant(of: rotTextField, matching: find.text('2.00')),
-        findsOneWidget);
-    await widgetTester.enterText(rotTextField, '4.0');
+  testWidgets('rotation text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GoalEndStateTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Rotation (Deg)');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '200.0');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
+
     expect(pathChanged, true);
-    expect(path.goalEndState.rotation, 4.0);
+    expect(path.goalEndState.rotation, -160.0);
+
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.goalEndState.rotation, 2.0);
+    expect(path.goalEndState.rotation, 1.0);
   });
 }

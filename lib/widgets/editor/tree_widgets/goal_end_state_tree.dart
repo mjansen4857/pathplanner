@@ -50,7 +50,11 @@ class GoalEndStateTree extends StatelessWidget {
                   label: 'Rotation (Deg)',
                   onSubmitted: (value) {
                     if (value != null) {
-                      _addChange(() => path.goalEndState.rotation = value);
+                      num rot = value % 360;
+                      if (rot > 180) {
+                        rot -= 360;
+                      }
+                      _addChange(() => path.goalEndState.rotation = rot);
                     }
                   },
                 ),

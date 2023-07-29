@@ -156,14 +156,6 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                       _controllers[zoneIdx - 1] = _controllers[zoneIdx];
                       _controllers[zoneIdx] = tempController;
 
-                      if (_selectedZone == zoneIdx) {
-                        _selectedZone = zoneIdx - 1;
-                        widget.onZoneSelected?.call(_selectedZone);
-                      } else if (_selectedZone == zoneIdx - 1) {
-                        _selectedZone = zoneIdx;
-                        widget.onZoneSelected?.call(_selectedZone);
-                      }
-
                       widget.onPathChanged?.call();
                     },
             ),
@@ -183,14 +175,6 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                       var tempController = _controllers[zoneIdx + 1];
                       _controllers[zoneIdx + 1] = _controllers[zoneIdx];
                       _controllers[zoneIdx] = tempController;
-
-                      if (_selectedZone == zoneIdx) {
-                        _selectedZone = zoneIdx + 1;
-                        widget.onZoneSelected?.call(_selectedZone);
-                      } else if (_selectedZone == zoneIdx + 1) {
-                        _selectedZone = zoneIdx;
-                        widget.onZoneSelected?.call(_selectedZone);
-                      }
 
                       widget.onPathChanged?.call();
                     },

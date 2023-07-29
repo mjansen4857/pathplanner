@@ -45,12 +45,16 @@ class WaitCommandWidget extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        IconButton(
-          onPressed: onRemoved,
-          visualDensity: const VisualDensity(
-              horizontal: VisualDensity.minimumDensity,
-              vertical: VisualDensity.minimumDensity),
-          icon: Icon(Icons.close, color: colorScheme.error),
+        Tooltip(
+          message: 'Remove Command',
+          waitDuration: const Duration(seconds: 1),
+          child: IconButton(
+            onPressed: onRemoved,
+            visualDensity: const VisualDensity(
+                horizontal: VisualDensity.minimumDensity,
+                vertical: VisualDensity.minimumDensity),
+            icon: Icon(Icons.close, color: colorScheme.error),
+          ),
         ),
       ],
     );

@@ -227,7 +227,17 @@ void main() {
     expect(find.byType(NumberTextField), findsNothing);
     controller.setSelectedWaypoint(0);
     await widgetTester.pumpAndSettle();
-    expect(find.byType(NumberTextField), findsWidgets);
+    expect(find.widgetWithText(NumberTextField, 'Next Control Length (M)'),
+        findsOneWidget);
+    expect(find.widgetWithText(NumberTextField, 'Previous Control Length (M)'),
+        findsNothing);
+
+    controller.setSelectedWaypoint(2);
+    await widgetTester.pumpAndSettle();
+    expect(find.widgetWithText(NumberTextField, 'Previous Control Length (M)'),
+        findsOneWidget);
+    expect(find.widgetWithText(NumberTextField, 'Next Control Length (M)'),
+        findsNothing);
 
     var midPoint = find.text('Waypoint 1');
     await widgetTester.tap(midPoint);

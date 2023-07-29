@@ -21,13 +21,14 @@ void main() {
     );
 
     bool pathChanged = false;
+    var undoStack = ChangeStack();
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
           path: path,
           onPathChanged: () => pathChanged = true,
-          undoStack: ChangeStack(),
+          undoStack: undoStack,
         ),
       ),
     ));
@@ -52,6 +53,9 @@ void main() {
     await widgetTester.pump();
     expect(pathChanged, true);
     expect(path.globalConstraints.maxVelocity, 5.0);
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.maxVelocity, 1.0);
     pathChanged = false;
 
     // Max accel text field
@@ -65,6 +69,9 @@ void main() {
     await widgetTester.pump();
     expect(pathChanged, true);
     expect(path.globalConstraints.maxAcceleration, 6.0);
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.maxAcceleration, 2.0);
     pathChanged = false;
 
     // Max angular vel text field
@@ -78,6 +85,9 @@ void main() {
     await widgetTester.pump();
     expect(pathChanged, true);
     expect(path.globalConstraints.maxAngularVelocity, 7.0);
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.maxAngularVelocity, 3.0);
     pathChanged = false;
 
     // Max angular accel text field
@@ -92,5 +102,8 @@ void main() {
     await widgetTester.pump();
     expect(pathChanged, true);
     expect(path.globalConstraints.maxAngularAcceleration, 8.0);
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.maxAngularAcceleration, 4.0);
   });
 }

@@ -15,13 +15,14 @@ void main() {
         PathPlannerAuto.defaultAuto(autoDir: '/autos', fs: MemoryFileSystem());
 
     bool autoChanged = false;
+    var undoStack = ChangeStack();
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: StartingPoseTree(
           auto: auto,
           onAutoChanged: () => autoChanged = true,
-          undoStack: ChangeStack(),
+          undoStack: undoStack,
         ),
       ),
     ));
@@ -50,7 +51,7 @@ void main() {
         body: StartingPoseTree(
           auto: auto,
           onAutoChanged: () => autoChanged = true,
-          undoStack: ChangeStack(),
+          undoStack: undoStack,
         ),
       ),
     ));
@@ -65,6 +66,9 @@ void main() {
     await widgetTester.pump();
     expect(autoChanged, true);
     expect(auto.startingPose!.position.x, 4.0);
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(auto.startingPose!.position.x, 1.0);
     autoChanged = false;
 
     // Y text field
@@ -77,6 +81,9 @@ void main() {
     await widgetTester.pump();
     expect(autoChanged, true);
     expect(auto.startingPose!.position.y, 5.0);
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(auto.startingPose!.position.y, 2.0);
     autoChanged = false;
 
     // Rotation text field
@@ -89,6 +96,9 @@ void main() {
     await widgetTester.pump();
     expect(autoChanged, true);
     expect(auto.startingPose!.rotation, 6.0);
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(auto.startingPose!.rotation, 3.0);
 
     // Make sure rotation values wrap
     await widgetTester.enterText(rotTextField, '200.0');
@@ -110,5 +120,9 @@ void main() {
 
     expect(autoChanged, true);
     expect(auto.startingPose, isNull);
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(auto.startingPose, isNotNull);
   });
 }

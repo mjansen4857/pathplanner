@@ -17,13 +17,14 @@ void main() {
     );
 
     bool pathChanged = false;
+    var undoStack = ChangeStack();
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GoalEndStateTree(
           path: path,
           onPathChanged: () => pathChanged = true,
-          undoStack: ChangeStack(),
+          undoStack: undoStack,
         ),
       ),
     ));
@@ -47,6 +48,9 @@ void main() {
     await widgetTester.pump();
     expect(pathChanged, true);
     expect(path.goalEndState.velocity, 3.0);
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.goalEndState.velocity, 1.0);
     pathChanged = false;
 
     // Rotation text field
@@ -59,5 +63,8 @@ void main() {
     await widgetTester.pump();
     expect(pathChanged, true);
     expect(path.goalEndState.rotation, 4.0);
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.goalEndState.rotation, 2.0);
   });
 }

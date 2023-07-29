@@ -143,10 +143,14 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             ),
           ),
           if (waypoints.length > 2)
-            IconButton(
-              onPressed: () => widget.onWaypointDeleted?.call(waypointIdx),
-              icon: const Icon(Icons.delete_forever),
-              color: colorScheme.error,
+            Tooltip(
+              message: 'Delete Waypoint',
+              waitDuration: const Duration(seconds: 1),
+              child: IconButton(
+                onPressed: () => widget.onWaypointDeleted?.call(waypointIdx),
+                icon: const Icon(Icons.delete_forever),
+                color: colorScheme.error,
+              ),
             ),
         ],
       ),

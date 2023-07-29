@@ -3,32 +3,43 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
+const num epsilon = 0.001;
+
 void main() {
-  testWidgets('Waypoints tree', (widgetTester) async {
-    PathPlannerPath path = PathPlannerPath.defaultPath(
+  late ChangeStack undoStack;
+  late PathPlannerPath path;
+  late bool pathChanged;
+  int? deletedWaypoint;
+  int? hoveredWaypoint;
+  int? selectedWaypoint;
+
+  setUp(() {
+    undoStack = ChangeStack();
+    path = PathPlannerPath.defaultPath(
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
+    path.waypointsExpanded = true;
+    pathChanged = false;
+    deletedWaypoint = null;
+    hoveredWaypoint = null;
+    selectedWaypoint = null;
+  });
 
-    var undoStack = ChangeStack();
-
-    bool pathChanged = false;
-    int? waypointDeleted;
-    int? hoveredWaypoint;
-    int? selectedWaypoint;
-
+  testWidgets('tapping expands/collapses tree', (widgetTester) async {
+    path.waypointsExpanded = false;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: WaypointsTree(
           path: path,
           undoStack: undoStack,
           onPathChanged: () => pathChanged = true,
-          onWaypointDeleted: (value) => waypointDeleted = value,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
         ),
@@ -36,27 +47,83 @@ void main() {
     ));
 
     // Tree initially collapsed, expect to find nothing
-    expect(find.byType(NumberTextField), findsNothing);
+    expect(
+        find.descendant(
+            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
+        findsNothing);
 
     await widgetTester.tap(find.byType(WaypointsTree));
     await widgetTester.pumpAndSettle();
-
     expect(path.waypointsExpanded, true);
 
-    var startPoint = find.text('Start Point');
-    var midPoint = find.text('Waypoint 1');
-    var endPoint = find.text('End Point');
+    await widgetTester.tap(find.text(
+        'Waypoints')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.pumpAndSettle();
+    expect(path.waypointsExpanded, false);
+  });
 
-    expect(startPoint, findsOneWidget);
-    expect(midPoint, findsOneWidget);
-    expect(endPoint, findsOneWidget);
+  testWidgets('waypoint card for each waypoint', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+        ),
+      ),
+    ));
+
+    expect(
+        find.descendant(
+            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
+        findsNWidgets(3));
+  });
+
+  testWidgets('waypoint card titles', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+        ),
+      ),
+    ));
+
+    expect(find.text('Start Point'), findsOneWidget);
+    expect(find.text('Waypoint 1'), findsOneWidget);
+    expect(find.text('End Point'), findsOneWidget);
+  });
+
+  testWidgets('waypoint card hover', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+        ),
+      ),
+    ));
 
     final gesture =
         await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
     await gesture.addPointer(location: Offset.zero);
     addTearDown(gesture.removePointer);
 
-    await gesture.moveTo(widgetTester.getCenter(midPoint));
+    var waypointCards = find.descendant(
+        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+
+    await gesture.moveTo(widgetTester.getCenter(waypointCards.at(1)));
     await widgetTester.pump();
 
     expect(hoveredWaypoint, 1);
@@ -65,38 +132,95 @@ void main() {
     await widgetTester.pump();
 
     expect(hoveredWaypoint, isNull);
+  });
 
-    await widgetTester.tap(midPoint);
+  testWidgets('tapping expands/collapses waypoint cards', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+        ),
+      ),
+    ));
+
+    var waypointCards = find.descendant(
+        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+
+    expect(find.byType(NumberTextField), findsNothing);
+
+    await widgetTester.tap(waypointCards.at(1));
     await widgetTester.pumpAndSettle();
-
     expect(selectedWaypoint, 1);
+    expect(find.byType(NumberTextField), findsWidgets);
 
-    var iconButtons = find.descendant(
-        of: find.ancestor(of: midPoint, matching: find.byType(Row)),
-        matching: find.byType(IconButton));
-    var xPosField = find.widgetWithText(NumberTextField, 'X Position (M)');
-    var yPosField = find.widgetWithText(NumberTextField, 'Y Position (M)');
-    var headingField = find.widgetWithText(NumberTextField, 'Heading (Deg)');
-    var prevLengthField =
-        find.widgetWithText(NumberTextField, 'Previous Control Length (M)');
-    var nextLengthField =
-        find.widgetWithText(NumberTextField, 'Next Control Length (M)');
-    var insertButton = find.text('Insert New Waypoint After');
+    await widgetTester.tap(waypointCards.at(2));
+    await widgetTester.pumpAndSettle();
+    expect(selectedWaypoint, 2);
 
-    expect(iconButtons, findsNWidgets(2));
-    expect(xPosField, findsOneWidget);
-    expect(yPosField, findsOneWidget);
-    expect(headingField, findsOneWidget);
-    expect(prevLengthField, findsOneWidget);
-    expect(nextLengthField, findsOneWidget);
-    expect(insertButton, findsOneWidget);
+    await widgetTester.tap(find.text('End Point'));
+    await widgetTester.pumpAndSettle();
+    expect(selectedWaypoint, isNull);
+  });
 
-    List<Waypoint> oldWaypoints =
-        PathPlannerPath.cloneWaypoints(path.waypoints);
+  testWidgets('Controller expands/collapses waypoint cards',
+      (widgetTester) async {
+    var controller = WaypointsTreeController();
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          controller: controller,
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+        ),
+      ),
+    ));
 
-    // Test x pos field
-    pathChanged = false;
-    await widgetTester.enterText(xPosField, '0.1');
+    expect(find.byType(NumberTextField), findsNothing);
+
+    controller.setSelectedWaypoint(1);
+    await widgetTester.pumpAndSettle();
+    expect(find.byType(NumberTextField), findsWidgets);
+
+    controller.setSelectedWaypoint(1);
+    await widgetTester.pumpAndSettle();
+    expect(find.byType(NumberTextField), findsWidgets);
+
+    controller.setSelectedWaypoint(null);
+    await widgetTester.pumpAndSettle();
+    expect(find.byType(NumberTextField), findsNothing);
+  });
+
+  testWidgets('X Position text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+          initialSelectedWaypoint: 1,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'X Position (M)');
+
+    expect(textField, findsOneWidget);
+
+    num oldVal = path.waypoints[1].anchor.x;
+
+    await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
@@ -105,65 +229,162 @@ void main() {
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[1].anchor.x, oldWaypoints[1].anchor.x);
+    expect(path.waypoints[1].anchor.x, oldVal);
+  });
 
-    // Test y pos field
-    pathChanged = false;
-    await widgetTester.enterText(yPosField, '0.2');
+  testWidgets('Y Position text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+          initialSelectedWaypoint: 1,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'Y Position (M)');
+
+    expect(textField, findsOneWidget);
+
+    num oldVal = path.waypoints[1].anchor.y;
+
+    await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].anchor.y, 0.2);
+    expect(path.waypoints[1].anchor.y, 0.1);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[1].anchor.y, oldWaypoints[1].anchor.y);
+    expect(path.waypoints[1].anchor.y, oldVal);
+  });
 
-    // Test heading field
-    pathChanged = false;
-    await widgetTester.enterText(headingField, '0.3');
+  testWidgets('Heading text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+          initialSelectedWaypoint: 1,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'Heading (Deg)');
+
+    expect(textField, findsOneWidget);
+
+    num oldVal = path.waypoints[1].getHeadingDegrees();
+
+    await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].getHeadingDegrees(), closeTo(0.3, 0.01));
+    expect(path.waypoints[1].getHeadingDegrees(), closeTo(0.1, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[1].getHeadingDegrees(),
-        closeTo(oldWaypoints[1].getHeadingDegrees(), 0.01));
+    expect(path.waypoints[1].getHeadingDegrees(), closeTo(oldVal, epsilon));
+  });
 
-    // Test prev length field
-    pathChanged = false;
-    await widgetTester.enterText(prevLengthField, '0.4');
+  testWidgets('Prev length text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+          initialSelectedWaypoint: 1,
+        ),
+      ),
+    ));
+
+    var textField =
+        find.widgetWithText(NumberTextField, 'Previous Control Length (M)');
+
+    expect(textField, findsOneWidget);
+
+    num oldVal = path.waypoints[1].getPrevControlLength();
+
+    await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].getPrevControlLength(), closeTo(0.4, 0.01));
+    expect(path.waypoints[1].getPrevControlLength(), closeTo(0.1, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[1].getPrevControlLength(),
-        closeTo(oldWaypoints[1].getPrevControlLength(), 0.01));
+    expect(path.waypoints[1].getPrevControlLength(), closeTo(oldVal, epsilon));
+  });
 
-    // Test next length field
-    pathChanged = false;
-    await widgetTester.enterText(nextLengthField, '0.5');
+  testWidgets('Next length text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+          initialSelectedWaypoint: 1,
+        ),
+      ),
+    ));
+
+    var textField =
+        find.widgetWithText(NumberTextField, 'Next Control Length (M)');
+
+    expect(textField, findsOneWidget);
+
+    num oldVal = path.waypoints[1].getNextControlLength();
+
+    await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].getNextControlLength(), closeTo(0.5, 0.01));
+    expect(path.waypoints[1].getNextControlLength(), closeTo(0.1, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[1].getNextControlLength(),
-        closeTo(oldWaypoints[1].getNextControlLength(), 0.01));
+    expect(path.waypoints[1].getNextControlLength(), closeTo(oldVal, epsilon));
+  });
 
-    // test insert button
-    pathChanged = false;
+  testWidgets('Insert waypoint button', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+          initialSelectedWaypoint: 1,
+        ),
+      ),
+    ));
+
+    var insertButton = find.text('Insert New Waypoint After');
+
+    expect(insertButton, findsOneWidget);
+
     await widgetTester.tap(insertButton);
     await widgetTester.pump();
 
@@ -173,79 +394,82 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
 
-    expect(path.waypoints.length, oldWaypoints.length);
+    expect(path.waypoints.length, 3);
     expect(selectedWaypoint, isNull);
-
-    // test lock button
-    pathChanged = false;
-    await widgetTester.tap(iconButtons.first);
-    await widgetTester.pump();
-
-    expect(pathChanged, true);
-
-    // test delete button
-    waypointDeleted = null;
-    await widgetTester.tap(iconButtons.last);
-    await widgetTester.pump();
-
-    expect(waypointDeleted, 1);
   });
 
-  testWidgets('various expansion tests', (widgetTester) async {
-    PathPlannerPath path = PathPlannerPath.defaultPath(
-      pathDir: '/paths',
-      fs: MemoryFileSystem(),
-    );
-
-    var undoStack = ChangeStack();
-    var controller = WaypointsTreeController();
-    int? selectedWaypoint;
-
+  testWidgets('Lock waypoint button', (widgetTester) async {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: WaypointsTree(
           path: path,
           undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
-          controller: controller,
         ),
       ),
     ));
 
-    await widgetTester.tap(find.byType(WaypointsTree));
-    await widgetTester.pumpAndSettle();
+    var lockButtons = find.byTooltip('Lock');
 
-    expect(path.waypointsExpanded, true);
+    expect(lockButtons, findsNWidgets(3));
 
-    await widgetTester.tap(find.text('Waypoints'));
-    await widgetTester.pumpAndSettle();
-    expect(path.waypointsExpanded, false);
+    await widgetTester.tap(lockButtons.at(1));
+    await widgetTester.pump();
 
-    await widgetTester.tap(find.byType(WaypointsTree));
-    await widgetTester.pumpAndSettle();
+    expect(pathChanged, true);
+    expect(path.waypoints[1].isLocked, true);
 
-    expect(find.byType(NumberTextField), findsNothing);
-    controller.setSelectedWaypoint(0);
-    await widgetTester.pumpAndSettle();
-    expect(find.widgetWithText(NumberTextField, 'Next Control Length (M)'),
-        findsOneWidget);
-    expect(find.widgetWithText(NumberTextField, 'Previous Control Length (M)'),
-        findsNothing);
+    await widgetTester.tap(lockButtons.at(1));
+    await widgetTester.pump();
 
-    controller.setSelectedWaypoint(2);
-    await widgetTester.pumpAndSettle();
-    expect(find.widgetWithText(NumberTextField, 'Previous Control Length (M)'),
-        findsOneWidget);
-    expect(find.widgetWithText(NumberTextField, 'Next Control Length (M)'),
-        findsNothing);
+    expect(path.waypoints[1].isLocked, false);
+  });
 
-    var midPoint = find.text('Waypoint 1');
-    await widgetTester.tap(midPoint);
-    await widgetTester.pumpAndSettle();
-    expect(selectedWaypoint, 1);
+  testWidgets('Delete waypoint button', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+        ),
+      ),
+    ));
 
-    await widgetTester.tap(midPoint);
-    await widgetTester.pumpAndSettle();
-    expect(selectedWaypoint, isNull);
+    var delButtons = find.byTooltip('Delete Waypoint');
+
+    expect(delButtons, findsNWidgets(3));
+
+    await widgetTester.tap(delButtons.at(1));
+    await widgetTester.pump();
+
+    expect(deletedWaypoint, 1);
+  });
+
+  testWidgets('Delete waypoint button hidden w/ 2 waypoints',
+      (widgetTester) async {
+    path.waypoints.removeAt(1);
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+        ),
+      ),
+    ));
+
+    var delButtons = find.byTooltip('Delete Waypoint');
+
+    expect(delButtons, findsNothing);
   });
 }

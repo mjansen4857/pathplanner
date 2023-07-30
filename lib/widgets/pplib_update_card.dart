@@ -97,18 +97,4 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
       ),
     );
   }
-
-  void _showSnackbar(BuildContext context, String message,
-      {Duration? duration, Color textColor = Colors.white}) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(
-        message,
-        style: TextStyle(color: textColor, fontSize: 16),
-      ),
-      duration: duration ?? const Duration(milliseconds: 4000),
-      backgroundColor: colorScheme.surfaceVariant,
-    ));
-  }
 }

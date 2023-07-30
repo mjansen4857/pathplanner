@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 void ignoreOverflowErrors(
@@ -23,5 +25,6 @@ void ignoreOverflowErrors(
     debugPrint('Ignored Error');
   } else {
     FlutterError.dumpErrorToConsole(details, forceReport: forceReport);
+    exit(1);
   }
 }

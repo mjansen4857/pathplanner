@@ -114,12 +114,16 @@ class CommandGroupWidget extends StatelessWidget {
             ),
             Visibility(
               visible: removable,
-              child: IconButton(
-                onPressed: onRemoved,
-                visualDensity: const VisualDensity(
-                    horizontal: VisualDensity.minimumDensity,
-                    vertical: VisualDensity.minimumDensity),
-                icon: Icon(Icons.close, color: colorScheme.error),
+              child: Tooltip(
+                message: 'Remove Command',
+                waitDuration: const Duration(seconds: 1),
+                child: IconButton(
+                  onPressed: onRemoved,
+                  visualDensity: const VisualDensity(
+                      horizontal: VisualDensity.minimumDensity,
+                      vertical: VisualDensity.minimumDensity),
+                  icon: Icon(Icons.close, color: colorScheme.error),
+                ),
               ),
             ),
           ],

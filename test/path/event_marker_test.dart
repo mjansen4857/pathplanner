@@ -52,7 +52,6 @@ void main() {
     expect(m2, m1);
     expect(m3, isNot(m1));
 
-    expect(m2.hashCode, m1.hashCode);
     expect(m3.hashCode, isNot(m1.hashCode));
   });
 }

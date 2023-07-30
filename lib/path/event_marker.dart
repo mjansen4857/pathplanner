@@ -4,7 +4,7 @@ import 'package:pathplanner/commands/command_groups.dart';
 class EventMarker {
   String name;
   num waypointRelativePos;
-  Command command;
+  CommandGroup command;
 
   EventMarker({
     this.name = 'New Event Marker',
@@ -19,7 +19,8 @@ class EventMarker {
       : this(
             name: json['name'],
             waypointRelativePos: json['waypointRelativePos'],
-            command: Command.fromJson(json['command'] ?? {}));
+            command: Command.fromJson(json['command'] ??
+                ParallelCommandGroup(commands: []).toJson()) as CommandGroup);
 
   Map<String, dynamic> toJson() {
     return {
@@ -33,7 +34,7 @@ class EventMarker {
     return EventMarker(
       name: name,
       waypointRelativePos: waypointRelativePos,
-      command: command.clone(),
+      command: command.clone() as CommandGroup,
     );
   }
 

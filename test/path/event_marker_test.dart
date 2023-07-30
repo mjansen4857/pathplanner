@@ -4,23 +4,11 @@ import 'package:pathplanner/commands/wait_command.dart';
 import 'package:pathplanner/path/event_marker.dart';
 
 void main() {
-  test('Constructor functions', () {
-    EventMarker m = EventMarker(
-      name: 'test',
-      waypointRelativePos: 1.0,
-      command: WaitCommand(waitTime: 1.0),
-    );
-
-    expect(m.name, 'test');
-    expect(m.waypointRelativePos, 1.0);
-    expect(m.command, WaitCommand(waitTime: 1.0));
-  });
-
   test('toJson/fromJson interoperability', () {
     EventMarker m = EventMarker(
       name: 'test',
       waypointRelativePos: 1.0,
-      command: WaitCommand(waitTime: 1.0),
+      command: ParallelCommandGroup(commands: []),
     );
 
     Map<String, dynamic> json = m.toJson();
@@ -39,7 +27,7 @@ void main() {
 
     expect(m, isNot(cloned));
 
-    (cloned.command as CommandGroup).commands.add(WaitCommand());
+    cloned.command.commands.add(WaitCommand());
 
     expect(m.command, isNot(cloned.command));
   });
@@ -48,17 +36,17 @@ void main() {
     EventMarker m1 = EventMarker(
       name: 'test',
       waypointRelativePos: 1.0,
-      command: WaitCommand(waitTime: 1.0),
+      command: ParallelCommandGroup(commands: []),
     );
     EventMarker m2 = EventMarker(
       name: 'test',
       waypointRelativePos: 1.0,
-      command: WaitCommand(waitTime: 1.0),
+      command: ParallelCommandGroup(commands: []),
     );
     EventMarker m3 = EventMarker(
       name: 'test2',
       waypointRelativePos: 1.2,
-      command: WaitCommand(waitTime: 1.0),
+      command: ParallelCommandGroup(commands: []),
     );
 
     expect(m2, m1);

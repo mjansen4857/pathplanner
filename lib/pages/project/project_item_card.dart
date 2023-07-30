@@ -61,7 +61,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                     ),
                   ),
                   FittedBox(
-                    child: PopupMenuButton(
+                    child: PopupMenuButton<String>(
                       tooltip: '',
                       onSelected: (value) {
                         if (value == 'duplicate') {

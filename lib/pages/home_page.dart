@@ -13,6 +13,7 @@ import 'package:pathplanner/pages/telemetry_page.dart';
 import 'package:pathplanner/pages/welcome_page.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
@@ -31,6 +32,7 @@ class HomePage extends StatefulWidget {
   final FileSystem fs;
   final ChangeStack undoStack;
   final PPLibTelemetry telemetry;
+  final UpdateChecker updateChecker;
 
   const HomePage({
     required this.appVersion,
@@ -40,6 +42,7 @@ class HomePage extends StatefulWidget {
     required this.fs,
     required this.undoStack,
     required this.telemetry,
+    required this.updateChecker,
     super.key,
   });
 
@@ -397,9 +400,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                UpdateCard(currentVersion: widget.appVersion),
+                UpdateCard(
+                  currentVersion: widget.appVersion,
+                  updateChecker: widget.updateChecker,
+                ),
                 if (_isWpiLib && !widget.appStoreBuild)
-                  PPLibUpdateCard(projectDir: _projectDir!),
+                  PPLibUpdateCard(
+                    projectDir: _projectDir!,
+                    fs: widget.fs,
+                    updateChecker: widget.updateChecker,
+                  ),
               ],
             ),
           ),

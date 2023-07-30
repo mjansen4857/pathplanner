@@ -21,7 +21,7 @@ class MiniPathsPreview extends StatelessWidget {
       children: [
         fieldImage.getWidget(small: true),
         Positioned.fill(
-          child: _PathPreviewPainter(
+          child: PathPreviewPainter(
             paths: paths,
             fieldImage: fieldImage,
           ),
@@ -31,11 +31,13 @@ class MiniPathsPreview extends StatelessWidget {
   }
 }
 
-class _PathPreviewPainter extends StatelessWidget {
+@visibleForTesting
+class PathPreviewPainter extends StatelessWidget {
   final List<PathPlannerPath> paths;
   final FieldImage fieldImage;
 
-  const _PathPreviewPainter({
+  const PathPreviewPainter({
+    super.key,
     required this.paths,
     required this.fieldImage,
   });
@@ -121,8 +123,6 @@ class _Painter extends CustomPainter {
       paint.color = Colors.green;
     } else if (waypointIdx == path.waypoints.length - 1) {
       paint.color = Colors.red;
-    } else {
-      paint.color = Colors.grey[300]!;
     }
 
     // draw anchor point

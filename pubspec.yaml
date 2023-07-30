@@ -36,7 +36,6 @@ dependencies:
   github: ^9.2.0
   version: ^3.0.2
   url_launcher: ^6.0.17
-  process_run: ^0.13.1
   macos_secure_bookmarks: ^0.2.0
   function_tree: ^0.8.12
   path_provider: ^2.0.9

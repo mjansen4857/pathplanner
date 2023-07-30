@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
@@ -52,6 +53,7 @@ void main() async {
         prefs: prefs,
         undoStack: ChangeStack(),
         telemetry: telemetry,
+        updateChecker: UpdateChecker(),
       ));
     },
     (Object error, StackTrace stack) {
@@ -67,12 +69,14 @@ class PathPlanner extends StatefulWidget {
   final SharedPreferences prefs;
   final ChangeStack undoStack;
   final PPLibTelemetry telemetry;
+  final UpdateChecker updateChecker;
 
   const PathPlanner({
     required this.appVersion,
     required this.prefs,
     required this.undoStack,
     required this.telemetry,
+    required this.updateChecker,
     this.fs = const LocalFileSystem(),
     super.key,
   });
@@ -102,6 +106,7 @@ class _PathPlannerState extends State<PathPlanner> {
         fs: widget.fs,
         undoStack: widget.undoStack,
         telemetry: widget.telemetry,
+        updateChecker: widget.updateChecker,
         onTeamColorChanged: (Color color) {
           setState(() {
             _teamColor = color;

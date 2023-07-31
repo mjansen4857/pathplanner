@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -17,6 +18,7 @@ class AutoEditorPage extends StatefulWidget {
   final FieldImage fieldImage;
   final ValueChanged<String> onRenamed;
   final ChangeStack undoStack;
+  final bool shortcuts;
 
   const AutoEditorPage({
     super.key,
@@ -27,6 +29,7 @@ class AutoEditorPage extends StatefulWidget {
     required this.fieldImage,
     required this.onRenamed,
     required this.undoStack,
+    this.shortcuts = true,
   });
 
   @override
@@ -42,6 +45,20 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
     List<PathPlannerPath> autoPaths = autoPathNames
         .map((name) => widget.allPaths.firstWhere((path) => path.name == name))
         .toList();
+
+    final editorWidget = SplitAutoEditor(
+      prefs: widget.prefs,
+      auto: widget.auto,
+      autoPaths: autoPaths,
+      allPathNames: widget.allPathNames,
+      fieldImage: widget.fieldImage,
+      undoStack: widget.undoStack,
+      onAutoChanged: () {
+        setState(() {
+          widget.auto.saveFile();
+        });
+      },
+    );
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -64,26 +81,18 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
           },
         ),
       ),
-      body: KeyBoardShortcuts(
-        keysToPress: shortCut(BasicShortCuts.undo),
-        onKeysPressed: widget.undoStack.undo,
-        child: KeyBoardShortcuts(
-          keysToPress: shortCut(BasicShortCuts.redo),
-          onKeysPressed: widget.undoStack.redo,
-          child: SplitAutoEditor(
-            prefs: widget.prefs,
-            auto: widget.auto,
-            autoPaths: autoPaths,
-            allPathNames: widget.allPathNames,
-            fieldImage: widget.fieldImage,
-            undoStack: widget.undoStack,
-            onAutoChanged: () {
-              setState(() {
-                widget.auto.saveFile();
-              });
-            },
+      body: ConditionalWidget(
+        condition: widget.shortcuts,
+        trueChild: KeyBoardShortcuts(
+          keysToPress: shortCut(BasicShortCuts.undo),
+          onKeysPressed: widget.undoStack.undo,
+          child: KeyBoardShortcuts(
+            keysToPress: shortCut(BasicShortCuts.redo),
+            onKeysPressed: widget.undoStack.redo,
+            child: editorWidget,
           ),
         ),
+        falseChild: editorWidget,
       ),
     );
   }

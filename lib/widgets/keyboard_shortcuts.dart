@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:tuple/tuple.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
-Widget? _homeWidget;
 List<_KeyBoardShortcuts> _keyBoardShortcuts = [];
 List<Tuple2<Set<LogicalKeyboardKey>, Function(BuildContext context)>>
     _newGlobal = [];
@@ -19,8 +18,7 @@ enum BasicShortCuts {
   redo,
 }
 
-void initShortCuts(
-  Widget homePage, {
+void initShortCuts({
   Set<Set<LogicalKeyboardKey>>? keysToPress,
   Set<Function(BuildContext context)>? onKeysPressed,
 }) async {
@@ -33,7 +31,6 @@ void initShortCuts(
           .add(Tuple2(keysToPress.elementAt(i), onKeysPressed.elementAt(i)));
     }
   }
-  _homeWidget = homePage;
 }
 
 bool _isPressed(
@@ -78,19 +75,22 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
 
   @override
   void initState() {
+    super.initState();
+
     _controller.addListener(() {
       if (_controller.hasClients) setState(() => controllerIsReady = true);
     });
     _attachKeyboardIfDetached();
     key = widget.key ?? UniqueKey();
-    super.initState();
   }
 
   @override
   void dispose() {
-    super.dispose();
+    focusScopeNode?.dispose();
     _controller.dispose();
     _detachKeyboardIfAttached();
+
+    super.dispose();
   }
 
   void _attachKeyboardIfDetached() {
@@ -118,12 +118,7 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
           _isPressed(keysPressed, widget.keysToPress!)) {
         widget.onKeysPressed!();
       } else if (widget.globalShortcuts) {
-        if (_homeWidget != null &&
-            _isPressed(keysPressed, {LogicalKeyboardKey.home})) {
-          Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => _homeWidget!),
-              (_) => false);
-        } else if (_isPressed(keysPressed, {LogicalKeyboardKey.escape})) {
+        if (_isPressed(keysPressed, {LogicalKeyboardKey.escape})) {
           Navigator.maybePop(context);
         } else if (controllerIsReady &&
                 keysPressed.containsAll({LogicalKeyboardKey.pageDown}) ||

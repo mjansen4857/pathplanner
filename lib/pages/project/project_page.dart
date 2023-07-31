@@ -18,6 +18,7 @@ class ProjectPage extends StatefulWidget {
   final Directory deployDirectory;
   final FileSystem fs;
   final ChangeStack undoStack;
+  final bool shortcuts;
 
   const ProjectPage({
     super.key,
@@ -26,6 +27,7 @@ class ProjectPage extends StatefulWidget {
     required this.deployDirectory,
     required this.fs,
     required this.undoStack,
+    this.shortcuts = true,
   });
 
   @override
@@ -210,9 +212,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             _paths.removeAt(i);
                           });
                         },
-                        onRenamed: (value) {
-                          _renamePath(i, value, context);
-                        },
+                        onRenamed: (value) => _renamePath(i, value, context),
                         onOpened: () async {
                           await Navigator.push(
                             context,
@@ -222,9 +222,9 @@ class _ProjectPageState extends State<ProjectPage> {
                                 path: _paths[i],
                                 fieldImage: widget.fieldImage,
                                 undoStack: widget.undoStack,
-                                onRenamed: (value) {
-                                  _renamePath(i, value, context);
-                                },
+                                onRenamed: (value) =>
+                                    _renamePath(i, value, context),
+                                shortcuts: widget.shortcuts,
                               ),
                             ),
                           );
@@ -361,9 +361,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             _autos.removeAt(i);
                           });
                         },
-                        onRenamed: (value) {
-                          _renameAuto(i, value, context);
-                        },
+                        onRenamed: (value) => _renameAuto(i, value, context),
                         onOpened: () async {
                           await Navigator.push(
                             context,
@@ -376,9 +374,9 @@ class _ProjectPageState extends State<ProjectPage> {
                                 allPathNames:
                                     _paths.map((e) => e.name).toList(),
                                 fieldImage: widget.fieldImage,
-                                onRenamed: (value) {
-                                  _renameAuto(i, value, context);
-                                },
+                                onRenamed: (value) =>
+                                    _renameAuto(i, value, context),
+                                shortcuts: widget.shortcuts,
                               ),
                             ),
                           );

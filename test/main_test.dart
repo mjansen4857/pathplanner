@@ -12,9 +12,6 @@ import 'main_test.mocks.dart';
 
 @GenerateNiceMocks([MockSpec<PPLibTelemetry>(), MockSpec<UpdateChecker>()])
 void main() {
-  // Basic full-app integration test for not
-  // TODO: flesh this out to test app function
-
   testWidgets('Full app test', (widgetTester) async {
     var fs = MemoryFileSystem();
     var undoStack = ChangeStack();

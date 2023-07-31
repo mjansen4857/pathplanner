@@ -29,9 +29,4 @@ public class GeometryUtil {
     Translation2d p1 = quadraticLerp(b, c, d, t);
     return translationLerp(p0, p1, t);
   }
-
-  public static Rotation2d cosineInterpolate(Rotation2d y1, Rotation2d y2, double mu) {
-    double mu2 = (1 - Math.cos(mu * Math.PI)) / 2;
-    return new Rotation2d(y1.getRadians() * (1 - mu2) + y2.getRadians() * mu2);
-  }
 }

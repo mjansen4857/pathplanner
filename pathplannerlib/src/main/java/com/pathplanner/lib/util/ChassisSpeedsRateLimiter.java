@@ -18,8 +18,7 @@ public class ChassisSpeedsRateLimiter {
       double translationRateLimit, double rotationRateLimit, ChassisSpeeds initialValue) {
     this.translationRateLimit = translationRateLimit;
     this.rotationRateLimit = rotationRateLimit;
-    this.prevVal = initialValue;
-    this.prevTime = MathSharedStore.getTimestamp();
+    reset(initialValue);
   }
 
   public ChassisSpeedsRateLimiter(double translationRateLimit, double rotationRateLimit) {

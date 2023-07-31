@@ -43,12 +43,12 @@ jobs:
         run: ./gradlew build -PreleaseMode
         working-directory: ./pathplannerlib
       
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          name: pplib-coverage
-          files: pathplannerlib/build/reports/jacoco/test/jacocoTestReport.xml
+      # - name: Upload coverage reports to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
+      #     name: pplib-coverage
+      #     files: pathplannerlib/build/reports/jacoco/test/jacocoTestReport.xml
   
   build-docker:
     strategy:

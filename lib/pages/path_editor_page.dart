@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_path_editor.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -14,6 +15,7 @@ class PathEditorPage extends StatefulWidget {
   final FieldImage fieldImage;
   final ValueChanged<String> onRenamed;
   final ChangeStack undoStack;
+  final bool shortcuts;
 
   const PathEditorPage({
     super.key,
@@ -22,6 +24,7 @@ class PathEditorPage extends StatefulWidget {
     required this.fieldImage,
     required this.onRenamed,
     required this.undoStack,
+    this.shortcuts = true,
   });
 
   @override
@@ -32,6 +35,13 @@ class _PathEditorPageState extends State<PathEditorPage> {
   @override
   Widget build(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    final editorWidget = SplitPathEditor(
+      prefs: widget.prefs,
+      path: widget.path,
+      fieldImage: widget.fieldImage,
+      undoStack: widget.undoStack,
+    );
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -54,19 +64,18 @@ class _PathEditorPageState extends State<PathEditorPage> {
           },
         ),
       ),
-      body: KeyBoardShortcuts(
-        keysToPress: shortCut(BasicShortCuts.undo),
-        onKeysPressed: widget.undoStack.undo,
-        child: KeyBoardShortcuts(
-          keysToPress: shortCut(BasicShortCuts.redo),
-          onKeysPressed: widget.undoStack.redo,
-          child: SplitPathEditor(
-            prefs: widget.prefs,
-            path: widget.path,
-            fieldImage: widget.fieldImage,
-            undoStack: widget.undoStack,
+      body: ConditionalWidget(
+        condition: widget.shortcuts,
+        trueChild: KeyBoardShortcuts(
+          keysToPress: shortCut(BasicShortCuts.undo),
+          onKeysPressed: widget.undoStack.undo,
+          child: KeyBoardShortcuts(
+            keysToPress: shortCut(BasicShortCuts.redo),
+            onKeysPressed: widget.undoStack.redo,
+            child: editorWidget,
           ),
         ),
+        falseChild: editorWidget,
       ),
     );
   }

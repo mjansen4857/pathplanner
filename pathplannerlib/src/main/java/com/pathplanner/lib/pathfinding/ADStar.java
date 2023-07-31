@@ -42,7 +42,7 @@ public class ADStar {
   private static volatile GridPosition sStart;
   private static volatile GridPosition sGoal;
 
-  private static double eps;
+  private static volatile double eps;
 
   private static final Thread planningThread = new Thread(ADStar::runThread);
   private static final Object lock = new Object();
@@ -151,7 +151,7 @@ public class ADStar {
       doMinor.set(false);
     } else if (doMajor.get()) {
       if (eps > 1.0) {
-        eps = eps - 0.5;
+        eps -= 0.5;
         open.putAll(incons);
 
         open.replaceAll((s, v) -> key(s));
@@ -198,7 +198,7 @@ public class ADStar {
   public static void setGoalPos(Translation2d goal) {
     GridPosition gridPos = findClosestNonObstacle(getGridPos(goal));
 
-    if (gridPos != null && !gridPos.equals(sGoal)) {
+    if (gridPos != null) {
       synchronized (lock) {
         sGoal = gridPos;
         doMinor.set(true);
@@ -517,7 +517,9 @@ public class ADStar {
         s2 = new GridPosition(Math.max(sStart.x, sEnd.x), Math.min(sStart.y, sEnd.y));
       }
 
-      return obstacles.contains(s1) || obstacles.contains(s2);
+      if (obstacles.contains(s1) || obstacles.contains(s2)) {
+        return true;
+      }
     }
 
     return false;

@@ -1,6 +1,6 @@
 package com.pathplanner.lib.path;
 
-import com.pathplanner.lib.auto.EventManager;
+import com.pathplanner.lib.auto.CommandUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -28,7 +28,7 @@ public class EventMarker {
 
   static EventMarker fromJson(JSONObject markerJson) {
     double pos = ((Number) markerJson.get("waypointRelativePos")).doubleValue();
-    Command cmd = EventManager.commandFromJson((JSONObject) markerJson.get("command"));
+    Command cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"));
     return new EventMarker(pos, cmd);
   }
 

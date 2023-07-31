@@ -1,4 +1,5 @@
 [![PathPlanner](https://github.com/mjansen4857/pathplanner/actions/workflows/pathplanner-ci.yaml/badge.svg)](https://github.com/mjansen4857/pathplanner/actions/workflows/pathplanner-ci.yaml)
+[![codecov](https://codecov.io/gh/mjansen4857/pathplanner/branch/main/graph/badge.svg?token=RRJY4YR69W)](https://codecov.io/gh/mjansen4857/pathplanner)
 [![PathPlannerLib](https://github.com/mjansen4857/pathplanner/actions/workflows/pplib-ci.yml/badge.svg)](https://github.com/mjansen4857/pathplanner/actions/workflows/pplib-ci.yml)
 
 # PathPlanner

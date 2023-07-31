@@ -26,7 +26,6 @@ import 'package:undo/undo.dart';
 
 class HomePage extends StatefulWidget {
   final String appVersion;
-  final bool appStoreBuild;
   final SharedPreferences prefs;
   final ValueChanged<Color> onTeamColorChanged;
   final FileSystem fs;
@@ -36,7 +35,6 @@ class HomePage extends StatefulWidget {
 
   const HomePage({
     required this.appVersion,
-    required this.appStoreBuild,
     required this.prefs,
     required this.onTeamColorChanged,
     required this.fs,
@@ -53,9 +51,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Directory? _projectDir;
   late Directory _deployDir;
-  Size _robotSize = const Size(0.75, 1.0);
-  bool _holonomicMode = false;
-  bool _isWpiLib = false;
   final SecureBookmarks? _bookmarks =
       Platform.isMacOS ? SecureBookmarks() : null;
   final List<FieldImage> _fieldImages = FieldImage.offialFields();
@@ -404,12 +399,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   currentVersion: widget.appVersion,
                   updateChecker: widget.updateChecker,
                 ),
-                if (_isWpiLib && !widget.appStoreBuild)
-                  PPLibUpdateCard(
-                    projectDir: _projectDir!,
-                    fs: widget.fs,
-                    updateChecker: widget.updateChecker,
-                  ),
+                PPLibUpdateCard(
+                  projectDir: _projectDir!,
+                  fs: widget.fs,
+                  updateChecker: widget.updateChecker,
+                ),
               ],
             ),
           ),
@@ -420,26 +414,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  bool _isWpiLibProject(Directory projectDir) {
-    File buildFile = fs.file(join(projectDir.path, 'build.gradle'));
-
-    return buildFile.existsSync();
-  }
-
   void _onProjectSettingsChanged() {
-    _loadSettingsFromPrefs();
     _saveProjectSettingsToFile(_projectDir!);
-  }
-
-  void _loadSettingsFromPrefs() {
-    setState(() {
-      _robotSize = Size(
-        widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth,
-        widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength,
-      );
-      _holonomicMode = widget.prefs.getBool(PrefsKeys.holonomicMode) ??
-          Defaults.holonomicMode;
-    });
   }
 
   void _loadProjectSettingsFromFile(Directory projectDir) async {
@@ -461,8 +437,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             'An error occurred while loading project settings', err, stack);
       }
     }
-
-    _loadSettingsFromPrefs();
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
@@ -475,9 +449,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     const JsonEncoder encoder = JsonEncoder.withIndent('  ');
 
     Map<String, dynamic> settings = {
-      'robotWidth': _robotSize.width,
-      'robotLength': _robotSize.height,
-      'holonomicMode': _holonomicMode,
+      'robotWidth':
+          widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth,
+      'robotLength':
+          widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength,
+      'holonomicMode': widget.prefs.getBool(PrefsKeys.holonomicMode) ??
+          Defaults.holonomicMode,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {
@@ -503,7 +480,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         _projectDir = fs.directory(projectFolder);
         _loadProjectSettingsFromFile(_projectDir!);
-        _isWpiLib = _isWpiLibProject(_projectDir!);
       });
     }
   }

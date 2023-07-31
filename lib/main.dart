@@ -88,7 +88,6 @@ class PathPlanner extends StatefulWidget {
 class _PathPlannerState extends State<PathPlanner> {
   late Color _teamColor =
       Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
-  final bool _sandboxed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +100,6 @@ class _PathPlannerState extends State<PathPlanner> {
       ),
       home: HomePage(
         appVersion: widget.appVersion,
-        appStoreBuild: _sandboxed,
         prefs: widget.prefs,
         fs: widget.fs,
         undoStack: widget.undoStack,

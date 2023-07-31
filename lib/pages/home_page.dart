@@ -77,11 +77,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       String? projectDir = widget.prefs.getString(PrefsKeys.currentProjectDir);
       if (projectDir != null && Platform.isMacOS) {
         if (widget.prefs.getString(PrefsKeys.macOSBookmark) != null) {
-          await _bookmarks!.resolveBookmark(
-              widget.prefs.getString(PrefsKeys.macOSBookmark)!);
+          try {
+            await _bookmarks!.resolveBookmark(
+                widget.prefs.getString(PrefsKeys.macOSBookmark)!);
 
-          await _bookmarks!
-              .startAccessingSecurityScopedResource(fs.file(projectDir));
+            await _bookmarks!
+                .startAccessingSecurityScopedResource(fs.file(projectDir));
+          } catch (e) {
+            Log.error('Failed to resolve secure bookmarks', e);
+            projectDir = null;
+          }
         } else {
           projectDir = null;
         }

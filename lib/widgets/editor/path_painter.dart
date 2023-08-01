@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:pathplanner/services/simulator/path_simulator.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -22,6 +23,9 @@ class PathPainter extends CustomPainter {
   final int? selectedMarker;
   final Size robotSize;
   final Pose2d? startingPose;
+  final SimulatedPath? simulatedPath;
+  Animation<num>? previewTime;
+  final Color? previewColor;
 
   late num robotRadius;
 
@@ -42,10 +46,18 @@ class PathPainter extends CustomPainter {
     this.selectedMarker,
     required this.robotSize,
     this.startingPose,
-  }) {
+    this.simulatedPath,
+    Animation<double>? animation,
+    this.previewColor,
+  }) : super(repaint: animation) {
     robotRadius = sqrt((robotSize.width * robotSize.width) +
             (robotSize.height * robotSize.height)) /
         2.0;
+
+    if (simulatedPath != null && animation != null) {
+      previewTime =
+          Tween<num>(begin: 0, end: simulatedPath!.runtime).animate(animation);
+    }
   }
 
   @override
@@ -106,6 +118,20 @@ class PathPainter extends CustomPainter {
                 startingPose!.position, scale, fieldImage),
             PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
             paint);
+      }
+    }
+
+    if (previewTime != null) {
+      Pose2d? previewPose = simulatedPath!.getState(previewTime!.value);
+      if (previewPose != null) {
+        PathPainterUtil.paintRobotOutline(
+            previewPose.position,
+            previewPose.rotation,
+            fieldImage,
+            robotSize,
+            scale,
+            canvas,
+            previewColor ?? Colors.grey);
       }
     }
   }

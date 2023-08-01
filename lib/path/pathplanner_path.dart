@@ -292,7 +292,8 @@ class PathPlannerPath {
           if ((unaddedTargets[0].waypointRelativePos - actualWaypointPos)
                   .abs() <=
               (unaddedTargets[0].waypointRelativePos -
-                  min(actualWaypointPos + 0.05, waypoints.length - 1))) {
+                      min(actualWaypointPos + 0.05, waypoints.length - 1))
+                  .abs()) {
             rotation = unaddedTargets.removeAt(0).rotationDegrees;
           }
         }
@@ -340,7 +341,7 @@ class PathPlannerPath {
     }
 
     for (int i = 0; i < pathPoints.length; i++) {
-      num curveRadius = _getCurveRadiusAtPoint(i);
+      num curveRadius = _getCurveRadiusAtPoint(i).abs();
 
       if (curveRadius.isFinite) {
         pathPoints[i].maxV = min(

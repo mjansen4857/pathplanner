@@ -37,7 +37,8 @@ class SplitPathEditor extends StatefulWidget {
   State<SplitPathEditor> createState() => _SplitPathEditorState();
 }
 
-class _SplitPathEditorState extends State<SplitPathEditor> {
+class _SplitPathEditorState extends State<SplitPathEditor>
+    with SingleTickerProviderStateMixin {
   final MultiSplitViewController _controller = MultiSplitViewController();
   final WaypointsTreeController _waypointsTreeController =
       WaypointsTreeController();
@@ -57,12 +58,15 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
   SimulatedPath? _simPath;
 
   late Size _robotSize;
+  late AnimationController _previewController;
 
   List<Waypoint> get waypoints => widget.path.waypoints;
 
   @override
   void initState() {
     super.initState();
+
+    _previewController = AnimationController(vsync: this);
 
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
@@ -87,6 +91,12 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
     ];
 
     _simulatePath();
+  }
+
+  @override
+  void dispose() {
+    _previewController.dispose();
+    super.dispose();
   }
 
   @override
@@ -337,6 +347,9 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                           hoveredMarker: _hoveredMarker,
                           selectedMarker: _selectedMarker,
                           robotSize: _robotSize,
+                          simulatedPath: _simPath,
+                          animation: _previewController.view,
+                          previewColor: colorScheme.primary,
                         ),
                       ),
                     ),
@@ -543,6 +556,11 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
     setState(() {
       _simPath = p;
     });
+    _previewController.stop();
+    _previewController.reset();
+    _previewController.duration =
+        Duration(milliseconds: (p.runtime * 1000).toInt());
+    _previewController.repeat();
   }
 
   num _adjustDeletedWaypointRelativePos(num pos, int deletedWaypointIdx) {

@@ -6,9 +6,10 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/simulator/chassis_speeds.dart';
 import 'package:pathplanner/services/simulator/chassis_speeds_limiter.dart';
 import 'package:pathplanner/services/simulator/rotation_p_controller.dart';
+import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/pose2d.dart';
 
-const num simulationPeriod = 0.05;
+const num simulationPeriod = 0.02;
 const num minLookahead = 0.5;
 
 Future<SimulatedPath> simulatePath(PathPlannerPath path,
@@ -78,7 +79,6 @@ Future<SimulatedPath> simulatePath(PathPlannerPath path,
             currentPose.rotation, nextRotationTarget.holonomicRotation!))
         .clamp(-maxAngVel, maxAngVel);
 
-    // TODO verify right order
     num headingRadians = atan2(lastLookahead.y - currentPose.position.y,
         lastLookahead.x - currentPose.position.x);
 
@@ -130,6 +130,7 @@ Future<SimulatedPath> simulatePath(PathPlannerPath path,
           }
         }
       }
+
       currentSpeeds = limiter.calculate(
         ChassisSpeeds(
           vx: maxV * cos(headingRadians),
@@ -290,11 +291,23 @@ class SimulatedPath {
       return null;
     }
 
-    int index = (time / simulationPeriod).floor();
-    if (index > pathStates.length - 1) {
+    int floorIndex = (time / simulationPeriod).floor();
+    int ceilIndex = (time / simulationPeriod).ceil();
+    if (floorIndex > pathStates.length - 1 ||
+        ceilIndex > pathStates.length - 1) {
       return pathStates.last;
+    } else if (floorIndex == ceilIndex) {
+      return pathStates[floorIndex];
     } else {
-      return pathStates[index];
+      num d = (time / simulationPeriod);
+      num t = (d - floorIndex) / (ceilIndex - floorIndex);
+
+      Point lerpedPos = GeometryUtil.pointLerp(
+          pathStates[floorIndex].position, pathStates[ceilIndex].position, t);
+      num lerpedRot = GeometryUtil.numLerp(
+          pathStates[floorIndex].rotation, pathStates[ceilIndex].rotation, t);
+
+      return Pose2d(position: lerpedPos, rotation: lerpedRot);
     }
   }
 }

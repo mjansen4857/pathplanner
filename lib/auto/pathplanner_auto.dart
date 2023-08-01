@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
-import 'package:pathplanner/auto/starting_pose.dart';
+import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -10,7 +10,7 @@ import 'package:pathplanner/services/log.dart';
 
 class PathPlannerAuto {
   String name;
-  StartingPose? startingPose;
+  Pose2d? startingPose;
   SequentialCommandGroup sequence;
 
   FileSystem fs;
@@ -48,7 +48,7 @@ class PathPlannerAuto {
           name: name,
           startingPose: json['startingPose'] == null
               ? null
-              : StartingPose.fromJson(json['startingPose']),
+              : Pose2d.fromJson(json['startingPose']),
           sequence:
               Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
         );

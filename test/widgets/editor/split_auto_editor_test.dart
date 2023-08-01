@@ -5,7 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
-import 'package:pathplanner/auto/starting_pose.dart';
+import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/path/event_marker.dart';
@@ -39,7 +39,7 @@ void main() {
       ),
       autoDir: '/autos',
       fs: fs,
-      startingPose: StartingPose(
+      startingPose: Pose2d(
         position: const Point(2.0, 2.0),
         rotation: 0.0,
       ),

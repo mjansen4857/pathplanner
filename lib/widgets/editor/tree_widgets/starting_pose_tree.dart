@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
-import 'package:pathplanner/auto/starting_pose.dart';
+import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -91,7 +91,7 @@ class StartingPoseTree extends StatelessWidget {
               onChanged: (value) {
                 if (value ?? false) {
                   _addChange(() {
-                    auto.startingPose = StartingPose.defaultPose();
+                    auto.startingPose = Pose2d(position: const Point(2, 2));
                   });
                 } else {
                   _addChange(() {

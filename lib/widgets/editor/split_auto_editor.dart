@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
-import 'package:pathplanner/auto/starting_pose.dart';
+import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -43,7 +43,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
   late bool _treeOnRight;
   bool _draggingStartPos = false;
   bool _draggingStartRot = false;
-  StartingPose? _dragOldValue;
+  Pose2d? _dragOldValue;
 
   late Size _robotSize;
 
@@ -146,7 +146,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
               onPanEnd: (details) {
                 if (widget.auto.startingPose != null &&
                     (_draggingStartPos || _draggingStartRot)) {
-                  StartingPose dragEnd = widget.auto.startingPose!.clone();
+                  Pose2d dragEnd = widget.auto.startingPose!.clone();
                   widget.undoStack.add(Change(
                     _dragOldValue,
                     () {

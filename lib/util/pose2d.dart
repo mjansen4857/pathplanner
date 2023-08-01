@@ -1,17 +1,15 @@
 import 'dart:math';
 
-class StartingPose {
+class Pose2d {
   Point position;
   num rotation;
 
-  StartingPose({
-    required this.position,
-    required this.rotation,
+  Pose2d({
+    this.position = const Point(0, 0),
+    this.rotation = 0,
   });
 
-  StartingPose.defaultPose() : this(position: const Point(2, 2), rotation: 0);
-
-  StartingPose.fromJson(Map<String, dynamic> json)
+  Pose2d.fromJson(Map<String, dynamic> json)
       : this(
           position: _pointFromJson(json['position']),
           rotation: json['rotation'] ?? 0,
@@ -35,8 +33,8 @@ class StartingPose {
     };
   }
 
-  StartingPose clone() {
-    return StartingPose(
+  Pose2d clone() {
+    return Pose2d(
       position: Point(position.x, position.y),
       rotation: rotation,
     );
@@ -44,7 +42,7 @@ class StartingPose {
 
   @override
   bool operator ==(Object other) =>
-      other is StartingPose &&
+      other is Pose2d &&
       other.runtimeType == runtimeType &&
       other.position == position &&
       other.rotation == rotation;

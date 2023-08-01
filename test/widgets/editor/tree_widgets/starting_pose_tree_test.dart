@@ -4,7 +4,7 @@ import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
-import 'package:pathplanner/auto/starting_pose.dart';
+import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/starting_pose_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -20,7 +20,7 @@ void main() {
       autoDir: '/paths',
       fs: MemoryFileSystem(),
     );
-    auto.startingPose = StartingPose(position: const Point(0, 0), rotation: 0);
+    auto.startingPose = Pose2d(position: const Point(0, 0), rotation: 0);
     autoChanged = false;
   });
 

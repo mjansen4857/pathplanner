@@ -6,7 +6,7 @@ import 'package:file/memory.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
-import 'package:pathplanner/auto/starting_pose.dart';
+import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
@@ -21,7 +21,7 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        startingPose: StartingPose.defaultPose(),
+        startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );
@@ -29,7 +29,7 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        startingPose: StartingPose.defaultPose(),
+        startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );
@@ -53,7 +53,7 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        startingPose: StartingPose.defaultPose(),
+        startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
       );

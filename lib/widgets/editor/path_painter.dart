@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:pathplanner/auto/starting_pose.dart';
+import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -21,7 +21,7 @@ class PathPainter extends CustomPainter {
   final int? hoveredMarker;
   final int? selectedMarker;
   final Size robotSize;
-  final StartingPose? startingPose;
+  final Pose2d? startingPose;
 
   late num robotRadius;
 

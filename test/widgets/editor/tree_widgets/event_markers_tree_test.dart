@@ -45,7 +45,7 @@ void main() {
       home: Scaffold(
         body: EventMarkersTree(
           path: path,
-          onPathChanged: () => pathChanged = true,
+          onPathChangedNoSim: () => pathChanged = true,
           onMarkerHovered: (value) => hoveredMarker = value,
           onMarkerSelected: (value) => selectedMarker = value,
           undoStack: undoStack,
@@ -75,7 +75,7 @@ void main() {
       home: Scaffold(
         body: EventMarkersTree(
           path: path,
-          onPathChanged: () => pathChanged = true,
+          onPathChangedNoSim: () => pathChanged = true,
           onMarkerHovered: (value) => hoveredMarker = value,
           onMarkerSelected: (value) => selectedMarker = value,
           undoStack: undoStack,
@@ -94,7 +94,7 @@ void main() {
       home: Scaffold(
         body: EventMarkersTree(
           path: path,
-          onPathChanged: () => pathChanged = true,
+          onPathChangedNoSim: () => pathChanged = true,
           onMarkerHovered: (value) => hoveredMarker = value,
           onMarkerSelected: (value) => selectedMarker = value,
           undoStack: undoStack,
@@ -123,7 +123,7 @@ void main() {
       home: Scaffold(
         body: EventMarkersTree(
           path: path,
-          onPathChanged: () => pathChanged = true,
+          onPathChangedNoSim: () => pathChanged = true,
           onMarkerHovered: (value) => hoveredMarker = value,
           onMarkerSelected: (value) => selectedMarker = value,
           undoStack: undoStack,
@@ -155,7 +155,7 @@ void main() {
       home: Scaffold(
         body: EventMarkersTree(
           path: path,
-          onPathChanged: () => pathChanged = true,
+          onPathChangedNoSim: () => pathChanged = true,
           onMarkerHovered: (value) => hoveredMarker = value,
           onMarkerSelected: (value) => selectedMarker = value,
           undoStack: undoStack,
@@ -187,7 +187,7 @@ void main() {
       home: Scaffold(
         body: EventMarkersTree(
           path: path,
-          onPathChanged: () => pathChanged = true,
+          onPathChangedNoSim: () => pathChanged = true,
           onMarkerHovered: (value) => hoveredMarker = value,
           onMarkerSelected: (value) => selectedMarker = value,
           undoStack: undoStack,
@@ -217,7 +217,7 @@ void main() {
       home: Scaffold(
         body: EventMarkersTree(
           path: path,
-          onPathChanged: () => pathChanged = true,
+          onPathChangedNoSim: () => pathChanged = true,
           onMarkerHovered: (value) => hoveredMarker = value,
           onMarkerSelected: (value) => selectedMarker = value,
           undoStack: undoStack,
@@ -252,7 +252,7 @@ void main() {
       home: Scaffold(
         body: EventMarkersTree(
           path: path,
-          onPathChanged: () => pathChanged = true,
+          onPathChangedNoSim: () => pathChanged = true,
           onMarkerHovered: (value) => hoveredMarker = value,
           onMarkerSelected: (value) => selectedMarker = value,
           undoStack: undoStack,
@@ -282,7 +282,7 @@ void main() {
       home: Scaffold(
         body: EventMarkersTree(
           path: path,
-          onPathChanged: () => pathChanged = true,
+          onPathChangedNoSim: () => pathChanged = true,
           onMarkerHovered: (value) => hoveredMarker = value,
           onMarkerSelected: (value) => selectedMarker = value,
           undoStack: undoStack,

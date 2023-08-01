@@ -279,24 +279,109 @@ class PathPlannerPath {
 
     pathPoints.clear();
 
+    List<RotationTarget> unaddedTargets = List.from(rotationTargets);
+    unaddedTargets
+        .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+
     for (int i = 0; i < waypoints.length - 1; i++) {
       for (double t = 0; t < 1.0; t += 0.05) {
-        pathPoints.add(PathPoint(
-          position: GeometryUtil.cubicLerp(
-              waypoints[i].anchor,
-              waypoints[i].nextControl!,
-              waypoints[i + 1].prevControl!,
-              waypoints[i + 1].anchor,
-              t),
-        ));
+        num actualWaypointPos = i + t;
+        num? rotation;
+
+        if (unaddedTargets.isNotEmpty) {
+          if ((unaddedTargets[0].waypointRelativePos - actualWaypointPos)
+                  .abs() <=
+              (unaddedTargets[0].waypointRelativePos -
+                  min(actualWaypointPos + 0.05, waypoints.length - 1))) {
+            rotation = unaddedTargets.removeAt(0).rotationDegrees;
+          }
+        }
+
+        PathConstraints? constraints;
+        for (ConstraintsZone z in constraintZones) {
+          if (actualWaypointPos >= z.minWaypointRelativePos &&
+              actualWaypointPos <= z.maxWaypointRelativePos) {
+            constraints = z.constraints;
+            break;
+          }
+        }
+
+        Point position = GeometryUtil.cubicLerp(
+            waypoints[i].anchor,
+            waypoints[i].nextControl!,
+            waypoints[i + 1].prevControl!,
+            waypoints[i + 1].anchor,
+            t);
+        num dist = (actualWaypointPos == 0)
+            ? 0
+            : (pathPoints.last.distanceAlongPath +
+                (pathPoints.last.position.distanceTo(position)));
+
+        pathPoints.add(
+          PathPoint(
+            position: position,
+            holonomicRotation: rotation,
+            constraints: constraints ?? globalConstraints,
+            distanceAlongPath: dist,
+          ),
+        );
       }
 
       if (i == waypoints.length - 2) {
         pathPoints.add(PathPoint(
           position: waypoints[waypoints.length - 1].anchor,
+          holonomicRotation: goalEndState.rotation,
+          constraints: globalConstraints,
+          distanceAlongPath: pathPoints.last.distanceAlongPath +
+              (pathPoints.last.position
+                  .distanceTo(waypoints[waypoints.length - 1].anchor)),
         ));
       }
     }
+
+    for (int i = 0; i < pathPoints.length; i++) {
+      num curveRadius = _getCurveRadiusAtPoint(i);
+
+      if (curveRadius.isFinite) {
+        pathPoints[i].maxV = min(
+            sqrt(pathPoints[i].constraints.maxAcceleration * curveRadius),
+            pathPoints[i].constraints.maxVelocity);
+      } else {
+        pathPoints[i].maxV = pathPoints[i].constraints.maxVelocity;
+      }
+    }
+  }
+
+  num _getCurveRadiusAtPoint(int index) {
+    if (pathPoints.length < 3) {
+      return double.infinity;
+    }
+
+    if (index == 0) {
+      return _calculateRadius(pathPoints[index].position,
+          pathPoints[index + 1].position, pathPoints[index + 2].position);
+    } else if (index == pathPoints.length - 1) {
+      return _calculateRadius(pathPoints[index - 2].position,
+          pathPoints[index - 1].position, pathPoints[index].position);
+    } else {
+      return _calculateRadius(pathPoints[index - 1].position,
+          pathPoints[index].position, pathPoints[index + 1].position);
+    }
+  }
+
+  num _calculateRadius(Point a, Point b, Point c) {
+    Point vba = a - b;
+    Point vbc = c - b;
+    num crossZ = (vba.x * vbc.y) - (vba.y * vbc.x);
+    num sign = (crossZ < 0) ? 1 : -1;
+
+    num ab = a.distanceTo(b);
+    num bc = b.distanceTo(c);
+    num ac = a.distanceTo(c);
+
+    num p = (ab + bc + ac) / 2;
+    num area = sqrt((p * (p - ab) * (p - bc) * (p - ac)).abs());
+    return sign * (ab * bc * ac) / (4 * area);
   }
 
   PathPlannerPath duplicate(String newName) {

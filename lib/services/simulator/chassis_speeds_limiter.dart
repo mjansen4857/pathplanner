@@ -6,7 +6,7 @@ class ChassisSpeedsLimiter {
   num translationLimit;
   num rotationLimit;
 
-  final ChassisSpeeds _prevVal;
+  ChassisSpeeds _prevVal;
 
   ChassisSpeedsLimiter(
       {required this.translationLimit,
@@ -41,6 +41,10 @@ class ChassisSpeedsLimiter {
     }
 
     return _prevVal;
+  }
+
+  void reset(ChassisSpeeds currentValue) {
+    _prevVal = currentValue;
   }
 }
 

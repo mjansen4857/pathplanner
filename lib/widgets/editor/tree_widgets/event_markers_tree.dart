@@ -11,7 +11,7 @@ import 'package:undo/undo.dart';
 
 class EventMarkersTree extends StatefulWidget {
   final PathPlannerPath path;
-  final VoidCallback? onPathChanged;
+  final VoidCallback? onPathChangedNoSim;
   final ValueChanged<int?>? onMarkerHovered;
   final ValueChanged<int?>? onMarkerSelected;
   final int? initiallySelectedMarker;
@@ -20,7 +20,7 @@ class EventMarkersTree extends StatefulWidget {
   const EventMarkersTree({
     super.key,
     required this.path,
-    this.onPathChanged,
+    this.onPathChangedNoSim,
     this.onMarkerHovered,
     this.onMarkerSelected,
     this.initiallySelectedMarker,
@@ -80,7 +80,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                 PathPlannerPath.cloneEventMarkers(markers),
                 () {
                   markers.add(EventMarker.defaultMarker());
-                  widget.onPathChanged?.call();
+                  widget.onPathChangedNoSim?.call();
                 },
                 (oldValue) {
                   _selectedMarker = null;
@@ -88,7 +88,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                   widget.onMarkerSelected?.call(null);
                   widget.path.eventMarkers =
                       PathPlannerPath.cloneEventMarkers(oldValue);
-                  widget.onPathChanged?.call();
+                  widget.onPathChangedNoSim?.call();
                 },
               ));
             },
@@ -128,11 +128,11 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                 markers[markerIdx].name,
                 () {
                   markers[markerIdx].name = value;
-                  widget.onPathChanged?.call();
+                  widget.onPathChangedNoSim?.call();
                 },
                 (oldValue) {
                   markers[markerIdx].name = oldValue;
-                  widget.onPathChanged?.call();
+                  widget.onPathChangedNoSim?.call();
                 },
               ));
             },
@@ -151,14 +151,14 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                     markers.removeAt(markerIdx);
                     widget.onMarkerSelected?.call(null);
                     widget.onMarkerHovered?.call(null);
-                    widget.onPathChanged?.call();
+                    widget.onPathChangedNoSim?.call();
                   },
                   (oldValue) {
                     widget.path.eventMarkers =
                         PathPlannerPath.cloneEventMarkers(oldValue);
                     widget.onMarkerSelected?.call(null);
                     widget.onMarkerHovered?.call(null);
-                    widget.onPathChanged?.call();
+                    widget.onPathChangedNoSim?.call();
                   },
                 ));
               },
@@ -183,17 +183,17 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
               _sliderChangeStart,
               () {
                 markers[markerIdx].waypointRelativePos = value;
-                widget.onPathChanged?.call();
+                widget.onPathChangedNoSim?.call();
               },
               (oldValue) {
                 markers[markerIdx].waypointRelativePos = oldValue;
-                widget.onPathChanged?.call();
+                widget.onPathChangedNoSim?.call();
               },
             ));
           },
           onChanged: (value) {
             markers[markerIdx].waypointRelativePos = value;
-            widget.onPathChanged?.call();
+            widget.onPathChangedNoSim?.call();
           },
         ),
         _buildCommandCard(markerIdx),
@@ -211,7 +211,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
           command: command,
           removable: false,
           undoStack: widget.undoStack,
-          onUpdated: widget.onPathChanged,
+          onUpdated: widget.onPathChangedNoSim,
           onGroupTypeChanged: (value) {
             widget.undoStack.add(Change(
               command.type,
@@ -219,13 +219,13 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                 List<Command> cmds = command.commands;
                 markers[markerIdx].command =
                     Command.fromType(value, commands: cmds) as CommandGroup;
-                widget.onPathChanged?.call();
+                widget.onPathChangedNoSim?.call();
               },
               (oldValue) {
                 List<Command> cmds = command.commands;
                 markers[markerIdx].command =
                     Command.fromType(oldValue, commands: cmds) as CommandGroup;
-                widget.onPathChanged?.call();
+                widget.onPathChangedNoSim?.call();
               },
             ));
           },

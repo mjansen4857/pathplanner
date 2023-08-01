@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
@@ -7,6 +8,8 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/services/log.dart';
+import 'package:pathplanner/services/simulator/path_simulator.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
@@ -51,6 +54,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
   Waypoint? _dragOldValue;
   int? _draggedRotationIdx;
   num? _dragRotationOldValue;
+  SimulatedPath? _simPath;
 
   late Size _robotSize;
 
@@ -81,6 +85,8 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
         minimalWeight: 0.25,
       ),
     ];
+
+    _simulatePath();
   }
 
   @override
@@ -130,6 +136,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                           _yPixelsToMeters(details.localPosition.dy)));
                       widget.path.generateAndSavePath();
                     });
+                    _simulatePath();
                   },
                   (oldValue) {
                     setState(() {
@@ -137,6 +144,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                           PathPlannerPath.cloneWaypoints(oldValue);
                       _setSelectedWaypoint(null);
                       widget.path.generateAndSavePath();
+                      _simulatePath();
                     });
                   },
                 ));
@@ -250,12 +258,14 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                           waypoints[index] = dragEnd.clone();
                         }
                         widget.path.generateAndSavePath();
+                        _simulatePath();
                       });
                     },
                     (oldValue) {
                       setState(() {
                         waypoints[index] = oldValue!.clone();
                         widget.path.generateAndSavePath();
+                        _simulatePath();
                       });
                     },
                   ));
@@ -269,12 +279,14 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                         setState(() {
                           widget.path.goalEndState.rotation = endRotation;
                           widget.path.generateAndSavePath();
+                          _simulatePath();
                         });
                       },
                       (oldValue) {
                         setState(() {
                           widget.path.goalEndState.rotation = oldValue!;
                           widget.path.generateAndSavePath();
+                          _simulatePath();
                         });
                       },
                     ));
@@ -289,6 +301,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                           widget.path.rotationTargets[rotationIdx]
                               .rotationDegrees = endRotation;
                           widget.path.generateAndSavePath();
+                          _simulatePath();
                         });
                       },
                       (oldValue) {
@@ -296,6 +309,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                           widget.path.rotationTargets[rotationIdx]
                               .rotationDegrees = oldValue!;
                           widget.path.generateAndSavePath();
+                          _simulatePath();
                         });
                       },
                     ));
@@ -370,6 +384,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
+                    pathRuntime: _simPath?.runtime,
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
                     initiallySelectedRotTarget: _selectedRotTarget,
@@ -377,6 +392,12 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                     waypointsTreeController: _waypointsTreeController,
                     undoStack: widget.undoStack,
                     onPathChanged: () {
+                      setState(() {
+                        widget.path.generateAndSavePath();
+                        _simulatePath();
+                      });
+                    },
+                    onPathChangedNoSim: () {
                       setState(() {
                         widget.path.generateAndSavePath();
                       });
@@ -432,6 +453,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                             }
 
                             widget.path.generateAndSavePath();
+                            _simulatePath();
                           });
                         },
                         (oldValue) {
@@ -453,6 +475,7 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
                                 PathPlannerPath.cloneRotationTargets(
                                     oldValue[3] as List<RotationTarget>);
                             widget.path.generateAndSavePath();
+                            _simulatePath();
                           });
                         },
                       ));
@@ -511,6 +534,15 @@ class _SplitPathEditorState extends State<SplitPathEditor> {
         ),
       ],
     );
+  }
+
+  void _simulatePath() async {
+    Stopwatch s = Stopwatch()..start();
+    SimulatedPath p = await compute(simulatePath, widget.path);
+    Log.debug('Simulated path in ${s.elapsedMilliseconds}ms');
+    setState(() {
+      _simPath = p;
+    });
   }
 
   num _adjustDeletedWaypointRelativePos(num pos, int deletedWaypointIdx) {

@@ -21,12 +21,14 @@ class PathTree extends StatefulWidget {
   final ValueChanged<int>? onWaypointDeleted;
   final VoidCallback? onSideSwapped;
   final VoidCallback? onPathChanged;
+  final VoidCallback? onPathChangedNoSim;
   final WaypointsTreeController? waypointsTreeController;
   final int? initiallySelectedWaypoint;
   final int? initiallySelectedZone;
   final int? initiallySelectedRotTarget;
   final int? initiallySelectedMarker;
   final ChangeStack undoStack;
+  final num? pathRuntime;
 
   const PathTree({
     super.key,
@@ -48,6 +50,8 @@ class PathTree extends StatefulWidget {
     this.onMarkerSelected,
     this.initiallySelectedMarker,
     required this.undoStack,
+    this.pathRuntime,
+    this.onPathChangedNoSim,
   });
 
   @override
@@ -63,9 +67,9 @@ class _PathTreeState extends State<PathTree> {
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             children: [
-              const Text(
-                'Simulated Driving Time: ~X.XXs',
-                style: TextStyle(fontSize: 18),
+              Text(
+                'Simulated Driving Time: ~${(widget.pathRuntime ?? 0).toStringAsFixed(2)}s',
+                style: const TextStyle(fontSize: 18),
               ),
               Expanded(child: Container()),
               Tooltip(
@@ -110,6 +114,7 @@ class _PathTreeState extends State<PathTree> {
                       'rotations${widget.path.rotationTargets.length}'),
                   path: widget.path,
                   onPathChanged: widget.onPathChanged,
+                  onPathChangedNoSim: widget.onPathChangedNoSim,
                   onTargetHovered: widget.onRotTargetHovered,
                   onTargetSelected: widget.onRotTargetSelected,
                   initiallySelectedTarget: widget.initiallySelectedRotTarget,
@@ -118,7 +123,7 @@ class _PathTreeState extends State<PathTree> {
                 EventMarkersTree(
                   key: ValueKey('markers${widget.path.eventMarkers.length}'),
                   path: widget.path,
-                  onPathChanged: widget.onPathChanged,
+                  onPathChangedNoSim: widget.onPathChangedNoSim,
                   onMarkerHovered: widget.onMarkerHovered,
                   onMarkerSelected: widget.onMarkerSelected,
                   initiallySelectedMarker: widget.initiallySelectedMarker,
@@ -128,6 +133,7 @@ class _PathTreeState extends State<PathTree> {
                   key: ValueKey('zones${widget.path.constraintZones.length}'),
                   path: widget.path,
                   onPathChanged: widget.onPathChanged,
+                  onPathChangedNoSim: widget.onPathChangedNoSim,
                   onZoneHovered: widget.onZoneHovered,
                   onZoneSelected: widget.onZoneSelected,
                   initiallySelectedZone: widget.initiallySelectedZone,

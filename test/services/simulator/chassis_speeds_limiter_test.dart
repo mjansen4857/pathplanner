@@ -52,7 +52,8 @@ void main() {
     expect(speeds.vy, closeTo(1.46, epsilon));
     expect(speeds.omega, closeTo(1.9, epsilon));
 
-    speeds = limiter.calculate(ChassisSpeeds(vx: 0, vy: 0, omega: 0), 50.0);
+    limiter.reset(ChassisSpeeds(vx: 0, vy: 0, omega: 0));
+    speeds = limiter.calculate(ChassisSpeeds(vx: 0, vy: 0, omega: 0), 0.1);
 
     expect(speeds.vx, closeTo(0, epsilon));
     expect(speeds.vy, closeTo(0, epsilon));

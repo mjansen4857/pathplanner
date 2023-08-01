@@ -9,6 +9,7 @@ import 'package:undo/undo.dart';
 class RotationTargetsTree extends StatefulWidget {
   final PathPlannerPath path;
   final VoidCallback? onPathChanged;
+  final VoidCallback? onPathChangedNoSim;
   final ValueChanged<int?>? onTargetHovered;
   final ValueChanged<int?>? onTargetSelected;
   final int? initiallySelectedTarget;
@@ -18,6 +19,7 @@ class RotationTargetsTree extends StatefulWidget {
     super.key,
     required this.path,
     this.onPathChanged,
+    this.onPathChangedNoSim,
     this.onTargetHovered,
     this.onTargetSelected,
     this.initiallySelectedTarget,
@@ -213,7 +215,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
           },
           onChanged: (value) {
             rotations[targetIdx].waypointRelativePos = value;
-            widget.onPathChanged?.call();
+            widget.onPathChangedNoSim?.call();
           },
         ),
       ],

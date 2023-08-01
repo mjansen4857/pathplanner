@@ -10,6 +10,7 @@ import 'package:undo/undo.dart';
 class ConstraintZonesTree extends StatefulWidget {
   final PathPlannerPath path;
   final VoidCallback? onPathChanged;
+  final VoidCallback? onPathChangedNoSim;
   final ValueChanged<int?>? onZoneHovered;
   final ValueChanged<int?>? onZoneSelected;
   final int? initiallySelectedZone;
@@ -19,6 +20,7 @@ class ConstraintZonesTree extends StatefulWidget {
     super.key,
     required this.path,
     this.onPathChanged,
+    this.onPathChangedNoSim,
     this.onZoneHovered,
     this.onZoneSelected,
     this.initiallySelectedZone,
@@ -82,7 +84,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                 PathPlannerPath.cloneConstraintZones(constraintZones),
                 () {
                   constraintZones.add(ConstraintsZone.defaultZone());
-                  widget.onPathChanged?.call();
+                  widget.onPathChangedNoSim?.call();
                 },
                 (oldValue) {
                   _selectedZone = null;
@@ -90,7 +92,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                   widget.onZoneSelected?.call(null);
                   widget.path.constraintZones =
                       PathPlannerPath.cloneConstraintZones(oldValue);
-                  widget.onPathChanged?.call();
+                  widget.onPathChangedNoSim?.call();
                 },
               ));
             },
@@ -130,11 +132,11 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                 constraintZones[zoneIdx].name,
                 () {
                   constraintZones[zoneIdx].name = value;
-                  widget.onPathChanged?.call();
+                  widget.onPathChangedNoSim?.call();
                 },
                 (oldValue) {
                   constraintZones[zoneIdx].name = oldValue;
-                  widget.onPathChanged?.call();
+                  widget.onPathChangedNoSim?.call();
                 },
               ));
             },
@@ -339,7 +341,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
           onChanged: (value) {
             if (value <= constraintZones[zoneIdx].maxWaypointRelativePos) {
               constraintZones[zoneIdx].minWaypointRelativePos = value;
-              widget.onPathChanged?.call();
+              widget.onPathChangedNoSim?.call();
             }
           },
         ),
@@ -370,7 +372,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
           onChanged: (value) {
             if (value >= constraintZones[zoneIdx].minWaypointRelativePos) {
               constraintZones[zoneIdx].maxWaypointRelativePos = value;
-              widget.onPathChanged?.call();
+              widget.onPathChangedNoSim?.call();
             }
           },
         ),

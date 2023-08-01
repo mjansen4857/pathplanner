@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:pathplanner/util/math_util.dart';
 
 class RotationPController {
@@ -9,8 +7,8 @@ class RotationPController {
     this.kP = 0,
   });
 
-  num calculate(num measurement, num setpoint, num elapsedTime) {
-    num posError = MathUtil.inputModulus(setpoint - measurement, -pi, pi);
+  num calculate(num measurement, num setpoint) {
+    num posError = MathUtil.inputModulus(setpoint - measurement, -180, 180);
 
     return kP * posError;
   }

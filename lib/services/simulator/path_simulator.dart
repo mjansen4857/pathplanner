@@ -76,9 +76,7 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
   PathPoint nextRotationTarget = _findNextRotationTarget(path, 0);
   bool lockDecel = false;
 
-  bool finished = false;
-
-  while (!finished) {
+  while (true) {
     int closestPointIdx =
         _getClosestPointIndex(currentPose.position, path.pathPoints);
     PathConstraints constraints = path.pathPoints[closestPointIdx].constraints;
@@ -120,15 +118,19 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
     num headingRadians = atan2(lastLookahead.y - currentPose.position.y,
         lastLookahead.x - currentPose.position.x);
 
-    num distanceToEnd =
-        currentPose.position.distanceTo(path.pathPoints.last.position);
-    num neededDecel = pow(currentRobotVel - path.goalEndState.velocity, 2) /
-        (2 * distanceToEnd);
+    if (path.goalEndState.velocity == 0 && !lockDecel) {
+      num distanceToEnd =
+          currentPose.position.distanceTo(path.pathPoints.last.position);
+      num neededDecel = pow(currentRobotVel, 2) / (2 * distanceToEnd);
+      if (neededDecel >= constraints.maxAcceleration) {
+        lockDecel = true;
+      }
+    }
 
-    if (lockDecel ||
-        (currentRobotVel > path.goalEndState.velocity &&
-            neededDecel >= constraints.maxAcceleration)) {
-      lockDecel = true;
+    if (lockDecel) {
+      num distanceToEnd =
+          currentPose.position.distanceTo(path.pathPoints.last.position);
+      num neededDecel = pow(currentRobotVel, 2) / (2 * distanceToEnd);
 
       num nextVel = max(path.goalEndState.velocity,
           currentRobotVel - (neededDecel * simulationPeriod));
@@ -145,7 +147,8 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
       );
       limiter.reset(currentSpeeds);
     } else {
-      num maxV = constraints.maxVelocity;
+      num maxV =
+          min(constraints.maxVelocity, path.pathPoints[closestPointIdx].maxV);
 
       num stoppingDist =
           pow(currentRobotVel, 2) / (2 * constraints.maxAcceleration);
@@ -161,8 +164,7 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
           num dist = currentPose.position.distanceTo(p.position);
           num neededDecel =
               (pow(currentRobotVel, 2) - pow(p.maxV, 2)) / (2 * dist);
-          if (neededDecel >= constraints.maxAcceleration ||
-              i == closestPointIdx) {
+          if (neededDecel >= constraints.maxAcceleration) {
             maxV = p.maxV;
             break;
           }
@@ -199,15 +201,19 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
     Point endPos = path.pathPoints.last.position;
     if (_pointEquals(lastLookahead, endPos)) {
       num distanceToEnd = currentPose.position.distanceTo(endPos);
+      if (path.goalEndState.velocity != 0 && distanceToEnd <= 0.1) {
+        break;
+      }
+
       if (distanceToEnd >= lastDistToEnd || path.goalEndState.velocity == 0) {
         if (path.goalEndState.velocity == 0) {
           num currentVel =
               sqrt(pow(currentSpeeds.vx, 2) + pow(currentSpeeds.vy, 2));
           if (currentVel.abs() <= 0.1) {
-            finished = true;
+            break;
           }
         } else {
-          finished = true;
+          break;
         }
       }
       lastDistToEnd = distanceToEnd;

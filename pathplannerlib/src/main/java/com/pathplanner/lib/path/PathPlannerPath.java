@@ -211,6 +211,7 @@ public class PathPlannerPath {
       }
 
       allPoints.get(allPoints.size() - 1).holonomicRotation = goalEndState.getRotation();
+      allPoints.get(allPoints.size() - 1).maxV = goalEndState.getVelocity();
     }
   }
 

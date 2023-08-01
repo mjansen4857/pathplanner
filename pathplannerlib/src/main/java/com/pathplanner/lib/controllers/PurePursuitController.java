@@ -129,17 +129,25 @@ public class PurePursuitController {
 
     Rotation2d heading = lastLookahead.minus(currentPose.getTranslation()).getAngle();
 
-    double distanceToEnd =
-        currentPose.getTranslation().getDistance(path.getPoint(path.numPoints() - 1).position);
+    if (path.getGoalEndState().getVelocity() == 0 && !lockDecel) {
+      double distanceToEnd =
+          currentPose.getTranslation().getDistance(path.getPoint(path.numPoints() - 1).position);
 
-    double neededDeceleration =
-        Math.pow(currentRobotVel - path.getGoalEndState().getVelocity(), 2) / (2 * distanceToEnd);
+      double neededDeceleration =
+          Math.pow(currentRobotVel - path.getGoalEndState().getVelocity(), 2) / (2 * distanceToEnd);
 
-    if (lockDecel
-        || (currentRobotVel > path.getGoalEndState().getVelocity()
-            && neededDeceleration >= constraints.getMaxAccelerationMpsSq())) {
-      lockDecel = true;
+      if (neededDeceleration >= constraints.getMaxAccelerationMpsSq()) {
+        lockDecel = true;
+      }
+    }
+
+    if (lockDecel) {
       // Deccel without limiter in case it needs to deccel faster than constraints
+      double distanceToEnd =
+          currentPose.getTranslation().getDistance(path.getPoint(path.numPoints() - 1).position);
+
+      double neededDeceleration = Math.pow(currentRobotVel, 2) / (2 * distanceToEnd);
+
       double nextVel =
           Math.max(
               path.getGoalEndState().getVelocity(), currentRobotVel - (neededDeceleration * 0.02));
@@ -154,7 +162,7 @@ public class PurePursuitController {
 
       return lastCommanded;
     } else {
-      double maxV = constraints.getMaxVelocityMps();
+      double maxV = Math.min(constraints.getMaxVelocityMps(), path.getPoint(closestPointIdx).maxV);
       double lastVel = Math.hypot(lastCommanded.vxMetersPerSecond, lastCommanded.vyMetersPerSecond);
 
       double stoppingDistance = Math.pow(lastVel, 2) / (2 * constraints.getMaxAccelerationMpsSq());
@@ -169,7 +177,7 @@ public class PurePursuitController {
         if (p.maxV < lastVel) {
           double dist = currentPose.getTranslation().getDistance(p.position);
           double neededDeccel = ((lastVel * lastVel) - (p.maxV * p.maxV)) / (2 * dist);
-          if (neededDeccel >= constraints.getMaxAccelerationMpsSq() || i == closestPointIdx) {
+          if (neededDeccel >= constraints.getMaxAccelerationMpsSq()) {
             maxV = p.maxV;
             break;
           }
@@ -192,6 +200,10 @@ public class PurePursuitController {
     Translation2d endPos = path.getPoint(path.numPoints() - 1).position;
     if (lastLookahead.equals(endPos)) {
       double distanceToEnd = currentPose.getTranslation().getDistance(endPos);
+      if (path.getGoalEndState().getVelocity() != 0 && distanceToEnd <= 0.1) {
+        return true;
+      }
+
       if (distanceToEnd >= lastDistToEnd || path.getGoalEndState().getVelocity() == 0) {
         if (path.getGoalEndState().getVelocity() == 0) {
           double currentVel =

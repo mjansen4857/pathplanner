@@ -351,6 +351,8 @@ class PathPlannerPath {
         pathPoints[i].maxV = pathPoints[i].constraints.maxVelocity;
       }
     }
+
+    pathPoints.last.maxV = goalEndState.velocity;
   }
 
   num _getCurveRadiusAtPoint(int index) {

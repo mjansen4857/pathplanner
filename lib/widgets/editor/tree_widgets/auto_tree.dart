@@ -11,6 +11,7 @@ class AutoTree extends StatefulWidget {
   final VoidCallback? onSideSwapped;
   final VoidCallback? onAutoChanged;
   final ChangeStack undoStack;
+  final num? autoRuntime;
 
   const AutoTree({
     super.key,
@@ -20,6 +21,7 @@ class AutoTree extends StatefulWidget {
     this.onSideSwapped,
     this.onAutoChanged,
     required this.undoStack,
+    this.autoRuntime,
   });
 
   @override
@@ -35,9 +37,9 @@ class _AutoTreeState extends State<AutoTree> {
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
             children: [
-              const Text(
-                'Simulated Driving Time: ~X.XXs',
-                style: TextStyle(fontSize: 18),
+              Text(
+                'Simulated Driving Time: ~${(widget.autoRuntime ?? 0).toStringAsFixed(2)}s',
+                style: const TextStyle(fontSize: 18),
               ),
               Expanded(child: Container()),
               Tooltip(

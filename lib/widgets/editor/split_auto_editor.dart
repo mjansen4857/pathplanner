@@ -1,8 +1,11 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/services/log.dart';
+import 'package:pathplanner/services/simulator/path_simulator.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
@@ -37,19 +40,24 @@ class SplitAutoEditor extends StatefulWidget {
   State<SplitAutoEditor> createState() => _SplitAutoEditorState();
 }
 
-class _SplitAutoEditorState extends State<SplitAutoEditor> {
+class _SplitAutoEditorState extends State<SplitAutoEditor>
+    with SingleTickerProviderStateMixin {
   final MultiSplitViewController _controller = MultiSplitViewController();
   String? _hoveredPath;
   late bool _treeOnRight;
   bool _draggingStartPos = false;
   bool _draggingStartRot = false;
   Pose2d? _dragOldValue;
+  SimulatedPath? _simPath;
 
   late Size _robotSize;
+  late AnimationController _previewController;
 
   @override
   void initState() {
     super.initState();
+
+    _previewController = AnimationController(vsync: this);
 
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
@@ -72,6 +80,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
         minimalWeight: 0.25,
       ),
     ];
+
+    _simulateAuto();
+  }
+
+  @override
+  void dispose() {
+    _previewController.dispose();
+    super.dispose();
   }
 
   @override
@@ -152,10 +168,12 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
                     () {
                       widget.auto.startingPose = dragEnd.clone();
                       widget.onAutoChanged?.call();
+                      _simulateAuto();
                     },
                     (oldValue) {
                       widget.auto.startingPose = oldValue!.clone();
                       widget.onAutoChanged?.call();
+                      _simulateAuto();
                     },
                   ));
                   _draggingStartPos = false;
@@ -176,6 +194,9 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
                           fieldImage: widget.fieldImage,
                           robotSize: _robotSize,
                           startingPose: widget.auto.startingPose,
+                          simulatedPath: _simPath,
+                          animation: _previewController.view,
+                          previewColor: colorScheme.primary,
                         ),
                       ),
                     ),
@@ -223,13 +244,17 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
                   padding: const EdgeInsets.all(8.0),
                   child: AutoTree(
                     auto: widget.auto,
+                    autoRuntime: _simPath?.runtime,
                     allPathNames: widget.allPathNames,
                     onPathHovered: (value) {
                       setState(() {
                         _hoveredPath = value;
                       });
                     },
-                    onAutoChanged: widget.onAutoChanged,
+                    onAutoChanged: () {
+                      widget.onAutoChanged?.call();
+                      _simulateAuto();
+                    },
                     onSideSwapped: () => setState(() {
                       _treeOnRight = !_treeOnRight;
                       widget.prefs.setBool(PrefsKeys.treeOnRight, _treeOnRight);
@@ -245,6 +270,23 @@ class _SplitAutoEditorState extends State<SplitAutoEditor> {
         ),
       ],
     );
+  }
+
+  void _simulateAuto() async {
+    Stopwatch s = Stopwatch()..start();
+    SimulatedPath p = await compute(
+        simulateAuto,
+        SimulatableAuto(
+            paths: widget.autoPaths, startingPose: widget.auto.startingPose));
+    Log.debug('Simulated auto in ${s.elapsedMilliseconds}ms');
+    setState(() {
+      _simPath = p;
+    });
+    _previewController.stop();
+    _previewController.reset();
+    _previewController.duration =
+        Duration(milliseconds: (p.runtime * 1000).toInt());
+    _previewController.repeat();
   }
 
   double _xPixelsToMeters(double pixels) {

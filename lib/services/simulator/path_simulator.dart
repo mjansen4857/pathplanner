@@ -12,8 +12,46 @@ import 'package:pathplanner/util/pose2d.dart';
 const num simulationPeriod = 0.02;
 const num minLookahead = 0.5;
 
-Future<SimulatedPath> simulatePath(PathPlannerPath path,
-    [Pose2d? startingPose, ChassisSpeeds? startingSpeeds]) async {
+class SimulatableAuto {
+  final List<PathPlannerPath> paths;
+  final Pose2d? startingPose;
+
+  const SimulatableAuto({
+    required this.paths,
+    this.startingPose,
+  });
+}
+
+Future<SimulatedPath> simulateAuto(SimulatableAuto auto) async {
+  SimulatedPath sim = SimulatedPath();
+
+  if (auto.paths.isNotEmpty) {
+    SimulatedPath path =
+        await _simulatePath(auto.paths.first, auto.startingPose, null);
+
+    sim.runtime += path.runtime;
+    sim.pathStates.addAll(path.pathStates);
+
+    for (int i = 1; i < auto.paths.length; i++) {
+      path = await _simulatePath(
+          auto.paths[i], sim.pathStates.last, path.endSpeeds);
+
+      sim.runtime += path.runtime;
+      sim.pathStates.addAll(path.pathStates);
+    }
+
+    sim.endSpeeds = path.endSpeeds;
+  }
+
+  return sim;
+}
+
+Future<SimulatedPath> simulatePath(PathPlannerPath path) {
+  return _simulatePath(path, null, null);
+}
+
+Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
+    ChassisSpeeds? startingSpeeds) async {
   SimulatedPath sim = SimulatedPath();
 
   if (path.pathPoints.length < 2) {
@@ -21,7 +59,7 @@ Future<SimulatedPath> simulatePath(PathPlannerPath path,
   }
 
   Pose2d currentPose =
-      startingPose ?? Pose2d(position: path.pathPoints.first.position);
+      startingPose?.clone() ?? Pose2d(position: path.pathPoints.first.position);
   sim.pathStates.add(Pose2d(
     position: currentPose.position,
     rotation: currentPose.rotation,
@@ -176,6 +214,7 @@ Future<SimulatedPath> simulatePath(PathPlannerPath path,
     }
   }
 
+  sim.endSpeeds = currentSpeeds;
   return sim;
 }
 
@@ -281,10 +320,12 @@ num _positionDelta(Point a, Point b) {
 class SimulatedPath {
   num runtime;
   List<Pose2d> pathStates;
+  ChassisSpeeds endSpeeds;
 
   SimulatedPath()
       : runtime = 0,
-        pathStates = [];
+        pathStates = [],
+        endSpeeds = ChassisSpeeds();
 
   Pose2d? getState(num time) {
     if (pathStates.isEmpty) {

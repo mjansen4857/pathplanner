@@ -42,6 +42,8 @@ public class PathfindCommand extends CommandBase {
       Subsystem... requirements) {
     addRequirements(requirements);
 
+    ADStar.ensureInitialized();
+
     this.targetPath = targetPath;
     this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
     this.goalEndState =
@@ -66,6 +68,8 @@ public class PathfindCommand extends CommandBase {
       Consumer<ChassisSpeeds> fieldRelativeOutput,
       Subsystem... requirements) {
     addRequirements(requirements);
+
+    ADStar.ensureInitialized();
 
     this.targetPath = null;
     this.targetPose = targetPose;

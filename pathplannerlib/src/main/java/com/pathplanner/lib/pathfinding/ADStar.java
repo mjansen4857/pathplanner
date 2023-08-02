@@ -19,13 +19,13 @@ public class ADStar {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;
   private static final double SMOOTHING_CONTROL_PCT = 0.33;
 
-  public static final double FIELD_LENGTH = 16.54;
-  public static final double FIELD_WIDTH = 8.02;
+  public static double FIELD_LENGTH;
+  public static double FIELD_WIDTH;
 
-  public static double NODE_SIZE = 0.2;
+  public static double NODE_SIZE;
 
-  public static int NODE_X = (int) Math.ceil(FIELD_LENGTH / NODE_SIZE); // 67
-  public static int NODE_Y = (int) Math.ceil(FIELD_WIDTH / NODE_SIZE); // 33
+  public static int NODE_X;
+  public static int NODE_Y;
 
   private static final double EPS = 2.5;
   private static final int heuristicType = 1; // 0: manhattan, 1: euclidean
@@ -55,7 +55,7 @@ public class ADStar {
 
   private static volatile List<PathPoint> currentPath = new ArrayList<>();
 
-  public static void initialize() {
+  public static void ensureInitialized() {
     if (!running.get()) {
       running.set(true);
       sStart = new GridPosition(0, 0);
@@ -91,6 +91,10 @@ public class ADStar {
               }
             }
           }
+
+          JSONObject fieldSize = (JSONObject) json.get("field_size");
+          FIELD_LENGTH = ((Number) fieldSize.get("x")).doubleValue();
+          FIELD_WIDTH = ((Number) fieldSize.get("y")).doubleValue();
         } catch (Exception e) {
           e.printStackTrace();
         }

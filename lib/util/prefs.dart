@@ -13,6 +13,8 @@ class PrefsKeys {
   static const String pplibClientHost = 'pplibClientHost';
   static const String pathSortOption = 'pathSortOption';
   static const String autoSortOption = 'autoSortOption';
+  static const String pathsCompactView = 'pathsCompactView';
+  static const String autosCompactView = 'pathsCompactView';
 }
 
 class Defaults {
@@ -26,4 +28,6 @@ class Defaults {
   static const bool treeOnRight = true;
   static const String pathSortOption = 'nameAsc';
   static const String autoSortOption = 'nameAsc';
+  static const bool pathsCompactView = false;
+  static const bool autosCompactView = false;
 }

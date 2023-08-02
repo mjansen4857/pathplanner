@@ -38,11 +38,14 @@ class _ProjectPageState extends State<ProjectPage> {
   final MultiSplitViewController _controller = MultiSplitViewController();
   List<PathPlannerPath> _paths = [];
   List<PathPlannerAuto> _autos = [];
-  int _pathGridCount = 2;
   late Directory _pathsDirectory;
   late Directory _autosDirectory;
   late String _pathSortValue;
   late String _autoSortValue;
+  late bool _pathsCompact;
+  late bool _autosCompact;
+  late int _pathGridCount;
+  late int _autosGridCount;
 
   bool _loading = true;
 
@@ -54,15 +57,14 @@ class _ProjectPageState extends State<ProjectPage> {
 
     double leftWeight = widget.prefs.getDouble(PrefsKeys.projectLeftWeight) ??
         Defaults.projectLeftWeight;
-    _pathGridCount = _getCrossAxisCountForWeight(leftWeight);
     _controller.areas = [
       Area(
         weight: leftWeight,
-        minimalWeight: 0.25,
+        minimalWeight: 0.33,
       ),
       Area(
         weight: 1.0 - leftWeight,
-        minimalWeight: 0.25,
+        minimalWeight: 0.33,
       ),
     ];
 
@@ -70,6 +72,13 @@ class _ProjectPageState extends State<ProjectPage> {
         Defaults.pathSortOption;
     _autoSortValue = widget.prefs.getString(PrefsKeys.autoSortOption) ??
         Defaults.autoSortOption;
+    _pathsCompact = widget.prefs.getBool(PrefsKeys.pathsCompactView) ??
+        Defaults.pathsCompactView;
+    _autosCompact = widget.prefs.getBool(PrefsKeys.autosCompactView) ??
+        Defaults.autosCompactView;
+
+    _pathGridCount = _getCrossAxisCountForWeight(leftWeight);
+    _autosGridCount = _getCrossAxisCountForWeight(1.0 - leftWeight);
 
     _load();
   }
@@ -130,6 +139,8 @@ class _ProjectPageState extends State<ProjectPage> {
             setState(() {
               _pathGridCount =
                   _getCrossAxisCountForWeight(_controller.areas[0].weight!);
+              _autosGridCount = _getCrossAxisCountForWeight(
+                  1.0 - _controller.areas[0].weight!);
             });
             widget.prefs.setDouble(PrefsKeys.projectLeftWeight,
                 _controller.areas[0].weight ?? Defaults.projectLeftWeight);
@@ -194,22 +205,30 @@ class _ProjectPageState extends State<ProjectPage> {
               const Divider(),
               _buildOptionsRow(
                 sortValue: _pathSortValue,
-                onSelected: (value) {
+                viewValue: _pathsCompact,
+                onSortChanged: (value) {
                   widget.prefs.setString(PrefsKeys.pathSortOption, value);
                   setState(() {
                     _pathSortValue = value;
                     _sortPaths(_pathSortValue);
                   });
                 },
+                onViewChanged: (value) {
+                  setState(() {
+                    _pathsCompact = value;
+                  });
+                },
               ),
               Expanded(
                 child: GridView.count(
-                  crossAxisCount: _pathGridCount,
-                  childAspectRatio: 1.55,
+                  crossAxisCount:
+                      _pathsCompact ? _pathGridCount + 1 : _pathGridCount,
+                  childAspectRatio: _pathsCompact ? 2.5 : 1.55,
                   children: [
                     for (int i = 0; i < _paths.length; i++)
                       ProjectItemCard(
                         name: _paths[i].name,
+                        compact: _pathsCompact,
                         fieldImage: widget.fieldImage,
                         paths: [_paths[i]],
                         onDuplicated: () {
@@ -356,22 +375,30 @@ class _ProjectPageState extends State<ProjectPage> {
               const Divider(),
               _buildOptionsRow(
                 sortValue: _autoSortValue,
-                onSelected: (value) {
+                viewValue: _autosCompact,
+                onSortChanged: (value) {
                   widget.prefs.setString(PrefsKeys.autoSortOption, value);
                   setState(() {
                     _autoSortValue = value;
                     _sortAutos(_autoSortValue);
                   });
                 },
+                onViewChanged: (value) {
+                  setState(() {
+                    _autosCompact = value;
+                  });
+                },
               ),
               Expanded(
                 child: GridView.count(
-                  crossAxisCount: 4 - _pathGridCount,
-                  childAspectRatio: 1.55,
+                  crossAxisCount:
+                      _autosCompact ? _autosGridCount + 1 : _autosGridCount,
+                  childAspectRatio: _autosCompact ? 2.5 : 1.55,
                   children: [
                     for (int i = 0; i < _autos.length; i++)
                       ProjectItemCard(
                         name: _autos[i].name,
+                        compact: _autosCompact,
                         fieldImage: widget.fieldImage,
                         paths: _getPathsFromNames(_autos[i].getAllPathNames()),
                         onDuplicated: () {
@@ -428,41 +455,94 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
-  Widget _buildOptionsRow(
-      {required String sortValue, required ValueChanged<String> onSelected}) {
+  Widget _buildOptionsRow({
+    required String sortValue,
+    required bool viewValue,
+    required ValueChanged<String> onSortChanged,
+    required ValueChanged<bool> onViewChanged,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6.0),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'Sort:',
-            style: TextStyle(fontSize: 16),
-          ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Material(
-              color: Colors.transparent,
-              child: PopupMenuButton<String>(
-                initialValue: sortValue,
-                tooltip: '',
-                elevation: 12.0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                onSelected: onSelected,
-                itemBuilder: (context) => _sortOptions(),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _sortLabel(sortValue),
-                      const Icon(Icons.arrow_drop_down),
-                    ],
+          Row(
+            children: [
+              const Text(
+                'Sort:',
+                style: TextStyle(fontSize: 16),
+              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Material(
+                  color: Colors.transparent,
+                  child: PopupMenuButton<String>(
+                    initialValue: sortValue,
+                    tooltip: '',
+                    elevation: 12.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onSelected: onSortChanged,
+                    itemBuilder: (context) => _sortOptions(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _sortLabel(sortValue),
+                          const Icon(Icons.arrow_drop_down),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
+          ),
+          Row(
+            children: [
+              const Text(
+                'View:',
+                style: TextStyle(fontSize: 16),
+              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Material(
+                  color: Colors.transparent,
+                  child: PopupMenuButton<bool>(
+                    initialValue: viewValue,
+                    tooltip: '',
+                    elevation: 12.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onSelected: onViewChanged,
+                    itemBuilder: (context) => const [
+                      PopupMenuItem(
+                        value: false,
+                        child: Text('Default'),
+                      ),
+                      PopupMenuItem(
+                        value: true,
+                        child: Text('Compact'),
+                      ),
+                    ],
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(viewValue ? 'Compact' : 'Default',
+                              style: const TextStyle(fontSize: 16)),
+                          const Icon(Icons.arrow_drop_down),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/mini_path_preview.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -14,6 +15,7 @@ class ProjectItemCard extends StatefulWidget {
   final VoidCallback onDuplicated;
   final VoidCallback onDeleted;
   final ValueChanged<String> onRenamed;
+  final bool compact;
 
   const ProjectItemCard({
     super.key,
@@ -24,6 +26,7 @@ class ProjectItemCard extends StatefulWidget {
     required this.onDuplicated,
     required this.onDeleted,
     required this.onRenamed,
+    this.compact = false,
   });
 
   @override
@@ -42,7 +45,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
       child: Column(
         children: [
           Expanded(
-            flex: 1,
+            flex: 4,
             child: Container(
               height: 38,
               color: Colors.white.withOpacity(0.05),
@@ -100,57 +103,78 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
               ),
             ),
           ),
-          Expanded(
-            flex: 4,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              onEnter: (event) => setState(() {
-                _hovering = true;
-              }),
-              onExit: (event) => setState(() {
-                _hovering = false;
-              }),
-              child: GestureDetector(
-                onTap: widget.onOpened,
-                child: Container(
-                  clipBehavior: Clip.hardEdge,
-                  decoration: const BoxDecoration(),
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Stack(
-                        children: [
-                          MiniPathsPreview(
-                            paths: widget.paths,
-                            fieldImage: widget.fieldImage,
-                          ),
-                          Positioned.fill(
-                            child: AnimatedOpacity(
-                              opacity: _hovering ? 1.0 : 0.0,
-                              curve: Curves.easeInOut,
-                              duration: const Duration(milliseconds: 200),
-                              child: BackdropFilter(
-                                filter:
-                                    ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                                child: Container(),
-                              ),
+          ConditionalWidget(
+            condition: widget.compact,
+            trueChild: Expanded(
+              flex: 5,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: FittedBox(
+                    child: ElevatedButton.icon(
+                      label: const Text('Edit'),
+                      icon: const Icon(Icons.edit),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 4.0,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            falseChild: Expanded(
+              flex: 16,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                onEnter: (event) => setState(() {
+                  _hovering = true;
+                }),
+                onExit: (event) => setState(() {
+                  _hovering = false;
+                }),
+                child: GestureDetector(
+                  onTap: widget.onOpened,
+                  child: Container(
+                    clipBehavior: Clip.hardEdge,
+                    decoration: const BoxDecoration(),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Stack(
+                          children: [
+                            MiniPathsPreview(
+                              paths: widget.paths,
+                              fieldImage: widget.fieldImage,
                             ),
-                          ),
-                          Positioned.fill(
-                            child: Center(
-                              child: AnimatedScale(
-                                scale: _hovering ? 1.0 : 0.0,
+                            Positioned.fill(
+                              child: AnimatedOpacity(
+                                opacity: _hovering ? 1.0 : 0.0,
                                 curve: Curves.easeInOut,
                                 duration: const Duration(milliseconds: 200),
-                                child: Icon(
-                                  Icons.edit,
-                                  color: colorScheme.onSurface,
-                                  size: 64,
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                      sigmaX: 5.0, sigmaY: 5.0),
+                                  child: Container(),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                            Positioned.fill(
+                              child: Center(
+                                child: AnimatedScale(
+                                  scale: _hovering ? 1.0 : 0.0,
+                                  curve: Curves.easeInOut,
+                                  duration: const Duration(milliseconds: 200),
+                                  child: Icon(
+                                    Icons.edit,
+                                    color: colorScheme.onSurface,
+                                    size: 64,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

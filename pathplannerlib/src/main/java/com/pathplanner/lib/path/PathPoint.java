@@ -2,6 +2,7 @@ package com.pathplanner.lib.path;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import java.util.Objects;
 
 public class PathPoint {
   public final Translation2d position;
@@ -30,5 +31,22 @@ public class PathPoint {
 
   public PathPoint(Translation2d position) {
     this.position = position;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PathPoint pathPoint = (PathPoint) o;
+    return Math.abs(pathPoint.distanceAlongPath - distanceAlongPath) < 1E-3
+        && Math.abs(pathPoint.maxV - maxV) < 1E-3
+        && Objects.equals(position, pathPoint.position)
+        && Objects.equals(holonomicRotation, pathPoint.holonomicRotation)
+        && Objects.equals(constraints, pathPoint.constraints);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(position, distanceAlongPath, maxV, holonomicRotation, constraints);
   }
 }

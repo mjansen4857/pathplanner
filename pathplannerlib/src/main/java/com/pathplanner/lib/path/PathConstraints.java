@@ -1,6 +1,7 @@
 package com.pathplanner.lib.path;
 
 import edu.wpi.first.math.util.Units;
+import java.util.Objects;
 import org.json.simple.JSONObject;
 
 public class PathConstraints {
@@ -84,5 +85,22 @@ public class PathConstraints {
    */
   public double getMaxAngularAccelerationRpsSq() {
     return maxAngularAccelerationRpsSq;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PathConstraints that = (PathConstraints) o;
+    return Math.abs(that.maxVelocityMps - maxVelocityMps) < 1E-3
+        && Math.abs(that.maxAccelerationMpsSq - maxAccelerationMpsSq) < 1E-3
+        && Math.abs(that.maxAngularVelocityRps - maxAngularVelocityRps) < 1E-3
+        && Math.abs(that.maxAngularAccelerationRpsSq - maxAngularAccelerationRpsSq) < 1E-3;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        maxVelocityMps, maxAccelerationMpsSq, maxAngularVelocityRps, maxAngularAccelerationRpsSq);
   }
 }

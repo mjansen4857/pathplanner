@@ -1,6 +1,7 @@
 package com.pathplanner.lib.path;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import java.util.Objects;
 import org.json.simple.JSONObject;
 
 public class GoalEndState {
@@ -46,5 +47,18 @@ public class GoalEndState {
    */
   public Rotation2d getRotation() {
     return rotation;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    GoalEndState that = (GoalEndState) o;
+    return Math.abs(that.velocity - velocity) < 1E-3 && Objects.equals(rotation, that.rotation);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(velocity, rotation);
   }
 }

@@ -4,6 +4,7 @@ import com.pathplanner.lib.auto.CommandUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import java.util.Objects;
 import org.json.simple.JSONObject;
 
 public class EventMarker {
@@ -101,5 +102,20 @@ public class EventMarker {
    */
   public double getWaypointRelativePos() {
     return waypointRelativePos;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    EventMarker that = (EventMarker) o;
+    return Math.abs(that.waypointRelativePos - waypointRelativePos) < 1E-3
+        && Math.abs(that.minimumTriggerDistance - minimumTriggerDistance) < 1E-3
+        && Objects.equals(command, that.command);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(waypointRelativePos, command, minimumTriggerDistance);
   }
 }

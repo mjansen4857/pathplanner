@@ -7,17 +7,31 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 public class PathPlannerPath {
-  private final List<PathPoint> allPoints;
+  private final List<Translation2d> bezierPoints;
+  private final List<RotationTarget> rotationTargets;
+  private final List<ConstraintsZone> constraintZones;
+  private final List<EventMarker> eventMarkers;
   private final PathConstraints globalConstraints;
   private final GoalEndState goalEndState;
-  private final List<EventMarker> eventMarkers;
+  private final List<PathPoint> allPoints;
 
+  /**
+   * Create a new path planner path
+   *
+   * @param bezierPoints List of points representing the cubic Bézier curve of the path
+   * @param holonomicRotations List of rotation targets along the path
+   * @param constraintZones List of constraint zones along the path
+   * @param eventMarkers List of event markers along the path
+   * @param globalConstraints The global constraints of the path
+   * @param goalEndState The goal end state of the path
+   */
   public PathPlannerPath(
       List<Translation2d> bezierPoints,
       List<RotationTarget> holonomicRotations,
@@ -25,21 +39,33 @@ public class PathPlannerPath {
       List<EventMarker> eventMarkers,
       PathConstraints globalConstraints,
       GoalEndState goalEndState) {
-    this.allPoints = createPath(bezierPoints, holonomicRotations, constraintZones);
+    this.bezierPoints = bezierPoints;
+    this.rotationTargets = holonomicRotations;
+    this.constraintZones = constraintZones;
+    this.eventMarkers = eventMarkers;
     this.globalConstraints = globalConstraints;
     this.goalEndState = goalEndState;
-    this.eventMarkers = eventMarkers;
+    this.allPoints = createPath(this.bezierPoints, this.rotationTargets, this.constraintZones);
 
     precalcValues();
   }
 
   private PathPlannerPath(PathConstraints globalConstraints, GoalEndState goalEndState) {
-    this.allPoints = new ArrayList<>();
+    this.bezierPoints = new ArrayList<>();
+    this.rotationTargets = new ArrayList<>();
+    this.constraintZones = new ArrayList<>();
+    this.eventMarkers = new ArrayList<>();
     this.globalConstraints = globalConstraints;
     this.goalEndState = goalEndState;
-    this.eventMarkers = new ArrayList<>();
+    this.allPoints = new ArrayList<>();
   }
 
+  /**
+   * Load a path from a path file in storage
+   *
+   * @param pathName The name of the path to load
+   * @return PathPlannerPath created from the given file name
+   */
   public static PathPlannerPath fromPathFile(String pathName) {
     try (BufferedReader br =
         new BufferedReader(
@@ -123,6 +149,12 @@ public class PathPlannerPath {
     return new Translation2d(x, y);
   }
 
+  /**
+   * Get the constraints for a point along the path
+   *
+   * @param idx Index of the point to get constraints for
+   * @return The constraints that should apply to the point
+   */
   public PathConstraints getConstraintsForPoint(int idx) {
     if (getPoint(idx).constraints != null) {
       return getPoint(idx).constraints;
@@ -131,6 +163,10 @@ public class PathPlannerPath {
     return globalConstraints;
   }
 
+  /**
+   * Create a path planner path from pre-generated path points. This is used internally, and you
+   * likely should not use this
+   */
   public static PathPlannerPath fromPathPoints(
       List<PathPoint> pathPoints, PathConstraints globalConstraints, GoalEndState goalEndState) {
     PathPlannerPath path = new PathPlannerPath(globalConstraints, goalEndState);
@@ -141,6 +177,9 @@ public class PathPlannerPath {
     return path;
   }
 
+  /**
+   * Generate path points for a path. This is used internally and should not be used directly.
+   */
   public static List<PathPoint> createPath(
       List<Translation2d> bezierPoints,
       List<RotationTarget> holonomicRotations,
@@ -215,22 +254,43 @@ public class PathPlannerPath {
     }
   }
 
+  /**
+   * Get all the path points in this path
+   * @return Path points in the path
+   */
   public List<PathPoint> getAllPathPoints() {
     return allPoints;
   }
 
+  /**
+   * Get the number of points in this path
+   * @return Number of points in the path
+   */
   public int numPoints() {
     return allPoints.size();
   }
 
+  /**
+   * Get a specific point along this path
+   * @param index Index of the point to get
+   * @return The point at the given index
+   */
   public PathPoint getPoint(int index) {
     return allPoints.get(index);
   }
 
+  /**
+   * Get the global constraints for this path
+   * @return Global constraints that apply to this path
+   */
   public PathConstraints getGlobalConstraints() {
     return globalConstraints;
   }
 
+  /**
+   * Get the goal end state of this path
+   * @return The goal end state
+   */
   public GoalEndState getGoalEndState() {
     return goalEndState;
   }
@@ -273,7 +333,35 @@ public class PathPlannerPath {
     return sign * (ab * bc * ac) / (4 * area);
   }
 
+  /**
+   * Get all the event markers for this path
+   * @return The event markers for this path
+   */
   public List<EventMarker> getEventMarkers() {
     return eventMarkers;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    PathPlannerPath that = (PathPlannerPath) o;
+    return Objects.equals(bezierPoints, that.bezierPoints)
+        && Objects.equals(rotationTargets, that.rotationTargets)
+        && Objects.equals(constraintZones, that.constraintZones)
+        && Objects.equals(eventMarkers, that.eventMarkers)
+        && Objects.equals(globalConstraints, that.globalConstraints)
+        && Objects.equals(goalEndState, that.goalEndState);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        bezierPoints,
+        rotationTargets,
+        constraintZones,
+        eventMarkers,
+        globalConstraints,
+        goalEndState);
   }
 }

@@ -1,5 +1,6 @@
 package com.pathplanner.lib.path;
 
+import java.util.Objects;
 import org.json.simple.JSONObject;
 
 public class ConstraintsZone {
@@ -95,5 +96,20 @@ public class ConstraintsZone {
   public ConstraintsZone forSegmentIndex(int segmentIndex) {
     return new ConstraintsZone(
         minWaypointPos - segmentIndex, maxWaypointPos - segmentIndex, constraints);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    ConstraintsZone that = (ConstraintsZone) o;
+    return Math.abs(that.minWaypointPos - minWaypointPos) < 1E-3
+        && Math.abs(that.maxWaypointPos - maxWaypointPos) < 1E-3
+        && Objects.equals(constraints, that.constraints);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(minWaypointPos, maxWaypointPos, constraints);
   }
 }

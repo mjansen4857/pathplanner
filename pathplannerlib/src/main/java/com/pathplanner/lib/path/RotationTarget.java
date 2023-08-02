@@ -1,6 +1,7 @@
 package com.pathplanner.lib.path;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import java.util.Objects;
 import org.json.simple.JSONObject;
 
 public class RotationTarget {
@@ -58,5 +59,19 @@ public class RotationTarget {
    */
   public RotationTarget forSegmentIndex(int segmentIndex) {
     return new RotationTarget(waypointRelativePosition - segmentIndex, target);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RotationTarget that = (RotationTarget) o;
+    return Math.abs(that.waypointRelativePosition - waypointRelativePosition) < 1E-3
+        && Objects.equals(target, that.target);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(waypointRelativePosition, target);
   }
 }

@@ -14,6 +14,14 @@ public class EventMarker {
   Translation2d markerPos;
   private Translation2d lastRobotPos;
 
+  /**
+   * Create a new event marker
+   *
+   * @param waypointRelativePos The waypoint relative position of the marker
+   * @param command The command that should be triggered at this marker
+   * @param minimumTriggerDistance The minimum distance the robot must be within for this marker to
+   *     be triggered
+   */
   public EventMarker(double waypointRelativePos, Command command, double minimumTriggerDistance) {
     this.waypointRelativePos = waypointRelativePos;
     this.command = command;
@@ -22,20 +30,43 @@ public class EventMarker {
     this.lastRobotPos = null;
   }
 
+  /**
+   * Create a new event marker
+   *
+   * @param waypointRelativePos The waypoint relative position of the marker
+   * @param command The command that should be triggered at this marker
+   */
   public EventMarker(double waypointRelativePos, Command command) {
     this(waypointRelativePos, command, 0.5);
   }
 
+  /**
+   * Create an event marker from json
+   *
+   * @param markerJson {@link org.json.simple.JSONObject} representing an event marker
+   * @return The event marker defined by the given json object
+   */
   static EventMarker fromJson(JSONObject markerJson) {
     double pos = ((Number) markerJson.get("waypointRelativePos")).doubleValue();
     Command cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"));
     return new EventMarker(pos, cmd);
   }
 
+  /**
+   * Reset the current robot position
+   *
+   * @param robotPose The current pose of the robot
+   */
   public void reset(Pose2d robotPose) {
     lastRobotPos = robotPose.getTranslation();
   }
 
+  /**
+   * Get if this event marker should be triggered
+   *
+   * @param robotPose Current pose of the robot
+   * @return True if this marker should be triggered
+   */
   public boolean shouldTrigger(Pose2d robotPose) {
     if (lastRobotPos == null || markerPos == null) {
       lastRobotPos = robotPose.getTranslation();
@@ -54,10 +85,20 @@ public class EventMarker {
     }
   }
 
+  /**
+   * Get the command associated with this marker
+   *
+   * @return Command for this marker
+   */
   public Command getCommand() {
     return command;
   }
 
+  /**
+   * Get the waypoint relative position of this marker
+   *
+   * @return Waypoint relative position of this marker
+   */
   public double getWaypointRelativePos() {
     return waypointRelativePos;
   }

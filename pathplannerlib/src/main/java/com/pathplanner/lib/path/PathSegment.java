@@ -12,6 +12,17 @@ public class PathSegment {
 
   private final List<PathPoint> segmentPoints;
 
+  /**
+   * Generate a new path segment
+   *
+   * @param p1 Start anchor point
+   * @param p2 Start next control
+   * @param p3 End prev control
+   * @param p4 End anchor point
+   * @param targetHolonomicRotations Rotation targets for within this segment
+   * @param constraintZones Constraint zones for within this segment
+   * @param endSegment Is this the last segment in the path
+   */
   public PathSegment(
       Translation2d p1,
       Translation2d p2,
@@ -57,11 +68,25 @@ public class PathSegment {
     }
   }
 
+  /**
+   * Generate a new path segment without constraint zones or rotation targets
+   *
+   * @param p1 Start anchor point
+   * @param p2 Start next control
+   * @param p3 End prev control
+   * @param p4 End anchor point
+   * @param endSegment Is this the last segment in the path
+   */
   public PathSegment(
       Translation2d p1, Translation2d p2, Translation2d p3, Translation2d p4, boolean endSegment) {
     this(p1, p2, p3, p4, new ArrayList<>(), new ArrayList<>(), endSegment);
   }
 
+  /**
+   * Get the path points for this segment
+   *
+   * @return Path points for this segment
+   */
   public List<PathPoint> getSegmentPoints() {
     return segmentPoints;
   }

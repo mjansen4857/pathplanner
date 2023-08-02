@@ -41,6 +41,8 @@ class _ProjectPageState extends State<ProjectPage> {
   int _pathGridCount = 2;
   late Directory _pathsDirectory;
   late Directory _autosDirectory;
+  late String _pathSortValue;
+  late String _autoSortValue;
 
   bool _loading = true;
 
@@ -64,6 +66,11 @@ class _ProjectPageState extends State<ProjectPage> {
       ),
     ];
 
+    _pathSortValue = widget.prefs.getString(PrefsKeys.pathSortOption) ??
+        Defaults.pathSortOption;
+    _autoSortValue = widget.prefs.getString(PrefsKeys.autoSortOption) ??
+        Defaults.autoSortOption;
+
     _load();
   }
 
@@ -76,10 +83,10 @@ class _ProjectPageState extends State<ProjectPage> {
 
     var paths =
         await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path, fs);
-    paths.sort((a, b) => a.name.compareTo(b.name));
+    _sortPaths(_pathSortValue);
     var autos =
         await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path, fs);
-    autos.sort((a, b) => a.name.compareTo(b.name));
+    _sortAutos(_autoSortValue);
 
     setState(() {
       _paths = paths;
@@ -149,9 +156,12 @@ class _ProjectPageState extends State<ProjectPage> {
             children: [
               Row(
                 children: [
-                  const Text(
-                    'Paths',
-                    style: TextStyle(fontSize: 32),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4.0),
+                    child: Text(
+                      'Paths',
+                      style: TextStyle(fontSize: 32),
+                    ),
                   ),
                   Expanded(child: Container()),
                   Tooltip(
@@ -182,6 +192,16 @@ class _ProjectPageState extends State<ProjectPage> {
                 ],
               ),
               const Divider(),
+              _buildOptionsRow(
+                sortValue: _pathSortValue,
+                onSelected: (value) {
+                  widget.prefs.setString(PrefsKeys.pathSortOption, value);
+                  setState(() {
+                    _pathSortValue = value;
+                    _sortPaths(_pathSortValue);
+                  });
+                },
+              ),
               Expanded(
                 child: GridView.count(
                   crossAxisCount: _pathGridCount,
@@ -298,9 +318,12 @@ class _ProjectPageState extends State<ProjectPage> {
             children: [
               Row(
                 children: [
-                  const Text(
-                    'Autos',
-                    style: TextStyle(fontSize: 32),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 4.0),
+                    child: Text(
+                      'Autos',
+                      style: TextStyle(fontSize: 32),
+                    ),
                   ),
                   Expanded(child: Container()),
                   Tooltip(
@@ -331,6 +354,16 @@ class _ProjectPageState extends State<ProjectPage> {
                 ],
               ),
               const Divider(),
+              _buildOptionsRow(
+                sortValue: _autoSortValue,
+                onSelected: (value) {
+                  widget.prefs.setString(PrefsKeys.autoSortOption, value);
+                  setState(() {
+                    _autoSortValue = value;
+                    _sortAutos(_autoSortValue);
+                  });
+                },
+              ),
               Expanded(
                 child: GridView.count(
                   crossAxisCount: 4 - _pathGridCount,
@@ -395,6 +428,47 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
+  Widget _buildOptionsRow(
+      {required String sortValue, required ValueChanged<String> onSelected}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6.0),
+      child: Row(
+        children: [
+          const Text(
+            'Sort:',
+            style: TextStyle(fontSize: 16),
+          ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Material(
+              color: Colors.transparent,
+              child: PopupMenuButton<String>(
+                initialValue: sortValue,
+                tooltip: '',
+                elevation: 12.0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                onSelected: onSelected,
+                itemBuilder: (context) => _sortOptions(),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _sortLabel(sortValue),
+                      const Icon(Icons.arrow_drop_down),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<PathPlannerPath> _getPathsFromNames(List<String> names) {
     List<PathPlannerPath> paths = [];
     for (String name in names) {
@@ -432,6 +506,49 @@ class _ProjectPageState extends State<ProjectPage> {
       setState(() {
         _autos[autoIdx].rename(newName);
       });
+    }
+  }
+
+  void _sortPaths(String sortOption) {
+    switch (sortOption) {
+      case 'nameDesc':
+        _paths.sort((a, b) => b.name.compareTo(a.name));
+      case 'nameAsc':
+      default:
+        _paths.sort((a, b) => a.name.compareTo(b.name));
+    }
+  }
+
+  void _sortAutos(String sortOption) {
+    switch (sortOption) {
+      case 'nameDesc':
+        _autos.sort((a, b) => b.name.compareTo(a.name));
+      case 'nameAsc':
+      default:
+        _autos.sort((a, b) => a.name.compareTo(b.name));
+    }
+  }
+
+  List<PopupMenuItem<String>> _sortOptions() {
+    return const [
+      PopupMenuItem(
+        value: 'nameAsc',
+        child: Text('Name Ascending'),
+      ),
+      PopupMenuItem(
+        value: 'nameDesc',
+        child: Text('Name Descending'),
+      ),
+    ];
+  }
+
+  Widget _sortLabel(String optionValue) {
+    switch (optionValue) {
+      case 'nameDesc':
+        return const Text('Name Descending', style: TextStyle(fontSize: 16));
+      case 'nameAsc':
+      default:
+        return const Text('Name Ascending', style: TextStyle(fontSize: 16));
     }
   }
 }

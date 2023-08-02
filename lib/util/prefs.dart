@@ -11,6 +11,8 @@ class PrefsKeys {
   static const String seen2023Warning = 'seen2023Warning';
   static const String holonomicMode = 'holonomicMode';
   static const String pplibClientHost = 'pplibClientHost';
+  static const String pathSortOption = 'pathSortOption';
+  static const String autoSortOption = 'autoSortOption';
 }
 
 class Defaults {
@@ -22,4 +24,6 @@ class Defaults {
   static const double editorTreeWeight = 0.5;
   static const String pplibClientHost = 'localhost';
   static const bool treeOnRight = true;
+  static const String pathSortOption = 'nameAsc';
+  static const String autoSortOption = 'nameAsc';
 }

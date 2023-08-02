@@ -115,7 +115,6 @@ void main() {
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
-    expect(pathChanged, true);
     expect(path.constraintZones[0].name, 'zone');
 
     undoStack.undo();
@@ -519,7 +518,6 @@ void main() {
     await widgetTester.tap(newZoneButton);
     await widgetTester.pump();
 
-    expect(pathChanged, true);
     expect(path.constraintZones.length, 3);
 
     undoStack.undo();

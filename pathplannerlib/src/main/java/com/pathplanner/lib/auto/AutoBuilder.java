@@ -3,6 +3,7 @@ package com.pathplanner.lib.auto;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -48,6 +49,7 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+    PPLibTelemetry.setAutoBuilderAvailable(true);
   }
 
   public static void configureCustom(
@@ -63,6 +65,7 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+    PPLibTelemetry.setAutoBuilderAvailable(true);
   }
 
   public static boolean isConfigured() {

@@ -9,9 +9,9 @@ import edu.wpi.first.math.numbers.N2;
 
 /**
  * Essentially a slew rate limiter for chassis speeds
- * <p></p>
- * This will properly apply a linear acceleration limit to the chassis speeds
- * instead of applying it separately with 2 X/Y slew rate limiters
+ *
+ * <p>This will properly apply a linear acceleration limit to the chassis speeds instead of applying
+ * it separately with 2 X/Y slew rate limiters
  */
 public class ChassisSpeedsRateLimiter {
   private double translationRateLimit;
@@ -22,6 +22,7 @@ public class ChassisSpeedsRateLimiter {
 
   /**
    * Create a new chassis speeds limiter
+   *
    * @param translationRateLimit The linear acceleration limit
    * @param rotationRateLimit The angular acceleration limit
    * @param initialValue The initial chassis speeds value
@@ -35,6 +36,7 @@ public class ChassisSpeedsRateLimiter {
 
   /**
    * Create a new chassis speeds limiter
+   *
    * @param translationRateLimit The linear acceleration limit
    * @param rotationRateLimit The angular acceleration limit
    */
@@ -44,6 +46,7 @@ public class ChassisSpeedsRateLimiter {
 
   /**
    * Reset the limiter
+   *
    * @param value The chassis speeds to reset with
    */
   public void reset(ChassisSpeeds value) {
@@ -53,6 +56,7 @@ public class ChassisSpeedsRateLimiter {
 
   /**
    * Set the acceleration limits
+   *
    * @param translationRateLimit Linear acceleration limit
    * @param rotationRateLimit Angular acceleration limit
    */
@@ -63,6 +67,7 @@ public class ChassisSpeedsRateLimiter {
 
   /**
    * Calculate the limited chassis speeds for a given input
+   *
    * @param input The target chassis speeds
    * @return The limited chassis speeds
    */

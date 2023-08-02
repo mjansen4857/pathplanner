@@ -4,6 +4,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoubleArrayPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -19,6 +20,10 @@ public class PPLibTelemetry {
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/currentPath").publish();
   private static final DoubleArrayPublisher lookaheadPub =
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/lookahead").publish();
+  private static final BooleanPublisher autoBuilderPub =
+      NetworkTableInstance.getDefault()
+          .getBooleanTopic("/PathPlanner/autoBuilderAvailable")
+          .publish();
 
   public static void setVelocities(
       double actualVel, double commandedVel, double actualAngVel, double commandedAngVel) {
@@ -49,5 +54,9 @@ public class PPLibTelemetry {
 
   public static void setLookahead(Translation2d lookahead) {
     lookaheadPub.set(new double[] {lookahead.getX(), lookahead.getY()});
+  }
+
+  public static void setAutoBuilderAvailable(boolean available) {
+    autoBuilderPub.set(available);
   }
 }

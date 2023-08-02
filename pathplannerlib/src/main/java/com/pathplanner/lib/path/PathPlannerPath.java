@@ -177,9 +177,7 @@ public class PathPlannerPath {
     return path;
   }
 
-  /**
-   * Generate path points for a path. This is used internally and should not be used directly.
-   */
+  /** Generate path points for a path. This is used internally and should not be used directly. */
   public static List<PathPoint> createPath(
       List<Translation2d> bezierPoints,
       List<RotationTarget> holonomicRotations,
@@ -256,6 +254,7 @@ public class PathPlannerPath {
 
   /**
    * Get all the path points in this path
+   *
    * @return Path points in the path
    */
   public List<PathPoint> getAllPathPoints() {
@@ -264,6 +263,7 @@ public class PathPlannerPath {
 
   /**
    * Get the number of points in this path
+   *
    * @return Number of points in the path
    */
   public int numPoints() {
@@ -272,6 +272,7 @@ public class PathPlannerPath {
 
   /**
    * Get a specific point along this path
+   *
    * @param index Index of the point to get
    * @return The point at the given index
    */
@@ -281,6 +282,7 @@ public class PathPlannerPath {
 
   /**
    * Get the global constraints for this path
+   *
    * @return Global constraints that apply to this path
    */
   public PathConstraints getGlobalConstraints() {
@@ -289,6 +291,7 @@ public class PathPlannerPath {
 
   /**
    * Get the goal end state of this path
+   *
    * @return The goal end state
    */
   public GoalEndState getGoalEndState() {
@@ -335,6 +338,7 @@ public class PathPlannerPath {
 
   /**
    * Get all the event markers for this path
+   *
    * @return The event markers for this path
    */
   public List<EventMarker> getEventMarkers() {

@@ -2,7 +2,7 @@
 
 using namespace pathplanner;
 
-PathConstraints PathConstraints::fromJson(wpi::json::reference json) {
+PathConstraints PathConstraints::fromJson(const wpi::json &json) {
 	auto maxVel = units::meters_per_second_t { static_cast<double>(json.at(
 			"maxVelocity")) };
 	auto maxAccel = units::meters_per_second_squared_t {

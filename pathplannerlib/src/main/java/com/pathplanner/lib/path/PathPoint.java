@@ -19,11 +19,6 @@ public class PathPoint {
     this.constraints = constraints;
   }
 
-  public PathPoint(Translation2d position, PathConstraints constraints) {
-    this.position = position;
-    this.constraints = constraints;
-  }
-
   public PathPoint(Translation2d position, Rotation2d holonomicRotation) {
     this.position = position;
     this.holonomicRotation = holonomicRotation;

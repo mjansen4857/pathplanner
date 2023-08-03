@@ -26,11 +26,19 @@ public:
 	}
 
 	/**
+	 * Create a path constraints object from json
+	 *
+	 * @param json json reference representing a path constraints object
+	 * @return The path constraints defined by the given json
+	 */
+	static PathConstraints fromJson(const wpi::json &json);
+
+	/**
 	 * Get the max linear velocity
 	 *
 	 * @return Max linear velocity (M/S)
 	 */
-	constexpr units::meters_per_second_t getMaxVelocity() {
+	constexpr units::meters_per_second_t getMaxVelocity() const {
 		return m_maxVelocity;
 	}
 
@@ -39,7 +47,7 @@ public:
 	 *
 	 * @return Max linear acceleration (M/S^2)
 	 */
-	constexpr units::meters_per_second_squared_t getMaxAcceleration() {
+	constexpr units::meters_per_second_squared_t getMaxAcceleration() const {
 		return m_maxAcceleration;
 	}
 
@@ -48,7 +56,7 @@ public:
 	 *
 	 * @return Max angular velocity (Rad/S)
 	 */
-	constexpr units::radians_per_second_t getMaxAngularVelocity() {
+	constexpr units::radians_per_second_t getMaxAngularVelocity() const {
 		return m_maxAngularVelocity;
 	}
 
@@ -57,17 +65,9 @@ public:
 	 *
 	 * @return Max angular acceleration (Rad/S^2)
 	 */
-	constexpr units::radians_per_second_squared_t getMaxAngularAcceleration() {
+	constexpr units::radians_per_second_squared_t getMaxAngularAcceleration() const {
 		return m_maxAngularAcceleration;
 	}
-
-	/**
-	 * Create a path constraints object from json
-	 *
-	 * @param json json reference representing a path constraints object
-	 * @return The path constraints defined by the given json
-	 */
-	static PathConstraints fromJson(wpi::json::reference json);
 
 private:
 	const units::meters_per_second_t m_maxVelocity;

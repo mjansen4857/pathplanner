@@ -6,6 +6,15 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public class CommandUtil {
+  public static Command wrappedEventCommand(Command eventCommand) {
+    return new FunctionalCommand(
+        eventCommand::initialize,
+        eventCommand::execute,
+        eventCommand::end,
+        eventCommand::isFinished,
+        eventCommand.getRequirements().toArray(Subsystem[]::new));
+  }
+
   public static Command commandFromJson(JSONObject commandJson) {
     String type = (String) commandJson.get("type");
     JSONObject data = (JSONObject) commandJson.get("data");

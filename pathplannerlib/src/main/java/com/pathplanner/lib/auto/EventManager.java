@@ -1,6 +1,5 @@
 package com.pathplanner.lib.auto;
 
-import com.pathplanner.lib.commands.WrappedEventCommand;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.wpilibj2.command.*;
 import java.util.HashMap;
@@ -30,7 +29,7 @@ public class EventManager {
 
   public static Command getCommand(String name) {
     if (hasCommand(name)) {
-      return new WrappedEventCommand(eventMap.get(name));
+      return CommandUtil.wrappedEventCommand(eventMap.get(name));
     } else {
       return Commands.none();
     }

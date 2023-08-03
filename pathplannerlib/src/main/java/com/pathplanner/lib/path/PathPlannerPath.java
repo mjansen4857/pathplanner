@@ -26,7 +26,7 @@ public class PathPlannerPath {
   /**
    * Create a new path planner path
    *
-   * @param bezierPoints List of points representing the cubic Bézier curve of the path
+   * @param bezierPoints List of points representing the cubic Bezier curve of the path
    * @param holonomicRotations List of rotation targets along the path
    * @param constraintZones List of constraint zones along the path
    * @param eventMarkers List of event markers along the path

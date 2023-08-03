@@ -15,8 +15,8 @@ public class PathConstraints {
    *
    * @param maxVelocityMps Max linear velocity (M/S)
    * @param maxAccelerationMpsSq Max linear acceleration (M/S^2)
-   * @param maxAngularVelocityRps Max angular velocity (Deg/S)
-   * @param maxAngularAccelerationRpsSq Max angular acceleration (Deg/S^2)
+   * @param maxAngularVelocityRps Max angular velocity (Rad/S)
+   * @param maxAngularAccelerationRpsSq Max angular acceleration (Rad/S^2)
    */
   public PathConstraints(
       double maxVelocityMps,
@@ -72,7 +72,7 @@ public class PathConstraints {
   /**
    * Get the max angular velocity
    *
-   * @return Max angular velocity (Deg/S)
+   * @return Max angular velocity (Rad/S)
    */
   public double getMaxAngularVelocityRps() {
     return maxAngularVelocityRps;
@@ -81,7 +81,7 @@ public class PathConstraints {
   /**
    * Get the max angular acceleration
    *
-   * @return Max angular acceleration (Deg/S^2)
+   * @return Max angular acceleration (Rad/S^2)
    */
   public double getMaxAngularAccelerationRpsSq() {
     return maxAngularAccelerationRpsSq;

@@ -3,11 +3,10 @@ package com.pathplanner.lib.auto;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import org.json.simple.JSONObject;
 
-public class PathPlannerAuto extends CommandBase {
+public class PathPlannerAuto extends Command {
   private Command autoCommand;
 
   public PathPlannerAuto(Command autoCommand) {

@@ -4,12 +4,11 @@ import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class FollowPathWithEvents extends CommandBase {
+public class FollowPathWithEvents extends Command {
   private final Command pathFollowingCommand;
   private final PathPlannerPath path;
   private final Supplier<Pose2d> poseSupplier;

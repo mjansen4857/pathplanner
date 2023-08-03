@@ -142,29 +142,38 @@ class _TelemetryPageState extends State<TelemetryPage> {
               Expanded(
                 flex: 2,
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: colorScheme.primary,
-                        size: 76,
-                        shadows: const [
-                          Shadow(
-                            color: Colors.black,
-                            blurRadius: 10.0,
-                            offset: Offset(0, 5.0),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      const Text('No auto builder detected in robot code.'),
-                      const SizedBox(height: 16),
-                      const Text(
-                          'An auto builder is required to test path following'),
-                      const Text('commands from the GUI.'),
-                    ],
-                  ),
+                  child: StreamBuilder(
+                      stream: widget.telemetry.autoBuilderAvailableStream(),
+                      builder: (context, snapshot) {
+                        if (snapshot.data ?? false) {
+                          return const Text('Autobuilder detected');
+                        } else {
+                          return Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: colorScheme.primary,
+                                size: 76,
+                                shadows: const [
+                                  Shadow(
+                                    color: Colors.black,
+                                    blurRadius: 10.0,
+                                    offset: Offset(0, 5.0),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                  'No auto builder detected in robot code.'),
+                              const SizedBox(height: 16),
+                              const Text(
+                                  'An auto builder is required to test path following'),
+                              const Text('commands from the GUI.'),
+                            ],
+                          );
+                        }
+                      }),
                 ),
               ),
             ],

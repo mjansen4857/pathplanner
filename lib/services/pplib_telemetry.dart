@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:nt4/nt4.dart';
+import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/path/pathplanner_path.dart';
 
 class PPLibTelemetry {
   late NT4Client _client;
@@ -7,6 +11,11 @@ class PPLibTelemetry {
   late NT4Subscription _currentPoseSub;
   late NT4Subscription _currentPathSub;
   late NT4Subscription _lookaheadSub;
+  late NT4Subscription _autoBuilderAvailableSub;
+
+  late NT4Topic _hotReloadPathTopic;
+  late NT4Topic _hotReloadAutoTopic;
+
   bool _isConnected = false;
 
   PPLibTelemetry({required String serverBaseAddress}) {
@@ -21,6 +30,41 @@ class PPLibTelemetry {
     _currentPoseSub = _client.subscribe('/PathPlanner/currentPose', 0.033);
     _currentPathSub = _client.subscribe('/PathPlanner/currentPath', 0.1);
     _lookaheadSub = _client.subscribe('/PathPlanner/lookahead', 0.033);
+    _autoBuilderAvailableSub =
+        _client.subscribe('/PathPlanner/autoBuilderAvailable', 1.0);
+
+    _hotReloadPathTopic = _client.publishNewTopic(
+        '/PathPlanner/HotReload/hotReloadPath', NT4TypeStr.typeStr);
+    _hotReloadAutoTopic = _client.publishNewTopic(
+        '/PathPlanner/HotReload/hotReloadAuto', NT4TypeStr.typeStr);
+  }
+
+  void hotReloadPath(PathPlannerPath path) {
+    String pathName = path.name;
+
+    Map<String, dynamic> msgJson = {
+      'name': pathName,
+      'path': path.toJson(),
+    };
+
+    _client.addSample(_hotReloadPathTopic, jsonEncode(msgJson));
+  }
+
+  void hotReloadAuto(PathPlannerAuto auto) {
+    String autoName = auto.name;
+
+    Map<String, dynamic> msgJson = {
+      'name': autoName,
+      'auto': auto.toJson(),
+    };
+
+    _client.addSample(_hotReloadAutoTopic, jsonEncode(msgJson));
+  }
+
+  Stream<bool> autoBuilderAvailableStream() {
+    return _autoBuilderAvailableSub
+        .stream()
+        .map((available) => (available as bool?) ?? false);
   }
 
   Stream<List<num>> velocitiesStream() {

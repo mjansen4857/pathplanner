@@ -7,6 +7,7 @@ import 'package:pathplanner/pages/path_editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,7 @@ class ProjectPage extends StatefulWidget {
   final FileSystem fs;
   final ChangeStack undoStack;
   final bool shortcuts;
+  final PPLibTelemetry? telemetry;
 
   const ProjectPage({
     super.key,
@@ -28,6 +30,7 @@ class ProjectPage extends StatefulWidget {
     required this.fs,
     required this.undoStack,
     this.shortcuts = true,
+    this.telemetry,
   });
 
   @override
@@ -92,10 +95,8 @@ class _ProjectPageState extends State<ProjectPage> {
 
     var paths =
         await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path, fs);
-    _sortPaths(_pathSortValue);
     var autos =
         await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path, fs);
-    _sortAutos(_autoSortValue);
 
     setState(() {
       _paths = paths;
@@ -108,6 +109,9 @@ class _ProjectPageState extends State<ProjectPage> {
           fs: fs,
         ));
       }
+
+      _sortPaths(_pathSortValue);
+      _sortAutos(_autoSortValue);
 
       _loading = false;
     });
@@ -264,6 +268,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                 onRenamed: (value) =>
                                     _renamePath(i, value, context),
                                 shortcuts: widget.shortcuts,
+                                telemetry: widget.telemetry,
                               ),
                             ),
                           );
@@ -304,8 +309,8 @@ class _ProjectPageState extends State<ProjectPage> {
             );
           });
     } else {
+      String oldName = _paths[pathIdx].name;
       setState(() {
-        String oldName = _paths[pathIdx].name;
         _paths[pathIdx].renamePath(newName);
         for (PathPlannerAuto auto in _autos) {
           auto.updatePathName(oldName, newName);
@@ -437,6 +442,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                 onRenamed: (value) =>
                                     _renameAuto(i, value, context),
                                 shortcuts: widget.shortcuts,
+                                telemetry: widget.telemetry,
                               ),
                             ),
                           );

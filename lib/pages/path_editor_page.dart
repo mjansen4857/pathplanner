@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_path_editor.dart';
@@ -16,6 +17,7 @@ class PathEditorPage extends StatefulWidget {
   final ValueChanged<String> onRenamed;
   final ChangeStack undoStack;
   final bool shortcuts;
+  final PPLibTelemetry? telemetry;
 
   const PathEditorPage({
     super.key,
@@ -25,6 +27,7 @@ class PathEditorPage extends StatefulWidget {
     required this.onRenamed,
     required this.undoStack,
     this.shortcuts = true,
+    this.telemetry,
   });
 
   @override
@@ -41,6 +44,7 @@ class _PathEditorPageState extends State<PathEditorPage> {
       path: widget.path,
       fieldImage: widget.fieldImage,
       undoStack: widget.undoStack,
+      telemetry: widget.telemetry,
     );
 
     return Scaffold(

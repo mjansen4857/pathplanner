@@ -9,6 +9,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
+import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/services/simulator/path_simulator.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
@@ -24,12 +25,14 @@ class SplitPathEditor extends StatefulWidget {
   final PathPlannerPath path;
   final FieldImage fieldImage;
   final ChangeStack undoStack;
+  final PPLibTelemetry? telemetry;
 
   const SplitPathEditor({
     required this.prefs,
     required this.path,
     required this.fieldImage,
     required this.undoStack,
+    this.telemetry,
     super.key,
   });
 
@@ -270,6 +273,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         widget.path.generateAndSavePath();
                         _simulatePath();
                       });
+                      // TODO: hot reload setting
+                      widget.telemetry?.hotReloadPath(widget.path);
                     },
                     (oldValue) {
                       setState(() {
@@ -277,6 +282,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         widget.path.generateAndSavePath();
                         _simulatePath();
                       });
+                      // TODO: hot reload setting
+                      widget.telemetry?.hotReloadPath(widget.path);
                     },
                   ));
                   _draggedPoint = null;
@@ -409,11 +416,17 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         widget.path.generateAndSavePath();
                         _simulatePath();
                       });
+
+                      // TODO: hot reload setting
+                      widget.telemetry?.hotReloadPath(widget.path);
                     },
                     onPathChangedNoSim: () {
                       setState(() {
                         widget.path.generateAndSavePath();
                       });
+
+                      // TODO: hot reload setting
+                      widget.telemetry?.hotReloadPath(widget.path);
                     },
                     onWaypointDeleted: (waypointIdx) {
                       widget.undoStack.add(Change(

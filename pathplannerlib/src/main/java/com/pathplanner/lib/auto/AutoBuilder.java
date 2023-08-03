@@ -108,20 +108,24 @@ public class AutoBuilder {
 
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
-      JSONObject commandJson = (JSONObject) json.get("command");
-
-      Command autoCommand = CommandUtil.commandFromJson(commandJson);
-      if (json.get("startingPose") != null) {
-        Pose2d startPose = getStartingPoseFromJson((JSONObject) json.get("startingPose"));
-        return Commands.sequence(Commands.runOnce(() -> resetPose.accept(startPose)), autoCommand);
-      } else {
-        return autoCommand;
-      }
+      return getAutoCommandFromJson(json);
     } catch (AutoBuilderException e) {
       throw e;
     } catch (Exception e) {
       e.printStackTrace();
       return null;
+    }
+  }
+
+  public static Command getAutoCommandFromJson(JSONObject autoJson) {
+    JSONObject commandJson = (JSONObject) autoJson.get("command");
+
+    Command autoCommand = CommandUtil.commandFromJson(commandJson);
+    if (autoJson.get("startingPose") != null) {
+      Pose2d startPose = getStartingPoseFromJson((JSONObject) autoJson.get("startingPose"));
+      return Commands.sequence(Commands.runOnce(() -> resetPose.accept(startPose)), autoCommand);
+    } else {
+      return autoCommand;
     }
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
@@ -19,6 +20,7 @@ class AutoEditorPage extends StatefulWidget {
   final ValueChanged<String> onRenamed;
   final ChangeStack undoStack;
   final bool shortcuts;
+  final PPLibTelemetry? telemetry;
 
   const AutoEditorPage({
     super.key,
@@ -30,6 +32,7 @@ class AutoEditorPage extends StatefulWidget {
     required this.onRenamed,
     required this.undoStack,
     this.shortcuts = true,
+    this.telemetry,
   });
 
   @override
@@ -57,6 +60,7 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
         setState(() {
           widget.auto.saveFile();
         });
+        widget.telemetry?.hotReloadAuto(widget.auto);
       },
     );
 

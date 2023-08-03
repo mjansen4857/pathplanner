@@ -1,5 +1,6 @@
 package com.pathplanner.lib.path;
 
+import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.BufferedReader;
@@ -14,13 +15,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 public class PathPlannerPath {
-  private final List<Translation2d> bezierPoints;
-  private final List<RotationTarget> rotationTargets;
-  private final List<ConstraintsZone> constraintZones;
-  private final List<EventMarker> eventMarkers;
-  private final PathConstraints globalConstraints;
-  private final GoalEndState goalEndState;
-  private final List<PathPoint> allPoints;
+  private List<Translation2d> bezierPoints;
+  private List<RotationTarget> rotationTargets;
+  private List<ConstraintsZone> constraintZones;
+  private List<EventMarker> eventMarkers;
+  private PathConstraints globalConstraints;
+  private GoalEndState goalEndState;
+  private List<PathPoint> allPoints;
 
   /**
    * Create a new path planner path
@@ -60,6 +61,18 @@ public class PathPlannerPath {
     this.allPoints = new ArrayList<>();
   }
 
+  public void hotReload(JSONObject pathJson) {
+    PathPlannerPath updatedPath = PathPlannerPath.fromJson(pathJson);
+
+    this.bezierPoints = updatedPath.bezierPoints;
+    this.rotationTargets = updatedPath.rotationTargets;
+    this.constraintZones = updatedPath.constraintZones;
+    this.eventMarkers = updatedPath.eventMarkers;
+    this.globalConstraints = updatedPath.globalConstraints;
+    this.goalEndState = updatedPath.goalEndState;
+    this.allPoints = updatedPath.allPoints;
+  }
+
   /**
    * Load a path from a path file in storage
    *
@@ -80,7 +93,10 @@ public class PathPlannerPath {
 
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
-      return PathPlannerPath.fromJson(json);
+
+      PathPlannerPath path = PathPlannerPath.fromJson(json);
+      PPLibTelemetry.registerHotReloadPath(pathName, path);
+      return path;
     } catch (Exception e) {
       e.printStackTrace();
       return null;

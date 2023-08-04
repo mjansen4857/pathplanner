@@ -23,6 +23,7 @@ import 'package:pathplanner/widgets/pplib_update_card.dart';
 import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   final String appVersion;
@@ -61,6 +62,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   static const _settingsDir = '.pathplanner/settings.json';
   int _selectedPage = 0;
   final PageController _pageController = PageController();
+  late bool _hotReload;
+  late bool _holonomicMode;
 
   FileSystem get fs => widget.fs;
 
@@ -138,6 +141,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _projectDir = fs.directory(projectDir!);
 
         _loadProjectSettingsFromFile(_projectDir!);
+
+        _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
+            Defaults.hotReloadEnabled;
+
+        _holonomicMode = widget.prefs.getBool(PrefsKeys.holonomicMode) ??
+            Defaults.holonomicMode;
 
         String? selectedFieldName =
             widget.prefs.getString(PrefsKeys.fieldImage);
@@ -322,42 +331,63 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         Align(
           alignment: Alignment.bottomLeft,
           child: Padding(
-            padding: const EdgeInsets.only(bottom: 12.0, left: 16.0),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return SettingsDialog(
-                      prefs: widget.prefs,
-                      onTeamColorChanged: widget.onTeamColorChanged,
-                      fieldImages: _fieldImages,
-                      selectedField: _fieldImage ?? FieldImage.defaultField,
-                      onFieldSelected: (FieldImage image) {
-                        setState(() {
-                          _fieldImage = image;
-                          if (!_fieldImages.contains(image)) {
-                            _fieldImages.add(image);
-                          }
-                          widget.prefs
-                              .setString(PrefsKeys.fieldImage, image.name);
-                        });
+            padding: const EdgeInsets.only(bottom: 12.0, left: 8.0),
+            child: Row(
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    launchUrl(Uri.parse(
+                        'https://github.com/mjansen4857/pathplanner/wiki'));
+                  },
+                  icon: const Icon(Icons.description),
+                  label: const Text('Wiki'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primaryContainer,
+                    foregroundColor: colorScheme.onPrimaryContainer,
+                    elevation: 4.0,
+                    fixedSize: const Size(141, 56),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return SettingsDialog(
+                          prefs: widget.prefs,
+                          onTeamColorChanged: widget.onTeamColorChanged,
+                          fieldImages: _fieldImages,
+                          selectedField: _fieldImage ?? FieldImage.defaultField,
+                          onFieldSelected: (FieldImage image) {
+                            setState(() {
+                              _fieldImage = image;
+                              if (!_fieldImages.contains(image)) {
+                                _fieldImages.add(image);
+                              }
+                              widget.prefs
+                                  .setString(PrefsKeys.fieldImage, image.name);
+                            });
+                          },
+                          onSettingsChanged: _onProjectSettingsChanged,
+                        );
                       },
-                      onSettingsChanged: _onProjectSettingsChanged,
                     );
                   },
-                );
-              },
-              icon: const Icon(Icons.settings),
-              label: const Text('Settings'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.surface,
-                foregroundColor: colorScheme.onSurface,
-                elevation: 4.0,
-                fixedSize: const Size(270, 56),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
-              ),
+                  icon: const Icon(Icons.settings),
+                  label: const Text('Settings'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.surface,
+                    foregroundColor: colorScheme.onSurface,
+                    elevation: 4.0,
+                    fixedSize: const Size(141, 56),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -382,6 +412,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   fs: fs,
                   undoStack: widget.undoStack,
                   telemetry: widget.telemetry,
+                  hotReload: _hotReload,
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
@@ -422,6 +453,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _onProjectSettingsChanged() {
     _saveProjectSettingsToFile(_projectDir!);
+
+    setState(() {
+      _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
+          Defaults.hotReloadEnabled;
+
+      _holonomicMode = widget.prefs.getBool(PrefsKeys.holonomicMode) ??
+          Defaults.holonomicMode;
+    });
   }
 
   void _loadProjectSettingsFromFile(Directory projectDir) async {

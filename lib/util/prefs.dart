@@ -15,6 +15,7 @@ class PrefsKeys {
   static const String autoSortOption = 'autoSortOption';
   static const String pathsCompactView = 'pathsCompactView';
   static const String autosCompactView = 'pathsCompactView';
+  static const String hotReloadEnabled = 'hotReloadEnabled';
 }
 
 class Defaults {
@@ -30,4 +31,5 @@ class Defaults {
   static const String autoSortOption = 'nameAsc';
   static const bool pathsCompactView = false;
   static const bool autosCompactView = false;
+  static const bool hotReloadEnabled = false;
 }

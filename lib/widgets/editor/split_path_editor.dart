@@ -26,6 +26,7 @@ class SplitPathEditor extends StatefulWidget {
   final FieldImage fieldImage;
   final ChangeStack undoStack;
   final PPLibTelemetry? telemetry;
+  final bool hotReload;
 
   const SplitPathEditor({
     required this.prefs,
@@ -33,6 +34,7 @@ class SplitPathEditor extends StatefulWidget {
     required this.fieldImage,
     required this.undoStack,
     this.telemetry,
+    this.hotReload = false,
     super.key,
   });
 
@@ -273,8 +275,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         widget.path.generateAndSavePath();
                         _simulatePath();
                       });
-                      // TODO: hot reload setting
-                      widget.telemetry?.hotReloadPath(widget.path);
+                      if (widget.hotReload) {
+                        widget.telemetry?.hotReloadPath(widget.path);
+                      }
                     },
                     (oldValue) {
                       setState(() {
@@ -282,8 +285,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         widget.path.generateAndSavePath();
                         _simulatePath();
                       });
-                      // TODO: hot reload setting
-                      widget.telemetry?.hotReloadPath(widget.path);
+                      if (widget.hotReload) {
+                        widget.telemetry?.hotReloadPath(widget.path);
+                      }
                     },
                   ));
                   _draggedPoint = null;
@@ -417,16 +421,18 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         _simulatePath();
                       });
 
-                      // TODO: hot reload setting
-                      widget.telemetry?.hotReloadPath(widget.path);
+                      if (widget.hotReload) {
+                        widget.telemetry?.hotReloadPath(widget.path);
+                      }
                     },
                     onPathChangedNoSim: () {
                       setState(() {
                         widget.path.generateAndSavePath();
                       });
 
-                      // TODO: hot reload setting
-                      widget.telemetry?.hotReloadPath(widget.path);
+                      if (widget.hotReload) {
+                        widget.telemetry?.hotReloadPath(widget.path);
+                      }
                     },
                     onWaypointDeleted: (waypointIdx) {
                       widget.undoStack.add(Change(

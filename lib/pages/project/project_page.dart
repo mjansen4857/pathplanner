@@ -21,6 +21,7 @@ class ProjectPage extends StatefulWidget {
   final ChangeStack undoStack;
   final bool shortcuts;
   final PPLibTelemetry? telemetry;
+  final bool hotReload;
 
   const ProjectPage({
     super.key,
@@ -31,6 +32,7 @@ class ProjectPage extends StatefulWidget {
     required this.undoStack,
     this.shortcuts = true,
     this.telemetry,
+    this.hotReload = false,
   });
 
   @override
@@ -269,6 +271,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                     _renamePath(i, value, context),
                                 shortcuts: widget.shortcuts,
                                 telemetry: widget.telemetry,
+                                hotReload: widget.hotReload,
                               ),
                             ),
                           );
@@ -443,6 +446,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                     _renameAuto(i, value, context),
                                 shortcuts: widget.shortcuts,
                                 telemetry: widget.telemetry,
+                                hotReload: widget.hotReload,
                               ),
                             ),
                           );

@@ -21,6 +21,7 @@ class AutoEditorPage extends StatefulWidget {
   final ChangeStack undoStack;
   final bool shortcuts;
   final PPLibTelemetry? telemetry;
+  final bool hotReload;
 
   const AutoEditorPage({
     super.key,
@@ -33,6 +34,7 @@ class AutoEditorPage extends StatefulWidget {
     required this.undoStack,
     this.shortcuts = true,
     this.telemetry,
+    this.hotReload = false,
   });
 
   @override
@@ -60,7 +62,10 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
         setState(() {
           widget.auto.saveFile();
         });
-        widget.telemetry?.hotReloadAuto(widget.auto);
+
+        if (widget.hotReload) {
+          widget.telemetry?.hotReloadAuto(widget.auto);
+        }
       },
     );
 

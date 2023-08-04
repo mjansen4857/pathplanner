@@ -18,6 +18,7 @@ class PathEditorPage extends StatefulWidget {
   final ChangeStack undoStack;
   final bool shortcuts;
   final PPLibTelemetry? telemetry;
+  final bool hotReload;
 
   const PathEditorPage({
     super.key,
@@ -28,6 +29,7 @@ class PathEditorPage extends StatefulWidget {
     required this.undoStack,
     this.shortcuts = true,
     this.telemetry,
+    this.hotReload = false,
   });
 
   @override
@@ -45,6 +47,7 @@ class _PathEditorPageState extends State<PathEditorPage> {
       fieldImage: widget.fieldImage,
       undoStack: widget.undoStack,
       telemetry: widget.telemetry,
+      hotReload: widget.hotReload,
     );
 
     return Scaffold(

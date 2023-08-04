@@ -21,6 +21,7 @@ void main() {
       PrefsKeys.robotWidth: 0.1,
       PrefsKeys.robotLength: 0.2,
       PrefsKeys.holonomicMode: true,
+      PrefsKeys.hotReloadEnabled: true,
       PrefsKeys.teamColor: Colors.black.value,
       PrefsKeys.pplibClientHost: 'localhost',
     });
@@ -232,5 +233,37 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(prefs.getBool(PrefsKeys.holonomicMode), true);
+  });
+
+  testWidgets('hot reload chip', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final chip = find.widgetWithText(FilterChip, 'Hot Reload');
+
+    expect(chip, findsOneWidget);
+
+    await widgetTester.tap(chip);
+    await widgetTester.pumpAndSettle();
+
+    expect(settingsChanged, true);
+    expect(prefs.getBool(PrefsKeys.hotReloadEnabled), false);
+
+    await widgetTester.tap(chip);
+    await widgetTester.pumpAndSettle();
+
+    expect(prefs.getBool(PrefsKeys.hotReloadEnabled), true);
   });
 }

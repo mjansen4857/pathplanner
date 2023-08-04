@@ -38,6 +38,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late num _width;
   late num _length;
   late bool _holonomicMode;
+  late bool _hotReload;
   late FieldImage _selectedField;
   late Color _teamColor;
   late String _pplibClientHost;
@@ -52,6 +53,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
     _holonomicMode =
         widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
+    _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
+        Defaults.hotReloadEnabled;
     _selectedField = widget.selectedField;
     _teamColor =
         Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
@@ -164,6 +167,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         widget.prefs.setBool(PrefsKeys.holonomicMode, value);
                         setState(() {
                           _holonomicMode = value;
+                        });
+                        widget.onSettingsChanged();
+                      },
+                    ),
+                    FilterChip(
+                      label: const Text('Hot Reload'),
+                      selected: _hotReload,
+                      onSelected: (value) {
+                        widget.prefs.setBool(PrefsKeys.hotReloadEnabled, value);
+                        setState(() {
+                          _hotReload = value;
                         });
                         widget.onSettingsChanged();
                       },

@@ -11,7 +11,7 @@
 namespace pathplanner {
 class PathPoint {
 public:
-	const frc::Translation2d position;
+	frc::Translation2d position;
 	units::meter_t distanceAlongPath = 0_m;
 	units::meters_per_second_t maxV = units::meters_per_second_t {
 			std::numeric_limits<double>::infinity() };

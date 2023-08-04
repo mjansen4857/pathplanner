@@ -45,7 +45,7 @@ public:
 	}
 
 private:
-	const units::meters_per_second_t m_velocity;
-	const frc::Rotation2d m_rotation;
+	units::meters_per_second_t m_velocity;
+	frc::Rotation2d m_rotation;
 };
 }

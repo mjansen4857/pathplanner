@@ -1,5 +1,6 @@
 package com.pathplanner.lib.path;
 
+import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -320,36 +321,21 @@ public class PathPlannerPath {
     }
 
     if (index == 0) {
-      return calculateRadius(
+      return GeometryUtil.calculateRadius(
           points.get(index).position,
           points.get(index + 1).position,
           points.get(index + 2).position);
     } else if (index == points.size() - 1) {
-      return calculateRadius(
+      return GeometryUtil.calculateRadius(
           points.get(index - 2).position,
           points.get(index - 1).position,
           points.get(index).position);
     } else {
-      return calculateRadius(
+      return GeometryUtil.calculateRadius(
           points.get(index - 1).position,
           points.get(index).position,
           points.get(index + 1).position);
     }
-  }
-
-  private static double calculateRadius(Translation2d a, Translation2d b, Translation2d c) {
-    Translation2d vba = a.minus(b);
-    Translation2d vbc = c.minus(b);
-    double cross_z = (vba.getX() * vbc.getY()) - (vba.getY() * vbc.getX());
-    double sign = (cross_z < 0) ? 1 : -1;
-
-    double ab = a.getDistance(b);
-    double bc = b.getDistance(c);
-    double ac = a.getDistance(c);
-
-    double p = (ab + bc + ac) / 2;
-    double area = Math.sqrt(Math.abs(p * (p - ab) * (p - bc) * (p - ac)));
-    return sign * (ab * bc * ac) / (4 * area);
   }
 
   /**

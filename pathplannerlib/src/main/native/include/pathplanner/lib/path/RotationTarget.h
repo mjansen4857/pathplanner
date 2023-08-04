@@ -51,10 +51,12 @@ public:
 	 * @param segmentIndex The segment index to transform position for
 	 * @return The transformed target
 	 */
-	constexpr RotationTarget forSegmentIndex(int segmentIndex) const;
+	constexpr RotationTarget forSegmentIndex(int segmentIndex) const {
+		return RotationTarget(m_position - segmentIndex, m_target);
+	}
 
 private:
-	const double m_position;
-	const frc::Rotation2d m_target;
+	double m_position;
+	frc::Rotation2d m_target;
 };
 }

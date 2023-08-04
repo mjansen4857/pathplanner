@@ -10,8 +10,3 @@ RotationTarget RotationTarget::fromJson(const wpi::json &json) {
 
 	return RotationTarget(pos, frc::Rotation2d(targetDeg));
 }
-
-constexpr RotationTarget RotationTarget::forSegmentIndex(
-		int segmentIndex) const {
-	return RotationTarget(m_position - segmentIndex, m_target);
-}

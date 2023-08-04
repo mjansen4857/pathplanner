@@ -70,9 +70,9 @@ public:
 	}
 
 private:
-	const units::meters_per_second_t m_maxVelocity;
-	const units::meters_per_second_squared_t m_maxAcceleration;
-	const units::radians_per_second_t m_maxAngularVelocity;
-	const units::radians_per_second_squared_t m_maxAngularAcceleration;
+	units::meters_per_second_t m_maxVelocity;
+	units::meters_per_second_squared_t m_maxAcceleration;
+	units::radians_per_second_t m_maxAngularVelocity;
+	units::radians_per_second_squared_t m_maxAngularAcceleration;
 };
 }

@@ -67,12 +67,20 @@ public:
 		return m_pos;
 	}
 
-	// TODO friend class PathPlannerPath;
+	/**
+	 * Set the field position of this event marker. This is used internally
+	 * during path creation and should likely not be used by an end user
+	 * 
+	 * @param fieldPosition Position of the marker on the field
+	 */
+	constexpr void setMarkerPosition(frc::Translation2d fieldPosition) {
+		m_markerPos = fieldPosition;
+	}
 
 private:
-	const double m_pos;
-	const std::shared_ptr<frc2::Command> m_command;
-	const units::meter_t m_minTriggerDistance;
+	double m_pos;
+	std::shared_ptr<frc2::Command> m_command;
+	units::meter_t m_minTriggerDistance;
 
 	frc::Translation2d m_markerPos;
 	frc::Translation2d m_lastRobotPos;

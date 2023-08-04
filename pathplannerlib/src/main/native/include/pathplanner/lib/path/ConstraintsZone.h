@@ -89,8 +89,8 @@ public:
 	}
 
 private:
-	const double m_minPos;
-	const double m_maxPos;
-	const PathConstraints m_constraints;
+	double m_minPos;
+	double m_maxPos;
+	PathConstraints m_constraints;
 };
 }

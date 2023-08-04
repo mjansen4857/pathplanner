@@ -89,6 +89,9 @@ constexpr frc::Rotation2d cosineInterpolate(frc::Rotation2d const y1,
 	return frc::Rotation2d(y1.Radians() * (1 - mu2) + y2.Radians() * mu2);
 }
 
+units::meter_t calculateRadius(const frc::Translation2d a,
+		const frc::Translation2d b, const frc::Translation2d c);
+
 inline units::degree_t modulo(units::degree_t const a,
 		units::degree_t const b) {
 	return a - (b * units::math::floor(a / b));

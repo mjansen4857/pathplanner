@@ -8,21 +8,18 @@ PathSegment::PathSegment(frc::Translation2d p1, frc::Translation2d p2,
 		std::vector<RotationTarget> targetHolonomicRotations,
 		std::vector<ConstraintsZone> constraintZones, bool endSegment) : m_segmentPoints() {
 
-	size_t currentRotTarget = 0;
 	for (double t = 0.0; t < 1.0; t += PathSegment::RESOLUTION) {
 		std::optional < frc::Rotation2d > holonomicRotation = std::nullopt;
 
-		if (currentRotTarget < targetHolonomicRotations.size()) {
-			if (std::abs(
-					targetHolonomicRotations[currentRotTarget].getPosition()
-							- t)
+		if (!targetHolonomicRotations.empty()) {
+			if (std::abs(targetHolonomicRotations[0].getPosition() - t)
 					<= std::abs(
-							targetHolonomicRotations[currentRotTarget].getPosition()
+							targetHolonomicRotations[0].getPosition()
 									- std::min(t + PathSegment::RESOLUTION,
 											1.0))) {
-				holonomicRotation =
-						targetHolonomicRotations[currentRotTarget].getTarget();
-				currentRotTarget++;
+				holonomicRotation = targetHolonomicRotations[0].getTarget();
+				targetHolonomicRotations.erase(
+						targetHolonomicRotations.begin());
 			}
 		}
 

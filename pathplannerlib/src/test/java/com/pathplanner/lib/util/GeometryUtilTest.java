@@ -65,4 +65,27 @@ public class GeometryUtilTest {
     assertEquals(4, t.getX(), DELTA);
     assertEquals(5, t.getY(), DELTA);
   }
+
+  @Test
+  public void testCurveRadius() {
+    double radius1 =
+        GeometryUtil.calculateRadius(
+            new Translation2d(1.0, 1.0), new Translation2d(1.5, 1.5), new Translation2d(2.0, 1.0));
+    assertEquals(-0.5, radius1, DELTA);
+
+    double radius2 =
+        GeometryUtil.calculateRadius(
+            new Translation2d(1.0, 1.0), new Translation2d(1.5, 0.5), new Translation2d(2.0, 1.0));
+    assertEquals(0.5, radius2, DELTA);
+
+    double radius3 =
+        GeometryUtil.calculateRadius(
+            new Translation2d(1.0, 1.0), new Translation2d(1.5, 1.25), new Translation2d(2.0, 1.0));
+    assertEquals(-0.625, radius3, DELTA);
+
+    double radius4 =
+        GeometryUtil.calculateRadius(
+            new Translation2d(1.0, 1.0), new Translation2d(1.5, 0.75), new Translation2d(2.0, 1.0));
+    assertEquals(0.625, radius4, DELTA);
+  }
 }

@@ -48,3 +48,10 @@ TEST(GeometryUtilTest, TestModulo) {
 	EXPECT_DOUBLE_EQ(5, GeometryUtil::modulo(5_deg, 7_deg)());
 	EXPECT_DOUBLE_EQ(5, GeometryUtil::modulo(95_deg, 10_deg)());
 }
+
+TEST(GeometryUtilTest, TestCalculateRadius) {
+	EXPECT_NEAR(-0.5, GeometryUtil::calculateRadius(frc::Translation2d(1_m, 1_m), frc::Translation2d(1.5_m, 1.5_m), frc::Translation2d(2.0_m, 1_m))(), 0.001);
+	EXPECT_NEAR(0.5, GeometryUtil::calculateRadius(frc::Translation2d(1_m, 1_m), frc::Translation2d(1.5_m, 0.5_m), frc::Translation2d(2.0_m, 1_m))(), 0.001);
+	EXPECT_NEAR(-0.625, GeometryUtil::calculateRadius(frc::Translation2d(1_m, 1_m), frc::Translation2d(1.5_m, 1.25_m), frc::Translation2d(2.0_m, 1_m))(), 0.001);
+	EXPECT_NEAR(0.625, GeometryUtil::calculateRadius(frc::Translation2d(1_m, 1_m), frc::Translation2d(1.5_m, 0.75_m), frc::Translation2d(2.0_m, 1_m))(), 0.001);
+}

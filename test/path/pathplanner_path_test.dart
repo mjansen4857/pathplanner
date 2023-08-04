@@ -52,6 +52,7 @@ void main() {
             List.generate(3, (index) => ConstraintsZone.defaultZone()),
         rotationTargets: List.generate(4, (index) => RotationTarget()),
         eventMarkers: List.generate(5, (index) => EventMarker.defaultMarker()),
+        reversed: false,
       );
 
       expect(path.name, 'test');
@@ -86,6 +87,7 @@ void main() {
         constraintZones: [ConstraintsZone.defaultZone()],
         rotationTargets: [RotationTarget()],
         eventMarkers: [EventMarker.defaultMarker()],
+        reversed: false,
       );
 
       Map<String, dynamic> json = path.toJson();
@@ -117,6 +119,7 @@ void main() {
         constraintZones: [ConstraintsZone.defaultZone()],
         rotationTargets: [RotationTarget()],
         eventMarkers: [EventMarker.defaultMarker()],
+        reversed: false,
       );
       PathPlannerPath cloned = path.duplicate('test');
 
@@ -149,6 +152,7 @@ void main() {
         constraintZones: [ConstraintsZone.defaultZone()],
         rotationTargets: [RotationTarget()],
         eventMarkers: [EventMarker.defaultMarker()],
+        reversed: false,
       );
       PathPlannerPath path2 = PathPlannerPath(
         name: 'test',
@@ -169,6 +173,7 @@ void main() {
         constraintZones: [ConstraintsZone.defaultZone()],
         rotationTargets: [RotationTarget()],
         eventMarkers: [EventMarker.defaultMarker()],
+        reversed: false,
       );
       PathPlannerPath path3 = PathPlannerPath(
         name: 'test2',
@@ -189,6 +194,7 @@ void main() {
         constraintZones: [],
         rotationTargets: [],
         eventMarkers: [],
+        reversed: false,
       );
 
       expect(path2, path1);
@@ -221,6 +227,7 @@ void main() {
       constraintZones: [ConstraintsZone.defaultZone()],
       rotationTargets: [RotationTarget()],
       eventMarkers: [EventMarker.defaultMarker()],
+      reversed: false,
     );
 
     path.addWaypoint(const Point(6.0, 1.0));
@@ -267,6 +274,7 @@ void main() {
               SequentialCommandGroup(commands: [NamedCommand(name: 'testcmd')]),
         ),
       ],
+      reversed: false,
     );
 
     path.insertWaypointAfter(1);

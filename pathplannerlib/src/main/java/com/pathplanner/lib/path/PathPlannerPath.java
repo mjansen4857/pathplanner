@@ -23,6 +23,7 @@ public class PathPlannerPath {
   private PathConstraints globalConstraints;
   private GoalEndState goalEndState;
   private List<PathPoint> allPoints;
+  private boolean reversed;
 
   /**
    * Create a new path planner path
@@ -33,6 +34,7 @@ public class PathPlannerPath {
    * @param eventMarkers List of event markers along the path
    * @param globalConstraints The global constraints of the path
    * @param goalEndState The goal end state of the path
+   * @param reversed Should the robot follow the path reversed (differential drive only)
    */
   public PathPlannerPath(
       List<Translation2d> bezierPoints,
@@ -40,13 +42,15 @@ public class PathPlannerPath {
       List<ConstraintsZone> constraintZones,
       List<EventMarker> eventMarkers,
       PathConstraints globalConstraints,
-      GoalEndState goalEndState) {
+      GoalEndState goalEndState,
+      boolean reversed) {
     this.bezierPoints = bezierPoints;
     this.rotationTargets = holonomicRotations;
     this.constraintZones = constraintZones;
     this.eventMarkers = eventMarkers;
     this.globalConstraints = globalConstraints;
     this.goalEndState = goalEndState;
+    this.reversed = reversed;
     this.allPoints = createPath(this.bezierPoints, this.rotationTargets, this.constraintZones);
 
     precalcValues();
@@ -59,6 +63,7 @@ public class PathPlannerPath {
     this.eventMarkers = new ArrayList<>();
     this.globalConstraints = globalConstraints;
     this.goalEndState = goalEndState;
+    this.reversed = false;
     this.allPoints = new ArrayList<>();
   }
 
@@ -72,6 +77,7 @@ public class PathPlannerPath {
     this.globalConstraints = updatedPath.globalConstraints;
     this.goalEndState = updatedPath.goalEndState;
     this.allPoints = updatedPath.allPoints;
+    this.reversed = updatedPath.reversed;
   }
 
   /**
@@ -110,6 +116,7 @@ public class PathPlannerPath {
     PathConstraints globalConstraints =
         PathConstraints.fromJson((JSONObject) pathJson.get("globalConstraints"));
     GoalEndState goalEndState = GoalEndState.fromJson((JSONObject) pathJson.get("goalEndState"));
+    boolean reversed = (boolean) pathJson.get("reversed");
     List<RotationTarget> rotationTargets = new ArrayList<>();
     List<ConstraintsZone> constraintZones = new ArrayList<>();
     List<EventMarker> eventMarkers = new ArrayList<>();
@@ -132,7 +139,8 @@ public class PathPlannerPath {
         constraintZones,
         eventMarkers,
         globalConstraints,
-        goalEndState);
+        goalEndState,
+        reversed);
   }
 
   private static List<Translation2d> bezierPointsFromWaypointsJson(JSONArray waypointsJson) {
@@ -345,6 +353,15 @@ public class PathPlannerPath {
    */
   public List<EventMarker> getEventMarkers() {
     return eventMarkers;
+  }
+
+  /**
+   * Should the path be followed reversed (differential drive only)
+   *
+   * @return True if reversed
+   */
+  public boolean isReversed() {
+    return reversed;
   }
 
   @Override

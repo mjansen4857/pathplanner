@@ -26,6 +26,7 @@ class PathPlannerPath {
   List<ConstraintsZone> constraintZones;
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
+  bool reversed;
 
   FileSystem fs;
   String pathDir;
@@ -46,7 +47,8 @@ class PathPlannerPath {
         goalEndState = GoalEndState(),
         constraintZones = [],
         rotationTargets = [],
-        eventMarkers = [] {
+        eventMarkers = [],
+        reversed = false {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),
@@ -76,6 +78,7 @@ class PathPlannerPath {
     required this.eventMarkers,
     required this.pathDir,
     required this.fs,
+    required this.reversed,
   }) : pathPoints = [] {
     generatePathPoints();
   }
@@ -105,6 +108,7 @@ class PathPlannerPath {
             for (var markerJson in json['eventMarkers'] ?? [])
               EventMarker.fromJson(markerJson),
           ],
+          reversed: json['reversed'] ?? false,
         );
 
   void generateAndSavePath() {
@@ -182,6 +186,7 @@ class PathPlannerPath {
       ],
       'globalConstraints': globalConstraints.toJson(),
       'goalEndState': goalEndState.toJson(),
+      'reversed': reversed,
     };
   }
 
@@ -398,6 +403,7 @@ class PathPlannerPath {
       eventMarkers: cloneEventMarkers(eventMarkers),
       pathDir: pathDir,
       fs: fs,
+      reversed: reversed,
     );
   }
 
@@ -434,6 +440,7 @@ class PathPlannerPath {
       other.name == name &&
       other.globalConstraints == globalConstraints &&
       other.goalEndState == goalEndState &&
+      other.reversed == reversed &&
       listEquals(other.waypoints, waypoints) &&
       listEquals(other.constraintZones, constraintZones) &&
       listEquals(other.eventMarkers, eventMarkers) &&
@@ -441,5 +448,5 @@ class PathPlannerPath {
 
   @override
   int get hashCode => Object.hash(name, globalConstraints, goalEndState,
-      waypoints, constraintZones, eventMarkers, rotationTargets);
+      waypoints, constraintZones, eventMarkers, rotationTargets, reversed);
 }

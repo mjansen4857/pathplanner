@@ -11,10 +11,11 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 		std::vector<RotationTarget> rotationTargets,
 		std::vector<ConstraintsZone> constraintZones,
 		std::vector<EventMarker> eventMarkers,
-		PathConstraints globalConstraints, GoalEndState goalEndState) : m_bezierPoints(
-		bezierPoints), m_rotationTargets(rotationTargets), m_constraintZones(
-		constraintZones), m_eventMarkers(eventMarkers), m_globalConstraints(
-		globalConstraints), m_goalEndState(goalEndState) {
+		PathConstraints globalConstraints, GoalEndState goalEndState,
+		bool reversed) : m_bezierPoints(bezierPoints), m_rotationTargets(
+		rotationTargets), m_constraintZones(constraintZones), m_eventMarkers(
+		eventMarkers), m_globalConstraints(globalConstraints), m_goalEndState(
+		goalEndState), m_reversed(reversed) {
 	m_allPoints = PathPlannerPath::createPath(m_bezierPoints, m_rotationTargets,
 			m_constraintZones);
 
@@ -23,7 +24,7 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 
 PathPlannerPath::PathPlannerPath(PathConstraints globalConstraints,
 		GoalEndState goalEndState) : m_globalConstraints(globalConstraints), m_goalEndState(
-		goalEndState) {
+		goalEndState), m_reversed(false) {
 
 }
 
@@ -36,6 +37,7 @@ void PathPlannerPath::hotReload(const wpi::json &json) {
 	m_eventMarkers = updatedPath.m_eventMarkers;
 	m_globalConstraints = updatedPath.m_globalConstraints;
 	m_goalEndState = updatedPath.m_goalEndState;
+	m_reversed = updatedPath.m_reversed;
 	m_allPoints = updatedPath.m_allPoints;
 }
 
@@ -65,6 +67,7 @@ PathPlannerPath PathPlannerPath::fromJson(const wpi::json &json) {
 	PathConstraints globalConstraints = PathConstraints::fromJson(
 			json.at("globalConstraints"));
 	GoalEndState goalEndState = GoalEndState::fromJson(json.at("goalEndState"));
+	bool reversed = static_cast<bool>(json.at("reversed"));
 	std::vector < RotationTarget > rotationTargets;
 	std::vector < ConstraintsZone > constraintZones;
 	std::vector < EventMarker > eventMarkers;
@@ -82,7 +85,7 @@ PathPlannerPath PathPlannerPath::fromJson(const wpi::json &json) {
 	}
 
 	return PathPlannerPath(bezierPoints, rotationTargets, constraintZones,
-			eventMarkers, globalConstraints, goalEndState);
+			eventMarkers, globalConstraints, goalEndState, reversed);
 }
 
 std::vector<frc::Translation2d> PathPlannerPath::bezierPointsFromWaypointsJson(

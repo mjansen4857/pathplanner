@@ -24,12 +24,14 @@ public:
 	 * @param eventMarkers List of event markers along the path
 	 * @param globalConstraints The global constraints of the path
 	 * @param goalEndState The goal end state of the path
+	 * @param reversed Should the robot follow the path reversed (differential drive only)
 	 */
 	PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 			std::vector<RotationTarget> rotationTargets,
 			std::vector<ConstraintsZone> constraintZones,
 			std::vector<EventMarker> eventMarkers,
-			PathConstraints globalConstraints, GoalEndState goalEndState);
+			PathConstraints globalConstraints, GoalEndState goalEndState,
+			bool reversed);
 
 	void hotReload(const wpi::json &json);
 
@@ -119,6 +121,15 @@ public:
 		return m_eventMarkers;
 	}
 
+	/**
+	 * Should the path be followed reversed (differential drive only)
+	 * 
+	 * @return True if reversed
+	 */
+	constexpr bool isReversed() const {
+		return m_reversed;
+	}
+
 private:
 	PathPlannerPath(PathConstraints globalConstraints,
 			GoalEndState goalEndState);
@@ -142,5 +153,6 @@ private:
 	PathConstraints m_globalConstraints;
 	GoalEndState m_goalEndState;
 	std::vector<PathPoint> m_allPoints;
+	bool m_reversed;
 };
 }

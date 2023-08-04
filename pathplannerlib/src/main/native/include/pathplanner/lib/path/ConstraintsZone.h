@@ -60,7 +60,9 @@ public:
 	 * @param t Waypoint relative position
 	 * @return True if given position is within this zone
 	 */
-	constexpr bool isWithinZone(double t) const;
+	constexpr bool isWithinZone(double t) const {
+		return t >= m_minPos && t <= m_maxPos;
+	}
 
 	/**
 	 * Get if this zone overlaps a given range
@@ -69,7 +71,9 @@ public:
 	 * @param maxPos The maximum waypoint relative position of the range
 	 * @return True if any part of this zone is within the given range
 	 */
-	constexpr bool overlapsRange(double minPos, double maxPos) const;
+	constexpr bool overlapsRange(double minPos, double maxPos) const {
+		return std::max(minPos, m_minPos) <= std::min(maxPos, m_maxPos);
+	}
 
 	/**
 	 * Transform the positions of this zone for a given segment number.
@@ -79,7 +83,10 @@ public:
 	 * @param segmentIndex The segment index to transform positions for
 	 * @return The transformed zone
 	 */
-	constexpr ConstraintsZone forSegmentIndex(int segmentIndex) const;
+	constexpr ConstraintsZone forSegmentIndex(int segmentIndex) const {
+		return ConstraintsZone(m_minPos - segmentIndex, m_maxPos - segmentIndex,
+				m_constraints);
+	}
 
 private:
 	const double m_minPos;

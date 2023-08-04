@@ -18,16 +18,10 @@ public:
 	std::optional<frc::Rotation2d> holonomicRotation = std::nullopt;
 	std::optional<PathConstraints> constraints = std::nullopt;
 
-	constexpr PathPoint(frc::Translation2d pos, frc::Rotation2d rot,
-			PathConstraints pathCostriaints) : position(pos), holonomicRotation(
+	constexpr PathPoint(frc::Translation2d pos,
+			std::optional<frc::Rotation2d> rot,
+			std::optional<PathConstraints> pathCostriaints) : position(pos), holonomicRotation(
 			rot), constraints(pathCostriaints) {
-	}
-
-	constexpr PathPoint(frc::Translation2d pos, frc::Rotation2d rot) : position(
-			pos), holonomicRotation(rot) {
-	}
-
-	constexpr PathPoint(frc::Translation2d pos) : position(pos) {
 	}
 };
 }

@@ -74,16 +74,12 @@ public class EventMarker {
       return false;
     }
 
-    if (robotPose.getTranslation().getDistance(markerPos) <= minimumTriggerDistance
-        && lastRobotPos.getDistance(markerPos)
-            < robotPose.getTranslation().getDistance(markerPos)) {
-      // Reached minima
-      lastRobotPos = robotPose.getTranslation();
-      return true;
-    } else {
-      lastRobotPos = robotPose.getTranslation();
-      return false;
-    }
+    double distanceToMarker = robotPose.getTranslation().getDistance(markerPos);
+    boolean trigger =
+        distanceToMarker <= minimumTriggerDistance
+            && lastRobotPos.getDistance(markerPos) < distanceToMarker;
+    lastRobotPos = robotPose.getTranslation();
+    return trigger;
   }
 
   /**

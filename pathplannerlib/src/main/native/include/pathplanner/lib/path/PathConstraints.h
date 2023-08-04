@@ -69,6 +69,8 @@ public:
 		return m_maxAngularAcceleration;
 	}
 
+	bool operator==(const PathConstraints &other) const;
+
 private:
 	units::meters_per_second_t m_maxVelocity;
 	units::meters_per_second_squared_t m_maxAcceleration;

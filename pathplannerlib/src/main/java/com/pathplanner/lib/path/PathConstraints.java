@@ -103,4 +103,18 @@ public class PathConstraints {
     return Objects.hash(
         maxVelocityMps, maxAccelerationMpsSq, maxAngularVelocityRps, maxAngularAccelerationRpsSq);
   }
+
+  @Override
+  public String toString() {
+    return "PathConstraints{"
+        + "maxVelocityMps="
+        + maxVelocityMps
+        + ", maxAccelerationMpsSq="
+        + maxAccelerationMpsSq
+        + ", maxAngularVelocityRps="
+        + maxAngularVelocityRps
+        + ", maxAngularAccelerationRpsSq="
+        + maxAngularAccelerationRpsSq
+        + '}';
+  }
 }

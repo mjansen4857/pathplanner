@@ -74,4 +74,14 @@ public class RotationTarget {
   public int hashCode() {
     return Objects.hash(waypointRelativePosition, target);
   }
+
+  @Override
+  public String toString() {
+    return "RotationTarget{"
+        + "waypointRelativePosition="
+        + waypointRelativePosition
+        + ", target="
+        + target
+        + '}';
+  }
 }

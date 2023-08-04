@@ -10,3 +10,8 @@ RotationTarget RotationTarget::fromJson(const wpi::json &json) {
 
 	return RotationTarget(pos, frc::Rotation2d(targetDeg));
 }
+
+bool RotationTarget::operator==(const RotationTarget &other) const {
+	return std::abs(m_position - other.m_position) < 1E-9
+			&& m_target == other.m_target;
+}

@@ -11,3 +11,9 @@ ConstraintsZone ConstraintsZone::fromJson(const wpi::json &json) {
 
 	return ConstraintsZone(minPos, maxPos, constraints);
 }
+
+bool ConstraintsZone::operator==(const ConstraintsZone &other) const {
+	return std::abs(m_minPos - other.m_minPos) < 1E-9
+			&& std::abs(m_maxPos - other.m_maxPos) < 1E-9
+			&& m_constraints == other.m_constraints;
+}

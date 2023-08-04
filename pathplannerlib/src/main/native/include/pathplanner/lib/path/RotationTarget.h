@@ -55,6 +55,8 @@ public:
 		return RotationTarget(m_position - segmentIndex, m_target);
 	}
 
+	bool operator==(const RotationTarget &other) const;
+
 private:
 	double m_position;
 	frc::Rotation2d m_target;

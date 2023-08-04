@@ -44,6 +44,8 @@ public:
 		return m_rotation;
 	}
 
+	bool operator==(const GoalEndState &other) const;
+
 private:
 	units::meters_per_second_t m_velocity;
 	frc::Rotation2d m_rotation;

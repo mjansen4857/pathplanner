@@ -61,4 +61,9 @@ public class GoalEndState {
   public int hashCode() {
     return Objects.hash(velocity, rotation);
   }
+
+  @Override
+  public String toString() {
+    return "GoalEndState{" + "velocity=" + velocity + ", rotation=" + rotation + '}';
+  }
 }

@@ -88,6 +88,8 @@ public:
 				m_constraints);
 	}
 
+	bool operator==(const ConstraintsZone &other) const;
+
 private:
 	double m_minPos;
 	double m_maxPos;

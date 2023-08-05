@@ -24,6 +24,7 @@ class SplitAutoEditor extends StatefulWidget {
   final VoidCallback? onAutoChanged;
   final FieldImage fieldImage;
   final ChangeStack undoStack;
+  final bool holonomicMode;
 
   const SplitAutoEditor({
     required this.prefs,
@@ -32,6 +33,7 @@ class SplitAutoEditor extends StatefulWidget {
     required this.allPathNames,
     required this.fieldImage,
     required this.undoStack,
+    required this.holonomicMode,
     this.onAutoChanged,
     super.key,
   });
@@ -275,7 +277,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   void _simulateAuto() async {
     Stopwatch s = Stopwatch()..start();
     SimulatedPath p = await compute(
-        simulateAuto,
+        widget.holonomicMode ? simulateAutoHolonomic : simulateAutoDifferential,
         SimulatableAuto(
             paths: widget.autoPaths, startingPose: widget.auto.startingPose));
     Log.debug('Simulated auto in ${s.elapsedMilliseconds}ms');

@@ -22,6 +22,7 @@ class AutoEditorPage extends StatefulWidget {
   final bool shortcuts;
   final PPLibTelemetry? telemetry;
   final bool hotReload;
+  final bool holonomicMode;
 
   const AutoEditorPage({
     super.key,
@@ -31,6 +32,7 @@ class AutoEditorPage extends StatefulWidget {
     required this.allPathNames,
     required this.fieldImage,
     required this.onRenamed,
+    required this.holonomicMode,
     required this.undoStack,
     this.shortcuts = true,
     this.telemetry,
@@ -58,6 +60,7 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
       allPathNames: widget.allPathNames,
       fieldImage: widget.fieldImage,
       undoStack: widget.undoStack,
+      holonomicMode: widget.holonomicMode,
       onAutoChanged: () {
         setState(() {
           widget.auto.saveFile();

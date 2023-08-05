@@ -22,19 +22,19 @@ class SimulatableAuto {
   });
 }
 
-Future<SimulatedPath> simulateAuto(SimulatableAuto auto) async {
+Future<SimulatedPath> simulateAutoHolonomic(SimulatableAuto auto) async {
   SimulatedPath sim = SimulatedPath();
 
   if (auto.paths.isNotEmpty) {
     SimulatedPath path =
-        await _simulatePath(auto.paths.first, auto.startingPose, null);
+        await _simulatePath(auto.paths.first, auto.startingPose, null, true);
 
     sim.runtime += path.runtime;
     sim.pathStates.addAll(path.pathStates);
 
     for (int i = 1; i < auto.paths.length; i++) {
       path = await _simulatePath(
-          auto.paths[i], sim.pathStates.last, path.endSpeeds);
+          auto.paths[i], sim.pathStates.last, path.endSpeeds, true);
 
       sim.runtime += path.runtime;
       sim.pathStates.addAll(path.pathStates);
@@ -46,12 +46,40 @@ Future<SimulatedPath> simulateAuto(SimulatableAuto auto) async {
   return sim;
 }
 
-Future<SimulatedPath> simulatePath(PathPlannerPath path) {
-  return _simulatePath(path, null, null);
+Future<SimulatedPath> simulateAutoDifferential(SimulatableAuto auto) async {
+  SimulatedPath sim = SimulatedPath();
+
+  if (auto.paths.isNotEmpty) {
+    SimulatedPath path =
+        await _simulatePath(auto.paths.first, auto.startingPose, null, false);
+
+    sim.runtime += path.runtime;
+    sim.pathStates.addAll(path.pathStates);
+
+    for (int i = 1; i < auto.paths.length; i++) {
+      path = await _simulatePath(
+          auto.paths[i], sim.pathStates.last, path.endSpeeds, false);
+
+      sim.runtime += path.runtime;
+      sim.pathStates.addAll(path.pathStates);
+    }
+
+    sim.endSpeeds = path.endSpeeds;
+  }
+
+  return sim;
+}
+
+Future<SimulatedPath> simulatePathHolonomic(PathPlannerPath path) {
+  return _simulatePath(path, null, null, true);
+}
+
+Future<SimulatedPath> simulatePathDifferential(PathPlannerPath path) {
+  return _simulatePath(path, null, null, false);
 }
 
 Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
-    ChassisSpeeds? startingSpeeds) async {
+    ChassisSpeeds? startingSpeeds, bool holonomic) async {
   SimulatedPath sim = SimulatedPath();
 
   if (path.pathPoints.length < 2) {
@@ -75,6 +103,7 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
   num lastDistToEnd = double.infinity;
   PathPoint nextRotationTarget = _findNextRotationTarget(path, 0);
   bool lockDecel = false;
+  num lastHeadingRadians = 0;
 
   while (true) {
     int closestPointIdx =
@@ -103,24 +132,30 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
       }
     }
 
-    num rotationVel = 0;
     if (path.pathPoints[closestPointIdx].distanceAlongPath >
         nextRotationTarget.distanceAlongPath) {
       nextRotationTarget = _findNextRotationTarget(path, closestPointIdx);
     }
 
-    num maxAngVel = constraints.maxAngularVelocity;
+    num distanceToEnd =
+        currentPose.position.distanceTo(path.pathPoints.last.position);
 
-    rotationVel = (rotationController.calculate(
-            currentPose.rotation, nextRotationTarget.holonomicRotation!))
+    // Lock in the heading at the end of the path so it doesn't get all wonky
+    // as the heading changes wildly
+    if (distanceToEnd > 0.1) {
+      lastHeadingRadians = atan2(lastLookahead.y - currentPose.position.y,
+          lastLookahead.x - currentPose.position.x);
+    }
+
+    num maxAngVel = constraints.maxAngularVelocity;
+    num rotationVel = (rotationController.calculate(
+            currentPose.rotation,
+            holonomic
+                ? nextRotationTarget.holonomicRotation!
+                : GeometryUtil.toDegrees(lastHeadingRadians)))
         .clamp(-maxAngVel, maxAngVel);
 
-    num headingRadians = atan2(lastLookahead.y - currentPose.position.y,
-        lastLookahead.x - currentPose.position.x);
-
     if (path.goalEndState.velocity == 0 && !lockDecel) {
-      num distanceToEnd =
-          currentPose.position.distanceTo(path.pathPoints.last.position);
       num neededDecel = pow(currentRobotVel, 2) / (2 * distanceToEnd);
       if (neededDecel >= constraints.maxAcceleration) {
         lockDecel = true;
@@ -128,8 +163,6 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
     }
 
     if (lockDecel) {
-      num distanceToEnd =
-          currentPose.position.distanceTo(path.pathPoints.last.position);
       num neededDecel = pow(currentRobotVel, 2) / (2 * distanceToEnd);
 
       num nextVel = max(path.goalEndState.velocity,
@@ -137,14 +170,20 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
       if (neededDecel < constraints.maxAcceleration * 0.9) {
         nextVel = sqrt(pow(currentSpeeds.vx, 2) + pow(currentSpeeds.vy, 2));
       }
-      num velX = nextVel * cos(headingRadians);
-      num velY = nextVel * sin(headingRadians);
 
-      currentSpeeds = ChassisSpeeds(
-        vx: velX,
-        vy: velY,
-        omega: rotationVel,
-      );
+      if (holonomic) {
+        num velX = nextVel * cos(lastHeadingRadians);
+        num velY = nextVel * sin(lastHeadingRadians);
+
+        currentSpeeds = ChassisSpeeds(
+          vx: velX,
+          vy: velY,
+          omega: rotationVel,
+        );
+      } else {
+        currentSpeeds = ChassisSpeeds(vx: nextVel, omega: rotationVel);
+      }
+
       limiter.reset(currentSpeeds);
     } else {
       num maxV =
@@ -171,18 +210,28 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
         }
       }
 
-      currentSpeeds = limiter.calculate(
-        ChassisSpeeds(
-          vx: maxV * cos(headingRadians),
-          vy: maxV * sin(headingRadians),
-          omega: rotationVel,
-        ),
-        simulationPeriod,
-      );
+      if (holonomic) {
+        currentSpeeds = limiter.calculate(
+          ChassisSpeeds(
+            vx: maxV * cos(lastHeadingRadians),
+            vy: maxV * sin(lastHeadingRadians),
+            omega: rotationVel,
+          ),
+          simulationPeriod,
+        );
+      } else {
+        currentSpeeds = limiter.calculate(
+          ChassisSpeeds(
+            vx: maxV,
+            omega: rotationVel,
+          ),
+          simulationPeriod,
+        );
+      }
     }
 
-    num nextX = currentPose.position.x + (currentSpeeds.vx * simulationPeriod);
-    num nextY = currentPose.position.y + (currentSpeeds.vy * simulationPeriod);
+    num nextX;
+    num nextY;
     num nextRot =
         currentPose.rotation + (currentSpeeds.omega * simulationPeriod);
     nextRot %= 360;
@@ -190,12 +239,39 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
       nextRot -= 360;
     }
 
+    if (holonomic) {
+      nextX = currentPose.position.x + (currentSpeeds.vx * simulationPeriod);
+      nextY = currentPose.position.y + (currentSpeeds.vy * simulationPeriod);
+    } else {
+      nextX = currentPose.position.x +
+          (currentSpeeds.vx *
+              cos(GeometryUtil.toRadians(nextRot)) *
+              simulationPeriod);
+      nextY = currentPose.position.y +
+          (currentSpeeds.vx *
+              sin(GeometryUtil.toRadians(nextRot)) *
+              simulationPeriod);
+    }
+
     currentPose.position = Point(nextX, nextY);
     currentPose.rotation = nextRot;
 
-    sim.pathStates.add(
-        Pose2d(position: currentPose.position, rotation: currentPose.rotation));
+    num actualRotation = currentPose.rotation;
+    if (path.reversed && !holonomic) {
+      actualRotation += 180;
+      actualRotation %= 360;
+      if (actualRotation > 180) {
+        actualRotation -= 360;
+      }
+    }
+
+    sim.pathStates
+        .add(Pose2d(position: currentPose.position, rotation: actualRotation));
     sim.runtime += simulationPeriod;
+
+    if (sim.runtime >= 10) {
+      break;
+    }
 
     // Check if we're finished following
     Point endPos = path.pathPoints.last.position;
@@ -205,17 +281,18 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
         break;
       }
 
-      if (distanceToEnd >= lastDistToEnd || path.goalEndState.velocity == 0) {
-        if (path.goalEndState.velocity == 0) {
+      if (distanceToEnd >= lastDistToEnd) {
+        if (holonomic && path.goalEndState.velocity == 0) {
           num currentVel =
               sqrt(pow(currentSpeeds.vx, 2) + pow(currentSpeeds.vy, 2));
-          if (currentVel.abs() <= 0.1) {
+          if (currentVel <= 0.1) {
             break;
           }
         } else {
           break;
         }
       }
+
       lastDistToEnd = distanceToEnd;
     }
   }

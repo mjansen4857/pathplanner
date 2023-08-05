@@ -413,6 +413,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   undoStack: widget.undoStack,
                   telemetry: widget.telemetry,
                   hotReload: _hotReload,
+                  holonomicMode: _holonomicMode,
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,

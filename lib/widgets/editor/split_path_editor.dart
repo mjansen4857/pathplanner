@@ -27,12 +27,14 @@ class SplitPathEditor extends StatefulWidget {
   final ChangeStack undoStack;
   final PPLibTelemetry? telemetry;
   final bool hotReload;
+  final bool holonomicMode;
 
   const SplitPathEditor({
     required this.prefs,
     required this.path,
     required this.fieldImage,
     required this.undoStack,
+    required this.holonomicMode,
     this.telemetry,
     this.hotReload = false,
     super.key,
@@ -570,7 +572,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
   void _simulatePath() async {
     Stopwatch s = Stopwatch()..start();
-    SimulatedPath p = await compute(simulatePath, widget.path);
+    SimulatedPath p = await compute(
+        widget.holonomicMode ? simulatePathHolonomic : simulatePathDifferential,
+        widget.path);
     Log.debug('Simulated path in ${s.elapsedMilliseconds}ms');
     setState(() {
       _simPath = p;

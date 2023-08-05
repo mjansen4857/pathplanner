@@ -1,6 +1,6 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/path/PathSegment.h"
-#include "pathplanner/lib/GeometryUtil.h"
+#include "pathplanner/lib/util/GeometryUtil.h"
 #include <frc/Filesystem.h>
 #include <wpi/raw_istream.h>
 #include <limits>

@@ -82,7 +82,7 @@ public class PurePursuitController {
 
   public ChassisSpeeds calculate(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     if (path.numPoints() < 2) {
-      return null;
+      return currentSpeeds;
     }
 
     int closestPointIdx =
@@ -231,7 +231,7 @@ public class PurePursuitController {
         if (holonomic && path.getGoalEndState().getVelocity() == 0) {
           double currentVel =
               Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-          if (currentVel < 0.1) {
+          if (currentVel <= 0.1) {
             return true;
           }
         } else {
@@ -245,7 +245,7 @@ public class PurePursuitController {
     return false;
   }
 
-  public double getLookaheadDistance(double currentVel, PathConstraints constraints) {
+  public static double getLookaheadDistance(double currentVel, PathConstraints constraints) {
     double lookaheadFactor = 1.0 - (0.1 * constraints.getMaxAccelerationMpsSq());
     return Math.max(lookaheadFactor * currentVel, MIN_LOOKAHEAD_DISTANCE);
   }
@@ -271,10 +271,7 @@ public class PurePursuitController {
         continue;
       }
 
-      double signDy = Math.signum(dy);
-      if (Math.abs(signDy) == 0.0) {
-        signDy = 1.0;
-      }
+      int signDy = dy < 0 ? -1 : 1;
 
       double x1 = (D * dy + signDy * dx * Math.sqrt(discriminant)) / Math.pow(d, 2);
       double x2 = (D * dy - signDy * dx * Math.sqrt(discriminant)) / Math.pow(d, 2);
@@ -284,11 +281,11 @@ public class PurePursuitController {
       double y2 = (-D * dx - v) / Math.pow(d, 2);
 
       boolean validIntersection1 =
-          Math.min(p1.getX(), p2.getX()) < x1 && x1 < Math.max(p1.getX(), p2.getX())
-              || Math.min(p1.getY(), p2.getY()) < y1 && y1 < Math.max(p1.getY(), p2.getY());
+          (Math.min(p1.getX(), p2.getX()) < x1 && x1 < Math.max(p1.getX(), p2.getX()))
+              || (Math.min(p1.getY(), p2.getY()) < y1 && y1 < Math.max(p1.getY(), p2.getY()));
       boolean validIntersection2 =
-          Math.min(p1.getX(), p2.getX()) < x2 && x2 < Math.max(p1.getX(), p2.getX())
-              || Math.min(p1.getY(), p2.getY()) < y2 && y2 < Math.max(p1.getY(), p2.getY());
+          (Math.min(p1.getX(), p2.getX()) < x2 && x2 < Math.max(p1.getX(), p2.getX()))
+              || (Math.min(p1.getY(), p2.getY()) < y2 && y2 < Math.max(p1.getY(), p2.getY()));
 
       if (validIntersection1 && !(validIntersection2 && signDy < 0)) {
         lookahead = new Translation2d(x1, y1).plus(robotPos);
@@ -309,10 +306,6 @@ public class PurePursuitController {
   }
 
   private static int getClosestPointIndex(Translation2d p, List<PathPoint> points) {
-    if (points.isEmpty()) {
-      return -1;
-    }
-
     // Since we don't care about the actual distance, only use dx + dy to avoid unnecessary
     // multiplication and sqrt calls
     int closestIndex = 0;

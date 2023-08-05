@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "pathplanner/lib/GeometryUtil.h"
+#include "pathplanner/lib/util/GeometryUtil.h"
 
 using namespace pathplanner;
 

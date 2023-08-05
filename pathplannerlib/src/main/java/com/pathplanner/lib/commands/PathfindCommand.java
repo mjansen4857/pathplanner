@@ -158,12 +158,6 @@ public class PathfindCommand extends Command {
 
       ChassisSpeeds targetSpeeds = controller.calculate(currentPose, currentSpeeds);
 
-      if (targetSpeeds == null) {
-        // Could not find lookahead for path, set the start pos to current pos
-        ADStar.setStartPos(currentPose.getTranslation());
-        return;
-      }
-
       PathPlannerLogging.logLookahead(controller.getLastLookahead());
       output.accept(targetSpeeds);
 
@@ -197,7 +191,7 @@ public class PathfindCommand extends Command {
 
     if (targetPath != null) {
       return currentPose.getTranslation().getDistance(targetPath.getPoint(0).position)
-          < controller.getLookaheadDistance(
+          < PurePursuitController.getLookaheadDistance(
               Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond),
               targetPath.getConstraintsForPoint(0));
     } else {

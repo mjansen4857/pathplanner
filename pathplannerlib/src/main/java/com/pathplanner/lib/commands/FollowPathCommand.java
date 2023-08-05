@@ -75,24 +75,21 @@ public class FollowPathCommand extends Command {
 
     ChassisSpeeds targetSpeeds = controller.calculate(currentPose, currentSpeeds);
 
-    if (targetSpeeds != null) {
-      PathPlannerLogging.logLookahead(controller.getLastLookahead());
-      output.accept(targetSpeeds);
+    PathPlannerLogging.logLookahead(controller.getLastLookahead());
+    output.accept(targetSpeeds);
 
-      double actualVel =
-          Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-      double commandedVel =
-          Math.hypot(targetSpeeds.vxMetersPerSecond, targetSpeeds.vyMetersPerSecond);
+    double actualVel = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+    double commandedVel =
+        Math.hypot(targetSpeeds.vxMetersPerSecond, targetSpeeds.vyMetersPerSecond);
 
-      PPLibTelemetry.setVelocities(
-          actualVel,
-          commandedVel,
-          Units.radiansToDegrees(currentSpeeds.omegaRadiansPerSecond),
-          Units.radiansToDegrees(targetSpeeds.omegaRadiansPerSecond));
-      PPLibTelemetry.setPathInaccuracy(controller.getLastInaccuracy());
-      PPLibTelemetry.setCurrentPose(currentPose);
-      PPLibTelemetry.setLookahead(controller.getLastLookahead());
-    }
+    PPLibTelemetry.setVelocities(
+        actualVel,
+        commandedVel,
+        Units.radiansToDegrees(currentSpeeds.omegaRadiansPerSecond),
+        Units.radiansToDegrees(targetSpeeds.omegaRadiansPerSecond));
+    PPLibTelemetry.setPathInaccuracy(controller.getLastInaccuracy());
+    PPLibTelemetry.setCurrentPose(currentPose);
+    PPLibTelemetry.setLookahead(controller.getLastLookahead());
 
     finished = controller.isAtGoal(currentPose, currentSpeeds);
   }

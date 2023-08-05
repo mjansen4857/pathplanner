@@ -71,7 +71,7 @@ public:
 	 *
 	 * @return Path points in the path
 	 */
-	constexpr std::vector<PathPoint>& getAllPathPoints() {
+	constexpr const std::vector<PathPoint>& getAllPathPoints() const {
 		return m_allPoints;
 	}
 
@@ -90,7 +90,7 @@ public:
 	 * @param index Index of the point to get
 	 * @return The point at the given index
 	 */
-	constexpr PathPoint& getPoint(size_t index) {
+	constexpr const PathPoint& getPoint(size_t index) const {
 		return m_allPoints[index];
 	}
 
@@ -99,7 +99,7 @@ public:
 	 *
 	 * @return Global constraints that apply to this path
 	 */
-	constexpr PathConstraints& getGlobalConstraints() {
+	constexpr const PathConstraints& getGlobalConstraints() const {
 		return m_globalConstraints;
 	}
 
@@ -108,7 +108,7 @@ public:
 	 *
 	 * @return The goal end state
 	 */
-	constexpr GoalEndState& getGoalEndState() {
+	constexpr const GoalEndState& getGoalEndState() const {
 		return m_goalEndState;
 	}
 
@@ -117,7 +117,7 @@ public:
 	 *
 	 * @return The event markers for this path
 	 */
-	constexpr std::vector<EventMarker>& getEventMarkers() {
+	constexpr const std::vector<EventMarker>& getEventMarkers() const {
 		return m_eventMarkers;
 	}
 

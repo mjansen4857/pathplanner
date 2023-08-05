@@ -53,7 +53,8 @@ public class PathfindCommand extends Command {
 
     this.controller =
         new PurePursuitController(
-            PathPlannerPath.fromPathPoints(new ArrayList<>(), this.constraints, this.goalEndState));
+            PathPlannerPath.fromPathPoints(new ArrayList<>(), this.constraints, this.goalEndState),
+            true);
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
     this.output = fieldRelativeOutput;
@@ -77,7 +78,8 @@ public class PathfindCommand extends Command {
     this.constraints = constraints;
     this.controller =
         new PurePursuitController(
-            PathPlannerPath.fromPathPoints(new ArrayList<>(), this.constraints, this.goalEndState));
+            PathPlannerPath.fromPathPoints(new ArrayList<>(), this.constraints, this.goalEndState),
+            true);
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
     this.output = fieldRelativeOutput;

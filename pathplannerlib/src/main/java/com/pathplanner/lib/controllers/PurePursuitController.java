@@ -19,6 +19,7 @@ public class PurePursuitController {
 
   private final ChassisSpeedsRateLimiter speedsLimiter;
   private final PIDController rotationController;
+  private final boolean holonomic;
 
   private Translation2d lastLookahead = new Translation2d();
   private double lastDistToEnd = Double.POSITIVE_INFINITY;
@@ -27,7 +28,7 @@ public class PurePursuitController {
   private double lastInaccuracy = 0;
   private boolean lockDecel;
 
-  public PurePursuitController(PathPlannerPath path) {
+  public PurePursuitController(PathPlannerPath path, boolean holonomic) {
     this.path = path;
     this.speedsLimiter =
         new ChassisSpeedsRateLimiter(
@@ -36,8 +37,11 @@ public class PurePursuitController {
     this.rotationController = new PIDController(4.0, 0.0, 0.0);
     this.rotationController.enableContinuousInput(-Math.PI, Math.PI);
     this.lastCommanded = new ChassisSpeeds();
-    this.nextRotationTarget = findNextRotationTarget(0);
     this.lockDecel = false;
+    this.holonomic = holonomic;
+    if (this.holonomic) {
+      this.nextRotationTarget = findNextRotationTarget(0);
+    }
   }
 
   public void reset(ChassisSpeeds fieldRelativeSpeeds) {
@@ -46,17 +50,19 @@ public class PurePursuitController {
     this.lastLookahead = null;
     this.lastDistToEnd = Double.POSITIVE_INFINITY;
     this.lastCommanded = fieldRelativeSpeeds;
-    this.nextRotationTarget = findNextRotationTarget(0);
+    if (holonomic) {
+      this.nextRotationTarget = findNextRotationTarget(0);
+    }
     this.lockDecel = false;
   }
 
   private PathPoint findNextRotationTarget(int startIndex) {
-    for (int i = startIndex; i < path.numPoints(); i++) {
+    for (int i = startIndex; i < path.numPoints() - 1; i++) {
       if (path.getPoint(i).holonomicRotation != null) {
         return path.getPoint(i);
       }
     }
-    return null;
+    return path.getPoint(path.numPoints() - 1);
   }
 
   public Translation2d getLastLookahead() {
@@ -110,24 +116,28 @@ public class PurePursuitController {
       }
     }
 
-    double rotationVel = 0;
-    if (nextRotationTarget != null) {
-      if (path.getPoint(closestPointIdx).distanceAlongPath > nextRotationTarget.distanceAlongPath) {
-        nextRotationTarget = findNextRotationTarget(closestPointIdx);
-      }
-
-      double maxAngVel = constraints.getMaxAngularVelocityRps();
-
-      rotationVel =
-          MathUtil.clamp(
-              rotationController.calculate(
-                  currentPose.getRotation().getRadians(),
-                  nextRotationTarget.holonomicRotation.getRadians()),
-              -maxAngVel,
-              maxAngVel);
+    Rotation2d heading = lastLookahead.minus(currentPose.getTranslation()).getAngle();
+    if (!holonomic && path.isReversed()) {
+      heading = heading.plus(Rotation2d.fromDegrees(180));
     }
 
-    Rotation2d heading = lastLookahead.minus(currentPose.getTranslation()).getAngle();
+    double maxAngVel = constraints.getMaxAngularVelocityRps();
+
+    if (holonomic
+        && path.getPoint(closestPointIdx).distanceAlongPath
+            > nextRotationTarget.distanceAlongPath) {
+      nextRotationTarget = findNextRotationTarget(closestPointIdx);
+    }
+
+    double rotationVel =
+        MathUtil.clamp(
+            rotationController.calculate(
+                currentPose.getRotation().getRadians(),
+                holonomic
+                    ? nextRotationTarget.holonomicRotation.getRadians()
+                    : heading.getRadians()),
+            -maxAngVel,
+            maxAngVel);
 
     if (path.getGoalEndState().getVelocity() == 0 && !lockDecel) {
       double distanceToEnd =
@@ -154,10 +164,16 @@ public class PurePursuitController {
       if (neededDeceleration < constraints.getMaxAccelerationMpsSq() * 0.9) {
         nextVel = Math.hypot(lastCommanded.vxMetersPerSecond, lastCommanded.vyMetersPerSecond);
       }
-      double velX = nextVel * heading.getCos();
-      double velY = nextVel * heading.getSin();
 
-      lastCommanded = new ChassisSpeeds(velX, velY, rotationVel);
+      if (holonomic) {
+        double velX = nextVel * heading.getCos();
+        double velY = nextVel * heading.getSin();
+
+        lastCommanded = new ChassisSpeeds(velX, velY, rotationVel);
+      } else {
+        lastCommanded = new ChassisSpeeds(path.isReversed() ? -nextVel : nextVel, 0, rotationVel);
+      }
+
       speedsLimiter.reset(lastCommanded);
 
       return lastCommanded;
@@ -184,9 +200,16 @@ public class PurePursuitController {
         }
       }
 
-      lastCommanded =
-          speedsLimiter.calculate(
-              new ChassisSpeeds(maxV * heading.getCos(), maxV * heading.getSin(), rotationVel));
+      if (holonomic) {
+        double velX = maxV * heading.getCos();
+        double velY = maxV * heading.getSin();
+
+        lastCommanded = speedsLimiter.calculate(new ChassisSpeeds(velX, velY, rotationVel));
+      } else {
+        lastCommanded =
+            speedsLimiter.calculate(
+                new ChassisSpeeds(path.isReversed() ? -maxV : maxV, 0, rotationVel));
+      }
 
       return lastCommanded;
     }

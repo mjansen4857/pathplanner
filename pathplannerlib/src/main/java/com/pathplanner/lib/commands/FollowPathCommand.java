@@ -33,7 +33,7 @@ public class FollowPathCommand extends Command {
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
     this.output = fieldRelativeOutput;
-    this.controller = new PurePursuitController(path);
+    this.controller = new PurePursuitController(path, true);
     this.finished = false;
   }
 

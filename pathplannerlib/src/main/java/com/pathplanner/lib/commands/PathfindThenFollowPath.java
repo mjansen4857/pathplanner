@@ -36,7 +36,7 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
             currentRobotRelativeSpeeds,
             fieldRelativeOutput,
             requirements),
-        new FollowPathCommand(
+        new HolonomicFollowPathCommand(
             goalPath, poseSupplier, currentRobotRelativeSpeeds, fieldRelativeOutput, requirements));
   }
 }

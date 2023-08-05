@@ -190,7 +190,7 @@ public class PathfindCommand extends Command {
 
   @Override
   public void end(boolean interrupted) {
-    if (interrupted) {
+    if (interrupted || goalEndState.getVelocity() == 0) {
       output.accept(new ChassisSpeeds());
     }
   }

@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class FollowPathCommand extends Command {
+public class HolonomicFollowPathCommand extends Command {
   private final PathPlannerPath path;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
@@ -21,7 +21,7 @@ public class FollowPathCommand extends Command {
 
   private boolean finished;
 
-  public FollowPathCommand(
+  public HolonomicFollowPathCommand(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,

@@ -45,12 +45,12 @@ public class PurePursuitController {
     }
   }
 
-  public void reset(ChassisSpeeds fieldRelativeSpeeds) {
-    this.speedsLimiter.reset(fieldRelativeSpeeds);
+  public void reset(ChassisSpeeds currentSpeeds) {
+    this.speedsLimiter.reset(currentSpeeds);
     this.rotationController.reset();
     this.lastLookahead = null;
     this.lastDistToEnd = Double.POSITIVE_INFINITY;
-    this.lastCommanded = fieldRelativeSpeeds;
+    this.lastCommanded = currentSpeeds;
     if (holonomic) {
       this.nextRotationTarget = findNextRotationTarget(0);
     }
@@ -118,9 +118,9 @@ public class PurePursuitController {
     }
 
     double distanceToEnd =
-            currentPose.getTranslation().getDistance(path.getPoint(path.numPoints() - 1).position);
+        currentPose.getTranslation().getDistance(path.getPoint(path.numPoints() - 1).position);
 
-    if(distanceToEnd > 0.1) {
+    if (distanceToEnd > 0.1) {
       targetHeading = lastLookahead.minus(currentPose.getTranslation()).getAngle();
       if (!holonomic && path.isReversed()) {
         targetHeading = targetHeading.plus(Rotation2d.fromDegrees(180));
@@ -227,14 +227,14 @@ public class PurePursuitController {
         return true;
       }
 
-      if(distanceToEnd >= lastDistToEnd){
-        if(holonomic && path.getGoalEndState().getVelocity() == 0){
+      if (distanceToEnd >= lastDistToEnd) {
+        if (holonomic && path.getGoalEndState().getVelocity() == 0) {
           double currentVel =
-                  Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-          if(currentVel < 0.1){
+              Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+          if (currentVel < 0.1) {
             return true;
           }
-        }else{
+        } else {
           return true;
         }
       }

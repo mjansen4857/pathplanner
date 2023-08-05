@@ -23,6 +23,7 @@ public class PurePursuitController {
 
   private Translation2d lastLookahead = new Translation2d();
   private double lastDistToEnd = Double.POSITIVE_INFINITY;
+  private Rotation2d targetHeading = new Rotation2d();
   private ChassisSpeeds lastCommanded;
   private PathPoint nextRotationTarget;
   private double lastInaccuracy = 0;
@@ -116,9 +117,14 @@ public class PurePursuitController {
       }
     }
 
-    Rotation2d heading = lastLookahead.minus(currentPose.getTranslation()).getAngle();
-    if (!holonomic && path.isReversed()) {
-      heading = heading.plus(Rotation2d.fromDegrees(180));
+    double distanceToEnd =
+            currentPose.getTranslation().getDistance(path.getPoint(path.numPoints() - 1).position);
+
+    if(distanceToEnd > 0.1) {
+      targetHeading = lastLookahead.minus(currentPose.getTranslation()).getAngle();
+      if (!holonomic && path.isReversed()) {
+        targetHeading = targetHeading.plus(Rotation2d.fromDegrees(180));
+      }
     }
 
     double maxAngVel = constraints.getMaxAngularVelocityRps();
@@ -135,14 +141,11 @@ public class PurePursuitController {
                 currentPose.getRotation().getRadians(),
                 holonomic
                     ? nextRotationTarget.holonomicRotation.getRadians()
-                    : heading.getRadians()),
+                    : targetHeading.getRadians()),
             -maxAngVel,
             maxAngVel);
 
     if (path.getGoalEndState().getVelocity() == 0 && !lockDecel) {
-      double distanceToEnd =
-          currentPose.getTranslation().getDistance(path.getPoint(path.numPoints() - 1).position);
-
       double neededDeceleration =
           Math.pow(currentRobotVel - path.getGoalEndState().getVelocity(), 2) / (2 * distanceToEnd);
 
@@ -153,9 +156,6 @@ public class PurePursuitController {
 
     if (lockDecel) {
       // Deccel without limiter in case it needs to deccel faster than constraints
-      double distanceToEnd =
-          currentPose.getTranslation().getDistance(path.getPoint(path.numPoints() - 1).position);
-
       double neededDeceleration = Math.pow(currentRobotVel, 2) / (2 * distanceToEnd);
 
       double nextVel =
@@ -166,8 +166,8 @@ public class PurePursuitController {
       }
 
       if (holonomic) {
-        double velX = nextVel * heading.getCos();
-        double velY = nextVel * heading.getSin();
+        double velX = nextVel * targetHeading.getCos();
+        double velY = nextVel * targetHeading.getSin();
 
         lastCommanded = new ChassisSpeeds(velX, velY, rotationVel);
       } else {
@@ -201,8 +201,8 @@ public class PurePursuitController {
       }
 
       if (holonomic) {
-        double velX = maxV * heading.getCos();
-        double velY = maxV * heading.getSin();
+        double velX = maxV * targetHeading.getCos();
+        double velY = maxV * targetHeading.getSin();
 
         lastCommanded = speedsLimiter.calculate(new ChassisSpeeds(velX, velY, rotationVel));
       } else {
@@ -227,14 +227,14 @@ public class PurePursuitController {
         return true;
       }
 
-      if (distanceToEnd >= lastDistToEnd || path.getGoalEndState().getVelocity() == 0) {
-        if (path.getGoalEndState().getVelocity() == 0) {
+      if(distanceToEnd >= lastDistToEnd){
+        if(holonomic && path.getGoalEndState().getVelocity() == 0){
           double currentVel =
-              Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-          if (Math.abs(currentVel) <= 0.1) {
+                  Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+          if(currentVel < 0.1){
             return true;
           }
-        } else {
+        }else{
           return true;
         }
       }

@@ -269,10 +269,6 @@ Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
         .add(Pose2d(position: currentPose.position, rotation: actualRotation));
     sim.runtime += simulationPeriod;
 
-    if (sim.runtime >= 10) {
-      break;
-    }
-
     // Check if we're finished following
     Point endPos = path.pathPoints.last.position;
     if (_pointEquals(lastLookahead, endPos)) {

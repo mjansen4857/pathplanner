@@ -26,6 +26,7 @@ class PathPainter extends CustomPainter {
   final SimulatedPath? simulatedPath;
   Animation<num>? previewTime;
   final Color? previewColor;
+  final bool holonomicMode;
 
   late num robotRadius;
 
@@ -34,6 +35,7 @@ class PathPainter extends CustomPainter {
   PathPainter({
     required this.paths,
     required this.fieldImage,
+    this.holonomicMode = true,
     this.simple = false,
     this.hoveredPath,
     this.hoveredWaypoint,
@@ -78,7 +80,9 @@ class PathPainter extends CustomPainter {
           scale,
           (hoveredPath == paths[i].name) ? Colors.orange : Colors.grey[300]!);
 
-      _paintRotations(paths[i], canvas, scale);
+      if (holonomicMode) {
+        _paintRotations(paths[i], canvas, scale);
+      }
 
       _paintMarkers(paths[i], canvas);
 

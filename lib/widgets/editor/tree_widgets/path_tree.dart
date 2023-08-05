@@ -29,6 +29,7 @@ class PathTree extends StatefulWidget {
   final int? initiallySelectedMarker;
   final ChangeStack undoStack;
   final num? pathRuntime;
+  final bool holonomicMode;
 
   const PathTree({
     super.key,
@@ -52,6 +53,7 @@ class PathTree extends StatefulWidget {
     required this.undoStack,
     this.pathRuntime,
     this.onPathChangedNoSim,
+    required this.holonomicMode,
   });
 
   @override
@@ -108,18 +110,20 @@ class _PathTreeState extends State<PathTree> {
                   path: widget.path,
                   onPathChanged: widget.onPathChanged,
                   undoStack: widget.undoStack,
+                  holonomicMode: widget.holonomicMode,
                 ),
-                RotationTargetsTree(
-                  key: ValueKey(
-                      'rotations${widget.path.rotationTargets.length}'),
-                  path: widget.path,
-                  onPathChanged: widget.onPathChanged,
-                  onPathChangedNoSim: widget.onPathChangedNoSim,
-                  onTargetHovered: widget.onRotTargetHovered,
-                  onTargetSelected: widget.onRotTargetSelected,
-                  initiallySelectedTarget: widget.initiallySelectedRotTarget,
-                  undoStack: widget.undoStack,
-                ),
+                if (widget.holonomicMode)
+                  RotationTargetsTree(
+                    key: ValueKey(
+                        'rotations${widget.path.rotationTargets.length}'),
+                    path: widget.path,
+                    onPathChanged: widget.onPathChanged,
+                    onPathChangedNoSim: widget.onPathChangedNoSim,
+                    onTargetHovered: widget.onRotTargetHovered,
+                    onTargetSelected: widget.onRotTargetSelected,
+                    initiallySelectedTarget: widget.initiallySelectedRotTarget,
+                    undoStack: widget.undoStack,
+                  ),
                 EventMarkersTree(
                   key: ValueKey('markers${widget.path.eventMarkers.length}'),
                   path: widget.path,

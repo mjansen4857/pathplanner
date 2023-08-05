@@ -24,7 +24,6 @@ class SplitAutoEditor extends StatefulWidget {
   final VoidCallback? onAutoChanged;
   final FieldImage fieldImage;
   final ChangeStack undoStack;
-  final bool holonomicMode;
 
   const SplitAutoEditor({
     required this.prefs,
@@ -33,7 +32,6 @@ class SplitAutoEditor extends StatefulWidget {
     required this.allPathNames,
     required this.fieldImage,
     required this.undoStack,
-    required this.holonomicMode,
     this.onAutoChanged,
     super.key,
   });
@@ -51,6 +49,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   bool _draggingStartRot = false;
   Pose2d? _dragOldValue;
   SimulatedPath? _simPath;
+  late bool _holonomicMode;
 
   late Size _robotSize;
   late AnimationController _previewController;
@@ -60,6 +59,9 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
     super.initState();
 
     _previewController = AnimationController(vsync: this);
+
+    _holonomicMode =
+        widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
 
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
@@ -199,6 +201,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                           simulatedPath: _simPath,
                           animation: _previewController.view,
                           previewColor: colorScheme.primary,
+                          holonomicMode: _holonomicMode,
                         ),
                       ),
                     ),
@@ -277,7 +280,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   void _simulateAuto() async {
     Stopwatch s = Stopwatch()..start();
     SimulatedPath p = await compute(
-        widget.holonomicMode ? simulateAutoHolonomic : simulateAutoDifferential,
+        _holonomicMode ? simulateAutoHolonomic : simulateAutoDifferential,
         SimulatableAuto(
             paths: widget.autoPaths, startingPose: widget.auto.startingPose));
     Log.debug('Simulated auto in ${s.elapsedMilliseconds}ms');

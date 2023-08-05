@@ -29,6 +29,7 @@ void main() {
         body: PathTree(
           path: path,
           undoStack: ChangeStack(),
+          holonomicMode: true,
         ),
       ),
     ));
@@ -43,6 +44,7 @@ void main() {
           path: path,
           undoStack: ChangeStack(),
           onSideSwapped: () => sideSwapped = true,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -62,6 +64,7 @@ void main() {
         body: PathTree(
           path: path,
           undoStack: ChangeStack(),
+          holonomicMode: true,
         ),
       ),
     ));
@@ -75,6 +78,7 @@ void main() {
         body: PathTree(
           path: path,
           undoStack: ChangeStack(),
+          holonomicMode: true,
         ),
       ),
     ));
@@ -88,6 +92,7 @@ void main() {
         body: PathTree(
           path: path,
           undoStack: ChangeStack(),
+          holonomicMode: true,
         ),
       ),
     ));
@@ -101,6 +106,7 @@ void main() {
         body: PathTree(
           path: path,
           undoStack: ChangeStack(),
+          holonomicMode: true,
         ),
       ),
     ));
@@ -114,6 +120,7 @@ void main() {
         body: PathTree(
           path: path,
           undoStack: ChangeStack(),
+          holonomicMode: true,
         ),
       ),
     ));
@@ -127,6 +134,7 @@ void main() {
         body: PathTree(
           path: path,
           undoStack: ChangeStack(),
+          holonomicMode: true,
         ),
       ),
     ));

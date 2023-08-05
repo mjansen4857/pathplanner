@@ -63,7 +63,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   int _selectedPage = 0;
   final PageController _pageController = PageController();
   late bool _hotReload;
-  late bool _holonomicMode;
 
   FileSystem get fs => widget.fs;
 
@@ -144,9 +143,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
             Defaults.hotReloadEnabled;
-
-        _holonomicMode = widget.prefs.getBool(PrefsKeys.holonomicMode) ??
-            Defaults.holonomicMode;
 
         String? selectedFieldName =
             widget.prefs.getString(PrefsKeys.fieldImage);
@@ -413,7 +409,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   undoStack: widget.undoStack,
                   telemetry: widget.telemetry,
                   hotReload: _hotReload,
-                  holonomicMode: _holonomicMode,
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
@@ -458,9 +453,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     setState(() {
       _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
           Defaults.hotReloadEnabled;
-
-      _holonomicMode = widget.prefs.getBool(PrefsKeys.holonomicMode) ??
-          Defaults.holonomicMode;
     });
   }
 

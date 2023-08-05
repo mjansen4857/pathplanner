@@ -31,6 +31,7 @@ void main() {
           path: path,
           onPathChanged: () => pathChanged = true,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -56,6 +57,7 @@ void main() {
           path: path,
           onPathChanged: () => pathChanged = true,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -83,6 +85,7 @@ void main() {
           path: path,
           onPathChanged: () => pathChanged = true,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));

@@ -424,8 +424,8 @@ class SimulatedPath {
 
       Point lerpedPos = GeometryUtil.pointLerp(
           pathStates[floorIndex].position, pathStates[ceilIndex].position, t);
-      num lerpedRot = GeometryUtil.numLerp(
-          pathStates[floorIndex].rotation, pathStates[ceilIndex].rotation, t);
+      num lerpedRot = GeometryUtil.rotationLerp(pathStates[floorIndex].rotation,
+          pathStates[ceilIndex].rotation, t, 180);
 
       return Pose2d(position: lerpedPos, rotation: lerpedRot);
     }

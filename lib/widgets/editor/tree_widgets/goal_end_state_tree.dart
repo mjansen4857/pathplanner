@@ -8,12 +8,14 @@ class GoalEndStateTree extends StatelessWidget {
   final PathPlannerPath path;
   final VoidCallback? onPathChanged;
   final ChangeStack undoStack;
+  final bool holonomicMode;
 
   const GoalEndStateTree({
     super.key,
     required this.path,
     this.onPathChanged,
     required this.undoStack,
+    required this.holonomicMode,
   });
 
   @override
@@ -43,22 +45,23 @@ class GoalEndStateTree extends StatelessWidget {
                   },
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: NumberTextField(
-                  initialText: path.goalEndState.rotation.toStringAsFixed(2),
-                  label: 'Rotation (Deg)',
-                  onSubmitted: (value) {
-                    if (value != null) {
-                      num rot = value % 360;
-                      if (rot > 180) {
-                        rot -= 360;
+              if (holonomicMode) const SizedBox(width: 8),
+              if (holonomicMode)
+                Expanded(
+                  child: NumberTextField(
+                    initialText: path.goalEndState.rotation.toStringAsFixed(2),
+                    label: 'Rotation (Deg)',
+                    onSubmitted: (value) {
+                      if (value != null) {
+                        num rot = value % 360;
+                        if (rot > 180) {
+                          rot -= 360;
+                        }
+                        _addChange(() => path.goalEndState.rotation = rot);
                       }
-                      _addChange(() => path.goalEndState.rotation = rot);
-                    }
-                  },
+                    },
+                  ),
                 ),
-              ),
             ],
           ),
         ),

@@ -27,14 +27,12 @@ class SplitPathEditor extends StatefulWidget {
   final ChangeStack undoStack;
   final PPLibTelemetry? telemetry;
   final bool hotReload;
-  final bool holonomicMode;
 
   const SplitPathEditor({
     required this.prefs,
     required this.path,
     required this.fieldImage,
     required this.undoStack,
-    required this.holonomicMode,
     this.telemetry,
     this.hotReload = false,
     super.key,
@@ -63,6 +61,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   int? _draggedRotationIdx;
   num? _dragRotationOldValue;
   SimulatedPath? _simPath;
+  late bool _holonomicMode;
 
   late Size _robotSize;
   late AnimationController _previewController;
@@ -74,6 +73,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
     super.initState();
 
     _previewController = AnimationController(vsync: this);
+
+    _holonomicMode =
+        widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
 
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
@@ -363,6 +365,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           simulatedPath: _simPath,
                           animation: _previewController.view,
                           previewColor: colorScheme.primary,
+                          holonomicMode: _holonomicMode,
                         ),
                       ),
                     ),
@@ -417,6 +420,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     initiallySelectedMarker: _selectedMarker,
                     waypointsTreeController: _waypointsTreeController,
                     undoStack: widget.undoStack,
+                    holonomicMode: _holonomicMode,
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();
@@ -573,7 +577,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   void _simulatePath() async {
     Stopwatch s = Stopwatch()..start();
     SimulatedPath p = await compute(
-        widget.holonomicMode ? simulatePathHolonomic : simulatePathDifferential,
+        _holonomicMode ? simulatePathHolonomic : simulatePathDifferential,
         widget.path);
     Log.debug('Simulated path in ${s.elapsedMilliseconds}ms');
     setState(() {

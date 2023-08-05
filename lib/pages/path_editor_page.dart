@@ -19,7 +19,6 @@ class PathEditorPage extends StatefulWidget {
   final bool shortcuts;
   final PPLibTelemetry? telemetry;
   final bool hotReload;
-  final bool holonomicMode;
 
   const PathEditorPage({
     super.key,
@@ -31,7 +30,6 @@ class PathEditorPage extends StatefulWidget {
     this.shortcuts = true,
     this.telemetry,
     this.hotReload = false,
-    required this.holonomicMode,
   });
 
   @override
@@ -50,7 +48,6 @@ class _PathEditorPageState extends State<PathEditorPage> {
       undoStack: widget.undoStack,
       telemetry: widget.telemetry,
       hotReload: widget.hotReload,
-      holonomicMode: widget.holonomicMode,
     );
 
     return Scaffold(

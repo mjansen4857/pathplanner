@@ -22,7 +22,6 @@ class ProjectPage extends StatefulWidget {
   final bool shortcuts;
   final PPLibTelemetry? telemetry;
   final bool hotReload;
-  final bool holonomicMode;
 
   const ProjectPage({
     super.key,
@@ -34,7 +33,6 @@ class ProjectPage extends StatefulWidget {
     this.shortcuts = true,
     this.telemetry,
     this.hotReload = false,
-    required this.holonomicMode,
   });
 
   @override
@@ -274,7 +272,6 @@ class _ProjectPageState extends State<ProjectPage> {
                                 shortcuts: widget.shortcuts,
                                 telemetry: widget.telemetry,
                                 hotReload: widget.hotReload,
-                                holonomicMode: widget.holonomicMode,
                               ),
                             ),
                           );
@@ -450,7 +447,6 @@ class _ProjectPageState extends State<ProjectPage> {
                                 shortcuts: widget.shortcuts,
                                 telemetry: widget.telemetry,
                                 hotReload: widget.hotReload,
-                                holonomicMode: widget.holonomicMode,
                               ),
                             ),
                           );

@@ -17,7 +17,11 @@ import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
+import '../../test_helpers.dart';
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late SharedPreferences prefs;
   late MemoryFileSystem fs;
 
@@ -673,6 +677,8 @@ void main() {
   });
 
   testWidgets('resize columns', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(

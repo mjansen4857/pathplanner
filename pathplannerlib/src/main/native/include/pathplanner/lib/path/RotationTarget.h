@@ -39,7 +39,7 @@ public:
 	 *
 	 * @return Target rotation
 	 */
-	constexpr frc::Rotation2d getTarget() const {
+	constexpr const frc::Rotation2d& getTarget() const {
 		return m_target;
 	}
 
@@ -55,7 +55,10 @@ public:
 		return RotationTarget(m_position - segmentIndex, m_target);
 	}
 
-	bool operator==(const RotationTarget &other) const;
+	constexpr bool operator==(const RotationTarget &other) const {
+		return std::abs(m_position - other.m_position) < 1E-9
+				&& m_target == other.m_target;
+	}
 
 private:
 	double m_position;

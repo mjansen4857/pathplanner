@@ -17,7 +17,8 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
       PathConstraints pathfindingConstraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
-      Consumer<ChassisSpeeds> fieldRelativeOutput,
+      Consumer<ChassisSpeeds> output,
+      boolean holonomic,
       Subsystem... requirements) {
     Rotation2d targetRotation = null;
     for (PathPoint p : goalPath.getAllPathPoints()) {
@@ -34,9 +35,10 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
             pathfindingConstraints,
             poseSupplier,
             currentRobotRelativeSpeeds,
-            fieldRelativeOutput,
+            output,
+            holonomic,
             requirements),
-        new HolonomicFollowPathCommand(
-            goalPath, poseSupplier, currentRobotRelativeSpeeds, fieldRelativeOutput, requirements));
+        new FollowPathCommand(
+            goalPath, poseSupplier, currentRobotRelativeSpeeds, output, holonomic, requirements));
   }
 }

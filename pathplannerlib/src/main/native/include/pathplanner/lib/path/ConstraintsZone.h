@@ -50,7 +50,7 @@ public:
 	 *
 	 * @return The constraints for this zone
 	 */
-	constexpr PathConstraints getConstraints() const {
+	constexpr const PathConstraints& getConstraints() const {
 		return m_constraints;
 	}
 
@@ -88,7 +88,11 @@ public:
 				m_constraints);
 	}
 
-	bool operator==(const ConstraintsZone &other) const;
+	constexpr bool operator==(const ConstraintsZone &other) const {
+		return std::abs(m_minPos - other.m_minPos) < 1E-9
+				&& std::abs(m_maxPos - other.m_maxPos) < 1E-9
+				&& m_constraints == other.m_constraints;
+	}
 
 private:
 	double m_minPos;

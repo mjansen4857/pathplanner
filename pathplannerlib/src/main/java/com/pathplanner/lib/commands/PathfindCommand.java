@@ -28,6 +28,7 @@ public class PathfindCommand extends Command {
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
+  private final boolean holonomic;
 
   private List<PathPoint> pathPoints;
   //  private Pose2d currentObsPose;
@@ -38,7 +39,8 @@ public class PathfindCommand extends Command {
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
-      Consumer<ChassisSpeeds> fieldRelativeOutput,
+      Consumer<ChassisSpeeds> output,
+      boolean holonomic,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -54,10 +56,11 @@ public class PathfindCommand extends Command {
     this.controller =
         new PurePursuitController(
             PathPlannerPath.fromPathPoints(new ArrayList<>(), this.constraints, this.goalEndState),
-            true);
+            holonomic);
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
-    this.output = fieldRelativeOutput;
+    this.output = output;
+    this.holonomic = holonomic;
   }
 
   public PathfindCommand(
@@ -66,7 +69,8 @@ public class PathfindCommand extends Command {
       double goalEndVel,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
-      Consumer<ChassisSpeeds> fieldRelativeOutput,
+      Consumer<ChassisSpeeds> output,
+      boolean holonomic,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -79,10 +83,11 @@ public class PathfindCommand extends Command {
     this.controller =
         new PurePursuitController(
             PathPlannerPath.fromPathPoints(new ArrayList<>(), this.constraints, this.goalEndState),
-            true);
+            holonomic);
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
-    this.output = fieldRelativeOutput;
+    this.output = output;
+    this.holonomic = holonomic;
   }
 
   public PathfindCommand(
@@ -90,7 +95,8 @@ public class PathfindCommand extends Command {
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
-      Consumer<ChassisSpeeds> fieldRelativeOutput,
+      Consumer<ChassisSpeeds> output,
+      boolean holonomic,
       Subsystem... requirements) {
     this(
         targetPose,
@@ -98,7 +104,8 @@ public class PathfindCommand extends Command {
         0.0,
         poseSupplier,
         currentRobotRelativeSpeeds,
-        fieldRelativeOutput,
+        output,
+        holonomic,
         requirements);
   }
 
@@ -109,10 +116,14 @@ public class PathfindCommand extends Command {
     Pose2d currentPose = poseSupplier.get();
     PathPlannerLogging.logCurrentPose(currentPose);
 
-    // Hack to convert robot relative to field relative speeds
-    controller.reset(
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            speedsSupplier.get(), currentPose.getRotation().unaryMinus()));
+    if (holonomic) {
+      // Hack to convert robot relative to field relative speeds
+      controller.reset(
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              speedsSupplier.get(), currentPose.getRotation().unaryMinus()));
+    } else {
+      controller.reset(speedsSupplier.get());
+    }
 
     ADStar.setStartPos(currentPose.getTranslation());
     ADStar.setGoalPos(targetPose.getTranslation());
@@ -136,12 +147,16 @@ public class PathfindCommand extends Command {
     }
 
     if (!pathPoints.isEmpty()) {
-      // Hack to convert robot relative to field relative speeds
-      ChassisSpeeds currentFieldRelativeSpeeds =
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              speedsSupplier.get(), currentPose.getRotation().unaryMinus());
+      ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-      ChassisSpeeds targetSpeeds = controller.calculate(currentPose, currentFieldRelativeSpeeds);
+      if (holonomic) {
+        // Hack to convert robot relative to field relative speeds
+        currentSpeeds =
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                currentSpeeds, currentPose.getRotation().unaryMinus());
+      }
+
+      ChassisSpeeds targetSpeeds = controller.calculate(currentPose, currentSpeeds);
 
       if (targetSpeeds == null) {
         // Could not find lookahead for path, set the start pos to current pos
@@ -153,16 +168,14 @@ public class PathfindCommand extends Command {
       output.accept(targetSpeeds);
 
       double actualVel =
-          Math.hypot(
-              currentFieldRelativeSpeeds.vxMetersPerSecond,
-              currentFieldRelativeSpeeds.vyMetersPerSecond);
+          Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
       double commandedVel =
           Math.hypot(targetSpeeds.vxMetersPerSecond, targetSpeeds.vyMetersPerSecond);
 
       PPLibTelemetry.setVelocities(
           actualVel,
           commandedVel,
-          Units.radiansToDegrees(currentFieldRelativeSpeeds.omegaRadiansPerSecond),
+          Units.radiansToDegrees(currentSpeeds.omegaRadiansPerSecond),
           Units.radiansToDegrees(targetSpeeds.omegaRadiansPerSecond));
       PPLibTelemetry.setPathInaccuracy(controller.getLastInaccuracy());
       PPLibTelemetry.setCurrentPose(currentPose);
@@ -173,10 +186,14 @@ public class PathfindCommand extends Command {
   @Override
   public boolean isFinished() {
     Pose2d currentPose = poseSupplier.get();
-    // Hack to convert robot relative to field relative speeds
-    ChassisSpeeds currentSpeeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            speedsSupplier.get(), currentPose.getRotation().unaryMinus());
+
+    ChassisSpeeds currentSpeeds = speedsSupplier.get();
+    if (holonomic) {
+      // Hack to convert robot relative to field relative speeds
+      currentSpeeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              currentSpeeds, currentPose.getRotation().unaryMinus());
+    }
 
     if (targetPath != null) {
       return currentPose.getTranslation().getDistance(targetPath.getPoint(0).position)

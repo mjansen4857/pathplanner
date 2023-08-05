@@ -1,6 +1,7 @@
 #pragma once
 
 #include <units/velocity.h>
+#include <units/math.h>
 #include <frc/geometry/Rotation2d.h>
 #include <wpi/json.h>
 
@@ -40,11 +41,14 @@ public:
 	 *
 	 * @return Goal rotation
 	 */
-	constexpr frc::Rotation2d getRotation() const {
+	constexpr const frc::Rotation2d& getRotation() const {
 		return m_rotation;
 	}
 
-	bool operator==(const GoalEndState &other) const;
+	constexpr bool operator==(const GoalEndState &other) const {
+		return std::abs(m_velocity() - other.m_velocity()) < 1E-9
+				&& m_rotation == other.m_rotation;
+	}
 
 private:
 	units::meters_per_second_t m_velocity;

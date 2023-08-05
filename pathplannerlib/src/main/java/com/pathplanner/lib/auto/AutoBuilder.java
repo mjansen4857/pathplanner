@@ -1,8 +1,7 @@
 package com.pathplanner.lib.auto;
 
-import com.pathplanner.lib.commands.DifferentialFollowPathCommand;
+import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
-import com.pathplanner.lib.commands.HolonomicFollowPathCommand;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -41,11 +40,12 @@ public class AutoBuilder {
 
     AutoBuilder.pathFollowingCommandBuilder =
         (path) ->
-            new HolonomicFollowPathCommand(
+            new FollowPathCommand(
                 path,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
                 fieldRelativeOutput,
+                true,
                 driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
@@ -66,8 +66,8 @@ public class AutoBuilder {
 
     AutoBuilder.pathFollowingCommandBuilder =
         (path) ->
-            new DifferentialFollowPathCommand(
-                path, poseSupplier, speedsSupplier, output, driveSubsystem);
+            new FollowPathCommand(
+                path, poseSupplier, speedsSupplier, output, false, driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;

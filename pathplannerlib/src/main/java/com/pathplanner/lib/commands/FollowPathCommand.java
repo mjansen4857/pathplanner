@@ -12,29 +12,32 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class HolonomicFollowPathCommand extends Command {
+public class FollowPathCommand extends Command {
   private final PathPlannerPath path;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
   private final PurePursuitController controller;
+  private final boolean holonomic;
 
   private boolean finished;
 
-  public HolonomicFollowPathCommand(
+  public FollowPathCommand(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
-      Consumer<ChassisSpeeds> fieldRelativeOutput,
+      Consumer<ChassisSpeeds> output,
+      boolean holonomic,
       Subsystem... requirements) {
     addRequirements(requirements);
 
     this.path = path;
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
-    this.output = fieldRelativeOutput;
-    this.controller = new PurePursuitController(path, true);
+    this.output = output;
+    this.controller = new PurePursuitController(path, holonomic);
     this.finished = false;
+    this.holonomic = holonomic;
   }
 
   @Override
@@ -44,10 +47,14 @@ public class HolonomicFollowPathCommand extends Command {
     Pose2d currentPose = poseSupplier.get();
     PathPlannerLogging.logCurrentPose(currentPose);
 
-    // Hack to convert robot relative to field relative speeds
-    controller.reset(
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            speedsSupplier.get(), currentPose.getRotation().unaryMinus()));
+    if (holonomic) {
+      // Hack to convert robot relative to field relative speeds
+      controller.reset(
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              speedsSupplier.get(), currentPose.getRotation().unaryMinus()));
+    } else {
+      controller.reset(speedsSupplier.get());
+    }
 
     PathPlannerLogging.logActivePath(path);
     PPLibTelemetry.setCurrentPath(path);
@@ -58,35 +65,36 @@ public class HolonomicFollowPathCommand extends Command {
     Pose2d currentPose = poseSupplier.get();
     PathPlannerLogging.logCurrentPose(currentPose);
 
-    // Hack to convert robot relative to field relative speeds
-    ChassisSpeeds currentFieldRelativeSpeeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            speedsSupplier.get(), currentPose.getRotation().unaryMinus());
+    ChassisSpeeds currentSpeeds = speedsSupplier.get();
+    if (holonomic) {
+      // Hack to convert robot relative to field relative speeds
+      currentSpeeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              currentSpeeds, currentPose.getRotation().unaryMinus());
+    }
 
-    ChassisSpeeds targetSpeeds = controller.calculate(currentPose, currentFieldRelativeSpeeds);
+    ChassisSpeeds targetSpeeds = controller.calculate(currentPose, currentSpeeds);
 
     if (targetSpeeds != null) {
       PathPlannerLogging.logLookahead(controller.getLastLookahead());
       output.accept(targetSpeeds);
 
       double actualVel =
-          Math.hypot(
-              currentFieldRelativeSpeeds.vxMetersPerSecond,
-              currentFieldRelativeSpeeds.vyMetersPerSecond);
+          Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
       double commandedVel =
           Math.hypot(targetSpeeds.vxMetersPerSecond, targetSpeeds.vyMetersPerSecond);
 
       PPLibTelemetry.setVelocities(
           actualVel,
           commandedVel,
-          Units.radiansToDegrees(currentFieldRelativeSpeeds.omegaRadiansPerSecond),
+          Units.radiansToDegrees(currentSpeeds.omegaRadiansPerSecond),
           Units.radiansToDegrees(targetSpeeds.omegaRadiansPerSecond));
       PPLibTelemetry.setPathInaccuracy(controller.getLastInaccuracy());
       PPLibTelemetry.setCurrentPose(currentPose);
       PPLibTelemetry.setLookahead(controller.getLastLookahead());
     }
 
-    finished = controller.isAtGoal(currentPose, currentFieldRelativeSpeeds);
+    finished = controller.isAtGoal(currentPose, currentSpeeds);
   }
 
   @Override

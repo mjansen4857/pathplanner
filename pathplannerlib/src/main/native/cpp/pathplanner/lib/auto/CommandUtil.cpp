@@ -28,7 +28,7 @@ frc2::CommandPtr CommandUtil::wrappedEventCommand(
 }
 
 frc2::CommandPtr CommandUtil::commandFromJson(const wpi::json &json) {
-	std::string type = static_cast<std::string>(json.at("type"));
+	std::string type = json.at("type").get<std::string>();
 	wpi::json::const_reference data = json.at("data");
 
 	if (type == "wait") {
@@ -51,12 +51,12 @@ frc2::CommandPtr CommandUtil::commandFromJson(const wpi::json &json) {
 }
 
 frc2::CommandPtr CommandUtil::waitCommandFromJson(const wpi::json &json) {
-	auto waitTime = units::second_t { static_cast<double>(json.at("waitTime")) };
+	auto waitTime = units::second_t(json.at("waitTime").get<double>());
 	return frc2::cmd::Wait(waitTime);
 }
 
 frc2::CommandPtr CommandUtil::namedCommandFromJson(const wpi::json &json) {
-	std::string name = static_cast<std::string>(json.at("name"));
+	std::string name = json.at("name").get<std::string>();
 	return EventManager::getCommand(name);
 }
 

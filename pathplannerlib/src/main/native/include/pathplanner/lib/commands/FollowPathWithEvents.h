@@ -13,7 +13,8 @@ class FollowPathWithEvents: public frc2::CommandHelper<frc2::Command,
 		FollowPathWithEvents> {
 public:
 	FollowPathWithEvents(std::unique_ptr<frc2::Command> &&pathFollowingCommand,
-			PathPlannerPath &path, std::function<frc::Pose2d()> poseSupplier);
+			std::shared_ptr<PathPlannerPath> path,
+			std::function<frc::Pose2d()> poseSupplier);
 
 	void Initialize() override;
 
@@ -25,7 +26,7 @@ public:
 
 private:
 	std::unique_ptr<frc2::Command> m_pathFollowingCommand;
-	PathPlannerPath &m_path;
+	std::shared_ptr<PathPlannerPath> m_path;
 	std::function<frc::Pose2d()> m_poseSupplier;
 
 	std::vector<std::pair<std::shared_ptr<frc2::Command>, bool>> m_currentCommands;

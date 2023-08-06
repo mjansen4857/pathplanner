@@ -4,11 +4,12 @@ using namespace pathplanner;
 
 FollowPathWithEvents::FollowPathWithEvents(
 		std::unique_ptr<frc2::Command> &&pathFollowingCommand,
-		PathPlannerPath &path, std::function<frc::Pose2d()> poseSupplier) : m_pathFollowingCommand(
+		std::shared_ptr<PathPlannerPath> path,
+		std::function<frc::Pose2d()> poseSupplier) : m_pathFollowingCommand(
 		std::move(pathFollowingCommand)), m_path(path), m_poseSupplier(
 		poseSupplier), m_isFinished(false) {
 	AddRequirements(m_pathFollowingCommand->GetRequirements());
-	for (EventMarker &marker : m_path.getEventMarkers()) {
+	for (EventMarker &marker : m_path->getEventMarkers()) {
 		auto reqs = marker.getCommand()->GetRequirements();
 
 		if (!frc2::RequirementsDisjoint(m_pathFollowingCommand.get(),
@@ -27,12 +28,12 @@ void FollowPathWithEvents::Initialize() {
 	m_currentCommands.clear();
 
 	frc::Pose2d currentPose = m_poseSupplier();
-	for (EventMarker &marker : m_path.getEventMarkers()) {
+	for (EventMarker &marker : m_path->getEventMarkers()) {
 		marker.reset(currentPose);
 	}
 
 	m_markers.clear();
-	for (EventMarker &marker : m_path.getEventMarkers()) {
+	for (EventMarker &marker : m_path->getEventMarkers()) {
 		m_markers.emplace_back(marker, false);
 	}
 

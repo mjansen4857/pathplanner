@@ -99,10 +99,6 @@ public class AutoBuilder {
     return new FollowPathWithEvents(pathFollowingCommandBuilder.apply(path), path, getPose);
   }
 
-  public static Command buildAuto(String autoName) {
-    return getAutoCommandFromFile(autoName);
-  }
-
   private static Pose2d getStartingPoseFromJson(JSONObject startingPoseJson) {
     JSONObject pos = (JSONObject) startingPoseJson.get("position");
     double x = ((Number) pos.get("x")).doubleValue();
@@ -112,7 +108,7 @@ public class AutoBuilder {
     return new Pose2d(x, y, Rotation2d.fromDegrees(deg));
   }
 
-  private static Command getAutoCommandFromFile(String autoName) {
+  public static Command buildAuto(String autoName) {
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(

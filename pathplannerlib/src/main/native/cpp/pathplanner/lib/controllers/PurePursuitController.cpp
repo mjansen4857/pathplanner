@@ -82,7 +82,7 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 	units::meter_t distanceToEnd = currentPose.Translation().Distance(
 			m_path.getPoint(m_path.numPoints() - 1).position);
 
-	if (distanceToEnd > 0.1_m) {
+	if (m_holonomic || distanceToEnd > 0.1_m) {
 		m_targetHeading = (lookahead - currentPose.Translation()).Angle();
 		if (!m_holonomic && m_path.isReversed()) {
 			m_targetHeading = m_targetHeading + frc::Rotation2d(180_deg);

@@ -120,7 +120,7 @@ public class PurePursuitController {
     double distanceToEnd =
         currentPose.getTranslation().getDistance(path.getPoint(path.numPoints() - 1).position);
 
-    if (distanceToEnd > 0.1) {
+    if (holonomic || distanceToEnd > 0.1) {
       targetHeading = lastLookahead.minus(currentPose.getTranslation()).getAngle();
       if (!holonomic && path.isReversed()) {
         targetHeading = targetHeading.plus(Rotation2d.fromDegrees(180));

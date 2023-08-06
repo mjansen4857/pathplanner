@@ -117,7 +117,7 @@ public:
 	 *
 	 * @return The event markers for this path
 	 */
-	constexpr const std::vector<EventMarker>& getEventMarkers() const {
+	constexpr std::vector<EventMarker>& getEventMarkers() {
 		return m_eventMarkers;
 	}
 

@@ -5,6 +5,7 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Translation2d.h>
 #include <memory>
+#include <optional>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 
 namespace pathplanner {
@@ -31,9 +32,10 @@ public:
 		}
 	}
 
-	static inline void logLookahead(frc::Translation2d lookahead) {
-		if (m_logLookahead) {
-			m_logLookahead(lookahead);
+	static inline void logLookahead(
+			std::optional<frc::Translation2d> lookahead) {
+		if (m_logLookahead && lookahead) {
+			m_logLookahead(lookahead.value());
 		}
 	}
 

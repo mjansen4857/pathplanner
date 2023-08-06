@@ -76,8 +76,7 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 			extraLookahead += 0.2_m;
 		}
 	}
-	frc::Translation2d lookahead = m_lastLookahead.value_or(
-			frc::Translation2d());
+	frc::Translation2d lookahead = m_lastLookahead.value();
 
 	units::meter_t distanceToEnd = currentPose.Translation().Distance(
 			m_path->getPoint(m_path->numPoints() - 1).position);
@@ -103,8 +102,7 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 							m_rotationController.Calculate(
 									currentPose.Rotation().Radians()(),
 									m_holonomic ?
-											m_nextRotationTarget.holonomicRotation.value_or(
-													frc::Rotation2d()).Radians()() :
+											m_nextRotationTarget.holonomicRotation.value().Radians()() :
 											m_targetHeading.Radians()()),
 							-maxAngVel(), maxAngVel()));
 

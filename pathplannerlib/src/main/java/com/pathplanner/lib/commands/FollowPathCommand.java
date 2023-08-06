@@ -45,7 +45,6 @@ public class FollowPathCommand extends Command {
     finished = false;
 
     Pose2d currentPose = poseSupplier.get();
-    PathPlannerLogging.logCurrentPose(currentPose);
 
     if (holonomic) {
       // Hack to convert robot relative to field relative speeds

@@ -132,7 +132,6 @@ public class PathfindCommand extends Command {
   @Override
   public void execute() {
     Pose2d currentPose = poseSupplier.get();
-    PathPlannerLogging.logCurrentPose(currentPose);
 
     if (ADStar.isNewPathAvailable()) {
       pathPoints = ADStar.getCurrentPath();

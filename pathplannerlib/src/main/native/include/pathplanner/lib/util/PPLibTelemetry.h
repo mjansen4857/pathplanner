@@ -26,8 +26,8 @@ public:
 
 	static inline void setVelocities(units::meters_per_second_t actualVel,
 			units::meters_per_second_t commandedVel,
-			units::radians_per_second_t actualAngVel,
-			units::radians_per_second_t commandedAngVel) {
+			units::degrees_per_second_t actualAngVel,
+			units::degrees_per_second_t commandedAngVel) {
 		if (!m_compMode) {
 			m_velPub.Set(std::span<const double>( { actualVel(), commandedVel(),
 					actualAngVel(), commandedAngVel() }));
@@ -49,10 +49,11 @@ public:
 
 	static void setCurrentPath(std::shared_ptr<PathPlannerPath> path);
 
-	static inline void setLookahead(frc::Translation2d lookahead) {
-		if (!m_compMode) {
-			m_lookaheadPub.Set(std::span<const double>( { lookahead.X()(),
-					lookahead.Y()() }));
+	static inline void setLookahead(
+			std::optional<frc::Translation2d> lookahead) {
+		if (!m_compMode && lookahead) {
+			m_lookaheadPub.Set(std::span<const double>( {
+					lookahead.value().X()(), lookahead.value().Y()() }));
 		}
 	}
 

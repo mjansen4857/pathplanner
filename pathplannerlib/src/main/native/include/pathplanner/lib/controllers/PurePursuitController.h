@@ -7,6 +7,7 @@
 #include <frc/geometry/Rotation2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <optional>
+#include <memory>
 #include "pathplanner/lib/path/PathPoint.h"
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/util/ChassisSpeedsRateLimiter.h"
@@ -14,7 +15,8 @@
 namespace pathplanner {
 class PurePursuitController {
 public:
-	PurePursuitController(PathPlannerPath &path, bool holonomic);
+	PurePursuitController(std::shared_ptr<PathPlannerPath> path,
+			bool holonomic);
 
 	void reset(frc::ChassisSpeeds currentSpeeds);
 
@@ -23,7 +25,7 @@ public:
 	}
 
 	/** DO NOT USE. FOR PATHFINDING COMMAND ONLY */
-	void setPath(PathPlannerPath &path) {
+	void setPath(std::shared_ptr<PathPlannerPath> path) {
 		m_path = path;
 		m_nextRotationTarget = findNextRotationTarget(0);
 	}
@@ -63,7 +65,7 @@ private:
 
 	static constexpr units::meter_t MIN_LOOKAHEAD = 0.5_m;
 
-	PathPlannerPath &m_path;
+	std::shared_ptr<PathPlannerPath> m_path;
 
 	ChassisSpeedsRateLimiter m_speedsLimiter;
 	frc::PIDController m_rotationController;

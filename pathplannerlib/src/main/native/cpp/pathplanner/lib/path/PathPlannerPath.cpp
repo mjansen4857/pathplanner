@@ -1,6 +1,7 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/path/PathSegment.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
+#include "pathplanner/lib/util/PPLibTelemetry.h"
 #include <frc/Filesystem.h>
 #include <wpi/raw_istream.h>
 #include <limits>
@@ -41,7 +42,8 @@ void PathPlannerPath::hotReload(const wpi::json &json) {
 	m_allPoints = updatedPath.m_allPoints;
 }
 
-PathPlannerPath PathPlannerPath::fromPathFile(std::string pathName) {
+std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
+		std::string pathName) {
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/paths/" + pathName + ".path";
 
@@ -55,8 +57,9 @@ PathPlannerPath PathPlannerPath::fromPathFile(std::string pathName) {
 	wpi::json json;
 	input >> json;
 
-	PathPlannerPath path = PathPlannerPath::fromJson(json);
-	// TODO: register hot reload
+	std::shared_ptr < PathPlannerPath > path = std::make_shared
+			< PathPlannerPath > (PathPlannerPath::fromJson(json));
+	PPLibTelemetry::registerHotReloadPath(pathName, path);
 	return path;
 }
 

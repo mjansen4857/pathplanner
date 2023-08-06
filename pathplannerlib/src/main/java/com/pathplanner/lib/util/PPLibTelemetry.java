@@ -29,10 +29,6 @@ public class PPLibTelemetry {
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/currentPath").publish();
   private static final DoubleArrayPublisher lookaheadPub =
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/lookahead").publish();
-  private static final BooleanPublisher autoBuilderPub =
-      NetworkTableInstance.getDefault()
-          .getBooleanTopic("/PathPlanner/autoBuilderAvailable")
-          .publish();
 
   private static final Map<String, List<PathPlannerPath>> hotReloadPaths = new HashMap<>();
   private static final Map<String, List<PathPlannerAuto>> hotReloadAutos = new HashMap<>();
@@ -81,12 +77,6 @@ public class PPLibTelemetry {
   public static void setLookahead(Translation2d lookahead) {
     if (!compMode) {
       lookaheadPub.set(new double[] {lookahead.getX(), lookahead.getY()});
-    }
-  }
-
-  public static void setAutoBuilderAvailable(boolean available) {
-    if (!compMode) {
-      autoBuilderPub.set(available);
     }
   }
 

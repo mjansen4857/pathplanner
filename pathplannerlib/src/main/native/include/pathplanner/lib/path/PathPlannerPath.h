@@ -11,6 +11,7 @@
 #include <wpi/json.h>
 #include <string>
 #include <units/length.h>
+#include <memory>
 
 namespace pathplanner {
 class PathPlannerPath {
@@ -39,9 +40,9 @@ public:
 	 * Load a path from a path file in storage
 	 *
 	 * @param pathName The name of the path to load
-	 * @return PathPlannerPath created from the given file name
+	 * @return shared ptr to the PathPlannerPath created from the given file name
 	 */
-	static PathPlannerPath fromPathFile(std::string pathName);
+	static std::shared_ptr<PathPlannerPath> fromPathFile(std::string pathName);
 
 	/**
 	 * Get the constraints for a point along the path

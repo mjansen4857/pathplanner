@@ -3,10 +3,10 @@
 
 using namespace pathplanner;
 
-PurePursuitController::PurePursuitController(PathPlannerPath &path,
-		bool holonomic) : m_path(path), m_speedsLimiter(
-		path.getGlobalConstraints().getMaxAcceleration(),
-		path.getGlobalConstraints().getMaxAngularAcceleration()), m_rotationController(
+PurePursuitController::PurePursuitController(
+		std::shared_ptr<PathPlannerPath> path, bool holonomic) : m_path(path), m_speedsLimiter(
+		path->getGlobalConstraints().getMaxAcceleration(),
+		path->getGlobalConstraints().getMaxAngularAcceleration()), m_rotationController(
 		4.0, 0.0, 0.0), m_holonomic(holonomic), m_lastLookahead(std::nullopt), m_lastDistToEnd(
 		std::numeric_limits<double>::infinity()), m_nextRotationTarget(
 		findNextRotationTarget(0)), m_lockDecel(false) {
@@ -27,25 +27,25 @@ void PurePursuitController::reset(frc::ChassisSpeeds currentSpeeds) {
 
 const PathPoint& PurePursuitController::findNextRotationTarget(
 		size_t startIndex) const {
-	for (size_t i = startIndex; i < m_path.numPoints() - 1; i++) {
-		if (m_path.getPoint(i).holonomicRotation) {
-			return m_path.getPoint(i);
+	for (size_t i = startIndex; i < m_path->numPoints() - 1; i++) {
+		if (m_path->getPoint(i).holonomicRotation) {
+			return m_path->getPoint(i);
 		}
 	}
-	return m_path.getPoint(m_path.numPoints() - 1);
+	return m_path->getPoint(m_path->numPoints() - 1);
 }
 
 frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 		frc::ChassisSpeeds currentSpeeds) {
-	if (m_path.numPoints() < 2) {
+	if (m_path->numPoints() < 2) {
 		return currentSpeeds;
 	}
 
 	size_t closestPointIdx = getClosestPointIndex(currentPose.Translation(),
-			m_path.getAllPathPoints());
+			m_path->getAllPathPoints());
 	m_lastInaccuracy = currentPose.Translation().Distance(
-			m_path.getPoint(closestPointIdx).position);
-	PathConstraints constraints = m_path.getConstraintsForPoint(
+			m_path->getPoint(closestPointIdx).position);
+	PathConstraints constraints = m_path->getConstraintsForPoint(
 			closestPointIdx);
 	m_speedsLimiter.setRateLimits(constraints.getMaxAcceleration(),
 			constraints.getMaxAngularAcceleration());
@@ -68,7 +68,7 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 			if (extraLookahead > 1.0_m) {
 				// Lookahead not found within reasonable distance, just aim for the start and hope for
 				// the best
-				m_lastLookahead = m_path.getPoint(0).position;
+				m_lastLookahead = m_path->getPoint(0).position;
 				break;
 			}
 			m_lastLookahead = getLookaheadPoint(currentPose.Translation(),
@@ -80,11 +80,11 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 			frc::Translation2d());
 
 	units::meter_t distanceToEnd = currentPose.Translation().Distance(
-			m_path.getPoint(m_path.numPoints() - 1).position);
+			m_path->getPoint(m_path->numPoints() - 1).position);
 
 	if (m_holonomic || distanceToEnd > 0.1_m) {
 		m_targetHeading = (lookahead - currentPose.Translation()).Angle();
-		if (!m_holonomic && m_path.isReversed()) {
+		if (!m_holonomic && m_path->isReversed()) {
 			m_targetHeading = m_targetHeading + frc::Rotation2d(180_deg);
 		}
 	}
@@ -92,7 +92,7 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 	auto maxAngVel = constraints.getMaxAngularVelocity();
 
 	if (m_holonomic
-			&& m_path.getPoint(closestPointIdx).distanceAlongPath
+			&& m_path->getPoint(closestPointIdx).distanceAlongPath
 					> m_nextRotationTarget.distanceAlongPath) {
 		m_nextRotationTarget = findNextRotationTarget(closestPointIdx);
 	}
@@ -108,9 +108,9 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 											m_targetHeading.Radians()()),
 							-maxAngVel(), maxAngVel()));
 
-	if (m_path.getGoalEndState().getVelocity() == 0_mps && !m_lockDecel) {
+	if (m_path->getGoalEndState().getVelocity() == 0_mps && !m_lockDecel) {
 		auto neededDeceleration = units::math::pow < 2
-				> (currentRobotVel - m_path.getGoalEndState().getVelocity())
+				> (currentRobotVel - m_path->getGoalEndState().getVelocity())
 						/ (2 * distanceToEnd);
 
 		if (neededDeceleration >= constraints.getMaxAcceleration()) {
@@ -120,10 +120,10 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 
 	if (m_lockDecel) {
 		auto neededDeceleration = units::math::pow < 2
-				> (currentRobotVel - m_path.getGoalEndState().getVelocity())
+				> (currentRobotVel - m_path->getGoalEndState().getVelocity())
 						/ (2 * distanceToEnd);
 
-		auto nextVel = units::math::max(m_path.getGoalEndState().getVelocity(),
+		auto nextVel = units::math::max(m_path->getGoalEndState().getVelocity(),
 				currentRobotVel - (neededDeceleration * 0.02_s));
 		if (neededDeceleration < constraints.getMaxAcceleration() * 0.9) {
 			nextVel = units::math::hypot(m_lastCommanded.vx,
@@ -136,10 +136,9 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 
 			m_lastCommanded = frc::ChassisSpeeds { velX, velY, rotationVel };
 		} else {
-			m_lastCommanded =
-					frc::ChassisSpeeds {
-							m_path.isReversed() ? -nextVel : nextVel, 0_mps,
-							rotationVel };
+			m_lastCommanded = frc::ChassisSpeeds {
+					m_path->isReversed() ? -nextVel : nextVel, 0_mps,
+					rotationVel };
 		}
 
 		m_speedsLimiter.reset(m_lastCommanded);
@@ -147,20 +146,20 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 		return m_lastCommanded;
 	} else {
 		auto maxV = units::math::min(constraints.getMaxVelocity(),
-				m_path.getPoint(closestPointIdx).maxV);
+				m_path->getPoint(closestPointIdx).maxV);
 		auto lastVel = units::math::hypot(m_lastCommanded.vx,
 				m_lastCommanded.vy);
 
 		auto stoppingDistance = units::math::pow < 2
 				> (lastVel) / (2 * constraints.getMaxAcceleration());
 
-		for (size_t i = closestPointIdx; i < m_path.numPoints(); i++) {
-			if (currentPose.Translation().Distance(m_path.getPoint(i).position)
+		for (size_t i = closestPointIdx; i < m_path->numPoints(); i++) {
+			if (currentPose.Translation().Distance(m_path->getPoint(i).position)
 					> stoppingDistance) {
 				break;
 			}
 
-			PathPoint p = m_path.getPoint(i);
+			PathPoint p = m_path->getPoint(i);
 			if (p.maxV < lastVel) {
 				auto dist = currentPose.Translation().Distance(p.position);
 				auto neededDeccel = (units::math::pow < 2
@@ -181,7 +180,7 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 					velX, velY, rotationVel });
 		} else {
 			m_lastCommanded = m_speedsLimiter.calculate(
-					frc::ChassisSpeeds { m_path.isReversed() ? -maxV : maxV,
+					frc::ChassisSpeeds { m_path->isReversed() ? -maxV : maxV,
 							0_mps, rotationVel });
 		}
 
@@ -191,22 +190,23 @@ frc::ChassisSpeeds PurePursuitController::calculate(frc::Pose2d currentPose,
 
 bool PurePursuitController::isAtGoal(frc::Pose2d currentPose,
 		frc::ChassisSpeeds currentSpeeds) {
-	if (m_path.numPoints() == 0 || !m_lastLookahead.has_value()) {
+	if (m_path->numPoints() == 0 || !m_lastLookahead.has_value()) {
 		return false;
 	}
 
-	frc::Translation2d endPos = m_path.getPoint(m_path.numPoints() - 1).position;
+	frc::Translation2d endPos =
+			m_path->getPoint(m_path->numPoints() - 1).position;
 	if (m_lastLookahead == endPos) {
 		units::meter_t distanceToEnd = currentPose.Translation().Distance(
 				endPos);
-		if (m_path.getGoalEndState().getVelocity() != 0_mps
+		if (m_path->getGoalEndState().getVelocity() != 0_mps
 				&& distanceToEnd <= 0.1_m) {
 			return true;
 		}
 
 		if (distanceToEnd >= m_lastDistToEnd) {
 			if (m_holonomic
-					&& m_path.getGoalEndState().getVelocity() == 0_mps) {
+					&& m_path->getGoalEndState().getVelocity() == 0_mps) {
 				units::meters_per_second_t currentVel = units::math::hypot(
 						currentSpeeds.vx, currentSpeeds.vy);
 				if (currentVel <= 0.1_mps) {
@@ -227,9 +227,9 @@ std::optional<frc::Translation2d> PurePursuitController::getLookaheadPoint(
 		frc::Translation2d robotPos, units::meter_t r) const {
 	std::optional < frc::Translation2d > lookahead = std::nullopt;
 
-	for (size_t i = 0; i < m_path.numPoints() - 1; i++) {
-		frc::Translation2d segmentStart = m_path.getPoint(i).position;
-		frc::Translation2d segmentEnd = m_path.getPoint(i + 1).position;
+	for (size_t i = 0; i < m_path->numPoints() - 1; i++) {
+		frc::Translation2d segmentStart = m_path->getPoint(i).position;
+		frc::Translation2d segmentEnd = m_path->getPoint(i + 1).position;
 
 		frc::Translation2d p1 = segmentStart - robotPos;
 		frc::Translation2d p2 = segmentEnd - robotPos;
@@ -272,9 +272,9 @@ std::optional<frc::Translation2d> PurePursuitController::getLookaheadPoint(
 		}
 	}
 
-	if (m_path.numPoints() > 0) {
+	if (m_path->numPoints() > 0) {
 		frc::Translation2d lastPoint =
-				m_path.getPoint(m_path.numPoints() - 1).position;
+				m_path->getPoint(m_path->numPoints() - 1).position;
 
 		if ((lastPoint - robotPos).Norm() <= r) {
 			return lastPoint;

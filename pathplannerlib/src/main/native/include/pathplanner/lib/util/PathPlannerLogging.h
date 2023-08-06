@@ -4,6 +4,7 @@
 #include <vector>
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Translation2d.h>
+#include <memory>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 
 namespace pathplanner {
@@ -36,10 +37,10 @@ public:
 		}
 	}
 
-	static void logActivePath(const PathPlannerPath &path) {
+	static void logActivePath(std::shared_ptr<PathPlannerPath> path) {
 		if (m_logActivePath) {
 			std::vector < frc::Pose2d > poses;
-			for (const PathPoint &point : path.getAllPathPoints()) {
+			for (const PathPoint &point : path->getAllPathPoints()) {
 				poses.push_back(frc::Pose2d(point.position, frc::Rotation2d()));
 			}
 			m_logActivePath(poses);

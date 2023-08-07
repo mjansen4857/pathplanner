@@ -2,7 +2,9 @@ dependencies:
 - pubspec.yml
 
 GUI:
-- any: ['lib/**', 'test/**', 'pubspec.yml']
+- 'lib/**'
+- 'test/**'
+- pubspec.yml
 
 PathPlannerLib:
-- any: ['pathplannerlib/**']
+- 'pathplannerlib/**'

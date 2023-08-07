@@ -26,6 +26,17 @@ public class AutoBuilder {
   private static Supplier<Pose2d> getPose;
   private static Consumer<Pose2d> resetPose;
 
+  /**
+   * Configures the AutoBuilder for a holonomic drivetrain.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
+   *     speeds
+   * @param fieldRelativeOutput a consumer for setting the robot's field-relative chassis speeds
+   * @param driveSubsystem the subsystem for the robot's drive
+   * @throws AutoBuilderException if AutoBuilder has already been configured
+   */
   public static void configureHolonomic(
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
@@ -51,6 +62,16 @@ public class AutoBuilder {
     AutoBuilder.configured = true;
   }
 
+  /**
+   * Configures the AutoBuilder for a differential drivetrain.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param speedsSupplier a supplier for the robot's current chassis speeds
+   * @param output a consumer for setting the robot's chassis speeds
+   * @param driveSubsystem the subsystem for the robot's drive
+   * @throws AutoBuilderException if AutoBuilder has already been configured
+   */
   public static void configureDifferential(
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
@@ -71,6 +92,14 @@ public class AutoBuilder {
     AutoBuilder.configured = true;
   }
 
+  /**
+   * Configures the AutoBuilder with custom path following command builder.
+   *
+   * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @throws AutoBuilderException if AutoBuilder has already been configured
+   */
   public static void configureCustom(
       Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
       Supplier<Pose2d> poseSupplier,
@@ -86,10 +115,22 @@ public class AutoBuilder {
     AutoBuilder.configured = true;
   }
 
+  /**
+   * Returns whether the AutoBuilder has been configured.
+   *
+   * @return true if the AutoBuilder has been configured, false otherwise
+   */
   public static boolean isConfigured() {
     return configured;
   }
 
+  /**
+   * Builds a command to follow a path with event markers.
+   *
+   * @param path the path to follow
+   * @return a path following command with events for the given path
+   * @throws AutoBuilderException if the AutoBuilder has not been configured
+   */
   public static Command followPathWithEvents(PathPlannerPath path) {
     if (!isConfigured()) {
       throw new AutoBuilderException(
@@ -108,6 +149,12 @@ public class AutoBuilder {
     return new Pose2d(x, y, Rotation2d.fromDegrees(deg));
   }
 
+  /**
+   * Builds an auto command for the given auto name.
+   *
+   * @param autoName the name of the auto to build
+   * @return an auto command for the given auto name
+   */
   public static Command buildAuto(String autoName) {
     try (BufferedReader br =
         new BufferedReader(
@@ -130,6 +177,12 @@ public class AutoBuilder {
     }
   }
 
+  /**
+   * Builds an auto command from the given JSON object.
+   *
+   * @param autoJson the JSON object to build the command from
+   * @return an auto command built from the JSON object
+   */
   public static Command getAutoCommandFromJson(JSONObject autoJson) {
     JSONObject commandJson = (JSONObject) autoJson.get("command");
 

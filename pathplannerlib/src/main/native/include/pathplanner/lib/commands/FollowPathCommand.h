@@ -15,12 +15,32 @@ namespace pathplanner {
 class FollowPathCommand: public frc2::CommandHelper<frc2::Command,
 		FollowPathCommand> {
 public:
+	/**
+	 * Creates a new FollowPathCommand.
+	 *
+	 * @param path the path to follow
+	 * @param poseSupplier a supplier for the robot's current pose
+	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+	 * @param output a consumer for the output speeds (field relative if holonomic, robot relative if differential)
+	 * @param holonomic whether the robot drive train is holonomic or not
+	 * @param requirements the subsystems required by this command
+	 */
 	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output, bool holonomic,
 			std::initializer_list<frc2::Subsystem*> requirements);
 
+	/**
+	 * Creates a new FollowPathCommand.
+	 *
+	 * @param path the path to follow
+	 * @param poseSupplier a supplier for the robot's current pose
+	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+	 * @param output a consumer for the output speeds (field relative if holonomic, robot relative if differential)
+	 * @param holonomic whether the robot drive train is holonomic or not
+	 * @param requirements the subsystems required by this command
+	 */
 	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,

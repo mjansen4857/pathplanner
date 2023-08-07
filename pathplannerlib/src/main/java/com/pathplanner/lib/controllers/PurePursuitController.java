@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.List;
 
+/** A controller that uses the Pure Pursuit algorithm to follow a path. */
 public class PurePursuitController {
   private static final double MIN_LOOKAHEAD_DISTANCE = 0.5;
 
@@ -29,6 +30,12 @@ public class PurePursuitController {
   private double lastInaccuracy = 0;
   private boolean lockDecel;
 
+  /**
+   * Constructs a new PurePursuitController.
+   *
+   * @param path the path to follow
+   * @param holonomic whether the robot is holonomic or not
+   */
   public PurePursuitController(PathPlannerPath path, boolean holonomic) {
     this.path = path;
     this.speedsLimiter =
@@ -45,6 +52,11 @@ public class PurePursuitController {
     }
   }
 
+  /**
+   * Resets the controller with the given current speeds.
+   *
+   * @param currentSpeeds the current speeds of the robot
+   */
   public void reset(ChassisSpeeds currentSpeeds) {
     this.speedsLimiter.reset(currentSpeeds);
     this.rotationController.reset();
@@ -66,6 +78,11 @@ public class PurePursuitController {
     return path.getPoint(path.numPoints() - 1);
   }
 
+  /**
+   * Get the last lookahead point used by the controller
+   *
+   * @return The last lookahead point
+   */
   public Translation2d getLastLookahead() {
     return lastLookahead;
   }
@@ -76,10 +93,22 @@ public class PurePursuitController {
     nextRotationTarget = findNextRotationTarget(0);
   }
 
+  /**
+   * Get the last path following inaccuracy of the controller
+   *
+   * @return Last path following inaccuracy in meters
+   */
   public double getLastInaccuracy() {
     return lastInaccuracy;
   }
 
+  /**
+   * Calculates the output speeds for the controller given the current pose and speeds of the robot.
+   *
+   * @param currentPose the current pose of the robot
+   * @param currentSpeeds the current speeds of the robot
+   * @return the output speeds
+   */
   public ChassisSpeeds calculate(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     if (path.numPoints() < 2) {
       return currentSpeeds;
@@ -215,6 +244,13 @@ public class PurePursuitController {
     }
   }
 
+  /**
+   * Determines whether the robot has reached the end of the path.
+   *
+   * @param currentPose the current pose of the robot
+   * @param currentSpeeds the current speeds of the robot
+   * @return true if the robot has reached the end of the path, false otherwise
+   */
   public boolean isAtGoal(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     if (path.numPoints() == 0 || lastLookahead == null) {
       return false;
@@ -245,6 +281,14 @@ public class PurePursuitController {
     return false;
   }
 
+  /**
+   * Calculates the lookahead distance for the Pure Pursuit algorithm given the current velocity and
+   * path constraints.
+   *
+   * @param currentVel the current velocity of the robot
+   * @param constraints the path constraints for the robot
+   * @return the lookahead distance for the Pure Pursuit algorithm
+   */
   public static double getLookaheadDistance(double currentVel, PathConstraints constraints) {
     double lookaheadFactor = 1.0 - (0.1 * constraints.getMaxAccelerationMpsSq());
     return Math.max(lookaheadFactor * currentVel, MIN_LOOKAHEAD_DISTANCE);

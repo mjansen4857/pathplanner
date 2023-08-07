@@ -12,6 +12,13 @@ namespace pathplanner {
 class FollowPathWithEvents: public frc2::CommandHelper<frc2::Command,
 		FollowPathWithEvents> {
 public:
+	/**
+	 * Constructs a new FollowPathWithEvents command.
+	 *
+	 * @param pathFollowingCommand the command to follow the path
+	 * @param path the path to follow
+	 * @param poseSupplier a supplier for the robot's current pose
+	 */
 	FollowPathWithEvents(std::unique_ptr<frc2::Command> &&pathFollowingCommand,
 			std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier);

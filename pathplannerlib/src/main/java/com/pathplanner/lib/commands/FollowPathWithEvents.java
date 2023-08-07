@@ -17,6 +17,14 @@ public class FollowPathWithEvents extends Command {
   private final List<EventMarker> untriggeredMarkers = new ArrayList<>();
   private boolean isFinished = false;
 
+  /**
+   * Constructs a new FollowPathWithEvents command.
+   *
+   * @param pathFollowingCommand the command to follow the path
+   * @param path the path to follow
+   * @param poseSupplier a supplier for the robot's current pose
+   * @throws IllegalArgumentException if an event command requires the drive subsystem
+   */
   public FollowPathWithEvents(
       Command pathFollowingCommand, PathPlannerPath path, Supplier<Pose2d> poseSupplier) {
     this.pathFollowingCommand = pathFollowingCommand;

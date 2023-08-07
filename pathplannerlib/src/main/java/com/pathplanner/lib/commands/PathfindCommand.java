@@ -31,8 +31,21 @@ public class PathfindCommand extends Command {
   private final boolean holonomic;
 
   private List<PathPoint> pathPoints;
-  //  private Pose2d currentObsPose;
 
+  /**
+   * Constructs a new PathfindCommand that will generate a path towards the given path.
+   *
+   * @param targetPath the path to pathfind to
+   * @param targetRotation the target rotation of the robot at the end of the path (only applied to
+   *     holonomic drive trains)
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
+   *     differential)
+   * @param holonomic whether the robot is holonomic or not
+   * @param requirements the subsystems required by this command
+   */
   public PathfindCommand(
       PathPlannerPath targetPath,
       Rotation2d targetRotation,
@@ -63,6 +76,20 @@ public class PathfindCommand extends Command {
     this.holonomic = holonomic;
   }
 
+  /**
+   * Constructs a new PathfindCommand that will generate a path towards the given pose.
+   *
+   * @param targetPose the pose to pathfind to (rotation will only be taken into account for
+   *     holonomic drive trains)
+   * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the given pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
+   *     differential)
+   * @param holonomic whether the robot is holonomic or not
+   * @param requirements the subsystems required by this command
+   */
   public PathfindCommand(
       Pose2d targetPose,
       PathConstraints constraints,
@@ -90,6 +117,19 @@ public class PathfindCommand extends Command {
     this.holonomic = holonomic;
   }
 
+  /**
+   * Constructs a new PathfindCommand that will generate a path towards the given pose and stop.
+   *
+   * @param targetPose the pose to pathfind to (rotation will only be taken into account for
+   *     holonomic drive trains)
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
+   *     differential)
+   * @param holonomic whether the robot is holonomic or not
+   * @param requirements the subsystems required by this command
+   */
   public PathfindCommand(
       Pose2d targetPose,
       PathConstraints constraints,

@@ -3,8 +3,7 @@
 
 using namespace pathplanner;
 
-std::unordered_map<std::string, std::shared_ptr<frc2::Command>> EventManager::eventMap =
-		std::unordered_map<std::string, std::shared_ptr<frc2::Command>>();
+std::unordered_map<std::string, std::shared_ptr<frc2::Command>> EventManager::eventMap;
 
 void EventManager::registerCommand(std::string name,
 		std::shared_ptr<frc2::Command> command) {

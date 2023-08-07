@@ -1,0 +1,8 @@
+dependencies:
+- pubspec.yml
+
+GUI:
+- any: ['lib/**', 'test/**', 'pubspec.yml']
+
+PathPlannerLib:
+- any: ['pathplannerlib/**']

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file/file.dart';
+import 'package:file/local.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
@@ -77,7 +78,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _loadFieldImages().then((_) async {
       String? projectDir = widget.prefs.getString(PrefsKeys.currentProjectDir);
-      if (projectDir != null && Platform.isMacOS) {
+      if (projectDir != null && Platform.isMacOS && fs is LocalFileSystem) {
         if (widget.prefs.getString(PrefsKeys.macOSBookmark) != null) {
           try {
             await _bookmarks!.resolveBookmark(
@@ -108,7 +109,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
         widget.prefs.setString(PrefsKeys.currentProjectDir, projectDir!);
 
-        if (Platform.isMacOS) {
+        if (Platform.isMacOS && fs is LocalFileSystem) {
           // Bookmark project on macos so it can be accessed again later
           String bookmark = await _bookmarks!.bookmark(fs.file(projectDir));
           widget.prefs.setString(PrefsKeys.macOSBookmark, bookmark);

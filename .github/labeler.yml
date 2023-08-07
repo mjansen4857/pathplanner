@@ -8,3 +8,6 @@ GUI:
 
 PathPlannerLib:
 - 'pathplannerlib/**'
+
+workflows:
+- '.github/workflows/**'

@@ -1,6 +1,6 @@
 package com.pathplanner.lib.util;
 
-import com.pathplanner.lib.auto.PathPlannerAuto;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import edu.wpi.first.math.geometry.Pose2d;

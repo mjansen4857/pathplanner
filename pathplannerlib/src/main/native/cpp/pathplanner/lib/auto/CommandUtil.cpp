@@ -1,5 +1,6 @@
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include "pathplanner/lib/auto/EventManager.h"
+#include "pathplanner/lib/auto/AutoBuilder.h"
 #include <frc2/command/Commands.h>
 #include <string>
 #include <units/time.h>
@@ -61,8 +62,9 @@ frc2::CommandPtr CommandUtil::namedCommandFromJson(const wpi::json &json) {
 }
 
 frc2::CommandPtr CommandUtil::pathCommandFromJson(const wpi::json &json) {
-	// TODO
-	return frc2::cmd::None();
+	std::string pathName = json.at("pathName").get<std::string>();
+	return AutoBuilder::followPathWithEvents(
+			PathPlannerPath::fromPathFile(pathName));
 }
 
 frc2::CommandPtr CommandUtil::sequentialGroupFromJson(const wpi::json &json) {

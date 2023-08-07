@@ -126,8 +126,7 @@ public class AutoBuilder {
     } catch (AutoBuilderException e) {
       throw e;
     } catch (Exception e) {
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(e.getMessage());
     }
   }
 

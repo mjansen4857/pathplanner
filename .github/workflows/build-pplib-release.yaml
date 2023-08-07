@@ -1,55 +1,9 @@
-name: PathPlannerLib
+name: Build PPLib Release
 
 on:
-  push:
-    branches: [main]
-
-  pull_request:
-
   workflow_dispatch:
 
 jobs:
-  formatting:
-    name: "[PPLib] Check Formatting"
-    runs-on: ubuntu-22.04
-    container: wpilib/ubuntu-base:22.04
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-      
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        working-directory: ./pathplannerlib
-      
-      - name: Check formatting
-        run: ./gradlew spotlessCheck
-        working-directory: ./pathplannerlib
-  
-  test:
-    name: "[PPLib] Unit Tests"
-    runs-on: ubuntu-22.04
-    container: wpilib/ubuntu-base:22.04
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-      
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        working-directory: ./pathplannerlib
-      
-      - name: Build & Test
-        run: ./gradlew build
-        working-directory: ./pathplannerlib
-      
-      # - name: Upload coverage reports to Codecov
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     token: ${{ secrets.CODECOV_TOKEN }}
-      #     name: pplib-coverage
-      #     files: pathplannerlib/build/reports/jacoco/test/jacocoTestReport.xml
-  
   build-docker:
     strategy:
       fail-fast: false
@@ -73,7 +27,7 @@ jobs:
         working-directory: ./pathplannerlib
       
       - name: Build
-        run: ./gradlew build --max-workers 1 ${{ matrix.build-options }}
+        run: ./gradlew build --max-workers 1 -PreleaseMode ${{ matrix.build-options }}
         working-directory: ./pathplannerlib
       
       - name: Upload artifact
@@ -104,7 +58,7 @@ jobs:
           distribution: 'zulu'
       
       - name: Build
-        run: ./gradlew build -Pbuildalldesktop
+        run: ./gradlew build -Pbuildalldesktop -PreleaseMode
         working-directory: ./pathplannerlib
       
       - name: Upload artifact

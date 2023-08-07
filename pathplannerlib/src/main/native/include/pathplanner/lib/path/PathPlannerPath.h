@@ -50,7 +50,7 @@ public:
 	 * @param idx Index of the point to get constraints for
 	 * @return The constraints that should apply to the point
 	 */
-	constexpr PathConstraints getConstraintsForPoint(size_t idx) {
+	inline PathConstraints getConstraintsForPoint(size_t idx) {
 		return getPoint(idx).constraints.value_or(m_globalConstraints);
 	}
 
@@ -81,7 +81,7 @@ public:
 	 *
 	 * @return Number of points in the path
 	 */
-	constexpr size_t numPoints() const {
+	inline size_t numPoints() const {
 		return m_allPoints.size();
 	}
 
@@ -91,7 +91,7 @@ public:
 	 * @param index Index of the point to get
 	 * @return The point at the given index
 	 */
-	constexpr const PathPoint& getPoint(size_t index) const {
+	inline const PathPoint& getPoint(size_t index) const {
 		return m_allPoints[index];
 	}
 

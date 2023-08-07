@@ -45,7 +45,7 @@ public:
 		return m_rotation;
 	}
 
-	constexpr bool operator==(const GoalEndState &other) const {
+	inline bool operator==(const GoalEndState &other) const {
 		return std::abs(m_velocity() - other.m_velocity()) < 1E-9
 				&& m_rotation == other.m_rotation;
 	}

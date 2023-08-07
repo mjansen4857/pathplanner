@@ -55,7 +55,7 @@ public:
 		return RotationTarget(m_position - segmentIndex, m_target);
 	}
 
-	constexpr bool operator==(const RotationTarget &other) const {
+	inline bool operator==(const RotationTarget &other) const {
 		return std::abs(m_position - other.m_position) < 1E-9
 				&& m_target == other.m_target;
 	}

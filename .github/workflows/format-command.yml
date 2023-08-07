@@ -54,7 +54,7 @@ jobs:
           NUMBER: ${{ github.event.issue.number }}
 
       - name: Format dart
-        run: flutter format lib/* test/*
+        run: dart format lib/* test/*
       
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew

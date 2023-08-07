@@ -1,4 +1,5 @@
 #include "pathplanner/lib/controllers/PurePursuitController.h"
+#include "pathplanner/lib/util/GeometryUtil.h"
 #include <limits>
 
 using namespace pathplanner;
@@ -10,7 +11,7 @@ PurePursuitController::PurePursuitController(
 		4.0, 0.0, 0.0), m_holonomic(holonomic), m_lastLookahead(std::nullopt), m_lastDistToEnd(
 		std::numeric_limits<double>::infinity()), m_nextRotationTarget(
 		findNextRotationTarget(0)), m_lockDecel(false) {
-	m_rotationController.EnableContinuousInput(-M_PI, M_PI);
+	m_rotationController.EnableContinuousInput(-PI, PI);
 }
 
 void PurePursuitController::reset(frc::ChassisSpeeds currentSpeeds) {

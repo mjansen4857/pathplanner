@@ -69,7 +69,7 @@ public:
 		return m_maxAngularAcceleration;
 	}
 
-	constexpr bool operator==(const PathConstraints &other) const {
+	bool operator==(const PathConstraints &other) const {
 		return std::abs(m_maxVelocity() - other.m_maxVelocity()) < 1E-9
 				&& std::abs(m_maxAcceleration() - other.m_maxAcceleration())
 						< 1E-9

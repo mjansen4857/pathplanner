@@ -88,7 +88,7 @@ public:
 				m_constraints);
 	}
 
-	constexpr bool operator==(const ConstraintsZone &other) const {
+	inline bool operator==(const ConstraintsZone &other) const {
 		return std::abs(m_minPos - other.m_minPos) < 1E-9
 				&& std::abs(m_maxPos - other.m_maxPos) < 1E-9
 				&& m_constraints == other.m_constraints;

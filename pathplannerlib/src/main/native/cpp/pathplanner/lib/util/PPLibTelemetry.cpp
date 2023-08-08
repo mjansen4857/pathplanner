@@ -112,8 +112,7 @@ void PPLibTelemetry::handlePathHotReloadEvent(const nt::Event &event) {
 			std::string_view jsonString =
 					event.GetValueEventData()->value.GetString();
 
-			wpi::json json;
-			json.accept(jsonString);
+			wpi::json json = wpi::json::parse(jsonString);
 
 			std::string pathName = json.at("name").get<std::string>();
 			wpi::json::const_reference pathJson = json.at("path");
@@ -159,8 +158,7 @@ void PPLibTelemetry::handleAutoHotReloadEvent(const nt::Event &event) {
 			std::string_view jsonString =
 					event.GetValueEventData()->value.GetString();
 
-			wpi::json json;
-			json.accept(jsonString);
+			wpi::json json = wpi::json::parse(jsonString);
 
 			std::string autoName = json.at("name").get<std::string>();
 			wpi::json::const_reference autoJson = json.at("auto");

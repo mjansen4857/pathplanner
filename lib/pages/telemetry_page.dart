@@ -45,51 +45,63 @@ class _TelemetryPageState extends State<TelemetryPage> {
     _robotSize = Size(width, length);
 
     widget.telemetry.connectionStatusStream().listen((connected) {
-      setState(() {
-        _connected = connected;
-      });
+      if (mounted) {
+        setState(() {
+          _connected = connected;
+        });
+      }
     });
 
     widget.telemetry.velocitiesStream().listen((vels) {
-      setState(() {
-        _velData.add(vels);
-        if (_velData.length > 150) {
-          _velData.removeAt(0);
-        }
-      });
+      if (mounted) {
+        setState(() {
+          _velData.add(vels);
+          if (_velData.length > 150) {
+            _velData.removeAt(0);
+          }
+        });
+      }
     });
 
     widget.telemetry.inaccuracyStream().listen((inaccuracy) {
-      setState(() {
-        _inaccuracyData.add(inaccuracy);
-        if (_inaccuracyData.length > 150) {
-          _inaccuracyData.removeAt(0);
-        }
-      });
+      if (mounted) {
+        setState(() {
+          _inaccuracyData.add(inaccuracy);
+          if (_inaccuracyData.length > 150) {
+            _inaccuracyData.removeAt(0);
+          }
+        });
+      }
     });
 
     widget.telemetry.currentPoseStream().listen((pose) {
-      setState(() {
-        if (pose == null) {
-          _robotPos = null;
-          _robotRotation = null;
-        } else {
-          _robotPos = Point(pose[0], pose[1]);
-          _robotRotation = pose[2];
-        }
-      });
+      if (mounted) {
+        setState(() {
+          if (pose == null) {
+            _robotPos = null;
+            _robotRotation = null;
+          } else {
+            _robotPos = Point(pose[0], pose[1]);
+            _robotRotation = pose[2];
+          }
+        });
+      }
     });
 
     widget.telemetry.currentPathStream().listen((path) {
-      setState(() {
-        _currentPath = path;
-      });
+      if (mounted) {
+        setState(() {
+          _currentPath = path;
+        });
+      }
     });
 
     widget.telemetry.lookaheadStream().listen((lookahead) {
-      setState(() {
-        _lookahead = lookahead;
-      });
+      if (mounted) {
+        setState(() {
+          _lookahead = lookahead;
+        });
+      }
     });
   }
 

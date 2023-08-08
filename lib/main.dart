@@ -1,21 +1,25 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:file/file.dart';
+import 'package:file/local.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pathplanner/services/log.dart';
+import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/services/update_checker.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:undo/undo.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'pages/home_page.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Log.init();
-
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      await Log.init();
       await windowManager.ensureInitialized();
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
@@ -38,8 +42,18 @@ void main() async {
         await windowManager.focus();
       });
 
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      PPLibTelemetry telemetry = PPLibTelemetry(
+          serverBaseAddress: prefs.getString(PrefsKeys.pplibClientHost) ??
+              Defaults.pplibClientHost);
+
       runApp(PathPlanner(
         appVersion: packageInfo.version,
+        prefs: prefs,
+        undoStack: ChangeStack(),
+        telemetry: telemetry,
+        updateChecker: UpdateChecker(),
       ));
     },
     (Object error, StackTrace stack) {
@@ -51,34 +65,32 @@ void main() async {
 
 class PathPlanner extends StatefulWidget {
   final String appVersion;
+  final FileSystem fs;
+  final SharedPreferences prefs;
+  final ChangeStack undoStack;
+  final PPLibTelemetry telemetry;
+  final UpdateChecker updateChecker;
 
-  const PathPlanner({required this.appVersion, super.key});
+  const PathPlanner({
+    required this.appVersion,
+    required this.prefs,
+    required this.undoStack,
+    required this.telemetry,
+    required this.updateChecker,
+    this.fs = const LocalFileSystem(),
+    super.key,
+  });
 
   @override
   State<PathPlanner> createState() => _PathPlannerState();
 }
 
 class _PathPlannerState extends State<PathPlanner> {
-  SharedPreferences? _prefs;
-  late Color _teamColor;
-  final bool _sandboxed = false;
-
-  @override
-  void initState() {
-    super.initState();
-
-    SharedPreferences.getInstance().then((prefs) {
-      setState(() {
-        _prefs = prefs;
-        _teamColor = Color(_prefs!.getInt('teamColor') ?? Colors.indigo.value);
-      });
-    });
-  }
+  late Color _teamColor =
+      Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
 
   @override
   Widget build(BuildContext context) {
-    if (_prefs == null) return Container();
-
     return MaterialApp(
       title: 'PathPlanner',
       theme: ThemeData(
@@ -88,12 +100,15 @@ class _PathPlannerState extends State<PathPlanner> {
       ),
       home: HomePage(
         appVersion: widget.appVersion,
-        appStoreBuild: _sandboxed,
-        prefs: _prefs!,
+        prefs: widget.prefs,
+        fs: widget.fs,
+        undoStack: widget.undoStack,
+        telemetry: widget.telemetry,
+        updateChecker: widget.updateChecker,
         onTeamColorChanged: (Color color) {
           setState(() {
             _teamColor = color;
-            _prefs!.setInt('teamColor', _teamColor.value);
+            widget.prefs.setInt(PrefsKeys.teamColor, _teamColor.value);
           });
         },
       ),

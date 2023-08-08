@@ -37,7 +37,7 @@ jobs:
         run: flutter analyze
       
       - name: Check formatting
-        run: flutter format -o none --set-exit-if-changed lib/* test/*
+        run: dart format -o none --set-exit-if-changed lib/* test/*
   
   test:
     name: "[GUI] Run Tests"

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:pathplanner/services/update_checker.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../services/github.dart';
 
 class UpdateCard extends StatefulWidget {
   final String currentVersion;
+  final UpdateChecker updateChecker;
 
-  const UpdateCard({required this.currentVersion, super.key});
+  const UpdateCard({
+    required this.currentVersion,
+    required this.updateChecker,
+    super.key,
+  });
 
   @override
   State<UpdateCard> createState() => _UpdateCardState();
@@ -31,11 +35,15 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
       curve: Curves.ease,
     ));
 
-    GitHubAPI.isUpdateAvailable(widget.currentVersion).then((value) {
-      setState(() {
-        _visibile = value;
-        _updateController.forward();
-      });
+    widget.updateChecker
+        .isGuiUpdateAvailable(widget.currentVersion)
+        .then((value) {
+      if (value) {
+        setState(() {
+          _visibile = value;
+          _updateController.forward();
+        });
+      }
     });
   }
 

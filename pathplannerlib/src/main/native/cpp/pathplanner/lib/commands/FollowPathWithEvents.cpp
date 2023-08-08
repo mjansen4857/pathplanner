@@ -1,32 +1,24 @@
 #include "pathplanner/lib/commands/FollowPathWithEvents.h"
 
-#include <frc/DriverStation.h>
-
 using namespace pathplanner;
 
 FollowPathWithEvents::FollowPathWithEvents(
 		std::unique_ptr<frc2::Command> &&pathFollowingCommand,
-		std::vector<PathPlannerTrajectory::EventMarker> pathMarkers,
-		std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap) {
-	m_pathFollowingCommand = std::move(pathFollowingCommand);
-	m_pathMarkers = pathMarkers;
-	m_eventMap = eventMap;
+		std::shared_ptr<PathPlannerPath> path,
+		std::function<frc::Pose2d()> poseSupplier) : m_pathFollowingCommand(
+		std::move(pathFollowingCommand)), m_path(path), m_poseSupplier(
+		poseSupplier), m_isFinished(false) {
+	AddRequirements(m_pathFollowingCommand->GetRequirements());
+	for (EventMarker &marker : m_path->getEventMarkers()) {
+		auto reqs = marker.getCommand()->GetRequirements();
 
-	this->AddRequirements(m_pathFollowingCommand->GetRequirements());
-	for (PathPlannerTrajectory::EventMarker marker : m_pathMarkers) {
-		for (std::string name : marker.names) {
-			if (m_eventMap.find(name) != m_eventMap.end()) {
-				auto reqs = m_eventMap[name]->GetRequirements();
-
-				if (!frc2::RequirementsDisjoint(m_pathFollowingCommand.get(),
-						m_eventMap[name].get())) {
-					throw FRC_MakeError(frc::err::CommandIllegalUse,
-							"Events that are triggered during path following cannot require the drive subsystem");
-				}
-
-				this->AddRequirements(reqs);
-			}
+		if (!frc2::RequirementsDisjoint(m_pathFollowingCommand.get(),
+				marker.getCommand().get())) {
+			throw FRC_MakeError(frc::err::CommandIllegalUse,
+					"Events that are triggered during path following cannot require the drive subsystem");
 		}
+
+		AddRequirements(reqs);
 	}
 }
 
@@ -35,12 +27,15 @@ void FollowPathWithEvents::Initialize() {
 
 	m_currentCommands.clear();
 
-	m_unpassedMarkers.clear();
-	m_unpassedMarkers.insert(m_unpassedMarkers.end(), m_pathMarkers.begin(),
-			m_pathMarkers.end());
+	frc::Pose2d currentPose = m_poseSupplier();
+	for (EventMarker &marker : m_path->getEventMarkers()) {
+		marker.reset(currentPose);
+	}
 
-	m_timer.Reset();
-	m_timer.Start();
+	m_markers.clear();
+	for (EventMarker &marker : m_path->getEventMarkers()) {
+		m_markers.emplace_back(marker, false);
+	}
 
 	m_pathFollowingCommand->Initialize();
 }
@@ -64,15 +59,11 @@ void FollowPathWithEvents::Execute() {
 		}
 	}
 
-	units::second_t currentTime = m_timer.Get();
-	if (m_unpassedMarkers.size() > 0
-			&& currentTime >= m_unpassedMarkers[0].time) {
-		PathPlannerTrajectory::EventMarker marker = m_unpassedMarkers[0];
-		m_unpassedMarkers.pop_front();
-
-		for (std::string name : marker.names) {
-			if (m_eventMap.find(name) != m_eventMap.end()) {
-				auto eventCommand = m_eventMap[name];
+	frc::Pose2d currentPose = m_poseSupplier();
+	for (std::pair<EventMarker, bool> &marker : m_markers) {
+		if (!marker.second) {
+			if (marker.first.shouldTrigger(currentPose)) {
+				marker.second = true;
 
 				for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentCommands) {
 					if (!runningCommand.second) {
@@ -80,21 +71,21 @@ void FollowPathWithEvents::Execute() {
 					}
 
 					if (!frc2::RequirementsDisjoint(runningCommand.first.get(),
-							eventCommand.get())) {
+							marker.first.getCommand().get())) {
 						runningCommand.first->End(true);
 						runningCommand.second = false;
 					}
 				}
 
-				eventCommand->Initialize();
-				m_currentCommands.emplace_back(eventCommand, true);
-			} else {
-				FRC_ReportError(frc::warn::Warning,
-						"PathPlanner attempted to schedule an event missing from the event map: {}",
-						name);
+				marker.first.getCommand()->Initialize();
+				m_currentCommands.emplace_back(marker.first.getCommand(), true);
 			}
 		}
 	}
+}
+
+bool FollowPathWithEvents::IsFinished() {
+	return m_isFinished;
 }
 
 void FollowPathWithEvents::End(bool interrupted) {
@@ -107,8 +98,4 @@ void FollowPathWithEvents::End(bool interrupted) {
 			runningCommand.first->End(true);
 		}
 	}
-}
-
-bool FollowPathWithEvents::IsFinished() {
-	return m_isFinished;
 }

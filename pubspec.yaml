@@ -15,10 +15,10 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 2023.4.2+23
+version: 2024.0.0+24
 
 environment:
-  sdk: '>=2.18.0 <3.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
@@ -29,25 +29,28 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.4
   shared_preferences: ^2.0.11
-  file_selector: ^0.9.0
+  file_selector: ^1.0.0
   undo: ^1.4.0
   tuple: ^2.0.0
-  visibility_detector: ^0.3.3
+  visibility_detector: ^0.4.0+2
   github: ^9.2.0
-  version: ^2.0.0
+  version: ^3.0.2
   url_launcher: ^6.0.17
-  process_run: ^0.12.2
   macos_secure_bookmarks: ^0.2.0
   function_tree: ^0.8.12
   path_provider: ^2.0.9
   image_size_getter: ^2.1.1
   path: ^1.8.0
-  window_manager: ^0.2.3
+  window_manager: ^0.3.5
   flutter_colorpicker: ^1.0.3
-  logger: ^1.3.0
-  http: ^0.13.4
-  fl_chart: ^0.55.1
-  package_info_plus: ^3.0.1
+  logger: ^2.0.1
+  http: ^1.1.0
+  fl_chart: ^0.63.0
+  package_info_plus: ^4.0.2
+  multi_split_view: ^2.4.0
+  file: ^6.1.4
+  collection: ^1.17.1
+  nt4: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -55,6 +58,8 @@ dev_dependencies:
   full_coverage: ^1.0.0
   msix: ^3.7.0
   flutter_lints: ^2.0.0
+  mockito: ^5.4.2
+  build_runner: ^2.4.6
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -71,7 +76,9 @@ flutter:
   assets:
     - images/field22.png
     - images/field23.png
+    - images/field23small.png
     - images/icon.png
+    - resources/default_navgrid.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

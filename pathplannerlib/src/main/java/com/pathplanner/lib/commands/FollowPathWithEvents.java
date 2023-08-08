@@ -1,60 +1,46 @@
 package com.pathplanner.lib.commands;
 
-import com.pathplanner.lib.PathPlannerTrajectory;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
+import com.pathplanner.lib.path.EventMarker;
+import com.pathplanner.lib.path.PathPlannerPath;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-public class FollowPathWithEvents extends CommandBase {
+public class FollowPathWithEvents extends Command {
   private final Command pathFollowingCommand;
-  private final List<PathPlannerTrajectory.EventMarker> pathMarkers;
-  private final Map<String, Command> eventMap;
+  private final PathPlannerPath path;
+  private final Supplier<Pose2d> poseSupplier;
 
   private final Map<Command, Boolean> currentCommands = new HashMap<>();
-  private final List<PathPlannerTrajectory.EventMarker> unpassedMarkers = new ArrayList<>();
-  private final Timer timer = new Timer();
-  private boolean isFinished = true;
+  private final List<EventMarker> untriggeredMarkers = new ArrayList<>();
+  private boolean isFinished = false;
 
   /**
-   * Create a FollowPathWithEvents command that will run a given path following command and run
-   * commands associated with triggered event markers along the way.
+   * Constructs a new FollowPathWithEvents command.
    *
-   * @param pathFollowingCommand The command that will run the path following. This acts like the
-   *     deadline command in ParallelDeadlineGroup
-   * @param pathMarkers The list of markers for the path that the path following command is
-   *     following
-   * @param eventMap Map of event marker names to the commands that should run when reaching that
-   *     marker. This SHOULD NOT contain any commands requiring the same subsystems as the path
-   *     following command.
+   * @param pathFollowingCommand the command to follow the path
+   * @param path the path to follow
+   * @param poseSupplier a supplier for the robot's current pose
+   * @throws IllegalArgumentException if an event command requires the drive subsystem
    */
   public FollowPathWithEvents(
-      Command pathFollowingCommand,
-      List<PathPlannerTrajectory.EventMarker> pathMarkers,
-      Map<String, Command> eventMap) {
+      Command pathFollowingCommand, PathPlannerPath path, Supplier<Pose2d> poseSupplier) {
     this.pathFollowingCommand = pathFollowingCommand;
-    this.pathMarkers = pathMarkers;
-    this.eventMap = eventMap;
+    this.path = path;
+    this.poseSupplier = poseSupplier;
 
     m_requirements.addAll(pathFollowingCommand.getRequirements());
-    for (PathPlannerTrajectory.EventMarker marker : pathMarkers) {
-      for (String name : marker.names) {
-        if (eventMap.containsKey(name)) {
-          var reqs = eventMap.get(name).getRequirements();
+    for (EventMarker marker : this.path.getEventMarkers()) {
+      var reqs = marker.getCommand().getRequirements();
 
-          if (!Collections.disjoint(pathFollowingCommand.getRequirements(), reqs)) {
-            throw new IllegalArgumentException(
-                "Events that are triggered during path following cannot require the drive subsystem");
-          }
-
-          m_requirements.addAll(reqs);
-        }
+      if (!Collections.disjoint(this.pathFollowingCommand.getRequirements(), reqs)) {
+        throw new IllegalArgumentException(
+            "Events that are triggered during path following cannot require the drive subsystem");
       }
+
+      m_requirements.addAll(reqs);
     }
   }
 
@@ -64,11 +50,13 @@ public class FollowPathWithEvents extends CommandBase {
 
     currentCommands.clear();
 
-    unpassedMarkers.clear();
-    unpassedMarkers.addAll(pathMarkers);
+    Pose2d currentPose = poseSupplier.get();
+    for (EventMarker marker : path.getEventMarkers()) {
+      marker.reset(currentPose);
+    }
 
-    timer.reset();
-    timer.start();
+    untriggeredMarkers.clear();
+    untriggeredMarkers.addAll(path.getEventMarkers());
 
     pathFollowingCommand.initialize();
     currentCommands.put(pathFollowingCommand, true);
@@ -92,35 +80,33 @@ public class FollowPathWithEvents extends CommandBase {
       }
     }
 
-    double currentTime = timer.get();
-    if (unpassedMarkers.size() > 0 && currentTime >= unpassedMarkers.get(0).timeSeconds) {
-      PathPlannerTrajectory.EventMarker marker = unpassedMarkers.remove(0);
+    Pose2d currentPose = poseSupplier.get();
+    List<EventMarker> toTrigger =
+        untriggeredMarkers.stream()
+            .filter(marker -> marker.shouldTrigger(currentPose))
+            .collect(Collectors.toList());
+    untriggeredMarkers.removeAll(toTrigger);
+    for (EventMarker marker : toTrigger) {
+      for (var runningCommand : currentCommands.entrySet()) {
+        if (!runningCommand.getValue()) {
+          continue;
+        }
 
-      for (String name : marker.names) {
-        if (eventMap.containsKey(name)) {
-          Command eventCommand = eventMap.get(name);
-
-          for (Map.Entry<Command, Boolean> runningCommand : currentCommands.entrySet()) {
-            if (!runningCommand.getValue()) {
-              continue;
-            }
-
-            if (!Collections.disjoint(
-                runningCommand.getKey().getRequirements(), eventCommand.getRequirements())) {
-              runningCommand.getKey().end(true);
-              runningCommand.setValue(false);
-            }
-          }
-
-          eventCommand.initialize();
-          currentCommands.put(eventCommand, true);
-        } else {
-          DriverStation.reportWarning(
-              "PathPlanner attempted to schedule an event missing from the event map: " + name,
-              false);
+        if (!Collections.disjoint(
+            runningCommand.getKey().getRequirements(), marker.getCommand().getRequirements())) {
+          runningCommand.getKey().end(true);
+          runningCommand.setValue(false);
         }
       }
+
+      marker.getCommand().initialize();
+      currentCommands.put(marker.getCommand(), true);
     }
+  }
+
+  @Override
+  public boolean isFinished() {
+    return isFinished;
   }
 
   @Override
@@ -130,10 +116,5 @@ public class FollowPathWithEvents extends CommandBase {
         runningCommand.getKey().end(true);
       }
     }
-  }
-
-  @Override
-  public boolean isFinished() {
-    return isFinished;
   }
 }

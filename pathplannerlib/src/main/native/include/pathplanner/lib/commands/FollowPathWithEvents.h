@@ -1,38 +1,43 @@
 #pragma once
 
-#include <frc2/command/CommandBase.h>
+#include <frc2/command/Command.h>
 #include <frc2/command/CommandHelper.h>
-#include <frc/Timer.h>
 #include <memory>
 #include <vector>
-#include <deque>
-#include <unordered_map>
-#include "pathplanner/lib/PathPlannerTrajectory.h"
+#include <functional>
+#include <frc/geometry/Pose2d.h>
+#include "pathplanner/lib/path/PathPlannerPath.h"
 
 namespace pathplanner {
-class FollowPathWithEvents: public frc2::CommandHelper<frc2::CommandBase,
+class FollowPathWithEvents: public frc2::CommandHelper<frc2::Command,
 		FollowPathWithEvents> {
 public:
+	/**
+	 * Constructs a new FollowPathWithEvents command.
+	 *
+	 * @param pathFollowingCommand the command to follow the path
+	 * @param path the path to follow
+	 * @param poseSupplier a supplier for the robot's current pose
+	 */
 	FollowPathWithEvents(std::unique_ptr<frc2::Command> &&pathFollowingCommand,
-			std::vector<PathPlannerTrajectory::EventMarker> pathMarkers,
-			std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap);
+			std::shared_ptr<PathPlannerPath> path,
+			std::function<frc::Pose2d()> poseSupplier);
 
 	void Initialize() override;
 
 	void Execute() override;
 
-	void End(bool interrupted) override;
-
 	bool IsFinished() override;
+
+	void End(bool interrupted) override;
 
 private:
 	std::unique_ptr<frc2::Command> m_pathFollowingCommand;
-	std::vector<PathPlannerTrajectory::EventMarker> m_pathMarkers;
-	std::unordered_map<std::string, std::shared_ptr<frc2::Command>> m_eventMap;
+	std::shared_ptr<PathPlannerPath> m_path;
+	std::function<frc::Pose2d()> m_poseSupplier;
 
 	std::vector<std::pair<std::shared_ptr<frc2::Command>, bool>> m_currentCommands;
-	std::deque<PathPlannerTrajectory::EventMarker> m_unpassedMarkers;
-	frc::Timer m_timer;
-	bool m_isFinished { true };
+	std::vector<std::pair<EventMarker, bool>> m_markers;
+	bool m_isFinished;
 };
 }

@@ -9,6 +9,7 @@
 .history
 .svn/
 coverage/
+*.mocks.dart
 
 # Old version stuff
 /dist/

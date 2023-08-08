@@ -12,8 +12,11 @@ enum OfficialField {
 
 class FieldImage {
   late final Image image;
+  Image? imageSmall;
   late final ui.Size defaultSize;
+  ui.Size? defaultSizeSmall;
   late num pixelsPerMeter;
+  num? pixelsPerMeterSmall;
   late String name;
   late final bool isCustom;
   late final String extension;
@@ -47,8 +50,14 @@ class FieldImage {
           'images/field23.png',
           fit: BoxFit.contain,
         );
+        imageSmall = Image.asset(
+          'images/field23small.png',
+          fit: BoxFit.contain,
+        );
         defaultSize = const ui.Size(3256, 1578);
+        defaultSizeSmall = const ui.Size(407, 197);
         pixelsPerMeter = 196.85;
+        pixelsPerMeterSmall = 24.6;
         name = 'Charged Up';
         break;
     }
@@ -81,6 +90,10 @@ class FieldImage {
     isCustom = true;
   }
 
+  ui.Size getFieldSizeMeters() {
+    return defaultSize / pixelsPerMeter.toDouble();
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) {
@@ -96,11 +109,11 @@ class FieldImage {
   int get hashCode => Object.hash(image.hashCode, defaultSize.hashCode,
       pixelsPerMeter.hashCode, name.hashCode);
 
-  Widget getWidget() {
+  Widget getWidget({bool small = false}) {
     return AspectRatio(
       aspectRatio: defaultSize.width / defaultSize.height,
       child: SizedBox.expand(
-        child: image,
+        child: (small && imageSmall != null) ? imageSmall : image,
       ),
     );
   }

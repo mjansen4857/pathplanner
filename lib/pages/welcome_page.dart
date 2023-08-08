@@ -8,10 +8,8 @@ import 'package:pathplanner/widgets/field_image.dart';
 
 class WelcomePage extends StatefulWidget {
   final String appVersion;
-  final FieldImage backgroundImage;
 
-  const WelcomePage(
-      {required this.backgroundImage, required this.appVersion, super.key});
+  const WelcomePage({required this.appVersion, super.key});
 
   @override
   State<WelcomePage> createState() => _WelcomePageState();
@@ -47,7 +45,10 @@ class _WelcomePageState extends State<WelcomePage>
 
     return Scaffold(
       appBar: CustomAppBar(
-        titleText: 'PathPlanner',
+        titleWidget: const Text(
+          'PathPlanner',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+        ),
         automaticallyImplyLeading: false,
       ),
       body: Stack(
@@ -55,7 +56,7 @@ class _WelcomePageState extends State<WelcomePage>
           Center(
             child: Padding(
               padding: const EdgeInsets.all(48),
-              child: widget.backgroundImage.getWidget(),
+              child: FieldImage.defaultField.getWidget(),
             ),
           ),
           Center(

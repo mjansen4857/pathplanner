@@ -61,15 +61,10 @@ public:
 	static void registerHotReloadPath(std::string pathName,
 			std::shared_ptr<PathPlannerPath> path);
 
-	static void registerHotReloadAuto(std::string autoName,
-			std::shared_ptr<PathPlannerAuto> ppAuto);
-
 private:
 	static void ensureHotReloadListenersInitialized();
 
 	static void handlePathHotReloadEvent(const nt::Event &event);
-
-	static void handleAutoHotReloadEvent(const nt::Event &event);
 
 	static bool m_compMode;
 
@@ -81,10 +76,7 @@ private:
 
 	static std::unordered_map<std::string,
 			std::vector<std::shared_ptr<PathPlannerPath>>> m_hotReloadPaths;
-	static std::unordered_map<std::string,
-			std::vector<std::shared_ptr<PathPlannerAuto>>> m_hotReloadAutos;
 
 	static std::optional<NT_Listener> m_hotReloadPathListener;
-	static std::optional<NT_Listener> m_hotReloadAutoListener;
 };
 }

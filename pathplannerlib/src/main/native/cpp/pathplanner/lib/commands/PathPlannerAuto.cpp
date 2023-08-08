@@ -12,13 +12,6 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 
 	m_autoCommand = AutoBuilder::buildAuto(autoName).Unwrap();
 	m_requirements = m_autoCommand->GetRequirements();
-	PPLibTelemetry::registerHotReloadAuto(autoName,
-			std::shared_ptr < PathPlannerAuto > (this));
-}
-
-void PathPlannerAuto::hotReload(const wpi::json &json) {
-	m_autoCommand = AutoBuilder::getAutoCommandFromJson(json).Unwrap();
-	m_requirements = m_autoCommand->GetRequirements();
 }
 
 void PathPlannerAuto::Initialize() {

@@ -18,13 +18,6 @@ public:
 	 */
 	PathPlannerAuto(std::string autoName);
 
-	/**
-	 * Reloads the autonomous routine with the given JSON and updates the requirements of this command.
-	 *
-	 * @param autoJson the JSON representing the updated autonomous routine
-	 */
-	void hotReload(const wpi::json &json);
-
 	void Initialize() override;
 
 	void Execute() override;

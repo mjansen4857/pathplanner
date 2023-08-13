@@ -88,9 +88,9 @@ public:
 	 */
 	static frc2::CommandPtr getAutoCommandFromJson(const wpi::json &json);
 
-private:
 	static frc::Pose2d getStartingPoseFromJson(const wpi::json &json);
 
+private:
 	static bool m_configured;
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
 	static std::function<frc::Pose2d()> m_getPose;

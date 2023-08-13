@@ -140,7 +140,7 @@ public class AutoBuilder {
     return new FollowPathWithEvents(pathFollowingCommandBuilder.apply(path), path, getPose);
   }
 
-  private static Pose2d getStartingPoseFromJson(JSONObject startingPoseJson) {
+  public static Pose2d getStartingPoseFromJson(JSONObject startingPoseJson) {
     JSONObject pos = (JSONObject) startingPoseJson.get("position");
     double x = ((Number) pos.get("x")).doubleValue();
     double y = ((Number) pos.get("y")).doubleValue();

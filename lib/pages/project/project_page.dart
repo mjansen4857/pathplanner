@@ -232,54 +232,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   childAspectRatio: _pathsCompact ? 2.5 : 1.55,
                   children: [
                     for (int i = 0; i < _paths.length; i++)
-                      ProjectItemCard(
-                        name: _paths[i].name,
-                        compact: _pathsCompact,
-                        fieldImage: widget.fieldImage,
-                        paths: [_paths[i]],
-                        onDuplicated: () {
-                          List<String> pathNames = [];
-                          for (PathPlannerPath path in _paths) {
-                            pathNames.add(path.name);
-                          }
-                          String pathName = 'Copy of ${_paths[i].name}';
-                          while (pathNames.contains(pathName)) {
-                            pathName = 'Copy of $pathName';
-                          }
-
-                          setState(() {
-                            _paths.add(_paths[i].duplicate(pathName));
-                          });
-                        },
-                        onDeleted: () {
-                          _paths[i].deletePath();
-                          setState(() {
-                            _paths.removeAt(i);
-                          });
-                        },
-                        onRenamed: (value) => _renamePath(i, value, context),
-                        onOpened: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PathEditorPage(
-                                prefs: widget.prefs,
-                                path: _paths[i],
-                                fieldImage: widget.fieldImage,
-                                undoStack: widget.undoStack,
-                                onRenamed: (value) =>
-                                    _renamePath(i, value, context),
-                                shortcuts: widget.shortcuts,
-                                telemetry: widget.telemetry,
-                                hotReload: widget.hotReload,
-                              ),
-                            ),
-                          );
-
-                          // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
-                          setState(() {});
-                        },
-                      ),
+                      _buildPathCard(i, context),
                   ],
                 ),
               ),
@@ -288,6 +241,69 @@ class _ProjectPageState extends State<ProjectPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildPathCard(int i, BuildContext context) {
+    final pathCard = ProjectItemCard(
+      name: _paths[i].name,
+      compact: _pathsCompact,
+      fieldImage: widget.fieldImage,
+      paths: [_paths[i]],
+      onDuplicated: () {
+        List<String> pathNames = [];
+        for (PathPlannerPath path in _paths) {
+          pathNames.add(path.name);
+        }
+        String pathName = 'Copy of ${_paths[i].name}';
+        while (pathNames.contains(pathName)) {
+          pathName = 'Copy of $pathName';
+        }
+
+        setState(() {
+          _paths.add(_paths[i].duplicate(pathName));
+        });
+      },
+      onDeleted: () {
+        _paths[i].deletePath();
+        setState(() {
+          _paths.removeAt(i);
+        });
+      },
+      onRenamed: (value) => _renamePath(i, value, context),
+      onOpened: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PathEditorPage(
+              prefs: widget.prefs,
+              path: _paths[i],
+              fieldImage: widget.fieldImage,
+              undoStack: widget.undoStack,
+              onRenamed: (value) => _renamePath(i, value, context),
+              shortcuts: widget.shortcuts,
+              telemetry: widget.telemetry,
+              hotReload: widget.hotReload,
+            ),
+          ),
+        );
+
+        // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
+        setState(() {});
+      },
+    );
+
+    return LayoutBuilder(builder: (context, constraints) {
+      return Draggable<PathPlannerPath>(
+        data: _paths[i],
+        feedback: SizedBox(
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          child: pathCard,
+        ),
+        childWhenDragging: Container(),
+        child: pathCard,
+      );
+    });
   }
 
   void _renamePath(int pathIdx, String newName, BuildContext context) {
@@ -404,57 +420,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   childAspectRatio: _autosCompact ? 2.5 : 1.55,
                   children: [
                     for (int i = 0; i < _autos.length; i++)
-                      ProjectItemCard(
-                        name: _autos[i].name,
-                        compact: _autosCompact,
-                        fieldImage: widget.fieldImage,
-                        paths: _getPathsFromNames(_autos[i].getAllPathNames()),
-                        onDuplicated: () {
-                          List<String> autoNames = [];
-                          for (PathPlannerAuto auto in _autos) {
-                            autoNames.add(auto.name);
-                          }
-                          String autoName = 'Copy of ${_autos[i].name}';
-                          while (autoNames.contains(autoName)) {
-                            autoName = 'Copy of $autoName';
-                          }
-
-                          setState(() {
-                            _autos.add(_autos[i].duplicate(autoName));
-                          });
-                        },
-                        onDeleted: () {
-                          _autos[i].delete();
-                          setState(() {
-                            _autos.removeAt(i);
-                          });
-                        },
-                        onRenamed: (value) => _renameAuto(i, value, context),
-                        onOpened: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AutoEditorPage(
-                                prefs: widget.prefs,
-                                auto: _autos[i],
-                                allPaths: _paths,
-                                undoStack: widget.undoStack,
-                                allPathNames:
-                                    _paths.map((e) => e.name).toList(),
-                                fieldImage: widget.fieldImage,
-                                onRenamed: (value) =>
-                                    _renameAuto(i, value, context),
-                                shortcuts: widget.shortcuts,
-                                telemetry: widget.telemetry,
-                                hotReload: widget.hotReload,
-                              ),
-                            ),
-                          );
-
-                          // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
-                          setState(() {});
-                        },
-                      ),
+                      _buildAutoCard(i, context),
                   ],
                 ),
               ),
@@ -463,6 +429,71 @@ class _ProjectPageState extends State<ProjectPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildAutoCard(int i, BuildContext context) {
+    final autoCard = ProjectItemCard(
+      name: _autos[i].name,
+      compact: _autosCompact,
+      fieldImage: widget.fieldImage,
+      paths: _getPathsFromNames(_autos[i].getAllPathNames()),
+      onDuplicated: () {
+        List<String> autoNames = [];
+        for (PathPlannerAuto auto in _autos) {
+          autoNames.add(auto.name);
+        }
+        String autoName = 'Copy of ${_autos[i].name}';
+        while (autoNames.contains(autoName)) {
+          autoName = 'Copy of $autoName';
+        }
+
+        setState(() {
+          _autos.add(_autos[i].duplicate(autoName));
+        });
+      },
+      onDeleted: () {
+        _autos[i].delete();
+        setState(() {
+          _autos.removeAt(i);
+        });
+      },
+      onRenamed: (value) => _renameAuto(i, value, context),
+      onOpened: () async {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AutoEditorPage(
+              prefs: widget.prefs,
+              auto: _autos[i],
+              allPaths: _paths,
+              undoStack: widget.undoStack,
+              allPathNames: _paths.map((e) => e.name).toList(),
+              fieldImage: widget.fieldImage,
+              onRenamed: (value) => _renameAuto(i, value, context),
+              shortcuts: widget.shortcuts,
+              telemetry: widget.telemetry,
+              hotReload: widget.hotReload,
+            ),
+          ),
+        );
+
+        // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
+        setState(() {});
+      },
+    );
+
+    return LayoutBuilder(builder: (context, constraints) {
+      return Draggable<PathPlannerAuto>(
+        data: _autos[i],
+        feedback: SizedBox(
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          child: autoCard,
+        ),
+        childWhenDragging: Container(),
+        child: autoCard,
+      );
+    });
   }
 
   Widget _buildOptionsRow({

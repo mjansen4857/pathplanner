@@ -10,6 +10,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
@@ -42,7 +43,9 @@ class ProjectPage extends StatefulWidget {
 class _ProjectPageState extends State<ProjectPage> {
   final MultiSplitViewController _controller = MultiSplitViewController();
   List<PathPlannerPath> _paths = [];
+  List<String> _pathFolders = [];
   List<PathPlannerAuto> _autos = [];
+  List<String> _autoFolders = [];
   late Directory _pathsDirectory;
   late Directory _autosDirectory;
   late String _pathSortValue;
@@ -84,6 +87,11 @@ class _ProjectPageState extends State<ProjectPage> {
 
     _pathGridCount = _getCrossAxisCountForWeight(leftWeight);
     _autosGridCount = _getCrossAxisCountForWeight(1.0 - leftWeight);
+
+    _pathFolders = widget.prefs.getStringList(PrefsKeys.pathFolders) ??
+        Defaults.pathFolders;
+    _autoFolders = widget.prefs.getStringList(PrefsKeys.autoFolders) ??
+        Defaults.autoFolders;
 
     _load();
   }
@@ -182,9 +190,29 @@ class _ProjectPageState extends State<ProjectPage> {
                   ),
                   Expanded(child: Container()),
                   Tooltip(
-                    message: 'Add new path',
+                    message: 'Add new folder',
                     waitDuration: const Duration(seconds: 1),
                     child: IconButton.filledTonal(
+                      onPressed: () {
+                        String folderName = 'New Folder';
+                        while (_pathFolders.contains(folderName)) {
+                          folderName = 'New $folderName';
+                        }
+
+                        setState(() {
+                          _pathFolders.add(folderName);
+                        });
+                        widget.prefs
+                            .setStringList(PrefsKeys.pathFolders, _pathFolders);
+                      },
+                      icon: const Icon(Icons.create_new_folder_outlined),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: 'Add new path',
+                    waitDuration: const Duration(seconds: 1),
+                    child: IconButton.filled(
                       onPressed: () {
                         List<String> pathNames = [];
                         for (PathPlannerPath path in _paths) {
@@ -225,6 +253,100 @@ class _ProjectPageState extends State<ProjectPage> {
                   });
                 },
               ),
+              GridView.count(
+                crossAxisCount: _pathGridCount,
+                childAspectRatio: 5.5,
+                shrinkWrap: true,
+                children: [
+                  for (int i = 0; i < _pathFolders.length; i++)
+                    DragTarget<PathPlannerPath>(
+                      onAccept: (data) {
+                        // TODO move into folder
+                        print('${data.name} placed in ${_pathFolders[i]}');
+                      },
+                      builder: (context, candidates, rejects) {
+                        ColorScheme colorScheme = Theme.of(context).colorScheme;
+                        return Card(
+                          elevation: 2,
+                          color: candidates.isNotEmpty
+                              ? colorScheme.primary
+                              : null,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              // TODO: open folder
+                            },
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.folder_outlined,
+                                    color: candidates.isNotEmpty
+                                        ? colorScheme.onPrimary
+                                        : null,
+                                  ),
+                                  Expanded(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: RenamableTitle(
+                                        title: _pathFolders[i],
+                                        textStyle: TextStyle(
+                                          fontSize: 20,
+                                          color: candidates.isNotEmpty
+                                              ? colorScheme.onPrimary
+                                              : null,
+                                        ),
+                                        onRename: (newName) {
+                                          if (newName != _pathFolders[i]) {
+                                            if (_pathFolders
+                                                .contains(newName)) {
+                                              showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      title: const Text(
+                                                          'Unable to Rename'),
+                                                      content: Text(
+                                                          'The folder "$newName" already exists'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed:
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop,
+                                                          child:
+                                                              const Text('OK'),
+                                                        ),
+                                                      ],
+                                                    );
+                                                  });
+                                            } else {
+                                              setState(() {
+                                                _pathFolders[i] = newName;
+                                              });
+                                              widget.prefs.setStringList(
+                                                  PrefsKeys.pathFolders,
+                                                  _pathFolders);
+                                            }
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              ),
+              if (_pathFolders.isNotEmpty) const SizedBox(height: 8),
               Expanded(
                 child: GridView.count(
                   crossAxisCount:
@@ -298,7 +420,10 @@ class _ProjectPageState extends State<ProjectPage> {
         feedback: SizedBox(
           width: constraints.maxWidth,
           height: constraints.maxHeight,
-          child: pathCard,
+          child: Opacity(
+            opacity: 0.8,
+            child: pathCard,
+          ),
         ),
         childWhenDragging: Container(),
         child: pathCard,
@@ -370,9 +495,29 @@ class _ProjectPageState extends State<ProjectPage> {
                   ),
                   Expanded(child: Container()),
                   Tooltip(
-                    message: 'Add new auto',
+                    message: 'Add new folder',
                     waitDuration: const Duration(seconds: 1),
                     child: IconButton.filledTonal(
+                      onPressed: () {
+                        String folderName = 'New Folder';
+                        while (_autoFolders.contains(folderName)) {
+                          folderName = 'New $folderName';
+                        }
+
+                        setState(() {
+                          _autoFolders.add(folderName);
+                        });
+                        widget.prefs
+                            .setStringList(PrefsKeys.autoFolders, _autoFolders);
+                      },
+                      icon: const Icon(Icons.create_new_folder_outlined),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: 'Add new auto',
+                    waitDuration: const Duration(seconds: 1),
+                    child: IconButton.filled(
                       onPressed: () {
                         List<String> autoNames = [];
                         for (PathPlannerAuto auto in _autos) {
@@ -413,6 +558,71 @@ class _ProjectPageState extends State<ProjectPage> {
                   });
                 },
               ),
+              GridView.count(
+                crossAxisCount: _autosGridCount,
+                childAspectRatio: 5.5,
+                shrinkWrap: true,
+                children: [
+                  for (int i = 0; i < _autoFolders.length; i++)
+                    Card(
+                      elevation: 2,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {},
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.folder_outlined),
+                              Expanded(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: RenamableTitle(
+                                    title: _autoFolders[i],
+                                    textStyle: const TextStyle(fontSize: 20),
+                                    onRename: (newName) {
+                                      if (newName != _autoFolders[i]) {
+                                        if (_autoFolders.contains(newName)) {
+                                          showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title: const Text(
+                                                      'Unable to Rename'),
+                                                  content: Text(
+                                                      'The folder "$newName" already exists'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed:
+                                                          Navigator.of(context)
+                                                              .pop,
+                                                      child: const Text('OK'),
+                                                    ),
+                                                  ],
+                                                );
+                                              });
+                                        } else {
+                                          setState(() {
+                                            _autoFolders[i] = newName;
+                                          });
+                                          widget.prefs.setStringList(
+                                              PrefsKeys.autoFolders,
+                                              _autoFolders);
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (_autoFolders.isNotEmpty) const SizedBox(height: 8),
               Expanded(
                 child: GridView.count(
                   crossAxisCount:
@@ -488,7 +698,10 @@ class _ProjectPageState extends State<ProjectPage> {
         feedback: SizedBox(
           width: constraints.maxWidth,
           height: constraints.maxHeight,
-          child: autoCard,
+          child: Opacity(
+            opacity: 0.8,
+            child: autoCard,
+          ),
         ),
         childWhenDragging: Container(),
         child: autoCard,
@@ -634,9 +847,11 @@ class _ProjectPageState extends State<ProjectPage> {
     switch (sortOption) {
       case 'nameDesc':
         _paths.sort((a, b) => b.name.compareTo(a.name));
+        _pathFolders.sort((a, b) => b.compareTo(a));
       case 'nameAsc':
       default:
         _paths.sort((a, b) => a.name.compareTo(b.name));
+        _pathFolders.sort((a, b) => a.compareTo(b));
     }
   }
 
@@ -644,9 +859,11 @@ class _ProjectPageState extends State<ProjectPage> {
     switch (sortOption) {
       case 'nameDesc':
         _autos.sort((a, b) => b.name.compareTo(a.name));
+        _autoFolders.sort((a, b) => b.compareTo(a));
       case 'nameAsc':
       default:
         _autos.sort((a, b) => a.name.compareTo(b.name));
+        _autoFolders.sort((a, b) => a.compareTo(b));
     }
   }
 

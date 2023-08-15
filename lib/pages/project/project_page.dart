@@ -59,6 +59,7 @@ class _ProjectPageState extends State<ProjectPage> {
   bool _loading = true;
 
   String? _pathFolder;
+  String? _autoFolder;
 
   FileSystem get fs => widget.fs;
 
@@ -626,31 +627,85 @@ class _ProjectPageState extends State<ProjectPage> {
             children: [
               Row(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 4.0),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4.0),
                     child: Text(
-                      'Autos',
-                      style: TextStyle(fontSize: 32),
+                      _autoFolder ?? 'Autos',
+                      style: const TextStyle(fontSize: 32),
                     ),
                   ),
                   Expanded(child: Container()),
-                  Tooltip(
-                    message: 'Add new folder',
-                    waitDuration: const Duration(seconds: 1),
-                    child: IconButton.filledTonal(
-                      onPressed: () {
-                        String folderName = 'New Folder';
-                        while (_autoFolders.contains(folderName)) {
-                          folderName = 'New $folderName';
-                        }
+                  ConditionalWidget(
+                    condition: _autoFolder == null,
+                    falseChild: Tooltip(
+                      message: 'Delete folder',
+                      waitDuration: const Duration(seconds: 1),
+                      child: IconButton.filledTonal(
+                        onPressed: () {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text('Delete Folder'),
+                                  content: SizedBox(
+                                    width: 400,
+                                    child: Text(
+                                        'Are you sure you want to delete the folder "$_autoFolder"?\n\nThis will also delete all autos within the folder. This cannot be undone.'),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: Navigator.of(context).pop,
+                                      child: const Text('CANCEL'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
 
-                        setState(() {
-                          _autoFolders.add(folderName);
-                        });
-                        widget.prefs
-                            .setStringList(PrefsKeys.autoFolders, _autoFolders);
-                      },
-                      icon: const Icon(Icons.create_new_folder_outlined),
+                                        for (int a = 0;
+                                            a < _autos.length;
+                                            a++) {
+                                          if (_autos[a].folder == _autoFolder) {
+                                            _autos[a].delete();
+                                          }
+                                        }
+
+                                        setState(() {
+                                          _autos.removeWhere((auto) =>
+                                              auto.folder == _autoFolder);
+                                          _autoFolders.remove(_autoFolder);
+                                          _autoFolder = null;
+                                        });
+                                        widget.prefs.setStringList(
+                                            PrefsKeys.autoFolders,
+                                            _autoFolders);
+                                      },
+                                      child: const Text('DELETE'),
+                                    ),
+                                  ],
+                                );
+                              });
+                        },
+                        icon: const Icon(Icons.delete_forever),
+                      ),
+                    ),
+                    trueChild: Tooltip(
+                      message: 'Add new folder',
+                      waitDuration: const Duration(seconds: 1),
+                      child: IconButton.filledTonal(
+                        onPressed: () {
+                          String folderName = 'New Folder';
+                          while (_autoFolders.contains(folderName)) {
+                            folderName = 'New $folderName';
+                          }
+
+                          setState(() {
+                            _autoFolders.add(folderName);
+                          });
+                          widget.prefs.setStringList(
+                              PrefsKeys.autoFolders, _autoFolders);
+                        },
+                        icon: const Icon(Icons.create_new_folder_outlined),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -673,6 +728,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             autoDir: _autosDirectory.path,
                             name: autoName,
                             fs: fs,
+                            folder: _autoFolder,
                           ));
                         });
                       },
@@ -698,69 +754,168 @@ class _ProjectPageState extends State<ProjectPage> {
                   });
                 },
               ),
-              GridView.count(
-                crossAxisCount: _autosGridCount,
-                childAspectRatio: 5.5,
-                shrinkWrap: true,
-                children: [
-                  for (int i = 0; i < _autoFolders.length; i++)
-                    Card(
-                      elevation: 2,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () {},
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.folder_outlined),
-                              Expanded(
-                                child: FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  alignment: Alignment.centerLeft,
-                                  child: RenamableTitle(
-                                    title: _autoFolders[i],
-                                    textStyle: const TextStyle(fontSize: 20),
-                                    onRename: (newName) {
-                                      if (newName != _autoFolders[i]) {
-                                        if (_autoFolders.contains(newName)) {
-                                          showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  title: const Text(
-                                                      'Unable to Rename'),
-                                                  content: Text(
-                                                      'The folder "$newName" already exists'),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed:
-                                                          Navigator.of(context)
-                                                              .pop,
-                                                      child: const Text('OK'),
-                                                    ),
-                                                  ],
-                                                );
-                                              });
-                                        } else {
-                                          setState(() {
-                                            _autoFolders[i] = newName;
-                                          });
-                                          widget.prefs.setStringList(
-                                              PrefsKeys.autoFolders,
-                                              _autoFolders);
-                                        }
-                                      }
-                                    },
+              ConditionalWidget(
+                condition: _autoFolder == null,
+                falseChild: GridView.count(
+                  crossAxisCount: _autosGridCount,
+                  childAspectRatio: 5.5,
+                  shrinkWrap: true,
+                  children: [
+                    DragTarget<PathPlannerAuto>(
+                      onAccept: (data) {
+                        setState(() {
+                          data.folder = null;
+                          data.saveFile();
+                        });
+                      },
+                      builder: (context, candidates, rejects) {
+                        ColorScheme colorScheme = Theme.of(context).colorScheme;
+                        return Card(
+                          elevation: 2,
+                          color: candidates.isNotEmpty
+                              ? colorScheme.primary
+                              : null,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              setState(() {
+                                _autoFolder = null;
+                              });
+                            },
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8.0),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.drive_file_move_rtl_outlined,
+                                    color: candidates.isNotEmpty
+                                        ? colorScheme.onPrimary
+                                        : null,
                                   ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        'Root Folder',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          color: candidates.isNotEmpty
+                                              ? colorScheme.onPrimary
+                                              : null,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                trueChild: GridView.count(
+                  crossAxisCount: _autosGridCount,
+                  childAspectRatio: 5.5,
+                  shrinkWrap: true,
+                  children: [
+                    for (int i = 0; i < _autoFolders.length; i++)
+                      DragTarget<PathPlannerAuto>(
+                        onAccept: (data) {
+                          setState(() {
+                            data.folder = _autoFolders[i];
+                            data.saveFile();
+                          });
+                        },
+                        builder: (context, candidates, rejects) {
+                          ColorScheme colorScheme =
+                              Theme.of(context).colorScheme;
+                          return Card(
+                            elevation: 2,
+                            color: candidates.isNotEmpty
+                                ? colorScheme.primary
+                                : null,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                setState(() {
+                                  _autoFolder = _autoFolders[i];
+                                });
+                              },
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.folder_outlined,
+                                      color: candidates.isNotEmpty
+                                          ? colorScheme.onPrimary
+                                          : null,
+                                    ),
+                                    Expanded(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: RenamableTitle(
+                                          title: _autoFolders[i],
+                                          textStyle: TextStyle(
+                                            fontSize: 20,
+                                            color: candidates.isNotEmpty
+                                                ? colorScheme.onPrimary
+                                                : null,
+                                          ),
+                                          onRename: (newName) {
+                                            if (newName != _autoFolders[i]) {
+                                              if (_autoFolders
+                                                  .contains(newName)) {
+                                                showDialog(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return AlertDialog(
+                                                        title: const Text(
+                                                            'Unable to Rename'),
+                                                        content: Text(
+                                                            'The folder "$newName" already exists'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed:
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop,
+                                                            child: const Text(
+                                                                'OK'),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    });
+                                              } else {
+                                                setState(() {
+                                                  _autoFolders[i] = newName;
+                                                });
+                                                widget.prefs.setStringList(
+                                                    PrefsKeys.autoFolders,
+                                                    _autoFolders);
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
               if (_autoFolders.isNotEmpty) const SizedBox(height: 8),
               Expanded(
@@ -770,7 +925,8 @@ class _ProjectPageState extends State<ProjectPage> {
                   childAspectRatio: _autosCompact ? 2.5 : 1.55,
                   children: [
                     for (int i = 0; i < _autos.length; i++)
-                      _buildAutoCard(i, context),
+                      if (_autos[i].folder == _autoFolder)
+                        _buildAutoCard(i, context),
                   ],
                 ),
               ),

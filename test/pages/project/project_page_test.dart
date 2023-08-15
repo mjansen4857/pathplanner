@@ -28,6 +28,8 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({
       PrefsKeys.projectLeftWeight: 0.5,
+      PrefsKeys.pathFolders: ['p'],
+      PrefsKeys.autoFolders: ['a'],
     });
     prefs = await SharedPreferences.getInstance();
     fs = MemoryFileSystem();
@@ -102,6 +104,8 @@ void main() {
       ),
       autoDir: '/deploy/autos',
       fs: fs,
+      folder: null,
+      startingPose: null,
     );
 
     await fs
@@ -157,6 +161,8 @@ void main() {
       ),
       autoDir: '/deploy/autos',
       fs: fs,
+      folder: null,
+      startingPose: null,
     );
 
     await fs
@@ -320,6 +326,8 @@ void main() {
       ),
       autoDir: '/deploy/autos',
       fs: fs,
+      folder: null,
+      startingPose: null,
     );
 
     await fs
@@ -415,6 +423,8 @@ void main() {
       ),
       autoDir: '/deploy/autos',
       fs: fs,
+      folder: null,
+      startingPose: null,
     );
 
     await fs
@@ -479,6 +489,8 @@ void main() {
           PathCommand(pathName: 'path1'),
         ],
       ),
+      folder: null,
+      startingPose: null,
     );
 
     await fs
@@ -719,5 +731,30 @@ void main() {
     await widgetTester.pump(const Duration(seconds: 1));
 
     expect(prefs.getDouble(PrefsKeys.projectLeftWeight), closeTo(0.5, 0.01));
+  });
+
+  testWidgets('shows folders', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory('/deploy'),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    expect(
+        find.widgetWithText(DragTarget<PathPlannerPath>, 'p'), findsOneWidget);
+    expect(
+        find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'), findsOneWidget);
   });
 }

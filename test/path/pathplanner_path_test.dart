@@ -53,6 +53,7 @@ void main() {
         rotationTargets: List.generate(4, (index) => RotationTarget()),
         eventMarkers: List.generate(5, (index) => EventMarker.defaultMarker()),
         reversed: false,
+        folder: null,
       );
 
       expect(path.name, 'test');
@@ -88,6 +89,7 @@ void main() {
         rotationTargets: [RotationTarget()],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
+        folder: null,
       );
 
       Map<String, dynamic> json = path.toJson();
@@ -120,6 +122,7 @@ void main() {
         rotationTargets: [RotationTarget()],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
+        folder: null,
       );
       PathPlannerPath cloned = path.duplicate('test');
 
@@ -153,6 +156,7 @@ void main() {
         rotationTargets: [RotationTarget()],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
+        folder: null,
       );
       PathPlannerPath path2 = PathPlannerPath(
         name: 'test',
@@ -174,6 +178,7 @@ void main() {
         rotationTargets: [RotationTarget()],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
+        folder: null,
       );
       PathPlannerPath path3 = PathPlannerPath(
         name: 'test2',
@@ -195,6 +200,7 @@ void main() {
         rotationTargets: [],
         eventMarkers: [],
         reversed: false,
+        folder: null,
       );
 
       expect(path2, path1);
@@ -228,6 +234,7 @@ void main() {
       rotationTargets: [RotationTarget()],
       eventMarkers: [EventMarker.defaultMarker()],
       reversed: false,
+      folder: null,
     );
 
     path.addWaypoint(const Point(6.0, 1.0));
@@ -275,6 +282,7 @@ void main() {
         ),
       ],
       reversed: false,
+      folder: null,
     );
 
     path.insertWaypointAfter(1);

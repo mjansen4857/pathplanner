@@ -24,6 +24,7 @@ void main() {
         startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        folder: null,
       );
       PathPlannerAuto auto2 = PathPlannerAuto(
         name: 'test',
@@ -32,12 +33,15 @@ void main() {
         startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        folder: null,
       );
       PathPlannerAuto auto3 = PathPlannerAuto(
         name: 'test2',
         autoDir: '/autos',
         fs: fs,
         sequence: SequentialCommandGroup(commands: []),
+        startingPose: null,
+        folder: null,
       );
 
       expect(auto2, auto1);
@@ -56,6 +60,7 @@ void main() {
         startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        folder: null,
       );
 
       Map<String, dynamic> json = auto.toJson();
@@ -74,6 +79,8 @@ void main() {
         fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        folder: null,
+        startingPose: null,
       );
       PathPlannerAuto cloned = auto.duplicate(auto.name);
 
@@ -92,6 +99,8 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
+        folder: null,
+        startingPose: null,
         sequence: SequentialCommandGroup(
           commands: [
             PathCommand(pathName: 'path1'),
@@ -118,6 +127,8 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
+        folder: null,
+        startingPose: null,
         sequence: SequentialCommandGroup(
           commands: [
             PathCommand(pathName: 'path1'),

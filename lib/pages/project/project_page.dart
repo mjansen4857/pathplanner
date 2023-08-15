@@ -209,7 +209,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   ConditionalWidget(
                     condition: _pathFolder == null,
                     falseChild: Tooltip(
-                      message: 'Delete folder',
+                      message: 'Delete path folder',
                       waitDuration: const Duration(seconds: 1),
                       child: IconButton.filledTonal(
                         onPressed: () {
@@ -261,7 +261,7 @@ class _ProjectPageState extends State<ProjectPage> {
                       ),
                     ),
                     trueChild: Tooltip(
-                      message: 'Add new folder',
+                      message: 'Add new path folder',
                       waitDuration: const Duration(seconds: 1),
                       child: IconButton.filledTonal(
                         onPressed: () {
@@ -468,15 +468,15 @@ class _ProjectPageState extends State<ProjectPage> {
                                                       );
                                                     });
                                               } else {
-                                                for (PathPlannerPath path
-                                                    in _paths) {
-                                                  if (path.folder ==
-                                                      _pathFolders[i]) {
-                                                    path.folder = newName;
-                                                    path.generateAndSavePath();
-                                                  }
-                                                }
                                                 setState(() {
+                                                  for (PathPlannerPath path
+                                                      in _paths) {
+                                                    if (path.folder ==
+                                                        _pathFolders[i]) {
+                                                      path.folder = newName;
+                                                      path.generateAndSavePath();
+                                                    }
+                                                  }
                                                   _pathFolders[i] = newName;
                                                 });
                                                 widget.prefs.setStringList(
@@ -651,7 +651,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   ConditionalWidget(
                     condition: _autoFolder == null,
                     falseChild: Tooltip(
-                      message: 'Delete folder',
+                      message: 'Delete auto folder',
                       waitDuration: const Duration(seconds: 1),
                       child: IconButton.filledTonal(
                         onPressed: () {
@@ -703,7 +703,7 @@ class _ProjectPageState extends State<ProjectPage> {
                       ),
                     ),
                     trueChild: Tooltip(
-                      message: 'Add new folder',
+                      message: 'Add new auto folder',
                       waitDuration: const Duration(seconds: 1),
                       child: IconButton.filledTonal(
                         onPressed: () {
@@ -910,15 +910,15 @@ class _ProjectPageState extends State<ProjectPage> {
                                                       );
                                                     });
                                               } else {
-                                                for (PathPlannerAuto auto
-                                                    in _autos) {
-                                                  if (auto.folder ==
-                                                      _autoFolders[i]) {
-                                                    auto.folder = newName;
-                                                    auto.saveFile();
-                                                  }
-                                                }
                                                 setState(() {
+                                                  for (PathPlannerAuto auto
+                                                      in _autos) {
+                                                    if (auto.folder ==
+                                                        _autoFolders[i]) {
+                                                      auto.folder = newName;
+                                                      auto.saveFile();
+                                                    }
+                                                  }
                                                   _autoFolders[i] = newName;
                                                 });
                                                 widget.prefs.setStringList(

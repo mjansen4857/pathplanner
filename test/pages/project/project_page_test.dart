@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -24,13 +26,19 @@ void main() {
 
   late SharedPreferences prefs;
   late MemoryFileSystem fs;
+  final String deployPath = Platform.isWindows ? 'C:\\deploy' : '/deploy';
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({
       PrefsKeys.projectLeftWeight: 0.5,
+      PrefsKeys.pathFolders: ['p'],
+      PrefsKeys.autoFolders: ['a'],
     });
     prefs = await SharedPreferences.getInstance();
-    fs = MemoryFileSystem();
+    fs = MemoryFileSystem(
+        style: Platform.isWindows
+            ? FileSystemStyle.windows
+            : FileSystemStyle.posix);
   });
 
   testWidgets('initially loading', (widgetTester) async {
@@ -41,7 +49,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -61,7 +69,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -79,16 +87,16 @@ void main() {
   testWidgets('loads populated project', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/paths').create(recursive: true);
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerPath path1 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path1',
     );
     PathPlannerPath path2 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path2',
     );
@@ -100,18 +108,20 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
+      folder: null,
+      startingPose: null,
     );
 
     await fs
-        .file('/deploy/paths/path1.path')
+        .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
     await fs
-        .file('/deploy/paths/path2.path')
+        .file(join(deployPath, 'paths', 'path2.path'))
         .writeAsString(jsonEncode(path2.toJson()));
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -119,7 +129,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -139,11 +149,11 @@ void main() {
       (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/paths').create(recursive: true);
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerPath path1 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path1',
     );
@@ -155,21 +165,23 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
+      folder: null,
+      startingPose: null,
     );
 
     await fs
-        .file('/deploy/paths/path1.path')
+        .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
     await fs
-        .file('/deploy/paths/path2.path')
+        .file(join(deployPath, 'paths', 'path2.path'))
         .writeAsString('{{invalid json..[]}.');
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
     await fs
-        .file('/deploy/autos/auto2.auto')
+        .file(join(deployPath, 'autos', 'auto2.auto'))
         .writeAsString('{{invalid json..[]}.');
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -177,7 +189,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -202,7 +214,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -237,7 +249,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -272,7 +284,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -309,7 +321,7 @@ void main() {
   testWidgets('duplicate auto', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
     PathPlannerAuto auto1 = PathPlannerAuto(
       name: 'auto1',
       sequence: SequentialCommandGroup(
@@ -318,12 +330,14 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
+      folder: null,
+      startingPose: null,
     );
 
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -331,7 +345,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -373,7 +387,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -404,7 +418,7 @@ void main() {
   testWidgets('delete auto', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
     PathPlannerAuto auto1 = PathPlannerAuto(
       name: 'auto1',
       sequence: SequentialCommandGroup(
@@ -413,12 +427,14 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
+      folder: null,
+      startingPose: null,
     );
 
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -426,7 +442,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -457,38 +473,40 @@ void main() {
   testWidgets('rename path', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/paths').create(recursive: true);
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerPath path1 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path1',
     );
     PathPlannerPath path2 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path2',
     );
     PathPlannerAuto auto1 = PathPlannerAuto(
       name: 'auto1',
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
         ],
       ),
+      folder: null,
+      startingPose: null,
     );
 
     await fs
-        .file('/deploy/paths/path1.path')
+        .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
     await fs
-        .file('/deploy/paths/path2.path')
+        .file(join(deployPath, 'paths', 'path2.path'))
         .writeAsString(jsonEncode(path2.toJson()));
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -496,7 +514,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -526,24 +544,24 @@ void main() {
   testWidgets('rename auto', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       name: 'auto1',
     );
     PathPlannerAuto auto2 = PathPlannerAuto.defaultAuto(
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       name: 'auto2',
     );
 
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
     await fs
-        .file('/deploy/autos/auto2.auto')
+        .file(join(deployPath, 'autos', 'auto2.auto'))
         .writeAsString(jsonEncode(auto2.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -551,7 +569,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -581,16 +599,16 @@ void main() {
   testWidgets('open path', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/paths').create(recursive: true);
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
 
     PathPlannerPath path1 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path1',
     );
 
     await fs
-        .file('/deploy/paths/path1.path')
+        .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -598,7 +616,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -630,16 +648,16 @@ void main() {
   testWidgets('open auto', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       name: 'auto1',
     );
 
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -647,7 +665,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -686,7 +704,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -719,5 +737,508 @@ void main() {
     await widgetTester.pump(const Duration(seconds: 1));
 
     expect(prefs.getDouble(PrefsKeys.projectLeftWeight), closeTo(0.5, 0.01));
+  });
+
+  testWidgets('shows folders', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    expect(
+        find.widgetWithText(DragTarget<PathPlannerPath>, 'p'), findsOneWidget);
+    expect(
+        find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'), findsOneWidget);
+  });
+
+  testWidgets('open path folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'));
+    await widgetTester.pump();
+    expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'), findsNothing);
+    expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'),
+        findsOneWidget);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'));
+    await widgetTester.pump();
+    expect(
+        find.widgetWithText(DragTarget<PathPlannerPath>, 'p'), findsOneWidget);
+    expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'),
+        findsNothing);
+  });
+
+  testWidgets('open auto folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'));
+    await widgetTester.pump();
+    expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'), findsNothing);
+    expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'),
+        findsOneWidget);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'));
+    await widgetTester.pump();
+    expect(
+        find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'), findsOneWidget);
+    expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'),
+        findsNothing);
+  });
+
+  testWidgets('drag to path folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    var pathOffset = widgetTester
+        .getCenter(find.widgetWithText(ProjectItemCard, 'Example Path'));
+    var folderOffset = widgetTester
+        .getCenter(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'));
+    var dragOffset = folderOffset - pathOffset;
+
+    await widgetTester.dragFrom(pathOffset, dragOffset);
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(ProjectItemCard, 'Example Path'), findsNothing);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'));
+    await widgetTester.pump();
+
+    expect(
+        find.widgetWithText(ProjectItemCard, 'Example Path'), findsOneWidget);
+
+    await widgetTester.dragFrom(pathOffset, dragOffset);
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(ProjectItemCard, 'Example Path'), findsNothing);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'));
+    await widgetTester.pump();
+
+    expect(
+        find.widgetWithText(ProjectItemCard, 'Example Path'), findsOneWidget);
+  });
+
+  testWidgets('drag to auto folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
+
+    PathPlannerAuto auto1 = PathPlannerAuto(
+      name: 'auto1',
+      sequence: SequentialCommandGroup(
+        commands: [
+          PathCommand(pathName: 'path1'),
+          PathCommand(pathName: 'path2'),
+        ],
+      ),
+      autoDir: join(deployPath, 'autos'),
+      fs: fs,
+      folder: null,
+      startingPose: null,
+    );
+
+    await fs
+        .file(join(deployPath, 'autos', 'auto1.auto'))
+        .writeAsString(jsonEncode(auto1.toJson()));
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    var pathOffset =
+        widgetTester.getCenter(find.widgetWithText(ProjectItemCard, 'auto1'));
+    var folderOffset = widgetTester
+        .getCenter(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'));
+    var dragOffset = folderOffset - pathOffset;
+
+    await widgetTester.dragFrom(pathOffset, dragOffset);
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsNothing);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'));
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsOneWidget);
+
+    await widgetTester.dragFrom(pathOffset, dragOffset);
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsNothing);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'));
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsOneWidget);
+  });
+
+  testWidgets('add path folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    expect(find.byTooltip('Add new path folder'), findsOneWidget);
+
+    await widgetTester.tap(find.byTooltip('Add new path folder'));
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'New Folder'),
+        findsOneWidget);
+  });
+
+  testWidgets('add auto folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    expect(find.byTooltip('Add new auto folder'), findsOneWidget);
+
+    await widgetTester.tap(find.byTooltip('Add new auto folder'));
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'New Folder'),
+        findsOneWidget);
+  });
+
+  testWidgets('delete path folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+
+    PathPlannerPath path1 = PathPlannerPath.defaultPath(
+      pathDir: join(deployPath, 'paths'),
+      fs: fs,
+      name: 'path1',
+      folder: 'p',
+    );
+
+    await fs
+        .file(join(deployPath, 'paths', 'path1.path'))
+        .writeAsString(jsonEncode(path1.toJson()));
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'));
+    await widgetTester.pump();
+
+    expect(find.byTooltip('Delete path folder'), findsOneWidget);
+
+    await widgetTester.tap(find.byTooltip('Delete path folder'));
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('CANCEL'), findsOneWidget);
+    expect(find.text('DELETE'), findsOneWidget);
+
+    await widgetTester.tap(find.text('CANCEL'));
+    await widgetTester.pumpAndSettle();
+
+    expect(find.widgetWithText(ProjectItemCard, 'path1'), findsOneWidget);
+
+    await widgetTester.tap(find.byTooltip('Delete path folder'));
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.tap(find.text('DELETE'));
+    await widgetTester.pumpAndSettle();
+
+    expect(find.widgetWithText(ProjectItemCard, 'path1'), findsNothing);
+  });
+
+  testWidgets('delete auto folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
+
+    PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
+      autoDir: join(deployPath, 'autos'),
+      fs: fs,
+      name: 'auto1',
+      folder: 'a',
+    );
+
+    await fs
+        .file(join(deployPath, 'autos', 'auto1.auto'))
+        .writeAsString(jsonEncode(auto1.toJson()));
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'));
+    await widgetTester.pump();
+
+    expect(find.byTooltip('Delete auto folder'), findsOneWidget);
+
+    await widgetTester.tap(find.byTooltip('Delete auto folder'));
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('CANCEL'), findsOneWidget);
+    expect(find.text('DELETE'), findsOneWidget);
+
+    await widgetTester.tap(find.text('CANCEL'));
+    await widgetTester.pumpAndSettle();
+
+    expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsOneWidget);
+
+    await widgetTester.tap(find.byTooltip('Delete auto folder'));
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.tap(find.text('DELETE'));
+    await widgetTester.pumpAndSettle();
+
+    expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsNothing);
+  });
+
+  testWidgets('rename path folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    prefs.setStringList(PrefsKeys.pathFolders, ['p', 'other']);
+
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+
+    PathPlannerPath path1 = PathPlannerPath.defaultPath(
+      pathDir: join(deployPath, 'paths'),
+      fs: fs,
+      name: 'path1',
+      folder: 'p',
+    );
+
+    await fs
+        .file(join(deployPath, 'paths', 'path1.path'))
+        .writeAsString(jsonEncode(path1.toJson()));
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.enterText(find.text('p'), 'r');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'p'), findsNothing);
+    expect(
+        find.widgetWithText(DragTarget<PathPlannerPath>, 'r'), findsOneWidget);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'r'));
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(ProjectItemCard, 'path1'), findsOneWidget);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerPath>, 'Root Folder'));
+    await widgetTester.pump();
+
+    await widgetTester.enterText(find.text('other'), 'r');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.textContaining('Unable to Rename'), findsOneWidget);
+  });
+
+  testWidgets('rename auto folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    prefs.setStringList(PrefsKeys.autoFolders, ['a', 'other']);
+
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
+
+    PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
+      autoDir: join(deployPath, 'autos'),
+      fs: fs,
+      name: 'auto1',
+      folder: 'a',
+    );
+
+    await fs
+        .file(join(deployPath, 'autos', 'auto1.auto'))
+        .writeAsString(jsonEncode(auto1.toJson()));
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.enterText(find.text('a'), 'r');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'a'), findsNothing);
+    expect(
+        find.widgetWithText(DragTarget<PathPlannerAuto>, 'r'), findsOneWidget);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'r'));
+    await widgetTester.pump();
+
+    expect(find.widgetWithText(ProjectItemCard, 'auto1'), findsOneWidget);
+
+    await widgetTester
+        .tap(find.widgetWithText(DragTarget<PathPlannerAuto>, 'Root Folder'));
+    await widgetTester.pump();
+
+    await widgetTester.enterText(find.text('other'), 'r');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.textContaining('Unable to Rename'), findsOneWidget);
   });
 }

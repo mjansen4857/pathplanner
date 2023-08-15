@@ -43,6 +43,7 @@ void main() {
         position: const Point(2.0, 2.0),
         rotation: 0.0,
       ),
+      folder: null,
     );
     testPath = PathPlannerPath.defaultPath(
       name: 'testPath',

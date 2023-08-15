@@ -27,6 +27,7 @@ class PathPlannerPath {
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
   bool reversed;
+  String? folder;
 
   FileSystem fs;
   String pathDir;
@@ -39,9 +40,12 @@ class PathPlannerPath {
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
 
-  PathPlannerPath.defaultPath(
-      {required this.pathDir, required this.fs, this.name = 'New Path'})
-      : waypoints = [],
+  PathPlannerPath.defaultPath({
+    required this.pathDir,
+    required this.fs,
+    this.name = 'New Path',
+    this.folder,
+  })  : waypoints = [],
         pathPoints = [],
         globalConstraints = PathConstraints(),
         goalEndState = GoalEndState(),
@@ -79,6 +83,7 @@ class PathPlannerPath {
     required this.pathDir,
     required this.fs,
     required this.reversed,
+    required this.folder,
   }) : pathPoints = [] {
     generatePathPoints();
   }
@@ -109,6 +114,7 @@ class PathPlannerPath {
               EventMarker.fromJson(markerJson),
           ],
           reversed: json['reversed'] ?? false,
+          folder: json['folder'],
         );
 
   void generateAndSavePath() {
@@ -187,6 +193,7 @@ class PathPlannerPath {
       'globalConstraints': globalConstraints.toJson(),
       'goalEndState': goalEndState.toJson(),
       'reversed': reversed,
+      'folder': folder,
     };
   }
 
@@ -404,6 +411,7 @@ class PathPlannerPath {
       pathDir: pathDir,
       fs: fs,
       reversed: reversed,
+      folder: folder,
     );
   }
 

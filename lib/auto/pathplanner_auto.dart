@@ -13,6 +13,8 @@ class PathPlannerAuto {
   Pose2d? startingPose;
   SequentialCommandGroup sequence;
 
+  String? folder;
+
   FileSystem fs;
   String autoDir;
 
@@ -21,13 +23,15 @@ class PathPlannerAuto {
     required this.sequence,
     required this.autoDir,
     required this.fs,
-    this.startingPose,
+    required this.folder,
+    required this.startingPose,
   });
 
   PathPlannerAuto.defaultAuto({
     this.name = 'New Auto',
     required this.autoDir,
     required this.fs,
+    this.folder,
   }) : sequence = SequentialCommandGroup(commands: []);
 
   PathPlannerAuto duplicate(String newName) {
@@ -37,6 +41,7 @@ class PathPlannerAuto {
       autoDir: autoDir,
       fs: fs,
       startingPose: startingPose,
+      folder: folder,
     );
   }
 
@@ -51,6 +56,7 @@ class PathPlannerAuto {
               : Pose2d.fromJson(json['startingPose']),
           sequence:
               Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
+          folder: json['folder'],
         );
 
   Map<String, dynamic> toJson() {
@@ -58,6 +64,7 @@ class PathPlannerAuto {
       'version': 1.0,
       'startingPose': startingPose?.toJson(),
       'command': sequence.toJson(),
+      'folder': folder,
     };
   }
 

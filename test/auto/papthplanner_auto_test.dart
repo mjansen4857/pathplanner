@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:file/file.dart';
@@ -24,6 +25,7 @@ void main() {
         startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        folder: null,
       );
       PathPlannerAuto auto2 = PathPlannerAuto(
         name: 'test',
@@ -32,12 +34,15 @@ void main() {
         startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        folder: null,
       );
       PathPlannerAuto auto3 = PathPlannerAuto(
         name: 'test2',
         autoDir: '/autos',
         fs: fs,
         sequence: SequentialCommandGroup(commands: []),
+        startingPose: null,
+        folder: null,
       );
 
       expect(auto2, auto1);
@@ -56,6 +61,7 @@ void main() {
         startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        folder: null,
       );
 
       Map<String, dynamic> json = auto.toJson();
@@ -74,6 +80,8 @@ void main() {
         fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        folder: null,
+        startingPose: null,
       );
       PathPlannerAuto cloned = auto.duplicate(auto.name);
 
@@ -92,6 +100,8 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
+        folder: null,
+        startingPose: null,
         sequence: SequentialCommandGroup(
           commands: [
             PathCommand(pathName: 'path1'),
@@ -118,6 +128,8 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
+        folder: null,
+        startingPose: null,
         sequence: SequentialCommandGroup(
           commands: [
             PathCommand(pathName: 'path1'),
@@ -152,10 +164,16 @@ void main() {
   });
 
   group('file management', () {
-    test('rename', () {
-      var fs = MemoryFileSystem();
+    late MemoryFileSystem fs;
+    final String autosPath = Platform.isWindows ? 'C:\\autos' : '/autos';
 
-      Directory autoDir = fs.directory('/autos');
+    setUp(() => fs = MemoryFileSystem(
+        style: Platform.isWindows
+            ? FileSystemStyle.windows
+            : FileSystemStyle.posix));
+
+    test('rename', () {
+      Directory autoDir = fs.directory(autosPath);
       fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
       PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
@@ -169,9 +187,7 @@ void main() {
     });
 
     test('delete', () {
-      var fs = MemoryFileSystem();
-
-      Directory autoDir = fs.directory('/autos');
+      Directory autoDir = fs.directory(autosPath);
       fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
       PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
@@ -183,9 +199,7 @@ void main() {
     });
 
     test('load autos in dir', () async {
-      var fs = MemoryFileSystem();
-
-      Directory autoDir = fs.directory('/autos');
+      Directory autoDir = fs.directory(autosPath);
       autoDir.createSync(recursive: true);
 
       PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
@@ -214,9 +228,7 @@ void main() {
     });
 
     test('save', () {
-      var fs = MemoryFileSystem();
-
-      Directory autoDir = fs.directory('/autos');
+      Directory autoDir = fs.directory(autosPath);
       autoDir.createSync(recursive: true);
 
       PathPlannerAuto auto = PathPlannerAuto.defaultAuto(

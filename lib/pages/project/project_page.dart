@@ -9,6 +9,7 @@ import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,6 +57,8 @@ class _ProjectPageState extends State<ProjectPage> {
   late int _autosGridCount;
 
   bool _loading = true;
+
+  String? _pathFolder;
 
   FileSystem get fs => widget.fs;
 
@@ -107,6 +110,17 @@ class _ProjectPageState extends State<ProjectPage> {
         await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path, fs);
     var autos =
         await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path, fs);
+
+    for (int i = 0; i < paths.length; i++) {
+      if (!_pathFolders.contains(paths[i].folder)) {
+        paths[i].folder = null;
+      }
+    }
+    for (int i = 0; i < autos.length; i++) {
+      if (!_autoFolders.contains(autos[i].folder)) {
+        autos[i].folder = null;
+      }
+    }
 
     setState(() {
       _paths = paths;
@@ -181,31 +195,85 @@ class _ProjectPageState extends State<ProjectPage> {
             children: [
               Row(
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(left: 4.0),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4.0),
                     child: Text(
-                      'Paths',
-                      style: TextStyle(fontSize: 32),
+                      _pathFolder ?? 'Paths',
+                      style: const TextStyle(fontSize: 32),
                     ),
                   ),
                   Expanded(child: Container()),
-                  Tooltip(
-                    message: 'Add new folder',
-                    waitDuration: const Duration(seconds: 1),
-                    child: IconButton.filledTonal(
-                      onPressed: () {
-                        String folderName = 'New Folder';
-                        while (_pathFolders.contains(folderName)) {
-                          folderName = 'New $folderName';
-                        }
+                  ConditionalWidget(
+                    condition: _pathFolder == null,
+                    falseChild: Tooltip(
+                      message: 'Delete folder',
+                      waitDuration: const Duration(seconds: 1),
+                      child: IconButton.filledTonal(
+                        onPressed: () {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title: const Text('Delete Folder'),
+                                  content: SizedBox(
+                                    width: 400,
+                                    child: Text(
+                                        'Are you sure you want to delete the folder "$_pathFolder"?\n\nThis will also delete all paths within the folder. This cannot be undone.'),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: Navigator.of(context).pop,
+                                      child: const Text('CANCEL'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
 
-                        setState(() {
-                          _pathFolders.add(folderName);
-                        });
-                        widget.prefs
-                            .setStringList(PrefsKeys.pathFolders, _pathFolders);
-                      },
-                      icon: const Icon(Icons.create_new_folder_outlined),
+                                        for (int p = 0;
+                                            p < _paths.length;
+                                            p++) {
+                                          if (_paths[p].folder == _pathFolder) {
+                                            _paths[p].deletePath();
+                                          }
+                                        }
+
+                                        setState(() {
+                                          _paths.removeWhere((path) =>
+                                              path.folder == _pathFolder);
+                                          _pathFolders.remove(_pathFolder);
+                                          _pathFolder = null;
+                                        });
+                                        widget.prefs.setStringList(
+                                            PrefsKeys.pathFolders,
+                                            _pathFolders);
+                                      },
+                                      child: const Text('DELETE'),
+                                    ),
+                                  ],
+                                );
+                              });
+                        },
+                        icon: const Icon(Icons.delete_forever),
+                      ),
+                    ),
+                    trueChild: Tooltip(
+                      message: 'Add new folder',
+                      waitDuration: const Duration(seconds: 1),
+                      child: IconButton.filledTonal(
+                        onPressed: () {
+                          String folderName = 'New Folder';
+                          while (_pathFolders.contains(folderName)) {
+                            folderName = 'New $folderName';
+                          }
+
+                          setState(() {
+                            _pathFolders.add(folderName);
+                          });
+                          widget.prefs.setStringList(
+                              PrefsKeys.pathFolders, _pathFolders);
+                        },
+                        icon: const Icon(Icons.create_new_folder_outlined),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -228,6 +296,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             pathDir: _pathsDirectory.path,
                             name: pathName,
                             fs: fs,
+                            folder: _pathFolder,
                           ));
                         });
                       },
@@ -253,16 +322,19 @@ class _ProjectPageState extends State<ProjectPage> {
                   });
                 },
               ),
-              GridView.count(
-                crossAxisCount: _pathGridCount,
-                childAspectRatio: 5.5,
-                shrinkWrap: true,
-                children: [
-                  for (int i = 0; i < _pathFolders.length; i++)
+              ConditionalWidget(
+                condition: _pathFolder == null,
+                falseChild: GridView.count(
+                  crossAxisCount: _pathGridCount,
+                  childAspectRatio: 5.5,
+                  shrinkWrap: true,
+                  children: [
                     DragTarget<PathPlannerPath>(
                       onAccept: (data) {
-                        // TODO move into folder
-                        print('${data.name} placed in ${_pathFolders[i]}');
+                        setState(() {
+                          data.folder = null;
+                          data.generateAndSavePath();
+                        });
                       },
                       builder: (context, candidates, rejects) {
                         ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -274,7 +346,9 @@ class _ProjectPageState extends State<ProjectPage> {
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12),
                             onTap: () {
-                              // TODO: open folder
+                              setState(() {
+                                _pathFolder = null;
+                              });
                             },
                             child: Padding(
                               padding:
@@ -282,58 +356,24 @@ class _ProjectPageState extends State<ProjectPage> {
                               child: Row(
                                 children: [
                                   Icon(
-                                    Icons.folder_outlined,
+                                    Icons.drive_file_move_rtl_outlined,
                                     color: candidates.isNotEmpty
                                         ? colorScheme.onPrimary
                                         : null,
                                   ),
+                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: FittedBox(
                                       fit: BoxFit.scaleDown,
                                       alignment: Alignment.centerLeft,
-                                      child: RenamableTitle(
-                                        title: _pathFolders[i],
-                                        textStyle: TextStyle(
+                                      child: Text(
+                                        'Root Folder',
+                                        style: TextStyle(
                                           fontSize: 20,
                                           color: candidates.isNotEmpty
                                               ? colorScheme.onPrimary
                                               : null,
                                         ),
-                                        onRename: (newName) {
-                                          if (newName != _pathFolders[i]) {
-                                            if (_pathFolders
-                                                .contains(newName)) {
-                                              showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      title: const Text(
-                                                          'Unable to Rename'),
-                                                      content: Text(
-                                                          'The folder "$newName" already exists'),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed:
-                                                              Navigator.of(
-                                                                      context)
-                                                                  .pop,
-                                                          child:
-                                                              const Text('OK'),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  });
-                                            } else {
-                                              setState(() {
-                                                _pathFolders[i] = newName;
-                                              });
-                                              widget.prefs.setStringList(
-                                                  PrefsKeys.pathFolders,
-                                                  _pathFolders);
-                                            }
-                                          }
-                                        },
                                       ),
                                     ),
                                   ),
@@ -344,7 +384,106 @@ class _ProjectPageState extends State<ProjectPage> {
                         );
                       },
                     ),
-                ],
+                  ],
+                ),
+                trueChild: GridView.count(
+                  crossAxisCount: _pathGridCount,
+                  childAspectRatio: 5.5,
+                  shrinkWrap: true,
+                  children: [
+                    for (int i = 0; i < _pathFolders.length; i++)
+                      DragTarget<PathPlannerPath>(
+                        onAccept: (data) {
+                          setState(() {
+                            data.folder = _pathFolders[i];
+                            data.generateAndSavePath();
+                          });
+                        },
+                        builder: (context, candidates, rejects) {
+                          ColorScheme colorScheme =
+                              Theme.of(context).colorScheme;
+                          return Card(
+                            elevation: 2,
+                            color: candidates.isNotEmpty
+                                ? colorScheme.primary
+                                : null,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                setState(() {
+                                  _pathFolder = _pathFolders[i];
+                                });
+                              },
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.folder_outlined,
+                                      color: candidates.isNotEmpty
+                                          ? colorScheme.onPrimary
+                                          : null,
+                                    ),
+                                    Expanded(
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: RenamableTitle(
+                                          title: _pathFolders[i],
+                                          textStyle: TextStyle(
+                                            fontSize: 20,
+                                            color: candidates.isNotEmpty
+                                                ? colorScheme.onPrimary
+                                                : null,
+                                          ),
+                                          onRename: (newName) {
+                                            if (newName != _pathFolders[i]) {
+                                              if (_pathFolders
+                                                  .contains(newName)) {
+                                                showDialog(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return AlertDialog(
+                                                        title: const Text(
+                                                            'Unable to Rename'),
+                                                        content: Text(
+                                                            'The folder "$newName" already exists'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed:
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop,
+                                                            child: const Text(
+                                                                'OK'),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    });
+                                              } else {
+                                                setState(() {
+                                                  _pathFolders[i] = newName;
+                                                });
+                                                widget.prefs.setStringList(
+                                                    PrefsKeys.pathFolders,
+                                                    _pathFolders);
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
               ),
               if (_pathFolders.isNotEmpty) const SizedBox(height: 8),
               Expanded(
@@ -354,7 +493,8 @@ class _ProjectPageState extends State<ProjectPage> {
                   childAspectRatio: _pathsCompact ? 2.5 : 1.55,
                   children: [
                     for (int i = 0; i < _paths.length; i++)
-                      _buildPathCard(i, context),
+                      if (_paths[i].folder == _pathFolder)
+                        _buildPathCard(i, context),
                   ],
                 ),
               ),

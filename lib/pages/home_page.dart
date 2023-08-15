@@ -410,6 +410,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   undoStack: widget.undoStack,
                   telemetry: widget.telemetry,
                   hotReload: _hotReload,
+                  onFoldersChanged: () =>
+                      _saveProjectSettingsToFile(_projectDir!),
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
@@ -471,6 +473,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             json['robotLength']?.toDouble() ?? Defaults.robotLength);
         widget.prefs.setBool(PrefsKeys.holonomicMode,
             json['holonomicMode'] ?? Defaults.holonomicMode);
+        widget.prefs.setStringList(
+            PrefsKeys.pathFolders, json['pathFolders'] ?? Defaults.pathFolders);
+        widget.prefs.setStringList(
+            PrefsKeys.autoFolders, json['autoFolders'] ?? Defaults.autoFolders);
       } catch (err, stack) {
         Log.error(
             'An error occurred while loading project settings', err, stack);
@@ -494,6 +500,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength,
       'holonomicMode': widget.prefs.getBool(PrefsKeys.holonomicMode) ??
           Defaults.holonomicMode,
+      'pathFolders': widget.prefs.getStringList(PrefsKeys.pathFolders) ??
+          Defaults.pathFolders,
+      'autoFolders': widget.prefs.getStringList(PrefsKeys.autoFolders) ??
+          Defaults.autoFolders,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

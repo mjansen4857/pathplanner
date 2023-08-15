@@ -24,6 +24,7 @@ class ProjectPage extends StatefulWidget {
   final bool shortcuts;
   final PPLibTelemetry? telemetry;
   final bool hotReload;
+  final VoidCallback? onFoldersChanged;
 
   const ProjectPage({
     super.key,
@@ -35,6 +36,7 @@ class ProjectPage extends StatefulWidget {
     this.shortcuts = true,
     this.telemetry,
     this.hotReload = false,
+    this.onFoldersChanged,
   });
 
   @override
@@ -247,6 +249,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                         widget.prefs.setStringList(
                                             PrefsKeys.pathFolders,
                                             _pathFolders);
+                                        widget.onFoldersChanged?.call();
                                       },
                                       child: const Text('DELETE'),
                                     ),
@@ -272,6 +275,7 @@ class _ProjectPageState extends State<ProjectPage> {
                           });
                           widget.prefs.setStringList(
                               PrefsKeys.pathFolders, _pathFolders);
+                          widget.onFoldersChanged?.call();
                         },
                         icon: const Icon(Icons.create_new_folder_outlined),
                       ),
@@ -470,6 +474,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                                 widget.prefs.setStringList(
                                                     PrefsKeys.pathFolders,
                                                     _pathFolders);
+                                                widget.onFoldersChanged?.call();
                                               }
                                             }
                                           },
@@ -678,6 +683,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                         widget.prefs.setStringList(
                                             PrefsKeys.autoFolders,
                                             _autoFolders);
+                                        widget.onFoldersChanged?.call();
                                       },
                                       child: const Text('DELETE'),
                                     ),
@@ -703,6 +709,7 @@ class _ProjectPageState extends State<ProjectPage> {
                           });
                           widget.prefs.setStringList(
                               PrefsKeys.autoFolders, _autoFolders);
+                          widget.onFoldersChanged?.call();
                         },
                         icon: const Icon(Icons.create_new_folder_outlined),
                       ),
@@ -901,6 +908,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                                 widget.prefs.setStringList(
                                                     PrefsKeys.autoFolders,
                                                     _autoFolders);
+                                                widget.onFoldersChanged?.call();
                                               }
                                             }
                                           },

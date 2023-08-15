@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:file/file.dart';
@@ -163,10 +164,16 @@ void main() {
   });
 
   group('file management', () {
-    test('rename', () {
-      var fs = MemoryFileSystem();
+    late MemoryFileSystem fs;
+    final String autosPath = Platform.isWindows ? 'C:\\autos' : '/autos';
 
-      Directory autoDir = fs.directory('/autos');
+    setUp(() => fs = MemoryFileSystem(
+        style: Platform.isWindows
+            ? FileSystemStyle.windows
+            : FileSystemStyle.posix));
+
+    test('rename', () {
+      Directory autoDir = fs.directory(autosPath);
       fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
       PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
@@ -180,9 +187,7 @@ void main() {
     });
 
     test('delete', () {
-      var fs = MemoryFileSystem();
-
-      Directory autoDir = fs.directory('/autos');
+      Directory autoDir = fs.directory(autosPath);
       fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
       PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
@@ -194,9 +199,7 @@ void main() {
     });
 
     test('load autos in dir', () async {
-      var fs = MemoryFileSystem();
-
-      Directory autoDir = fs.directory('/autos');
+      Directory autoDir = fs.directory(autosPath);
       autoDir.createSync(recursive: true);
 
       PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
@@ -225,9 +228,7 @@ void main() {
     });
 
     test('save', () {
-      var fs = MemoryFileSystem();
-
-      Directory autoDir = fs.directory('/autos');
+      Directory autoDir = fs.directory(autosPath);
       autoDir.createSync(recursive: true);
 
       PathPlannerAuto auto = PathPlannerAuto.defaultAuto(

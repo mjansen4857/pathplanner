@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
@@ -304,10 +305,16 @@ void main() {
   });
 
   group('file management', () {
-    test('rename', () {
-      var fs = MemoryFileSystem();
+    late MemoryFileSystem fs;
+    final String pathsPath = Platform.isWindows ? 'C:\\paths' : '/paths';
 
-      Directory pathDir = fs.directory('/paths');
+    setUp(() => fs = MemoryFileSystem(
+        style: Platform.isWindows
+            ? FileSystemStyle.windows
+            : FileSystemStyle.posix));
+
+    test('rename', () {
+      Directory pathDir = fs.directory(pathsPath);
       fs.file(join(pathDir.path, 'test.path')).createSync(recursive: true);
 
       PathPlannerPath path = PathPlannerPath.defaultPath(
@@ -321,9 +328,7 @@ void main() {
     });
 
     test('delete', () {
-      var fs = MemoryFileSystem();
-
-      Directory pathDir = fs.directory('/paths');
+      Directory pathDir = fs.directory(pathsPath);
       fs.file(join(pathDir.path, 'test.path')).createSync(recursive: true);
 
       PathPlannerPath path = PathPlannerPath.defaultPath(
@@ -335,9 +340,7 @@ void main() {
     });
 
     test('load paths in dir', () async {
-      var fs = MemoryFileSystem();
-
-      Directory pathDir = fs.directory('/paths');
+      Directory pathDir = fs.directory(pathsPath);
       pathDir.createSync(recursive: true);
 
       PathPlannerPath path1 = PathPlannerPath.defaultPath(
@@ -366,9 +369,7 @@ void main() {
     });
 
     test('generate and save', () {
-      var fs = MemoryFileSystem();
-
-      Directory pathDir = fs.directory('/paths');
+      Directory pathDir = fs.directory(pathsPath);
       pathDir.createSync(recursive: true);
 
       PathPlannerPath path = PathPlannerPath.defaultPath(

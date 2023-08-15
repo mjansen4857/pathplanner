@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -24,6 +26,7 @@ void main() {
 
   late SharedPreferences prefs;
   late MemoryFileSystem fs;
+  final String deployPath = Platform.isWindows ? 'C:\\deploy' : '/deploy';
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({
@@ -32,7 +35,10 @@ void main() {
       PrefsKeys.autoFolders: ['a'],
     });
     prefs = await SharedPreferences.getInstance();
-    fs = MemoryFileSystem();
+    fs = MemoryFileSystem(
+        style: Platform.isWindows
+            ? FileSystemStyle.windows
+            : FileSystemStyle.posix);
   });
 
   testWidgets('initially loading', (widgetTester) async {
@@ -43,7 +49,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -63,7 +69,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -81,16 +87,16 @@ void main() {
   testWidgets('loads populated project', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/paths').create(recursive: true);
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerPath path1 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path1',
     );
     PathPlannerPath path2 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path2',
     );
@@ -102,20 +108,20 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
       startingPose: null,
     );
 
     await fs
-        .file('/deploy/paths/path1.path')
+        .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
     await fs
-        .file('/deploy/paths/path2.path')
+        .file(join(deployPath, 'paths', 'path2.path'))
         .writeAsString(jsonEncode(path2.toJson()));
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -123,7 +129,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -143,11 +149,11 @@ void main() {
       (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/paths').create(recursive: true);
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerPath path1 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path1',
     );
@@ -159,23 +165,23 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
       startingPose: null,
     );
 
     await fs
-        .file('/deploy/paths/path1.path')
+        .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
     await fs
-        .file('/deploy/paths/path2.path')
+        .file(join(deployPath, 'paths', 'path2.path'))
         .writeAsString('{{invalid json..[]}.');
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
     await fs
-        .file('/deploy/autos/auto2.auto')
+        .file(join(deployPath, 'autos', 'auto2.auto'))
         .writeAsString('{{invalid json..[]}.');
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -183,7 +189,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -208,7 +214,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -243,7 +249,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -278,7 +284,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -315,7 +321,7 @@ void main() {
   testWidgets('duplicate auto', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
     PathPlannerAuto auto1 = PathPlannerAuto(
       name: 'auto1',
       sequence: SequentialCommandGroup(
@@ -324,14 +330,14 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
       startingPose: null,
     );
 
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -339,7 +345,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -381,7 +387,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -412,7 +418,7 @@ void main() {
   testWidgets('delete auto', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
     PathPlannerAuto auto1 = PathPlannerAuto(
       name: 'auto1',
       sequence: SequentialCommandGroup(
@@ -421,14 +427,14 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
       startingPose: null,
     );
 
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -436,7 +442,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -467,22 +473,22 @@ void main() {
   testWidgets('rename path', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/paths').create(recursive: true);
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerPath path1 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path1',
     );
     PathPlannerPath path2 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path2',
     );
     PathPlannerAuto auto1 = PathPlannerAuto(
       name: 'auto1',
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       sequence: SequentialCommandGroup(
         commands: [
@@ -494,13 +500,13 @@ void main() {
     );
 
     await fs
-        .file('/deploy/paths/path1.path')
+        .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
     await fs
-        .file('/deploy/paths/path2.path')
+        .file(join(deployPath, 'paths', 'path2.path'))
         .writeAsString(jsonEncode(path2.toJson()));
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -508,7 +514,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -538,24 +544,24 @@ void main() {
   testWidgets('rename auto', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       name: 'auto1',
     );
     PathPlannerAuto auto2 = PathPlannerAuto.defaultAuto(
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       name: 'auto2',
     );
 
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
     await fs
-        .file('/deploy/autos/auto2.auto')
+        .file(join(deployPath, 'autos', 'auto2.auto'))
         .writeAsString(jsonEncode(auto2.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -563,7 +569,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -593,16 +599,16 @@ void main() {
   testWidgets('open path', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/paths').create(recursive: true);
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
 
     PathPlannerPath path1 = PathPlannerPath.defaultPath(
-      pathDir: '/deploy/paths',
+      pathDir: join(deployPath, 'paths'),
       fs: fs,
       name: 'path1',
     );
 
     await fs
-        .file('/deploy/paths/path1.path')
+        .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -610,7 +616,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -642,16 +648,16 @@ void main() {
   testWidgets('open auto', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory('/deploy/autos').create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
-      autoDir: '/deploy/autos',
+      autoDir: join(deployPath, 'autos'),
       fs: fs,
       name: 'auto1',
     );
 
     await fs
-        .file('/deploy/autos/auto1.auto')
+        .file(join(deployPath, 'autos', 'auto1.auto'))
         .writeAsString(jsonEncode(auto1.toJson()));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -659,7 +665,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -698,7 +704,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -743,7 +749,7 @@ void main() {
         body: ProjectPage(
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,

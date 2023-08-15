@@ -1,22 +1,31 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart';
 import 'package:pathplanner/pages/nav_grid_page.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 void main() {
+  late MemoryFileSystem fs;
+  final String deployPath = Platform.isWindows ? 'C:\\deploy' : '/deploy';
+
+  setUp(() => fs = MemoryFileSystem(
+      style: Platform.isWindows
+          ? FileSystemStyle.windows
+          : FileSystemStyle.posix));
+
   testWidgets('loading when no file', (widgetTester) async {
-    var fs = MemoryFileSystem();
-    fs.directory('/deploy').createSync(recursive: true);
+    fs.directory(deployPath).createSync(recursive: true);
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NavGridPage(
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
         ),
       ),
@@ -28,23 +37,25 @@ void main() {
 
   testWidgets('navgrid editor shows when file', (widgetTester) async {
     var fs = MemoryFileSystem();
-    fs.directory('/deploy').createSync(recursive: true);
+    fs.directory(deployPath).createSync(recursive: true);
     NavGrid grid = NavGrid(
         fieldSize: const Size(16.54, 8.02),
         nodeSizeMeters: 0.2,
         grid: List.generate((8.02 / 0.2).ceil(),
             (index) => List.filled((16.54 / 0.2).ceil(), false)));
-    fs.file('/deploy/navgrid.json').writeAsStringSync(jsonEncode(grid));
+    fs
+        .file(join(deployPath, 'navgrid.json'))
+        .writeAsStringSync(jsonEncode(grid));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NavGridPage(
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
         ),
       ),
     ));
-    await widgetTester.pump();
+    await widgetTester.pumpAndSettle();
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.image(FieldImage.defaultField.image.image), findsOneWidget);
@@ -52,18 +63,20 @@ void main() {
 
   testWidgets('navgrid editor tap', (widgetTester) async {
     var fs = MemoryFileSystem();
-    fs.directory('/deploy').createSync(recursive: true);
+    fs.directory(deployPath).createSync(recursive: true);
     NavGrid grid = NavGrid(
         fieldSize: const Size(16.54, 8.02),
         nodeSizeMeters: 0.2,
         grid: List.generate((8.02 / 0.2).ceil(),
             (index) => List.filled((16.54 / 0.2).ceil(), false)));
-    fs.file('/deploy/navgrid.json').writeAsStringSync(jsonEncode(grid));
+    fs
+        .file(join(deployPath, 'navgrid.json'))
+        .writeAsStringSync(jsonEncode(grid));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NavGridPage(
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
         ),
       ),
@@ -73,25 +86,27 @@ void main() {
     await widgetTester.tapAt(const Offset(200, 200));
     await widgetTester.pump();
 
-    NavGrid editedGrid = NavGrid.fromJson(
-        jsonDecode(fs.file('/deploy/navgrid.json').readAsStringSync()));
+    NavGrid editedGrid = NavGrid.fromJson(jsonDecode(
+        fs.file(join(deployPath, 'navgrid.json')).readAsStringSync()));
     expect(editedGrid, isNot(grid));
   });
 
   testWidgets('navgrid editor drag', (widgetTester) async {
     var fs = MemoryFileSystem();
-    fs.directory('/deploy').createSync(recursive: true);
+    fs.directory(deployPath).createSync(recursive: true);
     NavGrid grid = NavGrid(
         fieldSize: const Size(16.54, 8.02),
         nodeSizeMeters: 0.2,
         grid: List.generate((8.02 / 0.2).ceil(),
             (index) => List.filled((16.54 / 0.2).ceil(), false)));
-    fs.file('/deploy/navgrid.json').writeAsStringSync(jsonEncode(grid));
+    fs
+        .file(join(deployPath, 'navgrid.json'))
+        .writeAsStringSync(jsonEncode(grid));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NavGridPage(
-          deployDirectory: fs.directory('/deploy'),
+          deployDirectory: fs.directory(deployPath),
           fs: fs,
         ),
       ),
@@ -109,8 +124,8 @@ void main() {
     await gesture.up();
     await widgetTester.pump();
 
-    NavGrid editedGrid = NavGrid.fromJson(
-        jsonDecode(fs.file('/deploy/navgrid.json').readAsStringSync()));
+    NavGrid editedGrid = NavGrid.fromJson(jsonDecode(
+        fs.file(join(deployPath, 'navgrid.json')).readAsStringSync()));
     expect(editedGrid, isNot(grid));
   });
 }

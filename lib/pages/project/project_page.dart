@@ -468,6 +468,14 @@ class _ProjectPageState extends State<ProjectPage> {
                                                       );
                                                     });
                                               } else {
+                                                for (PathPlannerPath path
+                                                    in _paths) {
+                                                  if (path.folder ==
+                                                      _pathFolders[i]) {
+                                                    path.folder = newName;
+                                                    path.generateAndSavePath();
+                                                  }
+                                                }
                                                 setState(() {
                                                   _pathFolders[i] = newName;
                                                 });
@@ -902,6 +910,14 @@ class _ProjectPageState extends State<ProjectPage> {
                                                       );
                                                     });
                                               } else {
+                                                for (PathPlannerAuto auto
+                                                    in _autos) {
+                                                  if (auto.folder ==
+                                                      _autoFolders[i]) {
+                                                    auto.folder = newName;
+                                                    auto.saveFile();
+                                                  }
+                                                }
                                                 setState(() {
                                                   _autoFolders[i] = newName;
                                                 });

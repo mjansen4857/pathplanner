@@ -291,7 +291,9 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
     _previewController.reset();
     _previewController.duration =
         Duration(milliseconds: (p.runtime * 1000).toInt());
-    _previewController.repeat();
+    if (p.runtime > 0) {
+      _previewController.repeat();
+    }
   }
 
   double _xPixelsToMeters(double pixels) {

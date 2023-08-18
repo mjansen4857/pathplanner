@@ -474,17 +474,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         widget.prefs.setBool(PrefsKeys.holonomicMode,
             json['holonomicMode'] ?? Defaults.holonomicMode);
         widget.prefs.setStringList(
-            PrefsKeys.pathFolders,
-            (json['pathFolders'] as List<dynamic>?)
-                    ?.map((e) => e as String)
-                    .toList() ??
-                Defaults.pathFolders);
+            PrefsKeys.pathFolders, json['pathFolders'] ?? Defaults.pathFolders);
         widget.prefs.setStringList(
-            PrefsKeys.autoFolders,
-            (json['autoFolders'] as List<dynamic>?)
-                    ?.map((e) => e as String)
-                    .toList() ??
-                Defaults.autoFolders);
+            PrefsKeys.autoFolders, json['autoFolders'] ?? Defaults.autoFolders);
       } catch (err, stack) {
         Log.error(
             'An error occurred while loading project settings', err, stack);

@@ -277,17 +277,12 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
     );
   }
 
-  void _simulateAuto() {
+  void _simulateAuto() async {
     Stopwatch s = Stopwatch()..start();
-
-    SimulatedPath p;
-
-    if (_holonomicMode) {
-      p = simulateAutoHolonomic(widget.autoPaths, widget.auto.startingPose);
-    } else {
-      p = simulateAutoDifferential(widget.autoPaths, widget.auto.startingPose);
-    }
-
+    SimulatedPath p = await compute(
+        _holonomicMode ? simulateAutoHolonomic : simulateAutoDifferential,
+        SimulatableAuto(
+            paths: widget.autoPaths, startingPose: widget.auto.startingPose));
     Log.debug('Simulated auto in ${s.elapsedMilliseconds}ms');
     setState(() {
       _simPath = p;

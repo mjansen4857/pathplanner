@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
@@ -573,15 +574,11 @@ class _SplitPathEditorState extends State<SplitPathEditor>
     );
   }
 
-  void _simulatePath() {
+  void _simulatePath() async {
     Stopwatch s = Stopwatch()..start();
-    SimulatedPath p;
-    if (_holonomicMode) {
-      p = simulatePathHolonomic(widget.path);
-    } else {
-      p = simulatePathDifferential(widget.path);
-    }
-
+    SimulatedPath p = await compute(
+        _holonomicMode ? simulatePathHolonomic : simulatePathDifferential,
+        widget.path);
     Log.debug('Simulated path in ${s.elapsedMilliseconds}ms');
     setState(() {
       _simPath = p;

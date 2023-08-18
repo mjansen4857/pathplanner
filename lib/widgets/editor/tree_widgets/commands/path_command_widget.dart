@@ -32,12 +32,15 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
     return Row(
       children: [
         Expanded(
-          child: LayoutBuilder(builder: (context, constraints) {
-            return DropdownMenu<String>(
+          child: SizedBox(
+            child: DropdownMenu<String>(
               label: const Text('Path Name'),
               controller: _controller,
               initialSelection: widget.command.pathName,
-              width: constraints.maxWidth,
+              // TODO: flutter is busted (shocker) and hasn't released
+              // the fix for DropdownMenu width stuff yet even though it was
+              // merged 3 months ago :). Check back later
+              // width: Command.named.isEmpty ? 250 : null,
               dropdownMenuEntries: List.generate(
                 widget.allPathNames.length,
                 (index) => DropdownMenuEntry(
@@ -77,10 +80,9 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
                   _controller.text = widget.command.pathName!;
                 }
               },
-            );
-          }),
+            ),
+          ),
         ),
-        const SizedBox(width: 8),
         Tooltip(
           message: 'Remove Command',
           waitDuration: const Duration(seconds: 1),

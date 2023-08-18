@@ -6,8 +6,7 @@ import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 
 abstract class Command {
-  // TODO: remove placeholder when dropdown fixed
-  static Set<String> named = {'placeholder_cmd'};
+  static Set<String> named = {};
 
   final String type;
 

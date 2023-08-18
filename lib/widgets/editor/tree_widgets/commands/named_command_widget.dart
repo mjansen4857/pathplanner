@@ -33,58 +33,61 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
         Row(
           children: [
             Expanded(
-              child: DropdownMenu<String>(
-                label: const Text('Command Name'),
-                initialSelection: widget.command.name,
-                controller: _controller,
-                // TODO: flutter is busted (shocker) and hasn't released
-                // the fix for DropdownMenu width stuff yet even though it was
-                // merged 3 months ago :). Check back later
-                // width: Command.named.isEmpty ? 250 : null,
-                dropdownMenuEntries: List.generate(
-                  Command.named.length,
-                  (index) => DropdownMenuEntry(
-                    value: Command.named.elementAt(index),
-                    label: Command.named.elementAt(index),
-                  ),
-                ),
-                inputDecorationTheme: InputDecorationTheme(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                  isDense: true,
-                  constraints: const BoxConstraints(
-                    maxHeight: 42,
-                  ),
-                ),
-                onSelected: (value) {
-                  FocusScopeNode currentScope = FocusScope.of(context);
-                  if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-                    FocusManager.instance.primaryFocus!.unfocus();
-                  }
-
-                  String text = _controller.text;
-                  widget.undoStack.add(Change(
-                    widget.command.name,
-                    () {
-                      if (value != null) {
-                        widget.command.name = value;
-                      } else if (text.isNotEmpty) {
-                        widget.command.name = text;
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return DropdownMenu<String>(
+                    label: const Text('Command Name'),
+                    initialSelection: widget.command.name,
+                    controller: _controller,
+                    width: constraints.maxWidth,
+                    dropdownMenuEntries: List.generate(
+                      Command.named.length,
+                      (index) => DropdownMenuEntry(
+                        value: Command.named.elementAt(index),
+                        label: Command.named.elementAt(index),
+                      ),
+                    ),
+                    inputDecorationTheme: InputDecorationTheme(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                      isDense: true,
+                      constraints: const BoxConstraints(
+                        maxHeight: 42,
+                      ),
+                    ),
+                    onSelected: (value) {
+                      FocusScopeNode currentScope = FocusScope.of(context);
+                      if (!currentScope.hasPrimaryFocus &&
+                          currentScope.hasFocus) {
+                        FocusManager.instance.primaryFocus!.unfocus();
                       }
-                      _controller.text = text;
-                      widget.onUpdated?.call();
+
+                      String text = _controller.text;
+                      widget.undoStack.add(Change(
+                        widget.command.name,
+                        () {
+                          if (value != null) {
+                            widget.command.name = value;
+                          } else if (text.isNotEmpty) {
+                            widget.command.name = text;
+                          }
+                          _controller.text = text;
+                          widget.onUpdated?.call();
+                        },
+                        (oldValue) {
+                          widget.command.name = oldValue;
+                          _controller.text = oldValue ?? '';
+                          widget.onUpdated?.call();
+                        },
+                      ));
                     },
-                    (oldValue) {
-                      widget.command.name = oldValue;
-                      _controller.text = oldValue ?? '';
-                      widget.onUpdated?.call();
-                    },
-                  ));
+                  );
                 },
               ),
             ),
+            const SizedBox(width: 8),
             Tooltip(
               message: 'Remove Command',
               waitDuration: const Duration(seconds: 1),

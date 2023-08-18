@@ -28,7 +28,7 @@ PathPlanner is a motion profile generator for FRC robots created by team 3015. T
 Make sure you [install PathPlannerLib](https://github.com/mjansen4857/pathplanner/wiki/PathPlannerLib:-Installing) to generate your paths. Paths can be pre-generated as CSV or WPILib JSON files, but the vendor library is much easier to use and supports all of the features of the GUI.
 
 ## How to build manually:
-* [Install Flutter](https://flutter.dev/docs/get-started/install) (this project currently uses v3.3.9)
+* [Install Flutter](https://flutter.dev/docs/get-started/install) (this project currently uses v3.13.0)
 * Open the project in a terminal and run the following command: `flutter build <PLATFORM>`
    * Valid platforms are:
       * windows

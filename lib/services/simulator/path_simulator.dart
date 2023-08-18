@@ -12,29 +12,18 @@ import 'package:pathplanner/util/pose2d.dart';
 const num simulationPeriod = 0.02;
 const num minLookahead = 0.5;
 
-class SimulatableAuto {
-  final List<PathPlannerPath> paths;
-  final Pose2d? startingPose;
-
-  const SimulatableAuto({
-    required this.paths,
-    this.startingPose,
-  });
-}
-
-Future<SimulatedPath> simulateAutoHolonomic(SimulatableAuto auto) async {
+SimulatedPath simulateAutoHolonomic(
+    List<PathPlannerPath> paths, Pose2d? startingPose) {
   SimulatedPath sim = SimulatedPath();
 
-  if (auto.paths.isNotEmpty) {
-    SimulatedPath path =
-        await _simulatePath(auto.paths.first, auto.startingPose, null, true);
+  if (paths.isNotEmpty) {
+    SimulatedPath path = _simulatePath(paths.first, startingPose, null, true);
 
     sim.runtime += path.runtime;
     sim.pathStates.addAll(path.pathStates);
 
-    for (int i = 1; i < auto.paths.length; i++) {
-      path = await _simulatePath(
-          auto.paths[i], sim.pathStates.last, path.endSpeeds, true);
+    for (int i = 1; i < paths.length; i++) {
+      path = _simulatePath(paths[i], sim.pathStates.last, path.endSpeeds, true);
 
       sim.runtime += path.runtime;
       sim.pathStates.addAll(path.pathStates);
@@ -46,19 +35,19 @@ Future<SimulatedPath> simulateAutoHolonomic(SimulatableAuto auto) async {
   return sim;
 }
 
-Future<SimulatedPath> simulateAutoDifferential(SimulatableAuto auto) async {
+SimulatedPath simulateAutoDifferential(
+    List<PathPlannerPath> paths, Pose2d? startingPose) {
   SimulatedPath sim = SimulatedPath();
 
-  if (auto.paths.isNotEmpty) {
-    SimulatedPath path =
-        await _simulatePath(auto.paths.first, auto.startingPose, null, false);
+  if (paths.isNotEmpty) {
+    SimulatedPath path = _simulatePath(paths.first, startingPose, null, false);
 
     sim.runtime += path.runtime;
     sim.pathStates.addAll(path.pathStates);
 
-    for (int i = 1; i < auto.paths.length; i++) {
-      path = await _simulatePath(
-          auto.paths[i], sim.pathStates.last, path.endSpeeds, false);
+    for (int i = 1; i < paths.length; i++) {
+      path =
+          _simulatePath(paths[i], sim.pathStates.last, path.endSpeeds, false);
 
       sim.runtime += path.runtime;
       sim.pathStates.addAll(path.pathStates);
@@ -70,16 +59,16 @@ Future<SimulatedPath> simulateAutoDifferential(SimulatableAuto auto) async {
   return sim;
 }
 
-Future<SimulatedPath> simulatePathHolonomic(PathPlannerPath path) {
+SimulatedPath simulatePathHolonomic(PathPlannerPath path) {
   return _simulatePath(path, null, null, true);
 }
 
-Future<SimulatedPath> simulatePathDifferential(PathPlannerPath path) {
+SimulatedPath simulatePathDifferential(PathPlannerPath path) {
   return _simulatePath(path, null, null, false);
 }
 
-Future<SimulatedPath> _simulatePath(PathPlannerPath path, Pose2d? startingPose,
-    ChassisSpeeds? startingSpeeds, bool holonomic) async {
+SimulatedPath _simulatePath(PathPlannerPath path, Pose2d? startingPose,
+    ChassisSpeeds? startingSpeeds, bool holonomic) {
   SimulatedPath sim = SimulatedPath();
 
   if (path.pathPoints.length < 2) {

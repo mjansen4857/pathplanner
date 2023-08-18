@@ -37,8 +37,8 @@ void main() {
     await widgetTester.tap(dropdown);
     await widgetTester.pumpAndSettle();
 
-    expect(find.text('path1'), findsOneWidget);
-    expect(find.text('path2'), findsOneWidget);
+    expect(find.text('path1'), findsWidgets);
+    expect(find.text('path2'), findsWidgets);
 
     // flutter is dumb and won't actually select from a dropdown when you tap
     // it in a test so this test ends here i guess

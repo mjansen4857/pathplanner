@@ -176,7 +176,7 @@ void main() {
     var gesture = await widgetTester.startGesture(tapLocation,
         kind: PointerDeviceKind.mouse);
 
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.waypointsExpanded, true);
     expect(find.byType(NumberTextField), findsWidgets);
@@ -185,7 +185,7 @@ void main() {
     await widgetTester.pump();
     gesture = await widgetTester.startGesture(const Offset(100, 100),
         kind: PointerDeviceKind.mouse);
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(find.byType(NumberTextField), findsNothing);
   });
@@ -212,14 +212,14 @@ void main() {
     await widgetTester.tapAt(tapLocation);
     await widgetTester.pump(kDoubleTapMinTime);
     await widgetTester.tapAt(tapLocation);
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.waypoints.length, 4);
     expect(path.waypoints.last.anchor.x, closeTo(1.0, 0.05));
     expect(path.waypoints.last.anchor.y, closeTo(1.0, 0.05));
 
     undoStack.undo();
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.waypoints.length, 3);
   });
@@ -259,13 +259,13 @@ void main() {
     }
 
     await gesture.up();
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.waypoints.last.anchor.x, closeTo(startX + 1.0, 0.05));
     expect(path.waypoints.last.anchor.y, closeTo(startY, 0.05));
 
     undoStack.undo();
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.waypoints.last.anchor.x, closeTo(startX, 0.05));
     expect(path.waypoints.last.anchor.y, closeTo(startY, 0.05));
@@ -306,12 +306,12 @@ void main() {
     }
 
     await gesture.up();
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.rotationTargets[0].rotationDegrees, closeTo(90, 1.0));
 
     undoStack.undo();
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.rotationTargets[0].rotationDegrees, closeTo(0, 0.1));
   });
@@ -350,12 +350,12 @@ void main() {
     }
 
     await gesture.up();
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.goalEndState.rotation, closeTo(90, 1.0));
 
     undoStack.undo();
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.goalEndState.rotation, closeTo(0, 0.1));
   });
@@ -383,12 +383,12 @@ void main() {
     PathPlannerPath oldPath = path.duplicate(path.name);
 
     await widgetTester.tap(deleteButtons.at(1));
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.waypoints.length, 2);
 
     undoStack.undo();
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(path.waypoints.length, 3);
     expect(path, oldPath);
@@ -453,7 +453,7 @@ void main() {
     await widgetTester.pump();
 
     await widgetTester.tap(zoneCard);
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     // nothing to test here, just covering the hover/select code
   });
@@ -490,7 +490,7 @@ void main() {
     await widgetTester.pump();
 
     await widgetTester.tap(targetCard);
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     // nothing to test here, just covering the hover/select code
   });
@@ -527,7 +527,7 @@ void main() {
     await widgetTester.pump();
 
     await widgetTester.tap(markerCard);
-    await widgetTester.pumpAndSettle();
+    await widgetTester.pump(const Duration(seconds: 1));
 
     // nothing to test here, just covering the hover/select code
   });

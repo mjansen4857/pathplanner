@@ -206,26 +206,32 @@ class _SettingsDialogState extends State<SettingsDialog> {
       TextInputFormatter? formatter) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
+    final controller = TextEditingController(text: text)
+      ..selection =
+          TextSelection.fromPosition(TextPosition(offset: text.length));
+
     return SizedBox(
       height: 42,
-      child: TextField(
-        onSubmitted: (val) {
-          if (onSubmitted != null && val.isNotEmpty) {
-            onSubmitted.call(val);
+      child: Focus(
+        skipTraversal: true,
+        onFocusChange: (hasFocus) {
+          if (!hasFocus) {
+            if (onSubmitted != null && controller.text.isNotEmpty) {
+              onSubmitted.call(controller.text);
+            }
           }
-          _unfocus(context);
         },
-        controller: TextEditingController(text: text)
-          ..selection =
-              TextSelection.fromPosition(TextPosition(offset: text.length)),
-        inputFormatters: [
-          if (formatter != null) formatter,
-        ],
-        style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        child: TextField(
+          controller: controller,
+          inputFormatters: [
+            if (formatter != null) formatter,
+          ],
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+            labelText: label,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
         ),
       ),
     );
@@ -427,13 +433,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
         ),
       ],
     );
-  }
-
-  void _unfocus(BuildContext context) {
-    FocusScopeNode currentScope = FocusScope.of(context);
-    if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-      FocusManager.instance.primaryFocus!.unfocus();
-    }
   }
 
   void _showFieldImportDialog(BuildContext context) {

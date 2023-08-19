@@ -82,11 +82,11 @@ class _WaypointsTreeState extends State<WaypointsTree> {
   void _setSelectedWaypoint(int? waypointIdx) {
     _ignoreExpansionFromTile = true;
 
-    if (_selectedWaypoint != null) {
+    if (_selectedWaypoint != null && widget.path.waypointsExpanded) {
       _controllers[_selectedWaypoint!].collapse();
     }
     _selectedWaypoint = waypointIdx;
-    if (waypointIdx != null) {
+    if (waypointIdx != null && widget.path.waypointsExpanded) {
       _controllers[waypointIdx].expand();
     }
     _ignoreExpansionFromTile = false;
@@ -347,8 +347,5 @@ class WaypointsTreeController {
   void setSelectedWaypoint(int? waypointIdx) {
     assert(_state != null);
     _state!._setSelectedWaypoint(waypointIdx);
-    if (waypointIdx != null) {
-      _state!._expansionController.expand();
-    }
   }
 }

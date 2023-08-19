@@ -222,11 +222,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
           }
         },
         child: TextField(
-          onSubmitted: (val) {
-            if (onSubmitted != null && val.isNotEmpty) {
-              onSubmitted.call(val);
-            }
-          },
           controller: controller,
           inputFormatters: [
             if (formatter != null) formatter,

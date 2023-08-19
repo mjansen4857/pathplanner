@@ -37,7 +37,6 @@ class NumberTextField extends StatelessWidget {
         },
         child: TextField(
           enabled: enabled,
-          onSubmitted: _onSubmitted,
           controller: _controller,
           inputFormatters: [
             FilteringTextInputFormatter.allow(

@@ -6,7 +6,6 @@ import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart'
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
-import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:undo/undo.dart';
 

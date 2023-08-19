@@ -4,8 +4,11 @@ import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EditorSettingsTree extends StatefulWidget {
+  final bool initiallyExpanded;
+
   const EditorSettingsTree({
     super.key,
+    this.initiallyExpanded = false,
   });
 
   @override
@@ -32,6 +35,7 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
   @override
   Widget build(BuildContext context) {
     return TreeCardNode(
+      initiallyExpanded: widget.initiallyExpanded,
       title: const Text('Editor Settings'),
       children: [
         Row(
@@ -53,7 +57,7 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
                 left: 4.0,
               ),
               child: Text(
-                'Display Sim Path',
+                'Display Simulated Path',
                 style: TextStyle(fontSize: 15),
               ),
             ),

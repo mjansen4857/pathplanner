@@ -302,7 +302,7 @@ bool _pointEquals(Point a, Point b) {
 }
 
 num _getLookaheadDistance(num currentVel, PathConstraints constraints) {
-  num lookaheadFactor = 1.0 - (0.1 * constraints.maxAcceleration);
+  num lookaheadFactor = 1.0 - (0.12 * constraints.maxAcceleration);
   return max(lookaheadFactor * currentVel, minLookahead);
 }
 

@@ -160,7 +160,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    FilterChip(
+                    FilterChip.elevated(
                       label: const Text('Holonomic Mode'),
                       selected: _holonomicMode,
                       onSelected: (value) {
@@ -171,7 +171,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         widget.onSettingsChanged();
                       },
                     ),
-                    FilterChip(
+                    FilterChip.elevated(
                       label: const Text('Hot Reload'),
                       selected: _hotReload,
                       onSelected: (value) {

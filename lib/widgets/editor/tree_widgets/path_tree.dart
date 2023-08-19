@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/constraint_zones_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
@@ -143,6 +144,8 @@ class _PathTreeState extends State<PathTree> {
                   initiallySelectedZone: widget.initiallySelectedZone,
                   undoStack: widget.undoStack,
                 ),
+                const Divider(),
+                const EditorSettingsTree(),
               ],
             ),
           ),

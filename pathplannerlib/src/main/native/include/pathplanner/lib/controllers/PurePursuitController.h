@@ -86,7 +86,7 @@ public:
 			units::meters_per_second_t currentVel,
 			PathConstraints constraints) {
 		double lookaheadFactor = 1.0
-				- (0.1 * constraints.getMaxAcceleration()());
+				- (0.12 * constraints.getMaxAcceleration()());
 		return units::meter_t(
 				std::max(lookaheadFactor * currentVel(), MIN_LOOKAHEAD()));
 	}

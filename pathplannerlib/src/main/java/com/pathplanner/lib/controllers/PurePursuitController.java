@@ -290,7 +290,7 @@ public class PurePursuitController {
    * @return the lookahead distance for the Pure Pursuit algorithm
    */
   public static double getLookaheadDistance(double currentVel, PathConstraints constraints) {
-    double lookaheadFactor = 1.0 - (0.1 * constraints.getMaxAccelerationMpsSq());
+    double lookaheadFactor = 1.0 - (0.12 * constraints.getMaxAccelerationMpsSq());
     return Math.max(lookaheadFactor * currentVel, MIN_LOOKAHEAD_DISTANCE);
   }
 

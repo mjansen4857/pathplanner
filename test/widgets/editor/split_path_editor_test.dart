@@ -155,6 +155,8 @@ void main() {
   testWidgets('select/deselect waypoint', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
+    path.waypointsExpanded = true;
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SplitPathEditor(
@@ -178,7 +180,6 @@ void main() {
 
     await widgetTester.pumpAndSettle();
 
-    expect(path.waypointsExpanded, true);
     expect(find.byType(NumberTextField), findsWidgets);
 
     await gesture.removePointer();

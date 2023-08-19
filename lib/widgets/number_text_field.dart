@@ -9,14 +9,18 @@ class NumberTextField extends StatelessWidget {
   final bool enabled;
   final ValueChanged<num?>? onSubmitted;
 
-  const NumberTextField({
+  late final TextEditingController _controller;
+
+  NumberTextField({
     super.key,
     required this.initialText,
     required this.label,
     this.height = 42,
     this.onSubmitted,
     this.enabled = true,
-  });
+  }) {
+    _controller = _getController(initialText);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,33 +28,39 @@ class NumberTextField extends StatelessWidget {
 
     return SizedBox(
       height: height,
-      child: TextField(
-        enabled: enabled,
-        onSubmitted: (val) {
-          if (val.isEmpty) {
-            onSubmitted?.call(null);
-          } else {
-            num parsed = val.interpret();
-            onSubmitted?.call(parsed);
-          }
-          FocusScopeNode currentScope = FocusScope.of(context);
-          if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-            FocusManager.instance.primaryFocus!.unfocus();
+      child: Focus(
+        skipTraversal: true,
+        onFocusChange: (hasFocus) {
+          if (!hasFocus) {
+            _onSubmitted(_controller.text);
           }
         },
-        controller: _getController(initialText),
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(
-              RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
-        ],
-        style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        child: TextField(
+          enabled: enabled,
+          onSubmitted: _onSubmitted,
+          controller: _controller,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(
+                RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
+          ],
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+            labelText: label,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
         ),
       ),
     );
+  }
+
+  void _onSubmitted(String val) {
+    if (val.isEmpty) {
+      onSubmitted?.call(null);
+    } else {
+      num parsed = val.interpret();
+      onSubmitted?.call(parsed);
+    }
   }
 
   TextEditingController _getController(String text) {

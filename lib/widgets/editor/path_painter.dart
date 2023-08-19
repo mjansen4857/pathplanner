@@ -5,8 +5,10 @@ import 'package:pathplanner/services/simulator/path_simulator.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PathPainter extends CustomPainter {
   final List<PathPlannerPath> paths;
@@ -21,21 +23,21 @@ class PathPainter extends CustomPainter {
   final int? selectedRotTarget;
   final int? hoveredMarker;
   final int? selectedMarker;
-  final Size robotSize;
   final Pose2d? startingPose;
   final SimulatedPath? simulatedPath;
   Animation<num>? previewTime;
   final Color? previewColor;
-  final bool holonomicMode;
+  final SharedPreferences prefs;
 
+  late Size robotSize;
   late num robotRadius;
+  late bool holonomicMode;
 
   static double scale = 1;
 
   PathPainter({
     required this.paths,
     required this.fieldImage,
-    this.holonomicMode = true,
     this.simple = false,
     this.hoveredPath,
     this.hoveredWaypoint,
@@ -46,15 +48,23 @@ class PathPainter extends CustomPainter {
     this.selectedRotTarget,
     this.hoveredMarker,
     this.selectedMarker,
-    required this.robotSize,
     this.startingPose,
     this.simulatedPath,
     Animation<double>? animation,
     this.previewColor,
+    required this.prefs,
   }) : super(repaint: animation) {
+    double robotWidth =
+        prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
+    double robotLength =
+        prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
+    robotSize = Size(robotWidth, robotLength);
     robotRadius = sqrt((robotSize.width * robotSize.width) +
             (robotSize.height * robotSize.height)) /
         2.0;
+
+    holonomicMode =
+        prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
 
     if (simulatedPath != null && animation != null) {
       previewTime =
@@ -65,6 +75,10 @@ class PathPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     scale = size.width / fieldImage.defaultSize.width;
+
+    if (prefs.getBool(PrefsKeys.displaySimPath) ?? Defaults.displaySimPath) {
+      _paintSimPath(canvas);
+    }
 
     for (int i = 0; i < paths.length; i++) {
       if (!simple) {
@@ -143,6 +157,28 @@ class PathPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true;
+  }
+
+  void _paintSimPath(Canvas canvas) {
+    if (simulatedPath != null && simulatedPath!.pathStates.isNotEmpty) {
+      var paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..color = previewColor ?? Colors.grey
+        ..strokeWidth = 2;
+
+      Path p = Path();
+      Offset start = PathPainterUtil.pointToPixelOffset(
+          simulatedPath!.pathStates[0].position, scale, fieldImage);
+      p.moveTo(start.dx, start.dy);
+
+      for (int i = 1; i < simulatedPath!.pathStates.length; i++) {
+        Offset pos = PathPainterUtil.pointToPixelOffset(
+            simulatedPath!.pathStates[i].position, scale, fieldImage);
+        p.lineTo(pos.dx, pos.dy);
+      }
+
+      canvas.drawPath(p, paint);
+    }
   }
 
   void _paintMarkers(PathPlannerPath path, Canvas canvas) {

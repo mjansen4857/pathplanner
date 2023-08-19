@@ -1169,9 +1169,10 @@ class _ProjectPageState extends State<ProjectPage> {
         _paths.sort((a, b) => b.name.compareTo(a.name));
         _pathFolders.sort((a, b) => b.compareTo(a));
       case 'nameAsc':
-      default:
         _paths.sort((a, b) => a.name.compareTo(b.name));
         _pathFolders.sort((a, b) => a.compareTo(b));
+      default:
+        throw FormatException('Invalid sort value', sortOption);
     }
   }
 
@@ -1181,9 +1182,10 @@ class _ProjectPageState extends State<ProjectPage> {
         _autos.sort((a, b) => b.name.compareTo(a.name));
         _autoFolders.sort((a, b) => b.compareTo(a));
       case 'nameAsc':
-      default:
         _autos.sort((a, b) => a.name.compareTo(b.name));
         _autoFolders.sort((a, b) => a.compareTo(b));
+      default:
+        throw FormatException('Invalid sort value', sortOption);
     }
   }
 
@@ -1201,12 +1203,11 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Widget _sortLabel(String optionValue) {
-    switch (optionValue) {
-      case 'nameDesc':
-        return const Text('Name Descending', style: TextStyle(fontSize: 16));
-      case 'nameAsc':
-      default:
-        return const Text('Name Ascending', style: TextStyle(fontSize: 16));
-    }
+    return switch (optionValue) {
+      'nameDesc' =>
+        const Text('Name Descending', style: TextStyle(fontSize: 16)),
+      'nameAsc' => const Text('Name Ascending', style: TextStyle(fontSize: 16)),
+      _ => throw FormatException('Invalid sort value', optionValue),
+    };
   }
 }

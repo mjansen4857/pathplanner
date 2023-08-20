@@ -18,6 +18,7 @@ class EditorSettingsTree extends StatefulWidget {
 class _EditorSettingsTreeState extends State<EditorSettingsTree> {
   late SharedPreferences _prefs;
   bool _displaySimPath = Defaults.displaySimPath;
+  bool _snapToGuidelines = Defaults.snapToGuidelines;
 
   @override
   void initState() {
@@ -28,6 +29,8 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
         _prefs = value;
         _displaySimPath =
             _prefs.getBool(PrefsKeys.displaySimPath) ?? Defaults.displaySimPath;
+        _snapToGuidelines = _prefs.getBool(PrefsKeys.snapToGuidelines) ??
+            Defaults.snapToGuidelines;
       });
     });
   }
@@ -58,6 +61,31 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
               ),
               child: Text(
                 'Display Simulated Path',
+                style: TextStyle(fontSize: 15),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Checkbox(
+              value: _snapToGuidelines,
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _snapToGuidelines = val;
+                    _prefs.setBool(PrefsKeys.snapToGuidelines, val);
+                  });
+                }
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.only(
+                bottom: 3.0,
+                left: 4.0,
+              ),
+              child: Text(
+                'Snap To Guidelines',
                 style: TextStyle(fontSize: 15),
               ),
             ),

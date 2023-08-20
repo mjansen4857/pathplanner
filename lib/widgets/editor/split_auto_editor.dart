@@ -136,19 +136,36 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               },
               onPanUpdate: (details) {
                 if (_draggingStartPos && widget.auto.startingPose != null) {
-                  double x = _xPixelsToMeters(min(
+                  num targetX = _xPixelsToMeters(min(
                       88 +
                           (widget.fieldImage.defaultSize.width *
                               PathPainter.scale),
                       max(8, details.localPosition.dx)));
-                  double y = _yPixelsToMeters(min(
+                  num targetY = _yPixelsToMeters(min(
                       88 +
                           (widget.fieldImage.defaultSize.height *
                               PathPainter.scale),
                       max(8, details.localPosition.dy)));
 
+                  if (widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
+                      Defaults.snapToGuidelines) {
+                    if (widget.autoPaths.isNotEmpty &&
+                        (widget.autoPaths[0].waypoints[0].anchor.x - targetX)
+                                .abs() <
+                            0.25) {
+                      targetX = widget.autoPaths[0].waypoints[0].anchor.x;
+                    }
+                    if (widget.autoPaths.isNotEmpty &&
+                        (widget.autoPaths[0].waypoints[0].anchor.y - targetY)
+                                .abs() <
+                            0.25) {
+                      targetY = widget.autoPaths[0].waypoints[0].anchor.y;
+                    }
+                  }
+
                   setState(() {
-                    widget.auto.startingPose!.position = Point(x, y);
+                    widget.auto.startingPose!.position =
+                        Point(targetX, targetY);
                   });
                 } else if (_draggingStartRot &&
                     widget.auto.startingPose != null) {

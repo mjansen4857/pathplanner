@@ -72,6 +72,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                   initialText: path.globalConstraints.maxAngularVelocity
                       .toStringAsFixed(2),
                   label: 'Max Angular Velocity (Deg/S)',
+                  arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
                     if (value != null && value > 0) {
                       _addChange(() =>
@@ -86,6 +87,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                   initialText: path.globalConstraints.maxAngularAcceleration
                       .toStringAsFixed(2),
                   label: 'Max Angular Acceleration (Deg/S²)',
+                  arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
                     if (value != null && value > 0) {
                       _addChange(() => path

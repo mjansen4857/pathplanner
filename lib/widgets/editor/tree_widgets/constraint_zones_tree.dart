@@ -278,6 +278,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                       .maxAngularVelocity
                       .toStringAsFixed(2),
                   label: 'Max Angular Velocity (Deg/S)',
+                  arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
                     if (value != null && value > 0) {
                       _addConstraintsChange(
@@ -297,6 +298,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                       .maxAngularAcceleration
                       .toStringAsFixed(2),
                   label: 'Max Angular Acceleration (Deg/S²)',
+                  arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
                     if (value != null && value > 0) {
                       _addConstraintsChange(

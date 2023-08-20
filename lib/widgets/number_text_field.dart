@@ -8,6 +8,7 @@ class NumberTextField extends StatelessWidget {
   final double height;
   final bool enabled;
   final ValueChanged<num?>? onSubmitted;
+  final num arrowKeyIncrement;
 
   late final TextEditingController _controller;
 
@@ -18,6 +19,7 @@ class NumberTextField extends StatelessWidget {
     this.height = 42,
     this.onSubmitted,
     this.enabled = true,
+    this.arrowKeyIncrement = 0.01,
   }) {
     _controller = _getController(initialText);
   }
@@ -28,25 +30,36 @@ class NumberTextField extends StatelessWidget {
 
     return SizedBox(
       height: height,
-      child: Focus(
-        skipTraversal: true,
-        onFocusChange: (hasFocus) {
-          if (!hasFocus) {
-            _onSubmitted(_controller.text);
-          }
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.arrowUp): () {
+            _submitIncrement(_controller.text);
+          },
+          const SingleActivator(LogicalKeyboardKey.arrowDown): () {
+            _submitDecrement(_controller.text);
+          },
         },
-        child: TextField(
-          enabled: enabled,
-          controller: _controller,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(
-                RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
-          ],
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-            labelText: label,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        child: Focus(
+          skipTraversal: true,
+          onFocusChange: (hasFocus) {
+            if (!hasFocus) {
+              _onSubmitted(_controller.text);
+            }
+          },
+          child: TextField(
+            enabled: enabled,
+            controller: _controller,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(
+                  RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
+            ],
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+              labelText: label,
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            ),
           ),
         ),
       ),
@@ -59,6 +72,20 @@ class NumberTextField extends StatelessWidget {
     } else {
       num parsed = val.interpret();
       onSubmitted?.call(parsed);
+    }
+  }
+
+  void _submitIncrement(String val) {
+    if (val.isNotEmpty) {
+      num parsed = val.interpret();
+      onSubmitted?.call(parsed + arrowKeyIncrement);
+    }
+  }
+
+  void _submitDecrement(String val) {
+    if (val.isNotEmpty) {
+      num parsed = val.interpret();
+      onSubmitted?.call(parsed - arrowKeyIncrement);
     }
   }
 

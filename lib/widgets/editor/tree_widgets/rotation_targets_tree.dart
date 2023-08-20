@@ -164,6 +164,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                   initialText:
                       rotations[targetIdx].rotationDegrees.toStringAsFixed(2),
                   label: 'Rotation (Deg)',
+                  arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
                     if (value != null) {
                       num rot = value % 360;

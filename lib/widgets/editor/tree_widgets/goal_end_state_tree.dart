@@ -38,6 +38,7 @@ class GoalEndStateTree extends StatelessWidget {
                 child: NumberTextField(
                   initialText: path.goalEndState.velocity.toStringAsFixed(2),
                   label: 'Velocity (M/S)',
+                  arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
                     if (value != null && value >= 0) {
                       _addChange(() => path.goalEndState.velocity = value);

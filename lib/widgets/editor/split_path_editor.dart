@@ -221,18 +221,49 @@ class _SplitPathEditorState extends State<SplitPathEditor>
               },
               onPanUpdate: (details) {
                 if (_draggedPoint != null) {
+                  num targetX = _xPixelsToMeters(min(
+                      88 +
+                          (widget.fieldImage.defaultSize.width *
+                              PathPainter.scale),
+                      max(8, details.localPosition.dx)));
+                  num targetY = _yPixelsToMeters(min(
+                      88 +
+                          (widget.fieldImage.defaultSize.height *
+                              PathPainter.scale),
+                      max(8, details.localPosition.dy)));
+
+                  if ((widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
+                          Defaults.snapToGuidelines) &&
+                      _draggedPoint!.isAnchorDragging) {
+                    num? closestX;
+                    num? closestY;
+
+                    for (Waypoint w in waypoints) {
+                      if (w != _draggedPoint) {
+                        if (closestX == null ||
+                            (targetX - w.anchor.x).abs() <
+                                (targetX - closestX).abs()) {
+                          closestX = w.anchor.x;
+                        }
+
+                        if (closestY == null ||
+                            (targetY - w.anchor.y).abs() <
+                                (targetY - closestY).abs()) {
+                          closestY = w.anchor.y;
+                        }
+                      }
+                    }
+
+                    if (closestX != null && (targetX - closestX).abs() < 0.25) {
+                      targetX = closestX;
+                    }
+                    if (closestY != null && (targetY - closestY).abs() < 0.25) {
+                      targetY = closestY;
+                    }
+                  }
+
                   setState(() {
-                    _draggedPoint!.dragUpdate(
-                        _xPixelsToMeters(min(
-                            88 +
-                                (widget.fieldImage.defaultSize.width *
-                                    PathPainter.scale),
-                            max(8, details.localPosition.dx))),
-                        _yPixelsToMeters(min(
-                            88 +
-                                (widget.fieldImage.defaultSize.height *
-                                    PathPainter.scale),
-                            max(8, details.localPosition.dy))));
+                    _draggedPoint!.dragUpdate(targetX, targetY);
                     widget.path.generatePathPoints();
                   });
                 } else if (_draggedRotationIdx != null) {

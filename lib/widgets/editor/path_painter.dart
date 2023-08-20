@@ -25,13 +25,13 @@ class PathPainter extends CustomPainter {
   final int? selectedMarker;
   final Pose2d? startingPose;
   final SimulatedPath? simulatedPath;
-  Animation<num>? previewTime;
   final Color? previewColor;
   final SharedPreferences prefs;
 
   late Size robotSize;
   late num robotRadius;
   late bool holonomicMode;
+  Animation<num>? previewTime;
 
   static double scale = 1;
 
@@ -155,8 +155,8 @@ class PathPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+  bool shouldRepaint(PathPainter oldDelegate) {
+    return true; // This will just be repainted all the time anyways from the animation
   }
 
   void _paintSimPath(Canvas canvas) {

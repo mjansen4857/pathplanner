@@ -1,7 +1,10 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -153,7 +156,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
               ),
             ],
           ),
-        ),
+        ).animate().fade(duration: 300.ms, curve: Curves.easeInOut),
         Expanded(
           flex: 4,
           child: Row(
@@ -244,7 +247,10 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   ],
                 ),
               ),
-            ],
+            ]
+                .animate(interval: 100.ms)
+                .fade(duration: 300.ms, curve: Curves.easeInOut)
+                .slide(begin: const Offset(0, 0.3)),
           ),
         ),
       ],
@@ -455,7 +461,13 @@ class TelemetryPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+  bool shouldRepaint(TelemetryPainter oldDelegate) {
+    return oldDelegate.fieldImage != fieldImage ||
+        oldDelegate.robotSize != robotSize ||
+        oldDelegate.robotPos != robotPos ||
+        oldDelegate.robotRotation != robotRotation ||
+        !listEquals(oldDelegate.currentPath, oldDelegate.currentPath) ||
+        !(const DeepCollectionEquality())
+            .equals(oldDelegate.lookahead, lookahead);
   }
 }

@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -81,8 +82,9 @@ class _Painter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+  bool shouldRepaint(_Painter oldDelegate) {
+    return oldDelegate.fieldImage != fieldImage ||
+        !(const DeepCollectionEquality()).equals(oldDelegate.paths, paths);
   }
 
   void _paintPathPoints(Canvas canvas, double scale, Color baseColor,

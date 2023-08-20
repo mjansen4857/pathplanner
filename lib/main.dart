@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
@@ -27,6 +28,8 @@ void main() async {
         FlutterError.presentError(details);
         Log.error('Flutter Error', details.exception, details.stack);
       };
+
+      Animate.restartOnHotReload = true;
 
       WindowOptions windowOptions = WindowOptions(
         size: const Size(1280, 720),

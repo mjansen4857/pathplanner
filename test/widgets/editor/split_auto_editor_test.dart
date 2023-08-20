@@ -30,21 +30,6 @@ void main() {
 
   setUp(() async {
     var fs = MemoryFileSystem();
-    auto = PathPlannerAuto(
-      name: 'test',
-      sequence: SequentialCommandGroup(
-        commands: [
-          PathCommand(pathName: 'testPath'),
-        ],
-      ),
-      autoDir: '/autos',
-      fs: fs,
-      startingPose: Pose2d(
-        position: const Point(2.0, 2.0),
-        rotation: 0.0,
-      ),
-      folder: null,
-    );
     testPath = PathPlannerPath.defaultPath(
       name: 'testPath',
       pathDir: '/paths',
@@ -59,6 +44,22 @@ void main() {
         command: SequentialCommandGroup(commands: []),
       ),
     ];
+    auto = PathPlannerAuto(
+      name: 'test',
+      sequence: SequentialCommandGroup(
+        commands: [
+          PathCommand(pathName: 'testPath'),
+        ],
+      ),
+      autoDir: '/autos',
+      fs: fs,
+      startingPose: Pose2d(
+        position: Point(testPath.waypoints[0].anchor.x - 0.5,
+            testPath.waypoints[0].anchor.y - 0.5),
+        rotation: 0.0,
+      ),
+      folder: null,
+    );
     undoStack = ChangeStack();
     SharedPreferences.setMockInitialValues({
       PrefsKeys.holonomicMode: true,
@@ -115,6 +116,9 @@ void main() {
       ),
     ));
 
+    num originalX = auto.startingPose!.position.x;
+    num originalY = auto.startingPose!.position.y;
+
     var dragLocation = PathPainterUtil.pointToPixelOffset(
             auto.startingPose!.position,
             PathPainter.scale,
@@ -139,12 +143,12 @@ void main() {
     await widgetTester.pump();
 
     expect(autoChanged, true);
-    expect(auto.startingPose!.position.x, closeTo(3.0, 0.1));
-    expect(auto.startingPose!.position.y, closeTo(1.0, 0.1));
+    expect(auto.startingPose!.position.x, closeTo(originalX + 1.0, 0.1));
+    expect(auto.startingPose!.position.y, closeTo(originalY - 1.0, 0.1));
 
     undoStack.undo();
-    expect(auto.startingPose!.position.x, closeTo(2.0, 0.1));
-    expect(auto.startingPose!.position.y, closeTo(2.0, 0.1));
+    expect(auto.startingPose!.position.x, closeTo(originalX, 0.1));
+    expect(auto.startingPose!.position.y, closeTo(originalY, 0.1));
     autoChanged = false;
 
     var rotGesture = await widgetTester.startGesture(

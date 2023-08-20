@@ -31,7 +31,7 @@ class PathPainter extends CustomPainter {
   late Size robotSize;
   late num robotRadius;
   late bool holonomicMode;
-  late Animation<num>? previewTime;
+  Animation<num>? previewTime;
 
   static double scale = 1;
 

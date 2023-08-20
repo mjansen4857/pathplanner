@@ -51,6 +51,7 @@ dependencies:
   file: ^6.1.4
   collection: ^1.17.1
   nt4: ^1.1.1
+  flutter_animate: ^4.2.0+1
 
 dev_dependencies:
   flutter_test:

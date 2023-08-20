@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 
 void main() {
-  testWidgets('number text field', (widgetTester) async {
+  testWidgets('enter text', (widgetTester) async {
     num? lastSubmit;
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -49,5 +50,63 @@ void main() {
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
     expect(lastSubmit, 25);
+  });
+
+  testWidgets('increment arrow key up', (widgetTester) async {
+    num? lastSubmit;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: NumberTextField(
+          initialText: '0.00',
+          label: 'Test Label',
+          arrowKeyIncrement: 1.0,
+          onSubmitted: (value) {
+            lastSubmit = value;
+          },
+        ),
+      ),
+    ));
+
+    var textField = find.byType(TextField);
+    await widgetTester.tap(textField);
+
+    await widgetTester.pumpAndSettle();
+
+    await simulateKeyDownEvent(LogicalKeyboardKey.arrowUp);
+    await widgetTester.pump();
+    await simulateKeyUpEvent(LogicalKeyboardKey.arrowUp);
+    await widgetTester.pump();
+
+    expect(lastSubmit, closeTo(1.0, 0.01));
+  });
+
+  testWidgets('increment arrow key down', (widgetTester) async {
+    num? lastSubmit;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: NumberTextField(
+          initialText: '0.00',
+          label: 'Test Label',
+          arrowKeyIncrement: 1.0,
+          onSubmitted: (value) {
+            lastSubmit = value;
+          },
+        ),
+      ),
+    ));
+
+    var textField = find.byType(TextField);
+    await widgetTester.tap(textField);
+
+    await widgetTester.pumpAndSettle();
+
+    await simulateKeyDownEvent(LogicalKeyboardKey.arrowDown);
+    await widgetTester.pump();
+    await simulateKeyUpEvent(LogicalKeyboardKey.arrowDown);
+    await widgetTester.pump();
+
+    expect(lastSubmit, closeTo(-1.0, 0.01));
   });
 }

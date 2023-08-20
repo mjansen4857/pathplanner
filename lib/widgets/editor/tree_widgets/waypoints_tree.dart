@@ -197,6 +197,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                 child: NumberTextField(
                   initialText: waypoint.getHeadingDegrees().toStringAsFixed(2),
                   label: 'Heading (Deg)',
+                  arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
                     if (value != null) {
                       Waypoint wRef = waypoints[waypointIdx];

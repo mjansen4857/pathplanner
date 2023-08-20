@@ -17,6 +17,8 @@ class Waypoint {
     this.isLocked = false,
   });
 
+  bool get isAnchorDragging => _isAnchorDragging;
+
   Waypoint.fromJson(Map<String, dynamic> json)
       : this(
           anchor: _pointFromJson(json['anchor'])!,

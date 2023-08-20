@@ -1,6 +1,8 @@
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
@@ -455,7 +457,13 @@ class TelemetryPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return true;
+  bool shouldRepaint(TelemetryPainter oldDelegate) {
+    return oldDelegate.fieldImage != fieldImage ||
+        oldDelegate.robotSize != robotSize ||
+        oldDelegate.robotPos != robotPos ||
+        oldDelegate.robotRotation != robotRotation ||
+        !listEquals(oldDelegate.currentPath, oldDelegate.currentPath) ||
+        !(const DeepCollectionEquality())
+            .equals(oldDelegate.lookahead, lookahead);
   }
 }

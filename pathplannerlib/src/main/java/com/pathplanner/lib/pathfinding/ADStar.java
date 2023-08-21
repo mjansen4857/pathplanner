@@ -28,7 +28,6 @@ public class ADStar {
   public static int NODE_Y = (int) Math.ceil(FIELD_WIDTH / NODE_SIZE);
 
   private static final double EPS = 2.5;
-  private static final int heuristicType = 1; // 0: manhattan, 1: euclidean
 
   private static final HashMap<GridPosition, Double> g = new HashMap<>();
   private static final HashMap<GridPosition, Double> rhs = new HashMap<>();
@@ -129,7 +128,7 @@ public class ADStar {
           }
         }
 
-        if (!needsReset.get() || !doMinor.get() || !doMajor.get()) {
+        if (!needsReset.get() && !doMinor.get() && !doMajor.get()) {
           try {
             Thread.sleep(20);
           } catch (InterruptedException e) {
@@ -365,21 +364,6 @@ public class ADStar {
     List<PathPoint> pathPoints =
         PathPlannerPath.createPath(bezierPoints, Collections.emptyList(), Collections.emptyList());
 
-    // Interpolate points to be at most 0.25 meters apart to help the pure pursuit follower fully
-    // function
-    //    int i = 0;
-    //    while (i < fieldPosPath.size() - 1) {
-    //      Translation2d a = fieldPosPath.get(i);
-    //      Translation2d b = fieldPosPath.get(i + 1);
-    //
-    //      double d = a.getDistance(b);
-    //      if (d > 0.25) {
-    //        fieldPosPath.add(i + 1, a.interpolate(b, 0.5));
-    //      } else {
-    //        i++;
-    //      }
-    //    }
-
     return pathPoints;
   }
 
@@ -585,11 +569,7 @@ public class ADStar {
   }
 
   private static double heuristic(GridPosition sStart, GridPosition sGoal) {
-    if (heuristicType == 0) {
-      return Math.abs(sGoal.x - sStart.x) + Math.abs(sGoal.y - sStart.y);
-    } else {
-      return Math.hypot(sGoal.x - sStart.x, sGoal.y - sStart.y);
-    }
+    return Math.hypot(sGoal.x - sStart.x, sGoal.y - sStart.y);
   }
 
   private static int comparePair(Pair<Double, Double> a, Pair<Double, Double> b) {

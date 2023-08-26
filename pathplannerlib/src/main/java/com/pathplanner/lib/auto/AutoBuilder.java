@@ -1,8 +1,9 @@
 package com.pathplanner.lib.auto;
 
-import com.pathplanner.lib.commands.FollowPathCommand;
+import com.pathplanner.lib.commands.FollowPathHolonomic;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -34,6 +35,8 @@ public class AutoBuilder {
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
    * @param fieldRelativeOutput a consumer for setting the robot's field-relative chassis speeds
+   * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
+   *     path following commands
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -42,6 +45,7 @@ public class AutoBuilder {
       Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
       Consumer<ChassisSpeeds> fieldRelativeOutput,
+      HolonomicPathFollowerConfig config,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -50,12 +54,12 @@ public class AutoBuilder {
 
     AutoBuilder.pathFollowingCommandBuilder =
         (path) ->
-            new FollowPathCommand(
+            new FollowPathHolonomic(
                 path,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
                 fieldRelativeOutput,
-                true,
+                config,
                 driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
@@ -83,10 +87,7 @@ public class AutoBuilder {
           "Auto builder has already been configured. Please only configure auto builder once");
     }
 
-    AutoBuilder.pathFollowingCommandBuilder =
-        (path) ->
-            new FollowPathCommand(
-                path, poseSupplier, speedsSupplier, output, false, driveSubsystem);
+    AutoBuilder.pathFollowingCommandBuilder = (path) -> Commands.none(); // TODO
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;

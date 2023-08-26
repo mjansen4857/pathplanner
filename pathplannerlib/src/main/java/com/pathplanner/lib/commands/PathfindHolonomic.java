@@ -1,59 +1,61 @@
 package com.pathplanner.lib.commands;
 
-import com.pathplanner.lib.controllers.PurePursuitController;
+import com.pathplanner.lib.controllers.HolonomicDriveController;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.PathPoint;
+import com.pathplanner.lib.path.PathPlannerTrajectory;
 import com.pathplanner.lib.pathfinding.ADStar;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class PathfindCommand extends Command {
+public class PathfindHolonomic extends Command {
   private final PathPlannerPath targetPath;
   private final Pose2d targetPose;
   private final GoalEndState goalEndState;
   private final PathConstraints constraints;
-  private final PurePursuitController controller;
+  private final HolonomicDriveController controller;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
-  private final boolean holonomic;
+  private final Timer timer;
 
-  private List<PathPoint> pathPoints;
+  private PathPlannerTrajectory currentTrajectory;
 
   /**
    * Constructs a new PathfindCommand that will generate a path towards the given path.
    *
    * @param targetPath the path to pathfind to
-   * @param targetRotation the target rotation of the robot at the end of the path (only applied to
-   *     holonomic drive trains)
+   * @param targetRotation the target rotation of the robot at the end of the path)
    * @param constraints the path constraints to use while pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
-   * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
-   *     differential)
-   * @param holonomic whether the robot is holonomic or not
+   * @param output a consumer for the output speeds (robot relative)
+   * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
+   *     following
    * @param requirements the subsystems required by this command
    */
-  public PathfindCommand(
+  public PathfindHolonomic(
       PathPlannerPath targetPath,
       Rotation2d targetRotation,
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
-      boolean holonomic,
+      HolonomicPathFollowerConfig config,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -65,15 +67,17 @@ public class PathfindCommand extends Command {
         new GoalEndState(
             this.targetPath.getGlobalConstraints().getMaxVelocityMps(), targetRotation);
     this.constraints = constraints;
-
     this.controller =
-        new PurePursuitController(
-            PathPlannerPath.fromPathPoints(new ArrayList<>(), this.constraints, this.goalEndState),
-            holonomic);
+        new HolonomicDriveController(
+            config.translationConstants,
+            config.rotationConstants,
+            config.period,
+            config.maxModuleSpeed,
+            config.driveBaseRadius);
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
     this.output = output;
-    this.holonomic = holonomic;
+    this.timer = new Timer();
   }
 
   /**
@@ -87,17 +91,18 @@ public class PathfindCommand extends Command {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
-   * @param holonomic whether the robot is holonomic or not
+   * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
+   *     following
    * @param requirements the subsystems required by this command
    */
-  public PathfindCommand(
+  public PathfindHolonomic(
       Pose2d targetPose,
       PathConstraints constraints,
       double goalEndVel,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
-      boolean holonomic,
+      HolonomicPathFollowerConfig config,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -108,13 +113,16 @@ public class PathfindCommand extends Command {
     this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation());
     this.constraints = constraints;
     this.controller =
-        new PurePursuitController(
-            PathPlannerPath.fromPathPoints(new ArrayList<>(), this.constraints, this.goalEndState),
-            holonomic);
+        new HolonomicDriveController(
+            config.translationConstants,
+            config.rotationConstants,
+            config.period,
+            config.maxModuleSpeed,
+            config.driveBaseRadius);
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
     this.output = output;
-    this.holonomic = holonomic;
+    this.timer = new Timer();
   }
 
   /**
@@ -127,16 +135,17 @@ public class PathfindCommand extends Command {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
-   * @param holonomic whether the robot is holonomic or not
+   * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
+   *     following
    * @param requirements the subsystems required by this command
    */
-  public PathfindCommand(
+  public PathfindHolonomic(
       Pose2d targetPose,
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
-      boolean holonomic,
+      HolonomicPathFollowerConfig config,
       Subsystem... requirements) {
     this(
         targetPose,
@@ -145,59 +154,73 @@ public class PathfindCommand extends Command {
         poseSupplier,
         currentRobotRelativeSpeeds,
         output,
-        holonomic,
+        config,
         requirements);
   }
 
   @Override
   public void initialize() {
-    pathPoints = new ArrayList<>();
+    currentTrajectory = null;
 
     Pose2d currentPose = poseSupplier.get();
     PathPlannerLogging.logCurrentPose(currentPose);
 
-    if (holonomic) {
-      // Hack to convert robot relative to field relative speeds
-      controller.reset(
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              speedsSupplier.get(), currentPose.getRotation().unaryMinus()));
-    } else {
-      controller.reset(speedsSupplier.get());
-    }
+    controller.reset(speedsSupplier.get());
 
-    ADStar.setStartPos(currentPose.getTranslation());
-    ADStar.setGoalPos(targetPose.getTranslation());
+    if (ADStar.getGridPos(currentPose.getTranslation())
+        .equals(ADStar.getGridPos(targetPose.getTranslation()))) {
+      this.cancel();
+    } else {
+      ADStar.setStartPos(currentPose.getTranslation());
+      ADStar.setGoalPos(targetPose.getTranslation());
+    }
   }
 
   @Override
   public void execute() {
     Pose2d currentPose = poseSupplier.get();
+    ChassisSpeeds currentSpeeds = speedsSupplier.get();
+
+    PathPlannerLogging.logCurrentPose(currentPose);
+    PPLibTelemetry.setCurrentPose(currentPose);
 
     if (ADStar.isNewPathAvailable()) {
-      pathPoints = ADStar.getCurrentPath();
-      if (!pathPoints.isEmpty()) {
-        pathPoints.get(pathPoints.size() - 1).holonomicRotation = targetPose.getRotation();
+      List<Translation2d> bezierPoints = ADStar.getCurrentPath();
+
+      if (bezierPoints.size() >= 4) {
         PathPlannerPath path =
-            PathPlannerPath.fromPathPoints(pathPoints, constraints, goalEndState);
-        controller.setPath(path);
-        PathPlannerLogging.logActivePath(path);
-        PPLibTelemetry.setCurrentPath(path);
+            new PathPlannerPath(
+                bezierPoints,
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                constraints,
+                goalEndState,
+                false);
+
+        if (currentPose.getTranslation().getDistance(path.getPoint(0).position) <= 0.25) {
+          currentTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
+
+          PathPlannerLogging.logActivePath(path);
+          PPLibTelemetry.setCurrentPath(path);
+        } else {
+          PathPlannerPath replanned = path.replan(currentPose, currentSpeeds, true);
+          currentTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
+
+          PathPlannerLogging.logActivePath(replanned);
+          PPLibTelemetry.setCurrentPath(replanned);
+        }
+
+        timer.reset();
+        timer.start();
       }
     }
 
-    if (!pathPoints.isEmpty()) {
-      ChassisSpeeds currentSpeeds = speedsSupplier.get();
+    if (currentTrajectory != null) {
+      PathPlannerTrajectory.State targetState = currentTrajectory.sample(timer.get());
+      ChassisSpeeds targetSpeeds = controller.calculate(currentPose, targetState);
 
-      if (holonomic) {
-        // Hack to convert robot relative to field relative speeds
-        currentSpeeds =
-            ChassisSpeeds.fromFieldRelativeSpeeds(
-                currentSpeeds, currentPose.getRotation().unaryMinus());
-      }
-
-      ChassisSpeeds targetSpeeds = controller.calculate(currentPose, currentSpeeds);
-
-      PathPlannerLogging.logLookahead(controller.getLastLookahead());
+      PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
       output.accept(targetSpeeds);
 
       double actualVel =
@@ -210,32 +233,31 @@ public class PathfindCommand extends Command {
           commandedVel,
           Units.radiansToDegrees(currentSpeeds.omegaRadiansPerSecond),
           Units.radiansToDegrees(targetSpeeds.omegaRadiansPerSecond));
-      PPLibTelemetry.setPathInaccuracy(controller.getLastInaccuracy());
-      PPLibTelemetry.setCurrentPose(currentPose);
-      PPLibTelemetry.setLookahead(controller.getLastLookahead());
+      PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
+      PPLibTelemetry.setTargetPose(targetState.getTargetHolonomicPose());
     }
   }
 
   @Override
   public boolean isFinished() {
-    Pose2d currentPose = poseSupplier.get();
-
-    ChassisSpeeds currentSpeeds = speedsSupplier.get();
-    if (holonomic) {
-      // Hack to convert robot relative to field relative speeds
-      currentSpeeds =
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              currentSpeeds, currentPose.getRotation().unaryMinus());
-    }
-
     if (targetPath != null) {
+      Pose2d currentPose = poseSupplier.get();
+      ChassisSpeeds currentSpeeds = speedsSupplier.get();
+
+      double currentVel =
+          Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+      double stoppingDistance =
+          Math.pow(currentVel, 2) / (2 * constraints.getMaxAccelerationMpsSq());
+
       return currentPose.getTranslation().getDistance(targetPath.getPoint(0).position)
-          < PurePursuitController.getLookaheadDistance(
-              Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond),
-              targetPath.getConstraintsForPoint(0));
-    } else {
-      return controller.isAtGoal(currentPose, currentSpeeds);
+          <= stoppingDistance;
     }
+
+    if (currentTrajectory != null) {
+      return timer.hasElapsed(currentTrajectory.getTotalTimeSeconds());
+    }
+
+    return false;
   }
 
   @Override
@@ -243,5 +265,6 @@ public class PathfindCommand extends Command {
     if (interrupted || goalEndState.getVelocity() == 0) {
       output.accept(new ChassisSpeeds());
     }
+    timer.stop();
   }
 }

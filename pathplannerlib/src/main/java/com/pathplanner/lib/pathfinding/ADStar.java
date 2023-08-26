@@ -1,7 +1,5 @@
 package com.pathplanner.lib.pathfinding;
 
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.PathPoint;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -53,7 +51,7 @@ public class ADStar {
   private static final AtomicBoolean running = new AtomicBoolean(false);
   private static final AtomicBoolean newPathAvailable = new AtomicBoolean(false);
 
-  private static volatile List<PathPoint> currentPath = new ArrayList<>();
+  private static volatile List<Translation2d> currentPath = new ArrayList<>();
 
   public static void ensureInitialized() {
     if (!running.get()) {
@@ -173,7 +171,7 @@ public class ADStar {
     return newPathAvailable.get();
   }
 
-  public static List<PathPoint> getCurrentPath() {
+  public static List<Translation2d> getCurrentPath() {
     if (!running.get()) {
       DriverStation.reportWarning("ADStar path was retrieved before it was initialized", false);
     }
@@ -187,13 +185,6 @@ public class ADStar {
 
     if (startPos != null && !startPos.equals(sStart)) {
       sStart = startPos;
-
-      for (PathPoint p : currentPath) {
-        if (getGridPos(p.position).equals(sStart)) {
-          needsExtract.set(true);
-          return;
-        }
-      }
 
       doMinor.set(true);
     }
@@ -275,9 +266,9 @@ public class ADStar {
     }
   }
 
-  private static List<PathPoint> extractPath() {
+  private static List<Translation2d> extractPath() {
     if (sGoal.equals(sStart)) {
-      return List.of(new PathPoint(gridPosToTranslation2d(sStart)));
+      return List.of(gridPosToTranslation2d(sStart));
     }
 
     List<GridPosition> path = new ArrayList<>();
@@ -362,25 +353,7 @@ public class ADStar {
             .plus(fieldPosPath.get(fieldPosPath.size() - 1)));
     bezierPoints.add(fieldPosPath.get(fieldPosPath.size() - 1));
 
-    List<PathPoint> pathPoints =
-        PathPlannerPath.createPath(bezierPoints, Collections.emptyList(), Collections.emptyList());
-
-    // Interpolate points to be at most 0.25 meters apart to help the pure pursuit follower fully
-    // function
-    //    int i = 0;
-    //    while (i < fieldPosPath.size() - 1) {
-    //      Translation2d a = fieldPosPath.get(i);
-    //      Translation2d b = fieldPosPath.get(i + 1);
-    //
-    //      double d = a.getDistance(b);
-    //      if (d > 0.25) {
-    //        fieldPosPath.add(i + 1, a.interpolate(b, 0.5));
-    //      } else {
-    //        i++;
-    //      }
-    //    }
-
-    return pathPoints;
+    return bezierPoints;
   }
 
   private static boolean walkable(GridPosition s1, GridPosition s2) {
@@ -601,7 +574,7 @@ public class ADStar {
     }
   }
 
-  private static GridPosition getGridPos(Translation2d pos) {
+  public static GridPosition getGridPos(Translation2d pos) {
     int x = (int) Math.floor(pos.getX() / NODE_SIZE);
     int y = (int) Math.floor(pos.getY() / NODE_SIZE);
 

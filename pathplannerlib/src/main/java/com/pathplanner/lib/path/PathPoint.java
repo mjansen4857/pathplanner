@@ -8,6 +8,7 @@ public class PathPoint {
   public final Translation2d position;
 
   public double distanceAlongPath = 0.0;
+  public double curveRadius = 0.0;
   public double maxV = Double.POSITIVE_INFINITY;
   public Rotation2d holonomicRotation = null;
   public PathConstraints constraints = null;

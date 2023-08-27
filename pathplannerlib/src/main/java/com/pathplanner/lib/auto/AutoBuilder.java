@@ -1,12 +1,17 @@
 package com.pathplanner.lib.auto;
 
 import com.pathplanner.lib.commands.FollowPathHolonomic;
+import com.pathplanner.lib.commands.FollowPathLTV;
+import com.pathplanner.lib.commands.FollowPathRamsete;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -67,7 +72,7 @@ public class AutoBuilder {
   }
 
   /**
-   * Configures the AutoBuilder for a differential drivetrain.
+   * Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
    *
    * @param poseSupplier a supplier for the robot's current pose
    * @param resetPose a consumer for resetting the robot's pose
@@ -76,7 +81,7 @@ public class AutoBuilder {
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
-  public static void configureDifferential(
+  public static void configureRamsete(
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> speedsSupplier,
@@ -87,7 +92,112 @@ public class AutoBuilder {
           "Auto builder has already been configured. Please only configure auto builder once");
     }
 
-    AutoBuilder.pathFollowingCommandBuilder = (path) -> Commands.none(); // TODO
+    AutoBuilder.pathFollowingCommandBuilder =
+        (path) -> new FollowPathRamsete(path, poseSupplier, speedsSupplier, output, driveSubsystem);
+    AutoBuilder.getPose = poseSupplier;
+    AutoBuilder.resetPose = resetPose;
+    AutoBuilder.configured = true;
+  }
+
+  /**
+   * Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param speedsSupplier a supplier for the robot's current chassis speeds
+   * @param output a consumer for setting the robot's chassis speeds
+   * @param b Tuning parameter (b > 0 rad²/m²) for which larger values make convergence more
+   *     aggressive like a proportional term.
+   * @param zeta Tuning parameter (0 rad⁻¹ < zeta < 1 rad⁻¹) for which larger values provide more
+   *     damping in response.
+   * @param driveSubsystem the subsystem for the robot's drive
+   * @throws AutoBuilderException if AutoBuilder has already been configured
+   */
+  public static void configureRamsete(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Supplier<ChassisSpeeds> speedsSupplier,
+      Consumer<ChassisSpeeds> output,
+      double b,
+      double zeta,
+      Subsystem driveSubsystem) {
+    if (configured) {
+      throw new AutoBuilderException(
+          "Auto builder has already been configured. Please only configure auto builder once");
+    }
+
+    AutoBuilder.pathFollowingCommandBuilder =
+        (path) ->
+            new FollowPathRamsete(
+                path, poseSupplier, speedsSupplier, output, b, zeta, driveSubsystem);
+    AutoBuilder.getPose = poseSupplier;
+    AutoBuilder.resetPose = resetPose;
+    AutoBuilder.configured = true;
+  }
+
+  /**
+   * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
+   * follower.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param speedsSupplier a supplier for the robot's current chassis speeds
+   * @param output a consumer for setting the robot's chassis speeds
+   * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param driveSubsystem the subsystem for the robot's drive
+   * @throws AutoBuilderException if AutoBuilder has already been configured
+   */
+  public static void configureLTV(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Supplier<ChassisSpeeds> speedsSupplier,
+      Consumer<ChassisSpeeds> output,
+      double dt,
+      Subsystem driveSubsystem) {
+    if (configured) {
+      throw new AutoBuilderException(
+          "Auto builder has already been configured. Please only configure auto builder once");
+    }
+
+    AutoBuilder.pathFollowingCommandBuilder =
+        (path) -> new FollowPathLTV(path, poseSupplier, speedsSupplier, output, dt, driveSubsystem);
+    AutoBuilder.getPose = poseSupplier;
+    AutoBuilder.resetPose = resetPose;
+    AutoBuilder.configured = true;
+  }
+
+  /**
+   * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
+   * follower.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param speedsSupplier a supplier for the robot's current chassis speeds
+   * @param output a consumer for setting the robot's chassis speeds
+   * @param qelems The maximum desired error tolerance for each state.
+   * @param relems The maximum desired control effort for each input.
+   * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param driveSubsystem the subsystem for the robot's drive
+   * @throws AutoBuilderException if AutoBuilder has already been configured
+   */
+  public static void configureLTV(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Supplier<ChassisSpeeds> speedsSupplier,
+      Consumer<ChassisSpeeds> output,
+      Vector<N3> qelems,
+      Vector<N2> relems,
+      double dt,
+      Subsystem driveSubsystem) {
+    if (configured) {
+      throw new AutoBuilderException(
+          "Auto builder has already been configured. Please only configure auto builder once");
+    }
+
+    AutoBuilder.pathFollowingCommandBuilder =
+        (path) ->
+            new FollowPathLTV(
+                path, poseSupplier, speedsSupplier, output, qelems, relems, dt, driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;

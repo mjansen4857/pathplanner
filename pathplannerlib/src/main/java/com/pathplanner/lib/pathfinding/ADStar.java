@@ -40,7 +40,7 @@ public class ADStar {
   private static volatile GridPosition sStart;
   private static volatile GridPosition sGoal;
 
-  private static volatile double eps;
+  private static double eps;
 
   private static final Thread planningThread = new Thread(ADStar::runThread);
   private static final Object lock = new Object();
@@ -161,7 +161,9 @@ public class ADStar {
         computeOrImprovePath();
         currentPath = extractPath();
         newPathAvailable.set(true);
-      } else {
+      }
+
+      if (eps <= 1.0) {
         doMajor.set(false);
       }
     }

@@ -1,10 +1,7 @@
 package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.controllers.HolonomicDriveController;
-import com.pathplanner.lib.path.GoalEndState;
-import com.pathplanner.lib.path.PathConstraints;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.PathPlannerTrajectory;
+import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.ADStar;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PPLibTelemetry;
@@ -24,7 +21,7 @@ import java.util.function.Supplier;
 
 public class PathfindHolonomic extends Command {
   private final PathPlannerPath targetPath;
-  private final Pose2d targetPose;
+  private Pose2d targetPose;
   private final GoalEndState goalEndState;
   private final PathConstraints constraints;
   private final HolonomicDriveController controller;
@@ -39,7 +36,6 @@ public class PathfindHolonomic extends Command {
    * Constructs a new PathfindHolonomic command that will generate a path towards the given path.
    *
    * @param targetPath the path to pathfind to
-   * @param targetRotation the target rotation of the robot at the end of the path)
    * @param constraints the path constraints to use while pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
@@ -50,7 +46,6 @@ public class PathfindHolonomic extends Command {
    */
   public PathfindHolonomic(
       PathPlannerPath targetPath,
-      Rotation2d targetRotation,
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
@@ -60,6 +55,14 @@ public class PathfindHolonomic extends Command {
     addRequirements(requirements);
 
     ADStar.ensureInitialized();
+
+    Rotation2d targetRotation = new Rotation2d();
+    for (PathPoint p : targetPath.getAllPathPoints()) {
+      if (p.holonomicRotation != null) {
+        targetRotation = p.holonomicRotation;
+        break;
+      }
+    }
 
     this.targetPath = targetPath;
     this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
@@ -163,6 +166,10 @@ public class PathfindHolonomic extends Command {
     PathPlannerLogging.logCurrentPose(currentPose);
 
     controller.reset(speedsSupplier.get());
+
+    if (targetPath != null) {
+      targetPose = new Pose2d(this.targetPath.getPoint(0).position, goalEndState.getRotation());
+    }
 
     if (ADStar.getGridPos(currentPose.getTranslation())
         .equals(ADStar.getGridPos(targetPose.getTranslation()))) {

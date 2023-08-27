@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 
 public class PathfindLTV extends Command {
   private final PathPlannerPath targetPath;
-  private final Translation2d targetPosition;
+  private Translation2d targetPosition;
   private final GoalEndState goalEndState;
   private final PathConstraints constraints;
   private final LTVUnicycleController controller;
@@ -263,6 +263,10 @@ public class PathfindLTV extends Command {
 
     Pose2d currentPose = poseSupplier.get();
     PathPlannerLogging.logCurrentPose(currentPose);
+
+    if (targetPath != null) {
+      targetPosition = this.targetPath.getPoint(0).position;
+    }
 
     if (ADStar.getGridPos(currentPose.getTranslation()).equals(ADStar.getGridPos(targetPosition))) {
       this.cancel();

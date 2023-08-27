@@ -2,10 +2,8 @@ package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -34,18 +32,9 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
       Consumer<ChassisSpeeds> robotRelativeOutput,
       HolonomicPathFollowerConfig config,
       Subsystem... requirements) {
-    Rotation2d targetRotation = null;
-    for (PathPoint p : goalPath.getAllPathPoints()) {
-      if (p.holonomicRotation != null) {
-        targetRotation = p.holonomicRotation;
-        break;
-      }
-    }
-
     addCommands(
         new PathfindHolonomic(
             goalPath,
-            targetRotation,
             pathfindingConstraints,
             poseSupplier,
             currentRobotRelativeSpeeds,

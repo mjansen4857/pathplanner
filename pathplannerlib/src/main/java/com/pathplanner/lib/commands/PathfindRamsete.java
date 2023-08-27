@@ -1,14 +1,13 @@
 package com.pathplanner.lib.commands;
 
-import com.pathplanner.lib.controllers.HolonomicDriveController;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPlannerTrajectory;
 import com.pathplanner.lib.pathfinding.ADStar;
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
+import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -22,12 +21,12 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class PathfindHolonomic extends Command {
+public class PathfindRamsete extends Command {
   private final PathPlannerPath targetPath;
-  private final Pose2d targetPose;
+  private final Translation2d targetPosition;
   private final GoalEndState goalEndState;
   private final PathConstraints constraints;
-  private final HolonomicDriveController controller;
+  private final RamseteController controller;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
@@ -36,122 +35,214 @@ public class PathfindHolonomic extends Command {
   private PathPlannerTrajectory currentTrajectory;
 
   /**
-   * Constructs a new PathfindHolonomic command that will generate a path towards the given path.
+   * Constructs a new PathfindRamsete command that will generate a path towards the given path.
    *
    * @param targetPath the path to pathfind to
-   * @param targetRotation the target rotation of the robot at the end of the path)
    * @param constraints the path constraints to use while pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (robot relative)
-   * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
-   *     following
+   * @param b Tuning parameter (b &gt; 0 rad^2/m^2) for which larger values make convergence more
+   *     aggressive like a proportional term.
+   * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
+   *     more damping in response.
    * @param requirements the subsystems required by this command
    */
-  public PathfindHolonomic(
+  public PathfindRamsete(
       PathPlannerPath targetPath,
-      Rotation2d targetRotation,
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
-      HolonomicPathFollowerConfig config,
+      double b,
+      double zeta,
       Subsystem... requirements) {
     addRequirements(requirements);
 
     ADStar.ensureInitialized();
 
     this.targetPath = targetPath;
-    this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
+    this.targetPosition = this.targetPath.getPoint(0).position;
     this.goalEndState =
         new GoalEndState(
-            this.targetPath.getGlobalConstraints().getMaxVelocityMps(), targetRotation);
+            this.targetPath.getGlobalConstraints().getMaxVelocityMps(), new Rotation2d());
     this.constraints = constraints;
-    this.controller =
-        new HolonomicDriveController(
-            config.translationConstants,
-            config.rotationConstants,
-            config.period,
-            config.maxModuleSpeed,
-            config.driveBaseRadius);
+    this.controller = new RamseteController(b, zeta);
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
     this.output = output;
   }
 
   /**
-   * Constructs a new PathfindHolonomic command that will generate a path towards the given pose.
+   * Constructs a new PathfindRamsete command that will generate a path towards the given path.
    *
-   * @param targetPose the pose to pathfind to
+   * @param targetPath the path to pathfind to
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param output a consumer for the output speeds (robot relative)
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindRamsete(
+      PathPlannerPath targetPath,
+      PathConstraints constraints,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
+      Consumer<ChassisSpeeds> output,
+      Subsystem... requirements) {
+    addRequirements(requirements);
+
+    ADStar.ensureInitialized();
+
+    this.targetPath = targetPath;
+    this.targetPosition = this.targetPath.getPoint(0).position;
+    this.goalEndState =
+        new GoalEndState(
+            this.targetPath.getGlobalConstraints().getMaxVelocityMps(), new Rotation2d());
+    this.constraints = constraints;
+    this.controller = new RamseteController();
+    this.poseSupplier = poseSupplier;
+    this.speedsSupplier = currentRobotRelativeSpeeds;
+    this.output = output;
+  }
+
+  /**
+   * Constructs a new PathfindRamsete command that will generate a path towards the given position.
+   *
+   * @param targetPosition the position to pathfind to
    * @param constraints the path constraints to use while pathfinding
    * @param goalEndVel The goal end velocity when reaching the given pose
    * @param poseSupplier a supplier for the robot's current pose
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
-   * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
-   *     following
+   * @param b Tuning parameter (b &gt; 0 rad^2/m^2) for which larger values make convergence more
+   *     aggressive like a proportional term.
+   * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
+   *     more damping in response.
    * @param requirements the subsystems required by this command
    */
-  public PathfindHolonomic(
-      Pose2d targetPose,
+  public PathfindRamsete(
+      Translation2d targetPosition,
       PathConstraints constraints,
       double goalEndVel,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
-      HolonomicPathFollowerConfig config,
+      double b,
+      double zeta,
       Subsystem... requirements) {
     addRequirements(requirements);
 
     ADStar.ensureInitialized();
 
     this.targetPath = null;
-    this.targetPose = targetPose;
-    this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation());
+    this.targetPosition = targetPosition;
+    this.goalEndState = new GoalEndState(goalEndVel, new Rotation2d());
     this.constraints = constraints;
-    this.controller =
-        new HolonomicDriveController(
-            config.translationConstants,
-            config.rotationConstants,
-            config.period,
-            config.maxModuleSpeed,
-            config.driveBaseRadius);
+    this.controller = new RamseteController(b, zeta);
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = currentRobotRelativeSpeeds;
     this.output = output;
   }
 
   /**
-   * Constructs a new PathfindHolonomic command that will generate a path towards the given pose and
-   * stop.
+   * Constructs a new PathfindRamsete command that will generate a path towards the given position.
    *
-   * @param targetPose the pose to pathfind to
+   * @param targetPosition the position to pathfind to
+   * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the given pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
+   *     differential)
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindRamsete(
+      Translation2d targetPosition,
+      PathConstraints constraints,
+      double goalEndVel,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
+      Consumer<ChassisSpeeds> output,
+      Subsystem... requirements) {
+    addRequirements(requirements);
+
+    ADStar.ensureInitialized();
+
+    this.targetPath = null;
+    this.targetPosition = targetPosition;
+    this.goalEndState = new GoalEndState(goalEndVel, new Rotation2d());
+    this.constraints = constraints;
+    this.controller = new RamseteController();
+    this.poseSupplier = poseSupplier;
+    this.speedsSupplier = currentRobotRelativeSpeeds;
+    this.output = output;
+  }
+
+  /**
+   * Constructs a new PathfindRamsete command that will generate a path towards the given position
+   * and stop.
+   *
+   * @param targetPosition the position to pathfind to
    * @param constraints the path constraints to use while pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
-   * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
-   *     following
+   * @param b Tuning parameter (b &gt; 0 rad^2/m^2) for which larger values make convergence more
+   *     aggressive like a proportional term.
+   * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
+   *     more damping in response.
    * @param requirements the subsystems required by this command
    */
-  public PathfindHolonomic(
-      Pose2d targetPose,
+  public PathfindRamsete(
+      Translation2d targetPosition,
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
-      HolonomicPathFollowerConfig config,
+      double b,
+      double zeta,
       Subsystem... requirements) {
     this(
-        targetPose,
+        targetPosition,
         constraints,
-        0.0,
+        0,
         poseSupplier,
         currentRobotRelativeSpeeds,
         output,
-        config,
+        b,
+        zeta,
+        requirements);
+  }
+
+  /**
+   * Constructs a new PathfindRamsete command that will generate a path towards the given position
+   * and stop.
+   *
+   * @param targetPosition the position to pathfind to
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
+   *     differential)
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindRamsete(
+      Translation2d targetPosition,
+      PathConstraints constraints,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
+      Consumer<ChassisSpeeds> output,
+      Subsystem... requirements) {
+    this(
+        targetPosition,
+        constraints,
+        0,
+        poseSupplier,
+        currentRobotRelativeSpeeds,
+        output,
         requirements);
   }
 
@@ -162,14 +253,11 @@ public class PathfindHolonomic extends Command {
     Pose2d currentPose = poseSupplier.get();
     PathPlannerLogging.logCurrentPose(currentPose);
 
-    controller.reset(speedsSupplier.get());
-
-    if (ADStar.getGridPos(currentPose.getTranslation())
-        .equals(ADStar.getGridPos(targetPose.getTranslation()))) {
+    if (ADStar.getGridPos(currentPose.getTranslation()).equals(ADStar.getGridPos(targetPosition))) {
       this.cancel();
     } else {
       ADStar.setStartPos(currentPose.getTranslation());
-      ADStar.setGoalPos(targetPose.getTranslation());
+      ADStar.setGoalPos(targetPosition);
     }
   }
 
@@ -195,13 +283,14 @@ public class PathfindHolonomic extends Command {
                 goalEndState,
                 false);
 
-        if (currentPose.getTranslation().getDistance(path.getPoint(0).position) <= 0.25) {
+        if (currentPose.getTranslation().getDistance(path.getPoint(0).position) <= 0.25
+            || Math.abs(currentSpeeds.vxMetersPerSecond) > 0.1) {
           currentTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
 
           PathPlannerLogging.logActivePath(path);
           PPLibTelemetry.setCurrentPath(path);
         } else {
-          PathPlannerPath replanned = path.replan(currentPose, currentSpeeds, true);
+          PathPlannerPath replanned = path.replan(currentPose, currentSpeeds, false);
           currentTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
 
           PathPlannerLogging.logActivePath(replanned);
@@ -215,22 +304,23 @@ public class PathfindHolonomic extends Command {
 
     if (currentTrajectory != null) {
       PathPlannerTrajectory.State targetState = currentTrajectory.sample(timer.get());
-      ChassisSpeeds targetSpeeds = controller.calculate(currentPose, targetState);
+      ChassisSpeeds targetSpeeds =
+          controller.calculate(
+              currentPose,
+              targetState.getDifferentialPose(),
+              targetState.velocityMps,
+              targetState.headingAngularVelocityRps);
 
       PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
       output.accept(targetSpeeds);
 
-      double actualVel =
-          Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-      double commandedVel =
-          Math.hypot(targetSpeeds.vxMetersPerSecond, targetSpeeds.vyMetersPerSecond);
-
       PPLibTelemetry.setVelocities(
-          actualVel,
-          commandedVel,
+          currentSpeeds.vxMetersPerSecond,
+          targetSpeeds.vxMetersPerSecond,
           Units.radiansToDegrees(currentSpeeds.omegaRadiansPerSecond),
           Units.radiansToDegrees(targetSpeeds.omegaRadiansPerSecond));
-      PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
+      PPLibTelemetry.setPathInaccuracy(
+          currentPose.getTranslation().getDistance(targetState.positionMeters));
       PPLibTelemetry.setTargetPose(targetState.getTargetHolonomicPose());
     }
   }
@@ -241,8 +331,7 @@ public class PathfindHolonomic extends Command {
       Pose2d currentPose = poseSupplier.get();
       ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-      double currentVel =
-          Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
+      double currentVel = currentSpeeds.vxMetersPerSecond;
       double stoppingDistance =
           Math.pow(currentVel, 2) / (2 * constraints.getMaxAccelerationMpsSq());
 

@@ -106,10 +106,10 @@ public class AutoBuilder {
    * @param resetPose a consumer for resetting the robot's pose
    * @param speedsSupplier a supplier for the robot's current chassis speeds
    * @param output a consumer for setting the robot's chassis speeds
-   * @param b Tuning parameter (b > 0 rad²/m²) for which larger values make convergence more
+   * @param b Tuning parameter (b &gt; 0 rad^2/m^2) for which larger values make convergence more
    *     aggressive like a proportional term.
-   * @param zeta Tuning parameter (0 rad⁻¹ < zeta < 1 rad⁻¹) for which larger values provide more
-   *     damping in response.
+   * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
+   *     more damping in response.
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */

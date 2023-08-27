@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 /** A command group that first pathfinds to a goal path and then follows the goal path. */
 public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
   /**
-   * Constructs a new PathfindThenFollowPath command group.
+   * Constructs a new PathfindThenFollowPathHolonomic command group.
    *
    * @param goalPath the goal path to follow
    * @param pathfindingConstraints the path constraints for pathfinding

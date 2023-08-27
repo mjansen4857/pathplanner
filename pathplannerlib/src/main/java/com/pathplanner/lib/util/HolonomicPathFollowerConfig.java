@@ -65,8 +65,8 @@ public class HolonomicPathFollowerConfig {
    */
   public HolonomicPathFollowerConfig(double maxModuleSpeed, double driveBaseRadius, double period) {
     this(
-        new PIDConstants(5.0, 0.0, 0.0, period),
-        new PIDConstants(3.5, 0.0, 0.0, period),
+        new PIDConstants(5.0, 0.0, 0.0),
+        new PIDConstants(3.5, 0.0, 0.0),
         maxModuleSpeed,
         driveBaseRadius,
         period);

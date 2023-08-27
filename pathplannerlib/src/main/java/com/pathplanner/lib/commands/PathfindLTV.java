@@ -301,7 +301,7 @@ public class PathfindLTV extends Command {
           PathPlannerLogging.logActivePath(path);
           PPLibTelemetry.setCurrentPath(path);
         } else {
-          PathPlannerPath replanned = path.replan(currentPose, currentSpeeds, false);
+          PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
           currentTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
 
           PathPlannerLogging.logActivePath(replanned);

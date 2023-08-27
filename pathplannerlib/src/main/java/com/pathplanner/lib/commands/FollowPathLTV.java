@@ -69,7 +69,7 @@ public class FollowPathLTV extends Command {
     if (currentPose.getTranslation().getDistance(path.getPoint(0).position) >= 0.25
         || Math.hypot(lastCommanded.vxMetersPerSecond, lastCommanded.vyMetersPerSecond) >= 0.25) {
       // Replan path
-      PathPlannerPath replanned = path.replan(currentPose, lastCommanded, false);
+      PathPlannerPath replanned = path.replan(currentPose, lastCommanded);
       generatedTrajectory = new PathPlannerTrajectory(replanned, lastCommanded);
       PathPlannerLogging.logActivePath(replanned);
       PPLibTelemetry.setCurrentPath(replanned);

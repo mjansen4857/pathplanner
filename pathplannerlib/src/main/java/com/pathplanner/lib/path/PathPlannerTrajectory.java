@@ -1,6 +1,7 @@
 package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.util.GeometryUtil;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -88,7 +89,7 @@ public class PathPlannerTrajectory {
 
     // Second pass. Handles linear deceleration
     for (int i = states.size() - 2; i > 1; i--) {
-      PathConstraints constraints = path.getPoint(i).constraints;
+      PathConstraints constraints = states.get(i).constraints;
 
       double v0 = states.get(i + 1).velocityMps;
 
@@ -240,7 +241,7 @@ public class PathPlannerTrajectory {
     // Values only used during generation
     private double deltaPos = 0;
 
-    private State interpolate(State endVal, double t) {
+    public State interpolate(State endVal, double t) {
       State lerpedState = new State();
 
       lerpedState.timeSeconds = GeometryUtil.doubleLerp(timeSeconds, endVal.timeSeconds, t);
@@ -304,8 +305,9 @@ public class PathPlannerTrajectory {
       reversed.timeSeconds = timeSeconds;
       reversed.velocityMps = -velocityMps;
       reversed.accelerationMpsSq = -accelerationMpsSq;
-      reversed.headingAngularVelocityRps = headingAngularVelocityRps;
-      reversed.heading = heading.unaryMinus();
+      reversed.headingAngularVelocityRps = -headingAngularVelocityRps;
+      reversed.heading =
+          Rotation2d.fromDegrees(MathUtil.inputModulus(heading.getDegrees() + 180, -180, 180));
       reversed.targetHolonomicRotation = targetHolonomicRotation;
       reversed.curvatureRadPerMeter = -curvatureRadPerMeter;
       reversed.deltaPos = deltaPos;

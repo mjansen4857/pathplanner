@@ -251,17 +251,19 @@ public class PathPlannerPath {
     if (numPoints() > 0) {
       for (int i = 0; i < allPoints.size(); i++) {
         PathPoint point = allPoints.get(i);
-        PathConstraints constraints =
-            point.constraints != null ? point.constraints : globalConstraints;
+        if (point.constraints == null) {
+          point.constraints = globalConstraints;
+        }
         point.curveRadius = getCurveRadiusAtPoint(i, allPoints);
 
         if (Double.isFinite(point.curveRadius)) {
           point.maxV =
               Math.min(
-                  Math.sqrt(constraints.getMaxAccelerationMpsSq() * Math.abs(point.curveRadius)),
-                  constraints.getMaxVelocityMps());
+                  Math.sqrt(
+                      point.constraints.getMaxAccelerationMpsSq() * Math.abs(point.curveRadius)),
+                  point.constraints.getMaxVelocityMps());
         } else {
-          point.maxV = constraints.getMaxVelocityMps();
+          point.maxV = point.constraints.getMaxVelocityMps();
         }
 
         if (i != 0) {
@@ -373,11 +375,9 @@ public class PathPlannerPath {
    *
    * @param startingPose New starting pose for the replanned path
    * @param currentSpeeds Current chassis speeds of the robot
-   * @param holonomic Does the robot have a holonomic drive base
    * @return The replanned path
    */
-  public PathPlannerPath replan(
-      Pose2d startingPose, ChassisSpeeds currentSpeeds, boolean holonomic) {
+  public PathPlannerPath replan(Pose2d startingPose, ChassisSpeeds currentSpeeds) {
     ChassisSpeeds currentFieldRelativeSpeeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
             currentSpeeds, startingPose.getRotation().unaryMinus());
@@ -391,14 +391,10 @@ public class PathPlannerPath {
       double stoppingDistance =
           Math.pow(linearVel, 2) / (2 * globalConstraints.getMaxAccelerationMpsSq());
 
-      Rotation2d heading = startingPose.getRotation();
-      if (holonomic) {
-        heading =
-            new Rotation2d(
-                Math.atan2(
-                    currentFieldRelativeSpeeds.vyMetersPerSecond,
-                    currentFieldRelativeSpeeds.vxMetersPerSecond));
-      }
+      Rotation2d heading =
+          new Rotation2d(
+              currentFieldRelativeSpeeds.vxMetersPerSecond,
+              currentFieldRelativeSpeeds.vyMetersPerSecond);
       robotNextControl =
           startingPose.getTranslation().plus(new Translation2d(stoppingDistance, heading));
     }

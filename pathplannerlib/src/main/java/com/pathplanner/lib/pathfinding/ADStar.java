@@ -32,10 +32,10 @@ public class ADStar {
   private static final HashMap<GridPosition, Double> rhs = new HashMap<>();
   private static final HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
   private static final HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
-  private static final List<GridPosition> closed = new ArrayList<>();
-  private static final List<GridPosition> staticObstacles = new ArrayList<>();
-  private static final List<GridPosition> dynamicObstacles = new ArrayList<>();
-  private static final List<GridPosition> obstacles = new ArrayList<>();
+  private static final Set<GridPosition> closed = new HashSet<>();
+  private static final Set<GridPosition> staticObstacles = new HashSet<>();
+  private static final Set<GridPosition> dynamicObstacles = new HashSet<>();
+  private static final Set<GridPosition> obstacles = new HashSet<>();
 
   private static volatile GridPosition sStart;
   private static volatile GridPosition sGoal;

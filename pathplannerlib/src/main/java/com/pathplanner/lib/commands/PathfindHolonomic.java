@@ -262,9 +262,12 @@ public class PathfindHolonomic extends Command {
 
   @Override
   public void end(boolean interrupted) {
-    if (interrupted || goalEndState.getVelocity() == 0) {
+    // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
+    // the command to smoothly transition into some auto-alignment routine
+    if (!interrupted && goalEndState.getVelocity() < 0.1) {
       output.accept(new ChassisSpeeds());
     }
+
     timer.stop();
   }
 }

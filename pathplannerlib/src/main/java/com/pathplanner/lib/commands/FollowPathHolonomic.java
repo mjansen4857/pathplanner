@@ -148,7 +148,9 @@ public class FollowPathHolonomic extends Command {
   public void end(boolean interrupted) {
     timer.stop();
 
-    if (interrupted || Math.abs(generatedTrajectory.getEndState().velocityMps) < 0.1) {
+    // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
+    // the command to smoothly transition into some auto-alignment routine
+    if (!interrupted && path.getGoalEndState().getVelocity() < 0.1) {
       output.accept(new ChassisSpeeds());
     }
   }

@@ -47,9 +47,13 @@ public:
 	 *
 	 * @param value The value to reset to.
 	 */
-	void reset(Unit_t value) {
+	inline void reset(Unit_t value) {
 		m_prevVal = value;
 		m_prevTime = wpi::math::MathSharedStore::GetTimestamp();
+	}
+
+	inline void setRateLimit(Rate_t rateLimit) {
+		m_rateLimit = rateLimit;
 	}
 
 private:

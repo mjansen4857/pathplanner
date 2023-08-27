@@ -17,7 +17,7 @@ public:
 	 * @param iZone Integral range
 	 */
 	constexpr PIDConstants(const double kP, const double kI, const double kD,
-			const double iRange = 1.0) : kP(kP), kI(kI), kD(kD), iZone(iZone) {
+			const double iZone = 1.0) : kP(kP), kI(kI), kD(kD), iZone(iZone) {
 	}
 
 	/**

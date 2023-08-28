@@ -36,7 +36,7 @@ void FollowPathHolonomic::Initialize() {
 	frc::Pose2d currentPose = m_poseSupplier();
 	m_lastCommanded = m_speedsSupplier();
 
-	m_controller.reset(m_lastCommanded);
+	m_controller.reset(currentPose, m_lastCommanded);
 
 	if (currentPose.Translation().Distance(m_path->getPoint(0).position)
 			>= 0.25_m

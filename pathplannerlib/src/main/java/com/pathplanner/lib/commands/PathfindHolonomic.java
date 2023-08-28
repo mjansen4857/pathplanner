@@ -165,7 +165,7 @@ public class PathfindHolonomic extends Command {
     Pose2d currentPose = poseSupplier.get();
     PathPlannerLogging.logCurrentPose(currentPose);
 
-    controller.reset(speedsSupplier.get());
+    controller.reset(currentPose, speedsSupplier.get());
 
     if (targetPath != null) {
       targetPose = new Pose2d(this.targetPath.getPoint(0).position, goalEndState.getRotation());

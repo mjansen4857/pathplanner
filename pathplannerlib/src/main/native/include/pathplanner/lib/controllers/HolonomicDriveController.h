@@ -1,6 +1,7 @@
 #pragma once
 
 #include <frc/controller/PIDController.h>
+#include <frc/controller/ProfiledPIDController.h>
 #include <units/velocity.h>
 #include <units/length.h>
 #include <units/time.h>
@@ -10,7 +11,6 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include "pathplanner/lib/util/GeometryUtil.h"
-#include "pathplanner/lib/util/DynamicSlewRateLimiter.h"
 #include "pathplanner/lib/util/PIDConstants.h"
 #include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
 #include "pathplanner/lib/path/PathPlannerTrajectory.h"
@@ -44,8 +44,10 @@ public:
 		m_enabled = enabled;
 	}
 
-	inline void reset(const frc::ChassisSpeeds &currentSpeeds) {
-		m_angularVelLimiter.reset(currentSpeeds.omega);
+	inline void reset(const frc::Pose2d &currentPose,
+			const frc::ChassisSpeeds &currentSpeeds) {
+		m_rotationController.Reset(currentPose.Rotation().Radians(),
+				currentSpeeds.omega);
 	}
 
 	/**
@@ -72,8 +74,7 @@ private:
 
 	frc2::PIDController m_xController;
 	frc2::PIDController m_yController;
-	frc2::PIDController m_rotationController;
-	DynamicSlewRateLimiter<units::radians_per_second> m_angularVelLimiter;
+	frc::ProfiledPIDController<units::radians> m_rotationController;
 	units::meters_per_second_t m_maxModuleSpeed;
 	rpsPerMps_t m_mpsToRps;
 

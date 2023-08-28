@@ -50,7 +50,7 @@ public:
 			const units::meters_per_second_t maxModuleSpeed,
 			const units::meter_t driveBaseRadius, const units::second_t period =
 					0.02_s) : HolonomicPathFollowerConfig(
-			PIDConstants(5.0, 0.0, 0.0), PIDConstants(3.5, 0.0, 0.0),
+			PIDConstants(5.0, 0.0, 0.0), PIDConstants(5.0, 0.0, 0.0),
 			maxModuleSpeed, driveBaseRadius, period) {
 	}
 };

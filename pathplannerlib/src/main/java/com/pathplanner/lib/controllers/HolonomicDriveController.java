@@ -1,19 +1,18 @@
 package com.pathplanner.lib.controllers;
 
 import com.pathplanner.lib.path.PathPlannerTrajectory;
-import com.pathplanner.lib.util.DynamicSlewRateLimiter;
 import com.pathplanner.lib.util.PIDConstants;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 public class HolonomicDriveController {
   private final PIDController xController;
   private final PIDController yController;
-  private final PIDController rotationController;
-  private final DynamicSlewRateLimiter angularVelLimiter;
+  private final ProfiledPIDController rotationController;
   private final double maxModuleSpeed;
   private final double mpsToRps;
 
@@ -47,13 +46,16 @@ public class HolonomicDriveController {
             translationConstants.kP, translationConstants.kI, translationConstants.kD, period);
     this.yController.setIntegratorRange(-translationConstants.iZone, translationConstants.iZone);
 
+    // Temp rate limit of 0, will be changed in calculate
     this.rotationController =
-        new PIDController(rotationConstants.kP, rotationConstants.kI, rotationConstants.kD, period);
+        new ProfiledPIDController(
+            rotationConstants.kP,
+            rotationConstants.kI,
+            rotationConstants.kD,
+            new TrapezoidProfile.Constraints(0, 0),
+            period);
     this.rotationController.setIntegratorRange(-rotationConstants.iZone, rotationConstants.iZone);
     this.rotationController.enableContinuousInput(-Math.PI, Math.PI);
-
-    // Temp rate limit of 0, will be changed in calculate
-    this.angularVelLimiter = new DynamicSlewRateLimiter(0);
 
     this.maxModuleSpeed = maxModuleSpeed;
     this.mpsToRps = 1.0 / driveBaseRadius;
@@ -87,8 +89,9 @@ public class HolonomicDriveController {
     this.isEnabled = enabled;
   }
 
-  public void reset(ChassisSpeeds currentSpeeds) {
-    angularVelLimiter.reset(currentSpeeds.omegaRadiansPerSecond);
+  public void reset(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
+    rotationController.reset(
+        currentPose.getRotation().getRadians(), currentSpeeds.omegaRadiansPerSecond);
   }
 
   /**
@@ -114,31 +117,24 @@ public class HolonomicDriveController {
         this.yController.calculate(currentPose.getY(), referenceState.positionMeters.getY());
 
     double angVelConstraint = referenceState.constraints.getMaxAngularVelocityRps();
-    angularVelLimiter.setRateLimit(referenceState.constraints.getMaxAngularAccelerationRpsSq());
-
     // Approximation of available module speed to do rotation with
     double maxAngVelModule = Math.max(0, maxModuleSpeed - referenceState.velocityMps) * mpsToRps;
-
     double maxAngVel = Math.min(angVelConstraint, maxAngVelModule);
 
+    var rotationConstraints =
+        new TrapezoidProfile.Constraints(
+            maxAngVel, referenceState.constraints.getMaxAngularAccelerationRpsSq());
+
     double targetRotationVel =
-        this.rotationController.calculate(
+        rotationController.calculate(
             currentPose.getRotation().getRadians(),
-            referenceState.targetHolonomicRotation.getRadians());
-    targetRotationVel = MathUtil.clamp(targetRotationVel, -maxAngVel, maxAngVel);
+            new TrapezoidProfile.State(referenceState.targetHolonomicRotation.getRadians(), 0),
+            rotationConstraints);
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
-        xFF + xFeedback,
-        yFF + yFeedback,
-        angularVelLimiter.calculate(targetRotationVel),
-        currentPose.getRotation());
+        xFF + xFeedback, yFF + yFeedback, targetRotationVel, currentPose.getRotation());
   }
 
-  /**
-   * Get the last positional error of the controller
-   *
-   * @return Positional error, in meters
-   */
   public double getPositionalError() {
     return translationError.getNorm();
   }

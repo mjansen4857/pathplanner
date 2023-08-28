@@ -96,7 +96,7 @@ public class FollowPathHolonomic extends Command {
     Pose2d currentPose = poseSupplier.get();
     lastCommanded = speedsSupplier.get();
 
-    controller.reset(lastCommanded);
+    controller.reset(currentPose, lastCommanded);
 
     if (currentPose.getTranslation().getDistance(path.getPoint(0).position) >= 0.25
         || Math.hypot(lastCommanded.vxMetersPerSecond, lastCommanded.vyMetersPerSecond) >= 0.25) {

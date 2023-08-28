@@ -9,8 +9,8 @@ HolonomicDriveController::HolonomicDriveController(
 		translationConstants.kP, translationConstants.kI,
 		translationConstants.kD, period), m_yController(translationConstants.kP,
 		translationConstants.kI, translationConstants.kD, period), m_rotationController(
-		rotationConstants.kP, rotationConstants.kI, rotationConstants.kD,
-		period), m_angularVelLimiter(0_rad_per_s_sq), m_maxModuleSpeed(
+		rotationConstants.kP, rotationConstants.kI, rotationConstants.kD, {
+				0_rad_per_s, 0_rad_per_s_sq }, period), m_maxModuleSpeed(
 		maxModuleSpeed), m_mpsToRps { 1.0 / driveBaseRadius() } {
 	m_xController.SetIntegratorRange(-translationConstants.iZone,
 			translationConstants.iZone);
@@ -19,7 +19,8 @@ HolonomicDriveController::HolonomicDriveController(
 
 	m_rotationController.SetIntegratorRange(-rotationConstants.iZone,
 			rotationConstants.iZone);
-	m_rotationController.EnableContinuousInput(-PI, PI);
+	m_rotationController.EnableContinuousInput(units::radian_t { -PI },
+			units::radian_t { PI });
 }
 
 frc::ChassisSpeeds HolonomicDriveController::calculate(frc::Pose2d currentPose,
@@ -43,8 +44,6 @@ frc::ChassisSpeeds HolonomicDriveController::calculate(frc::Pose2d currentPose,
 
 	units::radians_per_second_t angVelConstraint =
 			referenceState.constraints.getMaxAngularVelocity();
-	m_angularVelLimiter.setRateLimit(
-			referenceState.constraints.getMaxAngularAcceleration());
 
 	// Approximation of available module speed to do rotation with
 	units::radians_per_second_t maxAngVelModule = units::math::max(0_rad_per_s,
@@ -54,11 +53,11 @@ frc::ChassisSpeeds HolonomicDriveController::calculate(frc::Pose2d currentPose,
 			maxAngVelModule);
 
 	units::radians_per_second_t targetRotationVel {
-			m_rotationController.Calculate(currentPose.Rotation().Radians()(),
-					referenceState.targetHolonomicRotation.Radians()()) };
-	targetRotationVel = std::clamp(targetRotationVel, -maxAngVel, maxAngVel);
+			m_rotationController.Calculate(currentPose.Rotation().Radians(),
+					referenceState.targetHolonomicRotation.Radians(),
+					{ maxAngVel,
+							referenceState.constraints.getMaxAngularAcceleration() }) };
 
 	return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF + xFeedback,
-			yFF + yFeedback, m_angularVelLimiter.calculate(targetRotationVel),
-			currentPose.Rotation());
+			yFF + yFeedback, targetRotationVel, currentPose.Rotation());
 }

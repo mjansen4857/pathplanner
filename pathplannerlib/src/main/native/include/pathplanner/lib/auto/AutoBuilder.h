@@ -4,6 +4,7 @@
 #include <frc2/command/CommandPtr.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
+#include <frc/controller/RamseteController.h>
 #include <memory>
 #include <wpi/json.h>
 #include <string>
@@ -32,18 +33,41 @@ public:
 			frc2::Subsystem *driveSubsystem);
 
 	/**
-	 * Configures the AutoBuilder for a differential drivetrain.
+	 * Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
 	 *
-	 * @param poseSupplier a function that returns the robot's current pose
-	 * @param resetPose a function used for resetting the robot's pose
-	 * @param speedsSupplier a function that returns the robot's current chassis speeds
-	 * @param output a function for setting the robot's chassis speeds
-	 * @param driveSubsystem a pointer to the subsystem for the robot's drive
+	 * @param poseSupplier a supplier for the robot's current pose
+	 * @param resetPose a consumer for resetting the robot's pose
+	 * @param speedsSupplier a supplier for the robot's current chassis speeds
+	 * @param output a consumer for setting the robot's chassis speeds
+	 * @param driveSubsystem the subsystem for the robot's drive
+	 * @throws AutoBuilderException if AutoBuilder has already been configured
 	 */
-	static void configureDifferential(std::function<frc::Pose2d()> poseSupplier,
+	static void configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
+			frc2::Subsystem *driveSubsystem);
+
+	/**
+	 * Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
+	 *
+	 * @param poseSupplier a supplier for the robot's current pose
+	 * @param resetPose a consumer for resetting the robot's pose
+	 * @param speedsSupplier a supplier for the robot's current chassis speeds
+	 * @param output a consumer for setting the robot's chassis speeds
+	 * @param b Tuning parameter (b &gt; 0 rad^2/m^2) for which larger values make convergence more
+	 *     aggressive like a proportional term.
+	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
+	 *     more damping in response.
+	 * @param driveSubsystem the subsystem for the robot's drive
+	 * @throws AutoBuilderException if AutoBuilder has already been configured
+	 */
+	static void configureRamsete(std::function<frc::Pose2d()> poseSupplier,
+			std::function<void(frc::Pose2d)> resetPose,
+			std::function<frc::ChassisSpeeds()> speedsSupplier,
+			std::function<void(frc::ChassisSpeeds)> output,
+			units::unit_t<frc::RamseteController::b_unit> b,
+			units::unit_t<frc::RamseteController::zeta_unit> zeta,
 			frc2::Subsystem *driveSubsystem);
 
 	/**

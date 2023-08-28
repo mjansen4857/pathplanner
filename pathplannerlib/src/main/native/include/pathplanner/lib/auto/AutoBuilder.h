@@ -7,6 +7,7 @@
 #include <frc/controller/RamseteController.h>
 #include <memory>
 #include <wpi/json.h>
+#include <wpi/array.h>
 #include <string>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
@@ -40,7 +41,6 @@ public:
 	 * @param speedsSupplier a supplier for the robot's current chassis speeds
 	 * @param output a consumer for setting the robot's chassis speeds
 	 * @param driveSubsystem the subsystem for the robot's drive
-	 * @throws AutoBuilderException if AutoBuilder has already been configured
 	 */
 	static void configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
@@ -60,7 +60,6 @@ public:
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
 	 * @param driveSubsystem the subsystem for the robot's drive
-	 * @throws AutoBuilderException if AutoBuilder has already been configured
 	 */
 	static void configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
@@ -68,6 +67,44 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			units::unit_t<frc::RamseteController::b_unit> b,
 			units::unit_t<frc::RamseteController::zeta_unit> zeta,
+			frc2::Subsystem *driveSubsystem);
+
+	/**
+	 * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
+	 * follower.
+	 *
+	 * @param poseSupplier a supplier for the robot's current pose
+	 * @param resetPose a consumer for resetting the robot's pose
+	 * @param speedsSupplier a supplier for the robot's current chassis speeds
+	 * @param output a consumer for setting the robot's chassis speeds
+	 * @param qelems The maximum desired error tolerance for each state.
+	 * @param relems The maximum desired control effort for each input.
+	 * @param dt Period of the robot control loop in seconds (default 0.02)
+	 * @param driveSubsystem the subsystem for the robot's drive
+	 */
+	static void configureLTV(std::function<frc::Pose2d()> poseSupplier,
+			std::function<void(frc::Pose2d)> resetPose,
+			std::function<frc::ChassisSpeeds()> speedsSupplier,
+			std::function<void(frc::ChassisSpeeds)> output,
+			const wpi::array<double, 3> &Qelms,
+			const wpi::array<double, 2> &Relms, units::second_t dt,
+			frc2::Subsystem *driveSubsystem);
+
+	/**
+	 * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
+	 * follower.
+	 *
+	 * @param poseSupplier a supplier for the robot's current pose
+	 * @param resetPose a consumer for resetting the robot's pose
+	 * @param speedsSupplier a supplier for the robot's current chassis speeds
+	 * @param output a consumer for setting the robot's chassis speeds
+	 * @param dt Period of the robot control loop in seconds (default 0.02)
+	 * @param driveSubsystem the subsystem for the robot's drive
+	 */
+	static void configureLTV(std::function<frc::Pose2d()> poseSupplier,
+			std::function<void(frc::Pose2d)> resetPose,
+			std::function<frc::ChassisSpeeds()> speedsSupplier,
+			std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
 			frc2::Subsystem *driveSubsystem);
 
 	/**

@@ -1,6 +1,7 @@
 #include "pathplanner/lib/auto/AutoBuilder.h"
 #include "pathplanner/lib/commands/FollowPathHolonomic.h"
 #include "pathplanner/lib/commands/FollowPathRamsete.h"
+#include "pathplanner/lib/commands/FollowPathLTV.h"
 #include "pathplanner/lib/commands/FollowPathWithEvents.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include <stdexcept>
@@ -74,6 +75,48 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 			std::shared_ptr<PathPlannerPath> path) {
 		return FollowPathRamsete(path, poseSupplier, speedsSupplier, output, b,
 				zeta, { driveSubsystem }).ToPtr();
+	};
+	AutoBuilder::m_getPose = poseSupplier;
+	AutoBuilder::m_resetPose = resetPose;
+	AutoBuilder::m_configured = true;
+}
+
+void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
+		std::function<void(frc::Pose2d)> resetPose,
+		std::function<frc::ChassisSpeeds()> speedsSupplier,
+		std::function<void(frc::ChassisSpeeds)> output,
+		const wpi::array<double, 3> &Qelms, const wpi::array<double, 2> &Relms,
+		units::second_t dt, frc2::Subsystem *driveSubsystem) {
+	if (m_configured) {
+		throw std::runtime_error(
+				"Auto builder has already been configured. Please only configure auto builder once");
+	}
+
+	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
+			output, Qelms, Relms, dt, driveSubsystem](
+			std::shared_ptr<PathPlannerPath> path) {
+		return FollowPathLTV(path, poseSupplier, speedsSupplier, output, Qelms,
+				Relms, dt, { driveSubsystem }).ToPtr();
+	};
+	AutoBuilder::m_getPose = poseSupplier;
+	AutoBuilder::m_resetPose = resetPose;
+	AutoBuilder::m_configured = true;
+}
+
+void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
+		std::function<void(frc::Pose2d)> resetPose,
+		std::function<frc::ChassisSpeeds()> speedsSupplier,
+		std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
+		frc2::Subsystem *driveSubsystem) {
+	if (m_configured) {
+		throw std::runtime_error(
+				"Auto builder has already been configured. Please only configure auto builder once");
+	}
+
+	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
+			output, dt, driveSubsystem](std::shared_ptr<PathPlannerPath> path) {
+		return FollowPathLTV(path, poseSupplier, speedsSupplier, output, dt, {
+				driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;

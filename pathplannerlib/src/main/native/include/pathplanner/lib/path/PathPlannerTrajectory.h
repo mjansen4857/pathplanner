@@ -12,6 +12,7 @@
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/MathUtil.h>
 #include <vector>
+#include <memory>
 #include "pathplanner/lib/path/PathConstraints.h"
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
@@ -118,13 +119,16 @@ public:
 		}
 	};
 
+	PathPlannerTrajectory() {
+	}
+
 	/**
 	 * Generate a PathPlannerTrajectory
 	 *
-	 * @param path {@link com.pathplanner.lib.path.PathPlannerPath} to generate the trajectory for
+	 * @param path PathPlannerPath to generate the trajectory for
 	 * @param startingSpeeds Starting speeds of the robot when starting the trajectory
 	 */
-	PathPlannerTrajectory(PathPlannerPath &path,
+	PathPlannerTrajectory(std::shared_ptr<PathPlannerPath> path,
 			const frc::ChassisSpeeds &startingSpeeds) : m_states(
 			generateStates(path, startingSpeeds)) {
 	}
@@ -206,10 +210,11 @@ public:
 private:
 	std::vector<State> m_states;
 
-	static size_t getNextRotationTargetIdx(const PathPlannerPath &path,
-			const size_t startingIndex);
+	static size_t getNextRotationTargetIdx(
+			std::shared_ptr<PathPlannerPath> path, const size_t startingIndex);
 
-	static std::vector<State> generateStates(PathPlannerPath &path,
+	static std::vector<State> generateStates(
+			std::shared_ptr<PathPlannerPath> path,
 			const frc::ChassisSpeeds &startingSpeeds);
 };
 }

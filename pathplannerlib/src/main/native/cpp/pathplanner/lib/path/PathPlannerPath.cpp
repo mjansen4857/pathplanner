@@ -243,7 +243,8 @@ units::meter_t PathPlannerPath::getCurveRadiusAtPoint(size_t index,
 	}
 }
 
-PathPlannerPath PathPlannerPath::replan(const frc::Pose2d startingPose,
+std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
+		const frc::Pose2d startingPose,
 		const frc::ChassisSpeeds currentSpeeds) const {
 	frc::ChassisSpeeds currentFieldRelativeSpeeds =
 			frc::ChassisSpeeds::FromFieldRelativeSpeeds(currentSpeeds,
@@ -294,14 +295,14 @@ PathPlannerPath PathPlannerPath::replan(const frc::Pose2d startingPose,
 
 		// Throw out rotation targets, event markers, and constraint zones since we are skipping all
 		// of the path
-		return PathPlannerPath(std::vector < frc::Translation2d > ( {
-					startingPose.Translation(),
-					robotNextControl.value(),
-					endPrevControl,
-					getPoint(numPoints() - 1).position
-				}), std::vector<RotationTarget>(),
-				std::vector<ConstraintsZone>(), std::vector<EventMarker>(),
-				m_globalConstraints, m_goalEndState, m_reversed);
+		return std::make_shared < PathPlannerPath
+				> (std::vector < frc::Translation2d > ( {
+							startingPose.Translation(),
+							robotNextControl.value(),
+							endPrevControl,
+							getPoint(numPoints() - 1).position
+						}), std::vector<RotationTarget>(), std::vector<
+						ConstraintsZone>(), std::vector<EventMarker>(), m_globalConstraints, m_goalEndState, m_reversed);
 	} else if ((closestPointIdx == 0 && !robotNextControl)
 			|| (units::math::abs(
 					closestDist
@@ -352,8 +353,8 @@ PathPlannerPath PathPlannerPath::replan(const frc::Pose2d startingPose,
 							marker.getMinimumTriggerDistance());
 				});
 
-		return PathPlannerPath(replannedBezier, targets, zones, markers,
-				m_globalConstraints, m_goalEndState, m_reversed);
+		return std::make_shared < PathPlannerPath
+				> (replannedBezier, targets, zones, markers, m_globalConstraints, m_goalEndState, m_reversed);
 	}
 
 	size_t joinAnchorIdx = numPoints() - 1;
@@ -380,14 +381,14 @@ PathPlannerPath PathPlannerPath::replan(const frc::Pose2d startingPose,
 	if (joinAnchorIdx == numPoints() - 1) {
 		// Throw out rotation targets, event markers, and constraint zones since we are skipping all
 		// of the path
-		return PathPlannerPath(std::vector < frc::Translation2d > ( {
-					startingPose.Translation(),
-					robotNextControl.value(),
-					joinPrevControl,
-					joinAnchor
-				}), std::vector<RotationTarget>(),
-				std::vector<ConstraintsZone>(), std::vector<EventMarker>(),
-				m_globalConstraints, m_goalEndState, m_reversed);
+		return std::make_shared < PathPlannerPath
+				> (std::vector < frc::Translation2d > ( {
+							startingPose.Translation(),
+							robotNextControl.value(),
+							joinPrevControl,
+							joinAnchor
+						}), std::vector<RotationTarget>(), std::vector<
+						ConstraintsZone>(), std::vector<EventMarker>(), m_globalConstraints, m_goalEndState, m_reversed);
 	}
 
 	size_t nextWaypointIdx = static_cast<size_t>(std::ceil(
@@ -497,6 +498,6 @@ PathPlannerPath PathPlannerPath::replan(const frc::Pose2d startingPose,
 	// Throw out everything before nextWaypointIdx - 1, map everything from nextWaypointIdx -
 	// 1 to nextWaypointIdx on to the 2 joining segments (waypoint rel pos within old segment = %
 	// along distance of both new segments)
-	return PathPlannerPath(replannedBezier, mappedTargets, mappedZones,
-			mappedMarkers, m_globalConstraints, m_goalEndState, m_reversed);
+	return std::make_shared < PathPlannerPath
+			> (replannedBezier, mappedTargets, mappedZones, mappedMarkers, m_globalConstraints, m_goalEndState, m_reversed);
 }

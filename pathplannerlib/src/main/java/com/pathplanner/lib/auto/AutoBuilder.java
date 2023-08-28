@@ -39,7 +39,7 @@ public class AutoBuilder {
    * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
-   * @param fieldRelativeOutput a consumer for setting the robot's field-relative chassis speeds
+   * @param robotRelativeOutput a consumer for setting the robot's field-relative chassis speeds
    * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
    *     path following commands
    * @param driveSubsystem the subsystem for the robot's drive
@@ -49,7 +49,7 @@ public class AutoBuilder {
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
-      Consumer<ChassisSpeeds> fieldRelativeOutput,
+      Consumer<ChassisSpeeds> robotRelativeOutput,
       HolonomicPathFollowerConfig config,
       Subsystem driveSubsystem) {
     if (configured) {
@@ -63,7 +63,7 @@ public class AutoBuilder {
                 path,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
-                fieldRelativeOutput,
+                robotRelativeOutput,
                 config,
                 driveSubsystem);
     AutoBuilder.getPose = poseSupplier;

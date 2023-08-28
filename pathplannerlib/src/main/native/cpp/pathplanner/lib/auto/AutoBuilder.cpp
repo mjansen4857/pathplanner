@@ -1,5 +1,5 @@
 #include "pathplanner/lib/auto/AutoBuilder.h"
-#include "pathplanner/lib/commands/FollowPathCommand.h"
+#include "pathplanner/lib/commands/FollowPathHolonomic.h"
 #include "pathplanner/lib/commands/FollowPathWithEvents.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include <stdexcept>
@@ -17,18 +17,18 @@ std::function<void(frc::Pose2d)> AutoBuilder::m_resetPose;
 void AutoBuilder::configureHolonomic(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose,
 		std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-		std::function<void(frc::ChassisSpeeds)> fieldRelativeOutput,
-		frc2::Subsystem *driveSubsystem) {
+		std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
+		HolonomicPathFollowerConfig config, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier,
-			robotRelativeSpeedsSupplier, fieldRelativeOutput, driveSubsystem](
-			std::shared_ptr<PathPlannerPath> path) {
-		return FollowPathCommand(path, poseSupplier,
-				robotRelativeSpeedsSupplier, fieldRelativeOutput, true, {
+			robotRelativeSpeedsSupplier, robotRelativeOutput, config,
+			driveSubsystem](std::shared_ptr<PathPlannerPath> path) {
+		return FollowPathHolonomic(path, poseSupplier,
+				robotRelativeSpeedsSupplier, robotRelativeOutput, config, {
 						driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_getPose = poseSupplier;
@@ -47,11 +47,12 @@ void AutoBuilder::configureDifferential(
 				"Auto builder has already been configured. Please only configure auto builder once");
 	}
 
-	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
-			output, driveSubsystem](std::shared_ptr<PathPlannerPath> path) {
-		return FollowPathCommand(path, poseSupplier, speedsSupplier, output,
-				false, { driveSubsystem }).ToPtr();
-	};
+	// TODO
+	// AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
+	// 		output, driveSubsystem](std::shared_ptr<PathPlannerPath> path) {
+	// 	return FollowPathCommand(path, poseSupplier, speedsSupplier, output,
+	// 			false, { driveSubsystem }).ToPtr();
+	// };
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;

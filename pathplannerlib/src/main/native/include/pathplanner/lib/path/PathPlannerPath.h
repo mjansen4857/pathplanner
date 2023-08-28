@@ -140,7 +140,7 @@ public:
 	 * @param currentSpeeds Current chassis speeds of the robot
 	 * @return The replanned path
 	 */
-	PathPlannerPath replan(const frc::Pose2d startingPose,
+	std::shared_ptr<PathPlannerPath> replan(const frc::Pose2d startingPose,
 			const frc::ChassisSpeeds currentSpeeds) const;
 
 private:

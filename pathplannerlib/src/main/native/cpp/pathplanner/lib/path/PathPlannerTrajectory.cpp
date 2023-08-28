@@ -32,11 +32,11 @@ PathPlannerTrajectory::State PathPlannerTrajectory::sample(
 }
 
 size_t PathPlannerTrajectory::getNextRotationTargetIdx(
-		const PathPlannerPath &path, const size_t startingIndex) {
-	size_t idx = path.numPoints() - 1;
+		std::shared_ptr<PathPlannerPath> path, const size_t startingIndex) {
+	size_t idx = path->numPoints() - 1;
 
-	for (size_t i = startingIndex; i < path.numPoints() - 2; i++) {
-		if (path.getPoint(i).holonomicRotation) {
+	for (size_t i = startingIndex; i < path->numPoints() - 2; i++) {
+		if (path->getPoint(i).holonomicRotation) {
 			idx = i;
 			break;
 		}
@@ -46,7 +46,8 @@ size_t PathPlannerTrajectory::getNextRotationTargetIdx(
 }
 
 std::vector<PathPlannerTrajectory::State> PathPlannerTrajectory::generateStates(
-		PathPlannerPath &path, const frc::ChassisSpeeds &startingSpeeds) {
+		std::shared_ptr<PathPlannerPath> path,
+		const frc::ChassisSpeeds &startingSpeeds) {
 	std::vector < State > states;
 
 	units::meters_per_second_t startVel = units::math::hypot(startingSpeeds.vx,
@@ -55,10 +56,10 @@ std::vector<PathPlannerTrajectory::State> PathPlannerTrajectory::generateStates(
 	size_t nextRotationTargetIdx = getNextRotationTargetIdx(path, 0);
 
 	// Initial pass. Creates all states and handles linear acceleration
-	for (size_t i = 0; i < path.numPoints(); i++) {
+	for (size_t i = 0; i < path->numPoints(); i++) {
 		State state;
 
-		PathConstraints constraints = path.getPoint(i).constraints.value();
+		PathConstraints constraints = path->getPoint(i).constraints.value();
 		state.constraints = constraints;
 
 		if (i > nextRotationTargetIdx) {
@@ -66,29 +67,29 @@ std::vector<PathPlannerTrajectory::State> PathPlannerTrajectory::generateStates(
 		}
 
 		state.targetHolonomicRotation =
-				path.getPoint(nextRotationTargetIdx).holonomicRotation.value();
+				path->getPoint(nextRotationTargetIdx).holonomicRotation.value();
 
-		state.position = path.getPoint(i).position;
-		units::meter_t curveRadius = path.getPoint(i).curveRadius;
+		state.position = path->getPoint(i).position;
+		units::meter_t curveRadius = path->getPoint(i).curveRadius;
 		state.curvature = units::curvature_t {
 				(GeometryUtil::isFinite(curveRadius) && curveRadius != 0_m) ?
 						1.0 / curveRadius() : 0 };
 
-		if (i == path.numPoints() - 1) {
+		if (i == path->numPoints() - 1) {
 			state.heading = states[states.size() - 1].heading;
-			state.deltaPos = path.getPoint(i).distanceAlongPath
-					- path.getPoint(i - 1).distanceAlongPath;
-			state.velocity = path.getGoalEndState().getVelocity();
+			state.deltaPos = path->getPoint(i).distanceAlongPath
+					- path->getPoint(i - 1).distanceAlongPath;
+			state.velocity = path->getGoalEndState().getVelocity();
 		} else if (i == 0) {
 			state.heading =
-					(path.getPoint(i + 1).position - state.position).Angle();
+					(path->getPoint(i + 1).position - state.position).Angle();
 			state.deltaPos = 0_m;
 			state.velocity = startVel;
 		} else {
 			state.heading =
-					(path.getPoint(i + 1).position - state.position).Angle();
-			state.deltaPos = path.getPoint(i + 1).distanceAlongPath
-					- path.getPoint(i).distanceAlongPath;
+					(path->getPoint(i + 1).position - state.position).Angle();
+			state.deltaPos = path->getPoint(i + 1).distanceAlongPath
+					- path->getPoint(i).distanceAlongPath;
 
 			units::meters_per_second_t v0 = states[states.size() - 1].velocity;
 			units::meters_per_second_t vMax =
@@ -99,7 +100,7 @@ std::vector<PathPlannerTrajectory::State> PathPlannerTrajectory::generateStates(
 													+ (2
 															* constraints.getMaxAcceleration()
 															* state.deltaPos)));
-			state.velocity = units::math::min(vMax, path.getPoint(i).maxV);
+			state.velocity = units::math::min(vMax, path->getPoint(i).maxV);
 		}
 
 		states.push_back(state);

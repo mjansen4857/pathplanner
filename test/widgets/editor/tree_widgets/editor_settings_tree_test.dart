@@ -9,40 +9,9 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({
-      PrefsKeys.displaySimPath: false,
       PrefsKeys.snapToGuidelines: false,
     });
     prefs = await SharedPreferences.getInstance();
-  });
-
-  testWidgets('display sim path check', (widgetTester) async {
-    await widgetTester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: EditorSettingsTree(
-          initiallyExpanded: true,
-        ),
-      ),
-    ));
-    await widgetTester.pump();
-
-    final simPathRow = find.widgetWithText(Row, 'Display Simulated Path');
-
-    expect(simPathRow, findsOneWidget);
-
-    final simPathCheck =
-        find.descendant(of: simPathRow, matching: find.byType(Checkbox));
-
-    expect(simPathCheck, findsOneWidget);
-
-    await widgetTester.tap(simPathCheck);
-    await widgetTester.pumpAndSettle();
-
-    expect(prefs.getBool(PrefsKeys.displaySimPath), true);
-
-    await widgetTester.tap(simPathCheck);
-    await widgetTester.pumpAndSettle();
-
-    expect(prefs.getBool(PrefsKeys.displaySimPath), false);
   });
 
   testWidgets('snap to guidelines check', (widgetTester) async {

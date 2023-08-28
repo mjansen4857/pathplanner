@@ -412,6 +412,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   hotReload: _hotReload,
                   onFoldersChanged: () =>
                       _saveProjectSettingsToFile(_projectDir!),
+                  simulatePath: true,
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,

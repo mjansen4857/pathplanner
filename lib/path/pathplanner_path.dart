@@ -17,6 +17,8 @@ import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/util/geometry_util.dart';
 
+const double pathResolution = 0.025;
+
 class PathPlannerPath {
   String name;
   List<Waypoint> waypoints;
@@ -296,7 +298,7 @@ class PathPlannerPath {
         .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
 
     for (int i = 0; i < waypoints.length - 1; i++) {
-      for (double t = 0; t < 1.0; t += 0.05) {
+      for (double t = 0; t < 1.0; t += pathResolution) {
         num actualWaypointPos = i + t;
         num? rotation;
 
@@ -304,7 +306,8 @@ class PathPlannerPath {
           if ((unaddedTargets[0].waypointRelativePos - actualWaypointPos)
                   .abs() <=
               (unaddedTargets[0].waypointRelativePos -
-                      min(actualWaypointPos + 0.05, waypoints.length - 1))
+                      min(actualWaypointPos + pathResolution,
+                          waypoints.length - 1))
                   .abs()) {
             rotation = unaddedTargets.removeAt(0).rotationDegrees;
           }
@@ -357,7 +360,7 @@ class PathPlannerPath {
 
       if (curveRadius.isFinite) {
         pathPoints[i].maxV = min(
-            sqrt(pathPoints[i].constraints.maxAcceleration * curveRadius),
+            sqrt(pathPoints[i].constraints.maxAcceleration * curveRadius.abs()),
             pathPoints[i].constraints.maxVelocity);
       } else {
         pathPoints[i].maxV = pathPoints[i].constraints.maxVelocity;

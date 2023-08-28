@@ -25,6 +25,7 @@ class ProjectPage extends StatefulWidget {
   final PPLibTelemetry? telemetry;
   final bool hotReload;
   final VoidCallback? onFoldersChanged;
+  final bool simulatePath;
 
   const ProjectPage({
     super.key,
@@ -37,6 +38,7 @@ class ProjectPage extends StatefulWidget {
     this.telemetry,
     this.hotReload = false,
     this.onFoldersChanged,
+    this.simulatePath = false,
   });
 
   @override
@@ -559,6 +561,7 @@ class _ProjectPageState extends State<ProjectPage> {
               shortcuts: widget.shortcuts,
               telemetry: widget.telemetry,
               hotReload: widget.hotReload,
+              simulatePath: widget.simulatePath,
             ),
           ),
         );

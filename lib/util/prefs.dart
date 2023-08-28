@@ -18,7 +18,6 @@ class PrefsKeys {
   static const String hotReloadEnabled = 'hotReloadEnabled';
   static const String pathFolders = 'pathFolders';
   static const String autoFolders = 'autoFolders';
-  static const String displaySimPath = 'displaySimPath';
   static const String snapToGuidelines = 'snapToGuidelines';
 }
 
@@ -40,6 +39,5 @@ class Defaults {
       []; // Can't be const or user wont be able to add new folders
   static List<String> autoFolders =
       []; // Can't be const or user wont be able to add new folders
-  static const bool displaySimPath = false;
   static const bool snapToGuidelines = true;
 }

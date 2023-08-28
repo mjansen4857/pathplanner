@@ -1,7 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:pathplanner/services/simulator/path_simulator.dart';
+import 'package:pathplanner/services/trajectory_generator.dart';
+import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -24,7 +25,7 @@ class PathPainter extends CustomPainter {
   final int? hoveredMarker;
   final int? selectedMarker;
   final Pose2d? startingPose;
-  final SimulatedPath? simulatedPath;
+  final Trajectory? simulatedPath;
   final Color? previewColor;
   final SharedPreferences prefs;
 
@@ -67,18 +68,14 @@ class PathPainter extends CustomPainter {
         prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
 
     if (simulatedPath != null && animation != null) {
-      previewTime =
-          Tween<num>(begin: 0, end: simulatedPath!.runtime).animate(animation);
+      previewTime = Tween<num>(begin: 0, end: simulatedPath!.states.last.time)
+          .animate(animation);
     }
   }
 
   @override
   void paint(Canvas canvas, Size size) {
     scale = size.width / fieldImage.defaultSize.width;
-
-    if (prefs.getBool(PrefsKeys.displaySimPath) ?? Defaults.displaySimPath) {
-      _paintSimPath(canvas);
-    }
 
     for (int i = 0; i < paths.length; i++) {
       if (!simple) {
@@ -140,17 +137,18 @@ class PathPainter extends CustomPainter {
     }
 
     if (previewTime != null) {
-      Pose2d? previewPose = simulatedPath!.getState(previewTime!.value);
-      if (previewPose != null) {
-        PathPainterUtil.paintRobotOutline(
-            previewPose.position,
-            previewPose.rotation,
-            fieldImage,
-            robotSize,
-            scale,
-            canvas,
-            previewColor ?? Colors.grey);
-      }
+      TrajectoryState state = simulatedPath!.sample(previewTime!.value);
+      num rotation = holonomicMode
+          ? state.targetHolonomicRotationRadians
+          : state.headingRadians;
+      PathPainterUtil.paintRobotOutline(
+          state.position,
+          GeometryUtil.toDegrees(rotation),
+          fieldImage,
+          robotSize,
+          scale,
+          canvas,
+          previewColor ?? Colors.grey);
     }
   }
 
@@ -159,31 +157,10 @@ class PathPainter extends CustomPainter {
     return true; // This will just be repainted all the time anyways from the animation
   }
 
-  void _paintSimPath(Canvas canvas) {
-    if (simulatedPath != null && simulatedPath!.pathStates.isNotEmpty) {
-      var paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..color = previewColor ?? Colors.grey
-        ..strokeWidth = 2;
-
-      Path p = Path();
-      Offset start = PathPainterUtil.pointToPixelOffset(
-          simulatedPath!.pathStates[0].position, scale, fieldImage);
-      p.moveTo(start.dx, start.dy);
-
-      for (int i = 1; i < simulatedPath!.pathStates.length; i++) {
-        Offset pos = PathPainterUtil.pointToPixelOffset(
-            simulatedPath!.pathStates[i].position, scale, fieldImage);
-        p.lineTo(pos.dx, pos.dy);
-      }
-
-      canvas.drawPath(p, paint);
-    }
-  }
-
   void _paintMarkers(PathPlannerPath path, Canvas canvas) {
     for (int i = 0; i < path.eventMarkers.length; i++) {
-      int pointIdx = (path.eventMarkers[i].waypointRelativePos / 0.05).round();
+      int pointIdx =
+          (path.eventMarkers[i].waypointRelativePos / pathResolution).round();
 
       Color markerColor = Colors.grey[700]!;
       if (selectedMarker == i) {
@@ -202,7 +179,8 @@ class PathPainter extends CustomPainter {
   void _paintRotations(PathPlannerPath path, Canvas canvas, double scale) {
     for (int i = 0; i < path.rotationTargets.length; i++) {
       int pointIdx =
-          (path.rotationTargets[i].waypointRelativePos / 0.05).round();
+          (path.rotationTargets[i].waypointRelativePos / pathResolution)
+              .round();
 
       Color rotationColor = Colors.grey[700]!;
       if (selectedRotTarget == i) {

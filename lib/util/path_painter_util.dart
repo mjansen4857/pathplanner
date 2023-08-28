@@ -5,76 +5,6 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 class PathPainterUtil {
-  // static void paintDualPaths(RobotPath path, Size robotSize, Canvas canvas,
-  //     double scale, Color color, FieldImage fieldImage,
-  //     {Waypoint? selectedWaypoint, bool? focusedSelection}) {
-  //   var paint = Paint()
-  //     ..style = PaintingStyle.stroke
-  //     ..color = color
-  //     ..strokeWidth = 2;
-
-  //   for (int i = 0; i < path.waypoints.length - 1; i++) {
-  //     if ((focusedSelection ?? false) && selectedWaypoint != null) {
-  //       int index = path.waypoints.indexOf(selectedWaypoint);
-  //       int difference = index - i;
-  //       paint.color =
-  //           0 <= difference && difference <= 1 ? color : color.withAlpha(20);
-  //     } else {
-  //       paint.color = color;
-  //     }
-  //     Path p = Path();
-
-  //     double halfWidth = metersToPixels(robotSize.width / 2, scale, fieldImage);
-
-  //     Offset p0 =
-  //         pointToPixelOffset(path.waypoints[i].anchorPoint, scale, fieldImage);
-  //     Offset p1 =
-  //         pointToPixelOffset(path.waypoints[i].nextControl!, scale, fieldImage);
-  //     Offset p2 = pointToPixelOffset(
-  //         path.waypoints[i + 1].prevControl!, scale, fieldImage);
-  //     Offset p3 = pointToPixelOffset(
-  //         path.waypoints[i + 1].anchorPoint, scale, fieldImage);
-
-  //     for (double t = 0; t < 1.0; t += 0.01) {
-  //       Offset center = cubicLerp(p0, p1, p2, p3, t);
-  //       Offset centerNext = cubicLerp(p0, p1, p2, p3, t + 0.01);
-
-  //       double angle =
-  //           atan2(centerNext.dy - center.dy, centerNext.dx - center.dx);
-
-  //       Offset r =
-  //           center.translate(-(halfWidth * sin(angle)), halfWidth * cos(angle));
-  //       Offset rNext = centerNext.translate(
-  //           -(halfWidth * sin(angle)), halfWidth * cos(angle));
-
-  //       if (t == 0) {
-  //         p.moveTo(r.dx, r.dy);
-  //       }
-  //       p.lineTo(rNext.dx, rNext.dy);
-  //     }
-
-  //     for (double t = 0; t < 1.0; t += 0.01) {
-  //       Offset center = cubicLerp(p0, p1, p2, p3, t);
-  //       Offset centerNext = cubicLerp(p0, p1, p2, p3, t + 0.01);
-
-  //       double angle =
-  //           atan2(centerNext.dy - center.dy, centerNext.dx - center.dx);
-
-  //       Offset l =
-  //           center.translate(halfWidth * sin(angle), -(halfWidth * cos(angle)));
-  //       Offset lNext = centerNext.translate(
-  //           halfWidth * sin(angle), -(halfWidth * cos(angle)));
-
-  //       if (t == 0) {
-  //         p.moveTo(l.dx, l.dy);
-  //       }
-  //       p.lineTo(lNext.dx, lNext.dy);
-  //     }
-
-  //     canvas.drawPath(p, paint);
-  //   }
-  // }
-
   static void paintRobotOutline(
       Point position,
       num rotationDegrees,
@@ -160,10 +90,12 @@ class PathPainterUtil {
       p.reset();
 
       int startIdx =
-          (path.constraintZones[selectedZone].minWaypointRelativePos / 0.05)
+          (path.constraintZones[selectedZone].minWaypointRelativePos /
+                  pathResolution)
               .round();
       int endIdx = min(
-          (path.constraintZones[selectedZone].maxWaypointRelativePos / 0.05)
+          (path.constraintZones[selectedZone].maxWaypointRelativePos /
+                  pathResolution)
               .round(),
           path.pathPoints.length - 1);
       Offset start = PathPainterUtil.pointToPixelOffset(
@@ -184,11 +116,12 @@ class PathPainterUtil {
       paint.strokeWidth = 4;
       p.reset();
 
-      int startIdx =
-          (path.constraintZones[hoveredZone].minWaypointRelativePos / 0.05)
-              .round();
+      int startIdx = (path.constraintZones[hoveredZone].minWaypointRelativePos /
+              pathResolution)
+          .round();
       int endIdx = min(
-          (path.constraintZones[hoveredZone].maxWaypointRelativePos / 0.05)
+          (path.constraintZones[hoveredZone].maxWaypointRelativePos /
+                  pathResolution)
               .round(),
           path.pathPoints.length - 1);
       Offset start = PathPainterUtil.pointToPixelOffset(

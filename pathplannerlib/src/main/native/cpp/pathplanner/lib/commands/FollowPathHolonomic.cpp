@@ -34,23 +34,22 @@ FollowPathHolonomic::FollowPathHolonomic(std::shared_ptr<PathPlannerPath> path,
 
 void FollowPathHolonomic::Initialize() {
 	frc::Pose2d currentPose = m_poseSupplier();
-	m_lastCommanded = m_speedsSupplier();
+	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
 
-	m_controller.reset(currentPose, m_lastCommanded);
+	m_controller.reset(currentPose, currentSpeeds);
 
 	if (currentPose.Translation().Distance(m_path->getPoint(0).position)
 			>= 0.25_m
-			|| units::math::hypot(m_lastCommanded.vx, m_lastCommanded.vy)
+			|| units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
 					>= 0.25_mps) {
 		// Replan path
 		std::shared_ptr < PathPlannerPath > replanned = m_path->replan(
-				currentPose, m_lastCommanded);
-		m_generatedTrajectory = PathPlannerTrajectory(replanned,
-				m_lastCommanded);
+				currentPose, currentSpeeds);
+		m_generatedTrajectory = PathPlannerTrajectory(replanned, currentSpeeds);
 		PathPlannerLogging::logActivePath (replanned);
 		PPLibTelemetry::setCurrentPath(replanned);
 	} else {
-		m_generatedTrajectory = PathPlannerTrajectory(m_path, m_lastCommanded);
+		m_generatedTrajectory = PathPlannerTrajectory(m_path, currentSpeeds);
 		PathPlannerLogging::logActivePath (m_path);
 		PPLibTelemetry::setCurrentPath(m_path);
 	}
@@ -69,21 +68,19 @@ void FollowPathHolonomic::Execute() {
 
 	units::meters_per_second_t currentVel = units::math::hypot(currentSpeeds.vx,
 			currentSpeeds.vy);
-	units::meters_per_second_t lastVel = units::math::hypot(m_lastCommanded.vx,
-			m_lastCommanded.vy);
+
+	frc::ChassisSpeeds targetSpeeds = m_controller.calculate(currentPose,
+			targetState);
 
 	PPLibTelemetry::setCurrentPose(currentPose);
 	PPLibTelemetry::setTargetPose(targetState.getTargetHolonomicPose());
-	PPLibTelemetry::setVelocities(currentVel, lastVel, currentSpeeds.omega,
-			m_lastCommanded.omega);
+	PPLibTelemetry::setVelocities(currentVel, targetState.velocity,
+			currentSpeeds.omega, targetSpeeds.omega);
 	PathPlannerLogging::logCurrentPose(currentPose);
 	PathPlannerLogging::logTargetPose(targetState.getTargetHolonomicPose());
-
-	m_lastCommanded = m_controller.calculate(currentPose, targetState);
-
 	PPLibTelemetry::setPathInaccuracy(m_controller.getPositionalError());
 
-	m_output (m_lastCommanded);
+	m_output(targetSpeeds);
 }
 
 bool FollowPathHolonomic::IsFinished() {

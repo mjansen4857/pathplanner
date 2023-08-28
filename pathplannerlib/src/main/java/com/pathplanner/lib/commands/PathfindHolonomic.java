@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -224,21 +223,21 @@ public class PathfindHolonomic extends Command {
       PathPlannerTrajectory.State targetState = currentTrajectory.sample(timer.get());
       ChassisSpeeds targetSpeeds = controller.calculate(currentPose, targetState);
 
-      PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
-      output.accept(targetSpeeds);
-
-      double actualVel =
+      double currentVel =
           Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-      double commandedVel =
-          Math.hypot(targetSpeeds.vxMetersPerSecond, targetSpeeds.vyMetersPerSecond);
 
-      PPLibTelemetry.setVelocities(
-          actualVel,
-          commandedVel,
-          Units.radiansToDegrees(currentSpeeds.omegaRadiansPerSecond),
-          Units.radiansToDegrees(targetSpeeds.omegaRadiansPerSecond));
-      PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
+      PPLibTelemetry.setCurrentPose(currentPose);
       PPLibTelemetry.setTargetPose(targetState.getTargetHolonomicPose());
+      PathPlannerLogging.logCurrentPose(currentPose);
+      PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
+      PPLibTelemetry.setVelocities(
+          currentVel,
+          targetState.velocityMps,
+          currentSpeeds.omegaRadiansPerSecond,
+          targetSpeeds.omegaRadiansPerSecond);
+      PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
+
+      output.accept(targetSpeeds);
     }
   }
 

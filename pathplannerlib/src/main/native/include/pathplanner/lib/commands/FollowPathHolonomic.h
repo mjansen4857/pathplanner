@@ -83,6 +83,5 @@ private:
 	HolonomicDriveController m_controller;
 
 	PathPlannerTrajectory m_generatedTrajectory;
-	frc::ChassisSpeeds m_lastCommanded;
 };
 }

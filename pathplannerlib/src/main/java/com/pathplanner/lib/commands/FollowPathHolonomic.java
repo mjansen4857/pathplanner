@@ -24,7 +24,6 @@ public class FollowPathHolonomic extends Command {
   private final Consumer<ChassisSpeeds> output;
 
   private PathPlannerTrajectory generatedTrajectory;
-  private ChassisSpeeds lastCommanded;
 
   public FollowPathHolonomic(
       PathPlannerPath path,
@@ -94,19 +93,19 @@ public class FollowPathHolonomic extends Command {
   @Override
   public void initialize() {
     Pose2d currentPose = poseSupplier.get();
-    lastCommanded = speedsSupplier.get();
+    ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-    controller.reset(currentPose, lastCommanded);
+    controller.reset(currentPose, currentSpeeds);
 
     if (currentPose.getTranslation().getDistance(path.getPoint(0).position) >= 0.25
-        || Math.hypot(lastCommanded.vxMetersPerSecond, lastCommanded.vyMetersPerSecond) >= 0.25) {
+        || Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) >= 0.25) {
       // Replan path
-      PathPlannerPath replanned = path.replan(currentPose, lastCommanded);
-      generatedTrajectory = new PathPlannerTrajectory(replanned, lastCommanded);
+      PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
+      generatedTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
       PathPlannerLogging.logActivePath(replanned);
       PPLibTelemetry.setCurrentPath(replanned);
     } else {
-      generatedTrajectory = new PathPlannerTrajectory(path, lastCommanded);
+      generatedTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
       PathPlannerLogging.logActivePath(path);
       PPLibTelemetry.setCurrentPath(path);
     }
@@ -123,25 +122,23 @@ public class FollowPathHolonomic extends Command {
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
+    ChassisSpeeds targetSpeeds = controller.calculate(currentPose, targetState);
+
     double currentVel =
         Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-    double lastVel = Math.hypot(lastCommanded.vxMetersPerSecond, lastCommanded.vyMetersPerSecond);
 
     PPLibTelemetry.setCurrentPose(currentPose);
     PPLibTelemetry.setTargetPose(targetState.getTargetHolonomicPose());
-    PPLibTelemetry.setVelocities(
-        currentVel,
-        lastVel,
-        currentSpeeds.omegaRadiansPerSecond,
-        lastCommanded.omegaRadiansPerSecond);
     PathPlannerLogging.logCurrentPose(currentPose);
     PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
-
-    lastCommanded = controller.calculate(currentPose, targetState);
-
+    PPLibTelemetry.setVelocities(
+        currentVel,
+        targetState.velocityMps,
+        currentSpeeds.omegaRadiansPerSecond,
+        targetSpeeds.omegaRadiansPerSecond);
     PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
 
-    output.accept(lastCommanded);
+    output.accept(targetSpeeds);
   }
 
   @Override

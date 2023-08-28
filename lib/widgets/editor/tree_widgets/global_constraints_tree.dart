@@ -8,12 +8,14 @@ class GlobalConstraintsTree extends StatelessWidget {
   final PathPlannerPath path;
   final VoidCallback? onPathChanged;
   final ChangeStack undoStack;
+  final bool holonomicMode;
 
   const GlobalConstraintsTree({
     super.key,
     required this.path,
     this.onPathChanged,
     required this.undoStack,
+    required this.holonomicMode,
   });
 
   @override
@@ -62,43 +64,44 @@ class GlobalConstraintsTree extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: NumberTextField(
-                  initialText: path.globalConstraints.maxAngularVelocity
-                      .toStringAsFixed(2),
-                  label: 'Max Angular Velocity (Deg/S)',
-                  arrowKeyIncrement: 1.0,
-                  onSubmitted: (value) {
-                    if (value != null && value > 0) {
-                      _addChange(() =>
-                          path.globalConstraints.maxAngularVelocity = value);
-                    }
-                  },
+        if (holonomicMode) const SizedBox(height: 12),
+        if (holonomicMode)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: NumberTextField(
+                    initialText: path.globalConstraints.maxAngularVelocity
+                        .toStringAsFixed(2),
+                    label: 'Max Angular Velocity (Deg/S)',
+                    arrowKeyIncrement: 1.0,
+                    onSubmitted: (value) {
+                      if (value != null && value > 0) {
+                        _addChange(() =>
+                            path.globalConstraints.maxAngularVelocity = value);
+                      }
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: NumberTextField(
-                  initialText: path.globalConstraints.maxAngularAcceleration
-                      .toStringAsFixed(2),
-                  label: 'Max Angular Acceleration (Deg/S²)',
-                  arrowKeyIncrement: 1.0,
-                  onSubmitted: (value) {
-                    if (value != null && value > 0) {
-                      _addChange(() => path
-                          .globalConstraints.maxAngularAcceleration = value);
-                    }
-                  },
+                const SizedBox(width: 8),
+                Expanded(
+                  child: NumberTextField(
+                    initialText: path.globalConstraints.maxAngularAcceleration
+                        .toStringAsFixed(2),
+                    label: 'Max Angular Acceleration (Deg/S²)',
+                    arrowKeyIncrement: 1.0,
+                    onSubmitted: (value) {
+                      if (value != null && value > 0) {
+                        _addChange(() => path
+                            .globalConstraints.maxAngularAcceleration = value);
+                      }
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
       ],
     );
   }

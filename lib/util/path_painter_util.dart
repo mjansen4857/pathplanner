@@ -211,20 +211,4 @@ class PathPainterUtil {
       return size / 3240 * fieldImage.defaultSize.width * scale;
     }
   }
-
-  static Offset lerp(Offset a, Offset b, double t) {
-    return a + ((b - a) * t);
-  }
-
-  static Offset quadraticLerp(Offset a, Offset b, Offset c, double t) {
-    Offset p0 = lerp(a, b, t);
-    Offset p1 = lerp(b, c, t);
-    return lerp(p0, p1, t);
-  }
-
-  static Offset cubicLerp(Offset a, Offset b, Offset c, Offset d, double t) {
-    Offset p0 = quadraticLerp(a, b, c, t);
-    Offset p1 = quadraticLerp(b, c, d, t);
-    return lerp(p0, p1, t);
-  }
 }

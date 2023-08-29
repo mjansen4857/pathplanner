@@ -609,8 +609,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   void _simulatePath() async {
     if (widget.simulate) {
       setState(() {
-        // Just using default values for the kinematics stuff. It will be a good enough approximation
-        _simTraj = Trajectory(widget.path, ChassisSpeeds(), 4.5, 0.425);
+        _simTraj = Trajectory.simulate(widget.path, ChassisSpeeds());
       });
       _previewController.stop();
       _previewController.reset();

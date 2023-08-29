@@ -146,7 +146,7 @@ public:
 	 *
 	 * @return vector of all states
 	 */
-	constexpr std::vector<State> getStates() {
+	constexpr std::vector<State>& getStates() {
 		return m_states;
 	}
 
@@ -155,7 +155,7 @@ public:
 	 *
 	 * @return Total run time in seconds
 	 */
-	constexpr units::second_t getTotalTime() {
+	inline units::second_t getTotalTime() {
 		return getEndState().time;
 	}
 
@@ -165,7 +165,7 @@ public:
 	 * @param index Index of the state to get
 	 * @return The state at the given index
 	 */
-	constexpr State getState(size_t index) {
+	inline State getState(size_t index) {
 		return m_states[index];
 	}
 
@@ -174,7 +174,7 @@ public:
 	 *
 	 * @return The initial state
 	 */
-	constexpr State getInitialState() {
+	inline State getInitialState() {
 		return m_states[0];
 	}
 
@@ -185,7 +185,7 @@ public:
 	 *
 	 * @return The initial target pose
 	 */
-	constexpr frc::Pose2d getInitialTargetHolonomicPose() {
+	inline frc::Pose2d getInitialTargetHolonomicPose() {
 		return m_states[0].getTargetHolonomicPose();
 	}
 
@@ -194,7 +194,7 @@ public:
 	 *
 	 * @return The initial pose
 	 */
-	constexpr frc::Pose2d getInitialDifferentialPose() {
+	inline frc::Pose2d getInitialDifferentialPose() {
 		return m_states[0].getDifferentialPose();
 	}
 
@@ -203,7 +203,7 @@ public:
 	 *
 	 * @return The end state
 	 */
-	constexpr State getEndState() {
+	inline State getEndState() {
 		return m_states[m_states.size() - 1];
 	}
 

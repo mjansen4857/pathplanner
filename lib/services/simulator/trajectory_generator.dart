@@ -142,8 +142,8 @@ class TrajectoryGenerator {
               distToStart / 3.0 * sin(heading));
 
       num joinHeading = atan2(
-          path.waypoints[0].anchor.y - path.waypoints[1].nextControl!.y,
-          path.waypoints[0].anchor.x - path.waypoints[1].nextControl!.x);
+          path.waypoints[0].anchor.y - path.waypoints[0].nextControl!.y,
+          path.waypoints[0].anchor.x - path.waypoints[0].nextControl!.x);
       Point joinPrevControl = path.pathPoints[0].position +
           Point(distToStart / 2.0 * cos(joinHeading),
               distToStart / 2.0 * sin(joinHeading));

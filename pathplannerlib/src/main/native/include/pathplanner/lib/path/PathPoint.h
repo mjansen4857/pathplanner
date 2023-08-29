@@ -13,6 +13,7 @@ class PathPoint {
 public:
 	frc::Translation2d position;
 	units::meter_t distanceAlongPath = 0_m;
+	units::meter_t curveRadius = 0_m;
 	units::meters_per_second_t maxV = units::meters_per_second_t {
 			std::numeric_limits<double>::infinity() };
 	std::optional<frc::Rotation2d> holonomicRotation = std::nullopt;

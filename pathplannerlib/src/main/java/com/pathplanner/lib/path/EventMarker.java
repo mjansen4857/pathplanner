@@ -100,6 +100,15 @@ public class EventMarker {
     return waypointRelativePos;
   }
 
+  /**
+   * Get the minimum trigger distance for this marker
+   *
+   * @return The minimum trigger distance in meters
+   */
+  public double getMinimumTriggerDistance() {
+    return minimumTriggerDistance;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

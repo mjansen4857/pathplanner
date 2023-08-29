@@ -87,4 +87,16 @@ void main() {
       expect(GeometryUtil.toRadians(-180), -pi);
     });
   });
+
+  group('rotationLerp', () {
+    test('100 to -100', () {
+      expect(
+          GeometryUtil.rotationLerp(100, -100, 0.25, 180), closeTo(140, 0.001));
+    });
+
+    test('-120 to 150', () {
+      expect(
+          GeometryUtil.rotationLerp(-120, 150, 0.8, 180), closeTo(168, 0.001));
+    });
+  });
 }

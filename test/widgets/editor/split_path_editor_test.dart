@@ -448,10 +448,10 @@ void main() {
         matching: find.widgetWithText(TreeCardNode, 'z'));
 
     await gesture.moveTo(widgetTester.getCenter(zoneCard));
-    await widgetTester.pump();
+    await widgetTester.pumpAndSettle();
 
     await gesture.moveTo(Offset.infinite);
-    await widgetTester.pump();
+    await widgetTester.pumpAndSettle();
 
     await widgetTester.tap(zoneCard);
     await widgetTester.pumpAndSettle();

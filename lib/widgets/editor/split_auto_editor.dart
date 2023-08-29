@@ -1,11 +1,9 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
-import 'package:pathplanner/services/log.dart';
-import 'package:pathplanner/services/simulator/path_simulator.dart';
+import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
@@ -48,8 +46,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   bool _draggingStartPos = false;
   bool _draggingStartRot = false;
   Pose2d? _dragOldValue;
-  SimulatedPath? _simPath;
-  late bool _holonomicMode;
+  Trajectory? _simPath;
 
   late Size _robotSize;
   late AnimationController _previewController;
@@ -59,9 +56,6 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
     super.initState();
 
     _previewController = AnimationController(vsync: this);
-
-    _holonomicMode =
-        widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
 
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
@@ -265,7 +259,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: AutoTree(
                     auto: widget.auto,
-                    autoRuntime: _simPath?.runtime,
+                    autoRuntime: _simPath?.states.last.time,
                     allPathNames: widget.allPathNames,
                     onPathHovered: (value) {
                       setState(() {
@@ -293,21 +287,19 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
     );
   }
 
+  // Marked as async so it can run from initState
   void _simulateAuto() async {
-    Stopwatch s = Stopwatch()..start();
-    SimulatedPath p = await compute(
-        _holonomicMode ? simulateAutoHolonomic : simulateAutoDifferential,
-        SimulatableAuto(
-            paths: widget.autoPaths, startingPose: widget.auto.startingPose));
-    Log.debug('Simulated auto in ${s.elapsedMilliseconds}ms');
-    setState(() {
-      _simPath = p;
-    });
-    _previewController.stop();
-    _previewController.reset();
-    _previewController.duration =
-        Duration(milliseconds: (p.runtime * 1000).toInt());
-    if (p.runtime > 0) {
+    Trajectory? simPath = TrajectoryGenerator.simulateAuto(
+        widget.autoPaths, widget.auto.startingPose);
+
+    if (simPath != null) {
+      setState(() {
+        _simPath = simPath;
+      });
+      _previewController.stop();
+      _previewController.reset();
+      _previewController.duration =
+          Duration(milliseconds: (simPath.states.last.time * 1000).toInt());
       _previewController.repeat();
     }
   }

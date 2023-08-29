@@ -27,8 +27,8 @@ public class PPLibTelemetry {
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/currentPose").publish();
   private static final DoubleArrayPublisher pathPub =
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/currentPath").publish();
-  private static final DoubleArrayPublisher lookaheadPub =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/lookahead").publish();
+  private static final DoubleArrayPublisher targetPosePub =
+      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/targetPose").publish();
 
   private static final Map<String, List<PathPlannerPath>> hotReloadPaths = new HashMap<>();
   private static final Map<String, List<PathPlannerAuto>> hotReloadAutos = new HashMap<>();
@@ -74,9 +74,12 @@ public class PPLibTelemetry {
     }
   }
 
-  public static void setLookahead(Translation2d lookahead) {
+  public static void setTargetPose(Pose2d targetPose) {
     if (!compMode) {
-      lookaheadPub.set(new double[] {lookahead.getX(), lookahead.getY()});
+      targetPosePub.set(
+          new double[] {
+            targetPose.getX(), targetPose.getY(), targetPose.getRotation().getDegrees()
+          });
     }
   }
 

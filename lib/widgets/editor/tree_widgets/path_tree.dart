@@ -106,6 +106,7 @@ class _PathTreeState extends State<PathTree> {
                   path: widget.path,
                   onPathChanged: widget.onPathChanged,
                   undoStack: widget.undoStack,
+                  holonomicMode: widget.holonomicMode,
                 ),
                 GoalEndStateTree(
                   path: widget.path,
@@ -143,6 +144,7 @@ class _PathTreeState extends State<PathTree> {
                   onZoneSelected: widget.onZoneSelected,
                   initiallySelectedZone: widget.initiallySelectedZone,
                   undoStack: widget.undoStack,
+                  holonomicMode: widget.holonomicMode,
                 ),
                 const Divider(),
                 const EditorSettingsTree(),

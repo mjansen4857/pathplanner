@@ -6,8 +6,10 @@
 #include "pathplanner/lib/path/PathConstraints.h"
 #include "pathplanner/lib/path/GoalEndState.h"
 #include "pathplanner/lib/path/PathPoint.h"
+#include "pathplanner/lib/path/PathSegment.h"
 #include <vector>
 #include <frc/geometry/Translation2d.h>
+#include <frc/kinematics/ChassisSpeeds.h>
 #include <wpi/json.h>
 #include <string>
 #include <units/length.h>
@@ -131,6 +133,16 @@ public:
 		return m_reversed;
 	}
 
+	/**
+	 * Replan this path based on the current robot position and speeds
+	 *
+	 * @param startingPose New starting pose for the replanned path
+	 * @param currentSpeeds Current chassis speeds of the robot
+	 * @return The replanned path
+	 */
+	std::shared_ptr<PathPlannerPath> replan(const frc::Pose2d startingPose,
+			const frc::ChassisSpeeds currentSpeeds) const;
+
 private:
 	PathPlannerPath(PathConstraints globalConstraints,
 			GoalEndState goalEndState);
@@ -146,6 +158,34 @@ private:
 
 	static units::meter_t getCurveRadiusAtPoint(size_t index,
 			std::vector<PathPoint> &points);
+
+	/**
+	 * Map a given percentage/waypoint relative position over 2 segments
+	 *
+	 * @param pct The percent to map
+	 * @param seg1Pct The percentage of the 2 segments made up by the first segment
+	 * @return The waypoint relative position over the 2 segments
+	 */
+	static double mapPct(double pct, double seg1Pct) {
+		double mappedPct;
+		if (pct <= seg1Pct) {
+			// Map to segment 1
+			mappedPct = pct / seg1Pct;
+		} else {
+			// Map to segment 2
+			mappedPct = 1.0 + ((pct - seg1Pct) / (1.0 - seg1Pct));
+		}
+
+		return std::round(mappedPct * (1.0 / PathSegment::RESOLUTION))
+				/ (1.0 / PathSegment::RESOLUTION);
+	}
+
+	static inline units::meter_t positionDelta(const frc::Translation2d &a,
+			const frc::Translation2d &b) {
+		frc::Translation2d delta = a - b;
+
+		return units::math::abs(delta.X()) + units::math::abs(delta.Y());
+	}
 
 	std::vector<frc::Translation2d> m_bezierPoints;
 	std::vector<RotationTarget> m_rotationTargets;

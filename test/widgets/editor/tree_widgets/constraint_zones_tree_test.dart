@@ -54,6 +54,7 @@ void main() {
           onZoneHovered: (value) => hoveredZone = value,
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -84,6 +85,7 @@ void main() {
           onZoneHovered: (value) => hoveredZone = value,
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -103,6 +105,7 @@ void main() {
           onZoneHovered: (value) => hoveredZone = value,
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -131,6 +134,7 @@ void main() {
           onZoneHovered: (value) => hoveredZone = value,
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -163,6 +167,7 @@ void main() {
           onZoneHovered: (value) => hoveredZone = value,
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -196,6 +201,7 @@ void main() {
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
           initiallySelectedZone: 0,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -228,6 +234,7 @@ void main() {
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
           initiallySelectedZone: 0,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -261,6 +268,7 @@ void main() {
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
           initiallySelectedZone: 0,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -294,6 +302,7 @@ void main() {
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
           initiallySelectedZone: 0,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -327,6 +336,7 @@ void main() {
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
           initiallySelectedZone: 0,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -357,6 +367,7 @@ void main() {
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
           initiallySelectedZone: 0,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -387,6 +398,7 @@ void main() {
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
           initiallySelectedZone: 0,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -417,6 +429,7 @@ void main() {
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
           initiallySelectedZone: 0,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -438,6 +451,7 @@ void main() {
           onZoneHovered: (value) => hoveredZone = value,
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -473,6 +487,7 @@ void main() {
           onZoneHovered: (value) => hoveredZone = value,
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -507,6 +522,7 @@ void main() {
           onZoneHovered: (value) => hoveredZone = value,
           onZoneSelected: (value) => selectedZone = value,
           undoStack: undoStack,
+          holonomicMode: true,
         ),
       ),
     ));

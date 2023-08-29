@@ -9,7 +9,7 @@ import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/services/simulator/chassis_speeds.dart';
-import 'package:pathplanner/services/trajectory_generator.dart';
+import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
@@ -609,7 +609,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   void _simulatePath() async {
     if (widget.simulate) {
       setState(() {
-        _simTraj = Trajectory(widget.path, ChassisSpeeds());
+        // Just using default values for the kinematics stuff. It will be a good enough approximation
+        _simTraj = Trajectory(widget.path, ChassisSpeeds(), 4.5, 0.425);
       });
       _previewController.stop();
       _previewController.reset();

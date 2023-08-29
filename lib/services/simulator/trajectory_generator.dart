@@ -3,15 +3,22 @@ import 'dart:math';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/simulator/chassis_speeds.dart';
+import 'package:pathplanner/services/simulator/rotation_controller.dart';
 import 'package:pathplanner/util/geometry_util.dart';
+import 'package:pathplanner/util/math_util.dart';
 
 class TrajectoryGenerator {}
 
 class Trajectory {
   final List<TrajectoryState> states;
 
-  Trajectory(PathPlannerPath path, ChassisSpeeds startingSpeeds)
-      : states = _generateStates(path, startingSpeeds);
+  Trajectory(PathPlannerPath path, ChassisSpeeds startingSpeeds,
+      num maxModuleSpeed, num driveBaseRadius,
+      [num startingRotationRadians = 0, num startingAngVelRps = 0])
+      : states = _generateStates(path, startingSpeeds) {
+    _simulateRotation(startingRotationRadians, startingAngVelRps,
+        maxModuleSpeed, driveBaseRadius);
+  }
 
   TrajectoryState sample(num time) {
     if (time <= states.first.time) return states.first;
@@ -36,6 +43,37 @@ class Trajectory {
 
     return prevSample.interpolate(
         sample, (time - prevSample.time) / (sample.time - prevSample.time));
+  }
+
+  void _simulateRotation(num startingRotationRadians, num startingAngVelRps,
+      num maxModuleSpeed, num driveBaseRadius) {
+    num mpsToRps = 1.0 / driveBaseRadius;
+
+    RotationController controller = RotationController(
+        setpoint: State(
+            position: startingRotationRadians, velocity: startingAngVelRps));
+
+    states.first.holonomicRotationRadians = startingRotationRadians;
+
+    for (int i = 1; i < states.length; i++) {
+      num angVelConstraint =
+          GeometryUtil.toRadians(states[i].constraints.maxAngularVelocity);
+
+      // Approximation of available module speed to do rotation with
+      num maxAngVelModule =
+          max(0, maxModuleSpeed - states[i].velocity) * mpsToRps;
+      num maxAngVel = min(angVelConstraint, maxAngVelModule);
+
+      num dt = states[i].time - states[i - 1].time;
+      num rot = controller.calculate(
+          states[i - 1].holonomicRotationRadians,
+          states[i].holonomicRotationRadians,
+          maxAngVel,
+          GeometryUtil.toRadians(states[i].constraints.maxAngularAcceleration),
+          dt);
+
+      states[i].holonomicRotationRadians = MathUtil.inputModulus(rot, -pi, pi);
+    }
   }
 
   static int _getNextRotationTargetIdx(
@@ -71,7 +109,7 @@ class Trajectory {
         nextRotationTargetIdx = _getNextRotationTargetIdx(path, i);
       }
 
-      state.targetHolonomicRotationRadians = GeometryUtil.toRadians(
+      state.holonomicRotationRadians = GeometryUtil.toRadians(
           path.pathPoints[nextRotationTargetIdx].holonomicRotation!);
 
       state.position = path.pathPoints[i].position;
@@ -137,7 +175,7 @@ class TrajectoryState {
   Point position = const Point(0, 0);
   num headingRadians = 0;
 
-  num targetHolonomicRotationRadians = 0;
+  num holonomicRotationRadians = 0;
   PathConstraints constraints = PathConstraints();
 
   num deltaPos = 0;
@@ -159,15 +197,13 @@ class TrajectoryState {
     lerpedState.headingRadians =
         GeometryUtil.rotationLerp(headingRadians, endVal.headingRadians, t, pi);
     lerpedState.deltaPos = GeometryUtil.numLerp(deltaPos, endVal.deltaPos, t);
+    lerpedState.holonomicRotationRadians = GeometryUtil.rotationLerp(
+        holonomicRotationRadians, endVal.holonomicRotationRadians, t, pi);
 
     if (t < 0.5) {
       lerpedState.constraints = constraints;
-      lerpedState.targetHolonomicRotationRadians =
-          targetHolonomicRotationRadians;
     } else {
       lerpedState.constraints = endVal.constraints;
-      lerpedState.targetHolonomicRotationRadians =
-          endVal.targetHolonomicRotationRadians;
     }
 
     return lerpedState;

@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:pathplanner/services/trajectory_generator.dart';
+import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -138,9 +138,8 @@ class PathPainter extends CustomPainter {
 
     if (previewTime != null) {
       TrajectoryState state = simulatedPath!.sample(previewTime!.value);
-      num rotation = holonomicMode
-          ? state.targetHolonomicRotationRadians
-          : state.headingRadians;
+      num rotation =
+          holonomicMode ? state.holonomicRotationRadians : state.headingRadians;
       PathPainterUtil.paintRobotOutline(
           state.position,
           GeometryUtil.toDegrees(rotation),

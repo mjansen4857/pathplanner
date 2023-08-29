@@ -82,13 +82,7 @@ class PathPainter extends CustomPainter {
         _paintRadius(paths[i], canvas, scale);
       }
 
-      PathPainterUtil.paintPathPoints(
-          paths[i],
-          fieldImage,
-          selectedZone,
-          hoveredZone,
-          canvas,
-          scale,
+      _paintPathPoints(paths[i], canvas,
           (hoveredPath == paths[i].name) ? Colors.orange : Colors.grey[300]!);
 
       if (holonomicMode) {
@@ -154,6 +148,83 @@ class PathPainter extends CustomPainter {
   @override
   bool shouldRepaint(PathPainter oldDelegate) {
     return true; // This will just be repainted all the time anyways from the animation
+  }
+
+  void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = baseColor
+      ..strokeWidth = 2;
+
+    Path p = Path();
+
+    Offset start = PathPainterUtil.pointToPixelOffset(
+        path.pathPoints[0].position, scale, fieldImage);
+    p.moveTo(start.dx, start.dy);
+
+    for (int i = 1; i < path.pathPoints.length; i++) {
+      Offset pos = PathPainterUtil.pointToPixelOffset(
+          path.pathPoints[i].position, scale, fieldImage);
+
+      p.lineTo(pos.dx, pos.dy);
+    }
+
+    canvas.drawPath(p, paint);
+
+    if (selectedZone != null) {
+      paint.color = Colors.orange;
+      paint.strokeWidth = 4;
+      p.reset();
+
+      int startIdx =
+          (path.constraintZones[selectedZone!].minWaypointRelativePos /
+                  pathResolution)
+              .round();
+      int endIdx = min(
+          (path.constraintZones[selectedZone!].maxWaypointRelativePos /
+                  pathResolution)
+              .round(),
+          path.pathPoints.length - 1);
+      Offset start = PathPainterUtil.pointToPixelOffset(
+          path.pathPoints[startIdx].position, scale, fieldImage);
+      p.moveTo(start.dx, start.dy);
+
+      for (int i = startIdx; i <= endIdx; i++) {
+        Offset pos = PathPainterUtil.pointToPixelOffset(
+            path.pathPoints[i].position, scale, fieldImage);
+
+        p.lineTo(pos.dx, pos.dy);
+      }
+
+      canvas.drawPath(p, paint);
+    }
+    if (hoveredZone != null && selectedZone != hoveredZone) {
+      paint.color = Colors.deepPurpleAccent;
+      paint.strokeWidth = 4;
+      p.reset();
+
+      int startIdx =
+          (path.constraintZones[hoveredZone!].minWaypointRelativePos /
+                  pathResolution)
+              .round();
+      int endIdx = min(
+          (path.constraintZones[hoveredZone!].maxWaypointRelativePos /
+                  pathResolution)
+              .round(),
+          path.pathPoints.length - 1);
+      Offset start = PathPainterUtil.pointToPixelOffset(
+          path.pathPoints[startIdx].position, scale, fieldImage);
+      p.moveTo(start.dx, start.dy);
+
+      for (int i = startIdx; i <= endIdx; i++) {
+        Offset pos = PathPainterUtil.pointToPixelOffset(
+            path.pathPoints[i].position, scale, fieldImage);
+
+        p.lineTo(pos.dx, pos.dy);
+      }
+
+      canvas.drawPath(p, paint);
+    }
   }
 
   void _paintMarkers(PathPlannerPath path, Canvas canvas) {

@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 class PathPainterUtil {
@@ -54,89 +53,6 @@ class PathPainterUtil {
     paint.color = Colors.black;
     canvas.drawCircle(frontMiddle,
         PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
-  }
-
-  static void paintPathPoints(
-      PathPlannerPath path,
-      FieldImage fieldImage,
-      int? selectedZone,
-      int? hoveredZone,
-      Canvas canvas,
-      double scale,
-      Color baseColor) {
-    var paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = baseColor
-      ..strokeWidth = 2;
-
-    Path p = Path();
-
-    Offset start = PathPainterUtil.pointToPixelOffset(
-        path.pathPoints[0].position, scale, fieldImage);
-    p.moveTo(start.dx, start.dy);
-
-    for (int i = 1; i < path.pathPoints.length; i++) {
-      Offset pos = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[i].position, scale, fieldImage);
-
-      p.lineTo(pos.dx, pos.dy);
-    }
-
-    canvas.drawPath(p, paint);
-
-    if (selectedZone != null) {
-      paint.color = Colors.orange;
-      paint.strokeWidth = 4;
-      p.reset();
-
-      int startIdx =
-          (path.constraintZones[selectedZone].minWaypointRelativePos /
-                  pathResolution)
-              .round();
-      int endIdx = min(
-          (path.constraintZones[selectedZone].maxWaypointRelativePos /
-                  pathResolution)
-              .round(),
-          path.pathPoints.length - 1);
-      Offset start = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[startIdx].position, scale, fieldImage);
-      p.moveTo(start.dx, start.dy);
-
-      for (int i = startIdx; i <= endIdx; i++) {
-        Offset pos = PathPainterUtil.pointToPixelOffset(
-            path.pathPoints[i].position, scale, fieldImage);
-
-        p.lineTo(pos.dx, pos.dy);
-      }
-
-      canvas.drawPath(p, paint);
-    }
-    if (hoveredZone != null && selectedZone != hoveredZone) {
-      paint.color = Colors.deepPurpleAccent;
-      paint.strokeWidth = 4;
-      p.reset();
-
-      int startIdx = (path.constraintZones[hoveredZone].minWaypointRelativePos /
-              pathResolution)
-          .round();
-      int endIdx = min(
-          (path.constraintZones[hoveredZone].maxWaypointRelativePos /
-                  pathResolution)
-              .round(),
-          path.pathPoints.length - 1);
-      Offset start = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[startIdx].position, scale, fieldImage);
-      p.moveTo(start.dx, start.dy);
-
-      for (int i = startIdx; i <= endIdx; i++) {
-        Offset pos = PathPainterUtil.pointToPixelOffset(
-            path.pathPoints[i].position, scale, fieldImage);
-
-        p.lineTo(pos.dx, pos.dy);
-      }
-
-      canvas.drawPath(p, paint);
-    }
   }
 
   static void paintMarker(Canvas canvas, Offset location, Color color) {

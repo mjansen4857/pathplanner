@@ -117,7 +117,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                       style: ElevatedButton.styleFrom(
                         elevation: 4.0,
                       ),
-                      onPressed: () {},
+                      onPressed: widget.onOpened,
                     ),
                   ),
                 ),

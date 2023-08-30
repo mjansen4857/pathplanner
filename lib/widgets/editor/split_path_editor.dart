@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
@@ -233,9 +234,17 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                               PathPainter.scale),
                       max(8, details.localPosition.dy)));
 
-                  if ((widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
-                          Defaults.snapToGuidelines) &&
-                      _draggedPoint!.isAnchorDragging) {
+                  bool snapSetting =
+                      widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
+                          Defaults.snapToGuidelines;
+                  bool ctrlHeld = RawKeyboard.instance.keysPressed
+                          .contains(LogicalKeyboardKey.controlLeft) ||
+                      RawKeyboard.instance.keysPressed
+                          .contains(LogicalKeyboardKey.controlRight);
+
+                  bool shouldSnap = snapSetting ^ ctrlHeld;
+
+                  if (shouldSnap && _draggedPoint!.isAnchorDragging) {
                     num? closestX;
                     num? closestY;
 
@@ -255,10 +264,10 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       }
                     }
 
-                    if (closestX != null && (targetX - closestX).abs() < 0.25) {
+                    if (closestX != null && (targetX - closestX).abs() < 0.1) {
                       targetX = closestX;
                     }
-                    if (closestY != null && (targetY - closestY).abs() < 0.25) {
+                    if (closestY != null && (targetY - closestY).abs() < 0.1) {
                       targetY = closestY;
                     }
                   }

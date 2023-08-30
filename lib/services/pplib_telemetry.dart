@@ -10,7 +10,7 @@ class PPLibTelemetry {
   late NT4Subscription _inaccuracySub;
   late NT4Subscription _currentPoseSub;
   late NT4Subscription _currentPathSub;
-  late NT4Subscription _lookaheadSub;
+  late NT4Subscription _targetPoseSub;
 
   late NT4Topic _hotReloadPathTopic;
   late NT4Topic _hotReloadAutoTopic;
@@ -28,7 +28,7 @@ class PPLibTelemetry {
     _inaccuracySub = _client.subscribe('/PathPlanner/inaccuracy', 0.033);
     _currentPoseSub = _client.subscribe('/PathPlanner/currentPose', 0.033);
     _currentPathSub = _client.subscribe('/PathPlanner/currentPath', 0.1);
-    _lookaheadSub = _client.subscribe('/PathPlanner/lookahead', 0.033);
+    _targetPoseSub = _client.subscribe('/PathPlanner/targetPose', 0.033);
 
     _hotReloadPathTopic = _client.publishNewTopic(
         '/PathPlanner/HotReload/hotReloadPath', NT4TypeStr.typeStr);
@@ -85,9 +85,10 @@ class PPLibTelemetry {
     return _client.connectionStatusStream();
   }
 
-  Stream<List<num>?> lookaheadStream() {
-    return _lookaheadSub.stream().map(
-        (lookahead) => (lookahead as List?)?.map((e) => e as num).toList());
+  Stream<List<num>?> targetPoseStream() {
+    return _targetPoseSub
+        .stream()
+        .map((pose) => (pose as List?)?.map((e) => e as num).toList());
   }
 
   bool get isConnected => _isConnected;

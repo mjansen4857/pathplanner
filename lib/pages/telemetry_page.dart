@@ -1,12 +1,12 @@
 import 'dart:math';
 
-import 'package:collection/collection.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
+import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,9 +32,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
   final List<List<num>> _velData = [];
   final List<num> _inaccuracyData = [];
   List<num>? _currentPath;
-  List<num>? _lookahead;
-  Point? _robotPos;
-  num? _robotRotation;
+  Pose2d? _currentPose;
+  Pose2d? _targetPose;
   late final Size _robotSize;
 
   @override
@@ -81,11 +80,27 @@ class _TelemetryPageState extends State<TelemetryPage> {
       if (mounted) {
         setState(() {
           if (pose == null) {
-            _robotPos = null;
-            _robotRotation = null;
+            _currentPose = null;
           } else {
-            _robotPos = Point(pose[0], pose[1]);
-            _robotRotation = pose[2];
+            _currentPose = Pose2d(
+              position: Point(pose[0], pose[1]),
+              rotation: pose[2],
+            );
+          }
+        });
+      }
+    });
+
+    widget.telemetry.targetPoseStream().listen((pose) {
+      if (mounted) {
+        setState(() {
+          if (pose == null) {
+            _targetPose = null;
+          } else {
+            _targetPose = Pose2d(
+              position: Point(pose[0], pose[1]),
+              rotation: pose[2],
+            );
           }
         });
       }
@@ -95,14 +110,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
       if (mounted) {
         setState(() {
           _currentPath = path;
-        });
-      }
-    });
-
-    widget.telemetry.lookaheadStream().listen((lookahead) {
-      if (mounted) {
-        setState(() {
-          _lookahead = lookahead;
         });
       }
     });
@@ -143,10 +150,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
                           painter: TelemetryPainter(
                             fieldImage: widget.fieldImage,
                             robotSize: _robotSize,
-                            robotPos: _robotPos,
-                            robotRotation: _robotRotation,
+                            currentPose: _currentPose,
+                            targetPose: _targetPose,
                             currentPath: _currentPath,
-                            lookahead: _lookahead,
                           ),
                         ),
                       ),
@@ -197,9 +203,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 title: 'Angular Velocity',
                 legend: _buildLegend(Colors.orange, Colors.blue),
                 data: _buildData(
-                  minY: -360,
-                  maxY: 360,
-                  horizontalInterval: 180,
+                  minY: -2 * pi,
+                  maxY: 2 * pi,
+                  horizontalInterval: pi,
                   spots: [
                     [
                       for (int i = 0; i < _velData.length; i++)
@@ -395,20 +401,18 @@ class _TelemetryPageState extends State<TelemetryPage> {
 class TelemetryPainter extends CustomPainter {
   final FieldImage fieldImage;
   final Size robotSize;
-  final Point? robotPos;
-  final num? robotRotation;
+  final Pose2d? currentPose;
+  final Pose2d? targetPose;
   final List<num>? currentPath;
-  final List<num>? lookahead;
 
   static double scale = 1;
 
   const TelemetryPainter({
     required this.fieldImage,
     required this.robotSize,
-    this.robotPos,
-    this.robotRotation,
+    this.currentPose,
+    this.targetPose,
     this.currentPath,
-    this.lookahead,
   });
 
   @override
@@ -435,28 +439,26 @@ class TelemetryPainter extends CustomPainter {
       canvas.drawPath(path, p);
     }
 
-    if (robotPos != null && robotRotation != null) {
-      PathPainterUtil.paintRobotOutline(robotPos!, robotRotation!, fieldImage,
-          robotSize, scale, canvas, Colors.grey[400]!);
+    if (targetPose != null) {
+      PathPainterUtil.paintRobotOutline(
+          targetPose!.position,
+          targetPose!.rotation,
+          fieldImage,
+          robotSize,
+          scale,
+          canvas,
+          Colors.grey[600]!.withOpacity(0.75));
     }
 
-    if (lookahead != null) {
-      Offset offset = PathPainterUtil.pointToPixelOffset(
-          Point(lookahead![0], lookahead![1]), scale, fieldImage);
-      double radius =
-          PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage);
-
-      Paint p = Paint()
-        ..color = Colors.deepPurpleAccent
-        ..style = PaintingStyle.fill;
-
-      canvas.drawCircle(offset, radius, p);
-
-      p.color = Colors.black;
-      p.style = PaintingStyle.stroke;
-      p.strokeWidth = 1;
-
-      canvas.drawCircle(offset, radius, p);
+    if (currentPose != null) {
+      PathPainterUtil.paintRobotOutline(
+          currentPose!.position,
+          currentPose!.rotation,
+          fieldImage,
+          robotSize,
+          scale,
+          canvas,
+          Colors.grey[400]!);
     }
   }
 
@@ -464,10 +466,8 @@ class TelemetryPainter extends CustomPainter {
   bool shouldRepaint(TelemetryPainter oldDelegate) {
     return oldDelegate.fieldImage != fieldImage ||
         oldDelegate.robotSize != robotSize ||
-        oldDelegate.robotPos != robotPos ||
-        oldDelegate.robotRotation != robotRotation ||
-        !listEquals(oldDelegate.currentPath, oldDelegate.currentPath) ||
-        !(const DeepCollectionEquality())
-            .equals(oldDelegate.lookahead, lookahead);
+        oldDelegate.currentPose != currentPose ||
+        oldDelegate.targetPose != targetPose ||
+        !listEquals(oldDelegate.currentPath, oldDelegate.currentPath);
   }
 }

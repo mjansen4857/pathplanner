@@ -53,8 +53,9 @@ void main() {
         .thenAnswer((_) => Stream.value([0, 0, 0, 0]));
     when(telemetry.inaccuracyStream()).thenAnswer((_) => Stream.value(0));
     when(telemetry.currentPoseStream())
+        .thenAnswer((_) => Stream.value([2.1, 2.1, 20]));
+    when(telemetry.targetPoseStream())
         .thenAnswer((_) => Stream.value([2, 2, 0]));
-    when(telemetry.lookaheadStream()).thenAnswer((_) => Stream.value([5, 3]));
     when(telemetry.currentPathStream())
         .thenAnswer((_) => Stream.value([1, 5, 2, 4, 3, 5]));
 

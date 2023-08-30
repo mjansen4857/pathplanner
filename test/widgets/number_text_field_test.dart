@@ -81,6 +81,60 @@ void main() {
     expect(lastSubmit, closeTo(1.0, 0.01));
   });
 
+  testWidgets('increment arrow key up partial', (widgetTester) async {
+    num? lastSubmit;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: NumberTextField(
+          initialText: '0.7',
+          label: 'Test Label',
+          arrowKeyIncrement: 1.0,
+          onSubmitted: (value) {
+            lastSubmit = value;
+          },
+        ),
+      ),
+    ));
+
+    var textField = find.byType(TextField);
+    await widgetTester.tap(textField);
+
+    await widgetTester.pumpAndSettle();
+
+    await simulateKeyDownEvent(LogicalKeyboardKey.arrowUp);
+    await widgetTester.pump();
+    await simulateKeyUpEvent(LogicalKeyboardKey.arrowUp);
+    await widgetTester.pump();
+
+    expect(lastSubmit, closeTo(1.0, 0.01));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: NumberTextField(
+          initialText: '0.2',
+          label: 'Test Label',
+          arrowKeyIncrement: 1.0,
+          onSubmitted: (value) {
+            lastSubmit = value;
+          },
+        ),
+      ),
+    ));
+
+    textField = find.byType(TextField);
+    await widgetTester.tap(textField);
+
+    await widgetTester.pumpAndSettle();
+
+    await simulateKeyDownEvent(LogicalKeyboardKey.arrowUp);
+    await widgetTester.pump();
+    await simulateKeyUpEvent(LogicalKeyboardKey.arrowUp);
+    await widgetTester.pump();
+
+    expect(lastSubmit, closeTo(1.0, 0.01));
+  });
+
   testWidgets('increment arrow key down', (widgetTester) async {
     num? lastSubmit;
 
@@ -98,6 +152,60 @@ void main() {
     ));
 
     var textField = find.byType(TextField);
+    await widgetTester.tap(textField);
+
+    await widgetTester.pumpAndSettle();
+
+    await simulateKeyDownEvent(LogicalKeyboardKey.arrowDown);
+    await widgetTester.pump();
+    await simulateKeyUpEvent(LogicalKeyboardKey.arrowDown);
+    await widgetTester.pump();
+
+    expect(lastSubmit, closeTo(-1.0, 0.01));
+  });
+
+  testWidgets('increment arrow key partial', (widgetTester) async {
+    num? lastSubmit;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: NumberTextField(
+          initialText: '-0.20',
+          label: 'Test Label',
+          arrowKeyIncrement: 1.0,
+          onSubmitted: (value) {
+            lastSubmit = value;
+          },
+        ),
+      ),
+    ));
+
+    var textField = find.byType(TextField);
+    await widgetTester.tap(textField);
+
+    await widgetTester.pumpAndSettle();
+
+    await simulateKeyDownEvent(LogicalKeyboardKey.arrowDown);
+    await widgetTester.pump();
+    await simulateKeyUpEvent(LogicalKeyboardKey.arrowDown);
+    await widgetTester.pump();
+
+    expect(lastSubmit, closeTo(-1.0, 0.01));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: NumberTextField(
+          initialText: '-0.70',
+          label: 'Test Label',
+          arrowKeyIncrement: 1.0,
+          onSubmitted: (value) {
+            lastSubmit = value;
+          },
+        ),
+      ),
+    ));
+
+    textField = find.byType(TextField);
     await widgetTester.tap(textField);
 
     await widgetTester.pumpAndSettle();

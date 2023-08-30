@@ -78,14 +78,40 @@ class NumberTextField extends StatelessWidget {
   void _submitIncrement(String val) {
     if (val.isNotEmpty) {
       num parsed = val.interpret();
-      onSubmitted?.call(parsed + arrowKeyIncrement);
+
+      // Doing this dumb thing cuz dart modulo has insane floating point errors
+      num n = (parsed / arrowKeyIncrement).round() * arrowKeyIncrement;
+      num remainder = parsed - n;
+
+      if (remainder.abs() > 1E-3) {
+        if (remainder < 0) {
+          onSubmitted?.call(parsed + remainder.abs());
+        } else {
+          onSubmitted?.call(parsed + (arrowKeyIncrement - remainder.abs()));
+        }
+      } else {
+        onSubmitted?.call(parsed + arrowKeyIncrement);
+      }
     }
   }
 
   void _submitDecrement(String val) {
     if (val.isNotEmpty) {
       num parsed = val.interpret();
-      onSubmitted?.call(parsed - arrowKeyIncrement);
+
+      // Doing this dumb thing cuz dart modulo has insane floating point errors
+      num n = (parsed / arrowKeyIncrement).round() * arrowKeyIncrement;
+      num remainder = parsed - n;
+
+      if (remainder.abs() > 1E-3) {
+        if (remainder < 0) {
+          onSubmitted?.call(parsed - (arrowKeyIncrement - remainder.abs()));
+        } else {
+          onSubmitted?.call(parsed - remainder.abs());
+        }
+      } else {
+        onSubmitted?.call(parsed - arrowKeyIncrement);
+      }
     }
   }
 

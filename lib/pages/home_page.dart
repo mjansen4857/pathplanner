@@ -106,42 +106,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             reverseTransitionDuration: Duration.zero,
           ),
         );
-
-        widget.prefs.setString(PrefsKeys.currentProjectDir, projectDir!);
-
-        if (Platform.isMacOS && fs is LocalFileSystem) {
-          // Bookmark project on macos so it can be accessed again later
-          String bookmark = await _bookmarks!.bookmark(fs.file(projectDir));
-          widget.prefs.setString(PrefsKeys.macOSBookmark, bookmark);
-        }
       }
 
-      // Check if WPILib project
-      if (fs.file(join(projectDir, 'build.gradle')).existsSync()) {
-        _deployDir = fs.directory(
-            join(projectDir, 'src', 'main', 'deploy', 'pathplanner'));
-      } else {
-        _deployDir = fs.directory(join(projectDir, 'deploy', 'pathplanner'));
-      }
-
-      // Assure that a navgrid file is present
-      File navgridFile = fs.file(join(_deployDir.path, 'navgrid.json'));
-      navgridFile.exists().then((value) async {
-        if (!value) {
-          // Load default grid
-          String fileContent = await DefaultAssetBundle.of(this.context)
-              .loadString('resources/default_navgrid.json');
-          fs
-              .file(join(_deployDir.path, 'navgrid.json'))
-              .writeAsString(fileContent);
-        }
-      });
+      _initFromProjectDir(projectDir!);
 
       setState(() {
-        _projectDir = fs.directory(projectDir!);
-
-        _loadProjectSettingsFromFile(_projectDir!);
-
         _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
             Defaults.hotReloadEnabled;
 
@@ -155,46 +124,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             }
           }
         }
-
-        _animController.forward();
       });
 
-      if (!(widget.prefs.getBool(PrefsKeys.seen2023Warning) ?? false) &&
-          mounted) {
-        showDialog(
-            context: this.context,
-            barrierDismissible: false,
-            builder: (context) {
-              return AlertDialog(
-                title: const Text('Non-standard Field Mirroring'),
-                content: const SizedBox(
-                  width: 300,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                          'The 2023 FRC game has non-standard field mirroring that would prevent using the same auto path for both alliances.'),
-                      SizedBox(height: 16),
-                      Text(
-                          'To work around this, PathPlannerLib has added functionality to automatically transform paths to work for the correct alliance depending on the current alliance color while using PathPlannerLib\'s path following commands.'),
-                      SizedBox(height: 16),
-                      Text(
-                          'In order for this to work correctly, you MUST create all of your paths on the blue (left) side of the field.'),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      widget.prefs.setBool(PrefsKeys.seen2023Warning, true);
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-            });
-      }
+      _animController.forward();
+
+      // if (!(widget.prefs.getBool(PrefsKeys.seen2023Warning) ?? false) &&
+      //     mounted) {
+      //   showDialog(
+      //       context: this.context,
+      //       barrierDismissible: false,
+      //       builder: (context) {
+      //         return AlertDialog(
+      //           title: const Text('Non-standard Field Mirroring'),
+      //           content: const SizedBox(
+      //             width: 300,
+      //             child: Column(
+      //               mainAxisSize: MainAxisSize.min,
+      //               children: [
+      //                 Text(
+      //                     'The 2023 FRC game has non-standard field mirroring that would prevent using the same auto path for both alliances.'),
+      //                 SizedBox(height: 16),
+      //                 Text(
+      //                     'To work around this, PathPlannerLib has added functionality to automatically transform paths to work for the correct alliance depending on the current alliance color while using PathPlannerLib\'s path following commands.'),
+      //                 SizedBox(height: 16),
+      //                 Text(
+      //                     'In order for this to work correctly, you MUST create all of your paths on the blue (left) side of the field.'),
+      //               ],
+      //             ),
+      //           ),
+      //           actions: [
+      //             TextButton(
+      //               onPressed: () {
+      //                 Navigator.of(context).pop();
+      //                 widget.prefs.setBool(PrefsKeys.seen2023Warning, true);
+      //               },
+      //               child: const Text('OK'),
+      //             ),
+      //           ],
+      //         );
+      //       });
+      // }
     });
   }
 
@@ -529,19 +498,47 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String? projectFolder = await getDirectoryPath(
         confirmButtonText: 'Open Project', initialDirectory: initialDirectory);
     if (projectFolder != null) {
-      widget.prefs.setString(PrefsKeys.currentProjectDir, projectFolder);
-
-      if (Platform.isMacOS) {
-        // Bookmark project on macos so it can be accessed again later
-        String bookmark = await _bookmarks!.bookmark(fs.file(projectFolder));
-        widget.prefs.setString(PrefsKeys.macOSBookmark, bookmark);
-      }
-
-      setState(() {
-        _projectDir = fs.directory(projectFolder);
-        _loadProjectSettingsFromFile(_projectDir!);
-      });
+      _initFromProjectDir(projectFolder);
     }
+  }
+
+  void _initFromProjectDir(String projectDir) async {
+    widget.prefs.setString(PrefsKeys.currentProjectDir, projectDir);
+
+    if (Platform.isMacOS) {
+      // Bookmark project on macos so it can be accessed again later
+      String bookmark = await _bookmarks!.bookmark(fs.file(projectDir));
+      widget.prefs.setString(PrefsKeys.macOSBookmark, bookmark);
+    }
+
+    // Check if WPILib project
+    setState(() {
+      if (fs.file(join(projectDir, 'build.gradle')).existsSync()) {
+        _deployDir = fs.directory(
+            join(projectDir, 'src', 'main', 'deploy', 'pathplanner'));
+      } else {
+        _deployDir = fs.directory(join(projectDir, 'deploy', 'pathplanner'));
+      }
+    });
+
+    // Assure that a navgrid file is present
+    File navgridFile = fs.file(join(_deployDir.path, 'navgrid.json'));
+    navgridFile.exists().then((value) async {
+      if (!value) {
+        // Load default grid
+        String fileContent = await DefaultAssetBundle.of(this.context)
+            .loadString('resources/default_navgrid.json');
+        fs
+            .file(join(_deployDir.path, 'navgrid.json'))
+            .writeAsString(fileContent);
+      }
+    });
+
+    setState(() {
+      _projectDir = fs.directory(projectDir);
+
+      _loadProjectSettingsFromFile(_projectDir!);
+    });
   }
 
   Future<void> _loadFieldImages() async {

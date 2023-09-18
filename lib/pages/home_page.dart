@@ -463,34 +463,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _loadProjectSettingsFromFile(Directory projectDir) async {
     File settingsFile = fs.file(join(projectDir.path, _settingsDir));
 
+    var json = {};
+
     if (await settingsFile.exists()) {
       try {
         final fileContents = await settingsFile.readAsString();
-        final json = jsonDecode(fileContents);
-
-        widget.prefs.setDouble(PrefsKeys.robotWidth,
-            json['robotWidth']?.toDouble() ?? Defaults.robotWidth);
-        widget.prefs.setDouble(PrefsKeys.robotLength,
-            json['robotLength']?.toDouble() ?? Defaults.robotLength);
-        widget.prefs.setBool(PrefsKeys.holonomicMode,
-            json['holonomicMode'] ?? Defaults.holonomicMode);
-        widget.prefs.setStringList(
-            PrefsKeys.pathFolders,
-            (json['pathFolders'] as List<dynamic>?)
-                    ?.map((e) => e as String)
-                    .toList() ??
-                Defaults.pathFolders);
-        widget.prefs.setStringList(
-            PrefsKeys.autoFolders,
-            (json['autoFolders'] as List<dynamic>?)
-                    ?.map((e) => e as String)
-                    .toList() ??
-                Defaults.autoFolders);
+        json = jsonDecode(fileContents);
       } catch (err, stack) {
         Log.error(
             'An error occurred while loading project settings', err, stack);
       }
     }
+
+    widget.prefs.setDouble(PrefsKeys.robotWidth,
+        json['robotWidth']?.toDouble() ?? Defaults.robotWidth);
+    widget.prefs.setDouble(PrefsKeys.robotLength,
+        json['robotLength']?.toDouble() ?? Defaults.robotLength);
+    widget.prefs.setBool(PrefsKeys.holonomicMode,
+        json['holonomicMode'] ?? Defaults.holonomicMode);
+    widget.prefs.setStringList(
+        PrefsKeys.pathFolders,
+        (json['pathFolders'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            Defaults.pathFolders);
+    widget.prefs.setStringList(
+        PrefsKeys.autoFolders,
+        (json['autoFolders'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            Defaults.autoFolders);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {

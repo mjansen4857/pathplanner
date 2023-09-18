@@ -292,7 +292,9 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
     Trajectory? simPath = TrajectoryGenerator.simulateAuto(
         widget.autoPaths, widget.auto.startingPose);
 
-    if (simPath != null) {
+    if (simPath != null &&
+        simPath.states.last.time.isFinite &&
+        !simPath.states.last.time.isNaN) {
       setState(() {
         _simPath = simPath;
       });

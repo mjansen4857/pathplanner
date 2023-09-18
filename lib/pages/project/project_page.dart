@@ -116,6 +116,11 @@ class _ProjectPageState extends State<ProjectPage> {
     var autos =
         await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path, fs);
 
+    List<String> allPathNames = [];
+    for (PathPlannerPath path in paths) {
+      allPathNames.add(path.name);
+    }
+
     for (int i = 0; i < paths.length; i++) {
       if (!_pathFolders.contains(paths[i].folder)) {
         paths[i].folder = null;
@@ -125,6 +130,8 @@ class _ProjectPageState extends State<ProjectPage> {
       if (!_autoFolders.contains(autos[i].folder)) {
         autos[i].folder = null;
       }
+
+      autos[i].handleMissingPaths(allPathNames);
     }
 
     setState(() {
@@ -324,6 +331,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   });
                 },
                 onViewChanged: (value) {
+                  widget.prefs.setBool(PrefsKeys.pathsCompactView, value);
                   setState(() {
                     _pathsCompact = value;
                   });
@@ -767,6 +775,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   });
                 },
                 onViewChanged: (value) {
+                  widget.prefs.setBool(PrefsKeys.autosCompactView, value);
                   setState(() {
                     _autosCompact = value;
                   });
@@ -1013,6 +1022,9 @@ class _ProjectPageState extends State<ProjectPage> {
         // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
         setState(() {});
       },
+      warningMessage: _autos[i].hasEmptyPathCommands()
+          ? 'Contains a FollowPathCommand that does not have a path selected'
+          : null,
     );
 
     return LayoutBuilder(builder: (context, constraints) {

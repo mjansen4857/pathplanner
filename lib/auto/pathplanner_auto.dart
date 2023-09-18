@@ -141,6 +141,24 @@ class PathPlannerAuto {
     return _getPathNamesInCommands(sequence.commands);
   }
 
+  bool hasEmptyPathCommands() {
+    return _hasEmptyPathCommands(sequence.commands);
+  }
+
+  bool _hasEmptyPathCommands(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is PathCommand && cmd.pathName == null) {
+        return true;
+      } else if (cmd is CommandGroup) {
+        bool hasEmpty = _hasEmptyPathCommands(cmd.commands);
+        if (hasEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   List<String> _getPathNamesInCommands(List<Command> commands) {
     List<String> names = [];
     for (Command cmd in commands) {
@@ -151,6 +169,20 @@ class PathPlannerAuto {
       }
     }
     return names;
+  }
+
+  void handleMissingPaths(List<String> pathNames) {
+    return _handleMissingPaths(sequence.commands, pathNames);
+  }
+
+  void _handleMissingPaths(List<Command> commands, List<String> pathNames) {
+    for (Command cmd in commands) {
+      if (cmd is PathCommand && !pathNames.contains(cmd.pathName)) {
+        cmd.pathName = null;
+      } else if (cmd is CommandGroup) {
+        _handleMissingPaths(cmd.commands, pathNames);
+      }
+    }
   }
 
   @override

@@ -554,6 +554,11 @@ class _ProjectPageState extends State<ProjectPage> {
         setState(() {
           _paths.removeAt(i);
         });
+
+        List<String> allPathNames = _paths.map((e) => e.name).toList();
+        for (PathPlannerAuto auto in _autos) {
+          auto.handleMissingPaths(allPathNames);
+        }
       },
       onRenamed: (value) => _renamePath(i, value, context),
       onOpened: () async {

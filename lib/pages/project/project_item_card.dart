@@ -228,7 +228,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
         return AlertDialog(
           title: const Text('Delete File'),
           content: Text(
-              'Are you sure you want to delete the file: ${widget.name}? This cannot be undone.'),
+              'Are you sure you want to delete the file: ${widget.name}? This cannot be undone.\n\nIf this is a path, any autos using it will have their reference to it removed.'),
           actions: [
             TextButton(
               onPressed: () {

@@ -27,9 +27,11 @@ public class PathfindHolonomic extends Command {
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
+  private final double rotationDelayDistance;
   private final Timer timer = new Timer();
 
   private PathPlannerTrajectory currentTrajectory;
+  private Pose2d startingPose;
 
   /**
    * Constructs a new PathfindHolonomic command that will generate a path towards the given path.
@@ -51,34 +53,15 @@ public class PathfindHolonomic extends Command {
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
       Subsystem... requirements) {
-    addRequirements(requirements);
-
-    ADStar.ensureInitialized();
-
-    Rotation2d targetRotation = new Rotation2d();
-    for (PathPoint p : targetPath.getAllPathPoints()) {
-      if (p.holonomicRotation != null) {
-        targetRotation = p.holonomicRotation;
-        break;
-      }
-    }
-
-    this.targetPath = targetPath;
-    this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
-    this.goalEndState =
-        new GoalEndState(
-            this.targetPath.getGlobalConstraints().getMaxVelocityMps(), targetRotation);
-    this.constraints = constraints;
-    this.controller =
-        new HolonomicDriveController(
-            config.translationConstants,
-            config.rotationConstants,
-            config.period,
-            config.maxModuleSpeed,
-            config.driveBaseRadius);
-    this.poseSupplier = poseSupplier;
-    this.speedsSupplier = currentRobotRelativeSpeeds;
-    this.output = output;
+    this(
+        targetPath,
+        constraints,
+        poseSupplier,
+        currentRobotRelativeSpeeds,
+        output,
+        config,
+        0.0,
+        requirements);
   }
 
   /**
@@ -104,24 +87,16 @@ public class PathfindHolonomic extends Command {
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
       Subsystem... requirements) {
-    addRequirements(requirements);
-
-    ADStar.ensureInitialized();
-
-    this.targetPath = null;
-    this.targetPose = targetPose;
-    this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation());
-    this.constraints = constraints;
-    this.controller =
-        new HolonomicDriveController(
-            config.translationConstants,
-            config.rotationConstants,
-            config.period,
-            config.maxModuleSpeed,
-            config.driveBaseRadius);
-    this.poseSupplier = poseSupplier;
-    this.speedsSupplier = currentRobotRelativeSpeeds;
-    this.output = output;
+    this(
+        targetPose,
+        constraints,
+        goalEndVel,
+        poseSupplier,
+        currentRobotRelativeSpeeds,
+        output,
+        config,
+        0.0,
+        requirements);
   }
 
   /**
@@ -157,6 +132,147 @@ public class PathfindHolonomic extends Command {
         requirements);
   }
 
+  /**
+   * Constructs a new PathfindHolonomic command that will generate a path towards the given path.
+   *
+   * @param targetPath the path to pathfind to
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param output a consumer for the output speeds (robot relative)
+   * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
+   *     following
+   * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
+   *     cause the robot to hold its current rotation until it reaches the given distance along the
+   *     path.
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindHolonomic(
+      PathPlannerPath targetPath,
+      PathConstraints constraints,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
+      Consumer<ChassisSpeeds> output,
+      HolonomicPathFollowerConfig config,
+      double rotationDelayDistance,
+      Subsystem... requirements) {
+    addRequirements(requirements);
+
+    ADStar.ensureInitialized();
+
+    Rotation2d targetRotation = new Rotation2d();
+    for (PathPoint p : targetPath.getAllPathPoints()) {
+      if (p.holonomicRotation != null) {
+        targetRotation = p.holonomicRotation;
+        break;
+      }
+    }
+
+    this.targetPath = targetPath;
+    this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
+    this.goalEndState =
+        new GoalEndState(
+            this.targetPath.getGlobalConstraints().getMaxVelocityMps(), targetRotation);
+    this.constraints = constraints;
+    this.controller =
+        new HolonomicDriveController(
+            config.translationConstants,
+            config.rotationConstants,
+            config.period,
+            config.maxModuleSpeed,
+            config.driveBaseRadius);
+    this.poseSupplier = poseSupplier;
+    this.speedsSupplier = currentRobotRelativeSpeeds;
+    this.output = output;
+    this.rotationDelayDistance = rotationDelayDistance;
+  }
+
+  /**
+   * Constructs a new PathfindHolonomic command that will generate a path towards the given pose.
+   *
+   * @param targetPose the pose to pathfind to
+   * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the given pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
+   *     differential)
+   * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
+   *     following
+   * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
+   *     cause the robot to hold its current rotation until it reaches the given distance along the
+   *     path.
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindHolonomic(
+      Pose2d targetPose,
+      PathConstraints constraints,
+      double goalEndVel,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
+      Consumer<ChassisSpeeds> output,
+      HolonomicPathFollowerConfig config,
+      double rotationDelayDistance,
+      Subsystem... requirements) {
+    addRequirements(requirements);
+
+    ADStar.ensureInitialized();
+
+    this.targetPath = null;
+    this.targetPose = targetPose;
+    this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation());
+    this.constraints = constraints;
+    this.controller =
+        new HolonomicDriveController(
+            config.translationConstants,
+            config.rotationConstants,
+            config.period,
+            config.maxModuleSpeed,
+            config.driveBaseRadius);
+    this.poseSupplier = poseSupplier;
+    this.speedsSupplier = currentRobotRelativeSpeeds;
+    this.output = output;
+    this.rotationDelayDistance = rotationDelayDistance;
+  }
+
+  /**
+   * Constructs a new PathfindHolonomic command that will generate a path towards the given pose and
+   * stop.
+   *
+   * @param targetPose the pose to pathfind to
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
+   *     differential)
+   * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
+   *     following
+   * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
+   *     cause the robot to hold its current rotation until it reaches the given distance along the
+   *     path.
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindHolonomic(
+      Pose2d targetPose,
+      PathConstraints constraints,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
+      Consumer<ChassisSpeeds> output,
+      HolonomicPathFollowerConfig config,
+      double rotationDelayDistance,
+      Subsystem... requirements) {
+    this(
+        targetPose,
+        constraints,
+        0.0,
+        poseSupplier,
+        currentRobotRelativeSpeeds,
+        output,
+        config,
+        rotationDelayDistance,
+        requirements);
+  }
+
   @Override
   public void initialize() {
     currentTrajectory = null;
@@ -177,6 +293,8 @@ public class PathfindHolonomic extends Command {
       ADStar.setStartPos(currentPose.getTranslation());
       ADStar.setGoalPos(targetPose.getTranslation());
     }
+
+    startingPose = currentPose;
   }
 
   @Override
@@ -221,6 +339,14 @@ public class PathfindHolonomic extends Command {
 
     if (currentTrajectory != null) {
       PathPlannerTrajectory.State targetState = currentTrajectory.sample(timer.get());
+
+      // Set the target rotation to the starting rotation if we have not yet traveled the rotation
+      // delay distance
+      if (currentPose.getTranslation().getDistance(startingPose.getTranslation())
+          < rotationDelayDistance) {
+        targetState.targetHolonomicRotation = startingPose.getRotation();
+      }
+
       ChassisSpeeds targetSpeeds = controller.calculate(currentPose, targetState);
 
       double currentVel =

@@ -22,6 +22,49 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
    * @param robotRelativeOutput a consumer for the output speeds (robot relative)
    * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
    *     path following commands
+   * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
+   *     cause the robot to hold its current rotation until it reaches the given distance along the
+   *     path.
+   * @param requirements the subsystems required by this command (drive subsystem)
+   */
+  public PathfindThenFollowPathHolonomic(
+      PathPlannerPath goalPath,
+      PathConstraints pathfindingConstraints,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
+      Consumer<ChassisSpeeds> robotRelativeOutput,
+      HolonomicPathFollowerConfig config,
+      double rotationDelayDistance,
+      Subsystem... requirements) {
+    addCommands(
+        new PathfindHolonomic(
+            goalPath,
+            pathfindingConstraints,
+            poseSupplier,
+            currentRobotRelativeSpeeds,
+            robotRelativeOutput,
+            config,
+            rotationDelayDistance,
+            requirements),
+        new FollowPathHolonomic(
+            goalPath,
+            poseSupplier,
+            currentRobotRelativeSpeeds,
+            robotRelativeOutput,
+            config,
+            requirements));
+  }
+
+  /**
+   * Constructs a new PathfindThenFollowPathHolonomic command group.
+   *
+   * @param goalPath the goal path to follow
+   * @param pathfindingConstraints the path constraints for pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+   * @param robotRelativeOutput a consumer for the output speeds (robot relative)
+   * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
+   *     path following commands
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathHolonomic(
@@ -32,21 +75,14 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
       Consumer<ChassisSpeeds> robotRelativeOutput,
       HolonomicPathFollowerConfig config,
       Subsystem... requirements) {
-    addCommands(
-        new PathfindHolonomic(
-            goalPath,
-            pathfindingConstraints,
-            poseSupplier,
-            currentRobotRelativeSpeeds,
-            robotRelativeOutput,
-            config,
-            requirements),
-        new FollowPathHolonomic(
-            goalPath,
-            poseSupplier,
-            currentRobotRelativeSpeeds,
-            robotRelativeOutput,
-            config,
-            requirements));
+    this(
+        goalPath,
+        pathfindingConstraints,
+        poseSupplier,
+        currentRobotRelativeSpeeds,
+        robotRelativeOutput,
+        config,
+        0.0,
+        requirements);
   }
 }

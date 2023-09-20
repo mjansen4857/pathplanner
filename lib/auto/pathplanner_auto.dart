@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
@@ -25,7 +26,9 @@ class PathPlannerAuto {
     required this.fs,
     required this.folder,
     required this.startingPose,
-  });
+  }) {
+    _addNamedCommandsToSet(sequence.commands);
+  }
 
   PathPlannerAuto.defaultAuto({
     this.name = 'New Auto',
@@ -133,6 +136,21 @@ class PathPlannerAuto {
         cmd.pathName = newPathName;
       } else if (cmd is CommandGroup) {
         _updatePathNameInCommands(cmd.commands, oldPathName, newPathName);
+      }
+    }
+  }
+
+  void _addNamedCommandsToSet(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand) {
+        if (cmd.name != null) {
+          Command.named.add(cmd.name!);
+          continue;
+        }
+      }
+
+      if (cmd is CommandGroup) {
+        _addNamedCommandsToSet(cmd.commands);
       }
     }
   }

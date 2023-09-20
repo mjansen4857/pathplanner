@@ -94,7 +94,7 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
         ),
         Tooltip(
           message: 'Remove Command',
-          waitDuration: const Duration(seconds: 1),
+          waitDuration: const Duration(milliseconds: 500),
           child: IconButton(
             onPressed: widget.onRemoved,
             visualDensity: const VisualDensity(

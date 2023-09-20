@@ -10,6 +10,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
+import 'package:pathplanner/widgets/dialogs/named_commands_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -163,34 +164,66 @@ class _ProjectPageState extends State<ProjectPage> {
       );
     }
 
-    return Container(
-      color: colorScheme.surfaceTint.withOpacity(0.05),
-      child: MultiSplitViewTheme(
-        data: MultiSplitViewThemeData(
-          dividerPainter: DividerPainters.grooved1(
-            color: colorScheme.surfaceVariant,
-            highlightedColor: colorScheme.primary,
+    return Stack(
+      children: [
+        Container(
+          color: colorScheme.surfaceTint.withOpacity(0.05),
+          child: MultiSplitViewTheme(
+            data: MultiSplitViewThemeData(
+              dividerPainter: DividerPainters.grooved1(
+                color: colorScheme.surfaceVariant,
+                highlightedColor: colorScheme.primary,
+              ),
+            ),
+            child: MultiSplitView(
+              axis: Axis.horizontal,
+              controller: _controller,
+              onWeightChange: () {
+                setState(() {
+                  _pathGridCount =
+                      _getCrossAxisCountForWeight(_controller.areas[0].weight!);
+                  _autosGridCount = _getCrossAxisCountForWeight(
+                      1.0 - _controller.areas[0].weight!);
+                });
+                widget.prefs.setDouble(PrefsKeys.projectLeftWeight,
+                    _controller.areas[0].weight ?? Defaults.projectLeftWeight);
+              },
+              children: [
+                _buildPathsGrid(context),
+                _buildAutosGrid(context),
+              ],
+            ),
           ),
         ),
-        child: MultiSplitView(
-          axis: Axis.horizontal,
-          controller: _controller,
-          onWeightChange: () {
-            setState(() {
-              _pathGridCount =
-                  _getCrossAxisCountForWeight(_controller.areas[0].weight!);
-              _autosGridCount = _getCrossAxisCountForWeight(
-                  1.0 - _controller.areas[0].weight!);
-            });
-            widget.prefs.setDouble(PrefsKeys.projectLeftWeight,
-                _controller.areas[0].weight ?? Defaults.projectLeftWeight);
-          },
-          children: [
-            _buildPathsGrid(context),
-            _buildAutosGrid(context),
-          ],
+        Align(
+          alignment: Alignment.bottomRight,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: FloatingActionButton(
+              clipBehavior: Clip.antiAlias,
+              tooltip: 'Manage Named Commands',
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              onPressed: () => showDialog(
+                context: context,
+                builder: (BuildContext context) => NamedCommandsDialog(
+                  onCommandRenamed: (String oldName, String newName) {},
+                  onCommandDeleted: (String name) {},
+                ),
+              ),
+              // Dumb hack to get an elevation surface tint
+              child: Stack(
+                children: [
+                  Container(
+                    color: colorScheme.surfaceTint.withOpacity(0.1),
+                  ),
+                  const Center(child: Icon(Icons.edit_note_rounded)),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 

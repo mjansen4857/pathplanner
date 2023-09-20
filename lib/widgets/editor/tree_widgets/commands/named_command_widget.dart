@@ -39,6 +39,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                   initialSelection: widget.command.name,
                   controller: _controller,
                   width: constraints.maxWidth,
+                  enableSearch: false,
                   dropdownMenuEntries: List.generate(
                     Command.named.length,
                     (index) => DropdownMenuEntry(
@@ -71,6 +72,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                           widget.command.name = value;
                         } else if (text.isNotEmpty) {
                           widget.command.name = text;
+                          Command.named.add(text);
                         }
                         _controller.text = text;
                         widget.onUpdated?.call();
@@ -99,7 +101,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
             ),
             Tooltip(
               message: 'Remove Command',
-              waitDuration: const Duration(seconds: 1),
+              waitDuration: const Duration(milliseconds: 500),
               child: IconButton(
                 onPressed: widget.onRemoved,
                 visualDensity: const VisualDensity(

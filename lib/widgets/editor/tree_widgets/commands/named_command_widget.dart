@@ -86,6 +86,17 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
               }),
             ),
             const SizedBox(width: 8),
+            Visibility(
+              visible: widget.command.name == null,
+              child: const Tooltip(
+                message: 'Missing command name',
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.yellow,
+                  size: 32,
+                ),
+              ),
+            ),
             Tooltip(
               message: 'Remove Command',
               waitDuration: const Duration(seconds: 1),

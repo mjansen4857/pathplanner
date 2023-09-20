@@ -81,6 +81,17 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
           }),
         ),
         const SizedBox(width: 8),
+        Visibility(
+          visible: widget.command.pathName == null,
+          child: const Tooltip(
+            message: 'Missing path name',
+            child: Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.yellow,
+              size: 32,
+            ),
+          ),
+        ),
         Tooltip(
           message: 'Remove Command',
           waitDuration: const Duration(seconds: 1),

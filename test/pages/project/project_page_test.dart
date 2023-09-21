@@ -1261,7 +1261,11 @@ void main() {
       EventMarker(
         command: SequentialCommandGroup(
           commands: [
-            NamedCommand(name: 'test1'),
+            ParallelCommandGroup(
+              commands: [
+                NamedCommand(name: 'test1'),
+              ],
+            ),
           ],
         ),
       ),
@@ -1332,7 +1336,11 @@ void main() {
       EventMarker(
         command: SequentialCommandGroup(
           commands: [
-            NamedCommand(name: 'test1'),
+            ParallelCommandGroup(
+              commands: [
+                NamedCommand(name: 'test1'),
+              ],
+            ),
           ],
         ),
       ),

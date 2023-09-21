@@ -45,7 +45,7 @@ class _NamedCommandsDialogState extends State<NamedCommandsDialog> {
                       message: 'Rename named command',
                       waitDuration: const Duration(milliseconds: 500),
                       child: IconButton(
-                        onPressed: () {},
+                        onPressed: () => _showRenameDialog(commandName),
                         icon: const Icon(Icons.edit),
                       ),
                     ),
@@ -98,6 +98,62 @@ class _NamedCommandsDialogState extends State<NamedCommandsDialog> {
           child: const Text('Close'),
         ),
       ],
+    );
+  }
+
+  void _showRenameDialog(String originalName) {
+    TextEditingController controller =
+        TextEditingController(text: originalName);
+
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Rename Command'),
+        content: SizedBox(
+          height: 42,
+          width: 400,
+          child: TextField(
+            controller: controller,
+            style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+            decoration: InputDecoration(
+              contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+              labelText: 'Command Name',
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: Navigator.of(context).pop,
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (controller.text == originalName) {
+                Navigator.of(context).pop();
+              } else if (Command.named.contains(controller.text)) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('A command with that name already exists'),
+                  ),
+                );
+              } else {
+                Navigator.of(context).pop();
+                setState(() {
+                  widget.onCommandRenamed(originalName, controller.text);
+                  Command.named.remove(originalName);
+                  Command.named.add(controller.text);
+                });
+              }
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
     );
   }
 }

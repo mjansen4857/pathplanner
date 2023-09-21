@@ -218,11 +218,13 @@ class _ProjectPageState extends State<ProjectPage> {
                           _replaceNamedCommand(
                               oldName, newName, m.command.commands);
                         }
+                        path.generateAndSavePath();
                       }
 
                       for (PathPlannerAuto auto in _autos) {
                         _replaceNamedCommand(
                             oldName, newName, auto.sequence.commands);
+                        auto.saveFile();
                       }
                     });
                   },
@@ -232,11 +234,13 @@ class _ProjectPageState extends State<ProjectPage> {
                         for (EventMarker m in path.eventMarkers) {
                           _replaceNamedCommand(name, null, m.command.commands);
                         }
+                        path.generateAndSavePath();
                       }
 
                       for (PathPlannerAuto auto in _autos) {
                         _replaceNamedCommand(
                             name, null, auto.sequence.commands);
+                        auto.saveFile();
                       }
                     });
                   },

@@ -177,6 +177,24 @@ class PathPlannerAuto {
     return false;
   }
 
+  bool hasEmptyNamedCommand() {
+    return _hasEmptyNamedCommand(sequence.commands);
+  }
+
+  bool _hasEmptyNamedCommand(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand && cmd.name == null) {
+        return true;
+      } else if (cmd is CommandGroup) {
+        bool hasEmpty = _hasEmptyNamedCommand(cmd.commands);
+        if (hasEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   List<String> _getPathNamesInCommands(List<Command> commands) {
     List<String> names = [];
     for (Command cmd in commands) {

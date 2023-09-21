@@ -2,10 +2,14 @@ import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/commands/command.dart';
+import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/pages/auto_editor_page.dart';
 import 'package:pathplanner/pages/path_editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -207,8 +211,35 @@ class _ProjectPageState extends State<ProjectPage> {
               onPressed: () => showDialog(
                 context: context,
                 builder: (BuildContext context) => NamedCommandsDialog(
-                  onCommandRenamed: (String oldName, String newName) {},
-                  onCommandDeleted: (String name) {},
+                  onCommandRenamed: (String oldName, String newName) {
+                    setState(() {
+                      for (PathPlannerPath path in _paths) {
+                        for (EventMarker m in path.eventMarkers) {
+                          _replaceNamedCommand(
+                              oldName, newName, m.command.commands);
+                        }
+                      }
+
+                      for (PathPlannerAuto auto in _autos) {
+                        _replaceNamedCommand(
+                            oldName, newName, auto.sequence.commands);
+                      }
+                    });
+                  },
+                  onCommandDeleted: (String name) {
+                    setState(() {
+                      for (PathPlannerPath path in _paths) {
+                        for (EventMarker m in path.eventMarkers) {
+                          _replaceNamedCommand(name, null, m.command.commands);
+                        }
+                      }
+
+                      for (PathPlannerAuto auto in _autos) {
+                        _replaceNamedCommand(
+                            name, null, auto.sequence.commands);
+                      }
+                    });
+                  },
                 ),
               ),
               // Dumb hack to get an elevation surface tint
@@ -225,6 +256,17 @@ class _ProjectPageState extends State<ProjectPage> {
         ),
       ],
     );
+  }
+
+  void _replaceNamedCommand(
+      String originalName, String? newName, List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand && cmd.name == originalName) {
+        cmd.name = newName;
+      } else if (cmd is CommandGroup) {
+        _replaceNamedCommand(originalName, newName, cmd.commands);
+      }
+    }
   }
 
   Widget _buildPathsGrid(BuildContext context) {
@@ -568,6 +610,9 @@ class _ProjectPageState extends State<ProjectPage> {
       compact: _pathsCompact,
       fieldImage: widget.fieldImage,
       paths: [_paths[i]],
+      warningMessage: _paths[i].hasEmptyNamedCommand()
+          ? 'Contains a NamedCommand that does not have a command selected'
+          : null,
       onDuplicated: () {
         List<String> pathNames = [];
         for (PathPlannerPath path in _paths) {
@@ -1012,6 +1057,16 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Widget _buildAutoCard(int i, BuildContext context) {
+    String? warningMessage;
+
+    if (_autos[i].hasEmptyPathCommands()) {
+      warningMessage =
+          'Contains a FollowPathCommand that does not have a path selected';
+    } else if (_autos[i].hasEmptyNamedCommand()) {
+      warningMessage =
+          'Contains a NamedCommand that does not have a command selected';
+    }
+
     final autoCard = ProjectItemCard(
       name: _autos[i].name,
       compact: _autosCompact,
@@ -1060,9 +1115,7 @@ class _ProjectPageState extends State<ProjectPage> {
         // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
         setState(() {});
       },
-      warningMessage: _autos[i].hasEmptyPathCommands()
-          ? 'Contains a FollowPathCommand that does not have a path selected'
-          : null,
+      warningMessage: warningMessage,
     );
 
     return LayoutBuilder(builder: (context, constraints) {

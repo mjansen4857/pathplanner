@@ -53,7 +53,33 @@ class _NamedCommandsDialogState extends State<NamedCommandsDialog> {
                       message: 'Remove named command',
                       waitDuration: const Duration(milliseconds: 500),
                       child: IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) => AlertDialog(
+                                    title: const Text('Remove Named Command'),
+                                    content: Text(
+                                        'Are you sure you want to remove the named command "$commandName"? This cannot be undone.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: Navigator.of(context).pop,
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            widget
+                                                .onCommandDeleted(commandName);
+                                            Command.named.remove(commandName);
+                                          });
+
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Confirm'),
+                                      ),
+                                    ],
+                                  ));
+                        },
                         icon: Icon(
                           Icons.close_rounded,
                           color: colorScheme.error,

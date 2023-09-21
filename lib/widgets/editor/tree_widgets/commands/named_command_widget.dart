@@ -40,6 +40,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                   controller: _controller,
                   width: constraints.maxWidth,
                   enableSearch: false,
+                  enableFilter: true,
                   dropdownMenuEntries: List.generate(
                     Command.named.length,
                     (index) => DropdownMenuEntry(

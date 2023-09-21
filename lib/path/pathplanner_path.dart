@@ -285,6 +285,30 @@ class PathPlannerPath {
     }
   }
 
+  bool hasEmptyNamedCommand() {
+    for (EventMarker m in eventMarkers) {
+      bool hasEmpty = _hasEmptyNamedCommand(m.command.commands);
+      if (hasEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _hasEmptyNamedCommand(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand && cmd.name == null) {
+        return true;
+      } else if (cmd is CommandGroup) {
+        bool hasEmpty = _hasEmptyNamedCommand(cmd.commands);
+        if (hasEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   void generatePathPoints() {
     // Add all command names in this path to the available names
     for (EventMarker m in eventMarkers) {

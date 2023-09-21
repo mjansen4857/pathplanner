@@ -6,10 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
+import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
@@ -1240,5 +1243,149 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(find.textContaining('Unable to Rename'), findsOneWidget);
+  });
+
+  testWidgets('named command rename', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
+
+    Command.named.add('test1');
+
+    PathPlannerPath path = PathPlannerPath.defaultPath(
+      pathDir: join(deployPath, 'paths'),
+      fs: fs,
+    );
+    path.eventMarkers.add(
+      EventMarker(
+        command: SequentialCommandGroup(
+          commands: [
+            ParallelCommandGroup(
+              commands: [
+                NamedCommand(name: 'test1'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    path.generateAndSavePath();
+
+    PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
+      autoDir: join(deployPath, 'autos'),
+      fs: fs,
+    );
+    auto.sequence.commands.add(NamedCommand(name: 'test1'));
+    auto.saveFile();
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final fab = find.byType(FloatingActionButton);
+
+    expect(fab, findsOneWidget);
+
+    await widgetTester.tap(fab);
+    await widgetTester.pumpAndSettle();
+
+    final renameBtn = find.descendant(
+        of: find.widgetWithText(ListTile, 'test1'),
+        matching: find.byTooltip('Rename named command'));
+    expect(renameBtn, findsOneWidget);
+
+    await widgetTester.tap(renameBtn);
+    await widgetTester.pumpAndSettle();
+
+    final textField = find.descendant(
+        of: find.byType(AlertDialog), matching: find.byType(TextField));
+
+    await widgetTester.enterText(textField, 'test1renamed');
+    await widgetTester.pump();
+
+    final confirmBtn = find.text('Confirm');
+
+    await widgetTester.tap(confirmBtn);
+    await widgetTester.pumpAndSettle();
+  });
+
+  testWidgets('named command remove', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
+
+    Command.named.add('test1');
+
+    PathPlannerPath path = PathPlannerPath.defaultPath(
+      pathDir: join(deployPath, 'paths'),
+      fs: fs,
+    );
+    path.eventMarkers.add(
+      EventMarker(
+        command: SequentialCommandGroup(
+          commands: [
+            ParallelCommandGroup(
+              commands: [
+                NamedCommand(name: 'test1'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    path.generateAndSavePath();
+
+    PathPlannerAuto auto = PathPlannerAuto.defaultAuto(
+      autoDir: join(deployPath, 'autos'),
+      fs: fs,
+    );
+    auto.sequence.commands.add(NamedCommand(name: 'test1'));
+    auto.saveFile();
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final fab = find.byType(FloatingActionButton);
+
+    expect(fab, findsOneWidget);
+
+    await widgetTester.tap(fab);
+    await widgetTester.pumpAndSettle();
+
+    final removeBtn = find.descendant(
+        of: find.widgetWithText(ListTile, 'test1'),
+        matching: find.byTooltip('Remove named command'));
+    expect(removeBtn, findsOneWidget);
+
+    await widgetTester.tap(removeBtn);
+    await widgetTester.pumpAndSettle();
+
+    final confirmBtn = find.text('Confirm');
+
+    await widgetTester.tap(confirmBtn);
+    await widgetTester.pumpAndSettle();
   });
 }

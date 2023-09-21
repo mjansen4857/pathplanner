@@ -2,14 +2,19 @@ import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/commands/command.dart';
+import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/pages/auto_editor_page.dart';
 import 'package:pathplanner/pages/path_editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
+import 'package:pathplanner/widgets/dialogs/named_commands_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -163,35 +168,109 @@ class _ProjectPageState extends State<ProjectPage> {
       );
     }
 
-    return Container(
-      color: colorScheme.surfaceTint.withOpacity(0.05),
-      child: MultiSplitViewTheme(
-        data: MultiSplitViewThemeData(
-          dividerPainter: DividerPainters.grooved1(
-            color: colorScheme.surfaceVariant,
-            highlightedColor: colorScheme.primary,
+    return Stack(
+      children: [
+        Container(
+          color: colorScheme.surfaceTint.withOpacity(0.05),
+          child: MultiSplitViewTheme(
+            data: MultiSplitViewThemeData(
+              dividerPainter: DividerPainters.grooved1(
+                color: colorScheme.surfaceVariant,
+                highlightedColor: colorScheme.primary,
+              ),
+            ),
+            child: MultiSplitView(
+              axis: Axis.horizontal,
+              controller: _controller,
+              onWeightChange: () {
+                setState(() {
+                  _pathGridCount =
+                      _getCrossAxisCountForWeight(_controller.areas[0].weight!);
+                  _autosGridCount = _getCrossAxisCountForWeight(
+                      1.0 - _controller.areas[0].weight!);
+                });
+                widget.prefs.setDouble(PrefsKeys.projectLeftWeight,
+                    _controller.areas[0].weight ?? Defaults.projectLeftWeight);
+              },
+              children: [
+                _buildPathsGrid(context),
+                _buildAutosGrid(context),
+              ],
+            ),
           ),
         ),
-        child: MultiSplitView(
-          axis: Axis.horizontal,
-          controller: _controller,
-          onWeightChange: () {
-            setState(() {
-              _pathGridCount =
-                  _getCrossAxisCountForWeight(_controller.areas[0].weight!);
-              _autosGridCount = _getCrossAxisCountForWeight(
-                  1.0 - _controller.areas[0].weight!);
-            });
-            widget.prefs.setDouble(PrefsKeys.projectLeftWeight,
-                _controller.areas[0].weight ?? Defaults.projectLeftWeight);
-          },
-          children: [
-            _buildPathsGrid(context),
-            _buildAutosGrid(context),
-          ],
+        Align(
+          alignment: Alignment.bottomRight,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: FloatingActionButton(
+              clipBehavior: Clip.antiAlias,
+              tooltip: 'Manage Named Commands',
+              backgroundColor: colorScheme.surface,
+              foregroundColor: colorScheme.onSurface,
+              onPressed: () => showDialog(
+                context: context,
+                builder: (BuildContext context) => NamedCommandsDialog(
+                  onCommandRenamed: (String oldName, String newName) {
+                    setState(() {
+                      for (PathPlannerPath path in _paths) {
+                        for (EventMarker m in path.eventMarkers) {
+                          _replaceNamedCommand(
+                              oldName, newName, m.command.commands);
+                        }
+                        path.generateAndSavePath();
+                      }
+
+                      for (PathPlannerAuto auto in _autos) {
+                        _replaceNamedCommand(
+                            oldName, newName, auto.sequence.commands);
+                        auto.saveFile();
+                      }
+                    });
+                  },
+                  onCommandDeleted: (String name) {
+                    setState(() {
+                      for (PathPlannerPath path in _paths) {
+                        for (EventMarker m in path.eventMarkers) {
+                          _replaceNamedCommand(name, null, m.command.commands);
+                        }
+                        path.generateAndSavePath();
+                      }
+
+                      for (PathPlannerAuto auto in _autos) {
+                        _replaceNamedCommand(
+                            name, null, auto.sequence.commands);
+                        auto.saveFile();
+                      }
+                    });
+                  },
+                ),
+              ),
+              // Dumb hack to get an elevation surface tint
+              child: Stack(
+                children: [
+                  Container(
+                    color: colorScheme.surfaceTint.withOpacity(0.1),
+                  ),
+                  const Center(child: Icon(Icons.edit_note_rounded)),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
+      ],
     );
+  }
+
+  void _replaceNamedCommand(
+      String originalName, String? newName, List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand && cmd.name == originalName) {
+        cmd.name = newName;
+      } else if (cmd is CommandGroup) {
+        _replaceNamedCommand(originalName, newName, cmd.commands);
+      }
+    }
   }
 
   Widget _buildPathsGrid(BuildContext context) {
@@ -535,6 +614,9 @@ class _ProjectPageState extends State<ProjectPage> {
       compact: _pathsCompact,
       fieldImage: widget.fieldImage,
       paths: [_paths[i]],
+      warningMessage: _paths[i].hasEmptyNamedCommand()
+          ? 'Contains a NamedCommand that does not have a command selected'
+          : null,
       onDuplicated: () {
         List<String> pathNames = [];
         for (PathPlannerPath path in _paths) {
@@ -979,6 +1061,16 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Widget _buildAutoCard(int i, BuildContext context) {
+    String? warningMessage;
+
+    if (_autos[i].hasEmptyPathCommands()) {
+      warningMessage =
+          'Contains a FollowPathCommand that does not have a path selected';
+    } else if (_autos[i].hasEmptyNamedCommand()) {
+      warningMessage =
+          'Contains a NamedCommand that does not have a command selected';
+    }
+
     final autoCard = ProjectItemCard(
       name: _autos[i].name,
       compact: _autosCompact,
@@ -1027,9 +1119,7 @@ class _ProjectPageState extends State<ProjectPage> {
         // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
         setState(() {});
       },
-      warningMessage: _autos[i].hasEmptyPathCommands()
-          ? 'Contains a FollowPathCommand that does not have a path selected'
-          : null,
+      warningMessage: warningMessage,
     );
 
     return LayoutBuilder(builder: (context, constraints) {

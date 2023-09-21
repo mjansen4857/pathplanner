@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
@@ -25,7 +26,9 @@ class PathPlannerAuto {
     required this.fs,
     required this.folder,
     required this.startingPose,
-  });
+  }) {
+    _addNamedCommandsToSet(sequence.commands);
+  }
 
   PathPlannerAuto.defaultAuto({
     this.name = 'New Auto',
@@ -137,6 +140,21 @@ class PathPlannerAuto {
     }
   }
 
+  void _addNamedCommandsToSet(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand) {
+        if (cmd.name != null) {
+          Command.named.add(cmd.name!);
+          continue;
+        }
+      }
+
+      if (cmd is CommandGroup) {
+        _addNamedCommandsToSet(cmd.commands);
+      }
+    }
+  }
+
   List<String> getAllPathNames() {
     return _getPathNamesInCommands(sequence.commands);
   }
@@ -151,6 +169,24 @@ class PathPlannerAuto {
         return true;
       } else if (cmd is CommandGroup) {
         bool hasEmpty = _hasEmptyPathCommands(cmd.commands);
+        if (hasEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool hasEmptyNamedCommand() {
+    return _hasEmptyNamedCommand(sequence.commands);
+  }
+
+  bool _hasEmptyNamedCommand(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand && cmd.name == null) {
+        return true;
+      } else if (cmd is CommandGroup) {
+        bool hasEmpty = _hasEmptyNamedCommand(cmd.commands);
         if (hasEmpty) {
           return true;
         }

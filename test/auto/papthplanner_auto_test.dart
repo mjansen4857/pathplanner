@@ -7,6 +7,7 @@ import 'package:file/memory.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -191,6 +192,28 @@ void main() {
     expect(pathNames.contains('path1'), true);
     expect(pathNames.contains('path2'), false);
     expect(pathNames.contains('path3'), true);
+  });
+
+  test('hasEmptyNamedCommand', () {
+    var fs = MemoryFileSystem();
+
+    PathPlannerAuto auto = PathPlannerAuto(
+        name: 'test',
+        autoDir: '/autos',
+        fs: fs,
+        folder: null,
+        startingPose: null,
+        sequence: SequentialCommandGroup(
+          commands: [
+            SequentialCommandGroup(
+              commands: [
+                NamedCommand(),
+              ],
+            ),
+          ],
+        ));
+
+    expect(auto.hasEmptyNamedCommand(), true);
   });
 
   test('updatePathName', () {

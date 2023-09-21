@@ -387,4 +387,23 @@ void main() {
           const DeepCollectionEquality().equals(fileJson, path.toJson()), true);
     });
   });
+
+  test('hasEmptyNamedCommand', () {
+    PathPlannerPath path =
+        PathPlannerPath.defaultPath(pathDir: '/paths', fs: MemoryFileSystem());
+
+    path.eventMarkers.add(
+      EventMarker(
+        command: SequentialCommandGroup(
+          commands: [
+            ParallelCommandGroup(commands: [
+              NamedCommand(),
+            ]),
+          ],
+        ),
+      ),
+    );
+
+    expect(path.hasEmptyNamedCommand(), true);
+  });
 }

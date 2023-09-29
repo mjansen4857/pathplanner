@@ -4,6 +4,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -21,6 +22,7 @@ public class FollowPathHolonomic extends PathFollowingCommand {
       double maxModuleSpeed,
       double driveBaseRadius,
       double period,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         path,
@@ -29,6 +31,7 @@ public class FollowPathHolonomic extends PathFollowingCommand {
         outputRobotRelative,
         new PPHolonomicDriveController(
             translationConstants, rotationConstants, period, maxModuleSpeed, driveBaseRadius),
+        replanningConfig,
         requirements);
   }
 
@@ -41,6 +44,7 @@ public class FollowPathHolonomic extends PathFollowingCommand {
       PIDConstants rotationConstants,
       double maxModuleSpeed,
       double driveBaseRadius,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     this(
         path,
@@ -52,6 +56,7 @@ public class FollowPathHolonomic extends PathFollowingCommand {
         maxModuleSpeed,
         driveBaseRadius,
         0.02,
+        replanningConfig,
         requirements);
   }
 
@@ -72,6 +77,7 @@ public class FollowPathHolonomic extends PathFollowingCommand {
         config.maxModuleSpeed,
         config.driveBaseRadius,
         config.period,
+        config.replanningConfig,
         requirements);
   }
 }

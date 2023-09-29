@@ -2,6 +2,7 @@ package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.controllers.PPRamseteController;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -16,9 +17,16 @@ public class FollowPathRamsete extends PathFollowingCommand {
       Consumer<ChassisSpeeds> output,
       double b,
       double zeta,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
-        path, poseSupplier, speedsSupplier, output, new PPRamseteController(b, zeta), requirements);
+        path,
+        poseSupplier,
+        speedsSupplier,
+        output,
+        new PPRamseteController(b, zeta),
+        replanningConfig,
+        requirements);
   }
 
   public FollowPathRamsete(
@@ -26,7 +34,15 @@ public class FollowPathRamsete extends PathFollowingCommand {
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> output,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
-    super(path, poseSupplier, speedsSupplier, output, new PPRamseteController(), requirements);
+    super(
+        path,
+        poseSupplier,
+        speedsSupplier,
+        output,
+        new PPRamseteController(),
+        replanningConfig,
+        requirements);
   }
 }

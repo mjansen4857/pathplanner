@@ -6,6 +6,7 @@ import com.pathplanner.lib.commands.FollowPathRamsete;
 import com.pathplanner.lib.commands.FollowPathWithEvents;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -78,6 +79,7 @@ public class AutoBuilder {
    * @param resetPose a consumer for resetting the robot's pose
    * @param speedsSupplier a supplier for the robot's current chassis speeds
    * @param output a consumer for setting the robot's chassis speeds
+   * @param replanningConfig Path replanning configuration
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -86,6 +88,7 @@ public class AutoBuilder {
       Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> output,
+      ReplanningConfig replanningConfig,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -93,7 +96,9 @@ public class AutoBuilder {
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
-        (path) -> new FollowPathRamsete(path, poseSupplier, speedsSupplier, output, driveSubsystem);
+        (path) ->
+            new FollowPathRamsete(
+                path, poseSupplier, speedsSupplier, output, replanningConfig, driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
@@ -110,6 +115,7 @@ public class AutoBuilder {
    *     aggressive like a proportional term.
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
+   * @param replanningConfig Path replanning configuration
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -120,6 +126,7 @@ public class AutoBuilder {
       Consumer<ChassisSpeeds> output,
       double b,
       double zeta,
+      ReplanningConfig replanningConfig,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -129,7 +136,14 @@ public class AutoBuilder {
     AutoBuilder.pathFollowingCommandBuilder =
         (path) ->
             new FollowPathRamsete(
-                path, poseSupplier, speedsSupplier, output, b, zeta, driveSubsystem);
+                path,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                b,
+                zeta,
+                replanningConfig,
+                driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
@@ -144,6 +158,7 @@ public class AutoBuilder {
    * @param speedsSupplier a supplier for the robot's current chassis speeds
    * @param output a consumer for setting the robot's chassis speeds
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -153,6 +168,7 @@ public class AutoBuilder {
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> output,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -160,7 +176,9 @@ public class AutoBuilder {
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
-        (path) -> new FollowPathLTV(path, poseSupplier, speedsSupplier, output, dt, driveSubsystem);
+        (path) ->
+            new FollowPathLTV(
+                path, poseSupplier, speedsSupplier, output, dt, replanningConfig, driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
@@ -177,6 +195,7 @@ public class AutoBuilder {
    * @param qelems The maximum desired error tolerance for each state.
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -188,6 +207,7 @@ public class AutoBuilder {
       Vector<N3> qelems,
       Vector<N2> relems,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -197,7 +217,15 @@ public class AutoBuilder {
     AutoBuilder.pathFollowingCommandBuilder =
         (path) ->
             new FollowPathLTV(
-                path, poseSupplier, speedsSupplier, output, qelems, relems, dt, driveSubsystem);
+                path,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                qelems,
+                relems,
+                dt,
+                replanningConfig,
+                driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;

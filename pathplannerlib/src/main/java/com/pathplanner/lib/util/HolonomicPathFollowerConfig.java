@@ -7,6 +7,7 @@ public class HolonomicPathFollowerConfig {
   public final double maxModuleSpeed;
   public final double driveBaseRadius;
   public final double period;
+  public final ReplanningConfig replanningConfig;
 
   /**
    * Create a new holonomic path follower config
@@ -20,18 +21,21 @@ public class HolonomicPathFollowerConfig {
    *     distance from the center of the robot to the furthest module. For mecanum, this is the
    *     drive base width / 2
    * @param period Control loop period in seconds (Default = 0.02)
+   * @param replanningConfig Path replanning configuration
    */
   public HolonomicPathFollowerConfig(
       PIDConstants translationConstants,
       PIDConstants rotationConstants,
       double maxModuleSpeed,
       double driveBaseRadius,
-      double period) {
+      double period,
+      ReplanningConfig replanningConfig) {
     this.translationConstants = translationConstants;
     this.rotationConstants = rotationConstants;
     this.maxModuleSpeed = maxModuleSpeed;
     this.driveBaseRadius = driveBaseRadius;
     this.period = period;
+    this.replanningConfig = replanningConfig;
   }
 
   /**
@@ -45,13 +49,21 @@ public class HolonomicPathFollowerConfig {
    * @param driveBaseRadius The radius of the drive base in meters. For swerve drive, this is the
    *     distance from the center of the robot to the furthest module. For mecanum, this is the
    *     drive base width / 2
+   * @param replanningConfig Path replanning configuration
    */
   public HolonomicPathFollowerConfig(
       PIDConstants translationConstants,
       PIDConstants rotationConstants,
       double maxModuleSpeed,
-      double driveBaseRadius) {
-    this(translationConstants, rotationConstants, maxModuleSpeed, driveBaseRadius, 0.02);
+      double driveBaseRadius,
+      ReplanningConfig replanningConfig) {
+    this(
+        translationConstants,
+        rotationConstants,
+        maxModuleSpeed,
+        driveBaseRadius,
+        0.02,
+        replanningConfig);
   }
 
   /**
@@ -62,14 +74,20 @@ public class HolonomicPathFollowerConfig {
    *     distance from the center of the robot to the furthest module. For mecanum, this is the
    *     drive base width / 2
    * @param period Control loop period in seconds (Default = 0.02)
+   * @param replanningConfig Path replanning configuration
    */
-  public HolonomicPathFollowerConfig(double maxModuleSpeed, double driveBaseRadius, double period) {
+  public HolonomicPathFollowerConfig(
+      double maxModuleSpeed,
+      double driveBaseRadius,
+      double period,
+      ReplanningConfig replanningConfig) {
     this(
         new PIDConstants(5.0, 0.0, 0.0),
         new PIDConstants(5.0, 0.0, 0.0),
         maxModuleSpeed,
         driveBaseRadius,
-        period);
+        period,
+        replanningConfig);
   }
 
   /**
@@ -79,8 +97,10 @@ public class HolonomicPathFollowerConfig {
    * @param driveBaseRadius The radius of the drive base in meters. For swerve drive, this is the
    *     distance from the center of the robot to the furthest module. For mecanum, this is the
    *     drive base width / 2
+   * @param replanningConfig Path replanning configuration
    */
-  public HolonomicPathFollowerConfig(double maxModuleSpeed, double driveBaseRadius) {
-    this(maxModuleSpeed, driveBaseRadius, 0.02);
+  public HolonomicPathFollowerConfig(
+      double maxModuleSpeed, double driveBaseRadius, ReplanningConfig replanningConfig) {
+    this(maxModuleSpeed, driveBaseRadius, 0.02, replanningConfig);
   }
 }

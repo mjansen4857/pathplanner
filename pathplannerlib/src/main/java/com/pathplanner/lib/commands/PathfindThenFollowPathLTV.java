@@ -2,6 +2,7 @@ package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -25,6 +26,7 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
    * @param qelems The maximum desired error tolerance for each state.
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathLTV(
@@ -36,6 +38,7 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
       Vector<N3> qelems,
       Vector<N2> relems,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     addCommands(
         new PathfindLTV(
@@ -56,6 +59,7 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
             qelems,
             relems,
             dt,
+            replanningConfig,
             requirements));
   }
 
@@ -68,6 +72,7 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param robotRelativeOutput a consumer for the output speeds (robot relative)
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathLTV(
@@ -77,6 +82,7 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> robotRelativeOutput,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     addCommands(
         new PathfindLTV(
@@ -93,6 +99,7 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
             currentRobotRelativeSpeeds,
             robotRelativeOutput,
             dt,
+            replanningConfig,
             requirements));
   }
 }

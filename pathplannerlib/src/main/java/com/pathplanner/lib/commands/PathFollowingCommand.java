@@ -5,6 +5,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPlannerTrajectory;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
@@ -20,6 +21,7 @@ public class PathFollowingCommand extends Command {
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
   private final PathFollowingController controller;
+  private final ReplanningConfig replanningConfig;
 
   private PathPlannerTrajectory generatedTrajectory;
 
@@ -29,12 +31,14 @@ public class PathFollowingCommand extends Command {
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> outputRobotRelative,
       PathFollowingController controller,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     this.path = path;
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = speedsSupplier;
     this.output = outputRobotRelative;
     this.controller = controller;
+    this.replanningConfig = replanningConfig;
 
     addRequirements(requirements);
   }
@@ -46,13 +50,11 @@ public class PathFollowingCommand extends Command {
 
     controller.reset(currentPose, currentSpeeds);
 
-    if (currentPose.getTranslation().getDistance(path.getPoint(0).position) >= 0.25
-        || Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) >= 0.25) {
-      // Replan path
-      PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
-      generatedTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
-      PathPlannerLogging.logActivePath(replanned);
-      PPLibTelemetry.setCurrentPath(replanned);
+    if (replanningConfig.enableInitialReplanning
+        && (currentPose.getTranslation().getDistance(path.getPoint(0).position) >= 0.25
+            || Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond)
+                >= 0.25)) {
+      replanPath(currentPose, currentSpeeds);
     } else {
       generatedTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
       PathPlannerLogging.logActivePath(path);
@@ -70,6 +72,19 @@ public class PathFollowingCommand extends Command {
 
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
+
+    if (replanningConfig.enableDynamicReplanning) {
+      double previousError = Math.abs(controller.getPositionalError());
+      double currentError = currentPose.getTranslation().getDistance(targetState.positionMeters);
+
+      if (currentError >= replanningConfig.dynamicReplanningTotalErrorThreshold
+          || currentError - previousError
+              >= replanningConfig.dynamicReplanningErrorSpikeThreshold) {
+        replanPath(currentPose, currentSpeeds);
+        timer.reset();
+        targetState = generatedTrajectory.sample(0);
+      }
+    }
 
     ChassisSpeeds targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
 
@@ -104,5 +119,12 @@ public class PathFollowingCommand extends Command {
     if (!interrupted && path.getGoalEndState().getVelocity() < 0.1) {
       output.accept(new ChassisSpeeds());
     }
+  }
+
+  private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
+    PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
+    generatedTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
+    PathPlannerLogging.logActivePath(replanned);
+    PPLibTelemetry.setCurrentPath(replanned);
   }
 }

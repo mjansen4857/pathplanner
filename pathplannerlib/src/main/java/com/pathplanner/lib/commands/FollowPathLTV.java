@@ -2,6 +2,7 @@ package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.controllers.PPLTVController;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -18,8 +19,16 @@ public class FollowPathLTV extends PathFollowingCommand {
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> output,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
-    super(path, poseSupplier, speedsSupplier, output, new PPLTVController(dt), requirements);
+    super(
+        path,
+        poseSupplier,
+        speedsSupplier,
+        output,
+        new PPLTVController(dt),
+        replanningConfig,
+        requirements);
   }
 
   public FollowPathLTV(
@@ -30,6 +39,7 @@ public class FollowPathLTV extends PathFollowingCommand {
       Vector<N3> qelems,
       Vector<N2> relems,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         path,
@@ -37,6 +47,7 @@ public class FollowPathLTV extends PathFollowingCommand {
         speedsSupplier,
         output,
         new PPLTVController(qelems, relems, dt),
+        replanningConfig,
         requirements);
   }
 }

@@ -9,7 +9,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
-public class HolonomicDriveController {
+public class PPHolonomicDriveController implements PathFollowingController {
   private final PIDController xController;
   private final PIDController yController;
   private final ProfiledPIDController rotationController;
@@ -30,7 +30,7 @@ public class HolonomicDriveController {
    *     distance from the center of the robot to the furthest module. For mecanum, this is the
    *     drive base width / 2
    */
-  public HolonomicDriveController(
+  public PPHolonomicDriveController(
       PIDConstants translationConstants,
       PIDConstants rotationConstants,
       double period,
@@ -71,7 +71,7 @@ public class HolonomicDriveController {
    *     distance from the center of the robot to the furthest module. For mecanum, this is the
    *     drive base width / 2
    */
-  public HolonomicDriveController(
+  public PPHolonomicDriveController(
       PIDConstants translationConstants,
       PIDConstants rotationConstants,
       double maxModuleSpeed,
@@ -89,19 +89,15 @@ public class HolonomicDriveController {
     this.isEnabled = enabled;
   }
 
+  @Override
   public void reset(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     rotationController.reset(
         currentPose.getRotation().getRadians(), currentSpeeds.omegaRadiansPerSecond);
   }
 
-  /**
-   * Calculates the next output of the holonomic drive controller
-   *
-   * @param currentPose The current pose
-   * @param referenceState The desired trajectory state
-   * @return The next output of the holonomic drive controller (robot relative)
-   */
-  public ChassisSpeeds calculate(Pose2d currentPose, PathPlannerTrajectory.State referenceState) {
+  @Override
+  public ChassisSpeeds calculateRobotRelativeSpeeds(
+      Pose2d currentPose, PathPlannerTrajectory.State referenceState) {
     double xFF = referenceState.velocityMps * referenceState.heading.getCos();
     double yFF = referenceState.velocityMps * referenceState.heading.getSin();
 
@@ -135,6 +131,7 @@ public class HolonomicDriveController {
         xFF + xFeedback, yFF + yFeedback, targetRotationVel, currentPose.getRotation());
   }
 
+  @Override
   public double getPositionalError() {
     return translationError.getNorm();
   }

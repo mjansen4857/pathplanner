@@ -1,42 +1,38 @@
-#include "pathplanner/lib/commands/FollowPathHolonomic.h"
+#include "pathplanner/lib/commands/PathFollowingCommand.h"
 #include "pathplanner/lib/util/PathPlannerLogging.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 
 using namespace pathplanner;
 
-FollowPathHolonomic::FollowPathHolonomic(std::shared_ptr<PathPlannerPath> path,
+PathFollowingCommand::PathFollowingCommand(
+		std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
-		PIDConstants translationConstants, PIDConstants rotationConstants,
-		units::meters_per_second_t maxModuleSpeed,
-		units::meter_t driveBaseRadius,
-		std::initializer_list<frc2::Subsystem*> requirements,
-		units::second_t period) : m_path(path), m_poseSupplier(poseSupplier), m_speedsSupplier(
-		speedsSupplier), m_output(output), m_controller(translationConstants,
-		rotationConstants, maxModuleSpeed, driveBaseRadius, period) {
+		std::unique_ptr<PathFollowingController> controller,
+		std::initializer_list<frc2::Subsystem*> requirements) : m_path(path), m_poseSupplier(
+		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
+		std::move(controller)) {
 	AddRequirements(requirements);
 }
 
-FollowPathHolonomic::FollowPathHolonomic(std::shared_ptr<PathPlannerPath> path,
+PathFollowingCommand::PathFollowingCommand(
+		std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
-		PIDConstants translationConstants, PIDConstants rotationConstants,
-		units::meters_per_second_t maxModuleSpeed,
-		units::meter_t driveBaseRadius,
-		std::span<frc2::Subsystem*> requirements, units::second_t period) : m_path(
-		path), m_poseSupplier(poseSupplier), m_speedsSupplier(speedsSupplier), m_output(
-		output), m_controller(translationConstants, rotationConstants,
-		maxModuleSpeed, driveBaseRadius, period) {
+		std::unique_ptr<PathFollowingController> controller,
+		std::span<frc2::Subsystem*> requirements) : m_path(path), m_poseSupplier(
+		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
+		std::move(controller)) {
 	AddRequirements(requirements);
 }
 
-void FollowPathHolonomic::Initialize() {
+void PathFollowingCommand::Initialize() {
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
 
-	m_controller.reset(currentPose, currentSpeeds);
+	m_controller->reset(currentPose, currentSpeeds);
 
 	if (currentPose.Translation().Distance(m_path->getPoint(0).position)
 			>= 0.25_m
@@ -58,7 +54,7 @@ void FollowPathHolonomic::Initialize() {
 	m_timer.Start();
 }
 
-void FollowPathHolonomic::Execute() {
+void PathFollowingCommand::Execute() {
 	units::second_t currentTime = m_timer.Get();
 	PathPlannerTrajectory::State targetState = m_generatedTrajectory.sample(
 			currentTime);
@@ -69,8 +65,9 @@ void FollowPathHolonomic::Execute() {
 	units::meters_per_second_t currentVel = units::math::hypot(currentSpeeds.vx,
 			currentSpeeds.vy);
 
-	frc::ChassisSpeeds targetSpeeds = m_controller.calculate(currentPose,
-			targetState);
+	frc::ChassisSpeeds targetSpeeds =
+			m_controller->calculateRobotRelativeSpeeds(currentPose,
+					targetState);
 
 	PPLibTelemetry::setCurrentPose(currentPose);
 	PPLibTelemetry::setTargetPose(targetState.getTargetHolonomicPose());
@@ -78,16 +75,16 @@ void FollowPathHolonomic::Execute() {
 			currentSpeeds.omega, targetSpeeds.omega);
 	PathPlannerLogging::logCurrentPose(currentPose);
 	PathPlannerLogging::logTargetPose(targetState.getTargetHolonomicPose());
-	PPLibTelemetry::setPathInaccuracy(m_controller.getPositionalError());
+	PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());
 
 	m_output(targetSpeeds);
 }
 
-bool FollowPathHolonomic::IsFinished() {
+bool PathFollowingCommand::IsFinished() {
 	return m_timer.HasElapsed(m_generatedTrajectory.getTotalTime());
 }
 
-void FollowPathHolonomic::End(bool interrupted) {
+void PathFollowingCommand::End(bool interrupted) {
 	m_timer.Stop();
 
 	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting

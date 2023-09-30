@@ -1,8 +1,8 @@
-#include "pathplanner/lib/controllers/HolonomicDriveController.h"
+#include "pathplanner/lib/controllers/PPHolonomicDriveController.h"
 
 using namespace pathplanner;
 
-HolonomicDriveController::HolonomicDriveController(
+PPHolonomicDriveController::PPHolonomicDriveController(
 		PIDConstants translationConstants, PIDConstants rotationConstants,
 		units::meters_per_second_t maxModuleSpeed,
 		units::meter_t driveBaseRadius, units::second_t period) : m_xController(
@@ -23,8 +23,9 @@ HolonomicDriveController::HolonomicDriveController(
 			units::radian_t { PI });
 }
 
-frc::ChassisSpeeds HolonomicDriveController::calculate(frc::Pose2d currentPose,
-		PathPlannerTrajectory::State referenceState) {
+frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
+		const frc::Pose2d &currentPose,
+		const PathPlannerTrajectory::State &referenceState) {
 	units::meters_per_second_t xFF = referenceState.velocity
 			* referenceState.heading.Cos();
 	units::meters_per_second_t yFF = referenceState.velocity

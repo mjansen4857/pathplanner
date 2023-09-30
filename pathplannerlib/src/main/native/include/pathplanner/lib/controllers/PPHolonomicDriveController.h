@@ -14,12 +14,13 @@
 #include "pathplanner/lib/util/PIDConstants.h"
 #include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
 #include "pathplanner/lib/path/PathPlannerTrajectory.h"
+#include "pathplanner/lib/controllers/PathFollowingController.h"
 
 namespace pathplanner {
-class HolonomicDriveController {
+class PPHolonomicDriveController: public PathFollowingController {
 public:
 	/**
-	 * Constructs a HolonomicDriveController
+	 * Constructs a PPHolonomicDriveController
 	 *
 	 * @param translationConstants PID constants for the translation PID controllers
 	 * @param rotationConstants PID constants for the rotation controller
@@ -29,7 +30,7 @@ public:
 	 *     drive base width / 2
 	 * @param period Period of the control loop in seconds
 	 */
-	HolonomicDriveController(PIDConstants translationConstants,
+	PPHolonomicDriveController(PIDConstants translationConstants,
 			PIDConstants rotationConstants,
 			units::meters_per_second_t maxModuleSpeed,
 			units::meter_t driveBaseRadius, units::second_t period = 0.02_s);
@@ -45,7 +46,7 @@ public:
 	}
 
 	inline void reset(const frc::Pose2d &currentPose,
-			const frc::ChassisSpeeds &currentSpeeds) {
+			const frc::ChassisSpeeds &currentSpeeds) override {
 		m_rotationController.Reset(currentPose.Rotation().Radians(),
 				currentSpeeds.omega);
 	}
@@ -55,7 +56,7 @@ public:
 	 *
 	 * @return Positional error, in meters
 	 */
-	inline units::meter_t getPositionalError() {
+	inline units::meter_t getPositionalError() override {
 		return m_translationError.Norm();
 	}
 
@@ -66,8 +67,9 @@ public:
 	 * @param referenceState The desired trajectory state
 	 * @return The next output of the holonomic drive controller (robot relative)
 	 */
-	frc::ChassisSpeeds calculate(frc::Pose2d currentPose,
-			PathPlannerTrajectory::State referenceState);
+	frc::ChassisSpeeds calculateRobotRelativeSpeeds(
+			const frc::Pose2d &currentPose,
+			const PathPlannerTrajectory::State &referenceState) override;
 
 private:
 	using rpsPerMps_t = units::unit_t<units::compound_unit<units::radians_per_second, units::inverse<units::meters_per_second>>>;

@@ -2,6 +2,7 @@ package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
@@ -23,6 +24,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
    *     aggressive like a proportional term.
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathRamsete(
@@ -33,6 +35,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
       Consumer<ChassisSpeeds> robotRelativeOutput,
       double b,
       double zeta,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     addCommands(
         new PathfindRamsete(
@@ -51,6 +54,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
             robotRelativeOutput,
             b,
             zeta,
+            replanningConfig,
             requirements));
   }
 
@@ -62,6 +66,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
    * @param poseSupplier a supplier for the robot's current pose
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param robotRelativeOutput a consumer for the output speeds (robot relative)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathRamsete(
@@ -70,6 +75,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> robotRelativeOutput,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     addCommands(
         new PathfindRamsete(
@@ -80,6 +86,11 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
             robotRelativeOutput,
             requirements),
         new FollowPathRamsete(
-            goalPath, poseSupplier, currentRobotRelativeSpeeds, robotRelativeOutput, requirements));
+            goalPath,
+            poseSupplier,
+            currentRobotRelativeSpeeds,
+            robotRelativeOutput,
+            replanningConfig,
+            requirements));
   }
 }

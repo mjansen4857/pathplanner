@@ -4,6 +4,7 @@
 #include <units/length.h>
 #include <units/time.h>
 #include "pathplanner/lib/util/PIDConstants.h"
+#include "pathplanner/lib/util/ReplanningConfig.h"
 
 namespace pathplanner {
 class HolonomicPathFollowerConfig {
@@ -12,6 +13,7 @@ public:
 	const PIDConstants rotationConstants;
 	const units::meters_per_second_t maxModuleSpeed;
 	const units::meter_t driveBaseRadius;
+	const ReplanningConfig replanningConfig;
 	const units::second_t period;
 
 	/**
@@ -25,16 +27,19 @@ public:
 	 * @param driveBaseRadius The radius of the drive base in meters. For swerve drive, this is the
 	 *     distance from the center of the robot to the furthest module. For mecanum, this is the
 	 *     drive base width / 2
+	 * @param replanningConfig Path replanning configuration
 	 * @param period Control loop period in seconds (Default = 0.02)
 	 */
 	constexpr HolonomicPathFollowerConfig(
 			const PIDConstants translationConstants,
 			const PIDConstants rotationConstants,
 			const units::meters_per_second_t maxModuleSpeed,
-			const units::meter_t driveBaseRadius, const units::second_t period =
-					0.02_s) : translationConstants(translationConstants), rotationConstants(
-			rotationConstants), maxModuleSpeed(maxModuleSpeed), driveBaseRadius(
-			driveBaseRadius), period(period) {
+			const units::meter_t driveBaseRadius,
+			const ReplanningConfig replanningConfig,
+			const units::second_t period = 0.02_s) : translationConstants(
+			translationConstants), rotationConstants(rotationConstants), maxModuleSpeed(
+			maxModuleSpeed), driveBaseRadius(driveBaseRadius), replanningConfig(
+			replanningConfig), period(period) {
 	}
 
 	/**
@@ -44,14 +49,16 @@ public:
 	 * @param driveBaseRadius The radius of the drive base in meters. For swerve drive, this is the
 	 *     distance from the center of the robot to the furthest module. For mecanum, this is the
 	 *     drive base width / 2
+	 * @param replanningConfig Path replanning configuration
 	 * @param period Control loop period in seconds (Default = 0.02)
 	 */
 	constexpr HolonomicPathFollowerConfig(
 			const units::meters_per_second_t maxModuleSpeed,
-			const units::meter_t driveBaseRadius, const units::second_t period =
-					0.02_s) : HolonomicPathFollowerConfig(
+			const units::meter_t driveBaseRadius,
+			const ReplanningConfig replanningConfig,
+			const units::second_t period = 0.02_s) : HolonomicPathFollowerConfig(
 			PIDConstants(5.0, 0.0, 0.0), PIDConstants(5.0, 0.0, 0.0),
-			maxModuleSpeed, driveBaseRadius, period) {
+			maxModuleSpeed, driveBaseRadius, replanningConfig, period) {
 	}
 };
 }

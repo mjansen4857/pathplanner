@@ -1,6 +1,4 @@
 #include "pathplanner/lib/commands/PathFollowingCommand.h"
-#include "pathplanner/lib/util/PathPlannerLogging.h"
-#include "pathplanner/lib/util/PPLibTelemetry.h"
 
 using namespace pathplanner;
 
@@ -10,9 +8,10 @@ PathFollowingCommand::PathFollowingCommand(
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
+		ReplanningConfig replanningConfig,
 		std::initializer_list<frc2::Subsystem*> requirements) : m_path(path), m_poseSupplier(
 		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
-		std::move(controller)) {
+		std::move(controller)), m_replanningConfig(replanningConfig) {
 	AddRequirements(requirements);
 }
 
@@ -22,9 +21,10 @@ PathFollowingCommand::PathFollowingCommand(
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
+		ReplanningConfig replanningConfig,
 		std::span<frc2::Subsystem*> requirements) : m_path(path), m_poseSupplier(
 		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
-		std::move(controller)) {
+		std::move(controller)), m_replanningConfig(replanningConfig) {
 	AddRequirements(requirements);
 }
 
@@ -34,16 +34,12 @@ void PathFollowingCommand::Initialize() {
 
 	m_controller->reset(currentPose, currentSpeeds);
 
-	if (currentPose.Translation().Distance(m_path->getPoint(0).position)
-			>= 0.25_m
-			|| units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
-					>= 0.25_mps) {
-		// Replan path
-		std::shared_ptr < PathPlannerPath > replanned = m_path->replan(
-				currentPose, currentSpeeds);
-		m_generatedTrajectory = PathPlannerTrajectory(replanned, currentSpeeds);
-		PathPlannerLogging::logActivePath (replanned);
-		PPLibTelemetry::setCurrentPath(replanned);
+	if (m_replanningConfig.enableInitialReplanning
+			&& (currentPose.Translation().Distance(m_path->getPoint(0).position)
+					>= 0.25_m
+					|| units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
+							>= 0.25_mps)) {
+		replanPath(currentPose, currentSpeeds);
 	} else {
 		m_generatedTrajectory = PathPlannerTrajectory(m_path, currentSpeeds);
 		PathPlannerLogging::logActivePath (m_path);
@@ -61,6 +57,22 @@ void PathFollowingCommand::Execute() {
 
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
+
+	if (m_replanningConfig.enableDynamicReplanning) {
+		units::meter_t previousError = units::math::abs(
+				m_controller->getPositionalError());
+		units::meter_t currentError = currentPose.Translation().Distance(
+				targetState.position);
+
+		if (currentError
+				>= m_replanningConfig.dynamicReplanningTotalErrorThreshold
+				|| currentError - previousError
+						>= m_replanningConfig.dynamicReplanningErrorSpikeThreshold) {
+			replanPath(currentPose, currentSpeeds);
+			m_timer.Reset();
+			targetState = m_generatedTrajectory.sample(0_s);
+		}
+	}
 
 	units::meters_per_second_t currentVel = units::math::hypot(currentSpeeds.vx,
 			currentSpeeds.vy);

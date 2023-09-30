@@ -42,16 +42,17 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
-		frc2::Subsystem *driveSubsystem) {
+		ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
-			output, driveSubsystem](std::shared_ptr<PathPlannerPath> path) {
-		return FollowPathRamsete(path, poseSupplier, speedsSupplier, output, {
-				driveSubsystem }).ToPtr();
+			output, replanningConfig, driveSubsystem](
+			std::shared_ptr<PathPlannerPath> path) {
+		return FollowPathRamsete(path, poseSupplier, speedsSupplier, output,
+				replanningConfig, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
@@ -64,17 +65,17 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		units::unit_t<frc::RamseteController::b_unit> b,
 		units::unit_t<frc::RamseteController::zeta_unit> zeta,
-		frc2::Subsystem *driveSubsystem) {
+		ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
-			output, b, zeta, driveSubsystem](
+			output, b, zeta, replanningConfig, driveSubsystem](
 			std::shared_ptr<PathPlannerPath> path) {
 		return FollowPathRamsete(path, poseSupplier, speedsSupplier, output, b,
-				zeta, { driveSubsystem }).ToPtr();
+				zeta, replanningConfig, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
@@ -86,17 +87,18 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		const wpi::array<double, 3> &Qelms, const wpi::array<double, 2> &Relms,
-		units::second_t dt, frc2::Subsystem *driveSubsystem) {
+		units::second_t dt, ReplanningConfig replanningConfig,
+		frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
-			output, Qelms, Relms, dt, driveSubsystem](
+			output, Qelms, Relms, dt, replanningConfig, driveSubsystem](
 			std::shared_ptr<PathPlannerPath> path) {
 		return FollowPathLTV(path, poseSupplier, speedsSupplier, output, Qelms,
-				Relms, dt, { driveSubsystem }).ToPtr();
+				Relms, dt, replanningConfig, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
@@ -107,16 +109,17 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
-		frc2::Subsystem *driveSubsystem) {
+		ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
-			output, dt, driveSubsystem](std::shared_ptr<PathPlannerPath> path) {
-		return FollowPathLTV(path, poseSupplier, speedsSupplier, output, dt, {
-				driveSubsystem }).ToPtr();
+			output, dt, replanningConfig, driveSubsystem](
+			std::shared_ptr<PathPlannerPath> path) {
+		return FollowPathLTV(path, poseSupplier, speedsSupplier, output, dt,
+				replanningConfig, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;

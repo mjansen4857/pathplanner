@@ -8,6 +8,9 @@
 namespace pathplanner {
 class PathFollowingController {
 public:
+	virtual ~PathFollowingController() {
+	}
+
 	/**
 	 * Calculates the next output of the path following controller
 	 *

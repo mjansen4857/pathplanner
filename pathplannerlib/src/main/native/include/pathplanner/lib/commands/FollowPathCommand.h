@@ -20,10 +20,22 @@
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 
 namespace pathplanner {
-class PathFollowingCommand: public frc2::CommandHelper<frc2::Command,
-		PathFollowingCommand> {
+class FollowPathCommand: public frc2::CommandHelper<frc2::Command,
+		FollowPathCommand> {
 public:
-	PathFollowingCommand(std::shared_ptr<PathPlannerPath> path,
+	/**
+	 * Construct a base path following command
+	 *
+	 * @param path The path to follow
+	 * @param poseSupplier Function that supplies the current field-relative pose of the robot
+	 * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+	 * @param output Function that will apply the robot-relative output speeds of this
+	 *     command
+	 * @param controller Path following controller that will be used to follow the path
+	 * @param replanningConfig Path replanning configuration
+	 * @param requirements Subsystems required by this command, usually just the drive subsystem
+	 */
+	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
@@ -31,7 +43,19 @@ public:
 			ReplanningConfig replanningConfig,
 			std::initializer_list<frc2::Subsystem*> requirements);
 
-	PathFollowingCommand(std::shared_ptr<PathPlannerPath> path,
+	/**
+	 * Construct a base path following command
+	 *
+	 * @param path The path to follow
+	 * @param poseSupplier Function that supplies the current field-relative pose of the robot
+	 * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+	 * @param output Function that will apply the robot-relative output speeds of this
+	 *     command
+	 * @param controller Path following controller that will be used to follow the path
+	 * @param replanningConfig Path replanning configuration
+	 * @param requirements Subsystems required by this command, usually just the drive subsystem
+	 */
+	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,

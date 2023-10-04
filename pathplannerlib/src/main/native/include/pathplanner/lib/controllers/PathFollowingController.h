@@ -31,6 +31,11 @@ public:
 	virtual void reset(const frc::Pose2d &currentPose,
 			const frc::ChassisSpeeds &currentSpeeds) = 0;
 
+	/**
+	 * Get the current positional error between the robot's actual and target positions
+	 *
+	 * @return Positional error, in meters
+	 */
 	virtual units::meter_t getPositionalError() = 0;
 };
 }

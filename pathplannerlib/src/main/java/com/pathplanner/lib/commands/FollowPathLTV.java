@@ -12,7 +12,19 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class FollowPathLTV extends PathFollowingCommand {
+public class FollowPathLTV extends FollowPathCommand {
+  /**
+   * Create a path following command that will use an LTV unicycle controller for differential drive
+   * trains
+   *
+   * @param path The path to follow
+   * @param poseSupplier Function that supplies the current field-relative pose of the robot
+   * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+   * @param output Function that will apply the robot-relative output speeds of this command
+   * @param dt The amount of time between each robot control loop, default is 0.02s
+   * @param replanningConfig Path replanning configuration
+   * @param requirements Subsystems required by this command, usually just the drive subsystem
+   */
   public FollowPathLTV(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
@@ -31,6 +43,20 @@ public class FollowPathLTV extends PathFollowingCommand {
         requirements);
   }
 
+  /**
+   * Create a path following command that will use an LTV unicycle controller for differential drive
+   * trains
+   *
+   * @param path The path to follow
+   * @param poseSupplier Function that supplies the current field-relative pose of the robot
+   * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+   * @param output Function that will apply the robot-relative output speeds of this command
+   * @param qelems The maximum desired error tolerance for each state.
+   * @param relems The maximum desired control effort for each input.
+   * @param dt The amount of time between each robot control loop, default is 0.02s
+   * @param replanningConfig Path replanning configuration
+   * @param requirements Subsystems required by this command, usually just the drive subsystem
+   */
   public FollowPathLTV(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,

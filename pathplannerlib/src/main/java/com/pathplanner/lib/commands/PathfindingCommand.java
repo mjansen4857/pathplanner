@@ -32,6 +32,19 @@ public class PathfindingCommand extends Command {
   private PathPlannerTrajectory currentTrajectory;
   private Pose2d startingPose;
 
+  /**
+   * Constructs a new base pathfinding command that will generate a path towards the given path.
+   *
+   * @param targetPath the path to pathfind to
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param outputRobotRelative a consumer for the output speeds (robot relative)
+   * @param controller Path following controller that will be used to follow the path
+   * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
+   *     final rotation
+   * @param requirements the subsystems required by this command
+   */
   public PathfindingCommand(
       PathPlannerPath targetPath,
       PathConstraints constraints,
@@ -66,6 +79,20 @@ public class PathfindingCommand extends Command {
     this.rotationDelayDistance = rotationDelayDistance;
   }
 
+  /**
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
+   *
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param outputRobotRelative a consumer for the output speeds (robot relative)
+   * @param controller Path following controller that will be used to follow the path
+   * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
+   *     final rotation
+   * @param requirements the subsystems required by this command
+   */
   public PathfindingCommand(
       Pose2d targetPose,
       PathConstraints constraints,

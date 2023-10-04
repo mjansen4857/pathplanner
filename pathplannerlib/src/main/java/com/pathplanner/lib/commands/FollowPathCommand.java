@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class PathFollowingCommand extends Command {
+public class FollowPathCommand extends Command {
   private final Timer timer = new Timer();
   private final PathPlannerPath path;
   private final Supplier<Pose2d> poseSupplier;
@@ -25,7 +25,19 @@ public class PathFollowingCommand extends Command {
 
   private PathPlannerTrajectory generatedTrajectory;
 
-  public PathFollowingCommand(
+  /**
+   * Construct a base path following command
+   *
+   * @param path The path to follow
+   * @param poseSupplier Function that supplies the current field-relative pose of the robot
+   * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+   * @param outputRobotRelative Function that will apply the robot-relative output speeds of this
+   *     command
+   * @param controller Path following controller that will be used to follow the path
+   * @param replanningConfig Path replanning configuration
+   * @param requirements Subsystems required by this command, usually just the drive subsystem
+   */
+  public FollowPathCommand(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,

@@ -23,5 +23,10 @@ public interface PathFollowingController {
    */
   void reset(Pose2d currentPose, ChassisSpeeds currentSpeeds);
 
+  /**
+   * Get the current positional error between the robot's actual and target positions
+   *
+   * @return Positional error, in meters
+   */
   double getPositionalError();
 }

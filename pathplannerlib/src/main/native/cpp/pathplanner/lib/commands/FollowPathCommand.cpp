@@ -1,9 +1,8 @@
-#include "pathplanner/lib/commands/PathFollowingCommand.h"
+#include "pathplanner/lib/commands/FollowPathCommand.h"
 
 using namespace pathplanner;
 
-PathFollowingCommand::PathFollowingCommand(
-		std::shared_ptr<PathPlannerPath> path,
+FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
@@ -15,8 +14,7 @@ PathFollowingCommand::PathFollowingCommand(
 	AddRequirements(requirements);
 }
 
-PathFollowingCommand::PathFollowingCommand(
-		std::shared_ptr<PathPlannerPath> path,
+FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
@@ -28,7 +26,7 @@ PathFollowingCommand::PathFollowingCommand(
 	AddRequirements(requirements);
 }
 
-void PathFollowingCommand::Initialize() {
+void FollowPathCommand::Initialize() {
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
 
@@ -50,7 +48,7 @@ void PathFollowingCommand::Initialize() {
 	m_timer.Start();
 }
 
-void PathFollowingCommand::Execute() {
+void FollowPathCommand::Execute() {
 	units::second_t currentTime = m_timer.Get();
 	PathPlannerTrajectory::State targetState = m_generatedTrajectory.sample(
 			currentTime);
@@ -92,11 +90,11 @@ void PathFollowingCommand::Execute() {
 	m_output(targetSpeeds);
 }
 
-bool PathFollowingCommand::IsFinished() {
+bool FollowPathCommand::IsFinished() {
 	return m_timer.HasElapsed(m_generatedTrajectory.getTotalTime());
 }
 
-void PathFollowingCommand::End(bool interrupted) {
+void FollowPathCommand::End(bool interrupted) {
 	m_timer.Stop();
 
 	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting

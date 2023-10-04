@@ -28,6 +28,13 @@ public class PPRamseteController extends RamseteController implements PathFollow
     super();
   }
 
+  /**
+   * Calculates the next output of the path following controller
+   *
+   * @param currentPose The current robot pose
+   * @param targetState The desired trajectory state
+   * @return The next robot relative output of the path following controller
+   */
   @Override
   public ChassisSpeeds calculateRobotRelativeSpeeds(
       Pose2d currentPose, PathPlannerTrajectory.State targetState) {
@@ -40,11 +47,22 @@ public class PPRamseteController extends RamseteController implements PathFollow
         targetState.headingAngularVelocityRps);
   }
 
+  /**
+   * Resets the controller based on the current state of the robot
+   *
+   * @param currentPose Current robot pose
+   * @param currentSpeeds Current robot relative chassis speeds
+   */
   @Override
   public void reset(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     lastError = 0;
   }
 
+  /**
+   * Get the current positional error between the robot's actual and target positions
+   *
+   * @return Positional error, in meters
+   */
   @Override
   public double getPositionalError() {
     return lastError;

@@ -9,7 +9,22 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class FollowPathRamsete extends PathFollowingCommand {
+public class FollowPathRamsete extends FollowPathCommand {
+  /**
+   * Construct a path following command that will use a Ramsete path following controller for
+   * differential drive trains
+   *
+   * @param path The path to follow
+   * @param poseSupplier Function that supplies the current field-relative pose of the robot
+   * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+   * @param output Function that will apply the robot-relative output speeds of this command
+   * @param b Tuning parameter (b &gt; 0 rad^2/m^2) for which larger values make convergence more
+   *     aggressive like a proportional term.
+   * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
+   *     more damping in response.
+   * @param replanningConfig Path replanning configuration
+   * @param requirements Subsystems required by this command, usually just the drive subsystem
+   */
   public FollowPathRamsete(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
@@ -29,6 +44,17 @@ public class FollowPathRamsete extends PathFollowingCommand {
         requirements);
   }
 
+  /**
+   * Construct a path following command that will use a Ramsete path following controller for
+   * differential drive trains
+   *
+   * @param path The path to follow
+   * @param poseSupplier Function that supplies the current field-relative pose of the robot
+   * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+   * @param output Function that will apply the robot-relative output speeds of this command
+   * @param replanningConfig Path replanning configuration
+   * @param requirements Subsystems required by this command, usually just the drive subsystem
+   */
   public FollowPathRamsete(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,

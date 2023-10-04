@@ -89,48 +89,66 @@ public class PPHolonomicDriveController implements PathFollowingController {
     this.isEnabled = enabled;
   }
 
+  /**
+   * Resets the controller based on the current state of the robot
+   *
+   * @param currentPose Current robot pose
+   * @param currentSpeeds Current robot relative chassis speeds
+   */
   @Override
   public void reset(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     rotationController.reset(
         currentPose.getRotation().getRadians(), currentSpeeds.omegaRadiansPerSecond);
   }
 
+  /**
+   * Calculates the next output of the path following controller
+   *
+   * @param currentPose The current robot pose
+   * @param targetState The desired trajectory state
+   * @return The next robot relative output of the path following controller
+   */
   @Override
   public ChassisSpeeds calculateRobotRelativeSpeeds(
-      Pose2d currentPose, PathPlannerTrajectory.State referenceState) {
-    double xFF = referenceState.velocityMps * referenceState.heading.getCos();
-    double yFF = referenceState.velocityMps * referenceState.heading.getSin();
+      Pose2d currentPose, PathPlannerTrajectory.State targetState) {
+    double xFF = targetState.velocityMps * targetState.heading.getCos();
+    double yFF = targetState.velocityMps * targetState.heading.getSin();
 
-    this.translationError = currentPose.getTranslation().minus(referenceState.positionMeters);
+    this.translationError = currentPose.getTranslation().minus(targetState.positionMeters);
 
     if (!this.isEnabled) {
       return ChassisSpeeds.fromFieldRelativeSpeeds(xFF, yFF, 0, currentPose.getRotation());
     }
 
     double xFeedback =
-        this.xController.calculate(currentPose.getX(), referenceState.positionMeters.getX());
+        this.xController.calculate(currentPose.getX(), targetState.positionMeters.getX());
     double yFeedback =
-        this.yController.calculate(currentPose.getY(), referenceState.positionMeters.getY());
+        this.yController.calculate(currentPose.getY(), targetState.positionMeters.getY());
 
-    double angVelConstraint = referenceState.constraints.getMaxAngularVelocityRps();
+    double angVelConstraint = targetState.constraints.getMaxAngularVelocityRps();
     // Approximation of available module speed to do rotation with
-    double maxAngVelModule = Math.max(0, maxModuleSpeed - referenceState.velocityMps) * mpsToRps;
+    double maxAngVelModule = Math.max(0, maxModuleSpeed - targetState.velocityMps) * mpsToRps;
     double maxAngVel = Math.min(angVelConstraint, maxAngVelModule);
 
     var rotationConstraints =
         new TrapezoidProfile.Constraints(
-            maxAngVel, referenceState.constraints.getMaxAngularAccelerationRpsSq());
+            maxAngVel, targetState.constraints.getMaxAngularAccelerationRpsSq());
 
     double targetRotationVel =
         rotationController.calculate(
             currentPose.getRotation().getRadians(),
-            new TrapezoidProfile.State(referenceState.targetHolonomicRotation.getRadians(), 0),
+            new TrapezoidProfile.State(targetState.targetHolonomicRotation.getRadians(), 0),
             rotationConstraints);
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
         xFF + xFeedback, yFF + yFeedback, targetRotationVel, currentPose.getRotation());
   }
 
+  /**
+   * Get the current positional error between the robot's actual and target positions
+   *
+   * @return Positional error, in meters
+   */
   @Override
   public double getPositionalError() {
     return translationError.getNorm();

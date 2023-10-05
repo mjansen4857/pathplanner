@@ -146,6 +146,7 @@ class _PathTreeState extends State<PathTree> {
                   undoStack: widget.undoStack,
                   holonomicMode: widget.holonomicMode,
                 ),
+                _buildReversedCheckbox(),
                 const Divider(),
                 const EditorSettingsTree(),
               ],
@@ -153,6 +154,45 @@ class _PathTreeState extends State<PathTree> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildReversedCheckbox() {
+    return Visibility(
+      visible: !widget.holonomicMode,
+      child: Card(
+        elevation: 1.0,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
+          child: Row(
+            children: [
+              Checkbox(
+                value: widget.path.reversed,
+                onChanged: (value) {
+                  bool reversed = value ?? false;
+
+                  widget.undoStack.add(Change(
+                    widget.path.reversed,
+                    () {
+                      widget.path.reversed = reversed;
+                      widget.onPathChanged?.call();
+                    },
+                    (oldValue) {
+                      widget.path.reversed = oldValue;
+                      widget.onPathChanged?.call();
+                    },
+                  ));
+                },
+              ),
+              const SizedBox(width: 4),
+              const Text(
+                'Reversed',
+                style: TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

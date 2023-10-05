@@ -489,6 +489,13 @@ class Trajectory {
         state.headingRadians = atan2(delta.y, delta.x);
         state.deltaPos = 0;
         state.velocity = startVel;
+
+        if (path.reversed) {
+          state.headingRadians += pi;
+          if (state.headingRadians > pi) {
+            state.headingRadians -= 2 * pi;
+          }
+        }
       } else {
         Point delta = path.pathPoints[i + 1].position - state.position;
         state.headingRadians = atan2(delta.y, delta.x);
@@ -500,6 +507,13 @@ class Trajectory {
             (pow(v0, 2) + (2 * constraints.maxAcceleration * state.deltaPos))
                 .abs());
         state.velocity = min(vMax, path.pathPoints[i].maxV);
+
+        if (path.reversed) {
+          state.headingRadians += pi;
+          if (state.headingRadians > pi) {
+            state.headingRadians -= 2 * pi;
+          }
+        }
       }
 
       states.add(state);

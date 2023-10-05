@@ -20,6 +20,7 @@ void main() {
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
+    path.reversed = false;
     sideSwapped = false;
   });
 
@@ -140,5 +141,37 @@ void main() {
     ));
 
     expect(find.byType(RotationTargetsTree), findsOneWidget);
+  });
+
+  testWidgets('Reversed checkbox', (widgetTester) async {
+    final ChangeStack undoStack = ChangeStack();
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: PathTree(
+          path: path,
+          undoStack: undoStack,
+          holonomicMode: false,
+        ),
+      ),
+    ));
+
+    final check = find.byType(Checkbox);
+
+    expect(check, findsOneWidget);
+
+    await widgetTester.tap(check);
+    await widgetTester.pump();
+    expect(path.reversed, true);
+
+    undoStack.undo();
+
+    await widgetTester.pump();
+    expect(path.reversed, false);
+
+    undoStack.redo();
+
+    await widgetTester.pump();
+    expect(path.reversed, true);
   });
 }

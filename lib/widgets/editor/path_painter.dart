@@ -134,6 +134,7 @@ class PathPainter extends CustomPainter {
       TrajectoryState state = simulatedPath!.sample(previewTime!.value);
       num rotation =
           holonomicMode ? state.holonomicRotationRadians : state.headingRadians;
+
       PathPainterUtil.paintRobotOutline(
           state.position,
           GeometryUtil.toDegrees(rotation),

@@ -26,7 +26,7 @@ PathPlanner is a motion profile generator for FRC robots created by team 3015. T
 * Automatic pathfinding in PathPlannerLib with AD*
 
 ## Usage and Documentation
-#### [Check the Wiki](https://github.com/mjansen4857/pathplanner/wiki)
+### [Check the Wiki](https://github.com/mjansen4857/pathplanner/wiki)
 
 Make sure you [install PathPlannerLib](https://github.com/mjansen4857/pathplanner/wiki/PathPlannerLib:-Installing) to generate your paths.
 

@@ -4,6 +4,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -61,6 +62,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Waypoints'),
+      trailing: ItemCount(count: widget.path.waypoints.length),
       initiallyExpanded: widget.path.waypointsExpanded,
       controller: _expansionController,
       onExpansionChanged: (value) {

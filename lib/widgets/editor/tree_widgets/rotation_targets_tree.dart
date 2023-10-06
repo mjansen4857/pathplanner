@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -53,6 +54,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Rotation Targets'),
+      trailing: ItemCount(count: widget.path.rotationTargets.length),
       initiallyExpanded: widget.path.rotationTargetsExpanded,
       onExpansionChanged: (value) {
         if (value != null) {

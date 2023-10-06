@@ -111,19 +111,26 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                 condition: widget.compact,
                 trueChild: Expanded(
                   flex: 5,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: FittedBox(
-                        child: ElevatedButton.icon(
-                          label: const Text('Edit'),
-                          icon: const Icon(Icons.edit),
-                          style: ElevatedButton.styleFrom(
-                            elevation: 4.0,
-                          ),
-                          onPressed: widget.onOpened,
+                  child: InkWell(
+                    onTap: widget.onOpened,
+                    hoverColor: Colors.white.withOpacity(0.05),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.edit,
+                          size: 18,
+                          color: colorScheme.primary,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

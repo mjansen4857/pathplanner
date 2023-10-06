@@ -27,14 +27,14 @@ apply from: 'config.gradle'
 
 // Apply Java configuration
 dependencies {
-    implementation 'edu.wpi.first.cscore:cscore-java:2023.+'
-    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2023.+'
-    implementation 'edu.wpi.first.ntcore:ntcore-java:2023.+'
-    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2023.+'
-    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2023.+'
-    implementation 'edu.wpi.first.wpimath:wpimath-java:2023.+'
-    implementation 'edu.wpi.first.wpilibNewCommands:wpilibNewCommands-java:2023.+'
-    implementation 'edu.wpi.first.hal:hal-java:2023.+'
+    implementation 'edu.wpi.first.cscore:cscore-java:2024.+'
+    implementation 'edu.wpi.first.cameraserver:cameraserver-java:2024.+'
+    implementation 'edu.wpi.first.ntcore:ntcore-java:2024.+'
+    implementation 'edu.wpi.first.wpilibj:wpilibj-java:2024.+'
+    implementation 'edu.wpi.first.wpiutil:wpiutil-java:2024.+'
+    implementation 'edu.wpi.first.wpimath:wpimath-java:2024.+'
+    implementation 'edu.wpi.first.wpilibNewCommands:wpilibNewCommands-java:2024.+'
+    implementation 'edu.wpi.first.hal:hal-java:2024.+'
     implementation "org.ejml:ejml-simple:0.41"
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.12.4"
     implementation "com.fasterxml.jackson.core:jackson-core:2.12.4"

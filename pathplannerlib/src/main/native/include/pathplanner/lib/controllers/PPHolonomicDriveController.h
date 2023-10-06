@@ -74,8 +74,8 @@ public:
 private:
 	using rpsPerMps_t = units::unit_t<units::compound_unit<units::radians_per_second, units::inverse<units::meters_per_second>>>;
 
-	frc2::PIDController m_xController;
-	frc2::PIDController m_yController;
+	frc::PIDController m_xController;
+	frc::PIDController m_yController;
 	frc::ProfiledPIDController<units::radians> m_rotationController;
 	units::meters_per_second_t m_maxModuleSpeed;
 	rpsPerMps_t m_mpsToRps;

@@ -372,7 +372,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Team Color:'),
+        const Text('Theme Color:'),
         const SizedBox(height: 4),
         SizedBox(
           height: 48,
@@ -383,25 +383,29 @@ class _SettingsDialogState extends State<SettingsDialog> {
               onPressed: () {
                 showDialog(
                   context: context,
+                  barrierColor: Colors.transparent,
                   builder: (BuildContext context) {
                     return AlertDialog(
-                      title: const Text('Pick Team Color'),
-                      content: SingleChildScrollView(
-                        child: ColorPicker(
-                          pickerColor: _teamColor,
-                          enableAlpha: false,
-                          hexInputBar: true,
-                          onColorChanged: (Color color) {
-                            setState(() {
-                              _teamColor = color;
-                            });
-                          },
+                      title: const Text('Pick Theme Color'),
+                      content: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4.0),
+                        child: SingleChildScrollView(
+                          child: ColorPicker(
+                            pickerColor: _teamColor,
+                            enableAlpha: false,
+                            hexInputBar: true,
+                            onColorChanged: (Color color) {
+                              setState(() {
+                                _teamColor = color;
+                              });
+                              widget.onTeamColorChanged(_teamColor);
+                            },
+                          ),
                         ),
                       ),
                       actions: [
                         TextButton(
                           onPressed: () {
-                            Navigator.of(context).pop();
                             setState(() {
                               _teamColor = const Color(Defaults.teamColor);
                               widget.onTeamColorChanged(_teamColor);
@@ -410,11 +414,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           child: const Text('Reset'),
                         ),
                         TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            widget.onTeamColorChanged(_teamColor);
-                          },
-                          child: const Text('Confirm'),
+                          onPressed: Navigator.of(context).pop,
+                          child: const Text('Close'),
                         ),
                       ],
                     );

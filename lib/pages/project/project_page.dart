@@ -360,6 +360,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
                           setState(() {
                             _pathFolders.add(folderName);
+                            _sortPaths(_pathSortValue);
                           });
                           widget.prefs.setStringList(
                               PrefsKeys.pathFolders, _pathFolders);
@@ -816,6 +817,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
                           setState(() {
                             _autoFolders.add(folderName);
+                            _sortAutos(_autoSortValue);
                           });
                           widget.prefs.setStringList(
                               PrefsKeys.autoFolders, _autoFolders);

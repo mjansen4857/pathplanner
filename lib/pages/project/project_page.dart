@@ -391,6 +391,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             fs: fs,
                             folder: _pathFolder,
                           ));
+                          _sortPaths(_pathSortValue);
                         });
                       },
                       icon: const Icon(Icons.add),
@@ -846,6 +847,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             fs: fs,
                             folder: _autoFolder,
                           ));
+                          _sortAutos(_autoSortValue);
                         });
                       },
                       icon: const Icon(Icons.add),

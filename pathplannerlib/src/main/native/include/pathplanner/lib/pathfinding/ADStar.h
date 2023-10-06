@@ -25,6 +25,9 @@ public:
 		int x;
 		int y;
 
+		constexpr GridPosition() : x(0), y(0) {
+		}
+
 		constexpr GridPosition(const int xPos, const int yPos) : x(xPos), y(
 				yPos) {
 		}
@@ -57,20 +60,22 @@ private:
 	static std::unordered_set<GridPosition> dynamicObstacles;
 	static std::unordered_set<GridPosition> obstacles;
 
-	static std::atomic<GridPosition> sStart;
-	static std::atomic<GridPosition> sGoal;
+	static GridPosition sStart;
+	static frc::Translation2d realStartPos;
+	static GridPosition sGoal;
+	static frc::Translation2d realGoalPos;
 
-	static std::atomic<double> eps;
+	static double eps;
 
 	static std::thread planningThread;
 	static std::mutex mutex;
 
-	static std::atomic_bool doMinor;
-	static std::atomic_bool doMajor;
-	static std::atomic_bool needsReset;
-	static std::atomic_bool needsExtract;
-	static std::atomic_bool running;
-	static std::atomic_bool newPathAvailable;
+	static bool doMinor;
+	static bool doMajor;
+	static bool needsReset;
+	static bool needsExtract;
+	static bool running;
+	static bool newPathAvailable;
 
 	static std::vector<frc::Translation2d> currentPath;
 	static std::mutex currentPath_mutex;
@@ -79,9 +84,36 @@ private:
 
 	static void doWork();
 
+	static void setStartPos(const frc::Translation2d &start);
+
+	static void setGoalPos(const frc::Translation2d &goal);
+
+	static GridPosition findClosestNonObstacle(const GridPosition &pos);
+
+	static void setDynamicObstacles(
+			const std::vector<std::pair<frc::Translation2d, frc::Translation2d>> &obs,
+			const frc::Translation2d &currentRobotPos);
+
 	static std::vector<frc::Translation2d> extractPath();
 
-	// TODO: isCollision ^
+	static bool walkable(const GridPosition &s1, const GridPosition &s2);
+
+	static void reset();
+
+	static void computeOrImprovePath();
+
+	static void updateState(const GridPosition &s);
+
+	static inline double cost(const GridPosition &sStart,
+			const GridPosition &sGoal) {
+		if (isCollision(sStart, sGoal)) {
+			return std::numeric_limits<double>::infinity();
+		}
+		return heuristic(sStart, sGoal);
+	}
+
+	static bool isCollision(const GridPosition &sStart,
+			const GridPosition &sEnd);
 
 	static std::unordered_set<GridPosition> getOpenNeighbors(
 			const GridPosition &s);

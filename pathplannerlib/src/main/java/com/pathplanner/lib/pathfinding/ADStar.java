@@ -129,7 +129,7 @@ public class ADStar {
           }
         }
 
-        if (!needsReset.get() && !doMinor.get() && !doMajor.get()) {
+        if (!needsReset && !doMinor && !doMajor) {
           try {
             Thread.sleep(20);
           } catch (InterruptedException e) {

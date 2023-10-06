@@ -27,10 +27,10 @@ std::unordered_map<ADStar::GridPosition, double> ADStar::g;
 std::unordered_map<ADStar::GridPosition, double> ADStar::rhs;
 std::unordered_map<ADStar::GridPosition, std::pair<double, double>> ADStar::open;
 std::unordered_map<ADStar::GridPosition, std::pair<double, double>> ADStar::incons;
-std::vector<ADStar::GridPosition> ADStar::closed;
-std::vector<ADStar::GridPosition> ADStar::staticObstacles;
-std::vector<ADStar::GridPosition> ADStar::dynamicObstacles;
-std::vector<ADStar::GridPosition> ADStar::obstacles;
+std::unordered_set<ADStar::GridPosition> ADStar::closed;
+std::unordered_set<ADStar::GridPosition> ADStar::staticObstacles;
+std::unordered_set<ADStar::GridPosition> ADStar::dynamicObstacles;
+std::unordered_set<ADStar::GridPosition> ADStar::obstacles;
 
 std::atomic<ADStar::GridPosition> ADStar::sStart = ADStar::GridPosition(0, 0);
 std::atomic<ADStar::GridPosition> ADStar::sGoal = ADStar::GridPosition(0, 0);
@@ -47,7 +47,7 @@ std::atomic_bool ADStar::needsExtract = false;
 std::atomic_bool ADStar::running = false;
 std::atomic_bool ADStar::newPathAvailable = false;
 
-std::vector<PathPoint> ADStar::currentPath;
+std::vector<frc::Translation2d> ADStar::currentPath;
 std::mutex ADStar::currentPath_mutex;
 
 void ADStar::ensureInitialized() {
@@ -81,7 +81,7 @@ void ADStar::ensureInitialized() {
 					for (size_t col = 0; col < rowArr.size(); col++) {
 						bool isObstacle = rowArr[col].get<bool>();
 						if (isObstacle) {
-							staticObstacles.emplace_back(col, row);
+							staticObstacles.emplace(col, row);
 						}
 					}
 				}
@@ -95,10 +95,8 @@ void ADStar::ensureInitialized() {
 		}
 
 		obstacles.clear();
-		obstacles.insert(obstacles.begin(), staticObstacles.begin(),
-				staticObstacles.end());
-		obstacles.insert(obstacles.begin(), dynamicObstacles.begin(),
-				dynamicObstacles.end());
+		obstacles.insert(staticObstacles.begin(), staticObstacles.end());
+		obstacles.insert(dynamicObstacles.begin(), dynamicObstacles.end());
 
 		needsReset = true;
 		doMajor = true;
@@ -138,15 +136,15 @@ void ADStar::doWork() {
 	// TODO
 }
 
-std::vector<PathPoint> ADStar::extractPath() {
-	std::vector < PathPoint > path;
+std::vector<frc::Translation2d> ADStar::extractPath() {
+	std::vector < frc::Translation2d > bezierPoints;
 
 	// TODO
 
-	return path;
+	return bezierPoints;
 }
 
-std::vector<PathPoint> ADStar::getCurrentPath() {
+std::vector<frc::Translation2d> ADStar::getCurrentPath() {
 	if (!running) {
 		FRC_ReportError(frc::warn::Warning,
 				"ADStar path was retrieved before it was initialized");
@@ -157,9 +155,9 @@ std::vector<PathPoint> ADStar::getCurrentPath() {
 	return currentPath;
 }
 
-std::vector<ADStar::GridPosition> ADStar::getOpenNeighbors(
+std::unordered_set<ADStar::GridPosition> ADStar::getOpenNeighbors(
 		const ADStar::GridPosition &s) {
-	std::vector < GridPosition > ret;
+	std::unordered_set < GridPosition > ret;
 
 	for (int xMove = -1; xMove <= 1; xMove++) {
 		for (int yMove = -1; yMove <= 1; yMove++) {
@@ -167,23 +165,23 @@ std::vector<ADStar::GridPosition> ADStar::getOpenNeighbors(
 			if (std::find(obstacles.begin(), obstacles.end(), sNext)
 					== obstacles.end() && sNext.x >= 0 && sNext.x < NODE_X
 					&& sNext.y >= 0 && sNext.y < NODE_Y) {
-				ret.push_back(sNext);
+				ret.emplace(sNext);
 			}
 		}
 	}
 	return ret;
 }
 
-std::vector<ADStar::GridPosition> ADStar::getAllNeighbors(
+std::unordered_set<ADStar::GridPosition> ADStar::getAllNeighbors(
 		const ADStar::GridPosition &s) {
-	std::vector < GridPosition > ret;
+	std::unordered_set < GridPosition > ret;
 
 	for (int xMove = -1; xMove <= 1; xMove++) {
 		for (int yMove = -1; yMove <= 1; yMove++) {
 			GridPosition sNext = GridPosition(s.x + xMove, s.y + yMove);
 			if (sNext.x >= 0 && sNext.x < NODE_X && sNext.y >= 0
 					&& sNext.y < NODE_Y) {
-				ret.push_back(sNext);
+				ret.emplace(sNext);
 			}
 		}
 	}

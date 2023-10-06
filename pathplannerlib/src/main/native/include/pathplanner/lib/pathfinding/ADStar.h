@@ -1,13 +1,13 @@
 #pragma once
 
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <atomic>
 #include <thread>
 #include <mutex>
 #include <frc/geometry/Translation2d.h>
 #include <optional>
-#include "pathplanner/lib/path/PathPoint.h"
 
 namespace pathplanner {
 class ADStar {
@@ -18,7 +18,7 @@ public:
 		return newPathAvailable;
 	}
 
-	static std::vector<PathPoint> getCurrentPath();
+	static std::vector<frc::Translation2d> getCurrentPath();
 
 	class GridPosition {
 	public:
@@ -52,10 +52,10 @@ private:
 	static std::unordered_map<GridPosition, double> rhs;
 	static std::unordered_map<GridPosition, std::pair<double, double>> open;
 	static std::unordered_map<GridPosition, std::pair<double, double>> incons;
-	static std::vector<GridPosition> closed;
-	static std::vector<GridPosition> staticObstacles;
-	static std::vector<GridPosition> dynamicObstacles;
-	static std::vector<GridPosition> obstacles;
+	static std::unordered_set<GridPosition> closed;
+	static std::unordered_set<GridPosition> staticObstacles;
+	static std::unordered_set<GridPosition> dynamicObstacles;
+	static std::unordered_set<GridPosition> obstacles;
 
 	static std::atomic<GridPosition> sStart;
 	static std::atomic<GridPosition> sGoal;
@@ -72,20 +72,22 @@ private:
 	static std::atomic_bool running;
 	static std::atomic_bool newPathAvailable;
 
-	static std::vector<PathPoint> currentPath;
+	static std::vector<frc::Translation2d> currentPath;
 	static std::mutex currentPath_mutex;
 
 	static void runThread();
 
 	static void doWork();
 
-	static std::vector<PathPoint> extractPath();
+	static std::vector<frc::Translation2d> extractPath();
 
-    // TODO: isCollision ^
+	// TODO: isCollision ^
 
-	static std::vector<GridPosition> getOpenNeighbors(const GridPosition &s);
+	static std::unordered_set<GridPosition> getOpenNeighbors(
+			const GridPosition &s);
 
-	static std::vector<GridPosition> getAllNeighbors(const GridPosition &s);
+	static std::unordered_set<GridPosition> getAllNeighbors(
+			const GridPosition &s);
 
 	static std::pair<double, double> key(const GridPosition &s);
 

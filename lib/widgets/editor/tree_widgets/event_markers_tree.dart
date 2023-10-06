@@ -5,6 +5,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:undo/undo.dart';
@@ -54,6 +55,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Event Markers'),
+      trailing: ItemCount(count: widget.path.eventMarkers.length),
       initiallyExpanded: widget.path.eventMarkersExpanded,
       onExpansionChanged: (value) {
         if (value != null) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -56,6 +57,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Constraint Zones'),
+      trailing: ItemCount(count: widget.path.constraintZones.length),
       initiallyExpanded: widget.path.constraintZonesExpanded,
       onExpansionChanged: (value) {
         if (value != null) {

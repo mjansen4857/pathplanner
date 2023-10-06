@@ -7,22 +7,10 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
-		ReplanningConfig replanningConfig,
-		std::initializer_list<frc2::Subsystem*> requirements) : m_path(path), m_poseSupplier(
-		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
-		std::move(controller)), m_replanningConfig(replanningConfig) {
-	AddRequirements(requirements);
-}
-
-FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
-		std::function<frc::Pose2d()> poseSupplier,
-		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds)> output,
-		std::unique_ptr<PathFollowingController> controller,
-		ReplanningConfig replanningConfig,
-		std::span<frc2::Subsystem*> requirements) : m_path(path), m_poseSupplier(
-		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
-		std::move(controller)), m_replanningConfig(replanningConfig) {
+		ReplanningConfig replanningConfig, frc2::Requirements requirements) : m_path(
+		path), m_poseSupplier(poseSupplier), m_speedsSupplier(speedsSupplier), m_output(
+		output), m_controller(std::move(controller)), m_replanningConfig(
+		replanningConfig) {
 	AddRequirements(requirements);
 }
 

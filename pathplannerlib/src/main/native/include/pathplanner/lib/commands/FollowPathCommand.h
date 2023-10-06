@@ -2,13 +2,12 @@
 
 #include <frc2/command/Command.h>
 #include <frc2/command/CommandHelper.h>
+#include <frc2/command/Requirements.h>
 #include <memory>
 #include <functional>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/Timer.h>
-#include <initializer_list>
-#include <span>
 #include <units/velocity.h>
 #include <units/length.h>
 #include <units/time.h>
@@ -40,28 +39,7 @@ public:
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unique_ptr<PathFollowingController> controller,
-			ReplanningConfig replanningConfig,
-			std::initializer_list<frc2::Subsystem*> requirements);
-
-	/**
-	 * Construct a base path following command
-	 *
-	 * @param path The path to follow
-	 * @param poseSupplier Function that supplies the current field-relative pose of the robot
-	 * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
-	 * @param output Function that will apply the robot-relative output speeds of this
-	 *     command
-	 * @param controller Path following controller that will be used to follow the path
-	 * @param replanningConfig Path replanning configuration
-	 * @param requirements Subsystems required by this command, usually just the drive subsystem
-	 */
-	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
-			std::function<frc::Pose2d()> poseSupplier,
-			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> output,
-			std::unique_ptr<PathFollowingController> controller,
-			ReplanningConfig replanningConfig,
-			std::span<frc2::Subsystem*> requirements);
+			ReplanningConfig replanningConfig, frc2::Requirements requirements);
 
 	void Initialize() override;
 

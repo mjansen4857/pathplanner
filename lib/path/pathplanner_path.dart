@@ -41,6 +41,7 @@ class PathPlannerPath {
   bool rotationTargetsExpanded = false;
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
+  DateTime lastModified = DateTime.now().toUtc();
 
   PathPlannerPath.defaultPath({
     required this.pathDir,
@@ -128,6 +129,7 @@ class PathPlannerPath {
       File pathFile = fs.file(join(pathDir, '$name.path'));
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       pathFile.writeAsString(encoder.convert(this));
+      lastModified = DateTime.now().toUtc();
       Log.debug(
           'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
     } catch (ex, stack) {
@@ -142,13 +144,18 @@ class PathPlannerPath {
     List<FileSystemEntity> files = fs.directory(pathsDir).listSync();
     for (FileSystemEntity e in files) {
       if (e.path.endsWith('.path')) {
-        String jsonStr = await fs.file(e.path).readAsString();
+        final file = fs.file(e.path);
+        String jsonStr = await file.readAsString();
         try {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String pathName = basenameWithoutExtension(e.path);
 
           if (json['version'] == 1.0) {
-            paths.add(PathPlannerPath.fromJsonV1(json, pathName, pathsDir, fs));
+            PathPlannerPath path =
+                PathPlannerPath.fromJsonV1(json, pathName, pathsDir, fs);
+            path.lastModified = (await file.lastModified()).toUtc();
+
+            paths.add(path);
           } else {
             Log.error('Unknown path version');
           }
@@ -175,6 +182,7 @@ class PathPlannerPath {
       pathFile.rename(join(pathDir, '$name.path'));
     }
     this.name = name;
+    lastModified = DateTime.now().toUtc();
   }
 
   Map<String, dynamic> toJson() {

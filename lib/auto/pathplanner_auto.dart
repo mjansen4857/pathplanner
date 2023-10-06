@@ -19,6 +19,9 @@ class PathPlannerAuto {
   FileSystem fs;
   String autoDir;
 
+  // Stuff used for UI
+  DateTime lastModified = DateTime.now().toUtc();
+
   PathPlannerAuto({
     required this.name,
     required this.sequence,
@@ -78,13 +81,18 @@ class PathPlannerAuto {
     List<FileSystemEntity> files = fs.directory(autosDir).listSync();
     for (FileSystemEntity e in files) {
       if (e.path.endsWith('.auto')) {
-        String jsonStr = await fs.file(e.path).readAsString();
+        final file = fs.file(e.path);
+        String jsonStr = await file.readAsString();
         try {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String autoName = basenameWithoutExtension(e.path);
 
           if (json['version'] == 1.0) {
-            autos.add(PathPlannerAuto.fromJsonV1(json, autoName, autosDir, fs));
+            PathPlannerAuto auto =
+                PathPlannerAuto.fromJsonV1(json, autoName, autosDir, fs);
+            auto.lastModified = (await file.lastModified()).toUtc();
+
+            autos.add(auto);
           } else {
             Log.error('Unknown auto version');
           }
@@ -103,6 +111,7 @@ class PathPlannerAuto {
       autoFile.rename(join(autoDir, '$name.auto'));
     }
     this.name = name;
+    lastModified = DateTime.now().toUtc();
   }
 
   void delete() {
@@ -118,6 +127,7 @@ class PathPlannerAuto {
       File autoFile = fs.file(join(autoDir, '$name.auto'));
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       autoFile.writeAsString(encoder.convert(this));
+      lastModified = DateTime.now().toUtc();
       Log.debug('Saved "$name.auto"');
     } catch (ex, stack) {
       Log.error('Failed to save auto', ex, stack);

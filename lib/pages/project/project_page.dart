@@ -360,6 +360,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
                           setState(() {
                             _pathFolders.add(folderName);
+                            _sortPaths(_pathSortValue);
                           });
                           widget.prefs.setStringList(
                               PrefsKeys.pathFolders, _pathFolders);
@@ -391,6 +392,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             fs: fs,
                             folder: _pathFolder,
                           ));
+                          _sortPaths(_pathSortValue);
                         });
                       },
                       icon: const Icon(Icons.add),
@@ -629,6 +631,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
         setState(() {
           _paths.add(_paths[i].duplicate(pathName));
+          _sortPaths(_pathSortValue);
         });
       },
       onDeleted: () {
@@ -661,8 +664,9 @@ class _ProjectPageState extends State<ProjectPage> {
           ),
         );
 
-        // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
-        setState(() {});
+        setState(() {
+          _sortPaths(_pathSortValue);
+        });
       },
     );
 
@@ -711,6 +715,7 @@ class _ProjectPageState extends State<ProjectPage> {
         for (PathPlannerAuto auto in _autos) {
           auto.updatePathName(oldName, newName);
         }
+        _sortPaths(_pathSortValue);
       });
     }
   }
@@ -812,6 +817,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
                           setState(() {
                             _autoFolders.add(folderName);
+                            _sortAutos(_autoSortValue);
                           });
                           widget.prefs.setStringList(
                               PrefsKeys.autoFolders, _autoFolders);
@@ -843,6 +849,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             fs: fs,
                             folder: _autoFolder,
                           ));
+                          _sortAutos(_autoSortValue);
                         });
                       },
                       icon: const Icon(Icons.add),
@@ -1088,6 +1095,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
         setState(() {
           _autos.add(_autos[i].duplicate(autoName));
+          _sortAutos(_autoSortValue);
         });
       },
       onDeleted: () {
@@ -1116,8 +1124,9 @@ class _ProjectPageState extends State<ProjectPage> {
           ),
         );
 
-        // Wait for the user to go back then rebuild so the path preview updates (most of the time...)
-        setState(() {});
+        setState(() {
+          _sortAutos(_autoSortValue);
+        });
       },
       warningMessage: warningMessage,
     );
@@ -1269,18 +1278,25 @@ class _ProjectPageState extends State<ProjectPage> {
     } else {
       setState(() {
         _autos[autoIdx].rename(newName);
+        _sortAutos(_autoSortValue);
       });
     }
   }
 
   void _sortPaths(String sortOption) {
     switch (sortOption) {
+      case 'recent':
+        _paths.sort((a, b) => b.lastModified.compareTo(a.lastModified));
+        _pathFolders.sort((a, b) => a.compareTo(b));
+        break;
       case 'nameDesc':
         _paths.sort((a, b) => b.name.compareTo(a.name));
         _pathFolders.sort((a, b) => b.compareTo(a));
+        break;
       case 'nameAsc':
         _paths.sort((a, b) => a.name.compareTo(b.name));
         _pathFolders.sort((a, b) => a.compareTo(b));
+        break;
       default:
         throw FormatException('Invalid sort value', sortOption);
     }
@@ -1288,12 +1304,18 @@ class _ProjectPageState extends State<ProjectPage> {
 
   void _sortAutos(String sortOption) {
     switch (sortOption) {
+      case 'recent':
+        _autos.sort((a, b) => b.lastModified.compareTo(a.lastModified));
+        _autoFolders.sort((a, b) => a.compareTo(b));
+        break;
       case 'nameDesc':
         _autos.sort((a, b) => b.name.compareTo(a.name));
         _autoFolders.sort((a, b) => b.compareTo(a));
+        break;
       case 'nameAsc':
         _autos.sort((a, b) => a.name.compareTo(b.name));
         _autoFolders.sort((a, b) => a.compareTo(b));
+        break;
       default:
         throw FormatException('Invalid sort value', sortOption);
     }
@@ -1301,6 +1323,10 @@ class _ProjectPageState extends State<ProjectPage> {
 
   List<PopupMenuItem<String>> _sortOptions() {
     return const [
+      PopupMenuItem(
+        value: 'recent',
+        child: Text('Recent'),
+      ),
       PopupMenuItem(
         value: 'nameAsc',
         child: Text('Name Ascending'),
@@ -1314,6 +1340,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
   Widget _sortLabel(String optionValue) {
     return switch (optionValue) {
+      'recent' => const Text('Recent', style: TextStyle(fontSize: 16)),
       'nameDesc' =>
         const Text('Name Descending', style: TextStyle(fontSize: 16)),
       'nameAsc' => const Text('Name Ascending', style: TextStyle(fontSize: 16)),

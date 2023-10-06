@@ -111,6 +111,7 @@ class PathPlannerAuto {
       autoFile.rename(join(autoDir, '$name.auto'));
     }
     this.name = name;
+    lastModified = DateTime.now().toUtc();
   }
 
   void delete() {
@@ -126,6 +127,7 @@ class PathPlannerAuto {
       File autoFile = fs.file(join(autoDir, '$name.auto'));
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       autoFile.writeAsString(encoder.convert(this));
+      lastModified = DateTime.now().toUtc();
       Log.debug('Saved "$name.auto"');
     } catch (ex, stack) {
       Log.error('Failed to save auto', ex, stack);

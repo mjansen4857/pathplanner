@@ -182,6 +182,7 @@ class PathPlannerPath {
       pathFile.rename(join(pathDir, '$name.path'));
     }
     this.name = name;
+    lastModified = DateTime.now().toUtc();
   }
 
   Map<String, dynamic> toJson() {

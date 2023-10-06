@@ -21,9 +21,9 @@ nt::DoubleArrayPublisher PPLibTelemetry::m_posePub =
 nt::DoubleArrayPublisher PPLibTelemetry::m_pathPub =
 		nt::NetworkTableInstance::GetDefault().GetDoubleArrayTopic(
 				"/PathPlanner/currentPath").Publish();
-nt::DoubleArrayPublisher PPLibTelemetry::m_lookaheadPub =
+nt::DoubleArrayPublisher PPLibTelemetry::m_targetPosePub =
 		nt::NetworkTableInstance::GetDefault().GetDoubleArrayTopic(
-				"/PathPlanner/lookahead").Publish();
+				"/PathPlanner/targetPose").Publish();
 
 std::unordered_map<std::string, std::vector<std::shared_ptr<PathPlannerPath>>> PPLibTelemetry::m_hotReloadPaths =
 		std::unordered_map<std::string,

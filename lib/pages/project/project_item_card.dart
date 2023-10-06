@@ -16,6 +16,7 @@ class ProjectItemCard extends StatefulWidget {
   final VoidCallback onDeleted;
   final ValueChanged<String> onRenamed;
   final bool compact;
+  final String? warningMessage;
 
   const ProjectItemCard({
     super.key,
@@ -27,6 +28,7 @@ class ProjectItemCard extends StatefulWidget {
     required this.onDeleted,
     required this.onRenamed,
     this.compact = false,
+    this.warningMessage,
   });
 
   @override
@@ -40,150 +42,189 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
   Widget build(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Expanded(
-            flex: 4,
-            child: Container(
-              height: 38,
-              color: Colors.white.withOpacity(0.05),
-              child: Row(
-                children: [
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: RenamableTitle(
-                        title: widget.name,
-                        textStyle: const TextStyle(fontSize: 28),
-                        onRename: widget.onRenamed,
-                      ),
-                    ),
-                  ),
-                  FittedBox(
-                    child: PopupMenuButton<String>(
-                      tooltip: '',
-                      onSelected: (value) {
-                        if (value == 'duplicate') {
-                          widget.onDuplicated();
-                        } else if (value == 'delete') {
-                          _showDeleteDialog();
-                        }
-                      },
-                      itemBuilder: (_) {
-                        return const [
-                          PopupMenuItem(
-                            value: 'duplicate',
-                            child: Row(
-                              children: [
-                                Icon(Icons.copy),
-                                SizedBox(width: 12),
-                                Text('Duplicate'),
-                              ],
-                            ),
+    return Stack(
+      children: [
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              Expanded(
+                flex: 4,
+                child: Container(
+                  height: 38,
+                  color: Colors.white.withOpacity(0.05),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: RenamableTitle(
+                            title: widget.name,
+                            textStyle: const TextStyle(fontSize: 28),
+                            onRename: widget.onRenamed,
                           ),
-                          PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(Icons.delete_forever),
-                                SizedBox(width: 12),
-                                Text('Delete'),
-                              ],
-                            ),
-                          ),
-                        ];
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          ConditionalWidget(
-            condition: widget.compact,
-            trueChild: Expanded(
-              flex: 5,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: FittedBox(
-                    child: ElevatedButton.icon(
-                      label: const Text('Edit'),
-                      icon: const Icon(Icons.edit),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 4.0,
+                        ),
                       ),
-                      onPressed: () {},
-                    ),
+                      FittedBox(
+                        child: PopupMenuButton<String>(
+                          tooltip: '',
+                          onSelected: (value) {
+                            if (value == 'duplicate') {
+                              widget.onDuplicated();
+                            } else if (value == 'delete') {
+                              _showDeleteDialog();
+                            }
+                          },
+                          itemBuilder: (_) {
+                            return const [
+                              PopupMenuItem(
+                                value: 'duplicate',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.copy),
+                                    SizedBox(width: 12),
+                                    Text('Duplicate'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete_forever),
+                                    SizedBox(width: 12),
+                                    Text('Delete'),
+                                  ],
+                                ),
+                              ),
+                            ];
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-            falseChild: Expanded(
-              flex: 16,
-              child: MouseRegion(
-                cursor: SystemMouseCursors.click,
-                onEnter: (event) => setState(() {
-                  _hovering = true;
-                }),
-                onExit: (event) => setState(() {
-                  _hovering = false;
-                }),
-                child: GestureDetector(
-                  onTap: widget.onOpened,
-                  child: Container(
-                    clipBehavior: Clip.hardEdge,
-                    decoration: const BoxDecoration(),
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Stack(
-                          children: [
-                            MiniPathsPreview(
-                              paths: widget.paths,
-                              fieldImage: widget.fieldImage,
-                            ),
-                            Positioned.fill(
-                              child: AnimatedOpacity(
-                                opacity: _hovering ? 1.0 : 0.0,
-                                curve: Curves.easeInOut,
-                                duration: const Duration(milliseconds: 200),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                      sigmaX: 5.0, sigmaY: 5.0),
-                                  child: Container(),
+              ConditionalWidget(
+                condition: widget.compact,
+                trueChild: Expanded(
+                  flex: 5,
+                  child: InkWell(
+                    onTap: widget.onOpened,
+                    hoverColor: Colors.white.withOpacity(0.05),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.edit,
+                          size: 18,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Edit',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                falseChild: Expanded(
+                  flex: 16,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    onEnter: (event) => setState(() {
+                      _hovering = true;
+                    }),
+                    onExit: (event) => setState(() {
+                      _hovering = false;
+                    }),
+                    child: GestureDetector(
+                      onTap: widget.onOpened,
+                      child: Container(
+                        clipBehavior: Clip.hardEdge,
+                        decoration: const BoxDecoration(),
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Stack(
+                              children: [
+                                MiniPathsPreview(
+                                  paths: widget.paths,
+                                  fieldImage: widget.fieldImage,
                                 ),
-                              ),
-                            ),
-                            Positioned.fill(
-                              child: Center(
-                                child: AnimatedScale(
-                                  scale: _hovering ? 1.0 : 0.0,
-                                  curve: Curves.easeInOut,
-                                  duration: const Duration(milliseconds: 200),
-                                  child: Icon(
-                                    Icons.edit,
-                                    color: colorScheme.onSurface,
-                                    size: 64,
+                                Positioned.fill(
+                                  child: AnimatedOpacity(
+                                    opacity: _hovering ? 1.0 : 0.0,
+                                    curve: Curves.easeInOut,
+                                    duration: const Duration(milliseconds: 200),
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(
+                                          sigmaX: 5.0, sigmaY: 5.0),
+                                      child: Container(),
+                                    ),
                                   ),
                                 ),
-                              ),
+                                Positioned.fill(
+                                  child: Center(
+                                    child: AnimatedScale(
+                                      scale: _hovering ? 1.0 : 0.0,
+                                      curve: Curves.easeInOut,
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      child: Icon(
+                                        Icons.edit,
+                                        color: colorScheme.onSurface,
+                                        size: 64,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
+            ],
+          ),
+        ),
+        if (widget.warningMessage != null)
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: widget.compact
+                  ? const EdgeInsets.all(8.0)
+                  : const EdgeInsets.all(12.0),
+              child: Tooltip(
+                message: widget.warningMessage,
+                child: FittedBox(
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    size: widget.compact ? 32 : 48,
+                    color: Colors.yellow,
+                    shadows: widget.compact
+                        ? null
+                        : const [
+                            Shadow(
+                              offset: Offset(2, 2),
+                              blurRadius: 4,
+                            )
+                          ],
+                  ),
+                ),
+              ),
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -194,7 +235,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
         return AlertDialog(
           title: const Text('Delete File'),
           content: Text(
-              'Are you sure you want to delete the file: ${widget.name}? This cannot be undone.'),
+              'Are you sure you want to delete the file: ${widget.name}? This cannot be undone.\n\nIf this is a path, any autos using it will have their reference to it removed.'),
           actions: [
             TextButton(
               onPressed: () {

@@ -2,12 +2,16 @@ package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -247,17 +251,19 @@ public class PathPlannerPath {
     if (numPoints() > 0) {
       for (int i = 0; i < allPoints.size(); i++) {
         PathPoint point = allPoints.get(i);
-        PathConstraints constraints =
-            point.constraints != null ? point.constraints : globalConstraints;
-        double curveRadius = Math.abs(getCurveRadiusAtPoint(i, allPoints));
+        if (point.constraints == null) {
+          point.constraints = globalConstraints;
+        }
+        point.curveRadius = getCurveRadiusAtPoint(i, allPoints);
 
-        if (Double.isFinite(curveRadius)) {
+        if (Double.isFinite(point.curveRadius)) {
           point.maxV =
               Math.min(
-                  Math.sqrt(constraints.getMaxAccelerationMpsSq() * curveRadius),
-                  constraints.getMaxVelocityMps());
+                  Math.sqrt(
+                      point.constraints.getMaxAccelerationMpsSq() * Math.abs(point.curveRadius)),
+                  point.constraints.getMaxVelocityMps());
         } else {
-          point.maxV = constraints.getMaxVelocityMps();
+          point.maxV = point.constraints.getMaxVelocityMps();
         }
 
         if (i != 0) {
@@ -362,6 +368,307 @@ public class PathPlannerPath {
    */
   public boolean isReversed() {
     return reversed;
+  }
+
+  /**
+   * Replan this path based on the current robot position and speeds
+   *
+   * @param startingPose New starting pose for the replanned path
+   * @param currentSpeeds Current chassis speeds of the robot
+   * @return The replanned path
+   */
+  public PathPlannerPath replan(Pose2d startingPose, ChassisSpeeds currentSpeeds) {
+    ChassisSpeeds currentFieldRelativeSpeeds =
+        ChassisSpeeds.fromFieldRelativeSpeeds(
+            currentSpeeds, startingPose.getRotation().unaryMinus());
+
+    Translation2d robotNextControl = null;
+    double linearVel =
+        Math.hypot(
+            currentFieldRelativeSpeeds.vxMetersPerSecond,
+            currentFieldRelativeSpeeds.vyMetersPerSecond);
+    if (linearVel > 0.1) {
+      double stoppingDistance =
+          Math.pow(linearVel, 2) / (2 * globalConstraints.getMaxAccelerationMpsSq());
+
+      Rotation2d heading =
+          new Rotation2d(
+              currentFieldRelativeSpeeds.vxMetersPerSecond,
+              currentFieldRelativeSpeeds.vyMetersPerSecond);
+      robotNextControl =
+          startingPose.getTranslation().plus(new Translation2d(stoppingDistance, heading));
+    }
+
+    int closestPointIdx = 0;
+    Translation2d comparePoint =
+        (robotNextControl != null) ? robotNextControl : startingPose.getTranslation();
+    double closestDist = positionDelta(comparePoint, getPoint(closestPointIdx).position);
+
+    for (int i = 1; i < numPoints(); i++) {
+      double d = positionDelta(comparePoint, getPoint(i).position);
+
+      if (d < closestDist) {
+        closestPointIdx = i;
+        closestDist = d;
+      }
+    }
+
+    if (closestPointIdx == numPoints() - 1) {
+      Rotation2d heading = getPoint(numPoints() - 1).position.minus(comparePoint).getAngle();
+
+      if (robotNextControl == null) {
+        robotNextControl =
+            startingPose.getTranslation().plus(new Translation2d(closestDist / 3.0, heading));
+      }
+
+      Rotation2d endPrevControlHeading =
+          getPoint(numPoints() - 1).position.minus(robotNextControl).getAngle();
+
+      Translation2d endPrevControl =
+          getPoint(numPoints() - 1)
+              .position
+              .minus(new Translation2d(closestDist / 3.0, endPrevControlHeading));
+
+      // Throw out rotation targets, event markers, and constraint zones since we are skipping all
+      // of the path
+      return new PathPlannerPath(
+          List.of(
+              startingPose.getTranslation(),
+              robotNextControl,
+              endPrevControl,
+              getPoint(numPoints() - 1).position),
+          Collections.emptyList(),
+          Collections.emptyList(),
+          Collections.emptyList(),
+          globalConstraints,
+          goalEndState,
+          reversed);
+    } else if ((closestPointIdx == 0 && robotNextControl == null)
+        || (Math.abs(closestDist - startingPose.getTranslation().getDistance(getPoint(0).position))
+                <= 0.25
+            && linearVel < 0.1)) {
+      double distToStart = startingPose.getTranslation().getDistance(getPoint(0).position);
+
+      Rotation2d heading = getPoint(0).position.minus(startingPose.getTranslation()).getAngle();
+      robotNextControl =
+          startingPose.getTranslation().plus(new Translation2d(distToStart / 3.0, heading));
+
+      Rotation2d joinHeading = bezierPoints.get(0).minus(bezierPoints.get(1)).getAngle();
+      Translation2d joinPrevControl =
+          getPoint(0).position.plus(new Translation2d(distToStart / 2.0, joinHeading));
+
+      List<Translation2d> replannedBezier = new ArrayList<>();
+      replannedBezier.addAll(
+          List.of(startingPose.getTranslation(), robotNextControl, joinPrevControl));
+      replannedBezier.addAll(bezierPoints);
+
+      // keep all rotations, markers, and zones and increment waypoint pos by 1
+      return new PathPlannerPath(
+          replannedBezier,
+          rotationTargets.stream()
+              .map((target) -> new RotationTarget(target.getPosition() + 1, target.getTarget()))
+              .collect(Collectors.toList()),
+          constraintZones.stream()
+              .map(
+                  (zone) ->
+                      new ConstraintsZone(
+                          zone.getMinWaypointPos() + 1,
+                          zone.getMaxWaypointPos() + 1,
+                          zone.getConstraints()))
+              .collect(Collectors.toList()),
+          eventMarkers.stream()
+              .map(
+                  (marker) ->
+                      new EventMarker(
+                          marker.getWaypointRelativePos() + 1,
+                          marker.getCommand(),
+                          marker.getMinimumTriggerDistance()))
+              .collect(Collectors.toList()),
+          globalConstraints,
+          goalEndState,
+          reversed);
+    }
+
+    int joinAnchorIdx = numPoints() - 1;
+    for (int i = closestPointIdx; i < numPoints(); i++) {
+      if (getPoint(i).distanceAlongPath
+          >= getPoint(closestPointIdx).distanceAlongPath + closestDist) {
+        joinAnchorIdx = i;
+        break;
+      }
+    }
+
+    Translation2d joinPrevControl = getPoint(closestPointIdx).position;
+    Translation2d joinAnchor = getPoint(joinAnchorIdx).position;
+
+    if (robotNextControl == null) {
+      double robotToJoinDelta = startingPose.getTranslation().getDistance(joinAnchor);
+      Rotation2d heading = joinPrevControl.minus(startingPose.getTranslation()).getAngle();
+      robotNextControl =
+          startingPose.getTranslation().plus(new Translation2d(robotToJoinDelta / 3.0, heading));
+    }
+
+    if (joinAnchorIdx == numPoints() - 1) {
+      // Throw out rotation targets, event markers, and constraint zones since we are skipping all
+      // of the path
+      return new PathPlannerPath(
+          List.of(startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor),
+          Collections.emptyList(),
+          Collections.emptyList(),
+          Collections.emptyList(),
+          globalConstraints,
+          goalEndState,
+          reversed);
+    }
+
+    int nextWaypointIdx = (int) Math.ceil((joinAnchorIdx + 1) * PathSegment.RESOLUTION);
+    int bezierPointIdx = nextWaypointIdx * 3;
+    double waypointDelta = joinAnchor.getDistance(bezierPoints.get(bezierPointIdx));
+
+    Rotation2d joinHeading = joinAnchor.minus(joinPrevControl).getAngle();
+    Translation2d joinNextControl =
+        joinAnchor.plus(new Translation2d(waypointDelta / 3.0, joinHeading));
+
+    Rotation2d nextWaypointHeading;
+    if (bezierPointIdx == bezierPoints.size() - 1) {
+      nextWaypointHeading =
+          bezierPoints.get(bezierPointIdx - 1).minus(bezierPoints.get(bezierPointIdx)).getAngle();
+    } else {
+      nextWaypointHeading =
+          bezierPoints.get(bezierPointIdx).minus(bezierPoints.get(bezierPointIdx + 1)).getAngle();
+    }
+
+    Translation2d nextWaypointPrevControl =
+        bezierPoints
+            .get(bezierPointIdx)
+            .plus(new Translation2d(Math.max(waypointDelta / 3.0, 0.15), nextWaypointHeading));
+
+    List<Translation2d> replannedBezier = new ArrayList<>();
+    replannedBezier.addAll(
+        List.of(
+            startingPose.getTranslation(),
+            robotNextControl,
+            joinPrevControl,
+            joinAnchor,
+            joinNextControl,
+            nextWaypointPrevControl));
+    replannedBezier.addAll(bezierPoints.subList(bezierPointIdx, bezierPoints.size()));
+
+    double segment1Length = 0;
+    Translation2d lastSegment1Pos = startingPose.getTranslation();
+    double segment2Length = 0;
+    Translation2d lastSegment2Pos = joinAnchor;
+
+    for (double t = PathSegment.RESOLUTION; t < 1.0; t += PathSegment.RESOLUTION) {
+      Translation2d p1 =
+          GeometryUtil.cubicLerp(
+              startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor, t);
+      Translation2d p2 =
+          GeometryUtil.cubicLerp(
+              joinAnchor,
+              joinNextControl,
+              nextWaypointPrevControl,
+              bezierPoints.get(bezierPointIdx),
+              t);
+
+      segment1Length += lastSegment1Pos.getDistance(p1);
+      segment2Length += lastSegment2Pos.getDistance(p2);
+
+      lastSegment1Pos = p1;
+      lastSegment2Pos = p2;
+    }
+
+    double segment1Pct = segment1Length / (segment1Length + segment2Length);
+
+    List<RotationTarget> mappedTargets = new ArrayList<>();
+    List<ConstraintsZone> mappedZones = new ArrayList<>();
+    List<EventMarker> mappedMarkers = new ArrayList<>();
+
+    for (RotationTarget t : rotationTargets) {
+      if (t.getPosition() >= nextWaypointIdx) {
+        mappedTargets.add(new RotationTarget(t.getPosition() - nextWaypointIdx + 2, t.getTarget()));
+      } else if (t.getPosition() >= nextWaypointIdx - 1) {
+        double pct = t.getPosition() - (nextWaypointIdx - 1);
+        mappedTargets.add(new RotationTarget(mapPct(pct, segment1Pct), t.getTarget()));
+      }
+    }
+
+    for (ConstraintsZone z : constraintZones) {
+      double minPos = 0;
+      double maxPos = 0;
+
+      if (z.getMinWaypointPos() >= nextWaypointIdx) {
+        minPos = z.getMinWaypointPos() - nextWaypointIdx + 2;
+      } else if (z.getMinWaypointPos() >= nextWaypointIdx - 1) {
+        double pct = z.getMinWaypointPos() - (nextWaypointIdx - 1);
+        minPos = mapPct(pct, segment1Pct);
+      }
+
+      if (z.getMaxWaypointPos() >= nextWaypointIdx) {
+        maxPos = z.getMaxWaypointPos() - nextWaypointIdx + 2;
+      } else if (z.getMaxWaypointPos() >= nextWaypointIdx - 1) {
+        double pct = z.getMaxWaypointPos() - (nextWaypointIdx - 1);
+        maxPos = mapPct(pct, segment1Pct);
+      }
+
+      if (maxPos > 0) {
+        mappedZones.add(new ConstraintsZone(minPos, maxPos, z.getConstraints()));
+      }
+    }
+
+    for (EventMarker m : eventMarkers) {
+      if (m.getWaypointRelativePos() >= nextWaypointIdx) {
+        mappedMarkers.add(
+            new EventMarker(
+                m.getWaypointRelativePos() - nextWaypointIdx + 2,
+                m.getCommand(),
+                m.getMinimumTriggerDistance()));
+      } else if (m.getWaypointRelativePos() >= nextWaypointIdx - 1) {
+        double pct = m.getWaypointRelativePos() - (nextWaypointIdx - 1);
+        mappedMarkers.add(
+            new EventMarker(
+                mapPct(pct, segment1Pct), m.getCommand(), m.getMinimumTriggerDistance()));
+      }
+    }
+
+    // Throw out everything before nextWaypointIdx - 1, map everything from nextWaypointIdx -
+    // 1 to nextWaypointIdx on to the 2 joining segments (waypoint rel pos within old segment = %
+    // along distance of both new segments)
+    return new PathPlannerPath(
+        replannedBezier,
+        mappedTargets,
+        mappedZones,
+        mappedMarkers,
+        globalConstraints,
+        goalEndState,
+        reversed);
+  }
+
+  /**
+   * Map a given percentage/waypoint relative position over 2 segments
+   *
+   * @param pct The percent to map
+   * @param seg1Pct The percentage of the 2 segments made up by the first segment
+   * @return The waypoint relative position over the 2 segments
+   */
+  private static double mapPct(double pct, double seg1Pct) {
+    double mappedPct;
+    if (pct <= seg1Pct) {
+      // Map to segment 1
+      mappedPct = pct / seg1Pct;
+    } else {
+      // Map to segment 2
+      mappedPct = 1 + ((pct - seg1Pct) / (1.0 - seg1Pct));
+    }
+
+    // Round to nearest resolution step
+    return Math.round(mappedPct * (1.0 / PathSegment.RESOLUTION)) / (1.0 / PathSegment.RESOLUTION);
+  }
+
+  private static double positionDelta(Translation2d a, Translation2d b) {
+    Translation2d delta = a.minus(b);
+
+    return Math.abs(delta.getX()) + Math.abs(delta.getY());
   }
 
   @Override

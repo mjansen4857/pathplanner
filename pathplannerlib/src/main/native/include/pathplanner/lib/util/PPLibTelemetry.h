@@ -50,11 +50,10 @@ public:
 
 	static void setCurrentPath(std::shared_ptr<PathPlannerPath> path);
 
-	static inline void setLookahead(
-			std::optional<frc::Translation2d> lookahead) {
-		if (!m_compMode && lookahead) {
-			m_lookaheadPub.Set(std::span<const double>( {
-					lookahead.value().X()(), lookahead.value().Y()() }));
+	static inline void setTargetPose(frc::Pose2d targetPose) {
+		if (!m_compMode) {
+			m_targetPosePub.Set(std::span<const double>( { targetPose.X()(),
+					targetPose.Y()(), targetPose.Rotation().Degrees()() }));
 		}
 	}
 
@@ -72,7 +71,7 @@ private:
 	static nt::DoublePublisher m_inaccuracyPub;
 	static nt::DoubleArrayPublisher m_posePub;
 	static nt::DoubleArrayPublisher m_pathPub;
-	static nt::DoubleArrayPublisher m_lookaheadPub;
+	static nt::DoubleArrayPublisher m_targetPosePub;
 
 	static std::unordered_map<std::string,
 			std::vector<std::shared_ptr<PathPlannerPath>>> m_hotReloadPaths;

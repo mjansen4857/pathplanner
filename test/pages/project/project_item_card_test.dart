@@ -206,4 +206,30 @@ void main() {
 
     expect(deleted, true);
   });
+
+  testWidgets('shows warning icon', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectItemCard(
+          name: 'test',
+          fieldImage: FieldImage.defaultField,
+          paths: [
+            PathPlannerPath.defaultPath(
+              pathDir: '/paths',
+              fs: MemoryFileSystem(),
+            ),
+          ],
+          onOpened: () => opened = true,
+          onDuplicated: () => duplicated = true,
+          onDeleted: () => deleted = true,
+          onRenamed: (value) => name = value,
+          warningMessage: 'test warning',
+        ),
+      ),
+    ));
+
+    final warningIcon = find.byTooltip('test warning');
+
+    expect(warningIcon, findsOneWidget);
+  });
 }

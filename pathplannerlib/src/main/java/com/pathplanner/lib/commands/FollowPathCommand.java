@@ -1,118 +1,142 @@
 package com.pathplanner.lib.commands;
 
-import com.pathplanner.lib.controllers.PurePursuitController;
+import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.PathPlannerTrajectory;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class FollowPathCommand extends Command {
+  private final Timer timer = new Timer();
   private final PathPlannerPath path;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
-  private final PurePursuitController controller;
-  private final boolean holonomic;
+  private final PathFollowingController controller;
+  private final ReplanningConfig replanningConfig;
 
-  private boolean finished;
+  private PathPlannerTrajectory generatedTrajectory;
 
   /**
-   * Creates a new FollowPathCommand.
+   * Construct a base path following command
    *
-   * @param path the path to follow
-   * @param poseSupplier a supplier for the robot's current pose
-   * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
-   * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
-   *     differential)
-   * @param holonomic whether the robot drive train is holonomic or not
-   * @param requirements the subsystems required by this command
+   * @param path The path to follow
+   * @param poseSupplier Function that supplies the current field-relative pose of the robot
+   * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
+   * @param outputRobotRelative Function that will apply the robot-relative output speeds of this
+   *     command
+   * @param controller Path following controller that will be used to follow the path
+   * @param replanningConfig Path replanning configuration
+   * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathCommand(
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
-      Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
-      Consumer<ChassisSpeeds> output,
-      boolean holonomic,
+      Supplier<ChassisSpeeds> speedsSupplier,
+      Consumer<ChassisSpeeds> outputRobotRelative,
+      PathFollowingController controller,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
-    addRequirements(requirements);
-
     this.path = path;
     this.poseSupplier = poseSupplier;
-    this.speedsSupplier = currentRobotRelativeSpeeds;
-    this.output = output;
-    this.controller = new PurePursuitController(path, holonomic);
-    this.finished = false;
-    this.holonomic = holonomic;
+    this.speedsSupplier = speedsSupplier;
+    this.output = outputRobotRelative;
+    this.controller = controller;
+    this.replanningConfig = replanningConfig;
+
+    addRequirements(requirements);
   }
 
   @Override
   public void initialize() {
-    finished = false;
-
     Pose2d currentPose = poseSupplier.get();
+    ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-    if (holonomic) {
-      // Hack to convert robot relative to field relative speeds
-      controller.reset(
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              speedsSupplier.get(), currentPose.getRotation().unaryMinus()));
+    controller.reset(currentPose, currentSpeeds);
+
+    if (replanningConfig.enableInitialReplanning
+        && (currentPose.getTranslation().getDistance(path.getPoint(0).position) >= 0.25
+            || Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond)
+                >= 0.25)) {
+      replanPath(currentPose, currentSpeeds);
     } else {
-      controller.reset(speedsSupplier.get());
+      generatedTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
+      PathPlannerLogging.logActivePath(path);
+      PPLibTelemetry.setCurrentPath(path);
     }
 
-    PathPlannerLogging.logActivePath(path);
-    PPLibTelemetry.setCurrentPath(path);
+    timer.reset();
+    timer.start();
   }
 
   @Override
   public void execute() {
-    Pose2d currentPose = poseSupplier.get();
-    PathPlannerLogging.logCurrentPose(currentPose);
+    double currentTime = timer.get();
+    PathPlannerTrajectory.State targetState = generatedTrajectory.sample(currentTime);
 
+    Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
-    if (holonomic) {
-      // Hack to convert robot relative to field relative speeds
-      currentSpeeds =
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              currentSpeeds, currentPose.getRotation().unaryMinus());
+
+    if (replanningConfig.enableDynamicReplanning) {
+      double previousError = Math.abs(controller.getPositionalError());
+      double currentError = currentPose.getTranslation().getDistance(targetState.positionMeters);
+
+      if (currentError >= replanningConfig.dynamicReplanningTotalErrorThreshold
+          || currentError - previousError
+              >= replanningConfig.dynamicReplanningErrorSpikeThreshold) {
+        replanPath(currentPose, currentSpeeds);
+        timer.reset();
+        targetState = generatedTrajectory.sample(0);
+      }
     }
 
-    ChassisSpeeds targetSpeeds = controller.calculate(currentPose, currentSpeeds);
+    ChassisSpeeds targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
 
-    PathPlannerLogging.logLookahead(controller.getLastLookahead());
-    output.accept(targetSpeeds);
+    double currentVel =
+        Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
 
-    double actualVel = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-    double commandedVel =
-        Math.hypot(targetSpeeds.vxMetersPerSecond, targetSpeeds.vyMetersPerSecond);
-
-    PPLibTelemetry.setVelocities(
-        actualVel,
-        commandedVel,
-        Units.radiansToDegrees(currentSpeeds.omegaRadiansPerSecond),
-        Units.radiansToDegrees(targetSpeeds.omegaRadiansPerSecond));
-    PPLibTelemetry.setPathInaccuracy(controller.getLastInaccuracy());
     PPLibTelemetry.setCurrentPose(currentPose);
-    PPLibTelemetry.setLookahead(controller.getLastLookahead());
+    PPLibTelemetry.setTargetPose(targetState.getTargetHolonomicPose());
+    PathPlannerLogging.logCurrentPose(currentPose);
+    PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
+    PPLibTelemetry.setVelocities(
+        currentVel,
+        targetState.velocityMps,
+        currentSpeeds.omegaRadiansPerSecond,
+        targetSpeeds.omegaRadiansPerSecond);
+    PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
 
-    finished = controller.isAtGoal(currentPose, currentSpeeds);
+    output.accept(targetSpeeds);
   }
 
   @Override
   public boolean isFinished() {
-    return finished;
+    return timer.hasElapsed(generatedTrajectory.getTotalTimeSeconds());
   }
 
   @Override
   public void end(boolean interrupted) {
-    if (interrupted || path.getGoalEndState().getVelocity() == 0) {
+    timer.stop();
+
+    // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
+    // the command to smoothly transition into some auto-alignment routine
+    if (!interrupted && path.getGoalEndState().getVelocity() < 0.1) {
       output.accept(new ChassisSpeeds());
     }
+  }
+
+  private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
+    PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
+    generatedTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
+    PathPlannerLogging.logActivePath(replanned);
+    PPLibTelemetry.setCurrentPath(replanned);
   }
 }

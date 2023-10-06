@@ -10,25 +10,28 @@
 Download from one of the above app stores to receive auto-updates. Manual installs can be found [here](https://github.com/mjansen4857/pathplanner/releases).
 
 ## About
+![PathPlanner](https://github.com/mjansen4857/pathplanner/assets/9343077/41e73558-1e0e-4d08-a4b1-18b3d065462c)
 
-![PathPlanner](https://user-images.githubusercontent.com/9343077/211618068-8b4b0edb-d5b2-4247-94ee-119742d4507a.png)
 PathPlanner is a motion profile generator for FRC robots created by team 3015. The main features of PathPlanner include:
 * Each path is made with Bézier curves, allowing fine tuning of the exact path shape.
 * Holonomic mode supports decoupling the robot's rotation from its direction of travel.
 * Real-time path preview
 * Allows placing "event markers" along the path which can be used to trigger other code while path following.
-* Split a path into a "path group" to follow each part of a path seperately.
-* Auto path saving and file management
+* Build modular autonomous routines using other paths.
+* Automatic saving and file management
 * Robot-side vendor library for path generation and custom path following commands/controllers
-* Full autonomous command generation with PathPlannerLib AutoBuilder
+* Full autonomous command generation with PathPlannerLib auto builder
+* Real time path following telemetry
+* Hot reload (paths and autos can be updated and regenerated on the robot without redeploying code)
+* Automatic pathfinding in PathPlannerLib with AD*
 
 ## Usage and Documentation
-#### [Check the Wiki](https://github.com/mjansen4857/pathplanner/wiki)
+### [Check the Wiki](https://github.com/mjansen4857/pathplanner/wiki)
 
-Make sure you [install PathPlannerLib](https://github.com/mjansen4857/pathplanner/wiki/PathPlannerLib:-Installing) to generate your paths. Paths can be pre-generated as CSV or WPILib JSON files, but the vendor library is much easier to use and supports all of the features of the GUI.
+Make sure you [install PathPlannerLib](https://github.com/mjansen4857/pathplanner/wiki/PathPlannerLib:-Installing) to generate your paths.
 
 ## How to build manually:
-* [Install Flutter](https://flutter.dev/docs/get-started/install) (this project currently uses v3.13.0)
+* [Install Flutter](https://flutter.dev/docs/get-started/install) (this project currently uses v3.13.6)
 * Open the project in a terminal and run the following command: `flutter build <PLATFORM>`
    * Valid platforms are:
       * windows

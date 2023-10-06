@@ -7,6 +7,7 @@ import 'package:file/memory.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -116,6 +117,103 @@ void main() {
 
     expect(
         listEquals(auto.getAllPathNames(), ['path1', 'path2', 'path3']), true);
+  });
+
+  test('hasEmptyPathCommands', () {
+    var fs = MemoryFileSystem();
+
+    PathPlannerAuto auto1 = PathPlannerAuto(
+        name: 'test',
+        autoDir: '/autos',
+        fs: fs,
+        folder: null,
+        startingPose: null,
+        sequence: SequentialCommandGroup(
+          commands: [
+            PathCommand(pathName: 'path1'),
+            SequentialCommandGroup(
+              commands: [
+                PathCommand(pathName: 'path2'),
+              ],
+            ),
+            PathCommand(pathName: 'path3'),
+          ],
+        ));
+
+    expect(auto1.hasEmptyPathCommands(), false);
+
+    PathPlannerAuto auto2 = PathPlannerAuto(
+        name: 'test',
+        autoDir: '/autos',
+        fs: fs,
+        folder: null,
+        startingPose: null,
+        sequence: SequentialCommandGroup(
+          commands: [
+            PathCommand(pathName: 'path1'),
+            SequentialCommandGroup(
+              commands: [
+                PathCommand(),
+              ],
+            ),
+            PathCommand(pathName: 'path3'),
+          ],
+        ));
+
+    expect(auto2.hasEmptyPathCommands(), true);
+  });
+
+  test('handleMissingPaths', () {
+    var fs = MemoryFileSystem();
+
+    PathPlannerAuto auto = PathPlannerAuto(
+        name: 'test',
+        autoDir: '/autos',
+        fs: fs,
+        folder: null,
+        startingPose: null,
+        sequence: SequentialCommandGroup(
+          commands: [
+            PathCommand(pathName: 'path1'),
+            SequentialCommandGroup(
+              commands: [
+                PathCommand(pathName: 'path2'),
+              ],
+            ),
+            PathCommand(pathName: 'path3'),
+          ],
+        ));
+
+    auto.handleMissingPaths(['path1', 'path3']);
+
+    List<String> pathNames = auto.getAllPathNames();
+
+    expect(pathNames.length, 2);
+    expect(pathNames.contains('path1'), true);
+    expect(pathNames.contains('path2'), false);
+    expect(pathNames.contains('path3'), true);
+  });
+
+  test('hasEmptyNamedCommand', () {
+    var fs = MemoryFileSystem();
+
+    PathPlannerAuto auto = PathPlannerAuto(
+        name: 'test',
+        autoDir: '/autos',
+        fs: fs,
+        folder: null,
+        startingPose: null,
+        sequence: SequentialCommandGroup(
+          commands: [
+            SequentialCommandGroup(
+              commands: [
+                NamedCommand(),
+              ],
+            ),
+          ],
+        ));
+
+    expect(auto.hasEmptyNamedCommand(), true);
   });
 
   test('updatePathName', () {

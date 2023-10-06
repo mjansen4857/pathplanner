@@ -18,7 +18,6 @@ class PrefsKeys {
   static const String hotReloadEnabled = 'hotReloadEnabled';
   static const String pathFolders = 'pathFolders';
   static const String autoFolders = 'autoFolders';
-  static const String displaySimPath = 'displaySimPath';
   static const String snapToGuidelines = 'snapToGuidelines';
 }
 
@@ -31,8 +30,8 @@ class Defaults {
   static const double editorTreeWeight = 0.5;
   static const String pplibClientHost = 'localhost';
   static const bool treeOnRight = true;
-  static const String pathSortOption = 'nameAsc';
-  static const String autoSortOption = 'nameAsc';
+  static const String pathSortOption = 'recent';
+  static const String autoSortOption = 'recent';
   static const bool pathsCompactView = false;
   static const bool autosCompactView = false;
   static const bool hotReloadEnabled = false;
@@ -40,6 +39,5 @@ class Defaults {
       []; // Can't be const or user wont be able to add new folders
   static List<String> autoFolders =
       []; // Can't be const or user wont be able to add new folders
-  static const bool displaySimPath = false;
   static const bool snapToGuidelines = true;
 }

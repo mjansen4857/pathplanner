@@ -17,6 +17,8 @@ import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/util/geometry_util.dart';
 
+const double pathResolution = 0.025;
+
 class PathPlannerPath {
   String name;
   List<Waypoint> waypoints;
@@ -39,6 +41,7 @@ class PathPlannerPath {
   bool rotationTargetsExpanded = false;
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
+  DateTime lastModified = DateTime.now().toUtc();
 
   PathPlannerPath.defaultPath({
     required this.pathDir,
@@ -126,6 +129,7 @@ class PathPlannerPath {
       File pathFile = fs.file(join(pathDir, '$name.path'));
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       pathFile.writeAsString(encoder.convert(this));
+      lastModified = DateTime.now().toUtc();
       Log.debug(
           'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
     } catch (ex, stack) {
@@ -140,13 +144,18 @@ class PathPlannerPath {
     List<FileSystemEntity> files = fs.directory(pathsDir).listSync();
     for (FileSystemEntity e in files) {
       if (e.path.endsWith('.path')) {
-        String jsonStr = await fs.file(e.path).readAsString();
+        final file = fs.file(e.path);
+        String jsonStr = await file.readAsString();
         try {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String pathName = basenameWithoutExtension(e.path);
 
           if (json['version'] == 1.0) {
-            paths.add(PathPlannerPath.fromJsonV1(json, pathName, pathsDir, fs));
+            PathPlannerPath path =
+                PathPlannerPath.fromJsonV1(json, pathName, pathsDir, fs);
+            path.lastModified = (await file.lastModified()).toUtc();
+
+            paths.add(path);
           } else {
             Log.error('Unknown path version');
           }
@@ -173,6 +182,7 @@ class PathPlannerPath {
       pathFile.rename(join(pathDir, '$name.path'));
     }
     this.name = name;
+    lastModified = DateTime.now().toUtc();
   }
 
   Map<String, dynamic> toJson() {
@@ -283,6 +293,30 @@ class PathPlannerPath {
     }
   }
 
+  bool hasEmptyNamedCommand() {
+    for (EventMarker m in eventMarkers) {
+      bool hasEmpty = _hasEmptyNamedCommand(m.command.commands);
+      if (hasEmpty) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _hasEmptyNamedCommand(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand && cmd.name == null) {
+        return true;
+      } else if (cmd is CommandGroup) {
+        bool hasEmpty = _hasEmptyNamedCommand(cmd.commands);
+        if (hasEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   void generatePathPoints() {
     // Add all command names in this path to the available names
     for (EventMarker m in eventMarkers) {
@@ -296,7 +330,7 @@ class PathPlannerPath {
         .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
 
     for (int i = 0; i < waypoints.length - 1; i++) {
-      for (double t = 0; t < 1.0; t += 0.05) {
+      for (double t = 0; t < 1.0; t += pathResolution) {
         num actualWaypointPos = i + t;
         num? rotation;
 
@@ -304,7 +338,8 @@ class PathPlannerPath {
           if ((unaddedTargets[0].waypointRelativePos - actualWaypointPos)
                   .abs() <=
               (unaddedTargets[0].waypointRelativePos -
-                      min(actualWaypointPos + 0.05, waypoints.length - 1))
+                      min(actualWaypointPos + pathResolution,
+                          waypoints.length - 1))
                   .abs()) {
             rotation = unaddedTargets.removeAt(0).rotationDegrees;
           }
@@ -357,7 +392,7 @@ class PathPlannerPath {
 
       if (curveRadius.isFinite) {
         pathPoints[i].maxV = min(
-            sqrt(pathPoints[i].constraints.maxAcceleration * curveRadius),
+            sqrt(pathPoints[i].constraints.maxAcceleration * curveRadius.abs()),
             pathPoints[i].constraints.maxVelocity);
       } else {
         pathPoints[i].maxV = pathPoints[i].constraints.maxVelocity;

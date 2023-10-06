@@ -1,16 +1,16 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
-import 'package:pathplanner/services/simulator/path_simulator.dart';
+import 'package:pathplanner/services/simulator/chassis_speeds.dart';
+import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
@@ -27,6 +27,7 @@ class SplitPathEditor extends StatefulWidget {
   final ChangeStack undoStack;
   final PPLibTelemetry? telemetry;
   final bool hotReload;
+  final bool simulate;
 
   const SplitPathEditor({
     required this.prefs,
@@ -35,6 +36,7 @@ class SplitPathEditor extends StatefulWidget {
     required this.undoStack,
     this.telemetry,
     this.hotReload = false,
+    this.simulate = false,
     super.key,
   });
 
@@ -60,7 +62,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   Waypoint? _dragOldValue;
   int? _draggedRotationIdx;
   num? _dragRotationOldValue;
-  SimulatedPath? _simPath;
+  Trajectory? _simTraj;
   late bool _holonomicMode;
 
   late Size _robotSize;
@@ -91,11 +93,11 @@ class _SplitPathEditorState extends State<SplitPathEditor>
     _controller.areas = [
       Area(
         weight: _treeOnRight ? (1.0 - treeWeight) : treeWeight,
-        minimalWeight: 0.25,
+        minimalWeight: 0.3,
       ),
       Area(
         weight: _treeOnRight ? treeWeight : (1.0 - treeWeight),
-        minimalWeight: 0.25,
+        minimalWeight: 0.3,
       ),
     ];
 
@@ -232,9 +234,17 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                               PathPainter.scale),
                       max(8, details.localPosition.dy)));
 
-                  if ((widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
-                          Defaults.snapToGuidelines) &&
-                      _draggedPoint!.isAnchorDragging) {
+                  bool snapSetting =
+                      widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
+                          Defaults.snapToGuidelines;
+                  bool ctrlHeld = RawKeyboard.instance.keysPressed
+                          .contains(LogicalKeyboardKey.controlLeft) ||
+                      RawKeyboard.instance.keysPressed
+                          .contains(LogicalKeyboardKey.controlRight);
+
+                  bool shouldSnap = snapSetting ^ ctrlHeld;
+
+                  if (shouldSnap && _draggedPoint!.isAnchorDragging) {
                     num? closestX;
                     num? closestY;
 
@@ -254,10 +264,10 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       }
                     }
 
-                    if (closestX != null && (targetX - closestX).abs() < 0.25) {
+                    if (closestX != null && (targetX - closestX).abs() < 0.1) {
                       targetX = closestX;
                     }
-                    if (closestY != null && (targetY - closestY).abs() < 0.25) {
+                    if (closestY != null && (targetY - closestY).abs() < 0.1) {
                       targetY = closestY;
                     }
                   }
@@ -392,7 +402,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           selectedRotTarget: _selectedRotTarget,
                           hoveredMarker: _hoveredMarker,
                           selectedMarker: _selectedMarker,
-                          simulatedPath: _simPath,
+                          simulatedPath: _simTraj,
                           animation: _previewController.view,
                           previewColor: colorScheme.primary,
                           prefs: widget.prefs,
@@ -443,7 +453,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
-                    pathRuntime: _simPath?.runtime,
+                    pathRuntime: _simTraj?.states.last.time,
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
                     initiallySelectedRotTarget: _selectedRotTarget,
@@ -604,20 +614,18 @@ class _SplitPathEditorState extends State<SplitPathEditor>
     );
   }
 
+  // marked as async so it can be called from initState
   void _simulatePath() async {
-    Stopwatch s = Stopwatch()..start();
-    SimulatedPath p = await compute(
-        _holonomicMode ? simulatePathHolonomic : simulatePathDifferential,
-        widget.path);
-    Log.debug('Simulated path in ${s.elapsedMilliseconds}ms');
-    setState(() {
-      _simPath = p;
-    });
-    _previewController.stop();
-    _previewController.reset();
-    _previewController.duration =
-        Duration(milliseconds: (p.runtime * 1000).toInt());
-    _previewController.repeat();
+    if (widget.simulate) {
+      setState(() {
+        _simTraj = Trajectory.simulate(widget.path, ChassisSpeeds());
+      });
+      _previewController.stop();
+      _previewController.reset();
+      _previewController.duration =
+          Duration(milliseconds: (_simTraj!.states.last.time * 1000).toInt());
+      _previewController.repeat();
+    }
   }
 
   num _adjustDeletedWaypointRelativePos(num pos, int deletedWaypointIdx) {

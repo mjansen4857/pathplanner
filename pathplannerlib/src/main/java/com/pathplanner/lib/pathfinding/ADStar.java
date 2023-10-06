@@ -1,7 +1,5 @@
 package com.pathplanner.lib.pathfinding;
 
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.PathPoint;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -10,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -33,32 +30,36 @@ public class ADStar {
   private static final HashMap<GridPosition, Double> rhs = new HashMap<>();
   private static final HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
   private static final HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
-  private static final List<GridPosition> closed = new ArrayList<>();
-  private static final List<GridPosition> staticObstacles = new ArrayList<>();
-  private static final List<GridPosition> dynamicObstacles = new ArrayList<>();
-  private static final List<GridPosition> obstacles = new ArrayList<>();
+  private static final Set<GridPosition> closed = new HashSet<>();
+  private static final Set<GridPosition> staticObstacles = new HashSet<>();
+  private static final Set<GridPosition> dynamicObstacles = new HashSet<>();
+  private static final Set<GridPosition> obstacles = new HashSet<>();
 
   private static volatile GridPosition sStart;
+  private static volatile Translation2d realStartPos;
   private static volatile GridPosition sGoal;
+  private static volatile Translation2d realGoalPos;
 
-  private static volatile double eps;
+  private static double eps;
 
   private static final Thread planningThread = new Thread(ADStar::runThread);
   private static final Object lock = new Object();
-  private static final AtomicBoolean doMinor = new AtomicBoolean(true);
-  private static final AtomicBoolean doMajor = new AtomicBoolean(true);
-  private static final AtomicBoolean needsReset = new AtomicBoolean(true);
-  private static final AtomicBoolean needsExtract = new AtomicBoolean(false);
-  private static final AtomicBoolean running = new AtomicBoolean(false);
-  private static final AtomicBoolean newPathAvailable = new AtomicBoolean(false);
+  private static volatile boolean doMinor = true;
+  private static volatile boolean doMajor = true;
+  private static volatile boolean needsReset = true;
+  private static volatile boolean needsExtract = false;
+  private static volatile boolean running = false;
+  private static volatile boolean newPathAvailable = false;
 
-  private static volatile List<PathPoint> currentPath = new ArrayList<>();
+  private static volatile List<Translation2d> currentPath = new ArrayList<>();
 
   public static void ensureInitialized() {
-    if (!running.get()) {
-      running.set(true);
+    if (!running) {
+      running = true;
       sStart = new GridPosition(0, 0);
+      realStartPos = new Translation2d(0, 0);
       sGoal = new GridPosition(0, 0);
+      realGoalPos = new Translation2d(0, 0);
 
       staticObstacles.clear();
       dynamicObstacles.clear();
@@ -103,11 +104,11 @@ public class ADStar {
       obstacles.addAll(staticObstacles);
       obstacles.addAll(dynamicObstacles);
 
-      needsReset.set(true);
-      doMajor.set(true);
-      doMinor.set(true);
+      needsReset = true;
+      doMajor = true;
+      doMinor = true;
 
-      newPathAvailable.set(false);
+      newPathAvailable = false;
 
       planningThread.setDaemon(true);
       planningThread.setName("ADStar Planning Thread");
@@ -116,15 +117,15 @@ public class ADStar {
   }
 
   private static void runThread() {
-    while (running.get()) {
+    while (running) {
       try {
         synchronized (lock) {
-          if (needsReset.get() || doMinor.get() || doMajor.get()) {
+          if (needsReset || doMinor || doMajor) {
             doWork();
-          } else if (needsExtract.get()) {
+          } else if (needsExtract) {
             currentPath = extractPath();
-            newPathAvailable.set(true);
-            needsExtract.set(false);
+            newPathAvailable = true;
+            needsExtract = false;
           }
         }
 
@@ -142,17 +143,17 @@ public class ADStar {
   }
 
   private static void doWork() {
-    if (needsReset.get()) {
+    if (needsReset) {
       reset();
-      needsReset.set(false);
+      needsReset = false;
     }
 
-    if (doMinor.get()) {
+    if (doMinor) {
       computeOrImprovePath();
       currentPath = extractPath();
-      newPathAvailable.set(true);
-      doMinor.set(false);
-    } else if (doMajor.get()) {
+      newPathAvailable = true;
+      doMinor = false;
+    } else if (doMajor) {
       if (eps > 1.0) {
         eps -= 0.5;
         open.putAll(incons);
@@ -161,52 +162,52 @@ public class ADStar {
         closed.clear();
         computeOrImprovePath();
         currentPath = extractPath();
-        newPathAvailable.set(true);
-      } else {
-        doMajor.set(false);
+        newPathAvailable = true;
+      }
+
+      if (eps <= 1.0) {
+        doMajor = false;
       }
     }
   }
 
   public static boolean isNewPathAvailable() {
-    return newPathAvailable.get();
+    return newPathAvailable;
   }
 
-  public static List<PathPoint> getCurrentPath() {
-    if (!running.get()) {
+  public static List<Translation2d> getCurrentPath() {
+    if (!running) {
       DriverStation.reportWarning("ADStar path was retrieved before it was initialized", false);
     }
 
-    newPathAvailable.set(false);
+    newPathAvailable = false;
     return currentPath;
   }
 
   public static void setStartPos(Translation2d start) {
-    GridPosition startPos = findClosestNonObstacle(getGridPos(start));
+    synchronized (lock) {
+      GridPosition startPos = findClosestNonObstacle(getGridPos(start));
 
-    if (startPos != null && !startPos.equals(sStart)) {
-      sStart = startPos;
+      if (startPos != null && !startPos.equals(sStart)) {
+        sStart = startPos;
+        realStartPos = start;
 
-      for (PathPoint p : currentPath) {
-        if (getGridPos(p.position).equals(sStart)) {
-          needsExtract.set(true);
-          return;
-        }
+        doMinor = true;
       }
-
-      doMinor.set(true);
     }
   }
 
   public static void setGoalPos(Translation2d goal) {
-    GridPosition gridPos = findClosestNonObstacle(getGridPos(goal));
+    synchronized (lock) {
+      GridPosition gridPos = findClosestNonObstacle(getGridPos(goal));
 
-    if (gridPos != null) {
-      synchronized (lock) {
+      if (gridPos != null) {
         sGoal = gridPos;
-        doMinor.set(true);
-        doMajor.set(true);
-        needsReset.set(true);
+        realGoalPos = goal;
+
+        doMinor = true;
+        doMajor = true;
+        needsReset = true;
       }
     }
   }
@@ -263,9 +264,9 @@ public class ADStar {
       obstacles.clear();
       obstacles.addAll(staticObstacles);
       obstacles.addAll(dynamicObstacles);
-      needsReset.set(true);
-      doMinor.set(true);
-      doMajor.set(true);
+      needsReset = true;
+      doMinor = true;
+      doMajor = true;
     }
 
     if (dynamicObstacles.contains(getGridPos(currentRobotPos))) {
@@ -274,9 +275,9 @@ public class ADStar {
     }
   }
 
-  private static List<PathPoint> extractPath() {
+  private static List<Translation2d> extractPath() {
     if (sGoal.equals(sStart)) {
-      return List.of(new PathPoint(gridPosToTranslation2d(sStart)));
+      return List.of(gridPosToTranslation2d(sStart));
     }
 
     List<GridPosition> path = new ArrayList<>();
@@ -305,19 +306,23 @@ public class ADStar {
       }
     }
 
-    List<GridPosition> smoothedPath = new ArrayList<>();
-    smoothedPath.add(path.get(0));
+    List<GridPosition> simplifiedPath = new ArrayList<>();
+    simplifiedPath.add(path.get(0));
     for (int i = 1; i < path.size() - 1; i++) {
-      if (!walkable(smoothedPath.get(smoothedPath.size() - 1), path.get(i + 1))) {
-        smoothedPath.add(path.get(i));
+      if (!walkable(simplifiedPath.get(simplifiedPath.size() - 1), path.get(i + 1))) {
+        simplifiedPath.add(path.get(i));
       }
     }
-    smoothedPath.add(path.get(path.size() - 1));
+    simplifiedPath.add(path.get(path.size() - 1));
 
     List<Translation2d> fieldPosPath = new ArrayList<>();
-    for (GridPosition pos : smoothedPath) {
+    for (GridPosition pos : simplifiedPath) {
       fieldPosPath.add(gridPosToTranslation2d(pos));
     }
+
+    // Replace start and end positions with their real positions
+    fieldPosPath.set(0, realStartPos);
+    fieldPosPath.set(fieldPosPath.size() - 1, realGoalPos);
 
     List<Translation2d> bezierPoints = new ArrayList<>();
     bezierPoints.add(fieldPosPath.get(0));
@@ -361,10 +366,7 @@ public class ADStar {
             .plus(fieldPosPath.get(fieldPosPath.size() - 1)));
     bezierPoints.add(fieldPosPath.get(fieldPosPath.size() - 1));
 
-    List<PathPoint> pathPoints =
-        PathPlannerPath.createPath(bezierPoints, Collections.emptyList(), Collections.emptyList());
-
-    return pathPoints;
+    return bezierPoints;
   }
 
   private static boolean walkable(GridPosition s1, GridPosition s2) {
@@ -581,7 +583,7 @@ public class ADStar {
     }
   }
 
-  private static GridPosition getGridPos(Translation2d pos) {
+  public static GridPosition getGridPos(Translation2d pos) {
     int x = (int) Math.floor(pos.getX() / NODE_SIZE);
     int y = (int) Math.floor(pos.getY() / NODE_SIZE);
 

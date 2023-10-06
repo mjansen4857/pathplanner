@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
@@ -18,6 +19,9 @@ class PathPlannerAuto {
   FileSystem fs;
   String autoDir;
 
+  // Stuff used for UI
+  DateTime lastModified = DateTime.now().toUtc();
+
   PathPlannerAuto({
     required this.name,
     required this.sequence,
@@ -25,7 +29,9 @@ class PathPlannerAuto {
     required this.fs,
     required this.folder,
     required this.startingPose,
-  });
+  }) {
+    _addNamedCommandsToSet(sequence.commands);
+  }
 
   PathPlannerAuto.defaultAuto({
     this.name = 'New Auto',
@@ -75,13 +81,18 @@ class PathPlannerAuto {
     List<FileSystemEntity> files = fs.directory(autosDir).listSync();
     for (FileSystemEntity e in files) {
       if (e.path.endsWith('.auto')) {
-        String jsonStr = await fs.file(e.path).readAsString();
+        final file = fs.file(e.path);
+        String jsonStr = await file.readAsString();
         try {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String autoName = basenameWithoutExtension(e.path);
 
           if (json['version'] == 1.0) {
-            autos.add(PathPlannerAuto.fromJsonV1(json, autoName, autosDir, fs));
+            PathPlannerAuto auto =
+                PathPlannerAuto.fromJsonV1(json, autoName, autosDir, fs);
+            auto.lastModified = (await file.lastModified()).toUtc();
+
+            autos.add(auto);
           } else {
             Log.error('Unknown auto version');
           }
@@ -100,6 +111,7 @@ class PathPlannerAuto {
       autoFile.rename(join(autoDir, '$name.auto'));
     }
     this.name = name;
+    lastModified = DateTime.now().toUtc();
   }
 
   void delete() {
@@ -115,6 +127,7 @@ class PathPlannerAuto {
       File autoFile = fs.file(join(autoDir, '$name.auto'));
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       autoFile.writeAsString(encoder.convert(this));
+      lastModified = DateTime.now().toUtc();
       Log.debug('Saved "$name.auto"');
     } catch (ex, stack) {
       Log.error('Failed to save auto', ex, stack);
@@ -137,8 +150,59 @@ class PathPlannerAuto {
     }
   }
 
+  void _addNamedCommandsToSet(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand) {
+        if (cmd.name != null) {
+          Command.named.add(cmd.name!);
+          continue;
+        }
+      }
+
+      if (cmd is CommandGroup) {
+        _addNamedCommandsToSet(cmd.commands);
+      }
+    }
+  }
+
   List<String> getAllPathNames() {
     return _getPathNamesInCommands(sequence.commands);
+  }
+
+  bool hasEmptyPathCommands() {
+    return _hasEmptyPathCommands(sequence.commands);
+  }
+
+  bool _hasEmptyPathCommands(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is PathCommand && cmd.pathName == null) {
+        return true;
+      } else if (cmd is CommandGroup) {
+        bool hasEmpty = _hasEmptyPathCommands(cmd.commands);
+        if (hasEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool hasEmptyNamedCommand() {
+    return _hasEmptyNamedCommand(sequence.commands);
+  }
+
+  bool _hasEmptyNamedCommand(List<Command> commands) {
+    for (Command cmd in commands) {
+      if (cmd is NamedCommand && cmd.name == null) {
+        return true;
+      } else if (cmd is CommandGroup) {
+        bool hasEmpty = _hasEmptyNamedCommand(cmd.commands);
+        if (hasEmpty) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   List<String> _getPathNamesInCommands(List<Command> commands) {
@@ -151,6 +215,20 @@ class PathPlannerAuto {
       }
     }
     return names;
+  }
+
+  void handleMissingPaths(List<String> pathNames) {
+    return _handleMissingPaths(sequence.commands, pathNames);
+  }
+
+  void _handleMissingPaths(List<Command> commands, List<String> pathNames) {
+    for (Command cmd in commands) {
+      if (cmd is PathCommand && !pathNames.contains(cmd.pathName)) {
+        cmd.pathName = null;
+      } else if (cmd is CommandGroup) {
+        _handleMissingPaths(cmd.commands, pathNames);
+      }
+    }
   }
 
   @override

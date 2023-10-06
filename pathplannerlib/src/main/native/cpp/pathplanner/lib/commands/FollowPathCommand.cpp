@@ -1,84 +1,93 @@
 #include "pathplanner/lib/commands/FollowPathCommand.h"
-#include "pathplanner/lib/util/PathPlannerLogging.h"
-#include "pathplanner/lib/util/PPLibTelemetry.h"
 
 using namespace pathplanner;
 
 FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds)> output, bool holonomic,
-		std::initializer_list<frc2::Subsystem*> requirements) : m_path(path), m_poseSupplier(
-		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
-		path, holonomic) {
-	AddRequirements(requirements);
-}
-
-FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
-		std::function<frc::Pose2d()> poseSupplier,
-		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds)> output, bool holonomic,
-		std::span<frc2::Subsystem*> requirements) : m_path(path), m_poseSupplier(
-		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
-		path, holonomic) {
+		std::function<void(frc::ChassisSpeeds)> output,
+		std::unique_ptr<PathFollowingController> controller,
+		ReplanningConfig replanningConfig, frc2::Requirements requirements) : m_path(
+		path), m_poseSupplier(poseSupplier), m_speedsSupplier(speedsSupplier), m_output(
+		output), m_controller(std::move(controller)), m_replanningConfig(
+		replanningConfig) {
 	AddRequirements(requirements);
 }
 
 void FollowPathCommand::Initialize() {
-	m_finished = false;
-
 	frc::Pose2d currentPose = m_poseSupplier();
+	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
 
-	if (m_holonomic) {
-		// Hack to convert robot relative to field relative speeds
-		m_controller.reset(
-				frc::ChassisSpeeds::FromFieldRelativeSpeeds(m_speedsSupplier(),
-						-currentPose.Rotation()));
+	m_controller->reset(currentPose, currentSpeeds);
+
+	if (m_replanningConfig.enableInitialReplanning
+			&& (currentPose.Translation().Distance(m_path->getPoint(0).position)
+					>= 0.25_m
+					|| units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
+							>= 0.25_mps)) {
+		replanPath(currentPose, currentSpeeds);
 	} else {
-		m_controller.reset(m_speedsSupplier());
+		m_generatedTrajectory = PathPlannerTrajectory(m_path, currentSpeeds);
+		PathPlannerLogging::logActivePath (m_path);
+		PPLibTelemetry::setCurrentPath(m_path);
 	}
 
-	PathPlannerLogging::logActivePath (m_path);
-	PPLibTelemetry::setCurrentPath(m_path);
+	m_timer.Reset();
+	m_timer.Start();
 }
 
 void FollowPathCommand::Execute() {
-	frc::Pose2d currentPose = m_poseSupplier();
-	PathPlannerLogging::logCurrentPose(currentPose);
+	units::second_t currentTime = m_timer.Get();
+	PathPlannerTrajectory::State targetState = m_generatedTrajectory.sample(
+			currentTime);
 
+	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
-	if (m_holonomic) {
-		// Hack to convert robot relative to field relative speeds
-		currentSpeeds = frc::ChassisSpeeds::FromFieldRelativeSpeeds(
-				currentSpeeds, -currentPose.Rotation());
+
+	if (m_replanningConfig.enableDynamicReplanning) {
+		units::meter_t previousError = units::math::abs(
+				m_controller->getPositionalError());
+		units::meter_t currentError = currentPose.Translation().Distance(
+				targetState.position);
+
+		if (currentError
+				>= m_replanningConfig.dynamicReplanningTotalErrorThreshold
+				|| currentError - previousError
+						>= m_replanningConfig.dynamicReplanningErrorSpikeThreshold) {
+			replanPath(currentPose, currentSpeeds);
+			m_timer.Reset();
+			targetState = m_generatedTrajectory.sample(0_s);
+		}
 	}
 
-	frc::ChassisSpeeds targetSpeeds = m_controller.calculate(currentPose,
-			currentSpeeds);
-
-	PathPlannerLogging::logLookahead(m_controller.getLastLookahead());
-	m_output(targetSpeeds);
-
-	units::meters_per_second_t actualVel = units::math::hypot(currentSpeeds.vx,
+	units::meters_per_second_t currentVel = units::math::hypot(currentSpeeds.vx,
 			currentSpeeds.vy);
-	units::meters_per_second_t commandedVel = units::math::hypot(
-			targetSpeeds.vx, targetSpeeds.vy);
 
-	PPLibTelemetry::setVelocities(actualVel, commandedVel, currentSpeeds.omega,
-			targetSpeeds.omega);
-	PPLibTelemetry::setPathInaccuracy(m_controller.getLastInaccuracy());
+	frc::ChassisSpeeds targetSpeeds =
+			m_controller->calculateRobotRelativeSpeeds(currentPose,
+					targetState);
+
 	PPLibTelemetry::setCurrentPose(currentPose);
-	PPLibTelemetry::setLookahead(m_controller.getLastLookahead());
+	PPLibTelemetry::setTargetPose(targetState.getTargetHolonomicPose());
+	PPLibTelemetry::setVelocities(currentVel, targetState.velocity,
+			currentSpeeds.omega, targetSpeeds.omega);
+	PathPlannerLogging::logCurrentPose(currentPose);
+	PathPlannerLogging::logTargetPose(targetState.getTargetHolonomicPose());
+	PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());
 
-	m_finished = m_controller.isAtGoal(currentPose, currentSpeeds);
+	m_output(targetSpeeds);
 }
 
 bool FollowPathCommand::IsFinished() {
-	return m_finished;
+	return m_timer.HasElapsed(m_generatedTrajectory.getTotalTime());
 }
 
 void FollowPathCommand::End(bool interrupted) {
-	if (interrupted || m_path->getGoalEndState().getVelocity() == 0_mps) {
-		m_output(frc::ChassisSpeeds { });
+	m_timer.Stop();
+
+	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
+	// the command to smoothly transition into some auto-alignment routine
+	if (!interrupted && m_path->getGoalEndState().getVelocity() < 0.1_mps) {
+		m_output(frc::ChassisSpeeds());
 	}
 }

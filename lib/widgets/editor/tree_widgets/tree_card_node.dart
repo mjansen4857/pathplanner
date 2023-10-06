@@ -10,6 +10,7 @@ class TreeCardNode extends StatelessWidget {
   final bool initiallyExpanded;
   final ExpansionTileController? controller;
   final ValueChanged<bool?>? onExpansionChanged;
+  final Widget? trailing;
 
   const TreeCardNode({
     super.key,
@@ -22,6 +23,7 @@ class TreeCardNode extends StatelessWidget {
     this.initiallyExpanded = false,
     this.controller,
     this.onExpansionChanged,
+    this.trailing,
   });
 
   @override
@@ -36,6 +38,7 @@ class TreeCardNode extends StatelessWidget {
           onExit: (event) => onHoverEnd?.call(),
           child: ExpansionTile(
             title: title,
+            trailing: trailing,
             controller: controller,
             maintainState: false,
             onExpansionChanged: onExpansionChanged,

@@ -3,7 +3,6 @@
 #include <functional>
 #include <vector>
 #include <frc/geometry/Pose2d.h>
-#include <frc/geometry/Translation2d.h>
 #include <memory>
 #include <optional>
 #include "pathplanner/lib/path/PathPlannerPath.h"
@@ -16,9 +15,9 @@ public:
 		m_logCurrentPose = logCurrentPose;
 	}
 
-	static inline void setLogLookaheadCallback(
-			std::function<void(frc::Translation2d)> logLookahead) {
-		m_logLookahead = logLookahead;
+	static inline void setLogTargetPoseCallback(
+			std::function<void(frc::Pose2d)> logTargetPose) {
+		m_logTargetPose = logTargetPose;
 	}
 
 	static inline void setLogActivePathCallback(
@@ -32,10 +31,9 @@ public:
 		}
 	}
 
-	static inline void logLookahead(
-			std::optional<frc::Translation2d> lookahead) {
-		if (m_logLookahead && lookahead) {
-			m_logLookahead(lookahead.value());
+	static inline void logTargetPose(frc::Pose2d targetPose) {
+		if (m_logTargetPose) {
+			m_logTargetPose(targetPose);
 		}
 	}
 
@@ -51,7 +49,7 @@ public:
 
 private:
 	static std::function<void(frc::Pose2d)> m_logCurrentPose;
-	static std::function<void(frc::Translation2d)> m_logLookahead;
+	static std::function<void(frc::Pose2d)> m_logTargetPose;
 	static std::function<void(std::vector<frc::Pose2d>&)> m_logActivePath;
 };
 }

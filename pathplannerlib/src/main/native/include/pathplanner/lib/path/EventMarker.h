@@ -25,6 +25,21 @@ public:
 	}
 
 	/**
+	 * Create a new event marker
+	 *
+	 * @param waypointRelativePos The waypoint relative position of the marker
+	 * @param command The command that should be triggered at this marker
+	 * @param minimumTriggerDistance The minimum distance the robot must be within for this marker to
+	 *     be triggered
+	 */
+	EventMarker(double waypointRelativePos,
+			std::shared_ptr<frc2::Command> command,
+			units::meter_t minimumTriggerDistance = 0.5_m) : m_pos(
+			waypointRelativePos), m_command(command), m_minTriggerDistance(
+			minimumTriggerDistance) {
+	}
+
+	/**
 	 * Create an event marker from json
 	 *
 	 * @param json json reference representing an event marker
@@ -75,6 +90,15 @@ public:
 	 */
 	constexpr void setMarkerPosition(frc::Translation2d fieldPosition) {
 		m_markerPos = fieldPosition;
+	}
+
+	/**
+	 * Get the minimum trigger distance for this marker
+	 *
+	 * @return The minimum trigger distance in meters
+	 */
+	constexpr units::meter_t getMinimumTriggerDistance() const {
+		return m_minTriggerDistance;
 	}
 
 private:

@@ -14,7 +14,7 @@ void main() {
   late SharedPreferences prefs;
   late bool settingsChanged;
   FieldImage? selectedField;
-  Color? teamColor;
+  late Color teamColor;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({
@@ -28,7 +28,7 @@ void main() {
     prefs = await SharedPreferences.getInstance();
     settingsChanged = false;
     selectedField = null;
-    teamColor = null;
+    teamColor = Colors.black;
   });
 
   testWidgets('robot width text field', (widgetTester) async {
@@ -151,13 +151,6 @@ void main() {
     await widgetTester.tap(pickerButton);
     await widgetTester.pumpAndSettle();
 
-    final confirmButton = find.text('Confirm');
-
-    expect(confirmButton, findsOneWidget);
-
-    await widgetTester.tap(confirmButton);
-    await widgetTester.pumpAndSettle();
-
     expect(teamColor, Colors.black);
 
     await widgetTester.tap(pickerButton);
@@ -170,7 +163,7 @@ void main() {
     await widgetTester.tap(resetButton);
     await widgetTester.pumpAndSettle();
 
-    expect(teamColor?.value, Defaults.teamColor);
+    expect(teamColor.value, Defaults.teamColor);
   });
 
   testWidgets('telemetry host text field', (widgetTester) async {

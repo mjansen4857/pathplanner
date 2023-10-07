@@ -522,6 +522,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     });
 
+    await _deployDir.create(recursive: true);
+
     // Assure that a navgrid file is present
     File navgridFile = fs.file(join(_deployDir.path, 'navgrid.json'));
     navgridFile.exists().then((value) async {

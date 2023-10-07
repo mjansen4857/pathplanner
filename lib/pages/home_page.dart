@@ -397,21 +397,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           Align(
-            alignment: FractionalOffset.topLeft,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                UpdateCard(
-                  currentVersion: widget.appVersion,
-                  updateChecker: widget.updateChecker,
-                ),
-                PPLibUpdateCard(
-                  projectDir: _projectDir!,
-                  fs: widget.fs,
-                  updateChecker: widget.updateChecker,
-                ),
-              ],
+            alignment: FractionalOffset.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  UpdateCard(
+                    currentVersion: widget.appVersion,
+                    updateChecker: widget.updateChecker,
+                  ),
+                  PPLibUpdateCard(
+                    projectDir: _projectDir!,
+                    fs: widget.fs,
+                    updateChecker: widget.updateChecker,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -521,6 +524,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _deployDir = fs.directory(join(projectDir, 'deploy', 'pathplanner'));
       }
     });
+
+    await _deployDir.create(recursive: true);
 
     // Assure that a navgrid file is present
     File navgridFile = fs.file(join(_deployDir.path, 'navgrid.json'));

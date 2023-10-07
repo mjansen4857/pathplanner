@@ -7,9 +7,14 @@ on:
   pull_request:
 
   workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: The full version string, i.e. 2024.0.0-alpha-1 or 2024.1.1
+        required: true
 
 env:
-  FLUTTER_VERSION: 3.13.4
+  FLUTTER_VERSION: 3.13.6
 
 jobs:
   formatting-analysis:
@@ -113,6 +118,27 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
       
+      - name: Set release version env
+        if: ${{ github.event_name == 'workflow_dispatch' && matrix.build-option != 'windows' }}
+        run: echo "VERSION_NAME=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+      
+      - name: Set dev version env
+        if: ${{ github.event_name != 'workflow_dispatch' && matrix.build-option != 'windows' }}
+        run: echo "VERSION_NAME=0.0.0-dev-${{ github.run_number }}" >> $GITHUB_ENV
+      
+      - name: Set release version env windows just has to be different
+        if: ${{ github.event_name == 'workflow_dispatch' && matrix.build-option == 'windows' }}
+        run: Add-Content -Path ${env:GITHUB_ENV} -Value "VERSION_NAME=${{ github.event.inputs.version }}"
+      
+      - name: Set dev version env windows just has to be different
+        if: ${{ github.event_name != 'workflow_dispatch' && matrix.build-option == 'windows' }}
+        run: Add-Content -Path ${env:GITHUB_ENV} -Value "VERSION_NAME=0.0.0-dev-${{ github.run_number }}"
+      
+      - name: Set pubspec version
+        run: |
+          flutter pub global activate cider
+          dart run cider version "${{ env.VERSION_NAME }}+${{ github.run_number }}"
+      
       - name: Build app
         run: flutter build ${{ matrix.build-option }}
       
@@ -132,7 +158,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.artifact-name }}
+          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}
       
       - name: Create MSIX
@@ -143,5 +169,5 @@ jobs:
         if: ${{ matrix.build-option == 'windows' }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.artifact-name }}-MSIX
+          name: ${{ matrix.artifact-name }}-MSIX-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}/pathplanner.msix

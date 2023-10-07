@@ -8,6 +8,9 @@ on:
 
   workflow_dispatch:
 
+env:
+  VERSION_NAME: 0.0.0-dev-${{ github.run_number }}
+
 jobs:
   formatting:
     name: "[PPLib] Check Formatting"
@@ -62,6 +65,7 @@ jobs:
             artifact-name: PPLib-Linux
             build-options: ""
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
+    needs: [formatting, test]
     runs-on: ubuntu-22.04
     container: ${{ matrix.container }}
     steps:
@@ -70,6 +74,14 @@ jobs:
       
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+        working-directory: ./pathplannerlib
+      
+      - name: Set version
+        run: sed -i "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
+        working-directory: ./pathplannerlib
+      
+      - name: Ensure spotless is applied
+        run: ./gradlew spotlessApply
         working-directory: ./pathplannerlib
       
       - name: Build
@@ -92,6 +104,7 @@ jobs:
           - os: macos-12
             artifact-name: PPLib-macOS
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
+    needs: [formatting, test]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
@@ -102,6 +115,14 @@ jobs:
         with:
           java-version: '17'
           distribution: 'zulu'
+      
+      - name: Set version
+        run: sed -i '' "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
+        working-directory: ./pathplannerlib
+      
+      - name: Ensure spotless is applied
+        run: ./gradlew spotlessApply
+        working-directory: ./pathplannerlib
       
       - name: Build
         run: ./gradlew build -Pbuildalldesktop
@@ -144,5 +165,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: PPLib-Maven
+          name: PPLib-Maven-v${{ env.VERSION_NAME }}
           path: ~/releases

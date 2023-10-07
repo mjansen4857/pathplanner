@@ -96,7 +96,7 @@ public class ADStar {
           FIELD_LENGTH = ((Number) fieldSize.get("x")).doubleValue();
           FIELD_WIDTH = ((Number) fieldSize.get("y")).doubleValue();
         } catch (Exception e) {
-          e.printStackTrace();
+          // Do nothing, use defaults
         }
       }
 

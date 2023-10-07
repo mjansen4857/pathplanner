@@ -51,8 +51,6 @@ bool ADStar::running = false;
 bool ADStar::newPathAvailable = false;
 
 std::vector<frc::Translation2d> ADStar::currentPath;
-std::mutex ADStar::currentPath_mutex;
-
 void ADStar::ensureInitialized() {
 	if (!running) {
 		running = true;
@@ -122,7 +120,6 @@ void ADStar::runThread() {
 			if (needsReset || doMinor || doMajor) {
 				doWork();
 			} else if (needsExtract) {
-				std::lock_guard < std::mutex > pathLock(currentPath_mutex);
 				currentPath = extractPath();
 				newPathAvailable = true;
 				needsExtract = false;
@@ -138,7 +135,34 @@ void ADStar::runThread() {
 }
 
 void ADStar::doWork() {
-	// TODO
+	if (needsReset) {
+		reset();
+		needsReset = false;
+	}
+
+	if (doMinor) {
+		computeOrImprovePath();
+		currentPath = extractPath();
+		newPathAvailable = true;
+		doMinor = false;
+	} else if (doMajor) {
+		if (eps > 1.0) {
+			eps -= 0.5;
+			open.insert(incons.begin(), incons.end());
+
+			for (auto entry : open) {
+				open[entry.first] = key(entry.first);
+			}
+			closed.clear();
+			computeOrImprovePath();
+			currentPath = extractPath();
+			newPathAvailable = true;
+		}
+
+		if (eps <= 1.0) {
+			doMajor = false;
+		}
+	}
 }
 
 std::vector<frc::Translation2d> ADStar::getCurrentPath() {
@@ -147,7 +171,6 @@ std::vector<frc::Translation2d> ADStar::getCurrentPath() {
 				"ADStar path was retrieved before it was initialized");
 	}
 
-	std::lock_guard < std::mutex > pathLock(currentPath_mutex);
 	newPathAvailable = false;
 	return currentPath;
 }

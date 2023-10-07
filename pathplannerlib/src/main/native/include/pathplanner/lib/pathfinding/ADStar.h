@@ -20,6 +20,14 @@ public:
 
 	static std::vector<frc::Translation2d> getCurrentPath();
 
+	static void setStartPos(const frc::Translation2d &start);
+
+	static void setGoalPos(const frc::Translation2d &goal);
+
+	static void setDynamicObstacles(
+			const std::vector<std::pair<frc::Translation2d, frc::Translation2d>> &obs,
+			const frc::Translation2d &currentRobotPos);
+
 	class GridPosition {
 	public:
 		int x;
@@ -78,21 +86,12 @@ private:
 	static bool newPathAvailable;
 
 	static std::vector<frc::Translation2d> currentPath;
-	static std::mutex currentPath_mutex;
 
 	static void runThread();
 
 	static void doWork();
 
-	static void setStartPos(const frc::Translation2d &start);
-
-	static void setGoalPos(const frc::Translation2d &goal);
-
 	static GridPosition findClosestNonObstacle(const GridPosition &pos);
-
-	static void setDynamicObstacles(
-			const std::vector<std::pair<frc::Translation2d, frc::Translation2d>> &obs,
-			const frc::Translation2d &currentRobotPos);
 
 	static std::vector<frc::Translation2d> extractPath();
 

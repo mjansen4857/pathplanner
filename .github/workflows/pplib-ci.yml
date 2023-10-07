@@ -65,6 +65,7 @@ jobs:
             artifact-name: PPLib-Linux
             build-options: ""
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
+    needs: [formatting, test]
     runs-on: ubuntu-22.04
     container: ${{ matrix.container }}
     steps:
@@ -76,7 +77,7 @@ jobs:
         working-directory: ./pathplannerlib
       
       - name: Set version
-        run: sed "s/^def pubVersion =.*/def pubVersion = '${{ env.VERSION_NAME }}'/" publish.gradle
+        run: sed -i "s/^def pubVersion =.*/def pubVersion = '${{ env.VERSION_NAME }}'/" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Build
@@ -99,6 +100,7 @@ jobs:
           - os: macos-12
             artifact-name: PPLib-macOS
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
+    needs: [formatting, test]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
@@ -111,7 +113,7 @@ jobs:
           distribution: 'zulu'
       
       - name: Set version
-        run: sed "s/^def pubVersion =.*/def pubVersion = '${{ env.VERSION_NAME }}'/" publish.gradle
+        run: sed -i "s/^def pubVersion =.*/def pubVersion = '${{ env.VERSION_NAME }}'/" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Build

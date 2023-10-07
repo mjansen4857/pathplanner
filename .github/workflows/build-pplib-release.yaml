@@ -2,6 +2,11 @@ name: Build PPLib Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: The full version string, i.e. 2024.0.0-alpha-1 or 2024.1.1
+        required: true
 
 jobs:
   build-docker:
@@ -24,6 +29,10 @@ jobs:
       
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+        working-directory: ./pathplannerlib
+      
+      - name: Set version
+        run: sed -i "s/^def pubVersion =.*/def pubVersion = '${{ github.event.inputs.version }}'/" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Build
@@ -56,6 +65,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'zulu'
+      
+      - name: Set version
+        run: sed -i "s/^def pubVersion =.*/def pubVersion = '${{ github.event.inputs.version }}'/" publish.gradle
+        working-directory: ./pathplannerlib
       
       - name: Build
         run: ./gradlew build -Pbuildalldesktop -PreleaseMode
@@ -98,5 +111,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: PPLib-Maven
+          name: PPLib-Maven-v${{ github.event.inputs.version }}
           path: ~/releases

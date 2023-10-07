@@ -121,16 +121,16 @@ jobs:
       
       - name: Set release version env
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        run: echo "FULL_VERSION=${{ github.event.inputs.version }}+${{ github.run_number }}" >> $GITHUB_ENV
+        run: echo "VERSION_NAME=${{ github.event.inputs.version }}" >> $GITHUB_ENV
       
       - name: Set dev version env
         if: ${{ github.event_name != 'workflow_dispatch' }}
-        run: echo "FULL_VERSION=0.0.0-dev-${{ github.run_number }}+${{ github.run_number }}" >> $GITHUB_ENV
+        run: echo "VERSION_NAME=0.0.0-dev-${{ github.run_number }}" >> $GITHUB_ENV
       
       - name: Set pubspec version
         run: |
           flutter pub global activate cider
-          dart run cider version ${{ env.FULL_VERSION }}
+          dart run cider version ${{ env.VERSION_NAME }}+${{ github.run_number }}
       
       - name: Build app
         run: flutter build ${{ matrix.build-option }}
@@ -151,7 +151,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.artifact-name }}-v${{ env.FULL_VERSION }}
+          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}
       
       - name: Create MSIX
@@ -162,5 +162,5 @@ jobs:
         if: ${{ matrix.build-option == 'windows' }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.artifact-name }}-MSIX-v${{ env.FULL_VERSION }}
+          name: ${{ matrix.artifact-name }}-MSIX-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}/pathplanner.msix

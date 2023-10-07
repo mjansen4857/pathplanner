@@ -7,9 +7,15 @@ on:
   pull_request:
 
   workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        description: The full version string, i.e. 2024.0.0-alpha-1 or 2024.1.1
+        required: true
 
 env:
   FLUTTER_VERSION: 3.13.4
+  BUILD_NUMBER_OFFSET: 0
 
 jobs:
   formatting-analysis:
@@ -112,6 +118,19 @@ jobs:
       
       - name: Get dependencies
         run: flutter pub get
+      
+      - name: Set release version env
+        if: ${{ github.event_name }} == 'workflow_dispatch'
+        run: echo "FULL_VERSION=${{ github.event.inputs.version }}+${{ github.run_number }}" >> $GITHUB_ENV
+      
+      - name: Set dev version env
+        if: ${{ github.event_name }} != 'workflow_dispatch'
+        run: echo "FULL_VERSION=0.0.0-dev-${{ github.run_number }}+${{ github.run_number }}" >> $GITHUB_ENV
+      
+      - name: Set pubspec version
+        run: |
+          flutter pub global activate cider
+          dart run cider version ${{ env.FULL_VERSION }}
       
       - name: Build app
         run: flutter build ${{ matrix.build-option }}

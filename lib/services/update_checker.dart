@@ -26,6 +26,11 @@ class UpdateChecker {
       Version current = Version.parse(currentVersion);
       Version latest = Version.parse(latestVersion);
 
+      if (current.isPreRelease && current.preRelease[0].contains('dev')) {
+        // Dev build
+        return false;
+      }
+
       return latest > current;
     } catch (_) {
       return false;

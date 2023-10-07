@@ -397,21 +397,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ),
           Align(
-            alignment: FractionalOffset.topLeft,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                UpdateCard(
-                  currentVersion: widget.appVersion,
-                  updateChecker: widget.updateChecker,
-                ),
-                PPLibUpdateCard(
-                  projectDir: _projectDir!,
-                  fs: widget.fs,
-                  updateChecker: widget.updateChecker,
-                ),
-              ],
+            alignment: FractionalOffset.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  UpdateCard(
+                    currentVersion: widget.appVersion,
+                    updateChecker: widget.updateChecker,
+                  ),
+                  PPLibUpdateCard(
+                    projectDir: _projectDir!,
+                    fs: widget.fs,
+                    updateChecker: widget.updateChecker,
+                  ),
+                ],
+              ),
             ),
           ),
         ],

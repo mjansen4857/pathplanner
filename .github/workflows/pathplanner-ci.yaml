@@ -14,7 +14,7 @@ on:
         required: true
 
 env:
-  FLUTTER_VERSION: 3.13.4
+  FLUTTER_VERSION: 3.13.6
   BUILD_NUMBER_OFFSET: 0
 
 jobs:
@@ -120,11 +120,11 @@ jobs:
         run: flutter pub get
       
       - name: Set release version env
-        if: ${{ github.event_name }} == 'workflow_dispatch'
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         run: echo "FULL_VERSION=${{ github.event.inputs.version }}+${{ github.run_number }}" >> $GITHUB_ENV
       
       - name: Set dev version env
-        if: ${{ github.event_name }} != 'workflow_dispatch'
+        if: ${{ github.event_name != 'workflow_dispatch' }}
         run: echo "FULL_VERSION=0.0.0-dev-${{ github.run_number }}+${{ github.run_number }}" >> $GITHUB_ENV
       
       - name: Set pubspec version
@@ -151,7 +151,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.artifact-name }}
+          name: ${{ matrix.artifact-name }}-v${{ env.FULL_VERSION }}
           path: ${{ matrix.artifact-path }}
       
       - name: Create MSIX
@@ -162,5 +162,5 @@ jobs:
         if: ${{ matrix.build-option == 'windows' }}
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.artifact-name }}-MSIX
+          name: ${{ matrix.artifact-name }}-MSIX-v${{ env.FULL_VERSION }}
           path: ${{ matrix.artifact-path }}/pathplanner.msix

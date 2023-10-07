@@ -15,7 +15,6 @@ on:
 
 env:
   FLUTTER_VERSION: 3.13.6
-  BUILD_NUMBER_OFFSET: 0
 
 jobs:
   formatting-analysis:
@@ -120,12 +119,20 @@ jobs:
         run: flutter pub get
       
       - name: Set release version env
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && matrix.build-option != 'windows' }}
         run: echo "VERSION_NAME=${{ github.event.inputs.version }}" >> $GITHUB_ENV
       
       - name: Set dev version env
-        if: ${{ github.event_name != 'workflow_dispatch' }}
+        if: ${{ github.event_name != 'workflow_dispatch' && matrix.build-option != 'windows' }}
         run: echo "VERSION_NAME=0.0.0-dev-${{ github.run_number }}" >> $GITHUB_ENV
+      
+      - name: Set release version env windows just has to be different
+        if: ${{ github.event_name == 'workflow_dispatch' && matrix.build-option == 'windows' }}
+        run: Add-Content -Path ${env:GITHUB_ENV} -Value "VERSION_NAME=${{ github.event.inputs.version }}"
+      
+      - name: Set dev version env windows just has to be different
+        if: ${{ github.event_name != 'workflow_dispatch' && matrix.build-option == 'windows' }}
+        run: Add-Content -Path ${env:GITHUB_ENV} -Value "VERSION_NAME=0.0.0-dev-${{ github.run_number }}"
       
       - name: Set pubspec version
         run: |

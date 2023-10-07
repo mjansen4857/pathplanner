@@ -45,6 +45,11 @@ public:
 		}
 	};
 
+	static inline GridPosition getGridPos(const frc::Translation2d &pos) {
+		return GridPosition(static_cast<int>(std::floor(pos.X()() / NODE_SIZE)),
+				static_cast<int>(std::floor(pos.Y()() / NODE_SIZE)));
+	}
+
 private:
 	static const double SMOOTHING_ANCHOR_PCT;
 	static const double SMOOTHING_CONTROL_PCT;
@@ -146,11 +151,6 @@ private:
 			return 1;
 		}
 		return 0;
-	}
-
-	static inline GridPosition getGridPos(const frc::Translation2d &pos) {
-		return GridPosition(static_cast<int>(std::floor(pos.X()() / NODE_SIZE)),
-				static_cast<int>(std::floor(pos.Y()() / NODE_SIZE)));
 	}
 
 	static inline frc::Translation2d gridPosToTranslation2d(

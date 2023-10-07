@@ -7,11 +7,11 @@ nativeUtils {
     wpi {
         configureDependencies {
             wpiVersion = "2024.+"
-            niLibVersion = "2024.+"
-            opencvVersion = "4.6.0-3"
-            googleTestVersion = "1.11.0-4"
-            imguiVersion = "1.88-9"
-            wpimathVersion = "2024.+"
+            opencvYear = "frc2023"
+            googleTestYear = "frc2023"
+            niLibVersion = "2023.3.0"
+            opencvVersion = "4.6.0-5"
+            googleTestVersion = "1.12.1-2"
         }
     }
 }
@@ -103,7 +103,7 @@ ext.createComponentZipTasks = { components, names, base, type, project, func ->
         def task = project.tasks.create(base + "-${key}", type) {
             description = 'Creates component archive for platform ' + key
             destinationDirectory = outputsFolder
-            classifier = key
+            archiveClassifier = key
             archiveBaseName = '_M_' + base
             duplicatesStrategy = 'exclude'
 
@@ -137,7 +137,7 @@ ext.createAllCombined = { list, name, base, type, project ->
 
         list.each {
             if (it.name.endsWith('debug')) return
-                from project.zipTree(it.archivePath)
+                from project.zipTree(it.archiveFile)
             dependsOn it
         }
     }

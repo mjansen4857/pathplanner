@@ -80,6 +80,10 @@ jobs:
         run: sed -i "/def pubVersion =/c\\\ndef pubVersion = '${{ env.VERSION_NAME }}'/" publish.gradle
         working-directory: ./pathplannerlib
       
+      - name: Ensure spotless is applied
+        run: ./gradlew spotlessApply
+        working-directory: ./pathplannerlib
+      
       - name: Build
         run: ./gradlew build --max-workers 1 ${{ matrix.build-options }}
         working-directory: ./pathplannerlib
@@ -114,6 +118,10 @@ jobs:
       
       - name: Set version
         run: sed -i "/def pubVersion =/c\\\ndef pubVersion = '${{ env.VERSION_NAME }}'/" publish.gradle
+        working-directory: ./pathplannerlib
+      
+      - name: Ensure spotless is applied
+        run: ./gradlew spotlessApply
         working-directory: ./pathplannerlib
       
       - name: Build

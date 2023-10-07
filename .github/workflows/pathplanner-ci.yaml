@@ -130,7 +130,7 @@ jobs:
       - name: Set pubspec version
         run: |
           flutter pub global activate cider
-          dart run cider version ${{ env.VERSION_NAME }}+${{ github.run_number }}
+          dart run cider version "${{ env.VERSION_NAME }}+${{ github.run_number }}"
       
       - name: Build app
         run: flutter build ${{ matrix.build-option }}

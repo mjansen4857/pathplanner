@@ -32,7 +32,7 @@ jobs:
         working-directory: ./pathplannerlib
       
       - name: Set version
-        run: sed -i "s/^def pubVersion =.*/def pubVersion = '${{ github.event.inputs.version }}'/" publish.gradle
+        run: sed -i "/def pubVersion =/c\\\ndef pubVersion = '${{ github.event.inputs.version }}'/" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Build
@@ -67,7 +67,7 @@ jobs:
           distribution: 'zulu'
       
       - name: Set version
-        run: sed -i "s/^def pubVersion =.*/def pubVersion = '${{ github.event.inputs.version }}'/" publish.gradle
+        run: sed -i "/def pubVersion =/c\\\ndef pubVersion = '${{ github.event.inputs.version }}'/" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Build

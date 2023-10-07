@@ -8,6 +8,9 @@ on:
 
   workflow_dispatch:
 
+env:
+  VERSION_NAME: 0.0.0-dev-${{ github.run_number }}
+
 jobs:
   formatting:
     name: "[PPLib] Check Formatting"
@@ -72,6 +75,10 @@ jobs:
         run: chmod +x gradlew
         working-directory: ./pathplannerlib
       
+      - name: Set version
+        run: sed "s/^def pubVersion =.*/def pubVersion = '${{ env.VERSION_NAME }}'/" publish.gradle
+        working-directory: ./pathplannerlib
+      
       - name: Build
         run: ./gradlew build --max-workers 1 ${{ matrix.build-options }}
         working-directory: ./pathplannerlib
@@ -102,6 +109,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'zulu'
+      
+      - name: Set version
+        run: sed "s/^def pubVersion =.*/def pubVersion = '${{ env.VERSION_NAME }}'/" publish.gradle
+        working-directory: ./pathplannerlib
       
       - name: Build
         run: ./gradlew build -Pbuildalldesktop
@@ -144,5 +155,5 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: PPLib-Maven
+          name: PPLib-Maven-v${{ env.VERSION_NAME }}
           path: ~/releases

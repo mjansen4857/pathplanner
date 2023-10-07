@@ -38,8 +38,8 @@ copyAllOutputs.dependsOn outputVersions
 
 ext.addTaskToCopyAllOutputs = { task ->
     copyAllOutputs.dependsOn task
-    copyAllOutputs.inputs.file task.archivePath
-    copyAllOutputs.from task.archivePath
+    copyAllOutputs.inputs.file task.archiveFile
+    copyAllOutputs.from task.archiveFile
 }
 
 def artifactGroupId = 'com.pathplanner.lib'
@@ -50,7 +50,7 @@ def javaBaseName = "_GROUP_com_pathplanner_lib_ID_${baseArtifactId}-java_CLS"
 task cppHeadersZip(type: Zip) {
     destinationDirectory = outputsFolder
     archiveBaseName = zipBaseName
-    classifier = "headers"
+    archiveClassifier = "headers"
 
     from(licenseFile) {
         into '/'
@@ -64,7 +64,7 @@ task cppHeadersZip(type: Zip) {
 task cppSourceZip(type: Zip) {
     destinationDirectory = outputsFolder
     archiveBaseName = zipBaseName
-    classifier = "source"
+    archiveClassifier = "source"
 
     from(licenseFile) {
         into '/'
@@ -81,12 +81,12 @@ build.dependsOn cppSourceZip
 addTaskToCopyAllOutputs(cppSourceZip)
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 
@@ -99,14 +99,14 @@ task outputJar(type: Jar, dependsOn: classes) {
 task outputSourcesJar(type: Jar, dependsOn: classes) {
     archiveBaseName = javaBaseName
     destinationDirectory = outputsFolder
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
 }
 
 task outputJavadocJar(type: Jar, dependsOn: javadoc) {
     archiveBaseName = javaBaseName
     destinationDirectory = outputsFolder
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 

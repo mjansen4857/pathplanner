@@ -3,7 +3,7 @@ plugins {
     id 'java'
     id 'google-test'
     id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
-    id 'edu.wpi.first.NativeUtils' version '2023.7.0'
+    id 'edu.wpi.first.NativeUtils' version '2024.2.0'
     id 'edu.wpi.first.GradleJni' version '1.0.0'
     id 'edu.wpi.first.GradleVsCode' version '1.3.0'
     id 'com.diffplug.spotless' version '6.11.0'
@@ -34,8 +34,9 @@ dependencies {
     implementation 'edu.wpi.first.wpiutil:wpiutil-java:2024.+'
     implementation 'edu.wpi.first.wpimath:wpimath-java:2024.+'
     implementation 'edu.wpi.first.wpilibNewCommands:wpilibNewCommands-java:2024.+'
+    implementation 'edu.wpi.first.wpiunits:wpiunits-java:2024.+'
     implementation 'edu.wpi.first.hal:hal-java:2024.+'
-    implementation "org.ejml:ejml-simple:0.41"
+    implementation "org.ejml:ejml-simple:0.42"
     implementation "com.fasterxml.jackson.core:jackson-annotations:2.12.4"
     implementation "com.fasterxml.jackson.core:jackson-core:2.12.4"
     implementation "com.fasterxml.jackson.core:jackson-databind:2.12.4"
@@ -160,7 +161,7 @@ javadoc {
 apply from: 'publish.gradle'
 
 wrapper {
-    gradleVersion '7.5.1'
+    gradleVersion '8.3'
 }
 
 jacocoTestReport {

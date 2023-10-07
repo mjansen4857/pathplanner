@@ -32,7 +32,7 @@ jobs:
         working-directory: ./pathplannerlib
       
       - name: Set version
-        run: sed -i "/def pubVersion =/c\\\ndef pubVersion = '${{ github.event.inputs.version }}'\n/" publish.gradle
+        run: sed -i "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Ensure spotless is applied
@@ -71,7 +71,7 @@ jobs:
           distribution: 'zulu'
       
       - name: Set version
-        run: sed -i "/def pubVersion =/c\\\ndef pubVersion = '${{ github.event.inputs.version }}'\n/" publish.gradle
+        run: sed -i "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Ensure spotless is applied

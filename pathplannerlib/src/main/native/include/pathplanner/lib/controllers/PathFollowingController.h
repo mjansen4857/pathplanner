@@ -37,5 +37,13 @@ public:
 	 * @return Positional error, in meters
 	 */
 	virtual units::meter_t getPositionalError() = 0;
+
+	/**
+	 * Is this controller for holonomic drivetrains? Used to handle some differences in functionality
+	 * in the path following command.
+	 *
+	 * @return True if this controller is for a holonomic drive train
+	 */
+	virtual bool isHolonomic() = 0;
 };
 }

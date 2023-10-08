@@ -82,6 +82,9 @@ public class FollowPathCommand extends Command {
   public void execute() {
     double currentTime = timer.get();
     PathPlannerTrajectory.State targetState = generatedTrajectory.sample(currentTime);
+    if (!controller.isHolonomic() && path.isReversed()) {
+      targetState = targetState.reverse();
+    }
 
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
@@ -105,9 +108,16 @@ public class FollowPathCommand extends Command {
         Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
 
     PPLibTelemetry.setCurrentPose(currentPose);
-    PPLibTelemetry.setTargetPose(targetState.getTargetHolonomicPose());
     PathPlannerLogging.logCurrentPose(currentPose);
-    PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
+
+    if (controller.isHolonomic()) {
+      PPLibTelemetry.setTargetPose(targetState.getTargetHolonomicPose());
+      PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
+    } else {
+      PPLibTelemetry.setTargetPose(targetState.getDifferentialPose());
+      PathPlannerLogging.logTargetPose(targetState.getDifferentialPose());
+    }
+
     PPLibTelemetry.setVelocities(
         currentVel,
         targetState.velocityMps,

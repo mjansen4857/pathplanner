@@ -130,9 +130,18 @@ void PathfindingCommand::Execute() {
 				currentSpeeds.vx, currentSpeeds.vy);
 
 		PPLibTelemetry::setCurrentPose(currentPose);
-		PPLibTelemetry::setTargetPose(targetState.getTargetHolonomicPose());
 		PathPlannerLogging::logCurrentPose(currentPose);
-		PathPlannerLogging::logTargetPose(targetState.getTargetHolonomicPose());
+
+		if (m_controller->isHolonomic()) {
+			PPLibTelemetry::setTargetPose(targetState.getTargetHolonomicPose());
+			PathPlannerLogging::logTargetPose(
+					targetState.getTargetHolonomicPose());
+		} else {
+			PPLibTelemetry::setTargetPose(targetState.getDifferentialPose());
+			PathPlannerLogging::logTargetPose(
+					targetState.getDifferentialPose());
+		}
+
 		PPLibTelemetry::setVelocities(currentVel, targetState.velocity,
 				currentSpeeds.omega, targetSpeeds.omega);
 		PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());

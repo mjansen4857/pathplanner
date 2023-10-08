@@ -25,7 +25,6 @@ public class ADStar {
   public static int NODE_Y = (int) Math.ceil(FIELD_WIDTH / NODE_SIZE);
 
   private static final double EPS = 2.5;
-  private static final int heuristicType = 1; // 0: manhattan, 1: euclidean
 
   private static final HashMap<GridPosition, Double> g = new HashMap<>();
   private static final HashMap<GridPosition, Double> rhs = new HashMap<>();
@@ -97,7 +96,7 @@ public class ADStar {
           FIELD_LENGTH = ((Number) fieldSize.get("x")).doubleValue();
           FIELD_WIDTH = ((Number) fieldSize.get("y")).doubleValue();
         } catch (Exception e) {
-          e.printStackTrace();
+          // Do nothing, use defaults
         }
       }
 
@@ -130,7 +129,7 @@ public class ADStar {
           }
         }
 
-        if (!needsReset || !doMinor || !doMajor) {
+        if (!needsReset && !doMinor && !doMajor) {
           try {
             Thread.sleep(20);
           } catch (InterruptedException e) {
@@ -240,7 +239,7 @@ public class ADStar {
 
   public static void setDynamicObstacles(
       List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos) {
-    List<GridPosition> newObs = new ArrayList<>();
+    Set<GridPosition> newObs = new HashSet<>();
 
     for (var obstacle : obs) {
       var gridPos1 = getGridPos(obstacle.getFirst());
@@ -268,17 +267,17 @@ public class ADStar {
       needsReset = true;
       doMinor = true;
       doMajor = true;
-    }
 
-    if (dynamicObstacles.contains(getGridPos(currentRobotPos))) {
-      // Set the start position to the closest non-obstacle
-      setStartPos(currentRobotPos);
+      if (dynamicObstacles.contains(getGridPos(currentRobotPos))) {
+        // Set the start position to the closest non-obstacle
+        setStartPos(currentRobotPos);
+      }
     }
   }
 
   private static List<Translation2d> extractPath() {
     if (sGoal.equals(sStart)) {
-      return List.of(gridPosToTranslation2d(sStart));
+      return List.of(realGoalPos);
     }
 
     List<GridPosition> path = new ArrayList<>();
@@ -293,9 +292,9 @@ public class ADStar {
         gList.put(x, g.get(x));
       }
 
-      Map.Entry<GridPosition, Double> min = null;
+      Map.Entry<GridPosition, Double> min = Map.entry(sGoal, Double.POSITIVE_INFINITY);
       for (var entry : gList.entrySet()) {
-        if (min == null || entry.getValue() < min.getValue()) {
+        if (entry.getValue() < min.getValue()) {
           min = entry;
         }
       }
@@ -488,7 +487,7 @@ public class ADStar {
       return Double.POSITIVE_INFINITY;
     }
 
-    return Math.hypot(sGoal.x - sStart.x, sGoal.y - sStart.y);
+    return heuristic(sStart, sGoal);
   }
 
   private static boolean isCollision(GridPosition sStart, GridPosition sEnd) {
@@ -508,9 +507,7 @@ public class ADStar {
         s2 = new GridPosition(Math.max(sStart.x, sEnd.x), Math.min(sStart.y, sEnd.y));
       }
 
-      if (obstacles.contains(s1) || obstacles.contains(s2)) {
-        return true;
-      }
+      return obstacles.contains(s1) || obstacles.contains(s2);
     }
 
     return false;
@@ -572,11 +569,7 @@ public class ADStar {
   }
 
   private static double heuristic(GridPosition sStart, GridPosition sGoal) {
-    if (heuristicType == 0) {
-      return Math.abs(sGoal.x - sStart.x) + Math.abs(sGoal.y - sStart.y);
-    } else {
-      return Math.hypot(sGoal.x - sStart.x, sGoal.y - sStart.y);
-    }
+    return Math.hypot(sGoal.x - sStart.x, sGoal.y - sStart.y);
   }
 
   private static int comparePair(Pair<Double, Double> a, Pair<Double, Double> b) {
@@ -596,7 +589,8 @@ public class ADStar {
   }
 
   private static Translation2d gridPosToTranslation2d(GridPosition pos) {
-    return new Translation2d(pos.x * NODE_SIZE, pos.y * NODE_SIZE);
+    return new Translation2d(
+        (pos.x * NODE_SIZE) + (NODE_SIZE / 2.0), (pos.y * NODE_SIZE) + (NODE_SIZE / 2.0));
   }
 
   public static class GridPosition implements Comparable<GridPosition> {

@@ -85,6 +85,7 @@ public class PathfindingCommand extends Command {
    * @param targetPose the pose to pathfind to, the rotation component is only relevant for
    *     holonomic drive trains
    * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the target pose
    * @param poseSupplier a supplier for the robot's current pose
    * @param speedsSupplier a supplier for the robot's current robot relative speeds
    * @param outputRobotRelative a consumer for the output speeds (robot relative)
@@ -123,7 +124,6 @@ public class PathfindingCommand extends Command {
     currentTrajectory = null;
 
     Pose2d currentPose = poseSupplier.get();
-    PathPlannerLogging.logCurrentPose(currentPose);
 
     controller.reset(currentPose, speedsSupplier.get());
 

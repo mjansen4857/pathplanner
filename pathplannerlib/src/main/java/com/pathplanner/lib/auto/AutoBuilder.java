@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+/** Utility class used to build auto routines */
 public class AutoBuilder {
   private static boolean configured = false;
 
@@ -279,6 +280,12 @@ public class AutoBuilder {
     return new FollowPathWithEvents(pathFollowingCommandBuilder.apply(path), path, getPose);
   }
 
+  /**
+   * Get the starting pose from its JSON representation. This is only used internally.
+   *
+   * @param startingPoseJson JSON object representing a starting pose.
+   * @return The Pose2d starting pose
+   */
   public static Pose2d getStartingPoseFromJson(JSONObject startingPoseJson) {
     JSONObject pos = (JSONObject) startingPoseJson.get("position");
     double x = ((Number) pos.get("x")).doubleValue();

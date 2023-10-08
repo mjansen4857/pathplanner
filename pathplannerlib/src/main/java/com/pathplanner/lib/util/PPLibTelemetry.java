@@ -16,6 +16,7 @@ import java.util.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+/** Utility class for sending data to the PathPlanner app via NT4 */
 public class PPLibTelemetry {
   private static boolean compMode = false;
 
@@ -35,10 +36,19 @@ public class PPLibTelemetry {
   private static NetworkTableListener hotReloadPathListener = null;
   private static NetworkTableListener hotReloadAutoListener = null;
 
+  /** Enable competition mode. This will disable all telemetry and hot reload. */
   public static void enableCompetitionMode() {
     compMode = true;
   }
 
+  /**
+   * Set the path following actual/target velocities
+   *
+   * @param actualVel Actual robot velocity in m/s
+   * @param commandedVel Target robot velocity in m/s
+   * @param actualAngVel Actual angular velocity in rad/s
+   * @param commandedAngVel Target angular velocity in rad/s
+   */
   public static void setVelocities(
       double actualVel, double commandedVel, double actualAngVel, double commandedAngVel) {
     if (!compMode) {
@@ -46,18 +56,33 @@ public class PPLibTelemetry {
     }
   }
 
+  /**
+   * Set the path following inaccuracy
+   *
+   * @param inaccuracy Inaccuracy in meters
+   */
   public static void setPathInaccuracy(double inaccuracy) {
     if (!compMode) {
       inaccuracyPub.set(inaccuracy);
     }
   }
 
+  /**
+   * Set the current robot pose
+   *
+   * @param pose Current robot pose
+   */
   public static void setCurrentPose(Pose2d pose) {
     if (!compMode) {
       posePub.set(new double[] {pose.getX(), pose.getY(), pose.getRotation().getDegrees()});
     }
   }
 
+  /**
+   * Set the current path being followed
+   *
+   * @param path The current path
+   */
   public static void setCurrentPath(PathPlannerPath path) {
     if (!compMode) {
       double[] arr = new double[path.numPoints() * 2];
@@ -74,6 +99,11 @@ public class PPLibTelemetry {
     }
   }
 
+  /**
+   * Set the target robot pose
+   *
+   * @param targetPose Target robot pose
+   */
   public static void setTargetPose(Pose2d targetPose) {
     if (!compMode) {
       targetPosePub.set(
@@ -83,6 +113,12 @@ public class PPLibTelemetry {
     }
   }
 
+  /**
+   * Register a path for hot reload. This is used internally.
+   *
+   * @param pathName Name of the path
+   * @param path Reference to the path
+   */
   public static void registerHotReloadPath(String pathName, PathPlannerPath path) {
     if (!compMode) {
       ensureHotReloadListenersInitialized();
@@ -94,6 +130,12 @@ public class PPLibTelemetry {
     }
   }
 
+  /**
+   * Register an auto for hot reload. This is used internally.
+   *
+   * @param autoName Name of the auto
+   * @param auto Reference to the auto
+   */
   public static void registerHotReloadAuto(String autoName, PathPlannerAuto auto) {
     if (!compMode) {
       ensureHotReloadListenersInitialized();

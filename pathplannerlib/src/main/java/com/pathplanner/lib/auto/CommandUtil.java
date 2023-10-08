@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj2.command.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+/** Utility class for building commands used in autos */
 public class CommandUtil {
   /**
    * Wraps a command with a functional command that calls the command's initialize, execute, end,

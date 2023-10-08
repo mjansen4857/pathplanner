@@ -8,6 +8,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
 
+/** LTV following controller */
 public class PPLTVController extends LTVUnicycleController implements PathFollowingController {
   private double lastError = 0;
 

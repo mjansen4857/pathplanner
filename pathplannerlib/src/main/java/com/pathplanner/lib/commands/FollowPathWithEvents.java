@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/** Command that will run a path following command and trigger event markers along the way */
 public class FollowPathWithEvents extends Command {
   private final Command pathFollowingCommand;
   private final PathPlannerPath path;

@@ -4,6 +4,7 @@ import edu.wpi.first.math.util.Units;
 import java.util.Objects;
 import org.json.simple.JSONObject;
 
+/** Kinematic path following constraints */
 public class PathConstraints {
   private final double maxVelocityMps;
   private final double maxAccelerationMpsSq;

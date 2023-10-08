@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import java.util.Objects;
 import org.json.simple.JSONObject;
 
+/** Position along the path that will trigger a command when reached */
 public class EventMarker {
   private final double waypointRelativePos;
   private final Command command;

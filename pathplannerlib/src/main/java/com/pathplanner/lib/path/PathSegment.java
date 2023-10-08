@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/** A bezier curve segment */
 public class PathSegment {
+  /** The resolution used during path generation */
   public static final double RESOLUTION = 0.05;
 
   private final List<PathPoint> segmentPoints;

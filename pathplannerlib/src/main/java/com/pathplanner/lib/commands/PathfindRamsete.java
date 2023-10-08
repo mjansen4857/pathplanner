@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/** Pathfind and follow the path with a PPRamseteController */
 public class PathfindRamsete extends PathfindingCommand {
   /**
    * Constructs a new PathfindRamsete command that will generate a path towards the given path.

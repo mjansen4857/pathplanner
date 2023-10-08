@@ -6,7 +6,7 @@
 #include <frc2/command/Commands.h>
 
 namespace pathplanner {
-class EventManager {
+class NamedCommands {
 public:
 	/**
 	 * Registers a command with the given name.
@@ -34,6 +34,6 @@ public:
 	static frc2::CommandPtr getCommand(std::string name);
 
 private:
-	static std::unordered_map<std::string, std::shared_ptr<frc2::Command>> eventMap;
+	static std::unordered_map<std::string, std::shared_ptr<frc2::Command>> namedCommands;
 };
 }

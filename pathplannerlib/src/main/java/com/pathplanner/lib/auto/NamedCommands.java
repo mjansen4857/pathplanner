@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 /** Utility class for managing named commands */
-public class EventManager {
-  private static final HashMap<String, Command> eventMap = new HashMap<>();
+public class NamedCommands {
+  private static final HashMap<String, Command> namedCommands = new HashMap<>();
 
   /**
    * Registers a command with the given name.
@@ -17,7 +17,7 @@ public class EventManager {
    * @param command the command to register
    */
   public static void registerCommand(String name, Command command) {
-    eventMap.put(name, command);
+    namedCommands.put(name, command);
   }
 
   /**
@@ -37,7 +37,7 @@ public class EventManager {
    * @param commands the map of commands to register
    */
   public static void registerCommands(Map<String, Command> commands) {
-    eventMap.putAll(commands);
+    namedCommands.putAll(commands);
   }
 
   /**
@@ -47,7 +47,7 @@ public class EventManager {
    * @return true if a command with the given name has been registered, false otherwise
    */
   public static boolean hasCommand(String name) {
-    return eventMap.containsKey(name);
+    return namedCommands.containsKey(name);
   }
 
   /**
@@ -59,7 +59,7 @@ public class EventManager {
    */
   public static Command getCommand(String name) {
     if (hasCommand(name)) {
-      return CommandUtil.wrappedEventCommand(eventMap.get(name));
+      return CommandUtil.wrappedEventCommand(namedCommands.get(name));
     } else {
       return Commands.none();
     }

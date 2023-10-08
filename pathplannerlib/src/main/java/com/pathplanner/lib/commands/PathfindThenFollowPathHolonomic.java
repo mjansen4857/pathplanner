@@ -46,13 +46,16 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
             config,
             rotationDelayDistance,
             requirements),
-        new FollowPathHolonomic(
+        new FollowPathWithEvents(
+            new FollowPathHolonomic(
+                goalPath,
+                poseSupplier,
+                currentRobotRelativeSpeeds,
+                robotRelativeOutput,
+                config,
+                requirements),
             goalPath,
-            poseSupplier,
-            currentRobotRelativeSpeeds,
-            robotRelativeOutput,
-            config,
-            requirements));
+            poseSupplier));
   }
 
   /**

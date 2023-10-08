@@ -51,16 +51,19 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
             relems,
             dt,
             requirements),
-        new FollowPathLTV(
+        new FollowPathWithEvents(
+            new FollowPathLTV(
+                goalPath,
+                poseSupplier,
+                currentRobotRelativeSpeeds,
+                robotRelativeOutput,
+                qelems,
+                relems,
+                dt,
+                replanningConfig,
+                requirements),
             goalPath,
-            poseSupplier,
-            currentRobotRelativeSpeeds,
-            robotRelativeOutput,
-            qelems,
-            relems,
-            dt,
-            replanningConfig,
-            requirements));
+            poseSupplier));
   }
 
   /**
@@ -93,13 +96,16 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
             robotRelativeOutput,
             dt,
             requirements),
-        new FollowPathLTV(
+        new FollowPathWithEvents(
+            new FollowPathLTV(
+                goalPath,
+                poseSupplier,
+                currentRobotRelativeSpeeds,
+                robotRelativeOutput,
+                dt,
+                replanningConfig,
+                requirements),
             goalPath,
-            poseSupplier,
-            currentRobotRelativeSpeeds,
-            robotRelativeOutput,
-            dt,
-            replanningConfig,
-            requirements));
+            poseSupplier));
   }
 }

@@ -47,15 +47,18 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
             b,
             zeta,
             requirements),
-        new FollowPathRamsete(
+        new FollowPathWithEvents(
+            new FollowPathRamsete(
+                goalPath,
+                poseSupplier,
+                currentRobotRelativeSpeeds,
+                robotRelativeOutput,
+                b,
+                zeta,
+                replanningConfig,
+                requirements),
             goalPath,
-            poseSupplier,
-            currentRobotRelativeSpeeds,
-            robotRelativeOutput,
-            b,
-            zeta,
-            replanningConfig,
-            requirements));
+            poseSupplier));
   }
 
   /**

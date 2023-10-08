@@ -299,7 +299,7 @@ std::vector<frc::Translation2d> ADStar::extractPath() {
 		}
 		s = min.first;
 
-		path.push_back(sGoal);
+		path.push_back(s);
 		if (s == sGoal) {
 			break;
 		}
@@ -307,7 +307,7 @@ std::vector<frc::Translation2d> ADStar::extractPath() {
 
 	std::vector < GridPosition > simplifiedPath;
 	simplifiedPath.push_back(path[0]);
-	for (size_t i = 1; i < path.size(); i++) {
+	for (size_t i = 1; i < path.size() - 1; i++) {
 		if (!walkable(simplifiedPath[simplifiedPath.size() - 1], path[i + 1])) {
 			simplifiedPath.push_back(path[i]);
 		}

@@ -40,7 +40,7 @@ jobs:
         working-directory: ./pathplannerlib
       
       - name: Build
-        run: ./gradlew build --max-workers 1 -PreleaseMode ${{ matrix.build-options }}
+        run: ./gradlew build -PreleaseMode ${{ matrix.build-options }}
         working-directory: ./pathplannerlib
       
       - name: Upload artifact
@@ -56,7 +56,7 @@ jobs:
         include:
           - os: windows-2022
             artifact-name: PPLib-Win64
-          - os: macos-12
+          - os: macos-13
             artifact-name: PPLib-macOS
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     runs-on: ${{ matrix.os }}

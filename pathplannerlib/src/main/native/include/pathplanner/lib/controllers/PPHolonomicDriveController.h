@@ -71,6 +71,16 @@ public:
 			const frc::Pose2d &currentPose,
 			const PathPlannerTrajectory::State &referenceState) override;
 
+	/**
+	 * Is this controller for holonomic drivetrains? Used to handle some differences in functionality
+	 * in the path following command.
+	 *
+	 * @return True if this controller is for a holonomic drive train
+	 */
+	inline bool isHolonomic() override {
+		return true;
+	}
+
 private:
 	using rpsPerMps_t = units::unit_t<units::compound_unit<units::radians_per_second, units::inverse<units::meters_per_second>>>;
 

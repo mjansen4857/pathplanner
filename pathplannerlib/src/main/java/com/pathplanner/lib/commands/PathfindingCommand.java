@@ -200,9 +200,16 @@ public class PathfindingCommand extends Command {
           Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
 
       PPLibTelemetry.setCurrentPose(currentPose);
-      PPLibTelemetry.setTargetPose(targetState.getTargetHolonomicPose());
       PathPlannerLogging.logCurrentPose(currentPose);
-      PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
+
+      if (controller.isHolonomic()) {
+        PPLibTelemetry.setTargetPose(targetState.getTargetHolonomicPose());
+        PathPlannerLogging.logTargetPose(targetState.getTargetHolonomicPose());
+      } else {
+        PPLibTelemetry.setTargetPose(targetState.getDifferentialPose());
+        PathPlannerLogging.logTargetPose(targetState.getDifferentialPose());
+      }
+
       PPLibTelemetry.setVelocities(
           currentVel,
           targetState.velocityMps,

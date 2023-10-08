@@ -40,6 +40,9 @@ void FollowPathCommand::Execute() {
 	units::second_t currentTime = m_timer.Get();
 	PathPlannerTrajectory::State targetState = m_generatedTrajectory.sample(
 			currentTime);
+	if (m_controller->isHolonomic()) {
+		targetState = targetState.reverse();
+	}
 
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
@@ -68,11 +71,18 @@ void FollowPathCommand::Execute() {
 					targetState);
 
 	PPLibTelemetry::setCurrentPose(currentPose);
-	PPLibTelemetry::setTargetPose(targetState.getTargetHolonomicPose());
+	PathPlannerLogging::logCurrentPose(currentPose);
+
+	if (m_controller->isHolonomic()) {
+		PPLibTelemetry::setTargetPose(targetState.getTargetHolonomicPose());
+		PathPlannerLogging::logTargetPose(targetState.getTargetHolonomicPose());
+	} else {
+		PPLibTelemetry::setTargetPose(targetState.getDifferentialPose());
+		PathPlannerLogging::logTargetPose(targetState.getDifferentialPose());
+	}
+
 	PPLibTelemetry::setVelocities(currentVel, targetState.velocity,
 			currentSpeeds.omega, targetSpeeds.omega);
-	PathPlannerLogging::logCurrentPose(currentPose);
-	PathPlannerLogging::logTargetPose(targetState.getTargetHolonomicPose());
 	PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());
 
 	m_output(targetSpeeds);

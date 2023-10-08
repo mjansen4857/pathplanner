@@ -68,4 +68,15 @@ public class PPRamseteController extends RamseteController implements PathFollow
   public double getPositionalError() {
     return lastError;
   }
+
+  /**
+   * Is this controller for holonomic drivetrains? Used to handle some differences in functionality
+   * in the path following command.
+   *
+   * @return True if this controller is for a holonomic drive train
+   */
+  @Override
+  public boolean isHolonomic() {
+    return false;
+  }
 }

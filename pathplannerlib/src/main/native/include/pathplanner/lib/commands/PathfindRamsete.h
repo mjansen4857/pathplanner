@@ -19,9 +19,6 @@ public:
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
 	 * @param requirements the subsystems required by this command
-	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
-	 *     cause the robot to hold its current rotation until it reaches the given distance along the
-	 *     path. Default = 0 m
 	 */
 	PathfindRamsete(std::shared_ptr<PathPlannerPath> targetPath,
 			PathConstraints constraints,
@@ -30,11 +27,10 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			units::unit_t<PPRamseteController::b_unit> b,
 			units::unit_t<PPRamseteController::zeta_unit> zeta,
-			frc2::Requirements requirements,
-			units::meter_t rotationDelayDistance = 0_m) : PathfindingCommand(
-			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
-			output, std::make_unique < PPRamseteController > (b, zeta),
-			rotationDelayDistance, requirements) {
+			frc2::Requirements requirements) : PathfindingCommand(targetPath,
+			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
+			std::make_unique < PPRamseteController > (b, zeta), 0_m,
+			requirements) {
 	}
 
 	/**
@@ -46,20 +42,15 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param requirements the subsystems required by this command
-	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
-	 *     cause the robot to hold its current rotation until it reaches the given distance along the
-	 *     path. Default = 0 m
 	 */
 	PathfindRamsete(std::shared_ptr<PathPlannerPath> targetPath,
 			PathConstraints constraints,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output,
-			frc2::Requirements requirements,
-			units::meter_t rotationDelayDistance = 0_m) : PathfindingCommand(
-			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
-			output, std::make_unique<PPRamseteController>(),
-			rotationDelayDistance, requirements) {
+			frc2::Requirements requirements) : PathfindingCommand(targetPath,
+			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
+			std::make_unique<PPRamseteController>(), 0_m, requirements) {
 	}
 
 	/**
@@ -76,9 +67,6 @@ public:
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
 	 * @param requirements the subsystems required by this command
-	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
-	 *     cause the robot to hold its current rotation until it reaches the given distance along the
-	 *     path. Default = 0 m
 	 */
 	PathfindRamsete(frc::Translation2d targetPosition,
 			PathConstraints constraints, units::meters_per_second_t goalEndVel,
@@ -87,38 +75,10 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			units::unit_t<PPRamseteController::b_unit> b,
 			units::unit_t<PPRamseteController::zeta_unit> zeta,
-			frc2::Requirements requirements,
-			units::meter_t rotationDelayDistance = 0_m) : PathfindingCommand(
+			frc2::Requirements requirements) : PathfindingCommand(
 			frc::Pose2d(targetPosition, frc::Rotation2d()), constraints,
 			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique < PPRamseteController > (b, zeta),
-			rotationDelayDistance, requirements) {
-	}
-
-	/**
-	 * Constructs a new PathfindRamsete command that will generate a path towards the given position.
-	 *
-	 * @param targetPosition the position to pathfind to
-	 * @param constraints the path constraints to use while pathfinding
-	 * @param goalEndVel The goal end velocity when reaching the given position
-	 * @param poseSupplier a supplier for the robot's current pose
-	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
-	 * @param output a consumer for the output speeds (robot relative)
-	 * @param requirements the subsystems required by this command
-	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
-	 *     cause the robot to hold its current rotation until it reaches the given distance along the
-	 *     path. Default = 0 m
-	 */
-	PathfindRamsete(frc::Translation2d targetPosition,
-			PathConstraints constraints, units::meters_per_second_t goalEndVel,
-			std::function<frc::Pose2d()> poseSupplier,
-			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
-			std::function<void(frc::ChassisSpeeds)> output,
-			frc2::Requirements requirements,
-			units::meter_t rotationDelayDistance = 0_m) : PathfindingCommand(
-			frc::Pose2d(targetPosition, frc::Rotation2d()), constraints,
-			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique<PPRamseteController>(), rotationDelayDistance,
+			std::make_unique < PPRamseteController > (b, zeta), 0_m,
 			requirements) {
 	}
 
@@ -127,6 +87,28 @@ public:
 	 *
 	 * @param targetPosition the position to pathfind to
 	 * @param constraints the path constraints to use while pathfinding
+	 * @param goalEndVel The goal end velocity when reaching the given position
+	 * @param poseSupplier a supplier for the robot's current pose
+	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
+	 * @param output a consumer for the output speeds (robot relative)
+	 * @param requirements the subsystems required by this command
+	 */
+	PathfindRamsete(frc::Translation2d targetPosition,
+			PathConstraints constraints, units::meters_per_second_t goalEndVel,
+			std::function<frc::Pose2d()> poseSupplier,
+			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
+			std::function<void(frc::ChassisSpeeds)> output,
+			frc2::Requirements requirements) : PathfindingCommand(
+			frc::Pose2d(targetPosition, frc::Rotation2d()), constraints,
+			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
+			std::make_unique<PPRamseteController>(), 0_m, requirements) {
+	}
+
+	/**
+	 * Constructs a new PathfindRamsete command that will generate a path towards the given position.
+	 *
+	 * @param targetPosition the position to pathfind to
+	 * @param constraints the path constraints to use while pathfinding
 	 * @param poseSupplier a supplier for the robot's current pose
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param output a consumer for the output speeds (robot relative)
@@ -135,9 +117,6 @@ public:
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
 	 * @param requirements the subsystems required by this command
-	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
-	 *     cause the robot to hold its current rotation until it reaches the given distance along the
-	 *     path. Default = 0 m
 	 */
 	PathfindRamsete(frc::Translation2d targetPosition,
 			PathConstraints constraints, units::meters_per_second_t goalEndVel,
@@ -146,11 +125,9 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			units::unit_t<PPRamseteController::b_unit> b,
 			units::unit_t<PPRamseteController::zeta_unit> zeta,
-			frc2::Requirements requirements,
-			units::meter_t rotationDelayDistance = 0_m) : PathfindRamsete(
-			targetPosition, constraints, 0_mps, poseSupplier,
-			currentRobotRelativeSpeeds, output, b, zeta, requirements,
-			rotationDelayDistance) {
+			frc2::Requirements requirements) : PathfindRamsete(targetPosition,
+			constraints, 0_mps, poseSupplier, currentRobotRelativeSpeeds,
+			output, b, zeta, requirements) {
 	}
 
 	/**
@@ -162,20 +139,15 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param requirements the subsystems required by this command
-	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
-	 *     cause the robot to hold its current rotation until it reaches the given distance along the
-	 *     path. Default = 0 m
 	 */
 	PathfindRamsete(frc::Translation2d targetPosition,
 			PathConstraints constraints, units::meters_per_second_t goalEndVel,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output,
-			frc2::Requirements requirements,
-			units::meter_t rotationDelayDistance = 0_m) : PathfindRamsete(
-			targetPosition, constraints, 0_mps, poseSupplier,
-			currentRobotRelativeSpeeds, output, requirements,
-			rotationDelayDistance) {
+			frc2::Requirements requirements) : PathfindRamsete(targetPosition,
+			constraints, 0_mps, poseSupplier, currentRobotRelativeSpeeds,
+			output, requirements) {
 	}
 };
 }

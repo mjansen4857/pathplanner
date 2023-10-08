@@ -10,10 +10,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -61,6 +58,47 @@ public class PathPlannerPath {
     precalcValues();
   }
 
+  /**
+   * Simplified constructor to create a path with no rotation targets, constraint zones, or event
+   * markers.
+   *
+   * <p>You likely want to use bezierFromPoses to create the bezier points.
+   *
+   * @param bezierPoints List of points representing the cubic Bezier curve of the path
+   * @param constraints The global constraints of the path
+   * @param goalEndState The goal end state of the path
+   * @param reversed Should the robot follow the path reversed (differential drive only)
+   */
+  public PathPlannerPath(
+      List<Translation2d> bezierPoints,
+      PathConstraints constraints,
+      GoalEndState goalEndState,
+      boolean reversed) {
+    this(
+        bezierPoints,
+        Collections.emptyList(),
+        Collections.emptyList(),
+        Collections.emptyList(),
+        constraints,
+        goalEndState,
+        reversed);
+  }
+
+  /**
+   * Simplified constructor to create a path with no rotation targets, constraint zones, or event
+   * markers.
+   *
+   * <p>You likely want to use bezierFromPoses to create the bezier points.
+   *
+   * @param bezierPoints List of points representing the cubic Bezier curve of the path
+   * @param constraints The global constraints of the path
+   * @param goalEndState The goal end state of the path
+   */
+  public PathPlannerPath(
+      List<Translation2d> bezierPoints, PathConstraints constraints, GoalEndState goalEndState) {
+    this(bezierPoints, constraints, goalEndState, false);
+  }
+
   private PathPlannerPath(PathConstraints globalConstraints, GoalEndState goalEndState) {
     this.bezierPoints = new ArrayList<>();
     this.rotationTargets = new ArrayList<>();
@@ -70,6 +108,66 @@ public class PathPlannerPath {
     this.goalEndState = goalEndState;
     this.reversed = false;
     this.allPoints = new ArrayList<>();
+  }
+
+  /**
+   * Create the bezier points necessary to create a path using a list of poses
+   *
+   * @param poses List of poses. Each pose represents one waypoint.
+   * @return Bezier points
+   */
+  public static List<Translation2d> bezierFromPoses(List<Pose2d> poses) {
+    if (poses.size() < 2) {
+      throw new IllegalArgumentException("Not enough poses");
+    }
+
+    List<Translation2d> bezierPoints = new ArrayList<>();
+
+    // First pose
+    bezierPoints.add(poses.get(0).getTranslation());
+    bezierPoints.add(
+        new Translation2d(
+            poses.get(0).getTranslation().getDistance(poses.get(1).getTranslation()) / 3.0,
+            poses.get(0).getRotation()));
+
+    // Middle poses
+    for (int i = 1; i < poses.size() - 2; i++) {
+      // Prev control
+      bezierPoints.add(
+          new Translation2d(
+              poses.get(i).getTranslation().getDistance(poses.get(i - 1).getTranslation()) / 3.0,
+              poses.get(i).getRotation().plus(Rotation2d.fromDegrees(180))));
+      // Anchor
+      bezierPoints.add(poses.get(i).getTranslation());
+      // Next control
+      bezierPoints.add(
+          new Translation2d(
+              poses.get(i).getTranslation().getDistance(poses.get(i + 1).getTranslation()) / 3.0,
+              poses.get(i).getRotation()));
+    }
+
+    // Last pose
+    bezierPoints.add(
+        new Translation2d(
+            poses
+                    .get(poses.size() - 1)
+                    .getTranslation()
+                    .getDistance(poses.get(poses.size() - 2).getTranslation())
+                / 3.0,
+            poses.get(poses.size() - 1).getRotation().plus(Rotation2d.fromDegrees(180))));
+    bezierPoints.add(poses.get(poses.size() - 1).getTranslation());
+
+    return bezierPoints;
+  }
+
+  /**
+   * Create the bezier points necessary to create a path using a list of poses
+   *
+   * @param poses List of poses. Each pose represents one waypoint.
+   * @return Bezier points
+   */
+  public static List<Translation2d> bezierFromPoses(Pose2d... poses) {
+    return bezierFromPoses(Arrays.asList(poses));
   }
 
   /**

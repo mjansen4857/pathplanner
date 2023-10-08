@@ -14,6 +14,7 @@
 #include <string>
 #include <units/length.h>
 #include <memory>
+#include <initializer_list>
 
 namespace pathplanner {
 class PathPlannerPath {
@@ -36,7 +37,34 @@ public:
 			PathConstraints globalConstraints, GoalEndState goalEndState,
 			bool reversed);
 
+	/**
+	 * Simplified constructor to create a path with no rotation targets, constraint zones, or event
+	 * markers.
+	 *
+	 * <p>You likely want to use bezierFromPoses to create the bezier points.
+	 *
+	 * @param bezierPoints List of points representing the cubic Bezier curve of the path
+	 * @param constraints The global constraints of the path
+	 * @param goalEndState The goal end state of the path
+	 * @param reversed Should the robot follow the path reversed (differential drive only)
+	 */
+	PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
+			PathConstraints constraints, GoalEndState goalEndState,
+			bool reversed = false) : PathPlannerPath(bezierPoints,
+			std::vector<RotationTarget>(), std::vector<ConstraintsZone>(),
+			std::vector<EventMarker>(), constraints, goalEndState, reversed) {
+	}
+
 	void hotReload(const wpi::json &json);
+
+	/**
+	 * Create the bezier points necessary to create a path using a list of poses
+	 *
+	 * @param poses List of poses. Each pose represents one waypoint.
+	 * @return Bezier points
+	 */
+	static std::vector<frc::Translation2d> bezierFromPoses(
+			std::vector<frc::Pose2d> poses);
 
 	/**
 	 * Load a path from a path file in storage

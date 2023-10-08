@@ -2,9 +2,13 @@ package com.pathplanner.lib.util;
 
 /** PID constants used to create PID controllers */
 public class PIDConstants {
+  /** P */
   public final double kP;
+  /** I */
   public final double kI;
+  /** D */
   public final double kD;
+  /** Integral range */
   public final double iZone;
 
   /**

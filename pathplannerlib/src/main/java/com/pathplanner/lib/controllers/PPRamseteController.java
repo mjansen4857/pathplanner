@@ -5,6 +5,7 @@ import edu.wpi.first.math.controller.RamseteController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
+/** Ramsete path following controller */
 public class PPRamseteController extends RamseteController implements PathFollowingController {
   private double lastError = 0;
 

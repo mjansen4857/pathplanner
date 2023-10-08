@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/** Base command for following a path */
 public class FollowPathCommand extends Command {
   private final Timer timer = new Timer();
   private final PathPlannerPath path;

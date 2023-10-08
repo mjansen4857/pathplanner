@@ -3,6 +3,7 @@ package com.pathplanner.lib.path;
 import java.util.Objects;
 import org.json.simple.JSONObject;
 
+/** A zone on a path with different kinematic constraints */
 public class ConstraintsZone {
   private final double minWaypointPos;
   private final double maxWaypointPos;

@@ -4,6 +4,7 @@ import com.pathplanner.lib.path.PathPlannerTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
+/** Interface used by path following controllers */
 public interface PathFollowingController {
   /**
    * Calculates the next output of the path following controller

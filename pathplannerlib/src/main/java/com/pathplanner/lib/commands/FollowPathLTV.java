@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/** Follow a path using a PPLTVController */
 public class FollowPathLTV extends FollowPathCommand {
   /**
    * Create a path following command that will use an LTV unicycle controller for differential drive

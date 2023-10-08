@@ -12,17 +12,18 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+/** Implementation of the AD* pathfinding algorithm */
 public class ADStar {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;
   private static final double SMOOTHING_CONTROL_PCT = 0.33;
 
-  public static double FIELD_LENGTH = 16.54;
-  public static double FIELD_WIDTH = 8.02;
+  private static double FIELD_LENGTH = 16.54;
+  private static double FIELD_WIDTH = 8.02;
 
-  public static double NODE_SIZE = 0.2;
+  private static double NODE_SIZE = 0.2;
 
-  public static int NODE_X = (int) Math.ceil(FIELD_LENGTH / NODE_SIZE);
-  public static int NODE_Y = (int) Math.ceil(FIELD_WIDTH / NODE_SIZE);
+  private static int NODE_X = (int) Math.ceil(FIELD_LENGTH / NODE_SIZE);
+  private static int NODE_Y = (int) Math.ceil(FIELD_WIDTH / NODE_SIZE);
 
   private static final double EPS = 2.5;
 
@@ -53,6 +54,11 @@ public class ADStar {
 
   private static volatile List<Translation2d> currentPath = new ArrayList<>();
 
+  /**
+   * Ensure that the pathfinding thread is initialized and running.
+   *
+   * <p>This will do nothing if already initialized
+   */
   public static void ensureInitialized() {
     if (!running) {
       running = true;
@@ -171,10 +177,20 @@ public class ADStar {
     }
   }
 
+  /**
+   * Get if a new path has been calculated since the last time a path was retrieved
+   *
+   * @return True if a new path is available
+   */
   public static boolean isNewPathAvailable() {
     return newPathAvailable;
   }
 
+  /**
+   * Get the most recently calculated path
+   *
+   * @return The bezier points representing a path
+   */
   public static List<Translation2d> getCurrentPath() {
     if (!running) {
       DriverStation.reportWarning("ADStar path was retrieved before it was initialized", false);
@@ -184,6 +200,12 @@ public class ADStar {
     return currentPath;
   }
 
+  /**
+   * Set the start position to pathfind from
+   *
+   * @param start Start position on the field. If this is within an obstacle it will be moved to the
+   *     nearest non-obstacle node.
+   */
   public static void setStartPos(Translation2d start) {
     synchronized (lock) {
       GridPosition startPos = findClosestNonObstacle(getGridPos(start));
@@ -197,6 +219,12 @@ public class ADStar {
     }
   }
 
+  /**
+   * Set the goal position to pathfind to
+   *
+   * @param goal Goal position on the field. f this is within an obstacle it will be moved to the
+   *     nearest non-obstacle node.
+   */
   public static void setGoalPos(Translation2d goal) {
     synchronized (lock) {
       GridPosition gridPos = findClosestNonObstacle(getGridPos(goal));
@@ -237,6 +265,16 @@ public class ADStar {
     return null;
   }
 
+  /**
+   * Set the dynamic obstacles that should be avoided while pathfinding. This is an advanced usage
+   * feature. This can do some weird things so you should become very familiar with how this will
+   * work before being anywhere near comfortable using it in competition.
+   *
+   * @param obs A List of Translation2d pairs representing obstacles. Each Translation2d represents
+   *     opposite corners of a bounding box.
+   * @param currentRobotPos The current position of the robot. This is needed to change the start
+   *     position of the path if the robot is now within an obstacle.
+   */
   public static void setDynamicObstacles(
       List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos) {
     Set<GridPosition> newObs = new HashSet<>();
@@ -581,6 +619,12 @@ public class ADStar {
     }
   }
 
+  /**
+   * Converts a Translation2d into a grid position
+   *
+   * @param pos Position on the field
+   * @return The gird position containing the translation
+   */
   public static GridPosition getGridPos(Translation2d pos) {
     int x = (int) Math.floor(pos.getX() / NODE_SIZE);
     int y = (int) Math.floor(pos.getY() / NODE_SIZE);
@@ -593,10 +637,19 @@ public class ADStar {
         (pos.x * NODE_SIZE) + (NODE_SIZE / 2.0), (pos.y * NODE_SIZE) + (NODE_SIZE / 2.0));
   }
 
+  /** Represents a node in the pathfinding grid */
   public static class GridPosition implements Comparable<GridPosition> {
+    /** X index in the grid */
     public final int x;
+    /** Y index in the grid */
     public final int y;
 
+    /**
+     * Create a node within the pathfinding grid
+     *
+     * @param x X index in the grid
+     * @param y Y index in the grid
+     */
     public GridPosition(int x, int y) {
       this.x = x;
       this.y = y;

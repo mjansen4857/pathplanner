@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import java.util.Objects;
 import org.json.simple.JSONObject;
 
+/** A target holonomic rotation at a position along a path */
 public class RotationTarget {
   private final double waypointRelativePosition;
   private final Rotation2d target;

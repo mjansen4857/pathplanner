@@ -9,6 +9,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Trajectory created from a pathplanner path */
 public class PathPlannerTrajectory {
   private final List<State> states;
 
@@ -222,25 +223,41 @@ public class PathPlannerTrajectory {
     return getState(getStates().size() - 1);
   }
 
+  /** A state along the trajectory */
   public static class State {
+    /** The time at this state in seconds */
     public double timeSeconds = 0;
 
+    /** The velocity at this state in m/s */
     public double velocityMps = 0;
+    /** The acceleration at this state in m/s^2 */
     public double accelerationMpsSq = 0;
 
+    /** The time at this state in seconds */
     public double headingAngularVelocityRps = 0;
 
+    /** The position at this state in meters */
     public Translation2d positionMeters = new Translation2d();
+    /** The heading (direction of travel) at this state */
     public Rotation2d heading = new Rotation2d();
+    /** The target holonomic rotation at this state */
     public Rotation2d targetHolonomicRotation = new Rotation2d();
 
+    /** The curvature at this state in rad/m */
     public double curvatureRadPerMeter = 0;
-
+    /** The constraints to apply at this state */
     public PathConstraints constraints;
 
     // Values only used during generation
     private double deltaPos = 0;
 
+    /**
+     * Interpolate between this state and the given state
+     *
+     * @param endVal State to interpolate with
+     * @param t Interpolation factor (0.0-1.0)
+     * @return Interpolated state
+     */
     public State interpolate(State endVal, double t) {
       State lerpedState = new State();
 

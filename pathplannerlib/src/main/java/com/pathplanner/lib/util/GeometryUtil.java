@@ -3,19 +3,53 @@ package com.pathplanner.lib.util;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
+/** Utility class for various geometry functions used during generation */
 public class GeometryUtil {
+  /**
+   * Interpolate between two doubles
+   *
+   * @param startVal Start value
+   * @param endVal End value
+   * @param t Interpolation factor (0.0-1.0)
+   * @return Interpolated value
+   */
   public static double doubleLerp(double startVal, double endVal, double t) {
     return startVal + (endVal - startVal) * t;
   }
 
+  /**
+   * Interpolate between two Rotation2ds
+   *
+   * @param startVal Start value
+   * @param endVal End value
+   * @param t Interpolation factor (0.0-1.0)
+   * @return Interpolated value
+   */
   public static Rotation2d rotationLerp(Rotation2d startVal, Rotation2d endVal, double t) {
     return startVal.plus(endVal.minus(startVal).times(t));
   }
 
+  /**
+   * Linear interpolation between Translation2ds
+   *
+   * @param a Position 1
+   * @param b Position 2
+   * @param t Interpolation factor (0.0-1.0)
+   * @return Interpolated value
+   */
   public static Translation2d translationLerp(Translation2d a, Translation2d b, double t) {
     return a.plus((b.minus(a)).times(t));
   }
 
+  /**
+   * Cubic interpolation between Translation2ds
+   *
+   * @param a Position 1
+   * @param b Position 2
+   * @param c Position 3
+   * @param t Interpolation factor (0.0-1.0)
+   * @return Interpolated value
+   */
   public static Translation2d quadraticLerp(
       Translation2d a, Translation2d b, Translation2d c, double t) {
     Translation2d p0 = translationLerp(a, b, t);
@@ -23,6 +57,16 @@ public class GeometryUtil {
     return translationLerp(p0, p1, t);
   }
 
+  /**
+   * Quadratic interpolation between Translation2ds
+   *
+   * @param a Position 1
+   * @param b Position 2
+   * @param c Position 3
+   * @param d Position 4
+   * @param t Interpolation factor (0.0-1.0)
+   * @return Interpolated value
+   */
   public static Translation2d cubicLerp(
       Translation2d a, Translation2d b, Translation2d c, Translation2d d, double t) {
     Translation2d p0 = quadraticLerp(a, b, c, t);
@@ -30,6 +74,14 @@ public class GeometryUtil {
     return translationLerp(p0, p1, t);
   }
 
+  /**
+   * Calculate the curve radius given 3 points on the curve
+   *
+   * @param a Point A
+   * @param b Point B
+   * @param c Point C
+   * @return Curve radius
+   */
   public static double calculateRadius(Translation2d a, Translation2d b, Translation2d c) {
     Translation2d vba = a.minus(b);
     Translation2d vbc = c.minus(b);

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/** Base pathfinding command */
 public class PathfindingCommand extends Command {
   private final Timer timer = new Timer();
   private final PathPlannerPath targetPath;

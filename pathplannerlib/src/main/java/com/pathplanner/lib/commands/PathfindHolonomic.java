@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/** Pathfind and follow the path with a PPHolonomicDriveController */
 public class PathfindHolonomic extends PathfindingCommand {
   /**
    * Constructs a new PathfindHolonomic command that will generate a path towards the given path.

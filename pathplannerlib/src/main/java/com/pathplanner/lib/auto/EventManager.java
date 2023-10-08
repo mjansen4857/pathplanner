@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/** Utility class for managing named commands */
 public class EventManager {
   private static final HashMap<String, Command> eventMap = new HashMap<>();
 

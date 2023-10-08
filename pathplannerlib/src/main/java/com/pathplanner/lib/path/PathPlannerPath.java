@@ -19,6 +19,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
+/** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {
   private List<Translation2d> bezierPoints;
   private List<RotationTarget> rotationTargets;
@@ -71,6 +72,11 @@ public class PathPlannerPath {
     this.allPoints = new ArrayList<>();
   }
 
+  /**
+   * Hot reload the path. This is used internally.
+   *
+   * @param pathJson Updated JSONObject for the path
+   */
   public void hotReload(JSONObject pathJson) {
     PathPlannerPath updatedPath = PathPlannerPath.fromJson(pathJson);
 
@@ -192,22 +198,7 @@ public class PathPlannerPath {
     return globalConstraints;
   }
 
-  /**
-   * Create a path planner path from pre-generated path points. This is used internally, and you
-   * likely should not use this
-   */
-  public static PathPlannerPath fromPathPoints(
-      List<PathPoint> pathPoints, PathConstraints globalConstraints, GoalEndState goalEndState) {
-    PathPlannerPath path = new PathPlannerPath(globalConstraints, goalEndState);
-    path.allPoints.addAll(pathPoints);
-
-    path.precalcValues();
-
-    return path;
-  }
-
-  /** Generate path points for a path. This is used internally and should not be used directly. */
-  public static List<PathPoint> createPath(
+  private static List<PathPoint> createPath(
       List<Translation2d> bezierPoints,
       List<RotationTarget> holonomicRotations,
       List<ConstraintsZone> constraintZones) {

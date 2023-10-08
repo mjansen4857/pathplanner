@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import java.util.Objects;
 import org.json.simple.JSONObject;
 
+/** Describes the goal end state of the robot when finishing a path */
 public class GoalEndState {
   private final double velocity;
   private final Rotation2d rotation;

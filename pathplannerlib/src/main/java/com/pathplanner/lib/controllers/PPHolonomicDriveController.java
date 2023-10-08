@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
+/** Path following controller for holonomic drive trains */
 public class PPHolonomicDriveController implements PathFollowingController {
   private final PIDController xController;
   private final PIDController yController;

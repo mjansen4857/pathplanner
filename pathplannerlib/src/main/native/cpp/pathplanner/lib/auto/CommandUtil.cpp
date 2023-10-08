@@ -1,5 +1,5 @@
 #include "pathplanner/lib/auto/CommandUtil.h"
-#include "pathplanner/lib/auto/EventManager.h"
+#include "pathplanner/lib/auto/NamedCommands.h"
 #include "pathplanner/lib/auto/AutoBuilder.h"
 #include <frc2/command/Commands.h>
 #include <string>
@@ -58,7 +58,7 @@ frc2::CommandPtr CommandUtil::waitCommandFromJson(const wpi::json &json) {
 
 frc2::CommandPtr CommandUtil::namedCommandFromJson(const wpi::json &json) {
 	std::string name = json.at("name").get<std::string>();
-	return EventManager::getCommand(name);
+	return NamedCommands::getCommand(name);
 }
 
 frc2::CommandPtr CommandUtil::pathCommandFromJson(const wpi::json &json) {

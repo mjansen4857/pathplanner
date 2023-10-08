@@ -61,7 +61,7 @@ public class CommandUtil {
 
   private static Command namedCommandFromData(JSONObject dataJson) {
     String name = (String) dataJson.get("name");
-    return EventManager.getCommand(name);
+    return NamedCommands.getCommand(name);
   }
 
   private static Command pathCommandFromData(JSONObject dataJson) {

@@ -3,6 +3,7 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include "pathplanner/lib/commands/FollowPathRamsete.h"
 #include "pathplanner/lib/commands/PathfindRamsete.h"
+#include "pathplanner/lib/commands/FollowPathWithEvents.h"
 
 namespace pathplanner {
 class PathfindThenFollowPathRamsete: public frc2::SequentialCommandGroup {
@@ -35,9 +36,11 @@ public:
 				PathfindRamsete(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, b,
 						zeta, requirements),
-				FollowPathRamsete(goalPath, poseSupplier,
-						currentRobotRelativeSpeeds, robotRelativeOutput, b,
-						zeta, replanningConfig, requirements));
+				FollowPathWithEvents(
+						FollowPathRamsete(goalPath, poseSupplier,
+								currentRobotRelativeSpeeds, robotRelativeOutput,
+								b, zeta, replanningConfig, requirements).ToPtr().Unwrap(),
+						goalPath, poseSupplier));
 	}
 
 	/**
@@ -62,9 +65,11 @@ public:
 				PathfindRamsete(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput,
 						requirements),
-				FollowPathRamsete(goalPath, poseSupplier,
-						currentRobotRelativeSpeeds, robotRelativeOutput,
-						replanningConfig, requirements));
+				FollowPathWithEvents(
+						FollowPathRamsete(goalPath, poseSupplier,
+								currentRobotRelativeSpeeds, robotRelativeOutput,
+								replanningConfig, requirements).ToPtr().Unwrap(),
+						goalPath, poseSupplier));
 	}
 };
 }

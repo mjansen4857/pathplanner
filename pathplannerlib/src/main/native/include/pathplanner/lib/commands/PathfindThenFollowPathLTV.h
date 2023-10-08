@@ -3,6 +3,7 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include "pathplanner/lib/commands/FollowPathLTV.h"
 #include "pathplanner/lib/commands/PathfindLTV.h"
+#include "pathplanner/lib/commands/FollowPathWithEvents.h"
 
 namespace pathplanner {
 class PathfindThenFollowPathLTV: public frc2::SequentialCommandGroup {
@@ -34,9 +35,12 @@ public:
 				PathfindLTV(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, Qelems,
 						Relems, dt, requirements),
-				FollowPathLTV(goalPath, poseSupplier,
-						currentRobotRelativeSpeeds, robotRelativeOutput, Qelems,
-						Relems, dt, replanningConfig, requirements));
+				FollowPathWithEvents(
+						FollowPathLTV(goalPath, poseSupplier,
+								currentRobotRelativeSpeeds, robotRelativeOutput,
+								Qelems, Relems, dt, replanningConfig,
+								requirements).ToPtr().Unwrap(), goalPath,
+						poseSupplier));
 	}
 
 	/**
@@ -62,9 +66,11 @@ public:
 				PathfindLTV(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, dt,
 						requirements),
-				FollowPathLTV(goalPath, poseSupplier,
-						currentRobotRelativeSpeeds, robotRelativeOutput, dt,
-						replanningConfig, requirements));
+				FollowPathWithEvents(
+						FollowPathLTV(goalPath, poseSupplier,
+								currentRobotRelativeSpeeds, robotRelativeOutput,
+								dt, replanningConfig, requirements).ToPtr().Unwrap(),
+						goalPath, poseSupplier));
 	}
 };
 }

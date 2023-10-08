@@ -3,6 +3,7 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include "pathplanner/lib/commands/FollowPathHolonomic.h"
 #include "pathplanner/lib/commands/PathfindHolonomic.h"
+#include "pathplanner/lib/commands/FollowPathWithEvents.h"
 
 namespace pathplanner {
 class PathfindThenFollowPathHolonomic: public frc2::SequentialCommandGroup {
@@ -33,9 +34,11 @@ public:
 						poseSupplier, currentRobotRelativeSpeeds,
 						robotRelativeOutput, config, requirements,
 						rotationDelayDistance),
-				FollowPathHolonomic(goalPath, poseSupplier,
-						currentRobotRelativeSpeeds, robotRelativeOutput, config,
-						requirements));
+				FollowPathWithEvents(
+						FollowPathHolonomic(goalPath, poseSupplier,
+								currentRobotRelativeSpeeds, robotRelativeOutput,
+								config, requirements).ToPtr().Unwrap(),
+						goalPath, poseSupplier));
 	}
 };
 }

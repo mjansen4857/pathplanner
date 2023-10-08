@@ -155,8 +155,9 @@ private:
 
 	static inline frc::Translation2d gridPosToTranslation2d(
 			const GridPosition &pos) {
-		return frc::Translation2d(units::meter_t { pos.x * NODE_SIZE },
-				units::meter_t { pos.y * NODE_SIZE });
+		return frc::Translation2d(
+				units::meter_t { (pos.x * NODE_SIZE) + (NODE_SIZE / 2.0) },
+				units::meter_t { (pos.y * NODE_SIZE) + (NODE_SIZE / 2.0) });
 	}
 };
 }

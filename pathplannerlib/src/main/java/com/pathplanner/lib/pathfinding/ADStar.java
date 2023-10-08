@@ -589,7 +589,8 @@ public class ADStar {
   }
 
   private static Translation2d gridPosToTranslation2d(GridPosition pos) {
-    return new Translation2d(pos.x * NODE_SIZE, pos.y * NODE_SIZE);
+    return new Translation2d(
+        (pos.x * NODE_SIZE) + (NODE_SIZE / 2.0), (pos.y * NODE_SIZE) + (NODE_SIZE / 2.0));
   }
 
   public static class GridPosition implements Comparable<GridPosition> {

@@ -35,6 +35,10 @@ Make sure you [install PathPlannerLib](https://github.com/mjansen4857/pathplanne
 https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib.json
 ```
 
+[Java API Docs](https://mjansen4857.com/pathplanner/docs/java/)
+
+[C++ API Docs](https://mjansen4857.com/pathplanner/docs/cpp/)
+
 ## How to build manually:
 * [Install Flutter](https://flutter.dev/docs/get-started/install) (this project currently uses v3.13.6)
 * Open the project in a terminal and run the following command: `flutter build <PLATFORM>`

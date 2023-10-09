@@ -7,10 +7,10 @@ nativeUtils {
     wpi {
         configureDependencies {
             wpiVersion = "2024.+"
-            opencvYear = "frc2023"
+            opencvYear = "frc2024"
             googleTestYear = "frc2023"
             niLibVersion = "2024.1.1"
-            opencvVersion = "4.6.0-5"
+            opencvVersion = "4.8.0-1"
             googleTestVersion = "1.12.1-2"
         }
     }

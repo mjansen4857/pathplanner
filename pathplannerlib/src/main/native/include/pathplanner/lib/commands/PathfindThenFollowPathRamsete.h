@@ -59,7 +59,7 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
-			units::second_t dt, ReplanningConfig replanningConfig,
+			ReplanningConfig replanningConfig,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindRamsete(goalPath, pathfindingConstraints, poseSupplier,

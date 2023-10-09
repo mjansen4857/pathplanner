@@ -113,7 +113,7 @@ public:
 			ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem);
 
 	/**
-	 * Configures the AutoBuilder with custom path following command builder.
+	 * Configures the AutoBuilder with custom path following command builder. Building pathfinding commands is not supported when using a custom path following command builder.
 	 *
 	 * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
 	 * @param poseSupplier a function that returns the robot's current pose
@@ -160,10 +160,48 @@ public:
 
 	static frc::Pose2d getStartingPoseFromJson(const wpi::json &json);
 
+	/**
+	 * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
+	 * rotation and rotation delay distance will have no effect.
+	 *
+	 * @param pose The pose to pathfind to
+	 * @param constraints The constraints to use while pathfinding
+	 * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
+	 * @param rotationDelayDistance The distance the robot should move from the start position before
+	 *     attempting to rotate to the final rotation
+	 * @return A command to pathfind to a given pose
+	 */
+	static frc2::CommandPtr pathfindToPose(frc::Pose2d pose,
+			PathConstraints constraints, units::meters_per_second_t goalEndVel =
+					0_mps, units::meter_t rotationDelayDistance = 0_m);
+
+	/**
+	 * Build a command to pathfind to a given path, then follow that path. If not using a holonomic
+	 * drivetrain, the pose rotation delay distance will have no effect.
+	 *
+	 * @param goalPath The path to pathfind to, then follow
+	 * @param pathfindingConstraints The constraints to use while pathfinding
+	 * @param rotationDelayDistance The distance the robot should move from the start position before
+	 *     attempting to rotate to the final rotation
+	 * @return A command to pathfind to a given path, then follow the path
+	 */
+	static frc2::CommandPtr pathfindThenFollowPath(
+			std::shared_ptr<PathPlannerPath> goalPath,
+			PathConstraints pathfindingConstraints,
+			units::meter_t rotationDelayDistance = 0_m);
+
 private:
 	static bool m_configured;
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
 	static std::function<frc::Pose2d()> m_getPose;
 	static std::function<void(frc::Pose2d)> m_resetPose;
+
+	static bool m_pathfindingConfigured;
+	static std::function<
+			frc2::CommandPtr(frc::Pose2d, PathConstraints,
+					units::meters_per_second_t, units::meter_t)> m_pathfindToPoseCommandBuilder;
+	static std::function<
+			frc2::CommandPtr(std::shared_ptr<PathPlannerPath>, PathConstraints,
+					units::meter_t)> m_pathfindThenFollowPathCommandBuilder;
 };
 }

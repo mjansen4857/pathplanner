@@ -103,51 +103,5 @@ public:
 			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
 			std::make_unique < PPLTVController > (dt), 0_m, requirements) {
 	}
-
-	/**
-	 * Constructs a new PathfindLTV command that will generate a path towards the given position.
-	 *
-	 * @param targetPosition the position to pathfind to
-	 * @param constraints the path constraints to use while pathfinding
-	 * @param poseSupplier a supplier for the robot's current pose
-	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
-	 * @param output a consumer for the output speeds (robot relative)
-	 * @param Qelems The maximum desired error tolerance for each state.
-	 * @param Relems The maximum desired control effort for each input.
-	 * @param dt Period of the robot control loop in seconds (default 0.02)
-	 * @param requirements the subsystems required by this command
-	 */
-	PathfindLTV(frc::Translation2d targetPosition, PathConstraints constraints,
-			units::meters_per_second_t goalEndVel,
-			std::function<frc::Pose2d()> poseSupplier,
-			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
-			std::function<void(frc::ChassisSpeeds)> output,
-			const wpi::array<double, 3> &Qelems,
-			const wpi::array<double, 2> &Relems, units::second_t dt,
-			frc2::Requirements requirements) : PathfindLTV(targetPosition,
-			constraints, 0_mps, poseSupplier, currentRobotRelativeSpeeds,
-			output, Qelems, Relems, dt, requirements) {
-	}
-
-	/**
-	 * Constructs a new PathfindLTV command that will generate a path towards the given position.
-	 *
-	 * @param targetPosition the position to pathfind to
-	 * @param constraints the path constraints to use while pathfinding
-	 * @param poseSupplier a supplier for the robot's current pose
-	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
-	 * @param output a consumer for the output speeds (robot relative)
-	 * @param dt Period of the robot control loop in seconds (default 0.02)
-	 * @param requirements the subsystems required by this command
-	 */
-	PathfindLTV(frc::Translation2d targetPosition, PathConstraints constraints,
-			units::meters_per_second_t goalEndVel,
-			std::function<frc::Pose2d()> poseSupplier,
-			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
-			std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
-			frc2::Requirements requirements) : PathfindLTV(targetPosition,
-			constraints, 0_mps, poseSupplier, currentRobotRelativeSpeeds,
-			output, dt, requirements) {
-	}
 };
 }

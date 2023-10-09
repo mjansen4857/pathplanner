@@ -48,6 +48,6 @@ https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib.json
       * linux
 * The built app will be located here:
     * Windows: `<PROJECT DIR>/build/windows/runner/Release`
-    * maxOS: `<PROJECT DIR>/build/macos/Build/Products/Release`
+    * macOS: `<PROJECT DIR>/build/macos/Build/Products/Release`
     * Linux: `<PROJECT DIR>/build/linux/x64/release/bundle`
 * OR `flutter run` to run in debug mode

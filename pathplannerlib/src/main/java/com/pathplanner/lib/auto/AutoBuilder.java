@@ -1,9 +1,7 @@
 package com.pathplanner.lib.auto;
 
-import com.pathplanner.lib.commands.FollowPathHolonomic;
-import com.pathplanner.lib.commands.FollowPathLTV;
-import com.pathplanner.lib.commands.FollowPathRamsete;
-import com.pathplanner.lib.commands.FollowPathWithEvents;
+import com.pathplanner.lib.commands.*;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.ReplanningConfig;
@@ -33,6 +31,13 @@ public class AutoBuilder {
   private static Function<PathPlannerPath, Command> pathFollowingCommandBuilder;
   private static Supplier<Pose2d> getPose;
   private static Consumer<Pose2d> resetPose;
+
+  // Pathfinding builders
+  private static boolean pathfindingConfigured = false;
+  private static QuadFunction<Pose2d, PathConstraints, Double, Double, Command>
+      pathfindToPoseCommandBuilder;
+  private static TriFunction<PathPlannerPath, PathConstraints, Double, Command>
+      pathfindThenFollowPathCommandBuilder;
 
   /**
    * Configures the AutoBuilder for a holonomic drivetrain.
@@ -71,6 +76,31 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+
+    AutoBuilder.pathfindToPoseCommandBuilder =
+        (pose, constraints, goalEndVel, rotationDelayDistance) ->
+            new PathfindHolonomic(
+                pose,
+                constraints,
+                goalEndVel,
+                poseSupplier,
+                robotRelativeSpeedsSupplier,
+                robotRelativeOutput,
+                config,
+                rotationDelayDistance,
+                driveSubsystem);
+    AutoBuilder.pathfindThenFollowPathCommandBuilder =
+        (path, constraints, rotationDelayDistance) ->
+            new PathfindThenFollowPathHolonomic(
+                path,
+                constraints,
+                poseSupplier,
+                robotRelativeSpeedsSupplier,
+                robotRelativeOutput,
+                config,
+                rotationDelayDistance,
+                driveSubsystem);
+    AutoBuilder.pathfindingConfigured = true;
   }
 
   /**
@@ -103,6 +133,28 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+
+    AutoBuilder.pathfindToPoseCommandBuilder =
+        (pose, constraints, goalEndVel, rotationDelayDistance) ->
+            new PathfindRamsete(
+                pose.getTranslation(),
+                constraints,
+                goalEndVel,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                driveSubsystem);
+    AutoBuilder.pathfindThenFollowPathCommandBuilder =
+        (path, constraints, rotationDelayDistance) ->
+            new PathfindThenFollowPathRamsete(
+                path,
+                constraints,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                replanningConfig,
+                driveSubsystem);
+    AutoBuilder.pathfindingConfigured = true;
   }
 
   /**
@@ -148,6 +200,32 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+
+    AutoBuilder.pathfindToPoseCommandBuilder =
+        (pose, constraints, goalEndVel, rotationDelayDistance) ->
+            new PathfindRamsete(
+                pose.getTranslation(),
+                constraints,
+                goalEndVel,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                b,
+                zeta,
+                driveSubsystem);
+    AutoBuilder.pathfindThenFollowPathCommandBuilder =
+        (path, constraints, rotationDelayDistance) ->
+            new PathfindThenFollowPathRamsete(
+                path,
+                constraints,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                b,
+                zeta,
+                replanningConfig,
+                driveSubsystem);
+    AutoBuilder.pathfindingConfigured = true;
   }
 
   /**
@@ -183,6 +261,30 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+
+    AutoBuilder.pathfindToPoseCommandBuilder =
+        (pose, constraints, goalEndVel, rotationDelayDistance) ->
+            new PathfindLTV(
+                pose.getTranslation(),
+                constraints,
+                goalEndVel,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                dt,
+                driveSubsystem);
+    AutoBuilder.pathfindThenFollowPathCommandBuilder =
+        (path, constraints, rotationDelayDistance) ->
+            new PathfindThenFollowPathLTV(
+                path,
+                constraints,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                dt,
+                replanningConfig,
+                driveSubsystem);
+    AutoBuilder.pathfindingConfigured = true;
   }
 
   /**
@@ -230,10 +332,39 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+
+    AutoBuilder.pathfindToPoseCommandBuilder =
+        (pose, constraints, goalEndVel, rotationDelayDistance) ->
+            new PathfindLTV(
+                pose.getTranslation(),
+                constraints,
+                goalEndVel,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                qelems,
+                relems,
+                dt,
+                driveSubsystem);
+    AutoBuilder.pathfindThenFollowPathCommandBuilder =
+        (path, constraints, rotationDelayDistance) ->
+            new PathfindThenFollowPathLTV(
+                path,
+                constraints,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                qelems,
+                relems,
+                dt,
+                replanningConfig,
+                driveSubsystem);
+    AutoBuilder.pathfindingConfigured = true;
   }
 
   /**
-   * Configures the AutoBuilder with custom path following command builder.
+   * Configures the AutoBuilder with custom path following command builder. Building pathfinding
+   * commands is not supported if using a custom command builder.
    *
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
    * @param poseSupplier a supplier for the robot's current pose
@@ -253,6 +384,8 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+
+    AutoBuilder.pathfindingConfigured = false;
   }
 
   /**
@@ -262,6 +395,15 @@ public class AutoBuilder {
    */
   public static boolean isConfigured() {
     return configured;
+  }
+
+  /**
+   * Returns whether the AutoBuilder has been configured for pathfinding.
+   *
+   * @return true if the AutoBuilder has been configured for pathfinding, false otherwise
+   */
+  public static boolean isPathfindingConfigured() {
+    return pathfindingConfigured;
   }
 
   /**
@@ -278,6 +420,92 @@ public class AutoBuilder {
     }
 
     return new FollowPathWithEvents(pathFollowingCommandBuilder.apply(path), path, getPose);
+  }
+
+  /**
+   * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
+   * rotation and rotation delay distance will have no effect.
+   *
+   * @param pose The pose to pathfind to
+   * @param constraints The constraints to use while pathfinding
+   * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
+   * @param rotationDelayDistance The distance the robot should move from the start position before
+   *     attempting to rotate to the final rotation
+   * @return A command to pathfind to a given pose
+   */
+  public static Command pathfindToPose(
+      Pose2d pose,
+      PathConstraints constraints,
+      double goalEndVelocity,
+      double rotationDelayDistance) {
+    if (!isPathfindingConfigured()) {
+      throw new AutoBuilderException(
+          "Auto builder was used to build a pathfinding command before being configured");
+    }
+
+    return pathfindToPoseCommandBuilder.apply(
+        pose, constraints, goalEndVelocity, rotationDelayDistance);
+  }
+
+  /**
+   * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
+   * rotation will have no effect.
+   *
+   * @param pose The pose to pathfind to
+   * @param constraints The constraints to use while pathfinding
+   * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
+   * @return A command to pathfind to a given pose
+   */
+  public static Command pathfindToPose(
+      Pose2d pose, PathConstraints constraints, double goalEndVelocity) {
+    return pathfindToPose(pose, constraints, goalEndVelocity, 0);
+  }
+
+  /**
+   * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
+   * rotation will have no effect.
+   *
+   * @param pose The pose to pathfind to
+   * @param constraints The constraints to use while pathfinding
+   * @return A command to pathfind to a given pose
+   */
+  public static Command pathfindToPose(Pose2d pose, PathConstraints constraints) {
+    return pathfindToPose(pose, constraints, 0);
+  }
+
+  /**
+   * Build a command to pathfind to a given path, then follow that path. If not using a holonomic
+   * drivetrain, the pose rotation delay distance will have no effect.
+   *
+   * @param goalPath The path to pathfind to, then follow
+   * @param pathfindingConstraints The constraints to use while pathfinding
+   * @param rotationDelayDistance The distance the robot should move from the start position before
+   *     attempting to rotate to the final rotation
+   * @return A command to pathfind to a given path, then follow the path
+   */
+  public static Command pathfindThenFollowPath(
+      PathPlannerPath goalPath,
+      PathConstraints pathfindingConstraints,
+      double rotationDelayDistance) {
+    if (!isPathfindingConfigured()) {
+      throw new AutoBuilderException(
+          "Auto builder was used to build a pathfinding command before being configured");
+    }
+
+    return pathfindThenFollowPathCommandBuilder.apply(
+        goalPath, pathfindingConstraints, rotationDelayDistance);
+  }
+
+  /**
+   * Build a command to pathfind to a given path, then follow that path.
+   *
+   * @param goalPath The path to pathfind to, then follow
+   * @param pathfindingConstraints The constraints to use while pathfinding
+   * @return A command to pathfind to a given path, then follow the path
+   */
+  public static Command pathfindThenFollowPath(
+      PathPlannerPath goalPath, PathConstraints pathfindingConstraints) {
+    return pathfindThenFollowPath(goalPath, pathfindingConstraints, 0);
   }
 
   /**
@@ -339,5 +567,34 @@ public class AutoBuilder {
     } else {
       return autoCommand;
     }
+  }
+
+  /** Functional interface for a function that takes 3 inputs */
+  @FunctionalInterface
+  public interface TriFunction<In1, In2, In3, Out> {
+    /**
+     * Apply the inputs to this function
+     *
+     * @param in1 Input 1
+     * @param in2 Input 2
+     * @param in3 Input 3
+     * @return Output
+     */
+    Out apply(In1 in1, In2 in2, In3 in3);
+  }
+
+  /** Functional interface for a function that takes 4 inputs */
+  @FunctionalInterface
+  public interface QuadFunction<In1, In2, In3, In4, Out> {
+    /**
+     * Apply the inputs to this function
+     *
+     * @param in1 Input 1
+     * @param in2 Input 2
+     * @param in3 Input 3
+     * @param in4 Input 4
+     * @return Output
+     */
+    Out apply(In1 in1, In2 in2, In3 in3, In4 in4);
   }
 }

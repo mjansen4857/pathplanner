@@ -84,30 +84,30 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
           }),
         ),
         const SizedBox(width: 8),
-        widget.command.pathName == null 
-        ? const Tooltip(
-            message: 'Missing path name',
-            child: Icon(
-              Icons.warning_amber_rounded,
-              color: Colors.yellow,
-              size: 32,
-            ),
-          )
-        : Tooltip(
-          message: 'Edit Path',
-          waitDuration: const Duration(milliseconds: 500),
-          child: IconButton(
-            onPressed: () {
-              if (widget.onOpened != null){
-                widget.onOpened!(context, widget.command.pathName!);
-              }
-            },
-            visualDensity: const VisualDensity(
-                horizontal: VisualDensity.minimumDensity,
-                vertical: VisualDensity.minimumDensity),
-            icon: Icon(Icons.open_in_new, color: colorScheme.primary),
-          ),
-        ),
+        widget.command.pathName == null
+            ? const Tooltip(
+                message: 'Missing path name',
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: Colors.yellow,
+                  size: 32,
+                ),
+              )
+            : Tooltip(
+                message: 'Edit Path',
+                waitDuration: const Duration(milliseconds: 500),
+                child: IconButton(
+                  onPressed: () {
+                    if (widget.onOpened != null) {
+                      widget.onOpened!(context, widget.command.pathName!);
+                    }
+                  },
+                  visualDensity: const VisualDensity(
+                      horizontal: VisualDensity.minimumDensity,
+                      vertical: VisualDensity.minimumDensity),
+                  icon: Icon(Icons.open_in_new, color: colorScheme.primary),
+                ),
+              ),
         Tooltip(
           message: 'Remove Command',
           waitDuration: const Duration(milliseconds: 500),

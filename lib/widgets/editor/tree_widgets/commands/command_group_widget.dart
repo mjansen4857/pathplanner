@@ -4,8 +4,6 @@ import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
-import 'package:pathplanner/pages/path_editor_page.dart';
-import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
@@ -22,7 +20,7 @@ class CommandGroupWidget extends StatelessWidget {
   final bool removable;
   final List<String>? allPathNames;
   final ValueChanged<String?>? onPathCommandHovered;
-  final OpenPathCallback? onPathOpened;
+  final Function(String)? onPathOpened;
   final ChangeStack undoStack;
 
   const CommandGroupWidget({

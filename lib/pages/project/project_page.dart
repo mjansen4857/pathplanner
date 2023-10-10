@@ -20,8 +20,6 @@ import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
-typedef OpenPathCallback = void Function(BuildContext context, String name);
-
 class ProjectPage extends StatefulWidget {
   final SharedPreferences prefs;
   final FieldImage fieldImage;
@@ -689,7 +687,7 @@ class _ProjectPageState extends State<ProjectPage> {
     });
   }
 
-  void _openPathByName(BuildContext context, String name) async {
+  void _openPathByName(String name) async {
     int index = _paths.indexWhere((path) => path.name == name);
 
     if (index == -1) {
@@ -697,7 +695,7 @@ class _ProjectPageState extends State<ProjectPage> {
     }
 
     await Navigator.push(
-      context,
+      this.context,
       MaterialPageRoute(
         builder: (context) => PathEditorPage(
           prefs: widget.prefs,

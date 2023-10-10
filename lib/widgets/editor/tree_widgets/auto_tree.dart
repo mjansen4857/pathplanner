@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
-import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/starting_pose_tree.dart';
@@ -12,7 +11,7 @@ class AutoTree extends StatefulWidget {
   final ValueChanged<String?>? onPathHovered;
   final VoidCallback? onSideSwapped;
   final VoidCallback? onAutoChanged;
-  final OpenPathCallback? onPathOpened;
+  final Function(String)? onPathOpened;
   final ChangeStack undoStack;
   final num? autoRuntime;
 

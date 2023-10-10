@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/path_command.dart';
-import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:undo/undo.dart';
 
 class PathCommandWidget extends StatefulWidget {
@@ -8,7 +7,7 @@ class PathCommandWidget extends StatefulWidget {
   final List<String> allPathNames;
   final VoidCallback? onUpdated;
   final VoidCallback? onRemoved;
-  final OpenPathCallback? onOpened;
+  final Function(String)? onOpened;
   final ChangeStack undoStack;
 
   const PathCommandWidget({
@@ -99,7 +98,7 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
                 child: IconButton(
                   onPressed: () {
                     if (widget.onOpened != null) {
-                      widget.onOpened!(context, widget.command.pathName!);
+                      widget.onOpened!(widget.command.pathName!);
                     }
                   },
                   visualDensity: const VisualDensity(

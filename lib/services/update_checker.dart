@@ -26,7 +26,7 @@ class UpdateChecker {
       Version current = Version.parse(currentVersion);
       Version latest = Version.parse(latestVersion);
 
-      if (current.isPreRelease && current.preRelease[0].contains('dev')) {
+      if (current.major == 0 && current.minor == 0 && current.patch == 0) {
         // Dev build
         return false;
       }

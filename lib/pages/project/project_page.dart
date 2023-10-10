@@ -20,6 +20,8 @@ import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
+typedef OpenPathCallback = void Function(BuildContext context, String name);
+
 class ProjectPage extends StatefulWidget {
   final SharedPreferences prefs;
   final FieldImage fieldImage;
@@ -687,6 +689,31 @@ class _ProjectPageState extends State<ProjectPage> {
     });
   }
 
+  void _openPathByName(BuildContext context, String name) async {
+    int index = _paths.indexWhere((path) => path.name == name);
+
+    if (index == -1) {
+      throw Exception("No path found with name '$name'");
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PathEditorPage(
+          prefs: widget.prefs,
+          path: _paths[index],
+          fieldImage: widget.fieldImage,
+          undoStack: widget.undoStack,
+          onRenamed: (value) => _renamePath(index, value, context),
+          shortcuts: widget.shortcuts,
+          telemetry: widget.telemetry,
+          hotReload: widget.hotReload,
+          simulatePath: widget.simulatePath,
+        ),
+      ),
+    );
+  }
+
   void _renamePath(int pathIdx, String newName, BuildContext context) {
     List<String> pathNames = [];
     for (PathPlannerPath path in _paths) {
@@ -1117,6 +1144,7 @@ class _ProjectPageState extends State<ProjectPage> {
               allPathNames: _paths.map((e) => e.name).toList(),
               fieldImage: widget.fieldImage,
               onRenamed: (value) => _renameAuto(i, value, context),
+              onPathOpened: _openPathByName,
               shortcuts: widget.shortcuts,
               telemetry: widget.telemetry,
               hotReload: widget.hotReload,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
@@ -18,6 +19,7 @@ class AutoEditorPage extends StatefulWidget {
   final List<String> allPathNames;
   final FieldImage fieldImage;
   final ValueChanged<String> onRenamed;
+  final OpenPathCallback? onPathOpened;
   final ChangeStack undoStack;
   final bool shortcuts;
   final PPLibTelemetry? telemetry;
@@ -32,6 +34,7 @@ class AutoEditorPage extends StatefulWidget {
     required this.fieldImage,
     required this.onRenamed,
     required this.undoStack,
+    this.onPathOpened,
     this.shortcuts = true,
     this.telemetry,
     this.hotReload = false,
@@ -67,6 +70,7 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
           widget.telemetry?.hotReloadAuto(widget.auto);
         }
       },
+      onPathOpened: widget.onPathOpened,
     );
 
     return Scaffold(

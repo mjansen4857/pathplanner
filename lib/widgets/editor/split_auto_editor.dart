@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -20,6 +21,7 @@ class SplitAutoEditor extends StatefulWidget {
   final List<PathPlannerPath> autoPaths;
   final List<String> allPathNames;
   final VoidCallback? onAutoChanged;
+  final OpenPathCallback? onPathOpened;
   final FieldImage fieldImage;
   final ChangeStack undoStack;
 
@@ -30,6 +32,7 @@ class SplitAutoEditor extends StatefulWidget {
     required this.allPathNames,
     required this.fieldImage,
     required this.undoStack,
+    this.onPathOpened,
     this.onAutoChanged,
     super.key,
   });
@@ -270,6 +273,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                       widget.onAutoChanged?.call();
                       _simulateAuto();
                     },
+                    onPathOpened: widget.onPathOpened,
                     onSideSwapped: () => setState(() {
                       _treeOnRight = !_treeOnRight;
                       widget.prefs.setBool(PrefsKeys.treeOnRight, _treeOnRight);

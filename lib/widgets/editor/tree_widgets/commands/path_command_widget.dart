@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/path_command.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:undo/undo.dart';
 
 class PathCommandWidget extends StatefulWidget {
@@ -7,6 +8,7 @@ class PathCommandWidget extends StatefulWidget {
   final List<String> allPathNames;
   final VoidCallback? onUpdated;
   final VoidCallback? onRemoved;
+  final OpenPathCallback? onOpened;
   final ChangeStack undoStack;
 
   const PathCommandWidget({
@@ -15,6 +17,7 @@ class PathCommandWidget extends StatefulWidget {
     required this.allPathNames,
     this.onUpdated,
     this.onRemoved,
+    this.onOpened,
     required this.undoStack,
   });
 
@@ -81,15 +84,28 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
           }),
         ),
         const SizedBox(width: 8),
-        Visibility(
-          visible: widget.command.pathName == null,
-          child: const Tooltip(
+        widget.command.pathName == null 
+        ? const Tooltip(
             message: 'Missing path name',
             child: Icon(
               Icons.warning_amber_rounded,
               color: Colors.yellow,
               size: 32,
             ),
+          )
+        : Tooltip(
+          message: 'Edit Path',
+          waitDuration: const Duration(milliseconds: 500),
+          child: IconButton(
+            onPressed: () {
+              if (widget.onOpened != null){
+                widget.onOpened!(context, widget.command.pathName!);
+              }
+            },
+            visualDensity: const VisualDensity(
+                horizontal: VisualDensity.minimumDensity,
+                vertical: VisualDensity.minimumDensity),
+            icon: Icon(Icons.open_in_new, color: colorScheme.primary),
           ),
         ),
         Tooltip(

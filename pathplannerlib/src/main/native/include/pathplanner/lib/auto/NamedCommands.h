@@ -14,8 +14,17 @@ public:
 	 * @param name the name of the command
 	 * @param command shared pointer to the command to register
 	 */
-	static void registerCommand(std::string name,
-			std::shared_ptr<frc2::Command> command);
+	static inline void registerCommand(std::string name,
+			std::shared_ptr<frc2::Command> command) {
+		NamedCommands::namedCommands.emplace(name, command);
+	}
+
+	static inline void registerCommand(std::string name,
+			frc2::CommandPtr &&command) {
+		registerCommand(name,
+				std::shared_ptr < frc2::Command
+						> (std::move(command).Unwrap()));
+	}
 
 	/**
 	 * Returns whether a command with the given name has been registered.
@@ -23,7 +32,9 @@ public:
 	 * @param name the name of the command to check
 	 * @return true if a command with the given name has been registered, false otherwise
 	 */
-	static bool hasCommand(std::string name);
+	static inline bool hasCommand(std::string name) {
+		return NamedCommands::namedCommands.contains(name);
+	}
 
 	/**
 	 * Returns the command with the given name.

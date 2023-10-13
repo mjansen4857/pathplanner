@@ -45,15 +45,6 @@ public class PathPoint {
     this.holonomicRotation = holonomicRotation;
   }
 
-  /**
-   * Create a path point
-   *
-   * @param position Position of the point
-   */
-  public PathPoint(Translation2d position) {
-    this.position = position;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

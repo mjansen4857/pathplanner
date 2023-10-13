@@ -111,6 +111,23 @@ public class PathPlannerPath {
   }
 
   /**
+   * Creat a path with pre-generated points. This should already be a smooth path.
+   *
+   * @param pathPoints Path points along the smooth curve of the path
+   * @param constraints The global constraints of the path
+   * @param goalEndState The goal end state of the path
+   * @return A PathPlannerPath following the given pathpoints
+   */
+  public static PathPlannerPath fromPathPoints(
+          List<PathPoint> pathPoints, PathConstraints constraints, GoalEndState goalEndState) {
+    PathPlannerPath path = new PathPlannerPath(constraints, goalEndState);
+    path.allPoints = pathPoints;
+    path.precalcValues();
+
+    return path;
+  }
+
+  /**
    * Create the bezier points necessary to create a path using a list of poses
    *
    * @param poses List of poses. Each pose represents one waypoint.

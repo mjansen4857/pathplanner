@@ -119,7 +119,7 @@ public class PathPlannerPath {
    * @return A PathPlannerPath following the given pathpoints
    */
   public static PathPlannerPath fromPathPoints(
-          List<PathPoint> pathPoints, PathConstraints constraints, GoalEndState goalEndState) {
+      List<PathPoint> pathPoints, PathConstraints constraints, GoalEndState goalEndState) {
     PathPlannerPath path = new PathPlannerPath(constraints, goalEndState);
     path.allPoints = pathPoints;
     path.precalcValues();

@@ -10,6 +10,7 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({
       PrefsKeys.snapToGuidelines: false,
+      PrefsKeys.hidePathsOnHover: false,
     });
     prefs = await SharedPreferences.getInstance();
   });
@@ -42,5 +43,34 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(prefs.getBool(PrefsKeys.snapToGuidelines), false);
+  });
+
+  testWidgets('hide paths check', (widgetTester) async {
+    await widgetTester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+        body: EditorSettingsTree(
+          initiallyExpanded: true,
+        ),
+      ),
+    ));
+    await widgetTester.pump();
+
+    final row = find.widgetWithText(Row, 'Hide Other Paths on Hover');
+
+    expect(row, findsOneWidget);
+
+    final check = find.descendant(of: row, matching: find.byType(Checkbox));
+
+    expect(check, findsOneWidget);
+
+    await widgetTester.tap(check);
+    await widgetTester.pumpAndSettle();
+
+    expect(prefs.getBool(PrefsKeys.hidePathsOnHover), true);
+
+    await widgetTester.tap(check);
+    await widgetTester.pumpAndSettle();
+
+    expect(prefs.getBool(PrefsKeys.hidePathsOnHover), false);
   });
 }

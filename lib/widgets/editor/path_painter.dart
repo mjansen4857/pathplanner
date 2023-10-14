@@ -15,6 +15,7 @@ class PathPainter extends CustomPainter {
   final List<PathPlannerPath> paths;
   final FieldImage fieldImage;
   final bool simple;
+  final bool hideOtherPathsOnHover;
   final String? hoveredPath;
   final int? hoveredWaypoint;
   final int? selectedWaypoint;
@@ -40,6 +41,7 @@ class PathPainter extends CustomPainter {
     required this.paths,
     required this.fieldImage,
     this.simple = false,
+    this.hideOtherPathsOnHover = false,
     this.hoveredPath,
     this.hoveredWaypoint,
     this.selectedWaypoint,
@@ -78,6 +80,12 @@ class PathPainter extends CustomPainter {
     scale = size.width / fieldImage.defaultSize.width;
 
     for (int i = 0; i < paths.length; i++) {
+      if (hideOtherPathsOnHover &&
+          hoveredPath != null &&
+          hoveredPath != paths[i].name) {
+        continue;
+      }
+
       if (!simple) {
         _paintRadius(paths[i], canvas, scale);
       }
@@ -99,35 +107,35 @@ class PathPainter extends CustomPainter {
         _paintWaypoint(paths[i], canvas, scale, 0);
         _paintWaypoint(paths[i], canvas, scale, paths[i].waypoints.length - 1);
       }
+    }
 
-      if (startingPose != null) {
-        PathPainterUtil.paintRobotOutline(
-            startingPose!.position,
-            startingPose!.rotation,
-            fieldImage,
-            robotSize,
-            scale,
-            canvas,
-            Colors.green.withOpacity(0.5));
+    if (startingPose != null) {
+      PathPainterUtil.paintRobotOutline(
+          startingPose!.position,
+          startingPose!.rotation,
+          fieldImage,
+          robotSize,
+          scale,
+          canvas,
+          Colors.green.withOpacity(0.8));
 
-        var paint = Paint()
-          ..style = PaintingStyle.fill
-          ..color = Colors.green.withOpacity(0.5)
-          ..strokeWidth = 2;
+      var paint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = Colors.green.withOpacity(0.5)
+        ..strokeWidth = 2;
 
-        canvas.drawCircle(
-            PathPainterUtil.pointToPixelOffset(
-                startingPose!.position, scale, fieldImage),
-            PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
-            paint);
-        paint.style = PaintingStyle.stroke;
-        paint.color = Colors.black;
-        canvas.drawCircle(
-            PathPainterUtil.pointToPixelOffset(
-                startingPose!.position, scale, fieldImage),
-            PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
-            paint);
-      }
+      canvas.drawCircle(
+          PathPainterUtil.pointToPixelOffset(
+              startingPose!.position, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+          paint);
+      paint.style = PaintingStyle.stroke;
+      paint.color = Colors.black;
+      canvas.drawCircle(
+          PathPainterUtil.pointToPixelOffset(
+              startingPose!.position, scale, fieldImage),
+          PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+          paint);
     }
 
     if (previewTime != null) {

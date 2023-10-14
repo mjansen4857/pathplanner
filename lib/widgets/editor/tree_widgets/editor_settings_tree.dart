@@ -18,6 +18,7 @@ class EditorSettingsTree extends StatefulWidget {
 class _EditorSettingsTreeState extends State<EditorSettingsTree> {
   late SharedPreferences _prefs;
   bool _snapToGuidelines = Defaults.snapToGuidelines;
+  bool _hidePathsOnHover = Defaults.hidePathsOnHover;
 
   @override
   void initState() {
@@ -28,6 +29,8 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
         _prefs = value;
         _snapToGuidelines = _prefs.getBool(PrefsKeys.snapToGuidelines) ??
             Defaults.snapToGuidelines;
+        _hidePathsOnHover = _prefs.getBool(PrefsKeys.hidePathsOnHover) ??
+            Defaults.hidePathsOnHover;
       });
     });
   }
@@ -58,6 +61,31 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
               ),
               child: Text(
                 'Snap To Guidelines',
+                style: TextStyle(fontSize: 15),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Checkbox(
+              value: _hidePathsOnHover,
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _hidePathsOnHover = val;
+                    _prefs.setBool(PrefsKeys.hidePathsOnHover, val);
+                  });
+                }
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.only(
+                bottom: 3.0,
+                left: 4.0,
+              ),
+              child: Text(
+                'Hide Other Paths on Hover',
                 style: TextStyle(fontSize: 15),
               ),
             ),

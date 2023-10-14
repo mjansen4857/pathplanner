@@ -205,6 +205,9 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                         painter: PathPainter(
                           paths: widget.autoPaths,
                           simple: true,
+                          hideOtherPathsOnHover: widget.prefs
+                                  .getBool(PrefsKeys.hidePathsOnHover) ??
+                              Defaults.hidePathsOnHover,
                           hoveredPath: _hoveredPath,
                           fieldImage: widget.fieldImage,
                           startingPose: widget.auto.startingPose,

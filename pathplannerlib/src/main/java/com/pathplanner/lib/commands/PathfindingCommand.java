@@ -2,7 +2,7 @@ package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.pathfinding.ADStar;
+import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -57,7 +57,7 @@ public class PathfindingCommand extends Command {
       Subsystem... requirements) {
     addRequirements(requirements);
 
-    ADStar.ensureInitialized();
+    Pathfinding.ensureInitialized();
 
     Rotation2d targetRotation = new Rotation2d();
     for (PathPoint p : targetPath.getAllPathPoints()) {
@@ -107,7 +107,7 @@ public class PathfindingCommand extends Command {
       Subsystem... requirements) {
     addRequirements(requirements);
 
-    ADStar.ensureInitialized();
+    Pathfinding.ensureInitialized();
 
     this.targetPath = null;
     this.targetPose = targetPose;
@@ -132,12 +132,11 @@ public class PathfindingCommand extends Command {
       targetPose = new Pose2d(this.targetPath.getPoint(0).position, goalEndState.getRotation());
     }
 
-    if (ADStar.getGridPos(currentPose.getTranslation())
-        .equals(ADStar.getGridPos(targetPose.getTranslation()))) {
+    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.25) {
       this.cancel();
     } else {
-      ADStar.setStartPos(currentPose.getTranslation());
-      ADStar.setGoalPos(targetPose.getTranslation());
+      Pathfinding.setStartPosition(currentPose.getTranslation());
+      Pathfinding.setGoalPosition(targetPose.getTranslation());
     }
 
     startingPose = currentPose;
@@ -151,8 +150,8 @@ public class PathfindingCommand extends Command {
     PathPlannerLogging.logCurrentPose(currentPose);
     PPLibTelemetry.setCurrentPose(currentPose);
 
-    if (ADStar.isNewPathAvailable()) {
-      List<Translation2d> bezierPoints = ADStar.getCurrentPath();
+    if (Pathfinding.isNewPathAvailable()) {
+      List<Translation2d> bezierPoints = Pathfinding.getCurrentPath();
 
       if (bezierPoints.size() >= 4) {
         PathPlannerPath path =

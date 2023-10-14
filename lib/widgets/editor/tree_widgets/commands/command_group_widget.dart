@@ -197,9 +197,8 @@ class CommandGroupWidget extends StatelessWidget {
       },
       itemCount: command.commands.length,
       onReorder: (oldIndex, newIndex) {
-        // The fact that this needs to be here is so dumb
-        if (newIndex >= command.commands.length) {
-          newIndex = command.commands.length - 1;
+        if (oldIndex < newIndex) {
+          newIndex -= 1;
         }
 
         undoStack.add(Change(

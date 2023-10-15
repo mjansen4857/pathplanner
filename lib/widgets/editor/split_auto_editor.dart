@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -271,7 +272,11 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                     },
                     onAutoChanged: () {
                       widget.onAutoChanged?.call();
-                      _simulateAuto();
+                      // Delay this because it needs the parent widget to rebuild first
+                      Future.delayed(const Duration(milliseconds: 100))
+                          .then((_) {
+                        _simulateAuto();
+                      });
                     },
                     onSideSwapped: () => setState(() {
                       _treeOnRight = !_treeOnRight;
@@ -292,8 +297,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
   // Marked as async so it can run from initState
   void _simulateAuto() async {
-    Trajectory? simPath = TrajectoryGenerator.simulateAuto(
-        widget.autoPaths, widget.auto.startingPose);
+    Trajectory? simPath;
+
+    try {
+      simPath = TrajectoryGenerator.simulateAuto(
+          widget.autoPaths, widget.auto.startingPose);
+    } catch (err) {
+      Log.error('Failed to simulate auto', err);
+    }
 
     if (simPath != null &&
         simPath.states.last.time.isFinite &&

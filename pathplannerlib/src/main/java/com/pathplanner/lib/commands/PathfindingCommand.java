@@ -177,15 +177,15 @@ public class PathfindingCommand extends Command {
           int closestState2Idx = 1;
           while (true) {
             double closest2Dist =
-                    currentTrajectory
-                            .getState(closestState2Idx)
-                            .positionMeters
-                            .getDistance(currentPose.getTranslation());
+                currentTrajectory
+                    .getState(closestState2Idx)
+                    .positionMeters
+                    .getDistance(currentPose.getTranslation());
             double nextDist =
-                    currentTrajectory
-                            .getState(closestState2Idx + 1)
-                            .positionMeters
-                            .getDistance(currentPose.getTranslation());
+                currentTrajectory
+                    .getState(closestState2Idx + 1)
+                    .positionMeters
+                    .getDistance(currentPose.getTranslation());
             if (nextDist < closest2Dist) {
               closestState1Idx++;
               closestState2Idx++;
@@ -203,7 +203,7 @@ public class PathfindingCommand extends Command {
           double t = (currentPose.getTranslation().getDistance(closestState1.positionMeters)) / d;
 
           timeOffset =
-                  GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
+              GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
 
           PathPlannerLogging.logActivePath(path);
           PPLibTelemetry.setCurrentPath(path);

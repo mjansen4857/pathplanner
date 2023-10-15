@@ -256,21 +256,21 @@ void ADStar::setDynamicObstacles(
 		}
 	}
 
-	std::lock_guard < std::mutex > lock(mutex);
+	{
+		std::lock_guard < std::mutex > lock(mutex);
 
-	dynamicObstacles.clear();
-	dynamicObstacles.insert(newObs.begin(), newObs.end());
-	obstacles.clear();
-	obstacles.insert(staticObstacles.begin(), staticObstacles.end());
-	obstacles.insert(dynamicObstacles.begin(), dynamicObstacles.end());
-	needsReset = true;
-	doMinor = true;
-	doMajor = true;
-
-	if (dynamicObstacles.contains(getGridPos(currentRobotPos))) {
-		// Set the start position to the closest non-obstacle
-		setStartPos(currentRobotPos);
+		dynamicObstacles.clear();
+		dynamicObstacles.insert(newObs.begin(), newObs.end());
+		obstacles.clear();
+		obstacles.insert(staticObstacles.begin(), staticObstacles.end());
+		obstacles.insert(dynamicObstacles.begin(), dynamicObstacles.end());
+		needsReset = true;
+		doMinor = true;
+		doMajor = true;
 	}
+
+	setStartPos(currentRobotPos);
+	setGoalPos (realGoalPos);
 }
 
 std::vector<frc::Translation2d> ADStar::extractPath() {

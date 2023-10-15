@@ -90,5 +90,7 @@ private:
 
 	PathPlannerTrajectory m_currentTrajectory;
 	frc::Pose2d m_startingPose;
+
+	units::second_t m_timeOffset;
 };
 }

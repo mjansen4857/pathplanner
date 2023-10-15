@@ -1,5 +1,6 @@
 #include "pathplanner/lib/commands/PathfindingCommand.h"
 #include "pathplanner/lib/pathfinding/ADStar.h"
+#include "pathplanner/lib/util/GeometryUtil.h"
 #include <vector>
 
 using namespace pathplanner;
@@ -52,6 +53,7 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 
 void PathfindingCommand::Initialize() {
 	m_currentTrajectory = PathPlannerTrajectory();
+	m_timeOffset = 0_s;
 
 	frc::Pose2d currentPose = m_poseSupplier();
 
@@ -95,12 +97,47 @@ void PathfindingCommand::Execute() {
 				m_currentTrajectory = PathPlannerTrajectory(path,
 						currentSpeeds);
 
+				// Find the two closest states in front of and behind robot
+				size_t closestState1Idx = 0;
+				size_t closestState2Idx = 1;
+				while (true) {
+					auto closest2Dist = m_currentTrajectory.getState(
+							closestState2Idx).position.Distance(
+							currentPose.Translation());
+					auto nextDist = m_currentTrajectory.getState(
+							closestState2Idx + 1).position.Distance(
+							currentPose.Translation());
+					if (nextDist < closest2Dist) {
+						closestState1Idx++;
+						closestState2Idx++;
+					} else {
+						break;
+					}
+				}
+
+				// Use the closest 2 states to interpolate what the time offset should be
+				// This will account for the delay in pathfinding
+				auto closestState1 = m_currentTrajectory.getState(
+						closestState1Idx);
+				auto closestState2 = m_currentTrajectory.getState(
+						closestState2Idx);
+
+				auto d = closestState1.position.Distance(
+						closestState2.position);
+				double t = ((currentPose.Translation().Distance(
+						closestState1.position)) / d)();
+
+				m_timeOffset = GeometryUtil::unitLerp(closestState1.time,
+						closestState2.time, t);
+
 				PathPlannerLogging::logActivePath(path);
 				PPLibTelemetry::setCurrentPath(path);
 			} else {
 				auto replanned = path->replan(currentPose, currentSpeeds);
 				m_currentTrajectory = PathPlannerTrajectory(replanned,
 						currentSpeeds);
+
+				m_timeOffset = 0_s;
 
 				PathPlannerLogging::logActivePath(replanned);
 				PPLibTelemetry::setCurrentPath(replanned);
@@ -113,7 +150,7 @@ void PathfindingCommand::Execute() {
 
 	if (m_currentTrajectory.getStates().size() > 0) {
 		PathPlannerTrajectory::State targetState = m_currentTrajectory.sample(
-				m_timer.Get());
+				m_timer.Get() + m_timeOffset);
 
 		// Set the target rotation to the starting rotation if we have not yet traveled the rotation
 		// delay distance
@@ -165,7 +202,8 @@ bool PathfindingCommand::IsFinished() {
 	}
 
 	if (m_currentTrajectory.getStates().size() > 0) {
-		return m_timer.HasElapsed(m_currentTrajectory.getTotalTime());
+		return m_timer.HasElapsed(
+				m_currentTrajectory.getTotalTime() - m_timeOffset);
 	}
 
 	return false;

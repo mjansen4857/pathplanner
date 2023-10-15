@@ -206,7 +206,7 @@ class TrajectoryGenerator {
               robotToJoinDelta / 3.0 * sin(heading));
     }
 
-    if (joinAnchorIdx == path.pathPoints.length) {
+    if (joinAnchorIdx == path.pathPoints.length - 1) {
       // Throw out rotation targets, event markers, and constraint zones since we are skipping all
       // of the path
       return PathPlannerPath(

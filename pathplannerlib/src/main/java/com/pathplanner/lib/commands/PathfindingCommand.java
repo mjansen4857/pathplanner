@@ -2,19 +2,16 @@ package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.pathfinding.ADStar;
+import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -60,7 +57,7 @@ public class PathfindingCommand extends Command {
       Subsystem... requirements) {
     addRequirements(requirements);
 
-    ADStar.ensureInitialized();
+    Pathfinding.ensureInitialized();
 
     Rotation2d targetRotation = new Rotation2d();
     for (PathPoint p : targetPath.getAllPathPoints()) {
@@ -110,7 +107,7 @@ public class PathfindingCommand extends Command {
       Subsystem... requirements) {
     addRequirements(requirements);
 
-    ADStar.ensureInitialized();
+    Pathfinding.ensureInitialized();
 
     this.targetPath = null;
     this.targetPose = targetPose;
@@ -136,12 +133,11 @@ public class PathfindingCommand extends Command {
       targetPose = new Pose2d(this.targetPath.getPoint(0).position, goalEndState.getRotation());
     }
 
-    if (ADStar.getGridPos(currentPose.getTranslation())
-        .equals(ADStar.getGridPos(targetPose.getTranslation()))) {
+    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.25) {
       this.cancel();
     } else {
-      ADStar.setStartPos(currentPose.getTranslation());
-      ADStar.setGoalPos(targetPose.getTranslation());
+      Pathfinding.setStartPosition(currentPose.getTranslation());
+      Pathfinding.setGoalPosition(targetPose.getTranslation());
     }
 
     startingPose = currentPose;
@@ -155,20 +151,10 @@ public class PathfindingCommand extends Command {
     PathPlannerLogging.logCurrentPose(currentPose);
     PPLibTelemetry.setCurrentPose(currentPose);
 
-    if (ADStar.isNewPathAvailable()) {
-      List<Translation2d> bezierPoints = ADStar.getCurrentPath();
+    if (Pathfinding.isNewPathAvailable()) {
+      PathPlannerPath path = Pathfinding.getCurrentPath(constraints, goalEndState);
 
-      if (bezierPoints.size() >= 4) {
-        PathPlannerPath path =
-            new PathPlannerPath(
-                bezierPoints,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                constraints,
-                goalEndState,
-                false);
-
+      if (path != null) {
         if (currentPose.getTranslation().getDistance(path.getPoint(0).position) <= 0.25) {
           currentTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
 

@@ -1,8 +1,10 @@
 package com.pathplanner.lib.pathfinding;
 
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,118 +14,240 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-/** Implementation of the AD* pathfinding algorithm */
-public class ADStar {
+/**
+ * Implementation of AD* running locally in a background thread
+ *
+ * <p>I would like to apologize to anyone trying to understand this code. The implementation I
+ * translated it from was much worse.
+ */
+public class LocalADStar implements Pathfinder {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;
   private static final double SMOOTHING_CONTROL_PCT = 0.33;
-
-  private static double FIELD_LENGTH = 16.54;
-  private static double FIELD_WIDTH = 8.02;
-
-  private static double NODE_SIZE = 0.2;
-
-  private static int NODE_X = (int) Math.ceil(FIELD_LENGTH / NODE_SIZE);
-  private static int NODE_Y = (int) Math.ceil(FIELD_WIDTH / NODE_SIZE);
-
   private static final double EPS = 2.5;
 
-  private static final HashMap<GridPosition, Double> g = new HashMap<>();
-  private static final HashMap<GridPosition, Double> rhs = new HashMap<>();
-  private static final HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
-  private static final HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
-  private static final Set<GridPosition> closed = new HashSet<>();
-  private static final Set<GridPosition> staticObstacles = new HashSet<>();
-  private static final Set<GridPosition> dynamicObstacles = new HashSet<>();
-  private static final Set<GridPosition> obstacles = new HashSet<>();
+  private double fieldLength = 16.54;
+  private double fieldWidth = 8.02;
 
-  private static volatile GridPosition sStart;
-  private static volatile Translation2d realStartPos;
-  private static volatile GridPosition sGoal;
-  private static volatile Translation2d realGoalPos;
+  private double nodeSize = 0.2;
 
-  private static double eps;
+  private int nodesX = (int) Math.ceil(fieldLength / nodeSize);
+  private int nodesY = (int) Math.ceil(fieldWidth / nodeSize);
 
-  private static final Thread planningThread = new Thread(ADStar::runThread);
-  private static final Object lock = new Object();
-  private static volatile boolean doMinor = true;
-  private static volatile boolean doMajor = true;
-  private static volatile boolean needsReset = true;
-  private static volatile boolean needsExtract = false;
-  private static volatile boolean running = false;
-  private static volatile boolean newPathAvailable = false;
+  private final HashMap<GridPosition, Double> g = new HashMap<>();
+  private final HashMap<GridPosition, Double> rhs = new HashMap<>();
+  private final HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
+  private final HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
+  private final Set<GridPosition> closed = new HashSet<>();
+  private final Set<GridPosition> staticObstacles = new HashSet<>();
+  private final Set<GridPosition> dynamicObstacles = new HashSet<>();
+  private final Set<GridPosition> obstacles = new HashSet<>();
 
-  private static volatile List<Translation2d> currentPath = new ArrayList<>();
+  private volatile GridPosition sStart;
+  private volatile Translation2d realStartPos;
+  private volatile GridPosition sGoal;
+  private volatile Translation2d realGoalPos;
+
+  private double eps;
+
+  private final Thread planningThread;
+  private final Object lock = new Object();
+  private volatile boolean doMinor = true;
+  private volatile boolean doMajor = true;
+  private volatile boolean needsReset = true;
+  private volatile boolean needsExtract = false;
+  private volatile boolean newPathAvailable = false;
+
+  private volatile List<Translation2d> currentPath = new ArrayList<>();
+
+  /** Create a new pathfinder that runs AD* locally in a background thread */
+  public LocalADStar() {
+    planningThread = new Thread(this::runThread);
+
+    sStart = new GridPosition(0, 0);
+    realStartPos = new Translation2d(0, 0);
+    sGoal = new GridPosition(0, 0);
+    realGoalPos = new Translation2d(0, 0);
+
+    staticObstacles.clear();
+    dynamicObstacles.clear();
+
+    File navGridFile = new File(Filesystem.getDeployDirectory(), "pathplanner/navgrid.json");
+    if (navGridFile.exists()) {
+      try (BufferedReader br = new BufferedReader(new FileReader(navGridFile))) {
+        StringBuilder fileContentBuilder = new StringBuilder();
+        String line;
+        while ((line = br.readLine()) != null) {
+          fileContentBuilder.append(line);
+        }
+
+        String fileContent = fileContentBuilder.toString();
+        JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+        nodeSize = ((Number) json.get("nodeSizeMeters")).doubleValue();
+        JSONArray grid = (JSONArray) json.get("grid");
+        nodesY = grid.size();
+        for (int row = 0; row < grid.size(); row++) {
+          JSONArray rowArray = (JSONArray) grid.get(row);
+          if (row == 0) {
+            nodesX = rowArray.size();
+          }
+          for (int col = 0; col < rowArray.size(); col++) {
+            boolean isObstacle = (boolean) rowArray.get(col);
+            if (isObstacle) {
+              staticObstacles.add(new GridPosition(col, row));
+            }
+          }
+        }
+
+        JSONObject fieldSize = (JSONObject) json.get("field_size");
+        fieldLength = ((Number) fieldSize.get("x")).doubleValue();
+        fieldWidth = ((Number) fieldSize.get("y")).doubleValue();
+      } catch (Exception e) {
+        // Do nothing, use defaults
+      }
+    }
+
+    obstacles.clear();
+    obstacles.addAll(staticObstacles);
+    obstacles.addAll(dynamicObstacles);
+
+    needsReset = true;
+    doMajor = true;
+    doMinor = true;
+
+    newPathAvailable = false;
+
+    planningThread.setDaemon(true);
+    planningThread.setName("ADStar Planning Thread");
+    planningThread.start();
+  }
 
   /**
-   * Ensure that the pathfinding thread is initialized and running.
+   * Get if a new path has been calculated since the last time a path was retrieved
    *
-   * <p>This will do nothing if already initialized
+   * @return True if a new path is available
    */
-  public static void ensureInitialized() {
-    if (!running) {
-      running = true;
-      sStart = new GridPosition(0, 0);
-      realStartPos = new Translation2d(0, 0);
-      sGoal = new GridPosition(0, 0);
-      realGoalPos = new Translation2d(0, 0);
+  @Override
+  public boolean isNewPathAvailable() {
+    return newPathAvailable;
+  }
 
-      staticObstacles.clear();
-      dynamicObstacles.clear();
+  /**
+   * Get the most recently calculated path
+   *
+   * @param constraints The path constraints to use when creating the path
+   * @param goalEndState The goal end state to use when creating the path
+   * @return The PathPlannerPath created from the points calculated by the pathfinder
+   */
+  @Override
+  public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
+    List<Translation2d> bezierPoints;
 
-      File navGridFile = new File(Filesystem.getDeployDirectory(), "pathplanner/navgrid.json");
-      if (navGridFile.exists()) {
-        try (BufferedReader br = new BufferedReader(new FileReader(navGridFile))) {
-          StringBuilder fileContentBuilder = new StringBuilder();
-          String line;
-          while ((line = br.readLine()) != null) {
-            fileContentBuilder.append(line);
-          }
-
-          String fileContent = fileContentBuilder.toString();
-          JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
-
-          NODE_SIZE = ((Number) json.get("nodeSizeMeters")).doubleValue();
-          JSONArray grid = (JSONArray) json.get("grid");
-          NODE_Y = grid.size();
-          for (int row = 0; row < grid.size(); row++) {
-            JSONArray rowArray = (JSONArray) grid.get(row);
-            if (row == 0) {
-              NODE_X = rowArray.size();
-            }
-            for (int col = 0; col < rowArray.size(); col++) {
-              boolean isObstacle = (boolean) rowArray.get(col);
-              if (isObstacle) {
-                staticObstacles.add(new GridPosition(col, row));
-              }
-            }
-          }
-
-          JSONObject fieldSize = (JSONObject) json.get("field_size");
-          FIELD_LENGTH = ((Number) fieldSize.get("x")).doubleValue();
-          FIELD_WIDTH = ((Number) fieldSize.get("y")).doubleValue();
-        } catch (Exception e) {
-          // Do nothing, use defaults
-        }
-      }
-
-      obstacles.clear();
-      obstacles.addAll(staticObstacles);
-      obstacles.addAll(dynamicObstacles);
-
-      needsReset = true;
-      doMajor = true;
-      doMinor = true;
-
+    synchronized (lock) {
+      bezierPoints = new ArrayList<>(currentPath);
       newPathAvailable = false;
+    }
 
-      planningThread.setDaemon(true);
-      planningThread.setName("ADStar Planning Thread");
-      planningThread.start();
+    if (bezierPoints.size() < 4) {
+      // Not enough points to make a path. Something got borked somewhere
+      return null;
+    }
+
+    return new PathPlannerPath(bezierPoints, constraints, goalEndState);
+  }
+
+  /**
+   * Set the start position to pathfind from
+   *
+   * @param startPosition Start position on the field. If this is within an obstacle it will be
+   *     moved to the nearest non-obstacle node.
+   */
+  @Override
+  public void setStartPosition(Translation2d startPosition) {
+    synchronized (lock) {
+      GridPosition startPos = findClosestNonObstacle(getGridPos(startPosition));
+
+      if (startPos != null && !startPos.equals(sStart)) {
+        sStart = startPos;
+        realStartPos = startPosition;
+
+        doMinor = true;
+      }
     }
   }
 
-  private static void runThread() {
-    while (running) {
+  /**
+   * Set the goal position to pathfind to
+   *
+   * @param goalPosition Goal position on the field. f this is within an obstacle it will be moved
+   *     to the nearest non-obstacle node.
+   */
+  @Override
+  public void setGoalPosition(Translation2d goalPosition) {
+    synchronized (lock) {
+      GridPosition gridPos = findClosestNonObstacle(getGridPos(goalPosition));
+
+      if (gridPos != null) {
+        sGoal = gridPos;
+        realGoalPos = goalPosition;
+
+        doMinor = true;
+        doMajor = true;
+        needsReset = true;
+      }
+    }
+  }
+
+  /**
+   * Set the dynamic obstacles that should be avoided while pathfinding.
+   *
+   * @param obs A List of Translation2d pairs representing obstacles. Each Translation2d represents
+   *     opposite corners of a bounding box.
+   * @param currentRobotPos The current position of the robot. This is needed to change the start
+   *     position of the path if the robot is now within an obstacle.
+   */
+  @Override
+  public void setDynamicObstacles(
+      List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos) {
+    Set<GridPosition> newObs = new HashSet<>();
+
+    for (var obstacle : obs) {
+      var gridPos1 = getGridPos(obstacle.getFirst());
+      var gridPos2 = getGridPos(obstacle.getSecond());
+
+      int minX = Math.min(gridPos1.x, gridPos2.x);
+      int maxX = Math.max(gridPos1.x, gridPos2.x);
+
+      int minY = Math.min(gridPos1.y, gridPos2.y);
+      int maxY = Math.max(gridPos1.y, gridPos2.y);
+
+      for (int x = minX; x <= maxX; x++) {
+        for (int y = minY; y <= maxY; y++) {
+          newObs.add(new GridPosition(x, y));
+        }
+      }
+    }
+
+    boolean setStart;
+
+    synchronized (lock) {
+      dynamicObstacles.clear();
+      dynamicObstacles.addAll(newObs);
+      obstacles.clear();
+      obstacles.addAll(staticObstacles);
+      obstacles.addAll(dynamicObstacles);
+      needsReset = true;
+      doMinor = true;
+      doMajor = true;
+    }
+
+    setStartPosition(currentRobotPos);
+    setGoalPosition(realGoalPos);
+  }
+
+  @SuppressWarnings("BusyWait")
+  private void runThread() {
+    while (true) {
       try {
         synchronized (lock) {
           if (needsReset || doMinor || doMajor) {
@@ -143,12 +267,13 @@ public class ADStar {
           }
         }
       } catch (Exception e) {
-        //        e.printStackTrace();
+        // Something messed up. Reset and hope for the best
+        needsReset = true;
       }
     }
   }
 
-  private static void doWork() {
+  private void doWork() {
     if (needsReset) {
       reset();
       needsReset = false;
@@ -177,141 +302,7 @@ public class ADStar {
     }
   }
 
-  /**
-   * Get if a new path has been calculated since the last time a path was retrieved
-   *
-   * @return True if a new path is available
-   */
-  public static boolean isNewPathAvailable() {
-    return newPathAvailable;
-  }
-
-  /**
-   * Get the most recently calculated path
-   *
-   * @return The bezier points representing a path
-   */
-  public static List<Translation2d> getCurrentPath() {
-    if (!running) {
-      DriverStation.reportWarning("ADStar path was retrieved before it was initialized", false);
-    }
-
-    newPathAvailable = false;
-    return currentPath;
-  }
-
-  /**
-   * Set the start position to pathfind from
-   *
-   * @param start Start position on the field. If this is within an obstacle it will be moved to the
-   *     nearest non-obstacle node.
-   */
-  public static void setStartPos(Translation2d start) {
-    synchronized (lock) {
-      GridPosition startPos = findClosestNonObstacle(getGridPos(start));
-
-      if (startPos != null && !startPos.equals(sStart)) {
-        sStart = startPos;
-        realStartPos = start;
-
-        doMinor = true;
-      }
-    }
-  }
-
-  /**
-   * Set the goal position to pathfind to
-   *
-   * @param goal Goal position on the field. f this is within an obstacle it will be moved to the
-   *     nearest non-obstacle node.
-   */
-  public static void setGoalPos(Translation2d goal) {
-    synchronized (lock) {
-      GridPosition gridPos = findClosestNonObstacle(getGridPos(goal));
-
-      if (gridPos != null) {
-        sGoal = gridPos;
-        realGoalPos = goal;
-
-        doMinor = true;
-        doMajor = true;
-        needsReset = true;
-      }
-    }
-  }
-
-  private static GridPosition findClosestNonObstacle(GridPosition pos) {
-    if (!obstacles.contains(pos)) {
-      return pos;
-    }
-
-    Set<GridPosition> visited = new HashSet<>();
-
-    Queue<GridPosition> queue = new LinkedList<>(getAllNeighbors(pos));
-
-    while (!queue.isEmpty()) {
-      GridPosition check = queue.poll();
-      if (!obstacles.contains(check)) {
-        return check;
-      }
-      visited.add(check);
-
-      for (GridPosition neighbor : getAllNeighbors(check)) {
-        if (!visited.contains(neighbor)) {
-          queue.add(neighbor);
-        }
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Set the dynamic obstacles that should be avoided while pathfinding. This is an advanced usage
-   * feature. This can do some weird things so you should become very familiar with how this will
-   * work before being anywhere near comfortable using it in competition.
-   *
-   * @param obs A List of Translation2d pairs representing obstacles. Each Translation2d represents
-   *     opposite corners of a bounding box.
-   * @param currentRobotPos The current position of the robot. This is needed to change the start
-   *     position of the path if the robot is now within an obstacle.
-   */
-  public static void setDynamicObstacles(
-      List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos) {
-    Set<GridPosition> newObs = new HashSet<>();
-
-    for (var obstacle : obs) {
-      var gridPos1 = getGridPos(obstacle.getFirst());
-      var gridPos2 = getGridPos(obstacle.getSecond());
-
-      int minX = Math.min(gridPos1.x, gridPos2.x);
-      int maxX = Math.max(gridPos1.x, gridPos2.x);
-
-      int minY = Math.min(gridPos1.y, gridPos2.y);
-      int maxY = Math.max(gridPos1.y, gridPos2.y);
-
-      for (int x = minX; x <= maxX; x++) {
-        for (int y = minY; y <= maxY; y++) {
-          newObs.add(new GridPosition(x, y));
-        }
-      }
-    }
-
-    synchronized (lock) {
-      dynamicObstacles.clear();
-      dynamicObstacles.addAll(newObs);
-      obstacles.clear();
-      obstacles.addAll(staticObstacles);
-      obstacles.addAll(dynamicObstacles);
-      needsReset = true;
-      doMinor = true;
-      doMajor = true;
-    }
-
-    setStartPos(currentRobotPos);
-    setGoalPos(realGoalPos);
-  }
-
-  private static List<Translation2d> extractPath() {
+  private List<Translation2d> extractPath() {
     if (sGoal.equals(sStart)) {
       return List.of(realGoalPos);
     }
@@ -405,7 +396,32 @@ public class ADStar {
     return bezierPoints;
   }
 
-  private static boolean walkable(GridPosition s1, GridPosition s2) {
+  private GridPosition findClosestNonObstacle(GridPosition pos) {
+    if (!obstacles.contains(pos)) {
+      return pos;
+    }
+
+    Set<GridPosition> visited = new HashSet<>();
+
+    Queue<GridPosition> queue = new LinkedList<>(getAllNeighbors(pos));
+
+    while (!queue.isEmpty()) {
+      GridPosition check = queue.poll();
+      if (!obstacles.contains(check)) {
+        return check;
+      }
+      visited.add(check);
+
+      for (GridPosition neighbor : getAllNeighbors(check)) {
+        if (!visited.contains(neighbor)) {
+          queue.add(neighbor);
+        }
+      }
+    }
+    return null;
+  }
+
+  private boolean walkable(GridPosition s1, GridPosition s2) {
     int x0 = s1.x;
     int y0 = s1.y;
     int x1 = s2.x;
@@ -445,15 +461,15 @@ public class ADStar {
     return true;
   }
 
-  private static void reset() {
+  private void reset() {
     g.clear();
     rhs.clear();
     open.clear();
     incons.clear();
     closed.clear();
 
-    for (int x = 0; x < NODE_X; x++) {
-      for (int y = 0; y < NODE_Y; y++) {
+    for (int x = 0; x < nodesX; x++) {
+      for (int y = 0; y < nodesY; y++) {
         g.put(new GridPosition(x, y), Double.POSITIVE_INFINITY);
         rhs.put(new GridPosition(x, y), Double.POSITIVE_INFINITY);
       }
@@ -466,7 +482,7 @@ public class ADStar {
     open.put(sGoal, key(sGoal));
   }
 
-  private static void computeOrImprovePath() {
+  private void computeOrImprovePath() {
     while (true) {
       var sv = topKey();
       if (sv == null) {
@@ -498,7 +514,7 @@ public class ADStar {
     }
   }
 
-  private static void updateState(GridPosition s) {
+  private void updateState(GridPosition s) {
     if (!s.equals(sGoal)) {
       rhs.put(s, Double.POSITIVE_INFINITY);
 
@@ -518,7 +534,7 @@ public class ADStar {
     }
   }
 
-  private static double cost(GridPosition sStart, GridPosition sGoal) {
+  private double cost(GridPosition sStart, GridPosition sGoal) {
     if (isCollision(sStart, sGoal)) {
       return Double.POSITIVE_INFINITY;
     }
@@ -526,7 +542,7 @@ public class ADStar {
     return heuristic(sStart, sGoal);
   }
 
-  private static boolean isCollision(GridPosition sStart, GridPosition sEnd) {
+  private boolean isCollision(GridPosition sStart, GridPosition sEnd) {
     if (obstacles.contains(sStart) || obstacles.contains(sEnd)) {
       return true;
     }
@@ -549,7 +565,7 @@ public class ADStar {
     return false;
   }
 
-  private static List<GridPosition> getOpenNeighbors(GridPosition s) {
+  private List<GridPosition> getOpenNeighbors(GridPosition s) {
     List<GridPosition> ret = new ArrayList<>();
 
     for (int xMove = -1; xMove <= 1; xMove++) {
@@ -557,9 +573,9 @@ public class ADStar {
         GridPosition sNext = new GridPosition(s.x + xMove, s.y + yMove);
         if (!obstacles.contains(sNext)
             && sNext.x >= 0
-            && sNext.x < NODE_X
+            && sNext.x < nodesX
             && sNext.y >= 0
-            && sNext.y < NODE_Y) {
+            && sNext.y < nodesY) {
           ret.add(sNext);
         }
       }
@@ -567,13 +583,13 @@ public class ADStar {
     return ret;
   }
 
-  private static List<GridPosition> getAllNeighbors(GridPosition s) {
+  private List<GridPosition> getAllNeighbors(GridPosition s) {
     List<GridPosition> ret = new ArrayList<>();
 
     for (int xMove = -1; xMove <= 1; xMove++) {
       for (int yMove = -1; yMove <= 1; yMove++) {
         GridPosition sNext = new GridPosition(s.x + xMove, s.y + yMove);
-        if (sNext.x >= 0 && sNext.x < NODE_X && sNext.y >= 0 && sNext.y < NODE_Y) {
+        if (sNext.x >= 0 && sNext.x < nodesX && sNext.y >= 0 && sNext.y < nodesY) {
           ret.add(sNext);
         }
       }
@@ -581,7 +597,7 @@ public class ADStar {
     return ret;
   }
 
-  private static Pair<Double, Double> key(GridPosition s) {
+  private Pair<Double, Double> key(GridPosition s) {
     if (g.get(s) > rhs.get(s)) {
       return Pair.of(rhs.get(s) + eps * heuristic(sStart, s), rhs.get(s));
     } else {
@@ -589,7 +605,7 @@ public class ADStar {
     }
   }
 
-  private static Pair<GridPosition, Pair<Double, Double>> topKey() {
+  private Pair<GridPosition, Pair<Double, Double>> topKey() {
     Map.Entry<GridPosition, Pair<Double, Double>> min = null;
     for (var entry : open.entrySet()) {
       if (min == null || comparePair(entry.getValue(), min.getValue()) < 0) {
@@ -604,11 +620,11 @@ public class ADStar {
     return Pair.of(min.getKey(), min.getValue());
   }
 
-  private static double heuristic(GridPosition sStart, GridPosition sGoal) {
+  private double heuristic(GridPosition sStart, GridPosition sGoal) {
     return Math.hypot(sGoal.x - sStart.x, sGoal.y - sStart.y);
   }
 
-  private static int comparePair(Pair<Double, Double> a, Pair<Double, Double> b) {
+  private int comparePair(Pair<Double, Double> a, Pair<Double, Double> b) {
     int first = Double.compare(a.getFirst(), b.getFirst());
     if (first == 0) {
       return Double.compare(a.getSecond(), b.getSecond());
@@ -617,22 +633,16 @@ public class ADStar {
     }
   }
 
-  /**
-   * Converts a Translation2d into a grid position
-   *
-   * @param pos Position on the field
-   * @return The gird position containing the translation
-   */
-  public static GridPosition getGridPos(Translation2d pos) {
-    int x = (int) Math.floor(pos.getX() / NODE_SIZE);
-    int y = (int) Math.floor(pos.getY() / NODE_SIZE);
+  private GridPosition getGridPos(Translation2d pos) {
+    int x = (int) Math.floor(pos.getX() / nodeSize);
+    int y = (int) Math.floor(pos.getY() / nodeSize);
 
     return new GridPosition(x, y);
   }
 
-  private static Translation2d gridPosToTranslation2d(GridPosition pos) {
+  private Translation2d gridPosToTranslation2d(GridPosition pos) {
     return new Translation2d(
-        (pos.x * NODE_SIZE) + (NODE_SIZE / 2.0), (pos.y * NODE_SIZE) + (NODE_SIZE / 2.0));
+        (pos.x * nodeSize) + (nodeSize / 2.0), (pos.y * nodeSize) + (nodeSize / 2.0));
   }
 
   /** Represents a node in the pathfinding grid */

@@ -2,7 +2,7 @@
 #include "pathplanner/lib/auto/AutoBuilder.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include <frc/Filesystem.h>
-#include <wpi/raw_istream.h>
+#include <wpi/MemoryBuffer.h>
 
 using namespace pathplanner;
 
@@ -22,14 +22,14 @@ std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromA
 			+ "/pathplanner/autos/" + autoName + ".auto";
 
 	std::error_code error_code;
-	wpi::raw_fd_istream input { filePath, error_code };
+	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
+			wpi::MemoryBuffer::GetFile(filePath, error_code);
 
-	if (error_code) {
+	if (fileBuffer == nullptr || error_code) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json;
-	input >> json;
+	wpi::json json = wpi::json::parse(fileBuffer->begin(), fileBuffer->end());
 
 	return pathsFromCommandJson(json.at("command"));
 }
@@ -39,14 +39,14 @@ frc::Pose2d PathPlannerAuto::getStartingPoseFromAutoFile(std::string autoName) {
 			+ "/pathplanner/autos/" + autoName + ".auto";
 
 	std::error_code error_code;
-	wpi::raw_fd_istream input { filePath, error_code };
+	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
+			wpi::MemoryBuffer::GetFile(filePath, error_code);
 
-	if (error_code) {
+	if (fileBuffer == nullptr || error_code) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json;
-	input >> json;
+	wpi::json json = wpi::json::parse(fileBuffer->begin(), fileBuffer->end());
 
 	return AutoBuilder::getStartingPoseFromJson(json.at("startingPose"));
 }

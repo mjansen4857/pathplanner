@@ -223,14 +223,10 @@ public class LocalADStar implements Pathfinder {
       needsReset = true;
       doMinor = true;
       doMajor = true;
-
-      setStart = dynamicObstacles.contains(getGridPos(currentRobotPos));
     }
 
-    if (setStart) {
-      // Set the start position to the closest non-obstacle
-      setStartPosition(currentRobotPos);
-    }
+    setStartPosition(currentRobotPos);
+    setGoalPosition(realGoalPos);
   }
 
   @SuppressWarnings("BusyWait")

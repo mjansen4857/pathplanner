@@ -305,12 +305,10 @@ public class ADStar {
       needsReset = true;
       doMinor = true;
       doMajor = true;
-
-      if (dynamicObstacles.contains(getGridPos(currentRobotPos))) {
-        // Set the start position to the closest non-obstacle
-        setStartPos(currentRobotPos);
-      }
     }
+
+    setStartPos(currentRobotPos);
+    setGoalPos(realGoalPos);
   }
 
   private static List<Translation2d> extractPath() {

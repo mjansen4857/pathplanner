@@ -1,5 +1,5 @@
 #include "pathplanner/lib/commands/PathfindingCommand.h"
-#include "pathplanner/lib/pathfinding/ADStar.h"
+#include "pathplanner/lib/pathfinding/Pathfinding.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include <vector>
 
@@ -18,7 +18,7 @@ PathfindingCommand::PathfindingCommand(
 		rotationDelayDistance) {
 	AddRequirements(requirements);
 
-	ADStar::ensureInitialized();
+	Pathfinding::ensureInitialized();
 
 	frc::Rotation2d targetRotation;
 	for (PathPoint p : m_targetPath->getAllPathPoints()) {
@@ -48,7 +48,7 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 		rotationDelayDistance) {
 	AddRequirements(requirements);
 
-	ADStar::ensureInitialized();
+	Pathfinding::ensureInitialized();
 }
 
 void PathfindingCommand::Initialize() {
@@ -64,12 +64,12 @@ void PathfindingCommand::Initialize() {
 				m_goalEndState.getRotation());
 	}
 
-	if (ADStar::getGridPos(currentPose.Translation())
-			== ADStar::getGridPos(m_targetPose.Translation())) {
+	if (currentPose.Translation().Distance(m_targetPose.Translation())
+			< 0.25_m) {
 		Cancel();
 	} else {
-		ADStar::setStartPos(currentPose.Translation());
-		ADStar::setGoalPos(m_targetPose.Translation());
+		Pathfinding::setStartPosition(currentPose.Translation());
+		Pathfinding::setGoalPosition(m_targetPose.Translation());
 	}
 
 	m_startingPose = currentPose;
@@ -82,16 +82,10 @@ void PathfindingCommand::Execute() {
 	PathPlannerLogging::logCurrentPose(currentPose);
 	PPLibTelemetry::setCurrentPose(currentPose);
 
-	if (ADStar::isNewPathAvailable()) {
-		std::vector < frc::Translation2d > bezierPoints =
-				ADStar::getCurrentPath();
+	if (Pathfinding::isNewPathAvailable()) {
+		auto path = Pathfinding::getCurrentPath(m_constraints, m_goalEndState);
 
-		if (bezierPoints.size() >= 4) {
-			auto path =
-					std::make_shared < PathPlannerPath
-							> (bezierPoints, std::vector<RotationTarget>(), std::vector<
-									ConstraintsZone>(), std::vector<EventMarker>(), m_constraints, m_goalEndState, false);
-
+		if (path) {
 			if (currentPose.Translation().Distance(path->getPoint(0).position)
 					<= 0.25_m) {
 				m_currentTrajectory = PathPlannerTrajectory(path,

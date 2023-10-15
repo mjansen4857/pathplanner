@@ -1,5 +1,8 @@
 package com.pathplanner.lib.pathfinding;
 
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -130,14 +133,27 @@ public class LocalADStar implements Pathfinder {
   }
 
   /**
-   * Get the most recently calculated path as as bezier curve
+   * Get the most recently calculated path
    *
-   * @return The bezier points representing a path
+   * @param constraints The path constraints to use when creating the path
+   * @param goalEndState The goal end state to use when creating the path
+   * @return The PathPlannerPath created from the points calculated by the pathfinder
    */
   @Override
-  public List<Translation2d> getCurrentPath() {
-    newPathAvailable = false;
-    return currentPath;
+  public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
+    List<Translation2d> bezierPoints;
+
+    synchronized (lock) {
+      bezierPoints = new ArrayList<>(currentPath);
+      newPathAvailable = false;
+    }
+
+    if (bezierPoints.size() < 4) {
+      // Not enough points to make a path. Something got borked somewhere
+      return null;
+    }
+
+    return new PathPlannerPath(bezierPoints, constraints, goalEndState);
   }
 
   /**

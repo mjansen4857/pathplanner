@@ -8,13 +8,10 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -155,19 +152,9 @@ public class PathfindingCommand extends Command {
     PPLibTelemetry.setCurrentPose(currentPose);
 
     if (Pathfinding.isNewPathAvailable()) {
-      List<Translation2d> bezierPoints = Pathfinding.getCurrentPath();
+      PathPlannerPath path = Pathfinding.getCurrentPath(constraints, goalEndState);
 
-      if (bezierPoints.size() >= 4) {
-        PathPlannerPath path =
-            new PathPlannerPath(
-                bezierPoints,
-                Collections.emptyList(),
-                Collections.emptyList(),
-                Collections.emptyList(),
-                constraints,
-                goalEndState,
-                false);
-
+      if (path != null) {
         if (currentPose.getTranslation().getDistance(path.getPoint(0).position) <= 0.25) {
           currentTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
 

@@ -1,5 +1,8 @@
 package com.pathplanner.lib.pathfinding;
 
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import java.util.List;
@@ -14,11 +17,13 @@ public interface Pathfinder {
   boolean isNewPathAvailable();
 
   /**
-   * Get the most recently calculated path as as bezier curve
+   * Get the most recently calculated path
    *
-   * @return The bezier points representing a path
+   * @param constraints The path constraints to use when creating the path
+   * @param goalEndState The goal end state to use when creating the path
+   * @return The PathPlannerPath created from the points calculated by the pathfinder
    */
-  List<Translation2d> getCurrentPath();
+  PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState);
 
   /**
    * Set the start position to pathfind from
@@ -42,7 +47,7 @@ public interface Pathfinder {
    * @param obs A List of Translation2d pairs representing obstacles. Each Translation2d represents
    *     opposite corners of a bounding box.
    * @param currentRobotPos The current position of the robot. This is needed to change the start
-   *     position of the path if the robot is now within an obstacle.
+   *     position of the path to properly avoid obstacles
    */
   void setDynamicObstacles(
       List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos);

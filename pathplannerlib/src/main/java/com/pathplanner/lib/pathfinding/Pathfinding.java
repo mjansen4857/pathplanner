@@ -1,5 +1,8 @@
 package com.pathplanner.lib.pathfinding;
 
+import com.pathplanner.lib.path.GoalEndState;
+import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import java.util.List;
@@ -39,12 +42,15 @@ public class Pathfinding {
   }
 
   /**
-   * Get the most recently calculated path as as bezier curve
+   * Get the most recently calculated path
    *
-   * @return The bezier points representing a path
+   * @param constraints The path constraints to use when creating the path
+   * @param goalEndState The goal end state to use when creating the path
+   * @return The PathPlannerPath created from the points calculated by the pathfinder
    */
-  public static List<Translation2d> getCurrentPath() {
-    return pathfinder.getCurrentPath();
+  public static PathPlannerPath getCurrentPath(
+      PathConstraints constraints, GoalEndState goalEndState) {
+    return pathfinder.getCurrentPath(constraints, goalEndState);
   }
 
   /**

@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include <frc2/command/Commands.h>
 #include <frc/Filesystem.h>
-#include <wpi/raw_istream.h>
+#include <wpi/MemoryBuffer.h>
 
 using namespace pathplanner;
 
@@ -267,14 +267,14 @@ frc2::CommandPtr AutoBuilder::buildAuto(std::string autoName) {
 			+ "/pathplanner/autos/" + autoName + ".auto";
 
 	std::error_code error_code;
-	wpi::raw_fd_istream input { filePath, error_code };
+	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
+			wpi::MemoryBuffer::GetFile(filePath, error_code);
 
-	if (error_code) {
+	if (fileBuffer == nullptr || error_code) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json;
-	input >> json;
+	wpi::json json = wpi::json::parse(fileBuffer->begin(), fileBuffer->end());
 
 	return getAutoCommandFromJson(json);
 }

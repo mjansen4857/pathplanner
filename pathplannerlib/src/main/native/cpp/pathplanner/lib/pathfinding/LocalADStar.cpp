@@ -1,7 +1,7 @@
 #include "pathplanner/lib/pathfinding/LocalADStar.h"
 #include <cmath>
 #include <frc/Filesystem.h>
-#include <wpi/raw_istream.h>
+#include <wpi/MemoryBuffer.h>
 #include <wpi/json.h>
 #include <chrono>
 #include <frc/Errors.h>
@@ -26,12 +26,13 @@ LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 			+ "/pathplanner/navgrid.json";
 
 	std::error_code error_code;
-	wpi::raw_fd_istream input { filePath, error_code };
+	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
+			wpi::MemoryBuffer::GetFile(filePath, error_code);
 
 	if (!error_code) {
 		try {
-			wpi::json json;
-			input >> json;
+			wpi::json json = wpi::json::parse(fileBuffer->begin(),
+					fileBuffer->end());
 
 			nodeSize = json.at("nodeSizeMeters").get<double>();
 			wpi::json::const_reference grid = json.at("grid");

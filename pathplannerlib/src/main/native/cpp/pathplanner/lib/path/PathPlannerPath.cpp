@@ -2,7 +2,7 @@
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include <frc/Filesystem.h>
-#include <wpi/raw_istream.h>
+#include <wpi/MemoryBuffer.h>
 #include <limits>
 #include <optional>
 
@@ -87,14 +87,14 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 			+ "/pathplanner/paths/" + pathName + ".path";
 
 	std::error_code error_code;
-	wpi::raw_fd_istream input { filePath, error_code };
+	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
+			wpi::MemoryBuffer::GetFile(filePath, error_code);
 
-	if (error_code) {
+	if (fileBuffer == nullptr || error_code) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json;
-	input >> json;
+	wpi::json json = wpi::json::parse(fileBuffer->begin(), fileBuffer->end());
 
 	std::shared_ptr < PathPlannerPath > path = std::make_shared
 			< PathPlannerPath > (PathPlannerPath::fromJson(json));

@@ -3,6 +3,7 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.ADStar;
+import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -32,6 +33,8 @@ public class PathfindingCommand extends Command {
 
   private PathPlannerTrajectory currentTrajectory;
   private Pose2d startingPose;
+
+  private double timeOffset = 0;
 
   /**
    * Constructs a new base pathfinding command that will generate a path towards the given path.
@@ -123,6 +126,7 @@ public class PathfindingCommand extends Command {
   @Override
   public void initialize() {
     currentTrajectory = null;
+    timeOffset = 0;
 
     Pose2d currentPose = poseSupplier.get();
 
@@ -168,11 +172,46 @@ public class PathfindingCommand extends Command {
         if (currentPose.getTranslation().getDistance(path.getPoint(0).position) <= 0.25) {
           currentTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
 
+          // Find the two closest states in front of and behind robot
+          int closestState1Idx = 0;
+          int closestState2Idx = 1;
+          while (true) {
+            double closest2Dist =
+                currentTrajectory
+                    .getState(closestState2Idx)
+                    .positionMeters
+                    .getDistance(currentPose.getTranslation());
+            double nextDist =
+                currentTrajectory
+                    .getState(closestState2Idx + 1)
+                    .positionMeters
+                    .getDistance(currentPose.getTranslation());
+            if (nextDist < closest2Dist) {
+              closestState1Idx++;
+              closestState2Idx++;
+            } else {
+              break;
+            }
+          }
+
+          // Use the closest 2 states to interpolate what the time offset should be
+          // This will account for the delay in pathfinding
+          var closestState1 = currentTrajectory.getState(closestState1Idx);
+          var closestState2 = currentTrajectory.getState(closestState2Idx);
+
+          double d = closestState1.positionMeters.getDistance(closestState2.positionMeters);
+          double t = (currentPose.getTranslation().getDistance(closestState1.positionMeters)) / d;
+
+          timeOffset =
+              GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
+
           PathPlannerLogging.logActivePath(path);
           PPLibTelemetry.setCurrentPath(path);
         } else {
           PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
           currentTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
+
+          timeOffset = 0;
 
           PathPlannerLogging.logActivePath(replanned);
           PPLibTelemetry.setCurrentPath(replanned);
@@ -184,7 +223,7 @@ public class PathfindingCommand extends Command {
     }
 
     if (currentTrajectory != null) {
-      PathPlannerTrajectory.State targetState = currentTrajectory.sample(timer.get());
+      PathPlannerTrajectory.State targetState = currentTrajectory.sample(timer.get() + timeOffset);
 
       // Set the target rotation to the starting rotation if we have not yet traveled the rotation
       // delay distance
@@ -237,7 +276,7 @@ public class PathfindingCommand extends Command {
     }
 
     if (currentTrajectory != null) {
-      return timer.hasElapsed(currentTrajectory.getTotalTimeSeconds());
+      return timer.hasElapsed(currentTrajectory.getTotalTimeSeconds() - timeOffset);
     }
 
     return false;

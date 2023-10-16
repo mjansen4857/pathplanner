@@ -6,6 +6,7 @@ import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -27,7 +28,9 @@ public class PathfindingCommand extends Command {
   private final Consumer<ChassisSpeeds> output;
   private final PathFollowingController controller;
   private final double rotationDelayDistance;
+  private final ReplanningConfig replanningConfig;
 
+  private PathPlannerPath currentPath;
   private PathPlannerTrajectory currentTrajectory;
   private Pose2d startingPose;
 
@@ -44,6 +47,7 @@ public class PathfindingCommand extends Command {
    * @param controller Path following controller that will be used to follow the path
    * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
    *     final rotation
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
@@ -54,6 +58,7 @@ public class PathfindingCommand extends Command {
       Consumer<ChassisSpeeds> outputRobotRelative,
       PathFollowingController controller,
       double rotationDelayDistance,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -78,6 +83,7 @@ public class PathfindingCommand extends Command {
     this.speedsSupplier = speedsSupplier;
     this.output = outputRobotRelative;
     this.rotationDelayDistance = rotationDelayDistance;
+    this.replanningConfig = replanningConfig;
   }
 
   /**
@@ -93,6 +99,7 @@ public class PathfindingCommand extends Command {
    * @param controller Path following controller that will be used to follow the path
    * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
    *     final rotation
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
@@ -104,6 +111,7 @@ public class PathfindingCommand extends Command {
       Consumer<ChassisSpeeds> outputRobotRelative,
       PathFollowingController controller,
       double rotationDelayDistance,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -118,6 +126,7 @@ public class PathfindingCommand extends Command {
     this.speedsSupplier = speedsSupplier;
     this.output = outputRobotRelative;
     this.rotationDelayDistance = rotationDelayDistance;
+    this.replanningConfig = replanningConfig;
   }
 
   @Override
@@ -152,11 +161,12 @@ public class PathfindingCommand extends Command {
     PPLibTelemetry.setCurrentPose(currentPose);
 
     if (Pathfinding.isNewPathAvailable()) {
-      PathPlannerPath path = Pathfinding.getCurrentPath(constraints, goalEndState);
+      currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);
 
-      if (path != null) {
-        if (currentPose.getTranslation().getDistance(path.getPoint(0).position) <= 0.25) {
-          currentTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
+      if (currentPath != null) {
+        if (!replanningConfig.enableInitialReplanning
+            || currentPose.getTranslation().getDistance(currentPath.getPoint(0).position) <= 0.25) {
+          currentTrajectory = new PathPlannerTrajectory(currentPath, currentSpeeds);
 
           // Find the two closest states in front of and behind robot
           int closestState1Idx = 0;
@@ -191,10 +201,10 @@ public class PathfindingCommand extends Command {
           timeOffset =
               GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
 
-          PathPlannerLogging.logActivePath(path);
-          PPLibTelemetry.setCurrentPath(path);
+          PathPlannerLogging.logActivePath(currentPath);
+          PPLibTelemetry.setCurrentPath(currentPath);
         } else {
-          PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
+          PathPlannerPath replanned = currentPath.replan(currentPose, currentSpeeds);
           currentTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
 
           timeOffset = 0;
@@ -210,6 +220,19 @@ public class PathfindingCommand extends Command {
 
     if (currentTrajectory != null) {
       PathPlannerTrajectory.State targetState = currentTrajectory.sample(timer.get() + timeOffset);
+
+      if (replanningConfig.enableDynamicReplanning) {
+        double previousError = Math.abs(controller.getPositionalError());
+        double currentError = currentPose.getTranslation().getDistance(targetState.positionMeters);
+
+        if (currentError >= replanningConfig.dynamicReplanningTotalErrorThreshold
+            || currentError - previousError
+                >= replanningConfig.dynamicReplanningErrorSpikeThreshold) {
+          replanPath(currentPose, currentSpeeds);
+          timer.reset();
+          targetState = currentTrajectory.sample(0);
+        }
+      }
 
       // Set the target rotation to the starting rotation if we have not yet traveled the rotation
       // delay distance
@@ -277,5 +300,12 @@ public class PathfindingCommand extends Command {
     if (!interrupted && goalEndState.getVelocity() < 0.1) {
       output.accept(new ChassisSpeeds());
     }
+  }
+
+  private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
+    PathPlannerPath replanned = currentPath.replan(currentPose, currentSpeeds);
+    currentTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
+    PathPlannerLogging.logActivePath(replanned);
+    PPLibTelemetry.setCurrentPath(replanned);
   }
 }

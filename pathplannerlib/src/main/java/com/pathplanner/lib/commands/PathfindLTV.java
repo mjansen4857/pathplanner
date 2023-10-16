@@ -3,6 +3,7 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.controllers.PPLTVController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -27,6 +28,7 @@ public class PathfindLTV extends PathfindingCommand {
    * @param qelems The maximum desired error tolerance for each state.
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -38,6 +40,7 @@ public class PathfindLTV extends PathfindingCommand {
       Vector<N3> qelems,
       Vector<N2> relems,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -47,6 +50,7 @@ public class PathfindLTV extends PathfindingCommand {
         output,
         new PPLTVController(qelems, relems, dt),
         0,
+        replanningConfig,
         requirements);
   }
 
@@ -59,6 +63,7 @@ public class PathfindLTV extends PathfindingCommand {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (robot relative)
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -68,6 +73,7 @@ public class PathfindLTV extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -77,6 +83,7 @@ public class PathfindLTV extends PathfindingCommand {
         output,
         new PPLTVController(dt),
         0,
+        replanningConfig,
         requirements);
   }
 
@@ -93,6 +100,7 @@ public class PathfindLTV extends PathfindingCommand {
    * @param qelems The maximum desired error tolerance for each state.
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -105,6 +113,7 @@ public class PathfindLTV extends PathfindingCommand {
       Vector<N3> qelems,
       Vector<N2> relems,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         new Pose2d(targetPosition, new Rotation2d()),
@@ -115,6 +124,7 @@ public class PathfindLTV extends PathfindingCommand {
         output,
         new PPLTVController(qelems, relems, dt),
         0,
+        replanningConfig,
         requirements);
   }
 
@@ -129,6 +139,7 @@ public class PathfindLTV extends PathfindingCommand {
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -139,6 +150,7 @@ public class PathfindLTV extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         new Pose2d(targetPosition, new Rotation2d()),
@@ -149,6 +161,7 @@ public class PathfindLTV extends PathfindingCommand {
         output,
         new PPLTVController(dt),
         0,
+        replanningConfig,
         requirements);
   }
 
@@ -165,6 +178,7 @@ public class PathfindLTV extends PathfindingCommand {
    * @param qelems The maximum desired error tolerance for each state.
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -176,6 +190,7 @@ public class PathfindLTV extends PathfindingCommand {
       Vector<N3> qelems,
       Vector<N2> relems,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     this(
         targetPosition,
@@ -187,6 +202,7 @@ public class PathfindLTV extends PathfindingCommand {
         qelems,
         relems,
         dt,
+        replanningConfig,
         requirements);
   }
 
@@ -201,6 +217,7 @@ public class PathfindLTV extends PathfindingCommand {
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
    * @param dt Period of the robot control loop in seconds (default 0.02)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -210,6 +227,7 @@ public class PathfindLTV extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       double dt,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     this(
         targetPosition,
@@ -219,6 +237,7 @@ public class PathfindLTV extends PathfindingCommand {
         currentRobotRelativeSpeeds,
         output,
         dt,
+        replanningConfig,
         requirements);
   }
 }

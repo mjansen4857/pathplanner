@@ -50,6 +50,7 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
             qelems,
             relems,
             dt,
+            replanningConfig,
             requirements),
         new FollowPathWithEvents(
             new FollowPathLTV(
@@ -95,6 +96,7 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
             currentRobotRelativeSpeeds,
             robotRelativeOutput,
             dt,
+            replanningConfig,
             requirements),
         new FollowPathWithEvents(
             new FollowPathLTV(

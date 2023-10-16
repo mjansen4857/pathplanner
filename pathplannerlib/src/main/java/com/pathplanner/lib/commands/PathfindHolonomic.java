@@ -147,6 +147,7 @@ public class PathfindHolonomic extends PathfindingCommand {
             config.maxModuleSpeed,
             config.driveBaseRadius),
         rotationDelayDistance,
+        config.replanningConfig,
         requirements);
   }
 
@@ -191,6 +192,7 @@ public class PathfindHolonomic extends PathfindingCommand {
             config.maxModuleSpeed,
             config.driveBaseRadius),
         rotationDelayDistance,
+        config.replanningConfig,
         requirements);
   }
 

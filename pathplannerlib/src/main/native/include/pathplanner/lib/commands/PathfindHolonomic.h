@@ -32,7 +32,7 @@ public:
 			output,
 			std::make_unique < PPHolonomicDriveController
 					> (config.translationConstants, config.rotationConstants, config.maxModuleSpeed, config.driveBaseRadius, config.period),
-			rotationDelayDistance, requirements) {
+			rotationDelayDistance, config.replanningConfig, requirements) {
 	}
 
 	/**
@@ -63,7 +63,7 @@ public:
 			currentRobotRelativeSpeeds, output,
 			std::make_unique < PPHolonomicDriveController
 					> (config.translationConstants, config.rotationConstants, config.maxModuleSpeed, config.driveBaseRadius, config.period),
-			rotationDelayDistance, requirements) {
+			rotationDelayDistance, config.replanningConfig, requirements) {
 	}
 
 	/**

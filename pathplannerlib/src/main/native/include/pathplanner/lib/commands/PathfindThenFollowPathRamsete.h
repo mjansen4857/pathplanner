@@ -35,7 +35,7 @@ public:
 		AddCommands(
 				PathfindRamsete(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, b,
-						zeta, requirements),
+						zeta, replanningConfig, requirements),
 				FollowPathWithEvents(
 						FollowPathRamsete(goalPath, poseSupplier,
 								currentRobotRelativeSpeeds, robotRelativeOutput,
@@ -64,7 +64,7 @@ public:
 		AddCommands(
 				PathfindRamsete(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput,
-						requirements),
+						replanningConfig, requirements),
 				FollowPathWithEvents(
 						FollowPathRamsete(goalPath, poseSupplier,
 								currentRobotRelativeSpeeds, robotRelativeOutput,

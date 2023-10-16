@@ -3,6 +3,7 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.controllers.PPRamseteController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -25,6 +26,7 @@ public class PathfindRamsete extends PathfindingCommand {
    *     aggressive like a proportional term.
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -35,6 +37,7 @@ public class PathfindRamsete extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       double b,
       double zeta,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -44,6 +47,7 @@ public class PathfindRamsete extends PathfindingCommand {
         output,
         new PPRamseteController(b, zeta),
         0,
+        replanningConfig,
         requirements);
   }
 
@@ -55,6 +59,7 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param poseSupplier a supplier for the robot's current pose
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (robot relative)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -63,6 +68,7 @@ public class PathfindRamsete extends PathfindingCommand {
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -72,6 +78,7 @@ public class PathfindRamsete extends PathfindingCommand {
         output,
         new PPRamseteController(),
         0,
+        replanningConfig,
         requirements);
   }
 
@@ -89,6 +96,7 @@ public class PathfindRamsete extends PathfindingCommand {
    *     aggressive like a proportional term.
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -100,6 +108,7 @@ public class PathfindRamsete extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       double b,
       double zeta,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         new Pose2d(targetPosition, new Rotation2d()),
@@ -110,6 +119,7 @@ public class PathfindRamsete extends PathfindingCommand {
         output,
         new PPRamseteController(b, zeta),
         0,
+        replanningConfig,
         requirements);
   }
 
@@ -123,6 +133,7 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -132,6 +143,7 @@ public class PathfindRamsete extends PathfindingCommand {
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     super(
         new Pose2d(targetPosition, new Rotation2d()),
@@ -142,6 +154,7 @@ public class PathfindRamsete extends PathfindingCommand {
         output,
         new PPRamseteController(),
         0,
+        replanningConfig,
         requirements);
   }
 
@@ -159,6 +172,7 @@ public class PathfindRamsete extends PathfindingCommand {
    *     aggressive like a proportional term.
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -169,6 +183,7 @@ public class PathfindRamsete extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       double b,
       double zeta,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     this(
         targetPosition,
@@ -179,6 +194,7 @@ public class PathfindRamsete extends PathfindingCommand {
         output,
         b,
         zeta,
+        replanningConfig,
         requirements);
   }
 
@@ -192,6 +208,7 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
+   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -200,6 +217,7 @@ public class PathfindRamsete extends PathfindingCommand {
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
+      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     this(
         targetPosition,
@@ -208,6 +226,7 @@ public class PathfindRamsete extends PathfindingCommand {
         poseSupplier,
         currentRobotRelativeSpeeds,
         output,
+        replanningConfig,
         requirements);
   }
 }

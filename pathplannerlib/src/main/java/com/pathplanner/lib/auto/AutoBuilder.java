@@ -143,6 +143,7 @@ public class AutoBuilder {
                 poseSupplier,
                 speedsSupplier,
                 output,
+                replanningConfig,
                 driveSubsystem);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints, rotationDelayDistance) ->
@@ -212,6 +213,7 @@ public class AutoBuilder {
                 output,
                 b,
                 zeta,
+                replanningConfig,
                 driveSubsystem);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints, rotationDelayDistance) ->
@@ -272,6 +274,7 @@ public class AutoBuilder {
                 speedsSupplier,
                 output,
                 dt,
+                replanningConfig,
                 driveSubsystem);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints, rotationDelayDistance) ->
@@ -345,6 +348,7 @@ public class AutoBuilder {
                 qelems,
                 relems,
                 dt,
+                replanningConfig,
                 driveSubsystem);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints, rotationDelayDistance) ->

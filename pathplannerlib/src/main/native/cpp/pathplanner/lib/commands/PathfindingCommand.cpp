@@ -11,11 +11,12 @@ PathfindingCommand::PathfindingCommand(
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
-		units::meter_t rotationDelayDistance, frc2::Requirements requirements) : m_targetPath(
-		targetPath), m_targetPose(), m_goalEndState(0_mps, frc::Rotation2d()), m_constraints(
-		constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
-		speedsSupplier), m_output(output), m_controller(std::move(controller)), m_rotationDelayDistance(
-		rotationDelayDistance) {
+		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
+		frc2::Requirements requirements) : m_targetPath(targetPath), m_targetPose(), m_goalEndState(
+		0_mps, frc::Rotation2d()), m_constraints(constraints), m_poseSupplier(
+		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
+		std::move(controller)), m_rotationDelayDistance(rotationDelayDistance), m_replanningConfig(
+		replanningConfig) {
 	AddRequirements(requirements);
 
 	Pathfinding::ensureInitialized();
@@ -41,11 +42,12 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
-		units::meter_t rotationDelayDistance, frc2::Requirements requirements) : m_targetPath(), m_targetPose(
+		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
+		frc2::Requirements requirements) : m_targetPath(), m_targetPose(
 		targetPose), m_goalEndState(goalEndVel, targetPose.Rotation()), m_constraints(
 		constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
 		speedsSupplier), m_output(output), m_controller(std::move(controller)), m_rotationDelayDistance(
-		rotationDelayDistance) {
+		rotationDelayDistance), m_replanningConfig(replanningConfig) {
 	AddRequirements(requirements);
 
 	Pathfinding::ensureInitialized();
@@ -83,12 +85,14 @@ void PathfindingCommand::Execute() {
 	PPLibTelemetry::setCurrentPose(currentPose);
 
 	if (Pathfinding::isNewPathAvailable()) {
-		auto path = Pathfinding::getCurrentPath(m_constraints, m_goalEndState);
+		m_currentPath = Pathfinding::getCurrentPath(m_constraints,
+				m_goalEndState);
 
-		if (path) {
-			if (currentPose.Translation().Distance(path->getPoint(0).position)
-					<= 0.25_m) {
-				m_currentTrajectory = PathPlannerTrajectory(path,
+		if (m_currentPath) {
+			if (!m_replanningConfig.enableInitialReplanning
+					|| currentPose.Translation().Distance(
+							m_currentPath->getPoint(0).position) <= 0.25_m) {
+				m_currentTrajectory = PathPlannerTrajectory(m_currentPath,
 						currentSpeeds);
 
 				// Find the two closest states in front of and behind robot
@@ -124,10 +128,11 @@ void PathfindingCommand::Execute() {
 				m_timeOffset = GeometryUtil::unitLerp(closestState1.time,
 						closestState2.time, t);
 
-				PathPlannerLogging::logActivePath(path);
-				PPLibTelemetry::setCurrentPath(path);
+				PathPlannerLogging::logActivePath (m_currentPath);
+				PPLibTelemetry::setCurrentPath(m_currentPath);
 			} else {
-				auto replanned = path->replan(currentPose, currentSpeeds);
+				auto replanned = m_currentPath->replan(currentPose,
+						currentSpeeds);
 				m_currentTrajectory = PathPlannerTrajectory(replanned,
 						currentSpeeds);
 
@@ -145,6 +150,22 @@ void PathfindingCommand::Execute() {
 	if (m_currentTrajectory.getStates().size() > 0) {
 		PathPlannerTrajectory::State targetState = m_currentTrajectory.sample(
 				m_timer.Get() + m_timeOffset);
+
+		if (m_replanningConfig.enableDynamicReplanning) {
+			units::meter_t previousError = units::math::abs(
+					m_controller->getPositionalError());
+			units::meter_t currentError = currentPose.Translation().Distance(
+					targetState.position);
+
+			if (currentError
+					>= m_replanningConfig.dynamicReplanningTotalErrorThreshold
+					|| currentError - previousError
+							>= m_replanningConfig.dynamicReplanningErrorSpikeThreshold) {
+				replanPath(currentPose, currentSpeeds);
+				m_timer.Reset();
+				targetState = m_currentTrajectory.sample(0_s);
+			}
+		}
 
 		// Set the target rotation to the starting rotation if we have not yet traveled the rotation
 		// delay distance

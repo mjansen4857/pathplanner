@@ -17,6 +17,7 @@ public:
 	 * @param Qelems The maximum desired error tolerance for each state.
 	 * @param Relems The maximum desired control effort for each input.
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindLTV(std::shared_ptr<PathPlannerPath> targetPath,
@@ -26,10 +27,10 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			const wpi::array<double, 3> &Qelems,
 			const wpi::array<double, 2> &Relems, units::second_t dt,
-			frc2::Requirements requirements) : PathfindingCommand(targetPath,
-			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique < PPLTVController > (Qelems, Relems, dt), 0_m,
-			requirements) {
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
+			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
+			output, std::make_unique < PPLTVController > (Qelems, Relems, dt),
+			0_m, replanningConfig, requirements) {
 	}
 
 	/**
@@ -41,6 +42,7 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindLTV(std::shared_ptr<PathPlannerPath> targetPath,
@@ -48,9 +50,10 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
-			frc2::Requirements requirements) : PathfindingCommand(targetPath,
-			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique < PPLTVController > (dt), 0_m, requirements) {
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
+			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
+			output, std::make_unique < PPLTVController > (dt), 0_m,
+			replanningConfig, requirements) {
 	}
 
 	/**
@@ -65,6 +68,7 @@ public:
 	 * @param Qelems The maximum desired error tolerance for each state.
 	 * @param Relems The maximum desired control effort for each input.
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindLTV(frc::Translation2d targetPosition, PathConstraints constraints,
@@ -74,11 +78,11 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			const wpi::array<double, 3> &Qelems,
 			const wpi::array<double, 2> &Relems, units::second_t dt,
-			frc2::Requirements requirements) : PathfindingCommand(
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
 			frc::Pose2d(targetPosition, frc::Rotation2d()), constraints,
 			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
 			std::make_unique < PPLTVController > (Qelems, Relems, dt), 0_m,
-			requirements) {
+			replanningConfig, requirements) {
 	}
 
 	/**
@@ -91,6 +95,7 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindLTV(frc::Translation2d targetPosition, PathConstraints constraints,
@@ -98,10 +103,11 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
-			frc2::Requirements requirements) : PathfindingCommand(
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
 			frc::Pose2d(targetPosition, frc::Rotation2d()), constraints,
 			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique < PPLTVController > (dt), 0_m, requirements) {
+			std::make_unique < PPLTVController > (dt), 0_m, replanningConfig,
+			requirements) {
 	}
 };
 }

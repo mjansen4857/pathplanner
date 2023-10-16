@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
@@ -38,7 +39,8 @@ class PathPlannerAuto {
     required this.autoDir,
     required this.fs,
     this.folder,
-  }) : sequence = SequentialCommandGroup(commands: []);
+  })  : sequence = SequentialCommandGroup(commands: []),
+        startingPose = Pose2d(position: const Point(2, 2));
 
   PathPlannerAuto duplicate(String newName) {
     return PathPlannerAuto(

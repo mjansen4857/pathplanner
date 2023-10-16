@@ -18,6 +18,7 @@ public:
 	 *     aggressive like a proportional term.
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindRamsete(std::shared_ptr<PathPlannerPath> targetPath,
@@ -27,10 +28,10 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			units::unit_t<PPRamseteController::b_unit> b,
 			units::unit_t<PPRamseteController::zeta_unit> zeta,
-			frc2::Requirements requirements) : PathfindingCommand(targetPath,
-			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique < PPRamseteController > (b, zeta), 0_m,
-			requirements) {
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
+			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
+			output, std::make_unique < PPRamseteController > (b, zeta), 0_m,
+			replanningConfig, requirements) {
 	}
 
 	/**
@@ -41,6 +42,7 @@ public:
 	 * @param poseSupplier a supplier for the robot's current pose
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param output a consumer for the output speeds (robot relative)
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindRamsete(std::shared_ptr<PathPlannerPath> targetPath,
@@ -48,9 +50,10 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output,
-			frc2::Requirements requirements) : PathfindingCommand(targetPath,
-			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique<PPRamseteController>(), 0_m, requirements) {
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
+			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
+			output, std::make_unique<PPRamseteController>(), 0_m,
+			replanningConfig, requirements) {
 	}
 
 	/**
@@ -66,6 +69,7 @@ public:
 	 *     aggressive like a proportional term.
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindRamsete(frc::Translation2d targetPosition,
@@ -75,11 +79,11 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			units::unit_t<PPRamseteController::b_unit> b,
 			units::unit_t<PPRamseteController::zeta_unit> zeta,
-			frc2::Requirements requirements) : PathfindingCommand(
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
 			frc::Pose2d(targetPosition, frc::Rotation2d()), constraints,
 			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
 			std::make_unique < PPRamseteController > (b, zeta), 0_m,
-			requirements) {
+			replanningConfig, requirements) {
 	}
 
 	/**
@@ -91,6 +95,7 @@ public:
 	 * @param poseSupplier a supplier for the robot's current pose
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param output a consumer for the output speeds (robot relative)
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindRamsete(frc::Translation2d targetPosition,
@@ -98,10 +103,11 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output,
-			frc2::Requirements requirements) : PathfindingCommand(
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
 			frc::Pose2d(targetPosition, frc::Rotation2d()), constraints,
 			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique<PPRamseteController>(), 0_m, requirements) {
+			std::make_unique<PPRamseteController>(), 0_m, replanningConfig,
+			requirements) {
 	}
 };
 }

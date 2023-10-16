@@ -34,7 +34,7 @@ public:
 		AddCommands(
 				PathfindLTV(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, Qelems,
-						Relems, dt, requirements),
+						Relems, dt, replanningConfig, requirements),
 				FollowPathWithEvents(
 						FollowPathLTV(goalPath, poseSupplier,
 								currentRobotRelativeSpeeds, robotRelativeOutput,
@@ -65,7 +65,7 @@ public:
 		AddCommands(
 				PathfindLTV(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, dt,
-						requirements),
+						replanningConfig, requirements),
 				FollowPathWithEvents(
 						FollowPathLTV(goalPath, poseSupplier,
 								currentRobotRelativeSpeeds, robotRelativeOutput,

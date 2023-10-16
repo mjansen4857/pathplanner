@@ -33,6 +33,7 @@ public:
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
 	 *     final rotation
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindingCommand(std::shared_ptr<PathPlannerPath> targetPath,
@@ -42,7 +43,7 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unique_ptr<PathFollowingController> controller,
 			units::meter_t rotationDelayDistance,
-			frc2::Requirements requirements);
+			ReplanningConfig replanningConfig, frc2::Requirements requirements);
 
 	/**
 	 * Constructs a new base pathfinding command that will generate a path towards the given pose.
@@ -57,6 +58,7 @@ public:
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
 	 *     final rotation
+	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindingCommand(frc::Pose2d targetPose, PathConstraints constraints,
@@ -66,7 +68,7 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unique_ptr<PathFollowingController> controller,
 			units::meter_t rotationDelayDistance,
-			frc2::Requirements requirements);
+			ReplanningConfig replanningConfig, frc2::Requirements requirements);
 
 	void Initialize() override;
 
@@ -87,10 +89,20 @@ private:
 	std::function<void(frc::ChassisSpeeds)> m_output;
 	std::unique_ptr<PathFollowingController> m_controller;
 	units::meter_t m_rotationDelayDistance;
+	ReplanningConfig m_replanningConfig;
 
+	std::shared_ptr<PathPlannerPath> m_currentPath;
 	PathPlannerTrajectory m_currentTrajectory;
 	frc::Pose2d m_startingPose;
 
 	units::second_t m_timeOffset;
+
+	inline void replanPath(const frc::Pose2d &currentPose,
+			const frc::ChassisSpeeds &currentSpeeds) {
+		auto replanned = m_currentPath->replan(currentPose, currentSpeeds);
+		m_currentTrajectory = PathPlannerTrajectory(replanned, currentSpeeds);
+		PathPlannerLogging::logActivePath(replanned);
+		PPLibTelemetry::setCurrentPath(replanned);
+	}
 };
 }

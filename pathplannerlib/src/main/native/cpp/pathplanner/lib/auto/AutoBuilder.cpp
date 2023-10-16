@@ -91,15 +91,14 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 
-	AutoBuilder::m_pathfindToPoseCommandBuilder =
-			[poseSupplier, speedsSupplier, output, driveSubsystem](
-					frc::Pose2d pose, PathConstraints constraints,
-					units::meters_per_second_t goalEndVel,
-					units::meter_t rotationDelayDistance) {
-				return PathfindRamsete(pose.Translation(), constraints,
-						goalEndVel, poseSupplier, speedsSupplier, output, {
-								driveSubsystem }).ToPtr();
-			};
+	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
+			output, replanningConfig, driveSubsystem](frc::Pose2d pose,
+			PathConstraints constraints, units::meters_per_second_t goalEndVel,
+			units::meter_t rotationDelayDistance) {
+		return PathfindRamsete(pose.Translation(), constraints, goalEndVel,
+				poseSupplier, speedsSupplier, output, replanningConfig, {
+						driveSubsystem }).ToPtr();
+	};
 	AutoBuilder::m_pathfindThenFollowPathCommandBuilder =
 			[poseSupplier, speedsSupplier, output, replanningConfig,
 					driveSubsystem](std::shared_ptr<PathPlannerPath> path,
@@ -135,11 +134,11 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_configured = true;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
-			output, b, zeta, driveSubsystem](frc::Pose2d pose,
+			output, b, zeta, replanningConfig, driveSubsystem](frc::Pose2d pose,
 			PathConstraints constraints, units::meters_per_second_t goalEndVel,
 			units::meter_t rotationDelayDistance) {
 		return PathfindRamsete(pose.Translation(), constraints, goalEndVel,
-				poseSupplier, speedsSupplier, output, b, zeta,
+				poseSupplier, speedsSupplier, output, b, zeta, replanningConfig,
 				{ driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
@@ -176,12 +175,13 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_configured = true;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
-			output, Qelms, Relms, dt, driveSubsystem](frc::Pose2d pose,
-			PathConstraints constraints, units::meters_per_second_t goalEndVel,
+			output, Qelms, Relms, dt, replanningConfig, driveSubsystem](
+			frc::Pose2d pose, PathConstraints constraints,
+			units::meters_per_second_t goalEndVel,
 			units::meter_t rotationDelayDistance) {
 		return PathfindLTV(pose.Translation(), constraints, goalEndVel,
-				poseSupplier, speedsSupplier, output, Qelms, Relms, dt, {
-						driveSubsystem }).ToPtr();
+				poseSupplier, speedsSupplier, output, Qelms, Relms, dt,
+				replanningConfig, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
 			speedsSupplier, output, Qelms, Relms, dt, replanningConfig,
@@ -214,15 +214,14 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 
-	AutoBuilder::m_pathfindToPoseCommandBuilder =
-			[poseSupplier, speedsSupplier, output, dt, driveSubsystem](
-					frc::Pose2d pose, PathConstraints constraints,
-					units::meters_per_second_t goalEndVel,
-					units::meter_t rotationDelayDistance) {
-				return PathfindLTV(pose.Translation(), constraints, goalEndVel,
-						poseSupplier, speedsSupplier, output, dt, {
-								driveSubsystem }).ToPtr();
-			};
+	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
+			output, dt, replanningConfig, driveSubsystem](frc::Pose2d pose,
+			PathConstraints constraints, units::meters_per_second_t goalEndVel,
+			units::meter_t rotationDelayDistance) {
+		return PathfindLTV(pose.Translation(), constraints, goalEndVel,
+				poseSupplier, speedsSupplier, output, dt, replanningConfig, {
+						driveSubsystem }).ToPtr();
+	};
 	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
 			speedsSupplier, output, dt, replanningConfig, driveSubsystem](
 			std::shared_ptr<PathPlannerPath> path, PathConstraints constraints,

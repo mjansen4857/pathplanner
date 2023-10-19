@@ -204,7 +204,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     rotation = widget.path.rotationTargets[i].rotationDegrees;
                     int pointIdx =
                         (widget.path.rotationTargets[i].waypointRelativePos /
-                                0.05)
+                                pathResolution)
                             .round();
                     pos = widget.path.pathPoints[pointIdx].position;
                   }
@@ -218,6 +218,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       pow(dotRadius, 2)) {
                     _draggedRotationIdx = i;
                     _dragRotationOldValue = rotation;
+                    return;
                   }
                 }
               },
@@ -285,7 +286,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                                 .path
                                 .rotationTargets[_draggedRotationIdx!]
                                 .waypointRelativePos /
-                            0.05)
+                            pathResolution)
                         .round();
                     pos = widget.path.pathPoints[pointIdx].position;
                   }

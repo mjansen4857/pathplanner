@@ -286,7 +286,8 @@ void main() {
       ),
     ));
 
-    int pointIdx = (path.rotationTargets[0].waypointRelativePos / 0.05).round();
+    int pointIdx =
+        (path.rotationTargets[0].waypointRelativePos / pathResolution).round();
     Point targetPos = path.pathPoints[pointIdx].position;
     var dragLocation = PathPainterUtil.pointToPixelOffset(
             targetPos + const Point(0.5, 0.0),

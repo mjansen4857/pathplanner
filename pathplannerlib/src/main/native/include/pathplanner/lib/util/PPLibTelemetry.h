@@ -44,7 +44,7 @@ public:
 	static inline void setCurrentPose(frc::Pose2d pose) {
 		if (!m_compMode) {
 			m_posePub.Set(std::span<const double>( { pose.X()(), pose.Y()(),
-					pose.Rotation().Degrees()() }));
+					pose.Rotation().Radians()() }));
 		}
 	}
 
@@ -53,7 +53,7 @@ public:
 	static inline void setTargetPose(frc::Pose2d targetPose) {
 		if (!m_compMode) {
 			m_targetPosePub.Set(std::span<const double>( { targetPose.X()(),
-					targetPose.Y()(), targetPose.Rotation().Degrees()() }));
+					targetPose.Y()(), targetPose.Rotation().Radians()() }));
 		}
 	}
 

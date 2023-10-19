@@ -27,7 +27,7 @@ public class PPLibTelemetry {
   private static final DoubleArrayPublisher posePub =
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/currentPose").publish();
   private static final DoubleArrayPublisher pathPub =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/currentPath").publish();
+      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/activePath").publish();
   private static final DoubleArrayPublisher targetPosePub =
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/targetPose").publish();
 
@@ -74,7 +74,7 @@ public class PPLibTelemetry {
    */
   public static void setCurrentPose(Pose2d pose) {
     if (!compMode) {
-      posePub.set(new double[] {pose.getX(), pose.getY(), pose.getRotation().getDegrees()});
+      posePub.set(new double[] {pose.getX(), pose.getY(), pose.getRotation().getRadians()});
     }
   }
 
@@ -85,14 +85,16 @@ public class PPLibTelemetry {
    */
   public static void setCurrentPath(PathPlannerPath path) {
     if (!compMode) {
-      double[] arr = new double[path.numPoints() * 2];
+      double[] arr = new double[path.numPoints() * 3];
 
       int ndx = 0;
       for (PathPoint p : path.getAllPathPoints()) {
         Translation2d pos = p.position;
         arr[ndx] = pos.getX();
         arr[ndx + 1] = pos.getY();
-        ndx += 2;
+        // Just add 0 as a heading since it's not needed for displaying a path
+        arr[ndx + 2] = 0.0;
+        ndx += 3;
       }
 
       pathPub.set(arr);
@@ -108,7 +110,7 @@ public class PPLibTelemetry {
     if (!compMode) {
       targetPosePub.set(
           new double[] {
-            targetPose.getX(), targetPose.getY(), targetPose.getRotation().getDegrees()
+            targetPose.getX(), targetPose.getY(), targetPose.getRotation().getRadians()
           });
     }
   }

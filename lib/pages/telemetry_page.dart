@@ -84,7 +84,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
           } else {
             _currentPose = Pose2d(
               position: Point(pose[0], pose[1]),
-              rotation: pose[2],
+              rotation: pose[2] * (180.0 / pi),
             );
           }
         });
@@ -99,7 +99,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
           } else {
             _targetPose = Pose2d(
               position: Point(pose[0], pose[1]),
-              rotation: pose[2],
+              rotation: pose[2] * (180.0 / pi),
             );
           }
         });
@@ -426,7 +426,7 @@ class TelemetryPainter extends CustomPainter {
         ..strokeWidth = 2;
 
       Path path = Path();
-      for (int i = 0; i < currentPath!.length; i += 2) {
+      for (int i = 0; i < currentPath!.length - 3; i += 3) {
         Offset offset = PathPainterUtil.pointToPixelOffset(
             Point(currentPath![i], currentPath![i + 1]), scale, fieldImage);
         if (i == 0) {

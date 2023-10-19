@@ -9,7 +9,7 @@ class PPLibTelemetry {
   late NT4Subscription _velSub;
   late NT4Subscription _inaccuracySub;
   late NT4Subscription _currentPoseSub;
-  late NT4Subscription _currentPathSub;
+  late NT4Subscription _activePathSub;
   late NT4Subscription _targetPoseSub;
 
   late NT4Topic _hotReloadPathTopic;
@@ -27,7 +27,7 @@ class PPLibTelemetry {
     _velSub = _client.subscribe('/PathPlanner/vel', 0.033);
     _inaccuracySub = _client.subscribe('/PathPlanner/inaccuracy', 0.033);
     _currentPoseSub = _client.subscribe('/PathPlanner/currentPose', 0.033);
-    _currentPathSub = _client.subscribe('/PathPlanner/currentPath', 0.1);
+    _activePathSub = _client.subscribe('/PathPlanner/activePath', 0.1);
     _targetPoseSub = _client.subscribe('/PathPlanner/targetPose', 0.033);
 
     _hotReloadPathTopic = _client.publishNewTopic(
@@ -76,7 +76,7 @@ class PPLibTelemetry {
   }
 
   Stream<List<num>?> currentPathStream() {
-    return _currentPathSub
+    return _activePathSub
         .stream()
         .map((path) => (path as List?)?.map((e) => e as num).toList());
   }

@@ -5,9 +5,12 @@ import com.pathplanner.lib.util.PIDConstants;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 /** Path following controller for holonomic drive trains */
 public class PPHolonomicDriveController implements PathFollowingController {
@@ -19,6 +22,8 @@ public class PPHolonomicDriveController implements PathFollowingController {
 
   private Translation2d translationError = new Translation2d();
   private boolean isEnabled = true;
+
+  private static Supplier<Optional<Rotation2d>> rotationTargetOverride = null;
 
   /**
    * Constructs a HolonomicDriveController
@@ -135,10 +140,15 @@ public class PPHolonomicDriveController implements PathFollowingController {
         new TrapezoidProfile.Constraints(
             maxAngVel, targetState.constraints.getMaxAngularAccelerationRpsSq());
 
+    Rotation2d targetRotation = targetState.targetHolonomicRotation;
+    if (rotationTargetOverride != null) {
+      targetRotation = rotationTargetOverride.get().orElse(targetRotation);
+    }
+
     double targetRotationVel =
         rotationController.calculate(
             currentPose.getRotation().getRadians(),
-            new TrapezoidProfile.State(targetState.targetHolonomicRotation.getRadians(), 0),
+            new TrapezoidProfile.State(targetRotation.getRadians(), 0),
             rotationConstraints);
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -164,5 +174,17 @@ public class PPHolonomicDriveController implements PathFollowingController {
   @Override
   public boolean isHolonomic() {
     return true;
+  }
+
+  /**
+   * Set a supplier that will be used to override the rotation target when path following.
+   *
+   * <p>This function should return an empty optional to use the rotation targets in the path
+   *
+   * @param rotationTargetOverride Supplier to override rotation targets
+   */
+  public static void setRotationTargetOverride(
+      Supplier<Optional<Rotation2d>> rotationTargetOverride) {
+    PPHolonomicDriveController.rotationTargetOverride = rotationTargetOverride;
   }
 }

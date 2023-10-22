@@ -2,6 +2,8 @@
 
 using namespace pathplanner;
 
+std::function<std::optional<frc::Rotation2d>()> PPHolonomicDriveController::rotationTargetOverride;
+
 PPHolonomicDriveController::PPHolonomicDriveController(
 		PIDConstants translationConstants, PIDConstants rotationConstants,
 		units::meters_per_second_t maxModuleSpeed,
@@ -52,6 +54,11 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 
 	units::radians_per_second_t maxAngVel = units::math::min(angVelConstraint,
 			maxAngVelModule);
+
+	frc::Rotation2d targetRotation = referenceState.targetHolonomicRotation;
+	if (rotationTargetOverride) {
+		targetRotation = rotationTargetOverride().value_or(targetRotation);
+	}
 
 	units::radians_per_second_t targetRotationVel {
 			m_rotationController.Calculate(currentPose.Rotation().Radians(),

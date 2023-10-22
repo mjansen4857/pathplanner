@@ -10,6 +10,8 @@
 #include <frc/geometry/Rotation2d.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
+#include <functional>
+#include <optional>
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include "pathplanner/lib/util/PIDConstants.h"
 #include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
@@ -81,6 +83,18 @@ public:
 		return true;
 	}
 
+	/**
+	 * Set a supplier that will be used to override the rotation target when path following.
+	 * <p>
+	 * This function should return an empty optional to use the rotation targets in the path
+	 * @param rotationTargetOverride Supplier to override rotation targets
+	 */
+	static inline void setRotationTargetOverride(
+			std::function<std::optional<frc::Rotation2d>()> rotationTargetOverride) {
+		PPHolonomicDriveController::rotationTargetOverride =
+				rotationTargetOverride;
+	}
+
 private:
 	using rpsPerMps_t = units::unit_t<units::compound_unit<units::radians_per_second, units::inverse<units::meters_per_second>>>;
 
@@ -92,5 +106,7 @@ private:
 
 	frc::Translation2d m_translationError;
 	bool m_enabled;
+
+	static std::function<std::optional<frc::Rotation2d>()> rotationTargetOverride;
 };
 }

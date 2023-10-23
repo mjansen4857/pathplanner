@@ -323,6 +323,7 @@ public class PathPlannerTrajectory {
       reversed.velocityMps = -velocityMps;
       reversed.accelerationMpsSq = -accelerationMpsSq;
       reversed.headingAngularVelocityRps = -headingAngularVelocityRps;
+      reversed.positionMeters = positionMeters;
       reversed.heading =
           Rotation2d.fromDegrees(MathUtil.inputModulus(heading.getDegrees() + 180, -180, 180));
       reversed.targetHolonomicRotation = targetHolonomicRotation;

@@ -14,6 +14,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/preview_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 
@@ -55,6 +56,7 @@ void main() {
         eventMarkers: List.generate(5, (index) => EventMarker.defaultMarker()),
         reversed: false,
         folder: null,
+        previewStartingState: null,
       );
 
       expect(path.name, 'test');
@@ -91,6 +93,7 @@ void main() {
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
+        previewStartingState: PreviewStartingState(rotation: 10, velocity: 1),
       );
 
       Map<String, dynamic> json = path.toJson();
@@ -124,6 +127,7 @@ void main() {
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
+        previewStartingState: null,
       );
       PathPlannerPath cloned = path.duplicate('test');
 
@@ -158,6 +162,7 @@ void main() {
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
+        previewStartingState: null,
       );
       PathPlannerPath path2 = PathPlannerPath(
         name: 'test',
@@ -180,6 +185,7 @@ void main() {
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
+        previewStartingState: null,
       );
       PathPlannerPath path3 = PathPlannerPath(
         name: 'test2',
@@ -202,6 +208,7 @@ void main() {
         eventMarkers: [],
         reversed: false,
         folder: null,
+        previewStartingState: null,
       );
 
       expect(path2, path1);
@@ -236,6 +243,7 @@ void main() {
       eventMarkers: [EventMarker.defaultMarker()],
       reversed: false,
       folder: null,
+      previewStartingState: null,
     );
 
     path.addWaypoint(const Point(6.0, 1.0));
@@ -284,6 +292,7 @@ void main() {
       ],
       reversed: false,
       folder: null,
+      previewStartingState: null,
     );
 
     path.insertWaypointAfter(1);

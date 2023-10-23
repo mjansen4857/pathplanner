@@ -9,7 +9,6 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
-import 'package:pathplanner/services/simulator/chassis_speeds.dart';
 import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
@@ -618,8 +617,11 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   // marked as async so it can be called from initState
   void _simulatePath() async {
     if (widget.simulate) {
+      num linearVel = widget.path.previewStartingState?.velocity ?? 0;
+      num rotationRadians =
+          (widget.path.previewStartingState?.rotation ?? 0) * (pi / 180.0);
       setState(() {
-        _simTraj = Trajectory.simulate(widget.path, ChassisSpeeds());
+        _simTraj = Trajectory.simulate(widget.path, linearVel, rotationRadians);
       });
       _previewController.stop();
       _previewController.reset();

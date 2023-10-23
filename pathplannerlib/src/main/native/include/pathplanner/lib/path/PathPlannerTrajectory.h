@@ -107,9 +107,10 @@ public:
 			reversed.velocity = -velocity;
 			reversed.acceleration = -acceleration;
 			reversed.headingAngularVelocity = -headingAngularVelocity;
+			reversed.position = position;
 			reversed.heading = frc::Rotation2d(
-					frc::InputModulus(reversed.heading.Degrees() + 180_deg,
-							-180_deg, 180_deg));
+					frc::InputModulus(heading.Degrees() + 180_deg, -180_deg,
+							180_deg));
 			reversed.targetHolonomicRotation = targetHolonomicRotation;
 			reversed.curvature = -curvature;
 			reversed.deltaPos = deltaPos;

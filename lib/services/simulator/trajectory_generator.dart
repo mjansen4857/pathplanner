@@ -26,8 +26,9 @@ class TrajectoryGenerator {
     for (PathPlannerPath p in paths) {
       PathPlannerPath replanned =
           _replanPathIfNeeded(p, startPose, startSpeeds);
-      Trajectory simPath = Trajectory.simulate(replanned, startSpeeds,
-          startingRotationRadians: GeometryUtil.toRadians(startPose.rotation));
+      num linearVel = sqrt(pow(startSpeeds.vx, 2) + pow(startSpeeds.vy, 2));
+      Trajectory simPath = Trajectory.simulate(
+          replanned, linearVel, GeometryUtil.toRadians(startPose.rotation));
 
       num startTime = allStates.isNotEmpty ? allStates.last.time : 0;
       for (TrajectoryState s in simPath.states) {
@@ -123,6 +124,7 @@ class TrajectoryGenerator {
         fs: MemoryFileSystem(),
         reversed: path.reversed,
         folder: null,
+        previewStartingState: null,
       );
     } else if ((closestPointIdx == 0 && robotNextControl == null) ||
         ((closestDist -
@@ -182,6 +184,7 @@ class TrajectoryGenerator {
         fs: MemoryFileSystem(),
         reversed: path.reversed,
         folder: null,
+        previewStartingState: null,
       );
     }
 
@@ -230,6 +233,7 @@ class TrajectoryGenerator {
         fs: MemoryFileSystem(),
         reversed: path.reversed,
         folder: null,
+        previewStartingState: null,
       );
     }
 
@@ -356,6 +360,7 @@ class TrajectoryGenerator {
       fs: MemoryFileSystem(),
       reversed: path.reversed,
       folder: null,
+      previewStartingState: null,
     );
   }
 
@@ -378,11 +383,13 @@ class Trajectory {
   Trajectory({required this.states});
 
   // Just using default values for the kinematics stuff. It will be a good enough approximation
-  Trajectory.simulate(PathPlannerPath path, ChassisSpeeds startingSpeeds,
-      {num maxModuleSpeed = 4.5,
-      num driveBaseRadius = 0.425,
-      num startingRotationRadians = 0})
-      : states = _generateStates(path, startingSpeeds) {
+  Trajectory.simulate(
+    PathPlannerPath path,
+    num linearVel,
+    num startingRotationRadians, {
+    num maxModuleSpeed = 4.5,
+    num driveBaseRadius = 0.425,
+  }) : states = _generateStates(path, linearVel) {
     _simulateRotation(startingRotationRadians, maxModuleSpeed, driveBaseRadius);
   }
 
@@ -456,10 +463,10 @@ class Trajectory {
   }
 
   static List<TrajectoryState> _generateStates(
-      PathPlannerPath path, ChassisSpeeds startingSpeeds) {
+      PathPlannerPath path, num linearVel) {
     List<TrajectoryState> states = [];
 
-    num startVel = sqrt(pow(startingSpeeds.vx, 2) + pow(startingSpeeds.vy, 2));
+    num startVel = linearVel.abs();
 
     int nextRotationTargetIdx = _getNextRotationTargetIdx(path, 0);
 

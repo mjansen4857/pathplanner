@@ -12,6 +12,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
+import 'package:pathplanner/path/preview_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
@@ -29,6 +30,7 @@ class PathPlannerPath {
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
   bool reversed;
+  PreviewStartingState? previewStartingState;
   String? folder;
 
   FileSystem fs;
@@ -41,6 +43,7 @@ class PathPlannerPath {
   bool rotationTargetsExpanded = false;
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
+  bool previewStartingStateExpanded = false;
   DateTime lastModified = DateTime.now().toUtc();
 
   PathPlannerPath.defaultPath({
@@ -55,7 +58,8 @@ class PathPlannerPath {
         constraintZones = [],
         rotationTargets = [],
         eventMarkers = [],
-        reversed = false {
+        reversed = false,
+        previewStartingState = null {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),
@@ -87,6 +91,7 @@ class PathPlannerPath {
     required this.fs,
     required this.reversed,
     required this.folder,
+    required this.previewStartingState,
   }) : pathPoints = [] {
     generatePathPoints();
   }
@@ -118,6 +123,9 @@ class PathPlannerPath {
           ],
           reversed: json['reversed'] ?? false,
           folder: json['folder'],
+          previewStartingState: json['previewStartingState'] == null
+              ? null
+              : PreviewStartingState.fromJson(json['previewStartingState']),
         );
 
   void generateAndSavePath() {
@@ -204,6 +212,7 @@ class PathPlannerPath {
       'goalEndState': goalEndState.toJson(),
       'reversed': reversed,
       'folder': folder,
+      'previewStartingState': previewStartingState,
     };
   }
 
@@ -447,6 +456,7 @@ class PathPlannerPath {
       fs: fs,
       reversed: reversed,
       folder: folder,
+      previewStartingState: previewStartingState?.clone(),
     );
   }
 

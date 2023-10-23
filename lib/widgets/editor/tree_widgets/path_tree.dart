@@ -5,6 +5,7 @@ import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dar
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/preview_starting_state_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:undo/undo.dart';
@@ -145,6 +146,12 @@ class _PathTreeState extends State<PathTree> {
                   initiallySelectedZone: widget.initiallySelectedZone,
                   undoStack: widget.undoStack,
                   holonomicMode: widget.holonomicMode,
+                ),
+                PreviewStartingStateTree(
+                  path: widget.path,
+                  undoStack: widget.undoStack,
+                  holonomicMode: widget.holonomicMode,
+                  onPathChanged: widget.onPathChanged,
                 ),
                 _buildReversedCheckbox(),
                 const Divider(),

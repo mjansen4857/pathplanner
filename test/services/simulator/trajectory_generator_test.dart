@@ -8,7 +8,6 @@ import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/simulator/chassis_speeds.dart';
 import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/pose2d.dart';
 
@@ -37,9 +36,10 @@ void main() {
       fs: MemoryFileSystem(),
       reversed: false,
       folder: null,
+      previewStartingState: null,
     );
 
-    Trajectory sim = Trajectory.simulate(test, ChassisSpeeds());
+    Trajectory sim = Trajectory.simulate(test, 0, 0);
 
     // Basic coverage test, expand in future
     expect(sim.states.last.time, closeTo(2.83, 0.05));
@@ -76,6 +76,7 @@ void main() {
       fs: MemoryFileSystem(),
       reversed: false,
       folder: null,
+      previewStartingState: null,
     );
 
     // Basic coverage tests, expand in future

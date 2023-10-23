@@ -212,7 +212,7 @@ class PathPlannerPath {
       'goalEndState': goalEndState.toJson(),
       'reversed': reversed,
       'folder': folder,
-      'previewStartingState': previewStartingState,
+      'previewStartingState': previewStartingState?.toJson(),
     };
   }
 

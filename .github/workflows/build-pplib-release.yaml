@@ -19,7 +19,13 @@ jobs:
             build-options: "-Ponlylinuxathena"
           - container: wpilib/ubuntu-base:22.04
             artifact-name: PPLib-Linux
-            build-options: ""
+            build-options: "-Ponlylinuxx86-64"
+          - container: wpilib/raspbian-cross-ubuntu:bullseye-22.04
+            artifact-name: PPLib-Arm32
+            build-options: "-Ponlylinuxarm32"
+          - container: wpilib/aarch64-cross-ubuntu:bullseye-22.04
+            artifact-name: PPLib-Arm64
+            build-options: "-Ponlylinuxarm64"
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     runs-on: ubuntu-22.04
     container: ${{ matrix.container }}

@@ -2,6 +2,7 @@
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include <frc/Filesystem.h>
+#include <frc/MathUtil.h>
 #include <wpi/MemoryBuffer.h>
 #include <limits>
 #include <optional>
@@ -220,6 +221,20 @@ std::vector<PathPoint> PathPlannerPath::createPath(
 	}
 
 	return points;
+}
+
+frc::Pose2d PathPlannerPath::getStartingDifferentialPose() {
+	frc::Translation2d startPos = getPoint(0).position;
+	frc::Rotation2d heading =
+			(getPoint(1).position - getPoint(0).position).Angle();
+
+	if (m_reversed) {
+		heading = frc::Rotation2d(
+				frc::InputModulus(heading.Degrees() + 180_deg, -180_deg,
+						180_deg));
+	}
+
+	return frc::Pose2d(startPos, heading);
 }
 
 void PathPlannerPath::precalcValues() {

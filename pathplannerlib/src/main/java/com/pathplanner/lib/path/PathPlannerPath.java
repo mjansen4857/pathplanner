@@ -2,6 +2,7 @@ package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -297,6 +298,23 @@ public class PathPlannerPath {
     double y = ((Number) pointJson.get("y")).doubleValue();
 
     return new Translation2d(x, y);
+  }
+
+  /**
+   * Get the differential pose for the start point of this path
+   *
+   * @return Pose at the path's starting point
+   */
+  public Pose2d getStartingDifferentialPose() {
+    Translation2d startPos = getPoint(0).position;
+    Rotation2d heading = getPoint(1).position.minus(getPoint(0).position).getAngle();
+
+    if (reversed) {
+      heading =
+          Rotation2d.fromDegrees(MathUtil.inputModulus(heading.getDegrees() + 180, -180, 180));
+    }
+
+    return new Pose2d(startPos, heading);
   }
 
   /**

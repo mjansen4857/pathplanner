@@ -75,6 +75,13 @@ public:
 	static std::shared_ptr<PathPlannerPath> fromPathFile(std::string pathName);
 
 	/**
+	 * Get the differential pose for the start point of this path
+	 *
+	 * @return Pose at the path's starting point
+	 */
+	frc::Pose2d getStartingDifferentialPose();
+
+	/**
 	 * Get the constraints for a point along the path
 	 *
 	 * @param idx Index of the point to get constraints for

@@ -22,7 +22,7 @@ public:
 	 * @param poseSupplier a function that returns the robot's current pose
 	 * @param resetPose a function used for resetting the robot's pose
 	 * @param robotRelativeSpeedsSupplier a function that returns the robot's current robot relative chassis speeds
-	 * @param robotRelativeOutput a function for setting the robot's field-relative chassis speeds
+	 * @param robotRelativeOutput a function for setting the robot's robot-relative chassis speeds
 	 * @param config HolonomicPathFollowerConfig for configuring the
 	 *     path following commands
 	 * @param driveSubsystem a pointer to the subsystem for the robot's drive

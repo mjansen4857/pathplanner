@@ -52,7 +52,7 @@ public class AutoBuilder {
    * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
-   * @param robotRelativeOutput a consumer for setting the robot's field-relative chassis speeds
+   * @param robotRelativeOutput a consumer for setting the robot's robot-relative chassis speeds
    * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
    *     path following commands
    * @param driveSubsystem the subsystem for the robot's drive

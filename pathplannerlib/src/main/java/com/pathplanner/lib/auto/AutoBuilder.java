@@ -12,15 +12,21 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -510,6 +516,70 @@ public class AutoBuilder {
   public static Command pathfindThenFollowPath(
       PathPlannerPath goalPath, PathConstraints pathfindingConstraints) {
     return pathfindThenFollowPath(goalPath, pathfindingConstraints, 0);
+  }
+
+  /**
+   * Create and populate a sendable chooser with all PathPlannerAutos in the project. The default
+   * option will be Commands.none()
+   *
+   * @return SendableChooser populated with all autos
+   */
+  public static SendableChooser<Command> buildAutoChooser() {
+    return buildAutoChooser("");
+  }
+
+  /**
+   * Create and populate a sendable chooser with all PathPlannerAutos in the project
+   *
+   * @param defaultAutoName The name of the auto that should be the default option. If this is an
+   *     empty string, or if an auto with the given name does not exist, the default option will be
+   *     Commands.none()
+   * @return SendableChooser populated with all autos
+   */
+  public static SendableChooser<Command> buildAutoChooser(String defaultAutoName) {
+    if (!AutoBuilder.isConfigured()) {
+      throw new RuntimeException(
+          "AutoBuilder was not configured before attempting to build an auto chooser");
+    }
+
+    SendableChooser<Command> chooser = new SendableChooser<>();
+    File[] autoFiles = new File(Filesystem.getDeployDirectory(), "pathplanner/autos").listFiles();
+
+    if (autoFiles == null) {
+      chooser.setDefaultOption("None", Commands.none());
+      return chooser;
+    }
+
+    Set<String> autoNames =
+        Stream.of(autoFiles)
+            .filter(file -> !file.isDirectory())
+            .map(File::getName)
+            .filter(name -> name.endsWith(".auto"))
+            .map(name -> name.substring(0, name.lastIndexOf(".")))
+            .collect(Collectors.toSet());
+
+    PathPlannerAuto defaultOption = null;
+    List<PathPlannerAuto> options = new ArrayList<>();
+
+    for (String autoName : autoNames) {
+      PathPlannerAuto auto = new PathPlannerAuto(autoName);
+
+      if (!defaultAutoName.isEmpty() && defaultAutoName.equals(autoName)) {
+        defaultOption = auto;
+      } else {
+        options.add(auto);
+      }
+    }
+
+    if (defaultOption == null) {
+      chooser.setDefaultOption("None", Commands.none());
+    } else {
+      chooser.setDefaultOption(defaultOption.getName(), defaultOption);
+    }
+
+    options.forEach(auto -> chooser.addOption(auto.getName(), auto));
+
+    return chooser;
   }
 
   /**

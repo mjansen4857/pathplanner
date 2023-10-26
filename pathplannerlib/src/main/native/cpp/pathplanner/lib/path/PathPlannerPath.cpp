@@ -170,13 +170,14 @@ frc::Translation2d PathPlannerPath::pointFromJson(const wpi::json &json) {
 	return frc::Translation2d(x, y);
 }
 
-PathPlannerPath PathPlannerPath::fromPathPoints(
+std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathPoints(
 		std::vector<PathPoint> pathPoints, PathConstraints globalConstraints,
 		GoalEndState goalEndState) {
-	PathPlannerPath path = PathPlannerPath(globalConstraints, goalEndState);
-	path.m_allPoints = pathPoints;
+	auto path = std::make_shared < PathPlannerPath
+			> (globalConstraints, goalEndState);
+	path->m_allPoints = pathPoints;
 
-	path.precalcValues();
+	path->precalcValues();
 
 	return path;
 }
@@ -371,44 +372,62 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 		robotNextControl = startingPose.Translation()
 				+ frc::Translation2d(distToStart / 3.0, heading);
 
-		frc::Rotation2d joinHeading =
-				(m_bezierPoints[0] - m_bezierPoints[1]).Angle();
+		frc::Rotation2d joinHeading = (m_allPoints[0].position
+				- m_allPoints[1].position).Angle();
 		frc::Translation2d joinPrevControl = getPoint(0).position
 				+ frc::Translation2d(distToStart / 2.0, joinHeading);
 
-		std::vector < frc::Translation2d
-				> replannedBezier( { startingPose.Translation(),
-						robotNextControl.value(), joinPrevControl });
-		replannedBezier.insert(replannedBezier.end(), m_bezierPoints.begin(),
-				m_bezierPoints.end());
+		if (m_bezierPoints.empty()) {
+			// We don't have any bezier points to reference
+			PathSegment joinSegment(startingPose.Translation(),
+					robotNextControl.value(), joinPrevControl,
+					m_allPoints[0].position, false);
+			std::vector < PathPoint > replannedPoints;
+			auto joinPoints = joinSegment.getSegmentPoints();
+			replannedPoints.insert(replannedPoints.end(), joinPoints.begin(),
+					joinPoints.end());
+			replannedPoints.insert(replannedPoints.end(), m_allPoints.begin(),
+					m_allPoints.end());
 
-		// keep all rotations, markers, and zones and increment waypoint pos by 1
-		std::vector < RotationTarget > targets;
-		std::transform(m_rotationTargets.begin(), m_rotationTargets.end(),
-				std::back_inserter(targets),
-				[](RotationTarget target) {
-					return RotationTarget(target.getPosition() + 1,
-							target.getTarget());
-				});
-		std::vector < ConstraintsZone > zones;
-		std::transform(m_constraintZones.begin(), m_constraintZones.end(),
-				std::back_inserter(zones),
-				[](ConstraintsZone zone) {
-					return ConstraintsZone(zone.getMinWaypointRelativePos() + 1,
-							zone.getMaxWaypointRelativePos() + 1,
-							zone.getConstraints());
-				});
-		std::vector < EventMarker > markers;
-		std::transform(m_eventMarkers.begin(), m_eventMarkers.end(),
-				std::back_inserter(markers),
-				[](EventMarker marker) {
-					return EventMarker(marker.getWaypointRelativePos() + 1,
-							marker.getCommand(),
-							marker.getMinimumTriggerDistance());
-				});
+			return PathPlannerPath::fromPathPoints(replannedPoints,
+					m_globalConstraints, m_goalEndState);
+		} else {
+			// We can use the bezier points
+			std::vector < frc::Translation2d
+					> replannedBezier( { startingPose.Translation(),
+							robotNextControl.value(), joinPrevControl });
+			replannedBezier.insert(replannedBezier.end(),
+					m_bezierPoints.begin(), m_bezierPoints.end());
 
-		return std::make_shared < PathPlannerPath
-				> (replannedBezier, targets, zones, markers, m_globalConstraints, m_goalEndState, m_reversed);
+			// keep all rotations, markers, and zones and increment waypoint pos by 1
+			std::vector < RotationTarget > targets;
+			std::transform(m_rotationTargets.begin(), m_rotationTargets.end(),
+					std::back_inserter(targets),
+					[](RotationTarget target) {
+						return RotationTarget(target.getPosition() + 1,
+								target.getTarget());
+					});
+			std::vector < ConstraintsZone > zones;
+			std::transform(m_constraintZones.begin(), m_constraintZones.end(),
+					std::back_inserter(zones),
+					[](ConstraintsZone zone) {
+						return ConstraintsZone(
+								zone.getMinWaypointRelativePos() + 1,
+								zone.getMaxWaypointRelativePos() + 1,
+								zone.getConstraints());
+					});
+			std::vector < EventMarker > markers;
+			std::transform(m_eventMarkers.begin(), m_eventMarkers.end(),
+					std::back_inserter(markers),
+					[](EventMarker marker) {
+						return EventMarker(marker.getWaypointRelativePos() + 1,
+								marker.getCommand(),
+								marker.getMinimumTriggerDistance());
+					});
+
+			return std::make_shared < PathPlannerPath
+					> (replannedBezier, targets, zones, markers, m_globalConstraints, m_goalEndState, m_reversed);
+		}
 	}
 
 	size_t joinAnchorIdx = numPoints() - 1;
@@ -445,6 +464,22 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 						ConstraintsZone>(), std::vector<EventMarker>(), m_globalConstraints, m_goalEndState, m_reversed);
 	}
 
+	if (m_bezierPoints.empty()) {
+		// We don't have any bezier points to reference
+		PathSegment joinSegment(startingPose.Translation(),
+				robotNextControl.value(), joinPrevControl, joinAnchor, false);
+		std::vector < PathPoint > replannedPoints;
+		auto joinPoints = joinSegment.getSegmentPoints();
+		replannedPoints.insert(replannedPoints.end(), joinPoints.begin(),
+				joinPoints.end());
+		replannedPoints.insert(replannedPoints.end(),
+				m_allPoints.begin() + joinAnchorIdx, m_allPoints.end());
+
+		return PathPlannerPath::fromPathPoints(replannedPoints,
+				m_globalConstraints, m_goalEndState);
+	}
+
+	// We can reference bezier points
 	size_t nextWaypointIdx = static_cast<size_t>(std::ceil(
 			(joinAnchorIdx + 1) * PathSegment::RESOLUTION));
 	size_t bezierPointIdx = nextWaypointIdx * 3;

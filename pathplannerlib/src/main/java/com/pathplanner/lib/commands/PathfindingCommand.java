@@ -164,8 +164,18 @@ public class PathfindingCommand extends Command {
       currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);
 
       if (currentPath != null) {
+        ChassisSpeeds fieldRelativeSpeeds =
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                currentSpeeds, currentPose.getRotation().unaryMinus());
+        Rotation2d currentHeading =
+            new Rotation2d(
+                fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
+        Rotation2d headingError =
+            currentHeading.minus(currentPath.getStartingDifferentialPose().getRotation());
+
         if (!replanningConfig.enableInitialReplanning
-            || currentPose.getTranslation().getDistance(currentPath.getPoint(0).position) <= 0.25) {
+            || (currentPose.getTranslation().getDistance(currentPath.getPoint(0).position) <= 0.25
+                && Math.abs(headingError.getDegrees()) < 30)) {
           currentTrajectory = new PathPlannerTrajectory(currentPath, currentSpeeds);
 
           // Find the two closest states in front of and behind robot

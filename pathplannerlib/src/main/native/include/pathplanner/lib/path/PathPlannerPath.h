@@ -179,10 +179,13 @@ public:
 	std::shared_ptr<PathPlannerPath> replan(const frc::Pose2d startingPose,
 			const frc::ChassisSpeeds currentSpeeds) const;
 
-private:
+	/**
+	 * USED INTERNALLY. DO NOT USE
+	 */
 	PathPlannerPath(PathConstraints globalConstraints,
 			GoalEndState goalEndState);
 
+private:
 	static PathPlannerPath fromJson(const wpi::json &json);
 
 	static std::vector<frc::Translation2d> bezierPointsFromWaypointsJson(

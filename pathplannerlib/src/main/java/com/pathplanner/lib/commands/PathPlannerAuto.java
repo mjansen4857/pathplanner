@@ -34,6 +34,7 @@ public class PathPlannerAuto extends Command {
 
     this.autoCommand = AutoBuilder.buildAuto(autoName);
     m_requirements = autoCommand.getRequirements();
+    setName(autoName);
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
   }
 

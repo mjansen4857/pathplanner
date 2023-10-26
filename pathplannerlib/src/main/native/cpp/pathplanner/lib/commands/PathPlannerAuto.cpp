@@ -14,6 +14,7 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 
 	m_autoCommand = AutoBuilder::buildAuto(autoName).Unwrap();
 	m_requirements = m_autoCommand->GetRequirements();
+	SetName(autoName);
 }
 
 std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromAutoFile(

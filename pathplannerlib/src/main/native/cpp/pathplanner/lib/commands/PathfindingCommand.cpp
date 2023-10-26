@@ -89,9 +89,21 @@ void PathfindingCommand::Execute() {
 				m_goalEndState);
 
 		if (m_currentPath) {
+			frc::ChassisSpeeds fieldRelativeSpeeds =
+					frc::ChassisSpeeds::FromRobotRelativeSpeeds(currentSpeeds,
+							currentPose.Rotation());
+			frc::Rotation2d currentHeading(fieldRelativeSpeeds.vx(),
+					fieldRelativeSpeeds.vy());
+			frc::Rotation2d headingError = currentHeading
+					- m_currentPath->getStartingDifferentialPose().Rotation();
+			bool onHeading = units::math::hypot(currentSpeeds.vx,
+					currentSpeeds.vy) < 0.5_mps
+					|| units::math::abs(headingError.Degrees()) < 30_deg;
+
 			if (!m_replanningConfig.enableInitialReplanning
-					|| currentPose.Translation().Distance(
-							m_currentPath->getPoint(0).position) <= 0.25_m) {
+					|| (currentPose.Translation().Distance(
+							m_currentPath->getPoint(0).position) <= 0.25_m
+							&& onHeading)) {
 				m_currentTrajectory = PathPlannerTrajectory(m_currentPath,
 						currentSpeeds);
 

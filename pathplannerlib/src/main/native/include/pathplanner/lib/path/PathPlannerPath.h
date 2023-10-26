@@ -95,7 +95,8 @@ public:
 	 * Create a path planner path from pre-generated path points. This is used internally, and you
 	 * likely should not use this
 	 */
-	static PathPlannerPath fromPathPoints(std::vector<PathPoint> pathPoints,
+	static std::shared_ptr<PathPlannerPath> fromPathPoints(
+			std::vector<PathPoint> pathPoints,
 			PathConstraints globalConstraints, GoalEndState goalEndState);
 
 	/** Generate path points for a path. This is used internally and should not be used directly. */
@@ -178,10 +179,13 @@ public:
 	std::shared_ptr<PathPlannerPath> replan(const frc::Pose2d startingPose,
 			const frc::ChassisSpeeds currentSpeeds) const;
 
-private:
+	/**
+	 * USED INTERNALLY. DO NOT USE
+	 */
 	PathPlannerPath(PathConstraints globalConstraints,
 			GoalEndState goalEndState);
 
+private:
 	static PathPlannerPath fromJson(const wpi::json &json);
 
 	static std::vector<frc::Translation2d> bezierPointsFromWaypointsJson(

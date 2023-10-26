@@ -577,40 +577,58 @@ public class PathPlannerPath {
       robotNextControl =
           startingPose.getTranslation().plus(new Translation2d(distToStart / 3.0, heading));
 
-      Rotation2d joinHeading = bezierPoints.get(0).minus(bezierPoints.get(1)).getAngle();
+      Rotation2d joinHeading =
+          allPoints.get(0).position.minus(allPoints.get(1).position).getAngle();
       Translation2d joinPrevControl =
           getPoint(0).position.plus(new Translation2d(distToStart / 2.0, joinHeading));
 
-      List<Translation2d> replannedBezier = new ArrayList<>();
-      replannedBezier.addAll(
-          List.of(startingPose.getTranslation(), robotNextControl, joinPrevControl));
-      replannedBezier.addAll(bezierPoints);
+      if (bezierPoints.isEmpty()) {
+        // We don't have any bezier points to reference
+        PathSegment joinSegment =
+            new PathSegment(
+                startingPose.getTranslation(),
+                robotNextControl,
+                joinPrevControl,
+                getPoint(0).position,
+                false);
+        List<PathPoint> replannedPoints = new ArrayList<>();
+        replannedPoints.addAll(joinSegment.getSegmentPoints());
+        replannedPoints.addAll(allPoints);
 
-      // keep all rotations, markers, and zones and increment waypoint pos by 1
-      return new PathPlannerPath(
-          replannedBezier,
-          rotationTargets.stream()
-              .map((target) -> new RotationTarget(target.getPosition() + 1, target.getTarget()))
-              .collect(Collectors.toList()),
-          constraintZones.stream()
-              .map(
-                  (zone) ->
-                      new ConstraintsZone(
-                          zone.getMinWaypointPos() + 1,
-                          zone.getMaxWaypointPos() + 1,
-                          zone.getConstraints()))
-              .collect(Collectors.toList()),
-          eventMarkers.stream()
-              .map(
-                  (marker) ->
-                      new EventMarker(
-                          marker.getWaypointRelativePos() + 1,
-                          marker.getCommand(),
-                          marker.getMinimumTriggerDistance()))
-              .collect(Collectors.toList()),
-          globalConstraints,
-          goalEndState,
-          reversed);
+        return PathPlannerPath.fromPathPoints(replannedPoints, globalConstraints, goalEndState);
+      } else {
+        // We can use the bezier points
+        List<Translation2d> replannedBezier = new ArrayList<>();
+        replannedBezier.addAll(
+            List.of(startingPose.getTranslation(), robotNextControl, joinPrevControl));
+        replannedBezier.addAll(bezierPoints);
+
+        // keep all rotations, markers, and zones and increment waypoint pos by 1
+        return new PathPlannerPath(
+            replannedBezier,
+            rotationTargets.stream()
+                .map((target) -> new RotationTarget(target.getPosition() + 1, target.getTarget()))
+                .collect(Collectors.toList()),
+            constraintZones.stream()
+                .map(
+                    (zone) ->
+                        new ConstraintsZone(
+                            zone.getMinWaypointPos() + 1,
+                            zone.getMaxWaypointPos() + 1,
+                            zone.getConstraints()))
+                .collect(Collectors.toList()),
+            eventMarkers.stream()
+                .map(
+                    (marker) ->
+                        new EventMarker(
+                            marker.getWaypointRelativePos() + 1,
+                            marker.getCommand(),
+                            marker.getMinimumTriggerDistance()))
+                .collect(Collectors.toList()),
+            globalConstraints,
+            goalEndState,
+            reversed);
+      }
     }
 
     int joinAnchorIdx = numPoints() - 1;
@@ -645,6 +663,19 @@ public class PathPlannerPath {
           reversed);
     }
 
+    if (bezierPoints.isEmpty()) {
+      // We don't have any bezier points to reference
+      PathSegment joinSegment =
+          new PathSegment(
+              startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor, false);
+      List<PathPoint> replannedPoints = new ArrayList<>();
+      replannedPoints.addAll(joinSegment.getSegmentPoints());
+      replannedPoints.addAll(allPoints.subList(joinAnchorIdx, allPoints.size()));
+
+      return PathPlannerPath.fromPathPoints(replannedPoints, globalConstraints, goalEndState);
+    }
+
+    // We can reference bezier points
     int nextWaypointIdx = (int) Math.ceil((joinAnchorIdx + 1) * PathSegment.RESOLUTION);
     int bezierPointIdx = nextWaypointIdx * 3;
     double waypointDelta = joinAnchor.getDistance(bezierPoints.get(bezierPointIdx));

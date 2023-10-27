@@ -228,7 +228,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                           waypoint.getPrevControlLength().toStringAsFixed(2),
                       label: 'Previous Control Length (M)',
                       onSubmitted: (value) {
-                        if (value != null) {
+                        if (value != null && value >= 0.05) {
                           Waypoint wRef = waypoints[waypointIdx];
                           widget.undoStack.add(_waypointChange(
                             wRef,
@@ -251,7 +251,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                           waypoint.getNextControlLength().toStringAsFixed(2),
                       label: 'Next Control Length (M)',
                       onSubmitted: (value) {
-                        if (value != null) {
+                        if (value != null && value >= 0.05) {
                           Waypoint wRef = waypoints[waypointIdx];
                           widget.undoStack.add(_waypointChange(
                             wRef,

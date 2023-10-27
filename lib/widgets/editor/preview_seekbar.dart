@@ -20,6 +20,7 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
       child: Padding(
         padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
         child: Card(
+          elevation: 2.0,
           child: SizedBox(
             height: 32,
             child: Row(

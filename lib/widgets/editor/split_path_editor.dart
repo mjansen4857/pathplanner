@@ -12,6 +12,7 @@ import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
+import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -433,7 +434,10 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   .setDouble(PrefsKeys.editorTreeWeight, newWeight ?? 0.5);
             },
             children: [
-              if (_treeOnRight) Container(),
+              if (_treeOnRight)
+                PreviewSeekbar(
+                  previewController: _previewController,
+                ),
               Card(
                 margin: const EdgeInsets.all(0),
                 elevation: 4.0,
@@ -606,7 +610,10 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   ),
                 ),
               ),
-              if (!_treeOnRight) Container(),
+              if (!_treeOnRight)
+                PreviewSeekbar(
+                  previewController: _previewController,
+                ),
             ],
           ),
         ),

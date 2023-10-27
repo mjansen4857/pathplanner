@@ -10,6 +10,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
+import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -243,7 +244,10 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                   .setDouble(PrefsKeys.editorTreeWeight, newWeight ?? 0.5);
             },
             children: [
-              if (_treeOnRight) Container(),
+              if (_treeOnRight)
+                PreviewSeekbar(
+                  previewController: _previewController,
+                ),
               Card(
                 margin: const EdgeInsets.all(0),
                 elevation: 4.0,
@@ -287,7 +291,10 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                   ),
                 ),
               ),
-              if (!_treeOnRight) Container(),
+              if (!_treeOnRight)
+                PreviewSeekbar(
+                  previewController: _previewController,
+                ),
             ],
           ),
         ),

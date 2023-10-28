@@ -2,6 +2,8 @@ import org.gradle.internal.os.OperatingSystem
 
 nativeUtils.addWpiNativeUtils()
 nativeUtils.withCrossRoboRIO()
+nativeUtils.withCrossLinuxArm32()
+nativeUtils.withCrossLinuxArm64()
 
 nativeUtils {
     wpi {

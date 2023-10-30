@@ -282,7 +282,7 @@ frc2::CommandPtr AutoBuilder::getAutoCommandFromJson(const wpi::json &json) {
 	wpi::json::const_reference commandJson = json.at("command");
 
 	frc2::CommandPtr autoCommand = CommandUtil::commandFromJson(commandJson);
-	if (json.find("startingPose") != json.end()) {
+	if (!json.at("startingPose").is_null()) {
 		frc::Pose2d startPose = getStartingPoseFromJson(
 				json.at("startingPose"));
 		return frc2::cmd::Sequence(frc2::cmd::RunOnce([startPose]() {

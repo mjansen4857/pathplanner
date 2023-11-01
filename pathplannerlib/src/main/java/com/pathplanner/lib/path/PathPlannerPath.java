@@ -19,6 +19,27 @@ import org.json.simple.parser.JSONParser;
 
 /** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {
+
+  /** Container for the preview starting state */
+  public static class PreviewStartingState {
+    private Rotation2d rotation;
+    private double velocityMps;
+
+    /** Default constructor */
+    public PreviewStartingState() {}
+
+    /**
+     * Constructor
+     *
+     * @param rotation The rotation of the starting preview poin
+     * @param velocityMps The velocity of the starting preview point
+     */
+    public PreviewStartingState(Rotation2d rotation, double velocityMps) {
+      this.rotation = rotation;
+      this.velocityMps = velocityMps;
+    }
+  }
+
   private List<Translation2d> bezierPoints;
   private List<RotationTarget> rotationTargets;
   private List<ConstraintsZone> constraintZones;
@@ -27,6 +48,7 @@ public class PathPlannerPath {
   private GoalEndState goalEndState;
   private List<PathPoint> allPoints;
   private boolean reversed;
+  private PreviewStartingState previewStartingState;
 
   /**
    * Create a new path planner path
@@ -37,7 +59,8 @@ public class PathPlannerPath {
    * @param eventMarkers List of event markers along the path
    * @param globalConstraints The global constraints of the path
    * @param goalEndState The goal end state of the path
-   * @param reversed Should the robot follow the path reversed (differential drive only)
+   * @param reversed If the path is reversed. Differential mode only
+   * @param previewStartingState The settings used for previews in the UI
    */
   public PathPlannerPath(
       List<Translation2d> bezierPoints,
@@ -46,7 +69,8 @@ public class PathPlannerPath {
       List<EventMarker> eventMarkers,
       PathConstraints globalConstraints,
       GoalEndState goalEndState,
-      boolean reversed) {
+      boolean reversed,
+      PreviewStartingState previewStartingState) {
     this.bezierPoints = bezierPoints;
     this.rotationTargets = holonomicRotations;
     this.constraintZones = constraintZones;
@@ -55,6 +79,7 @@ public class PathPlannerPath {
     this.goalEndState = goalEndState;
     this.reversed = reversed;
     this.allPoints = createPath(this.bezierPoints, this.rotationTargets, this.constraintZones);
+    this.previewStartingState = previewStartingState;
 
     precalcValues();
   }
@@ -82,7 +107,8 @@ public class PathPlannerPath {
         Collections.emptyList(),
         constraints,
         goalEndState,
-        reversed);
+        reversed,
+        new PreviewStartingState());
   }
 
   /**
@@ -109,6 +135,7 @@ public class PathPlannerPath {
     this.goalEndState = goalEndState;
     this.reversed = false;
     this.allPoints = new ArrayList<>();
+    this.previewStartingState = new PreviewStartingState();
   }
 
   /**
@@ -204,6 +231,7 @@ public class PathPlannerPath {
     this.goalEndState = updatedPath.goalEndState;
     this.allPoints = updatedPath.allPoints;
     this.reversed = updatedPath.reversed;
+    this.previewStartingState = updatedPath.previewStartingState;
   }
 
   /**
@@ -259,6 +287,17 @@ public class PathPlannerPath {
       eventMarkers.add(EventMarker.fromJson((JSONObject) markerJson));
     }
 
+    PreviewStartingState previewStartingState = new PreviewStartingState();
+    if (pathJson.containsKey("previewStartingState")) {
+      JSONObject previewStartingStateJson = (JSONObject) pathJson.get("previewStartingState");
+      if (previewStartingStateJson != null) {
+        previewStartingState.rotation =
+            Rotation2d.fromDegrees((Double) previewStartingStateJson.get("rotation"));
+        previewStartingState.velocityMps =
+            ((Number) previewStartingStateJson.get("velocity")).doubleValue();
+      }
+    }
+
     return new PathPlannerPath(
         bezierPoints,
         rotationTargets,
@@ -266,7 +305,8 @@ public class PathPlannerPath {
         eventMarkers,
         globalConstraints,
         goalEndState,
-        reversed);
+        reversed,
+        previewStartingState);
   }
 
   private static List<Translation2d> bezierPointsFromWaypointsJson(JSONArray waypointsJson) {
@@ -313,6 +353,19 @@ public class PathPlannerPath {
       heading =
           Rotation2d.fromDegrees(MathUtil.inputModulus(heading.getDegrees() + 180, -180, 180));
     }
+
+    return new Pose2d(startPos, heading);
+  }
+
+  /**
+   * Get the starting pose for the holomonic path based on the preview settings
+   *
+   * @return Pose at the path's starting point
+   */
+  public Pose2d getStartingHolomonicPreviewPose() {
+    Translation2d startPos = getPoint(0).position;
+    Rotation2d heading =
+        previewStartingState == null ? Rotation2d.fromDegrees(0) : previewStartingState.rotation;
 
     return new Pose2d(startPos, heading);
   }
@@ -566,7 +619,8 @@ public class PathPlannerPath {
           Collections.emptyList(),
           globalConstraints,
           goalEndState,
-          reversed);
+          reversed,
+          previewStartingState);
     } else if ((closestPointIdx == 0 && robotNextControl == null)
         || (Math.abs(closestDist - startingPose.getTranslation().getDistance(getPoint(0).position))
                 <= 0.25
@@ -627,7 +681,8 @@ public class PathPlannerPath {
                 .collect(Collectors.toList()),
             globalConstraints,
             goalEndState,
-            reversed);
+            reversed,
+            previewStartingState);
       }
     }
 
@@ -660,7 +715,8 @@ public class PathPlannerPath {
           Collections.emptyList(),
           globalConstraints,
           goalEndState,
-          reversed);
+          reversed,
+          previewStartingState);
     }
 
     if (bezierPoints.isEmpty()) {
@@ -796,7 +852,8 @@ public class PathPlannerPath {
         mappedMarkers,
         globalConstraints,
         goalEndState,
-        reversed);
+        reversed,
+        previewStartingState);
   }
 
   /**

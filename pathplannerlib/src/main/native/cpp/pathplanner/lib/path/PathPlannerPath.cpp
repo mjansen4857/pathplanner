@@ -14,10 +14,11 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 		std::vector<ConstraintsZone> constraintZones,
 		std::vector<EventMarker> eventMarkers,
 		PathConstraints globalConstraints, GoalEndState goalEndState,
-		bool reversed) : m_bezierPoints(bezierPoints), m_rotationTargets(
-		rotationTargets), m_constraintZones(constraintZones), m_eventMarkers(
-		eventMarkers), m_globalConstraints(globalConstraints), m_goalEndState(
-		goalEndState), m_reversed(reversed) {
+		bool reversed, PreviewStartingState previewStartingState) : m_bezierPoints(
+		bezierPoints), m_rotationTargets(rotationTargets), m_constraintZones(
+		constraintZones), m_eventMarkers(eventMarkers), m_globalConstraints(
+		globalConstraints), m_goalEndState(goalEndState), m_reversed(reversed), m_previewStartingState(
+		previewStartingState) {
 	m_allPoints = PathPlannerPath::createPath(m_bezierPoints, m_rotationTargets,
 			m_constraintZones);
 
@@ -127,8 +128,16 @@ PathPlannerPath PathPlannerPath::fromJson(const wpi::json &json) {
 		eventMarkers.push_back(EventMarker::fromJson(markerJson));
 	}
 
+	PreviewStartingState previewStartingState;
+	if (json.contains("previewStartingState")) {
+		auto jsonStartingState = json["previewStartingState"];
+		previewStartingState = { units::degree_t(jsonStartingState["rotation"]),
+				units::meters_per_second_t(jsonStartingState["velocity"]) };
+	}
+
 	return PathPlannerPath(bezierPoints, rotationTargets, constraintZones,
-			eventMarkers, globalConstraints, goalEndState, reversed);
+			eventMarkers, globalConstraints, goalEndState, reversed,
+			previewStartingState);
 }
 
 std::vector<frc::Translation2d> PathPlannerPath::bezierPointsFromWaypointsJson(
@@ -236,6 +245,10 @@ frc::Pose2d PathPlannerPath::getStartingDifferentialPose() {
 	}
 
 	return frc::Pose2d(startPos, heading);
+}
+
+frc::Pose2d PathPlannerPath::getStartingHolomonicPreviewPose() {
+	return frc::Pose2d(getPoint(0).position, m_previewStartingState.m_rotation);
 }
 
 void PathPlannerPath::precalcValues() {

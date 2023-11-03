@@ -52,8 +52,8 @@ public class PathPlannerPathTest {
             new PathConstraints(1, 2, 3, 4),
             new GoalEndState(0, Rotation2d.fromDegrees(0)),
             true,
-            new PathPlannerPath.PreviewStartingState(Rotation2d.fromDegrees(90), 0));
-    Pose2d initialPose = path.getStartingHolomonicPreviewPose();
+            Rotation2d.fromDegrees(90));
+    Pose2d initialPose = path.getPreviewStartingHolonomicPose();
     assertNotNull(initialPose);
     assertEquals(2, initialPose.getX(), EPSILON);
     assertEquals(1, initialPose.getY(), EPSILON);
@@ -76,7 +76,7 @@ public class PathPlannerPathTest {
             new GoalEndState(0, Rotation2d.fromDegrees(0)),
             true,
             null);
-    Pose2d initialPose = path.getStartingHolomonicPreviewPose();
+    Pose2d initialPose = path.getPreviewStartingHolonomicPose();
     assertNotNull(initialPose);
     assertEquals(2, initialPose.getX(), EPSILON);
     assertEquals(1, initialPose.getY(), EPSILON);

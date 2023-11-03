@@ -29,9 +29,9 @@ TEST(PathPlannerPathTest, HolomonicStartingPoseSet)
 			PathConstraints {1_mps, 2_mps_sq, 3_rad_per_s, 4_rad_per_s_sq},
 			GoalEndState(0_mps, 0_deg),
 			true,
-			PathPlannerPath::PreviewStartingState {90_deg, 0_mps});
+			frc::Rotation2d {90_deg});
 
-	frc::Pose2d initialPose = path.getStartingHolomonicPreviewPose();
+	frc::Pose2d initialPose = path.getPreviewStartingHolonomicPose();
 	EXPECT_EQ(2, initialPose.X()());
 	EXPECT_EQ(1, initialPose.Y()());
 	EXPECT_EQ(90, initialPose.Rotation().Degrees()());
@@ -48,7 +48,7 @@ TEST(PathPlannerPathTest, HolomonicStartingPoseNotSet)
 			GoalEndState(0_mps, 0_deg),
 			true);
 
-	frc::Pose2d initialPose = path.getStartingHolomonicPreviewPose();
+	frc::Pose2d initialPose = path.getPreviewStartingHolonomicPose();
 	EXPECT_EQ(2, initialPose.X()());
 	EXPECT_EQ(1, initialPose.Y()());
 	EXPECT_EQ(0, initialPose.Rotation().Degrees()());

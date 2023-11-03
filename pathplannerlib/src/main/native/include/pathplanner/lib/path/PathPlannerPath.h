@@ -19,16 +19,6 @@
 namespace pathplanner {
 class PathPlannerPath {
 public:
-
-	/**
-	 * Container for the preview starting state
-	 */
-	class PreviewStartingState {
-	public:
-		frc::Rotation2d m_rotation;
-		units::meters_per_second_t m_velocity;
-	};
-
 	/**
 	 * Create a new path planner path
 	 *
@@ -45,8 +35,8 @@ public:
 			std::vector<ConstraintsZone> constraintZones,
 			std::vector<EventMarker> eventMarkers,
 			PathConstraints globalConstraints, GoalEndState goalEndState,
-			bool reversed, PreviewStartingState previewStartingState =
-					PreviewStartingState());
+			bool reversed, frc::Rotation2d previewStartingRotation =
+					frc::Rotation2d());
 
 	/**
 	 * Simplified constructor to create a path with no rotation targets, constraint zones, or event
@@ -93,11 +83,13 @@ public:
 	frc::Pose2d getStartingDifferentialPose();
 
 	/**
-	 * Get the starting pose for the holomonic path based on the preview settings
+	 * Get the starting pose for the holomonic path based on the preview settings.
+	 *
+	 * NOTE: This should only be used for the first path you are running, and only if you are not using an auto mode file. Using this pose to reset the robots pose between sequential paths will cause a loss of accuracy.
 	 *
 	 * @return Pose at the path's starting point
 	 */
-	frc::Pose2d getStartingHolomonicPreviewPose();
+	frc::Pose2d getPreviewStartingHolonomicPose();
 
 	/**
 	 * Get the constraints for a point along the path
@@ -252,6 +244,6 @@ private:
 	GoalEndState m_goalEndState;
 	std::vector<PathPoint> m_allPoints;
 	bool m_reversed;
-	PreviewStartingState m_previewStartingState;
+	frc::Rotation2d m_previewStartingRotation;
 };
 }

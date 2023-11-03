@@ -64,6 +64,28 @@ public class PathPlannerPath {
   }
 
   /**
+   * Create a new path planner path
+   *
+   * @param bezierPoints List of points representing the cubic Bezier curve of the path
+   * @param holonomicRotations List of rotation targets along the path
+   * @param constraintZones List of constraint zones along the path
+   * @param eventMarkers List of event markers along the path
+   * @param globalConstraints The global constraints of the path
+   * @param goalEndState The goal end state of the path
+   * @param reversed Should the robot follow the path reversed (differential drive only)
+   */
+  public PathPlannerPath(
+          List<Translation2d> bezierPoints,
+          List<RotationTarget> holonomicRotations,
+          List<ConstraintsZone> constraintZones,
+          List<EventMarker> eventMarkers,
+          PathConstraints globalConstraints,
+          GoalEndState goalEndState,
+          boolean reversed) {
+    this(bezierPoints, holonomicRotations, constraintZones, eventMarkers, globalConstraints, goalEndState, reversed, Rotation2d.fromDegrees(0));
+  }
+
+  /**
    * Simplified constructor to create a path with no rotation targets, constraint zones, or event
    * markers.
    *

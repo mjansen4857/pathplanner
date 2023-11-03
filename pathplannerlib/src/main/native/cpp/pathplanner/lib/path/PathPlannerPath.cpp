@@ -14,10 +14,11 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 		std::vector<ConstraintsZone> constraintZones,
 		std::vector<EventMarker> eventMarkers,
 		PathConstraints globalConstraints, GoalEndState goalEndState,
-		bool reversed) : m_bezierPoints(bezierPoints), m_rotationTargets(
-		rotationTargets), m_constraintZones(constraintZones), m_eventMarkers(
-		eventMarkers), m_globalConstraints(globalConstraints), m_goalEndState(
-		goalEndState), m_reversed(reversed) {
+		bool reversed, frc::Rotation2d previewStartingRotation) : m_bezierPoints(
+		bezierPoints), m_rotationTargets(rotationTargets), m_constraintZones(
+		constraintZones), m_eventMarkers(eventMarkers), m_globalConstraints(
+		globalConstraints), m_goalEndState(goalEndState), m_reversed(reversed), m_previewStartingRotation(
+		previewStartingRotation) {
 	m_allPoints = PathPlannerPath::createPath(m_bezierPoints, m_rotationTargets,
 			m_constraintZones);
 
@@ -41,6 +42,7 @@ void PathPlannerPath::hotReload(const wpi::json &json) {
 	m_goalEndState = updatedPath.m_goalEndState;
 	m_reversed = updatedPath.m_reversed;
 	m_allPoints = updatedPath.m_allPoints;
+	m_previewStartingRotation = updatedPath.m_previewStartingRotation;
 }
 
 std::vector<frc::Translation2d> PathPlannerPath::bezierFromPoses(
@@ -127,8 +129,18 @@ PathPlannerPath PathPlannerPath::fromJson(const wpi::json &json) {
 		eventMarkers.push_back(EventMarker::fromJson(markerJson));
 	}
 
+	frc::Rotation2d previewStartingRotation;
+	if (json.contains("previewStartingState")
+			&& !json.at("previewStartingState").is_null()) {
+		auto jsonStartingState = json.at("previewStartingState");
+		previewStartingRotation = frc::Rotation2d(
+				units::degree_t(
+						jsonStartingState.at("rotation").get<double>()));
+	}
+
 	return PathPlannerPath(bezierPoints, rotationTargets, constraintZones,
-			eventMarkers, globalConstraints, goalEndState, reversed);
+			eventMarkers, globalConstraints, goalEndState, reversed,
+			previewStartingRotation);
 }
 
 std::vector<frc::Translation2d> PathPlannerPath::bezierPointsFromWaypointsJson(
@@ -236,6 +248,10 @@ frc::Pose2d PathPlannerPath::getStartingDifferentialPose() {
 	}
 
 	return frc::Pose2d(startPos, heading);
+}
+
+frc::Pose2d PathPlannerPath::getPreviewStartingHolonomicPose() {
+	return frc::Pose2d(getPoint(0).position, m_previewStartingRotation);
 }
 
 void PathPlannerPath::precalcValues() {

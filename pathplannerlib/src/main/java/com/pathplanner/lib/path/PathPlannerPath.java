@@ -271,7 +271,7 @@ public class PathPlannerPath {
       JSONObject previewStartingStateJson = (JSONObject) pathJson.get("previewStartingState");
       if (previewStartingStateJson != null) {
         previewStartingRotation =
-            Rotation2d.fromDegrees((Double) previewStartingStateJson.get("rotation"));
+            Rotation2d.fromDegrees(((Number) previewStartingStateJson.get("rotation")).doubleValue());
       }
     }
 

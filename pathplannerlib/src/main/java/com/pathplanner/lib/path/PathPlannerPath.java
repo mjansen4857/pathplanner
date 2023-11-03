@@ -75,14 +75,22 @@ public class PathPlannerPath {
    * @param reversed Should the robot follow the path reversed (differential drive only)
    */
   public PathPlannerPath(
-          List<Translation2d> bezierPoints,
-          List<RotationTarget> holonomicRotations,
-          List<ConstraintsZone> constraintZones,
-          List<EventMarker> eventMarkers,
-          PathConstraints globalConstraints,
-          GoalEndState goalEndState,
-          boolean reversed) {
-    this(bezierPoints, holonomicRotations, constraintZones, eventMarkers, globalConstraints, goalEndState, reversed, Rotation2d.fromDegrees(0));
+      List<Translation2d> bezierPoints,
+      List<RotationTarget> holonomicRotations,
+      List<ConstraintsZone> constraintZones,
+      List<EventMarker> eventMarkers,
+      PathConstraints globalConstraints,
+      GoalEndState goalEndState,
+      boolean reversed) {
+    this(
+        bezierPoints,
+        holonomicRotations,
+        constraintZones,
+        eventMarkers,
+        globalConstraints,
+        goalEndState,
+        reversed,
+        Rotation2d.fromDegrees(0));
   }
 
   /**
@@ -293,7 +301,8 @@ public class PathPlannerPath {
       JSONObject previewStartingStateJson = (JSONObject) pathJson.get("previewStartingState");
       if (previewStartingStateJson != null) {
         previewStartingRotation =
-            Rotation2d.fromDegrees(((Number) previewStartingStateJson.get("rotation")).doubleValue());
+            Rotation2d.fromDegrees(
+                ((Number) previewStartingStateJson.get("rotation")).doubleValue());
       }
     }
 

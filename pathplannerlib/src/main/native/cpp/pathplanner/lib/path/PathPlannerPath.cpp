@@ -130,10 +130,12 @@ PathPlannerPath PathPlannerPath::fromJson(const wpi::json &json) {
 	}
 
 	frc::Rotation2d previewStartingRotation;
-	if (json.contains("previewStartingState") && !json.at("previewStartingState").is_null()) {
+	if (json.contains("previewStartingState")
+			&& !json.at("previewStartingState").is_null()) {
 		auto jsonStartingState = json.at("previewStartingState");
 		previewStartingRotation = frc::Rotation2d(
-				units::degree_t(jsonStartingState.at("rotation").get<double>()));
+				units::degree_t(
+						jsonStartingState.at("rotation").get<double>()));
 	}
 
 	return PathPlannerPath(bezierPoints, rotationTargets, constraintZones,

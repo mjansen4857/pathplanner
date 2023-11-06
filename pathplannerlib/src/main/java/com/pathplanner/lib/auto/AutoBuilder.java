@@ -21,7 +21,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -543,20 +542,7 @@ public class AutoBuilder {
     }
 
     SendableChooser<Command> chooser = new SendableChooser<>();
-    File[] autoFiles = new File(Filesystem.getDeployDirectory(), "pathplanner/autos").listFiles();
-
-    if (autoFiles == null) {
-      chooser.setDefaultOption("None", Commands.none());
-      return chooser;
-    }
-
-    Set<String> autoNames =
-        Stream.of(autoFiles)
-            .filter(file -> !file.isDirectory())
-            .map(File::getName)
-            .filter(name -> name.endsWith(".auto"))
-            .map(name -> name.substring(0, name.lastIndexOf(".")))
-            .collect(Collectors.toSet());
+    List<String> autoNames = getAllAutoNames();
 
     PathPlannerAuto defaultOption = null;
     List<PathPlannerAuto> options = new ArrayList<>();
@@ -580,6 +566,26 @@ public class AutoBuilder {
     options.forEach(auto -> chooser.addOption(auto.getName(), auto));
 
     return chooser;
+  }
+
+  /**
+   * Get a list of all auto names in the project
+   *
+   * @return List of all auto names
+   */
+  public static List<String> getAllAutoNames() {
+    File[] autoFiles = new File(Filesystem.getDeployDirectory(), "pathplanner/autos").listFiles();
+
+    if (autoFiles == null) {
+      return new ArrayList<>();
+    }
+
+    return Stream.of(autoFiles)
+        .filter(file -> !file.isDirectory())
+        .map(File::getName)
+        .filter(name -> name.endsWith(".auto"))
+        .map(name -> name.substring(0, name.lastIndexOf(".")))
+        .collect(Collectors.toList());
   }
 
   /**

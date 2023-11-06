@@ -30,3 +30,8 @@ def calculateRadius(a: Translation2d, b: Translation2d, c: Translation2d) -> flo
     p = (ab + bc + ac) / 2
     area = math.sqrt(math.fabs(p * (p - ab) * (p - bc) * (p - ac)))
     return sign * (ab * bc * ac) / (4 * area)
+
+def decimal_range(start: float, stop: float, increment: float):
+    while start < stop and not math.isclose(start, stop):
+        yield start
+        start += increment

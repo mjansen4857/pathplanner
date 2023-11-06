@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pathplannerlib-python"
+version = "0.0.0"
+description = "Python implementation of PathPlannerLib"
+authors = [{ name = "mjansen4857", email = "mjansen4857@gmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["pathplannerlib"]
+dependencies = [
+    "pyntcore ~=2024.0",
+    "robotpy-wpimath ~=2024.0",
+    "robotpy-commands-v2 ~=2024.0",
+]
+requires-python = ">=3.8"
+
+[project.urls]
+Homepage = "https://github.com/mjansen4857/pathplanner"

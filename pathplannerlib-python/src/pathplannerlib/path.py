@@ -9,7 +9,7 @@ import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
 import commands2.cmd as cmd
-from geometry_util import decimal_range, cubicLerp, calculateRadius
+from .geometry_util import decimal_range, cubicLerp, calculateRadius
 from wpilib import getDeployDirectory
 import os
 import json

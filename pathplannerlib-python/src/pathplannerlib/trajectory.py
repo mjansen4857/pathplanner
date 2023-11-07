@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpimath import inputModulus
-from path import PathConstraints, PathPlannerPath
-from geometry_util import floatLerp, translationLerp, rotationLerp
+from .path import PathConstraints, PathPlannerPath
+from .geometry_util import floatLerp, translationLerp, rotationLerp
 from typing import List
 
 

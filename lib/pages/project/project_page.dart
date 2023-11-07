@@ -10,6 +10,7 @@ import 'package:pathplanner/pages/path_editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/event_marker.dart';
+import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -148,6 +149,7 @@ class _ProjectPageState extends State<ProjectPage> {
           pathDir: _pathsDirectory.path,
           name: 'Example Path',
           fs: fs,
+          constraints: _getDefaultConstraints(),
         ));
       }
 
@@ -391,6 +393,7 @@ class _ProjectPageState extends State<ProjectPage> {
                             name: pathName,
                             fs: fs,
                             folder: _pathFolder,
+                            constraints: _getDefaultConstraints(),
                           ));
                           _sortPaths(_pathSortValue);
                         });
@@ -1346,5 +1349,19 @@ class _ProjectPageState extends State<ProjectPage> {
       'nameAsc' => const Text('Name Ascending', style: TextStyle(fontSize: 16)),
       _ => throw FormatException('Invalid sort value', optionValue),
     };
+  }
+
+  PathConstraints _getDefaultConstraints() {
+    return PathConstraints(
+      maxVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+          Defaults.defaultMaxVel,
+      maxAcceleration: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+          Defaults.defaultMaxAccel,
+      maxAngularVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+          Defaults.defaultMaxAngVel,
+      maxAngularAcceleration:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
+              Defaults.defaultMaxAngAccel,
+    );
   }
 }

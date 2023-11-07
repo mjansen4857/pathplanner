@@ -37,6 +37,7 @@ void main() {
 
   testWidgets('robot width text field', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -67,6 +68,7 @@ void main() {
 
   testWidgets('robot length text field', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -97,6 +99,7 @@ void main() {
 
   testWidgets('default max vel text field', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -128,6 +131,7 @@ void main() {
 
   testWidgets('default max accel text field', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -159,6 +163,7 @@ void main() {
 
   testWidgets('default max ang vel text field', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -190,6 +195,7 @@ void main() {
 
   testWidgets('default max ang accel text field', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -221,6 +227,7 @@ void main() {
 
   testWidgets('field image dropdown', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -258,6 +265,7 @@ void main() {
 
   testWidgets('team color picker', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -296,6 +304,7 @@ void main() {
 
   testWidgets('telemetry host text field', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -326,6 +335,7 @@ void main() {
 
   testWidgets('holonomic mode chip', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -358,6 +368,7 @@ void main() {
 
   testWidgets('hot reload chip', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

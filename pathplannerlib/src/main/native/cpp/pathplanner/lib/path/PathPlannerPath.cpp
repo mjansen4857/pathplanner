@@ -57,28 +57,43 @@ std::vector<frc::Translation2d> PathPlannerPath::bezierFromPoses(
 	// First pose
 	bezierPoints.emplace_back(poses[0].Translation());
 	bezierPoints.emplace_back(
-			poses[0].Translation().Distance(poses[1].Translation()) / 3.0,
-			poses[0].Rotation());
+			poses[0].Translation()
+					+ frc::Translation2d(
+							poses[0].Translation().Distance(
+									poses[1].Translation()) / 3.0,
+							poses[0].Rotation()));
 
 	// Middle poses
 	for (size_t i = 1; i < poses.size() - 2; i++) {
+		frc::Translation2d anchor = poses[i].Translation();
+
 		// Prev control
 		bezierPoints.emplace_back(
-				poses[i].Translation().Distance(poses[i - 1].Translation())
-						/ 3.0, poses[i].Rotation() + frc::Rotation2d(180_deg));
+				anchor
+						+ frc::Translation2d(
+								anchor.Distance(poses[i - 1].Translation())
+										/ 3.0,
+								poses[i].Rotation()
+										+ frc::Rotation2d(180_deg)));
 		// Anchor
-		bezierPoints.emplace_back(poses[i].Translation());
+		bezierPoints.emplace_back(anchor);
 		// Next control
 		bezierPoints.emplace_back(
-				poses[i].Translation().Distance(poses[i + 1].Translation())
-						/ 3.0, poses[i].Rotation());
+				anchor
+						+ frc::Translation2d(
+								anchor.Distance(poses[i + 1].Translation())
+										/ 3.0, poses[i].Rotation()));
 	}
 
 	// Last pose
 	bezierPoints.emplace_back(
-			poses[poses.size() - 1].Translation().Distance(
-					poses[poses.size() - 2].Translation()) / 3.0,
-			poses[poses.size() - 1].Rotation() + frc::Rotation2d(180_deg));
+			poses[poses.size() - 1].Translation()
+					+ frc::Translation2d(
+							poses[poses.size() - 1].Translation().Distance(
+									poses[poses.size() - 2].Translation())
+									/ 3.0,
+							poses[poses.size() - 1].Rotation()
+									+ frc::Rotation2d(180_deg)));
 	bezierPoints.emplace_back(poses[poses.size() - 1].Translation());
 
 	return bezierPoints;

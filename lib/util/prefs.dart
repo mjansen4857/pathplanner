@@ -20,6 +20,10 @@ class PrefsKeys {
   static const String autoFolders = 'autoFolders';
   static const String snapToGuidelines = 'snapToGuidelines';
   static const String hidePathsOnHover = 'hidePathsOnHover';
+  static const String defaultMaxVel = 'defaultMaxVel';
+  static const String defaultMaxAccel = 'defaultMaxAccel';
+  static const String defaultMaxAngVel = 'defaultMaxAngVel';
+  static const String defaultMaxAngAccel = 'defaultMaxAngAccel';
 }
 
 class Defaults {
@@ -42,4 +46,8 @@ class Defaults {
       []; // Can't be const or user wont be able to add new folders
   static const bool snapToGuidelines = true;
   static const bool hidePathsOnHover = true;
+  static const double defaultMaxVel = 3.0;
+  static const double defaultMaxAccel = 3.0;
+  static const double defaultMaxAngVel = 540.0;
+  static const double defaultMaxAngAccel = 720.0;
 }

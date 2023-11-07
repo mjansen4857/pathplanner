@@ -180,35 +180,47 @@ public class PathPlannerPath {
     // First pose
     bezierPoints.add(poses.get(0).getTranslation());
     bezierPoints.add(
-        new Translation2d(
-            poses.get(0).getTranslation().getDistance(poses.get(1).getTranslation()) / 3.0,
-            poses.get(0).getRotation()));
+        poses
+            .get(0)
+            .getTranslation()
+            .plus(
+                new Translation2d(
+                    poses.get(0).getTranslation().getDistance(poses.get(1).getTranslation()) / 3.0,
+                    poses.get(0).getRotation())));
 
     // Middle poses
     for (int i = 1; i < poses.size() - 2; i++) {
+      Translation2d anchor = poses.get(i).getTranslation();
+
       // Prev control
       bezierPoints.add(
-          new Translation2d(
-              poses.get(i).getTranslation().getDistance(poses.get(i - 1).getTranslation()) / 3.0,
-              poses.get(i).getRotation().plus(Rotation2d.fromDegrees(180))));
+          anchor.plus(
+              new Translation2d(
+                  anchor.getDistance(poses.get(i - 1).getTranslation()) / 3.0,
+                  poses.get(i).getRotation().plus(Rotation2d.fromDegrees(180)))));
       // Anchor
-      bezierPoints.add(poses.get(i).getTranslation());
+      bezierPoints.add(anchor);
       // Next control
       bezierPoints.add(
-          new Translation2d(
-              poses.get(i).getTranslation().getDistance(poses.get(i + 1).getTranslation()) / 3.0,
-              poses.get(i).getRotation()));
+          anchor.plus(
+              new Translation2d(
+                  anchor.getDistance(poses.get(i + 1).getTranslation()) / 3.0,
+                  poses.get(i).getRotation())));
     }
 
     // Last pose
     bezierPoints.add(
-        new Translation2d(
-            poses
-                    .get(poses.size() - 1)
-                    .getTranslation()
-                    .getDistance(poses.get(poses.size() - 2).getTranslation())
-                / 3.0,
-            poses.get(poses.size() - 1).getRotation().plus(Rotation2d.fromDegrees(180))));
+        poses
+            .get(poses.size() - 1)
+            .getTranslation()
+            .plus(
+                new Translation2d(
+                    poses
+                            .get(poses.size() - 1)
+                            .getTranslation()
+                            .getDistance(poses.get(poses.size() - 2).getTranslation())
+                        / 3.0,
+                    poses.get(poses.size() - 1).getRotation().plus(Rotation2d.fromDegrees(180)))));
     bezierPoints.add(poses.get(poses.size() - 1).getTranslation());
 
     return bezierPoints;

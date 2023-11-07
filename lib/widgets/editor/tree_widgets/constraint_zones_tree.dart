@@ -87,7 +87,9 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
               widget.undoStack.add(Change(
                 PathPlannerPath.cloneConstraintZones(constraintZones),
                 () {
-                  constraintZones.add(ConstraintsZone.defaultZone());
+                  constraintZones.add(ConstraintsZone.defaultZone(
+                    constraints: widget.path.globalConstraints.clone(),
+                  ));
                   widget.onPathChangedNoSim?.call();
                 },
                 (oldValue) {

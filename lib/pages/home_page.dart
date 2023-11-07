@@ -449,23 +449,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
 
     widget.prefs.setDouble(PrefsKeys.robotWidth,
-        json['robotWidth']?.toDouble() ?? Defaults.robotWidth);
+        json[PrefsKeys.robotWidth]?.toDouble() ?? Defaults.robotWidth);
     widget.prefs.setDouble(PrefsKeys.robotLength,
-        json['robotLength']?.toDouble() ?? Defaults.robotLength);
+        json[PrefsKeys.robotLength]?.toDouble() ?? Defaults.robotLength);
     widget.prefs.setBool(PrefsKeys.holonomicMode,
-        json['holonomicMode'] ?? Defaults.holonomicMode);
+        json[PrefsKeys.holonomicMode] ?? Defaults.holonomicMode);
     widget.prefs.setStringList(
         PrefsKeys.pathFolders,
-        (json['pathFolders'] as List<dynamic>?)
+        (json[PrefsKeys.pathFolders] as List<dynamic>?)
                 ?.map((e) => e as String)
                 .toList() ??
             Defaults.pathFolders);
     widget.prefs.setStringList(
         PrefsKeys.autoFolders,
-        (json['autoFolders'] as List<dynamic>?)
+        (json[PrefsKeys.autoFolders] as List<dynamic>?)
                 ?.map((e) => e as String)
                 .toList() ??
             Defaults.autoFolders);
+    widget.prefs.setDouble(PrefsKeys.defaultMaxVel,
+        json[PrefsKeys.defaultMaxVel] ?? Defaults.defaultMaxVel);
+    widget.prefs.setDouble(PrefsKeys.defaultMaxAccel,
+        json[PrefsKeys.defaultMaxAccel] ?? Defaults.defaultMaxAccel);
+    widget.prefs.setDouble(PrefsKeys.defaultMaxAngVel,
+        json[PrefsKeys.defaultMaxAngVel] ?? Defaults.defaultMaxAngVel);
+    widget.prefs.setDouble(PrefsKeys.defaultMaxAngAccel,
+        json[PrefsKeys.defaultMaxAngAccel] ?? Defaults.defaultMaxAngAccel);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
@@ -478,16 +486,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     const JsonEncoder encoder = JsonEncoder.withIndent('  ');
 
     Map<String, dynamic> settings = {
-      'robotWidth':
+      PrefsKeys.robotWidth:
           widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth,
-      'robotLength':
+      PrefsKeys.robotLength:
           widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength,
-      'holonomicMode': widget.prefs.getBool(PrefsKeys.holonomicMode) ??
+      PrefsKeys.holonomicMode: widget.prefs.getBool(PrefsKeys.holonomicMode) ??
           Defaults.holonomicMode,
-      'pathFolders': widget.prefs.getStringList(PrefsKeys.pathFolders) ??
-          Defaults.pathFolders,
-      'autoFolders': widget.prefs.getStringList(PrefsKeys.autoFolders) ??
-          Defaults.autoFolders,
+      PrefsKeys.pathFolders:
+          widget.prefs.getStringList(PrefsKeys.pathFolders) ??
+              Defaults.pathFolders,
+      PrefsKeys.autoFolders:
+          widget.prefs.getStringList(PrefsKeys.autoFolders) ??
+              Defaults.autoFolders,
+      PrefsKeys.defaultMaxVel:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+              Defaults.defaultMaxVel,
+      PrefsKeys.defaultMaxAccel:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+              Defaults.defaultMaxAccel,
+      PrefsKeys.defaultMaxAngVel:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+              Defaults.defaultMaxAngVel,
+      PrefsKeys.defaultMaxAngAccel:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
+              Defaults.defaultMaxAccel,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

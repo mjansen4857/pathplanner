@@ -33,19 +33,17 @@ std::optional<NT_Listener> PPLibTelemetry::m_hotReloadPathListener =
 		std::nullopt;
 
 void PPLibTelemetry::setCurrentPath(std::shared_ptr<PathPlannerPath> path) {
-	if (!m_compMode) {
-		std::vector<double> arr;
+	std::vector<double> arr;
 
-		for (const PathPoint &p : path->getAllPathPoints()) {
-			frc::Translation2d pos = p.position;
-			arr.push_back(pos.X()());
-			arr.push_back(pos.Y()());
-			// Just add 0 as a heading since it's not needed for displaying a path
-			arr.push_back(0.0);
-		}
-
-		m_pathPub.Set(std::span { arr.data(), arr.size() });
+	for (const PathPoint &p : path->getAllPathPoints()) {
+		frc::Translation2d pos = p.position;
+		arr.push_back(pos.X()());
+		arr.push_back(pos.Y()());
+		// Just add 0 as a heading since it's not needed for displaying a path
+		arr.push_back(0.0);
 	}
+
+	m_pathPub.Set(std::span { arr.data(), arr.size() });
 }
 
 void PPLibTelemetry::ensureHotReloadListenersInitialized() {

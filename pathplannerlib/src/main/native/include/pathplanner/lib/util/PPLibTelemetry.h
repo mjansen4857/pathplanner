@@ -29,32 +29,25 @@ public:
 			units::meters_per_second_t commandedVel,
 			units::degrees_per_second_t actualAngVel,
 			units::degrees_per_second_t commandedAngVel) {
-		if (!m_compMode) {
-			m_velPub.Set(std::span<const double>( { actualVel(), commandedVel(),
-					actualAngVel(), commandedAngVel() }));
-		}
+		m_velPub.Set(std::span<const double>( { actualVel(), commandedVel(),
+				actualAngVel(), commandedAngVel() }));
 	}
 
 	static inline void setPathInaccuracy(units::meter_t inaccuracy) {
-		if (!m_compMode) {
-			m_inaccuracyPub.Set(inaccuracy());
-		}
+		m_inaccuracyPub.Set(inaccuracy());
 	}
 
 	static inline void setCurrentPose(frc::Pose2d pose) {
-		if (!m_compMode) {
-			m_posePub.Set(std::span<const double>( { pose.X()(), pose.Y()(),
-					pose.Rotation().Radians()() }));
-		}
+		m_posePub.Set(
+				std::span<const double>( { pose.X()(), pose.Y()(),
+						pose.Rotation().Radians()() }));
 	}
 
 	static void setCurrentPath(std::shared_ptr<PathPlannerPath> path);
 
 	static inline void setTargetPose(frc::Pose2d targetPose) {
-		if (!m_compMode) {
-			m_targetPosePub.Set(std::span<const double>( { targetPose.X()(),
-					targetPose.Y()(), targetPose.Rotation().Radians()() }));
-		}
+		m_targetPosePub.Set(std::span<const double>( { targetPose.X()(),
+				targetPose.Y()(), targetPose.Rotation().Radians()() }));
 	}
 
 	static void registerHotReloadPath(std::string pathName,

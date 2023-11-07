@@ -36,7 +36,7 @@ public class PPLibTelemetry {
   private static NetworkTableListener hotReloadPathListener = null;
   private static NetworkTableListener hotReloadAutoListener = null;
 
-  /** Enable competition mode. This will disable all telemetry and hot reload. */
+  /** Enable competition mode. This will disable hot reload. */
   public static void enableCompetitionMode() {
     compMode = true;
   }
@@ -51,9 +51,7 @@ public class PPLibTelemetry {
    */
   public static void setVelocities(
       double actualVel, double commandedVel, double actualAngVel, double commandedAngVel) {
-    if (!compMode) {
-      velPub.set(new double[] {actualVel, commandedVel, actualAngVel, commandedAngVel});
-    }
+    velPub.set(new double[] {actualVel, commandedVel, actualAngVel, commandedAngVel});
   }
 
   /**
@@ -62,9 +60,7 @@ public class PPLibTelemetry {
    * @param inaccuracy Inaccuracy in meters
    */
   public static void setPathInaccuracy(double inaccuracy) {
-    if (!compMode) {
-      inaccuracyPub.set(inaccuracy);
-    }
+    inaccuracyPub.set(inaccuracy);
   }
 
   /**
@@ -73,9 +69,7 @@ public class PPLibTelemetry {
    * @param pose Current robot pose
    */
   public static void setCurrentPose(Pose2d pose) {
-    if (!compMode) {
-      posePub.set(new double[] {pose.getX(), pose.getY(), pose.getRotation().getRadians()});
-    }
+    posePub.set(new double[] {pose.getX(), pose.getY(), pose.getRotation().getRadians()});
   }
 
   /**
@@ -84,21 +78,19 @@ public class PPLibTelemetry {
    * @param path The current path
    */
   public static void setCurrentPath(PathPlannerPath path) {
-    if (!compMode) {
-      double[] arr = new double[path.numPoints() * 3];
+    double[] arr = new double[path.numPoints() * 3];
 
-      int ndx = 0;
-      for (PathPoint p : path.getAllPathPoints()) {
-        Translation2d pos = p.position;
-        arr[ndx] = pos.getX();
-        arr[ndx + 1] = pos.getY();
-        // Just add 0 as a heading since it's not needed for displaying a path
-        arr[ndx + 2] = 0.0;
-        ndx += 3;
-      }
-
-      pathPub.set(arr);
+    int ndx = 0;
+    for (PathPoint p : path.getAllPathPoints()) {
+      Translation2d pos = p.position;
+      arr[ndx] = pos.getX();
+      arr[ndx + 1] = pos.getY();
+      // Just add 0 as a heading since it's not needed for displaying a path
+      arr[ndx + 2] = 0.0;
+      ndx += 3;
     }
+
+    pathPub.set(arr);
   }
 
   /**
@@ -107,12 +99,8 @@ public class PPLibTelemetry {
    * @param targetPose Target robot pose
    */
   public static void setTargetPose(Pose2d targetPose) {
-    if (!compMode) {
-      targetPosePub.set(
-          new double[] {
-            targetPose.getX(), targetPose.getY(), targetPose.getRotation().getRadians()
-          });
-    }
+    targetPosePub.set(
+        new double[] {targetPose.getX(), targetPose.getY(), targetPose.getRotation().getRadians()});
   }
 
   /**

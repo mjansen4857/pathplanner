@@ -805,8 +805,8 @@ public class PathPlannerPath {
               bezierPoints.get(bezierPointIdx),
               t);
 
-      segment1Length += lastSegment1Pos.getDistance(p1);
-      segment2Length += lastSegment2Pos.getDistance(p2);
+      segment1Length += positionDelta(lastSegment1Pos, p1);
+      segment2Length += positionDelta(lastSegment2Pos, p2);
 
       lastSegment1Pos = p1;
       lastSegment2Pos = p2;

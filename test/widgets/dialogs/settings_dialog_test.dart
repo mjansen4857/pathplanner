@@ -289,9 +289,6 @@ void main() {
 
     expect(teamColor, Colors.black);
 
-    await widgetTester.tap(pickerButton);
-    await widgetTester.pumpAndSettle();
-
     final resetButton = find.text('Reset');
 
     expect(resetButton, findsOneWidget);

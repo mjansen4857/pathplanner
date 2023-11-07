@@ -18,6 +18,8 @@ dependencies = [
     "pyntcore ~=2024.0",
     "robotpy-wpimath ~=2024.0",
     "robotpy-commands-v2 ~=2024.0",
+    "robotpy-wpiutil ~=2024.0",
+    "robotpy-hal ~=2024.0",
 ]
 requires-python = ">=3.8"
 

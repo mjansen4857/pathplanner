@@ -9,6 +9,9 @@ from wpimath import inputModulus
 from commands2 import Command
 import commands2.cmd as cmd
 from geometry_util import decimal_range, cubicLerp, calculateRadius
+from wpilib import getDeployDirectory
+import os
+import json
 
 RESOLUTION: Final[float] = 0.05
 
@@ -239,8 +242,26 @@ class PathPlannerPath:
 
     @staticmethod
     def fromPathFile(path_name: str) -> PathPlannerPath:
-        # TODO
-        pass
+        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'paths', path_name + '.path')
+
+        with open(filePath, 'r') as f:
+            pathJson = json.loads(f.read())
+            return PathPlannerPath._fromJson(pathJson)
+
+    @staticmethod
+    def bezierFromPoses(poses: List[Pose2d]) -> List[Translation2d]:
+        if len(poses) < 2:
+            raise ValueError('Not enough poses')
+
+        bezierPoints = []
+
+        # First pose
+        bezierPoints.append(poses[0].translation())
+        bezierPoints.append(poses[0].translation() + Translation2d(poses[0].translation().distance(poses[1].translation()) / 3.0, poses[0].rotation()))
+
+        # Middle poses
+        for i in range(1, len(poses) - 1):
+            pass
 
     def getAllPathPoints(self) -> List[PathPoint]:
         return self._allPoints

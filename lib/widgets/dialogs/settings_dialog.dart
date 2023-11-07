@@ -37,6 +37,10 @@ class SettingsDialog extends StatefulWidget {
 class _SettingsDialogState extends State<SettingsDialog> {
   late num _width;
   late num _length;
+  late num _defaultMaxVel;
+  late num _defaultMaxAccel;
+  late num _defaultMaxAngVel;
+  late num _defaultMaxAngAccel;
   late bool _holonomicMode;
   late bool _hotReload;
   late FieldImage _selectedField;
@@ -51,6 +55,15 @@ class _SettingsDialogState extends State<SettingsDialog> {
         widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
     _length =
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
+    _defaultMaxVel = widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+        Defaults.defaultMaxVel;
+    _defaultMaxAccel = widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+        Defaults.defaultMaxAccel;
+    _defaultMaxAngVel = widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+        Defaults.defaultMaxAngVel;
+    _defaultMaxAngAccel =
+        widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
+            Defaults.defaultMaxAngAccel;
     _holonomicMode =
         widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
     _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
@@ -67,7 +80,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return AlertDialog(
       title: const Text('Settings'),
       content: SizedBox(
-        width: 345,
+        width: 436,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +124,91 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            const Text('Default Constraints:'),
             const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: NumberTextField(
+                    initialText: _defaultMaxVel.toStringAsFixed(2),
+                    label: 'Max Velocity (M/S)',
+                    onSubmitted: (value) {
+                      if (value != null) {
+                        widget.prefs.setDouble(
+                            PrefsKeys.defaultMaxVel, value.toDouble());
+                        setState(() {
+                          _defaultMaxVel = value;
+                        });
+                      }
+                      widget.onSettingsChanged();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: NumberTextField(
+                    initialText: _defaultMaxAccel.toStringAsFixed(2),
+                    label: 'Max Acceleration (M/S²)',
+                    onSubmitted: (value) {
+                      if (value != null) {
+                        widget.prefs.setDouble(
+                            PrefsKeys.defaultMaxAccel, value.toDouble());
+                        setState(() {
+                          _defaultMaxAccel = value;
+                        });
+                      }
+                      widget.onSettingsChanged();
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (_holonomicMode)
+              Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _defaultMaxAngVel.toStringAsFixed(2),
+                          label: 'Max Angular Velocity (Deg/S)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.defaultMaxAngVel, value.toDouble());
+                              setState(() {
+                                _defaultMaxAngVel = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _defaultMaxAngAccel.toStringAsFixed(2),
+                          label: 'Max Angular Acceleration (Deg/S²)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.defaultMaxAngAccel,
+                                  value.toDouble());
+                              setState(() {
+                                _defaultMaxAngAccel = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,7 +344,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         const SizedBox(height: 4),
         SizedBox(
           height: 48,
-          width: 165,
+          width: 213,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Container(
@@ -376,7 +473,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         const SizedBox(height: 4),
         SizedBox(
           height: 48,
-          width: 165,
+          width: 213,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: ElevatedButton(

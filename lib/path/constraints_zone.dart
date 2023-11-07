@@ -13,7 +13,8 @@ class ConstraintsZone {
       required this.constraints,
       this.name = 'New Constraints Zone'});
 
-  ConstraintsZone.defaultZone() : this(constraints: PathConstraints());
+  ConstraintsZone.defaultZone({PathConstraints? constraints})
+      : this(constraints: constraints ?? PathConstraints());
 
   ConstraintsZone.fromJson(Map<String, dynamic> json)
       : name = json['name'] ?? 'New Constraints Zone',

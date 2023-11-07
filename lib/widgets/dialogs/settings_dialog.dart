@@ -80,7 +80,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return AlertDialog(
       title: const Text('Settings'),
       content: SizedBox(
-        width: 424,
+        width: 436,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,7 +173,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       Expanded(
                         child: NumberTextField(
                           initialText: _defaultMaxAngVel.toStringAsFixed(2),
-                          label: 'Max Angular Velocity (M/S)',
+                          label: 'Max Angular Velocity (Deg/S)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -190,7 +190,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       Expanded(
                         child: NumberTextField(
                           initialText: _defaultMaxAngAccel.toStringAsFixed(2),
-                          label: 'Max Angular Acceleration (M/S²)',
+                          label: 'Max Angular Acceleration (Deg/S²)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -344,7 +344,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         const SizedBox(height: 4),
         SizedBox(
           height: 48,
-          width: 208,
+          width: 213,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Container(
@@ -473,7 +473,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         const SizedBox(height: 4),
         SizedBox(
           height: 48,
-          width: 208,
+          width: 213,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: ElevatedButton(

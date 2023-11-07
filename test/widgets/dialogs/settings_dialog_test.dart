@@ -24,6 +24,10 @@ void main() {
       PrefsKeys.hotReloadEnabled: true,
       PrefsKeys.teamColor: Colors.black.value,
       PrefsKeys.pplibClientHost: 'localhost',
+      PrefsKeys.defaultMaxVel: 1.0,
+      PrefsKeys.defaultMaxAccel: 2.0,
+      PrefsKeys.defaultMaxAngVel: 3.0,
+      PrefsKeys.defaultMaxAngAccel: 4.0,
     });
     prefs = await SharedPreferences.getInstance();
     settingsChanged = false;
@@ -89,6 +93,130 @@ void main() {
 
     expect(settingsChanged, true);
     expect(prefs.getDouble(PrefsKeys.robotLength), 1.0);
+  });
+
+  testWidgets('default max vel text field', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField =
+        find.widgetWithText(NumberTextField, 'Max Velocity (M/S)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('1.00')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.1');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.defaultMaxVel), 1.1);
+  });
+
+  testWidgets('default max accel text field', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField =
+        find.widgetWithText(NumberTextField, 'Max Acceleration (M/S²)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('2.00')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '2.2');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.defaultMaxAccel), 2.2);
+  });
+
+  testWidgets('default max ang vel text field', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField =
+        find.widgetWithText(NumberTextField, 'Max Angular Velocity (Deg/S)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('3.00')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '3.3');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.defaultMaxAngVel), 3.3);
+  });
+
+  testWidgets('default max ang accel text field', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(
+        NumberTextField, 'Max Angular Acceleration (Deg/S²)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('4.00')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '4.4');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.defaultMaxAngAccel), 4.4);
   });
 
   testWidgets('field image dropdown', (widgetTester) async {

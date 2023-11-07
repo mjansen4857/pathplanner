@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Final, List
 from wpimath.geometry import Rotation2d, Translation2d, Pose2d
 import wpimath.units as units
+from wpimath import inputModulus
 from commands2 import Command
 import commands2.cmd as cmd
 from geometry_util import decimal_range, cubicLerp, calculateRadius
@@ -211,6 +212,36 @@ class PathPlannerPath:
     _reversed: bool
     _previewStartingRotation: Rotation2d
 
+    def __init__(self, bezier_points: List[Translation2d], constraints: PathConstraints, goal_end_state: GoalEndState,
+                 holonomic_rotations: List[RotationTarget] = [], constraint_zones: List[ConstraintsZone] = [],
+                 event_markers: List[EventMarker] = [], is_reversed: bool = False,
+                 preview_starting_rotation: Rotation2d = Rotation2d()):
+        self._bezierPoints = bezier_points
+        self._rotationTargets = holonomic_rotations
+        self._constraintZones = constraint_zones
+        self._eventMarkers = event_markers
+        self._globalConstraints = constraints
+        self._goalEndState = goal_end_state
+        self._reversed = is_reversed
+        self._allPoints = PathPlannerPath._createPath(self._bezierPoints, self._rotationTargets, self._constraintZones)
+        self._previewStartingRotation = preview_starting_rotation
+
+        self._precalcValues()
+
+    @staticmethod
+    def fromPathPoints(path_points: List[PathPoint], constraints: PathConstraints,
+                       goal_end_state: GoalEndState) -> PathPlannerPath:
+        path = PathPlannerPath([], constraints, goal_end_state)
+        path._allPoints = path_points
+        path._precalcValues()
+
+        return path
+
+    @staticmethod
+    def fromPathFile(path_name: str) -> PathPlannerPath:
+        # TODO
+        pass
+
     def getAllPathPoints(self) -> List[PathPoint]:
         return self._allPoints
 
@@ -232,6 +263,65 @@ class PathPlannerPath:
     def isReversed(self) -> bool:
         return self._reversed
 
+    def getStartingDifferentialPose(self) -> Pose2d:
+        startPos = self.getPoint(0).position
+        heading = (self.getPoint(1).position - self.getPoint(0).position).angle()
+
+        if self._reversed:
+            heading = Rotation2d.fromDegrees(inputModulus(heading.degrees() + 180, -180, 180))
+
+        return Pose2d(startPos, heading)
+
+    def getPreviewStartingHolonomicPose(self) -> Pose2d:
+        heading = Rotation2d() if self._previewStartingRotation is None else self._previewStartingRotation
+        return Pose2d(self.getPoint(0).position, heading)
+
+    @staticmethod
+    def _fromJson(path_json: dict) -> PathPlannerPath:
+        bezierPoints = PathPlannerPath._bezierPointsFromWaypointsJson(path_json['waypoints'])
+        globalConstraints = PathConstraints.fromJson(path_json['globalConstraints'])
+        goalEndState = GoalEndState.fromJson(path_json['goalEndState'])
+        isReversed = bool(path_json['reversed'])
+        rotationTargets = [RotationTarget.fromJson(rotJson) for rotJson in path_json['rotationTargets']]
+        constraintZones = [ConstraintsZone.fromJson(zoneJson) for zoneJson in path_json['constraintZones']]
+        eventMarkers = [EventMarker.fromJson(markerJson) for markerJson in path_json['eventMarkers']]
+        previewStartingRotation = Rotation2d()
+        if path_json['previewStartingState'] is not None:
+            previewStartingRotation = Rotation2d.fromDegrees(float(path_json['previewStartingState']['rotation']))
+
+        return PathPlannerPath(bezierPoints, globalConstraints, goalEndState, rotationTargets, constraintZones,
+                               eventMarkers, isReversed, previewStartingRotation)
+
+    @staticmethod
+    def _bezierPointsFromWaypointsJson(waypoints_json) -> List[Translation2d]:
+        bezierPoints = []
+
+        # First point
+        firstPointJson = waypoints_json[0]
+        bezierPoints.append(PathPlannerPath._pointFromJson(firstPointJson['anchor']))
+        bezierPoints.append(PathPlannerPath._pointFromJson(firstPointJson['nextControl']))
+
+        # Mid points
+        for i in range(1, len(waypoints_json) - 1):
+            point = waypoints_json[i]
+            bezierPoints.append(PathPlannerPath._pointFromJson(point['prevControl']))
+            bezierPoints.append(PathPlannerPath._pointFromJson(point['anchor']))
+            bezierPoints.append(PathPlannerPath._pointFromJson(point['nextControl']))
+
+        # Last point
+        lastPointJson = waypoints_json[len(waypoints_json) - 1]
+        bezierPoints.append(PathPlannerPath._pointFromJson(lastPointJson['prevControl']))
+        bezierPoints.append(PathPlannerPath._pointFromJson(lastPointJson['anchor']))
+
+        return bezierPoints
+
+    @staticmethod
+    def _pointFromJson(point_json: dict) -> Translation2d:
+        x = float(point_json['x'])
+        y = float(point_json['y'])
+
+        return Translation2d(x, y)
+
     @staticmethod
     def _createPath(bezier_points: List[Translation2d], holonomic_rotations: List[RotationTarget],
                     constraint_zones: List[ConstraintsZone]) -> List[PathPoint]:
@@ -249,7 +339,40 @@ class PathPlannerPath:
             p4 = bezier_points[iOffset + 3]
 
             segmentIdx = s
-            # TODO
+            segmentRotations = [t.forSegmentIndex(segmentIdx) for t in holonomic_rotations if
+                                segmentIdx <= t.waypointRelativePosition <= segmentIdx + 1]
+            segmentZones = [z.forSegmentIndex(segmentIdx) for z in constraint_zones if
+                            z.overlapsRange(segmentIdx, segmentIdx + 1)]
+
+            segment = PathSegment(p1, p2, p3, p4, segmentRotations, segmentZones, s == numSegments - 1)
+            points.extend(segment.segmentPoints)
+
+        return points
+
+    def _precalcValues(self) -> None:
+        if self.numPoints() > 0:
+            for i in range(self.numPoints()):
+                point = self.getPoint(i)
+                if point.constraints is None:
+                    point.constraints = self._globalConstraints
+                point.curveRadius = self._getCurveRadiusAtPoint(i)
+
+                if math.isfinite(point.curveRadius):
+                    point.maxV = min(math.sqrt(point.constraints.maxAccelerationMpsSq * math.fabs(point.curveRadius)),
+                                     point.constraints.maxVelocityMps)
+                else:
+                    point.maxV = point.constraints.maxVelocityMps
+
+                if i != 0:
+                    point.distanceAlongPath = self.getPoint(i - 1).distanceAlongPath + (
+                        self.getPoint(i - 1).position.distance(point.position))
+
+            for m in self._eventMarkers:
+                pointIndex = int(m.waypointRelativePos / RESOLUTION)
+                m.markerPos = self.getPoint(pointIndex).position
+
+            self.getPoint(self.numPoints() - 1).holonomicRotation = self._goalEndState.rotation
+            self.getPoint(self.numPoints() - 1).maxV = self._goalEndState.velocity
 
     def _getCurveRadiusAtPoint(self, index: int) -> float:
         if self.numPoints() < 3:

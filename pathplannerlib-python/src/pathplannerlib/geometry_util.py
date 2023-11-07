@@ -1,10 +1,13 @@
-from wpimath.geometry import Translation2d
+from wpimath.geometry import Translation2d, Rotation2d
 import math
 
 def floatLerp(start_val: float, end_val: float, t: float) -> float:
     return start_val + (end_val - start_val) * t
 
 def translationLerp(a: Translation2d, b: Translation2d, t: float) -> Translation2d:
+    return a + ((b - a) * t)
+
+def rotationLerp(a: Rotation2d, b: Rotation2d, t: float) -> Rotation2d:
     return a + ((b - a) * t)
 
 def quadraticLerp(a: Translation2d, b: Translation2d, c: Translation2d, t: float) -> Translation2d:

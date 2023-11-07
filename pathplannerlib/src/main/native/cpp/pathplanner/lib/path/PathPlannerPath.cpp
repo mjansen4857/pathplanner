@@ -64,7 +64,7 @@ std::vector<frc::Translation2d> PathPlannerPath::bezierFromPoses(
 							poses[0].Rotation()));
 
 	// Middle poses
-	for (size_t i = 1; i < poses.size() - 2; i++) {
+	for (size_t i = 1; i < poses.size() - 1; i++) {
 		frc::Translation2d anchor = poses[i].Translation();
 
 		// Prev control

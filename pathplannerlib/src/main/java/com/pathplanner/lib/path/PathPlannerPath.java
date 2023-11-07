@@ -189,7 +189,7 @@ public class PathPlannerPath {
                     poses.get(0).getRotation())));
 
     // Middle poses
-    for (int i = 1; i < poses.size() - 2; i++) {
+    for (int i = 1; i < poses.size() - 1; i++) {
       Translation2d anchor = poses.get(i).getTranslation();
 
       // Prev control

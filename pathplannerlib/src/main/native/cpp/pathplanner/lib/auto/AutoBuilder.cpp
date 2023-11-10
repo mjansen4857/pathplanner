@@ -273,19 +273,7 @@ frc2::CommandPtr AutoBuilder::buildAuto(std::string autoName) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	// Workaround to trim trailing \0 bytes
-	std::span<const uint8_t> buffer = fileBuffer->GetBuffer();
-	size_t trimSize = buffer.size();
-	for (size_t i = trimSize - 1; i != 0; i--) {
-		if (buffer[i] == 0) {
-			trimSize = i;
-		} else {
-			break;
-		}
-	}
-	std::span<const uint8_t> trimmed = buffer.first(trimSize);
-
-	wpi::json json = wpi::json::parse(trimmed.begin(), trimmed.end());
+	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
 	return getAutoCommandFromJson(json);
 }

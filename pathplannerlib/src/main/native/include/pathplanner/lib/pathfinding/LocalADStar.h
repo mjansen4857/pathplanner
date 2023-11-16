@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pathplanner/lib/pathfinding/Pathfinder.h"
+#include "pathplanner/lib/path/PathPoint.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -87,39 +88,46 @@ private:
 	std::unordered_set<GridPosition> dynamicObstacles;
 	std::unordered_set<GridPosition> obstacles;
 
-	GridPosition sStart;
-	frc::Translation2d realStartPos;
-	GridPosition sGoal;
-	frc::Translation2d realGoalPos;
+	GridPosition requestStart;
+	frc::Translation2d requestRealStartPos;
+	GridPosition requestGoal;
+	frc::Translation2d requestRealGoalPos;
 
 	double eps;
 
 	std::thread planningThread;
-	std::mutex mutex;
+	std::mutex pathMutex;
+	std::mutex requestMutex;
 
-	bool doMinor;
-	bool doMajor;
-	bool needsReset;
-	bool needsExtract;
+	bool requestMinor;
+	bool requestMajor;
+	bool requestReset;
 	bool newPathAvailable;
 
-	std::vector<frc::Translation2d> currentPath;
+	std::vector<PathPoint> currentPathPoints;
 
 	void runThread();
 
-	void doWork();
+	void doWork(const bool needsReset, const bool doMinor, const bool doMajor,
+			const GridPosition &sStart, const GridPosition &sGoal,
+			const frc::Translation2d &realStartPos,
+			const frc::Translation2d &realGoalPos);
 
 	GridPosition findClosestNonObstacle(const GridPosition &pos);
 
-	std::vector<frc::Translation2d> extractPath();
+	std::vector<PathPoint> extractPath(const GridPosition &sStart,
+			const GridPosition &sGoal, const frc::Translation2d &realStartPos,
+			const frc::Translation2d &realGoalPos);
 
 	bool walkable(const GridPosition &s1, const GridPosition &s2);
 
-	void reset();
+	void reset(const GridPosition &sStart, const GridPosition &sGoal);
 
-	void computeOrImprovePath();
+	void computeOrImprovePath(const GridPosition &sStart,
+			const GridPosition &sGoal);
 
-	void updateState(const GridPosition &s);
+	void updateState(const GridPosition &s, const GridPosition &sStart,
+			const GridPosition &sGoal);
 
 	inline double cost(const GridPosition &sStart, const GridPosition &sGoal) {
 		if (isCollision(sStart, sGoal)) {
@@ -134,7 +142,8 @@ private:
 
 	std::unordered_set<GridPosition> getAllNeighbors(const GridPosition &s);
 
-	std::pair<double, double> key(const GridPosition &s);
+	std::pair<double, double> key(const GridPosition &s,
+			const GridPosition &sStart);
 
 	std::optional<std::pair<GridPosition, std::pair<double, double>>> topKey();
 

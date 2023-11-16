@@ -30,9 +30,7 @@ public class RemoteADStar implements Pathfinder {
       new AtomicReference<>(new ArrayList<>());
   private final AtomicBoolean newPathAvailable = new AtomicBoolean(false);
 
-  private static RemoteADStar instance = null;
-
-  private RemoteADStar() {
+  public RemoteADStar() {
     var nt = NetworkTableInstance.getDefault();
 
     navGridJsonPub = nt.getStringTopic("/PPLibCoprocessor/RemoteADStar/navGrid").publish();
@@ -78,14 +76,6 @@ public class RemoteADStar implements Pathfinder {
             "RemoteADStar failed to load navgrid. Pathfinding will not be functional.", false);
       }
     }
-  }
-
-  public static RemoteADStar getInstance() {
-    if (instance == null) {
-      instance = new RemoteADStar();
-    }
-
-    return instance;
   }
 
   /**
@@ -153,6 +143,7 @@ public class RemoteADStar implements Pathfinder {
       List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos) {
     double[] obsArr = new double[((obs.size() * 2) + 1) * 2];
 
+    // First two doubles represent current robot pos
     obsArr[0] = currentRobotPos.getX();
     obsArr[1] = currentRobotPos.getY();
 

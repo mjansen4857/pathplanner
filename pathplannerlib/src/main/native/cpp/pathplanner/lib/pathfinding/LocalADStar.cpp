@@ -89,7 +89,7 @@ void LocalADStar::runThread() {
 			std::unordered_set < GridPosition > obstacles;
 
 			{
-				std::lock_guard < std::mutex > lock(requestMutex);
+				std::scoped_lock lock { requestMutex };
 				reset = requestReset;
 				minor = requestMinor;
 				major = requestMajor;
@@ -120,7 +120,7 @@ void LocalADStar::runThread() {
 			}
 		} catch (...) {
 			// Something messed up. Reset and hope for the best
-			std::lock_guard < std::mutex > lock(requestMutex);
+			std::scoped_lock lock { requestMutex };
 			requestReset = true;
 		}
 	}
@@ -141,7 +141,7 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 				realStartPos, realGoalPos, obstacles);
 
 		{
-			std::lock_guard < std::mutex > lock(pathMutex);
+			std::scoped_lock lock { pathMutex };
 			currentPathPoints = path;
 		}
 
@@ -160,7 +160,7 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 					realStartPos, realGoalPos, obstacles);
 
 			{
-				std::lock_guard < std::mutex > lock(pathMutex);
+				std::scoped_lock lock { pathMutex };
 				currentPathPoints = path;
 			}
 
@@ -174,7 +174,7 @@ std::shared_ptr<PathPlannerPath> LocalADStar::getCurrentPath(
 	std::vector < PathPoint > pathPoints;
 
 	{
-		std::lock_guard < std::mutex > lock(pathMutex);
+		std::scoped_lock lock { pathMutex };
 		pathPoints = currentPathPoints;
 	}
 
@@ -194,7 +194,7 @@ void LocalADStar::setStartPosition(const frc::Translation2d &start) {
 			requestObstacles);
 
 	if (startPos != requestStart) {
-		std::lock_guard < std::mutex > lock(requestMutex);
+		std::scoped_lock lock { requestMutex };
 		requestStart = startPos;
 		requestRealStartPos = start;
 
@@ -207,7 +207,7 @@ void LocalADStar::setGoalPosition(const frc::Translation2d &goal) {
 			requestObstacles);
 
 	if (gridPos != requestGoal) {
-		std::lock_guard < std::mutex > lock(requestMutex);
+		std::scoped_lock lock { requestMutex };
 		requestGoal = gridPos;
 		requestRealGoalPos = goal;
 
@@ -279,7 +279,7 @@ void LocalADStar::setDynamicObstacles(
 	dynamicObstacles.insert(newObs.begin(), newObs.end());
 
 	{
-		std::lock_guard < std::mutex > lock(requestMutex);
+		std::scoped_lock lock { requestMutex };
 		requestObstacles.clear();
 		requestObstacles.insert(staticObstacles.begin(), staticObstacles.end());
 		requestObstacles.insert(dynamicObstacles.begin(),

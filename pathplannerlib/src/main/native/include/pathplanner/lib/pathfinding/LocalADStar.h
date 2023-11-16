@@ -7,7 +7,7 @@
 #include <vector>
 #include <atomic>
 #include <thread>
-#include <mutex>
+#include <wpi/mutex.h>
 #include <frc/geometry/Translation2d.h>
 #include <optional>
 
@@ -96,8 +96,8 @@ private:
 	double eps;
 
 	std::thread planningThread;
-	std::mutex pathMutex;
-	std::mutex requestMutex;
+	wpi::mutex pathMutex;
+	wpi::mutex requestMutex;
 
 	bool requestMinor;
 	bool requestMajor;

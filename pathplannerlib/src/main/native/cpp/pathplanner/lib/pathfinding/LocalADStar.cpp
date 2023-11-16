@@ -181,6 +181,8 @@ GridPosition LocalADStar::findClosestNonObstacle(const GridPosition &pos) {
 	}
 
 	std::unordered_set < GridPosition > visited;
+	// Workaround to be able to see which what nodes are in the queue while maintaining the ordering of the queue
+	std::unordered_set < GridPosition > workaround;
 	std::queue < GridPosition > queue;
 	for (const GridPosition &gp : getAllNeighbors(pos)) {
 		queue.push(gp);
@@ -188,14 +190,16 @@ GridPosition LocalADStar::findClosestNonObstacle(const GridPosition &pos) {
 
 	while (!queue.empty()) {
 		GridPosition check = queue.front();
+		workaround.erase(check);
 		if (!obstacles.contains(check)) {
 			return check;
 		}
 		visited.emplace(check);
 
 		for (const GridPosition &neighbor : getAllNeighbors(check)) {
-			if (!visited.contains(neighbor)) {
+			if (!visited.contains(neighbor) && !workaround.contains(check)) {
 				queue.push(neighbor);
+				workaround.emplace(neighbor);
 			}
 		}
 

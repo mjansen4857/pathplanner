@@ -463,7 +463,7 @@ public class LocalADStar implements Pathfinder {
       visited.add(check);
 
       for (GridPosition neighbor : getAllNeighbors(check)) {
-        if (!visited.contains(neighbor)) {
+        if (!visited.contains(neighbor) && !queue.contains(neighbor)) {
           queue.add(neighbor);
         }
       }

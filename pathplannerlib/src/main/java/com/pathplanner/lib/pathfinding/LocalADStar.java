@@ -259,6 +259,17 @@ public class LocalADStar implements Pathfinder {
         GridPosition goal = requestGoal;
         Translation2d realGoal = requestRealGoalPos;
         Set<GridPosition> obstacles = new HashSet<>(requestObstacles);
+
+        // Change the request booleans based on what will be done this loop
+        if (reset) {
+          requestReset = false;
+        }
+
+        if (minor) {
+          requestMinor = false;
+        } else if (major && (eps - 0.5) <= 1.0) {
+          requestMajor = false;
+        }
         requestLock.readLock().unlock();
 
         if (reset || minor || major) {
@@ -290,7 +301,6 @@ public class LocalADStar implements Pathfinder {
       Set<GridPosition> obstacles) {
     if (needsReset) {
       reset(sStart, sGoal);
-      requestReset = false;
     }
 
     if (doMinor) {
@@ -302,8 +312,6 @@ public class LocalADStar implements Pathfinder {
       pathLock.writeLock().unlock();
 
       newPathAvailable = true;
-
-      requestMinor = false;
     } else if (doMajor) {
       if (eps > 1.0) {
         eps -= 0.5;
@@ -319,10 +327,6 @@ public class LocalADStar implements Pathfinder {
         pathLock.writeLock().unlock();
 
         newPathAvailable = true;
-      }
-
-      if (eps <= 1.0) {
-        requestMajor = false;
       }
     }
   }

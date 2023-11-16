@@ -99,6 +99,17 @@ void LocalADStar::runThread() {
 				realGoal = requestRealGoalPos;
 				obstacles.insert(requestObstacles.begin(),
 						requestObstacles.end());
+
+				// Change the request booleans based on what will be done this loop
+				if (reset) {
+					requestReset = false;
+				}
+
+				if (minor) {
+					requestMinor = false;
+				} else if (major && (eps - 0.5) <= 1.0) {
+					requestMajor = false;
+				}
 			}
 
 			if (reset || minor || major) {
@@ -122,7 +133,6 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 		const std::unordered_set<GridPosition> &obstacles) {
 	if (needsReset) {
 		reset(sStart, sGoal);
-		requestReset = false;
 	}
 
 	if (doMinor) {
@@ -136,7 +146,6 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 		}
 
 		newPathAvailable = true;
-		requestMinor = false;
 	} else if (doMajor) {
 		if (eps > 1.0) {
 			eps -= 0.5;
@@ -156,10 +165,6 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 			}
 
 			newPathAvailable = true;
-		}
-
-		if (eps <= 1.0) {
-			requestMajor = false;
 		}
 	}
 }

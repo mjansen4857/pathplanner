@@ -86,7 +86,7 @@ private:
 	std::unordered_set<GridPosition> closed;
 	std::unordered_set<GridPosition> staticObstacles;
 	std::unordered_set<GridPosition> dynamicObstacles;
-	std::unordered_set<GridPosition> obstacles;
+	std::unordered_set<GridPosition> requestObstacles;
 
 	GridPosition requestStart;
 	frc::Translation2d requestRealStartPos;
@@ -111,34 +111,43 @@ private:
 	void doWork(const bool needsReset, const bool doMinor, const bool doMajor,
 			const GridPosition &sStart, const GridPosition &sGoal,
 			const frc::Translation2d &realStartPos,
-			const frc::Translation2d &realGoalPos);
+			const frc::Translation2d &realGoalPos,
+			const std::unordered_set<GridPosition> &obstacles);
 
-	GridPosition findClosestNonObstacle(const GridPosition &pos);
+	GridPosition findClosestNonObstacle(const GridPosition &pos,
+			const std::unordered_set<GridPosition> &obstacles);
 
 	std::vector<PathPoint> extractPath(const GridPosition &sStart,
 			const GridPosition &sGoal, const frc::Translation2d &realStartPos,
-			const frc::Translation2d &realGoalPos);
+			const frc::Translation2d &realGoalPos,
+			const std::unordered_set<GridPosition> &obstacles);
 
-	bool walkable(const GridPosition &s1, const GridPosition &s2);
+	bool walkable(const GridPosition &s1, const GridPosition &s2,
+			const std::unordered_set<GridPosition> &obstacles);
 
 	void reset(const GridPosition &sStart, const GridPosition &sGoal);
 
 	void computeOrImprovePath(const GridPosition &sStart,
-			const GridPosition &sGoal);
+			const GridPosition &sGoal,
+			const std::unordered_set<GridPosition> &obstacles);
 
 	void updateState(const GridPosition &s, const GridPosition &sStart,
-			const GridPosition &sGoal);
+			const GridPosition &sGoal,
+			const std::unordered_set<GridPosition> &obstacles);
 
-	inline double cost(const GridPosition &sStart, const GridPosition &sGoal) {
-		if (isCollision(sStart, sGoal)) {
+	inline double cost(const GridPosition &sStart, const GridPosition &sGoal,
+			const std::unordered_set<GridPosition> &obstacles) {
+		if (isCollision(sStart, sGoal, obstacles)) {
 			return std::numeric_limits<double>::infinity();
 		}
 		return heuristic(sStart, sGoal);
 	}
 
-	bool isCollision(const GridPosition &sStart, const GridPosition &sEnd);
+	bool isCollision(const GridPosition &sStart, const GridPosition &sEnd,
+			const std::unordered_set<GridPosition> &obstacles);
 
-	std::unordered_set<GridPosition> getOpenNeighbors(const GridPosition &s);
+	std::unordered_set<GridPosition> getOpenNeighbors(const GridPosition &s,
+			const std::unordered_set<GridPosition> &obstacles);
 
 	std::unordered_set<GridPosition> getAllNeighbors(const GridPosition &s);
 

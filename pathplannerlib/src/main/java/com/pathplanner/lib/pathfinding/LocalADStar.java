@@ -41,7 +41,7 @@ public class LocalADStar implements Pathfinder {
   private final Set<GridPosition> closed = new HashSet<>();
   private final Set<GridPosition> staticObstacles = new HashSet<>();
   private final Set<GridPosition> dynamicObstacles = new HashSet<>();
-  private final Set<GridPosition> obstacles = new HashSet<>();
+  private final Set<GridPosition> requestObstacles = new HashSet<>();
 
   private GridPosition requestStart;
   private Translation2d requestRealStartPos;
@@ -109,9 +109,9 @@ public class LocalADStar implements Pathfinder {
       }
     }
 
-    obstacles.clear();
-    obstacles.addAll(staticObstacles);
-    obstacles.addAll(dynamicObstacles);
+    requestObstacles.clear();
+    requestObstacles.addAll(staticObstacles);
+    requestObstacles.addAll(dynamicObstacles);
 
     requestReset = true;
     requestMajor = true;
@@ -167,7 +167,7 @@ public class LocalADStar implements Pathfinder {
    */
   @Override
   public void setStartPosition(Translation2d startPosition) {
-    GridPosition startPos = findClosestNonObstacle(getGridPos(startPosition));
+    GridPosition startPos = findClosestNonObstacle(getGridPos(startPosition), requestObstacles);
 
     if (startPos != null && !startPos.equals(requestStart)) {
       requestLock.writeLock().lock();
@@ -187,7 +187,7 @@ public class LocalADStar implements Pathfinder {
    */
   @Override
   public void setGoalPosition(Translation2d goalPosition) {
-    GridPosition gridPos = findClosestNonObstacle(getGridPos(goalPosition));
+    GridPosition gridPos = findClosestNonObstacle(getGridPos(goalPosition), requestObstacles);
 
     if (gridPos != null) {
       requestLock.writeLock().lock();
@@ -233,10 +233,10 @@ public class LocalADStar implements Pathfinder {
 
     dynamicObstacles.clear();
     dynamicObstacles.addAll(newObs);
-    obstacles.clear();
-    obstacles.addAll(staticObstacles);
-    obstacles.addAll(dynamicObstacles);
     requestLock.writeLock().lock();
+    requestObstacles.clear();
+    requestObstacles.addAll(staticObstacles);
+    requestObstacles.addAll(dynamicObstacles);
     requestReset = true;
     requestMinor = true;
     requestMajor = true;
@@ -258,10 +258,11 @@ public class LocalADStar implements Pathfinder {
         Translation2d realStart = requestRealStartPos;
         GridPosition goal = requestGoal;
         Translation2d realGoal = requestRealGoalPos;
+        Set<GridPosition> obstacles = new HashSet<>(requestObstacles);
         requestLock.readLock().unlock();
 
         if (reset || minor || major) {
-          doWork(reset, minor, major, start, goal, realStart, realGoal);
+          doWork(reset, minor, major, start, goal, realStart, realGoal, obstacles);
         } else {
           try {
             Thread.sleep(10);
@@ -285,15 +286,16 @@ public class LocalADStar implements Pathfinder {
       GridPosition sStart,
       GridPosition sGoal,
       Translation2d realStartPos,
-      Translation2d realGoalPos) {
+      Translation2d realGoalPos,
+      Set<GridPosition> obstacles) {
     if (needsReset) {
       reset(sStart, sGoal);
       requestReset = false;
     }
 
     if (doMinor) {
-      computeOrImprovePath(sStart, sGoal);
-      List<PathPoint> path = extractPath(sStart, sGoal, realStartPos, realGoalPos);
+      computeOrImprovePath(sStart, sGoal, obstacles);
+      List<PathPoint> path = extractPath(sStart, sGoal, realStartPos, realGoalPos, obstacles);
 
       pathLock.writeLock().lock();
       currentPathPoints = path;
@@ -309,8 +311,8 @@ public class LocalADStar implements Pathfinder {
 
         open.replaceAll((s, v) -> key(s, sStart));
         closed.clear();
-        computeOrImprovePath(sStart, sGoal);
-        List<PathPoint> path = extractPath(sStart, sGoal, realStartPos, realGoalPos);
+        computeOrImprovePath(sStart, sGoal, obstacles);
+        List<PathPoint> path = extractPath(sStart, sGoal, realStartPos, realGoalPos, obstacles);
 
         pathLock.writeLock().lock();
         currentPathPoints = path;
@@ -329,7 +331,8 @@ public class LocalADStar implements Pathfinder {
       GridPosition sStart,
       GridPosition sGoal,
       Translation2d realStartPos,
-      Translation2d realGoalPos) {
+      Translation2d realGoalPos,
+      Set<GridPosition> obstacles) {
     if (sGoal.equals(sStart)) {
       return List.of(new PathPoint(realGoalPos, null));
     }
@@ -342,7 +345,7 @@ public class LocalADStar implements Pathfinder {
     for (int k = 0; k < 200; k++) {
       HashMap<GridPosition, Double> gList = new HashMap<>();
 
-      for (GridPosition x : getOpenNeighbors(s)) {
+      for (GridPosition x : getOpenNeighbors(s, obstacles)) {
         gList.put(x, g.get(x));
       }
 
@@ -363,7 +366,7 @@ public class LocalADStar implements Pathfinder {
     List<GridPosition> simplifiedPath = new ArrayList<>();
     simplifiedPath.add(path.get(0));
     for (int i = 1; i < path.size() - 1; i++) {
-      if (!walkable(simplifiedPath.get(simplifiedPath.size() - 1), path.get(i + 1))) {
+      if (!walkable(simplifiedPath.get(simplifiedPath.size() - 1), path.get(i + 1), obstacles)) {
         simplifiedPath.add(path.get(i));
       }
     }
@@ -446,7 +449,7 @@ public class LocalADStar implements Pathfinder {
     return pathPoints;
   }
 
-  private GridPosition findClosestNonObstacle(GridPosition pos) {
+  private GridPosition findClosestNonObstacle(GridPosition pos, Set<GridPosition> obstacles) {
     if (!obstacles.contains(pos)) {
       return pos;
     }
@@ -471,7 +474,7 @@ public class LocalADStar implements Pathfinder {
     return null;
   }
 
-  private boolean walkable(GridPosition s1, GridPosition s2) {
+  private boolean walkable(GridPosition s1, GridPosition s2, Set<GridPosition> obstacles) {
     int x0 = s1.x;
     int y0 = s1.y;
     int x1 = s2.x;
@@ -532,7 +535,8 @@ public class LocalADStar implements Pathfinder {
     open.put(sGoal, key(sGoal, sStart));
   }
 
-  private void computeOrImprovePath(GridPosition sStart, GridPosition sGoal) {
+  private void computeOrImprovePath(
+      GridPosition sStart, GridPosition sGoal, Set<GridPosition> obstacles) {
     while (true) {
       var sv = topKey();
       if (sv == null) {
@@ -551,25 +555,26 @@ public class LocalADStar implements Pathfinder {
         g.put(s, rhs.get(s));
         closed.add(s);
 
-        for (GridPosition sn : getOpenNeighbors(s)) {
-          updateState(sn, sStart, sGoal);
+        for (GridPosition sn : getOpenNeighbors(s, obstacles)) {
+          updateState(sn, sStart, sGoal, obstacles);
         }
       } else {
         g.put(s, Double.POSITIVE_INFINITY);
-        for (GridPosition sn : getOpenNeighbors(s)) {
-          updateState(sn, sStart, sGoal);
+        for (GridPosition sn : getOpenNeighbors(s, obstacles)) {
+          updateState(sn, sStart, sGoal, obstacles);
         }
-        updateState(s, sStart, sGoal);
+        updateState(s, sStart, sGoal, obstacles);
       }
     }
   }
 
-  private void updateState(GridPosition s, GridPosition sStart, GridPosition sGoal) {
+  private void updateState(
+      GridPosition s, GridPosition sStart, GridPosition sGoal, Set<GridPosition> obstacles) {
     if (!s.equals(sGoal)) {
       rhs.put(s, Double.POSITIVE_INFINITY);
 
-      for (GridPosition x : getOpenNeighbors(s)) {
-        rhs.put(s, Math.min(rhs.get(s), g.get(x) + cost(s, x)));
+      for (GridPosition x : getOpenNeighbors(s, obstacles)) {
+        rhs.put(s, Math.min(rhs.get(s), g.get(x) + cost(s, x, obstacles)));
       }
     }
 
@@ -584,15 +589,15 @@ public class LocalADStar implements Pathfinder {
     }
   }
 
-  private double cost(GridPosition sStart, GridPosition sGoal) {
-    if (isCollision(sStart, sGoal)) {
+  private double cost(GridPosition sStart, GridPosition sGoal, Set<GridPosition> obstacles) {
+    if (isCollision(sStart, sGoal, obstacles)) {
       return Double.POSITIVE_INFINITY;
     }
 
     return heuristic(sStart, sGoal);
   }
 
-  private boolean isCollision(GridPosition sStart, GridPosition sEnd) {
+  private boolean isCollision(GridPosition sStart, GridPosition sEnd, Set<GridPosition> obstacles) {
     if (obstacles.contains(sStart) || obstacles.contains(sEnd)) {
       return true;
     }
@@ -615,7 +620,7 @@ public class LocalADStar implements Pathfinder {
     return false;
   }
 
-  private List<GridPosition> getOpenNeighbors(GridPosition s) {
+  private List<GridPosition> getOpenNeighbors(GridPosition s, Set<GridPosition> obstacles) {
     List<GridPosition> ret = new ArrayList<>();
 
     for (int xMove = -1; xMove <= 1; xMove++) {

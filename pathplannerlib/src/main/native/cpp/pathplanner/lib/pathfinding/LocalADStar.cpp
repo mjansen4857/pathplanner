@@ -1,4 +1,6 @@
 #include "pathplanner/lib/pathfinding/LocalADStar.h"
+#include "pathplanner/lib/path/PathSegment.h"
+#include "pathplanner/lib/util/GeometryUtil.h"
 #include <cmath>
 #include <frc/Filesystem.h>
 #include <wpi/MemoryBuffer.h>
@@ -11,13 +13,13 @@ using namespace pathplanner;
 
 LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 		0.2), nodesX(static_cast<int>(std::ceil(fieldLength / nodeSize))), nodesY(
-		static_cast<int>(std::ceil(fieldWidth / nodeSize))), g(), rhs(), open(), incons(), closed(), staticObstacles(), dynamicObstacles(), obstacles(), sStart(), realStartPos(), sGoal(), realGoalPos(), eps(
-		EPS), planningThread(), mutex(), doMinor(true), doMajor(true), needsReset(
-		true), needsExtract(false), newPathAvailable(false), currentPath() {
-	sStart = GridPosition(0, 0);
-	realStartPos = frc::Translation2d(0_m, 0_m);
-	sGoal = GridPosition(0, 0);
-	realGoalPos = frc::Translation2d(0_m, 0_m);
+		static_cast<int>(std::ceil(fieldWidth / nodeSize))), g(), rhs(), open(), incons(), closed(), staticObstacles(), dynamicObstacles(), requestObstacles(), requestStart(), requestRealStartPos(), requestGoal(), requestRealGoalPos(), eps(
+		EPS), planningThread(), pathMutex(), requestMutex(), requestMinor(true), requestMajor(
+		true), requestReset(true), newPathAvailable(false), currentPathPoints() {
+	requestStart = GridPosition(0, 0);
+	requestRealStartPos = frc::Translation2d(0_m, 0_m);
+	requestGoal = GridPosition(0, 0);
+	requestRealGoalPos = frc::Translation2d(0_m, 0_m);
 
 	staticObstacles.clear();
 	dynamicObstacles.clear();
@@ -57,13 +59,13 @@ LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 		}
 	}
 
-	obstacles.clear();
-	obstacles.insert(staticObstacles.begin(), staticObstacles.end());
-	obstacles.insert(dynamicObstacles.begin(), dynamicObstacles.end());
+	requestObstacles.clear();
+	requestObstacles.insert(staticObstacles.begin(), staticObstacles.end());
+	requestObstacles.insert(dynamicObstacles.begin(), dynamicObstacles.end());
 
-	needsReset = true;
-	doMajor = true;
-	doMinor = true;
+	requestReset = true;
+	requestMajor = true;
+	requestMinor = true;
 
 	newPathAvailable = false;
 
@@ -76,110 +78,153 @@ LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 void LocalADStar::runThread() {
 	while (true) {
 		try {
-			std::lock_guard < std::mutex > lock(mutex);
+			bool reset;
+			bool minor;
+			bool major;
+			GridPosition start;
+			frc::Translation2d realStart;
+			GridPosition goal;
+			frc::Translation2d realGoal;
+			std::unordered_set < GridPosition > obstacles;
 
-			if (needsReset || doMinor || doMajor) {
-				doWork();
-			} else if (needsExtract) {
-				currentPath = extractPath();
-				newPathAvailable = true;
-				needsExtract = false;
+			{
+				std::scoped_lock lock { requestMutex };
+				reset = requestReset;
+				minor = requestMinor;
+				major = requestMajor;
+				start = requestStart;
+				realStart = requestRealStartPos;
+				goal = requestGoal;
+				realGoal = requestRealGoalPos;
+				obstacles.insert(requestObstacles.begin(),
+						requestObstacles.end());
+
+				// Change the request booleans based on what will be done this loop
+				if (reset) {
+					requestReset = false;
+				}
+
+				if (minor) {
+					requestMinor = false;
+				} else if (major && (eps - 0.5) <= 1.0) {
+					requestMajor = false;
+				}
+			}
+
+			if (reset || minor || major) {
+				doWork(reset, minor, major, start, goal, realStart, realGoal,
+						obstacles);
+			} else {
+				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			}
 		} catch (...) {
-			// Ignore
-		}
-
-		if (!needsReset && !doMinor && !doMajor) {
-			std::this_thread::sleep_for(std::chrono::milliseconds(20));
+			// Something messed up. Reset and hope for the best
+			std::scoped_lock lock { requestMutex };
+			requestReset = true;
 		}
 	}
 }
 
-void LocalADStar::doWork() {
+void LocalADStar::doWork(const bool needsReset, const bool doMinor,
+		const bool doMajor, const GridPosition &sStart,
+		const GridPosition &sGoal, const frc::Translation2d &realStartPos,
+		const frc::Translation2d &realGoalPos,
+		const std::unordered_set<GridPosition> &obstacles) {
 	if (needsReset) {
-		reset();
-		needsReset = false;
+		reset(sStart, sGoal);
 	}
 
 	if (doMinor) {
-		computeOrImprovePath();
-		currentPath = extractPath();
+		computeOrImprovePath(sStart, sGoal, obstacles);
+		std::vector < PathPoint > path = extractPath(sStart, sGoal,
+				realStartPos, realGoalPos, obstacles);
+
+		{
+			std::scoped_lock lock { pathMutex };
+			currentPathPoints = path;
+		}
+
 		newPathAvailable = true;
-		doMinor = false;
 	} else if (doMajor) {
 		if (eps > 1.0) {
 			eps -= 0.5;
 			open.insert(incons.begin(), incons.end());
 
 			for (auto entry : open) {
-				open[entry.first] = key(entry.first);
+				open[entry.first] = key(entry.first, sStart);
 			}
 			closed.clear();
-			computeOrImprovePath();
-			currentPath = extractPath();
-			newPathAvailable = true;
-		}
+			computeOrImprovePath(sStart, sGoal, obstacles);
+			std::vector < PathPoint > path = extractPath(sStart, sGoal,
+					realStartPos, realGoalPos, obstacles);
 
-		if (eps <= 1.0) {
-			doMajor = false;
+			{
+				std::scoped_lock lock { pathMutex };
+				currentPathPoints = path;
+			}
+
+			newPathAvailable = true;
 		}
 	}
 }
 
 std::shared_ptr<PathPlannerPath> LocalADStar::getCurrentPath(
 		PathConstraints constraints, GoalEndState goalEndState) {
-	std::vector < frc::Translation2d > bezierPoints;
+	std::vector < PathPoint > pathPoints;
 
 	{
-		std::lock_guard < std::mutex > lock(mutex);
-
-		bezierPoints = currentPath;
-		newPathAvailable = false;
+		std::scoped_lock lock { pathMutex };
+		pathPoints = currentPathPoints;
 	}
 
-	if (bezierPoints.size() < 4) {
+	newPathAvailable = false;
+
+	if (pathPoints.empty()) {
 		// Not enough points to make a path
 		return nullptr;
 	}
 
-	return std::make_shared < PathPlannerPath
-			> (bezierPoints, constraints, goalEndState);
+	return PathPlannerPath::fromPathPoints(pathPoints, constraints,
+			goalEndState);
 }
 
 void LocalADStar::setStartPosition(const frc::Translation2d &start) {
-	std::lock_guard < std::mutex > lock(mutex);
+	GridPosition startPos = findClosestNonObstacle(getGridPos(start),
+			requestObstacles);
 
-	GridPosition startPos = findClosestNonObstacle(getGridPos(start));
+	if (startPos != requestStart) {
+		std::scoped_lock lock { requestMutex };
+		requestStart = startPos;
+		requestRealStartPos = start;
 
-	if (startPos != sStart) {
-		sStart = startPos;
-		realStartPos = start;
-
-		doMinor = true;
+		requestMinor = true;
 	}
 }
 
 void LocalADStar::setGoalPosition(const frc::Translation2d &goal) {
-	std::lock_guard < std::mutex > lock(mutex);
+	GridPosition gridPos = findClosestNonObstacle(getGridPos(goal),
+			requestObstacles);
 
-	GridPosition gridPos = findClosestNonObstacle(getGridPos(goal));
+	if (gridPos != requestGoal) {
+		std::scoped_lock lock { requestMutex };
+		requestGoal = gridPos;
+		requestRealGoalPos = goal;
 
-	if (gridPos != sGoal) {
-		sGoal = gridPos;
-		realGoalPos = goal;
-
-		doMinor = true;
-		doMajor = true;
-		needsReset = true;
+		requestMinor = true;
+		requestMajor = true;
+		requestReset = true;
 	}
 }
 
-GridPosition LocalADStar::findClosestNonObstacle(const GridPosition &pos) {
+GridPosition LocalADStar::findClosestNonObstacle(const GridPosition &pos,
+		const std::unordered_set<GridPosition> &obstacles) {
 	if (!obstacles.contains(pos)) {
 		return pos;
 	}
 
 	std::unordered_set < GridPosition > visited;
+	// Workaround to be able to see which what nodes are in the queue while maintaining the ordering of the queue
+	std::unordered_set < GridPosition > workaround;
 	std::queue < GridPosition > queue;
 	for (const GridPosition &gp : getAllNeighbors(pos)) {
 		queue.push(gp);
@@ -187,14 +232,16 @@ GridPosition LocalADStar::findClosestNonObstacle(const GridPosition &pos) {
 
 	while (!queue.empty()) {
 		GridPosition check = queue.front();
+		workaround.erase(check);
 		if (!obstacles.contains(check)) {
 			return check;
 		}
 		visited.emplace(check);
 
 		for (const GridPosition &neighbor : getAllNeighbors(check)) {
-			if (!visited.contains(neighbor)) {
+			if (!visited.contains(neighbor) && !workaround.contains(check)) {
 				queue.push(neighbor);
+				workaround.emplace(neighbor);
 			}
 		}
 
@@ -227,26 +274,31 @@ void LocalADStar::setDynamicObstacles(
 		}
 	}
 
-	{
-		std::lock_guard < std::mutex > lock(mutex);
+	dynamicObstacles.clear();
+	dynamicObstacles.insert(newObs.begin(), newObs.end());
 
-		dynamicObstacles.clear();
-		dynamicObstacles.insert(newObs.begin(), newObs.end());
-		obstacles.clear();
-		obstacles.insert(staticObstacles.begin(), staticObstacles.end());
-		obstacles.insert(dynamicObstacles.begin(), dynamicObstacles.end());
-		needsReset = true;
-		doMinor = true;
-		doMajor = true;
+	{
+		std::scoped_lock lock { requestMutex };
+		requestObstacles.clear();
+		requestObstacles.insert(staticObstacles.begin(), staticObstacles.end());
+		requestObstacles.insert(dynamicObstacles.begin(),
+				dynamicObstacles.end());
+		requestReset = true;
+		requestMinor = true;
+		requestMajor = true;
 	}
 
 	setStartPosition(currentRobotPos);
-	setGoalPosition (realGoalPos);
+	setGoalPosition (requestRealGoalPos);
 }
 
-std::vector<frc::Translation2d> LocalADStar::extractPath() {
+std::vector<PathPoint> LocalADStar::extractPath(const GridPosition &sStart,
+		const GridPosition &sGoal, const frc::Translation2d &realStartPos,
+		const frc::Translation2d &realGoalPos,
+		const std::unordered_set<GridPosition> &obstacles) {
 	if (sGoal == sStart) {
-		return std::vector<frc::Translation2d> { realGoalPos };
+		return std::vector<PathPoint> { PathPoint(realGoalPos, std::nullopt,
+				std::nullopt) };
 	}
 
 	std::vector < GridPosition > path;
@@ -257,7 +309,7 @@ std::vector<frc::Translation2d> LocalADStar::extractPath() {
 	for (int k = 0; k < 200; k++) {
 		std::unordered_map<GridPosition, double> gList;
 
-		for (const GridPosition &x : getOpenNeighbors(s)) {
+		for (const GridPosition &x : getOpenNeighbors(s, obstacles)) {
 			gList[x] = g.at(x);
 		}
 
@@ -279,7 +331,8 @@ std::vector<frc::Translation2d> LocalADStar::extractPath() {
 	std::vector < GridPosition > simplifiedPath;
 	simplifiedPath.push_back(path[0]);
 	for (size_t i = 1; i < path.size() - 1; i++) {
-		if (!walkable(simplifiedPath[simplifiedPath.size() - 1], path[i + 1])) {
+		if (!walkable(simplifiedPath[simplifiedPath.size() - 1], path[i + 1],
+				obstacles)) {
 			simplifiedPath.push_back(path[i]);
 		}
 	}
@@ -337,10 +390,35 @@ std::vector<frc::Translation2d> LocalADStar::extractPath() {
 					+ fieldPosPath[fieldPosPath.size() - 1]);
 	bezierPoints.push_back(fieldPosPath[fieldPosPath.size() - 1]);
 
-	return bezierPoints;
+	size_t numSegments = (bezierPoints.size() - 1) / 3;
+	std::vector < PathPoint > pathPoints;
+
+	for (size_t i = 0; i < numSegments; i++) {
+		size_t iOffset = i * 3;
+
+		frc::Translation2d p1 = bezierPoints[iOffset];
+		frc::Translation2d p2 = bezierPoints[iOffset + 1];
+		frc::Translation2d p3 = bezierPoints[iOffset + 2];
+		frc::Translation2d p4 = bezierPoints[iOffset + 3];
+
+		double resolution = PathSegment::RESOLUTION;
+		if (p1.Distance(p4) <= 1_m) {
+			resolution = 0.2;
+		}
+
+		for (double t = 0.0; t < 1.0; t += resolution) {
+			pathPoints.emplace_back(GeometryUtil::cubicLerp(p1, p2, p3, p4, t),
+					std::nullopt, std::nullopt);
+		}
+	}
+	pathPoints.emplace_back(bezierPoints[bezierPoints.size() - 1], std::nullopt,
+			std::nullopt);
+
+	return pathPoints;
 }
 
-bool LocalADStar::walkable(const GridPosition &s1, const GridPosition &s2) {
+bool LocalADStar::walkable(const GridPosition &s1, const GridPosition &s2,
+		const std::unordered_set<GridPosition> &obstacles) {
 	int x0 = s1.x;
 	int y0 = s1.y;
 	int x1 = s2.x;
@@ -380,7 +458,7 @@ bool LocalADStar::walkable(const GridPosition &s1, const GridPosition &s2) {
 	return true;
 }
 
-void LocalADStar::reset() {
+void LocalADStar::reset(const GridPosition &sStart, const GridPosition &sGoal) {
 	g.clear();
 	rhs.clear();
 	open.clear();
@@ -398,10 +476,12 @@ void LocalADStar::reset() {
 
 	eps = EPS;
 
-	open[sGoal] = key(sGoal);
+	open[sGoal] = key(sGoal, sStart);
 }
 
-void LocalADStar::computeOrImprovePath() {
+void LocalADStar::computeOrImprovePath(const GridPosition &sStart,
+		const GridPosition &sGoal,
+		const std::unordered_set<GridPosition> &obstacles) {
 	while (true) {
 		auto svOpt = topKey();
 		if (!svOpt.has_value()) {
@@ -411,7 +491,7 @@ void LocalADStar::computeOrImprovePath() {
 		auto s = sv.first;
 		auto v = sv.second;
 
-		if (comparePair(v, key(sStart)) >= 0
+		if (comparePair(v, key(sStart, sStart)) >= 0
 				&& rhs.at(sStart) == g.at(sStart)) {
 			break;
 		}
@@ -422,25 +502,27 @@ void LocalADStar::computeOrImprovePath() {
 			g[s] = rhs.at(s);
 			closed.emplace(s);
 
-			for (const GridPosition &sn : getOpenNeighbors(s)) {
-				updateState(sn);
+			for (const GridPosition &sn : getOpenNeighbors(s, obstacles)) {
+				updateState(sn, sStart, sGoal, obstacles);
 			}
 		} else {
 			g[s] = std::numeric_limits<double>::infinity();
-			for (const GridPosition &sn : getOpenNeighbors(s)) {
-				updateState(sn);
+			for (const GridPosition &sn : getOpenNeighbors(s, obstacles)) {
+				updateState(sn, sStart, sGoal, obstacles);
 			}
-			updateState(s);
+			updateState(s, sStart, sGoal, obstacles);
 		}
 	}
 }
 
-void LocalADStar::updateState(const GridPosition &s) {
+void LocalADStar::updateState(const GridPosition &s, const GridPosition &sStart,
+		const GridPosition &sGoal,
+		const std::unordered_set<GridPosition> &obstacles) {
 	if (s != sGoal) {
 		rhs[s] = std::numeric_limits<double>::infinity();
 
-		for (const GridPosition &x : getOpenNeighbors(s)) {
-			rhs[s] = std::min(rhs.at(s), g.at(x) + cost(s, x));
+		for (const GridPosition &x : getOpenNeighbors(s, obstacles)) {
+			rhs[s] = std::min(rhs.at(s), g.at(x) + cost(s, x, obstacles));
 		}
 	}
 
@@ -448,7 +530,7 @@ void LocalADStar::updateState(const GridPosition &s) {
 
 	if (g.at(s) != rhs.at(s)) {
 		if (!closed.contains(s)) {
-			open[s] = key(s);
+			open[s] = key(s, sStart);
 		} else {
 			incons[s] = std::pair<double, double>(0.0, 0.0);
 		}
@@ -456,7 +538,8 @@ void LocalADStar::updateState(const GridPosition &s) {
 }
 
 bool LocalADStar::isCollision(const GridPosition &sStart,
-		const GridPosition &sEnd) {
+		const GridPosition &sEnd,
+		const std::unordered_set<GridPosition> &obstacles) {
 	if (obstacles.contains(sStart) || obstacles.contains(sEnd)) {
 		return true;
 	}
@@ -484,7 +567,8 @@ bool LocalADStar::isCollision(const GridPosition &sStart,
 }
 
 std::unordered_set<GridPosition> LocalADStar::getOpenNeighbors(
-		const GridPosition &s) {
+		const GridPosition &s,
+		const std::unordered_set<GridPosition> &obstacles) {
 	std::unordered_set < GridPosition > ret;
 
 	for (int xMove = -1; xMove <= 1; xMove++) {
@@ -515,7 +599,8 @@ std::unordered_set<GridPosition> LocalADStar::getAllNeighbors(
 	return ret;
 }
 
-std::pair<double, double> LocalADStar::key(const GridPosition &s) {
+std::pair<double, double> LocalADStar::key(const GridPosition &s,
+		const GridPosition &sStart) {
 	if (g.at(s) > rhs.at(s)) {
 		return std::pair<double, double>(rhs.at(s) + eps * heuristic(sStart, s),
 				rhs.at(s));

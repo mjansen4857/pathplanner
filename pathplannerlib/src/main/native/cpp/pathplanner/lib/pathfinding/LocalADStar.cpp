@@ -33,8 +33,7 @@ LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 
 	if (!error_code) {
 		try {
-			wpi::json json = wpi::json::parse(fileBuffer->begin(),
-					fileBuffer->end());
+			wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
 			nodeSize = json.at("nodeSizeMeters").get<double>();
 			wpi::json::const_reference grid = json.at("grid");

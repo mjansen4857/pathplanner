@@ -86,6 +86,7 @@
     "unordered_set": "cpp",
     "forward_list": "cpp",
     "ranges": "cpp",
-    "valarray": "cpp"
+    "valarray": "cpp",
+    "*.mac": "cpp"
   }
 }

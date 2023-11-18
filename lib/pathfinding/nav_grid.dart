@@ -14,6 +14,16 @@ class NavGrid {
     required this.grid,
   });
 
+  NavGrid.blankGrid({
+    required this.nodeSizeMeters,
+    required this.fieldSize,
+  }) : grid = [] {
+    int rows = (fieldSize.height / nodeSizeMeters).ceil();
+    int cols = (fieldSize.width / nodeSizeMeters).ceil();
+
+    grid = List.generate(rows, (index) => List.filled(cols, false));
+  }
+
   NavGrid.fromJson(Map<String, dynamic> json)
       : fieldSize = _sizeFromJson(json['field_size']),
         nodeSizeMeters = json['nodeSizeMeters'] ?? 0.2,

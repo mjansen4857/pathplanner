@@ -9,6 +9,7 @@ import 'package:path/path.dart';
 import 'package:pathplanner/pages/nav_grid_page.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
 import 'package:pathplanner/widgets/field_image.dart';
+import 'package:pathplanner/widgets/number_text_field.dart';
 
 void main() {
   late MemoryFileSystem fs;
@@ -127,5 +128,49 @@ void main() {
     NavGrid editedGrid = NavGrid.fromJson(jsonDecode(
         fs.file(join(deployPath, 'navgrid.json')).readAsStringSync()));
     expect(editedGrid, isNot(grid));
+  });
+
+  testWidgets('edit grid attributes', (widgetTester) async {
+    var fs = MemoryFileSystem();
+    fs.directory(deployPath).createSync(recursive: true);
+    NavGrid grid = NavGrid(
+        fieldSize: const Size(16.54, 8.02),
+        nodeSizeMeters: 0.2,
+        grid: List.generate((8.02 / 0.2).ceil(),
+            (index) => List.filled((16.54 / 0.2).ceil(), false)));
+    fs
+        .file(join(deployPath, 'navgrid.json'))
+        .writeAsStringSync(jsonEncode(grid));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: NavGridPage(
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final fab = find.byType(FloatingActionButton);
+    expect(fab, findsOneWidget);
+    await widgetTester.tap(fab);
+
+    await widgetTester.pumpAndSettle();
+
+    final nodeSizeField = find.widgetWithText(NumberTextField, 'Node Size (M)');
+
+    expect(nodeSizeField, findsOneWidget);
+
+    await widgetTester.enterText(nodeSizeField, '0.4');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.tap(find.text('Confirm'));
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.tap(fab);
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.tap(find.text('Restore Default'));
+    await widgetTester.pumpAndSettle();
   });
 }

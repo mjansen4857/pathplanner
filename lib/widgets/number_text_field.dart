@@ -20,8 +20,10 @@ class NumberTextField extends StatelessWidget {
     this.onSubmitted,
     this.enabled = true,
     this.arrowKeyIncrement = 0.01,
+    TextEditingController? controller,
   }) {
-    _controller = _getController(initialText);
+    _controller = controller ?? TextEditingController();
+    _controller.text = initialText;
   }
 
   @override
@@ -113,11 +115,5 @@ class NumberTextField extends StatelessWidget {
         onSubmitted?.call(parsed - arrowKeyIncrement);
       }
     }
-  }
-
-  TextEditingController _getController(String text) {
-    return TextEditingController(text: text)
-      ..selection =
-          TextSelection.fromPosition(TextPosition(offset: text.length));
   }
 }

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 class PreviewSeekbar extends StatefulWidget {
   final AnimationController previewController;
+  final ValueChanged<bool>? onPauseStateChanged;
 
   const PreviewSeekbar({
     super.key,
     required this.previewController,
+    this.onPauseStateChanged,
   });
 
   @override
@@ -32,8 +34,10 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
                     setState(() {
                       if (widget.previewController.isAnimating) {
                         widget.previewController.stop();
+                        widget.onPauseStateChanged?.call(true);
                       } else {
                         widget.previewController.repeat();
+                        widget.onPauseStateChanged?.call(false);
                       }
                     });
                   },
@@ -57,6 +61,7 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
                               setState(() {
                                 widget.previewController.stop();
                               });
+                              widget.onPauseStateChanged?.call(true);
                             }
 
                             widget.previewController.value = value;

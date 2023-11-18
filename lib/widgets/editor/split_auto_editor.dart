@@ -49,6 +49,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   bool _draggingStartRot = false;
   Pose2d? _dragOldValue;
   Trajectory? _simPath;
+  bool _paused = false;
 
   late Size _robotSize;
   late AnimationController _previewController;
@@ -247,6 +248,9 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               if (_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
+                  onPauseStateChanged: (value) => setState(() {
+                    _paused = value;
+                  }),
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -294,6 +298,9 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               if (!_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
+                  onPauseStateChanged: (value) => setState(() {
+                    _paused = value;
+                  }),
                 ),
             ],
           ),
@@ -319,11 +326,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       setState(() {
         _simPath = simPath;
       });
-      _previewController.stop();
-      _previewController.reset();
-      _previewController.duration =
-          Duration(milliseconds: (simPath.states.last.time * 1000).toInt());
-      _previewController.repeat();
+
+      if (!_paused) {
+        _previewController.stop();
+        _previewController.reset();
+        _previewController.duration =
+            Duration(milliseconds: (simPath.states.last.time * 1000).toInt());
+        _previewController.repeat();
+      }
     }
   }
 

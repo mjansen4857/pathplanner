@@ -63,6 +63,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   int? _draggedRotationIdx;
   num? _dragRotationOldValue;
   Trajectory? _simTraj;
+  bool _paused = false;
   late bool _holonomicMode;
 
   late Size _robotSize;
@@ -437,6 +438,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
               if (_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
+                  onPauseStateChanged: (value) => setState(() {
+                    _paused = value;
+                  }),
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -613,6 +617,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
               if (!_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
+                  onPauseStateChanged: (value) => setState(() {
+                    _paused = value;
+                  }),
                 ),
             ],
           ),
@@ -630,11 +637,14 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       setState(() {
         _simTraj = Trajectory.simulate(widget.path, linearVel, rotationRadians);
       });
-      _previewController.stop();
-      _previewController.reset();
-      _previewController.duration =
-          Duration(milliseconds: (_simTraj!.states.last.time * 1000).toInt());
-      _previewController.repeat();
+
+      if (!_paused) {
+        _previewController.stop();
+        _previewController.reset();
+        _previewController.duration =
+            Duration(milliseconds: (_simTraj!.states.last.time * 1000).toInt());
+        _previewController.repeat();
+      }
     }
   }
 

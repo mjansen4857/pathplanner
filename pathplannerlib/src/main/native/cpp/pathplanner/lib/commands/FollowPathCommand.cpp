@@ -27,7 +27,8 @@ void FollowPathCommand::Initialize() {
 							>= 0.25_mps)) {
 		replanPath(currentPose, currentSpeeds);
 	} else {
-		m_generatedTrajectory = PathPlannerTrajectory(m_path, currentSpeeds);
+		m_generatedTrajectory = PathPlannerTrajectory(m_path, currentSpeeds,
+				currentPose.Rotation());
 		PathPlannerLogging::logActivePath (m_path);
 		PPLibTelemetry::setCurrentPath(m_path);
 	}

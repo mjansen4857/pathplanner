@@ -389,7 +389,7 @@ class Trajectory {
     num startingRotationRadians, {
     num maxModuleSpeed = 4.5,
     num driveBaseRadius = 0.425,
-  }) : states = _generateStates(path, linearVel) {
+  }) : states = _generateStates(path, linearVel, startingRotationRadians) {
     _simulateRotation(startingRotationRadians, maxModuleSpeed, driveBaseRadius);
   }
 
@@ -453,7 +453,7 @@ class Trajectory {
     int idx = path.pathPoints.length - 1;
 
     for (int i = startingIndex; i < path.pathPoints.length - 2; i++) {
-      if (path.pathPoints[i].holonomicRotation != null) {
+      if (path.pathPoints[i].rotationTarget != null) {
         idx = i;
         break;
       }
@@ -463,12 +463,16 @@ class Trajectory {
   }
 
   static List<TrajectoryState> _generateStates(
-      PathPlannerPath path, num linearVel) {
+      PathPlannerPath path, num linearVel, num currentRotationRadians) {
     List<TrajectoryState> states = [];
 
     num startVel = linearVel.abs();
 
+    num prevRotationTargetDist = 0;
+    num prevRotationTargetRot = currentRotationRadians;
     int nextRotationTargetIdx = _getNextRotationTargetIdx(path, 0);
+    num distBetweenTargets =
+        path.pathPoints[nextRotationTargetIdx].distanceAlongPath;
 
     // Initial pass. Creates all states and handles linear acceleration
     for (int i = 0; i < path.pathPoints.length; i++) {
@@ -478,11 +482,37 @@ class Trajectory {
       state.constraints = constraints;
 
       if (i > nextRotationTargetIdx) {
+        prevRotationTargetDist =
+            path.pathPoints[nextRotationTargetIdx].distanceAlongPath;
+        prevRotationTargetRot = GeometryUtil.toRadians(path
+            .pathPoints[nextRotationTargetIdx].rotationTarget!.rotationDegrees);
         nextRotationTargetIdx = _getNextRotationTargetIdx(path, i);
+        distBetweenTargets =
+            path.pathPoints[nextRotationTargetIdx].distanceAlongPath -
+                prevRotationTargetDist;
       }
 
-      state.holonomicRotationRadians = GeometryUtil.toRadians(
-          path.pathPoints[nextRotationTargetIdx].holonomicRotation!);
+      RotationTarget nextTarget =
+          path.pathPoints[nextRotationTargetIdx].rotationTarget!;
+
+      if (nextTarget.rotateFast) {
+        state.holonomicRotationRadians =
+            GeometryUtil.toRadians(nextTarget.rotationDegrees);
+      } else {
+        double t =
+            (path.pathPoints[i].distanceAlongPath - prevRotationTargetDist) /
+                distBetweenTargets;
+        t = min(max(0.0, t), 1.0);
+        if (!t.isFinite) {
+          t = 0;
+        }
+
+        state.holonomicRotationRadians = GeometryUtil.rotationLerp(
+            prevRotationTargetRot,
+            GeometryUtil.toRadians(nextTarget.rotationDegrees),
+            t,
+            pi);
+      }
 
       state.position = path.pathPoints[i].position;
 

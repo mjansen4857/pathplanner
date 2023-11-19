@@ -66,8 +66,8 @@ public class PathfindingCommand extends Command {
 
     Rotation2d targetRotation = new Rotation2d();
     for (PathPoint p : targetPath.getAllPathPoints()) {
-      if (p.holonomicRotation != null) {
-        targetRotation = p.holonomicRotation;
+      if (p.rotationTarget != null) {
+        targetRotation = p.rotationTarget.getTarget();
         break;
       }
     }
@@ -76,7 +76,7 @@ public class PathfindingCommand extends Command {
     this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
     this.goalEndState =
         new GoalEndState(
-            this.targetPath.getGlobalConstraints().getMaxVelocityMps(), targetRotation);
+            this.targetPath.getGlobalConstraints().getMaxVelocityMps(), targetRotation, true);
     this.constraints = constraints;
     this.controller = controller;
     this.poseSupplier = poseSupplier;
@@ -119,7 +119,7 @@ public class PathfindingCommand extends Command {
 
     this.targetPath = null;
     this.targetPose = targetPose;
-    this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation());
+    this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation(), true);
     this.constraints = constraints;
     this.controller = controller;
     this.poseSupplier = poseSupplier;
@@ -178,7 +178,8 @@ public class PathfindingCommand extends Command {
         if (!replanningConfig.enableInitialReplanning
             || (currentPose.getTranslation().getDistance(currentPath.getPoint(0).position) <= 0.25
                 && onHeading)) {
-          currentTrajectory = new PathPlannerTrajectory(currentPath, currentSpeeds);
+          currentTrajectory =
+              new PathPlannerTrajectory(currentPath, currentSpeeds, currentPose.getRotation());
 
           // Find the two closest states in front of and behind robot
           int closestState1Idx = 0;
@@ -217,7 +218,8 @@ public class PathfindingCommand extends Command {
           PPLibTelemetry.setCurrentPath(currentPath);
         } else {
           PathPlannerPath replanned = currentPath.replan(currentPose, currentSpeeds);
-          currentTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
+          currentTrajectory =
+              new PathPlannerTrajectory(replanned, currentSpeeds, currentPose.getRotation());
 
           timeOffset = 0;
 
@@ -316,7 +318,8 @@ public class PathfindingCommand extends Command {
 
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     PathPlannerPath replanned = currentPath.replan(currentPose, currentSpeeds);
-    currentTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
+    currentTrajectory =
+        new PathPlannerTrajectory(replanned, currentSpeeds, currentPose.getRotation());
     PathPlannerLogging.logActivePath(replanned);
     PPLibTelemetry.setCurrentPath(replanned);
   }

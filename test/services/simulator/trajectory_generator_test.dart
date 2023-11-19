@@ -29,7 +29,11 @@ void main() {
       goalEndState: GoalEndState(),
       constraintZones: [],
       rotationTargets: [
-        RotationTarget(waypointRelativePos: 0.5, rotationDegrees: 45),
+        RotationTarget(
+          waypointRelativePos: 0.5,
+          rotationDegrees: 45,
+          rotateFast: true,
+        ),
       ],
       eventMarkers: [],
       pathDir: '',

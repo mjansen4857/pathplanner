@@ -26,7 +26,7 @@ public class PathPlannerPathTest {
             new ArrayList<>(),
             new ArrayList<>(),
             new PathConstraints(1, 2, 3, 4),
-            new GoalEndState(0, Rotation2d.fromDegrees(0)),
+            new GoalEndState(0, Rotation2d.fromDegrees(0), false),
             true,
             null);
 
@@ -50,7 +50,7 @@ public class PathPlannerPathTest {
             new ArrayList<>(),
             new ArrayList<>(),
             new PathConstraints(1, 2, 3, 4),
-            new GoalEndState(0, Rotation2d.fromDegrees(0)),
+            new GoalEndState(0, Rotation2d.fromDegrees(0), false),
             true,
             Rotation2d.fromDegrees(90));
     Pose2d initialPose = path.getPreviewStartingHolonomicPose();
@@ -73,7 +73,7 @@ public class PathPlannerPathTest {
             new ArrayList<>(),
             new ArrayList<>(),
             new PathConstraints(1, 2, 3, 4),
-            new GoalEndState(0, Rotation2d.fromDegrees(0)),
+            new GoalEndState(0, Rotation2d.fromDegrees(0), false),
             true,
             null);
     Pose2d initialPose = path.getPreviewStartingHolonomicPose();

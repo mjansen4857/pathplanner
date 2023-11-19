@@ -297,8 +297,7 @@ std::vector<PathPoint> LocalADStar::extractPath(const GridPosition &sStart,
 		const frc::Translation2d &realGoalPos,
 		const std::unordered_set<GridPosition> &obstacles) {
 	if (sGoal == sStart) {
-		return std::vector<PathPoint> { PathPoint(realGoalPos, std::nullopt,
-				std::nullopt) };
+		return std::vector<PathPoint>();
 	}
 
 	std::vector < GridPosition > path;

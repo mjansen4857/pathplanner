@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+/** Implementation of ADStar running on a coprocessor */
 public class RemoteADStar implements Pathfinder {
   private final StringPublisher navGridJsonPub;
   private final DoubleArrayPublisher startPosPub;
@@ -30,6 +31,7 @@ public class RemoteADStar implements Pathfinder {
       new AtomicReference<>(new ArrayList<>());
   private final AtomicBoolean newPathAvailable = new AtomicBoolean(false);
 
+  /** Create a RemoteADStar object. This will use NT4 to communicate with the coprocessor. */
   public RemoteADStar() {
     var nt = NetworkTableInstance.getDefault();
 

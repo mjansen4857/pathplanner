@@ -18,16 +18,18 @@ public class PathPlannerTrajectory {
    *
    * @param path {@link com.pathplanner.lib.path.PathPlannerPath} to generate the trajectory for
    * @param startingSpeeds Starting speeds of the robot when starting the trajectory
+   * @param startingRotation Starting rotation of the robot when starting the trajectory
    */
-  public PathPlannerTrajectory(PathPlannerPath path, ChassisSpeeds startingSpeeds) {
-    this.states = generateStates(path, startingSpeeds);
+  public PathPlannerTrajectory(
+      PathPlannerPath path, ChassisSpeeds startingSpeeds, Rotation2d startingRotation) {
+    this.states = generateStates(path, startingSpeeds, startingRotation);
   }
 
   private static int getNextRotationTargetIdx(PathPlannerPath path, int startingIndex) {
     int idx = path.numPoints() - 1;
 
     for (int i = startingIndex; i < path.numPoints() - 2; i++) {
-      if (path.getPoint(i).holonomicRotation != null) {
+      if (path.getPoint(i).rotationTarget != null) {
         idx = i;
         break;
       }
@@ -36,13 +38,17 @@ public class PathPlannerTrajectory {
     return idx;
   }
 
-  private static List<State> generateStates(PathPlannerPath path, ChassisSpeeds startingSpeeds) {
+  private static List<State> generateStates(
+      PathPlannerPath path, ChassisSpeeds startingSpeeds, Rotation2d startingRotation) {
     List<State> states = new ArrayList<>();
 
     double startVel =
         Math.hypot(startingSpeeds.vxMetersPerSecond, startingSpeeds.vyMetersPerSecond);
 
+    double prevRotationTargetDist = 0.0;
+    Rotation2d prevRotationTargetRot = startingRotation;
     int nextRotationTargetIdx = getNextRotationTargetIdx(path, 0);
+    double distanceBetweenTargets = path.getPoint(nextRotationTargetIdx).distanceAlongPath;
 
     // Initial pass. Creates all states and handles linear acceleration
     for (int i = 0; i < path.numPoints(); i++) {
@@ -52,10 +58,28 @@ public class PathPlannerTrajectory {
       state.constraints = constraints;
 
       if (i > nextRotationTargetIdx) {
+        prevRotationTargetDist = path.getPoint(nextRotationTargetIdx).distanceAlongPath;
+        prevRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.getTarget();
         nextRotationTargetIdx = getNextRotationTargetIdx(path, i);
+        distanceBetweenTargets =
+            path.getPoint(nextRotationTargetIdx).distanceAlongPath - prevRotationTargetDist;
       }
 
-      state.targetHolonomicRotation = path.getPoint(nextRotationTargetIdx).holonomicRotation;
+      RotationTarget nextTarget = path.getPoint(nextRotationTargetIdx).rotationTarget;
+
+      if (nextTarget.shouldRotateFast()) {
+        state.targetHolonomicRotation = nextTarget.getTarget();
+      } else {
+        double t =
+            (path.getPoint(i).distanceAlongPath - prevRotationTargetDist) / distanceBetweenTargets;
+        t = Math.min(Math.max(0.0, t), 1.0);
+        if (!Double.isFinite(t)) {
+          t = 0.0;
+        }
+
+        state.targetHolonomicRotation =
+            prevRotationTargetRot.interpolate(nextTarget.getTarget(), t);
+      }
 
       state.positionMeters = path.getPoint(i).position;
       double curveRadius = path.getPoint(i).curveRadius;

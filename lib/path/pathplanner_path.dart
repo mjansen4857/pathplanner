@@ -342,7 +342,7 @@ class PathPlannerPath {
     for (int i = 0; i < waypoints.length - 1; i++) {
       for (double t = 0; t < 1.0; t += pathResolution) {
         num actualWaypointPos = i + t;
-        num? rotation;
+        RotationTarget? rotation;
 
         if (unaddedTargets.isNotEmpty) {
           if ((unaddedTargets[0].waypointRelativePos - actualWaypointPos)
@@ -351,7 +351,7 @@ class PathPlannerPath {
                       min(actualWaypointPos + pathResolution,
                           waypoints.length - 1))
                   .abs()) {
-            rotation = unaddedTargets.removeAt(0).rotationDegrees;
+            rotation = unaddedTargets.removeAt(0);
           }
         }
 
@@ -378,7 +378,7 @@ class PathPlannerPath {
         pathPoints.add(
           PathPoint(
             position: position,
-            holonomicRotation: rotation,
+            rotationTarget: rotation,
             constraints: constraints ?? globalConstraints,
             distanceAlongPath: dist,
           ),
@@ -388,7 +388,10 @@ class PathPlannerPath {
       if (i == waypoints.length - 2) {
         pathPoints.add(PathPoint(
           position: waypoints[waypoints.length - 1].anchor,
-          holonomicRotation: goalEndState.rotation,
+          rotationTarget: RotationTarget(
+              rotationDegrees: goalEndState.rotation,
+              waypointRelativePos: waypoints.length - 1,
+              rotateFast: goalEndState.rotateFast),
           constraints: globalConstraints,
           distanceAlongPath: pathPoints.last.distanceAlongPath +
               (pathPoints.last.position

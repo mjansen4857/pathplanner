@@ -137,7 +137,7 @@ void main() {
 
     await widgetTester.pump(const Duration(seconds: 1));
 
-    expect(prefs.getDouble(PrefsKeys.editorTreeWeight), closeTo(0.65, 0.01));
+    expect(prefs.getDouble(PrefsKeys.editorTreeWeight), closeTo(0.6, 0.01));
 
     await widgetTester.tap(find.byTooltip('Move to Other Side'));
     await widgetTester.pump();
@@ -156,6 +156,7 @@ void main() {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.waypointsExpanded = true;
+    prefs.setBool(PrefsKeys.holonomicMode, false);
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

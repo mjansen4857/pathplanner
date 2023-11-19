@@ -66,6 +66,24 @@ class GoalEndStateTree extends StatelessWidget {
             ],
           ),
         ),
+        if (holonomicMode) const SizedBox(height: 12),
+        if (holonomicMode)
+          Row(
+            children: [
+              Checkbox(
+                value: path.goalEndState.rotateFast,
+                onChanged: (value) {
+                  _addChange(
+                      () => path.goalEndState.rotateFast = value ?? false);
+                },
+              ),
+              const SizedBox(width: 4),
+              const Text(
+                'Rotate as Fast as Possible',
+                style: TextStyle(fontSize: 18),
+              ),
+            ],
+          ),
       ],
     );
   }

@@ -102,6 +102,7 @@ class _PathTreeState extends State<PathTree> {
                   onWaypointSelected: widget.onWaypointSelected,
                   onPathChanged: widget.onPathChanged,
                   undoStack: widget.undoStack,
+                  holonomicMode: widget.holonomicMode,
                 ),
                 GlobalConstraintsTree(
                   path: widget.path,

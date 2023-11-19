@@ -4,6 +4,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -18,6 +19,7 @@ class WaypointsTree extends StatefulWidget {
   final WaypointsTreeController? controller;
   final int? initialSelectedWaypoint;
   final ChangeStack undoStack;
+  final bool holonomicMode;
 
   const WaypointsTree({
     super.key,
@@ -29,6 +31,7 @@ class WaypointsTree extends StatefulWidget {
     this.initialSelectedWaypoint,
     this.onWaypointDeleted,
     required this.undoStack,
+    this.holonomicMode = Defaults.holonomicMode,
   });
 
   @override
@@ -267,57 +270,97 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             ],
           ),
         ),
-        Visibility(
-          visible: waypointIdx != waypoints.length - 1,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  widget.undoStack.add(Change(
-                    [
-                      PathPlannerPath.cloneWaypoints(widget.path.waypoints),
-                      PathPlannerPath.cloneConstraintZones(
-                          widget.path.constraintZones),
-                      PathPlannerPath.cloneEventMarkers(
-                          widget.path.eventMarkers),
-                      PathPlannerPath.cloneRotationTargets(
-                          widget.path.rotationTargets),
-                    ],
-                    () {
-                      widget.path.insertWaypointAfter(waypointIdx);
-                      widget.onPathChanged?.call();
+        if (widget.holonomicMode || waypointIdx != waypoints.length - 1)
+          const SizedBox(height: 8.0),
+        if (widget.holonomicMode || waypointIdx != waypoints.length - 1)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.holonomicMode)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      widget.undoStack.add(Change(
+                        PathPlannerPath.cloneRotationTargets(
+                            widget.path.rotationTargets),
+                        () {
+                          widget.path.rotationTargets.add(
+                              RotationTarget(waypointRelativePos: waypointIdx));
+                          widget.onPathChanged?.call();
+                        },
+                        (oldValue) {
+                          widget.path.rotationTargets =
+                              PathPlannerPath.cloneRotationTargets(oldValue);
+                          widget.onPathChanged?.call();
+                        },
+                      ));
                     },
-                    (oldValue) {
-                      _selectedWaypoint = null;
-                      widget.onWaypointHovered?.call(null);
-                      widget.onWaypointSelected?.call(null);
-
-                      widget.path.waypoints = PathPlannerPath.cloneWaypoints(
-                          oldValue[0] as List<Waypoint>);
-                      widget.path.constraintZones =
-                          PathPlannerPath.cloneConstraintZones(
-                              oldValue[1] as List<ConstraintsZone>);
-                      widget.path.eventMarkers =
-                          PathPlannerPath.cloneEventMarkers(
-                              oldValue[2] as List<EventMarker>);
-                      widget.path.rotationTargets =
-                          PathPlannerPath.cloneRotationTargets(
-                              oldValue[3] as List<RotationTarget>);
-
-                      widget.onPathChanged?.call();
-                    },
-                  ));
-                },
-                icon: const Icon(Icons.add),
-                style: ElevatedButton.styleFrom(
-                  elevation: 1.0,
+                    icon: const Icon(Icons.replay, size: 20),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1.0,
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: const Text('Add Rotation Target'),
+                  ),
                 ),
-                label: const Text('Insert New Waypoint After'),
-              ),
-            ),
+              if (waypointIdx != waypoints.length - 1)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      widget.undoStack.add(Change(
+                        [
+                          PathPlannerPath.cloneWaypoints(widget.path.waypoints),
+                          PathPlannerPath.cloneConstraintZones(
+                              widget.path.constraintZones),
+                          PathPlannerPath.cloneEventMarkers(
+                              widget.path.eventMarkers),
+                          PathPlannerPath.cloneRotationTargets(
+                              widget.path.rotationTargets),
+                        ],
+                        () {
+                          widget.path.insertWaypointAfter(waypointIdx);
+                          widget.onPathChanged?.call();
+                        },
+                        (oldValue) {
+                          _selectedWaypoint = null;
+                          widget.onWaypointHovered?.call(null);
+                          widget.onWaypointSelected?.call(null);
+
+                          widget.path.waypoints =
+                              PathPlannerPath.cloneWaypoints(
+                                  oldValue[0] as List<Waypoint>);
+                          widget.path.constraintZones =
+                              PathPlannerPath.cloneConstraintZones(
+                                  oldValue[1] as List<ConstraintsZone>);
+                          widget.path.eventMarkers =
+                              PathPlannerPath.cloneEventMarkers(
+                                  oldValue[2] as List<EventMarker>);
+                          widget.path.rotationTargets =
+                              PathPlannerPath.cloneRotationTargets(
+                                  oldValue[3] as List<RotationTarget>);
+
+                          widget.onPathChanged?.call();
+                        },
+                      ));
+                    },
+                    icon: const Icon(Icons.add, size: 20),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1.0,
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: const Text('New Waypoint After'),
+                  ),
+                ),
+            ],
           ),
-        ),
       ],
     );
   }

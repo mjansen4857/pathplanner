@@ -338,7 +338,7 @@ public class LocalADStar implements Pathfinder {
       Translation2d realGoalPos,
       Set<GridPosition> obstacles) {
     if (sGoal.equals(sStart)) {
-      return List.of(new PathPoint(realGoalPos, null));
+      return new ArrayList<>();
     }
 
     List<GridPosition> path = new ArrayList<>();
@@ -445,10 +445,10 @@ public class LocalADStar implements Pathfinder {
       }
 
       for (double t = 0.0; t < 1.0; t += resolution) {
-        pathPoints.add(new PathPoint(GeometryUtil.cubicLerp(p1, p2, p3, p4, t), null));
+        pathPoints.add(new PathPoint(GeometryUtil.cubicLerp(p1, p2, p3, p4, t)));
       }
     }
-    pathPoints.add(new PathPoint(bezierPoints.get(bezierPoints.size() - 1), null));
+    pathPoints.add(new PathPoint(bezierPoints.get(bezierPoints.size() - 1)));
 
     return pathPoints;
   }

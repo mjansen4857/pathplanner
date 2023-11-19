@@ -42,6 +42,7 @@ void main() {
           onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -72,6 +73,7 @@ void main() {
           onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -92,6 +94,7 @@ void main() {
           onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -111,6 +114,7 @@ void main() {
           onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -144,6 +148,7 @@ void main() {
           onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -180,6 +185,7 @@ void main() {
           onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -210,6 +216,7 @@ void main() {
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
           initialSelectedWaypoint: 1,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -243,6 +250,7 @@ void main() {
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
           initialSelectedWaypoint: 1,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -276,6 +284,7 @@ void main() {
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
           initialSelectedWaypoint: 1,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -309,6 +318,7 @@ void main() {
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
           initialSelectedWaypoint: 1,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -343,6 +353,7 @@ void main() {
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
           initialSelectedWaypoint: 1,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -377,11 +388,12 @@ void main() {
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
           initialSelectedWaypoint: 1,
+          holonomicMode: true,
         ),
       ),
     ));
 
-    var insertButton = find.text('Insert New Waypoint After');
+    var insertButton = find.text('New Waypoint After');
 
     expect(insertButton, findsOneWidget);
 
@@ -398,6 +410,38 @@ void main() {
     expect(selectedWaypoint, isNull);
   });
 
+  testWidgets('Add rotation target button', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+          initialSelectedWaypoint: 1,
+          holonomicMode: true,
+        ),
+      ),
+    ));
+
+    var button = find.text('Add Rotation Target');
+
+    expect(button, findsOneWidget);
+
+    await widgetTester.tap(button);
+    await widgetTester.pump();
+
+    expect(pathChanged, true);
+    expect(path.rotationTargets.length, 1);
+
+    undoStack.undo();
+    await widgetTester.pump();
+
+    expect(path.rotationTargets.length, 0);
+  });
+
   testWidgets('Lock waypoint button', (widgetTester) async {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -408,6 +452,7 @@ void main() {
           onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -438,6 +483,7 @@ void main() {
           onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
+          holonomicMode: true,
         ),
       ),
     ));
@@ -464,6 +510,7 @@ void main() {
           onWaypointDeleted: (value) => deletedWaypoint = value,
           onWaypointHovered: (value) => hoveredWaypoint = value,
           onWaypointSelected: (value) => selectedWaypoint = value,
+          holonomicMode: true,
         ),
       ),
     ));

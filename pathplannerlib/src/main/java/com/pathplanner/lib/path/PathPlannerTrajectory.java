@@ -68,8 +68,7 @@ public class PathPlannerTrajectory {
       RotationTarget nextTarget = path.getPoint(nextRotationTargetIdx).rotationTarget;
 
       if (nextTarget.shouldRotateFast()) {
-        state.targetHolonomicRotation =
-            path.getPoint(nextRotationTargetIdx).rotationTarget.getTarget();
+        state.targetHolonomicRotation = nextTarget.getTarget();
       } else {
         double t =
             (path.getPoint(i).distanceAlongPath - prevRotationTargetDist) / distanceBetweenTargets;

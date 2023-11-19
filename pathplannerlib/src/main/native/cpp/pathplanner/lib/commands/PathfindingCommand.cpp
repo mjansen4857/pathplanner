@@ -13,7 +13,7 @@ PathfindingCommand::PathfindingCommand(
 		std::unique_ptr<PathFollowingController> controller,
 		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
 		frc2::Requirements requirements) : m_targetPath(targetPath), m_targetPose(), m_goalEndState(
-		0_mps, frc::Rotation2d()), m_constraints(constraints), m_poseSupplier(
+		0_mps, frc::Rotation2d(), true), m_constraints(constraints), m_poseSupplier(
 		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
 		std::move(controller)), m_rotationDelayDistance(rotationDelayDistance), m_replanningConfig(
 		replanningConfig) {
@@ -23,8 +23,8 @@ PathfindingCommand::PathfindingCommand(
 
 	frc::Rotation2d targetRotation;
 	for (PathPoint p : m_targetPath->getAllPathPoints()) {
-		if (p.holonomicRotation.has_value()) {
-			targetRotation = p.holonomicRotation.value();
+		if (p.rotationTarget.has_value()) {
+			targetRotation = p.rotationTarget.value().getTarget();
 			break;
 		}
 	}
@@ -33,7 +33,7 @@ PathfindingCommand::PathfindingCommand(
 			targetRotation);
 	m_goalEndState = GoalEndState(
 			m_targetPath->getGlobalConstraints().getMaxVelocity(),
-			targetRotation);
+			targetRotation, true);
 }
 
 PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
@@ -44,7 +44,7 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 		std::unique_ptr<PathFollowingController> controller,
 		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
 		frc2::Requirements requirements) : m_targetPath(), m_targetPose(
-		targetPose), m_goalEndState(goalEndVel, targetPose.Rotation()), m_constraints(
+		targetPose), m_goalEndState(goalEndVel, targetPose.Rotation(), true), m_constraints(
 		constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
 		speedsSupplier), m_output(output), m_controller(std::move(controller)), m_rotationDelayDistance(
 		rotationDelayDistance), m_replanningConfig(replanningConfig) {
@@ -105,7 +105,7 @@ void PathfindingCommand::Execute() {
 							m_currentPath->getPoint(0).position) <= 0.25_m
 							&& onHeading)) {
 				m_currentTrajectory = PathPlannerTrajectory(m_currentPath,
-						currentSpeeds);
+						currentSpeeds, currentPose.Rotation());
 
 				// Find the two closest states in front of and behind robot
 				size_t closestState1Idx = 0;
@@ -146,7 +146,7 @@ void PathfindingCommand::Execute() {
 				auto replanned = m_currentPath->replan(currentPose,
 						currentSpeeds);
 				m_currentTrajectory = PathPlannerTrajectory(replanned,
-						currentSpeeds);
+						currentSpeeds, currentPose.Rotation());
 
 				m_timeOffset = 0_s;
 

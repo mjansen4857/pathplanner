@@ -305,8 +305,9 @@ void PathPlannerPath::precalcValues() {
 			m.setMarkerPosition(m_allPoints[pointIndex].position);
 		}
 
-		m_allPoints[m_allPoints.size() - 1].holonomicRotation =
-				m_goalEndState.getRotation();
+		m_allPoints[m_allPoints.size() - 1].rotationTarget = RotationTarget(-1,
+				m_goalEndState.getRotation(),
+				m_goalEndState.shouldRotateFast());
 		m_allPoints[m_allPoints.size() - 1].maxV = m_goalEndState.getVelocity();
 	}
 }
@@ -436,7 +437,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 					std::back_inserter(targets),
 					[](RotationTarget target) {
 						return RotationTarget(target.getPosition() + 1,
-								target.getTarget());
+								target.getTarget(), target.shouldRotateFast());
 					});
 			std::vector < ConstraintsZone > zones;
 			std::transform(m_constraintZones.begin(), m_constraintZones.end(),
@@ -573,10 +574,11 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 	for (RotationTarget t : m_rotationTargets) {
 		if (t.getPosition() >= nextWaypointIdx) {
 			mappedTargets.emplace_back(t.getPosition() - nextWaypointIdx + 2,
-					t.getTarget());
+					t.getTarget(), t.shouldRotateFast());
 		} else if (t.getPosition() >= nextWaypointIdx - 1) {
 			double pct = t.getPosition() - (nextWaypointIdx - 1);
-			mappedTargets.emplace_back(mapPct(pct, segment1Pct), t.getTarget());
+			mappedTargets.emplace_back(mapPct(pct, segment1Pct), t.getTarget(),
+					t.shouldRotateFast());
 		}
 	}
 

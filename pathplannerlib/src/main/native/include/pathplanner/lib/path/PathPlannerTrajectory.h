@@ -128,10 +128,12 @@ public:
 	 *
 	 * @param path PathPlannerPath to generate the trajectory for
 	 * @param startingSpeeds Starting speeds of the robot when starting the trajectory
+	 * @param startingRotation Starting rotation of the robot when starting the trajectory
 	 */
 	PathPlannerTrajectory(std::shared_ptr<PathPlannerPath> path,
-			const frc::ChassisSpeeds &startingSpeeds) : m_states(
-			generateStates(path, startingSpeeds)) {
+			const frc::ChassisSpeeds &startingSpeeds,
+			const frc::Rotation2d &startingRotation) : m_states(
+			generateStates(path, startingSpeeds, startingRotation)) {
 	}
 
 	/**
@@ -216,6 +218,7 @@ private:
 
 	static std::vector<State> generateStates(
 			std::shared_ptr<PathPlannerPath> path,
-			const frc::ChassisSpeeds &startingSpeeds);
+			const frc::ChassisSpeeds &startingSpeeds,
+			const frc::Rotation2d &startingRotation);
 };
 }

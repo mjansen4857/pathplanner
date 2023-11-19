@@ -36,7 +36,7 @@ size_t PathPlannerTrajectory::getNextRotationTargetIdx(
 	size_t idx = path->numPoints() - 1;
 
 	for (size_t i = startingIndex; i < path->numPoints() - 2; i++) {
-		if (path->getPoint(i).holonomicRotation) {
+		if (path->getPoint(i).rotationTarget) {
 			idx = i;
 			break;
 		}
@@ -47,13 +47,18 @@ size_t PathPlannerTrajectory::getNextRotationTargetIdx(
 
 std::vector<PathPlannerTrajectory::State> PathPlannerTrajectory::generateStates(
 		std::shared_ptr<PathPlannerPath> path,
-		const frc::ChassisSpeeds &startingSpeeds) {
+		const frc::ChassisSpeeds &startingSpeeds,
+		const frc::Rotation2d &startingRotation) {
 	std::vector < State > states;
 
 	units::meters_per_second_t startVel = units::math::hypot(startingSpeeds.vx,
 			startingSpeeds.vy);
 
+	units::meter_t prevRotationTargetDist = 0.0_m;
+	frc::Rotation2d prevRotationTargetRot = startingRotation;
 	size_t nextRotationTargetIdx = getNextRotationTargetIdx(path, 0);
+	units::meter_t distanceBetweenTargets = path->getPoint(
+			nextRotationTargetIdx).distanceAlongPath;
 
 	// Initial pass. Creates all states and handles linear acceleration
 	for (size_t i = 0; i < path->numPoints(); i++) {
@@ -63,11 +68,32 @@ std::vector<PathPlannerTrajectory::State> PathPlannerTrajectory::generateStates(
 		state.constraints = constraints;
 
 		if (i > nextRotationTargetIdx) {
+			prevRotationTargetDist =
+					path->getPoint(nextRotationTargetIdx).distanceAlongPath;
+			prevRotationTargetRot =
+					path->getPoint(nextRotationTargetIdx).rotationTarget.value().getTarget();
 			nextRotationTargetIdx = getNextRotationTargetIdx(path, i);
+			distanceBetweenTargets =
+					path->getPoint(nextRotationTargetIdx).distanceAlongPath
+							- prevRotationTargetDist;
 		}
 
-		state.targetHolonomicRotation =
-				path->getPoint(nextRotationTargetIdx).holonomicRotation.value();
+		RotationTarget nextTarget =
+				path->getPoint(nextRotationTargetIdx).rotationTarget.value();
+
+		if (nextTarget.shouldRotateFast()) {
+			state.targetHolonomicRotation = nextTarget.getTarget();
+		} else {
+			double t = ((path->getPoint(i).distanceAlongPath
+					- prevRotationTargetDist) / distanceBetweenTargets)();
+			t = std::min(std::max(0.0, t), 1.0);
+			if (!std::isfinite(t)) {
+				t = 0.0;
+			}
+
+			state.targetHolonomicRotation = (prevRotationTargetRot
+					+ (nextTarget.getTarget() - prevRotationTargetRot)) * t;
+		}
 
 		state.position = path->getPoint(i).position;
 		units::meter_t curveRadius = path->getPoint(i).curveRadius;

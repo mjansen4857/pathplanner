@@ -9,7 +9,7 @@ PathSegment::PathSegment(frc::Translation2d p1, frc::Translation2d p2,
 		std::vector<ConstraintsZone> constraintZones, bool endSegment) : m_segmentPoints() {
 
 	for (double t = 0.0; t < 1.0; t += PathSegment::RESOLUTION) {
-		std::optional < frc::Rotation2d > holonomicRotation = std::nullopt;
+		std::optional < RotationTarget > holonomicRotation = std::nullopt;
 
 		if (!targetHolonomicRotations.empty()) {
 			if (std::abs(targetHolonomicRotations[0].getPosition() - t)
@@ -17,7 +17,7 @@ PathSegment::PathSegment(frc::Translation2d p1, frc::Translation2d p2,
 							targetHolonomicRotations[0].getPosition()
 									- std::min(t + PathSegment::RESOLUTION,
 											1.0))) {
-				holonomicRotation = targetHolonomicRotations[0].getTarget();
+				holonomicRotation = targetHolonomicRotations[0];
 				targetHolonomicRotations.erase(
 						targetHolonomicRotations.begin());
 			}
@@ -35,6 +35,17 @@ PathSegment::PathSegment(frc::Translation2d p1, frc::Translation2d p2,
 					PathPoint(GeometryUtil::cubicLerp(p1, p2, p3, p4, t),
 							holonomicRotation, std::nullopt));
 		}
+	}
+
+	if (endSegment) {
+		std::optional < RotationTarget > holonomicRotation = std::nullopt;
+		if (!targetHolonomicRotations.empty()) {
+			holonomicRotation = targetHolonomicRotations[0];
+		}
+
+		m_segmentPoints.push_back(
+				PathPoint(GeometryUtil::cubicLerp(p1, p2, p3, p4, 1.0),
+						holonomicRotation, std::nullopt));
 	}
 }
 

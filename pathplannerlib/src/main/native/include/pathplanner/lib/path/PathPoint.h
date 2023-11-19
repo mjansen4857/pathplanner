@@ -1,12 +1,12 @@
 #pragma once
 
 #include <frc/geometry/Translation2d.h>
-#include <frc/geometry/Rotation2d.h>
 #include <limits>
 #include <optional>
 #include <units/length.h>
 #include <units/velocity.h>
 #include "pathplanner/lib/path/PathConstraints.h"
+#include "pathplanner/lib/path/RotationTarget.h"
 
 namespace pathplanner {
 class PathPoint {
@@ -16,12 +16,12 @@ public:
 	units::meter_t curveRadius = 0_m;
 	units::meters_per_second_t maxV = units::meters_per_second_t {
 			std::numeric_limits<double>::infinity() };
-	std::optional<frc::Rotation2d> holonomicRotation = std::nullopt;
+	std::optional<RotationTarget> rotationTarget = std::nullopt;
 	std::optional<PathConstraints> constraints = std::nullopt;
 
 	constexpr PathPoint(frc::Translation2d pos,
-			std::optional<frc::Rotation2d> rot,
-			std::optional<PathConstraints> pathCostriaints) : position(pos), holonomicRotation(
+			std::optional<RotationTarget> rot,
+			std::optional<PathConstraints> pathCostriaints) : position(pos), rotationTarget(
 			rot), constraints(pathCostriaints) {
 	}
 };

@@ -125,6 +125,7 @@ class TrajectoryGenerator {
         reversed: path.reversed,
         folder: null,
         previewStartingState: null,
+        useDefaultConstraints: path.useDefaultConstraints,
       );
     } else if ((closestPointIdx == 0 && robotNextControl == null) ||
         ((closestDist -
@@ -185,6 +186,7 @@ class TrajectoryGenerator {
         reversed: path.reversed,
         folder: null,
         previewStartingState: null,
+        useDefaultConstraints: path.useDefaultConstraints,
       );
     }
 
@@ -234,6 +236,7 @@ class TrajectoryGenerator {
         reversed: path.reversed,
         folder: null,
         previewStartingState: null,
+        useDefaultConstraints: path.useDefaultConstraints,
       );
     }
 
@@ -361,6 +364,7 @@ class TrajectoryGenerator {
       reversed: path.reversed,
       folder: null,
       previewStartingState: null,
+      useDefaultConstraints: path.useDefaultConstraints,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/constraint_zones_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
@@ -31,6 +32,7 @@ void main() {
           path: path,
           undoStack: ChangeStack(),
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -46,6 +48,7 @@ void main() {
           undoStack: ChangeStack(),
           onSideSwapped: () => sideSwapped = true,
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -66,6 +69,7 @@ void main() {
           path: path,
           undoStack: ChangeStack(),
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -80,6 +84,7 @@ void main() {
           path: path,
           undoStack: ChangeStack(),
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -94,6 +99,7 @@ void main() {
           path: path,
           undoStack: ChangeStack(),
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -108,6 +114,7 @@ void main() {
           path: path,
           undoStack: ChangeStack(),
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -122,6 +129,7 @@ void main() {
           path: path,
           undoStack: ChangeStack(),
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -136,6 +144,7 @@ void main() {
           path: path,
           undoStack: ChangeStack(),
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -152,6 +161,7 @@ void main() {
           path: path,
           undoStack: undoStack,
           holonomicMode: false,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));

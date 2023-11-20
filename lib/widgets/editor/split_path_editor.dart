@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
+import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -467,6 +468,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     waypointsTreeController: _waypointsTreeController,
                     undoStack: widget.undoStack,
                     holonomicMode: _holonomicMode,
+                    defaultConstraints: _getDefaultConstraints(),
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();
@@ -685,5 +687,19 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
   double _pixelsToMeters(double pixels) {
     return (pixels / PathPainter.scale) / widget.fieldImage.pixelsPerMeter;
+  }
+
+  PathConstraints _getDefaultConstraints() {
+    return PathConstraints(
+      maxVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+          Defaults.defaultMaxVel,
+      maxAcceleration: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+          Defaults.defaultMaxAccel,
+      maxAngularVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+          Defaults.defaultMaxAngVel,
+      maxAngularAcceleration:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
+              Defaults.defaultMaxAngAccel,
+    );
   }
 }

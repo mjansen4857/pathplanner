@@ -41,6 +41,7 @@ void main() {
       reversed: false,
       folder: null,
       previewStartingState: null,
+      useDefaultConstraints: false,
     );
 
     Trajectory sim = Trajectory.simulate(test, 0, 0);
@@ -81,6 +82,7 @@ void main() {
       reversed: false,
       folder: null,
       previewStartingState: null,
+      useDefaultConstraints: false,
     );
 
     // Basic coverage tests, expand in future

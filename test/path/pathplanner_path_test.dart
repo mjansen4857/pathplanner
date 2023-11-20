@@ -57,6 +57,7 @@ void main() {
         reversed: false,
         folder: null,
         previewStartingState: null,
+        useDefaultConstraints: false,
       );
 
       expect(path.name, 'test');
@@ -94,6 +95,7 @@ void main() {
         reversed: false,
         folder: null,
         previewStartingState: PreviewStartingState(rotation: 10, velocity: 1),
+        useDefaultConstraints: false,
       );
 
       Map<String, dynamic> json = path.toJson();
@@ -128,6 +130,7 @@ void main() {
         reversed: false,
         folder: null,
         previewStartingState: null,
+        useDefaultConstraints: false,
       );
       PathPlannerPath cloned = path.duplicate('test');
 
@@ -163,6 +166,7 @@ void main() {
         reversed: false,
         folder: null,
         previewStartingState: null,
+        useDefaultConstraints: false,
       );
       PathPlannerPath path2 = PathPlannerPath(
         name: 'test',
@@ -186,6 +190,7 @@ void main() {
         reversed: false,
         folder: null,
         previewStartingState: null,
+        useDefaultConstraints: false,
       );
       PathPlannerPath path3 = PathPlannerPath(
         name: 'test2',
@@ -209,6 +214,7 @@ void main() {
         reversed: false,
         folder: null,
         previewStartingState: null,
+        useDefaultConstraints: false,
       );
 
       expect(path2, path1);
@@ -244,6 +250,7 @@ void main() {
       reversed: false,
       folder: null,
       previewStartingState: null,
+      useDefaultConstraints: false,
     );
 
     path.addWaypoint(const Point(6.0, 1.0));
@@ -293,6 +300,7 @@ void main() {
       reversed: false,
       folder: null,
       previewStartingState: null,
+      useDefaultConstraints: false,
     );
 
     path.insertWaypointAfter(1);

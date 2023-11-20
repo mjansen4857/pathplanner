@@ -33,6 +33,9 @@ class ProjectPage extends StatefulWidget {
   final VoidCallback? onFoldersChanged;
   final bool simulatePath;
 
+  // Stupid workaround to get when settings are updated
+  static bool settingsUpdated = false;
+
   const ProjectPage({
     super.key,
     required this.prefs,
@@ -168,6 +171,20 @@ class _ProjectPageState extends State<ProjectPage> {
       return const Center(
         child: CircularProgressIndicator(),
       );
+    }
+
+    // Stupid workaround but it works
+    if (ProjectPage.settingsUpdated) {
+      PathConstraints defaultConstraints = _getDefaultConstraints();
+
+      for (PathPlannerPath path in _paths) {
+        if (path.useDefaultConstraints) {
+          path.globalConstraints = defaultConstraints.clone();
+          path.generateAndSavePath();
+        }
+      }
+
+      ProjectPage.settingsUpdated = false;
     }
 
     return Stack(

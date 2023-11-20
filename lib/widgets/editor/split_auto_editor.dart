@@ -249,6 +249,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
+                  totalPathTime: _simPath?.states.last.time ?? 1.0,
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -297,6 +298,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
+                  totalPathTime: _simPath?.states.last.time ?? 1.0,
                 ),
             ],
           ),

@@ -440,6 +440,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
+                  totalPathTime: _simTraj?.states.last.time ?? 1.0,
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -618,6 +619,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
+                  totalPathTime: _simTraj?.states.last.time ?? 1.0,
                 ),
             ],
           ),

@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class PreviewSeekbar extends StatefulWidget {
   final AnimationController previewController;
   final ValueChanged<bool>? onPauseStateChanged;
+  final num totalPathTime;
 
   const PreviewSeekbar({
     super.key,
     required this.previewController,
     this.onPauseStateChanged,
+    required this.totalPathTime,
   });
 
   @override
@@ -50,22 +52,32 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
                   child: AnimatedBuilder(
                       animation: widget.previewController.view,
                       builder: (context, _) {
-                        return Slider(
-                          value: widget.previewController.view.value,
-                          focusNode: FocusNode(
-                            skipTraversal: true,
-                            canRequestFocus: false,
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            sliderTheme: const SliderThemeData(
+                              showValueIndicator: ShowValueIndicator.always,
+                            ),
                           ),
-                          onChanged: (value) {
-                            if (widget.previewController.isAnimating) {
-                              setState(() {
-                                widget.previewController.stop();
-                              });
-                              widget.onPauseStateChanged?.call(true);
-                            }
+                          child: Slider(
+                            value: widget.previewController.view.value,
+                            label: (widget.previewController.view.value *
+                                    widget.totalPathTime)
+                                .toStringAsFixed(2),
+                            focusNode: FocusNode(
+                              skipTraversal: true,
+                              canRequestFocus: false,
+                            ),
+                            onChanged: (value) {
+                              if (widget.previewController.isAnimating) {
+                                setState(() {
+                                  widget.previewController.stop();
+                                });
+                                widget.onPauseStateChanged?.call(true);
+                              }
 
-                            widget.previewController.value = value;
-                          },
+                              widget.previewController.value = value;
+                            },
+                          ),
                         );
                       }),
                 ),

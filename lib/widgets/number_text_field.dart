@@ -28,8 +28,6 @@ class NumberTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return SizedBox(
       height: height,
       child: CallbackShortcuts(
@@ -55,7 +53,7 @@ class NumberTextField extends StatelessWidget {
               FilteringTextInputFormatter.allow(
                   RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
             ],
-            style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+            style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
               labelText: label,

@@ -32,6 +32,7 @@ class PathPlannerPath {
   bool reversed;
   PreviewStartingState? previewStartingState;
   String? folder;
+  bool useDefaultConstraints;
 
   FileSystem fs;
   String pathDir;
@@ -60,7 +61,8 @@ class PathPlannerPath {
         rotationTargets = [],
         eventMarkers = [],
         reversed = false,
-        previewStartingState = null {
+        previewStartingState = null,
+        useDefaultConstraints = false {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),
@@ -93,6 +95,7 @@ class PathPlannerPath {
     required this.reversed,
     required this.folder,
     required this.previewStartingState,
+    required this.useDefaultConstraints,
   }) : pathPoints = [] {
     generatePathPoints();
   }
@@ -127,6 +130,7 @@ class PathPlannerPath {
           previewStartingState: json['previewStartingState'] == null
               ? null
               : PreviewStartingState.fromJson(json['previewStartingState']),
+          useDefaultConstraints: json['useDefaultConstraints'] ?? false,
         );
 
   void generateAndSavePath() {
@@ -214,6 +218,7 @@ class PathPlannerPath {
       'reversed': reversed,
       'folder': folder,
       'previewStartingState': previewStartingState?.toJson(),
+      'useDefaultConstraints': useDefaultConstraints,
     };
   }
 
@@ -461,6 +466,7 @@ class PathPlannerPath {
       reversed: reversed,
       folder: folder,
       previewStartingState: previewStartingState?.clone(),
+      useDefaultConstraints: useDefaultConstraints,
     );
   }
 

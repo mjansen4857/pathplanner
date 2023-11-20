@@ -425,6 +425,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _onProjectSettingsChanged() {
+    ProjectPage.settingsUpdated = true;
     _saveProjectSettingsToFile(_projectDir!);
 
     setState(() {

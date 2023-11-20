@@ -14,7 +14,10 @@ void main() {
     await widgetTester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PreviewSeekbar(previewController: controller),
+          body: PreviewSeekbar(
+            previewController: controller,
+            totalPathTime: 1.0,
+          ),
         ),
       ),
     );
@@ -40,7 +43,10 @@ void main() {
     await widgetTester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PreviewSeekbar(previewController: controller),
+          body: PreviewSeekbar(
+            previewController: controller,
+            totalPathTime: 1.0,
+          ),
         ),
       ),
     );

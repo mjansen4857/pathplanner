@@ -80,106 +80,29 @@ class _SettingsDialogState extends State<SettingsDialog> {
     return AlertDialog(
       title: const Text('Settings'),
       content: SizedBox(
-        width: 436,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        width: 740,
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Robot Size:'),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: NumberTextField(
-                    initialText: _width.toStringAsFixed(2),
-                    label: 'Width (M)',
-                    onSubmitted: (value) {
-                      if (value != null) {
-                        widget.prefs
-                            .setDouble(PrefsKeys.robotWidth, value.toDouble());
-                        setState(() {
-                          _width = value;
-                        });
-                      }
-                      widget.onSettingsChanged();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: NumberTextField(
-                    initialText: _length.toStringAsFixed(2),
-                    label: 'Length (M)',
-                    onSubmitted: (value) {
-                      if (value != null) {
-                        widget.prefs
-                            .setDouble(PrefsKeys.robotLength, value.toDouble());
-                        setState(() {
-                          _length = value;
-                        });
-                      }
-                      widget.onSettingsChanged();
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text('Default Constraints:'),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: NumberTextField(
-                    initialText: _defaultMaxVel.toStringAsFixed(2),
-                    label: 'Max Velocity (M/S)',
-                    onSubmitted: (value) {
-                      if (value != null) {
-                        widget.prefs.setDouble(
-                            PrefsKeys.defaultMaxVel, value.toDouble());
-                        setState(() {
-                          _defaultMaxVel = value;
-                        });
-                      }
-                      widget.onSettingsChanged();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: NumberTextField(
-                    initialText: _defaultMaxAccel.toStringAsFixed(2),
-                    label: 'Max Acceleration (M/S²)',
-                    onSubmitted: (value) {
-                      if (value != null) {
-                        widget.prefs.setDouble(
-                            PrefsKeys.defaultMaxAccel, value.toDouble());
-                        setState(() {
-                          _defaultMaxAccel = value;
-                        });
-                      }
-                      widget.onSettingsChanged();
-                    },
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (_holonomicMode)
-              Column(
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const Text('Robot Attributes:'),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _defaultMaxAngVel.toStringAsFixed(2),
-                          label: 'Max Angular Velocity (Deg/S)',
+                          initialText: _width.toStringAsFixed(2),
+                          label: 'Robot Width (M)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
-                                  PrefsKeys.defaultMaxAngVel, value.toDouble());
+                                  PrefsKeys.robotWidth, value.toDouble());
                               setState(() {
-                                _defaultMaxAngVel = value;
+                                _width = value;
                               });
                             }
                             widget.onSettingsChanged();
@@ -189,15 +112,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _defaultMaxAngAccel.toStringAsFixed(2),
-                          label: 'Max Angular Acceleration (Deg/S²)',
+                          initialText: _length.toStringAsFixed(2),
+                          label: 'Robot Length (M)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
-                                  PrefsKeys.defaultMaxAngAccel,
-                                  value.toDouble());
+                                  PrefsKeys.robotLength, value.toDouble());
                               setState(() {
-                                _defaultMaxAngAccel = value;
+                                _length = value;
                               });
                             }
                             widget.onSettingsChanged();
@@ -207,81 +129,202 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: '4.65',
+                          label: 'Max Module Speed (M/S)',
+                          enabled: _holonomicMode,
+                          onSubmitted: (value) {
+                            // if (value != null) {
+                            //   widget.prefs.setDouble(
+                            //       PrefsKeys.robotLength, value.toDouble());
+                            //   setState(() {
+                            //     _length = value;
+                            //   });
+                            // }
+                            // widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Default Constraints:'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _defaultMaxVel.toStringAsFixed(2),
+                          label: 'Max Velocity (M/S)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.defaultMaxVel, value.toDouble());
+                              setState(() {
+                                _defaultMaxVel = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _defaultMaxAccel.toStringAsFixed(2),
+                          label: 'Max Acceleration (M/S²)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.defaultMaxAccel, value.toDouble());
+                              setState(() {
+                                _defaultMaxAccel = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: NumberTextField(
+                              initialText: _defaultMaxAngVel.toStringAsFixed(2),
+                              label: 'Max Angular Velocity (Deg/S)',
+                              enabled: _holonomicMode,
+                              onSubmitted: (value) {
+                                if (value != null) {
+                                  widget.prefs.setDouble(
+                                      PrefsKeys.defaultMaxAngVel,
+                                      value.toDouble());
+                                  setState(() {
+                                    _defaultMaxAngVel = value;
+                                  });
+                                }
+                                widget.onSettingsChanged();
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: NumberTextField(
+                              initialText:
+                                  _defaultMaxAngAccel.toStringAsFixed(2),
+                              label: 'Max Angular Accel (Deg/S²)',
+                              enabled: _holonomicMode,
+                              onSubmitted: (value) {
+                                if (value != null) {
+                                  widget.prefs.setDouble(
+                                      PrefsKeys.defaultMaxAngAccel,
+                                      value.toDouble());
+                                  setState(() {
+                                    _defaultMaxAngAccel = value;
+                                  });
+                                }
+                                widget.onSettingsChanged();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ],
               ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildFieldImageDropdown(context),
-                _buildTeamColorPicker(context),
-              ],
             ),
-            const SizedBox(height: 12),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('PPLib Telemetry:'),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildTextField(
-                        context,
-                        'Host',
-                        (value) {
-                          widget.prefs
-                              .setString(PrefsKeys.pplibClientHost, value);
-                          setState(() {
-                            _pplibClientHost = value;
-                          });
-                          widget.onSettingsChanged();
-                        },
-                        _pplibClientHost,
-                        null,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _buildFieldImageDropdown(context)),
+                      const SizedBox(width: 8),
+                      Expanded(child: _buildTeamColorPicker(context)),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('PPLib Telemetry:'),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildTextField(
+                              context,
+                              'Host',
+                              (value) {
+                                widget.prefs.setString(
+                                    PrefsKeys.pplibClientHost, value);
+                                setState(() {
+                                  _pplibClientHost = value;
+                                });
+                                widget.onSettingsChanged();
+                              },
+                              _pplibClientHost,
+                              null,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-              ],
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Additional Options:'),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilterChip.elevated(
-                      label: const Text('Holonomic Mode'),
-                      selected: _holonomicMode,
-                      onSelected: (value) {
-                        widget.prefs.setBool(PrefsKeys.holonomicMode, value);
-                        setState(() {
-                          _holonomicMode = value;
-                        });
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                    FilterChip.elevated(
-                      label: const Text('Hot Reload'),
-                      selected: _hotReload,
-                      onSelected: (value) {
-                        widget.prefs.setBool(PrefsKeys.hotReloadEnabled, value);
-                        setState(() {
-                          _hotReload = value;
-                        });
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Additional Options:'),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          FilterChip.elevated(
+                            label: const Text('Holonomic Mode'),
+                            selected: _holonomicMode,
+                            onSelected: (value) {
+                              widget.prefs
+                                  .setBool(PrefsKeys.holonomicMode, value);
+                              setState(() {
+                                _holonomicMode = value;
+                              });
+                              widget.onSettingsChanged();
+                            },
+                          ),
+                          FilterChip.elevated(
+                            label: const Text('Hot Reload'),
+                            selected: _hotReload,
+                            onSelected: (value) {
+                              widget.prefs
+                                  .setBool(PrefsKeys.hotReloadEnabled, value);
+                              setState(() {
+                                _hotReload = value;
+                              });
+                              widget.onSettingsChanged();
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -344,7 +387,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
         const SizedBox(height: 4),
         SizedBox(
           height: 48,
-          width: 213,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: Container(
@@ -473,7 +515,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
         const SizedBox(height: 4),
         SizedBox(
           height: 48,
-          width: 213,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: ElevatedButton(

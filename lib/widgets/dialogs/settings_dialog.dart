@@ -46,6 +46,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late FieldImage _selectedField;
   late Color _teamColor;
   late String _pplibClientHost;
+  late num _maxModuleSpeed;
 
   @override
   void initState() {
@@ -73,6 +74,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
         Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
     _pplibClientHost = widget.prefs.getString(PrefsKeys.pplibClientHost) ??
         Defaults.pplibClientHost;
+    _maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
+        Defaults.maxModuleSpeed;
   }
 
   @override
@@ -133,18 +136,18 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: '4.65',
+                          initialText: _maxModuleSpeed.toStringAsFixed(2),
                           label: 'Max Module Speed (M/S)',
                           enabled: _holonomicMode,
                           onSubmitted: (value) {
-                            // if (value != null) {
-                            //   widget.prefs.setDouble(
-                            //       PrefsKeys.robotLength, value.toDouble());
-                            //   setState(() {
-                            //     _length = value;
-                            //   });
-                            // }
-                            // widget.onSettingsChanged();
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.maxModuleSpeed, value.toDouble());
+                              setState(() {
+                                _maxModuleSpeed = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
                           },
                         ),
                       ),

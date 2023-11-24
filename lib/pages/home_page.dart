@@ -475,6 +475,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json[PrefsKeys.defaultMaxAngVel] ?? Defaults.defaultMaxAngVel);
     widget.prefs.setDouble(PrefsKeys.defaultMaxAngAccel,
         json[PrefsKeys.defaultMaxAngAccel] ?? Defaults.defaultMaxAngAccel);
+    widget.prefs.setDouble(PrefsKeys.maxModuleSpeed,
+        json[PrefsKeys.maxModuleSpeed] ?? Defaults.maxModuleSpeed);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
@@ -511,6 +513,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.defaultMaxAngAccel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAccel,
+      PrefsKeys.maxModuleSpeed:
+          widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
+              Defaults.maxModuleSpeed,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

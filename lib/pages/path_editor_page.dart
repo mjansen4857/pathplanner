@@ -20,6 +20,7 @@ class PathEditorPage extends StatefulWidget {
   final PPLibTelemetry? telemetry;
   final bool hotReload;
   final bool simulatePath;
+  final VoidCallback? onPathChanged;
 
   const PathEditorPage({
     super.key,
@@ -32,6 +33,7 @@ class PathEditorPage extends StatefulWidget {
     this.telemetry,
     this.hotReload = false,
     this.simulatePath = false,
+    this.onPathChanged,
   });
 
   @override
@@ -51,6 +53,7 @@ class _PathEditorPageState extends State<PathEditorPage> {
       telemetry: widget.telemetry,
       hotReload: widget.hotReload,
       simulate: widget.simulatePath,
+      onPathChanged: widget.onPathChanged,
     );
 
     return Scaffold(

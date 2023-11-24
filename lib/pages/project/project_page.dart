@@ -12,6 +12,7 @@ import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
@@ -680,6 +681,28 @@ class _ProjectPageState extends State<ProjectPage> {
               telemetry: widget.telemetry,
               hotReload: widget.hotReload,
               simulatePath: widget.simulatePath,
+              onPathChanged: () {
+                // Make sure all paths with linked waypoints are updated
+                for (PathPlannerPath p in _paths) {
+                  bool changed = false;
+
+                  for (Waypoint w in p.waypoints) {
+                    if (w.linkedName != null) {
+                      var anchor = Waypoint.linked[w.linkedName];
+
+                      if (anchor != null &&
+                          anchor.distanceTo(w.anchor) >= 0.01) {
+                        w.move(anchor.x, anchor.y);
+                        changed = true;
+                      }
+                    }
+                  }
+
+                  if (changed) {
+                    p.generateAndSavePath();
+                  }
+                }
+              },
             ),
           ),
         );

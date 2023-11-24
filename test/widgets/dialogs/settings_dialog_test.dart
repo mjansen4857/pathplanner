@@ -52,7 +52,7 @@ void main() {
       ),
     ));
 
-    final textField = find.widgetWithText(NumberTextField, 'Width (M)');
+    final textField = find.widgetWithText(NumberTextField, 'Robot Width (M)');
 
     expect(textField, findsOneWidget);
     expect(find.descendant(of: textField, matching: find.text('0.10')),
@@ -83,7 +83,7 @@ void main() {
       ),
     ));
 
-    final textField = find.widgetWithText(NumberTextField, 'Length (M)');
+    final textField = find.widgetWithText(NumberTextField, 'Robot Length (M)');
 
     expect(textField, findsOneWidget);
     expect(find.descendant(of: textField, matching: find.text('0.20')),

@@ -210,8 +210,8 @@ void main() {
       ),
     ));
 
-    final textField = find.widgetWithText(
-        NumberTextField, 'Max Angular Acceleration (Deg/S²)');
+    final textField =
+        find.widgetWithText(NumberTextField, 'Max Angular Accel (Deg/S²)');
 
     expect(textField, findsOneWidget);
     expect(find.descendant(of: textField, matching: find.text('4.00')),

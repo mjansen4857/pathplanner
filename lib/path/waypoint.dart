@@ -1,6 +1,9 @@
+import 'dart:collection';
 import 'dart:math';
 
 class Waypoint {
+  static HashMap<String, Point> linked = HashMap();
+
   Point anchor;
   Point? prevControl;
   Point? nextControl;

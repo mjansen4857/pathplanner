@@ -311,9 +311,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   void _simulateAuto() async {
     Trajectory? simPath;
 
+    num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
+        Defaults.maxModuleSpeed;
+    num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
+        0.1; // Assuming ~3in thick bumpers
+
     try {
       simPath = TrajectoryGenerator.simulateAuto(
-          widget.autoPaths, widget.auto.startingPose);
+          widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius);
     } catch (err) {
       Log.error('Failed to simulate auto', err);
     }

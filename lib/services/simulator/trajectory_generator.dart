@@ -13,8 +13,8 @@ import 'package:pathplanner/util/math_util.dart';
 import 'package:pathplanner/util/pose2d.dart';
 
 class TrajectoryGenerator {
-  static Trajectory? simulateAuto(
-      List<PathPlannerPath> paths, Pose2d? startingPose) {
+  static Trajectory? simulateAuto(List<PathPlannerPath> paths,
+      Pose2d? startingPose, num maxModuleSpeed, num driveRadius) {
     if (paths.isEmpty) return null;
 
     List<TrajectoryState> allStates = [];
@@ -28,7 +28,8 @@ class TrajectoryGenerator {
           _replanPathIfNeeded(p, startPose, startSpeeds);
       num linearVel = sqrt(pow(startSpeeds.vx, 2) + pow(startSpeeds.vy, 2));
       Trajectory simPath = Trajectory.simulate(
-          replanned, linearVel, GeometryUtil.toRadians(startPose.rotation));
+          replanned, linearVel, GeometryUtil.toRadians(startPose.rotation),
+          maxModuleSpeed: maxModuleSpeed, driveBaseRadius: driveRadius);
 
       num startTime = allStates.isNotEmpty ? allStates.last.time : 0;
       for (TrajectoryState s in simPath.states) {
@@ -391,8 +392,8 @@ class Trajectory {
     PathPlannerPath path,
     num linearVel,
     num startingRotationRadians, {
-    num maxModuleSpeed = 4.5,
-    num driveBaseRadius = 0.425,
+    required num maxModuleSpeed,
+    required num driveBaseRadius,
   }) : states = _generateStates(path, linearVel, startingRotationRadians) {
     _simulateRotation(startingRotationRadians, maxModuleSpeed, driveBaseRadius);
   }

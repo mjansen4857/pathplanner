@@ -634,8 +634,15 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       num linearVel = widget.path.previewStartingState?.velocity ?? 0;
       num rotationRadians =
           (widget.path.previewStartingState?.rotation ?? 0) * (pi / 180.0);
+
+      num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
+          Defaults.maxModuleSpeed;
+      num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
+          0.1; // Assuming ~3in thick bumpers
+
       setState(() {
-        _simTraj = Trajectory.simulate(widget.path, linearVel, rotationRadians);
+        _simTraj = Trajectory.simulate(widget.path, linearVel, rotationRadians,
+            maxModuleSpeed: maxModuleSpeed, driveBaseRadius: radius);
       });
 
       if (!_paused) {

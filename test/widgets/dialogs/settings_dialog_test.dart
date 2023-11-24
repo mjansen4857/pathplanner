@@ -28,6 +28,7 @@ void main() {
       PrefsKeys.defaultMaxAccel: 2.0,
       PrefsKeys.defaultMaxAngVel: 3.0,
       PrefsKeys.defaultMaxAngAccel: 4.0,
+      PrefsKeys.maxModuleSpeed: 4.5,
     });
     prefs = await SharedPreferences.getInstance();
     settingsChanged = false;
@@ -95,6 +96,38 @@ void main() {
 
     expect(settingsChanged, true);
     expect(prefs.getDouble(PrefsKeys.robotLength), 1.0);
+  });
+
+  testWidgets('max module speed text field', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField =
+        find.widgetWithText(NumberTextField, 'Max Module Speed (M/S)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('4.50')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.maxModuleSpeed), 1.0);
   });
 
   testWidgets('default max vel text field', (widgetTester) async {

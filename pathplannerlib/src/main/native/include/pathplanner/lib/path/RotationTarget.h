@@ -14,7 +14,7 @@ public:
 	 * @param rotateFast Should the robot reach the rotation as fast as possible
 	 */
 	constexpr RotationTarget(double waypointRelativePosition,
-			frc::Rotation2d target, bool rotateFast) : m_position(
+			frc::Rotation2d target, bool rotateFast = false) : m_position(
 			waypointRelativePosition), m_target(target), m_rotateFast(
 			rotateFast) {
 	}

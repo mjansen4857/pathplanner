@@ -24,6 +24,16 @@ public class GoalEndState {
   }
 
   /**
+   * Create a new goal end state
+   *
+   * @param velocity The goal end velocity (M/S)
+   * @param rotation The goal rotation
+   */
+  public GoalEndState(double velocity, Rotation2d rotation) {
+    this(velocity, rotation, false);
+  }
+
+  /**
    * Create a goal end state from json
    *
    * @param endStateJson {@link org.json.simple.JSONObject} representing a goal end state

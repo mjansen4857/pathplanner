@@ -24,6 +24,16 @@ public class RotationTarget {
   }
 
   /**
+   * Create a new rotation target
+   *
+   * @param waypointRelativePosition Waypoint relative position of this target
+   * @param target Target rotation
+   */
+  public RotationTarget(double waypointRelativePosition, Rotation2d target) {
+    this(waypointRelativePosition, target, false);
+  }
+
+  /**
    * Create a rotation target from json
    *
    * @param targetJson {@link org.json.simple.JSONObject} representing a rotation target

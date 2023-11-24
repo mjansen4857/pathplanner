@@ -16,8 +16,8 @@ public:
 	 * @param rotateFast Should the robot reach the rotation as fast as possible
 	 */
 	constexpr GoalEndState(units::meters_per_second_t velocity,
-			frc::Rotation2d rotation, bool rotateFast) : m_velocity(velocity), m_rotation(
-			rotation), m_rotateFast(rotateFast) {
+			frc::Rotation2d rotation, bool rotateFast = false) : m_velocity(
+			velocity), m_rotation(rotation), m_rotateFast(rotateFast) {
 	}
 
 	/**

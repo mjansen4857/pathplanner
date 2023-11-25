@@ -386,7 +386,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    label: const Text('Convert to Linked'),
+                    label: const Text('Link Waypoint'),
                   ),
                 ),
               if (waypoint.linkedName != null)
@@ -425,7 +425,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Convert to Linked Waypoint'),
+            title: const Text('Link Waypoint'),
             content: SizedBox(
               width: 400,
               child: Column(

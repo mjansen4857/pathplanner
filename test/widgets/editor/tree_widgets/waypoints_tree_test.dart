@@ -1,8 +1,11 @@
+import 'dart:math';
+
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -440,6 +443,105 @@ void main() {
     await widgetTester.pump();
 
     expect(path.rotationTargets.length, 0);
+  });
+
+  testWidgets('linked waypoint', (widgetTester) async {
+    Waypoint.linked['existing link'] = const Point(0, 0);
+    Waypoint.linked['new link'] = const Point(0, 0);
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: WaypointsTree(
+          path: path,
+          undoStack: undoStack,
+          onPathChanged: () => pathChanged = true,
+          onWaypointDeleted: (value) => deletedWaypoint = value,
+          onWaypointHovered: (value) => hoveredWaypoint = value,
+          onWaypointSelected: (value) => selectedWaypoint = value,
+          initialSelectedWaypoint: 1,
+          holonomicMode: true,
+        ),
+      ),
+    ));
+
+    var button = find.text('Link Waypoint');
+
+    expect(button, findsOneWidget);
+
+    await widgetTester.tap(button);
+    await widgetTester.pumpAndSettle();
+
+    final cancelButton = find.text('Cancel');
+
+    expect(cancelButton, findsOneWidget);
+    await widgetTester.tap(cancelButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+
+    await widgetTester.tap(button);
+    await widgetTester.pumpAndSettle();
+
+    final dropdown =
+        find.widgetWithText(DropdownMenu<String>, 'Linked Waypoint Name');
+    expect(dropdown, findsOneWidget);
+
+    await widgetTester.tap(dropdown);
+    await widgetTester.pumpAndSettle();
+
+    Waypoint.linked.remove('new link');
+
+    // Stupid that there are duplicate text widgets. The dropdown menu is the worst widget in flutter
+    await widgetTester.tap(find.text('new link').last);
+    await widgetTester.pumpAndSettle();
+
+    final confirmButton = find.text('Confirm');
+    expect(confirmButton, findsOneWidget);
+
+    await widgetTester.tap(confirmButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsNothing);
+
+    expect(pathChanged, true);
+    expect(path.waypoints[1].linkedName, 'new link');
+
+    final unlinkButton = find.text('Unlink');
+    await widgetTester.tap(unlinkButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(path.waypoints[1].linkedName, null);
+
+    await widgetTester.tap(button);
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.tap(dropdown);
+    await widgetTester.pumpAndSettle();
+
+    // Stupid that there are duplicate text widgets. The dropdown menu is the worst widget in flutter
+    await widgetTester.tap(find.text('existing link').last);
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.tap(confirmButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(path.waypoints[1].linkedName, 'existing link');
+    expect(path.waypoints[1].anchor.x, closeTo(0.0, 0.01));
+    expect(path.waypoints[1].anchor.y, closeTo(0.0, 0.01));
+
+    // Undo existing
+    undoStack.undo();
+    await widgetTester.pump();
+
+    // Undo unlink
+    undoStack.undo();
+    await widgetTester.pump();
+
+    // Undo new link
+    undoStack.undo();
+    await widgetTester.pump();
+
+    expect(path.waypoints[1].linkedName, null);
   });
 
   testWidgets('Lock waypoint button', (widgetTester) async {

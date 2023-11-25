@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
@@ -134,6 +136,17 @@ class _WaypointsTreeState extends State<WaypointsTree> {
       title: Row(
         children: [
           Text(name),
+          if (waypoint.linkedName != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Tooltip(
+                message: waypoint.linkedName,
+                child: const Icon(
+                  Icons.link,
+                  color: Colors.green,
+                ),
+              ),
+            ),
           Expanded(child: Container()),
           Tooltip(
             message: waypoint.isLocked ? 'Unlock' : 'Lock',
@@ -244,7 +257,8 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                     ),
                   ),
                 ),
-              if (waypointIdx != 0) const SizedBox(width: 8),
+              if (waypointIdx != 0 && waypointIdx != waypoints.length - 1)
+                const SizedBox(width: 8),
               if (waypointIdx != waypoints.length - 1)
                 Expanded(
                   child: Padding(
@@ -270,11 +284,11 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             ],
           ),
         ),
-        if (widget.holonomicMode || waypointIdx != waypoints.length - 1)
-          const SizedBox(height: 8.0),
-        if (widget.holonomicMode || waypointIdx != waypoints.length - 1)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+        const SizedBox(height: 8.0),
+        Center(
+          child: Wrap(
+            runSpacing: 8.0,
+            alignment: WrapAlignment.center,
             children: [
               if (widget.holonomicMode)
                 Padding(
@@ -359,10 +373,146 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                     label: const Text('New Waypoint After'),
                   ),
                 ),
+              if (waypoint.linkedName == null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showLinkedDialog(waypointIdx),
+                    icon: const Icon(Icons.link, size: 20),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1.0,
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: const Text('Link Waypoint'),
+                  ),
+                ),
+              if (waypoint.linkedName != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      widget.undoStack.add(_waypointChange(waypoint, () {
+                        waypoint.linkedName = null;
+                      }, (oldVal) {
+                        waypoint.linkedName = oldVal.linkedName;
+                      }));
+                    },
+                    icon: const Icon(Icons.link_off, size: 20),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1.0,
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: const Text('Unlink'),
+                  ),
+                ),
             ],
           ),
+        ),
       ],
     );
+  }
+
+  void _showLinkedDialog(int waypointIdx) {
+    final TextEditingController controller = TextEditingController();
+
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Link Waypoint'),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                      'Convert this waypoint to a linked waypoint. Updating the position one instance of a linked waypoint will update all linked waypoints under the same name.'),
+                  const SizedBox(height: 18),
+                  const Text(
+                      'If you choose the name of an existing linked waypoint, this waypoint will be updated to match its position.'),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownMenu<String>(
+                          label: const Text('Linked Waypoint Name'),
+                          controller: controller,
+                          enableSearch: false,
+                          enableFilter: true,
+                          width: 400,
+                          dropdownMenuEntries: [
+                            for (String name in Waypoint.linked.keys)
+                              DropdownMenuEntry(
+                                value: name,
+                                label: name,
+                              ),
+                          ],
+                          inputDecorationTheme: InputDecorationTheme(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding:
+                                const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                            isDense: true,
+                            constraints: const BoxConstraints(
+                              maxHeight: 42,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: Navigator.of(context).pop,
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (controller.text.isNotEmpty) {
+                    String name = controller.text;
+
+                    if (Waypoint.linked.containsKey(name)) {
+                      // Linked waypoint exists, update this waypoint
+                      Point anchor = Waypoint.linked[name]!;
+
+                      widget.undoStack
+                          .add(_waypointChange(waypoints[waypointIdx], () {
+                        waypoints[waypointIdx].linkedName = name;
+                        waypoints[waypointIdx].move(anchor.x, anchor.y);
+                      }, (oldVal) {
+                        waypoints[waypointIdx] = oldVal.clone();
+                      }));
+                    } else {
+                      // Create new linked waypoint
+                      widget.undoStack
+                          .add(_waypointChange(waypoints[waypointIdx], () {
+                        waypoints[waypointIdx].linkedName = name;
+                        Point anchor = Point(waypoints[waypointIdx].anchor.x,
+                            waypoints[waypointIdx].anchor.y);
+                        Waypoint.linked[name] = anchor;
+                      }, (oldVal) {
+                        waypoints[waypointIdx] = oldVal.clone();
+                        Waypoint.linked.remove(name);
+                      }));
+                    }
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text('Confirm'),
+              ),
+            ],
+          );
+        });
   }
 
   Change _waypointChange(

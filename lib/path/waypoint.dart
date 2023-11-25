@@ -1,10 +1,14 @@
+import 'dart:collection';
 import 'dart:math';
 
 class Waypoint {
+  static HashMap<String, Point> linked = HashMap();
+
   Point anchor;
   Point? prevControl;
   Point? nextControl;
   bool isLocked;
+  String? linkedName;
 
   bool _isAnchorDragging = false;
   bool _isPrevControlDragging = false;
@@ -15,7 +19,12 @@ class Waypoint {
     this.prevControl,
     this.nextControl,
     this.isLocked = false,
-  });
+    this.linkedName,
+  }) {
+    if (linkedName != null) {
+      linked[linkedName!] = Point(anchor.x, anchor.y);
+    }
+  }
 
   bool get isAnchorDragging => _isAnchorDragging;
 
@@ -25,6 +34,7 @@ class Waypoint {
           prevControl: _pointFromJson(json['prevControl']),
           nextControl: _pointFromJson(json['nextControl']),
           isLocked: json['isLocked'] ?? false,
+          linkedName: json['linkedName'],
         );
 
   Map<String, dynamic> toJson() {
@@ -33,6 +43,7 @@ class Waypoint {
       'prevControl': _pointToJson(prevControl),
       'nextControl': _pointToJson(nextControl),
       'isLocked': isLocked,
+      'linkedName': linkedName,
     };
   }
 
@@ -111,6 +122,7 @@ class Waypoint {
       anchor: anchorPt,
       prevControl: prev,
       nextControl: next,
+      linkedName: linkedName,
     );
   }
 
@@ -284,8 +296,9 @@ class Waypoint {
       other.runtimeType == runtimeType &&
       other.anchor == anchor &&
       other.prevControl == prevControl &&
-      other.nextControl == nextControl;
+      other.nextControl == nextControl &&
+      other.linkedName == linkedName;
 
   @override
-  int get hashCode => Object.hash(anchor, prevControl, nextControl);
+  int get hashCode => Object.hash(anchor, prevControl, nextControl, linkedName);
 }

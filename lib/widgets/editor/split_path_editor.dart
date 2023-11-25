@@ -29,6 +29,7 @@ class SplitPathEditor extends StatefulWidget {
   final PPLibTelemetry? telemetry;
   final bool hotReload;
   final bool simulate;
+  final VoidCallback? onPathChanged;
 
   const SplitPathEditor({
     required this.prefs,
@@ -38,6 +39,7 @@ class SplitPathEditor extends StatefulWidget {
     this.telemetry,
     this.hotReload = false,
     this.simulate = false,
+    this.onPathChanged,
     super.key,
   });
 
@@ -322,6 +324,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         }
                         widget.path.generateAndSavePath();
                         _simulatePath();
+                        widget.onPathChanged?.call();
                       });
                       if (widget.hotReload) {
                         widget.telemetry?.hotReloadPath(widget.path);
@@ -332,6 +335,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         waypoints[index] = oldValue!.clone();
                         widget.path.generateAndSavePath();
                         _simulatePath();
+                        widget.onPathChanged?.call();
                       });
                       if (widget.hotReload) {
                         widget.telemetry?.hotReloadPath(widget.path);
@@ -479,6 +483,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       if (widget.hotReload) {
                         widget.telemetry?.hotReloadPath(widget.path);
                       }
+
+                      widget.onPathChanged?.call();
                     },
                     onPathChangedNoSim: () {
                       setState(() {
@@ -488,6 +494,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       if (widget.hotReload) {
                         widget.telemetry?.hotReloadPath(widget.path);
                       }
+
+                      widget.onPathChanged?.call();
                     },
                     onWaypointDeleted: (waypointIdx) {
                       widget.undoStack.add(Change(

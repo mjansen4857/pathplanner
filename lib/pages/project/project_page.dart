@@ -700,6 +700,10 @@ class _ProjectPageState extends State<ProjectPage> {
 
                   if (changed) {
                     p.generateAndSavePath();
+
+                    if (widget.hotReload) {
+                      widget.telemetry?.hotReloadPath(p);
+                    }
                   }
                 }
               },

@@ -16,6 +16,7 @@ import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
+import 'package:pathplanner/widgets/dialogs/management_dialog.dart';
 import 'package:pathplanner/widgets/dialogs/named_commands_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -230,7 +231,7 @@ class _ProjectPageState extends State<ProjectPage> {
               foregroundColor: colorScheme.onSurface,
               onPressed: () => showDialog(
                 context: context,
-                builder: (BuildContext context) => NamedCommandsDialog(
+                builder: (BuildContext context) => ManagementDialog(
                   onCommandRenamed: (String oldName, String newName) {
                     setState(() {
                       for (PathPlannerPath path in _paths) {

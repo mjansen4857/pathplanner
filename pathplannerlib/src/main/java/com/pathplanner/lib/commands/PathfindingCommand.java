@@ -166,78 +166,75 @@ public class PathfindingCommand extends Command {
             && currentPose
                     .getTranslation()
                     .getDistance(currentTrajectory.getEndState().positionMeters)
-                < 3.0;
+                < 2.0;
 
     if (!skipUpdates && Pathfinding.isNewPathAvailable()) {
       currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);
 
       if (currentPath != null) {
+        currentTrajectory =
+            new PathPlannerTrajectory(currentPath, currentSpeeds, currentPose.getRotation());
+
+        // Find the two closest states in front of and behind robot
+        int closestState1Idx = 0;
+        int closestState2Idx = 1;
+        while (true) {
+          double closest2Dist =
+              currentTrajectory
+                  .getState(closestState2Idx)
+                  .positionMeters
+                  .getDistance(currentPose.getTranslation());
+          double nextDist =
+              currentTrajectory
+                  .getState(closestState2Idx + 1)
+                  .positionMeters
+                  .getDistance(currentPose.getTranslation());
+          if (nextDist < closest2Dist) {
+            closestState1Idx++;
+            closestState2Idx++;
+          } else {
+            break;
+          }
+        }
+
+        // Use the closest 2 states to interpolate what the time offset should be
+        // This will account for the delay in pathfinding
+        var closestState1 = currentTrajectory.getState(closestState1Idx);
+        var closestState2 = currentTrajectory.getState(closestState2Idx);
+
         ChassisSpeeds fieldRelativeSpeeds =
             ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.getRotation());
         Rotation2d currentHeading =
             new Rotation2d(
                 fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
-        Rotation2d headingError =
-            currentHeading.minus(currentPath.getStartingDifferentialPose().getRotation());
+        Rotation2d headingError = currentHeading.minus(closestState1.heading);
         boolean onHeading =
-            Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 0.5
+            Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 1.0
                 || Math.abs(headingError.getDegrees()) < 30;
 
-        if (!replanningConfig.enableInitialReplanning
-            || (currentPose.getTranslation().getDistance(currentPath.getPoint(0).position) <= 0.25
-                && onHeading)) {
+        // Replan the path if we are more than 0.25m away or our heading is off
+        if (!onHeading
+            || (replanningConfig.enableInitialReplanning
+                && currentPose.getTranslation().getDistance(closestState1.positionMeters) > 0.25)) {
+          currentPath = currentPath.replan(currentPose, currentSpeeds);
           currentTrajectory =
               new PathPlannerTrajectory(currentPath, currentSpeeds, currentPose.getRotation());
 
-          // Find the two closest states in front of and behind robot
-          int closestState1Idx = 0;
-          int closestState2Idx = 1;
-          while (true) {
-            double closest2Dist =
-                currentTrajectory
-                    .getState(closestState2Idx)
-                    .positionMeters
-                    .getDistance(currentPose.getTranslation());
-            double nextDist =
-                currentTrajectory
-                    .getState(closestState2Idx + 1)
-                    .positionMeters
-                    .getDistance(currentPose.getTranslation());
-            if (nextDist < closest2Dist) {
-              closestState1Idx++;
-              closestState2Idx++;
-            } else {
-              break;
-            }
-          }
-
-          // Use the closest 2 states to interpolate what the time offset should be
-          // This will account for the delay in pathfinding
-          var closestState1 = currentTrajectory.getState(closestState1Idx);
-          var closestState2 = currentTrajectory.getState(closestState2Idx);
-
+          timeOffset = 0;
+        } else {
           double d = closestState1.positionMeters.getDistance(closestState2.positionMeters);
           double t = (currentPose.getTranslation().getDistance(closestState1.positionMeters)) / d;
 
           timeOffset =
               GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
-
-          PathPlannerLogging.logActivePath(currentPath);
-          PPLibTelemetry.setCurrentPath(currentPath);
-        } else {
-          PathPlannerPath replanned = currentPath.replan(currentPose, currentSpeeds);
-          currentTrajectory =
-              new PathPlannerTrajectory(replanned, currentSpeeds, currentPose.getRotation());
-
-          timeOffset = 0;
-
-          PathPlannerLogging.logActivePath(replanned);
-          PPLibTelemetry.setCurrentPath(replanned);
         }
 
-        timer.reset();
-        timer.start();
+        PathPlannerLogging.logActivePath(currentPath);
+        PPLibTelemetry.setCurrentPath(currentPath);
       }
+
+      timer.reset();
+      timer.start();
     }
 
     if (currentTrajectory != null) {

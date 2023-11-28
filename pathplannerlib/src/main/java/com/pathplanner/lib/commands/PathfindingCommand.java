@@ -160,7 +160,15 @@ public class PathfindingCommand extends Command {
     PathPlannerLogging.logCurrentPose(currentPose);
     PPLibTelemetry.setCurrentPose(currentPose);
 
-    if (Pathfinding.isNewPathAvailable()) {
+    // Skip new paths if we are close to the end
+    boolean skipUpdates =
+        currentTrajectory != null
+            && currentPose
+                    .getTranslation()
+                    .getDistance(currentTrajectory.getEndState().positionMeters)
+                < 3.0;
+
+    if (!skipUpdates && Pathfinding.isNewPathAvailable()) {
       currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);
 
       if (currentPath != null) {

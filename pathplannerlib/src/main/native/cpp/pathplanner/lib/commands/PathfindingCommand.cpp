@@ -84,7 +84,11 @@ void PathfindingCommand::Execute() {
 	PathPlannerLogging::logCurrentPose(currentPose);
 	PPLibTelemetry::setCurrentPose(currentPose);
 
-	if (Pathfinding::isNewPathAvailable()) {
+	bool skipUpdates = !m_currentTrajectory.getStates().empty()
+			&& currentPose.Translation().Distance(
+					m_currentTrajectory.getEndState().position) < 3.0_m;
+
+	if (!skipUpdates && Pathfinding::isNewPathAvailable()) {
 		m_currentPath = Pathfinding::getCurrentPath(m_constraints,
 				m_goalEndState);
 

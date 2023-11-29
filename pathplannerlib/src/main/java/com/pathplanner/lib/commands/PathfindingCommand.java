@@ -319,6 +319,8 @@ public class PathfindingCommand extends Command {
     if (!interrupted && goalEndState.getVelocity() < 0.1) {
       output.accept(new ChassisSpeeds());
     }
+
+    PathPlannerLogging.logActivePath(null);
   }
 
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {

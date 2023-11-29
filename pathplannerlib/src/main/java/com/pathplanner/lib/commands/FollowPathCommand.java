@@ -143,6 +143,8 @@ public class FollowPathCommand extends Command {
     if (!interrupted && path.getGoalEndState().getVelocity() < 0.1) {
       output.accept(new ChassisSpeeds());
     }
+
+    PathPlannerLogging.logActivePath(null);
   }
 
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {

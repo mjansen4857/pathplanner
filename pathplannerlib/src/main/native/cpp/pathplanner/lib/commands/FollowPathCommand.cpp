@@ -101,4 +101,6 @@ void FollowPathCommand::End(bool interrupted) {
 	if (!interrupted && m_path->getGoalEndState().getVelocity() < 0.1_mps) {
 		m_output(frc::ChassisSpeeds());
 	}
+
+	PathPlannerLogging::logActivePath(nullptr);
 }

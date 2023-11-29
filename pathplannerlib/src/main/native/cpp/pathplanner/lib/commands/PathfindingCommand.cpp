@@ -130,6 +130,7 @@ void PathfindingCommand::Execute() {
 					currentSpeeds.vy) < 1.0_mps
 					|| units::math::abs(headingError.Degrees()) < 30_deg;
 
+			// Replan the path if we are more than 0.25m away or our heading is off
 			if (!onHeading
 					|| (m_replanningConfig.enableInitialReplanning
 							&& currentPose.Translation().Distance(
@@ -244,4 +245,6 @@ void PathfindingCommand::End(bool interrupted) {
 	if (!interrupted && m_goalEndState.getVelocity() < 0.1_mps) {
 		m_output(frc::ChassisSpeeds());
 	}
+
+	PathPlannerLogging::logActivePath(nullptr);
 }

@@ -76,8 +76,8 @@ class State:
 class PathPlannerTrajectory:
     _states: List[State]
 
-    def __init__(self, path: PathPlannerPath, starting_speeds: ChassisSpeeds):
-        self._states = PathPlannerTrajectory._generateStates(path, starting_speeds)
+    def __init__(self, path: PathPlannerPath, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d):
+        self._states = PathPlannerTrajectory._generateStates(path, starting_speeds, starting_rotation)
 
     def getStates(self) -> List[State]:
         return self._states
@@ -130,19 +130,23 @@ class PathPlannerTrajectory:
         idx = path.numPoints() - 1
 
         for i in range(starting_index, path.numPoints() - 1):
-            if path.getPoint(i).holonomicRotation is not None:
+            if path.getPoint(i).rotationTarget is not None:
                 idx = i
                 break
 
         return idx
 
     @staticmethod
-    def _generateStates(path: PathPlannerPath, starting_speeds: ChassisSpeeds) -> List[State]:
+    def _generateStates(path: PathPlannerPath, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d) -> List[
+        State]:
         states = []
 
         startVel = math.hypot(starting_speeds.vx, starting_speeds.vy)
 
+        prevRotationTargetDist = 0.0
+        prevRotationTargetRot = starting_rotation
         nextRotationTargetIdx = PathPlannerTrajectory._getNextRotationTarget(path, 0)
+        distanceBetweenTargets = path.getPoint(nextRotationTargetIdx).distanceAlongPath
 
         # Initial pass. Creates all states and handles linear acceleration
         for i in range(path.numPoints()):
@@ -152,9 +156,23 @@ class PathPlannerTrajectory:
             state.constraints = constraints
 
             if i > nextRotationTargetIdx:
+                prevRotationTargetDist = path.getPoint(nextRotationTargetIdx).distanceAlongPath
+                prevRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.target
                 nextRotationTargetIdx = PathPlannerTrajectory._getNextRotationTarget(path, i)
+                distanceBetweenTargets = path.getPoint(nextRotationTargetIdx).distanceAlongPath - prevRotationTargetDist
 
-            state.targetHolonomicRotation = path.getPoint(nextRotationTargetIdx).holonomicRotation
+            nextTarget = path.getPoint(nextRotationTargetIdx).rotationTarget
+
+            if nextTarget.rotateFast:
+                state.targetHolonomicRotation = nextTarget.target
+            else:
+                t = (path.getPoint(i).distanceAlongPath - prevRotationTargetDist) / distanceBetweenTargets
+                t = min(max(0.0, t), 1.0)
+                if not math.isfinite(t):
+                    t = 0.0
+
+                state.targetHolonomicRotation = (prevRotationTargetRot + (
+                            nextTarget.target - prevRotationTargetRot)) * t
 
             state.positionMeters = path.getPoint(i).position
             curveRadius = path.getPoint(i).curveRadius

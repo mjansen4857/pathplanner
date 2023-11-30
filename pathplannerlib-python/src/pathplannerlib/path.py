@@ -49,18 +49,24 @@ class PathConstraints:
 class GoalEndState:
     velocity: float
     rotation: Rotation2d
+    rotateFast: bool
 
     @staticmethod
     def fromJson(json_dict: dict) -> GoalEndState:
         vel = float(json_dict['velocity'])
         deg = float(json_dict['rotation'])
 
-        return GoalEndState(vel, Rotation2d.fromDegrees(deg))
+        rotateFast = False
+        if 'rotateFast' in json_dict:
+            rotateFast = bool(json_dict['rotateFast'])
+
+        return GoalEndState(vel, Rotation2d.fromDegrees(deg), rotateFast)
 
     def __eq__(self, other):
         return (isinstance(other, GoalEndState)
                 and other.velocity == self.velocity
-                and other.rotation == self.rotation)
+                and other.rotation == self.rotation
+                and other.rotateFast == self.rotateFast)
 
 
 @dataclass(frozen=True)
@@ -98,20 +104,27 @@ class ConstraintsZone:
 class RotationTarget:
     waypointRelativePosition: float
     target: Rotation2d
+    rotateFast: bool
 
     @staticmethod
     def fromJson(json_dict: dict) -> RotationTarget:
         pos = float(json_dict['waypointRelativePos'])
         deg = float(json_dict['rotationDegrees'])
-        return RotationTarget(pos, Rotation2d.fromDegrees(deg))
+
+        rotateFast = False
+        if 'rotateFast' in json_dict:
+            rotateFast = bool(json_dict['rotateFast'])
+
+        return RotationTarget(pos, Rotation2d.fromDegrees(deg), rotateFast)
 
     def forSegmentIndex(self, segment_index: int) -> RotationTarget:
-        return RotationTarget(self.waypointRelativePosition - segment_index, self.target)
+        return RotationTarget(self.waypointRelativePosition - segment_index, self.target, self.rotateFast)
 
     def __eq__(self, other):
         return (isinstance(other, RotationTarget)
                 and other.waypointRelativePosition == self.waypointRelativePosition
-                and other.target == self.target)
+                and other.target == self.target
+                and other.rotateFast == self.rotateFast)
 
 
 @dataclass
@@ -152,7 +165,7 @@ class EventMarker:
 @dataclass
 class PathPoint:
     position: Translation2d
-    holonomicRotation: Rotation2d
+    rotationTarget: RotationTarget
     constraints: PathConstraints = None
     distanceAlongPath: float = 0.0
     curveRadius: float = 0.0
@@ -161,7 +174,7 @@ class PathPoint:
     def __eq__(self, other):
         return (isinstance(other, PathPoint)
                 and other.position == self.position
-                and other.holonomicRotation == self.holonomicRotation
+                and other.holonomicRotation == self.rotationTarget
                 and other.constraints == self.constraints
                 and other.distanceAlongPath == self.distanceAlongPath
                 and other.curveRadius == self.curveRadius
@@ -182,7 +195,7 @@ class PathSegment:
             if len(target_holonomic_rotations) > 0:
                 if math.fabs(target_holonomic_rotations[0].waypointRelativePosition - t) <= math.fabs(
                         target_holonomic_rotations[0].waypointRelativePosition - min(t + RESOLUTION, 1.0)):
-                    holonomicRotation = target_holonomic_rotations.pop(0).target
+                    holonomicRotation = target_holonomic_rotations.pop(0)
 
             currentZone = self._findConstraintsZone(constraint_zones, t)
 
@@ -193,7 +206,7 @@ class PathSegment:
                 self.segmentPoints.append(PathPoint(cubicLerp(p1, p2, p3, p4, t), holonomicRotation))
 
         if end_segment:
-            holonomicRotation = target_holonomic_rotations.pop(0).target if len(
+            holonomicRotation = target_holonomic_rotations.pop(0) if len(
                 target_holonomic_rotations) > 0 else None
             self.segmentPoints.append(PathPoint(cubicLerp(p1, p2, p3, p4, 1.0), holonomicRotation))
 
@@ -361,7 +374,7 @@ class PathPlannerPath:
                 self._goalEndState, [], [], [], self._reversed, self._previewStartingRotation)
         elif (closestPointIdx == 0 and robotNextControl is None) or (math.fabs(
                 closestDist - starting_pose.translation().distance(
-                        self.getPoint(0).position)) <= 0.25 and linearVel < 0.1):
+                    self.getPoint(0).position)) <= 0.25 and linearVel < 0.1):
             distToStart = starting_pose.translation().distance(self.getPoint(0).position)
 
             heading = (self.getPoint(0).position - starting_pose.translation()).angle()
@@ -387,7 +400,8 @@ class PathPlannerPath:
                 # Keep all rotations, markers, and zones and increment waypoint pos by 1
                 return PathPlannerPath(
                     replannedBezier, self._globalConstraints, self._goalEndState,
-                    [RotationTarget(t.waypointRelativePosition + 1, t.target) for t in self._rotationTargets],
+                    [RotationTarget(t.waypointRelativePosition + 1, t.target, t.rotateFast) for t in
+                     self._rotationTargets],
                     [ConstraintsZone(z.minWaypointPos + 1, z.maxWaypointPos + 1, z.constraints) for z in
                      self._constraintZones],
                     [EventMarker(m.waypointRelativePos + 1, m.command, m.minimumTriggerDistance) for m in
@@ -478,10 +492,11 @@ class PathPlannerPath:
 
         for t in self._rotationTargets:
             if t.waypointRelativePosition >= nextWaypointIdx:
-                mappedTargets.append(RotationTarget(t.waypointRelativePosition - nextWaypointIdx + 2, t.target))
+                mappedTargets.append(
+                    RotationTarget(t.waypointRelativePosition - nextWaypointIdx + 2, t.target, t.rotateFast))
             elif t.waypointRelativePosition >= nextWaypointIdx - 1:
                 pct = t.waypointRelativePosition - (nextWaypointIdx - 1)
-                mappedTargets.append(RotationTarget(PathPlannerPath._mapPct(pct, segment1Pct), t.target))
+                mappedTargets.append(RotationTarget(PathPlannerPath._mapPct(pct, segment1Pct), t.target, t.rotateFast))
 
         for z in self._constraintZones:
             minPos = 0
@@ -631,7 +646,8 @@ class PathPlannerPath:
                 pointIndex = int(m.waypointRelativePos / RESOLUTION)
                 m.markerPos = self.getPoint(pointIndex).position
 
-            self.getPoint(self.numPoints() - 1).holonomicRotation = self._goalEndState.rotation
+            self.getPoint(self.numPoints() - 1).rotationTarget = RotationTarget(-1, self._goalEndState.rotation,
+                                                                                self._goalEndState.rotateFast)
             self.getPoint(self.numPoints() - 1).maxV = self._goalEndState.velocity
 
     def _getCurveRadiusAtPoint(self, index: int) -> float:

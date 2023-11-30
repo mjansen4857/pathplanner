@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable, List, Union
 from wpimath.geometry import Pose2d, Rotation2d
 from .path import PathPlannerPath
 
@@ -31,7 +31,10 @@ class PathPlannerLogging:
             PathPlannerLogging._logTargetPose(pose)
 
     @staticmethod
-    def logActivePath(path: PathPlannerPath) -> None:
+    def logActivePath(path: Union[PathPlannerPath, None]) -> None:
         if PathPlannerLogging._logActivePath is not None:
-            poses = [Pose2d(p.position, Rotation2d()) for p in path.getAllPathPoints()]
-            PathPlannerLogging._logActivePath(poses)
+            if path is not None:
+                poses = [Pose2d(p.position, Rotation2d()) for p in path.getAllPathPoints()]
+                PathPlannerLogging._logActivePath(poses)
+            else:
+                PathPlannerLogging._logActivePath([])

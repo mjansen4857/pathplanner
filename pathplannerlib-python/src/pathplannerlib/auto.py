@@ -3,6 +3,7 @@ from commands2.functionalcommand import FunctionalCommand
 import commands2.cmd as cmd
 from path import PathPlannerPath
 
+
 class NamedCommands:
     _namedCommands: dict = {}
 
@@ -38,6 +39,7 @@ class NamedCommands:
             return CommandUtil.wrappedEventCommand(NamedCommands._namedCommands[name])
         else:
             return cmd.none()
+
 
 class CommandUtil:
     @staticmethod
@@ -94,13 +96,13 @@ class CommandUtil:
     @staticmethod
     def _namedCommandFromData(data_json: dict) -> Command:
         name = str(data_json['name'])
-        return cmd.none() # TODO
+        return cmd.none()  # TODO
 
     @staticmethod
     def _pathCommandFromData(data_json: dict) -> Command:
         pathName = str(data_json['pathName'])
         path = PathPlannerPath.fromPathFile(pathName)
-        return cmd.none() # TODO
+        return cmd.none()  # TODO
 
     @staticmethod
     def _sequentialGroupFromData(data_json: dict) -> Command:

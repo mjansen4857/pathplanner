@@ -49,7 +49,7 @@ class PathConstraints:
 class GoalEndState:
     velocity: float
     rotation: Rotation2d
-    rotateFast: bool
+    rotateFast: bool = False
 
     @staticmethod
     def fromJson(json_dict: dict) -> GoalEndState:
@@ -104,7 +104,7 @@ class ConstraintsZone:
 class RotationTarget:
     waypointRelativePosition: float
     target: Rotation2d
-    rotateFast: bool
+    rotateFast: bool = False
 
     @staticmethod
     def fromJson(json_dict: dict) -> RotationTarget:

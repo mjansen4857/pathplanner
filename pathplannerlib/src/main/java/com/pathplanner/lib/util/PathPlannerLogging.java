@@ -3,6 +3,7 @@ package com.pathplanner.lib.util;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -72,11 +73,16 @@ public class PathPlannerLogging {
    */
   public static void logActivePath(PathPlannerPath path) {
     if (logActivePath != null) {
-      List<Pose2d> poses =
-          path.getAllPathPoints().stream()
-              .map(p -> new Pose2d(p.position, new Rotation2d()))
-              .collect(Collectors.toList());
-      logActivePath.accept(poses);
+
+      if (path != null) {
+        List<Pose2d> poses =
+            path.getAllPathPoints().stream()
+                .map(p -> new Pose2d(p.position, new Rotation2d()))
+                .collect(Collectors.toList());
+        logActivePath.accept(poses);
+      } else {
+        logActivePath.accept(new ArrayList<>());
+      }
     }
   }
 }

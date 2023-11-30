@@ -20,14 +20,14 @@ class NumberTextField extends StatelessWidget {
     this.onSubmitted,
     this.enabled = true,
     this.arrowKeyIncrement = 0.01,
+    TextEditingController? controller,
   }) {
-    _controller = _getController(initialText);
+    _controller = controller ?? TextEditingController();
+    _controller.text = initialText;
   }
 
   @override
   Widget build(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
-
     return SizedBox(
       height: height,
       child: CallbackShortcuts(
@@ -53,7 +53,7 @@ class NumberTextField extends StatelessWidget {
               FilteringTextInputFormatter.allow(
                   RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
             ],
-            style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
+            style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
               labelText: label,
@@ -113,11 +113,5 @@ class NumberTextField extends StatelessWidget {
         onSubmitted?.call(parsed - arrowKeyIncrement);
       }
     }
-  }
-
-  TextEditingController _getController(String text) {
-    return TextEditingController(text: text)
-      ..selection =
-          TextSelection.fromPosition(TextPosition(offset: text.length));
   }
 }

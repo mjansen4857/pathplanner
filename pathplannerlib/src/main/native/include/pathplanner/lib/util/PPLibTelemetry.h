@@ -3,7 +3,6 @@
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/DoubleArrayTopic.h>
 #include <networktables/DoubleTopic.h>
-#include <networktables/DoubleArrayTopic.h>
 #include <networktables/NetworkTableListener.h>
 #include <string>
 #include <unordered_map>

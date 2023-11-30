@@ -60,12 +60,15 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 		targetRotation = rotationTargetOverride().value_or(targetRotation);
 	}
 
-	units::radians_per_second_t targetRotationVel {
+	units::radians_per_second_t rotationFeedback {
 			m_rotationController.Calculate(currentPose.Rotation().Radians(),
 					referenceState.targetHolonomicRotation.Radians(),
 					{ maxAngVel,
 							referenceState.constraints.getMaxAngularAcceleration() }) };
+	units::radians_per_second_t rotationFF =
+			m_rotationController.GetSetpoint().velocity;
 
 	return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF + xFeedback,
-			yFF + yFeedback, targetRotationVel, currentPose.Rotation());
+			yFF + yFeedback, rotationFF + rotationFeedback,
+			currentPose.Rotation());
 }

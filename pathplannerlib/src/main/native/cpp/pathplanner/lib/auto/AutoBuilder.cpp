@@ -273,7 +273,7 @@ frc2::CommandPtr AutoBuilder::buildAuto(std::string autoName) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer->begin(), fileBuffer->end());
+	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
 	return getAutoCommandFromJson(json);
 }

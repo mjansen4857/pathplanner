@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
+import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -28,6 +29,7 @@ class SplitPathEditor extends StatefulWidget {
   final PPLibTelemetry? telemetry;
   final bool hotReload;
   final bool simulate;
+  final VoidCallback? onPathChanged;
 
   const SplitPathEditor({
     required this.prefs,
@@ -37,6 +39,7 @@ class SplitPathEditor extends StatefulWidget {
     this.telemetry,
     this.hotReload = false,
     this.simulate = false,
+    this.onPathChanged,
     super.key,
   });
 
@@ -63,6 +66,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   int? _draggedRotationIdx;
   num? _dragRotationOldValue;
   Trajectory? _simTraj;
+  bool _paused = false;
   late bool _holonomicMode;
 
   late Size _robotSize;
@@ -93,11 +97,11 @@ class _SplitPathEditorState extends State<SplitPathEditor>
     _controller.areas = [
       Area(
         weight: _treeOnRight ? (1.0 - treeWeight) : treeWeight,
-        minimalWeight: 0.3,
+        minimalWeight: 0.4,
       ),
       Area(
         weight: _treeOnRight ? treeWeight : (1.0 - treeWeight),
-        minimalWeight: 0.3,
+        minimalWeight: 0.4,
       ),
     ];
 
@@ -320,6 +324,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         }
                         widget.path.generateAndSavePath();
                         _simulatePath();
+                        widget.onPathChanged?.call();
                       });
                       if (widget.hotReload) {
                         widget.telemetry?.hotReloadPath(widget.path);
@@ -330,6 +335,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         waypoints[index] = oldValue!.clone();
                         widget.path.generateAndSavePath();
                         _simulatePath();
+                        widget.onPathChanged?.call();
                       });
                       if (widget.hotReload) {
                         widget.telemetry?.hotReloadPath(widget.path);
@@ -437,6 +443,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
               if (_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
+                  onPauseStateChanged: (value) => _paused = value,
+                  totalPathTime: _simTraj?.states.last.time ?? 1.0,
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -465,6 +473,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     waypointsTreeController: _waypointsTreeController,
                     undoStack: widget.undoStack,
                     holonomicMode: _holonomicMode,
+                    defaultConstraints: _getDefaultConstraints(),
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();
@@ -474,6 +483,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       if (widget.hotReload) {
                         widget.telemetry?.hotReloadPath(widget.path);
                       }
+
+                      widget.onPathChanged?.call();
                     },
                     onPathChangedNoSim: () {
                       setState(() {
@@ -483,6 +494,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       if (widget.hotReload) {
                         widget.telemetry?.hotReloadPath(widget.path);
                       }
+
+                      widget.onPathChanged?.call();
                     },
                     onWaypointDeleted: (waypointIdx) {
                       widget.undoStack.add(Change(
@@ -613,6 +626,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
               if (!_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
+                  onPauseStateChanged: (value) => _paused = value,
+                  totalPathTime: _simTraj?.states.last.time ?? 1.0,
                 ),
             ],
           ),
@@ -627,14 +642,24 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       num linearVel = widget.path.previewStartingState?.velocity ?? 0;
       num rotationRadians =
           (widget.path.previewStartingState?.rotation ?? 0) * (pi / 180.0);
+
+      num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
+          Defaults.maxModuleSpeed;
+      num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
+          0.1; // Assuming ~3in thick bumpers
+
       setState(() {
-        _simTraj = Trajectory.simulate(widget.path, linearVel, rotationRadians);
+        _simTraj = Trajectory.simulate(widget.path, linearVel, rotationRadians,
+            maxModuleSpeed: maxModuleSpeed, driveBaseRadius: radius);
       });
-      _previewController.stop();
-      _previewController.reset();
-      _previewController.duration =
-          Duration(milliseconds: (_simTraj!.states.last.time * 1000).toInt());
-      _previewController.repeat();
+
+      if (!_paused) {
+        _previewController.stop();
+        _previewController.reset();
+        _previewController.duration =
+            Duration(milliseconds: (_simTraj!.states.last.time * 1000).toInt());
+        _previewController.repeat();
+      }
     }
   }
 
@@ -679,5 +704,19 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
   double _pixelsToMeters(double pixels) {
     return (pixels / PathPainter.scale) / widget.fieldImage.pixelsPerMeter;
+  }
+
+  PathConstraints _getDefaultConstraints() {
+    return PathConstraints(
+      maxVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+          Defaults.defaultMaxVel,
+      maxAcceleration: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+          Defaults.defaultMaxAccel,
+      maxAngularVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+          Defaults.defaultMaxAngVel,
+      maxAngularAcceleration:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
+              Defaults.defaultMaxAngAccel,
+    );
   }
 }

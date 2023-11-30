@@ -1,7 +1,6 @@
 package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.util.GeometryUtil;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,13 +35,13 @@ public class PathSegment {
     this.segmentPoints = new ArrayList<>();
 
     for (double t = 0.0; t < 1.0; t += RESOLUTION) {
-      Rotation2d holonomicRotation = null;
+      RotationTarget holonomicRotation = null;
 
       if (!targetHolonomicRotations.isEmpty()) {
         if (Math.abs(targetHolonomicRotations.get(0).getPosition() - t)
             <= Math.abs(
                 targetHolonomicRotations.get(0).getPosition() - Math.min(t + RESOLUTION, 1.0))) {
-          holonomicRotation = targetHolonomicRotations.remove(0).getTarget();
+          holonomicRotation = targetHolonomicRotations.remove(0);
         }
       }
 
@@ -61,10 +60,8 @@ public class PathSegment {
     }
 
     if (endSegment) {
-      Rotation2d holonomicRotation =
-          targetHolonomicRotations.isEmpty()
-              ? null
-              : targetHolonomicRotations.remove(0).getTarget();
+      RotationTarget holonomicRotation =
+          targetHolonomicRotations.isEmpty() ? null : targetHolonomicRotations.remove(0);
       this.segmentPoints.add(
           new PathPoint(GeometryUtil.cubicLerp(p1, p2, p3, p4, 1.0), holonomicRotation));
     }

@@ -14,7 +14,7 @@ on:
         required: true
 
 env:
-  FLUTTER_VERSION: 3.13.9
+  FLUTTER_VERSION: 3.16.0
 
 jobs:
   formatting-analysis:
@@ -85,7 +85,7 @@ jobs:
         include:
           - os: windows-2022
             build-option: "windows"
-            artifact-path: "build/windows/runner/Release"
+            artifact-path: "build/windows/x64/runner/Release"
             artifact-name: PathPlanner-Windows
           - os: macos-13
             build-option: "macos"
@@ -145,9 +145,9 @@ jobs:
       - name: Copy redist
         if: ${{ matrix.build-option == 'windows' }}
         run: |
-          cp windows/redist/msvcp140.dll build/windows/runner/Release
-          cp windows/redist/vcruntime140.dll build/windows/runner/Release
-          cp windows/redist/vcruntime140_1.dll build/windows/runner/Release
+          cp windows/redist/msvcp140.dll build/windows/x64/runner/Release
+          cp windows/redist/vcruntime140.dll build/windows/x64/runner/Release
+          cp windows/redist/vcruntime140_1.dll build/windows/x64/runner/Release
       
       - name: Zip release
         if: ${{ matrix.build-option == 'macos' }}

@@ -49,6 +49,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   bool _draggingStartRot = false;
   Pose2d? _dragOldValue;
   Trajectory? _simPath;
+  bool _paused = false;
 
   late Size _robotSize;
   late AnimationController _previewController;
@@ -247,6 +248,8 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               if (_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
+                  onPauseStateChanged: (value) => _paused = value,
+                  totalPathTime: _simPath?.states.last.time ?? 1.0,
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -294,6 +297,8 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               if (!_treeOnRight)
                 PreviewSeekbar(
                   previewController: _previewController,
+                  onPauseStateChanged: (value) => _paused = value,
+                  totalPathTime: _simPath?.states.last.time ?? 1.0,
                 ),
             ],
           ),
@@ -306,9 +311,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   void _simulateAuto() async {
     Trajectory? simPath;
 
+    num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
+        Defaults.maxModuleSpeed;
+    num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
+        0.1; // Assuming ~3in thick bumpers
+
     try {
       simPath = TrajectoryGenerator.simulateAuto(
-          widget.autoPaths, widget.auto.startingPose);
+          widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius);
     } catch (err) {
       Log.error('Failed to simulate auto', err);
     }
@@ -319,11 +329,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       setState(() {
         _simPath = simPath;
       });
-      _previewController.stop();
-      _previewController.reset();
-      _previewController.duration =
-          Duration(milliseconds: (simPath.states.last.time * 1000).toInt());
-      _previewController.repeat();
+
+      if (!_paused) {
+        _previewController.stop();
+        _previewController.reset();
+        _previewController.duration =
+            Duration(milliseconds: (simPath.states.last.time * 1000).toInt());
+        _previewController.repeat();
+      }
     }
   }
 

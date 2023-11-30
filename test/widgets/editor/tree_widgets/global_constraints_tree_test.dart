@@ -37,6 +37,7 @@ void main() {
           onPathChanged: () => pathChanged = true,
           undoStack: undoStack,
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -63,6 +64,7 @@ void main() {
           onPathChanged: () => pathChanged = true,
           undoStack: undoStack,
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -92,6 +94,7 @@ void main() {
           onPathChanged: () => pathChanged = true,
           undoStack: undoStack,
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -121,6 +124,7 @@ void main() {
           onPathChanged: () => pathChanged = true,
           undoStack: undoStack,
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -150,6 +154,7 @@ void main() {
           onPathChanged: () => pathChanged = true,
           undoStack: undoStack,
           holonomicMode: true,
+          defaultConstraints: PathConstraints(),
         ),
       ),
     ));
@@ -169,5 +174,40 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.globalConstraints.maxAngularAcceleration, 1.0);
+  });
+
+  testWidgets('use defaults checkbox', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GlobalConstraintsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+          holonomicMode: true,
+          defaultConstraints: PathConstraints(),
+        ),
+      ),
+    ));
+
+    final check = find.byType(Checkbox);
+
+    expect(check, findsOneWidget);
+
+    await widgetTester.tap(check);
+    await widgetTester.pump();
+
+    expect(pathChanged, true);
+    expect(path.globalConstraints, PathConstraints());
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(
+        path.globalConstraints,
+        PathConstraints(
+          maxVelocity: 1.0,
+          maxAcceleration: 1.0,
+          maxAngularVelocity: 1.0,
+          maxAngularAcceleration: 1.0,
+        ));
   });
 }

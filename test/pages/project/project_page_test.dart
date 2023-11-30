@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
@@ -1246,6 +1248,7 @@ void main() {
   });
 
   testWidgets('named command rename', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await fs.directory(join(deployPath, 'paths')).create(recursive: true);
@@ -1320,7 +1323,69 @@ void main() {
     await widgetTester.pumpAndSettle();
   });
 
+  testWidgets('linked waypoint rename', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
+
+    Command.named.add('test1');
+    Waypoint.linked['link1'] = const Point(0, 0);
+
+    PathPlannerPath path = PathPlannerPath.defaultPath(
+      pathDir: join(deployPath, 'paths'),
+      fs: fs,
+    );
+    path.waypoints[0].linkedName = 'link1';
+    path.generateAndSavePath();
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final fab = find.byType(FloatingActionButton);
+
+    expect(fab, findsOneWidget);
+
+    await widgetTester.tap(fab);
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.tap(find.text('Manage Linked Waypoints'));
+    await widgetTester.pumpAndSettle();
+
+    final renameBtn = find.descendant(
+        of: find.widgetWithText(ListTile, 'link1'),
+        matching: find.byTooltip('Rename linked waypoint'));
+    expect(renameBtn, findsOneWidget);
+
+    await widgetTester.tap(renameBtn);
+    await widgetTester.pumpAndSettle();
+
+    final textField = find.descendant(
+        of: find.byType(AlertDialog), matching: find.byType(TextField));
+
+    await widgetTester.enterText(textField, 'link1renamed');
+    await widgetTester.pump();
+
+    final confirmBtn = find.text('Confirm');
+
+    await widgetTester.tap(confirmBtn);
+    await widgetTester.pumpAndSettle();
+  });
+
   testWidgets('named command remove', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await fs.directory(join(deployPath, 'paths')).create(recursive: true);
@@ -1378,6 +1443,60 @@ void main() {
     final removeBtn = find.descendant(
         of: find.widgetWithText(ListTile, 'test1'),
         matching: find.byTooltip('Remove named command'));
+    expect(removeBtn, findsOneWidget);
+
+    await widgetTester.tap(removeBtn);
+    await widgetTester.pumpAndSettle();
+
+    final confirmBtn = find.text('Confirm');
+
+    await widgetTester.tap(confirmBtn);
+    await widgetTester.pumpAndSettle();
+  });
+
+  testWidgets('linked waypoint remove', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
+
+    Waypoint.linked['link1'] = const Point(0, 0);
+
+    PathPlannerPath path = PathPlannerPath.defaultPath(
+      pathDir: join(deployPath, 'paths'),
+      fs: fs,
+    );
+    path.waypoints[0].linkedName = 'link1';
+    path.generateAndSavePath();
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final fab = find.byType(FloatingActionButton);
+
+    expect(fab, findsOneWidget);
+
+    await widgetTester.tap(fab);
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.tap(find.text('Manage Linked Waypoints'));
+    await widgetTester.pumpAndSettle();
+
+    final removeBtn = find.descendant(
+        of: find.widgetWithText(ListTile, 'link1'),
+        matching: find.byTooltip('Remove linked waypoint'));
     expect(removeBtn, findsOneWidget);
 
     await widgetTester.tap(removeBtn);

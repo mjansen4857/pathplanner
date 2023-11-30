@@ -29,7 +29,11 @@ void main() {
       goalEndState: GoalEndState(),
       constraintZones: [],
       rotationTargets: [
-        RotationTarget(waypointRelativePos: 0.5, rotationDegrees: 45),
+        RotationTarget(
+          waypointRelativePos: 0.5,
+          rotationDegrees: 45,
+          rotateFast: true,
+        ),
       ],
       eventMarkers: [],
       pathDir: '',
@@ -37,9 +41,11 @@ void main() {
       reversed: false,
       folder: null,
       previewStartingState: null,
+      useDefaultConstraints: false,
     );
 
-    Trajectory sim = Trajectory.simulate(test, 0, 0);
+    Trajectory sim = Trajectory.simulate(test, 0, 0,
+        maxModuleSpeed: 4.5, driveBaseRadius: 0.425);
 
     // Basic coverage test, expand in future
     expect(sim.states.last.time, closeTo(2.83, 0.05));
@@ -77,29 +83,30 @@ void main() {
       reversed: false,
       folder: null,
       previewStartingState: null,
+      useDefaultConstraints: false,
     );
 
     // Basic coverage tests, expand in future
-    Trajectory? sim = TrajectoryGenerator.simulateAuto([], null);
+    Trajectory? sim = TrajectoryGenerator.simulateAuto([], null, 4.5, 0.425);
     expect(sim, isNull);
 
     sim = TrajectoryGenerator.simulateAuto(
-        [test], Pose2d(position: const Point(1, 1)));
+        [test], Pose2d(position: const Point(1, 1)), 4.5, 0.425);
     expect(sim, isNotNull);
     expect(sim!.states.last.time, closeTo(2.83, 0.05));
 
     sim = TrajectoryGenerator.simulateAuto(
-        [test], Pose2d(position: const Point(0, 0)));
+        [test], Pose2d(position: const Point(0, 0)), 4.5, 0.425);
     expect(sim, isNotNull);
     expect(sim!.states.last.time, closeTo(3.67, 0.05));
 
     sim = TrajectoryGenerator.simulateAuto(
-        [test], Pose2d(position: const Point(8, 2)));
+        [test], Pose2d(position: const Point(8, 2)), 4.5, 0.425);
     expect(sim, isNotNull);
     expect(sim!.states.last.time, closeTo(1.73, 0.05));
 
     sim = TrajectoryGenerator.simulateAuto(
-        [test], Pose2d(position: const Point(3, 1)));
+        [test], Pose2d(position: const Point(3, 1)), 4.5, 0.425);
     expect(sim, isNotNull);
     expect(sim!.states.last.time, closeTo(2.58, 0.05));
   });

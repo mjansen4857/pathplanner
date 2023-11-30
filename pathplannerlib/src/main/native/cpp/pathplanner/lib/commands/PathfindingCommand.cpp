@@ -13,7 +13,7 @@ PathfindingCommand::PathfindingCommand(
 		std::unique_ptr<PathFollowingController> controller,
 		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
 		frc2::Requirements requirements) : m_targetPath(targetPath), m_targetPose(), m_goalEndState(
-		0_mps, frc::Rotation2d()), m_constraints(constraints), m_poseSupplier(
+		0_mps, frc::Rotation2d(), true), m_constraints(constraints), m_poseSupplier(
 		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
 		std::move(controller)), m_rotationDelayDistance(rotationDelayDistance), m_replanningConfig(
 		replanningConfig) {
@@ -23,8 +23,8 @@ PathfindingCommand::PathfindingCommand(
 
 	frc::Rotation2d targetRotation;
 	for (PathPoint p : m_targetPath->getAllPathPoints()) {
-		if (p.holonomicRotation.has_value()) {
-			targetRotation = p.holonomicRotation.value();
+		if (p.rotationTarget.has_value()) {
+			targetRotation = p.rotationTarget.value().getTarget();
 			break;
 		}
 	}
@@ -33,7 +33,7 @@ PathfindingCommand::PathfindingCommand(
 			targetRotation);
 	m_goalEndState = GoalEndState(
 			m_targetPath->getGlobalConstraints().getMaxVelocity(),
-			targetRotation);
+			targetRotation, true);
 }
 
 PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
@@ -44,7 +44,7 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 		std::unique_ptr<PathFollowingController> controller,
 		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
 		frc2::Requirements requirements) : m_targetPath(), m_targetPose(
-		targetPose), m_goalEndState(goalEndVel, targetPose.Rotation()), m_constraints(
+		targetPose), m_goalEndState(goalEndVel, targetPose.Rotation(), true), m_constraints(
 		constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
 		speedsSupplier), m_output(output), m_controller(std::move(controller)), m_rotationDelayDistance(
 		rotationDelayDistance), m_replanningConfig(replanningConfig) {
@@ -84,11 +84,41 @@ void PathfindingCommand::Execute() {
 	PathPlannerLogging::logCurrentPose(currentPose);
 	PPLibTelemetry::setCurrentPose(currentPose);
 
-	if (Pathfinding::isNewPathAvailable()) {
+	bool skipUpdates = !m_currentTrajectory.getStates().empty()
+			&& currentPose.Translation().Distance(
+					m_currentTrajectory.getEndState().position) < 2.0_m;
+
+	if (!skipUpdates && Pathfinding::isNewPathAvailable()) {
 		m_currentPath = Pathfinding::getCurrentPath(m_constraints,
 				m_goalEndState);
 
 		if (m_currentPath) {
+			m_currentTrajectory = PathPlannerTrajectory(m_currentPath,
+					currentSpeeds, currentPose.Rotation());
+
+			// Find the two closest states in front of and behind robot
+			size_t closestState1Idx = 0;
+			size_t closestState2Idx = 1;
+			while (true) {
+				auto closest2Dist = m_currentTrajectory.getState(
+						closestState2Idx).position.Distance(
+						currentPose.Translation());
+				auto nextDist = m_currentTrajectory.getState(
+						closestState2Idx + 1).position.Distance(
+						currentPose.Translation());
+				if (nextDist < closest2Dist) {
+					closestState1Idx++;
+					closestState2Idx++;
+				} else {
+					break;
+				}
+			}
+
+			// Use the closest 2 states to interpolate what the time offset should be
+			// This will account for the delay in pathfinding
+			auto closestState1 = m_currentTrajectory.getState(closestState1Idx);
+			auto closestState2 = m_currentTrajectory.getState(closestState2Idx);
+
 			frc::ChassisSpeeds fieldRelativeSpeeds =
 					frc::ChassisSpeeds::FromRobotRelativeSpeeds(currentSpeeds,
 							currentPose.Rotation());
@@ -97,41 +127,22 @@ void PathfindingCommand::Execute() {
 			frc::Rotation2d headingError = currentHeading
 					- m_currentPath->getStartingDifferentialPose().Rotation();
 			bool onHeading = units::math::hypot(currentSpeeds.vx,
-					currentSpeeds.vy) < 0.5_mps
+					currentSpeeds.vy) < 1.0_mps
 					|| units::math::abs(headingError.Degrees()) < 30_deg;
 
-			if (!m_replanningConfig.enableInitialReplanning
-					|| (currentPose.Translation().Distance(
-							m_currentPath->getPoint(0).position) <= 0.25_m
-							&& onHeading)) {
-				m_currentTrajectory = PathPlannerTrajectory(m_currentPath,
+			// Replan the path if we are more than 0.25m away or our heading is off
+			if (!onHeading
+					|| (m_replanningConfig.enableInitialReplanning
+							&& currentPose.Translation().Distance(
+									closestState1.position) > 0.25_m)) {
+				m_currentPath = m_currentPath->replan(currentPose,
 						currentSpeeds);
 
-				// Find the two closest states in front of and behind robot
-				size_t closestState1Idx = 0;
-				size_t closestState2Idx = 1;
-				while (true) {
-					auto closest2Dist = m_currentTrajectory.getState(
-							closestState2Idx).position.Distance(
-							currentPose.Translation());
-					auto nextDist = m_currentTrajectory.getState(
-							closestState2Idx + 1).position.Distance(
-							currentPose.Translation());
-					if (nextDist < closest2Dist) {
-						closestState1Idx++;
-						closestState2Idx++;
-					} else {
-						break;
-					}
-				}
+				m_currentTrajectory = PathPlannerTrajectory(m_currentPath,
+						currentSpeeds, currentPose.Rotation());
 
-				// Use the closest 2 states to interpolate what the time offset should be
-				// This will account for the delay in pathfinding
-				auto closestState1 = m_currentTrajectory.getState(
-						closestState1Idx);
-				auto closestState2 = m_currentTrajectory.getState(
-						closestState2Idx);
-
+				m_timeOffset = 0_s;
+			} else {
 				auto d = closestState1.position.Distance(
 						closestState2.position);
 				double t = ((currentPose.Translation().Distance(
@@ -139,20 +150,10 @@ void PathfindingCommand::Execute() {
 
 				m_timeOffset = GeometryUtil::unitLerp(closestState1.time,
 						closestState2.time, t);
-
-				PathPlannerLogging::logActivePath (m_currentPath);
-				PPLibTelemetry::setCurrentPath(m_currentPath);
-			} else {
-				auto replanned = m_currentPath->replan(currentPose,
-						currentSpeeds);
-				m_currentTrajectory = PathPlannerTrajectory(replanned,
-						currentSpeeds);
-
-				m_timeOffset = 0_s;
-
-				PathPlannerLogging::logActivePath(replanned);
-				PPLibTelemetry::setCurrentPath(replanned);
 			}
+
+			PathPlannerLogging::logActivePath (m_currentPath);
+			PPLibTelemetry::setCurrentPath(m_currentPath);
 
 			m_timer.Reset();
 			m_timer.Start();
@@ -244,4 +245,6 @@ void PathfindingCommand::End(bool interrupted) {
 	if (!interrupted && m_goalEndState.getVelocity() < 0.1_mps) {
 		m_output(frc::ChassisSpeeds());
 	}
+
+	PathPlannerLogging::logActivePath(nullptr);
 }

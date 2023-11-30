@@ -24,6 +24,7 @@ class PrefsKeys {
   static const String defaultMaxAccel = 'defaultMaxAccel';
   static const String defaultMaxAngVel = 'defaultMaxAngVel';
   static const String defaultMaxAngAccel = 'defaultMaxAngAccel';
+  static const String maxModuleSpeed = 'maxModuleSpeed';
 }
 
 class Defaults {
@@ -50,4 +51,5 @@ class Defaults {
   static const double defaultMaxAccel = 3.0;
   static const double defaultMaxAngVel = 540.0;
   static const double defaultMaxAngAccel = 720.0;
+  static const double maxModuleSpeed = 4.5;
 }

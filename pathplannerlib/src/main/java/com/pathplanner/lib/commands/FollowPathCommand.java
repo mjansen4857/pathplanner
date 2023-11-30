@@ -69,7 +69,8 @@ public class FollowPathCommand extends Command {
                 >= 0.25)) {
       replanPath(currentPose, currentSpeeds);
     } else {
-      generatedTrajectory = new PathPlannerTrajectory(path, currentSpeeds);
+      generatedTrajectory =
+          new PathPlannerTrajectory(path, currentSpeeds, currentPose.getRotation());
       PathPlannerLogging.logActivePath(path);
       PPLibTelemetry.setCurrentPath(path);
     }
@@ -142,11 +143,14 @@ public class FollowPathCommand extends Command {
     if (!interrupted && path.getGoalEndState().getVelocity() < 0.1) {
       output.accept(new ChassisSpeeds());
     }
+
+    PathPlannerLogging.logActivePath(null);
   }
 
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
-    generatedTrajectory = new PathPlannerTrajectory(replanned, currentSpeeds);
+    generatedTrajectory =
+        new PathPlannerTrajectory(replanned, currentSpeeds, currentPose.getRotation());
     PathPlannerLogging.logActivePath(replanned);
     PPLibTelemetry.setCurrentPath(replanned);
   }

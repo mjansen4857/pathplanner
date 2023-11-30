@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/constraint_zones_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dart';
@@ -32,6 +33,7 @@ class PathTree extends StatefulWidget {
   final ChangeStack undoStack;
   final num? pathRuntime;
   final bool holonomicMode;
+  final PathConstraints defaultConstraints;
 
   const PathTree({
     super.key,
@@ -56,6 +58,7 @@ class PathTree extends StatefulWidget {
     this.pathRuntime,
     this.onPathChangedNoSim,
     required this.holonomicMode,
+    required this.defaultConstraints,
   });
 
   @override
@@ -102,12 +105,14 @@ class _PathTreeState extends State<PathTree> {
                   onWaypointSelected: widget.onWaypointSelected,
                   onPathChanged: widget.onPathChanged,
                   undoStack: widget.undoStack,
+                  holonomicMode: widget.holonomicMode,
                 ),
                 GlobalConstraintsTree(
                   path: widget.path,
                   onPathChanged: widget.onPathChanged,
                   undoStack: widget.undoStack,
                   holonomicMode: widget.holonomicMode,
+                  defaultConstraints: widget.defaultConstraints,
                 ),
                 GoalEndStateTree(
                   path: widget.path,

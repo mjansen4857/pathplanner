@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -12,10 +14,11 @@ import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
-import 'package:pathplanner/widgets/dialogs/named_commands_dialog.dart';
+import 'package:pathplanner/widgets/dialogs/management_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,6 +35,9 @@ class ProjectPage extends StatefulWidget {
   final bool hotReload;
   final VoidCallback? onFoldersChanged;
   final bool simulatePath;
+
+  // Stupid workaround to get when settings are updated
+  static bool settingsUpdated = false;
 
   const ProjectPage({
     super.key,
@@ -170,6 +176,20 @@ class _ProjectPageState extends State<ProjectPage> {
       );
     }
 
+    // Stupid workaround but it works
+    if (ProjectPage.settingsUpdated) {
+      PathConstraints defaultConstraints = _getDefaultConstraints();
+
+      for (PathPlannerPath path in _paths) {
+        if (path.useDefaultConstraints) {
+          path.globalConstraints = defaultConstraints.clone();
+          path.generateAndSavePath();
+        }
+      }
+
+      ProjectPage.settingsUpdated = false;
+    }
+
     return Stack(
       children: [
         Container(
@@ -207,12 +227,12 @@ class _ProjectPageState extends State<ProjectPage> {
             padding: const EdgeInsets.all(16.0),
             child: FloatingActionButton(
               clipBehavior: Clip.antiAlias,
-              tooltip: 'Manage Named Commands',
+              tooltip: 'Manage Named Commands & Linked Waypoints',
               backgroundColor: colorScheme.surface,
               foregroundColor: colorScheme.onSurface,
               onPressed: () => showDialog(
                 context: context,
-                builder: (BuildContext context) => NamedCommandsDialog(
+                builder: (BuildContext context) => ManagementDialog(
                   onCommandRenamed: (String oldName, String newName) {
                     setState(() {
                       for (PathPlannerPath path in _paths) {
@@ -243,6 +263,50 @@ class _ProjectPageState extends State<ProjectPage> {
                         _replaceNamedCommand(
                             name, null, auto.sequence.commands);
                         auto.saveFile();
+                      }
+                    });
+                  },
+                  onLinkedRenamed: (String oldName, String newName) {
+                    setState(() {
+                      Point? pos = Waypoint.linked.remove(oldName);
+
+                      if (pos != null) {
+                        Waypoint.linked[newName] = pos;
+
+                        for (PathPlannerPath path in _paths) {
+                          bool changed = false;
+
+                          for (Waypoint w in path.waypoints) {
+                            if (w.linkedName == oldName) {
+                              w.linkedName = newName;
+                              changed = true;
+                            }
+                          }
+
+                          if (changed) {
+                            path.generateAndSavePath();
+                          }
+                        }
+                      }
+                    });
+                  },
+                  onLinkedDeleted: (String name) {
+                    setState(() {
+                      Waypoint.linked.remove(name);
+
+                      for (PathPlannerPath path in _paths) {
+                        bool changed = false;
+
+                        for (Waypoint w in path.waypoints) {
+                          if (w.linkedName == name) {
+                            w.linkedName = null;
+                            changed = true;
+                          }
+                        }
+
+                        if (changed) {
+                          path.generateAndSavePath();
+                        }
                       }
                     });
                   },
@@ -663,6 +727,32 @@ class _ProjectPageState extends State<ProjectPage> {
               telemetry: widget.telemetry,
               hotReload: widget.hotReload,
               simulatePath: widget.simulatePath,
+              onPathChanged: () {
+                // Make sure all paths with linked waypoints are updated
+                for (PathPlannerPath p in _paths) {
+                  bool changed = false;
+
+                  for (Waypoint w in p.waypoints) {
+                    if (w.linkedName != null) {
+                      var anchor = Waypoint.linked[w.linkedName];
+
+                      if (anchor != null &&
+                          anchor.distanceTo(w.anchor) >= 0.01) {
+                        w.move(anchor.x, anchor.y);
+                        changed = true;
+                      }
+                    }
+                  }
+
+                  if (changed) {
+                    p.generateAndSavePath();
+
+                    if (widget.hotReload) {
+                      widget.telemetry?.hotReloadPath(p);
+                    }
+                  }
+                }
+              },
             ),
           ),
         );

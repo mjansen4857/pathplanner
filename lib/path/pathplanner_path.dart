@@ -32,6 +32,7 @@ class PathPlannerPath {
   bool reversed;
   PreviewStartingState? previewStartingState;
   String? folder;
+  bool useDefaultConstraints;
 
   FileSystem fs;
   String pathDir;
@@ -60,7 +61,8 @@ class PathPlannerPath {
         rotationTargets = [],
         eventMarkers = [],
         reversed = false,
-        previewStartingState = null {
+        previewStartingState = null,
+        useDefaultConstraints = false {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),
@@ -93,6 +95,7 @@ class PathPlannerPath {
     required this.reversed,
     required this.folder,
     required this.previewStartingState,
+    required this.useDefaultConstraints,
   }) : pathPoints = [] {
     generatePathPoints();
   }
@@ -127,6 +130,7 @@ class PathPlannerPath {
           previewStartingState: json['previewStartingState'] == null
               ? null
               : PreviewStartingState.fromJson(json['previewStartingState']),
+          useDefaultConstraints: json['useDefaultConstraints'] ?? false,
         );
 
   void generateAndSavePath() {
@@ -214,6 +218,7 @@ class PathPlannerPath {
       'reversed': reversed,
       'folder': folder,
       'previewStartingState': previewStartingState?.toJson(),
+      'useDefaultConstraints': useDefaultConstraints,
     };
   }
 
@@ -342,7 +347,7 @@ class PathPlannerPath {
     for (int i = 0; i < waypoints.length - 1; i++) {
       for (double t = 0; t < 1.0; t += pathResolution) {
         num actualWaypointPos = i + t;
-        num? rotation;
+        RotationTarget? rotation;
 
         if (unaddedTargets.isNotEmpty) {
           if ((unaddedTargets[0].waypointRelativePos - actualWaypointPos)
@@ -351,7 +356,7 @@ class PathPlannerPath {
                       min(actualWaypointPos + pathResolution,
                           waypoints.length - 1))
                   .abs()) {
-            rotation = unaddedTargets.removeAt(0).rotationDegrees;
+            rotation = unaddedTargets.removeAt(0);
           }
         }
 
@@ -378,7 +383,7 @@ class PathPlannerPath {
         pathPoints.add(
           PathPoint(
             position: position,
-            holonomicRotation: rotation,
+            rotationTarget: rotation,
             constraints: constraints ?? globalConstraints,
             distanceAlongPath: dist,
           ),
@@ -388,7 +393,10 @@ class PathPlannerPath {
       if (i == waypoints.length - 2) {
         pathPoints.add(PathPoint(
           position: waypoints[waypoints.length - 1].anchor,
-          holonomicRotation: goalEndState.rotation,
+          rotationTarget: RotationTarget(
+              rotationDegrees: goalEndState.rotation,
+              waypointRelativePos: waypoints.length - 1,
+              rotateFast: goalEndState.rotateFast),
           constraints: globalConstraints,
           distanceAlongPath: pathPoints.last.distanceAlongPath +
               (pathPoints.last.position
@@ -458,6 +466,7 @@ class PathPlannerPath {
       reversed: reversed,
       folder: folder,
       previewStartingState: previewStartingState?.clone(),
+      useDefaultConstraints: useDefaultConstraints,
     );
   }
 

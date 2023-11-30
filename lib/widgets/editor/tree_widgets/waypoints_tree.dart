@@ -1,9 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -18,6 +21,7 @@ class WaypointsTree extends StatefulWidget {
   final WaypointsTreeController? controller;
   final int? initialSelectedWaypoint;
   final ChangeStack undoStack;
+  final bool holonomicMode;
 
   const WaypointsTree({
     super.key,
@@ -29,6 +33,7 @@ class WaypointsTree extends StatefulWidget {
     this.initialSelectedWaypoint,
     this.onWaypointDeleted,
     required this.undoStack,
+    this.holonomicMode = Defaults.holonomicMode,
   });
 
   @override
@@ -131,6 +136,17 @@ class _WaypointsTreeState extends State<WaypointsTree> {
       title: Row(
         children: [
           Text(name),
+          if (waypoint.linkedName != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Tooltip(
+                message: waypoint.linkedName,
+                child: const Icon(
+                  Icons.link,
+                  color: Colors.green,
+                ),
+              ),
+            ),
           Expanded(child: Container()),
           Tooltip(
             message: waypoint.isLocked ? 'Unlock' : 'Lock',
@@ -241,7 +257,8 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                     ),
                   ),
                 ),
-              if (waypointIdx != 0) const SizedBox(width: 8),
+              if (waypointIdx != 0 && waypointIdx != waypoints.length - 1)
+                const SizedBox(width: 8),
               if (waypointIdx != waypoints.length - 1)
                 Expanded(
                   child: Padding(
@@ -267,59 +284,235 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             ],
           ),
         ),
-        Visibility(
-          visible: waypointIdx != waypoints.length - 1,
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  widget.undoStack.add(Change(
-                    [
-                      PathPlannerPath.cloneWaypoints(widget.path.waypoints),
-                      PathPlannerPath.cloneConstraintZones(
-                          widget.path.constraintZones),
-                      PathPlannerPath.cloneEventMarkers(
-                          widget.path.eventMarkers),
-                      PathPlannerPath.cloneRotationTargets(
-                          widget.path.rotationTargets),
-                    ],
-                    () {
-                      widget.path.insertWaypointAfter(waypointIdx);
-                      widget.onPathChanged?.call();
+        const SizedBox(height: 8.0),
+        Center(
+          child: Wrap(
+            runSpacing: 8.0,
+            alignment: WrapAlignment.center,
+            children: [
+              if (widget.holonomicMode)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      widget.undoStack.add(Change(
+                        PathPlannerPath.cloneRotationTargets(
+                            widget.path.rotationTargets),
+                        () {
+                          widget.path.rotationTargets.add(
+                              RotationTarget(waypointRelativePos: waypointIdx));
+                          widget.onPathChanged?.call();
+                        },
+                        (oldValue) {
+                          widget.path.rotationTargets =
+                              PathPlannerPath.cloneRotationTargets(oldValue);
+                          widget.onPathChanged?.call();
+                        },
+                      ));
                     },
-                    (oldValue) {
-                      _selectedWaypoint = null;
-                      widget.onWaypointHovered?.call(null);
-                      widget.onWaypointSelected?.call(null);
-
-                      widget.path.waypoints = PathPlannerPath.cloneWaypoints(
-                          oldValue[0] as List<Waypoint>);
-                      widget.path.constraintZones =
-                          PathPlannerPath.cloneConstraintZones(
-                              oldValue[1] as List<ConstraintsZone>);
-                      widget.path.eventMarkers =
-                          PathPlannerPath.cloneEventMarkers(
-                              oldValue[2] as List<EventMarker>);
-                      widget.path.rotationTargets =
-                          PathPlannerPath.cloneRotationTargets(
-                              oldValue[3] as List<RotationTarget>);
-
-                      widget.onPathChanged?.call();
-                    },
-                  ));
-                },
-                icon: const Icon(Icons.add),
-                style: ElevatedButton.styleFrom(
-                  elevation: 1.0,
+                    icon: const Icon(Icons.replay, size: 20),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1.0,
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: const Text('Add Rotation Target'),
+                  ),
                 ),
-                label: const Text('Insert New Waypoint After'),
-              ),
-            ),
+              if (waypointIdx != waypoints.length - 1)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      widget.undoStack.add(Change(
+                        [
+                          PathPlannerPath.cloneWaypoints(widget.path.waypoints),
+                          PathPlannerPath.cloneConstraintZones(
+                              widget.path.constraintZones),
+                          PathPlannerPath.cloneEventMarkers(
+                              widget.path.eventMarkers),
+                          PathPlannerPath.cloneRotationTargets(
+                              widget.path.rotationTargets),
+                        ],
+                        () {
+                          widget.path.insertWaypointAfter(waypointIdx);
+                          widget.onPathChanged?.call();
+                        },
+                        (oldValue) {
+                          _selectedWaypoint = null;
+                          widget.onWaypointHovered?.call(null);
+                          widget.onWaypointSelected?.call(null);
+
+                          widget.path.waypoints =
+                              PathPlannerPath.cloneWaypoints(
+                                  oldValue[0] as List<Waypoint>);
+                          widget.path.constraintZones =
+                              PathPlannerPath.cloneConstraintZones(
+                                  oldValue[1] as List<ConstraintsZone>);
+                          widget.path.eventMarkers =
+                              PathPlannerPath.cloneEventMarkers(
+                                  oldValue[2] as List<EventMarker>);
+                          widget.path.rotationTargets =
+                              PathPlannerPath.cloneRotationTargets(
+                                  oldValue[3] as List<RotationTarget>);
+
+                          widget.onPathChanged?.call();
+                        },
+                      ));
+                    },
+                    icon: const Icon(Icons.add, size: 20),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1.0,
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: const Text('New Waypoint After'),
+                  ),
+                ),
+              if (waypoint.linkedName == null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showLinkedDialog(waypointIdx),
+                    icon: const Icon(Icons.link, size: 20),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1.0,
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: const Text('Link Waypoint'),
+                  ),
+                ),
+              if (waypoint.linkedName != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      widget.undoStack.add(_waypointChange(waypoint, () {
+                        waypoint.linkedName = null;
+                      }, (oldVal) {
+                        waypoint.linkedName = oldVal.linkedName;
+                      }));
+                    },
+                    icon: const Icon(Icons.link_off, size: 20),
+                    style: ElevatedButton.styleFrom(
+                      elevation: 1.0,
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    label: const Text('Unlink'),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
     );
+  }
+
+  void _showLinkedDialog(int waypointIdx) {
+    final TextEditingController controller = TextEditingController();
+
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Link Waypoint'),
+            content: SizedBox(
+              width: 400,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                      'Convert this waypoint to a linked waypoint. Updating the position one instance of a linked waypoint will update all linked waypoints under the same name.'),
+                  const SizedBox(height: 18),
+                  const Text(
+                      'If you choose the name of an existing linked waypoint, this waypoint will be updated to match its position.'),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownMenu<String>(
+                          label: const Text('Linked Waypoint Name'),
+                          controller: controller,
+                          enableSearch: false,
+                          enableFilter: true,
+                          width: 400,
+                          dropdownMenuEntries: [
+                            for (String name in Waypoint.linked.keys)
+                              DropdownMenuEntry(
+                                value: name,
+                                label: name,
+                              ),
+                          ],
+                          inputDecorationTheme: InputDecorationTheme(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding:
+                                const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                            isDense: true,
+                            constraints: const BoxConstraints(
+                              maxHeight: 42,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: Navigator.of(context).pop,
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (controller.text.isNotEmpty) {
+                    String name = controller.text;
+
+                    if (Waypoint.linked.containsKey(name)) {
+                      // Linked waypoint exists, update this waypoint
+                      Point anchor = Waypoint.linked[name]!;
+
+                      widget.undoStack
+                          .add(_waypointChange(waypoints[waypointIdx], () {
+                        waypoints[waypointIdx].linkedName = name;
+                        waypoints[waypointIdx].move(anchor.x, anchor.y);
+                      }, (oldVal) {
+                        waypoints[waypointIdx] = oldVal.clone();
+                      }));
+                    } else {
+                      // Create new linked waypoint
+                      widget.undoStack
+                          .add(_waypointChange(waypoints[waypointIdx], () {
+                        waypoints[waypointIdx].linkedName = name;
+                        Point anchor = Point(waypoints[waypointIdx].anchor.x,
+                            waypoints[waypointIdx].anchor.y);
+                        Waypoint.linked[name] = anchor;
+                      }, (oldVal) {
+                        waypoints[waypointIdx] = oldVal.clone();
+                        Waypoint.linked.remove(name);
+                      }));
+                    }
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text('Confirm'),
+              ),
+            ],
+          );
+        });
   }
 
   Change _waypointChange(

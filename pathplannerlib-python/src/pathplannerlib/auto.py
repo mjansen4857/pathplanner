@@ -1,7 +1,7 @@
 from commands2.command import Command
 from commands2.functionalcommand import FunctionalCommand
 import commands2.cmd as cmd
-from path import PathPlannerPath
+from . import path as p
 
 
 class NamedCommands:
@@ -101,7 +101,7 @@ class CommandUtil:
     @staticmethod
     def _pathCommandFromData(data_json: dict) -> Command:
         pathName = str(data_json['pathName'])
-        path = PathPlannerPath.fromPathFile(pathName)
+        path = p.PathPlannerPath.fromPathFile(pathName)
         return cmd.none()  # TODO
 
     @staticmethod

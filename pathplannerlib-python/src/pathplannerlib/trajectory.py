@@ -172,7 +172,7 @@ class PathPlannerTrajectory:
                     t = 0.0
 
                 state.targetHolonomicRotation = (prevRotationTargetRot + (
-                            nextTarget.target - prevRotationTargetRot)) * t
+                        nextTarget.target - prevRotationTargetRot) * t)
 
             state.positionMeters = path.getPoint(i).position
             curveRadius = path.getPoint(i).curveRadius

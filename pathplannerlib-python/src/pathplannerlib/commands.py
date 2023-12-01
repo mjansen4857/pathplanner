@@ -230,8 +230,8 @@ class FollowPathHolonomic(FollowPathCommand):
         :param requirements: Subsystems required by this command, usually just the drive subsystem
         """
         super().__init__(path, pose_supplier, speeds_supplier, output_robot_relative, PPHolonomicDriveController(
-            config.translationConstants, config.rotationConstants, config.period, config.maxModuleSpeed,
-            config.driveBaseRadius
+            config.translationConstants, config.rotationConstants, config.maxModuleSpeed, config.driveBaseRadius,
+            config.period
         ), config.replanningConfig, *requirements)
 
 

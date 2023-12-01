@@ -55,8 +55,8 @@ class CommandUtil:
         return FunctionalCommand(
             lambda: event_command.initialize(),
             lambda: event_command.execute(),
-            lambda: event_command.isFinished(),
             lambda interupted: event_command.end(interupted),
+            lambda: event_command.isFinished(),
             *event_command.getRequirements()
         )
 
@@ -96,7 +96,7 @@ class CommandUtil:
     @staticmethod
     def _namedCommandFromData(data_json: dict) -> Command:
         name = str(data_json['name'])
-        return cmd.none()  # TODO
+        return NamedCommands.getCommand(name)
 
     @staticmethod
     def _pathCommandFromData(data_json: dict) -> Command:

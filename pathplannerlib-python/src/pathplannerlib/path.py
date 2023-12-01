@@ -10,6 +10,7 @@ from wpimath import inputModulus
 from commands2 import Command
 import commands2.cmd as cmd
 from .geometry_util import decimal_range, cubicLerp, calculateRadius
+from .auto import CommandUtil
 from wpilib import getDeployDirectory
 import os
 import json
@@ -138,8 +139,7 @@ class EventMarker:
     @staticmethod
     def fromJson(json_dict: dict) -> EventMarker:
         pos = float(json_dict['waypointRelativePos'])
-        # TODO: get command from json
-        command = cmd.none()
+        command = CommandUtil.commandFromJson(json_dict['command'])
         return EventMarker(pos, command)
 
     def reset(self, robot_pose: Pose2d) -> None:

@@ -181,11 +181,62 @@ class LocalADStar(Pathfinder):
     def _extractPath(self, s_start: GridPosition, s_goal: GridPosition, real_start_pos: Translation2d, real_goal_pos: Translation2d, obstacles: Set[GridPosition]) -> List[PathPoint]:
         pass # TODO
 
-    def _findClosestNonObstacle(self, pos: GridPosition, obstacles: Set[GridPosition]) -> GridPosition:
-        pass # TODO
+    def _findClosestNonObstacle(self, pos: GridPosition, obstacles: Set[GridPosition]) -> Union[GridPosition, None]:
+        if pos not in obstacles:
+            return pos
+
+        visited = set()
+        queue = []
+
+        while len(queue) > 0:
+            check = queue.pop(0)
+            if check not in obstacles:
+                return check
+            visited.add(check)
+
+            for neighbor in self._getAllNeighbors(check):
+                if neighbor not in visited and neighbor not in queue:
+                    queue.append(neighbor)
+
+        return None
 
     def _walkable(self, s1: GridPosition, s2: GridPosition, obstacles: Set[GridPosition]) -> bool:
-        pass # TODO
+        x0 = s1.x
+        y0 = s1.y
+        x1 = s2.x
+        y1 = s2.y
+
+        dx = abs(x1 - x0)
+        dy = abs(y1 - y0)
+        x = x0
+        y = y0
+        n = 1 + dx + dy
+        xInc = 1 if x1 > x0 else -1
+        yInc = 1 if y1 > y0 else -1
+        error = dx - dy
+        dx *= 2
+        dy *= 2
+
+        while n > 0:
+            if GridPosition(x, y) in obstacles:
+                return False
+
+            if error > 0:
+                x += xInc
+                error -= dy
+            elif error < 0:
+                y += yInc
+                error += dx
+            else:
+                x += xInc
+                y += yInc
+                error -= dy
+                error += dx
+                n -= 1
+
+            n -= 1
+
+        return True
 
     def _reset(self, s_start: GridPosition, s_goal: GridPosition) -> None:
         self._g.clear()
@@ -322,4 +373,4 @@ class LocalADStar(Pathfinder):
         return GridPosition(x, y)
 
     def _gridPosToTranslation2d(self, pos: GridPosition) -> Translation2d:
-        return Translation2d((pos.x * self._nodeSize) + (self._nodeSize / 2.0), (pose.y * self._nodeSize) + (self._nodeSize / 2.0))
+        return Translation2d((pos.x * self._nodeSize) + (self._nodeSize / 2.0), (pos.y * self._nodeSize) + (self._nodeSize / 2.0))

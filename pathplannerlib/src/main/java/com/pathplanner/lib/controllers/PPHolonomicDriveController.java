@@ -150,7 +150,8 @@ public class PPHolonomicDriveController implements PathFollowingController {
             currentPose.getRotation().getRadians(),
             new TrapezoidProfile.State(targetRotation.getRadians(), 0),
             rotationConstraints);
-    double rotationFF = rotationController.getSetpoint().velocity;
+    double rotationFF =
+        targetState.holonomicAngularVelocityRps.orElse(rotationController.getSetpoint().velocity);
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
         xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback, currentPose.getRotation());

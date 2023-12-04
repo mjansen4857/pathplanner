@@ -29,6 +29,8 @@ public class PathPlannerPath {
   private boolean reversed;
   private Rotation2d previewStartingRotation;
 
+  private Optional<PathPlannerTrajectory> preGeneratedTrajectory = Optional.empty();
+
   /**
    * Create a new path planner path
    *
@@ -278,6 +280,76 @@ public class PathPlannerPath {
 
       PathPlannerPath path = PathPlannerPath.fromJson(json);
       PPLibTelemetry.registerHotReloadPath(pathName, path);
+      return path;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  public static PathPlannerPath fromChoreoTraj(String filePath) {
+    try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+      StringBuilder fileContentBuilder = new StringBuilder();
+      String line;
+      while ((line = br.readLine()) != null) {
+        fileContentBuilder.append(line);
+      }
+
+      String fileContent = fileContentBuilder.toString();
+      JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+      List<PathPlannerTrajectory.State> trajStates = new ArrayList<>();
+      for (var s : (JSONArray) json.get("samples")) {
+        JSONObject sample = (JSONObject) s;
+        PathPlannerTrajectory.State state = new PathPlannerTrajectory.State();
+
+        double time = ((Number) sample.get("timestamp")).doubleValue();
+        double xPos = ((Number) sample.get("x")).doubleValue();
+        double yPos = ((Number) sample.get("y")).doubleValue();
+        double rotationRad = ((Number) sample.get("heading")).doubleValue();
+        double xVel = ((Number) sample.get("velocityX")).doubleValue();
+        double yVel = ((Number) sample.get("velocityY")).doubleValue();
+        double angularVelRps = ((Number) sample.get("angularVelocity")).doubleValue();
+
+        state.timeSeconds = time;
+        state.velocityMps = Math.hypot(xVel, yVel);
+        state.accelerationMpsSq = 0.0; // Not encoded, not needed anyway
+        state.headingAngularVelocityRps = 0.0; // Not encoded, only used for diff drive anyway
+        state.positionMeters = new Translation2d(xPos, yPos);
+        state.heading = new Rotation2d(xVel, yVel);
+        state.targetHolonomicRotation = new Rotation2d(rotationRad);
+        state.holonomicAngularVelocityRps = Optional.of(angularVelRps);
+        state.curvatureRadPerMeter = 0.0; // Not encoded, only used for diff drive anyway
+        state.constraints =
+            new PathConstraints(
+                Double.POSITIVE_INFINITY,
+                Double.POSITIVE_INFINITY,
+                Double.POSITIVE_INFINITY,
+                Double.POSITIVE_INFINITY);
+
+        trajStates.add(state);
+      }
+
+      PathPlannerPath path =
+          new PathPlannerPath(
+              new PathConstraints(
+                  Double.POSITIVE_INFINITY,
+                  Double.POSITIVE_INFINITY,
+                  Double.POSITIVE_INFINITY,
+                  Double.POSITIVE_INFINITY),
+              new GoalEndState(
+                  trajStates.get(trajStates.size() - 1).velocityMps,
+                  trajStates.get(trajStates.size() - 1).targetHolonomicRotation,
+                  true));
+
+      List<PathPoint> pathPoints = new ArrayList<>();
+      for (var state : trajStates) {
+        pathPoints.add(new PathPoint(state.positionMeters));
+      }
+
+      path.allPoints = pathPoints;
+      path.preGeneratedTrajectory = Optional.of(new PathPlannerTrajectory(trajStates));
+
       return path;
     } catch (Exception e) {
       e.printStackTrace();
@@ -579,6 +651,11 @@ public class PathPlannerPath {
    * @return The replanned path
    */
   public PathPlannerPath replan(Pose2d startingPose, ChassisSpeeds currentSpeeds) {
+    if (preGeneratedTrajectory != null) {
+      // This path has a pregenerated trajectory, cannot be replanned
+      return this;
+    }
+
     ChassisSpeeds currentFieldRelativeSpeeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
             currentSpeeds, startingPose.getRotation().unaryMinus());
@@ -886,6 +963,10 @@ public class PathPlannerPath {
         goalEndState,
         reversed,
         previewStartingRotation);
+  }
+
+  public Optional<PathPlannerTrajectory> getPreGeneratedTrajectory() {
+    return preGeneratedTrajectory;
   }
 
   /**

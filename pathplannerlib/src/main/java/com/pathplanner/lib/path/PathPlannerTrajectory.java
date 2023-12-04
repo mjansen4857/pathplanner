@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /** Trajectory created from a pathplanner path */
 public class PathPlannerTrajectory {
@@ -23,6 +24,10 @@ public class PathPlannerTrajectory {
   public PathPlannerTrajectory(
       PathPlannerPath path, ChassisSpeeds startingSpeeds, Rotation2d startingRotation) {
     this.states = generateStates(path, startingSpeeds, startingRotation);
+  }
+
+  public PathPlannerTrajectory(List<State> states) {
+    this.states = states;
   }
 
   private static int getNextRotationTargetIdx(PathPlannerPath path, int startingIndex) {
@@ -266,6 +271,8 @@ public class PathPlannerTrajectory {
     public Rotation2d heading = new Rotation2d();
     /** The target holonomic rotation at this state */
     public Rotation2d targetHolonomicRotation = new Rotation2d();
+
+    public Optional<Double> holonomicAngularVelocityRps = Optional.empty();
 
     /** The curvature at this state in rad/m */
     public double curvatureRadPerMeter = 0;

@@ -165,7 +165,7 @@ class EventMarker:
 @dataclass
 class PathPoint:
     position: Translation2d
-    rotationTarget: RotationTarget
+    rotationTarget: RotationTarget = None
     constraints: PathConstraints = None
     distanceAlongPath: float = 0.0
     curveRadius: float = 0.0

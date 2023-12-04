@@ -287,8 +287,8 @@ public class PathPlannerPath {
     }
   }
 
-  public static PathPlannerPath fromChoreoTraj(String filePath) {
-    try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+  public static PathPlannerPath fromChoreoTrajectory(String fileName) {
+    try (BufferedReader br = new BufferedReader(new FileReader(new File(Filesystem.getDeployDirectory(), fileName)))) {
       StringBuilder fileContentBuilder = new StringBuilder();
       String line;
       while ((line = br.readLine()) != null) {

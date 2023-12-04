@@ -70,9 +70,11 @@ public class FollowPathCommand extends Command {
                 >= 0.25)) {
       replanPath(currentPose, currentSpeeds);
     } else {
-      generatedTrajectory =
-          path.getPreGeneratedTrajectory()
-              .orElse(new PathPlannerTrajectory(path, currentSpeeds, currentPose.getRotation()));
+      if(path.getPreGeneratedTrajectory().isPresent()){
+        generatedTrajectory = path.getPreGeneratedTrajectory().get();
+      }else{
+        generatedTrajectory = new PathPlannerTrajectory(path, currentSpeeds, currentPose.getRotation());
+      }
       PathPlannerLogging.logActivePath(path);
       PPLibTelemetry.setCurrentPath(path);
     }

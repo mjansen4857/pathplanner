@@ -148,7 +148,7 @@ public class PathPlannerPath {
   }
 
   /**
-   * Creat a path with pre-generated points. This should already be a smooth path.
+   * Create a path with pre-generated points. This should already be a smooth path.
    *
    * @param pathPoints Path points along the smooth curve of the path
    * @param constraints The global constraints of the path

@@ -8,7 +8,6 @@ from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
-import commands2.cmd as cmd
 from .geometry_util import decimal_range, cubicLerp, calculateRadius
 from wpilib import getDeployDirectory
 import os
@@ -19,6 +18,15 @@ RESOLUTION: Final[float] = 0.05
 
 @dataclass(frozen=True)
 class PathConstraints:
+    """
+    Kinematic path following constraints
+
+    Args:
+        maxVelocityMps (float): Max linear velocity (M/S)
+        maxAccelerationMpsSq (float): Max linear acceleration (M/S^2)
+        maxAngularVelocityRps (float): Max angular velocity (Rad/S)
+        maxAngularAccelerationRpsSq (float): Max angular acceleration (Rad/S^2)
+    """
     maxVelocityMps: float
     maxAccelerationMpsSq: float
     maxAngularVelocityRps: float
@@ -47,6 +55,14 @@ class PathConstraints:
 
 @dataclass(frozen=True)
 class GoalEndState:
+    """
+    Describes the goal end state of the robot when finishing a path
+
+    Args:
+        velocity (float): The goal end velocity (M/S)
+        rotation (Rotation2d): The goal rotation
+        rotateFast (bool): Should the robot reach the rotation as fast as possible
+    """
     velocity: float
     rotation: Rotation2d
     rotateFast: bool = False
@@ -71,6 +87,14 @@ class GoalEndState:
 
 @dataclass(frozen=True)
 class ConstraintsZone:
+    """
+    A zone on a path with different kinematic constraints
+
+    Args:
+        minWaypointPos (float): Starting position of the zone
+        maxWaypointPos (float): End position of the zone
+        constraints (PathConstraints): PathConstraints to apply within the zone
+    """
     minWaypointPos: float
     maxWaypointPos: float
     constraints: PathConstraints
@@ -84,12 +108,33 @@ class ConstraintsZone:
         return ConstraintsZone(minPos, maxPos, constraints)
 
     def isWithinZone(self, t: float) -> bool:
+        """
+        Get if a given waypoint relative position is within this zone
+
+        :param t: Waypoint relative position
+        :return: True if given position is within this zone
+        """
         return self.minWaypointPos <= t <= self.maxWaypointPos
 
     def overlapsRange(self, min_pos: float, max_pos: float) -> bool:
+        """
+        Get if this zone overlaps a given range
+
+        :param min_pos: The minimum waypoint relative position of the range
+        :param max_pos: The maximum waypoint relative position of the range
+        :return: True if any part of this zone is within the given range
+        """
         return max(min_pos, self.minWaypointPos) <= min(max_pos, self.maxWaypointPos)
 
     def forSegmentIndex(self, segment_index: int) -> ConstraintsZone:
+        """
+        Transform the positions of this zone for a given segment number.
+
+        For example, a zone from [1.5, 2.0] for the segment 1 will have the positions [0.5, 1.0]
+
+        :param segment_index: The segment index to transform positions for
+        :return: The transformed zone
+        """
         return ConstraintsZone(self.minWaypointPos - segment_index, self.maxWaypointPos - segment_index,
                                self.constraints)
 
@@ -102,6 +147,14 @@ class ConstraintsZone:
 
 @dataclass(frozen=True)
 class RotationTarget:
+    """
+    A target holonomic rotation at a position along a path
+
+    Args:
+        waypointRelativePosition (float): Waypoint relative position of this target
+        target (Rotation2d): Target rotation
+        rotateFast (bool): Should the robot reach the rotation as fast as possible
+    """
     waypointRelativePosition: float
     target: Rotation2d
     rotateFast: bool = False
@@ -118,6 +171,14 @@ class RotationTarget:
         return RotationTarget(pos, Rotation2d.fromDegrees(deg), rotateFast)
 
     def forSegmentIndex(self, segment_index: int) -> RotationTarget:
+        """
+        Transform the position of this target for a given segment number.
+
+        For example, a target with position 1.5 for the segment 1 will have the position 0.5
+
+        :param segment_index: The segment index to transform position for
+        :return: The transformed target
+        """
         return RotationTarget(self.waypointRelativePosition - segment_index, self.target, self.rotateFast)
 
     def __eq__(self, other):
@@ -129,6 +190,14 @@ class RotationTarget:
 
 @dataclass
 class EventMarker:
+    """
+    Position along the path that will trigger a command when reached
+
+    Args:
+        waypointRelativePos (float): The waypoint relative position of the marker
+        command (Command): The command that should be triggered at this marker
+        minimumTriggerDistance (float): The minimum distance the robot must be within for this marker to be triggered
+    """
     waypointRelativePos: float
     command: Command
     minimumTriggerDistance: float = 0.5
@@ -143,9 +212,20 @@ class EventMarker:
         return EventMarker(pos, command)
 
     def reset(self, robot_pose: Pose2d) -> None:
+        """
+        Reset the current robot position
+
+        :param robot_pose: The current pose of the robot
+        """
         self.lastRobotPos = robot_pose.translation()
 
     def shouldTrigger(self, robot_pose: Pose2d) -> bool:
+        """
+        Get if this event marker should be triggered
+
+        :param robot_pose: Current pose of the robot
+        :return: True if this marker should be triggered
+        """
         if self.lastRobotPos is None or self.markerPos is None:
             self.lastRobotPos = robot_pose.translation()
             return False
@@ -164,6 +244,14 @@ class EventMarker:
 
 @dataclass
 class PathPoint:
+    """
+    A point along a pathplanner path
+
+    Args:
+        position (Translation2d): Position of the point
+        rotationTarget (RotationTarget): Rotation target at this point
+        constraints (PathConstraints): The constraints at this point
+    """
     position: Translation2d
     rotationTarget: RotationTarget = None
     constraints: PathConstraints = None
@@ -187,6 +275,17 @@ class PathSegment:
     def __init__(self, p1: Translation2d, p2: Translation2d, p3: Translation2d, p4: Translation2d,
                  target_holonomic_rotations: List[RotationTarget] = [], constraint_zones: List[ConstraintsZone] = [],
                  end_segment: bool = False):
+        """
+        Generate a new path segment
+
+        :param p1: Start anchor point
+        :param p2: Start next control
+        :param p3: End prev control
+        :param p4: End anchor point
+        :param target_holonomic_rotations: Rotation targets for within this segment
+        :param constraint_zones: Constraint zones for within this segment
+        :param end_segment: Is this the last segment in the path
+        """
         self.segmentPoints = []
 
         for t in decimal_range(0.0, 1.0, RESOLUTION):
@@ -233,6 +332,18 @@ class PathPlannerPath:
                  holonomic_rotations: List[RotationTarget] = [], constraint_zones: List[ConstraintsZone] = [],
                  event_markers: List[EventMarker] = [], is_reversed: bool = False,
                  preview_starting_rotation: Rotation2d = Rotation2d()):
+        """
+        Create a new path planner path
+
+        :param bezier_points: List of points representing the cubic Bezier curve of the path
+        :param constraints: The global constraints of the path
+        :param goal_end_state: The goal end state of the path
+        :param holonomic_rotations: List of rotation targets along the path
+        :param constraint_zones: List of constraint zones along the path
+        :param event_markers: List of event markers along the path
+        :param is_reversed: Should the robot follow the path reversed (differential drive only)
+        :param preview_starting_rotation: The settings used for previews in the UI
+        """
         self._bezierPoints = bezier_points
         self._rotationTargets = holonomic_rotations
         self._constraintZones = constraint_zones
@@ -248,6 +359,14 @@ class PathPlannerPath:
     @staticmethod
     def fromPathPoints(path_points: List[PathPoint], constraints: PathConstraints,
                        goal_end_state: GoalEndState) -> PathPlannerPath:
+        """
+        Create a path with pre-generated points. This should already be a smooth path.
+
+        :param path_points: Path points along the smooth curve of the path
+        :param constraints: The global constraints of the path
+        :param goal_end_state: The goal end state of the path
+        :return: A PathPlannerPath following the given pathpoints
+        """
         path = PathPlannerPath([], constraints, goal_end_state)
         path._allPoints = path_points
         path._precalcValues()
@@ -256,6 +375,12 @@ class PathPlannerPath:
 
     @staticmethod
     def fromPathFile(path_name: str) -> PathPlannerPath:
+        """
+        Load a path from a path file in storage
+
+        :param path_name: The name of the path to load
+        :return: PathPlannerPath created from the given file name
+        """
         filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'paths', path_name + '.path')
 
         with open(filePath, 'r') as f:
@@ -264,6 +389,12 @@ class PathPlannerPath:
 
     @staticmethod
     def bezierFromPoses(poses: List[Pose2d]) -> List[Translation2d]:
+        """
+        Create the bezier points necessary to create a path using a list of poses
+
+        :param poses: List of poses. Each pose represents one waypoint.
+        :return: Bezier points
+        """
         if len(poses) < 2:
             raise ValueError('Not enough poses')
 
@@ -294,27 +425,68 @@ class PathPlannerPath:
         return bezierPoints
 
     def getAllPathPoints(self) -> List[PathPoint]:
+        """
+        Get all the path points in this path
+
+        :return: Path points in the path
+        """
         return self._allPoints
 
     def numPoints(self) -> int:
+        """
+        Get the number of points in this path
+
+        :return: Number of points in the path
+        """
         return len(self._allPoints)
 
     def getPoint(self, index: int) -> PathPoint:
+        """
+        Get a specific point along this path
+
+        :param index: Index of the point to get
+        :return: The point at the given index
+        """
         return self._allPoints[index]
 
     def getGlobalConstraints(self) -> PathConstraints:
+        """
+        Get the global constraints for this path
+
+        :return: Global constraints that apply to this path
+        """
         return self._globalConstraints
 
     def getGoalEndState(self) -> GoalEndState:
+        """
+        Get the goal end state of this path
+
+        :return: The goal end state
+        """
         return self._goalEndState
 
     def getEventMarkers(self) -> List[EventMarker]:
+        """
+        Get all the event markers for this path
+
+        :return: The event markers for this path
+        """
         return self._eventMarkers
 
     def isReversed(self) -> bool:
+        """
+        Should the path be followed reversed (differential drive only)
+
+        :return: True if reversed
+        """
         return self._reversed
 
     def getStartingDifferentialPose(self) -> Pose2d:
+        """
+        Get the differential pose for the start point of this path
+
+        :return: Pose at the path's starting point
+        """
         startPos = self.getPoint(0).position
         heading = (self.getPoint(1).position - self.getPoint(0).position).angle()
 
@@ -324,10 +496,23 @@ class PathPlannerPath:
         return Pose2d(startPos, heading)
 
     def getPreviewStartingHolonomicPose(self) -> Pose2d:
+        """
+        Get the starting pose for the holomonic path based on the preview settings.\
+
+        NOTE: This should only be used for the first path you are running, and only if you are not using an auto mode file. Using this pose to reset the robots pose between sequential paths will cause a loss of accuracy.
+        :return: Pose at the path's starting point
+        """
         heading = Rotation2d() if self._previewStartingRotation is None else self._previewStartingRotation
         return Pose2d(self.getPoint(0).position, heading)
 
     def replan(self, starting_pose: Pose2d, current_speeds: ChassisSpeeds) -> PathPlannerPath:
+        """
+        Replan this path based on the current robot position and speeds
+
+        :param starting_pose: New starting pose for the replanned path
+        :param current_speeds: Current chassis speeds of the robot
+        :return: The replanned path
+        """
         currentFieldRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(current_speeds.vx, current_speeds.vy,
                                                                            current_speeds.omega,
                                                                            -starting_pose.rotation())

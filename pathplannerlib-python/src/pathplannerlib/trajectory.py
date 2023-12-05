@@ -24,6 +24,13 @@ class State:
     deltaPos: float = 0
 
     def interpolate(self, end_val: State, t: float) -> State:
+        """
+        Interpolate between this state and the given state
+
+        :param end_val: State to interpolate with
+        :param t: Interpolation factor (0.0-1.0)
+        :return: Interpolated state
+        """
         lerpedState = State()
 
         lerpedState.timeSeconds = floatLerp(self.timeSeconds, end_val.timeSeconds, t)
@@ -51,12 +58,27 @@ class State:
         return lerpedState
 
     def getTargetHolonomicPose(self) -> Pose2d:
+        """
+        Get the target pose for a holonomic drivetrain NOTE: This is a "target" pose, meaning the rotation will be the value of the next rotation target along the path, not what the rotation should be at the start of the path
+
+        :return: The target pose
+        """
         return Pose2d(self.positionMeters, self.targetHolonomicRotation)
 
     def getDifferentialPose(self) -> Pose2d:
+        """
+        Get this pose for a differential drivetrain
+
+        :return: The pose
+        """
         return Pose2d(self.positionMeters, self.heading)
 
     def reverse(self) -> State:
+        """
+        Get the state reversed, used for following a trajectory reversed with a differential drivetrain
+
+        :return: The reversed state
+        """
         reversedState = State()
 
         reversedState.timeSeconds = self.timeSeconds
@@ -77,30 +99,79 @@ class PathPlannerTrajectory:
     _states: List[State]
 
     def __init__(self, path: PathPlannerPath, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d):
+        """
+        Generate a PathPlannerTrajectory
+
+        :param path: PathPlannerPath to generate the trajectory for
+        :param starting_speeds: Starting speeds of the robot when starting the trajectory
+        :param starting_rotation: Starting rotation of the robot when starting the trajectory
+        """
         self._states = PathPlannerTrajectory._generateStates(path, starting_speeds, starting_rotation)
 
     def getStates(self) -> List[State]:
+        """
+        Get all of the pre-generated states in the trajectory
+
+        :return: List of all states
+        """
         return self._states
 
     def getState(self, index: int) -> State:
+        """
+        Get the goal state at the given index
+
+        :param index: Index of the state to get
+        :return: The state at the given index
+        """
         return self._states[index]
 
     def getInitialState(self) -> State:
+        """
+        Get the initial state of the trajectory
+
+        :return: The initial state
+        """
         return self.getState(0)
 
     def getInitialTargetHolonomicPose(self) -> Pose2d:
+        """
+        Get the initial target pose for a holonomic drivetrain NOTE: This is a "target" pose, meaning the rotation will be the value of the next rotation target along the path, not what the rotation should be at the start of the path
+
+        :return: The initial target pose
+        """
         return self.getInitialState().getTargetHolonomicPose()
 
     def getInitialDifferentialPose(self) -> Pose2d:
+        """
+        Get this initial pose for a differential drivetrain
+
+        :return: The initial pose
+        """
         return self.getInitialState().getDifferentialPose()
 
     def getEndState(self) -> State:
+        """
+        Get the end state of the trajectory
+
+        :return: The end state
+        """
         return self.getState(len(self.getStates()) - 1)
 
     def getTotalTimeSeconds(self) -> float:
+        """
+        Get the total run time of the trajectory
+
+        :return: Total run time in seconds
+        """
         return self.getEndState().timeSeconds
 
     def sample(self, time: float) -> State:
+        """
+        Get the target state at the given point in time along the trajectory
+
+        :param time: The time to sample the trajectory at in seconds
+        :return: The target state
+        """
         if time <= self.getInitialState().timeSeconds:
             return self.getInitialState()
         if time >= self.getTotalTimeSeconds():

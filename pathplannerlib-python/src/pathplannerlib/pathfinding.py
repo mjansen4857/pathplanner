@@ -1,19 +1,41 @@
+from __future__ import annotations
 from .path import PathPlannerPath, PathConstraints, GoalEndState
 from wpimath.geometry import Translation2d
-from typing import List, Tuple, Union
+from typing import List, Tuple
+from .pathfinders import LocalADStar, Pathfinder
 
 
-class Pathfinder:
-    def isNewPathAvailable(self) -> bool:
+class Pathfinding:
+    _pathfinder: Pathfinder = None
+
+    @staticmethod
+    def setPathfinder(pathfinder: Pathfinder) -> None:
+        """
+        Set the pathfinder that should be used by the path following commands
+
+        :param pathfinder: The pathfinder to use
+        """
+        Pathfinding._pathfinder = pathfinder
+
+    @staticmethod
+    def ensureInitialized() -> None:
+        """
+        Ensure that a pathfinding implementation has been chosen. If not, set it to the default.
+        """
+        if Pathfinding._pathfinder is None:
+            Pathfinding._pathfinder = LocalADStar()
+
+    @staticmethod
+    def isNewPathAvailable() -> bool:
         """
         Get if a new path has been calculated since the last time a path was retrieved
 
         :return: True if a new path is available
         """
-        raise NotImplementedError
+        return Pathfinding._pathfinder.isNewPathAvailable()
 
-    def getCurrentPath(self, constraints: PathConstraints, goal_end_state: GoalEndState) -> Union[
-        PathPlannerPath, None]:
+    @staticmethod
+    def getCurrentPath(constraints: PathConstraints, goal_end_state: GoalEndState) -> PathPlannerPath:
         """
         Get the most recently calculated path
 
@@ -21,25 +43,28 @@ class Pathfinder:
         :param goal_end_state: The goal end state to use when creating the path
         :return: The PathPlannerPath created from the points calculated by the pathfinder
         """
-        raise NotImplementedError
+        return Pathfinding._pathfinder.getCurrentPath(constraints, goal_end_state)
 
-    def setStartPosition(self, start_position: Translation2d) -> None:
+    @staticmethod
+    def setStartPosition(start_position: Translation2d) -> None:
         """
         Set the start position to pathfind from
 
         :param start_position: Start position on the field. If this is within an obstacle it will be moved to the nearest non-obstacle node.
         """
-        raise NotImplementedError
+        Pathfinding._pathfinder.setStartPosition(start_position)
 
-    def setGoalPosition(self, goal_position: Translation2d) -> None:
+    @staticmethod
+    def setGoalPosition(goal_position: Translation2d) -> None:
         """
         Set the goal position to pathfind to
 
         :param goal_position: Goal position on the field. f this is within an obstacle it will be moved to the nearest non-obstacle node.
         """
-        raise NotImplementedError
+        Pathfinding._pathfinder.setGoalPosition(goal_position)
 
-    def setDynamicObstacles(self, obs: List[Tuple[Translation2d, Translation2d]],
+    @staticmethod
+    def setDynamicObstacles(obs: List[Tuple[Translation2d, Translation2d]],
                             current_robot_pos: Translation2d) -> None:
         """
         Set the dynamic obstacles that should be avoided while pathfinding.
@@ -47,4 +72,4 @@ class Pathfinder:
         :param obs: A List of Translation2d pairs representing obstacles. Each Translation2d represents opposite corners of a bounding box.
         :param current_robot_pos: The current position of the robot. This is needed to change the start position of the path to properly avoid obstacles
         """
-        raise NotImplementedError
+        Pathfinding._pathfinder.setDynamicObstacles(obs, current_robot_pos)

@@ -1,7 +1,17 @@
-from commands2.command import Command
 from commands2.functionalcommand import FunctionalCommand
 import commands2.cmd as cmd
-from . import path as p
+from .path import PathPlannerPath, PathConstraints
+from typing import Callable, Tuple, List
+from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.kinematics import ChassisSpeeds
+from .commands import FollowPathWithEvents, FollowPathRamsete, FollowPathHolonomic, FollowPathLTV, PathfindLTV, \
+    PathfindHolonomic, PathfindRamsete, PathfindThenFollowPathHolonomic, PathfindThenFollowPathRamsete, \
+    PathfindThenFollowPathLTV
+import os
+from wpilib import getDeployDirectory
+import json
+from commands2.command import Command, Subsystem
+from .config import HolonomicPathFollowerConfig, ReplanningConfig
 
 
 class NamedCommands:
@@ -101,8 +111,8 @@ class CommandUtil:
     @staticmethod
     def _pathCommandFromData(data_json: dict) -> Command:
         pathName = str(data_json['pathName'])
-        path = p.PathPlannerPath.fromPathFile(pathName)
-        return cmd.none()  # TODO
+        path = PathPlannerPath.fromPathFile(pathName)
+        return AutoBuilder.followPathWithEvents(path)
 
     @staticmethod
     def _sequentialGroupFromData(data_json: dict) -> Command:
@@ -123,3 +133,388 @@ class CommandUtil:
     def _deadlineGroupFromData(data_json: dict) -> Command:
         commands = [CommandUtil.commandFromJson(cmd_json) for cmd_json in data_json['commands']]
         return cmd.deadline(*commands)
+
+
+class AutoBuilder:
+    _configured: bool = False
+
+    _pathFollowingCommandBuilder: Callable[[PathPlannerPath], Command] = None
+    _getPose: Callable[[], Pose2d] = None
+    _resetPose: Callable[[Pose2d], None] = None
+
+    _pathfindingConfigured: bool = False
+    _pathfindToPoseCommandBuilder: Callable[[Pose2d, PathConstraints, float, float], Command] = None
+    _pathfindThenFollowPathCommandBuilder: Callable[[PathPlannerPath, PathConstraints, float], Command] = None
+
+    @staticmethod
+    def configureHolonomic(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
+                           robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
+                           robot_relative_output: Callable[[ChassisSpeeds], None],
+                           config: HolonomicPathFollowerConfig, drive_subsystem: Subsystem) -> None:
+        """
+        Configures the AutoBuilder for a holonomic drivetrain.
+
+        :param pose_supplier: a supplier for the robot's current pose
+        :param reset_pose: a consumer for resetting the robot's pose
+        :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
+        :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
+        :param config: HolonomicPathFollowerConfig for configuring the path following commands
+        :param drive_subsystem: the subsystem for the robot's drive
+        """
+        if AutoBuilder._configured:
+            raise RuntimeError('AutoBuilder has already been configured. Please only configure AutoBuilder once')
+
+        AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathHolonomic(
+            path,
+            pose_supplier,
+            robot_relative_speeds_supplier,
+            robot_relative_output,
+            config,
+            drive_subsystem
+        )
+        AutoBuilder._getPose = pose_supplier
+        AutoBuilder._resetPose = reset_pose
+        AutoBuilder._configured = True
+
+        AutoBuilder._pathfindToPoseCommandBuilder = \
+            lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindHolonomic(
+                constraints,
+                pose_supplier,
+                robot_relative_speeds_supplier,
+                robot_relative_output,
+                config,
+                drive_subsystem,
+                rotation_delay_distance=rotation_delay_distance,
+                target_pose=pose,
+                goal_end_vel=goal_end_vel
+            )
+        AutoBuilder._pathfindThenFollowPathCommandBuilder = \
+            lambda path, constraints, rotation_delay_distance: PathfindThenFollowPathHolonomic(
+                path,
+                constraints,
+                pose_supplier,
+                robot_relative_speeds_supplier,
+                robot_relative_output,
+                config,
+                drive_subsystem,
+                rotation_delay_distance=rotation_delay_distance
+            )
+        AutoBuilder._pathfindingConfigured = True
+
+    @staticmethod
+    def configureRamsete(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
+                         robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
+                         robot_relative_output: Callable[[ChassisSpeeds], None],
+                         replanning_config: ReplanningConfig, drive_subsystem: Subsystem) -> None:
+        """
+        Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
+
+        :param pose_supplier: a supplier for the robot's current pose
+        :param reset_pose: a consumer for resetting the robot's pose
+        :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
+        :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
+        :param replanning_config: Path replanning configuration
+        :param drive_subsystem: the subsystem for the robot's drive
+        """
+        if AutoBuilder._configured:
+            raise RuntimeError('AutoBuilder has already been configured. Please only configure AutoBuilder once')
+
+        AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathRamsete(
+            path,
+            pose_supplier,
+            robot_relative_speeds_supplier,
+            robot_relative_output,
+            replanning_config,
+            drive_subsystem
+        )
+        AutoBuilder._getPose = pose_supplier
+        AutoBuilder._resetPose = reset_pose
+        AutoBuilder._configured = True
+
+        AutoBuilder._pathfindToPoseCommandBuilder = \
+            lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindRamsete(
+                constraints,
+                pose_supplier,
+                robot_relative_speeds_supplier,
+                robot_relative_output,
+                replanning_config,
+                drive_subsystem,
+                target_position=pose.translation(),
+                goal_end_vel=goal_end_vel
+            )
+        AutoBuilder._pathfindThenFollowPathCommandBuilder = \
+            lambda path, constraints, rotation_delay_distance: PathfindThenFollowPathRamsete(
+                path,
+                constraints,
+                pose_supplier,
+                robot_relative_speeds_supplier,
+                robot_relative_output,
+                replanning_config,
+                drive_subsystem
+            )
+        AutoBuilder._pathfindingConfigured = True
+
+    @staticmethod
+    def configureLTV(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
+                     robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
+                     robot_relative_output: Callable[[ChassisSpeeds], None],
+                     qelems: Tuple[float, float, float], relems: Tuple[float, float], dt: float,
+                     replanning_config: ReplanningConfig, drive_subsystem: Subsystem) -> None:
+        """
+        Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path follower.
+
+        :param pose_supplier: a supplier for the robot's current pose
+        :param reset_pose: a consumer for resetting the robot's pose
+        :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
+        :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
+        :param qelems: The maximum desired error tolerance for each state
+        :param relems: The maximum desired control effort for each input
+        :param dt: The amount of time between each robot control loop, default is 0.02s
+        :param replanning_config: Path replanning configuration
+        :param drive_subsystem: the subsystem for the robot's drive
+        """
+        if AutoBuilder._configured:
+            raise RuntimeError('AutoBuilder has already been configured. Please only configure AutoBuilder once')
+
+        AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathLTV(
+            path,
+            pose_supplier,
+            robot_relative_speeds_supplier,
+            robot_relative_output,
+            qelems, relems, dt,
+            replanning_config,
+            drive_subsystem
+        )
+        AutoBuilder._getPose = pose_supplier
+        AutoBuilder._resetPose = reset_pose
+        AutoBuilder._configured = True
+
+        AutoBuilder._pathfindToPoseCommandBuilder = \
+            lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindLTV(
+                constraints,
+                pose_supplier,
+                robot_relative_speeds_supplier,
+                robot_relative_output,
+                qelems, relems, dt,
+                replanning_config,
+                drive_subsystem,
+                target_position=pose.translation(),
+                goal_end_vel=goal_end_vel
+            )
+        AutoBuilder._pathfindThenFollowPathCommandBuilder = \
+            lambda path, constraints, rotation_delay_distance: PathfindThenFollowPathLTV(
+                path,
+                constraints,
+                pose_supplier,
+                robot_relative_speeds_supplier,
+                robot_relative_output,
+                qelems, relems, dt,
+                replanning_config,
+                drive_subsystem
+            )
+        AutoBuilder._pathfindingConfigured = True
+
+    @staticmethod
+    def configureCustom(path_following_command_builder: Callable[[PathPlannerPath], Command],
+                        pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None]) -> None:
+        """
+        Configures the AutoBuilder with custom path following command builder. Building pathfinding commands is not supported if using a custom command builder.
+
+        :param path_following_command_builder: a function that builds a command to follow a given path
+        :param pose_supplier: a supplier for the robot's current pose
+        :param reset_pose: a consumer for resetting the robot's pose
+        """
+        if AutoBuilder._configured:
+            raise RuntimeError('AutoBuilder has already been configured. Please only configure AutoBuilder once')
+
+        AutoBuilder._pathFollowingCommandBuilder = path_following_command_builder
+        AutoBuilder._getPose = pose_supplier
+        AutoBuilder._resetPose = reset_pose
+        AutoBuilder._configured = True
+
+        AutoBuilder._pathfindingConfigured = False
+
+    @staticmethod
+    def isConfigured() -> bool:
+        """
+        Returns whether the AutoBuilder has been configured.
+
+        :return: true if the AutoBuilder has been configured, false otherwise
+        """
+        return AutoBuilder._configured
+
+    @staticmethod
+    def isPathfindingConfigured() -> bool:
+        """
+        Returns whether the AutoBuilder has been configured for pathfinding.
+
+        :return: true if the AutoBuilder has been configured for pathfinding, false otherwise
+        """
+        return AutoBuilder._pathfindingConfigured
+
+    @staticmethod
+    def followPathWithEvents(path: PathPlannerPath) -> Command:
+        """
+        Builds a command to follow a path with event markers.
+
+        :param path: the path to follow
+        :return: a path following command with events for the given path
+        """
+        if not AutoBuilder.isConfigured():
+            raise RuntimeError('Auto builder was used to build a path following command before being configured')
+
+        return FollowPathWithEvents(AutoBuilder._pathFollowingCommandBuilder(path), path, AutoBuilder._getPose)
+
+    @staticmethod
+    def pathfindToPose(pose: Pose2d, constraints: PathConstraints, goal_end_vel: float = 0.0,
+                       rotation_delay_distance: float = 0.0) -> Command:
+        """
+        Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose rotation and rotation delay distance will have no effect.
+
+        :param pose: The pose to pathfind to
+        :param constraints: The constraints to use while pathfinding
+        :param goal_end_vel: The goal end velocity of the robot when reaching the target pose
+        :param rotation_delay_distance: The distance the robot should move from the start position before attempting to rotate to the final rotation
+        :return: A command to pathfind to a given pose
+        """
+        if not AutoBuilder.isPathfindingConfigured():
+            raise RuntimeError('Auto builder was used to build a pathfinding command before being configured')
+
+        return AutoBuilder._pathfindToPoseCommandBuilder(pose, constraints, goal_end_vel, rotation_delay_distance)
+
+    @staticmethod
+    def pathfindThenFollowPath(goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
+                               rotation_delay_distance: float = 0.0) -> Command:
+        """
+        Build a command to pathfind to a given path, then follow that path. If not using a holonomic drivetrain, the pose rotation delay distance will have no effect.
+
+        :param goal_path: The path to pathfind to, then follow
+        :param pathfinding_constraints: The constraints to use while pathfinding
+        :param rotation_delay_distance: The distance the robot should move from the start position before attempting to rotate to the final rotation
+        :return: A command to pathfind to a given path, then follow the path
+        """
+        if not AutoBuilder.isPathfindingConfigured():
+            raise RuntimeError('Auto builder was used to build a pathfinding command before being configured')
+
+        return AutoBuilder._pathfindThenFollowPathCommandBuilder(goal_path, pathfinding_constraints,
+                                                                 rotation_delay_distance)
+
+    @staticmethod
+    def getStartingPoseFromJson(starting_pose_json: dict) -> Pose2d:
+        """
+        Get the starting pose from its JSON representation. This is only used internally.
+
+        :param starting_pose_json: JSON dict representing a starting pose.
+        :return: The Pose2d starting pose
+        """
+        pos = starting_pose_json['position']
+        x = float(pos['x'])
+        y = float(pos['y'])
+        deg = float(starting_pose_json['rotation'])
+
+        return Pose2d(x, y, Rotation2d.fromDegrees(deg))
+
+    @staticmethod
+    def getAutoCommandFromJson(auto_json: dict) -> Command:
+        """
+        Builds an auto command from the given JSON dict.
+
+        :param auto_json: the JSON dict to build the command from
+        :return: an auto command built from the JSON object
+        """
+        commandJson = auto_json['command']
+
+        autoCommand = CommandUtil.commandFromJson(commandJson)
+        if auto_json['startingPose'] is not None:
+            startPose = AutoBuilder.getStartingPoseFromJson(auto_json['startingPose'])
+            return cmd.sequence(cmd.runOnce(lambda: AutoBuilder._resetPose(startPose)), autoCommand)
+        else:
+            return autoCommand
+
+    @staticmethod
+    def buildAuto(auto_name: str) -> Command:
+        """
+        Builds an auto command for the given auto name.
+
+        :param auto_name: the name of the auto to build
+        :return: an auto command for the given auto name
+        """
+        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
+
+        with open(filePath, 'r') as f:
+            auto_json = json.loads(f.read())
+            return AutoBuilder.getAutoCommandFromJson(auto_json)
+
+
+class PathPlannerAuto(Command):
+    _autoCommand: Command
+
+    def __init__(self, auto_name: str):
+        """
+        Constructs a new PathPlannerAuto command.
+
+        :param auto_name: the name of the autonomous routine to load and run
+        """
+        super().__init__()
+
+        if not AutoBuilder.isConfigured():
+            raise RuntimeError('AutoBuilder was not configured before attempting to load a PathPlannerAuto from file')
+
+        self._autoCommand = AutoBuilder.buildAuto(auto_name)
+        self.addRequirements(*self._autoCommand.getRequirements())
+        self.setName(auto_name)
+
+    @staticmethod
+    def getStartingPoseFromAutoFile(auto_name: str) -> Pose2d:
+        """
+        Get the starting pose from the given auto file
+
+        :param auto_name: Name of the auto to get the pose from
+        :return: Starting pose from the given auto
+        """
+        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
+
+        with open(filePath, 'r') as f:
+            auto_json = json.loads(f.read())
+            return AutoBuilder.getStartingPoseFromJson(auto_json['startingPose'])
+
+    @staticmethod
+    def _pathsFromCommandJson(command_json: dict) -> List[PathPlannerPath]:
+        paths = []
+
+        cmdType = str(command_json['type'])
+        data = command_json['data']
+
+        if cmdType == 'path':
+            pathName = str(data['pathName'])
+            paths.append(PathPlannerPath.fromPathFile(pathName))
+        elif cmdType == 'sequential' or cmdType == 'parallel' or cmdType == 'race' or cmdType == 'deadline':
+            for cmdJson in data['commands']:
+                paths.extend(PathPlannerAuto._pathsFromCommandJson(cmdJson))
+        return paths
+
+    @staticmethod
+    def getPathGroupFromAutoFile(auto_name: str) -> List[PathPlannerPath]:
+        """
+        Get a list of every path in the given auto (depth first)
+
+        :param auto_name: Name of the auto to get the path group from
+        :return: List of paths in the auto
+        """
+        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
+
+        with open(filePath, 'r') as f:
+            auto_json = json.loads(f.read())
+            return PathPlannerAuto._pathsFromCommandJson(auto_json['command'])
+
+    def initialize(self):
+        self._autoCommand.initialize()
+
+    def execute(self):
+        self._autoCommand.execute()
+
+    def isFinished(self) -> bool:
+        return self._autoCommand.isFinished()
+
+    def end(self, interrupted: bool):
+        self._autoCommand.end(interrupted)

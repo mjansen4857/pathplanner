@@ -10,7 +10,6 @@ from wpimath import inputModulus
 from commands2 import Command
 import commands2.cmd as cmd
 from .geometry_util import decimal_range, cubicLerp, calculateRadius
-from .auto import CommandUtil
 from wpilib import getDeployDirectory
 import os
 import json
@@ -139,6 +138,7 @@ class EventMarker:
     @staticmethod
     def fromJson(json_dict: dict) -> EventMarker:
         pos = float(json_dict['waypointRelativePos'])
+        from .auto import CommandUtil
         command = CommandUtil.commandFromJson(json_dict['command'])
         return EventMarker(pos, command)
 
@@ -267,13 +267,10 @@ class PathPlannerPath:
         if len(poses) < 2:
             raise ValueError('Not enough poses')
 
-        bezierPoints = []
-
         # First pose
-        bezierPoints.append(poses[0].translation())
-        bezierPoints.append(
-            poses[0].translation() + Translation2d(poses[0].translation().distance(poses[1].translation()) / 3.0,
-                                                   poses[0].rotation()))
+        bezierPoints = [poses[0].translation(), poses[0].translation() + Translation2d(
+            poses[0].translation().distance(poses[1].translation()) / 3.0,
+            poses[0].rotation())]
 
         # Middle poses
         for i in range(1, len(poses) - 1):

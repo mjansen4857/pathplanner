@@ -13,6 +13,112 @@ from threading import Thread, RLock
 import os
 from wpilib import getDeployDirectory
 import json
+from ntcore import StringPublisher, DoubleArrayPublisher, DoubleArraySubscriber, NetworkTableInstance, PubSubOptions, \
+    EventFlags
+
+
+class RemoteADStar(Pathfinder):
+    _navGridJsonPub: StringPublisher
+    _startPosPub: DoubleArrayPublisher
+    _goalPosPub: DoubleArrayPublisher
+    _dynamicObstaclePub: DoubleArrayPublisher
+
+    _pathPointsSub: DoubleArraySubscriber
+
+    _currentPath: List[PathPoint] = []
+    _newPathAvailable: bool = False
+
+    def __init__(self):
+        nt = NetworkTableInstance.getDefault()
+
+        self._navGridJsonPub = nt.getStringTopic('/PPLibCoprocessor/RemoteADStar/navGrid').publish()
+        self._startPosPub = nt.getDoubleArrayTopic('/PPLibCoprocessor/RemoteADStar/startPos').publish()
+        self._goalPosPub = nt.getDoubleArrayTopic('/PPLibCoprocessor/RemoteADStar/goalPos').publish()
+        self._dynamicObstaclePub = nt.getDoubleArrayTopic('/PPLibCoprocessor/RemoteADStar/dynamicObstacles').publish()
+
+        self._pathPointsSub = nt.getDoubleArrayTopic('/PPLibCoprocessor/RemoteADStar/pathPoints').subscribe([],
+                                                                                                            PubSubOptions(
+                                                                                                                sendAll=True,
+                                                                                                                keepDuplicates=True))
+
+        nt.addListener(self._pathPointsSub, EventFlags.kValueAll, self._handlePathListenerEvent)
+
+        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'navgrid.json')
+
+        with open(filePath, 'r') as f:
+            file_content = f.read()
+            self._navGridJsonPub.set(file_content)
+
+    def _handlePathListenerEvent(self, event):
+        pathPointsArr = self._pathPointsSub.get()
+
+        pathPoints = []
+        for i in range(0, len(pathPointsArr) - 1, 2):
+            pathPoints.append(PathPoint(Translation2d(pathPointsArr[i], pathPointsArr[i + 1])))
+
+        self._currentPath = pathPoints
+        self._newPathAvailable = True
+
+    def isNewPathAvailable(self) -> bool:
+        """
+        Get if a new path has been calculated since the last time a path was retrieved
+
+        :return: True if a new path is available
+        """
+        return self._newPathAvailable
+
+    def getCurrentPath(self, constraints: PathConstraints, goal_end_state: GoalEndState) -> Union[
+        PathPlannerPath, None]:
+        """
+        Get the most recently calculated path
+
+        :param constraints: The path constraints to use when creating the path
+        :param goal_end_state: The goal end state to use when creating the path
+        :return: The PathPlannerPath created from the points calculated by the pathfinder
+        """
+        pathPoints = [p for p in self._currentPath]
+
+        self._newPathAvailable = False
+
+        if len(pathPoints) < 2:
+            return None
+
+        return PathPlannerPath.fromPathPoints(pathPoints, constraints, goal_end_state)
+
+    def setStartPosition(self, start_position: Translation2d) -> None:
+        """
+        Set the start position to pathfind from
+
+        :param start_position: Start position on the field. If this is within an obstacle it will be moved to the nearest non-obstacle node.
+        """
+        self._startPosPub.set([start_position.X(), start_position.Y()])
+
+    def setGoalPosition(self, goal_position: Translation2d) -> None:
+        """
+        Set the goal position to pathfind to
+
+        :param goal_position: Goal position on the field. f this is within an obstacle it will be moved to the nearest non-obstacle node.
+        """
+        self._goalPosPub.set([goal_position.X(), goal_position.Y()])
+
+    def setDynamicObstacles(self, obs: List[Tuple[Translation2d, Translation2d]],
+                            current_robot_pos: Translation2d) -> None:
+        """
+        Set the dynamic obstacles that should be avoided while pathfinding.
+
+        :param obs: A List of Translation2d pairs representing obstacles. Each Translation2d represents opposite corners of a bounding box.
+        :param current_robot_pos: The current position of the robot. This is needed to change the start position of the path to properly avoid obstacles
+        """
+        # First two doubles represent current robot pos
+        obsArr = [current_robot_pos.X(), current_robot_pos.Y()]
+
+        for box in obs:
+            obsArr.append(box[0].X())
+            obsArr.append(box[0].Y())
+            obsArr.append(box[1].X())
+            obsArr.append(box[1].Y())
+
+        self._dynamicObstaclePub.set(obsArr)
 
 
 @dataclass(frozen=True)

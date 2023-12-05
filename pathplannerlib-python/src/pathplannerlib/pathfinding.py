@@ -1,6 +1,7 @@
 from .path import PathPlannerPath, PathConstraints, GoalEndState
 from wpimath.geometry import Translation2d
-from typing import List, Tuple
+from typing import List, Tuple, Union
+
 
 class Pathfinder:
     def isNewPathAvailable(self) -> bool:
@@ -11,7 +12,8 @@ class Pathfinder:
         """
         raise NotImplementedError
 
-    def getCurrentPath(self, constraints: PathConstraints, goal_end_state: GoalEndState) -> PathPlannerPath:
+    def getCurrentPath(self, constraints: PathConstraints, goal_end_state: GoalEndState) -> Union[
+        PathPlannerPath, None]:
         """
         Get the most recently calculated path
 
@@ -37,7 +39,8 @@ class Pathfinder:
         """
         raise NotImplementedError
 
-    def setDynamicObstacles(self, obs: List[Tuple[Translation2d, Translation2d]], current_robot_pos: Translation2d) -> None:
+    def setDynamicObstacles(self, obs: List[Tuple[Translation2d, Translation2d]],
+                            current_robot_pos: Translation2d) -> None:
         """
         Set the dynamic obstacles that should be avoided while pathfinding.
 

@@ -9,7 +9,7 @@ from .geometry_util import floatLerp
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpilib import Timer
-from commands2 import Command, Subsystem
+from commands2 import Command, Subsystem, SequentialCommandGroup
 from typing import Callable, Tuple, List
 from .config import ReplanningConfig, HolonomicPathFollowerConfig
 from .pathfinding import Pathfinding
@@ -261,7 +261,7 @@ class FollowPathLTV(FollowPathCommand):
                  qelems: Tuple[float, float, float], relems: Tuple[float, float], dt: float,
                  replanning_config: ReplanningConfig, *requirements: Subsystem):
         """
-        Construct a path following command that will use a Ramsete path following controller for differential drive trains
+        Construct a path following command that will use a LTV path following controller for differential drive trains
 
         :param path: The path to follow
         :param pose_supplier: Function that supplies the current field-relative pose of the robot
@@ -397,7 +397,7 @@ class PathfindingCommand(Command):
                 # Replan the path if we are more than 0.25m away or our heading is off
                 if not onHeading or (
                         self._replanningConfig.enableInitialReplanning and currentPose.translation().distance(
-                        closestState1.positionMeters) > 0.25):
+                    closestState1.positionMeters) > 0.25):
                     self._currentPath = self._currentPath.replan(currentPose, currentSpeeds)
                     self._currentTrajectory = PathPlannerTrajectory(self._currentPath, currentSpeeds,
                                                                     currentPose.rotation())
@@ -488,6 +488,21 @@ class PathfindHolonomic(PathfindingCommand):
                  config: HolonomicPathFollowerConfig, *requirements: Subsystem,
                  rotation_delay_distance: float = 0.0, target_path: PathPlannerPath = None, target_pose: Pose2d = None,
                  goal_end_vel: float = 0):
+        """
+        Constructs a new PathfindHolonomic command that will generate a path towards the given path or pose.
+        NOTE: Either target_path or target_pose must be specified
+
+        :param constraints: the path constraints to use while pathfinding
+        :param pose_supplier: a supplier for the robot's current pose
+        :param speeds_supplier: a supplier for the robot's current robot relative speeds
+        :param output_robot_relative: a consumer for the output speeds (robot relative)
+        :param config: HolonomicPathFollowerConfig object with the configuration parameters for path following
+        :param requirements: the subsystems required by this command
+        :param rotation_delay_distance: Distance to delay the target rotation of the robot. This will cause the robot to hold its current rotation until it reaches the given distance along the path.
+        :param target_path: the path to pathfind to
+        :param target_pose: the pose to pathfind to
+        :param goal_end_vel: The goal end velocity when reaching the given pose
+        """
         super().__init__(constraints, pose_supplier, speeds_supplier, output_robot_relative,
                          PPHolonomicDriveController(config.translationConstants, config.rotationConstants,
                                                     config.maxModuleSpeed, config.driveBaseRadius, config.period),
@@ -500,11 +515,25 @@ class PathfindRamsete(PathfindingCommand):
     def __init__(self, constraints: PathConstraints, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
                  replanning_config: ReplanningConfig, *requirements: Subsystem,
-                 target_path: PathPlannerPath = None, target_pose: Pose2d = None,
+                 target_path: PathPlannerPath = None, target_position: Translation2d = None,
                  goal_end_vel: float = 0):
+        """
+        Constructs a new PathfindRamsete command that will generate a path towards the given path or pose.
+        NOTE: Either target_path or target_position must be specified.
+
+        :param constraints: the path constraints to use while pathfinding
+        :param pose_supplier: a supplier for the robot's current pose
+        :param speeds_supplier: a supplier for the robot's current robot relative speeds
+        :param output_robot_relative: a consumer for the output speeds (robot relative)
+        :param replanning_config: Path replanning configuration
+        :param requirements: the subsystems required by this command
+        :param target_path: the path to pathfind to
+        :param target_position: the position to pathfind to
+        :param goal_end_vel: The goal end velocity when reaching the given position
+        """
         super().__init__(constraints, pose_supplier, speeds_supplier, output_robot_relative,
                          PPRamseteController(), replanning_config, *requirements, target_path=target_path,
-                         target_pose=target_pose, goal_end_vel=goal_end_vel)
+                         target_pose=Pose2d(target_position, Rotation2d()), goal_end_vel=goal_end_vel)
 
 
 class PathfindLTV(PathfindingCommand):
@@ -512,8 +541,163 @@ class PathfindLTV(PathfindingCommand):
                  speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
                  qelems: Tuple[float, float, float], relems: Tuple[float, float], dt: float,
                  replanning_config: ReplanningConfig, *requirements: Subsystem,
-                 target_path: PathPlannerPath = None, target_pose: Pose2d = None,
+                 target_path: PathPlannerPath = None, target_position: Translation2d = None,
                  goal_end_vel: float = 0):
+        """
+        Constructs a new PathfindLTV command that will generate a path towards the given path or pose.
+        NOTE: Either target_path or target_position must be specified.
+
+        :param constraints: the path constraints to use while pathfinding
+        :param pose_supplier: a supplier for the robot's current pose
+        :param speeds_supplier: a supplier for the robot's current robot relative speeds
+        :param output_robot_relative: a consumer for the output speeds (robot relative)
+        :param qelems: The maximum desired error tolerance for each state
+        :param relems: The maximum desired control effort for each input
+        :param dt: The amount of time between each robot control loop, default is 0.02s
+        :param replanning_config: Path replanning configuration
+        :param requirements: the subsystems required by this command
+        :param target_path: the path to pathfind to
+        :param target_position: the position to pathfind to
+        :param goal_end_vel: The goal end velocity when reaching the given position
+        """
         super().__init__(constraints, pose_supplier, speeds_supplier, output_robot_relative,
                          PPLTVController(qelems, relems, dt), replanning_config, *requirements,
-                         target_path=target_path, target_pose=target_pose, goal_end_vel=goal_end_vel)
+                         target_path=target_path, target_pose=Pose2d(target_position, Rotation2d()),
+                         goal_end_vel=goal_end_vel)
+
+
+class PathfindThenFollowPathHolonomic(SequentialCommandGroup):
+    def __init__(self, goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
+                 pose_supplier: Callable[[], Pose2d],
+                 speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
+                 config: HolonomicPathFollowerConfig, *requirements: Subsystem, rotation_delay_distance: float = 0.0):
+        """
+        Constructs a new PathfindThenFollowPathHolonomic command group.
+
+        :param goal_path: the goal path to follow
+        :param pathfinding_constraints: the path constraints for pathfinding
+        :param pose_supplier: a supplier for the robot's current pose
+        :param speeds_supplier: a supplier for the robot's current robot relative speeds
+        :param output_robot_relative: a consumer for the output speeds (robot relative)
+        :param config: HolonomicPathFollowerConfig for configuring the path following commands
+        :param requirements: the subsystems required by this command (drive subsystem)
+        :param rotation_delay_distance: Distance to delay the target rotation of the robot. This will cause the robot to hold its current rotation until it reaches the given distance along the path.
+        """
+        super().__init__()
+
+        self.addCommands(
+            PathfindHolonomic(
+                pathfinding_constraints,
+                pose_supplier,
+                speeds_supplier,
+                output_robot_relative,
+                config,
+                *requirements,
+                target_path=goal_path,
+                rotation_delay_distance=rotation_delay_distance
+            ),
+            FollowPathWithEvents(
+                FollowPathHolonomic(
+                    goal_path,
+                    pose_supplier,
+                    speeds_supplier,
+                    output_robot_relative,
+                    config,
+                    *requirements
+                ),
+                goal_path,
+                pose_supplier
+            )
+        )
+
+
+class PathfindThenFollowPathRamsete(SequentialCommandGroup):
+    def __init__(self, goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
+                 pose_supplier: Callable[[], Pose2d],
+                 speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
+                 replanning_config: ReplanningConfig, *requirements: Subsystem):
+        """
+        Constructs a new PathfindThenFollowPathRamsete command group.
+
+        :param goal_path: the goal path to follow
+        :param pathfinding_constraints: the path constraints for pathfinding
+        :param pose_supplier: a supplier for the robot's current pose
+        :param speeds_supplier: a supplier for the robot's current robot relative speeds
+        :param output_robot_relative: a consumer for the output speeds (robot relative)
+        :param replanning_config: Path replanning configuration
+        :param requirements: the subsystems required by this command (drive subsystem)
+        """
+        super().__init__()
+
+        self.addCommands(
+            PathfindRamsete(
+                pathfinding_constraints,
+                pose_supplier,
+                speeds_supplier,
+                output_robot_relative,
+                replanning_config,
+                *requirements,
+                target_path=goal_path
+            ),
+            FollowPathWithEvents(
+                FollowPathRamsete(
+                    goal_path,
+                    pose_supplier,
+                    speeds_supplier,
+                    output_robot_relative,
+                    replanning_config,
+                    *requirements
+                ),
+                goal_path,
+                pose_supplier
+            )
+        )
+
+
+class PathfindThenFollowPathLTV(SequentialCommandGroup):
+    def __init__(self, goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
+                 pose_supplier: Callable[[], Pose2d],
+                 speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
+                 qelems: Tuple[float, float, float], relems: Tuple[float, float], dt: float,
+                 replanning_config: ReplanningConfig, *requirements: Subsystem):
+        """
+        Constructs a new PathfindThenFollowPathRamsete command group.
+
+        :param goal_path: the goal path to follow
+        :param pathfinding_constraints: the path constraints for pathfinding
+        :param pose_supplier: a supplier for the robot's current pose
+        :param speeds_supplier: a supplier for the robot's current robot relative speeds
+        :param output_robot_relative: a consumer for the output speeds (robot relative)
+        :param qelems: The maximum desired error tolerance for each state
+        :param relems: The maximum desired control effort for each input
+        :param dt: The amount of time between each robot control loop, default is 0.02s
+        :param replanning_config: Path replanning configuration
+        :param requirements: the subsystems required by this command (drive subsystem)
+        """
+        super().__init__()
+
+        self.addCommands(
+            PathfindLTV(
+                pathfinding_constraints,
+                pose_supplier,
+                speeds_supplier,
+                output_robot_relative,
+                qelems, relems, dt,
+                replanning_config,
+                *requirements,
+                target_path=goal_path
+            ),
+            FollowPathWithEvents(
+                FollowPathLTV(
+                    goal_path,
+                    pose_supplier,
+                    speeds_supplier,
+                    output_robot_relative,
+                    qelems, relems, dt,
+                    replanning_config,
+                    *requirements
+                ),
+                goal_path,
+                pose_supplier
+            )
+        )

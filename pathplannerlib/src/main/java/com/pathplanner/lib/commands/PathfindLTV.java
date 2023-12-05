@@ -52,6 +52,11 @@ public class PathfindLTV extends PathfindingCommand {
         0,
         replanningConfig,
         requirements);
+
+    if (targetPath.isChoreoPath()) {
+      throw new IllegalArgumentException(
+          "Paths loaded from Choreo cannot be used with differential drivetrains");
+    }
   }
 
   /**
@@ -85,6 +90,11 @@ public class PathfindLTV extends PathfindingCommand {
         0,
         replanningConfig,
         requirements);
+
+    if (targetPath.isChoreoPath()) {
+      throw new IllegalArgumentException(
+          "Paths loaded from Choreo cannot be used with differential drivetrains");
+    }
   }
 
   /**

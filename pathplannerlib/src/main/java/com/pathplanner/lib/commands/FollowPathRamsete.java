@@ -43,6 +43,11 @@ public class FollowPathRamsete extends FollowPathCommand {
         new PPRamseteController(b, zeta),
         replanningConfig,
         requirements);
+
+    if (path.isChoreoPath()) {
+      throw new IllegalArgumentException(
+          "Paths loaded from Choreo cannot be used with differential drivetrains");
+    }
   }
 
   /**
@@ -71,5 +76,10 @@ public class FollowPathRamsete extends FollowPathCommand {
         new PPRamseteController(),
         replanningConfig,
         requirements);
+
+    if (path.isChoreoPath()) {
+      throw new IllegalArgumentException(
+          "Paths loaded from Choreo cannot be used with differential drivetrains");
+    }
   }
 }

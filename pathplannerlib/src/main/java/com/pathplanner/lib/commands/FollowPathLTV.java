@@ -42,6 +42,11 @@ public class FollowPathLTV extends FollowPathCommand {
         new PPLTVController(dt),
         replanningConfig,
         requirements);
+
+    if (path.isChoreoPath()) {
+      throw new IllegalArgumentException(
+          "Paths loaded from Choreo cannot be used with differential drivetrains");
+    }
   }
 
   /**
@@ -76,5 +81,10 @@ public class FollowPathLTV extends FollowPathCommand {
         new PPLTVController(qelems, relems, dt),
         replanningConfig,
         requirements);
+
+    if (path.isChoreoPath()) {
+      throw new IllegalArgumentException(
+          "Paths loaded from Choreo cannot be used with differential drivetrains");
+    }
   }
 }

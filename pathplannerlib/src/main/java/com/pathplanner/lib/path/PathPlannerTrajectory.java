@@ -26,6 +26,11 @@ public class PathPlannerTrajectory {
     this.states = generateStates(path, startingSpeeds, startingRotation);
   }
 
+  /**
+   * Create a PathPlannerTrajectory from pre-generated states.
+   *
+   * @param states Pre-generated trajectory states
+   */
   public PathPlannerTrajectory(List<State> states) {
     this.states = states;
   }
@@ -271,7 +276,7 @@ public class PathPlannerTrajectory {
     public Rotation2d heading = new Rotation2d();
     /** The target holonomic rotation at this state */
     public Rotation2d targetHolonomicRotation = new Rotation2d();
-
+    /** Optional holonomic angular velocity. Will only be provided for choreo paths */
     public Optional<Double> holonomicAngularVelocityRps = Optional.empty();
 
     /** The curvature at this state in rad/m */

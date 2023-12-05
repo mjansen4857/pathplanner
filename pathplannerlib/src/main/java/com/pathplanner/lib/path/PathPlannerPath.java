@@ -29,7 +29,8 @@ public class PathPlannerPath {
   private boolean reversed;
   private Rotation2d previewStartingRotation;
 
-  private Optional<PathPlannerTrajectory> preGeneratedTrajectory = Optional.empty();
+  private boolean isChoreoPath = false;
+  private PathPlannerTrajectory choreoTrajectory = null;
 
   /**
    * Create a new path planner path
@@ -287,8 +288,19 @@ public class PathPlannerPath {
     }
   }
 
-  public static PathPlannerPath fromChoreoTrajectory(String fileName) {
-    try (BufferedReader br = new BufferedReader(new FileReader(new File(Filesystem.getDeployDirectory(), fileName)))) {
+  /**
+   * Load a Choreo trajectory as a PathPlannerPath
+   *
+   * @param trajectoryName The name of the Choreo trajectory to load. This should be just the name
+   *     of the trajectory, including any folders it may be in within the deploy directory. For
+   *     example, "deploy/path.traj" becomes "path", "deploy/choreo/path.traj" becomes
+   *     "choreo/path".
+   * @return PathPlannerPath created from the given Choreo trajectory file
+   */
+  public static PathPlannerPath fromChoreoTrajectory(String trajectoryName) {
+    try (BufferedReader br =
+        new BufferedReader(
+            new FileReader(new File(Filesystem.getDeployDirectory(), trajectoryName + ".traj")))) {
       StringBuilder fileContentBuilder = new StringBuilder();
       String line;
       while ((line = br.readLine()) != null) {
@@ -348,7 +360,8 @@ public class PathPlannerPath {
       }
 
       path.allPoints = pathPoints;
-      path.preGeneratedTrajectory = Optional.of(new PathPlannerTrajectory(trajStates));
+      path.isChoreoPath = true;
+      path.choreoTrajectory = new PathPlannerTrajectory(trajStates);
 
       return path;
     } catch (Exception e) {
@@ -651,8 +664,8 @@ public class PathPlannerPath {
    * @return The replanned path
    */
   public PathPlannerPath replan(Pose2d startingPose, ChassisSpeeds currentSpeeds) {
-    if (preGeneratedTrajectory != null) {
-      // This path has a pregenerated trajectory, cannot be replanned
+    if (isChoreoPath) {
+      // This path is from choreo, cannot be replanned
       return this;
     }
 
@@ -965,8 +978,29 @@ public class PathPlannerPath {
         previewStartingRotation);
   }
 
-  public Optional<PathPlannerTrajectory> getPreGeneratedTrajectory() {
-    return preGeneratedTrajectory;
+  /**
+   * Check if this path is loaded from a Choreo trajectory
+   *
+   * @return True if this path is from choreo, false otherwise
+   */
+  public boolean isChoreoPath() {
+    return isChoreoPath;
+  }
+
+  /**
+   * Generate a trajectory for this path.
+   *
+   * @param startingSpeeds The robot-relative starting speeds.
+   * @param startingRotation The starting rotation of the robot.
+   * @return The generated trajectory.
+   */
+  public PathPlannerTrajectory getTrajectory(
+      ChassisSpeeds startingSpeeds, Rotation2d startingRotation) {
+    if (isChoreoPath) {
+      return choreoTrajectory;
+    } else {
+      return new PathPlannerTrajectory(this, startingSpeeds, startingRotation);
+    }
   }
 
   /**

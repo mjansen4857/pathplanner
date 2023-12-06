@@ -111,6 +111,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
+          name: robotpy-pathplannerlib
           path: pathplannerlib-python/dist
   
   build-docker:

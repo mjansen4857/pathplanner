@@ -10,7 +10,8 @@ from .commands import FollowPathWithEvents, FollowPathRamsete, FollowPathHolonom
 import os
 from wpilib import getDeployDirectory
 import json
-from commands2.command import Command, Subsystem
+from commands2.command import Command
+from commands2.subsystem import Subsystem
 from .config import HolonomicPathFollowerConfig, ReplanningConfig
 
 

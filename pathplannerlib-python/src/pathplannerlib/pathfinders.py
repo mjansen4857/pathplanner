@@ -15,6 +15,7 @@ import json
 from ntcore import StringPublisher, DoubleArrayPublisher, DoubleArraySubscriber, NetworkTableInstance, PubSubOptions, \
     EventFlags
 
+
 class Pathfinder:
     def isNewPathAvailable(self) -> bool:
         """
@@ -60,6 +61,7 @@ class Pathfinder:
         :param current_robot_pos: The current position of the robot. This is needed to change the start position of the path to properly avoid obstacles
         """
         raise NotImplementedError
+
 
 class RemoteADStar(Pathfinder):
     _navGridJsonPub: StringPublisher
@@ -201,10 +203,10 @@ class LocalADStar(Pathfinder):
     _rhs: Dict[GridPosition, float] = {}
     _open: Dict[GridPosition, Tuple[float, float]] = {}
     _incons: Dict[GridPosition, Tuple[float, float]] = {}
-    _closed: Set[GridPosition] = {}
-    _staticObstacles: Set[GridPosition] = {}
-    _dynamicObstacles: Set[GridPosition] = {}
-    _requestObstacles: Set[GridPosition] = {}
+    _closed: Set[GridPosition] = set()
+    _staticObstacles: Set[GridPosition] = set()
+    _dynamicObstacles: Set[GridPosition] = set()
+    _requestObstacles: Set[GridPosition] = set()
 
     _requestStart: GridPosition
     _requestRealStartPos: Translation2d
@@ -531,7 +533,7 @@ class LocalADStar(Pathfinder):
             return pos
 
         visited = set()
-        queue = []
+        queue = [p for p in self._getAllNeighbors(pos)]
 
         while len(queue) > 0:
             check = queue.pop(0)
@@ -636,7 +638,8 @@ class LocalADStar(Pathfinder):
             for x in self._getOpenNeighbors(s, obstacles):
                 self._rhs[s] = min(self._rhs[s], self._g[x] + self._cost(s, x, obstacles))
 
-        self._open.pop(s)
+        if s in self._open:
+            self._open.pop(s)
 
         if self._g[s] != self._rhs[s]:
             if s not in self._closed:

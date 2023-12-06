@@ -351,10 +351,11 @@ class PathPlannerPath:
         self._globalConstraints = constraints
         self._goalEndState = goal_end_state
         self._reversed = is_reversed
-        self._allPoints = PathPlannerPath._createPath(self._bezierPoints, self._rotationTargets, self._constraintZones)
+        if len(bezier_points) >= 4:
+            self._allPoints = PathPlannerPath._createPath(self._bezierPoints, self._rotationTargets,
+                                                          self._constraintZones)
+            self._precalcValues()
         self._previewStartingRotation = preview_starting_rotation
-
-        self._precalcValues()
 
     @staticmethod
     def fromPathPoints(path_points: List[PathPoint], constraints: PathConstraints,

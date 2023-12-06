@@ -2,9 +2,9 @@ from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds
 from wpimath.controller import PIDController, ProfiledPIDController, RamseteController, LTVUnicycleController
 from wpimath.trajectory import TrapezoidProfile
-from trajectory import State
+from .trajectory import State
 from typing import Callable, Union
-from config import PIDConstants
+from .config import PIDConstants
 import math
 
 

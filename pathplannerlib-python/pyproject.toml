@@ -3,7 +3,7 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pathplannerlib-python"
+name = "robotpy-pathplannerlib"
 version = "0.0.0"
 description = "Python implementation of PathPlannerLib"
 authors = [{ name = "mjansen4857", email = "mjansen4857@gmail.com" }]

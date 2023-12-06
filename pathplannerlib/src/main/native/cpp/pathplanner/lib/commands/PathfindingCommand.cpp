@@ -176,6 +176,7 @@ void PathfindingCommand::Execute() {
 							>= m_replanningConfig.dynamicReplanningErrorSpikeThreshold) {
 				replanPath(currentPose, currentSpeeds);
 				m_timer.Reset();
+				m_timeOffset = 0_s;
 				targetState = m_currentTrajectory.sample(0_s);
 			}
 		}

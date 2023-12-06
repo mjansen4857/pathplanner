@@ -28,7 +28,7 @@ public class PathPlannerTrajectory {
   private static int getNextRotationTargetIdx(PathPlannerPath path, int startingIndex) {
     int idx = path.numPoints() - 1;
 
-    for (int i = startingIndex; i < path.numPoints() - 2; i++) {
+    for (int i = startingIndex; i < path.numPoints() - 1; i++) {
       if (path.getPoint(i).rotationTarget != null) {
         idx = i;
         break;

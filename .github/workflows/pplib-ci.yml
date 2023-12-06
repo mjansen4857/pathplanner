@@ -108,15 +108,10 @@ jobs:
         working-directory: ./pathplannerlib-python
         run: python -m build
       
-      - name: Upload wheel artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          path: pathplannerlib-python/dist/robotpy-pathplannerlib-*.whl
-      
-      - name: Upload archive artifact
-        uses: actions/upload-artifact@v3
-        with:
-          path: pathplannerlib-python/dist/robotpy-pathplannerlib-*.tar.gz
+          path: pathplannerlib-python/dist
   
   build-docker:
     strategy:

@@ -257,6 +257,7 @@ public class PathfindingCommand extends Command {
                 >= replanningConfig.dynamicReplanningErrorSpikeThreshold) {
           replanPath(currentPose, currentSpeeds);
           timer.reset();
+          timeOffset = 0.0;
           targetState = currentTrajectory.sample(0);
         }
       }

@@ -42,7 +42,7 @@ public class GeometryUtil {
   }
 
   /**
-   * Cubic interpolation between Translation2ds
+   * Quadratic interpolation between Translation2ds
    *
    * @param a Position 1
    * @param b Position 2
@@ -58,7 +58,7 @@ public class GeometryUtil {
   }
 
   /**
-   * Quadratic interpolation between Translation2ds
+   * Cubic interpolation between Translation2ds
    *
    * @param a Position 1
    * @param b Position 2

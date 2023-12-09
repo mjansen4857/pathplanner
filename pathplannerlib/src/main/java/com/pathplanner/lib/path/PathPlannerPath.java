@@ -151,7 +151,7 @@ public class PathPlannerPath {
   }
 
   /**
-   * Creat a path with pre-generated points. This should already be a smooth path.
+   * Create a path with pre-generated points. This should already be a smooth path.
    *
    * @param pathPoints Path points along the smooth curve of the path
    * @param constraints The global constraints of the path
@@ -901,8 +901,8 @@ public class PathPlannerPath {
               bezierPoints.get(bezierPointIdx),
               t);
 
-      segment1Length += lastSegment1Pos.getDistance(p1);
-      segment2Length += lastSegment2Pos.getDistance(p2);
+      segment1Length += positionDelta(lastSegment1Pos, p1);
+      segment2Length += positionDelta(lastSegment2Pos, p2);
 
       lastSegment1Pos = p1;
       lastSegment2Pos = p2;

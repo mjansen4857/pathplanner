@@ -35,7 +35,7 @@ size_t PathPlannerTrajectory::getNextRotationTargetIdx(
 		std::shared_ptr<PathPlannerPath> path, const size_t startingIndex) {
 	size_t idx = path->numPoints() - 1;
 
-	for (size_t i = startingIndex; i < path->numPoints() - 2; i++) {
+	for (size_t i = startingIndex; i < path->numPoints() - 1; i++) {
 		if (path->getPoint(i).rotationTarget) {
 			idx = i;
 			break;

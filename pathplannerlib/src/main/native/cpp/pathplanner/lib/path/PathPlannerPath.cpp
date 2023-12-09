@@ -557,8 +557,8 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 				joinNextControl, nextWaypointPrevControl,
 				m_bezierPoints[bezierPointIdx], t);
 
-		segment1Length += lastSegment1Pos.Distance(p1);
-		segment2Length += lastSegment2Pos.Distance(p2);
+		segment1Length += positionDelta(lastSegment1Pos, p1);
+		segment2Length += positionDelta(lastSegment2Pos, p2);
 
 		lastSegment1Pos = p1;
 		lastSegment2Pos = p2;

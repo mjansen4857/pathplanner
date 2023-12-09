@@ -397,7 +397,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 ProjectPage(
-                  key: ValueKey(_projectDir!.path),
+                  key: ValueKey(
+                      _projectDir!.path.hashCode + _choreoProjRelPath.hashCode),
                   prefs: widget.prefs,
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
                   deployDirectory: _deployDir,
@@ -408,6 +409,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   onFoldersChanged: () =>
                       _saveProjectSettingsToFile(_projectDir!),
                   simulatePath: true,
+                  choreoProjPath: join(_projectDir!.path, _choreoProjRelPath),
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,

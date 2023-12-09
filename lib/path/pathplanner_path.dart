@@ -470,6 +470,12 @@ class PathPlannerPath {
     );
   }
 
+  List<Point> getPathPositions() {
+    return [
+      for (PathPoint p in pathPoints) p.position,
+    ];
+  }
+
   static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {
     return [
       for (Waypoint waypoint in waypoints) waypoint.clone(),

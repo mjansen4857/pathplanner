@@ -2,7 +2,6 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/mini_path_preview.dart';
@@ -19,6 +18,7 @@ class ProjectItemCard extends StatefulWidget {
   final bool compact;
   final String? warningMessage;
   final bool showOptions;
+  final bool choreoItem;
 
   const ProjectItemCard({
     super.key,
@@ -32,6 +32,7 @@ class ProjectItemCard extends StatefulWidget {
     this.compact = false,
     this.warningMessage,
     this.showOptions = true,
+    this.choreoItem = false,
   });
 
   @override
@@ -225,6 +226,18 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                           ],
                   ),
                 ),
+              ),
+            ),
+          ),
+        if (widget.choreoItem)
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                'images/choreo.png',
+                filterQuality: FilterQuality.medium,
+                width: widget.compact ? 32 : 40,
               ),
             ),
           ),

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/pose2d.dart';
@@ -20,6 +21,7 @@ class SplitAutoEditor extends StatefulWidget {
   final SharedPreferences prefs;
   final PathPlannerAuto auto;
   final List<PathPlannerPath> autoPaths;
+  final List<ChoreoPath> autoChoreoPaths;
   final List<String> allPathNames;
   final VoidCallback? onAutoChanged;
   final FieldImage fieldImage;
@@ -29,6 +31,7 @@ class SplitAutoEditor extends StatefulWidget {
     required this.prefs,
     required this.auto,
     required this.autoPaths,
+    required this.autoChoreoPaths,
     required this.allPathNames,
     required this.fieldImage,
     required this.undoStack,
@@ -207,6 +210,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                       child: CustomPaint(
                         painter: PathPainter(
                           paths: widget.autoPaths,
+                          choreoPaths: widget.autoChoreoPaths,
                           simple: true,
                           hideOtherPathsOnHover: widget.prefs
                                   .getBool(PrefsKeys.hidePathsOnHover) ??
@@ -311,16 +315,35 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   void _simulateAuto() async {
     Trajectory? simPath;
 
-    num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
-        Defaults.maxModuleSpeed;
-    num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
-        0.1; // Assuming ~3in thick bumpers
+    if (widget.auto.choreoAuto) {
+      List<TrajectoryState> allStates = [];
+      num timeOffset = 0.0;
 
-    try {
-      simPath = TrajectoryGenerator.simulateAuto(
-          widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius);
-    } catch (err) {
-      Log.error('Failed to simulate auto', err);
+      for (ChoreoPath p in widget.autoChoreoPaths) {
+        for (TrajectoryState s in p.trajectory.states) {
+          allStates.add(s.copyWithTime(s.time + timeOffset));
+        }
+
+        if (allStates.isNotEmpty) {
+          timeOffset = allStates.last.time;
+        }
+      }
+
+      if (allStates.isNotEmpty) {
+        simPath = Trajectory(states: allStates);
+      }
+    } else {
+      num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
+          Defaults.maxModuleSpeed;
+      num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
+          0.1; // Assuming ~3in thick bumpers
+
+      try {
+        simPath = TrajectoryGenerator.simulateAuto(
+            widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius);
+      } catch (err) {
+        Log.error('Failed to simulate auto', err);
+      }
     }
 
     if (simPath != null &&

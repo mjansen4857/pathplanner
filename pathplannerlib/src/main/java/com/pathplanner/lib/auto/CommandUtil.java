@@ -28,9 +28,10 @@ public class CommandUtil {
    * Builds a command from the given JSON object.
    *
    * @param commandJson the JSON object to build the command from
+   * @param loadChoreoPaths Load path commands using choreo trajectories
    * @return a command built from the JSON object
    */
-  public static Command commandFromJson(JSONObject commandJson) {
+  public static Command commandFromJson(JSONObject commandJson, boolean loadChoreoPaths) {
     String type = (String) commandJson.get("type");
     JSONObject data = (JSONObject) commandJson.get("data");
 
@@ -40,15 +41,15 @@ public class CommandUtil {
       case "named":
         return namedCommandFromData(data);
       case "path":
-        return pathCommandFromData(data);
+        return pathCommandFromData(data, loadChoreoPaths);
       case "sequential":
-        return sequentialGroupFromData(data);
+        return sequentialGroupFromData(data, loadChoreoPaths);
       case "parallel":
-        return parallelGroupFromData(data);
+        return parallelGroupFromData(data, loadChoreoPaths);
       case "race":
-        return raceGroupFromData(data);
+        return raceGroupFromData(data, loadChoreoPaths);
       case "deadline":
-        return deadlineGroupFromData(data);
+        return deadlineGroupFromData(data, loadChoreoPaths);
     }
 
     return Commands.none();
@@ -64,44 +65,48 @@ public class CommandUtil {
     return NamedCommands.getCommand(name);
   }
 
-  private static Command pathCommandFromData(JSONObject dataJson) {
+  private static Command pathCommandFromData(JSONObject dataJson, boolean choreoPath) {
     String pathName = (String) dataJson.get("pathName");
-    PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
-    return AutoBuilder.followPathWithEvents(path);
+
+    if(choreoPath){
+      return AutoBuilder.followPathWithEvents(PathPlannerPath.fromChoreoTrajectory(pathName));
+    }else {
+      return AutoBuilder.followPathWithEvents(PathPlannerPath.fromPathFile(pathName));
+    }
   }
 
-  private static Command sequentialGroupFromData(JSONObject dataJson) {
+  private static Command sequentialGroupFromData(JSONObject dataJson, boolean loadChoreoPaths) {
     SequentialCommandGroup group = new SequentialCommandGroup();
     for (var cmdJson : (JSONArray) dataJson.get("commands")) {
-      group.addCommands(commandFromJson((JSONObject) cmdJson));
+      group.addCommands(commandFromJson((JSONObject) cmdJson, loadChoreoPaths));
     }
     return group;
   }
 
-  private static Command parallelGroupFromData(JSONObject dataJson) {
+  private static Command parallelGroupFromData(JSONObject dataJson, boolean loadChoreoPaths) {
     ParallelCommandGroup group = new ParallelCommandGroup();
     for (var cmdJson : (JSONArray) dataJson.get("commands")) {
-      group.addCommands(commandFromJson((JSONObject) cmdJson));
+      group.addCommands(commandFromJson((JSONObject) cmdJson, loadChoreoPaths));
     }
     return group;
   }
 
-  private static Command raceGroupFromData(JSONObject dataJson) {
+  private static Command raceGroupFromData(JSONObject dataJson, boolean loadChoreoPaths) {
     ParallelRaceGroup group = new ParallelRaceGroup();
     for (var cmdJson : (JSONArray) dataJson.get("commands")) {
-      group.addCommands(commandFromJson((JSONObject) cmdJson));
+      group.addCommands(commandFromJson((JSONObject) cmdJson, loadChoreoPaths));
     }
     return group;
   }
 
-  private static Command deadlineGroupFromData(JSONObject dataJson) {
+  private static Command deadlineGroupFromData(JSONObject dataJson, boolean loadChoreoPaths) {
     JSONArray cmds = (JSONArray) dataJson.get("commands");
 
     if (!cmds.isEmpty()) {
-      Command deadline = commandFromJson((JSONObject) cmds.get(0));
+      Command deadline = commandFromJson((JSONObject) cmds.get(0), loadChoreoPaths);
       ParallelDeadlineGroup group = new ParallelDeadlineGroup(deadline);
       for (int i = 1; i < cmds.size(); i++) {
-        group.addCommands(commandFromJson((JSONObject) cmds.get(i)));
+        group.addCommands(commandFromJson((JSONObject) cmds.get(i), loadChoreoPaths));
       }
       return group;
     } else {

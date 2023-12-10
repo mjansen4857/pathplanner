@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/util/prefs.dart';
-import 'package:pathplanner/widgets/editor/choreo_path_painter.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/choreo_path_tree.dart';
@@ -36,7 +35,6 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
   late bool _treeOnRight;
   bool _paused = false;
 
-  late Size _robotSize;
   late AnimationController _previewController;
 
   @override
@@ -47,12 +45,6 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
 
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
-
-    var width =
-        widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
-    var length =
-        widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
-    _robotSize = Size(width, length);
 
     double treeWeight = widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
@@ -98,8 +90,9 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
                     widget.fieldImage.getWidget(),
                     Positioned.fill(
                       child: CustomPaint(
-                        painter: ChoreoPathPainter(
-                          paths: [widget.path],
+                        painter: PathPainter(
+                          paths: [],
+                          choreoPaths: [widget.path],
                           fieldImage: widget.fieldImage,
                           simulatedPath: widget.path.trajectory,
                           animation: _previewController.view,

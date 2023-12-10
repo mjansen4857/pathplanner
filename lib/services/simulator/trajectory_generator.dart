@@ -633,4 +633,16 @@ class TrajectoryState {
 
     return lerpedState;
   }
+
+  TrajectoryState copyWithTime(num time) {
+    TrajectoryState ret = TrajectoryState();
+    ret.time = time;
+    ret.velocity = velocity;
+    ret.position = position;
+    ret.headingRadians = headingRadians;
+    ret.holonomicRotationRadians = holonomicRotationRadians;
+    ret.constraints = constraints;
+    ret.deltaPos = deltaPos;
+    return ret;
+  }
 }

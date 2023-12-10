@@ -14,6 +14,7 @@ class PathPlannerAuto {
   String name;
   Pose2d? startingPose;
   SequentialCommandGroup sequence;
+  bool choreoAuto;
 
   String? folder;
 
@@ -30,6 +31,7 @@ class PathPlannerAuto {
     required this.fs,
     required this.folder,
     required this.startingPose,
+    required this.choreoAuto,
   }) {
     _addNamedCommandsToSet(sequence.commands);
   }
@@ -39,6 +41,7 @@ class PathPlannerAuto {
     required this.autoDir,
     required this.fs,
     this.folder,
+    this.choreoAuto = false,
   })  : sequence = SequentialCommandGroup(commands: []),
         startingPose = Pose2d(position: const Point(2, 2));
 
@@ -50,6 +53,7 @@ class PathPlannerAuto {
       fs: fs,
       startingPose: startingPose,
       folder: folder,
+      choreoAuto: choreoAuto,
     );
   }
 
@@ -65,6 +69,7 @@ class PathPlannerAuto {
           sequence:
               Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
           folder: json['folder'],
+          choreoAuto: json['choreoAuto'] ?? false,
         );
 
   Map<String, dynamic> toJson() {
@@ -73,6 +78,7 @@ class PathPlannerAuto {
       'startingPose': startingPose?.toJson(),
       'command': sequence.toJson(),
       'folder': folder,
+      'choreoAuto': choreoAuto,
     };
   }
 

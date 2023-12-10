@@ -292,15 +292,13 @@ public class PathPlannerPath {
    * Load a Choreo trajectory as a PathPlannerPath
    *
    * @param trajectoryName The name of the Choreo trajectory to load. This should be just the name
-   *     of the trajectory, including any folders it may be in within the deploy directory. For
-   *     example, "deploy/path.traj" becomes "path", "deploy/choreo/path.traj" becomes
-   *     "choreo/path".
+   *     of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
    * @return PathPlannerPath created from the given Choreo trajectory file
    */
   public static PathPlannerPath fromChoreoTrajectory(String trajectoryName) {
     try (BufferedReader br =
         new BufferedReader(
-            new FileReader(new File(Filesystem.getDeployDirectory(), trajectoryName + ".traj")))) {
+            new FileReader(new File(Filesystem.getDeployDirectory(), "choreo/" + trajectoryName + ".traj")))) {
       StringBuilder fileContentBuilder = new StringBuilder();
       String line;
       while ((line = br.readLine()) != null) {

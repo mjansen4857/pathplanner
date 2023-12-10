@@ -83,6 +83,8 @@ class _ProjectPageState extends State<ProjectPage> {
   String? _autoFolder;
   bool _inChoreoFolder = false;
 
+  final GlobalKey _addAutoKey = GlobalKey();
+
   FileSystem get fs => widget.fs;
 
   @override
@@ -142,6 +144,11 @@ class _ProjectPageState extends State<ProjectPage> {
       allPathNames.add(path.name);
     }
 
+    List<String> allChoreoPathNames = [];
+    for (ChoreoPath path in choreoPaths) {
+      allChoreoPathNames.add(path.name);
+    }
+
     for (int i = 0; i < paths.length; i++) {
       if (!_pathFolders.contains(paths[i].folder)) {
         paths[i].folder = null;
@@ -152,7 +159,8 @@ class _ProjectPageState extends State<ProjectPage> {
         autos[i].folder = null;
       }
 
-      autos[i].handleMissingPaths(allPathNames);
+      autos[i].handleMissingPaths(
+          autos[i].choreoAuto ? allChoreoPathNames : allPathNames);
     }
 
     setState(() {
@@ -430,6 +438,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
                 Expanded(
                   child: GridView.count(
                     crossAxisCount:
@@ -798,7 +807,8 @@ class _ProjectPageState extends State<ProjectPage> {
                   ],
                 ),
               ),
-              if (_pathFolders.isNotEmpty) const SizedBox(height: 8),
+              if (_pathFolders.isNotEmpty || _choreoPaths.isNotEmpty)
+                const SizedBox(height: 8),
               Expanded(
                 child: GridView.count(
                   crossAxisCount:
@@ -850,7 +860,9 @@ class _ProjectPageState extends State<ProjectPage> {
 
         List<String> allPathNames = _paths.map((e) => e.name).toList();
         for (PathPlannerAuto auto in _autos) {
-          auto.handleMissingPaths(allPathNames);
+          if (!auto.choreoAuto) {
+            auto.handleMissingPaths(allPathNames);
+          }
         }
       },
       onRenamed: (value) => _renamePath(i, value, context),
@@ -928,6 +940,7 @@ class _ProjectPageState extends State<ProjectPage> {
       fieldImage: widget.fieldImage,
       showOptions: false,
       paths: [_choreoPaths[i].getPathPositions()],
+      choreoItem: true,
       onOpened: () async {
         await Navigator.push(
           context,
@@ -1107,25 +1120,37 @@ class _ProjectPageState extends State<ProjectPage> {
                     message: 'Add new auto',
                     waitDuration: const Duration(seconds: 1),
                     child: IconButton.filled(
+                      key: _addAutoKey,
                       onPressed: () {
-                        List<String> autoNames = [];
-                        for (PathPlannerAuto auto in _autos) {
-                          autoNames.add(auto.name);
-                        }
-                        String autoName = 'New Auto';
-                        while (autoNames.contains(autoName)) {
-                          autoName = 'New $autoName';
-                        }
+                        if (_choreoPaths.isNotEmpty) {
+                          final RenderBox renderBox = _addAutoKey.currentContext
+                              ?.findRenderObject() as RenderBox;
+                          final Size size = renderBox.size;
+                          final Offset offset =
+                              renderBox.localToGlobal(Offset.zero);
 
-                        setState(() {
-                          _autos.add(PathPlannerAuto.defaultAuto(
-                            autoDir: _autosDirectory.path,
-                            name: autoName,
-                            fs: fs,
-                            folder: _autoFolder,
-                          ));
-                          _sortAutos(_autoSortValue);
-                        });
+                          showMenu(
+                            context: context,
+                            position: RelativeRect.fromLTRB(
+                              offset.dx,
+                              offset.dy + size.height,
+                              offset.dx + size.width,
+                              offset.dy + size.height,
+                            ),
+                            items: [
+                              PopupMenuItem(
+                                child: const Text('New PathPlanner Auto'),
+                                onTap: () => _createNewAuto(),
+                              ),
+                              PopupMenuItem(
+                                child: const Text('New Choreo Auto'),
+                                onTap: () => _createNewAuto(choreo: true),
+                              ),
+                            ],
+                          );
+                        } else {
+                          _createNewAuto();
+                        }
                       },
                       icon: const Icon(Icons.add),
                     ),
@@ -1342,6 +1367,28 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
+  void _createNewAuto({bool choreo = false}) {
+    List<String> autoNames = [];
+    for (PathPlannerAuto auto in _autos) {
+      autoNames.add(auto.name);
+    }
+    String autoName = 'New Auto';
+    while (autoNames.contains(autoName)) {
+      autoName = 'New $autoName';
+    }
+
+    setState(() {
+      _autos.add(PathPlannerAuto.defaultAuto(
+        autoDir: _autosDirectory.path,
+        name: autoName,
+        fs: fs,
+        folder: _autoFolder,
+        choreoAuto: choreo,
+      ));
+      _sortAutos(_autoSortValue);
+    });
+  }
+
   Widget _buildAutoCard(int i, BuildContext context) {
     String? warningMessage;
 
@@ -1357,11 +1404,18 @@ class _ProjectPageState extends State<ProjectPage> {
       name: _autos[i].name,
       compact: _autosCompact,
       fieldImage: widget.fieldImage,
-      paths: [
-        for (PathPlannerPath path
-            in _getPathsFromNames(_autos[i].getAllPathNames()))
-          path.getPathPositions(),
-      ],
+      choreoItem: _autos[i].choreoAuto,
+      paths: _autos[i].choreoAuto
+          ? [
+              for (ChoreoPath path
+                  in _getChoreoPathsFromNames(_autos[i].getAllPathNames()))
+                path.getPathPositions(),
+            ]
+          : [
+              for (PathPlannerPath path
+                  in _getPathsFromNames(_autos[i].getAllPathNames()))
+                path.getPathPositions(),
+            ],
       onDuplicated: () {
         List<String> autoNames = [];
         for (PathPlannerAuto auto in _autos) {
@@ -1392,8 +1446,11 @@ class _ProjectPageState extends State<ProjectPage> {
               prefs: widget.prefs,
               auto: _autos[i],
               allPaths: _paths,
+              allChoreoPaths: _choreoPaths,
               undoStack: widget.undoStack,
-              allPathNames: _paths.map((e) => e.name).toList(),
+              allPathNames: _autos[i].choreoAuto
+                  ? _choreoPaths.map((e) => e.name).toList()
+                  : _paths.map((e) => e.name).toList(),
               fieldImage: widget.fieldImage,
               onRenamed: (value) => _renameAuto(i, value, context),
               shortcuts: widget.shortcuts,
@@ -1526,6 +1583,18 @@ class _ProjectPageState extends State<ProjectPage> {
     for (String name in names) {
       List<PathPlannerPath> matched =
           _paths.where((path) => path.name == name).toList();
+      if (matched.isNotEmpty) {
+        paths.add(matched[0]);
+      }
+    }
+    return paths;
+  }
+
+  List<ChoreoPath> _getChoreoPathsFromNames(List<String> names) {
+    List<ChoreoPath> paths = [];
+    for (String name in names) {
+      List<ChoreoPath> matched =
+          _choreoPaths.where((path) => path.name == name).toList();
       if (matched.isNotEmpty) {
         paths.add(matched[0]);
       }

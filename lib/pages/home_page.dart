@@ -278,13 +278,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                             const SizedBox(width: 4),
                             Tooltip(
-                              message: 'Link Choreo Project',
+                              message: _choreoProjRelPath != null
+                                  ? 'Unlink Choreo Project'
+                                  : 'Link Choreo Project',
                               waitDuration: const Duration(milliseconds: 500),
                               child: ElevatedButton.icon(
                                 onPressed: _choreoProjRelPath != null
-                                    ? null
+                                    ? _unlinkChoreo
                                     : _linkChoreoDialog,
-                                icon: const Icon(Icons.link),
+                                icon: _choreoProjRelPath != null
+                                    ? const Icon(Icons.link_off)
+                                    : const Icon(Icons.link),
                                 label: const Text('Choreo'),
                                 style: ElevatedButton.styleFrom(
                                   foregroundColor:
@@ -568,6 +572,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (projectFolder != null) {
       _initFromProjectDir(projectFolder);
     }
+  }
+
+  void _unlinkChoreo() {
+    setState(() {
+      _choreoProjRelPath = null;
+    });
   }
 
   void _linkChoreoDialog() async {

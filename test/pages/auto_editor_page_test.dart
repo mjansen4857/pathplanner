@@ -25,6 +25,7 @@ void main() {
 
   setUp(() async {
     final fs = MemoryFileSystem();
+    await fs.directory('/autos').create();
     auto = PathPlannerAuto.defaultAuto(autoDir: '/autos', fs: fs);
     testPath = PathPlannerPath.defaultPath(
         pathDir: '/paths', fs: fs, name: 'testPath');

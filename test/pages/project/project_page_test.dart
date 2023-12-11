@@ -249,6 +249,60 @@ void main() {
         find.widgetWithText(ProjectItemCard, 'New New Path'), findsOneWidget);
   });
 
+  testWidgets('add new auto button w/ choreo', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await fs.directory(deployPath).create(recursive: true);
+    await fs.file(join(deployPath, 'test.chor')).writeAsString(jsonEncode({
+          'paths': {
+            'test path': {
+              'trajectory': [
+                {
+                  'timestamp': 0.0,
+                  'x': 0.0,
+                  'y': 0.0,
+                  'heading': 0.0,
+                },
+                {
+                  'timestamp': 1.0,
+                  'x': 1.0,
+                  'y': 1.0,
+                  'heading': 0.0,
+                },
+              ],
+            },
+          },
+        }));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+          choreoProjPath: join(deployPath, 'test.chor'),
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final addButton = find.byTooltip('Add new auto');
+
+    expect(addButton, findsOneWidget);
+
+    await widgetTester.tap(addButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('New PathPlanner Auto'), findsWidgets);
+    expect(find.text('New Choreo Auto'), findsWidgets);
+
+    await widgetTester.tap(find.text('New Choreo Auto'));
+    await widgetTester.pumpAndSettle();
+  });
+
   testWidgets('add new auto button', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 

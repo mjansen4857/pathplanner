@@ -59,6 +59,7 @@ void main() {
         rotation: 0.0,
       ),
       folder: null,
+      choreoAuto: false,
     );
     undoStack = ChangeStack();
     SharedPreferences.setMockInitialValues({
@@ -80,6 +81,7 @@ void main() {
           prefs: prefs,
           auto: auto,
           autoPaths: [testPath],
+          autoChoreoPaths: const [],
           allPathNames: const ['testPath', 'otherPath'],
           fieldImage: FieldImage.defaultField,
           undoStack: undoStack,
@@ -108,6 +110,7 @@ void main() {
           prefs: prefs,
           auto: auto,
           autoPaths: [testPath],
+          autoChoreoPaths: const [],
           allPathNames: const ['testPath', 'otherPath'],
           fieldImage: FieldImage.defaultField,
           undoStack: undoStack,
@@ -185,6 +188,7 @@ void main() {
           prefs: prefs,
           auto: auto,
           autoPaths: [testPath],
+          autoChoreoPaths: const [],
           allPathNames: const ['testPath', 'otherPath'],
           fieldImage: FieldImage.defaultField,
           undoStack: undoStack,
@@ -217,6 +221,7 @@ void main() {
           prefs: prefs,
           auto: auto,
           autoPaths: [testPath],
+          autoChoreoPaths: const [],
           allPathNames: const ['testPath', 'otherPath'],
           fieldImage: FieldImage.defaultField,
           undoStack: undoStack,
@@ -249,6 +254,7 @@ void main() {
           prefs: prefs,
           auto: auto,
           autoPaths: [testPath],
+          autoChoreoPaths: const [],
           allPathNames: const ['testPath', 'otherPath'],
           fieldImage: FieldImage.defaultField,
           undoStack: undoStack,

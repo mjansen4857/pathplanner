@@ -1,13 +1,17 @@
 import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/mini_path_preview.dart';
 
 void main() {
   PathPlannerPath path =
       PathPlannerPath.defaultPath(pathDir: '/paths', fs: MemoryFileSystem());
+  ChoreoPath path2 = ChoreoPath(
+      name: 'test', trajectory: Trajectory(states: [TrajectoryState()]));
 
   testWidgets('mini preview w/ small image', (widgetTester) async {
     var fieldImage = FieldImage.official(OfficialField.chargedUp);
@@ -15,7 +19,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: MiniPathsPreview(
-          paths: [path],
+          paths: [path.getPathPositions(), path2.getPathPositions()],
           fieldImage: fieldImage,
         ),
       ),
@@ -31,7 +35,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: MiniPathsPreview(
-          paths: [path],
+          paths: [path.getPathPositions(), path2.getPathPositions()],
           fieldImage: fieldImage,
         ),
       ),

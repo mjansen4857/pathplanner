@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/pages/auto_editor_page.dart';
+import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -13,6 +15,7 @@ import 'package:undo/undo.dart';
 void main() {
   late PathPlannerAuto auto;
   late PathPlannerPath testPath;
+  late ChoreoPath testChoreoPath;
   late ChangeStack undoStack;
   late SharedPreferences prefs;
   String? name;
@@ -22,6 +25,8 @@ void main() {
     auto = PathPlannerAuto.defaultAuto(autoDir: '/autos', fs: fs);
     testPath = PathPlannerPath.defaultPath(
         pathDir: '/paths', fs: fs, name: 'testPath');
+    testChoreoPath = ChoreoPath(
+        name: 'test', trajectory: Trajectory(states: [TrajectoryState()]));
     undoStack = ChangeStack();
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
@@ -36,6 +41,7 @@ void main() {
         prefs: prefs,
         auto: auto,
         allPaths: [testPath],
+        allChoreoPaths: [testChoreoPath],
         allPathNames: const ['testPath'],
         fieldImage: FieldImage.defaultField,
         onRenamed: (value) => name = value,
@@ -55,6 +61,7 @@ void main() {
         prefs: prefs,
         auto: auto,
         allPaths: [testPath],
+        allChoreoPaths: [testChoreoPath],
         allPathNames: const ['testPath'],
         fieldImage: FieldImage.defaultField,
         onRenamed: (value) => name = value,
@@ -82,6 +89,7 @@ void main() {
         prefs: prefs,
         auto: auto,
         allPaths: [testPath],
+        allChoreoPaths: [testChoreoPath],
         allPathNames: const ['testPath'],
         fieldImage: FieldImage.defaultField,
         onRenamed: (value) => name = value,

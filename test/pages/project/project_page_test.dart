@@ -117,6 +117,7 @@ void main() {
       fs: fs,
       folder: null,
       startingPose: null,
+      choreoAuto: false,
     );
 
     await fs
@@ -174,6 +175,7 @@ void main() {
       fs: fs,
       folder: null,
       startingPose: null,
+      choreoAuto: false,
     );
 
     await fs
@@ -339,6 +341,7 @@ void main() {
       fs: fs,
       folder: null,
       startingPose: null,
+      choreoAuto: false,
     );
 
     await fs
@@ -436,6 +439,7 @@ void main() {
       fs: fs,
       folder: null,
       startingPose: null,
+      choreoAuto: false,
     );
 
     await fs
@@ -502,6 +506,7 @@ void main() {
       ),
       folder: null,
       startingPose: null,
+      choreoAuto: false,
     );
 
     await fs
@@ -906,6 +911,7 @@ void main() {
       fs: fs,
       folder: null,
       startingPose: null,
+      choreoAuto: false,
     );
 
     await fs

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/pose2d.dart';
@@ -13,6 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class PathPainter extends CustomPainter {
   final List<PathPlannerPath> paths;
+  final List<ChoreoPath> choreoPaths;
   final FieldImage fieldImage;
   final bool simple;
   final bool hideOtherPathsOnHover;
@@ -39,6 +41,7 @@ class PathPainter extends CustomPainter {
 
   PathPainter({
     required this.paths,
+    this.choreoPaths = const [],
     required this.fieldImage,
     this.simple = false,
     this.hideOtherPathsOnHover = false,
@@ -109,6 +112,29 @@ class PathPainter extends CustomPainter {
       }
     }
 
+    for (int i = 0; i < choreoPaths.length; i++) {
+      if (hideOtherPathsOnHover &&
+          hoveredPath != null &&
+          hoveredPath != choreoPaths[i].name) {
+        continue;
+      }
+
+      if (choreoPaths[i].trajectory.states.isEmpty) {
+        continue;
+      }
+
+      _paintTrajectory(
+          choreoPaths[i].trajectory,
+          canvas,
+          (hoveredPath == choreoPaths[i].name)
+              ? Colors.orange
+              : Colors.grey[300]!);
+      _paintChoreoWaypoint(
+          choreoPaths[i].trajectory.states.first, canvas, Colors.green, scale);
+      _paintChoreoWaypoint(
+          choreoPaths[i].trajectory.states.last, canvas, Colors.red, scale);
+    }
+
     if (startingPose != null) {
       PathPainterUtil.paintRobotOutline(
           startingPose!.position,
@@ -157,6 +183,59 @@ class PathPainter extends CustomPainter {
   @override
   bool shouldRepaint(PathPainter oldDelegate) {
     return true; // This will just be repainted all the time anyways from the animation
+  }
+
+  void _paintTrajectory(Trajectory traj, Canvas canvas, Color baseColor) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = baseColor
+      ..strokeWidth = 2;
+
+    Path p = Path();
+
+    Offset start = PathPainterUtil.pointToPixelOffset(
+        traj.states.first.position, scale, fieldImage);
+    p.moveTo(start.dx, start.dy);
+
+    for (int i = 1; i < traj.states.length; i++) {
+      Offset pos = PathPainterUtil.pointToPixelOffset(
+          traj.states[i].position, scale, fieldImage);
+
+      p.lineTo(pos.dx, pos.dy);
+    }
+
+    canvas.drawPath(p, paint);
+  }
+
+  void _paintChoreoWaypoint(
+      TrajectoryState state, Canvas canvas, Color color, double scale) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..color = color;
+
+    // draw anchor point
+    paint.style = PaintingStyle.fill;
+    canvas.drawCircle(
+        PathPainterUtil.pointToPixelOffset(state.position, scale, fieldImage),
+        PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+        paint);
+    paint.style = PaintingStyle.stroke;
+    paint.color = Colors.black;
+    canvas.drawCircle(
+        PathPainterUtil.pointToPixelOffset(state.position, scale, fieldImage),
+        PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+        paint);
+
+    // Draw robot
+    PathPainterUtil.paintRobotOutline(
+        state.position,
+        GeometryUtil.toDegrees(state.holonomicRotationRadians),
+        fieldImage,
+        robotSize,
+        scale,
+        canvas,
+        color.withOpacity(0.5));
   }
 
   void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor) {

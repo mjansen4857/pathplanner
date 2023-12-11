@@ -30,6 +30,10 @@ public:
 			path, poseSupplier, speedsSupplier, output,
 			std::make_unique < PPLTVController > (Qelms, Relms, dt),
 			replanningConfig, requirements) {
+		if (path->isChoreoPath()) {
+			throw FRC_MakeError(frc::err::CommandIllegalUse,
+					"Paths loaded from Choreo cannot be used with differential drivetrains");
+		}
 	}
 
 	/**
@@ -52,6 +56,10 @@ public:
 			path, poseSupplier, speedsSupplier, output,
 			std::make_unique < PPLTVController > (dt), replanningConfig,
 			requirements) {
+		if (path->isChoreoPath()) {
+			throw FRC_MakeError(frc::err::CommandIllegalUse,
+					"Paths loaded from Choreo cannot be used with differential drivetrains");
+		}
 	}
 };
 }

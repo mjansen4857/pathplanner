@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/util/geometry_util.dart';
+import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
@@ -15,6 +18,7 @@ class AutoEditorPage extends StatefulWidget {
   final SharedPreferences prefs;
   final PathPlannerAuto auto;
   final List<PathPlannerPath> allPaths;
+  final List<ChoreoPath> allChoreoPaths;
   final List<String> allPathNames;
   final FieldImage fieldImage;
   final ValueChanged<String> onRenamed;
@@ -28,6 +32,7 @@ class AutoEditorPage extends StatefulWidget {
     required this.prefs,
     required this.auto,
     required this.allPaths,
+    required this.allChoreoPaths,
     required this.allPathNames,
     required this.fieldImage,
     required this.onRenamed,
@@ -47,19 +52,45 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     List<String> autoPathNames = widget.auto.getAllPathNames();
-    List<PathPlannerPath> autoPaths = autoPathNames
-        .map((name) => widget.allPaths.firstWhere((path) => path.name == name))
-        .toList();
+    List<PathPlannerPath> autoPaths = widget.auto.choreoAuto
+        ? []
+        : autoPathNames
+            .map((name) =>
+                widget.allPaths.firstWhere((path) => path.name == name))
+            .toList();
+    List<ChoreoPath> autoChoreoPaths = widget.auto.choreoAuto
+        ? autoPathNames
+            .map((name) =>
+                widget.allChoreoPaths.firstWhere((path) => path.name == name))
+            .toList()
+        : [];
 
     final editorWidget = SplitAutoEditor(
       prefs: widget.prefs,
       auto: widget.auto,
       autoPaths: autoPaths,
+      autoChoreoPaths: autoChoreoPaths,
       allPathNames: widget.allPathNames,
       fieldImage: widget.fieldImage,
       undoStack: widget.undoStack,
       onAutoChanged: () {
         setState(() {
+          if (widget.auto.choreoAuto) {
+            var pathNames = widget.auto.getAllPathNames();
+            if (pathNames.isNotEmpty) {
+              ChoreoPath first = widget.allChoreoPaths
+                  .firstWhere((e) => e.name == pathNames.first);
+              if (first.trajectory.states.isNotEmpty) {
+                Pose2d startPose = Pose2d(
+                  position: first.trajectory.states.first.position,
+                  rotation: GeometryUtil.toDegrees(
+                      first.trajectory.states.first.holonomicRotationRadians),
+                );
+                widget.auto.startingPose = startPose;
+              }
+            }
+          }
+
           widget.auto.saveFile();
         });
 

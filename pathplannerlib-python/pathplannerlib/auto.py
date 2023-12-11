@@ -72,11 +72,12 @@ class CommandUtil:
         )
 
     @staticmethod
-    def commandFromJson(command_json: dict) -> Command:
+    def commandFromJson(command_json: dict, load_choreo_paths: bool) -> Command:
         """
         Builds a command from the given json object
 
         :param command_json: the json dict to build the command from
+        :param load_choreo_paths: Load path commands using choreo trajectories
         :return: a command built from the json dict
         """
         cmd_type = str(command_json['type'])
@@ -87,15 +88,15 @@ class CommandUtil:
         elif cmd_type == 'named':
             return CommandUtil._namedCommandFromData(data)
         elif cmd_type == 'path':
-            return CommandUtil._pathCommandFromData(data)
+            return CommandUtil._pathCommandFromData(data, load_choreo_paths)
         elif cmd_type == 'sequential':
-            return CommandUtil._sequentialGroupFromData(data)
+            return CommandUtil._sequentialGroupFromData(data, load_choreo_paths)
         elif cmd_type == 'parallel':
-            return CommandUtil._parallelGroupFromData(data)
+            return CommandUtil._parallelGroupFromData(data, load_choreo_paths)
         elif cmd_type == 'race':
-            return CommandUtil._raceGroupFromData(data)
+            return CommandUtil._raceGroupFromData(data, load_choreo_paths)
         elif cmd_type == 'deadline':
-            return CommandUtil._deadlineGroupFromData(data)
+            return CommandUtil._deadlineGroupFromData(data, load_choreo_paths)
 
         return cmd.none()
 
@@ -110,29 +111,32 @@ class CommandUtil:
         return NamedCommands.getCommand(name)
 
     @staticmethod
-    def _pathCommandFromData(data_json: dict) -> Command:
+    def _pathCommandFromData(data_json: dict, load_choreo_paths: bool) -> Command:
         pathName = str(data_json['pathName'])
-        path = PathPlannerPath.fromPathFile(pathName)
-        return AutoBuilder.followPathWithEvents(path)
+
+        if load_choreo_paths:
+            return AutoBuilder.followPathWithEvents(PathPlannerPath.fromChoreoTrajectory(pathName))
+        else:
+            return AutoBuilder.followPathWithEvents(PathPlannerPath.fromPathFile(pathName))
 
     @staticmethod
-    def _sequentialGroupFromData(data_json: dict) -> Command:
-        commands = [CommandUtil.commandFromJson(cmd_json) for cmd_json in data_json['commands']]
+    def _sequentialGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
+        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths) for cmd_json in data_json['commands']]
         return cmd.sequence(*commands)
 
     @staticmethod
-    def _parallelGroupFromData(data_json: dict) -> Command:
-        commands = [CommandUtil.commandFromJson(cmd_json) for cmd_json in data_json['commands']]
+    def _parallelGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
+        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths) for cmd_json in data_json['commands']]
         return cmd.parallel(*commands)
 
     @staticmethod
-    def _raceGroupFromData(data_json: dict) -> Command:
-        commands = [CommandUtil.commandFromJson(cmd_json) for cmd_json in data_json['commands']]
+    def _raceGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
+        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths) for cmd_json in data_json['commands']]
         return cmd.race(*commands)
 
     @staticmethod
-    def _deadlineGroupFromData(data_json: dict) -> Command:
-        commands = [CommandUtil.commandFromJson(cmd_json) for cmd_json in data_json['commands']]
+    def _deadlineGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
+        commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths) for cmd_json in data_json['commands']]
         return cmd.deadline(*commands)
 
 
@@ -424,8 +428,9 @@ class AutoBuilder:
         :return: an auto command built from the JSON object
         """
         commandJson = auto_json['command']
+        choreoAuto = 'choreoAuto' in auto_json and bool(auto_json['choreoAuto'])
 
-        autoCommand = CommandUtil.commandFromJson(commandJson)
+        autoCommand = CommandUtil.commandFromJson(commandJson, choreoAuto)
         if auto_json['startingPose'] is not None:
             startPose = AutoBuilder.getStartingPoseFromJson(auto_json['startingPose'])
             return cmd.sequence(cmd.runOnce(lambda: AutoBuilder._resetPose(startPose)), autoCommand)

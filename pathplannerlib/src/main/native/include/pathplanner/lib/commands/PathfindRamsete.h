@@ -32,6 +32,10 @@ public:
 			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
 			output, std::make_unique < PPRamseteController > (b, zeta), 0_m,
 			replanningConfig, requirements) {
+		if (targetPath->isChoreoPath()) {
+			throw FRC_MakeError(frc::err::CommandIllegalUse,
+					"Paths loaded from Choreo cannot be used with differential drivetrains");
+		}
 	}
 
 	/**
@@ -54,6 +58,10 @@ public:
 			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
 			output, std::make_unique<PPRamseteController>(), 0_m,
 			replanningConfig, requirements) {
+		if (targetPath->isChoreoPath()) {
+			throw FRC_MakeError(frc::err::CommandIllegalUse,
+					"Paths loaded from Choreo cannot be used with differential drivetrains");
+		}
 	}
 
 	/**

@@ -30,12 +30,13 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ),
+            ).getPathPositions(),
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
           onDeleted: () => deleted = true,
           onRenamed: (value) => name = value,
+          choreoItem: true,
         ),
       ),
     ));
@@ -67,7 +68,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ),
+            ).getPathPositions(),
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
@@ -100,7 +101,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ),
+            ).getPathPositions(),
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
@@ -135,7 +136,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ),
+            ).getPathPositions(),
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
@@ -176,7 +177,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ),
+            ).getPathPositions(),
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
@@ -217,7 +218,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ),
+            ).getPathPositions(),
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,

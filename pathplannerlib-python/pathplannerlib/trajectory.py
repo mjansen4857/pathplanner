@@ -5,9 +5,9 @@ from dataclasses import dataclass
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpimath import inputModulus
-from .path import PathConstraints, PathPlannerPath
+import pathplannerlib.path as p
 from .geometry_util import floatLerp, translationLerp, rotationLerp
-from typing import List
+from typing import List, Union
 
 
 @dataclass
@@ -19,8 +19,9 @@ class State:
     positionMeters: Translation2d = Translation2d()
     heading: Rotation2d = Rotation2d()
     targetHolonomicRotation: Rotation2d = Rotation2d()
+    holonomicAngularVelocityRps: Union[float, None] = None
     curvatureRadPerMeter: float = 0
-    constraints: PathConstraints = None
+    constraints: p.PathConstraints = None
     deltaPos: float = 0
 
     def interpolate(self, end_val: State, t: float) -> State:
@@ -47,6 +48,10 @@ class State:
                                                           end_val.headingAngularVelocityRps, t)
         lerpedState.curvatureRadPerMeter = floatLerp(self.curvatureRadPerMeter, end_val.curvatureRadPerMeter, t)
         lerpedState.deltaPos = floatLerp(self.deltaPos, end_val.deltaPos, t)
+
+        if self.holonomicAngularVelocityRps is not None and end_val.holonomicAngularVelocityRps is not None:
+            lerpedState.holonomicAngularVelocityRps = floatLerp(self.holonomicAngularVelocityRps,
+                                                                end_val.holonomicAngularVelocityRps, t)
 
         if t < 0.5:
             lerpedState.constraints = self.constraints
@@ -88,6 +93,7 @@ class State:
         reversedState.positionMeters = self.positionMeters
         reversedState.heading = Rotation2d.fromDegrees(inputModulus(self.heading.degrees() + 180, -180, 180))
         reversedState.targetHolonomicRotation = self.targetHolonomicRotation
+        reversedState.holonomicAngularVelocityRps = self.holonomicAngularVelocityRps
         reversedState.curvatureRadPerMeter = -self.curvatureRadPerMeter
         reversedState.deltaPos = self.deltaPos
         reversedState.constraints = self.constraints
@@ -98,15 +104,21 @@ class State:
 class PathPlannerTrajectory:
     _states: List[State]
 
-    def __init__(self, path: PathPlannerPath, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d):
+    def __init__(self, path: Union[p.PathPlannerPath, None], starting_speeds: Union[ChassisSpeeds, None],
+                 starting_rotation: Union[Rotation2d, None], states: List[State] = None):
         """
-        Generate a PathPlannerTrajectory
+        Generate a PathPlannerTrajectory. If "states" is provided, the other arguments can be None
 
         :param path: PathPlannerPath to generate the trajectory for
         :param starting_speeds: Starting speeds of the robot when starting the trajectory
         :param starting_rotation: Starting rotation of the robot when starting the trajectory
+        :param states: Pre-generated trajectory states
         """
-        self._states = PathPlannerTrajectory._generateStates(path, starting_speeds, starting_rotation)
+
+        if states is not None:
+            self._states = states
+        else:
+            self._states = PathPlannerTrajectory._generateStates(path, starting_speeds, starting_rotation)
 
     def getStates(self) -> List[State]:
         """
@@ -197,7 +209,7 @@ class PathPlannerTrajectory:
                                       (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds))
 
     @staticmethod
-    def _getNextRotationTarget(path: PathPlannerPath, starting_index: int) -> int:
+    def _getNextRotationTarget(path: p.PathPlannerPath, starting_index: int) -> int:
         idx = path.numPoints() - 1
 
         for i in range(starting_index, path.numPoints() - 1):
@@ -208,7 +220,7 @@ class PathPlannerTrajectory:
         return idx
 
     @staticmethod
-    def _generateStates(path: PathPlannerPath, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d) -> List[
+    def _generateStates(path: p.PathPlannerPath, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d) -> List[
         State]:
         states = []
 

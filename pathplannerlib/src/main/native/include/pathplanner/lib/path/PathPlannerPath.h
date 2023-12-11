@@ -7,6 +7,7 @@
 #include "pathplanner/lib/path/GoalEndState.h"
 #include "pathplanner/lib/path/PathPoint.h"
 #include "pathplanner/lib/path/PathSegment.h"
+#include "pathplanner/lib/path/PathPlannerTrajectory.h"
 #include <vector>
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
@@ -17,7 +18,7 @@
 #include <initializer_list>
 
 namespace pathplanner {
-class PathPlannerPath {
+class PathPlannerPath: public std::enable_shared_from_this<PathPlannerPath> {
 public:
 	/**
 	 * Create a new path planner path
@@ -56,6 +57,15 @@ public:
 			std::vector<EventMarker>(), constraints, goalEndState, reversed) {
 	}
 
+	/**
+	 * USED INTERNALLY. DO NOT USE!
+	 */
+	PathPlannerPath(PathConstraints constraints, GoalEndState goalEndState) : m_bezierPoints(), m_rotationTargets(), m_constraintZones(), m_eventMarkers(), m_globalConstraints(
+			constraints), m_goalEndState(goalEndState), m_reversed(false), m_previewStartingRotation(), m_isChoreoPath(
+			false), m_choreoTrajectory() {
+
+	}
+
 	void hotReload(const wpi::json &json);
 
 	/**
@@ -74,6 +84,16 @@ public:
 	 * @return shared ptr to the PathPlannerPath created from the given file name
 	 */
 	static std::shared_ptr<PathPlannerPath> fromPathFile(std::string pathName);
+
+	/**
+	 * Load a Choreo trajectory as a PathPlannerPath
+	 *
+	 * @param trajectoryName The name of the Choreo trajectory to load. This should be just the name
+	 *     of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
+	 * @return PathPlannerPath created from the given Choreo trajectory file
+	 */
+	static std::shared_ptr<PathPlannerPath> fromChoreoTrajecory(
+			std::string trajectoryName);
 
 	/**
 	 * Get the differential pose for the start point of this path
@@ -180,6 +200,26 @@ public:
 	}
 
 	/**
+	 * Check if this path is loaded from a Choreo trajectory
+	 *
+	 * @return True if this path is from choreo, false otherwise
+	 */
+	constexpr bool isChoreoPath() const {
+		return m_isChoreoPath;
+	}
+
+	inline PathPlannerTrajectory getTrajectory(
+			frc::ChassisSpeeds startingSpeeds,
+			frc::Rotation2d startingRotation) {
+		if (m_isChoreoPath) {
+			return m_choreoTrajectory;
+		} else {
+			return PathPlannerTrajectory(shared_from_this(), startingSpeeds,
+					startingRotation);
+		}
+	}
+
+	/**
 	 * Replan this path based on the current robot position and speeds
 	 *
 	 * @param startingPose New starting pose for the replanned path
@@ -187,16 +227,10 @@ public:
 	 * @return The replanned path
 	 */
 	std::shared_ptr<PathPlannerPath> replan(const frc::Pose2d startingPose,
-			const frc::ChassisSpeeds currentSpeeds) const;
-
-	/**
-	 * USED INTERNALLY. DO NOT USE
-	 */
-	PathPlannerPath(PathConstraints globalConstraints,
-			GoalEndState goalEndState);
+			const frc::ChassisSpeeds currentSpeeds);
 
 private:
-	static PathPlannerPath fromJson(const wpi::json &json);
+	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);
 
 	static std::vector<frc::Translation2d> bezierPointsFromWaypointsJson(
 			const wpi::json &json);
@@ -245,5 +279,7 @@ private:
 	std::vector<PathPoint> m_allPoints;
 	bool m_reversed;
 	frc::Rotation2d m_previewStartingRotation;
+	bool m_isChoreoPath;
+	PathPlannerTrajectory m_choreoTrajectory;
 };
 }

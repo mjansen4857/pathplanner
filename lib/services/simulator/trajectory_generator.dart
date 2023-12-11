@@ -601,7 +601,11 @@ class TrajectoryState {
 
   num deltaPos = 0;
 
-  TrajectoryState();
+  TrajectoryState({
+    this.time = 0,
+    this.position = const Point(0, 0),
+    this.holonomicRotationRadians = 0.0,
+  });
 
   TrajectoryState interpolate(TrajectoryState endVal, num t) {
     TrajectoryState lerpedState = TrajectoryState();
@@ -628,5 +632,17 @@ class TrajectoryState {
     }
 
     return lerpedState;
+  }
+
+  TrajectoryState copyWithTime(num time) {
+    TrajectoryState ret = TrajectoryState();
+    ret.time = time;
+    ret.velocity = velocity;
+    ret.position = position;
+    ret.headingRadians = headingRadians;
+    ret.holonomicRotationRadians = holonomicRotationRadians;
+    ret.constraints = constraints;
+    ret.deltaPos = deltaPos;
+    return ret;
   }
 }

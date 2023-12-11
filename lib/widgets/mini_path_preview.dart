@@ -1,13 +1,12 @@
+import 'dart:math';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:pathplanner/path/path_point.dart';
-import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 
 class MiniPathsPreview extends StatelessWidget {
-  final List<PathPlannerPath> paths;
+  final List<List<Point>> paths;
   final FieldImage fieldImage;
 
   const MiniPathsPreview({
@@ -34,7 +33,7 @@ class MiniPathsPreview extends StatelessWidget {
 
 @visibleForTesting
 class PathPreviewPainter extends StatelessWidget {
-  final List<PathPlannerPath> paths;
+  final List<List<Point>> paths;
   final FieldImage fieldImage;
 
   const PathPreviewPainter({
@@ -55,7 +54,7 @@ class PathPreviewPainter extends StatelessWidget {
 }
 
 class _Painter extends CustomPainter {
-  final List<PathPlannerPath> paths;
+  final List<List<Point>> paths;
   final FieldImage fieldImage;
 
   const _Painter({
@@ -73,11 +72,12 @@ class _Painter extends CustomPainter {
       scale = size.width / fieldImage.defaultSize.width;
     }
 
-    for (PathPlannerPath path in paths) {
-      _paintPathPoints(canvas, scale, Colors.grey[300]!, path.pathPoints);
-
-      _paintWaypoint(canvas, scale, path, 0);
-      _paintWaypoint(canvas, scale, path, path.waypoints.length - 1);
+    for (List<Point> path in paths) {
+      if (path.isNotEmpty) {
+        _paintPathPoints(canvas, scale, Colors.grey[300]!, path);
+        _paintWaypoint(canvas, scale, path.first, Colors.green);
+        _paintWaypoint(canvas, scale, path.last, Colors.red);
+      }
     }
   }
 
@@ -87,8 +87,8 @@ class _Painter extends CustomPainter {
         !(const DeepCollectionEquality()).equals(oldDelegate.paths, paths);
   }
 
-  void _paintPathPoints(Canvas canvas, double scale, Color baseColor,
-      List<PathPoint> pathPoints) {
+  void _paintPathPoints(
+      Canvas canvas, double scale, Color baseColor, List<Point> pathPoints) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
@@ -97,13 +97,13 @@ class _Painter extends CustomPainter {
     Path p = Path();
 
     Offset start = PathPainterUtil.pointToPixelOffset(
-        pathPoints[0].position, scale, fieldImage,
+        pathPoints[0], scale, fieldImage,
         small: true);
     p.moveTo(start.dx, start.dy);
 
     for (int i = 1; i < pathPoints.length; i++) {
       Offset pos = PathPainterUtil.pointToPixelOffset(
-          pathPoints[i].position, scale, fieldImage,
+          pathPoints[i], scale, fieldImage,
           small: true);
 
       p.lineTo(pos.dx, pos.dy);
@@ -113,31 +113,23 @@ class _Painter extends CustomPainter {
   }
 
   void _paintWaypoint(
-      Canvas canvas, double scale, PathPlannerPath path, int waypointIdx) {
+      Canvas canvas, double scale, Point position, Color color) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = Colors.black
+      ..color = color
       ..strokeWidth = 1;
-
-    Waypoint waypoint = path.waypoints[waypointIdx];
-
-    if (waypointIdx == 0) {
-      paint.color = Colors.green;
-    } else if (waypointIdx == path.waypoints.length - 1) {
-      paint.color = Colors.red;
-    }
 
     // draw anchor point
     paint.style = PaintingStyle.fill;
     canvas.drawCircle(
-        PathPainterUtil.pointToPixelOffset(waypoint.anchor, scale, fieldImage,
+        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage,
             small: true),
         PathPainterUtil.uiPointSizeToPixels(35, scale, fieldImage, small: true),
         paint);
     paint.style = PaintingStyle.stroke;
     paint.color = Colors.black;
     canvas.drawCircle(
-        PathPainterUtil.pointToPixelOffset(waypoint.anchor, scale, fieldImage,
+        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage,
             small: true),
         PathPainterUtil.uiPointSizeToPixels(35, scale, fieldImage, small: true),
         paint);

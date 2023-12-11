@@ -65,18 +65,26 @@ public class PathfindingCommand extends Command {
     Pathfinding.ensureInitialized();
 
     Rotation2d targetRotation = new Rotation2d();
-    for (PathPoint p : targetPath.getAllPathPoints()) {
-      if (p.rotationTarget != null) {
-        targetRotation = p.rotationTarget.getTarget();
-        break;
+    double goalEndVel = targetPath.getGlobalConstraints().getMaxVelocityMps();
+    if (targetPath.isChoreoPath()) {
+      // Can call getTrajectory here without proper speeds since it will just return the choreo
+      // trajectory
+      PathPlannerTrajectory choreoTraj =
+          targetPath.getTrajectory(new ChassisSpeeds(), new Rotation2d());
+      targetRotation = choreoTraj.getInitialState().targetHolonomicRotation;
+      goalEndVel = choreoTraj.getInitialState().velocityMps;
+    } else {
+      for (PathPoint p : targetPath.getAllPathPoints()) {
+        if (p.rotationTarget != null) {
+          targetRotation = p.rotationTarget.getTarget();
+          break;
+        }
       }
     }
 
     this.targetPath = targetPath;
     this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
-    this.goalEndState =
-        new GoalEndState(
-            this.targetPath.getGlobalConstraints().getMaxVelocityMps(), targetRotation, true);
+    this.goalEndState = new GoalEndState(goalEndVel, targetRotation, true);
     this.constraints = constraints;
     this.controller = controller;
     this.poseSupplier = poseSupplier;
@@ -291,7 +299,7 @@ public class PathfindingCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    if (targetPath != null) {
+    if (targetPath != null && !targetPath.isChoreoPath()) {
       Pose2d currentPose = poseSupplier.get();
       ChassisSpeeds currentSpeeds = speedsSupplier.get();
 

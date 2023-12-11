@@ -1,7 +1,7 @@
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/mini_path_preview.dart';
@@ -10,13 +10,15 @@ import 'package:pathplanner/widgets/renamable_title.dart';
 class ProjectItemCard extends StatefulWidget {
   final String name;
   final FieldImage fieldImage;
-  final List<PathPlannerPath> paths;
+  final List<List<Point>> paths;
   final VoidCallback onOpened;
-  final VoidCallback onDuplicated;
-  final VoidCallback onDeleted;
-  final ValueChanged<String> onRenamed;
+  final VoidCallback? onDuplicated;
+  final VoidCallback? onDeleted;
+  final ValueChanged<String>? onRenamed;
   final bool compact;
   final String? warningMessage;
+  final bool showOptions;
+  final bool choreoItem;
 
   const ProjectItemCard({
     super.key,
@@ -24,11 +26,13 @@ class ProjectItemCard extends StatefulWidget {
     required this.fieldImage,
     required this.paths,
     required this.onOpened,
-    required this.onDuplicated,
-    required this.onDeleted,
-    required this.onRenamed,
+    this.onDuplicated,
+    this.onDeleted,
+    this.onRenamed,
     this.compact = false,
     this.warningMessage,
+    this.showOptions = true,
+    this.choreoItem = false,
   });
 
   @override
@@ -67,42 +71,43 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                           ),
                         ),
                       ),
-                      FittedBox(
-                        child: PopupMenuButton<String>(
-                          tooltip: '',
-                          onSelected: (value) {
-                            if (value == 'duplicate') {
-                              widget.onDuplicated();
-                            } else if (value == 'delete') {
-                              _showDeleteDialog();
-                            }
-                          },
-                          itemBuilder: (_) {
-                            return const [
-                              PopupMenuItem(
-                                value: 'duplicate',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.copy),
-                                    SizedBox(width: 12),
-                                    Text('Duplicate'),
-                                  ],
+                      if (widget.showOptions)
+                        FittedBox(
+                          child: PopupMenuButton<String>(
+                            tooltip: '',
+                            onSelected: (value) {
+                              if (value == 'duplicate') {
+                                widget.onDuplicated?.call();
+                              } else if (value == 'delete') {
+                                _showDeleteDialog();
+                              }
+                            },
+                            itemBuilder: (_) {
+                              return const [
+                                PopupMenuItem(
+                                  value: 'duplicate',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.copy),
+                                      SizedBox(width: 12),
+                                      Text('Duplicate'),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              PopupMenuItem(
-                                value: 'delete',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.delete_forever),
-                                    SizedBox(width: 12),
-                                    Text('Delete'),
-                                  ],
+                                PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.delete_forever),
+                                      SizedBox(width: 12),
+                                      Text('Delete'),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ];
-                          },
+                              ];
+                            },
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -224,6 +229,18 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
               ),
             ),
           ),
+        if (widget.choreoItem)
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Image.asset(
+                'images/choreo.png',
+                filterQuality: FilterQuality.medium,
+                width: widget.compact ? 32 : 40,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -246,7 +263,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                widget.onDeleted.call();
+                widget.onDeleted?.call();
               },
               child: const Text('DELETE'),
             ),

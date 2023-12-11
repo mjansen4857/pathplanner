@@ -280,8 +280,11 @@ frc2::CommandPtr AutoBuilder::buildAuto(std::string autoName) {
 
 frc2::CommandPtr AutoBuilder::getAutoCommandFromJson(const wpi::json &json) {
 	wpi::json::const_reference commandJson = json.at("command");
+	bool choreoAuto = json.contains("choreoAuto")
+			&& json.at("choreoAuto").get<bool>();
 
-	frc2::CommandPtr autoCommand = CommandUtil::commandFromJson(commandJson);
+	frc2::CommandPtr autoCommand = CommandUtil::commandFromJson(commandJson,
+			choreoAuto);
 	if (!json.at("startingPose").is_null()) {
 		frc::Pose2d startPose = getStartingPoseFromJson(
 				json.at("startingPose"));

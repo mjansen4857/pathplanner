@@ -29,6 +29,9 @@ public class PathPlannerPath {
   private boolean reversed;
   private Rotation2d previewStartingRotation;
 
+  private boolean isChoreoPath = false;
+  private PathPlannerTrajectory choreoTrajectory = null;
+
   /**
    * Create a new path planner path
    *
@@ -278,6 +281,87 @@ public class PathPlannerPath {
 
       PathPlannerPath path = PathPlannerPath.fromJson(json);
       PPLibTelemetry.registerHotReloadPath(pathName, path);
+      return path;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  /**
+   * Load a Choreo trajectory as a PathPlannerPath
+   *
+   * @param trajectoryName The name of the Choreo trajectory to load. This should be just the name
+   *     of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
+   * @return PathPlannerPath created from the given Choreo trajectory file
+   */
+  public static PathPlannerPath fromChoreoTrajectory(String trajectoryName) {
+    try (BufferedReader br =
+        new BufferedReader(
+            new FileReader(
+                new File(Filesystem.getDeployDirectory(), "choreo/" + trajectoryName + ".traj")))) {
+      StringBuilder fileContentBuilder = new StringBuilder();
+      String line;
+      while ((line = br.readLine()) != null) {
+        fileContentBuilder.append(line);
+      }
+
+      String fileContent = fileContentBuilder.toString();
+      JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+      List<PathPlannerTrajectory.State> trajStates = new ArrayList<>();
+      for (var s : (JSONArray) json.get("samples")) {
+        JSONObject sample = (JSONObject) s;
+        PathPlannerTrajectory.State state = new PathPlannerTrajectory.State();
+
+        double time = ((Number) sample.get("timestamp")).doubleValue();
+        double xPos = ((Number) sample.get("x")).doubleValue();
+        double yPos = ((Number) sample.get("y")).doubleValue();
+        double rotationRad = ((Number) sample.get("heading")).doubleValue();
+        double xVel = ((Number) sample.get("velocityX")).doubleValue();
+        double yVel = ((Number) sample.get("velocityY")).doubleValue();
+        double angularVelRps = ((Number) sample.get("angularVelocity")).doubleValue();
+
+        state.timeSeconds = time;
+        state.velocityMps = Math.hypot(xVel, yVel);
+        state.accelerationMpsSq = 0.0; // Not encoded, not needed anyway
+        state.headingAngularVelocityRps = 0.0; // Not encoded, only used for diff drive anyway
+        state.positionMeters = new Translation2d(xPos, yPos);
+        state.heading = new Rotation2d(xVel, yVel);
+        state.targetHolonomicRotation = new Rotation2d(rotationRad);
+        state.holonomicAngularVelocityRps = Optional.of(angularVelRps);
+        state.curvatureRadPerMeter = 0.0; // Not encoded, only used for diff drive anyway
+        state.constraints =
+            new PathConstraints(
+                Double.POSITIVE_INFINITY,
+                Double.POSITIVE_INFINITY,
+                Double.POSITIVE_INFINITY,
+                Double.POSITIVE_INFINITY);
+
+        trajStates.add(state);
+      }
+
+      PathPlannerPath path =
+          new PathPlannerPath(
+              new PathConstraints(
+                  Double.POSITIVE_INFINITY,
+                  Double.POSITIVE_INFINITY,
+                  Double.POSITIVE_INFINITY,
+                  Double.POSITIVE_INFINITY),
+              new GoalEndState(
+                  trajStates.get(trajStates.size() - 1).velocityMps,
+                  trajStates.get(trajStates.size() - 1).targetHolonomicRotation,
+                  true));
+
+      List<PathPoint> pathPoints = new ArrayList<>();
+      for (var state : trajStates) {
+        pathPoints.add(new PathPoint(state.positionMeters));
+      }
+
+      path.allPoints = pathPoints;
+      path.isChoreoPath = true;
+      path.choreoTrajectory = new PathPlannerTrajectory(trajStates);
+
       return path;
     } catch (Exception e) {
       e.printStackTrace();
@@ -579,6 +663,11 @@ public class PathPlannerPath {
    * @return The replanned path
    */
   public PathPlannerPath replan(Pose2d startingPose, ChassisSpeeds currentSpeeds) {
+    if (isChoreoPath) {
+      // This path is from choreo, cannot be replanned
+      return this;
+    }
+
     ChassisSpeeds currentFieldRelativeSpeeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(
             currentSpeeds, startingPose.getRotation().unaryMinus());
@@ -886,6 +975,31 @@ public class PathPlannerPath {
         goalEndState,
         reversed,
         previewStartingRotation);
+  }
+
+  /**
+   * Check if this path is loaded from a Choreo trajectory
+   *
+   * @return True if this path is from choreo, false otherwise
+   */
+  public boolean isChoreoPath() {
+    return isChoreoPath;
+  }
+
+  /**
+   * Generate a trajectory for this path.
+   *
+   * @param startingSpeeds The robot-relative starting speeds.
+   * @param startingRotation The starting rotation of the robot.
+   * @return The generated trajectory.
+   */
+  public PathPlannerTrajectory getTrajectory(
+      ChassisSpeeds startingSpeeds, Rotation2d startingRotation) {
+    if (isChoreoPath) {
+      return choreoTrajectory;
+    } else {
+      return new PathPlannerTrajectory(this, startingSpeeds, startingRotation);
+    }
   }
 
   /**

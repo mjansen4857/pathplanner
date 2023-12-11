@@ -22,18 +22,27 @@ PathfindingCommand::PathfindingCommand(
 	Pathfinding::ensureInitialized();
 
 	frc::Rotation2d targetRotation;
-	for (PathPoint p : m_targetPath->getAllPathPoints()) {
-		if (p.rotationTarget.has_value()) {
-			targetRotation = p.rotationTarget.value().getTarget();
-			break;
+	units::meters_per_second_t goalEndVel =
+			targetPath->getGlobalConstraints().getMaxVelocity();
+	if (targetPath->isChoreoPath()) {
+		// Can call getTrajectory here without proper speeds since it will just return the choreo
+		// trajectory
+		PathPlannerTrajectory choreoTraj = targetPath->getTrajectory(
+				frc::ChassisSpeeds(), frc::Rotation2d());
+		targetRotation = choreoTraj.getInitialState().targetHolonomicRotation;
+		goalEndVel = choreoTraj.getInitialState().velocity;
+	} else {
+		for (PathPoint p : targetPath->getAllPathPoints()) {
+			if (p.rotationTarget) {
+				targetRotation = p.rotationTarget.value().getTarget();
+				break;
+			}
 		}
 	}
 
 	m_targetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
 			targetRotation);
-	m_goalEndState = GoalEndState(
-			m_targetPath->getGlobalConstraints().getMaxVelocity(),
-			targetRotation, true);
+	m_goalEndState = GoalEndState(goalEndVel, targetRotation, true);
 }
 
 PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
@@ -217,7 +226,7 @@ void PathfindingCommand::Execute() {
 }
 
 bool PathfindingCommand::IsFinished() {
-	if (m_targetPath) {
+	if (m_targetPath && !m_targetPath->isChoreoPath()) {
 		frc::Pose2d currentPose = m_poseSupplier();
 		frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
 

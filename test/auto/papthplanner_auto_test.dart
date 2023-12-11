@@ -27,6 +27,7 @@ void main() {
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
         folder: null,
+        choreoAuto: false,
       );
       PathPlannerAuto auto2 = PathPlannerAuto(
         name: 'test',
@@ -36,6 +37,7 @@ void main() {
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
         folder: null,
+        choreoAuto: false,
       );
       PathPlannerAuto auto3 = PathPlannerAuto(
         name: 'test2',
@@ -44,6 +46,7 @@ void main() {
         sequence: SequentialCommandGroup(commands: []),
         startingPose: null,
         folder: null,
+        choreoAuto: false,
       );
 
       expect(auto2, auto1);
@@ -63,6 +66,7 @@ void main() {
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
         folder: null,
+        choreoAuto: false,
       );
 
       Map<String, dynamic> json = auto.toJson();
@@ -83,6 +87,7 @@ void main() {
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
         folder: null,
         startingPose: null,
+        choreoAuto: false,
       );
       PathPlannerAuto cloned = auto.duplicate(auto.name);
 
@@ -98,22 +103,24 @@ void main() {
     var fs = MemoryFileSystem();
 
     PathPlannerAuto auto = PathPlannerAuto(
-        name: 'test',
-        autoDir: '/autos',
-        fs: fs,
-        folder: null,
-        startingPose: null,
-        sequence: SequentialCommandGroup(
-          commands: [
-            PathCommand(pathName: 'path1'),
-            SequentialCommandGroup(
-              commands: [
-                PathCommand(pathName: 'path2'),
-              ],
-            ),
-            PathCommand(pathName: 'path3'),
-          ],
-        ));
+      name: 'test',
+      autoDir: '/autos',
+      fs: fs,
+      folder: null,
+      startingPose: null,
+      sequence: SequentialCommandGroup(
+        commands: [
+          PathCommand(pathName: 'path1'),
+          SequentialCommandGroup(
+            commands: [
+              PathCommand(pathName: 'path2'),
+            ],
+          ),
+          PathCommand(pathName: 'path3'),
+        ],
+      ),
+      choreoAuto: false,
+    );
 
     expect(
         listEquals(auto.getAllPathNames(), ['path1', 'path2', 'path3']), true);
@@ -123,42 +130,46 @@ void main() {
     var fs = MemoryFileSystem();
 
     PathPlannerAuto auto1 = PathPlannerAuto(
-        name: 'test',
-        autoDir: '/autos',
-        fs: fs,
-        folder: null,
-        startingPose: null,
-        sequence: SequentialCommandGroup(
-          commands: [
-            PathCommand(pathName: 'path1'),
-            SequentialCommandGroup(
-              commands: [
-                PathCommand(pathName: 'path2'),
-              ],
-            ),
-            PathCommand(pathName: 'path3'),
-          ],
-        ));
+      name: 'test',
+      autoDir: '/autos',
+      fs: fs,
+      folder: null,
+      startingPose: null,
+      sequence: SequentialCommandGroup(
+        commands: [
+          PathCommand(pathName: 'path1'),
+          SequentialCommandGroup(
+            commands: [
+              PathCommand(pathName: 'path2'),
+            ],
+          ),
+          PathCommand(pathName: 'path3'),
+        ],
+      ),
+      choreoAuto: false,
+    );
 
     expect(auto1.hasEmptyPathCommands(), false);
 
     PathPlannerAuto auto2 = PathPlannerAuto(
-        name: 'test',
-        autoDir: '/autos',
-        fs: fs,
-        folder: null,
-        startingPose: null,
-        sequence: SequentialCommandGroup(
-          commands: [
-            PathCommand(pathName: 'path1'),
-            SequentialCommandGroup(
-              commands: [
-                PathCommand(),
-              ],
-            ),
-            PathCommand(pathName: 'path3'),
-          ],
-        ));
+      name: 'test',
+      autoDir: '/autos',
+      fs: fs,
+      folder: null,
+      startingPose: null,
+      sequence: SequentialCommandGroup(
+        commands: [
+          PathCommand(pathName: 'path1'),
+          SequentialCommandGroup(
+            commands: [
+              PathCommand(),
+            ],
+          ),
+          PathCommand(pathName: 'path3'),
+        ],
+      ),
+      choreoAuto: false,
+    );
 
     expect(auto2.hasEmptyPathCommands(), true);
   });
@@ -167,22 +178,24 @@ void main() {
     var fs = MemoryFileSystem();
 
     PathPlannerAuto auto = PathPlannerAuto(
-        name: 'test',
-        autoDir: '/autos',
-        fs: fs,
-        folder: null,
-        startingPose: null,
-        sequence: SequentialCommandGroup(
-          commands: [
-            PathCommand(pathName: 'path1'),
-            SequentialCommandGroup(
-              commands: [
-                PathCommand(pathName: 'path2'),
-              ],
-            ),
-            PathCommand(pathName: 'path3'),
-          ],
-        ));
+      name: 'test',
+      autoDir: '/autos',
+      fs: fs,
+      folder: null,
+      startingPose: null,
+      sequence: SequentialCommandGroup(
+        commands: [
+          PathCommand(pathName: 'path1'),
+          SequentialCommandGroup(
+            commands: [
+              PathCommand(pathName: 'path2'),
+            ],
+          ),
+          PathCommand(pathName: 'path3'),
+        ],
+      ),
+      choreoAuto: false,
+    );
 
     auto.handleMissingPaths(['path1', 'path3']);
 
@@ -198,20 +211,22 @@ void main() {
     var fs = MemoryFileSystem();
 
     PathPlannerAuto auto = PathPlannerAuto(
-        name: 'test',
-        autoDir: '/autos',
-        fs: fs,
-        folder: null,
-        startingPose: null,
-        sequence: SequentialCommandGroup(
-          commands: [
-            SequentialCommandGroup(
-              commands: [
-                NamedCommand(),
-              ],
-            ),
-          ],
-        ));
+      name: 'test',
+      autoDir: '/autos',
+      fs: fs,
+      folder: null,
+      startingPose: null,
+      sequence: SequentialCommandGroup(
+        commands: [
+          SequentialCommandGroup(
+            commands: [
+              NamedCommand(),
+            ],
+          ),
+        ],
+      ),
+      choreoAuto: false,
+    );
 
     expect(auto.hasEmptyNamedCommand(), true);
   });
@@ -223,22 +238,24 @@ void main() {
     fs.file(join(autoDir.path, 'test.auto')).createSync(recursive: true);
 
     PathPlannerAuto auto = PathPlannerAuto(
-        name: 'test',
-        autoDir: '/autos',
-        fs: fs,
-        folder: null,
-        startingPose: null,
-        sequence: SequentialCommandGroup(
-          commands: [
-            PathCommand(pathName: 'path1'),
-            SequentialCommandGroup(
-              commands: [
-                PathCommand(pathName: 'path2'),
-              ],
-            ),
-            PathCommand(pathName: 'path3'),
-          ],
-        ));
+      name: 'test',
+      autoDir: '/autos',
+      fs: fs,
+      folder: null,
+      startingPose: null,
+      sequence: SequentialCommandGroup(
+        commands: [
+          PathCommand(pathName: 'path1'),
+          SequentialCommandGroup(
+            commands: [
+              PathCommand(pathName: 'path2'),
+            ],
+          ),
+          PathCommand(pathName: 'path3'),
+        ],
+      ),
+      choreoAuto: false,
+    );
 
     auto.updatePathName('path1', 'updated1');
 

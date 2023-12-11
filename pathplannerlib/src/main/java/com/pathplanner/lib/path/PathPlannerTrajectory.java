@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /** Trajectory created from a pathplanner path */
 public class PathPlannerTrajectory {
@@ -23,6 +24,15 @@ public class PathPlannerTrajectory {
   public PathPlannerTrajectory(
       PathPlannerPath path, ChassisSpeeds startingSpeeds, Rotation2d startingRotation) {
     this.states = generateStates(path, startingSpeeds, startingRotation);
+  }
+
+  /**
+   * Create a PathPlannerTrajectory from pre-generated states.
+   *
+   * @param states Pre-generated trajectory states
+   */
+  public PathPlannerTrajectory(List<State> states) {
+    this.states = states;
   }
 
   private static int getNextRotationTargetIdx(PathPlannerPath path, int startingIndex) {
@@ -266,6 +276,8 @@ public class PathPlannerTrajectory {
     public Rotation2d heading = new Rotation2d();
     /** The target holonomic rotation at this state */
     public Rotation2d targetHolonomicRotation = new Rotation2d();
+    /** Optional holonomic angular velocity. Will only be provided for choreo paths */
+    public Optional<Double> holonomicAngularVelocityRps = Optional.empty();
 
     /** The curvature at this state in rad/m */
     public double curvatureRadPerMeter = 0;
@@ -302,6 +314,16 @@ public class PathPlannerTrajectory {
       lerpedState.curvatureRadPerMeter =
           GeometryUtil.doubleLerp(curvatureRadPerMeter, endVal.curvatureRadPerMeter, t);
       lerpedState.deltaPos = GeometryUtil.doubleLerp(deltaPos, endVal.deltaPos, t);
+
+      if (holonomicAngularVelocityRps.isPresent()
+          && endVal.holonomicAngularVelocityRps.isPresent()) {
+        lerpedState.holonomicAngularVelocityRps =
+            Optional.of(
+                GeometryUtil.doubleLerp(
+                    holonomicAngularVelocityRps.get(),
+                    endVal.holonomicAngularVelocityRps.get(),
+                    t));
+      }
 
       if (t < 0.5) {
         lerpedState.constraints = constraints;
@@ -351,6 +373,7 @@ public class PathPlannerTrajectory {
       reversed.heading =
           Rotation2d.fromDegrees(MathUtil.inputModulus(heading.getDegrees() + 180, -180, 180));
       reversed.targetHolonomicRotation = targetHolonomicRotation;
+      reversed.holonomicAngularVelocityRps = holonomicAngularVelocityRps;
       reversed.curvatureRadPerMeter = -curvatureRadPerMeter;
       reversed.deltaPos = deltaPos;
       reversed.constraints = constraints;

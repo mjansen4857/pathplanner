@@ -47,13 +47,14 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 
 	units::radians_per_second_t angVelConstraint =
 			referenceState.constraints.getMaxAngularVelocity();
-
-	// Approximation of available module speed to do rotation with
-	units::radians_per_second_t maxAngVelModule = units::math::max(0_rad_per_s,
-			(m_maxModuleSpeed - referenceState.velocity) * m_mpsToRps);
-
-	units::radians_per_second_t maxAngVel = units::math::min(angVelConstraint,
-			maxAngVelModule);
+	units::radians_per_second_t maxAngVel = angVelConstraint;
+	if (std::isfinite(maxAngVel())) {
+		// Approximation of available module speed to do rotation with
+		units::radians_per_second_t maxAngVelModule = units::math::max(
+				0_rad_per_s,
+				(m_maxModuleSpeed - referenceState.velocity) * m_mpsToRps);
+		maxAngVel = units::math::min(angVelConstraint, maxAngVelModule);
+	}
 
 	frc::Rotation2d targetRotation = referenceState.targetHolonomicRotation;
 	if (rotationTargetOverride) {
@@ -66,7 +67,8 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 					{ maxAngVel,
 							referenceState.constraints.getMaxAngularAcceleration() }) };
 	units::radians_per_second_t rotationFF =
-			m_rotationController.GetSetpoint().velocity;
+			referenceState.holonomicAngularVelocityRps.value_or(
+					m_rotationController.GetSetpoint().velocity);
 
 	return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF + xFeedback,
 			yFF + yFeedback, rotationFF + rotationFeedback,

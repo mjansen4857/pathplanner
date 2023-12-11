@@ -53,6 +53,16 @@ void main() {
     expect(sim.sample(0.5).velocity, closeTo(1.5, 0.05));
   });
 
+  test('copyWithTime', () {
+    TrajectoryState state =
+        TrajectoryState(time: 0.0, position: const Point(1.0, 1.0));
+
+    TrajectoryState copied = state.copyWithTime(1.0);
+
+    expect(copied.time, 1.0);
+    expect(copied.position, state.position);
+  });
+
   test('simulate auto', () {
     PathPlannerPath test = PathPlannerPath(
       name: '',

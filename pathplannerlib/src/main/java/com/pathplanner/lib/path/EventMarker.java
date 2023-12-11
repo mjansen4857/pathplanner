@@ -50,7 +50,7 @@ public class EventMarker {
    */
   static EventMarker fromJson(JSONObject markerJson) {
     double pos = ((Number) markerJson.get("waypointRelativePos")).doubleValue();
-    Command cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"));
+    Command cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"), false);
     return new EventMarker(pos, cmd);
   }
 

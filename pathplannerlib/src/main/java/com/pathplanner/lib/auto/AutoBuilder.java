@@ -639,8 +639,9 @@ public class AutoBuilder {
    */
   public static Command getAutoCommandFromJson(JSONObject autoJson) {
     JSONObject commandJson = (JSONObject) autoJson.get("command");
+    boolean choreoAuto = autoJson.get("choreoAuto") != null && (boolean) autoJson.get("choreoAuto");
 
-    Command autoCommand = CommandUtil.commandFromJson(commandJson);
+    Command autoCommand = CommandUtil.commandFromJson(commandJson, choreoAuto);
     if (autoJson.get("startingPose") != null) {
       Pose2d startPose = getStartingPoseFromJson((JSONObject) autoJson.get("startingPose"));
       return Commands.sequence(Commands.runOnce(() -> resetPose.accept(startPose)), autoCommand);

@@ -3,7 +3,7 @@ plugins {
     id 'java'
     id 'google-test'
     id 'edu.wpi.first.wpilib.repositories.WPILibRepositoriesPlugin' version '2020.2'
-    id 'edu.wpi.first.NativeUtils' version '2024.3.1'
+    id 'edu.wpi.first.NativeUtils' version '2024.5.2'
     id 'edu.wpi.first.GradleJni' version '1.0.0'
     id 'edu.wpi.first.GradleVsCode' version '1.3.0'
     id 'com.diffplug.spotless' version '6.11.0'

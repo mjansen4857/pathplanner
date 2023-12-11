@@ -63,14 +63,14 @@ public class FollowPathCommand extends Command {
 
     controller.reset(currentPose, currentSpeeds);
 
-    if (replanningConfig.enableInitialReplanning
+    if (!path.isChoreoPath()
+        && replanningConfig.enableInitialReplanning
         && (currentPose.getTranslation().getDistance(path.getPoint(0).position) >= 0.25
             || Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond)
                 >= 0.25)) {
       replanPath(currentPose, currentSpeeds);
     } else {
-      generatedTrajectory =
-          new PathPlannerTrajectory(path, currentSpeeds, currentPose.getRotation());
+      generatedTrajectory = path.getTrajectory(currentSpeeds, currentPose.getRotation());
       PathPlannerLogging.logActivePath(path);
       PPLibTelemetry.setCurrentPath(path);
     }
@@ -90,7 +90,7 @@ public class FollowPathCommand extends Command {
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-    if (replanningConfig.enableDynamicReplanning) {
+    if (!path.isChoreoPath() && replanningConfig.enableDynamicReplanning) {
       double previousError = Math.abs(controller.getPositionalError());
       double currentError = currentPose.getTranslation().getDistance(targetState.positionMeters);
 

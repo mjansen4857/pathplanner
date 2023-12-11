@@ -132,9 +132,13 @@ public class PPHolonomicDriveController implements PathFollowingController {
         this.yController.calculate(currentPose.getY(), targetState.positionMeters.getY());
 
     double angVelConstraint = targetState.constraints.getMaxAngularVelocityRps();
-    // Approximation of available module speed to do rotation with
-    double maxAngVelModule = Math.max(0, maxModuleSpeed - targetState.velocityMps) * mpsToRps;
-    double maxAngVel = Math.min(angVelConstraint, maxAngVelModule);
+    double maxAngVel = angVelConstraint;
+
+    if (Double.isFinite(maxAngVel)) {
+      // Approximation of available module speed to do rotation with
+      double maxAngVelModule = Math.max(0, maxModuleSpeed - targetState.velocityMps) * mpsToRps;
+      maxAngVel = Math.min(angVelConstraint, maxAngVelModule);
+    }
 
     var rotationConstraints =
         new TrapezoidProfile.Constraints(
@@ -150,7 +154,8 @@ public class PPHolonomicDriveController implements PathFollowingController {
             currentPose.getRotation().getRadians(),
             new TrapezoidProfile.State(targetRotation.getRadians(), 0),
             rotationConstraints);
-    double rotationFF = rotationController.getSetpoint().velocity;
+    double rotationFF =
+        targetState.holonomicAngularVelocityRps.orElse(rotationController.getSetpoint().velocity);
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
         xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback, currentPose.getRotation());

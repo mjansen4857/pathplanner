@@ -18,31 +18,25 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 		bezierPoints), m_rotationTargets(rotationTargets), m_constraintZones(
 		constraintZones), m_eventMarkers(eventMarkers), m_globalConstraints(
 		globalConstraints), m_goalEndState(goalEndState), m_reversed(reversed), m_previewStartingRotation(
-		previewStartingRotation) {
+		previewStartingRotation), m_isChoreoPath(false), m_choreoTrajectory() {
 	m_allPoints = PathPlannerPath::createPath(m_bezierPoints, m_rotationTargets,
 			m_constraintZones);
 
 	precalcValues();
 }
 
-PathPlannerPath::PathPlannerPath(PathConstraints globalConstraints,
-		GoalEndState goalEndState) : m_globalConstraints(globalConstraints), m_goalEndState(
-		goalEndState), m_reversed(false) {
-
-}
-
 void PathPlannerPath::hotReload(const wpi::json &json) {
-	PathPlannerPath updatedPath = PathPlannerPath::fromJson(json);
+	auto updatedPath = PathPlannerPath::fromJson(json);
 
-	m_bezierPoints = updatedPath.m_bezierPoints;
-	m_rotationTargets = updatedPath.m_rotationTargets;
-	m_constraintZones = updatedPath.m_constraintZones;
-	m_eventMarkers = updatedPath.m_eventMarkers;
-	m_globalConstraints = updatedPath.m_globalConstraints;
-	m_goalEndState = updatedPath.m_goalEndState;
-	m_reversed = updatedPath.m_reversed;
-	m_allPoints = updatedPath.m_allPoints;
-	m_previewStartingRotation = updatedPath.m_previewStartingRotation;
+	m_bezierPoints = updatedPath->m_bezierPoints;
+	m_rotationTargets = updatedPath->m_rotationTargets;
+	m_constraintZones = updatedPath->m_constraintZones;
+	m_eventMarkers = updatedPath->m_eventMarkers;
+	m_globalConstraints = updatedPath->m_globalConstraints;
+	m_goalEndState = updatedPath->m_goalEndState;
+	m_reversed = updatedPath->m_reversed;
+	m_allPoints = updatedPath->m_allPoints;
+	m_previewStartingRotation = updatedPath->m_previewStartingRotation;
 }
 
 std::vector<frc::Translation2d> PathPlannerPath::bezierFromPoses(
@@ -114,13 +108,87 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 
 	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
-	std::shared_ptr < PathPlannerPath > path = std::make_shared
-			< PathPlannerPath > (PathPlannerPath::fromJson(json));
+	std::shared_ptr < PathPlannerPath > path = PathPlannerPath::fromJson(json);
 	PPLibTelemetry::registerHotReloadPath(pathName, path);
 	return path;
 }
 
-PathPlannerPath PathPlannerPath::fromJson(const wpi::json &json) {
+std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajecory(
+		std::string trajectoryName) {
+	const std::string filePath = frc::filesystem::GetDeployDirectory()
+			+ "/choreo/" + trajectoryName + ".traj";
+
+	std::error_code error_code;
+	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
+			wpi::MemoryBuffer::GetFile(filePath, error_code);
+
+	if (fileBuffer == nullptr || error_code) {
+		throw std::runtime_error("Cannot open file: " + filePath);
+	}
+
+	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+
+	std::vector < PathPlannerTrajectory::State > trajStates;
+	for (wpi::json::const_reference s : json.at("samples")) {
+		PathPlannerTrajectory::State state;
+
+		units::second_t time { s.at("timestamp").get<double>() };
+		units::meter_t xPos { s.at("x").get<double>() };
+		units::meter_t yPos { s.at("y").get<double>() };
+		units::radian_t rotationRad { s.at("heading").get<double>() };
+		units::meters_per_second_t xVel { s.at("velocityX").get<double>() };
+		units::meters_per_second_t yVel { s.at("velocityY").get<double>() };
+		units::radians_per_second_t angularVelRps { s.at("angularVelocity").get<
+				double>() };
+
+		state.time = time;
+		state.velocity = units::math::hypot(xVel, yVel);
+		state.acceleration = 0_mps_sq; // Not encoded, not needed anyway
+		state.headingAngularVelocity = 0_rad_per_s; // Not encoded, only used for diff drive anyway
+		state.position = frc::Translation2d(xPos, yPos);
+		state.heading = frc::Rotation2d(xVel(), yVel());
+		state.targetHolonomicRotation = frc::Rotation2d(rotationRad);
+		state.holonomicAngularVelocityRps = angularVelRps;
+		state.curvature = units::curvature_t { 0.0 };
+		state.constraints = PathConstraints(units::meters_per_second_t {
+				std::numeric_limits<double>::infinity() },
+				units::meters_per_second_squared_t {
+						std::numeric_limits<double>::infinity() },
+				units::radians_per_second_t {
+						std::numeric_limits<double>::infinity() },
+				units::radians_per_second_squared_t {
+						std::numeric_limits<double>::infinity() });
+
+		trajStates.emplace_back(state);
+	}
+
+	auto path = std::make_shared < PathPlannerPath
+			> (PathConstraints(
+					units::meters_per_second_t {
+							std::numeric_limits<double>::infinity() },
+					units::meters_per_second_squared_t { std::numeric_limits<
+							double>::infinity() }, units::radians_per_second_t {
+							std::numeric_limits<double>::infinity() },
+					units::radians_per_second_squared_t { std::numeric_limits<
+							double>::infinity() }), GoalEndState(
+					trajStates[trajStates.size() - 1].velocity,
+					trajStates[trajStates.size() - 1].targetHolonomicRotation,
+					true));
+
+	std::vector < PathPoint > pathPoints;
+	for (auto state : trajStates) {
+		pathPoints.emplace_back(state.position);
+	}
+
+	path->m_allPoints = pathPoints;
+	path->m_isChoreoPath = true;
+	path->m_choreoTrajectory = PathPlannerTrajectory(trajStates);
+
+	return path;
+}
+
+std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
+		const wpi::json &json) {
 	std::vector < frc::Translation2d > bezierPoints =
 			PathPlannerPath::bezierPointsFromWaypointsJson(
 					json.at("waypoints"));
@@ -153,9 +221,8 @@ PathPlannerPath PathPlannerPath::fromJson(const wpi::json &json) {
 						jsonStartingState.at("rotation").get<double>()));
 	}
 
-	return PathPlannerPath(bezierPoints, rotationTargets, constraintZones,
-			eventMarkers, globalConstraints, goalEndState, reversed,
-			previewStartingRotation);
+	return std::make_shared < PathPlannerPath
+			> (bezierPoints, rotationTargets, constraintZones, eventMarkers, globalConstraints, goalEndState, reversed, previewStartingRotation);
 }
 
 std::vector<frc::Translation2d> PathPlannerPath::bezierPointsFromWaypointsJson(
@@ -332,7 +399,12 @@ units::meter_t PathPlannerPath::getCurveRadiusAtPoint(size_t index,
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 		const frc::Pose2d startingPose,
-		const frc::ChassisSpeeds currentSpeeds) const {
+		const frc::ChassisSpeeds currentSpeeds) {
+	if (m_isChoreoPath) {
+		// This path is from choreo, cannot be replanned
+		return shared_from_this();
+	}
+
 	frc::ChassisSpeeds currentFieldRelativeSpeeds =
 			frc::ChassisSpeeds::FromFieldRelativeSpeeds(currentSpeeds,
 					-startingPose.Rotation());

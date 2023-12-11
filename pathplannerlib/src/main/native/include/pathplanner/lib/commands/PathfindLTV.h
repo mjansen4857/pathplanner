@@ -31,6 +31,10 @@ public:
 			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
 			output, std::make_unique < PPLTVController > (Qelems, Relems, dt),
 			0_m, replanningConfig, requirements) {
+		if (targetPath->isChoreoPath()) {
+			throw FRC_MakeError(frc::err::CommandIllegalUse,
+					"Paths loaded from Choreo cannot be used with differential drivetrains");
+		}
 	}
 
 	/**
@@ -54,6 +58,10 @@ public:
 			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
 			output, std::make_unique < PPLTVController > (dt), 0_m,
 			replanningConfig, requirements) {
+		if (targetPath->isChoreoPath()) {
+			throw FRC_MakeError(frc::err::CommandIllegalUse,
+					"Paths loaded from Choreo cannot be used with differential drivetrains");
+		}
 	}
 
 	/**

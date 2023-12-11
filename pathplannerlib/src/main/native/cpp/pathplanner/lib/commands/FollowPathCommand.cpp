@@ -20,14 +20,14 @@ void FollowPathCommand::Initialize() {
 
 	m_controller->reset(currentPose, currentSpeeds);
 
-	if (m_replanningConfig.enableInitialReplanning
+	if (!m_path->isChoreoPath() && m_replanningConfig.enableInitialReplanning
 			&& (currentPose.Translation().Distance(m_path->getPoint(0).position)
 					>= 0.25_m
 					|| units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
 							>= 0.25_mps)) {
 		replanPath(currentPose, currentSpeeds);
 	} else {
-		m_generatedTrajectory = PathPlannerTrajectory(m_path, currentSpeeds,
+		m_generatedTrajectory = m_path->getTrajectory(currentSpeeds,
 				currentPose.Rotation());
 		PathPlannerLogging::logActivePath (m_path);
 		PPLibTelemetry::setCurrentPath(m_path);
@@ -48,7 +48,7 @@ void FollowPathCommand::Execute() {
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
 
-	if (m_replanningConfig.enableDynamicReplanning) {
+	if (!m_path->isChoreoPath() && m_replanningConfig.enableDynamicReplanning) {
 		units::meter_t previousError = units::math::abs(
 				m_controller->getPositionalError());
 		units::meter_t currentError = currentPose.Translation().Distance(

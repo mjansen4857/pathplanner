@@ -24,5 +24,8 @@ public:
 			std::optional<PathConstraints> pathCostriaints) : position(pos), rotationTarget(
 			rot), constraints(pathCostriaints) {
 	}
+
+	constexpr PathPoint(frc::Translation2d pos) : position(pos) {
+	}
 };
 }

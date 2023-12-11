@@ -13,11 +13,14 @@
 #include <frc/MathUtil.h>
 #include <vector>
 #include <memory>
+#include <optional>
 #include "pathplanner/lib/path/PathConstraints.h"
-#include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 
 namespace pathplanner {
+
+class PathPlannerPath;
+
 class PathPlannerTrajectory {
 public:
 	class State {
@@ -29,12 +32,13 @@ public:
 		frc::Translation2d position;
 		frc::Rotation2d heading;
 		frc::Rotation2d targetHolonomicRotation;
+		std::optional<units::radians_per_second_t> holonomicAngularVelocityRps;
 		units::curvature_t curvature;
 		PathConstraints constraints;
 		units::meter_t deltaPos;
 
-		constexpr State() : constraints(0_mps, 0_mps_sq, 0_rad_per_s,
-				0_rad_per_s_sq) {
+		constexpr State() : holonomicAngularVelocityRps(std::nullopt), constraints(
+				0_mps, 0_mps_sq, 0_rad_per_s, 0_rad_per_s_sq) {
 		}
 
 		constexpr State interpolate(const State &endValue, double t) const {
@@ -61,6 +65,15 @@ public:
 					endValue.curvature, t);
 			lerpedState.deltaPos = GeometryUtil::unitLerp(deltaPos,
 					endValue.deltaPos, t);
+
+			if (holonomicAngularVelocityRps
+					&& endValue.holonomicAngularVelocityRps) {
+				lerpedState.holonomicAngularVelocityRps =
+						GeometryUtil::unitLerp(
+								holonomicAngularVelocityRps.value(),
+								endValue.holonomicAngularVelocityRps.value(),
+								t);
+			}
 
 			if (t < 0.5) {
 				lerpedState.constraints = constraints;
@@ -112,6 +125,7 @@ public:
 					frc::InputModulus(heading.Degrees() + 180_deg, -180_deg,
 							180_deg));
 			reversed.targetHolonomicRotation = targetHolonomicRotation;
+			reversed.holonomicAngularVelocityRps = holonomicAngularVelocityRps;
 			reversed.curvature = -curvature;
 			reversed.deltaPos = deltaPos;
 			reversed.constraints = constraints;
@@ -121,6 +135,9 @@ public:
 	};
 
 	PathPlannerTrajectory() {
+	}
+
+	PathPlannerTrajectory(std::vector<State> states) : m_states(states) {
 	}
 
 	/**

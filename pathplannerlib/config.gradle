@@ -11,7 +11,7 @@ nativeUtils {
             wpiVersion = "2024.+"
             opencvYear = "frc2024"
             googleTestYear = "frc2024"
-            niLibVersion = "2024.1.1"
+            niLibVersion = "2024.2.1"
             opencvVersion = "4.8.0-2"
             googleTestVersion = "1.14.0-1"
         }

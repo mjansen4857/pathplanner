@@ -21,23 +21,30 @@ public:
 	 * Builds a command from the given JSON.
 	 *
 	 * @param commandJson the JSON to build the command from
+	 * @param loadChoreoPaths Load path commands using choreo trajectories
 	 * @return a command built from the JSON
 	 */
-	static frc2::CommandPtr commandFromJson(const wpi::json &json);
+	static frc2::CommandPtr commandFromJson(const wpi::json &json,
+			bool loadChoreoPaths);
 
 private:
 	static frc2::CommandPtr waitCommandFromJson(const wpi::json &json);
 
 	static frc2::CommandPtr namedCommandFromJson(const wpi::json &json);
 
-	static frc2::CommandPtr pathCommandFromJson(const wpi::json &json);
+	static frc2::CommandPtr pathCommandFromJson(const wpi::json &json,
+			bool loadChoreoPaths);
 
-	static frc2::CommandPtr sequentialGroupFromJson(const wpi::json &json);
+	static frc2::CommandPtr sequentialGroupFromJson(const wpi::json &json,
+			bool loadChoreoPaths);
 
-	static frc2::CommandPtr parallelGroupFromJson(const wpi::json &json);
+	static frc2::CommandPtr parallelGroupFromJson(const wpi::json &json,
+			bool loadChoreoPaths);
 
-	static frc2::CommandPtr raceGroupFromJson(const wpi::json &json);
+	static frc2::CommandPtr raceGroupFromJson(const wpi::json &json,
+			bool loadChoreoPaths);
 
-	static frc2::CommandPtr deadlineGroupFromJson(const wpi::json &json);
+	static frc2::CommandPtr deadlineGroupFromJson(const wpi::json &json,
+			bool loadChoreoPaths);
 };
 }

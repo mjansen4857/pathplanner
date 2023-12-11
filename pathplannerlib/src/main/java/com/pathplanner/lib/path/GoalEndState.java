@@ -44,7 +44,7 @@ public class GoalEndState {
     double deg = ((Number) endStateJson.get("rotation")).doubleValue();
     boolean rotateFast = false;
     if (endStateJson.get("rotateFast") != null) {
-      rotateFast = (boolean) endStateJson.get("rotation");
+      rotateFast = (boolean) endStateJson.get("rotateFast");
     }
     return new GoalEndState(vel, Rotation2d.fromDegrees(deg), rotateFast);
   }

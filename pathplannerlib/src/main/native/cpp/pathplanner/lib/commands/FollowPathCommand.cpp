@@ -20,11 +20,20 @@ void FollowPathCommand::Initialize() {
 
 	m_controller->reset(currentPose, currentSpeeds);
 
+	frc::ChassisSpeeds fieldSpeeds =
+			frc::ChassisSpeeds::FromRobotRelativeSpeeds(currentSpeeds,
+					currentPose.Rotation());
+	frc::Rotation2d currentHeading = frc::Rotation2d(fieldSpeeds.vx(),
+			fieldSpeeds.vy());
+	frc::Rotation2d targetHeading = (m_path->getPoint(1).position
+			- m_path->getPoint(0).position).Angle();
+	frc::Rotation2d headingError = currentHeading - targetHeading;
+	bool onHeading = units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
+			< 0.25_mps || units::math::abs(headingError.Degrees()) < 30_deg;
+
 	if (!m_path->isChoreoPath() && m_replanningConfig.enableInitialReplanning
-			&& (currentPose.Translation().Distance(m_path->getPoint(0).position)
-					>= 0.25_m
-					|| units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
-							>= 0.25_mps)) {
+			&& !(currentPose.Translation().Distance(
+					m_path->getPoint(0).position) < 0.25_m && onHeading)) {
 		replanPath(currentPose, currentSpeeds);
 	} else {
 		m_generatedTrajectory = m_path->getTrajectory(currentSpeeds,

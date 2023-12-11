@@ -54,9 +54,17 @@ class TrajectoryGenerator {
   static PathPlannerPath _replanPathIfNeeded(
       PathPlannerPath path, Pose2d startingPose, ChassisSpeeds startingSpeeds) {
     num linearVel = sqrt(pow(startingSpeeds.vx, 2) + pow(startingSpeeds.vy, 2));
+    num currentHeading = atan2(startingSpeeds.vy, startingSpeeds.vx);
+    var p1 = path.pathPoints[0].position;
+    var p2 = path.pathPoints[1].position;
+    num targetHeading = atan2(p2.y - p1.y, p2.x - p1.x);
+    num headingError = (currentHeading - targetHeading).abs();
+    bool onHeading =
+        linearVel < 0.25 || GeometryUtil.toDegrees(headingError) < 30;
+
     if (startingPose.position.distanceTo(path.pathPoints.first.position) <=
             0.1 &&
-        linearVel < 0.1) {
+        onHeading) {
       return path;
     }
 

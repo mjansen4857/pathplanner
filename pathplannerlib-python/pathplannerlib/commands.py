@@ -148,9 +148,14 @@ class FollowPathCommand(Command):
 
         self._controller.reset(currentPose, currentSpeeds)
 
-        if not self._path.isChoreoPath() and self._replanningConfig.enableInitialReplanning and (
-                currentPose.translation().distance(self._path.getPoint(0).position) >= 0.25 or math.hypot(
-            currentSpeeds.vx, currentSpeeds.vy) >= 0.25):
+        fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.rotation())
+        currentHeading = Rotation2d(fieldSpeeds.vx, fieldSpeeds.vy)
+        targetHeading = (self._path.getPoint(1).position - self._path.getPoint(0).position).angle()
+        headingError = currentHeading - targetHeading
+        onHeading = math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 0.25 or abs(headingError.degrees()) < 30
+
+        if not self._path.isChoreoPath() and self._replanningConfig.enableInitialReplanning and not (
+                currentPose.translation().distance(self._path.getPoint(0).position) < 0.25 and onHeading):
             self._replanPath(currentPose, currentSpeeds)
         else:
             self._generatedTrajectory = self._path.getTrajectory(currentSpeeds, currentPose.rotation())

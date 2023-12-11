@@ -44,7 +44,7 @@ public class RotationTarget {
     double deg = ((Number) targetJson.get("rotationDegrees")).doubleValue();
     boolean rotateFast = false;
     if (targetJson.get("rotateFast") != null) {
-      rotateFast = (boolean) targetJson.get("rotation");
+      rotateFast = (boolean) targetJson.get("rotateFast");
     }
     return new RotationTarget(pos, Rotation2d.fromDegrees(deg), rotateFast);
   }

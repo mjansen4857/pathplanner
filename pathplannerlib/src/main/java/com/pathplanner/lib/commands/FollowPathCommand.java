@@ -7,6 +7,7 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -63,11 +64,21 @@ public class FollowPathCommand extends Command {
 
     controller.reset(currentPose, currentSpeeds);
 
+    ChassisSpeeds fieldSpeeds =
+        ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.getRotation());
+    Rotation2d currentHeading =
+        new Rotation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
+    Rotation2d targetHeading =
+        path.getPoint(1).position.minus(path.getPoint(0).position).getAngle();
+    Rotation2d headingError = currentHeading.minus(targetHeading);
+    boolean onHeading =
+        Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 0.25
+            || Math.abs(headingError.getDegrees()) < 30;
+
     if (!path.isChoreoPath()
         && replanningConfig.enableInitialReplanning
-        && (currentPose.getTranslation().getDistance(path.getPoint(0).position) >= 0.25
-            || Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond)
-                >= 0.25)) {
+        && !(currentPose.getTranslation().getDistance(path.getPoint(0).position) < 0.25
+            && onHeading)) {
       replanPath(currentPose, currentSpeeds);
     } else {
       generatedTrajectory = path.getTrajectory(currentSpeeds, currentPose.getRotation());

@@ -5,6 +5,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
+import 'package:pathplanner/path/choreo_path.dart';
+import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -75,13 +77,19 @@ void main() {
   testWidgets('has painter and tree', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
+    auto.choreoAuto = true;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SplitAutoEditor(
           prefs: prefs,
           auto: auto,
           autoPaths: [testPath],
-          autoChoreoPaths: const [],
+          autoChoreoPaths: [
+            ChoreoPath(
+              name: 'test',
+              trajectory: Trajectory(states: [TrajectoryState(time: 1.0)]),
+            ),
+          ],
           allPathNames: const ['testPath', 'otherPath'],
           fieldImage: FieldImage.defaultField,
           undoStack: undoStack,

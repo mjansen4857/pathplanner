@@ -76,33 +76,25 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
       children: [
         Center(
           child: InteractiveViewer(
-            child: GestureDetector(
-              onTapDown: (details) {
-                FocusScopeNode currentScope = FocusScope.of(context);
-                if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-                  FocusManager.instance.primaryFocus!.unfocus();
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(48),
-                child: Stack(
-                  children: [
-                    widget.fieldImage.getWidget(),
-                    Positioned.fill(
-                      child: CustomPaint(
-                        painter: PathPainter(
-                          paths: [],
-                          choreoPaths: [widget.path],
-                          fieldImage: widget.fieldImage,
-                          simulatedPath: widget.path.trajectory,
-                          animation: _previewController.view,
-                          previewColor: colorScheme.primary,
-                          prefs: widget.prefs,
-                        ),
+            child: Padding(
+              padding: const EdgeInsets.all(48),
+              child: Stack(
+                children: [
+                  widget.fieldImage.getWidget(),
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: PathPainter(
+                        paths: [],
+                        choreoPaths: [widget.path],
+                        fieldImage: widget.fieldImage,
+                        simulatedPath: widget.path.trajectory,
+                        animation: _previewController.view,
+                        previewColor: colorScheme.primary,
+                        prefs: widget.prefs,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),

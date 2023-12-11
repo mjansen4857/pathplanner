@@ -11,6 +11,7 @@ import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/path_command.dart';
+import 'package:pathplanner/pages/choreo_path_editor_page.dart';
 import 'package:pathplanner/pages/project/project_item_card.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/event_marker.dart';
@@ -1075,6 +1076,75 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(find.widgetWithText(ProjectItemCard, 'path1'), findsNothing);
+  });
+
+  testWidgets('choreo paths folder', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+
+    PathPlannerPath path1 = PathPlannerPath.defaultPath(
+      pathDir: join(deployPath, 'paths'),
+      fs: fs,
+      name: 'path1',
+      folder: 'p',
+    );
+
+    await fs
+        .file(join(deployPath, 'paths', 'path1.path'))
+        .writeAsString(jsonEncode(path1.toJson()));
+    await fs.file(join(deployPath, 'test.chor')).writeAsString(jsonEncode({
+          'paths': {
+            'test path': {
+              'trajectory': [
+                {
+                  'timestamp': 0.0,
+                  'x': 0.0,
+                  'y': 0.0,
+                  'heading': 0.0,
+                },
+                {
+                  'timestamp': 1.0,
+                  'x': 1.0,
+                  'y': 1.0,
+                  'heading': 0.0,
+                },
+              ],
+            },
+          },
+        }));
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          deployDirectory: fs.directory(deployPath),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+          choreoProjPath: join(deployPath, 'test.chor'),
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final folder = find.text('Choreo Paths');
+    expect(folder, findsOneWidget);
+
+    await widgetTester.tap(folder);
+    await widgetTester.pump();
+
+    final card = find.widgetWithText(ProjectItemCard, 'test path');
+    expect(card, findsOneWidget);
+
+    await widgetTester.tap(card);
+    await widgetTester.pump();
+    await widgetTester.pump();
+
+    expect(find.byType(ChoreoPathEditorPage), findsOneWidget);
   });
 
   testWidgets('delete auto folder', (widgetTester) async {

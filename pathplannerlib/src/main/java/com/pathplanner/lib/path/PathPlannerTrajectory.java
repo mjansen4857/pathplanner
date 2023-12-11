@@ -315,6 +315,16 @@ public class PathPlannerTrajectory {
           GeometryUtil.doubleLerp(curvatureRadPerMeter, endVal.curvatureRadPerMeter, t);
       lerpedState.deltaPos = GeometryUtil.doubleLerp(deltaPos, endVal.deltaPos, t);
 
+      if (holonomicAngularVelocityRps.isPresent()
+          && endVal.holonomicAngularVelocityRps.isPresent()) {
+        lerpedState.holonomicAngularVelocityRps =
+            Optional.of(
+                GeometryUtil.doubleLerp(
+                    holonomicAngularVelocityRps.get(),
+                    endVal.holonomicAngularVelocityRps.get(),
+                    t));
+      }
+
       if (t < 0.5) {
         lerpedState.constraints = constraints;
         lerpedState.targetHolonomicRotation = targetHolonomicRotation;
@@ -363,6 +373,7 @@ public class PathPlannerTrajectory {
       reversed.heading =
           Rotation2d.fromDegrees(MathUtil.inputModulus(heading.getDegrees() + 180, -180, 180));
       reversed.targetHolonomicRotation = targetHolonomicRotation;
+      reversed.holonomicAngularVelocityRps = holonomicAngularVelocityRps;
       reversed.curvatureRadPerMeter = -curvatureRadPerMeter;
       reversed.deltaPos = deltaPos;
       reversed.constraints = constraints;

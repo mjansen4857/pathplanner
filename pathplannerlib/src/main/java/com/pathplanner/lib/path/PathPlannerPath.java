@@ -298,7 +298,8 @@ public class PathPlannerPath {
   public static PathPlannerPath fromChoreoTrajectory(String trajectoryName) {
     try (BufferedReader br =
         new BufferedReader(
-            new FileReader(new File(Filesystem.getDeployDirectory(), "choreo/" + trajectoryName + ".traj")))) {
+            new FileReader(
+                new File(Filesystem.getDeployDirectory(), "choreo/" + trajectoryName + ".traj")))) {
       StringBuilder fileContentBuilder = new StringBuilder();
       String line;
       while ((line = br.readLine()) != null) {

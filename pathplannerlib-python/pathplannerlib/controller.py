@@ -114,9 +114,12 @@ class PPHolonomicDriveController(PathFollowingController):
         yFeedback = self._yController.calculate(current_pose.Y(), target_state.positionMeters.Y())
 
         angVelConstraint = target_state.constraints.maxAngularVelocityRps
-        # Approximation of available module speed to do rotation with
-        maxAngVelModule = max(0.0, self._maxModuleSpeed - target_state.velocityMps) * self._mpsToRps
-        maxAngVel = min(angVelConstraint, maxAngVelModule)
+        maxAngVel = angVelConstraint
+
+        if math.isfinite(maxAngVel):
+            # Approximation of available module speed to do rotation with
+            maxAngVelModule = max(0.0, self._maxModuleSpeed - target_state.velocityMps) * self._mpsToRps
+            maxAngVel = min(angVelConstraint, maxAngVelModule)
 
         rotationConstraints = TrapezoidProfile.Constraints(maxAngVel,
                                                            target_state.constraints.maxAngularAccelerationRpsSq)
@@ -132,7 +135,10 @@ class PPHolonomicDriveController(PathFollowingController):
             targetRotation.radians(),
             rotationConstraints
         )
-        rotationFF = self._rotationController.getSetpoint().velocity
+        if target_state.holonomicAngularVelocityRps is not None:
+            rotationFF = target_state.holonomicAngularVelocityRps
+        else:
+            rotationFF = self._rotationController.getSetpoint().velocity
 
         return ChassisSpeeds.fromFieldRelativeSpeeds(xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback,
                                                      current_pose.rotation())

@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
-from typing import Final, List
+from typing import Final, List, Union
 from wpimath.geometry import Rotation2d, Translation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
 from .geometry_util import decimal_range, cubicLerp, calculateRadius
+from .trajectory import PathPlannerTrajectory, State
 from wpilib import getDeployDirectory
 import os
 import json
@@ -208,7 +209,7 @@ class EventMarker:
     def fromJson(json_dict: dict) -> EventMarker:
         pos = float(json_dict['waypointRelativePos'])
         from .auto import CommandUtil
-        command = CommandUtil.commandFromJson(json_dict['command'])
+        command = CommandUtil.commandFromJson(json_dict['command'], False)
         return EventMarker(pos, command)
 
     def reset(self, robot_pose: Pose2d) -> None:
@@ -327,6 +328,8 @@ class PathPlannerPath:
     _allPoints: List[PathPoint]
     _reversed: bool
     _previewStartingRotation: Rotation2d
+    _isChoreoPath: bool = False
+    _choreoTrajectory: Union[PathPlannerTrajectory, None] = None
 
     def __init__(self, bezier_points: List[Translation2d], constraints: PathConstraints, goal_end_state: GoalEndState,
                  holonomic_rotations: List[RotationTarget] = [], constraint_zones: List[ConstraintsZone] = [],
@@ -387,6 +390,64 @@ class PathPlannerPath:
         with open(filePath, 'r') as f:
             pathJson = json.loads(f.read())
             return PathPlannerPath._fromJson(pathJson)
+
+    @staticmethod
+    def fromChoreoTrajectory(trajectory_name: str) -> PathPlannerPath:
+        """
+        Load a Choreo trajectory as a PathPlannerPath
+
+        :param trajectory_name: The name of the Choreo trajectory to load. This should be just the name of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
+        :return: PathPlannerPath created from the given Choreo trajectory file
+        """
+        filePath = os.path.join(getDeployDirectory(), 'choreo', trajectory_name + '.traj')
+
+        with open(filePath, 'r') as f:
+            trajJson = json.loads(f.read())
+
+            trajStates = []
+            for s in trajJson['samples']:
+                state = State()
+
+                time = float(s['timestamp'])
+                xPos = float(s['x'])
+                yPos = float(s['y'])
+                rotationRad = float(s['heading'])
+                xVel = float(s['velocityX'])
+                yVel = float(s['velocityY'])
+                angularVelRps = float(s['angularVelocity'])
+
+                state.timeSeconds = time
+                state.velocityMps = math.hypot(xVel, yVel)
+                state.accelerationMpsSq = 0.0  # Not encoded, not needed anyway
+                state.headingAngularVelocityRps = 0.0  # Not encoded, only used for diff drive anyway
+                state.positionMeters = Translation2d(xPos, yPos)
+                state.heading = Rotation2d(xVel, yVel)
+                state.targetHolonomicRotation = Rotation2d(rotationRad)
+                state.holonomicAngularVelocityRps = angularVelRps
+                state.curvatureRadPerMeter = 0.0  # Not encoded, only used for diff drive anyway
+                state.constraints = PathConstraints(
+                    float('inf'),
+                    float('inf'),
+                    float('inf'),
+                    float('inf')
+                )
+
+                trajStates.append(state)
+
+            path = PathPlannerPath([], PathConstraints(
+                float('inf'),
+                float('inf'),
+                float('inf'),
+                float('inf')
+            ), GoalEndState(trajStates[-1].velocityMps, trajStates[-1].targetHolonomicRotation, True))
+
+            pathPoints = [PathPoint(state.positionMeters) for state in trajStates]
+
+            path._allPoints = pathPoints
+            path._isChoreoPath = True
+            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, states=trajStates)
+
+            return path
 
     @staticmethod
     def bezierFromPoses(poses: List[Pose2d]) -> List[Translation2d]:
@@ -514,6 +575,10 @@ class PathPlannerPath:
         :param current_speeds: Current chassis speeds of the robot
         :return: The replanned path
         """
+        if self._isChoreoPath:
+            # This path is from choreo, cannot be replanned
+            return self
+
         currentFieldRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(current_speeds.vx, current_speeds.vy,
                                                                            current_speeds.omega,
                                                                            -starting_pose.rotation())
@@ -716,6 +781,27 @@ class PathPlannerPath:
             replannedBezier, self._globalConstraints, self._goalEndState,
             mappedTargets, mappedZones, mappedMarkers, self._reversed, self._previewStartingRotation
         )
+
+    def isChoreoPath(self) -> bool:
+        """
+        Check if this path is loaded from a Choreo trajectory
+
+        :return: True if this path is from choreo, false otherwise
+        """
+        return self._isChoreoPath
+
+    def getTrajectory(self, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d) -> PathPlannerTrajectory:
+        """
+        Generate a trajectory for this path.
+
+        :param starting_speeds: The robot-relative starting speeds.
+        :param starting_rotation: The starting rotation of the robot.
+        :return: The generated trajectory.
+        """
+        if self._isChoreoPath:
+            return self._choreoTrajectory
+        else:
+            return PathPlannerTrajectory(self, starting_speeds, starting_rotation)
 
     @staticmethod
     def _mapPct(pct: float, seg1_pct: float) -> float:

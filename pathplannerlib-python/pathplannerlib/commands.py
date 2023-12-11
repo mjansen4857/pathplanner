@@ -148,12 +148,12 @@ class FollowPathCommand(Command):
 
         self._controller.reset(currentPose, currentSpeeds)
 
-        if self._replanningConfig.enableInitialReplanning and (
+        if not self._path.isChoreoPath() and self._replanningConfig.enableInitialReplanning and (
                 currentPose.translation().distance(self._path.getPoint(0).position) >= 0.25 or math.hypot(
             currentSpeeds.vx, currentSpeeds.vy) >= 0.25):
             self._replanPath(currentPose, currentSpeeds)
         else:
-            self._generatedTrajectory = PathPlannerTrajectory(self._path, currentSpeeds, currentPose.rotation())
+            self._generatedTrajectory = self._path.getTrajectory(currentSpeeds, currentPose.rotation())
             PathPlannerLogging.logActivePath(self._path)
             PPLibTelemetry.setCurrentPath(self._path)
 
@@ -169,7 +169,7 @@ class FollowPathCommand(Command):
         currentPose = self._poseSupplier()
         currentSpeeds = self._speedsSupplier()
 
-        if self._replanningConfig.enableDynamicReplanning:
+        if not self._path.isChoreoPath() and self._replanningConfig.enableDynamicReplanning:
             previousError = abs(self._controller.getPositionalError())
             currentError = currentPose.translation().distance(targetState.positionMeters)
 
@@ -254,6 +254,9 @@ class FollowPathRamsete(FollowPathCommand):
         super().__init__(path, pose_supplier, speeds_supplier, output_robot_relative, PPRamseteController(),
                          replanning_config, *requirements)
 
+        if path.isChoreoPath():
+            raise ValueError('Paths loaded from Choreo cannot be used with differential drivetrains')
+
 
 class FollowPathLTV(FollowPathCommand):
     def __init__(self, path: PathPlannerPath, pose_supplier: Callable[[], Pose2d],
@@ -276,6 +279,9 @@ class FollowPathLTV(FollowPathCommand):
         super().__init__(path, pose_supplier, speeds_supplier, output_robot_relative,
                          PPLTVController(qelems, relems, dt),
                          replanning_config, *requirements)
+
+        if path.isChoreoPath():
+            raise ValueError('Paths loaded from Choreo cannot be used with differential drivetrains')
 
 
 class PathfindingCommand(Command):
@@ -320,13 +326,21 @@ class PathfindingCommand(Command):
 
         if target_path is not None:
             targetRotation = Rotation2d()
-            for p in target_path.getAllPathPoints():
-                if p.rotationTarget is not None:
-                    targetRotation = p.rotationTarget.target
-                    break
+            goalEndVel = target_path.getGlobalConstraints().maxVelocityMps
+            if target_path.isChoreoPath():
+                # Can call getTrajectory here without proper speeds since it will just return the choreo
+                # trajectory
+                choreoTraj = target_path.getTrajectory(ChassisSpeeds(), Rotation2d())
+                targetRotation = choreoTraj.getInitialState().targetHolonomicRotation
+                goalEndVel = choreoTraj.getInitialState().velocityMps
+            else:
+                for p in target_path.getAllPathPoints():
+                    if p.rotationTarget is not None:
+                        targetRotation = p.rotationTarget.target
+                        break
             self._targetPath = target_path
             self._targetPose = Pose2d(target_path.getPoint(0).position, targetRotation)
-            self._goalEndState = GoalEndState(target_path.getGlobalConstraints().maxVelocityMps, targetRotation, True)
+            self._goalEndState = GoalEndState(goalEndVel, targetRotation, True)
         else:
             self._targetPath = None
             self._targetPose = target_pose
@@ -457,7 +471,7 @@ class PathfindingCommand(Command):
             self._output(targetSpeeds)
 
     def isFinished(self) -> bool:
-        if self._targetPath is not None:
+        if self._targetPath is not None and not self._targetPath.isChoreoPath():
             currentPose = self._poseSupplier()
             currentSpeeds = self._speedsSupplier()
 
@@ -535,6 +549,9 @@ class PathfindRamsete(PathfindingCommand):
                          PPRamseteController(), replanning_config, *requirements, target_path=target_path,
                          target_pose=Pose2d(target_position, Rotation2d()), goal_end_vel=goal_end_vel)
 
+        if target_path is not None and target_path.isChoreoPath():
+            raise ValueError('Paths loaded from Choreo cannot be used with differential drivetrains')
+
 
 class PathfindLTV(PathfindingCommand):
     def __init__(self, constraints: PathConstraints, pose_supplier: Callable[[], Pose2d],
@@ -564,6 +581,9 @@ class PathfindLTV(PathfindingCommand):
                          PPLTVController(qelems, relems, dt), replanning_config, *requirements,
                          target_path=target_path, target_pose=Pose2d(target_position, Rotation2d()),
                          goal_end_vel=goal_end_vel)
+
+        if target_path is not None and target_path.isChoreoPath():
+            raise ValueError('Paths loaded from Choreo cannot be used with differential drivetrains')
 
 
 class PathfindThenFollowPathHolonomic(SequentialCommandGroup):

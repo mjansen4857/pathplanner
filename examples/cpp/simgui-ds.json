@@ -1,0 +1,92 @@
+{
+  "keyboardJoysticks": [
+    {
+      "axisConfig": [
+        {
+          "decKey": 65,
+          "incKey": 68
+        },
+        {
+          "decKey": 87,
+          "incKey": 83
+        },
+        {
+          "decKey": 69,
+          "decayRate": 0.0,
+          "incKey": 82,
+          "keyRate": 0.009999999776482582
+        }
+      ],
+      "axisCount": 3,
+      "buttonCount": 4,
+      "buttonKeys": [
+        90,
+        88,
+        67,
+        86
+      ],
+      "povConfig": [
+        {
+          "key0": 328,
+          "key135": 323,
+          "key180": 322,
+          "key225": 321,
+          "key270": 324,
+          "key315": 327,
+          "key45": 329,
+          "key90": 326
+        }
+      ],
+      "povCount": 1
+    },
+    {
+      "axisConfig": [
+        {
+          "decKey": 74,
+          "incKey": 76
+        },
+        {
+          "decKey": 73,
+          "incKey": 75
+        }
+      ],
+      "axisCount": 2,
+      "buttonCount": 4,
+      "buttonKeys": [
+        77,
+        44,
+        46,
+        47
+      ],
+      "povCount": 0
+    },
+    {
+      "axisConfig": [
+        {
+          "decKey": 263,
+          "incKey": 262
+        },
+        {
+          "decKey": 265,
+          "incKey": 264
+        }
+      ],
+      "axisCount": 2,
+      "buttonCount": 6,
+      "buttonKeys": [
+        260,
+        268,
+        266,
+        261,
+        269,
+        267
+      ],
+      "povCount": 0
+    },
+    {
+      "axisCount": 0,
+      "buttonCount": 0,
+      "povCount": 0
+    }
+  ]
+}

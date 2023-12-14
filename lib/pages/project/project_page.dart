@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:file/file.dart';
@@ -25,6 +26,7 @@ import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
+import 'package:watcher/watcher.dart';
 
 class ProjectPage extends StatefulWidget {
   final SharedPreferences prefs;
@@ -76,6 +78,8 @@ class _ProjectPageState extends State<ProjectPage> {
   late bool _autosCompact;
   late int _pathGridCount;
   late int _autosGridCount;
+  FileWatcher? _chorWatcher;
+  StreamSubscription<WatchEvent>? _chorWatcherSub;
 
   bool _loading = true;
 
@@ -121,7 +125,35 @@ class _ProjectPageState extends State<ProjectPage> {
     _autoFolders = widget.prefs.getStringList(PrefsKeys.autoFolders) ??
         Defaults.autoFolders;
 
+    // Set up choreo project file watcher if a project is linked
+    if (widget.choreoProjPath != null) {
+      _chorWatcher = FileWatcher(widget.choreoProjPath!,
+          pollingDelay: const Duration(seconds: 1));
+
+      _chorWatcherSub = _chorWatcher!.events.listen((event) {
+        if (event.type == ChangeType.MODIFY) {
+          _load();
+          if (mounted) {
+            if (Navigator.of(this.context).canPop()) {
+              // We might have a path or auto open, close it
+              Navigator.of(this.context).pop();
+            }
+
+            ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
+                content: Text('Linked Choreo project was modified')));
+          }
+        }
+      });
+    }
+
     _load();
+  }
+
+  @override
+  void dispose() {
+    _chorWatcherSub?.cancel();
+
+    super.dispose();
   }
 
   void _load() async {
@@ -167,6 +199,9 @@ class _ProjectPageState extends State<ProjectPage> {
       _paths = paths;
       _autos = autos;
       _choreoPaths = choreoPaths;
+      _pathFolder = null;
+      _autoFolder = null;
+      _inChoreoFolder = false;
 
       if (_paths.isEmpty) {
         _paths.add(PathPlannerPath.defaultPath(

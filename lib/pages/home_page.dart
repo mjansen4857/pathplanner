@@ -413,6 +413,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   onFoldersChanged: () =>
                       _saveProjectSettingsToFile(_projectDir!),
                   simulatePath: true,
+                  watchChorFile: true,
                   choreoProjPath: join(_projectDir!.path, _choreoProjRelPath),
                 ),
                 TelemetryPage(
@@ -465,7 +466,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
-  void _loadProjectSettingsFromFile(Directory projectDir) async {
+  Future<void> _loadProjectSettingsFromFile(Directory projectDir) async {
     File settingsFile = fs.file(join(projectDir.path, _settingsDir));
 
     var json = {};
@@ -652,22 +653,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     setState(() {
       _projectDir = fs.directory(projectDir);
+    });
 
-      _loadProjectSettingsFromFile(_projectDir!);
-      _choreoProjRelPath = widget.prefs.getString(PrefsKeys.choreoProjectPath);
+    await _loadProjectSettingsFromFile(_projectDir!);
 
-      if (_choreoProjRelPath != null &&
-          !fs.isFileSync(join(_projectDir!.path, _choreoProjRelPath))) {
-        _choreoProjRelPath = null;
-        widget.prefs.remove(PrefsKeys.choreoProjectPath);
-        _saveProjectSettingsToFile(_projectDir!);
+    if (mounted) {
+      setState(() {
+        _choreoProjRelPath =
+            widget.prefs.getString(PrefsKeys.choreoProjectPath);
 
-        if (mounted) {
+        if (_choreoProjRelPath != null &&
+            !fs.isFileSync(join(_projectDir!.path, _choreoProjRelPath))) {
+          _choreoProjRelPath = null;
+          widget.prefs.remove(PrefsKeys.choreoProjectPath);
+          _saveProjectSettingsToFile(_projectDir!);
+
           ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
               content: Text('Failed to load linked Choreo project')));
         }
-      }
-    });
+      });
+    }
   }
 
   Future<void> _loadFieldImages() async {

@@ -1078,7 +1078,7 @@ packages:
     source: hosted
     version: "0.4.0+2"
   watcher:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: watcher
       sha256: "3d2ad6751b3c16cf07c7fca317a1413b3f26530319181b37e3b9039b84fc01d8"

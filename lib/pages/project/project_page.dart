@@ -39,6 +39,7 @@ class ProjectPage extends StatefulWidget {
   final bool hotReload;
   final VoidCallback? onFoldersChanged;
   final bool simulatePath;
+  final bool watchChorFile;
   final String? choreoProjPath;
 
   // Stupid workaround to get when settings are updated
@@ -56,6 +57,7 @@ class ProjectPage extends StatefulWidget {
     this.hotReload = false,
     this.onFoldersChanged,
     this.simulatePath = false,
+    this.watchChorFile = false,
     this.choreoProjPath,
   });
 
@@ -126,7 +128,7 @@ class _ProjectPageState extends State<ProjectPage> {
         Defaults.autoFolders;
 
     // Set up choreo project file watcher if a project is linked
-    if (widget.choreoProjPath != null) {
+    if (widget.choreoProjPath != null && widget.watchChorFile) {
       _chorWatcher = FileWatcher(widget.choreoProjPath!,
           pollingDelay: const Duration(seconds: 1));
 

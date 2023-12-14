@@ -413,6 +413,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   onFoldersChanged: () =>
                       _saveProjectSettingsToFile(_projectDir!),
                   simulatePath: true,
+                  watchChorFile: true,
                   choreoProjPath: join(_projectDir!.path, _choreoProjRelPath),
                 ),
                 TelemetryPage(

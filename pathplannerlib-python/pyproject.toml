@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "robotpy-pathplannerlib"
 version = "0.0.0"
 description = "Python implementation of PathPlannerLib"
+readme = "README.md"
 authors = [{ name = "mjansen4857", email = "mjansen4857@gmail.com" }]
 license = { file = "LICENSE" }
 classifiers = [

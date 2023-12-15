@@ -20,14 +20,14 @@
 
 namespace SwerveConstants {
 
-constexpr frc::Translation2d flOffset = frc::Translation2d(0.4_m, 0.4_m);
-constexpr frc::Translation2d frOffset = frc::Translation2d(0.4_m, -0.4_m);
-constexpr frc::Translation2d blOffset = frc::Translation2d(-0.4_m, 0.4_m);
-constexpr frc::Translation2d brOffset = frc::Translation2d(-0.4_m, -0.4_m);
+inline constexpr frc::Translation2d flOffset = frc::Translation2d(0.4_m, 0.4_m);
+inline constexpr frc::Translation2d frOffset = frc::Translation2d(0.4_m, -0.4_m);
+inline constexpr frc::Translation2d blOffset = frc::Translation2d(-0.4_m, 0.4_m);
+inline constexpr frc::Translation2d brOffset = frc::Translation2d(-0.4_m, -0.4_m);
 
-constexpr units::meters_per_second_t maxModuleSpeed = 4.5_mps;
+inline constexpr units::meters_per_second_t maxModuleSpeed = 4.5_mps;
 
-constexpr pathplanner::HolonomicPathFollowerConfig pathFollowerConfig = pathplanner::HolonomicPathFollowerConfig(
+inline constexpr pathplanner::HolonomicPathFollowerConfig pathFollowerConfig = pathplanner::HolonomicPathFollowerConfig(
     pathplanner::PIDConstants(5.0, 0.0, 0.0), // Translation constants 
     pathplanner::PIDConstants(5.0, 0.0, 0.0), // Rotation constants 
     maxModuleSpeed,

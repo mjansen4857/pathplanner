@@ -13,6 +13,7 @@ import json
 from commands2.command import Command
 from commands2.subsystem import Subsystem
 from .config import HolonomicPathFollowerConfig, ReplanningConfig
+from hal import report
 
 
 class NamedCommands:
@@ -455,6 +456,8 @@ class AutoBuilder:
 class PathPlannerAuto(Command):
     _autoCommand: Command
 
+    _instances: int = 0
+
     def __init__(self, auto_name: str):
         """
         Constructs a new PathPlannerAuto command.
@@ -469,6 +472,9 @@ class PathPlannerAuto(Command):
         self._autoCommand = AutoBuilder.buildAuto(auto_name)
         self.addRequirements(*self._autoCommand.getRequirements())
         self.setName(auto_name)
+
+        PathPlannerAuto._instances += 1
+        report(107, PathPlannerAuto._instances)  # TODO: Use resource type when updated
 
     @staticmethod
     def getStartingPoseFromAutoFile(auto_name: str) -> Pose2d:

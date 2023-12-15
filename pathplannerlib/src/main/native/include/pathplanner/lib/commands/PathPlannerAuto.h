@@ -51,5 +51,7 @@ private:
 
 	static std::vector<std::shared_ptr<PathPlannerPath>> pathsFromCommandJson(
 			const wpi::json &json);
+
+	static int m_instances;
 };
 }

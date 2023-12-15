@@ -105,5 +105,7 @@ private:
 		PathPlannerLogging::logActivePath(replanned);
 		PPLibTelemetry::setCurrentPath(replanned);
 	}
+
+	static int m_instances;
 };
 }

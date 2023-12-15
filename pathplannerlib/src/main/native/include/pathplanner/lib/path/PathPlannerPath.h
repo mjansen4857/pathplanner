@@ -60,11 +60,7 @@ public:
 	/**
 	 * USED INTERNALLY. DO NOT USE!
 	 */
-	PathPlannerPath(PathConstraints constraints, GoalEndState goalEndState) : m_bezierPoints(), m_rotationTargets(), m_constraintZones(), m_eventMarkers(), m_globalConstraints(
-			constraints), m_goalEndState(goalEndState), m_reversed(false), m_previewStartingRotation(), m_isChoreoPath(
-			false), m_choreoTrajectory() {
-
-	}
+	PathPlannerPath(PathConstraints constraints, GoalEndState goalEndState);
 
 	void hotReload(const wpi::json &json);
 
@@ -281,5 +277,7 @@ private:
 	frc::Rotation2d m_previewStartingRotation;
 	bool m_isChoreoPath;
 	PathPlannerTrajectory m_choreoTrajectory;
+
+	static int m_instances;
 };
 }

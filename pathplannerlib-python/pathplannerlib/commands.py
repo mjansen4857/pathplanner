@@ -13,6 +13,7 @@ from commands2 import Command, Subsystem, SequentialCommandGroup
 from typing import Callable, Tuple, List
 from .config import ReplanningConfig, HolonomicPathFollowerConfig
 from .pathfinding import Pathfinding
+from hal import report
 
 
 class FollowPathWithEvents(Command):
@@ -308,6 +309,8 @@ class PathfindingCommand(Command):
 
     _timeOffset: float = 0
 
+    _instances: int = 0
+
     def __init__(self, constraints: PathConstraints, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
                  controller: PathFollowingController, replanning_config: ReplanningConfig, *requirements: Subsystem,
@@ -350,6 +353,9 @@ class PathfindingCommand(Command):
             self._targetPath = None
             self._targetPose = target_pose
             self._goalEndState = GoalEndState(goal_end_vel, target_pose.rotation(), True)
+
+        PathfindingCommand._instances += 1
+        report(108, PathfindingCommand._instances)  # TODO: Use resource type when updated
 
     def initialize(self):
         self._currentTrajectory = None

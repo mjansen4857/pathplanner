@@ -3,6 +3,7 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PPLibTelemetry;
+import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -17,6 +18,8 @@ import org.json.simple.parser.JSONParser;
 
 /** A command that loads and runs an autonomous routine built using PathPlanner. */
 public class PathPlannerAuto extends Command {
+  private static int instances = 0;
+
   private Command autoCommand;
 
   /**
@@ -36,6 +39,9 @@ public class PathPlannerAuto extends Command {
     m_requirements = autoCommand.getRequirements();
     setName(autoName);
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
+
+    instances++;
+    HAL.report(107, instances); // TODO: Use tResourceType class when updated
   }
 
   /**

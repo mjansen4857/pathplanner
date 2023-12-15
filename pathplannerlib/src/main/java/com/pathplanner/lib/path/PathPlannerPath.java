@@ -2,6 +2,7 @@ package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
+import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,6 +20,8 @@ import org.json.simple.parser.JSONParser;
 
 /** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {
+  private static int instances = 0;
+
   private List<Translation2d> bezierPoints;
   private List<RotationTarget> rotationTargets;
   private List<ConstraintsZone> constraintZones;
@@ -64,6 +67,9 @@ public class PathPlannerPath {
     this.previewStartingRotation = previewStartingRotation;
 
     precalcValues();
+
+    instances++;
+    HAL.report(106, instances); // TODO: Use tResourceType class when updated
   }
 
   /**
@@ -148,6 +154,9 @@ public class PathPlannerPath {
     this.reversed = false;
     this.allPoints = new ArrayList<>();
     this.previewStartingRotation = Rotation2d.fromDegrees(0);
+
+    instances++;
+    HAL.report(106, instances); // TODO: Use tResourceType class when updated
   }
 
   /**

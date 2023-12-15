@@ -11,6 +11,7 @@ from commands2 import Command
 from .geometry_util import decimal_range, cubicLerp, calculateRadius
 from .trajectory import PathPlannerTrajectory, State
 from wpilib import getDeployDirectory
+from hal import report
 import os
 import json
 
@@ -331,6 +332,8 @@ class PathPlannerPath:
     _isChoreoPath: bool = False
     _choreoTrajectory: Union[PathPlannerTrajectory, None] = None
 
+    _instances: int = 0
+
     def __init__(self, bezier_points: List[Translation2d], constraints: PathConstraints, goal_end_state: GoalEndState,
                  holonomic_rotations: List[RotationTarget] = [], constraint_zones: List[ConstraintsZone] = [],
                  event_markers: List[EventMarker] = [], is_reversed: bool = False,
@@ -359,6 +362,9 @@ class PathPlannerPath:
                                                           self._constraintZones)
             self._precalcValues()
         self._previewStartingRotation = preview_starting_rotation
+
+        PathPlannerPath._instances += 1
+        report(106, PathPlannerPath._instances)  # TODO: Use resource type when updated
 
     @staticmethod
     def fromPathPoints(path_points: List[PathPoint], constraints: PathConstraints,

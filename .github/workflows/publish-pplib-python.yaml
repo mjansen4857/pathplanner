@@ -1,4 +1,4 @@
-name: Build PPLib Release
+name: Publish PPLib Python Release
 
 on:
   workflow_dispatch:

@@ -7,6 +7,7 @@ import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
+import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -18,6 +19,8 @@ import java.util.function.Supplier;
 
 /** Base pathfinding command */
 public class PathfindingCommand extends Command {
+  private static int instances = 0;
+
   private final Timer timer = new Timer();
   private final PathPlannerPath targetPath;
   private Pose2d targetPose;
@@ -92,6 +95,9 @@ public class PathfindingCommand extends Command {
     this.output = outputRobotRelative;
     this.rotationDelayDistance = rotationDelayDistance;
     this.replanningConfig = replanningConfig;
+
+    instances++;
+    HAL.report(108, instances); // TODO: Use tResourceType class when updated
   }
 
   /**
@@ -135,6 +141,9 @@ public class PathfindingCommand extends Command {
     this.output = outputRobotRelative;
     this.rotationDelayDistance = rotationDelayDistance;
     this.replanningConfig = replanningConfig;
+
+    instances++;
+    HAL.report(108, instances); // TODO: Use tResourceType class when updated
   }
 
   @Override

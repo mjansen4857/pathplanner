@@ -3,8 +3,11 @@
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include <frc/Filesystem.h>
 #include <wpi/MemoryBuffer.h>
+#include <hal/HAL.h>
 
 using namespace pathplanner;
+
+int PathPlannerAuto::m_instances = 0;
 
 PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 	if (!AutoBuilder::isConfigured()) {
@@ -15,6 +18,9 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 	m_autoCommand = AutoBuilder::buildAuto(autoName).Unwrap();
 	m_requirements = m_autoCommand->GetRequirements();
 	SetName(autoName);
+
+	m_instances++;
+	HAL_Report(107, m_instances); // TODO: Use resource type when updated
 }
 
 std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromAutoFile(

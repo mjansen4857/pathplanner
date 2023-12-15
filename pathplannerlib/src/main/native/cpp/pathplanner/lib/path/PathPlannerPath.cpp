@@ -6,8 +6,11 @@
 #include <wpi/MemoryBuffer.h>
 #include <limits>
 #include <optional>
+#include <hal/HAL.h>
 
 using namespace pathplanner;
+
+int PathPlannerPath::m_instances = 0;
 
 PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 		std::vector<RotationTarget> rotationTargets,
@@ -23,6 +26,17 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 			m_constraintZones);
 
 	precalcValues();
+
+	m_instances++;
+	HAL_Report(106, m_instances); // TODO: Use resource type when updated
+}
+
+PathPlannerPath::PathPlannerPath(PathConstraints constraints,
+		GoalEndState goalEndState) : m_bezierPoints(), m_rotationTargets(), m_constraintZones(), m_eventMarkers(), m_globalConstraints(
+		constraints), m_goalEndState(goalEndState), m_reversed(false), m_previewStartingRotation(), m_isChoreoPath(
+		false), m_choreoTrajectory() {
+	m_instances++;
+	HAL_Report(106, m_instances); // TODO: Use resource type when updated
 }
 
 void PathPlannerPath::hotReload(const wpi::json &json) {

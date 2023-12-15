@@ -2,8 +2,11 @@
 #include "pathplanner/lib/pathfinding/Pathfinding.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include <vector>
+#include <hal/HAL.h>
 
 using namespace pathplanner;
+
+int PathfindingCommand::m_instances = 0;
 
 PathfindingCommand::PathfindingCommand(
 		std::shared_ptr<PathPlannerPath> targetPath,
@@ -43,6 +46,9 @@ PathfindingCommand::PathfindingCommand(
 	m_targetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
 			targetRotation);
 	m_goalEndState = GoalEndState(goalEndVel, targetRotation, true);
+
+	m_instances++;
+	HAL_Report(108, m_instances); // TODO: Use resource type when updated
 }
 
 PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
@@ -60,6 +66,9 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 	AddRequirements(requirements);
 
 	Pathfinding::ensureInitialized();
+
+	m_instances++;
+	HAL_Report(108, m_instances); // TODO: Use resource type when updated
 }
 
 void PathfindingCommand::Initialize() {

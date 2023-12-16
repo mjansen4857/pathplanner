@@ -24,7 +24,7 @@ RobotContainer::RobotContainer() {
 
 void RobotContainer::ConfigureBindings() {
   // Add a button to run the example auto to SmartDashboard, this will also be in the GetAutonomousCommand method below
-  exampleAuto = PathPlannerAuto("Example Auto").ToPtr();
+  exampleAuto = PathPlannerAuto("Example Auto").ToPtr().Unwrap();
   frc::SmartDashboard::PutData("Example Auto", exampleAuto.get());
 
   // Add a button to run pathfinding commands to SmartDashboard
@@ -33,14 +33,14 @@ void RobotContainer::ConfigureBindings() {
     PathConstraints(4.0_mps, 4.0_mps_sq, 360_deg_per_s, 540_deg_per_s_sq),
     0_mps,
     2.0_m
-  );
+  ).Unwrap();
   frc::SmartDashboard::PutData("Pathfind to Pickup Pos", pathfindToPickup.get());
   pathfindToScore = AutoBuilder::pathfindToPose(
     frc::Pose2d(2.15_m, 3.0_m, frc::Rotation2d(180_deg)),
     PathConstraints(4.0_mps, 4.0_mps_sq, 360_deg_per_s, 540_deg_per_s_sq),
     0_mps,
     0_m
-  );
+  ).Unwrap();
   frc::SmartDashboard::PutData("Pathfind to Scoring Pos", pathfindToScore.get());
 
   // Add a button to SmartDashboard that will create and follow an on-the-fly path
@@ -60,9 +60,9 @@ void RobotContainer::ConfigureBindings() {
       GoalEndState(0_mps, currentPose.Rotation())
     );
 
-    this->followOnTheFly = AutoBuilder::followPathWithEvents(path);
-    this->followOnTheFly.Schedule();
-  });
+    this->followOnTheFly = AutoBuilder::followPathWithEvents(path).Unwrap();
+    this->followOnTheFly->Schedule();
+  }).Unwrap();
   frc::SmartDashboard::PutData("On-the-fly path", onTheFly.get());
 }
 

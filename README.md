@@ -39,6 +39,8 @@ https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib.json
 
 [C++ API Docs](https://mjansen4857.com/pathplanner/docs/cpp/)
 
+[Python API Docs](https://mjansen4857.com/pathplanner/docs/python/)
+
 ## How to build manually:
 * [Install Flutter](https://flutter.dev/docs/get-started/install) (this project currently uses v3.13.9)
 * Open the project in a terminal and run the following command: `flutter build <PLATFORM>`

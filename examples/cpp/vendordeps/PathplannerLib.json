@@ -1,7 +1,7 @@
 {
     "fileName": "PathplannerLib.json",
     "name": "PathplannerLib",
-    "version": "2024.0.0-beta-5.1",
+    "version": "2024.0.0-beta-6",
     "uuid": "1b42324f-17c6-4875-8e77-1c312bc8c786",
     "frcYear": "2024",
     "mavenUrls": [
@@ -12,7 +12,7 @@
         {
             "groupId": "com.pathplanner.lib",
             "artifactId": "PathplannerLib-java",
-            "version": "2024.0.0-beta-5.1"
+            "version": "2024.0.0-beta-6"
         }
     ],
     "jniDependencies": [],
@@ -20,7 +20,7 @@
         {
             "groupId": "com.pathplanner.lib",
             "artifactId": "PathplannerLib-cpp",
-            "version": "2024.0.0-beta-5.1",
+            "version": "2024.0.0-beta-6",
             "libName": "PathplannerLib",
             "headerClassifier": "headers",
             "sharedLibrary": false,

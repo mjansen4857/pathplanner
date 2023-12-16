@@ -24,11 +24,11 @@ class RobotContainer {
  private:
   SwerveSubsystem swerve;
 
-  frc2::CommandPtr exampleAuto{nullptr};
-  frc2::CommandPtr pathfindToPickup{nullptr};
-  frc2::CommandPtr pathfindToScore{nullptr};
-  frc2::CommandPtr onTheFly{nullptr};
-  frc2::CommandPtr followOnTheFly{nullptr};
+  std::unique_ptr<frc2::Command> exampleAuto;
+  std::unique_ptr<frc2::Command> pathfindToPickup;
+  std::unique_ptr<frc2::Command> pathfindToScore;
+  std::unique_ptr<frc2::Command> onTheFly;
+  std::unique_ptr<frc2::Command> followOnTheFly;
 
   void ConfigureBindings();
 };

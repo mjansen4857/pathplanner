@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpimath import inputModulus
@@ -16,9 +16,9 @@ class State:
     velocityMps: float = 0
     accelerationMpsSq: float = 0
     headingAngularVelocityRps: float = 0
-    positionMeters: Translation2d = Translation2d()
-    heading: Rotation2d = Rotation2d()
-    targetHolonomicRotation: Rotation2d = Rotation2d()
+    positionMeters: Translation2d = field(default_factory=Translation2d)
+    heading: Rotation2d = field(default_factory=Rotation2d)
+    targetHolonomicRotation: Rotation2d = field(default_factory=Rotation2d)
     holonomicAngularVelocityRps: Union[float, None] = None
     curvatureRadPerMeter: float = 0
     constraints: p.PathConstraints = None

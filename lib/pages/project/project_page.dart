@@ -31,7 +31,8 @@ import 'package:watcher/watcher.dart';
 class ProjectPage extends StatefulWidget {
   final SharedPreferences prefs;
   final FieldImage fieldImage;
-  final Directory deployDirectory;
+  final Directory pathplannerDirectory;
+  final Directory choreoDirectory;
   final FileSystem fs;
   final ChangeStack undoStack;
   final bool shortcuts;
@@ -39,8 +40,7 @@ class ProjectPage extends StatefulWidget {
   final bool hotReload;
   final VoidCallback? onFoldersChanged;
   final bool simulatePath;
-  final bool watchChorFile;
-  final String? choreoProjPath;
+  final bool watchChorDir;
 
   // Stupid workaround to get when settings are updated
   static bool settingsUpdated = false;
@@ -49,7 +49,8 @@ class ProjectPage extends StatefulWidget {
     super.key,
     required this.prefs,
     required this.fieldImage,
-    required this.deployDirectory,
+    required this.pathplannerDirectory,
+    required this.choreoDirectory,
     required this.fs,
     required this.undoStack,
     this.shortcuts = true,
@@ -57,8 +58,7 @@ class ProjectPage extends StatefulWidget {
     this.hotReload = false,
     this.onFoldersChanged,
     this.simulatePath = false,
-    this.watchChorFile = false,
-    this.choreoProjPath,
+    this.watchChorDir = false,
   });
 
   @override
@@ -74,13 +74,14 @@ class _ProjectPageState extends State<ProjectPage> {
   List<ChoreoPath> _choreoPaths = [];
   late Directory _pathsDirectory;
   late Directory _autosDirectory;
+  late Directory _choreoDirectory;
   late String _pathSortValue;
   late String _autoSortValue;
   late bool _pathsCompact;
   late bool _autosCompact;
   late int _pathGridCount;
   late int _autosGridCount;
-  FileWatcher? _chorWatcher;
+  DirectoryWatcher? _chorWatcher;
   StreamSubscription<WatchEvent>? _chorWatcherSub;
 
   bool _loading = true;
@@ -127,23 +128,25 @@ class _ProjectPageState extends State<ProjectPage> {
     _autoFolders = widget.prefs.getStringList(PrefsKeys.autoFolders) ??
         Defaults.autoFolders;
 
-    // Set up choreo project file watcher if a project is linked
-    if (widget.choreoProjPath != null && widget.watchChorFile) {
-      _chorWatcher = FileWatcher(widget.choreoProjPath!,
-          pollingDelay: const Duration(seconds: 1));
+    // Set up choreo directory watcher
+    if (widget.watchChorDir) {
+      widget.choreoDirectory.exists().then((value) {
+        if (value) {
+          _chorWatcher = DirectoryWatcher(widget.choreoDirectory.path,
+              pollingDelay: const Duration(seconds: 1));
 
-      _chorWatcherSub = _chorWatcher!.events.listen((event) {
-        if (event.type == ChangeType.MODIFY) {
-          _load();
-          if (mounted) {
-            if (Navigator.of(this.context).canPop()) {
-              // We might have a path or auto open, close it
-              Navigator.of(this.context).pop();
+          _chorWatcherSub = _chorWatcher!.events.listen((event) {
+            _load();
+            if (mounted) {
+              if (Navigator.of(this.context).canPop()) {
+                // We might have a path or auto open, close it
+                Navigator.of(this.context).pop();
+              }
+
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                  const SnackBar(content: Text('Reloaded Choreo paths')));
             }
-
-            ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
-                content: Text('Linked Choreo project was modified')));
-          }
+          });
         }
       });
     }
@@ -160,18 +163,20 @@ class _ProjectPageState extends State<ProjectPage> {
 
   void _load() async {
     // Make sure dirs exist
-    _pathsDirectory = fs.directory(join(widget.deployDirectory.path, 'paths'));
+    _pathsDirectory =
+        fs.directory(join(widget.pathplannerDirectory.path, 'paths'));
     _pathsDirectory.createSync(recursive: true);
-    _autosDirectory = fs.directory(join(widget.deployDirectory.path, 'autos'));
+    _autosDirectory =
+        fs.directory(join(widget.pathplannerDirectory.path, 'autos'));
     _autosDirectory.createSync(recursive: true);
+    _choreoDirectory = fs.directory(widget.choreoDirectory);
 
     var paths =
         await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path, fs);
     var autos =
         await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path, fs);
-    List<ChoreoPath> choreoPaths = widget.choreoProjPath == null
-        ? []
-        : await ChoreoPath.loadAllPathsInProj(widget.choreoProjPath!, fs);
+    List<ChoreoPath> choreoPaths =
+        await ChoreoPath.loadAllPathsInDir(_choreoDirectory.path, fs);
 
     List<String> allPathNames = [];
     for (PathPlannerPath path in paths) {

@@ -25,7 +25,6 @@ class PrefsKeys {
   static const String defaultMaxAngVel = 'defaultMaxAngVel';
   static const String defaultMaxAngAccel = 'defaultMaxAngAccel';
   static const String maxModuleSpeed = 'maxModuleSpeed';
-  static const String choreoProjectPath = 'choreoProjectPath';
 }
 
 class Defaults {

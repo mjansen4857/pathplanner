@@ -72,8 +72,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
     _selectedField = widget.selectedField;
     _teamColor =
         Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
-    _pplibClientHost = widget.prefs.getString(PrefsKeys.pplibClientHost) ??
-        Defaults.pplibClientHost;
+    _pplibClientHost = widget.prefs.getString(PrefsKeys.ntServerAddress) ??
+        Defaults.ntServerAddress;
     _maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
         Defaults.maxModuleSpeed;
   }
@@ -273,7 +273,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                               'Host',
                               (value) {
                                 widget.prefs.setString(
-                                    PrefsKeys.pplibClientHost, value);
+                                    PrefsKeys.ntServerAddress, value);
                                 setState(() {
                                   _pplibClientHost = value;
                                 });

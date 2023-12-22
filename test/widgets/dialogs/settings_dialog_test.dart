@@ -23,7 +23,7 @@ void main() {
       PrefsKeys.holonomicMode: true,
       PrefsKeys.hotReloadEnabled: true,
       PrefsKeys.teamColor: Colors.black.value,
-      PrefsKeys.pplibClientHost: 'localhost',
+      PrefsKeys.ntServerAddress: 'localhost',
       PrefsKeys.defaultMaxVel: 1.0,
       PrefsKeys.defaultMaxAccel: 2.0,
       PrefsKeys.defaultMaxAngVel: 3.0,
@@ -360,7 +360,7 @@ void main() {
     await widgetTester.pump();
 
     expect(settingsChanged, true);
-    expect(prefs.getString(PrefsKeys.pplibClientHost), '10.30.15.2');
+    expect(prefs.getString(PrefsKeys.ntServerAddress), '10.30.15.2');
   });
 
   testWidgets('holonomic mode chip', (widgetTester) async {

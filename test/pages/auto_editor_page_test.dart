@@ -30,8 +30,11 @@ void main() {
     testPath = PathPlannerPath.defaultPath(
         pathDir: '/paths', fs: fs, name: 'testPath');
     testChoreoPath = ChoreoPath(
-        name: 'test',
-        trajectory: Trajectory(states: [TrajectoryState(time: 1.0)]));
+      name: 'test',
+      trajectory: Trajectory(states: [TrajectoryState(time: 1.0)]),
+      fs: fs,
+      choreoDir: '/choreo',
+    );
     undoStack = ChangeStack();
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();

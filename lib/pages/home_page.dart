@@ -53,8 +53,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Directory? _projectDir;
-  String? _choreoProjRelPath;
-  late Directory _deployDir;
+  late Directory _pathplannerDir;
+  late Directory _choreoDir;
   final SecureBookmarks? _bookmarks =
       Platform.isMacOS ? SecureBookmarks() : null;
   final List<FieldImage> _fieldImages = FieldImage.offialFields();
@@ -263,42 +263,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: colorScheme.onPrimaryContainer,
-                                backgroundColor: colorScheme.primaryContainer,
-                              ),
-                              onPressed: () {
-                                _openProjectDialog(context);
-                              },
-                              child: const Text('Switch Project'),
-                            ),
-                            const SizedBox(width: 4),
-                            Tooltip(
-                              message: _choreoProjRelPath != null
-                                  ? 'Unlink Choreo Project'
-                                  : 'Link Choreo Project',
-                              waitDuration: const Duration(milliseconds: 500),
-                              child: ElevatedButton.icon(
-                                onPressed: _choreoProjRelPath != null
-                                    ? _unlinkChoreo
-                                    : _linkChoreoDialog,
-                                icon: _choreoProjRelPath != null
-                                    ? const Icon(Icons.link_off)
-                                    : const Icon(Icons.link),
-                                label: const Text('Choreo'),
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor:
-                                      colorScheme.onSecondaryContainer,
-                                  backgroundColor:
-                                      colorScheme.secondaryContainer,
-                                ),
-                              ),
-                            ),
-                          ],
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: colorScheme.onPrimaryContainer,
+                            backgroundColor: colorScheme.primaryContainer,
+                          ),
+                          onPressed: () {
+                            _openProjectDialog(context);
+                          },
+                          child: const Text('Switch Project'),
                         ),
                         Expanded(
                           flex: 4,
@@ -401,11 +374,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 ProjectPage(
-                  key: ValueKey(
-                      _projectDir!.path.hashCode + _choreoProjRelPath.hashCode),
+                  key: ValueKey(_projectDir!.path.hashCode),
                   prefs: widget.prefs,
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
-                  deployDirectory: _deployDir,
+                  pathplannerDirectory: _pathplannerDir,
+                  choreoDirectory: _choreoDir,
                   fs: fs,
                   undoStack: widget.undoStack,
                   telemetry: widget.telemetry,
@@ -413,8 +386,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   onFoldersChanged: () =>
                       _saveProjectSettingsToFile(_projectDir!),
                   simulatePath: true,
-                  watchChorFile: true,
-                  choreoProjPath: join(_projectDir!.path, _choreoProjRelPath),
+                  watchChorDir: true,
                 ),
                 TelemetryPage(
                   fieldImage: _fieldImage ?? FieldImage.defaultField,
@@ -422,7 +394,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   prefs: widget.prefs,
                 ),
                 NavGridPage(
-                  deployDirectory: _deployDir,
+                  deployDirectory: _pathplannerDir,
                   fs: fs,
                 ),
               ],
@@ -509,13 +481,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json[PrefsKeys.defaultMaxAngAccel] ?? Defaults.defaultMaxAngAccel);
     widget.prefs.setDouble(PrefsKeys.maxModuleSpeed,
         json[PrefsKeys.maxModuleSpeed] ?? Defaults.maxModuleSpeed);
-
-    if (json[PrefsKeys.choreoProjectPath] != null) {
-      widget.prefs.setString(
-          PrefsKeys.choreoProjectPath, json[PrefsKeys.choreoProjectPath]);
-    } else {
-      widget.prefs.remove(PrefsKeys.choreoProjectPath);
-    }
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
@@ -555,8 +520,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.maxModuleSpeed:
           widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
               Defaults.maxModuleSpeed,
-      PrefsKeys.choreoProjectPath:
-          widget.prefs.getString(PrefsKeys.choreoProjectPath),
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {
@@ -575,43 +538,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _unlinkChoreo() {
-    setState(() {
-      _choreoProjRelPath = null;
-    });
-  }
-
-  void _linkChoreoDialog() async {
-    XFile? chorFile = await openFile(
-      acceptedTypeGroups: [
-        const XTypeGroup(
-          label: 'Choreo Project',
-          extensions: ['chor'],
-        ),
-      ],
-      initialDirectory: _projectDir!.path,
-      confirmButtonText: 'Link Project',
-    );
-
-    if (chorFile != null) {
-      if (!isWithin(_projectDir!.path, chorFile.path)) {
-        if (!mounted) return;
-
-        Navigator.of(this.context).pop();
-        ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
-            content: Text(
-                'The Choreo project file must be somewhere within the current robot project')));
-      } else {
-        String relPath = relative(chorFile.path, from: _projectDir!.path);
-        widget.prefs.setString(PrefsKeys.choreoProjectPath, relPath);
-        _saveProjectSettingsToFile(_projectDir!);
-        setState(() {
-          _choreoProjRelPath = relPath;
-        });
-      }
-    }
-  }
-
   void _initFromProjectDir(String projectDir) async {
     widget.prefs.setString(PrefsKeys.currentProjectDir, projectDir);
 
@@ -624,24 +550,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Check if WPILib project
     setState(() {
       if (fs.file(join(projectDir, 'build.gradle')).existsSync()) {
-        _deployDir = fs.directory(
+        _pathplannerDir = fs.directory(
             join(projectDir, 'src', 'main', 'deploy', 'pathplanner'));
+        _choreoDir =
+            fs.directory(join(projectDir, 'src', 'main', 'deploy', 'choreo'));
       } else {
-        _deployDir = fs.directory(join(projectDir, 'deploy', 'pathplanner'));
+        _pathplannerDir =
+            fs.directory(join(projectDir, 'deploy', 'pathplanner'));
+        _choreoDir = fs.directory(join(projectDir, 'deploy', 'choreo'));
       }
     });
 
-    await _deployDir.create(recursive: true);
+    await _pathplannerDir.create(recursive: true);
 
     // Assure that a navgrid file is present
-    File navgridFile = fs.file(join(_deployDir.path, 'navgrid.json'));
+    File navgridFile = fs.file(join(_pathplannerDir.path, 'navgrid.json'));
     navgridFile.exists().then((value) async {
       if (!value) {
         // Load default grid
         String fileContent = await DefaultAssetBundle.of(this.context)
             .loadString('resources/default_navgrid.json');
         fs
-            .file(join(_deployDir.path, 'navgrid.json'))
+            .file(join(_pathplannerDir.path, 'navgrid.json'))
             .writeAsString(fileContent);
       }
     });
@@ -656,23 +586,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
 
     await _loadProjectSettingsFromFile(_projectDir!);
-
-    if (mounted) {
-      setState(() {
-        _choreoProjRelPath =
-            widget.prefs.getString(PrefsKeys.choreoProjectPath);
-
-        if (_choreoProjRelPath != null &&
-            !fs.isFileSync(join(_projectDir!.path, _choreoProjRelPath))) {
-          _choreoProjRelPath = null;
-          widget.prefs.remove(PrefsKeys.choreoProjectPath);
-          _saveProjectSettingsToFile(_projectDir!);
-
-          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(
-              content: Text('Failed to load linked Choreo project')));
-        }
-      });
-    }
   }
 
   Future<void> _loadFieldImages() async {

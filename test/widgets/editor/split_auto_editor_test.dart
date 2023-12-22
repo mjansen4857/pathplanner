@@ -29,9 +29,10 @@ void main() {
   late SharedPreferences prefs;
   late ChangeStack undoStack;
   late bool autoChanged;
+  late MemoryFileSystem fs;
 
   setUp(() async {
-    var fs = MemoryFileSystem();
+    fs = MemoryFileSystem();
     testPath = PathPlannerPath.defaultPath(
       name: 'testPath',
       pathDir: '/paths',
@@ -88,6 +89,8 @@ void main() {
             ChoreoPath(
               name: 'test',
               trajectory: Trajectory(states: [TrajectoryState(time: 1.0)]),
+              fs: fs,
+              choreoDir: '/choreo',
             ),
           ],
           allPathNames: const ['testPath', 'otherPath'],

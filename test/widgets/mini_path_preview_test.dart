@@ -8,10 +8,14 @@ import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/mini_path_preview.dart';
 
 void main() {
-  PathPlannerPath path =
-      PathPlannerPath.defaultPath(pathDir: '/paths', fs: MemoryFileSystem());
+  MemoryFileSystem fs = MemoryFileSystem();
+  PathPlannerPath path = PathPlannerPath.defaultPath(pathDir: '/paths', fs: fs);
   ChoreoPath path2 = ChoreoPath(
-      name: 'test', trajectory: Trajectory(states: [TrajectoryState()]));
+    name: 'test',
+    trajectory: Trajectory(states: [TrajectoryState()]),
+    fs: fs,
+    choreoDir: '/choreo',
+  );
 
   testWidgets('mini preview w/ small image', (widgetTester) async {
     var fieldImage = FieldImage.official(OfficialField.chargedUp);

@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/choreo_path.dart';
@@ -19,13 +20,16 @@ void main() {
 
   setUp(() async {
     path = ChoreoPath(
-        name: 'test',
-        trajectory: Trajectory(
-          states: [
-            TrajectoryState(time: 0.0, position: const Point(0, 0)),
-            TrajectoryState(time: 1.0, position: const Point(1, 1)),
-          ],
-        ));
+      name: 'test',
+      trajectory: Trajectory(
+        states: [
+          TrajectoryState(time: 0.0, position: const Point(0, 0)),
+          TrajectoryState(time: 1.0, position: const Point(1, 1)),
+        ],
+      ),
+      fs: MemoryFileSystem(),
+      choreoDir: '/choreo',
+    );
     undoStack = ChangeStack();
     SharedPreferences.setMockInitialValues({
       PrefsKeys.holonomicMode: true,

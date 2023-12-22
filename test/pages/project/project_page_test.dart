@@ -56,6 +56,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -76,6 +77,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -137,6 +139,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -198,6 +201,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -223,6 +227,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -252,26 +257,24 @@ void main() {
   testWidgets('add new auto button w/ choreo', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    await fs.directory(deployPath).create(recursive: true);
-    await fs.file(join(deployPath, 'test.chor')).writeAsString(jsonEncode({
-          'paths': {
-            'test path': {
-              'trajectory': [
-                {
-                  'timestamp': 0.0,
-                  'x': 0.0,
-                  'y': 0.0,
-                  'heading': 0.0,
-                },
-                {
-                  'timestamp': 1.0,
-                  'x': 1.0,
-                  'y': 1.0,
-                  'heading': 0.0,
-                },
-              ],
+    await fs.directory(join(deployPath, 'choreo')).create(recursive: true);
+    await fs
+        .file(join(deployPath, 'choreo', 'test.traj'))
+        .writeAsString(jsonEncode({
+          'samples': [
+            {
+              'timestamp': 0.0,
+              'x': 0.0,
+              'y': 0.0,
+              'heading': 0.0,
             },
-          },
+            {
+              'timestamp': 1.0,
+              'x': 1.0,
+              'y': 1.0,
+              'heading': 0.0,
+            },
+          ],
         }));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -280,10 +283,10 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
-          choreoProjPath: join(deployPath, 'test.chor'),
         ),
       ),
     ));
@@ -312,6 +315,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -347,6 +351,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -409,6 +414,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -451,6 +457,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -507,6 +514,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -580,6 +588,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -635,6 +644,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -682,6 +692,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -731,6 +742,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -770,6 +782,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -815,6 +828,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -840,6 +854,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -875,6 +890,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -910,6 +926,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -981,6 +998,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1029,6 +1047,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1057,6 +1076,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1098,6 +1118,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1136,6 +1157,7 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
 
     await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'choreo')).create(recursive: true);
 
     PathPlannerPath path1 = PathPlannerPath.defaultPath(
       pathDir: join(deployPath, 'paths'),
@@ -1147,25 +1169,23 @@ void main() {
     await fs
         .file(join(deployPath, 'paths', 'path1.path'))
         .writeAsString(jsonEncode(path1.toJson()));
-    await fs.file(join(deployPath, 'test.chor')).writeAsString(jsonEncode({
-          'paths': {
-            'test path': {
-              'trajectory': [
-                {
-                  'timestamp': 0.0,
-                  'x': 0.0,
-                  'y': 0.0,
-                  'heading': 0.0,
-                },
-                {
-                  'timestamp': 1.0,
-                  'x': 1.0,
-                  'y': 1.0,
-                  'heading': 0.0,
-                },
-              ],
+    await fs
+        .file(join(deployPath, 'choreo', 'test.traj'))
+        .writeAsString(jsonEncode({
+          'samples': [
+            {
+              'timestamp': 0.0,
+              'x': 0.0,
+              'y': 0.0,
+              'heading': 0.0,
             },
-          },
+            {
+              'timestamp': 1.0,
+              'x': 1.0,
+              'y': 1.0,
+              'heading': 0.0,
+            },
+          ],
         }));
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
@@ -1176,10 +1196,10 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
-          choreoProjPath: join(deployPath, 'test.chor'),
         ),
       ),
     ));
@@ -1191,7 +1211,7 @@ void main() {
     await widgetTester.tap(folder);
     await widgetTester.pump();
 
-    final card = find.widgetWithText(ProjectItemCard, 'test path');
+    final card = find.widgetWithText(ProjectItemCard, 'test');
     expect(card, findsOneWidget);
 
     await widgetTester.tap(card);
@@ -1225,6 +1245,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1285,6 +1306,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1344,6 +1366,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1418,6 +1441,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1476,6 +1500,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1555,6 +1580,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,
@@ -1606,6 +1632,7 @@ void main() {
           prefs: prefs,
           fieldImage: FieldImage.defaultField,
           pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
           fs: fs,
           undoStack: ChangeStack(),
           shortcuts: false,

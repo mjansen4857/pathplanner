@@ -48,8 +48,8 @@ void main() async {
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
       PPLibTelemetry telemetry = PPLibTelemetry(
-          serverBaseAddress: prefs.getString(PrefsKeys.pplibClientHost) ??
-              Defaults.pplibClientHost);
+          serverBaseAddress: prefs.getString(PrefsKeys.ntServerAddress) ??
+              Defaults.ntServerAddress);
 
       runApp(PathPlanner(
         appVersion: packageInfo.version,

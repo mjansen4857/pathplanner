@@ -24,16 +24,27 @@ class PPLibTelemetry {
       onDisconnect: () => _isConnected = false,
     );
 
-    _velSub = _client.subscribe('/PathPlanner/vel', 0.033);
-    _inaccuracySub = _client.subscribe('/PathPlanner/inaccuracy', 0.033);
-    _currentPoseSub = _client.subscribe('/PathPlanner/currentPose', 0.033);
-    _activePathSub = _client.subscribe('/PathPlanner/activePath', 0.1);
-    _targetPoseSub = _client.subscribe('/PathPlanner/targetPose', 0.033);
+    _velSub = _client.subscribePeriodic('/PathPlanner/vel', 0.033);
+    _inaccuracySub =
+        _client.subscribePeriodic('/PathPlanner/inaccuracy', 0.033);
+    _currentPoseSub =
+        _client.subscribePeriodic('/PathPlanner/currentPose', 0.033);
+    _activePathSub = _client.subscribePeriodic('/PathPlanner/activePath', 0.1);
+    _targetPoseSub =
+        _client.subscribePeriodic('/PathPlanner/targetPose', 0.033);
 
     _hotReloadPathTopic = _client.publishNewTopic(
         '/PathPlanner/HotReload/hotReloadPath', NT4TypeStr.typeStr);
     _hotReloadAutoTopic = _client.publishNewTopic(
         '/PathPlanner/HotReload/hotReloadAuto', NT4TypeStr.typeStr);
+  }
+
+  void setServerAddress(String serverAddress) {
+    _client.setServerBaseAddress(serverAddress);
+  }
+
+  String getServerAddress() {
+    return _client.serverBaseAddress;
   }
 
   void hotReloadPath(PathPlannerPath path) {

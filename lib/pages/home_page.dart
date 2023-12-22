@@ -226,25 +226,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   ),
                   Align(
                     alignment: FractionalOffset.bottomRight,
-                    child: ConditionalWidget(
-                      condition: widget.telemetry.isConnected,
-                      trueChild: const Tooltip(
-                        message: 'Connected to Robot',
-                        child: Icon(
-                          Icons.lan,
-                          size: 20,
-                          color: Colors.green,
-                        ),
-                      ),
-                      falseChild: const Tooltip(
-                        message: 'Not Connected to Robot',
-                        child: Icon(
-                          Icons.lan_outlined,
-                          size: 20,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ),
+                    child: StreamBuilder(
+                        stream: widget.telemetry.connectionStatusStream(),
+                        builder: (context, snapshot) {
+                          return ConditionalWidget(
+                            condition: snapshot.data ?? false,
+                            trueChild: const Tooltip(
+                              message: 'Connected to Robot',
+                              child: Icon(
+                                Icons.lan,
+                                size: 20,
+                                color: Colors.green,
+                              ),
+                            ),
+                            falseChild: const Tooltip(
+                              message: 'Not Connected to Robot',
+                              child: Icon(
+                                Icons.lan_outlined,
+                                size: 20,
+                                color: Colors.red,
+                              ),
+                            ),
+                          );
+                        }),
                   ),
                   Center(
                     child: Column(
@@ -431,6 +435,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   void _onProjectSettingsChanged() {
     ProjectPage.settingsUpdated = true;
     _saveProjectSettingsToFile(_projectDir!);
+
+    String serverAddress = widget.prefs.getString(PrefsKeys.ntServerAddress) ??
+        Defaults.ntServerAddress;
+    if (serverAddress != widget.telemetry.getServerAddress()) {
+      widget.telemetry.setServerAddress(serverAddress);
+    }
 
     setState(() {
       _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??

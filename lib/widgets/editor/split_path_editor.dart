@@ -198,10 +198,17 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     PathPainterUtil.uiPointSizeToPixels(
                         15, PathPainter.scale, widget.fieldImage));
                 // This is a little bit stupid but whatever
-                for (int i = -1; i < widget.path.rotationTargets.length; i++) {
+                for (int i = -2; i < widget.path.rotationTargets.length; i++) {
                   num rotation;
                   Point pos;
-                  if (i == -1) {
+                  if (i == -2) {
+                    if (widget.path.previewStartingState == null) {
+                      continue;
+                    }
+
+                    rotation = widget.path.previewStartingState!.rotation;
+                    pos = widget.path.waypoints.first.anchor;
+                  } else if (i == -1) {
                     rotation = widget.path.goalEndState.rotation;
                     pos = widget.path.waypoints.last.anchor;
                   } else {
@@ -283,7 +290,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   });
                 } else if (_draggedRotationIdx != null) {
                   Point pos;
-                  if (_draggedRotationIdx == -1) {
+                  if (_draggedRotationIdx == -2) {
+                    pos = widget.path.waypoints.first.anchor;
+                  } else if (_draggedRotationIdx == -1) {
                     pos = widget.path.waypoints.last.anchor;
                   } else {
                     int pointIdx = (widget
@@ -301,7 +310,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   num rotationDeg = (rotation * 180 / pi);
 
                   setState(() {
-                    if (_draggedRotationIdx == -1) {
+                    if (_draggedRotationIdx == -2) {
+                      widget.path.previewStartingState!.rotation = rotationDeg;
+                    } else if (_draggedRotationIdx == -1) {
                       widget.path.goalEndState.rotation = rotationDeg;
                     } else {
                       widget.path.rotationTargets[_draggedRotationIdx!]
@@ -344,7 +355,29 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   ));
                   _draggedPoint = null;
                 } else if (_draggedRotationIdx != null) {
-                  if (_draggedRotationIdx == -1) {
+                  if (_draggedRotationIdx == -2) {
+                    num endRotation =
+                        widget.path.previewStartingState!.rotation;
+                    widget.undoStack.add(Change(
+                      _dragRotationOldValue,
+                      () {
+                        setState(() {
+                          widget.path.previewStartingState!.rotation =
+                              endRotation;
+                          widget.path.generateAndSavePath();
+                          _simulatePath();
+                        });
+                      },
+                      (oldValue) {
+                        setState(() {
+                          widget.path.previewStartingState!.rotation =
+                              oldValue!;
+                          widget.path.generateAndSavePath();
+                          _simulatePath();
+                        });
+                      },
+                    ));
+                  } else if (_draggedRotationIdx == -1) {
                     num endRotation = widget.path.goalEndState.rotation;
                     widget.undoStack.add(Change(
                       _dragRotationOldValue,

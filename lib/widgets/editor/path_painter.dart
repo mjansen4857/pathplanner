@@ -106,6 +106,17 @@ class PathPainter extends CustomPainter {
         for (int w = 0; w < paths[i].waypoints.length; w++) {
           _paintWaypoint(paths[i], canvas, scale, w);
         }
+
+        if (paths[i].previewStartingState != null) {
+          PathPainterUtil.paintRobotOutline(
+              paths[i].waypoints.first.anchor,
+              paths[i].previewStartingState!.rotation,
+              fieldImage,
+              robotSize,
+              scale,
+              canvas,
+              Colors.green.withOpacity(0.5));
+        }
       } else {
         _paintWaypoint(paths[i], canvas, scale, 0);
         _paintWaypoint(paths[i], canvas, scale, paths[i].waypoints.length - 1);

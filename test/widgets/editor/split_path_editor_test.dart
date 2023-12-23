@@ -9,6 +9,7 @@ import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/preview_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -361,6 +362,52 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(path.goalEndState.rotation, closeTo(0, 0.1));
+  });
+
+  testWidgets('drag preview starting state rotation', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    path.previewStartingState = PreviewStartingState();
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SplitPathEditor(
+          prefs: prefs,
+          path: path,
+          fieldImage: FieldImage.defaultField,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    Point targetPos = path.waypoints.first.anchor;
+    var dragLocation = PathPainterUtil.pointToPixelOffset(
+            targetPos + const Point(0.5, 0.0),
+            PathPainter.scale,
+            FieldImage.defaultField) +
+        const Offset(48, 48) + // Add 48 for padding
+        const Offset(2.0, 28.0); // Some weird buffer going on
+    var halfMeterPixels = PathPainterUtil.metersToPixels(
+        0.5, PathPainter.scale, FieldImage.defaultField);
+
+    var gesture = await widgetTester.startGesture(dragLocation,
+        kind: PointerDeviceKind.mouse);
+    await widgetTester.pump();
+
+    for (int i = 0; i <= halfMeterPixels.ceil(); i++) {
+      await gesture.moveBy(const Offset(-1, -1.5));
+      await widgetTester.pump();
+    }
+
+    await gesture.up();
+    await widgetTester.pumpAndSettle();
+
+    expect(path.previewStartingState!.rotation, closeTo(90, 1.0));
+
+    undoStack.undo();
+    await widgetTester.pumpAndSettle();
+
+    expect(path.previewStartingState!.rotation, closeTo(0, 0.1));
   });
 
   testWidgets('delete waypoint', (widgetTester) async {

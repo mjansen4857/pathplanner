@@ -155,8 +155,8 @@ class FollowPathCommand(Command):
         headingError = currentHeading - targetHeading
         onHeading = math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 0.25 or abs(headingError.degrees()) < 30
 
-        if not self._path.isChoreoPath() and self._replanningConfig.enableInitialReplanning and not (
-                currentPose.translation().distance(self._path.getPoint(0).position) < 0.25 and onHeading):
+        if not self._path.isChoreoPath() and self._replanningConfig.enableInitialReplanning and (
+                currentPose.translation().distance(self._path.getPoint(0).position) > 0.25 or not onHeading):
             self._replanPath(currentPose, currentSpeeds)
         else:
             self._generatedTrajectory = self._path.getTrajectory(currentSpeeds, currentPose.rotation())
@@ -419,20 +419,18 @@ class PathfindingCommand(Command):
                 headingError = currentHeading - closestState1.heading
                 onHeading = math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 1.0 or abs(headingError.degrees()) < 30
 
-                # Replan the path if we are more than 0.25m away or our heading is off
-                if not onHeading or (
-                        self._replanningConfig.enableInitialReplanning and currentPose.translation().distance(
-                    closestState1.positionMeters) > 0.25):
+                # Replan the path if our heading is off
+                if onHeading or not self._replanningConfig.enableInitialReplanning:
+                    d = closestState1.positionMeters.distance(closestState2.positionMeters)
+                    t = (currentPose.translation().distance(closestState1.positionMeters)) / d
+
+                    self._timeOffset = floatLerp(closestState1.timeSeconds, closestState2.timeSeconds, t)
+                else:
                     self._currentPath = self._currentPath.replan(currentPose, currentSpeeds)
                     self._currentTrajectory = PathPlannerTrajectory(self._currentPath, currentSpeeds,
                                                                     currentPose.rotation())
 
                     self._timeOffset = 0.0
-                else:
-                    d = closestState1.positionMeters.distance(closestState2.positionMeters)
-                    t = (currentPose.translation().distance(closestState1.positionMeters)) / d
-
-                    self._timeOffset = floatLerp(closestState1.timeSeconds, closestState2.timeSeconds, t)
 
                 PathPlannerLogging.logActivePath(self._currentPath)
                 PPLibTelemetry.setCurrentPath(self._currentPath)

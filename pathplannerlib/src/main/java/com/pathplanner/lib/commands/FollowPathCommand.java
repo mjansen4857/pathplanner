@@ -77,8 +77,8 @@ public class FollowPathCommand extends Command {
 
     if (!path.isChoreoPath()
         && replanningConfig.enableInitialReplanning
-        && !(currentPose.getTranslation().getDistance(path.getPoint(0).position) < 0.25
-            && onHeading)) {
+        && (currentPose.getTranslation().getDistance(path.getPoint(0).position) > 0.25
+            || !onHeading)) {
       replanPath(currentPose, currentSpeeds);
     } else {
       generatedTrajectory = path.getTrajectory(currentSpeeds, currentPose.getRotation());

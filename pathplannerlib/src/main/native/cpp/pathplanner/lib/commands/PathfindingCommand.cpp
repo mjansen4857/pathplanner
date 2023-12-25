@@ -146,7 +146,7 @@ void PathfindingCommand::Execute() {
 					- m_currentPath->getStartingDifferentialPose().Rotation();
 			bool onHeading = units::math::hypot(currentSpeeds.vx,
 					currentSpeeds.vy) < 1.0_mps
-					|| units::math::abs(headingError.Degrees()) < 30_deg;
+					|| units::math::abs(headingError.Degrees()) < 45_deg;
 
 			// Replan the path if our heading is off
 			if (onHeading || !m_replanningConfig.enableInitialReplanning) {

@@ -417,7 +417,7 @@ class PathfindingCommand(Command):
                 fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.rotation())
                 currentHeading = Rotation2d(fieldRelativeSpeeds.vx, fieldRelativeSpeeds.vy)
                 headingError = currentHeading - closestState1.heading
-                onHeading = math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 1.0 or abs(headingError.degrees()) < 30
+                onHeading = math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 1.0 or abs(headingError.degrees()) < 45
 
                 # Replan the path if our heading is off
                 if onHeading or not self._replanningConfig.enableInitialReplanning:

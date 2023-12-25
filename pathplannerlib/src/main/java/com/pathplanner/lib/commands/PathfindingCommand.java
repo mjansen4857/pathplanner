@@ -227,7 +227,7 @@ public class PathfindingCommand extends Command {
         Rotation2d headingError = currentHeading.minus(closestState1.heading);
         boolean onHeading =
             Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 1.0
-                || Math.abs(headingError.getDegrees()) < 30;
+                || Math.abs(headingError.getDegrees()) < 45;
 
         // Replan the path if our heading is off
         if (onHeading || !replanningConfig.enableInitialReplanning) {

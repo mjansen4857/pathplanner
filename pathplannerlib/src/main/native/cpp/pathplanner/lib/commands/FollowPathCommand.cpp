@@ -32,8 +32,8 @@ void FollowPathCommand::Initialize() {
 			< 0.25_mps || units::math::abs(headingError.Degrees()) < 30_deg;
 
 	if (!m_path->isChoreoPath() && m_replanningConfig.enableInitialReplanning
-			&& !(currentPose.Translation().Distance(
-					m_path->getPoint(0).position) < 0.25_m && onHeading)) {
+			&& (currentPose.Translation().Distance(m_path->getPoint(0).position)
+					> 0.25_m || !onHeading)) {
 		replanPath(currentPose, currentSpeeds);
 	} else {
 		m_generatedTrajectory = m_path->getTrajectory(currentSpeeds,

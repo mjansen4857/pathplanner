@@ -148,19 +148,8 @@ void PathfindingCommand::Execute() {
 					currentSpeeds.vy) < 1.0_mps
 					|| units::math::abs(headingError.Degrees()) < 30_deg;
 
-			// Replan the path if we are more than 0.25m away or our heading is off
-			if (!onHeading
-					|| (m_replanningConfig.enableInitialReplanning
-							&& currentPose.Translation().Distance(
-									closestState1.position) > 0.25_m)) {
-				m_currentPath = m_currentPath->replan(currentPose,
-						currentSpeeds);
-
-				m_currentTrajectory = PathPlannerTrajectory(m_currentPath,
-						currentSpeeds, currentPose.Rotation());
-
-				m_timeOffset = 0_s;
-			} else {
+			// Replan the path if our heading is off
+			if (onHeading || !m_replanningConfig.enableInitialReplanning) {
 				auto d = closestState1.position.Distance(
 						closestState2.position);
 				double t = ((currentPose.Translation().Distance(
@@ -168,6 +157,14 @@ void PathfindingCommand::Execute() {
 
 				m_timeOffset = GeometryUtil::unitLerp(closestState1.time,
 						closestState2.time, t);
+			} else {
+				m_currentPath = m_currentPath->replan(currentPose,
+						currentSpeeds);
+
+				m_currentTrajectory = PathPlannerTrajectory(m_currentPath,
+						currentSpeeds, currentPose.Rotation());
+
+				m_timeOffset = 0_s;
 			}
 
 			PathPlannerLogging::logActivePath (m_currentPath);

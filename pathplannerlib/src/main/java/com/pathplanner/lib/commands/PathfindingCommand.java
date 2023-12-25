@@ -229,21 +229,19 @@ public class PathfindingCommand extends Command {
             Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 1.0
                 || Math.abs(headingError.getDegrees()) < 30;
 
-        // Replan the path if we are more than 0.25m away or our heading is off
-        if (!onHeading
-            || (replanningConfig.enableInitialReplanning
-                && currentPose.getTranslation().getDistance(closestState1.positionMeters) > 0.25)) {
-          currentPath = currentPath.replan(currentPose, currentSpeeds);
-          currentTrajectory =
-              new PathPlannerTrajectory(currentPath, currentSpeeds, currentPose.getRotation());
-
-          timeOffset = 0;
-        } else {
+        // Replan the path if our heading is off
+        if (onHeading || !replanningConfig.enableInitialReplanning) {
           double d = closestState1.positionMeters.getDistance(closestState2.positionMeters);
           double t = (currentPose.getTranslation().getDistance(closestState1.positionMeters)) / d;
 
           timeOffset =
               GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
+        } else {
+          currentPath = currentPath.replan(currentPose, currentSpeeds);
+          currentTrajectory =
+              new PathPlannerTrajectory(currentPath, currentSpeeds, currentPose.getRotation());
+
+          timeOffset = 0;
         }
 
         PathPlannerLogging.logActivePath(currentPath);

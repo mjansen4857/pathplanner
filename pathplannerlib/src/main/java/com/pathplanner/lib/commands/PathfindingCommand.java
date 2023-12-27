@@ -8,6 +8,7 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -233,9 +234,20 @@ public class PathfindingCommand extends Command {
         if (onHeading || !replanningConfig.enableInitialReplanning) {
           double d = closestState1.positionMeters.getDistance(closestState2.positionMeters);
           double t = (currentPose.getTranslation().getDistance(closestState1.positionMeters)) / d;
+          t = MathUtil.clamp(t, 0.0, 1.0);
 
           timeOffset =
               GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
+
+          // If the robot is stationary and at the start of the path, set the time offset to the
+          // next loop
+          // This can prevent an issue where the robot will remain stationary if new paths come in
+          // every loop
+          if (timeOffset <= 0.02
+              && Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond)
+                  < 0.1) {
+            timeOffset = 0.02;
+          }
         } else {
           currentPath = currentPath.replan(currentPose, currentSpeeds);
           currentTrajectory =

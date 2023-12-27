@@ -154,9 +154,20 @@ void PathfindingCommand::Execute() {
 						closestState2.position);
 				double t = ((currentPose.Translation().Distance(
 						closestState1.position)) / d)();
+				t = units::math::min(1.0, units::math::max(0.0, t));
 
 				m_timeOffset = GeometryUtil::unitLerp(closestState1.time,
 						closestState2.time, t);
+
+				// If the robot is stationary and at the start of the path, set the time offset to the
+				// next loop
+				// This can prevent an issue where the robot will remain stationary if new paths come in
+				// every loop
+				if (m_timeOffset <= 0.02_s
+						&& units::math::hypot(currentSpeeds.vx,
+								currentSpeeds.vy) < 0.1_mps) {
+					m_timeOffset = 0.02_s;
+				}
 			} else {
 				m_currentPath = m_currentPath->replan(currentPose,
 						currentSpeeds);

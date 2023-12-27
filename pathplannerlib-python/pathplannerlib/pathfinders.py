@@ -225,6 +225,7 @@ class LocalADStar(Pathfinder):
     _requestLock: RLock = RLock()
 
     _currentPathPoints: List[PathPoint] = []
+    _currentPathFull: List[GridPosition] = []
 
     def __init__(self):
         self._planningThread = Thread(target=self._runThread, daemon=True)
@@ -367,13 +368,19 @@ class LocalADStar(Pathfinder):
         self._requestObstacles.clear()
         self._requestObstacles.update(self._staticObstacles)
         self._requestObstacles.update(self._dynamicObstacles)
-        self._requestReset = True
-        self._requestMinor = True
-        self._requestMajor = True
         self._requestLock.release()
 
-        self.setStartPosition(current_robot_pos)
-        self.setGoalPosition(self._requestRealGoalPos)
+        self._pathLock.acquire()
+        recalculate = False
+        for pos in self._currentPathFull:
+            if pos in self._requestObstacles:
+                recalculate = True
+                break
+        self._pathLock.release()
+
+        if recalculate:
+            self.setStartPosition(current_robot_pos)
+            self.setGoalPosition(self._requestRealGoalPos)
 
     def _runThread(self) -> None:
         while True:
@@ -416,10 +423,13 @@ class LocalADStar(Pathfinder):
 
         if do_minor:
             self._computeOrImprovePath(s_start, s_goal, obstacles)
-            path = self._extractPath(s_start, s_goal, real_start_pos, real_goal_pos, obstacles)
+
+            pathPositions = self._extractPath(s_start, s_goal, obstacles)
+            pathPoints = self._createPathPoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
 
             self._pathLock.acquire()
-            self._currentPathPoints = path
+            self._currentPathFull = pathPositions
+            self._currentPathPoints = pathPoints
             self._pathLock.release()
 
             self._newPathAvailable = False
@@ -432,16 +442,19 @@ class LocalADStar(Pathfinder):
                     self._open[key] = self._key(key, s_start)
                 self._closed.clear()
                 self._computeOrImprovePath(s_start, s_goal, obstacles)
-                path = self._extractPath(s_start, s_goal, real_start_pos, real_goal_pos, obstacles)
+
+                pathPositions = self._extractPath(s_start, s_goal, obstacles)
+                pathPoints = self._createPathPoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
 
                 self._pathLock.acquire()
-                self._currentPathPoints = path
+                self._currentPathFull = pathPositions
+                self._currentPathPoints = pathPoints
                 self._pathLock.release()
 
                 self._newPathAvailable = True
 
-    def _extractPath(self, s_start: GridPosition, s_goal: GridPosition, real_start_pos: Translation2d,
-                     real_goal_pos: Translation2d, obstacles: Set[GridPosition]) -> List[PathPoint]:
+    def _extractPath(self, s_start: GridPosition, s_goal: GridPosition, obstacles: Set[GridPosition]) -> List[
+        GridPosition]:
         if s_goal == s_start:
             return []
 
@@ -464,6 +477,13 @@ class LocalADStar(Pathfinder):
             path.append(s)
             if s == s_goal:
                 break
+
+        return path
+
+    def _createPathPoints(self, path: List[GridPosition], real_start_pos: Translation2d,
+                          real_goal_pos: Translation2d, obstacles: Set[GridPosition]) -> List[PathPoint]:
+        if len(path) == 0:
+            return []
 
         simplifiedPath = [path[0]]
         for i in range(1, len(path) - 1):

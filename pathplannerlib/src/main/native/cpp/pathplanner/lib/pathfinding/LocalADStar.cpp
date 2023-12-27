@@ -136,12 +136,15 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 
 	if (doMinor) {
 		computeOrImprovePath(sStart, sGoal, obstacles);
-		std::vector < PathPoint > path = extractPath(sStart, sGoal,
+		std::vector < GridPosition > pathPositions = extractPath(sStart, sGoal,
+				obstacles);
+		std::vector < PathPoint > pathPoints = createPathPoints(pathPositions,
 				realStartPos, realGoalPos, obstacles);
 
 		{
 			std::scoped_lock lock { pathMutex };
-			currentPathPoints = path;
+			currentPathFull = pathPositions;
+			currentPathPoints = pathPoints;
 		}
 
 		newPathAvailable = true;
@@ -155,12 +158,15 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 			}
 			closed.clear();
 			computeOrImprovePath(sStart, sGoal, obstacles);
-			std::vector < PathPoint > path = extractPath(sStart, sGoal,
-					realStartPos, realGoalPos, obstacles);
+			std::vector < GridPosition > pathPositions = extractPath(sStart,
+					sGoal, obstacles);
+			std::vector < PathPoint > pathPoints = createPathPoints(
+					pathPositions, realStartPos, realGoalPos, obstacles);
 
 			{
 				std::scoped_lock lock { pathMutex };
-				currentPathPoints = path;
+				currentPathFull = pathPositions;
+				currentPathPoints = pathPoints;
 			}
 
 			newPathAvailable = true;
@@ -283,21 +289,30 @@ void LocalADStar::setDynamicObstacles(
 		requestObstacles.insert(staticObstacles.begin(), staticObstacles.end());
 		requestObstacles.insert(dynamicObstacles.begin(),
 				dynamicObstacles.end());
-		requestReset = true;
-		requestMinor = true;
-		requestMajor = true;
 	}
 
-	setStartPosition(currentRobotPos);
-	setGoalPosition (requestRealGoalPos);
+	bool recalculate = false;
+	{
+		std::scoped_lock lock { pathMutex };
+		for (GridPosition pos : currentPathFull) {
+			if (requestObstacles.contains(pos)) {
+				recalculate = true;
+				break;
+			}
+		}
+	}
+
+	if (recalculate) {
+		setStartPosition(currentRobotPos);
+		setGoalPosition (requestRealGoalPos);
+	}
 }
 
-std::vector<PathPoint> LocalADStar::extractPath(const GridPosition &sStart,
-		const GridPosition &sGoal, const frc::Translation2d &realStartPos,
-		const frc::Translation2d &realGoalPos,
+std::vector<GridPosition> LocalADStar::extractPath(const GridPosition &sStart,
+		const GridPosition &sGoal,
 		const std::unordered_set<GridPosition> &obstacles) {
 	if (sGoal == sStart) {
-		return std::vector<PathPoint>();
+		return std::vector<GridPosition>();
 	}
 
 	std::vector < GridPosition > path;
@@ -325,6 +340,17 @@ std::vector<PathPoint> LocalADStar::extractPath(const GridPosition &sStart,
 		if (s == sGoal) {
 			break;
 		}
+	}
+	return path;
+}
+
+std::vector<PathPoint> LocalADStar::createPathPoints(
+		const std::vector<GridPosition> &path,
+		const frc::Translation2d &realStartPos,
+		const frc::Translation2d &realGoalPos,
+		const std::unordered_set<GridPosition> &obstacles) {
+	if (path.empty()) {
+		return std::vector<PathPoint>();
 	}
 
 	std::vector < GridPosition > simplifiedPath;

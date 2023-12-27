@@ -19,7 +19,7 @@ class MiniPathsPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        fieldImage.getWidget(small: true),
+        fieldImage.getWidget(),
         Positioned.fill(
           child: PathPreviewPainter(
             paths: paths,

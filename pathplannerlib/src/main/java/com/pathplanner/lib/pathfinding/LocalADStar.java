@@ -60,6 +60,7 @@ public class LocalADStar implements Pathfinder {
   private final ReadWriteLock requestLock = new ReentrantReadWriteLock();
 
   private List<PathPoint> currentPathPoints = new ArrayList<>();
+  private List<GridPosition> currentPathFull = new ArrayList<>();
 
   /** Create a new pathfinder that runs AD* locally in a background thread */
   public LocalADStar() {
@@ -237,13 +238,22 @@ public class LocalADStar implements Pathfinder {
     requestObstacles.clear();
     requestObstacles.addAll(staticObstacles);
     requestObstacles.addAll(dynamicObstacles);
-    requestReset = true;
-    requestMinor = true;
-    requestMajor = true;
     requestLock.writeLock().unlock();
 
-    setStartPosition(currentRobotPos);
-    setGoalPosition(requestRealGoalPos);
+    pathLock.readLock().lock();
+    boolean recalculate = false;
+    for (GridPosition pos : currentPathFull) {
+      if (requestObstacles.contains(pos)) {
+        recalculate = true;
+        break;
+      }
+    }
+    pathLock.readLock().unlock();
+
+    if (recalculate) {
+      setStartPosition(currentRobotPos);
+      setGoalPosition(requestRealGoalPos);
+    }
   }
 
   @SuppressWarnings("BusyWait")
@@ -305,10 +315,14 @@ public class LocalADStar implements Pathfinder {
 
     if (doMinor) {
       computeOrImprovePath(sStart, sGoal, obstacles);
-      List<PathPoint> path = extractPath(sStart, sGoal, realStartPos, realGoalPos, obstacles);
+
+      List<GridPosition> pathPositions = extractPath(sStart, sGoal, obstacles);
+      List<PathPoint> pathPoints =
+          createPathPoints(pathPositions, realStartPos, realGoalPos, obstacles);
 
       pathLock.writeLock().lock();
-      currentPathPoints = path;
+      currentPathFull = pathPositions;
+      currentPathPoints = pathPoints;
       pathLock.writeLock().unlock();
 
       newPathAvailable = true;
@@ -320,10 +334,14 @@ public class LocalADStar implements Pathfinder {
         open.replaceAll((s, v) -> key(s, sStart));
         closed.clear();
         computeOrImprovePath(sStart, sGoal, obstacles);
-        List<PathPoint> path = extractPath(sStart, sGoal, realStartPos, realGoalPos, obstacles);
+
+        List<GridPosition> pathPositions = extractPath(sStart, sGoal, obstacles);
+        List<PathPoint> pathPoints =
+            createPathPoints(pathPositions, realStartPos, realGoalPos, obstacles);
 
         pathLock.writeLock().lock();
-        currentPathPoints = path;
+        currentPathFull = pathPositions;
+        currentPathPoints = pathPoints;
         pathLock.writeLock().unlock();
 
         newPathAvailable = true;
@@ -331,12 +349,8 @@ public class LocalADStar implements Pathfinder {
     }
   }
 
-  private List<PathPoint> extractPath(
-      GridPosition sStart,
-      GridPosition sGoal,
-      Translation2d realStartPos,
-      Translation2d realGoalPos,
-      Set<GridPosition> obstacles) {
+  private List<GridPosition> extractPath(
+      GridPosition sStart, GridPosition sGoal, Set<GridPosition> obstacles) {
     if (sGoal.equals(sStart)) {
       return new ArrayList<>();
     }
@@ -367,6 +381,14 @@ public class LocalADStar implements Pathfinder {
       }
     }
 
+    return path;
+  }
+
+  private List<PathPoint> createPathPoints(
+      List<GridPosition> path,
+      Translation2d realStartPos,
+      Translation2d realGoalPos,
+      Set<GridPosition> obstacles) {
     List<GridPosition> simplifiedPath = new ArrayList<>();
     simplifiedPath.add(path.get(0));
     for (int i = 1; i < path.size() - 1; i++) {

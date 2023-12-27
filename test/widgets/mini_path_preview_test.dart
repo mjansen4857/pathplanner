@@ -30,7 +30,7 @@ void main() {
     ));
 
     expect(find.byType(PathPreviewPainter), findsOneWidget);
-    expect(find.image(fieldImage.imageSmall!.image), findsOneWidget);
+    expect(find.image(fieldImage.image.image), findsOneWidget);
   });
 
   testWidgets('mini preview w/o small image', (widgetTester) async {

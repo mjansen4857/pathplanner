@@ -93,7 +93,7 @@ class PPLibTelemetry {
   }
 
   Stream<bool> connectionStatusStream() {
-    return _client.connectionStatusStream();
+    return _client.connectionStatusStream().asBroadcastStream();
   }
 
   Stream<List<num>?> targetPoseStream() {

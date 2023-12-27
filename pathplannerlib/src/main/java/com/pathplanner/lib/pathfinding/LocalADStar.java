@@ -389,6 +389,10 @@ public class LocalADStar implements Pathfinder {
       Translation2d realStartPos,
       Translation2d realGoalPos,
       Set<GridPosition> obstacles) {
+    if (path.isEmpty()) {
+      return new ArrayList<>();
+    }
+
     List<GridPosition> simplifiedPath = new ArrayList<>();
     simplifiedPath.add(path.get(0));
     for (int i = 1; i < path.size() - 1; i++) {

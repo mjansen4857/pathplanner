@@ -423,8 +423,17 @@ class PathfindingCommand(Command):
                 if onHeading or not self._replanningConfig.enableInitialReplanning:
                     d = closestState1.positionMeters.distance(closestState2.positionMeters)
                     t = (currentPose.translation().distance(closestState1.positionMeters)) / d
+                    t = min(1.0, max(0.0, t))
 
                     self._timeOffset = floatLerp(closestState1.timeSeconds, closestState2.timeSeconds, t)
+
+                    # If the robot is stationary and at the start of the path, set the time offset to the
+                    # next loop
+                    # This can prevent an issue where the robot will remain stationary if new paths come in
+                    # every loop
+
+                    if self._timeOffset <= 0.02 and math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 0.1:
+                        self._timeOffset = 0.02
                 else:
                     self._currentPath = self._currentPath.replan(currentPose, currentSpeeds)
                     self._currentTrajectory = PathPlannerTrajectory(self._currentPath, currentSpeeds,

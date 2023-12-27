@@ -105,6 +105,7 @@ private:
 	bool newPathAvailable;
 
 	std::vector<PathPoint> currentPathPoints;
+	std::vector<GridPosition> currentPathFull;
 
 	void runThread();
 
@@ -117,8 +118,13 @@ private:
 	GridPosition findClosestNonObstacle(const GridPosition &pos,
 			const std::unordered_set<GridPosition> &obstacles);
 
-	std::vector<PathPoint> extractPath(const GridPosition &sStart,
-			const GridPosition &sGoal, const frc::Translation2d &realStartPos,
+	std::vector<GridPosition> extractPath(const GridPosition &sStart,
+			const GridPosition &sGoal,
+			const std::unordered_set<GridPosition> &obstacles);
+
+	std::vector<PathPoint> createPathPoints(
+			const std::vector<GridPosition> &path,
+			const frc::Translation2d &realStartPos,
 			const frc::Translation2d &realGoalPos,
 			const std::unordered_set<GridPosition> &obstacles);
 

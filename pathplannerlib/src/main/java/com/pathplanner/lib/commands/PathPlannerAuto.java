@@ -3,6 +3,7 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PPLibTelemetry;
+import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -41,7 +42,7 @@ public class PathPlannerAuto extends Command {
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
 
     instances++;
-    HAL.report(107, instances); // TODO: Use tResourceType class when updated
+    HAL.report(tResourceType.kResourceType_PathPlannerAuto, instances);
   }
 
   /**

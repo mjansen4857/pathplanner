@@ -2,6 +2,7 @@ package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
+import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -69,7 +70,7 @@ public class PathPlannerPath {
     precalcValues();
 
     instances++;
-    HAL.report(106, instances); // TODO: Use tResourceType class when updated
+    HAL.report(tResourceType.kResourceType_PathPlannerPath, instances);
   }
 
   /**
@@ -156,7 +157,7 @@ public class PathPlannerPath {
     this.previewStartingRotation = Rotation2d.fromDegrees(0);
 
     instances++;
-    HAL.report(106, instances); // TODO: Use tResourceType class when updated
+    HAL.report(tResourceType.kResourceType_PathPlannerPath, instances);
   }
 
   /**

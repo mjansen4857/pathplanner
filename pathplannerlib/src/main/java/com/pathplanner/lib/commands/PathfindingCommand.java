@@ -7,6 +7,7 @@ import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
+import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -98,7 +99,7 @@ public class PathfindingCommand extends Command {
     this.replanningConfig = replanningConfig;
 
     instances++;
-    HAL.report(108, instances); // TODO: Use tResourceType class when updated
+    HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
   }
 
   /**
@@ -144,7 +145,7 @@ public class PathfindingCommand extends Command {
     this.replanningConfig = replanningConfig;
 
     instances++;
-    HAL.report(108, instances); // TODO: Use tResourceType class when updated
+    HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
   }
 
   @Override

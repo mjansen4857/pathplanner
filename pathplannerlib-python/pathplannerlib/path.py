@@ -11,7 +11,7 @@ from commands2 import Command
 from .geometry_util import decimal_range, cubicLerp, calculateRadius
 from .trajectory import PathPlannerTrajectory, State
 from wpilib import getDeployDirectory
-from hal import report
+from hal import report, tResourceType
 import os
 import json
 
@@ -364,7 +364,7 @@ class PathPlannerPath:
         self._previewStartingRotation = preview_starting_rotation
 
         PathPlannerPath._instances += 1
-        report(106, PathPlannerPath._instances)  # TODO: Use resource type when updated
+        report(tResourceType.kResourceType_PathPlannerPath.value, PathPlannerPath._instances)
 
     @staticmethod
     def fromPathPoints(path_points: List[PathPoint], constraints: PathConstraints,

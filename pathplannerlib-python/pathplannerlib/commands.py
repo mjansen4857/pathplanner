@@ -13,7 +13,7 @@ from commands2 import Command, Subsystem, SequentialCommandGroup
 from typing import Callable, Tuple, List
 from .config import ReplanningConfig, HolonomicPathFollowerConfig
 from .pathfinding import Pathfinding
-from hal import report
+from hal import report, tResourceType
 
 
 class FollowPathWithEvents(Command):
@@ -355,7 +355,7 @@ class PathfindingCommand(Command):
             self._goalEndState = GoalEndState(goal_end_vel, target_pose.rotation(), True)
 
         PathfindingCommand._instances += 1
-        report(108, PathfindingCommand._instances)  # TODO: Use resource type when updated
+        report(tResourceType.kResourceType_PathFindingCommand.value, PathfindingCommand._instances)
 
     def initialize(self):
         self._currentTrajectory = None

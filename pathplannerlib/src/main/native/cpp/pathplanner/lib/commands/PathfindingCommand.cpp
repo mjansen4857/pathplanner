@@ -2,7 +2,7 @@
 #include "pathplanner/lib/pathfinding/Pathfinding.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include <vector>
-#include <hal/HAL.h>
+#include <hal/FRCUsageReporting.h>
 
 using namespace pathplanner;
 
@@ -48,7 +48,8 @@ PathfindingCommand::PathfindingCommand(
 	m_goalEndState = GoalEndState(goalEndVel, targetRotation, true);
 
 	m_instances++;
-	HAL_Report(108, m_instances); // TODO: Use resource type when updated
+	HAL_Report(HALUsageReporting::kResourceType_PathFindingCommand,
+			m_instances);
 }
 
 PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
@@ -68,7 +69,8 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 	Pathfinding::ensureInitialized();
 
 	m_instances++;
-	HAL_Report(108, m_instances); // TODO: Use resource type when updated
+	HAL_Report(HALUsageReporting::kResourceType_PathFindingCommand,
+			m_instances);
 }
 
 void PathfindingCommand::Initialize() {

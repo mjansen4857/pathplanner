@@ -3,7 +3,7 @@
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include <frc/Filesystem.h>
 #include <wpi/MemoryBuffer.h>
-#include <hal/HAL.h>
+#include <hal/FRCUsageReporting.h>
 
 using namespace pathplanner;
 
@@ -20,7 +20,7 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 	SetName(autoName);
 
 	m_instances++;
-	HAL_Report(107, m_instances); // TODO: Use resource type when updated
+	HAL_Report(HALUsageReporting::kResourceType_PathPlannerAuto, m_instances);
 }
 
 std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromAutoFile(

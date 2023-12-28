@@ -13,7 +13,7 @@ import json
 from commands2.command import Command
 from commands2.subsystem import Subsystem
 from .config import HolonomicPathFollowerConfig, ReplanningConfig
-from hal import report
+from hal import report, tResourceType
 
 
 class NamedCommands:
@@ -474,7 +474,7 @@ class PathPlannerAuto(Command):
         self.setName(auto_name)
 
         PathPlannerAuto._instances += 1
-        report(107, PathPlannerAuto._instances)  # TODO: Use resource type when updated
+        report(tResourceType.kResourceType_PathPlannerAuto.value, PathPlannerAuto._instances)
 
     @staticmethod
     def getStartingPoseFromAutoFile(auto_name: str) -> Pose2d:

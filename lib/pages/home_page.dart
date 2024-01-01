@@ -86,7 +86,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             await _bookmarks!.resolveBookmark(
                 widget.prefs.getString(PrefsKeys.macOSBookmark)!);
 
-            await _bookmarks!
+            await _bookmarks
                 .startAccessingSecurityScopedResource(fs.file(projectDir));
           } catch (e) {
             Log.error('Failed to resolve secure bookmarks', e);

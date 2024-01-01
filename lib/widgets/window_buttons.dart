@@ -111,8 +111,7 @@ class MouseStateBuilder extends StatefulWidget {
   final MouseStateBuilderCB? builder;
   final VoidCallback? onPressed;
 
-  const MouseStateBuilder({Key? key, this.builder, this.onPressed})
-      : super(key: key);
+  const MouseStateBuilder({super.key, this.builder, this.onPressed});
 
   @override
   State<MouseStateBuilder> createState() => _MouseStateBuilderState();

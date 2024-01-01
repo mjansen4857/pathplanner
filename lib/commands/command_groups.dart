@@ -31,8 +31,8 @@ abstract class CommandGroup extends Command {
 class SequentialCommandGroup extends CommandGroup {
   SequentialCommandGroup({required super.commands}) : super(type: 'sequential');
 
-  SequentialCommandGroup.fromDataJson(Map<String, dynamic> json)
-      : super.fromDataJson(json, type: 'sequential');
+  SequentialCommandGroup.fromDataJson(super.json)
+      : super.fromDataJson(type: 'sequential');
 
   @override
   Command clone() {
@@ -53,8 +53,8 @@ class SequentialCommandGroup extends CommandGroup {
 class ParallelCommandGroup extends CommandGroup {
   ParallelCommandGroup({required super.commands}) : super(type: 'parallel');
 
-  ParallelCommandGroup.fromDataJson(Map<String, dynamic> json)
-      : super.fromDataJson(json, type: 'parallel');
+  ParallelCommandGroup.fromDataJson(super.json)
+      : super.fromDataJson(type: 'parallel');
 
   @override
   Command clone() {
@@ -75,8 +75,7 @@ class ParallelCommandGroup extends CommandGroup {
 class RaceCommandGroup extends CommandGroup {
   RaceCommandGroup({required super.commands}) : super(type: 'race');
 
-  RaceCommandGroup.fromDataJson(Map<String, dynamic> json)
-      : super.fromDataJson(json, type: 'race');
+  RaceCommandGroup.fromDataJson(super.json) : super.fromDataJson(type: 'race');
 
   @override
   Command clone() {
@@ -96,8 +95,8 @@ class RaceCommandGroup extends CommandGroup {
 class DeadlineCommandGroup extends CommandGroup {
   DeadlineCommandGroup({required super.commands}) : super(type: 'deadline');
 
-  DeadlineCommandGroup.fromDataJson(Map<String, dynamic> json)
-      : super.fromDataJson(json, type: 'deadline');
+  DeadlineCommandGroup.fromDataJson(super.json)
+      : super.fromDataJson(type: 'deadline');
 
   @override
   Command clone() {

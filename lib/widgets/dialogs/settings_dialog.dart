@@ -425,7 +425,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           value: value,
                           child: Text(value.name),
                         );
-                      }).toList(),
+                      }),
                       const DropdownMenuItem<FieldImage?>(
                         value: null,
                         child: Text('Import Custom...'),

@@ -312,7 +312,10 @@ std::vector<GridPosition> LocalADStar::extractPath(const GridPosition &sStart,
 		const GridPosition &sGoal,
 		const std::unordered_set<GridPosition> &obstacles) {
 	if (sGoal == sStart) {
-		return std::vector<GridPosition>();
+		std::vector < GridPosition > ret;
+		ret.emplace_back(sStart);
+		ret.emplace_back(sGoal);
+		return ret;
 	}
 
 	std::vector < GridPosition > path;

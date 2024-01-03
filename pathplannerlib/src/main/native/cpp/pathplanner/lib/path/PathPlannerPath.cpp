@@ -127,7 +127,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 	return path;
 }
 
-std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajecory(
+std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 		std::string trajectoryName) {
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/choreo/" + trajectoryName + ".traj";

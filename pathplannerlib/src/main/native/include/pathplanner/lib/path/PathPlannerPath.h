@@ -88,7 +88,7 @@ public:
 	 *     of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
 	 * @return PathPlannerPath created from the given Choreo trajectory file
 	 */
-	static std::shared_ptr<PathPlannerPath> fromChoreoTrajecory(
+	static std::shared_ptr<PathPlannerPath> fromChoreoTrajectory(
 			std::string trajectoryName);
 
 	/**

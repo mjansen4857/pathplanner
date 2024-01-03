@@ -68,7 +68,7 @@ frc2::CommandPtr CommandUtil::pathCommandFromJson(const wpi::json &json,
 
 	if (loadChoreoPaths) {
 		return AutoBuilder::followPathWithEvents(
-				PathPlannerPath::fromChoreoTrajecory(pathName));
+				PathPlannerPath::fromChoreoTrajectory(pathName));
 	} else {
 		return AutoBuilder::followPathWithEvents(
 				PathPlannerPath::fromPathFile(pathName));

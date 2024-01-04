@@ -42,10 +42,9 @@
                summary="Generate and follow paths from anywhere to anywhere on the field, and avoid obstacles along the way">Pathfinding</a>
             <a href="pplib-Choreo-Interop.md" summary="Use PathPlannerLib to follow Choreo trajectories">Choreo
                 Interop</a>
-            <a href=""
+            <a href="pplib-Override-Target-Rotation.md"
                summary="Override the target rotation while path following to aim at game pieces or scoring locations">Rotation
                 Override</a>
-            <a href="" summary="Using PathPlannerLib with custom path following code">Custom path following</a>
         </secondary>
     </section-starting-page>
 

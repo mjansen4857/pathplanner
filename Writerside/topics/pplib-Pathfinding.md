@@ -15,7 +15,7 @@ A few important considerations to note before attempting to use these commands:
 * Because of the above, this is more difficult to get great results with a differential drivetrain. It will still be
   possible, you just need to take more care with it. For example, doing a turn in place command if your robot is not
   facing the direction it will travel when pathfinding.
-* Even with a holonomic drive train, its not that great at lining up with things (for example, a human player station)
+* Even with a holonomic drive train, it's not that great at lining up with things (for example, a human player station)
   because of the heading restriction. This is why the ability to chain paths together exists. It is recommended to
   create a pre-planned path for doing the final line up with something, then pathfind to that path if precision is
   required.

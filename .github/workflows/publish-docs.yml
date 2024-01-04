@@ -49,6 +49,7 @@ jobs:
       - name: Move java/cpp to api dir
         run: |
             mkdir _site
+            mkdir _site/api
             sudo mv pathplannerlib/build/docs/javadoc _site/api/java
             sudo mv pathplannerlib/build/docs/cpp/html _site/api/cpp
       
@@ -76,7 +77,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-      
+
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

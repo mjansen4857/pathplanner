@@ -14,5 +14,7 @@
         <toc-element topic="pplib-Create-a-Path-On-the-fly.md"/>
         <toc-element topic="pplib-Path-Groups.md"/>
         <toc-element topic="pplib-Custom-Logging.md"/>
+        <toc-element topic="pplib-Pathfinding.md"/>
+        <toc-element topic="pplib-Choreo-Interop.md"/>
     </toc-element>
 </instance-profile>

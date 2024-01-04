@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<buildprofiles xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/build-profiles.xsd"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <variables>
+        <primary-color>blueberry</primary-color>
+        <custom-favicons>icon.png</custom-favicons>
+        <header-logo>icon.png</header-logo>
+        <download-title>GitHub</download-title>
+        <download-page>https://github.com/mjansen4857/pathplanner</download-page>
+        <showDownloadButton>true</showDownloadButton>
+    </variables>
+
+    <build-profile instance="pp-docs">
+        <variables>
+            <noindex-content>false</noindex-content>
+        </variables>
+    </build-profile>
+
+    <footer>
+
+    </footer>
+
+</buildprofiles>

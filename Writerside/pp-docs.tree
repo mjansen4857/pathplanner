@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE instance-profile
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/product-profile.dtd">
+
+<instance-profile id="pp-docs"
+                  name="PathPlanner Docs"
+                  start-page="PathPlannerLib.topic">
+
+    <toc-element topic="PathPlannerLib.topic">
+        <toc-element topic="pplib-Getting-Started.md"/>
+    </toc-element>
+</instance-profile>

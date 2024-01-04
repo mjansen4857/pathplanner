@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/xhtml-entities.dtd">
+<topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"
+       title="PathPlannerLib" id="PathPlannerLib">
+
+    <section-starting-page>
+        <title>PathPlannerLib</title>
+        <description>
+            PathPlanner's powerful robot-side vendor library
+        </description>
+
+        <spotlight>
+            <a href="pplib-Getting-Started.md" type="start" summary="Install and start running auto routines">Getting started</a>
+            <a href="" type="learn" summary="Basic examples to get up and running with PathPlannerLib's core features">Basic Examples</a>
+        </spotlight>
+
+        <primary>
+            <title>Example Projects</title>
+            <a href="" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">Java</a>
+            <a href="" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">C++</a>
+            <a href="" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">Python</a>
+        </primary>
+
+        <secondary>
+            <title>Advanced features</title>
+            <a href="" summary="Generate and follow paths from anywhere to anywhere on the field, and avoid obstacles along the way">Pathfinding</a>
+            <a href="" summary="Register logging callbacks to be used by built-in path following commands">Logging</a>
+            <a href="" summary="Override the target rotation while pathfinding to aim at game pieces or scoring locations">Rotation Override</a>
+            <a href="" summary="Using PathPlannerLib with custom path following code">Custom path following</a>
+        </secondary>
+    </section-starting-page>
+
+</topic>

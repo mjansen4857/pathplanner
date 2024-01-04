@@ -21,13 +21,18 @@
 
         <primary>
             <title>Basic Examples</title>
-            <a href="pplib-Named-Commands.md" summary="Register named commands for use with autos and event markers">Named Commands</a>
-            <a href="pplib-Build-an-Auto.md" summary="Configure and use AutoBuilder to build full autonomous routines">Build an Auto</a>
-            <a href="pplib-Follow-a-Single-Path.md" summary="Follow a single path without building a full auto">Follow a Single Path</a>
-            <a href="" summary="Create new paths at runtime given a list of field positions">On-the-fly Paths</a>
-            <a href="" summary="Get a list of paths from an auto file for building auto command groups manually">Path
+            <a href="pplib-Named-Commands.md" summary="Register named commands for use with autos and event markers">Named
+                Commands</a>
+            <a href="pplib-Build-an-Auto.md" summary="Configure and use AutoBuilder to build full autonomous routines">Build
+                an Auto</a>
+            <a href="pplib-Follow-a-Single-Path.md" summary="Follow a single path without building a full auto">Follow a
+                Single Path</a>
+            <a href="pplib-Create-a-Path-On-the-fly.md"
+               summary="Create new paths at runtime given a list of field positions">On-the-fly Paths</a>
+            <a href="pplib-Path-Groups.md"
+               summary="Get a list of paths from an auto file for building auto command groups manually">Path
                 Groups</a>
-            <a href=""
+            <a href="pplib-Custom-Logging.md"
                summary="Set custom logging callbacks that will be used by built-in path following commands. This can be used for things like putting the active path on a Field2d widget">Logging</a>
         </primary>
 

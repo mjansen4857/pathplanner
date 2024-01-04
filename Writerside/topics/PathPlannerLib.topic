@@ -23,7 +23,7 @@
             <title>Basic Examples</title>
             <a href="pplib-Named-Commands.md" summary="Register named commands for use with autos and event markers">Named Commands</a>
             <a href="pplib-Build-an-Auto.md" summary="Configure and use AutoBuilder to build full autonomous routines">Build an Auto</a>
-            <a href="" summary="Follow a single path without building a full auto">Follow a Single Path</a>
+            <a href="pplib-Follow-a-Single-Path.md" summary="Follow a single path without building a full auto">Follow a Single Path</a>
             <a href="" summary="Create new paths at runtime given a list of field positions">On-the-fly Paths</a>
             <a href="" summary="Get a list of paths from an auto file for building auto command groups manually">Path
                 Groups</a>

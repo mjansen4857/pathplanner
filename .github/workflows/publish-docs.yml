@@ -47,13 +47,12 @@ jobs:
           python -m mkdocs build
       
       - name: Move java/cpp to api dir
-        working-directory: pathplannerlib/build/docs
         run: |
             mkdir _site
             sudo mv pathplannerlib/build/docs/javadoc _site/api/java
             sudo mv pathplannerlib/build/docs/cpp/html _site/api/cpp
       
-      - name: Move python to docs dir
+      - name: Move python to api dir
         run: |
           sudo mv pathplannerlib-python/docs _site/api/python
       

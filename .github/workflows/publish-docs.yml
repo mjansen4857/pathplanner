@@ -4,10 +4,9 @@ on:
   workflow_dispatch
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-22.04
     steps:
-
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -47,23 +46,39 @@ jobs:
           handsdown --external https://github.com/mjansen4857/pathplanner.git -o docsmd -n pathplannerlib --theme=material --create-configs include pathplannerlib
           python -m mkdocs build
       
-      - name: Move java/cpp to docs dir
+      - name: Move java/cpp to api dir
         working-directory: pathplannerlib/build/docs
         run: |
-            mkdir docs
-            sudo mv javadoc docs/java
-            sudo mv cpp/html docs/cpp
+            mkdir _site
+            sudo mv pathplannerlib/build/docs/javadoc _site/api/java
+            sudo mv pathplannerlib/build/docs/cpp/html _site/api/cpp
       
       - name: Move python to docs dir
         run: |
-          sudo mv pathplannerlib-python/docs pathplannerlib/build/docs/docs/python
+          sudo mv pathplannerlib-python/docs _site/api/python
+      
+      - name: Fix permissions
+        run: |
+          chmod -c -R +rX "_site/" | while read line; do
+            echo "::warning title=Invalid file permissions automatically fixed::$line"
+          done
+      
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v2
 
-      - name: Deploy generated documentation to GitHub Pages
-        uses: s0/git-publish-subdir-action@v2.6.0
-        env:
-          REPO: self
-          FOLDER: pathplannerlib/build/docs
-          BRANCH: gh-pages
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MESSAGE: Publish docs from PathPlannerLib
-          SQUASH_HISTORY: true
+  deploy:
+    runs-on: ubuntu-22.04
+    needs: build
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

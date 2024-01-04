@@ -12,22 +12,33 @@
         </description>
 
         <spotlight>
-            <a href="pplib-Getting-Started.md" type="start" summary="Install and start running auto routines">Getting started</a>
-            <a href="" type="learn" summary="Basic examples to get up and running with PathPlannerLib's core features">Basic Examples</a>
+            <a href="pplib-Getting-Started.md" type="start" summary="Install and start running auto routines">Getting
+                started</a>
+            <a href="https://github.com/mjansen4857/pathplanner/tree/main/examples" type="development"
+               summary="Basic projects with a simulated swerve drive using AutoBuilder and pathfinding">Example
+                Projects</a>
         </spotlight>
 
         <primary>
-            <title>Example Projects</title>
-            <a href="https://github.com/mjansen4857/pathplanner/tree/main/examples/java" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">Java</a>
-            <a href="https://github.com/mjansen4857/pathplanner/tree/main/examples/cpp" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">C++</a>
-            <a href="https://github.com/mjansen4857/pathplanner/tree/main/examples/python" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">Python</a>
+            <title>Basic Examples</title>
+            <a href="pplib-Named-Commands.md" summary="Register named commands for use with autos and event markers">Named Commands</a>
+            <a href="pplib-Build-an-Auto.md" summary="Configure and use AutoBuilder to build full autonomous routines">Build an Auto</a>
+            <a href="" summary="Follow a single path without building a full auto">Follow a Single Path</a>
+            <a href="" summary="Create new paths at runtime given a list of field positions">On-the-fly Paths</a>
+            <a href="" summary="Get a list of paths from an auto file for building auto command groups manually">Path
+                Groups</a>
+            <a href=""
+               summary="Set custom logging callbacks that will be used by built-in path following commands. This can be used for things like putting the active path on a Field2d widget">Logging</a>
         </primary>
 
         <secondary>
             <title>Advanced features</title>
-            <a href="" summary="Generate and follow paths from anywhere to anywhere on the field, and avoid obstacles along the way">Pathfinding</a>
+            <a href=""
+               summary="Generate and follow paths from anywhere to anywhere on the field, and avoid obstacles along the way">Pathfinding</a>
             <a href="" summary="Use PathPlannerLib to follow Choreo trajectories">Choreo Interop</a>
-            <a href="" summary="Override the target rotation while path following to aim at game pieces or scoring locations">Rotation Override</a>
+            <a href=""
+               summary="Override the target rotation while path following to aim at game pieces or scoring locations">Rotation
+                Override</a>
             <a href="" summary="Using PathPlannerLib with custom path following code">Custom path following</a>
         </secondary>
     </section-starting-page>

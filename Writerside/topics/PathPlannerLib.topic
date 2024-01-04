@@ -18,16 +18,16 @@
 
         <primary>
             <title>Example Projects</title>
-            <a href="" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">Java</a>
-            <a href="" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">C++</a>
-            <a href="" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">Python</a>
+            <a href="https://github.com/mjansen4857/pathplanner/tree/main/examples/java" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">Java</a>
+            <a href="https://github.com/mjansen4857/pathplanner/tree/main/examples/cpp" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">C++</a>
+            <a href="https://github.com/mjansen4857/pathplanner/tree/main/examples/python" summary="Basic simulated swerve drive using AutoBuilder and pathfinding">Python</a>
         </primary>
 
         <secondary>
             <title>Advanced features</title>
             <a href="" summary="Generate and follow paths from anywhere to anywhere on the field, and avoid obstacles along the way">Pathfinding</a>
-            <a href="" summary="Register logging callbacks to be used by built-in path following commands">Logging</a>
-            <a href="" summary="Override the target rotation while pathfinding to aim at game pieces or scoring locations">Rotation Override</a>
+            <a href="" summary="Use PathPlannerLib to follow Choreo trajectories">Choreo Interop</a>
+            <a href="" summary="Override the target rotation while path following to aim at game pieces or scoring locations">Rotation Override</a>
             <a href="" summary="Using PathPlannerLib with custom path following code">Custom path following</a>
         </secondary>
     </section-starting-page>

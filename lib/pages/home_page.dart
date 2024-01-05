@@ -309,11 +309,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               children: [
                 ElevatedButton.icon(
                   onPressed: () {
-                    launchUrl(Uri.parse(
-                        'https://github.com/mjansen4857/pathplanner/wiki'));
+                    launchUrl(Uri.parse('https://pathplanner.dev'));
                   },
                   icon: const Icon(Icons.description),
-                  label: const Text('Wiki'),
+                  label: const Text('Docs'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primaryContainer,
                     foregroundColor: colorScheme.onPrimaryContainer,

@@ -1,11 +1,73 @@
-name: Publish documentation to GitHub Pages
+name: Build Documentation
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
+
+  push:
+    branches: [main]
+
+  pull_request:
+
+env:
+  INSTANCE: Writerside/hi
+  ARTIFACT: webHelpHI2-all.zip
+  DOCKER_VERSION: 232.10275
+  ALGOLIA_ARTIFACT: algolia-indexes-HI.zip
+  ALGOLIA_APP_NAME: JPTUGJLEMP
+  ALGOLIA_INDEX_NAME: PathPlanner_docs
+  ALGOLIA_KEY: ${{ secrets.ALGOLIA_KEY }}
+  CONFIG_JSON_PRODUCT: HI
+  CONFIG_JSON_VERSION: 1.0
 
 jobs:
-  build:
+  build-docs:
     runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build Writerside docs using Docker
+        uses: JetBrains/writerside-github-action@v4
+        with:
+          instance: ${{ env.INSTANCE }}
+          artifact: ${{ env.ARTIFACT }}
+          docker-version: ${{ env.DOCKER_VERSION }}
+
+      - name: Upload documentation
+        uses: actions/upload-artifact@v3
+        with:
+          name: docs
+          path: |
+            artifacts/${{ env.ARTIFACT }}
+            artifacts/report.json
+          retention-days: 7
+
+      - name: Upload algolia-indexes
+        uses: actions/upload-artifact@v3
+        with:
+          name: algolia-indexes
+          path: artifacts/${{ env.ALGOLIA_ARTIFACT }}
+          retention-days: 7
+
+  test-docs:
+    runs-on: ubuntu-22.04
+    needs: build-docs
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v1
+        with:
+          name: docs
+          path: artifacts
+
+      - name: Test documentation
+        uses: JetBrains/writerside-checker-action@v1
+        with:
+          instance: ${{ env.INSTANCE }}
+
+  build-api:
+    runs-on: ubuntu-22.04
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: test-docs
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -13,62 +75,71 @@ jobs:
       - name: Build PathPlannerLib
         working-directory: pathplannerlib
         run: |
-            ./gradlew build -PreleaseMode
-            ./gradlew publish -PreleaseMode
+          ./gradlew build -PreleaseMode
+          ./gradlew publish -PreleaseMode
 
       - name: Get Doxygen theme
         working-directory: pathplannerlib
         run: |
-            git submodule add https://github.com/jothepro/doxygen-awesome-css.git
-            cd doxygen-awesome-css
-            git checkout v2.2.1
+          git submodule add https://github.com/jothepro/doxygen-awesome-css.git
+          cd doxygen-awesome-css
+          git checkout v2.2.1
 
       - name: Generate Doxygen docs
         uses: mattnotmitt/doxygen-action@v1.9.5
         with:
           working-directory: pathplannerlib
-      
+
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
         with:
           python-version: "3.10"
-      
+
       - name: Install python dependencies
         working-directory: ./pathplannerlib-python
         run: |
           python -m pip install --upgrade pip
           pip install build handsdown mkdocs mkdocs-material
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      
+
       - name: Generate python docs
         working-directory: ./pathplannerlib-python
         run: |
           handsdown --external https://github.com/mjansen4857/pathplanner.git -o docsmd -n pathplannerlib --theme=material --create-configs include pathplannerlib
           python -m mkdocs build
-      
+
       - name: Move java/cpp to api dir
         run: |
-            mkdir _site
-            mkdir _site/api
-            sudo mv pathplannerlib/build/docs/javadoc _site/api/java
-            sudo mv pathplannerlib/build/docs/cpp/html _site/api/cpp
-      
+          mkdir _site
+          mkdir _site/api
+          sudo mv pathplannerlib/build/docs/javadoc _site/api/java
+          sudo mv pathplannerlib/build/docs/cpp/html _site/api/cpp
+
       - name: Move python to api dir
         run: |
           sudo mv pathplannerlib-python/docs _site/api/python
-      
+
+      - name: Download docs artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: docs
+
+      - name: Unzip docs artifact
+        run: unzip -O UTF-8 -qq ${{ env.ARTIFACT }} -d _site
+
       - name: Fix permissions
         run: |
           chmod -c -R +rX "_site/" | while read line; do
             echo "::warning title=Invalid file permissions automatically fixed::$line"
           done
-      
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v2
 
-  deploy:
+  deploy-pages:
     runs-on: ubuntu-22.04
-    needs: build
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: build-api
 
     permissions:
       pages: write
@@ -82,3 +153,28 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v3
+
+  publish-indexes:
+    runs-on: ubuntu-22.04
+    if: ${{ github.event_name != 'pull_request' }}
+    needs: test-docs
+    container:
+      image: registry.jetbrains.team/p/writerside/builder/algolia-publisher:2.0.32-2
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: algolia-indexes
+
+      - name: Unzip artifact
+        run: |
+          unzip -O UTF-8 -qq ${{ env.ALGOLIA_ARTIFACT }} -d algolia-indexes
+          env "algolia-key=${{env.ALGOLIA_KEY}}" java -jar /opt/builder/help-publication-agent.jar \
+          update-index \
+          --application-name ${{env.ALGOLIA_APP_NAME}} \
+          --index-name ${{env.ALGOLIA_INDEX_NAME}} \
+          --product ${{env.CONFIG_JSON_PRODUCT}} \
+          --version ${{env.CONFIG_JSON_VERSION}} \
+          --index-directory algolia-indexes/ \
+          2>&1 | tee algolia-update-index-log.txt

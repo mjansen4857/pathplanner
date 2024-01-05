@@ -6,20 +6,4 @@
         <accepts>page.html</accepts>
     </rule>
     -->
-    <rule id="7ba19f6e">
-        <description>Created after removal of "This is the first topic" from PathPlanner Docs</description>
-        <accepts>Default-topic.html</accepts>
-    </rule>
-    <rule id="63a0808b">
-        <description>Created after removal of "Basic Examples" from PathPlanner Docs</description>
-        <accepts>pplib-Basic-Examples.html</accepts>
-    </rule>
-    <rule id="790d7f4b">
-        <description>Created after removal of "Reference" from PathPlanner Docs</description>
-        <accepts>Reference.html</accepts>
-    </rule>
-    <rule id="17ce1f3f">
-        <description>Created after removal of "Basic Examples" from PathPlanner Docs</description>
-        <accepts>pplib-Basic-Examples.html</accepts>
-    </rule>
 </rules>

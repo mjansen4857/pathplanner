@@ -79,6 +79,7 @@ flutter:
   assets:
     - images/field22.png
     - images/field23.png
+    - images/field24.png
     - images/icon.png
     - images/choreo.png
     - resources/default_navgrid.json

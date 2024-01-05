@@ -93,23 +93,12 @@ class PathPainterUtil {
   }
 
   static Offset pointToPixelOffset(
-      Point point, double scale, FieldImage fieldImage,
-      {bool small = false}) {
-    if (small &&
-        fieldImage.defaultSizeSmall != null &&
-        fieldImage.pixelsPerMeterSmall != null) {
-      return Offset(
-              (point.x * fieldImage.pixelsPerMeterSmall!) + 0,
-              fieldImage.defaultSizeSmall!.height -
-                  ((point.y * fieldImage.pixelsPerMeterSmall!) + 0))
-          .scale(scale, scale);
-    } else {
-      return Offset(
-              (point.x * fieldImage.pixelsPerMeter) + 0,
-              fieldImage.defaultSize.height -
-                  ((point.y * fieldImage.pixelsPerMeter) + 0))
-          .scale(scale, scale);
-    }
+      Point point, double scale, FieldImage fieldImage) {
+    return Offset(
+            (point.x * fieldImage.pixelsPerMeter) + 0,
+            fieldImage.defaultSize.height -
+                ((point.y * fieldImage.pixelsPerMeter) + 0))
+        .scale(scale, scale);
   }
 
   static double metersToPixels(
@@ -118,13 +107,8 @@ class PathPainterUtil {
   }
 
   static double uiPointSizeToPixels(
-      double size, double scale, FieldImage fieldImage,
-      {bool small = false}) {
+      double size, double scale, FieldImage fieldImage) {
     // 3240 = width of field image size is based on
-    if (small && fieldImage.defaultSizeSmall != null) {
-      return size / 3240 * fieldImage.defaultSizeSmall!.width * scale;
-    } else {
-      return size / 3240 * fieldImage.defaultSize.width * scale;
-    }
+    return size / 3240 * fieldImage.defaultSize.width * scale;
   }
 }

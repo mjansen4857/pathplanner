@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE topic
+        SYSTEM "https://resources.jetbrains.com/writerside/1.0/xhtml-entities.dtd">
+<topic xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/topic.v2.xsd"
+       title="PathPlanner GUI" id="PathPlanner-GUI">
+
+    <section-starting-page>
+        <title>PathPlanner</title>
+        <description>
+            PathPlanner is a motion profile generator for FRC robots created by team 3015. Paths are generated in robot
+            code with an easy-to-use vendor library, PathPlannerLib.
+        </description>
+
+        <spotlight>
+            <a href="gui-Getting-Started.md" type="start" summary="Install and start creating paths and autos">Getting started</a>
+            <a href="gui-Editing-Paths-and-Autos.md" type="creative" summary="Deep dive into PathPlanner's editor">Editing paths and autos</a>
+        </spotlight>
+
+        <primary>
+            <title>Basic Usage</title>
+            <a href="gui-Project-Browser.md" summary="Manage all paths and autos in the project">Project browser</a>
+            <a href="gui-Navigation-Menu.md" summary="Navigate to other pages and the settings menu">Navigation menu</a>
+            <a href="gui-Settings.md" summary="Change PathPlanner's settings">Settings</a>
+            <a href="gui-Controls-and-Shortcuts.md" summary="List of all keyboard shortcuts and basic controls">Controls and shortcuts</a>
+        </primary>
+
+        <secondary>
+            <title>Other Pages</title>
+            <a href="gui-Telemetry.md" summary="View live path following telemetry">Telemetry</a>
+            <a href="gui-Navigation-Grid-Editor.md" summary="Edit the navigation grid used by pathfinding commands to avoid obstacles">Navigation
+                grid editor</a>
+        </secondary>
+
+    </section-starting-page>
+
+</topic>

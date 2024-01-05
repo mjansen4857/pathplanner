@@ -12,3 +12,6 @@ PathPlannerLib:
 
 workflows:
 - '.github/workflows/**'
+
+documentation:
+- 'Writerside/**'

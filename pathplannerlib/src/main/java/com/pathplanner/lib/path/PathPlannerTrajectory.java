@@ -325,12 +325,13 @@ public class PathPlannerTrajectory {
                     t));
       }
 
+      lerpedState.targetHolonomicRotation =
+          targetHolonomicRotation.interpolate(endVal.targetHolonomicRotation, t);
+
       if (t < 0.5) {
         lerpedState.constraints = constraints;
-        lerpedState.targetHolonomicRotation = targetHolonomicRotation;
       } else {
         lerpedState.constraints = endVal.constraints;
-        lerpedState.targetHolonomicRotation = endVal.targetHolonomicRotation;
       }
 
       return lerpedState;

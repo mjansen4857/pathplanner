@@ -130,42 +130,58 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       _animController.forward();
 
-      // if (!(widget.prefs.getBool(PrefsKeys.seen2023Warning) ?? false) &&
-      //     mounted) {
-      //   showDialog(
-      //       context: this.context,
-      //       barrierDismissible: false,
-      //       builder: (context) {
-      //         return AlertDialog(
-      //           title: const Text('Non-standard Field Mirroring'),
-      //           content: const SizedBox(
-      //             width: 300,
-      //             child: Column(
-      //               mainAxisSize: MainAxisSize.min,
-      //               children: [
-      //                 Text(
-      //                     'The 2023 FRC game has non-standard field mirroring that would prevent using the same auto path for both alliances.'),
-      //                 SizedBox(height: 16),
-      //                 Text(
-      //                     'To work around this, PathPlannerLib has added functionality to automatically transform paths to work for the correct alliance depending on the current alliance color while using PathPlannerLib\'s path following commands.'),
-      //                 SizedBox(height: 16),
-      //                 Text(
-      //                     'In order for this to work correctly, you MUST create all of your paths on the blue (left) side of the field.'),
-      //               ],
-      //             ),
-      //           ),
-      //           actions: [
-      //             TextButton(
-      //               onPressed: () {
-      //                 Navigator.of(context).pop();
-      //                 widget.prefs.setBool(PrefsKeys.seen2023Warning, true);
-      //               },
-      //               child: const Text('OK'),
-      //             ),
-      //           ],
-      //         );
-      //       });
-      // }
+      if (!(widget.prefs.getBool(PrefsKeys.seen2024ResetPopup) ?? false) &&
+          _fieldImage?.name != 'Crescendo' &&
+          mounted) {
+        showDialog(
+          context: this.context,
+          barrierDismissible: false,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('New Field Image Available'),
+              content: const SizedBox(
+                width: 400,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                        'The 2024 field image is now available. Would you like to set your field image to the 2024 field and reset the default navgrid for the 2024 field?'),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    widget.prefs.setBool(PrefsKeys.seen2024ResetPopup, true);
+                  },
+                  child: const Text('No'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    Navigator.of(context).pop();
+                    widget.prefs.setBool(PrefsKeys.seen2024ResetPopup, true);
+                    setState(() {
+                      _fieldImage = FieldImage.defaultField;
+                      widget.prefs
+                          .setString(PrefsKeys.fieldImage, _fieldImage!.name);
+                    });
+
+                    // Load default grid
+                    String fileContent =
+                        await DefaultAssetBundle.of(this.context)
+                            .loadString('resources/default_navgrid.json');
+                    fs
+                        .file(join(_pathplannerDir.path, 'navgrid.json'))
+                        .writeAsString(fileContent);
+                  },
+                  child: const Text('Yes (Recommended)'),
+                ),
+              ],
+            );
+          },
+        );
+      }
     });
   }
 

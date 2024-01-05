@@ -75,13 +75,14 @@ public:
 								t);
 			}
 
+			lerpedState.targetHolonomicRotation = GeometryUtil::rotationLerp(
+					targetHolonomicRotation, endValue.targetHolonomicRotation,
+					t);
+
 			if (t < 0.5) {
 				lerpedState.constraints = constraints;
-				lerpedState.targetHolonomicRotation = targetHolonomicRotation;
 			} else {
 				lerpedState.constraints = endValue.constraints;
-				lerpedState.targetHolonomicRotation =
-						endValue.targetHolonomicRotation;
 			}
 
 			return lerpedState;

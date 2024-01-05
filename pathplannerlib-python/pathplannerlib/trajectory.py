@@ -53,12 +53,13 @@ class State:
             lerpedState.holonomicAngularVelocityRps = floatLerp(self.holonomicAngularVelocityRps,
                                                                 end_val.holonomicAngularVelocityRps, t)
 
+        lerpedState.targetHolonomicRotation = rotationLerp(self.targetHolonomicRotation,
+                                                           end_val.targetHolonomicRotation, t)
+
         if t < 0.5:
             lerpedState.constraints = self.constraints
-            lerpedState.targetHolonomicRotation = self.targetHolonomicRotation
         else:
             lerpedState.constraints = end_val.constraints
-            lerpedState.targetHolonomicRotation = end_val.targetHolonomicRotation
 
         return lerpedState
 

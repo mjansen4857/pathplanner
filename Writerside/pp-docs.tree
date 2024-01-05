@@ -4,9 +4,19 @@
 
 <instance-profile id="pp-docs"
                   name="PathPlanner Docs"
-                  start-page="PathPlannerLib.topic">
+                  start-page="Home.md">
 
-    <toc-element topic="PathPlanner-GUI.topic"/>
+    <toc-element topic="Home.md"/>
+    <toc-element topic="PathPlanner-GUI.topic">
+        <toc-element topic="gui-Getting-Started.md"/>
+        <toc-element topic="gui-Editing-Paths-and-Autos.md"/>
+        <toc-element topic="gui-Project-Browser.md"/>
+        <toc-element topic="gui-Navigation-Menu.md"/>
+        <toc-element topic="gui-Settings.md"/>
+        <toc-element topic="gui-Controls-and-Shortcuts.md"/>
+        <toc-element topic="gui-Telemetry.md"/>
+        <toc-element topic="gui-Navigation-Grid-Editor.md"/>
+    </toc-element>
     <toc-element topic="PathPlannerLib.topic">
         <toc-element topic="pplib-Getting-Started.md"/>
         <toc-element topic="pplib-Build-an-Auto.md"/>

@@ -13,22 +13,22 @@
         </description>
 
         <spotlight>
-            <a href="" type="start" summary="Install and start creating paths and autos">Getting started</a>
-            <a href="" type="creative" summary="Deep dive into PathPlanner's editor">Editing paths and autos</a>
+            <a href="gui-Getting-Started.md" type="start" summary="Install and start creating paths and autos">Getting started</a>
+            <a href="gui-Editing-Paths-and-Autos.md" type="creative" summary="Deep dive into PathPlanner's editor">Editing paths and autos</a>
         </spotlight>
 
         <primary>
             <title>Basic Usage</title>
-            <a href="" summary="Manage all paths and autos in the project">Project browser</a>
-            <a href="" summary="Navigate to other pages and the settings menu">Navigation menu</a>
-            <a href="" summary="Change PathPlanner's settings">Settings</a>
-            <a href="" summary="List of all keyboard shortcuts and basic controls">Controls and shortcuts</a>
+            <a href="gui-Project-Browser.md" summary="Manage all paths and autos in the project">Project browser</a>
+            <a href="gui-Navigation-Menu.md" summary="Navigate to other pages and the settings menu">Navigation menu</a>
+            <a href="gui-Settings.md" summary="Change PathPlanner's settings">Settings</a>
+            <a href="gui-Controls-and-Shortcuts.md" summary="List of all keyboard shortcuts and basic controls">Controls and shortcuts</a>
         </primary>
 
         <secondary>
             <title>Other Pages</title>
-            <a href="" summary="View live path following telemetry">Telemetry</a>
-            <a href="" summary="Edit the navigation grid used by pathfinding commands to avoid obstacles">Navigation
+            <a href="gui-Telemetry.md" summary="View live path following telemetry">Telemetry</a>
+            <a href="gui-Navigation-Grid-Editor.md" summary="Edit the navigation grid used by pathfinding commands to avoid obstacles">Navigation
                 grid editor</a>
         </secondary>
 

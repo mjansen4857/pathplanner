@@ -36,7 +36,7 @@ std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromA
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer->begin(), fileBuffer->end());
+	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
 	return pathsFromCommandJson(json.at("command"));
 }
@@ -53,7 +53,7 @@ frc::Pose2d PathPlannerAuto::getStartingPoseFromAutoFile(std::string autoName) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer->begin(), fileBuffer->end());
+	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
 	return AutoBuilder::getStartingPoseFromJson(json.at("startingPose"));
 }

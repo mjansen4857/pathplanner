@@ -61,7 +61,7 @@ class FieldImage {
           fit: BoxFit.contain,
           filterQuality: FilterQuality.medium,
         );
-        defaultSize = const ui.Size(3256, 1578);
+        defaultSize = const ui.Size(3256, 1616);
         pixelsPerMeter = 196.85;
         name = 'Crescendo';
         break;

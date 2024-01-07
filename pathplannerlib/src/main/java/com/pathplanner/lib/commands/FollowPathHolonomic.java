@@ -30,8 +30,6 @@ public class FollowPathHolonomic extends FollowPathCommand {
    *     drive base width / 2
    * @param period Period of the control loop in seconds, default is 0.02s
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathHolonomic(
@@ -45,7 +43,6 @@ public class FollowPathHolonomic extends FollowPathCommand {
       double driveBaseRadius,
       double period,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         path,
@@ -55,7 +52,6 @@ public class FollowPathHolonomic extends FollowPathCommand {
         new PPHolonomicDriveController(
             translationConstants, rotationConstants, period, maxModuleSpeed, driveBaseRadius),
         replanningConfig,
-        useAllianceColor,
         requirements);
   }
 
@@ -75,8 +71,6 @@ public class FollowPathHolonomic extends FollowPathCommand {
    *     distance from the center of the robot to the furthest module. For mecanum, this is the
    *     drive base width / 2
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathHolonomic(
@@ -89,7 +83,6 @@ public class FollowPathHolonomic extends FollowPathCommand {
       double maxModuleSpeed,
       double driveBaseRadius,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         path,
@@ -102,7 +95,6 @@ public class FollowPathHolonomic extends FollowPathCommand {
         driveBaseRadius,
         0.02,
         replanningConfig,
-        useAllianceColor,
         requirements);
   }
 
@@ -116,8 +108,6 @@ public class FollowPathHolonomic extends FollowPathCommand {
    * @param outputRobotRelative Function that will apply the robot-relative output speeds of this
    *     command
    * @param config Holonomic path follower configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathHolonomic(
@@ -126,7 +116,6 @@ public class FollowPathHolonomic extends FollowPathCommand {
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> outputRobotRelative,
       HolonomicPathFollowerConfig config,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         path,
@@ -139,7 +128,6 @@ public class FollowPathHolonomic extends FollowPathCommand {
         config.driveBaseRadius,
         config.period,
         config.replanningConfig,
-        useAllianceColor,
         requirements);
   }
 }

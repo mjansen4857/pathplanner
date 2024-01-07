@@ -18,7 +18,6 @@ public:
 	 * @param Relems The maximum desired control effort for each input.
 	 * @param dt The amount of time between each robot control loop, default is 0.02s
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
 	 */
 	FollowPathLTV(std::shared_ptr<PathPlannerPath> path,
@@ -27,11 +26,10 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			const wpi::array<double, 3> &Qelms,
 			const wpi::array<double, 2> &Relms, units::second_t dt,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
-			frc2::Requirements requirements) : FollowPathCommand(path,
-			poseSupplier, speedsSupplier, output,
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : FollowPathCommand(
+			path, poseSupplier, speedsSupplier, output,
 			std::make_unique < PPLTVController > (Qelms, Relms, dt),
-			replanningConfig, useAllianceColor, requirements) {
+			replanningConfig, requirements) {
 		if (path->isChoreoPath()) {
 			throw FRC_MakeError(frc::err::CommandIllegalUse,
 					"Paths loaded from Choreo cannot be used with differential drivetrains");
@@ -48,18 +46,16 @@ public:
 	 * @param output Function that will apply the robot-relative output speeds of this command
 	 * @param dt The amount of time between each robot control loop, default is 0.02s
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
 	 */
 	FollowPathLTV(std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
-			frc2::Requirements requirements) : FollowPathCommand(path,
-			poseSupplier, speedsSupplier, output,
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : FollowPathCommand(
+			path, poseSupplier, speedsSupplier, output,
 			std::make_unique < PPLTVController > (dt), replanningConfig,
-			useAllianceColor, requirements) {
+			requirements) {
 		if (path->isChoreoPath()) {
 			throw FRC_MakeError(frc::err::CommandIllegalUse,
 					"Paths loaded from Choreo cannot be used with differential drivetrains");

@@ -21,8 +21,6 @@ public class PathfindHolonomic extends PathfindingCommand {
    * @param output a consumer for the output speeds (robot relative)
    * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
    *     following
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindHolonomic(
@@ -32,7 +30,6 @@ public class PathfindHolonomic extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         targetPath,
@@ -42,7 +39,6 @@ public class PathfindHolonomic extends PathfindingCommand {
         output,
         config,
         0.0,
-        useAllianceColor,
         requirements);
   }
 
@@ -58,8 +54,6 @@ public class PathfindHolonomic extends PathfindingCommand {
    *     differential)
    * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
    *     following
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindHolonomic(
@@ -70,7 +64,6 @@ public class PathfindHolonomic extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         targetPose,
@@ -81,7 +74,6 @@ public class PathfindHolonomic extends PathfindingCommand {
         output,
         config,
         0.0,
-        useAllianceColor,
         requirements);
   }
 
@@ -97,8 +89,6 @@ public class PathfindHolonomic extends PathfindingCommand {
    *     differential)
    * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
    *     following
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindHolonomic(
@@ -108,7 +98,6 @@ public class PathfindHolonomic extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         targetPose,
@@ -118,7 +107,6 @@ public class PathfindHolonomic extends PathfindingCommand {
         currentRobotRelativeSpeeds,
         output,
         config,
-        useAllianceColor,
         requirements);
   }
 
@@ -135,8 +123,6 @@ public class PathfindHolonomic extends PathfindingCommand {
    * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
    *     cause the robot to hold its current rotation until it reaches the given distance along the
    *     path.
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindHolonomic(
@@ -147,7 +133,6 @@ public class PathfindHolonomic extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
       double rotationDelayDistance,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -163,7 +148,6 @@ public class PathfindHolonomic extends PathfindingCommand {
             config.driveBaseRadius),
         rotationDelayDistance,
         config.replanningConfig,
-        useAllianceColor,
         requirements);
   }
 
@@ -182,8 +166,6 @@ public class PathfindHolonomic extends PathfindingCommand {
    * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
    *     cause the robot to hold its current rotation until it reaches the given distance along the
    *     path.
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindHolonomic(
@@ -195,7 +177,6 @@ public class PathfindHolonomic extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
       double rotationDelayDistance,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         targetPose,
@@ -212,7 +193,6 @@ public class PathfindHolonomic extends PathfindingCommand {
             config.driveBaseRadius),
         rotationDelayDistance,
         config.replanningConfig,
-        useAllianceColor,
         requirements);
   }
 
@@ -231,8 +211,6 @@ public class PathfindHolonomic extends PathfindingCommand {
    * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
    *     cause the robot to hold its current rotation until it reaches the given distance along the
    *     path.
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindHolonomic(
@@ -243,7 +221,6 @@ public class PathfindHolonomic extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
       double rotationDelayDistance,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         targetPose,
@@ -254,7 +231,6 @@ public class PathfindHolonomic extends PathfindingCommand {
         output,
         config,
         rotationDelayDistance,
-        useAllianceColor,
         requirements);
   }
 }

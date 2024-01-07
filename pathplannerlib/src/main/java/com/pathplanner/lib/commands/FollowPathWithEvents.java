@@ -2,9 +2,7 @@ package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.*;
 import java.util.function.Supplier;
@@ -15,12 +13,10 @@ public class FollowPathWithEvents extends Command {
   private final Command pathFollowingCommand;
   private final PathPlannerPath path;
   private final Supplier<Pose2d> poseSupplier;
-  private final boolean useAllianceColor;
 
   private final Map<Command, Boolean> currentCommands = new HashMap<>();
   private final List<EventMarker> untriggeredMarkers = new ArrayList<>();
   private boolean isFinished = false;
-  private boolean mirror = false;
 
   /**
    * Constructs a new FollowPathWithEvents command.
@@ -28,19 +24,13 @@ public class FollowPathWithEvents extends Command {
    * @param pathFollowingCommand the command to follow the path
    * @param path the path to follow
    * @param poseSupplier a supplier for the robot's current pose
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @throws IllegalArgumentException if an event command requires the drive subsystem
    */
   public FollowPathWithEvents(
-      Command pathFollowingCommand,
-      PathPlannerPath path,
-      Supplier<Pose2d> poseSupplier,
-      boolean useAllianceColor) {
+      Command pathFollowingCommand, PathPlannerPath path, Supplier<Pose2d> poseSupplier) {
     this.pathFollowingCommand = pathFollowingCommand;
     this.path = path;
     this.poseSupplier = poseSupplier;
-    this.useAllianceColor = useAllianceColor;
 
     m_requirements.addAll(pathFollowingCommand.getRequirements());
     for (EventMarker marker : this.path.getEventMarkers()) {
@@ -57,20 +47,11 @@ public class FollowPathWithEvents extends Command {
 
   @Override
   public void initialize() {
-    mirror =
-        useAllianceColor
-            && DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
-                == DriverStation.Alliance.Red;
-
     isFinished = false;
 
     currentCommands.clear();
 
     Pose2d currentPose = poseSupplier.get();
-    if (mirror) {
-      currentPose = GeometryUtil.mirrorPose(currentPose);
-    }
-
     for (EventMarker marker : path.getEventMarkers()) {
       marker.reset(currentPose);
     }
@@ -100,9 +81,7 @@ public class FollowPathWithEvents extends Command {
       }
     }
 
-    Pose2d currentPose =
-        (mirror) ? GeometryUtil.mirrorPose(poseSupplier.get()) : poseSupplier.get();
-
+    Pose2d currentPose = poseSupplier.get();
     List<EventMarker> toTrigger =
         untriggeredMarkers.stream()
             .filter(marker -> marker.shouldTrigger(currentPose))

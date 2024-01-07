@@ -18,10 +18,9 @@
 using namespace pathplanner;
 
 bool AutoBuilder::m_configured = false;
-std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>, bool)> AutoBuilder::m_pathFollowingCommandBuilder;
+std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> AutoBuilder::m_pathFollowingCommandBuilder;
 std::function<frc::Pose2d()> AutoBuilder::m_getPose;
 std::function<void(frc::Pose2d)> AutoBuilder::m_resetPose;
-bool AutoBuilder::m_useAllianceColor = false;
 
 bool AutoBuilder::m_pathfindingConfigured = false;
 std::function<
@@ -35,8 +34,7 @@ void AutoBuilder::configureHolonomic(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose,
 		std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
-		HolonomicPathFollowerConfig config, bool useAllianceColor,
-		frc2::Subsystem *driveSubsystem) {
+		HolonomicPathFollowerConfig config, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
@@ -44,38 +42,32 @@ void AutoBuilder::configureHolonomic(std::function<frc::Pose2d()> poseSupplier,
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier,
 			robotRelativeSpeedsSupplier, robotRelativeOutput, config,
-			driveSubsystem](std::shared_ptr<PathPlannerPath> path,
-			bool shouldUseAllianceColor) {
+			driveSubsystem](std::shared_ptr<PathPlannerPath> path) {
 		return FollowPathHolonomic(path, poseSupplier,
-				robotRelativeSpeedsSupplier, robotRelativeOutput, config,
-				shouldUseAllianceColor, { driveSubsystem }).ToPtr();
+				robotRelativeSpeedsSupplier, robotRelativeOutput, config, {
+						driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 
-	AutoBuilder::m_pathfindToPoseCommandBuilder =
-			[poseSupplier, robotRelativeSpeedsSupplier, robotRelativeOutput,
-					config, driveSubsystem, useAllianceColor](frc::Pose2d pose,
-					PathConstraints constraints,
-					units::meters_per_second_t goalEndVel,
-					units::meter_t rotationDelayDistance) {
-				return PathfindHolonomic(pose, constraints, goalEndVel,
-						poseSupplier, robotRelativeSpeedsSupplier,
-						robotRelativeOutput, config, useAllianceColor, {
-								driveSubsystem }, rotationDelayDistance).ToPtr();
-			};
-	AutoBuilder::m_pathfindThenFollowPathCommandBuilder =
-			[poseSupplier, robotRelativeSpeedsSupplier, robotRelativeOutput,
-					config, driveSubsystem, useAllianceColor](
-					std::shared_ptr<PathPlannerPath> path,
-					PathConstraints constraints,
-					units::meter_t rotationDelayDistance) {
-				return PathfindThenFollowPathHolonomic(path, constraints,
-						poseSupplier, robotRelativeSpeedsSupplier,
-						robotRelativeOutput, config, useAllianceColor, {
-								driveSubsystem }, rotationDelayDistance).ToPtr();
-			};
+	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier,
+			robotRelativeSpeedsSupplier, robotRelativeOutput, config,
+			driveSubsystem](frc::Pose2d pose, PathConstraints constraints,
+			units::meters_per_second_t goalEndVel,
+			units::meter_t rotationDelayDistance) {
+		return PathfindHolonomic(pose, constraints, goalEndVel, poseSupplier,
+				robotRelativeSpeedsSupplier, robotRelativeOutput, config, {
+						driveSubsystem }, rotationDelayDistance).ToPtr();
+	};
+	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
+			robotRelativeSpeedsSupplier, robotRelativeOutput, config,
+			driveSubsystem](std::shared_ptr<PathPlannerPath> path,
+			PathConstraints constraints, units::meter_t rotationDelayDistance) {
+		return PathfindThenFollowPathHolonomic(path, constraints, poseSupplier,
+				robotRelativeSpeedsSupplier, robotRelativeOutput, config, {
+						driveSubsystem }, rotationDelayDistance).ToPtr();
+	};
 	AutoBuilder::m_pathfindingConfigured = true;
 }
 
@@ -83,42 +75,39 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
-		ReplanningConfig replanningConfig, bool useAllianceColor,
-		frc2::Subsystem *driveSubsystem) {
+		ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
 	}
 
-	AutoBuilder::m_pathFollowingCommandBuilder =
-			[poseSupplier, speedsSupplier, output, replanningConfig,
-					driveSubsystem](std::shared_ptr<PathPlannerPath> path,
-					bool shouldUseAllianceColor) {
-				return FollowPathRamsete(path, poseSupplier, speedsSupplier,
-						output, replanningConfig, shouldUseAllianceColor, {
-								driveSubsystem }).ToPtr();
-			};
+	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
+			output, replanningConfig, driveSubsystem](
+			std::shared_ptr<PathPlannerPath> path) {
+		return FollowPathRamsete(path, poseSupplier, speedsSupplier, output,
+				replanningConfig, { driveSubsystem }).ToPtr();
+	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
-			output, replanningConfig, driveSubsystem, useAllianceColor](
-			frc::Pose2d pose, PathConstraints constraints,
-			units::meters_per_second_t goalEndVel,
+			output, replanningConfig, driveSubsystem](frc::Pose2d pose,
+			PathConstraints constraints, units::meters_per_second_t goalEndVel,
 			units::meter_t rotationDelayDistance) {
 		return PathfindRamsete(pose.Translation(), constraints, goalEndVel,
-				poseSupplier, speedsSupplier, output, replanningConfig,
-				useAllianceColor, { driveSubsystem }).ToPtr();
-	};
-	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
-			speedsSupplier, output, replanningConfig, driveSubsystem,
-			useAllianceColor](std::shared_ptr<PathPlannerPath> path,
-			PathConstraints constraints, units::meter_t rotationDelayDistance) {
-		return PathfindThenFollowPathRamsete(path, constraints, poseSupplier,
-				speedsSupplier, output, replanningConfig, useAllianceColor, {
+				poseSupplier, speedsSupplier, output, replanningConfig, {
 						driveSubsystem }).ToPtr();
 	};
+	AutoBuilder::m_pathfindThenFollowPathCommandBuilder =
+			[poseSupplier, speedsSupplier, output, replanningConfig,
+					driveSubsystem](std::shared_ptr<PathPlannerPath> path,
+					PathConstraints constraints,
+					units::meter_t rotationDelayDistance) {
+				return PathfindThenFollowPathRamsete(path, constraints,
+						poseSupplier, speedsSupplier, output, replanningConfig,
+						{ driveSubsystem }).ToPtr();
+			};
 	AutoBuilder::m_pathfindingConfigured = true;
 }
 
@@ -128,8 +117,7 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		units::unit_t<frc::RamseteController::b_unit> b,
 		units::unit_t<frc::RamseteController::zeta_unit> zeta,
-		ReplanningConfig replanningConfig, bool useAllianceColor,
-		frc2::Subsystem *driveSubsystem) {
+		ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
@@ -137,34 +125,29 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
 			output, b, zeta, replanningConfig, driveSubsystem](
-			std::shared_ptr<PathPlannerPath> path,
-			bool shouldUseAllianceColor) {
+			std::shared_ptr<PathPlannerPath> path) {
 		return FollowPathRamsete(path, poseSupplier, speedsSupplier, output, b,
-				zeta, replanningConfig, shouldUseAllianceColor,
-				{ driveSubsystem }).ToPtr();
+				zeta, replanningConfig, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 
-	AutoBuilder::m_pathfindToPoseCommandBuilder =
-			[poseSupplier, speedsSupplier, output, b, zeta, replanningConfig,
-					driveSubsystem, useAllianceColor](frc::Pose2d pose,
-					PathConstraints constraints,
-					units::meters_per_second_t goalEndVel,
-					units::meter_t rotationDelayDistance) {
-				return PathfindRamsete(pose.Translation(), constraints,
-						goalEndVel, poseSupplier, speedsSupplier, output, b,
-						zeta, replanningConfig, useAllianceColor, {
-								driveSubsystem }).ToPtr();
-			};
+	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
+			output, b, zeta, replanningConfig, driveSubsystem](frc::Pose2d pose,
+			PathConstraints constraints, units::meters_per_second_t goalEndVel,
+			units::meter_t rotationDelayDistance) {
+		return PathfindRamsete(pose.Translation(), constraints, goalEndVel,
+				poseSupplier, speedsSupplier, output, b, zeta, replanningConfig,
+				{ driveSubsystem }).ToPtr();
+	};
 	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
-			speedsSupplier, output, b, zeta, replanningConfig, driveSubsystem,
-			useAllianceColor](std::shared_ptr<PathPlannerPath> path,
-			PathConstraints constraints, units::meter_t rotationDelayDistance) {
+			speedsSupplier, output, b, zeta, replanningConfig, driveSubsystem](
+			std::shared_ptr<PathPlannerPath> path, PathConstraints constraints,
+			units::meter_t rotationDelayDistance) {
 		return PathfindThenFollowPathRamsete(path, constraints, poseSupplier,
-				speedsSupplier, output, b, zeta, replanningConfig,
-				useAllianceColor, { driveSubsystem }).ToPtr();
+				speedsSupplier, output, b, zeta, replanningConfig, {
+						driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_pathfindingConfigured = true;
 }
@@ -175,7 +158,7 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		const wpi::array<double, 3> &Qelms, const wpi::array<double, 2> &Relms,
 		units::second_t dt, ReplanningConfig replanningConfig,
-		bool useAllianceColor, frc2::Subsystem *driveSubsystem) {
+		frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
@@ -183,33 +166,30 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
 			output, Qelms, Relms, dt, replanningConfig, driveSubsystem](
-			std::shared_ptr<PathPlannerPath> path,
-			bool shouldUseAllianceColor) {
+			std::shared_ptr<PathPlannerPath> path) {
 		return FollowPathLTV(path, poseSupplier, speedsSupplier, output, Qelms,
-				Relms, dt, replanningConfig, shouldUseAllianceColor, {
-						driveSubsystem }).ToPtr();
+				Relms, dt, replanningConfig, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
-			output, Qelms, Relms, dt, replanningConfig, driveSubsystem,
-			useAllianceColor](frc::Pose2d pose, PathConstraints constraints,
+			output, Qelms, Relms, dt, replanningConfig, driveSubsystem](
+			frc::Pose2d pose, PathConstraints constraints,
 			units::meters_per_second_t goalEndVel,
 			units::meter_t rotationDelayDistance) {
 		return PathfindLTV(pose.Translation(), constraints, goalEndVel,
 				poseSupplier, speedsSupplier, output, Qelms, Relms, dt,
-				replanningConfig, useAllianceColor, { driveSubsystem }).ToPtr();
+				replanningConfig, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
 			speedsSupplier, output, Qelms, Relms, dt, replanningConfig,
-			driveSubsystem, useAllianceColor](
-			std::shared_ptr<PathPlannerPath> path, PathConstraints constraints,
-			units::meter_t rotationDelayDistance) {
+			driveSubsystem](std::shared_ptr<PathPlannerPath> path,
+			PathConstraints constraints, units::meter_t rotationDelayDistance) {
 		return PathfindThenFollowPathLTV(path, constraints, poseSupplier,
-				speedsSupplier, output, Qelms, Relms, dt, replanningConfig,
-				useAllianceColor, { driveSubsystem }).ToPtr();
+				speedsSupplier, output, Qelms, Relms, dt, replanningConfig, {
+						driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_pathfindingConfigured = true;
 }
@@ -218,47 +198,43 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
-		ReplanningConfig replanningConfig, bool useAllianceColor,
-		frc2::Subsystem *driveSubsystem) {
+		ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
 		throw std::runtime_error(
 				"Auto builder has already been configured. Please only configure auto builder once");
 	}
 
-	AutoBuilder::m_pathFollowingCommandBuilder =
-			[poseSupplier, speedsSupplier, output, dt, replanningConfig,
-					driveSubsystem](std::shared_ptr<PathPlannerPath> path,
-					bool shouldUseAllianceColor) {
-				return FollowPathLTV(path, poseSupplier, speedsSupplier, output,
-						dt, replanningConfig, shouldUseAllianceColor, {
-								driveSubsystem }).ToPtr();
-			};
+	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
+			output, dt, replanningConfig, driveSubsystem](
+			std::shared_ptr<PathPlannerPath> path) {
+		return FollowPathLTV(path, poseSupplier, speedsSupplier, output, dt,
+				replanningConfig, { driveSubsystem }).ToPtr();
+	};
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
-			output, dt, replanningConfig, driveSubsystem, useAllianceColor](
-			frc::Pose2d pose, PathConstraints constraints,
-			units::meters_per_second_t goalEndVel,
+			output, dt, replanningConfig, driveSubsystem](frc::Pose2d pose,
+			PathConstraints constraints, units::meters_per_second_t goalEndVel,
 			units::meter_t rotationDelayDistance) {
 		return PathfindLTV(pose.Translation(), constraints, goalEndVel,
-				poseSupplier, speedsSupplier, output, dt, replanningConfig,
-				useAllianceColor, { driveSubsystem }).ToPtr();
+				poseSupplier, speedsSupplier, output, dt, replanningConfig, {
+						driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
-			speedsSupplier, output, dt, replanningConfig, driveSubsystem,
-			useAllianceColor](std::shared_ptr<PathPlannerPath> path,
-			PathConstraints constraints, units::meter_t rotationDelayDistance) {
+			speedsSupplier, output, dt, replanningConfig, driveSubsystem](
+			std::shared_ptr<PathPlannerPath> path, PathConstraints constraints,
+			units::meter_t rotationDelayDistance) {
 		return PathfindThenFollowPathLTV(path, constraints, poseSupplier,
-				speedsSupplier, output, dt, replanningConfig, useAllianceColor,
+				speedsSupplier, output, dt, replanningConfig,
 				{ driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_pathfindingConfigured = true;
 }
 
 void AutoBuilder::configureCustom(
-		std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>, bool)> pathFollowingCommandBuilder,
+		std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose) {
 	if (m_configured) {
@@ -275,15 +251,14 @@ void AutoBuilder::configureCustom(
 }
 
 frc2::CommandPtr AutoBuilder::followPathWithEvents(
-		std::shared_ptr<PathPlannerPath> path, bool useAllianceColor) {
+		std::shared_ptr<PathPlannerPath> path) {
 	if (!m_configured) {
 		throw std::runtime_error(
 				"Auto builder was used to build a path following command before being configured");
 	}
 
-	return FollowPathWithEvents(
-			m_pathFollowingCommandBuilder(path, useAllianceColor).Unwrap(),
-			path, m_getPose, useAllianceColor).ToPtr();
+	return FollowPathWithEvents(m_pathFollowingCommandBuilder(path).Unwrap(),
+			path, m_getPose).ToPtr();
 }
 
 frc2::CommandPtr AutoBuilder::buildAuto(std::string autoName) {

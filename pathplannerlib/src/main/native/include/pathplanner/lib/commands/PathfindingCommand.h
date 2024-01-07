@@ -34,7 +34,6 @@ public:
 	 * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
 	 *     final rotation
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path be mirrored based on the alliance color
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindingCommand(std::shared_ptr<PathPlannerPath> targetPath,
@@ -44,8 +43,7 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unique_ptr<PathFollowingController> controller,
 			units::meter_t rotationDelayDistance,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
-			frc2::Requirements requirements);
+			ReplanningConfig replanningConfig, frc2::Requirements requirements);
 
 	/**
 	 * Constructs a new base pathfinding command that will generate a path towards the given pose.
@@ -61,7 +59,6 @@ public:
 	 * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
 	 *     final rotation
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path be mirrored based on the alliance color
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindingCommand(frc::Pose2d targetPose, PathConstraints constraints,
@@ -71,8 +68,7 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unique_ptr<PathFollowingController> controller,
 			units::meter_t rotationDelayDistance,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
-			frc2::Requirements requirements);
+			ReplanningConfig replanningConfig, frc2::Requirements requirements);
 
 	void Initialize() override;
 
@@ -94,9 +90,7 @@ private:
 	std::unique_ptr<PathFollowingController> m_controller;
 	units::meter_t m_rotationDelayDistance;
 	ReplanningConfig m_replanningConfig;
-	bool m_useAllianceColor;
 
-	bool m_mirror;
 	std::shared_ptr<PathPlannerPath> m_currentPath;
 	PathPlannerTrajectory m_currentTrajectory;
 	frc::Pose2d m_startingPose;

@@ -27,8 +27,6 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -40,7 +38,6 @@ public class PathfindRamsete extends PathfindingCommand {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -51,7 +48,6 @@ public class PathfindRamsete extends PathfindingCommand {
         new PPRamseteController(b, zeta),
         0,
         replanningConfig,
-        useAllianceColor,
         requirements);
 
     if (targetPath.isChoreoPath()) {
@@ -69,8 +65,6 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (robot relative)
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -80,7 +74,6 @@ public class PathfindRamsete extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -91,7 +84,6 @@ public class PathfindRamsete extends PathfindingCommand {
         new PPRamseteController(),
         0,
         replanningConfig,
-        useAllianceColor,
         requirements);
 
     if (targetPath.isChoreoPath()) {
@@ -115,8 +107,6 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -129,7 +119,6 @@ public class PathfindRamsete extends PathfindingCommand {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         new Pose2d(targetPosition, new Rotation2d()),
@@ -141,7 +130,6 @@ public class PathfindRamsete extends PathfindingCommand {
         new PPRamseteController(b, zeta),
         0,
         replanningConfig,
-        useAllianceColor,
         requirements);
   }
 
@@ -156,8 +144,6 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -168,7 +154,6 @@ public class PathfindRamsete extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         new Pose2d(targetPosition, new Rotation2d()),
@@ -180,7 +165,6 @@ public class PathfindRamsete extends PathfindingCommand {
         new PPRamseteController(),
         0,
         replanningConfig,
-        useAllianceColor,
         requirements);
   }
 
@@ -199,8 +183,6 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -212,7 +194,6 @@ public class PathfindRamsete extends PathfindingCommand {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         targetPosition,
@@ -224,7 +205,6 @@ public class PathfindRamsete extends PathfindingCommand {
         b,
         zeta,
         replanningConfig,
-        useAllianceColor,
         requirements);
   }
 
@@ -239,8 +219,6 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param output a consumer for the output speeds (field relative if holonomic, robot relative if
    *     differential)
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -250,7 +228,6 @@ public class PathfindRamsete extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         targetPosition,
@@ -260,7 +237,6 @@ public class PathfindRamsete extends PathfindingCommand {
         currentRobotRelativeSpeeds,
         output,
         replanningConfig,
-        useAllianceColor,
         requirements);
   }
 }

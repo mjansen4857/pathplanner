@@ -12,9 +12,7 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -36,9 +34,7 @@ public class PathfindingCommand extends Command {
   private final PathFollowingController controller;
   private final double rotationDelayDistance;
   private final ReplanningConfig replanningConfig;
-  private final boolean useAllianceColor;
 
-  private boolean mirror = false;
   private PathPlannerPath currentPath;
   private PathPlannerTrajectory currentTrajectory;
   private Pose2d startingPose;
@@ -57,7 +53,6 @@ public class PathfindingCommand extends Command {
    * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
    *     final rotation
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path be mirrored based on the alliance color
    * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
@@ -69,7 +64,6 @@ public class PathfindingCommand extends Command {
       PathFollowingController controller,
       double rotationDelayDistance,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -103,7 +97,6 @@ public class PathfindingCommand extends Command {
     this.output = outputRobotRelative;
     this.rotationDelayDistance = rotationDelayDistance;
     this.replanningConfig = replanningConfig;
-    this.useAllianceColor = useAllianceColor;
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -123,7 +116,6 @@ public class PathfindingCommand extends Command {
    * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
    *     final rotation
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path be mirrored based on the alliance color
    * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
@@ -136,7 +128,6 @@ public class PathfindingCommand extends Command {
       PathFollowingController controller,
       double rotationDelayDistance,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -152,7 +143,6 @@ public class PathfindingCommand extends Command {
     this.output = outputRobotRelative;
     this.rotationDelayDistance = rotationDelayDistance;
     this.replanningConfig = replanningConfig;
-    this.useAllianceColor = useAllianceColor;
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -160,11 +150,6 @@ public class PathfindingCommand extends Command {
 
   @Override
   public void initialize() {
-    mirror =
-        useAllianceColor
-            && DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
-                == DriverStation.Alliance.Red;
-
     currentTrajectory = null;
     timeOffset = 0;
 
@@ -172,20 +157,18 @@ public class PathfindingCommand extends Command {
 
     controller.reset(currentPose, speedsSupplier.get());
 
-    Pose2d alliancePose = mirror ? GeometryUtil.mirrorPose(currentPose) : currentPose;
-
     if (targetPath != null) {
       targetPose = new Pose2d(this.targetPath.getPoint(0).position, goalEndState.getRotation());
     }
 
-    if (alliancePose.getTranslation().getDistance(targetPose.getTranslation()) < 0.25) {
+    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.25) {
       this.cancel();
     } else {
-      Pathfinding.setStartPosition(alliancePose.getTranslation());
+      Pathfinding.setStartPosition(currentPose.getTranslation());
       Pathfinding.setGoalPosition(targetPose.getTranslation());
     }
 
-    startingPose = alliancePose;
+    startingPose = currentPose;
   }
 
   @Override
@@ -206,9 +189,6 @@ public class PathfindingCommand extends Command {
 
     if (!skipUpdates && Pathfinding.isNewPathAvailable()) {
       currentPath = Pathfinding.getCurrentPath(constraints, goalEndState);
-      if (mirror) {
-        currentPath = currentPath.mirrorPath();
-      }
 
       if (currentPath != null) {
         currentTrajectory =
@@ -348,12 +328,8 @@ public class PathfindingCommand extends Command {
       double stoppingDistance =
           Math.pow(currentVel, 2) / (2 * constraints.getMaxAccelerationMpsSq());
 
-      Translation2d startPos = targetPath.getPoint(0).position;
-      if (mirror) {
-        startPos = GeometryUtil.mirrorTranslation(startPos);
-      }
-
-      return currentPose.getTranslation().getDistance(startPos) <= stoppingDistance;
+      return currentPose.getTranslation().getDistance(targetPath.getPoint(0).position)
+          <= stoppingDistance;
     }
 
     if (currentTrajectory != null) {

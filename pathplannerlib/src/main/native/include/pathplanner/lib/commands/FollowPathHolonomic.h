@@ -24,7 +24,6 @@ public:
 	 *     distance from the center of the robot to the furthest module. For mecanum, this is the
 	 *     drive base width / 2
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
 	 * @param period Period of the control loop in seconds, default is 0.02s
 	 */
@@ -35,12 +34,11 @@ public:
 			PIDConstants translationConstants, PIDConstants rotationConstants,
 			units::meters_per_second_t maxModuleSpeed,
 			units::meter_t driveBaseRadius, ReplanningConfig replanningConfig,
-			bool useAllianceColor, frc2::Requirements requirements,
-			units::second_t period = 0.02_s) : FollowPathCommand(path,
-			poseSupplier, speedsSupplier, output,
+			frc2::Requirements requirements, units::second_t period = 0.02_s) : FollowPathCommand(
+			path, poseSupplier, speedsSupplier, output,
 			std::make_unique < PPHolonomicDriveController
 					> (translationConstants, rotationConstants, maxModuleSpeed, driveBaseRadius, period),
-			replanningConfig, useAllianceColor, requirements) {
+			replanningConfig, requirements) {
 	}
 
 	/**
@@ -53,19 +51,17 @@ public:
 	 * @param output Function that will apply the robot-relative output speeds of this
 	 *     command
 	 * @param config Holonomic path follower configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
 	 */
 	FollowPathHolonomic(std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
-			HolonomicPathFollowerConfig config, bool useAllianceColor,
-			frc2::Requirements requirements) : FollowPathHolonomic(path,
-			poseSupplier, speedsSupplier, output, config.translationConstants,
-			config.rotationConstants, config.maxModuleSpeed,
-			config.driveBaseRadius, config.replanningConfig, useAllianceColor,
-			requirements, config.period) {
+			HolonomicPathFollowerConfig config, frc2::Requirements requirements) : FollowPathHolonomic(
+			path, poseSupplier, speedsSupplier, output,
+			config.translationConstants, config.rotationConstants,
+			config.maxModuleSpeed, config.driveBaseRadius,
+			config.replanningConfig, requirements, config.period) {
 	}
 };
 }

@@ -21,8 +21,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,10 +33,9 @@ import org.json.simple.parser.JSONParser;
 public class AutoBuilder {
   private static boolean configured = false;
 
-  private static BiFunction<PathPlannerPath, Boolean, Command> pathFollowingCommandBuilder;
+  private static Function<PathPlannerPath, Command> pathFollowingCommandBuilder;
   private static Supplier<Pose2d> getPose;
   private static Consumer<Pose2d> resetPose;
-  private static boolean useAllianceColor;
 
   // Pathfinding builders
   private static boolean pathfindingConfigured = false;
@@ -55,8 +54,6 @@ public class AutoBuilder {
    * @param robotRelativeOutput a consumer for setting the robot's robot-relative chassis speeds
    * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
    *     path following commands
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -66,7 +63,6 @@ public class AutoBuilder {
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
       Consumer<ChassisSpeeds> robotRelativeOutput,
       HolonomicPathFollowerConfig config,
-      boolean useAllianceColor,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -74,18 +70,16 @@ public class AutoBuilder {
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
-        (path, shouldUseAllianceColor) ->
+        (path) ->
             new FollowPathHolonomic(
                 path,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
                 robotRelativeOutput,
                 config,
-                shouldUseAllianceColor,
                 driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
-    AutoBuilder.useAllianceColor = useAllianceColor;
     AutoBuilder.configured = true;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
@@ -99,7 +93,6 @@ public class AutoBuilder {
                 robotRelativeOutput,
                 config,
                 rotationDelayDistance,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints, rotationDelayDistance) ->
@@ -111,7 +104,6 @@ public class AutoBuilder {
                 robotRelativeOutput,
                 config,
                 rotationDelayDistance,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
@@ -125,8 +117,6 @@ public class AutoBuilder {
    * @param output a consumer for setting the robot's chassis speeds
    * @param replanningConfig Path replanning configuration
    * @param driveSubsystem the subsystem for the robot's drive
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
   public static void configureRamsete(
@@ -135,7 +125,6 @@ public class AutoBuilder {
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> output,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -143,18 +132,11 @@ public class AutoBuilder {
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
-        (path, shouldUseAllianceColor) ->
+        (path) ->
             new FollowPathRamsete(
-                path,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                replanningConfig,
-                shouldUseAllianceColor,
-                driveSubsystem);
+                path, poseSupplier, speedsSupplier, output, replanningConfig, driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
-    AutoBuilder.useAllianceColor = useAllianceColor;
     AutoBuilder.configured = true;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
@@ -167,7 +149,6 @@ public class AutoBuilder {
                 speedsSupplier,
                 output,
                 replanningConfig,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints, rotationDelayDistance) ->
@@ -178,7 +159,6 @@ public class AutoBuilder {
                 speedsSupplier,
                 output,
                 replanningConfig,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
@@ -195,8 +175,6 @@ public class AutoBuilder {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -208,7 +186,6 @@ public class AutoBuilder {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -216,7 +193,7 @@ public class AutoBuilder {
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
-        (path, shouldUseAllianceColor) ->
+        (path) ->
             new FollowPathRamsete(
                 path,
                 poseSupplier,
@@ -225,11 +202,9 @@ public class AutoBuilder {
                 b,
                 zeta,
                 replanningConfig,
-                shouldUseAllianceColor,
                 driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
-    AutoBuilder.useAllianceColor = useAllianceColor;
     AutoBuilder.configured = true;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
@@ -244,7 +219,6 @@ public class AutoBuilder {
                 b,
                 zeta,
                 replanningConfig,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints, rotationDelayDistance) ->
@@ -257,7 +231,6 @@ public class AutoBuilder {
                 b,
                 zeta,
                 replanningConfig,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
@@ -272,8 +245,6 @@ public class AutoBuilder {
    * @param output a consumer for setting the robot's chassis speeds
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -284,7 +255,6 @@ public class AutoBuilder {
       Consumer<ChassisSpeeds> output,
       double dt,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -292,19 +262,11 @@ public class AutoBuilder {
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
-        (path, shouldUseAllianceColor) ->
+        (path) ->
             new FollowPathLTV(
-                path,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                dt,
-                replanningConfig,
-                shouldUseAllianceColor,
-                driveSubsystem);
+                path, poseSupplier, speedsSupplier, output, dt, replanningConfig, driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
-    AutoBuilder.useAllianceColor = useAllianceColor;
     AutoBuilder.configured = true;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
@@ -318,7 +280,6 @@ public class AutoBuilder {
                 output,
                 dt,
                 replanningConfig,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints, rotationDelayDistance) ->
@@ -330,7 +291,6 @@ public class AutoBuilder {
                 output,
                 dt,
                 replanningConfig,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
@@ -347,8 +307,6 @@ public class AutoBuilder {
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -361,7 +319,6 @@ public class AutoBuilder {
       Vector<N2> relems,
       double dt,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -369,7 +326,7 @@ public class AutoBuilder {
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
-        (path, shouldUseAllianceColor) ->
+        (path) ->
             new FollowPathLTV(
                 path,
                 poseSupplier,
@@ -379,11 +336,9 @@ public class AutoBuilder {
                 relems,
                 dt,
                 replanningConfig,
-                shouldUseAllianceColor,
                 driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
-    AutoBuilder.useAllianceColor = useAllianceColor;
     AutoBuilder.configured = true;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
@@ -399,7 +354,6 @@ public class AutoBuilder {
                 relems,
                 dt,
                 replanningConfig,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints, rotationDelayDistance) ->
@@ -413,7 +367,6 @@ public class AutoBuilder {
                 relems,
                 dt,
                 replanningConfig,
-                useAllianceColor,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
@@ -428,7 +381,7 @@ public class AutoBuilder {
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
   public static void configureCustom(
-      BiFunction<PathPlannerPath, Boolean, Command> pathFollowingCommandBuilder,
+      Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose) {
     if (configured) {
@@ -466,25 +419,6 @@ public class AutoBuilder {
    * Builds a command to follow a path with event markers.
    *
    * @param path the path to follow
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
-   * @return a path following command with events for the given path
-   * @throws AutoBuilderException if the AutoBuilder has not been configured
-   */
-  public static Command followPathWithEvents(PathPlannerPath path, boolean useAllianceColor) {
-    if (!isConfigured()) {
-      throw new AutoBuilderException(
-          "Auto builder was used to build a path following command before being configured");
-    }
-
-    return new FollowPathWithEvents(
-        pathFollowingCommandBuilder.apply(path, useAllianceColor), path, getPose, useAllianceColor);
-  }
-
-  /**
-   * Builds a command to follow a path with event markers.
-   *
-   * @param path the path to follow
    * @return a path following command with events for the given path
    * @throws AutoBuilderException if the AutoBuilder has not been configured
    */
@@ -494,8 +428,7 @@ public class AutoBuilder {
           "Auto builder was used to build a path following command before being configured");
     }
 
-    return new FollowPathWithEvents(
-        pathFollowingCommandBuilder.apply(path, useAllianceColor), path, getPose, useAllianceColor);
+    return new FollowPathWithEvents(pathFollowingCommandBuilder.apply(path), path, getPose);
   }
 
   /**

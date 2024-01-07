@@ -3,7 +3,6 @@
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include <vector>
 #include <hal/FRCUsageReporting.h>
-#include <frc/DriverStation.h>
 
 using namespace pathplanner;
 
@@ -16,12 +15,11 @@ PathfindingCommand::PathfindingCommand(
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
 		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
-		bool useAllianceColor, frc2::Requirements requirements) : m_targetPath(
-		targetPath), m_targetPose(), m_goalEndState(0_mps, frc::Rotation2d(),
-		true), m_constraints(constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
-		speedsSupplier), m_output(output), m_controller(std::move(controller)), m_rotationDelayDistance(
-		rotationDelayDistance), m_replanningConfig(replanningConfig), m_useAllianceColor(
-		useAllianceColor), m_mirror(false) {
+		frc2::Requirements requirements) : m_targetPath(targetPath), m_targetPose(), m_goalEndState(
+		0_mps, frc::Rotation2d(), true), m_constraints(constraints), m_poseSupplier(
+		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
+		std::move(controller)), m_rotationDelayDistance(rotationDelayDistance), m_replanningConfig(
+		replanningConfig) {
 	AddRequirements(requirements);
 
 	Pathfinding::ensureInitialized();
@@ -61,12 +59,11 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
 		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
-		bool useAllianceColor, frc2::Requirements requirements) : m_targetPath(), m_targetPose(
+		frc2::Requirements requirements) : m_targetPath(), m_targetPose(
 		targetPose), m_goalEndState(goalEndVel, targetPose.Rotation(), true), m_constraints(
 		constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
 		speedsSupplier), m_output(output), m_controller(std::move(controller)), m_rotationDelayDistance(
-		rotationDelayDistance), m_replanningConfig(replanningConfig), m_useAllianceColor(
-		useAllianceColor), m_mirror(false) {
+		rotationDelayDistance), m_replanningConfig(replanningConfig) {
 	AddRequirements(requirements);
 
 	Pathfinding::ensureInitialized();
@@ -77,11 +74,6 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 }
 
 void PathfindingCommand::Initialize() {
-	m_mirror = m_useAllianceColor
-			&& frc::DriverStation::GetAlliance().value_or(
-					frc::DriverStation::Alliance::kBlue)
-					== frc::DriverStation::Alliance::kRed;
-
 	m_currentTrajectory = PathPlannerTrajectory();
 	m_timeOffset = 0_s;
 
@@ -89,20 +81,17 @@ void PathfindingCommand::Initialize() {
 
 	m_controller->reset(currentPose, m_speedsSupplier());
 
-	frc::Pose2d alliancePose =
-			m_mirror ? GeometryUtil::mirrorPose(currentPose) : currentPose;
-
 	if (m_targetPath) {
-		alliancePose = frc::Pose2d(m_targetPath->getPoint(0).position,
+		m_targetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
 				m_goalEndState.getRotation());
 	}
 
-	if (currentPose.Translation().Distance(alliancePose.Translation())
+	if (currentPose.Translation().Distance(m_targetPose.Translation())
 			< 0.25_m) {
 		Cancel();
 	} else {
 		Pathfinding::setStartPosition(currentPose.Translation());
-		Pathfinding::setGoalPosition(alliancePose.Translation());
+		Pathfinding::setGoalPosition(m_targetPose.Translation());
 	}
 
 	m_startingPose = currentPose;
@@ -122,9 +111,6 @@ void PathfindingCommand::Execute() {
 	if (!skipUpdates && Pathfinding::isNewPathAvailable()) {
 		m_currentPath = Pathfinding::getCurrentPath(m_constraints,
 				m_goalEndState);
-		if (m_mirror) {
-			m_currentPath = m_currentPath->mirrorPath();
-		}
 
 		if (m_currentPath) {
 			m_currentTrajectory = PathPlannerTrajectory(m_currentPath,
@@ -268,12 +254,8 @@ bool PathfindingCommand::IsFinished() {
 		units::meter_t stoppingDistance = units::math::pow < 2
 				> (currentVel) / (2 * m_constraints.getMaxAcceleration());
 
-		frc::Translation2d startPos = m_targetPath->getPoint(0).position;
-		if (m_mirror) {
-			startPos = GeometryUtil::mirrorTranslation(startPos);
-		}
-
-		return currentPose.Translation().Distance(startPos) <= stoppingDistance;
+		return currentPose.Translation().Distance(
+				m_targetPath->getPoint(0).position) <= stoppingDistance;
 	}
 
 	if (m_currentTrajectory.getStates().size() > 0) {

@@ -20,7 +20,6 @@ public:
 	 * @param relems The maximum desired control effort for each input.
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 */
 	PathfindThenFollowPathLTV(std::shared_ptr<PathPlannerPath> goalPath,
@@ -30,19 +29,18 @@ public:
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
 			const wpi::array<double, 3> &Qelems,
 			const wpi::array<double, 2> &Relems, units::second_t dt,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
+			ReplanningConfig replanningConfig,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindLTV(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, Qelems,
-						Relems, dt, replanningConfig, useAllianceColor,
-						requirements),
+						Relems, dt, replanningConfig, requirements),
 				FollowPathWithEvents(
 						FollowPathLTV(goalPath, poseSupplier,
 								currentRobotRelativeSpeeds, robotRelativeOutput,
 								Qelems, Relems, dt, replanningConfig,
-								useAllianceColor, requirements).ToPtr().Unwrap(),
-						goalPath, poseSupplier, useAllianceColor));
+								requirements).ToPtr().Unwrap(), goalPath,
+						poseSupplier));
 	}
 
 	/**
@@ -55,7 +53,6 @@ public:
 	 * @param robotRelativeOutput a consumer for the output speeds (robot relative)
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 */
 	PathfindThenFollowPathLTV(std::shared_ptr<PathPlannerPath> goalPath,
@@ -64,17 +61,16 @@ public:
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
 			units::second_t dt, ReplanningConfig replanningConfig,
-			bool useAllianceColor, frc2::Requirements requirements) {
+			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindLTV(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, dt,
-						replanningConfig, useAllianceColor, requirements),
+						replanningConfig, requirements),
 				FollowPathWithEvents(
 						FollowPathLTV(goalPath, poseSupplier,
 								currentRobotRelativeSpeeds, robotRelativeOutput,
-								dt, replanningConfig, useAllianceColor,
-								requirements).ToPtr().Unwrap(), goalPath,
-						poseSupplier, useAllianceColor));
+								dt, replanningConfig, requirements).ToPtr().Unwrap(),
+						goalPath, poseSupplier));
 	}
 };
 }

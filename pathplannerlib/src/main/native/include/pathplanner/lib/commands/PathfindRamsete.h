@@ -19,7 +19,6 @@ public:
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindRamsete(std::shared_ptr<PathPlannerPath> targetPath,
@@ -29,11 +28,10 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			units::unit_t<PPRamseteController::b_unit> b,
 			units::unit_t<PPRamseteController::zeta_unit> zeta,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
-			frc2::Requirements requirements) : PathfindingCommand(targetPath,
-			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique < PPRamseteController > (b, zeta), 0_m,
-			replanningConfig, useAllianceColor, requirements) {
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
+			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
+			output, std::make_unique < PPRamseteController > (b, zeta), 0_m,
+			replanningConfig, requirements) {
 		if (targetPath->isChoreoPath()) {
 			throw FRC_MakeError(frc::err::CommandIllegalUse,
 					"Paths loaded from Choreo cannot be used with differential drivetrains");
@@ -49,7 +47,6 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindRamsete(std::shared_ptr<PathPlannerPath> targetPath,
@@ -57,11 +54,10 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
-			frc2::Requirements requirements) : PathfindingCommand(targetPath,
-			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
-			std::make_unique<PPRamseteController>(), 0_m, replanningConfig,
-			useAllianceColor, requirements) {
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
+			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
+			output, std::make_unique<PPRamseteController>(), 0_m,
+			replanningConfig, requirements) {
 		if (targetPath->isChoreoPath()) {
 			throw FRC_MakeError(frc::err::CommandIllegalUse,
 					"Paths loaded from Choreo cannot be used with differential drivetrains");
@@ -82,7 +78,6 @@ public:
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindRamsete(frc::Translation2d targetPosition,
@@ -92,12 +87,11 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			units::unit_t<PPRamseteController::b_unit> b,
 			units::unit_t<PPRamseteController::zeta_unit> zeta,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
-			frc2::Requirements requirements) : PathfindingCommand(
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
 			frc::Pose2d(targetPosition, frc::Rotation2d()), constraints,
 			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
 			std::make_unique < PPRamseteController > (b, zeta), 0_m,
-			replanningConfig, useAllianceColor, requirements) {
+			replanningConfig, requirements) {
 	}
 
 	/**
@@ -110,7 +104,6 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindRamsete(frc::Translation2d targetPosition,
@@ -118,12 +111,11 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
-			frc2::Requirements requirements) : PathfindingCommand(
+			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
 			frc::Pose2d(targetPosition, frc::Rotation2d()), constraints,
 			goalEndVel, poseSupplier, currentRobotRelativeSpeeds, output,
 			std::make_unique<PPRamseteController>(), 0_m, replanningConfig,
-			useAllianceColor, requirements) {
+			requirements) {
 	}
 };
 }

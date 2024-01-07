@@ -32,8 +32,6 @@ public:
 	 *     command
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance
-	 *     color
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
 	 */
 	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
@@ -41,8 +39,7 @@ public:
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unique_ptr<PathFollowingController> controller,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
-			frc2::Requirements requirements);
+			ReplanningConfig replanningConfig, frc2::Requirements requirements);
 
 	void Initialize() override;
 
@@ -60,9 +57,7 @@ private:
 	std::function<void(frc::ChassisSpeeds)> m_output;
 	std::unique_ptr<PathFollowingController> m_controller;
 	ReplanningConfig m_replanningConfig;
-	bool m_useAllianceColor;
 
-	std::shared_ptr<PathPlannerPath> m_alliancePath;
 	PathPlannerTrajectory m_generatedTrajectory;
 
 	inline void replanPath(const frc::Pose2d &currentPose,

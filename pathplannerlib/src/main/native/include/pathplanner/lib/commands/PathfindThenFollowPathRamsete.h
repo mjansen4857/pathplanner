@@ -21,7 +21,6 @@ public:
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 */
 	PathfindThenFollowPathRamsete(std::shared_ptr<PathPlannerPath> goalPath,
@@ -31,18 +30,17 @@ public:
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
 			units::unit_t<frc::RamseteController::b_unit> b,
 			units::unit_t<frc::RamseteController::zeta_unit> zeta,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
+			ReplanningConfig replanningConfig,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindRamsete(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, b,
-						zeta, replanningConfig, useAllianceColor, requirements),
+						zeta, replanningConfig, requirements),
 				FollowPathWithEvents(
 						FollowPathRamsete(goalPath, poseSupplier,
 								currentRobotRelativeSpeeds, robotRelativeOutput,
-								b, zeta, replanningConfig, useAllianceColor,
-								requirements).ToPtr().Unwrap(), goalPath,
-						poseSupplier, useAllianceColor));
+								b, zeta, replanningConfig, requirements).ToPtr().Unwrap(),
+						goalPath, poseSupplier));
 	}
 
 	/**
@@ -54,7 +52,6 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param robotRelativeOutput a consumer for the output speeds (robot relative)
 	 * @param replanningConfig Path replanning configuration
-	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 */
 	PathfindThenFollowPathRamsete(std::shared_ptr<PathPlannerPath> goalPath,
@@ -62,18 +59,17 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
-			ReplanningConfig replanningConfig, bool useAllianceColor,
+			ReplanningConfig replanningConfig,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindRamsete(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput,
-						replanningConfig, useAllianceColor, requirements),
+						replanningConfig, requirements),
 				FollowPathWithEvents(
 						FollowPathRamsete(goalPath, poseSupplier,
 								currentRobotRelativeSpeeds, robotRelativeOutput,
-								replanningConfig, useAllianceColor,
-								requirements).ToPtr().Unwrap(), goalPath,
-						poseSupplier, useAllianceColor));
+								replanningConfig, requirements).ToPtr().Unwrap(),
+						goalPath, poseSupplier));
 	}
 };
 }

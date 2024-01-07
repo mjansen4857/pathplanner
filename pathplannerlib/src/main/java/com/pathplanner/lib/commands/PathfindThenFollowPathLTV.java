@@ -27,8 +27,6 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathLTV(
@@ -41,7 +39,6 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
       Vector<N2> relems,
       double dt,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     addCommands(
         new PathfindLTV(
@@ -54,7 +51,6 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
             relems,
             dt,
             replanningConfig,
-            useAllianceColor,
             requirements),
         new FollowPathWithEvents(
             new FollowPathLTV(
@@ -66,11 +62,9 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
                 relems,
                 dt,
                 replanningConfig,
-                useAllianceColor,
                 requirements),
             goalPath,
-            poseSupplier,
-            useAllianceColor));
+            poseSupplier));
   }
 
   /**
@@ -83,8 +77,6 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
    * @param robotRelativeOutput a consumer for the output speeds (robot relative)
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
-   * @param useAllianceColor Should the path following be mirrored based on the current alliance
-   *     color
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathLTV(
@@ -95,7 +87,6 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
       Consumer<ChassisSpeeds> robotRelativeOutput,
       double dt,
       ReplanningConfig replanningConfig,
-      boolean useAllianceColor,
       Subsystem... requirements) {
     addCommands(
         new PathfindLTV(
@@ -106,7 +97,6 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
             robotRelativeOutput,
             dt,
             replanningConfig,
-            useAllianceColor,
             requirements),
         new FollowPathWithEvents(
             new FollowPathLTV(
@@ -116,10 +106,8 @@ public class PathfindThenFollowPathLTV extends SequentialCommandGroup {
                 robotRelativeOutput,
                 dt,
                 replanningConfig,
-                useAllianceColor,
                 requirements),
             goalPath,
-            poseSupplier,
-            useAllianceColor));
+            poseSupplier));
   }
 }

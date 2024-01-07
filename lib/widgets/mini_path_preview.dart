@@ -64,13 +64,7 @@ class _Painter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    double scale;
-
-    if (fieldImage.defaultSizeSmall != null) {
-      scale = size.width / fieldImage.defaultSizeSmall!.width;
-    } else {
-      scale = size.width / fieldImage.defaultSize.width;
-    }
+    double scale = size.width / fieldImage.defaultSize.width;
 
     for (List<Point> path in paths) {
       if (path.isNotEmpty) {
@@ -96,15 +90,13 @@ class _Painter extends CustomPainter {
 
     Path p = Path();
 
-    Offset start = PathPainterUtil.pointToPixelOffset(
-        pathPoints[0], scale, fieldImage,
-        small: true);
+    Offset start =
+        PathPainterUtil.pointToPixelOffset(pathPoints[0], scale, fieldImage);
     p.moveTo(start.dx, start.dy);
 
     for (int i = 1; i < pathPoints.length; i++) {
-      Offset pos = PathPainterUtil.pointToPixelOffset(
-          pathPoints[i], scale, fieldImage,
-          small: true);
+      Offset pos =
+          PathPainterUtil.pointToPixelOffset(pathPoints[i], scale, fieldImage);
 
       p.lineTo(pos.dx, pos.dy);
     }
@@ -122,16 +114,14 @@ class _Painter extends CustomPainter {
     // draw anchor point
     paint.style = PaintingStyle.fill;
     canvas.drawCircle(
-        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage,
-            small: true),
-        PathPainterUtil.uiPointSizeToPixels(35, scale, fieldImage, small: true),
+        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage),
+        PathPainterUtil.uiPointSizeToPixels(35, scale, fieldImage),
         paint);
     paint.style = PaintingStyle.stroke;
     paint.color = Colors.black;
     canvas.drawCircle(
-        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage,
-            small: true),
-        PathPainterUtil.uiPointSizeToPixels(35, scale, fieldImage, small: true),
+        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage),
+        PathPainterUtil.uiPointSizeToPixels(35, scale, fieldImage),
         paint);
   }
 }

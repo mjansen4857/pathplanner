@@ -115,6 +115,8 @@ void main() {
   testWidgets('drag starting pose', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
+    final fieldImage = FieldImage.official(OfficialField.chargedUp);
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SplitAutoEditor(
@@ -123,7 +125,7 @@ void main() {
           autoPaths: [testPath],
           autoChoreoPaths: const [],
           allPathNames: const ['testPath', 'otherPath'],
-          fieldImage: FieldImage.defaultField,
+          fieldImage: fieldImage,
           undoStack: undoStack,
           onAutoChanged: () => autoChanged = true,
         ),
@@ -134,13 +136,11 @@ void main() {
     num originalY = auto.startingPose!.position.y;
 
     var dragLocation = PathPainterUtil.pointToPixelOffset(
-            auto.startingPose!.position,
-            PathPainter.scale,
-            FieldImage.defaultField) +
+            auto.startingPose!.position, PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(-2.0, 23.0); // Some weird buffer going on
-    var oneMeterPixels = PathPainterUtil.metersToPixels(
-        1.0, PathPainter.scale, FieldImage.defaultField);
+    var oneMeterPixels =
+        PathPainterUtil.metersToPixels(1.0, PathPainter.scale, fieldImage);
 
     var posGesture = await widgetTester.startGesture(dragLocation,
         kind: PointerDeviceKind.mouse);

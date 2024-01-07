@@ -196,19 +196,21 @@ void main() {
   testWidgets('double click to add waypoint', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
+    final fieldImage = FieldImage.official(OfficialField.chargedUp);
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: fieldImage,
           undoStack: undoStack,
         ),
       ),
     ));
 
     var tapLocation = PathPainterUtil.pointToPixelOffset(
-            const Point(1.0, 1.0), PathPainter.scale, FieldImage.defaultField) +
+            const Point(1.0, 1.0), PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(-2.0, 23.0); // Some weird buffer going on
 
@@ -230,12 +232,14 @@ void main() {
   testWidgets('drag waypoint', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
+    final fieldImage = FieldImage.official(OfficialField.chargedUp);
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: fieldImage,
           undoStack: undoStack,
         ),
       ),
@@ -244,13 +248,11 @@ void main() {
     final startX = path.waypoints.last.anchor.x;
     final startY = path.waypoints.last.anchor.y;
     var dragLocation = PathPainterUtil.pointToPixelOffset(
-            path.waypoints.last.anchor,
-            PathPainter.scale,
-            FieldImage.defaultField) +
+            path.waypoints.last.anchor, PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(-2.0, 23.0); // Some weird buffer going on
-    var meterPixels = PathPainterUtil.metersToPixels(
-        1.0, PathPainter.scale, FieldImage.defaultField);
+    var meterPixels =
+        PathPainterUtil.metersToPixels(1.0, PathPainter.scale, fieldImage);
 
     var gesture = await widgetTester.startGesture(dragLocation,
         kind: PointerDeviceKind.mouse);
@@ -277,12 +279,14 @@ void main() {
   testWidgets('drag rotation target', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
+    final fieldImage = FieldImage.official(OfficialField.chargedUp);
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: fieldImage,
           undoStack: undoStack,
         ),
       ),
@@ -292,13 +296,11 @@ void main() {
         (path.rotationTargets[0].waypointRelativePos / pathResolution).round();
     Point targetPos = path.pathPoints[pointIdx].position;
     var dragLocation = PathPainterUtil.pointToPixelOffset(
-            targetPos + const Point(0.5, 0.0),
-            PathPainter.scale,
-            FieldImage.defaultField) +
+            targetPos + const Point(0.5, 0.0), PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(2.0, 28.0); // Some weird buffer going on
-    var halfMeterPixels = PathPainterUtil.metersToPixels(
-        0.5, PathPainter.scale, FieldImage.defaultField);
+    var halfMeterPixels =
+        PathPainterUtil.metersToPixels(0.5, PathPainter.scale, fieldImage);
 
     var gesture = await widgetTester.startGesture(dragLocation,
         kind: PointerDeviceKind.mouse);
@@ -323,12 +325,14 @@ void main() {
   testWidgets('drag end rotation', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
+    final fieldImage = FieldImage.official(OfficialField.chargedUp);
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: fieldImage,
           undoStack: undoStack,
         ),
       ),
@@ -336,13 +340,11 @@ void main() {
 
     Point targetPos = path.waypoints.last.anchor;
     var dragLocation = PathPainterUtil.pointToPixelOffset(
-            targetPos + const Point(0.5, 0.0),
-            PathPainter.scale,
-            FieldImage.defaultField) +
+            targetPos + const Point(0.5, 0.0), PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(2.0, 28.0); // Some weird buffer going on
-    var halfMeterPixels = PathPainterUtil.metersToPixels(
-        0.5, PathPainter.scale, FieldImage.defaultField);
+    var halfMeterPixels =
+        PathPainterUtil.metersToPixels(0.5, PathPainter.scale, fieldImage);
 
     var gesture = await widgetTester.startGesture(dragLocation,
         kind: PointerDeviceKind.mouse);
@@ -368,13 +370,14 @@ void main() {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.previewStartingState = PreviewStartingState();
+    final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SplitPathEditor(
           prefs: prefs,
           path: path,
-          fieldImage: FieldImage.defaultField,
+          fieldImage: fieldImage,
           undoStack: undoStack,
         ),
       ),
@@ -382,13 +385,11 @@ void main() {
 
     Point targetPos = path.waypoints.first.anchor;
     var dragLocation = PathPainterUtil.pointToPixelOffset(
-            targetPos + const Point(0.5, 0.0),
-            PathPainter.scale,
-            FieldImage.defaultField) +
+            targetPos + const Point(0.5, 0.0), PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(2.0, 28.0); // Some weird buffer going on
-    var halfMeterPixels = PathPainterUtil.metersToPixels(
-        0.5, PathPainter.scale, FieldImage.defaultField);
+    var halfMeterPixels =
+        PathPainterUtil.metersToPixels(0.5, PathPainter.scale, fieldImage);
 
     var gesture = await widgetTester.startGesture(dragLocation,
         kind: PointerDeviceKind.mouse);

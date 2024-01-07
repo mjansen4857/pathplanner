@@ -8,26 +8,26 @@ import 'package:image_size_getter/image_size_getter.dart';
 enum OfficialField {
   rapidReact,
   chargedUp,
+  crescendo,
 }
 
 class FieldImage {
   late final Image image;
   late final ui.Size defaultSize;
-  ui.Size? defaultSizeSmall;
   late num pixelsPerMeter;
-  num? pixelsPerMeterSmall;
   late String name;
   late final bool isCustom;
   late final String extension;
 
   static List<FieldImage>? _officialFields;
 
-  static final FieldImage defaultField = offialFields()[1];
+  static final FieldImage defaultField = offialFields().last;
 
   static List<FieldImage> offialFields() {
     _officialFields ??= [
       FieldImage.official(OfficialField.rapidReact),
       FieldImage.official(OfficialField.chargedUp),
+      FieldImage.official(OfficialField.crescendo),
     ];
     return _officialFields!;
   }
@@ -45,17 +45,25 @@ class FieldImage {
         name = 'Rapid React';
         break;
       case OfficialField.chargedUp:
-      default:
         image = Image.asset(
           'images/field23.png',
           fit: BoxFit.contain,
           filterQuality: FilterQuality.medium,
         );
         defaultSize = const ui.Size(3256, 1578);
-        defaultSizeSmall = const ui.Size(407, 197);
         pixelsPerMeter = 196.85;
-        pixelsPerMeterSmall = 24.6;
         name = 'Charged Up';
+        break;
+      case OfficialField.crescendo:
+      default:
+        image = Image.asset(
+          'images/field24.png',
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
+        );
+        defaultSize = const ui.Size(3256, 1578);
+        pixelsPerMeter = 196.85;
+        name = 'Crescendo';
         break;
     }
     isCustom = false;

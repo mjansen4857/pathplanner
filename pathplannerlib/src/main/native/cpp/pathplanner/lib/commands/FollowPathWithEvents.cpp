@@ -1,13 +1,15 @@
 #include "pathplanner/lib/commands/FollowPathWithEvents.h"
+#include <frc/DriverStation.h>
 
 using namespace pathplanner;
 
 FollowPathWithEvents::FollowPathWithEvents(
 		std::unique_ptr<frc2::Command> &&pathFollowingCommand,
 		std::shared_ptr<PathPlannerPath> path,
-		std::function<frc::Pose2d()> poseSupplier) : m_pathFollowingCommand(
+		std::function<frc::Pose2d()> poseSupplier, bool useAllianceColor) : m_pathFollowingCommand(
 		std::move(pathFollowingCommand)), m_path(path), m_poseSupplier(
-		poseSupplier), m_isFinished(false) {
+		poseSupplier), m_useAllianceColor(useAllianceColor), m_isFinished(
+		false), m_mirror(false) {
 	AddRequirements(m_pathFollowingCommand->GetRequirements());
 	for (EventMarker &marker : m_path->getEventMarkers()) {
 		auto reqs = marker.getCommand()->GetRequirements();
@@ -23,11 +25,20 @@ FollowPathWithEvents::FollowPathWithEvents(
 }
 
 void FollowPathWithEvents::Initialize() {
+	m_mirror = m_useAllianceColor
+			&& frc::DriverStation::GetAlliance().value_or(
+					frc::DriverStation::Alliance::kBlue)
+					== frc::DriverStation::Alliance::kRed;
+
 	m_isFinished = false;
 
 	m_currentCommands.clear();
 
 	frc::Pose2d currentPose = m_poseSupplier();
+	if (m_mirror) {
+		currentPose = GeometryUtil::mirrorPose(currentPose);
+	}
+
 	for (EventMarker &marker : m_path->getEventMarkers()) {
 		marker.reset(currentPose);
 	}
@@ -59,7 +70,10 @@ void FollowPathWithEvents::Execute() {
 		}
 	}
 
-	frc::Pose2d currentPose = m_poseSupplier();
+	frc::Pose2d currentPose =
+			m_mirror ?
+					GeometryUtil::mirrorPose(m_poseSupplier()) :
+					m_poseSupplier();
 	for (std::pair<EventMarker, bool> &marker : m_markers) {
 		if (!marker.second) {
 			if (marker.first.shouldTrigger(currentPose)) {

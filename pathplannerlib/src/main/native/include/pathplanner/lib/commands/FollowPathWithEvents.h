@@ -18,10 +18,12 @@ public:
 	 * @param pathFollowingCommand the command to follow the path
 	 * @param path the path to follow
 	 * @param poseSupplier a supplier for the robot's current pose
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance
+	 *     color
 	 */
 	FollowPathWithEvents(std::unique_ptr<frc2::Command> &&pathFollowingCommand,
 			std::shared_ptr<PathPlannerPath> path,
-			std::function<frc::Pose2d()> poseSupplier);
+			std::function<frc::Pose2d()> poseSupplier, bool useAllianceColor);
 
 	void Initialize() override;
 
@@ -35,9 +37,11 @@ private:
 	std::unique_ptr<frc2::Command> m_pathFollowingCommand;
 	std::shared_ptr<PathPlannerPath> m_path;
 	std::function<frc::Pose2d()> m_poseSupplier;
+	bool m_useAllianceColor;
 
 	std::vector<std::pair<std::shared_ptr<frc2::Command>, bool>> m_currentCommands;
 	std::vector<std::pair<EventMarker, bool>> m_markers;
 	bool m_isFinished;
+	bool m_mirror;
 };
 }

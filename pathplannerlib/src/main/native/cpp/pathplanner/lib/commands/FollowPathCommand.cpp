@@ -1,4 +1,5 @@
 #include "pathplanner/lib/commands/FollowPathCommand.h"
+#include <frc/DriverStation.h>
 
 using namespace pathplanner;
 
@@ -7,14 +8,24 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
-		ReplanningConfig replanningConfig, frc2::Requirements requirements) : m_path(
-		path), m_poseSupplier(poseSupplier), m_speedsSupplier(speedsSupplier), m_output(
-		output), m_controller(std::move(controller)), m_replanningConfig(
-		replanningConfig) {
+		ReplanningConfig replanningConfig, bool useAllianceColor,
+		frc2::Requirements requirements) : m_path(path), m_poseSupplier(
+		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
+		std::move(controller)), m_replanningConfig(replanningConfig), m_useAllianceColor(
+		useAllianceColor) {
 	AddRequirements(requirements);
 }
 
 void FollowPathCommand::Initialize() {
+	if (m_useAllianceColor
+			&& frc::DriverStation::GetAlliance().value_or(
+					frc::DriverStation::Alliance::kBlue)
+					== frc::DriverStation::Alliance::kRed) {
+		m_alliancePath = m_path->mirrorPath();
+	} else {
+		m_alliancePath = m_path;
+	}
+
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
 
@@ -25,21 +36,22 @@ void FollowPathCommand::Initialize() {
 					currentPose.Rotation());
 	frc::Rotation2d currentHeading = frc::Rotation2d(fieldSpeeds.vx(),
 			fieldSpeeds.vy());
-	frc::Rotation2d targetHeading = (m_path->getPoint(1).position
-			- m_path->getPoint(0).position).Angle();
+	frc::Rotation2d targetHeading = (m_alliancePath->getPoint(1).position
+			- m_alliancePath->getPoint(0).position).Angle();
 	frc::Rotation2d headingError = currentHeading - targetHeading;
 	bool onHeading = units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
 			< 0.25_mps || units::math::abs(headingError.Degrees()) < 30_deg;
 
-	if (!m_path->isChoreoPath() && m_replanningConfig.enableInitialReplanning
-			&& (currentPose.Translation().Distance(m_path->getPoint(0).position)
-					> 0.25_m || !onHeading)) {
+	if (!m_alliancePath->isChoreoPath()
+			&& m_replanningConfig.enableInitialReplanning
+			&& (currentPose.Translation().Distance(
+					m_alliancePath->getPoint(0).position) > 0.25_m || !onHeading)) {
 		replanPath(currentPose, currentSpeeds);
 	} else {
-		m_generatedTrajectory = m_path->getTrajectory(currentSpeeds,
+		m_generatedTrajectory = m_alliancePath->getTrajectory(currentSpeeds,
 				currentPose.Rotation());
-		PathPlannerLogging::logActivePath (m_path);
-		PPLibTelemetry::setCurrentPath(m_path);
+		PathPlannerLogging::logActivePath (m_alliancePath);
+		PPLibTelemetry::setCurrentPath(m_alliancePath);
 	}
 
 	m_timer.Reset();
@@ -57,7 +69,8 @@ void FollowPathCommand::Execute() {
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
 
-	if (!m_path->isChoreoPath() && m_replanningConfig.enableDynamicReplanning) {
+	if (!m_alliancePath->isChoreoPath()
+			&& m_replanningConfig.enableDynamicReplanning) {
 		units::meter_t previousError = units::math::abs(
 				m_controller->getPositionalError());
 		units::meter_t currentError = currentPose.Translation().Distance(
@@ -107,7 +120,8 @@ void FollowPathCommand::End(bool interrupted) {
 
 	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
 	// the command to smoothly transition into some auto-alignment routine
-	if (!interrupted && m_path->getGoalEndState().getVelocity() < 0.1_mps) {
+	if (!interrupted
+			&& m_alliancePath->getGoalEndState().getVelocity() < 0.1_mps) {
 		m_output(frc::ChassisSpeeds());
 	}
 

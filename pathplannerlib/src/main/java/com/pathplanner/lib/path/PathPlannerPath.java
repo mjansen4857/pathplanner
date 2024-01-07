@@ -1081,8 +1081,18 @@ public class PathPlannerPath {
     return new PathPlannerPath(
         newBezier,
         newRotTargets,
-        new ArrayList<>(constraintZones),
-        new ArrayList<>(eventMarkers),
+        constraintZones.stream()
+            .map(
+                z ->
+                    new ConstraintsZone(
+                        z.getMinWaypointPos(), z.getMaxWaypointPos(), z.getConstraints()))
+            .collect(Collectors.toList()),
+        eventMarkers.stream()
+            .map(
+                e ->
+                    new EventMarker(
+                        e.getWaypointRelativePos(), e.getCommand(), e.getMinimumTriggerDistance()))
+            .collect(Collectors.toList()),
         globalConstraints,
         newEndState,
         reversed,

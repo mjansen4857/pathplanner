@@ -225,6 +225,13 @@ public:
 	std::shared_ptr<PathPlannerPath> replan(const frc::Pose2d startingPose,
 			const frc::ChassisSpeeds currentSpeeds);
 
+	/**
+	 * Mirror a blue alliance path for the red alliance assuming reflectional symmetry
+	 *
+	 * @return The mirrored path
+	 */
+	std::shared_ptr<PathPlannerPath> mirrorPath();
+
 private:
 	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);
 

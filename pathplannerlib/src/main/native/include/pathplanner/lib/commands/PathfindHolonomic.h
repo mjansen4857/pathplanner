@@ -16,6 +16,7 @@ public:
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
 	 *     following
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command
 	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
 	 *     cause the robot to hold its current rotation until it reaches the given distance along the
@@ -26,13 +27,15 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output,
-			HolonomicPathFollowerConfig config, frc2::Requirements requirements,
+			HolonomicPathFollowerConfig config, bool useAllianceColor,
+			frc2::Requirements requirements,
 			units::meter_t rotationDelayDistance = 0_m) : PathfindingCommand(
 			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
 			output,
 			std::make_unique < PPHolonomicDriveController
 					> (config.translationConstants, config.rotationConstants, config.maxModuleSpeed, config.driveBaseRadius, config.period),
-			rotationDelayDistance, config.replanningConfig, requirements) {
+			rotationDelayDistance, config.replanningConfig, useAllianceColor,
+			requirements) {
 	}
 
 	/**
@@ -47,6 +50,7 @@ public:
 	 *     differential)
 	 * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
 	 *     following
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command
 	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
 	 *     cause the robot to hold its current rotation until it reaches the given distance along the
@@ -57,13 +61,15 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output,
-			HolonomicPathFollowerConfig config, frc2::Requirements requirements,
+			HolonomicPathFollowerConfig config, bool useAllianceColor,
+			frc2::Requirements requirements,
 			units::meter_t rotationDelayDistance = 0_m) : PathfindingCommand(
 			targetPose, constraints, goalEndVel, poseSupplier,
 			currentRobotRelativeSpeeds, output,
 			std::make_unique < PPHolonomicDriveController
 					> (config.translationConstants, config.rotationConstants, config.maxModuleSpeed, config.driveBaseRadius, config.period),
-			rotationDelayDistance, config.replanningConfig, requirements) {
+			rotationDelayDistance, config.replanningConfig, useAllianceColor,
+			requirements) {
 	}
 
 	/**
@@ -77,6 +83,7 @@ public:
 	 *     differential)
 	 * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
 	 *     following
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command
 	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
 	 *     cause the robot to hold its current rotation until it reaches the given distance along the
@@ -86,11 +93,12 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output,
-			HolonomicPathFollowerConfig config, frc2::Requirements requirements,
+			HolonomicPathFollowerConfig config, bool useAllianceColor,
+			frc2::Requirements requirements,
 			units::meter_t rotationDelayDistance = 0_m) : PathfindHolonomic(
 			targetPose, constraints, 0_mps, poseSupplier,
-			currentRobotRelativeSpeeds, output, config, requirements,
-			rotationDelayDistance) {
+			currentRobotRelativeSpeeds, output, config, useAllianceColor,
+			requirements, rotationDelayDistance) {
 	}
 };
 }

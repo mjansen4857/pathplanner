@@ -20,7 +20,6 @@ import java.util.function.Supplier;
 public class FollowPathCommand extends Command {
   private final Timer timer = new Timer();
   private final PathPlannerPath path;
-  private final PathPlannerPath mirroredPath;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
@@ -55,7 +54,6 @@ public class FollowPathCommand extends Command {
       boolean useAllianceColor,
       Subsystem... requirements) {
     this.path = path;
-    this.mirroredPath = path.mirrorPath();
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = speedsSupplier;
     this.output = outputRobotRelative;
@@ -71,7 +69,7 @@ public class FollowPathCommand extends Command {
     if (useAllianceColor
         && DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
             == DriverStation.Alliance.Red) {
-      alliancePath = mirroredPath;
+      alliancePath = path.mirrorPath();
     } else {
       alliancePath = path;
     }

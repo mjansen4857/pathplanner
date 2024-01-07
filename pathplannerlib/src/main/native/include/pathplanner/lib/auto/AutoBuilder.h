@@ -25,13 +25,14 @@ public:
 	 * @param robotRelativeOutput a function for setting the robot's robot-relative chassis speeds
 	 * @param config HolonomicPathFollowerConfig for configuring the
 	 *     path following commands
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param driveSubsystem a pointer to the subsystem for the robot's drive
 	 */
 	static void configureHolonomic(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
-			HolonomicPathFollowerConfig config,
+			HolonomicPathFollowerConfig config, bool useAllianceColor,
 			frc2::Subsystem *driveSubsystem);
 
 	/**
@@ -42,13 +43,15 @@ public:
 	 * @param speedsSupplier a supplier for the robot's current chassis speeds
 	 * @param output a consumer for setting the robot's chassis speeds
 	 * @param replanningConfig Path replanning configuration
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param driveSubsystem the subsystem for the robot's drive
 	 */
 	static void configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
-			ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem);
+			ReplanningConfig replanningConfig, bool useAllianceColor,
+			frc2::Subsystem *driveSubsystem);
 
 	/**
 	 * Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
@@ -62,6 +65,7 @@ public:
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
 	 * @param replanningConfig Path replanning configuration
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param driveSubsystem the subsystem for the robot's drive
 	 */
 	static void configureRamsete(std::function<frc::Pose2d()> poseSupplier,
@@ -70,7 +74,8 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			units::unit_t<frc::RamseteController::b_unit> b,
 			units::unit_t<frc::RamseteController::zeta_unit> zeta,
-			ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem);
+			ReplanningConfig replanningConfig, bool useAllianceColor,
+			frc2::Subsystem *driveSubsystem);
 
 	/**
 	 * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
@@ -84,6 +89,7 @@ public:
 	 * @param relems The maximum desired control effort for each input.
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
 	 * @param replanningConfig Path replanning configuration
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param driveSubsystem the subsystem for the robot's drive
 	 */
 	static void configureLTV(std::function<frc::Pose2d()> poseSupplier,
@@ -92,7 +98,8 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			const wpi::array<double, 3> &Qelms,
 			const wpi::array<double, 2> &Relms, units::second_t dt,
-			ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem);
+			ReplanningConfig replanningConfig, bool useAllianceColor,
+			frc2::Subsystem *driveSubsystem);
 
 	/**
 	 * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
@@ -104,13 +111,15 @@ public:
 	 * @param output a consumer for setting the robot's chassis speeds
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
 	 * @param replanningConfig Path replanning configuration
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param driveSubsystem the subsystem for the robot's drive
 	 */
 	static void configureLTV(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
-			ReplanningConfig replanningConfig, frc2::Subsystem *driveSubsystem);
+			ReplanningConfig replanningConfig, bool useAllianceColor,
+			frc2::Subsystem *driveSubsystem);
 
 	/**
 	 * Configures the AutoBuilder with custom path following command builder. Building pathfinding commands is not supported when using a custom path following command builder.
@@ -120,7 +129,8 @@ public:
 	 * @param resetPose a function for resetting the robot's pose
 	 */
 	static void configureCustom(
-			std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
+			std::function<
+					frc2::CommandPtr(std::shared_ptr<PathPlannerPath>, bool)> pathFollowingCommandBuilder,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose);
 
@@ -137,10 +147,22 @@ public:
 	 * Builds a command to follow a path with event markers.
 	 *
 	 * @param path the path to follow
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @return a path following command with events for the given path
 	 */
 	static frc2::CommandPtr followPathWithEvents(
-			std::shared_ptr<PathPlannerPath> path);
+			std::shared_ptr<PathPlannerPath> path, bool useAllianceColor);
+
+	/**
+	 * Builds a command to follow a path with event markers.
+	 *
+	 * @param path the path to follow
+	 * @return a path following command with events for the given path
+	 */
+	static inline frc2::CommandPtr followPathWithEvents(
+			std::shared_ptr<PathPlannerPath> path) {
+		return followPathWithEvents(path, m_useAllianceColor);
+	}
 
 	/**
 	 * Builds an auto command for the given auto name.
@@ -192,9 +214,11 @@ public:
 
 private:
 	static bool m_configured;
-	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
+	static std::function<
+			frc2::CommandPtr(std::shared_ptr<PathPlannerPath>, bool)> m_pathFollowingCommandBuilder;
 	static std::function<frc::Pose2d()> m_getPose;
 	static std::function<void(frc::Pose2d)> m_resetPose;
+	static bool m_useAllianceColor;
 
 	static bool m_pathfindingConfigured;
 	static std::function<

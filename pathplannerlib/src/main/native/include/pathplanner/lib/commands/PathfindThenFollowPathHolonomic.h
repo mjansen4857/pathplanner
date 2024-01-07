@@ -17,6 +17,7 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param robotRelativeOutput a consumer for the output speeds (robot relative)
 	 * @param config HolonomicPathFollowerConfig for configuring the path following commands
+	 * @param useAllianceColor Should the path following be mirrored based on the current alliance color
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
 	 *     cause the robot to hold its current rotation until it reaches the given distance along the
@@ -27,18 +28,19 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
-			HolonomicPathFollowerConfig config, frc2::Requirements requirements,
+			HolonomicPathFollowerConfig config, bool useAllianceColor,
+			frc2::Requirements requirements,
 			units::meter_t rotationDelayDistance = 0_m) {
 		AddCommands(
 				PathfindHolonomic(goalPath, pathfindingConstraints,
 						poseSupplier, currentRobotRelativeSpeeds,
-						robotRelativeOutput, config, requirements,
-						rotationDelayDistance),
+						robotRelativeOutput, config, useAllianceColor,
+						requirements, rotationDelayDistance),
 				FollowPathWithEvents(
 						FollowPathHolonomic(goalPath, poseSupplier,
 								currentRobotRelativeSpeeds, robotRelativeOutput,
-								config, requirements).ToPtr().Unwrap(),
-						goalPath, poseSupplier));
+								config, useAllianceColor, requirements).ToPtr().Unwrap(),
+						goalPath, poseSupplier, useAllianceColor));
 	}
 };
 }

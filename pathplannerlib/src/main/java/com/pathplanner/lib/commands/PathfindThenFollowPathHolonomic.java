@@ -25,6 +25,8 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
    * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
    *     cause the robot to hold its current rotation until it reaches the given distance along the
    *     path.
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathHolonomic(
@@ -35,6 +37,7 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
       Consumer<ChassisSpeeds> robotRelativeOutput,
       HolonomicPathFollowerConfig config,
       double rotationDelayDistance,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     addCommands(
         new PathfindHolonomic(
@@ -45,6 +48,7 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
             robotRelativeOutput,
             config,
             rotationDelayDistance,
+            useAllianceColor,
             requirements),
         new FollowPathWithEvents(
             new FollowPathHolonomic(
@@ -53,9 +57,11 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
                 currentRobotRelativeSpeeds,
                 robotRelativeOutput,
                 config,
+                useAllianceColor,
                 requirements),
             goalPath,
-            poseSupplier));
+            poseSupplier,
+            useAllianceColor));
   }
 
   /**
@@ -68,6 +74,8 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
    * @param robotRelativeOutput a consumer for the output speeds (robot relative)
    * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
    *     path following commands
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathHolonomic(
@@ -77,6 +85,7 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> robotRelativeOutput,
       HolonomicPathFollowerConfig config,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         goalPath,
@@ -86,6 +95,7 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
         robotRelativeOutput,
         config,
         0.0,
+        useAllianceColor,
         requirements);
   }
 }

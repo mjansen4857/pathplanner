@@ -29,6 +29,8 @@ public class PathfindLTV extends PathfindingCommand {
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -41,6 +43,7 @@ public class PathfindLTV extends PathfindingCommand {
       Vector<N2> relems,
       double dt,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -51,6 +54,7 @@ public class PathfindLTV extends PathfindingCommand {
         new PPLTVController(qelems, relems, dt),
         0,
         replanningConfig,
+        useAllianceColor,
         requirements);
 
     if (targetPath.isChoreoPath()) {
@@ -69,6 +73,8 @@ public class PathfindLTV extends PathfindingCommand {
    * @param output a consumer for the output speeds (robot relative)
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -79,6 +85,7 @@ public class PathfindLTV extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       double dt,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -89,6 +96,7 @@ public class PathfindLTV extends PathfindingCommand {
         new PPLTVController(dt),
         0,
         replanningConfig,
+        useAllianceColor,
         requirements);
 
     if (targetPath.isChoreoPath()) {
@@ -111,6 +119,8 @@ public class PathfindLTV extends PathfindingCommand {
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -124,6 +134,7 @@ public class PathfindLTV extends PathfindingCommand {
       Vector<N2> relems,
       double dt,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         new Pose2d(targetPosition, new Rotation2d()),
@@ -135,6 +146,7 @@ public class PathfindLTV extends PathfindingCommand {
         new PPLTVController(qelems, relems, dt),
         0,
         replanningConfig,
+        useAllianceColor,
         requirements);
   }
 
@@ -150,6 +162,8 @@ public class PathfindLTV extends PathfindingCommand {
    *     differential)
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -161,6 +175,7 @@ public class PathfindLTV extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       double dt,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         new Pose2d(targetPosition, new Rotation2d()),
@@ -172,6 +187,7 @@ public class PathfindLTV extends PathfindingCommand {
         new PPLTVController(dt),
         0,
         replanningConfig,
+        useAllianceColor,
         requirements);
   }
 
@@ -189,6 +205,8 @@ public class PathfindLTV extends PathfindingCommand {
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -201,6 +219,7 @@ public class PathfindLTV extends PathfindingCommand {
       Vector<N2> relems,
       double dt,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         targetPosition,
@@ -213,6 +232,7 @@ public class PathfindLTV extends PathfindingCommand {
         relems,
         dt,
         replanningConfig,
+        useAllianceColor,
         requirements);
   }
 
@@ -228,6 +248,8 @@ public class PathfindLTV extends PathfindingCommand {
    *     differential)
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -238,6 +260,7 @@ public class PathfindLTV extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       double dt,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     this(
         targetPosition,
@@ -248,6 +271,7 @@ public class PathfindLTV extends PathfindingCommand {
         output,
         dt,
         replanningConfig,
+        useAllianceColor,
         requirements);
   }
 }

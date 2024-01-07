@@ -25,6 +25,8 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathRamsete(
@@ -36,6 +38,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     addCommands(
         new PathfindRamsete(
@@ -47,6 +50,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
             b,
             zeta,
             replanningConfig,
+            useAllianceColor,
             requirements),
         new FollowPathWithEvents(
             new FollowPathRamsete(
@@ -57,9 +61,11 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
                 b,
                 zeta,
                 replanningConfig,
+                useAllianceColor,
                 requirements),
             goalPath,
-            poseSupplier));
+            poseSupplier,
+            useAllianceColor));
   }
 
   /**
@@ -71,6 +77,8 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param robotRelativeOutput a consumer for the output speeds (robot relative)
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathRamsete(
@@ -80,6 +88,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> robotRelativeOutput,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     addCommands(
         new PathfindRamsete(
@@ -89,13 +98,19 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
             currentRobotRelativeSpeeds,
             robotRelativeOutput,
             replanningConfig,
+            useAllianceColor,
             requirements),
-        new FollowPathRamsete(
+        new FollowPathWithEvents(
+            new FollowPathRamsete(
+                goalPath,
+                poseSupplier,
+                currentRobotRelativeSpeeds,
+                robotRelativeOutput,
+                replanningConfig,
+                useAllianceColor,
+                requirements),
             goalPath,
             poseSupplier,
-            currentRobotRelativeSpeeds,
-            robotRelativeOutput,
-            replanningConfig,
-            requirements));
+            useAllianceColor));
   }
 }

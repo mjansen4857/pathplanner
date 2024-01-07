@@ -9,6 +9,7 @@ import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -19,12 +20,15 @@ import java.util.function.Supplier;
 public class FollowPathCommand extends Command {
   private final Timer timer = new Timer();
   private final PathPlannerPath path;
+  private final PathPlannerPath mirroredPath;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
   private final PathFollowingController controller;
   private final ReplanningConfig replanningConfig;
+  private final boolean useAllianceColor;
 
+  private PathPlannerPath alliancePath;
   private PathPlannerTrajectory generatedTrajectory;
 
   /**
@@ -37,6 +41,8 @@ public class FollowPathCommand extends Command {
    *     command
    * @param controller Path following controller that will be used to follow the path
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathCommand(
@@ -46,19 +52,30 @@ public class FollowPathCommand extends Command {
       Consumer<ChassisSpeeds> outputRobotRelative,
       PathFollowingController controller,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     this.path = path;
+    this.mirroredPath = path.mirrorPath();
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = speedsSupplier;
     this.output = outputRobotRelative;
     this.controller = controller;
     this.replanningConfig = replanningConfig;
+    this.useAllianceColor = useAllianceColor;
 
     addRequirements(requirements);
   }
 
   @Override
   public void initialize() {
+    if (useAllianceColor
+        && DriverStation.getAlliance().orElse(DriverStation.Alliance.Blue)
+            == DriverStation.Alliance.Red) {
+      alliancePath = mirroredPath;
+    } else {
+      alliancePath = path;
+    }
+
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
@@ -69,21 +86,21 @@ public class FollowPathCommand extends Command {
     Rotation2d currentHeading =
         new Rotation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
     Rotation2d targetHeading =
-        path.getPoint(1).position.minus(path.getPoint(0).position).getAngle();
+        alliancePath.getPoint(1).position.minus(alliancePath.getPoint(0).position).getAngle();
     Rotation2d headingError = currentHeading.minus(targetHeading);
     boolean onHeading =
         Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 0.25
             || Math.abs(headingError.getDegrees()) < 30;
 
-    if (!path.isChoreoPath()
+    if (!alliancePath.isChoreoPath()
         && replanningConfig.enableInitialReplanning
-        && (currentPose.getTranslation().getDistance(path.getPoint(0).position) > 0.25
+        && (currentPose.getTranslation().getDistance(alliancePath.getPoint(0).position) > 0.25
             || !onHeading)) {
       replanPath(currentPose, currentSpeeds);
     } else {
-      generatedTrajectory = path.getTrajectory(currentSpeeds, currentPose.getRotation());
-      PathPlannerLogging.logActivePath(path);
-      PPLibTelemetry.setCurrentPath(path);
+      generatedTrajectory = alliancePath.getTrajectory(currentSpeeds, currentPose.getRotation());
+      PathPlannerLogging.logActivePath(alliancePath);
+      PPLibTelemetry.setCurrentPath(alliancePath);
     }
 
     timer.reset();
@@ -94,14 +111,14 @@ public class FollowPathCommand extends Command {
   public void execute() {
     double currentTime = timer.get();
     PathPlannerTrajectory.State targetState = generatedTrajectory.sample(currentTime);
-    if (!controller.isHolonomic() && path.isReversed()) {
+    if (!controller.isHolonomic() && alliancePath.isReversed()) {
       targetState = targetState.reverse();
     }
 
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
-    if (!path.isChoreoPath() && replanningConfig.enableDynamicReplanning) {
+    if (!alliancePath.isChoreoPath() && replanningConfig.enableDynamicReplanning) {
       double previousError = Math.abs(controller.getPositionalError());
       double currentError = currentPose.getTranslation().getDistance(targetState.positionMeters);
 
@@ -159,7 +176,7 @@ public class FollowPathCommand extends Command {
   }
 
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
-    PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
+    PathPlannerPath replanned = alliancePath.replan(currentPose, currentSpeeds);
     generatedTrajectory =
         new PathPlannerTrajectory(replanned, currentSpeeds, currentPose.getRotation());
     PathPlannerLogging.logActivePath(replanned);

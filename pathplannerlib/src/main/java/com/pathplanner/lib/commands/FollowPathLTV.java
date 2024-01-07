@@ -24,6 +24,8 @@ public class FollowPathLTV extends FollowPathCommand {
    * @param output Function that will apply the robot-relative output speeds of this command
    * @param dt The amount of time between each robot control loop, default is 0.02s
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathLTV(
@@ -33,6 +35,7 @@ public class FollowPathLTV extends FollowPathCommand {
       Consumer<ChassisSpeeds> output,
       double dt,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         path,
@@ -41,6 +44,7 @@ public class FollowPathLTV extends FollowPathCommand {
         output,
         new PPLTVController(dt),
         replanningConfig,
+        useAllianceColor,
         requirements);
 
     if (path.isChoreoPath()) {
@@ -61,6 +65,8 @@ public class FollowPathLTV extends FollowPathCommand {
    * @param relems The maximum desired control effort for each input.
    * @param dt The amount of time between each robot control loop, default is 0.02s
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathLTV(
@@ -72,6 +78,7 @@ public class FollowPathLTV extends FollowPathCommand {
       Vector<N2> relems,
       double dt,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         path,
@@ -80,6 +87,7 @@ public class FollowPathLTV extends FollowPathCommand {
         output,
         new PPLTVController(qelems, relems, dt),
         replanningConfig,
+        useAllianceColor,
         requirements);
 
     if (path.isChoreoPath()) {

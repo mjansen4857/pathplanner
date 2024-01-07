@@ -24,6 +24,8 @@ public class FollowPathRamsete extends FollowPathCommand {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathRamsete(
@@ -34,6 +36,7 @@ public class FollowPathRamsete extends FollowPathCommand {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         path,
@@ -42,6 +45,7 @@ public class FollowPathRamsete extends FollowPathCommand {
         output,
         new PPRamseteController(b, zeta),
         replanningConfig,
+        useAllianceColor,
         requirements);
 
     if (path.isChoreoPath()) {
@@ -59,6 +63,8 @@ public class FollowPathRamsete extends FollowPathCommand {
    * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
    * @param output Function that will apply the robot-relative output speeds of this command
    * @param replanningConfig Path replanning configuration
+   * @param useAllianceColor Should the path following be mirrored based on the current alliance
+   *     color
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathRamsete(
@@ -67,6 +73,7 @@ public class FollowPathRamsete extends FollowPathCommand {
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> output,
       ReplanningConfig replanningConfig,
+      boolean useAllianceColor,
       Subsystem... requirements) {
     super(
         path,
@@ -75,6 +82,7 @@ public class FollowPathRamsete extends FollowPathCommand {
         output,
         new PPRamseteController(),
         replanningConfig,
+        useAllianceColor,
         requirements);
 
     if (path.isChoreoPath()) {

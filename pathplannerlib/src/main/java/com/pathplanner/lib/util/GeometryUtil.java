@@ -1,10 +1,33 @@
 package com.pathplanner.lib.util;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 /** Utility class for various geometry functions used during generation */
 public class GeometryUtil {
+  private static final double FIELD_WIDTH = 8.21;
+
+  /**
+   * Mirror a Pose2d to the other alliance assuming reflectional symmetry
+   *
+   * @param pose The pose to mirror
+   * @return The mirrored pose
+   */
+  public static Pose2d mirrorPose(Pose2d pose) {
+    return new Pose2d(mirrorTranslation(pose.getTranslation()), pose.getRotation().unaryMinus());
+  }
+
+  /**
+   * Mirror a Translation2d to the other alliance assuming reflectional symmetry
+   *
+   * @param translation The translation to mirror
+   * @return The mirrored translation
+   */
+  public static Translation2d mirrorTranslation(Translation2d translation) {
+    return new Translation2d(translation.getX(), FIELD_WIDTH - translation.getY());
+  }
+
   /**
    * Interpolate between two doubles
    *

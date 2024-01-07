@@ -2,6 +2,7 @@
 
 #include <frc/geometry/Rotation2d.h>
 #include <frc/geometry/Translation2d.h>
+#include <frc/geometry/Pose2d.h>
 #include <units/time.h>
 #include <units/velocity.h>
 #include <units/acceleration.h>
@@ -14,9 +15,19 @@
 #include <math.h>
 
 #define PI 3.14159265358979323846
+#define FIELD_WIDTH 8.21_m
 
 namespace pathplanner {
 namespace GeometryUtil {
+constexpr frc::Translation2d mirrorTranslation(
+		const frc::Translation2d &translation) {
+	return frc::Translation2d(translation.X(), FIELD_WIDTH - translation.Y());
+}
+
+constexpr frc::Pose2d mirrorPose(const frc::Pose2d &pose) {
+	return frc::Pose2d(mirrorTranslation(pose.Translation()), -pose.Rotation());
+}
+
 constexpr units::second_t unitLerp(units::second_t const startVal,
 		units::second_t const endVal, double const t) {
 	return startVal + (endVal - startVal) * t;

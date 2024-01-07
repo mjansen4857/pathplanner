@@ -8,6 +8,7 @@ import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -30,6 +31,8 @@ public class FollowPathHolonomic extends FollowPathCommand {
    *     drive base width / 2
    * @param period Period of the control loop in seconds, default is 0.02s
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathHolonomic(
@@ -43,6 +46,7 @@ public class FollowPathHolonomic extends FollowPathCommand {
       double driveBaseRadius,
       double period,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         path,
@@ -52,6 +56,7 @@ public class FollowPathHolonomic extends FollowPathCommand {
         new PPHolonomicDriveController(
             translationConstants, rotationConstants, period, maxModuleSpeed, driveBaseRadius),
         replanningConfig,
+        shouldFlipPath,
         requirements);
   }
 
@@ -71,6 +76,8 @@ public class FollowPathHolonomic extends FollowPathCommand {
    *     distance from the center of the robot to the furthest module. For mecanum, this is the
    *     drive base width / 2
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathHolonomic(
@@ -83,6 +90,7 @@ public class FollowPathHolonomic extends FollowPathCommand {
       double maxModuleSpeed,
       double driveBaseRadius,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     this(
         path,
@@ -95,6 +103,7 @@ public class FollowPathHolonomic extends FollowPathCommand {
         driveBaseRadius,
         0.02,
         replanningConfig,
+        shouldFlipPath,
         requirements);
   }
 
@@ -108,6 +117,8 @@ public class FollowPathHolonomic extends FollowPathCommand {
    * @param outputRobotRelative Function that will apply the robot-relative output speeds of this
    *     command
    * @param config Holonomic path follower configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathHolonomic(
@@ -116,6 +127,7 @@ public class FollowPathHolonomic extends FollowPathCommand {
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> outputRobotRelative,
       HolonomicPathFollowerConfig config,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     this(
         path,
@@ -128,6 +140,7 @@ public class FollowPathHolonomic extends FollowPathCommand {
         config.driveBaseRadius,
         config.period,
         config.replanningConfig,
+        shouldFlipPath,
         requirements);
   }
 }

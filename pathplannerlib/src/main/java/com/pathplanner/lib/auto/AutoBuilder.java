@@ -3,6 +3,7 @@ package com.pathplanner.lib.auto;
 import com.pathplanner.lib.commands.*;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.Vector;
@@ -21,6 +22,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -36,6 +38,7 @@ public class AutoBuilder {
   private static Function<PathPlannerPath, Command> pathFollowingCommandBuilder;
   private static Supplier<Pose2d> getPose;
   private static Consumer<Pose2d> resetPose;
+  private static BooleanSupplier shouldFlipPath;
 
   // Pathfinding builders
   private static boolean pathfindingConfigured = false;
@@ -54,6 +57,8 @@ public class AutoBuilder {
    * @param robotRelativeOutput a consumer for setting the robot's robot-relative chassis speeds
    * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
    *     path following commands
+   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
+   *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -63,6 +68,7 @@ public class AutoBuilder {
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
       Consumer<ChassisSpeeds> robotRelativeOutput,
       HolonomicPathFollowerConfig config,
+      BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -77,6 +83,7 @@ public class AutoBuilder {
                 robotRelativeSpeedsSupplier,
                 robotRelativeOutput,
                 config,
+                shouldFlipPath,
                 driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
@@ -104,6 +111,7 @@ public class AutoBuilder {
                 robotRelativeOutput,
                 config,
                 rotationDelayDistance,
+                shouldFlipPath,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
@@ -116,6 +124,8 @@ public class AutoBuilder {
    * @param speedsSupplier a supplier for the robot's current chassis speeds
    * @param output a consumer for setting the robot's chassis speeds
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
+   *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -125,6 +135,7 @@ public class AutoBuilder {
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> output,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -134,7 +145,13 @@ public class AutoBuilder {
     AutoBuilder.pathFollowingCommandBuilder =
         (path) ->
             new FollowPathRamsete(
-                path, poseSupplier, speedsSupplier, output, replanningConfig, driveSubsystem);
+                path,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                replanningConfig,
+                shouldFlipPath,
+                driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
@@ -159,6 +176,7 @@ public class AutoBuilder {
                 speedsSupplier,
                 output,
                 replanningConfig,
+                shouldFlipPath,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
@@ -175,6 +193,8 @@ public class AutoBuilder {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
+   *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -186,6 +206,7 @@ public class AutoBuilder {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -202,6 +223,7 @@ public class AutoBuilder {
                 b,
                 zeta,
                 replanningConfig,
+                shouldFlipPath,
                 driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
@@ -231,6 +253,7 @@ public class AutoBuilder {
                 b,
                 zeta,
                 replanningConfig,
+                shouldFlipPath,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
@@ -245,6 +268,8 @@ public class AutoBuilder {
    * @param output a consumer for setting the robot's chassis speeds
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
+   *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -255,6 +280,7 @@ public class AutoBuilder {
       Consumer<ChassisSpeeds> output,
       double dt,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -264,7 +290,14 @@ public class AutoBuilder {
     AutoBuilder.pathFollowingCommandBuilder =
         (path) ->
             new FollowPathLTV(
-                path, poseSupplier, speedsSupplier, output, dt, replanningConfig, driveSubsystem);
+                path,
+                poseSupplier,
+                speedsSupplier,
+                output,
+                dt,
+                replanningConfig,
+                shouldFlipPath,
+                driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
@@ -291,6 +324,7 @@ public class AutoBuilder {
                 output,
                 dt,
                 replanningConfig,
+                shouldFlipPath,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
@@ -307,6 +341,8 @@ public class AutoBuilder {
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
+   *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
    * @throws AutoBuilderException if AutoBuilder has already been configured
    */
@@ -319,6 +355,7 @@ public class AutoBuilder {
       Vector<N2> relems,
       double dt,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
       throw new AutoBuilderException(
@@ -336,6 +373,7 @@ public class AutoBuilder {
                 relems,
                 dt,
                 replanningConfig,
+                shouldFlipPath,
                 driveSubsystem);
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
@@ -367,13 +405,15 @@ public class AutoBuilder {
                 relems,
                 dt,
                 replanningConfig,
+                shouldFlipPath,
                 driveSubsystem);
     AutoBuilder.pathfindingConfigured = true;
   }
 
   /**
    * Configures the AutoBuilder with custom path following command builder. Building pathfinding
-   * commands is not supported if using a custom command builder.
+   * commands is not supported if using a custom command builder. Custom path following commands
+   * will not have the path flipped for them, and event markers will not be triggered automatically.
    *
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
    * @param poseSupplier a supplier for the robot's current pose
@@ -421,14 +461,28 @@ public class AutoBuilder {
    * @param path the path to follow
    * @return a path following command with events for the given path
    * @throws AutoBuilderException if the AutoBuilder has not been configured
+   * @deprecated Renamed to "followPath"
    */
+  @Deprecated(forRemoval = true)
   public static Command followPathWithEvents(PathPlannerPath path) {
+    return followPath(path);
+  }
+
+  /**
+   * Builds a command to follow a path. PathPlannerLib commands will also trigger event markers
+   * along the way.
+   *
+   * @param path the path to follow
+   * @return a path following command with for the given path
+   * @throws AutoBuilderException if the AutoBuilder has not been configured
+   */
+  public static Command followPath(PathPlannerPath path) {
     if (!isConfigured()) {
       throw new AutoBuilderException(
           "Auto builder was used to build a path following command before being configured");
     }
 
-    return new FollowPathWithEvents(pathFollowingCommandBuilder.apply(path), path, getPose);
+    return pathFollowingCommandBuilder.apply(path);
   }
 
   /**
@@ -644,7 +698,17 @@ public class AutoBuilder {
     Command autoCommand = CommandUtil.commandFromJson(commandJson, choreoAuto);
     if (autoJson.get("startingPose") != null) {
       Pose2d startPose = getStartingPoseFromJson((JSONObject) autoJson.get("startingPose"));
-      return Commands.sequence(Commands.runOnce(() -> resetPose.accept(startPose)), autoCommand);
+      return Commands.sequence(
+          Commands.runOnce(
+              () -> {
+                boolean flip = shouldFlipPath.getAsBoolean();
+                if (flip) {
+                  resetPose.accept(GeometryUtil.flipFieldPose(startPose));
+                } else {
+                  resetPose.accept(startPose);
+                }
+              }),
+          autoCommand);
     } else {
       return autoCommand;
     }

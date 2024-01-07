@@ -6,6 +6,7 @@ import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -24,6 +25,8 @@ public class FollowPathRamsete extends FollowPathCommand {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathRamsete(
@@ -34,6 +37,7 @@ public class FollowPathRamsete extends FollowPathCommand {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         path,
@@ -42,6 +46,7 @@ public class FollowPathRamsete extends FollowPathCommand {
         output,
         new PPRamseteController(b, zeta),
         replanningConfig,
+        shouldFlipPath,
         requirements);
 
     if (path.isChoreoPath()) {
@@ -59,6 +64,8 @@ public class FollowPathRamsete extends FollowPathCommand {
    * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
    * @param output Function that will apply the robot-relative output speeds of this command
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathRamsete(
@@ -67,6 +74,7 @@ public class FollowPathRamsete extends FollowPathCommand {
       Supplier<ChassisSpeeds> speedsSupplier,
       Consumer<ChassisSpeeds> output,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         path,
@@ -75,6 +83,7 @@ public class FollowPathRamsete extends FollowPathCommand {
         output,
         new PPRamseteController(),
         replanningConfig,
+        shouldFlipPath,
         requirements);
 
     if (path.isChoreoPath()) {

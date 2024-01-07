@@ -1,6 +1,7 @@
 package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.controllers.PathFollowingController;
+import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPlannerTrajectory;
 import com.pathplanner.lib.util.PPLibTelemetry;
@@ -12,19 +13,28 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.*;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /** Base command for following a path */
 public class FollowPathCommand extends Command {
   private final Timer timer = new Timer();
-  private final PathPlannerPath path;
+  private final PathPlannerPath originalPath;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
   private final Consumer<ChassisSpeeds> output;
   private final PathFollowingController controller;
   private final ReplanningConfig replanningConfig;
+  private final BooleanSupplier shouldFlipPath;
 
+  // For event markers
+  private final Map<Command, Boolean> currentEventCommands = new HashMap<>();
+  private final List<EventMarker> untriggeredMarkers = new ArrayList<>();
+
+  private PathPlannerPath path;
   private PathPlannerTrajectory generatedTrajectory;
 
   /**
@@ -37,6 +47,8 @@ public class FollowPathCommand extends Command {
    *     command
    * @param controller Path following controller that will be used to follow the path
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathCommand(
@@ -46,19 +58,39 @@ public class FollowPathCommand extends Command {
       Consumer<ChassisSpeeds> outputRobotRelative,
       PathFollowingController controller,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
-    this.path = path;
+    this.originalPath = path;
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = speedsSupplier;
     this.output = outputRobotRelative;
     this.controller = controller;
     this.replanningConfig = replanningConfig;
+    this.shouldFlipPath = shouldFlipPath;
 
-    addRequirements(requirements);
+    Set<Subsystem> driveRequirements = Set.of(requirements);
+    m_requirements.addAll(driveRequirements);
+
+    for (EventMarker marker : this.path.getEventMarkers()) {
+      var reqs = marker.getCommand().getRequirements();
+
+      if (!Collections.disjoint(driveRequirements, reqs)) {
+        throw new IllegalArgumentException(
+            "Events that are triggered during path following cannot require the drive subsystem");
+      }
+
+      m_requirements.addAll(reqs);
+    }
   }
 
   @Override
   public void initialize() {
+    if (shouldFlipPath.getAsBoolean()) {
+      path = originalPath.flipPath();
+    } else {
+      path = originalPath;
+    }
+
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
@@ -85,6 +117,14 @@ public class FollowPathCommand extends Command {
       PathPlannerLogging.logActivePath(path);
       PPLibTelemetry.setCurrentPath(path);
     }
+
+    // Initialize markers
+    currentEventCommands.clear();
+    for (EventMarker marker : path.getEventMarkers()) {
+      marker.reset(currentPose);
+    }
+    untriggeredMarkers.clear();
+    untriggeredMarkers.addAll(path.getEventMarkers());
 
     timer.reset();
     timer.start();
@@ -138,6 +178,42 @@ public class FollowPathCommand extends Command {
     PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
 
     output.accept(targetSpeeds);
+
+    // Run event marker commands
+    for (Map.Entry<Command, Boolean> runningCommand : currentEventCommands.entrySet()) {
+      if (!runningCommand.getValue()) {
+        continue;
+      }
+
+      runningCommand.getKey().execute();
+
+      if (runningCommand.getKey().isFinished()) {
+        runningCommand.getKey().end(false);
+        runningCommand.setValue(false);
+      }
+    }
+
+    List<EventMarker> toTrigger =
+        untriggeredMarkers.stream()
+            .filter(marker -> marker.shouldTrigger(currentPose))
+            .collect(Collectors.toList());
+    untriggeredMarkers.removeAll(toTrigger);
+    for (EventMarker marker : toTrigger) {
+      for (var runningCommand : currentEventCommands.entrySet()) {
+        if (!runningCommand.getValue()) {
+          continue;
+        }
+
+        if (!Collections.disjoint(
+            runningCommand.getKey().getRequirements(), marker.getCommand().getRequirements())) {
+          runningCommand.getKey().end(true);
+          runningCommand.setValue(false);
+        }
+      }
+
+      marker.getCommand().initialize();
+      currentEventCommands.put(marker.getCommand(), true);
+    }
   }
 
   @Override
@@ -156,6 +232,13 @@ public class FollowPathCommand extends Command {
     }
 
     PathPlannerLogging.logActivePath(null);
+
+    // End markers
+    for (Map.Entry<Command, Boolean> runningCommand : currentEventCommands.entrySet()) {
+      if (runningCommand.getValue()) {
+        runningCommand.getKey().end(true);
+      }
+    }
   }
 
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {

@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -25,6 +26,8 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
    * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
    *     cause the robot to hold its current rotation until it reaches the given distance along the
    *     path.
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathHolonomic(
@@ -35,6 +38,7 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
       Consumer<ChassisSpeeds> robotRelativeOutput,
       HolonomicPathFollowerConfig config,
       double rotationDelayDistance,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     addCommands(
         new PathfindHolonomic(
@@ -45,17 +49,16 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
             robotRelativeOutput,
             config,
             rotationDelayDistance,
+            shouldFlipPath,
             requirements),
-        new FollowPathWithEvents(
-            new FollowPathHolonomic(
-                goalPath,
-                poseSupplier,
-                currentRobotRelativeSpeeds,
-                robotRelativeOutput,
-                config,
-                requirements),
+        new FollowPathHolonomic(
             goalPath,
-            poseSupplier));
+            poseSupplier,
+            currentRobotRelativeSpeeds,
+            robotRelativeOutput,
+            config,
+            shouldFlipPath,
+            requirements));
   }
 
   /**
@@ -68,6 +71,8 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
    * @param robotRelativeOutput a consumer for the output speeds (robot relative)
    * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
    *     path following commands
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathHolonomic(
@@ -77,6 +82,7 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> robotRelativeOutput,
       HolonomicPathFollowerConfig config,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     this(
         goalPath,
@@ -86,6 +92,7 @@ public class PathfindThenFollowPathHolonomic extends SequentialCommandGroup {
         robotRelativeOutput,
         config,
         0.0,
+        shouldFlipPath,
         requirements);
   }
 }

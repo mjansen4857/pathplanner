@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -25,6 +26,8 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathRamsete(
@@ -36,6 +39,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     addCommands(
         new PathfindRamsete(
@@ -47,19 +51,18 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
             b,
             zeta,
             replanningConfig,
+            shouldFlipPath,
             requirements),
-        new FollowPathWithEvents(
-            new FollowPathRamsete(
-                goalPath,
-                poseSupplier,
-                currentRobotRelativeSpeeds,
-                robotRelativeOutput,
-                b,
-                zeta,
-                replanningConfig,
-                requirements),
+        new FollowPathRamsete(
             goalPath,
-            poseSupplier));
+            poseSupplier,
+            currentRobotRelativeSpeeds,
+            robotRelativeOutput,
+            b,
+            zeta,
+            replanningConfig,
+            shouldFlipPath,
+            requirements));
   }
 
   /**
@@ -71,6 +74,8 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param robotRelativeOutput a consumer for the output speeds (robot relative)
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command (drive subsystem)
    */
   public PathfindThenFollowPathRamsete(
@@ -80,6 +85,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> robotRelativeOutput,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     addCommands(
         new PathfindRamsete(
@@ -89,6 +95,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
             currentRobotRelativeSpeeds,
             robotRelativeOutput,
             replanningConfig,
+            shouldFlipPath,
             requirements),
         new FollowPathRamsete(
             goalPath,
@@ -96,6 +103,7 @@ public class PathfindThenFollowPathRamsete extends SequentialCommandGroup {
             currentRobotRelativeSpeeds,
             robotRelativeOutput,
             replanningConfig,
+            shouldFlipPath,
             requirements));
   }
 }

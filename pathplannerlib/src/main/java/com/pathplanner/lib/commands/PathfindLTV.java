@@ -12,6 +12,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -29,6 +30,8 @@ public class PathfindLTV extends PathfindingCommand {
    * @param relems The maximum desired control effort for each input.
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -41,6 +44,7 @@ public class PathfindLTV extends PathfindingCommand {
       Vector<N2> relems,
       double dt,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -51,6 +55,7 @@ public class PathfindLTV extends PathfindingCommand {
         new PPLTVController(qelems, relems, dt),
         0,
         replanningConfig,
+        shouldFlipPath,
         requirements);
 
     if (targetPath.isChoreoPath()) {
@@ -69,6 +74,8 @@ public class PathfindLTV extends PathfindingCommand {
    * @param output a consumer for the output speeds (robot relative)
    * @param dt Period of the robot control loop in seconds (default 0.02)
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command
    */
   public PathfindLTV(
@@ -79,6 +86,7 @@ public class PathfindLTV extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       double dt,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -89,6 +97,7 @@ public class PathfindLTV extends PathfindingCommand {
         new PPLTVController(dt),
         0,
         replanningConfig,
+        shouldFlipPath,
         requirements);
 
     if (targetPath.isChoreoPath()) {

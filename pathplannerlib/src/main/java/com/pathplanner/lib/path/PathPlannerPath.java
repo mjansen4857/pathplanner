@@ -1013,6 +1013,89 @@ public class PathPlannerPath {
   }
 
   /**
+   * Flip a path to the other side of the field, maintaining a global blue alliance origin
+   *
+   * @return The flipped path
+   */
+  public PathPlannerPath flipPath() {
+    if (isChoreoPath) {
+      // Just flip the choreo traj
+      List<PathPlannerTrajectory.State> mirroredStates = new ArrayList<>();
+      for (PathPlannerTrajectory.State state : choreoTrajectory.getStates()) {
+        PathPlannerTrajectory.State mirrored = new PathPlannerTrajectory.State();
+
+        mirrored.timeSeconds = state.timeSeconds;
+        mirrored.velocityMps = state.velocityMps;
+        mirrored.accelerationMpsSq = state.accelerationMpsSq;
+        mirrored.headingAngularVelocityRps = -state.headingAngularVelocityRps;
+        mirrored.positionMeters = GeometryUtil.flipFieldPosition(state.positionMeters);
+        mirrored.heading = GeometryUtil.flipFieldRotation(state.heading);
+        mirrored.targetHolonomicRotation =
+            GeometryUtil.flipFieldRotation(state.targetHolonomicRotation);
+        mirrored.holonomicAngularVelocityRps.ifPresent(
+            v -> mirrored.holonomicAngularVelocityRps = Optional.of(-v));
+        mirrored.curvatureRadPerMeter = -state.curvatureRadPerMeter;
+        mirrored.constraints = state.constraints;
+        mirroredStates.add(mirrored);
+      }
+
+      PathPlannerPath path =
+          new PathPlannerPath(
+              new PathConstraints(
+                  Double.POSITIVE_INFINITY,
+                  Double.POSITIVE_INFINITY,
+                  Double.POSITIVE_INFINITY,
+                  Double.POSITIVE_INFINITY),
+              new GoalEndState(
+                  mirroredStates.get(mirroredStates.size() - 1).velocityMps,
+                  mirroredStates.get(mirroredStates.size() - 1).targetHolonomicRotation,
+                  true));
+
+      List<PathPoint> pathPoints = new ArrayList<>();
+      for (var state : mirroredStates) {
+        pathPoints.add(new PathPoint(state.positionMeters));
+      }
+
+      path.allPoints = pathPoints;
+      path.isChoreoPath = true;
+      path.choreoTrajectory = new PathPlannerTrajectory(mirroredStates);
+
+      return path;
+    }
+
+    List<Translation2d> newBezier =
+        bezierPoints.stream().map(GeometryUtil::flipFieldPosition).collect(Collectors.toList());
+    List<RotationTarget> newRotTargets =
+        rotationTargets.stream()
+            .map(
+                (t) ->
+                    new RotationTarget(
+                        t.getPosition(),
+                        GeometryUtil.flipFieldRotation(t.getTarget()),
+                        t.shouldRotateFast()))
+            .collect(Collectors.toList());
+    GoalEndState newEndState =
+        new GoalEndState(
+            goalEndState.getVelocity(), GeometryUtil.flipFieldRotation(goalEndState.getRotation()));
+    Rotation2d newPreviewRot = GeometryUtil.flipFieldRotation(previewStartingRotation);
+
+    return new PathPlannerPath(
+        newBezier,
+        newRotTargets,
+        constraintZones,
+        eventMarkers.stream()
+            .map(
+                e ->
+                    new EventMarker(
+                        e.getWaypointRelativePos(), e.getCommand(), e.getMinimumTriggerDistance()))
+            .collect(Collectors.toList()),
+        globalConstraints,
+        newEndState,
+        reversed,
+        newPreviewRot);
+  }
+
+  /**
    * Map a given percentage/waypoint relative position over 2 segments
    *
    * @param pct The percent to map

@@ -6,6 +6,7 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -21,6 +22,8 @@ public class PathfindHolonomic extends PathfindingCommand {
    * @param output a consumer for the output speeds (robot relative)
    * @param config HolonomicPathFollowerConfig object with the configuration parameters for path
    *     following
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command
    */
   public PathfindHolonomic(
@@ -30,6 +33,7 @@ public class PathfindHolonomic extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     this(
         targetPath,
@@ -39,6 +43,7 @@ public class PathfindHolonomic extends PathfindingCommand {
         output,
         config,
         0.0,
+        shouldFlipPath,
         requirements);
   }
 
@@ -123,6 +128,8 @@ public class PathfindHolonomic extends PathfindingCommand {
    * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
    *     cause the robot to hold its current rotation until it reaches the given distance along the
    *     path.
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command
    */
   public PathfindHolonomic(
@@ -133,6 +140,7 @@ public class PathfindHolonomic extends PathfindingCommand {
       Consumer<ChassisSpeeds> output,
       HolonomicPathFollowerConfig config,
       double rotationDelayDistance,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -148,6 +156,7 @@ public class PathfindHolonomic extends PathfindingCommand {
             config.driveBaseRadius),
         rotationDelayDistance,
         config.replanningConfig,
+        shouldFlipPath,
         requirements);
   }
 

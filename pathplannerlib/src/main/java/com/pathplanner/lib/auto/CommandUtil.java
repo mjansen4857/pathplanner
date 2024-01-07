@@ -69,9 +69,9 @@ public class CommandUtil {
     String pathName = (String) dataJson.get("pathName");
 
     if (choreoPath) {
-      return AutoBuilder.followPathWithEvents(PathPlannerPath.fromChoreoTrajectory(pathName));
+      return AutoBuilder.followPath(PathPlannerPath.fromChoreoTrajectory(pathName));
     } else {
-      return AutoBuilder.followPathWithEvents(PathPlannerPath.fromPathFile(pathName));
+      return AutoBuilder.followPath(PathPlannerPath.fromPathFile(pathName));
     }
   }
 

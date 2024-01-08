@@ -245,6 +245,7 @@ pathfindingCommand = PathfindHolonomic(
           0.4, # Drive base radius in meters. Distance from robot center to furthest module.
           ReplanningConfig() # Default path replanning config. See the API for the options here
     ),
+    lambda: False, # Don't flip paths when pathfinding to a pose
     self, # Reference to this subsystem to set requirements
     rotation_delay_distance=0.0, # Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
     target_pose=targetPose,
@@ -359,6 +360,17 @@ Command pathfindingCommand = new PathfindThenFollowPathHolonomic(
         swerveSubsystem::driveRobotRelative,
         Constants.Swerve.pathFollowingConfig, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
         3.0, // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate. Optional
+        () -> {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+            var alliance = DriverStation.getAlliance();
+            if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+            }
+            return false;
+        },
         swerveSubsystem // Reference to drive subsystem to set requirements
 );
 ```
@@ -388,6 +400,17 @@ frc2::CommandPtr pathfindingCommand = PathfindThenFollowPathHolonomic(
     [this](){ return getRobotRelativeSpeeds(); },
     [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
     Constants::Swerve::pathFollowingConfig, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
+    []() {
+        // Boolean supplier that controls when the path will be mirrored for the red alliance
+        // This will flip the path being followed to the red side of the field.
+        // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+        auto alliance = DriverStation::GetAlliance();
+        if (alliance) {
+            return alliance.value() == DriverStation::Alliance::kRed;
+        }
+        return false;
+    },
     this, // Reference to drive subsystem to set requirements
     3.0_m, // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate. Optional
 ).ToPtr();
@@ -426,9 +449,16 @@ pathfindingCommand = PathfindThenFollowPathHolonomic(
           0.4, # Drive base radius in meters. Distance from robot center to furthest module.
           ReplanningConfig() # Default path replanning config. See the API for the options here
     ),
+    self.shouldFlipPath, # Supplier to control path flipping based on alliance color
     self, # Reference to this subsystem to set requirements
     rotation_delay_distance=3.0 # Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
 )
+
+def shouldFlipPath():
+    # Boolean supplier that controls when the path will be mirrored for the red alliance
+    # This will flip the path being followed to the red side of the field.
+    # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 ```
 
 </tab>
@@ -438,6 +468,12 @@ pathfindingCommand = PathfindThenFollowPathHolonomic(
 
 PathPlannerLib supports the ability to use a custom pathfinder implementation for pathfinding commands. In order to do
 so, your pathfinder must implement the methods in the `Pathfinder` interface.
+
+> **Note:**
+>
+> PathPlannerLib assumes that all pathfinders will use a global blue alliance field origin at all times
+>
+{style="note"}
 
 <tabs group="pplib-language">
 <tab title="Java" group-key="java">

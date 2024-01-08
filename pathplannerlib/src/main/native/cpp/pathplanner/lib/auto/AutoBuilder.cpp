@@ -53,6 +53,7 @@ void AutoBuilder::configureHolonomic(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
+	AutoBuilder::m_shouldFlipPath = shouldFlipPath;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier,
 			robotRelativeSpeedsSupplier, robotRelativeOutput, config,
@@ -97,6 +98,7 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
+	AutoBuilder::m_shouldFlipPath = shouldFlipPath;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
 			output, replanningConfig, driveSubsystem](frc::Pose2d pose,
@@ -141,6 +143,7 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
+	AutoBuilder::m_shouldFlipPath = shouldFlipPath;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
 			output, b, zeta, replanningConfig, driveSubsystem](frc::Pose2d pose,
@@ -184,6 +187,7 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
+	AutoBuilder::m_shouldFlipPath = shouldFlipPath;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
 			output, Qelms, Relms, dt, replanningConfig, driveSubsystem](
@@ -226,6 +230,7 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
+	AutoBuilder::m_shouldFlipPath = shouldFlipPath;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
 			output, dt, replanningConfig, driveSubsystem](frc::Pose2d pose,
@@ -259,6 +264,9 @@ void AutoBuilder::configureCustom(
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
+	AutoBuilder::m_shouldFlipPath = []() {
+		return false;
+	};
 
 	AutoBuilder::m_pathfindingConfigured = false;
 }

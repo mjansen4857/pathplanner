@@ -88,6 +88,7 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+    AutoBuilder.shouldFlipPath = shouldFlipPath;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
         (pose, constraints, goalEndVel, rotationDelayDistance) ->
@@ -155,6 +156,7 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+    AutoBuilder.shouldFlipPath = shouldFlipPath;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
         (pose, constraints, goalEndVel, rotationDelayDistance) ->
@@ -228,6 +230,7 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+    AutoBuilder.shouldFlipPath = shouldFlipPath;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
         (pose, constraints, goalEndVel, rotationDelayDistance) ->
@@ -301,6 +304,7 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+    AutoBuilder.shouldFlipPath = shouldFlipPath;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
         (pose, constraints, goalEndVel, rotationDelayDistance) ->
@@ -378,6 +382,7 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+    AutoBuilder.shouldFlipPath = shouldFlipPath;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
         (pose, constraints, goalEndVel, rotationDelayDistance) ->
@@ -433,6 +438,7 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
+    AutoBuilder.shouldFlipPath = () -> false;
 
     AutoBuilder.pathfindingConfigured = false;
   }

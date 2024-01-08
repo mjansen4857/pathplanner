@@ -186,6 +186,7 @@ class AutoBuilder:
         AutoBuilder._getPose = pose_supplier
         AutoBuilder._resetPose = reset_pose
         AutoBuilder._configured = True
+        AutoBuilder._shouldFlipPath = should_flip_path
 
         AutoBuilder._pathfindToPoseCommandBuilder = \
             lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindHolonomic(
@@ -246,6 +247,7 @@ class AutoBuilder:
         AutoBuilder._getPose = pose_supplier
         AutoBuilder._resetPose = reset_pose
         AutoBuilder._configured = True
+        AutoBuilder._shouldFlipPath = should_flip_path
 
         AutoBuilder._pathfindToPoseCommandBuilder = \
             lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindRamsete(
@@ -309,6 +311,7 @@ class AutoBuilder:
         AutoBuilder._getPose = pose_supplier
         AutoBuilder._resetPose = reset_pose
         AutoBuilder._configured = True
+        AutoBuilder._shouldFlipPath = should_flip_path
 
         AutoBuilder._pathfindToPoseCommandBuilder = \
             lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindLTV(
@@ -354,6 +357,7 @@ class AutoBuilder:
         AutoBuilder._getPose = pose_supplier
         AutoBuilder._resetPose = reset_pose
         AutoBuilder._configured = True
+        AutoBuilder._shouldFlipPath = lambda: False
 
         AutoBuilder._pathfindingConfigured = False
 

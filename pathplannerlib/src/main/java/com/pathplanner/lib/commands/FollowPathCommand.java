@@ -71,7 +71,7 @@ public class FollowPathCommand extends Command {
     Set<Subsystem> driveRequirements = Set.of(requirements);
     m_requirements.addAll(driveRequirements);
 
-    for (EventMarker marker : this.path.getEventMarkers()) {
+    for (EventMarker marker : this.originalPath.getEventMarkers()) {
       var reqs = marker.getCommand().getRequirements();
 
       if (!Collections.disjoint(driveRequirements, reqs)) {

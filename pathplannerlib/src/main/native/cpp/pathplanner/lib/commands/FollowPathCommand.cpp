@@ -16,7 +16,7 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 
 	auto &&driveRequirements = GetRequirements();
 
-	for (EventMarker &marker : m_path->getEventMarkers()) {
+	for (EventMarker &marker : m_originalPath->getEventMarkers()) {
 		auto reqs = marker.getCommand()->GetRequirements();
 
 		for (auto &&requirement : reqs) {

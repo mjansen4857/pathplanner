@@ -61,7 +61,7 @@ class FollowPathCommand(Command):
 
         self.addRequirements(*requirements)
 
-        for marker in self._path.getEventMarkers():
+        for marker in self._originalPath.getEventMarkers():
             reqs = marker.command.getRequirements()
 
             for req in self.getRequirements():

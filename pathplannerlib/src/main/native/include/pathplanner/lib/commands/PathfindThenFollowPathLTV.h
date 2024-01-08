@@ -20,6 +20,8 @@ public:
 	 * @param relems The maximum desired control effort for each input.
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
 	 * @param replanningConfig Path replanning configuration
+	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 */
 	PathfindThenFollowPathLTV(std::shared_ptr<PathPlannerPath> goalPath,
@@ -30,17 +32,17 @@ public:
 			const wpi::array<double, 3> &Qelems,
 			const wpi::array<double, 2> &Relems, units::second_t dt,
 			ReplanningConfig replanningConfig,
+			std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindLTV(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, Qelems,
-						Relems, dt, replanningConfig, requirements),
-				FollowPathWithEvents(
-						FollowPathLTV(goalPath, poseSupplier,
-								currentRobotRelativeSpeeds, robotRelativeOutput,
-								Qelems, Relems, dt, replanningConfig,
-								requirements).ToPtr().Unwrap(), goalPath,
-						poseSupplier));
+						Relems, dt, replanningConfig, shouldFlipPath,
+						requirements),
+				FollowPathLTV(goalPath, poseSupplier,
+						currentRobotRelativeSpeeds, robotRelativeOutput, Qelems,
+						Relems, dt, replanningConfig, shouldFlipPath,
+						requirements));
 	}
 
 	/**
@@ -53,6 +55,8 @@ public:
 	 * @param robotRelativeOutput a consumer for the output speeds (robot relative)
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
 	 * @param replanningConfig Path replanning configuration
+	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 */
 	PathfindThenFollowPathLTV(std::shared_ptr<PathPlannerPath> goalPath,
@@ -61,16 +65,15 @@ public:
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
 			units::second_t dt, ReplanningConfig replanningConfig,
+			std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindLTV(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, dt,
-						replanningConfig, requirements),
-				FollowPathWithEvents(
-						FollowPathLTV(goalPath, poseSupplier,
-								currentRobotRelativeSpeeds, robotRelativeOutput,
-								dt, replanningConfig, requirements).ToPtr().Unwrap(),
-						goalPath, poseSupplier));
+						replanningConfig, shouldFlipPath, requirements),
+				FollowPathLTV(goalPath, poseSupplier,
+						currentRobotRelativeSpeeds, robotRelativeOutput, dt,
+						replanningConfig, shouldFlipPath, requirements));
 	}
 };
 }

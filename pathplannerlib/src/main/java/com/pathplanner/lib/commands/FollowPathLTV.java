@@ -9,6 +9,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -24,6 +25,8 @@ public class FollowPathLTV extends FollowPathCommand {
    * @param output Function that will apply the robot-relative output speeds of this command
    * @param dt The amount of time between each robot control loop, default is 0.02s
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathLTV(
@@ -33,6 +36,7 @@ public class FollowPathLTV extends FollowPathCommand {
       Consumer<ChassisSpeeds> output,
       double dt,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         path,
@@ -41,6 +45,7 @@ public class FollowPathLTV extends FollowPathCommand {
         output,
         new PPLTVController(dt),
         replanningConfig,
+        shouldFlipPath,
         requirements);
 
     if (path.isChoreoPath()) {
@@ -61,6 +66,8 @@ public class FollowPathLTV extends FollowPathCommand {
    * @param relems The maximum desired control effort for each input.
    * @param dt The amount of time between each robot control loop, default is 0.02s
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+   *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
    */
   public FollowPathLTV(
@@ -72,6 +79,7 @@ public class FollowPathLTV extends FollowPathCommand {
       Vector<N2> relems,
       double dt,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         path,
@@ -80,6 +88,7 @@ public class FollowPathLTV extends FollowPathCommand {
         output,
         new PPLTVController(qelems, relems, dt),
         replanningConfig,
+        shouldFlipPath,
         requirements);
 
     if (path.isChoreoPath()) {

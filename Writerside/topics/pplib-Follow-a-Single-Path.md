@@ -72,27 +72,33 @@ def getAutonomousCommand():
 ```Java
 public class DriveSubsystem extends SubsystemBase {
     // Assuming this is a method in your drive subsystem
-    public Command followPathCommand(String pathName){
+    public Command followPathCommand(String pathName) {
         PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
 
-        // You must wrap the path following command in a FollowPathWithEvents command in order for event markers to work
-        return new FollowPathWithEvents(
-                new FollowPathHolonomic(
-                        path,
-                        this::getPose, // Robot pose supplier
-                        this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                        this::driveRobotRelative, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-                        new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
-                                new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-                                new PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
-                                4.5, // Max module speed, in m/s
-                                0.4, // Drive base radius in meters. Distance from robot center to furthest module.
-                                new ReplanningConfig() // Default path replanning config. See the API for the options here
-                        ),
-                        this // Reference to this subsystem to set requirements
+        return new FollowPathHolonomic(
+                path,
+                this::getPose, // Robot pose supplier
+                this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+                this::driveRobotRelative, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+                new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+                        new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+                        new PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
+                        4.5, // Max module speed, in m/s
+                        0.4, // Drive base radius in meters. Distance from robot center to furthest module.
+                        new ReplanningConfig() // Default path replanning config. See the API for the options here
                 ),
-                path, // FollowPathWithEvents also requires the path
-                this::getPose // FollowPathWithEvents also requires the robot pose supplier
+                () -> {
+                    // Boolean supplier that controls when the path will be mirrored for the red alliance
+                    // This will flip the path being followed to the red side of the field.
+                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+                    var alliance = DriverStation.getAlliance();
+                    if (alliance.isPresent()) {
+                        return alliance.get() == DriverStation.Alliance.Red;
+                    }
+                    return false;
+                },
+                this // Reference to this subsystem to set requirements
         );
     }
 }
@@ -110,24 +116,30 @@ using namespace pathplanner;
 frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
     auto path = PathPlannerPath::fromPathFile(pathName);
 
-    // You must wrap the path following command in a FollowPathWithEvents command in order for event markers to work
-    return FollowPathWithEvents(
-        FollowPathHolonomic(
-            path,
-            [this](){ return getPose(); }, // Robot pose supplier
-            [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-            HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
-                PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-                PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
-                4.5_mps, // Max module speed, in m/s
-                0.4_m, // Drive base radius in meters. Distance from robot center to furthest module.
-                ReplanningConfig() // Default path replanning config. See the API for the options here
-            ),
-            { this } // Reference to this subsystem to set requirements
-        ).ToPtr().Unwrap(),
-        path, // FollowPathWithEvents also requires the path
-       [this](){ return getPose(); } // FollowPathWithEvents also requires the robot pose supplier
+    return FollowPathHolonomic(
+        path,
+        [this](){ return getPose(); }, // Robot pose supplier
+        [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+        HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+            PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+            PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
+            4.5_mps, // Max module speed, in m/s
+            0.4_m, // Drive base radius in meters. Distance from robot center to furthest module.
+            ReplanningConfig() // Default path replanning config. See the API for the options here
+        ),
+        []() {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+            auto alliance = DriverStation::GetAlliance();
+            if (alliance) {
+                return alliance.value() == DriverStation::Alliance::kRed;
+            }
+            return false;
+        },
+        { this } // Reference to this subsystem to set requirements
     ).ToPtr();
 }
 ```
@@ -144,25 +156,27 @@ from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig,
 def followPathCommand(pathName: str):
     path = PathPlannerPath.fromPathFile(pathName)
 
-    # You must wrap the path following command in a FollowPathWithEvents command in order for event markers to work
-    return FollowPathWithEvents(
-        FollowPathHolonomic(
-            path,
-            self.getPose, # Robot pose supplier
-            self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-            HolonomicPathFollowerConfig( # HolonomicPathFollowerConfig, this should likely live in your Constants class
-                PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
-                PIDConstants(5.0, 0.0, 0.0), # Rotation PID constants
-                4.5, # Max module speed, in m/s
-                0.4, # Drive base radius in meters. Distance from robot center to furthest module.
-                ReplanningConfig() # Default path replanning config. See the API for the options here
-            ),
-            self # Reference to this subsystem to set requirements
+    return FollowPathHolonomic(
+        path,
+        self.getPose, # Robot pose supplier
+        self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+        self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+        HolonomicPathFollowerConfig( # HolonomicPathFollowerConfig, this should likely live in your Constants class
+            PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
+            PIDConstants(5.0, 0.0, 0.0), # Rotation PID constants
+            4.5, # Max module speed, in m/s
+            0.4, # Drive base radius in meters. Distance from robot center to furthest module.
+            ReplanningConfig() # Default path replanning config. See the API for the options here
         ),
-        path, # FollowPathWithEvents also requires the path
-        self.getPose # FollowPathWithEvents also requires the robot pose supplier
+        self.shouldFlipPath, # Supplier to control path flipping based on alliance color
+        self # Reference to this subsystem to set requirements
     )
+
+def shouldFlipPath():
+    # Boolean supplier that controls when the path will be mirrored for the red alliance
+    # This will flip the path being followed to the red side of the field.
+    # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 ```
 
 </tab>
@@ -176,21 +190,27 @@ def followPathCommand(pathName: str):
 ```Java
 public class DriveSubsystem extends SubsystemBase {
     // Assuming this is a method in your drive subsystem
-    public Command followPathCommand(String pathName){
+    public Command followPathCommand(String pathName) {
         PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
 
-        // You must wrap the path following command in a FollowPathWithEvents command in order for event markers to work
-        return new FollowPathWithEvents(
-                new FollowPathRamsete(
-                        path,
-                        this::getPose, // Robot pose supplier
-                        this::getCurrentSpeeds, // Current ChassisSpeeds supplier
-                        this::drive, // Method that will drive the robot given ChassisSpeeds
-                        new ReplanningConfig(), // Default path replanning config. See the API for the options here
-                        this // Reference to this subsystem to set requirements
-                ),
-                path, // FollowPathWithEvents also requires the path
-                this::getPose // FollowPathWithEvents also requires the robot pose supplier
+        return new FollowPathRamsete(
+                path,
+                this::getPose, // Robot pose supplier
+                this::getCurrentSpeeds, // Current ChassisSpeeds supplier
+                this::drive, // Method that will drive the robot given ChassisSpeeds
+                new ReplanningConfig(), // Default path replanning config. See the API for the options here
+                () -> {
+                    // Boolean supplier that controls when the path will be mirrored for the red alliance
+                    // This will flip the path being followed to the red side of the field.
+                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+                    var alliance = DriverStation.getAlliance();
+                    if (alliance.isPresent()) {
+                        return alliance.get() == DriverStation.Alliance.Red;
+                    }
+                    return false;
+                },
+                this // Reference to this subsystem to set requirements
         );
     }
 }
@@ -208,18 +228,24 @@ using namespace pathplanner;
 frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
     auto path = PathPlannerPath::fromPathFile(pathName);
 
-    // You must wrap the path following command in a FollowPathWithEvents command in order for event markers to work
-    return FollowPathWithEvents(
-        FollowPathRamsete(
-            path,
-            [this](){ return getPose(); }, // Robot pose supplier
-            [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-            ReplanningConfig(), // Default path replanning config. See the API for the options here
-            { this } // Reference to this subsystem to set requirements
-        ).ToPtr().Unwrap(),
-        path, // FollowPathWithEvents also requires the path
-       [this](){ return getPose(); } // FollowPathWithEvents also requires the robot pose supplier
+    return FollowPathRamsete(
+        path,
+        [this](){ return getPose(); }, // Robot pose supplier
+        [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+        ReplanningConfig(), // Default path replanning config. See the API for the options here
+            []() {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    
+            auto alliance = DriverStation::GetAlliance();
+            if (alliance) {
+                return alliance.value() == DriverStation::Alliance::kRed;
+            }
+            return false;
+        },
+        { this } // Reference to this subsystem to set requirements
     ).ToPtr();
 }
 ```
@@ -236,19 +262,21 @@ from pathplannerlib.config import ReplanningConfig, PIDConstants
 def followPathCommand(pathName: str){
     path = PathPlannerPath.fromPathFile(pathName)
 
-    # You must wrap the path following command in a FollowPathWithEvents command in order for event markers to work
-    return FollowPathWithEvents(
-        FollowPathRamsete(
-            path,
-            self.getPose, # Robot pose supplier
-            self.getCurrentSpeeds, # Current ChassisSpeeds supplier
-            self.drive, # Method that will drive the robot given ChassisSpeeds
-            ReplanningConfig(), # Default path replanning config. See the API for the options here
-            self # Reference to this subsystem to set requirements
-        ),
-        path, # FollowPathWithEvents also requires the path
-        self.getPose # FollowPathWithEvents also requires the robot pose supplier
+    return FollowPathRamsete(
+        path,
+        self.getPose, # Robot pose supplier
+        self.getCurrentSpeeds, # Current ChassisSpeeds supplier
+        self.drive, # Method that will drive the robot given ChassisSpeeds
+        ReplanningConfig(), # Default path replanning config. See the API for the options here
+        self.shouldFlipPath, # Supplier to control path flipping based on alliance color
+        self # Reference to this subsystem to set requirements
     )
+
+def shouldFlipPath():
+    # Boolean supplier that controls when the path will be mirrored for the red alliance
+    # This will flip the path being followed to the red side of the field.
+    # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 ```
 
 </tab>
@@ -262,22 +290,28 @@ def followPathCommand(pathName: str){
 ```Java
 public class DriveSubsystem extends SubsystemBase {
     // Assuming this is a method in your drive subsystem
-    public Command followPathCommand(String pathName){
+    public Command followPathCommand(String pathName) {
         PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
 
-        // You must wrap the path following command in a FollowPathWithEvents command in order for event markers to work
-        return new FollowPathWithEvents(
-                new FollowPathLTV(
-                        path,
-                        this::getPose, // Robot pose supplier
-                        this::getCurrentSpeeds, // Current ChassisSpeeds supplier
-                        this::drive, // Method that will drive the robot given ChassisSpeeds
-                        0.02, // Robot control loop period in seconds. Default is 0.02
-                        new ReplanningConfig(), // Default path replanning config. See the API for the options here
-                        this // Reference to this subsystem to set requirements
-                ),
-                path, // FollowPathWithEvents also requires the path
-                this::getPose // FollowPathWithEvents also requires the robot pose supplier
+        return new FollowPathLTV(
+                path,
+                this::getPose, // Robot pose supplier
+                this::getCurrentSpeeds, // Current ChassisSpeeds supplier
+                this::drive, // Method that will drive the robot given ChassisSpeeds
+                0.02, // Robot control loop period in seconds. Default is 0.02
+                new ReplanningConfig(), // Default path replanning config. See the API for the options here
+                () -> {
+                    // Boolean supplier that controls when the path will be mirrored for the red alliance
+                    // This will flip the path being followed to the red side of the field.
+                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+                    var alliance = DriverStation.getAlliance();
+                    if (alliance.isPresent()) {
+                        return alliance.get() == DriverStation.Alliance.Red;
+                    }
+                    return false;
+                },
+                this // Reference to this subsystem to set requirements
         );
     }
 }
@@ -295,19 +329,25 @@ using namespace pathplanner;
 frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
     auto path = PathPlannerPath::fromPathFile(pathName);
 
-    // You must wrap the path following command in a FollowPathWithEvents command in order for event markers to work
-    return FollowPathWithEvents(
-        FollowPathLTV(
-            path,
-            [this](){ return getPose(); }, // Robot pose supplier
-            [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-            0.02_s, // Robot control loop period in seconds. Default is 0.02
-            ReplanningConfig(), // Default path replanning config. See the API for the options here
-            { this } // Reference to this subsystem to set requirements
-        ).ToPtr().Unwrap(),
-        path, // FollowPathWithEvents also requires the path
-       [this](){ return getPose(); } // FollowPathWithEvents also requires the robot pose supplier
+    return FollowPathLTV(
+        path,
+        [this](){ return getPose(); }, // Robot pose supplier
+        [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+        0.02_s, // Robot control loop period in seconds. Default is 0.02
+        ReplanningConfig(), // Default path replanning config. See the API for the options here
+        []() {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+            auto alliance = DriverStation::GetAlliance();
+            if (alliance) {
+                return alliance.value() == DriverStation::Alliance::kRed;
+            }
+            return false;
+        },
+        { this } // Reference to this subsystem to set requirements
     ).ToPtr();
 }
 ```
@@ -324,22 +364,24 @@ from pathplannerlib.config import ReplanningConfig, PIDConstants
 def followPathCommand(pathName: str){
     path = PathPlannerPath.fromPathFile(pathName)
 
-    # You must wrap the path following command in a FollowPathWithEvents command in order for event markers to work
-    return FollowPathWithEvents(
-        FollowPathLTV(
-            path,
-            self.getPose, # Robot pose supplier
-            self.getCurrentSpeeds, # Current ChassisSpeeds supplier
-            self.drive, # Method that will drive the robot given ChassisSpeeds
-            (0.0625, 0.125, 2.0), # qelems/error tolerances
-            (1.0, 2.0), # relems/control effort
-            0.02, # Robot control loop period in seconds. Default is 0.02
-            ReplanningConfig(), # Default path replanning config. See the API for the options here
-            self # Reference to this subsystem to set requirements
-        ),
-        path, # FollowPathWithEvents also requires the path
-        self.getPose # FollowPathWithEvents also requires the robot pose supplier
+    return FollowPathLTV(
+        path,
+        self.getPose, # Robot pose supplier
+        self.getCurrentSpeeds, # Current ChassisSpeeds supplier
+        self.drive, # Method that will drive the robot given ChassisSpeeds
+        (0.0625, 0.125, 2.0), # qelems/error tolerances
+        (1.0, 2.0), # relems/control effort
+        0.02, # Robot control loop period in seconds. Default is 0.02
+        ReplanningConfig(), # Default path replanning config. See the API for the options here
+        self.shouldFlipPath, # Supplier to control path flipping based on alliance color
+        self # Reference to this subsystem to set requirements
     )
+
+def shouldFlipPath():
+    # Boolean supplier that controls when the path will be mirrored for the red alliance
+    # This will flip the path being followed to the red side of the field.
+    # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 ```
 
 </tab>

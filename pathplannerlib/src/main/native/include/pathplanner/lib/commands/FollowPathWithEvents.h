@@ -18,26 +18,33 @@ public:
 	 * @param pathFollowingCommand the command to follow the path
 	 * @param path the path to follow
 	 * @param poseSupplier a supplier for the robot's current pose
+	 * @deprecated No longer needed. Path following commands will trigger events
 	 */
+	[[deprecated("No longer needed. Path following commands will trigger events")]]
 	FollowPathWithEvents(std::unique_ptr<frc2::Command> &&pathFollowingCommand,
 			std::shared_ptr<PathPlannerPath> path,
-			std::function<frc::Pose2d()> poseSupplier);
+			std::function<frc::Pose2d()> poseSupplier) : m_pathFollowingCommand(
+			std::move(pathFollowingCommand)) {
+		AddRequirements(m_pathFollowingCommand->GetRequirements());
+	}
 
-	void Initialize() override;
+	void Initialize() override {
+		m_pathFollowingCommand->Initialize();
+	}
 
-	void Execute() override;
+	void Execute() override {
+		m_pathFollowingCommand->Execute();
+	}
 
-	bool IsFinished() override;
+	bool IsFinished() override {
+		return m_pathFollowingCommand->IsFinished();
+	}
 
-	void End(bool interrupted) override;
+	void End(bool interrupted) override {
+		m_pathFollowingCommand->End(interrupted);
+	}
 
 private:
 	std::unique_ptr<frc2::Command> m_pathFollowingCommand;
-	std::shared_ptr<PathPlannerPath> m_path;
-	std::function<frc::Pose2d()> m_poseSupplier;
-
-	std::vector<std::pair<std::shared_ptr<frc2::Command>, bool>> m_currentCommands;
-	std::vector<std::pair<EventMarker, bool>> m_markers;
-	bool m_isFinished;
 };
 }

@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -27,6 +28,8 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
    *     more damping in response.
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -38,6 +41,7 @@ public class PathfindRamsete extends PathfindingCommand {
       double b,
       double zeta,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -48,6 +52,7 @@ public class PathfindRamsete extends PathfindingCommand {
         new PPRamseteController(b, zeta),
         0,
         replanningConfig,
+        shouldFlipPath,
         requirements);
 
     if (targetPath.isChoreoPath()) {
@@ -65,6 +70,8 @@ public class PathfindRamsete extends PathfindingCommand {
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
    * @param output a consumer for the output speeds (robot relative)
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command
    */
   public PathfindRamsete(
@@ -74,6 +81,7 @@ public class PathfindRamsete extends PathfindingCommand {
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
       Consumer<ChassisSpeeds> output,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     super(
         targetPath,
@@ -84,6 +92,7 @@ public class PathfindRamsete extends PathfindingCommand {
         new PPRamseteController(),
         0,
         replanningConfig,
+        shouldFlipPath,
         requirements);
 
     if (targetPath.isChoreoPath()) {

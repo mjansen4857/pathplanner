@@ -16,6 +16,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -34,6 +35,7 @@ public class PathfindingCommand extends Command {
   private final PathFollowingController controller;
   private final double rotationDelayDistance;
   private final ReplanningConfig replanningConfig;
+  private final BooleanSupplier shouldFlipPath;
 
   private PathPlannerPath currentPath;
   private PathPlannerTrajectory currentTrajectory;
@@ -53,6 +55,8 @@ public class PathfindingCommand extends Command {
    * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
    *     final rotation
    * @param replanningConfig Path replanning configuration
+   * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+   *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
@@ -64,6 +68,7 @@ public class PathfindingCommand extends Command {
       PathFollowingController controller,
       double rotationDelayDistance,
       ReplanningConfig replanningConfig,
+      BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -97,6 +102,7 @@ public class PathfindingCommand extends Command {
     this.output = outputRobotRelative;
     this.rotationDelayDistance = rotationDelayDistance;
     this.replanningConfig = replanningConfig;
+    this.shouldFlipPath = shouldFlipPath;
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -143,6 +149,7 @@ public class PathfindingCommand extends Command {
     this.output = outputRobotRelative;
     this.rotationDelayDistance = rotationDelayDistance;
     this.replanningConfig = replanningConfig;
+    this.shouldFlipPath = () -> false;
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathFindingCommand, instances);
@@ -159,9 +166,12 @@ public class PathfindingCommand extends Command {
 
     if (targetPath != null) {
       targetPose = new Pose2d(this.targetPath.getPoint(0).position, goalEndState.getRotation());
+      if (shouldFlipPath.getAsBoolean()) {
+        targetPose = GeometryUtil.flipFieldPose(targetPose);
+      }
     }
 
-    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.25) {
+    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.35) {
       this.cancel();
     } else {
       Pathfinding.setStartPosition(currentPose.getTranslation());
@@ -328,7 +338,7 @@ public class PathfindingCommand extends Command {
       double stoppingDistance =
           Math.pow(currentVel, 2) / (2 * constraints.getMaxAccelerationMpsSq());
 
-      return currentPose.getTranslation().getDistance(targetPath.getPoint(0).position)
+      return currentPose.getTranslation().getDistance(targetPose.getTranslation())
           <= stoppingDistance;
     }
 

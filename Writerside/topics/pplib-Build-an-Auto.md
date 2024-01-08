@@ -27,6 +27,16 @@ The following examples will assume that your drive subsystem has the following m
   This can be
   converted to module states or wheel speeds using WPILib's drive kinematics classes.
 
+> **Warning**
+>
+> The AutoBuilder configuration requires a method that will return true when a path should be flipped to the red side of
+> the field. The origin of the field coordinate system will remain on the blue side.
+>
+> If you wish to have any other alliance color based transformation, you must implement it yourself by changing the data
+> passed to, and received from, PathPlannerLib's path following commands.
+>
+{style="warning"}
+
 ### Holonomic (Swerve)
 
 <tabs group="pplib-language">
@@ -51,6 +61,17 @@ public class DriveSubsystem extends SubsystemBase {
                         0.4, // Drive base radius in meters. Distance from robot center to furthest module.
                         new ReplanningConfig() // Default path replanning config. See the API for the options here
                 ),
+                () -> {
+                    // Boolean supplier that controls when the path will be mirrored for the red alliance
+                    // This will flip the path being followed to the red side of the field.
+                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+                    var alliance = DriverStation.getAlliance();
+                    if (alliance.isPresent()) {
+                        return alliance.get() == DriverStation.Alliance.Red;
+                    }
+                    return false;
+                },
                 this // Reference to this subsystem to set requirements
         );
     }
@@ -67,6 +88,7 @@ public class DriveSubsystem extends SubsystemBase {
 #include <pathplanner/lib/util/ReplanningConfig.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
+#include <frc/DriverStation.h>
 
 using namespace pathplanner;
 
@@ -87,6 +109,17 @@ SwerveSubsystem::SwerveSubsystem(){
             0.4_m, // Drive base radius in meters. Distance from robot center to furthest module.
             ReplanningConfig() // Default path replanning config. See the API for the options here
         ),
+        []() {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+            auto alliance = DriverStation::GetAlliance();
+            if (alliance) {
+                return alliance.value() == DriverStation::Alliance::kRed;
+            }
+            return false;
+        },
         this // Reference to this subsystem to set requirements
     );
 }
@@ -98,6 +131,7 @@ SwerveSubsystem::SwerveSubsystem(){
 ```Python
 from pathplannerlib.auto import AutoBuilder
 from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
+from wpilib import DriverStation
 
 class SwerveSubsystem(Subsystem):
     def __init__(self):
@@ -117,9 +151,15 @@ class SwerveSubsystem(Subsystem):
                 0.4, # Drive base radius in meters. Distance from robot center to furthest module.
                 ReplanningConfig() # Default path replanning config. See the API for the options here
             ),
+            self.shouldFlipPath, # Supplier to control path flipping based on alliance color
             self # Reference to this subsystem to set requirements
         )
-
+    
+    def shouldFlipPath():
+        # Boolean supplier that controls when the path will be mirrored for the red alliance
+        # This will flip the path being followed to the red side of the field.
+        # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+        return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 ```
 
 </tab>
@@ -143,6 +183,17 @@ public class DriveSubsystem extends SubsystemBase {
                 this::getCurrentSpeeds, // Current ChassisSpeeds supplier
                 this::drive, // Method that will drive the robot given ChassisSpeeds
                 new ReplanningConfig(), // Default path replanning config. See the API for the options here
+                () -> {
+                    // Boolean supplier that controls when the path will be mirrored for the red alliance
+                    // This will flip the path being followed to the red side of the field.
+                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+                    var alliance = DriverStation.getAlliance();
+                    if (alliance.isPresent()) {
+                        return alliance.get() == DriverStation.Alliance.Red;
+                    }
+                    return false;
+                },
                 this // Reference to this subsystem to set requirements
         );
     }
@@ -171,6 +222,17 @@ DriveSubsystem::DriveSubsystem(){
         [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
         [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
         ReplanningConfig(), // Default path replanning config. See the API for the options here
+        []() {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+            auto alliance = DriverStation::GetAlliance();
+            if (alliance) {
+                return alliance.value() == DriverStation::Alliance::kRed;
+            }
+            return false;
+        },
         this // Reference to this subsystem to set requirements
     );
 }
@@ -195,9 +257,15 @@ class DriveSubsystem(Subsystem):
             self.getCurrentSpeeds, # Current ChassisSpeeds supplier
             self.drive, # Method that will drive the robot given ChassisSpeeds
             ReplanningConfig(), # Default path replanning config. See the API for the options here
+            self.shouldFlipPath, # Supplier to control path flipping based on alliance color
             self # Reference to this subsystem to set requirements
         )
-
+    
+    def shouldFlipPath():
+        # Boolean supplier that controls when the path will be mirrored for the red alliance
+        # This will flip the path being followed to the red side of the field.
+        # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+        return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 ```
 
 </tab>
@@ -222,6 +290,17 @@ public class DriveSubsystem extends SubsystemBase {
                 this::drive, // Method that will drive the robot given ChassisSpeeds
                 0.02, // Robot control loop period in seconds. Default is 0.02
                 new ReplanningConfig(), // Default path replanning config. See the API for the options here
+                () -> {
+                    // Boolean supplier that controls when the path will be mirrored for the red alliance
+                    // This will flip the path being followed to the red side of the field.
+                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+                    var alliance = DriverStation.getAlliance();
+                    if (alliance.isPresent()) {
+                        return alliance.get() == DriverStation.Alliance.Red;
+                    }
+                    return false;
+                },
                 this // Reference to this subsystem to set requirements
         );
     }
@@ -251,6 +330,17 @@ DriveSubsystem::DriveSubsystem(){
         [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
         0.02_s, // Robot control loop period in seconds. Default is 0.02
         ReplanningConfig(), // Default path replanning config. See the API for the options here
+        []() {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+            auto alliance = DriverStation::GetAlliance();
+            if (alliance) {
+                return alliance.value() == DriverStation::Alliance::kRed;
+            }
+            return false;
+        },
         this // Reference to this subsystem to set requirements
     );
 }
@@ -278,8 +368,15 @@ class DriveSubsystem(Subsystem):
             (1.0, 2.0), # relems/control effort
             0.02, # Robot control loop period in seconds. Default is 0.02
             ReplanningConfig(), # Default path replanning config. See the API for the options here
+            self.shouldFlipPath, # Supplier to control path flipping based on alliance color
             self # Reference to this subsystem to set requirements
         )
+    
+    def shouldFlipPath():
+        # Boolean supplier that controls when the path will be mirrored for the red alliance
+        # This will flip the path being followed to the red side of the field.
+        # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+        return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 ```
 
 </tab>
@@ -363,4 +460,5 @@ public class RobotContainer {
     }
 }
 ```
+
 </snippet>

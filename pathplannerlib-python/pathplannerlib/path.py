@@ -8,7 +8,7 @@ from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
-from .geometry_util import decimal_range, cubicLerp, calculateRadius
+from .geometry_util import decimal_range, cubicLerp, calculateRadius, flipFieldPos, flipFieldRotation
 from .trajectory import PathPlannerTrajectory, State
 from wpilib import getDeployDirectory
 from hal import report, tResourceType
@@ -333,6 +333,8 @@ class PathPlannerPath:
     _choreoTrajectory: Union[PathPlannerTrajectory, None] = None
 
     _instances: int = 0
+
+    preventFlipping: bool = False
 
     def __init__(self, bezier_points: List[Translation2d], constraints: PathConstraints, goal_end_state: GoalEndState,
                  holonomic_rotations: List[RotationTarget] = [], constraint_zones: List[ConstraintsZone] = [],
@@ -808,6 +810,59 @@ class PathPlannerPath:
             return self._choreoTrajectory
         else:
             return PathPlannerTrajectory(self, starting_speeds, starting_rotation)
+
+    def flipPath(self) -> PathPlannerPath:
+        """
+        Flip a path to the other side of the field, maintaining a global blue alliance origin
+        :return: The flipped path
+        """
+        if self._isChoreoPath:
+            # Just flip the choreo traj
+            mirroredStates = []
+
+            for state in self._choreoTrajectory.getStates():
+                mirrored = State()
+
+                mirrored.timeSeconds = state.timeSeconds
+                mirrored.velocityMps = state.velocityMps
+                mirrored.accelerationMpsSq = state.accelerationMpsSq
+                mirrored.headingAngularVelocityRps = -state.headingAngularVelocityRps
+                mirrored.positionMeters = flipFieldPos(state.positionMeters)
+                mirrored.heading = flipFieldRotation(state.heading)
+                mirrored.targetHolonomicRotation = flipFieldRotation(state.targetHolonomicRotation)
+                if state.holonomicAngularVelocityRps is not None:
+                    mirrored.holonomicAngularVelocityRps = -state.holonomicAngularVelocityRps
+                mirrored.curvatureRadPerMeter = -state.curvatureRadPerMeter
+                mirrored.constraints = state.constraints
+
+                mirroredStates.append(mirrored)
+
+            path = PathPlannerPath([], PathConstraints(
+                float('inf'),
+                float('inf'),
+                float('inf'),
+                float('inf')
+            ), GoalEndState(mirroredStates[-1].velocityMps, mirroredStates[-1].targetHolonomicRotation, True))
+
+            pathPoints = [PathPoint(state.positionMeters) for state in mirroredStates]
+
+            path._allPoints = pathPoints
+            path._isChoreoPath = True
+            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, states=mirroredStates)
+
+            return path
+
+        newBezier = [flipFieldPos(pos) for pos in self._bezierPoints]
+        newRotTargets = [RotationTarget(t.waypointRelativePosition, flipFieldRotation(t.target), t.rotateFast) for t in
+                         self._rotationTargets]
+        newEndState = GoalEndState(self._goalEndState.velocity, flipFieldRotation(self._goalEndState.rotation),
+                                   self._goalEndState.rotateFast)
+        newPreviewRot = flipFieldRotation(self._previewStartingRotation)
+        newMarkers = [EventMarker(m.waypointRelativePos, m.command, m.minimumTriggerDistance) for m in
+                      self._eventMarkers]
+
+        return PathPlannerPath(newBezier, self._globalConstraints, newEndState, newRotTargets, self._constraintZones,
+                               newMarkers, self._reversed, newPreviewRot)
 
     @staticmethod
     def _mapPct(pct: float, seg1_pct: float) -> float:

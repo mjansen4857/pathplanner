@@ -20,6 +20,8 @@
 namespace pathplanner {
 class PathPlannerPath: public std::enable_shared_from_this<PathPlannerPath> {
 public:
+	bool preventFlipping = false;
+
 	/**
 	 * Create a new path planner path
 	 *
@@ -224,6 +226,13 @@ public:
 	 */
 	std::shared_ptr<PathPlannerPath> replan(const frc::Pose2d startingPose,
 			const frc::ChassisSpeeds currentSpeeds);
+
+	/**
+	 * Flip a path to the other side of the field, maintaining a global blue alliance origin
+	 *
+	 * @return The flipped path
+	 */
+	std::shared_ptr<PathPlannerPath> flipPath();
 
 private:
 	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);

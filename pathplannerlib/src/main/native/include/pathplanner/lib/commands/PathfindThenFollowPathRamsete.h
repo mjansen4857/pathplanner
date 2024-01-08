@@ -21,6 +21,8 @@ public:
 	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
 	 *     more damping in response.
 	 * @param replanningConfig Path replanning configuration
+	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 */
 	PathfindThenFollowPathRamsete(std::shared_ptr<PathPlannerPath> goalPath,
@@ -31,16 +33,15 @@ public:
 			units::unit_t<frc::RamseteController::b_unit> b,
 			units::unit_t<frc::RamseteController::zeta_unit> zeta,
 			ReplanningConfig replanningConfig,
+			std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindRamsete(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput, b,
-						zeta, replanningConfig, requirements),
-				FollowPathWithEvents(
-						FollowPathRamsete(goalPath, poseSupplier,
-								currentRobotRelativeSpeeds, robotRelativeOutput,
-								b, zeta, replanningConfig, requirements).ToPtr().Unwrap(),
-						goalPath, poseSupplier));
+						zeta, replanningConfig, shouldFlipPath, requirements),
+				FollowPathRamsete(goalPath, poseSupplier,
+						currentRobotRelativeSpeeds, robotRelativeOutput, b,
+						zeta, replanningConfig, shouldFlipPath, requirements));
 	}
 
 	/**
@@ -52,6 +53,8 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param robotRelativeOutput a consumer for the output speeds (robot relative)
 	 * @param replanningConfig Path replanning configuration
+	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 */
 	PathfindThenFollowPathRamsete(std::shared_ptr<PathPlannerPath> goalPath,
@@ -60,16 +63,15 @@ public:
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
 			ReplanningConfig replanningConfig,
+			std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindRamsete(goalPath, pathfindingConstraints, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput,
-						replanningConfig, requirements),
-				FollowPathWithEvents(
-						FollowPathRamsete(goalPath, poseSupplier,
-								currentRobotRelativeSpeeds, robotRelativeOutput,
-								replanningConfig, requirements).ToPtr().Unwrap(),
-						goalPath, poseSupplier));
+						replanningConfig, shouldFlipPath, requirements),
+				FollowPathRamsete(goalPath, poseSupplier,
+						currentRobotRelativeSpeeds, robotRelativeOutput,
+						replanningConfig, shouldFlipPath, requirements));
 	}
 };
 }

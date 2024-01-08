@@ -452,6 +452,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 NavGridPage(
                   deployDirectory: _pathplannerDir,
                   fs: fs,
+                  fieldImage: _fieldImage ?? FieldImage.defaultField,
                 ),
               ],
             ),

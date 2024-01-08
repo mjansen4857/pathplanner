@@ -15,11 +15,12 @@ class NavGridPage extends StatefulWidget {
   final FieldImage fieldImage;
   final FileSystem fs;
 
-  NavGridPage({
+  const NavGridPage({
     super.key,
     required this.deployDirectory,
     required this.fs,
-  }) : fieldImage = FieldImage.defaultField;
+    required this.fieldImage,
+  });
 
   @override
   State<NavGridPage> createState() => _NavGridPageState();

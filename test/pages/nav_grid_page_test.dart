@@ -28,6 +28,7 @@ void main() {
         body: NavGridPage(
           deployDirectory: fs.directory(deployPath),
           fs: fs,
+          fieldImage: FieldImage.defaultField,
         ),
       ),
     ));
@@ -53,6 +54,7 @@ void main() {
         body: NavGridPage(
           deployDirectory: fs.directory(deployPath),
           fs: fs,
+          fieldImage: FieldImage.defaultField,
         ),
       ),
     ));
@@ -79,6 +81,7 @@ void main() {
         body: NavGridPage(
           deployDirectory: fs.directory(deployPath),
           fs: fs,
+          fieldImage: FieldImage.defaultField,
         ),
       ),
     ));
@@ -109,6 +112,7 @@ void main() {
         body: NavGridPage(
           deployDirectory: fs.directory(deployPath),
           fs: fs,
+          fieldImage: FieldImage.defaultField,
         ),
       ),
     ));
@@ -147,6 +151,7 @@ void main() {
         body: NavGridPage(
           deployDirectory: fs.directory(deployPath),
           fs: fs,
+          fieldImage: FieldImage.defaultField,
         ),
       ),
     ));

@@ -456,7 +456,7 @@ class LocalADStar(Pathfinder):
     def _extractPath(self, s_start: GridPosition, s_goal: GridPosition, obstacles: Set[GridPosition]) -> List[
         GridPosition]:
         if s_goal == s_start:
-            return [s_start, s_goal]
+            return []
 
         path = [s_start]
 

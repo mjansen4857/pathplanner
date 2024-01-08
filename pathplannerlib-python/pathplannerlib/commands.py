@@ -354,7 +354,7 @@ class PathfindingCommand(Command):
             if self._shouldFlipPath():
                 self._targetPose = flipFieldPose(self._targetPose)
 
-        if currentPose.translation().distance(self._targetPose.translation()) < 0.25:
+        if currentPose.translation().distance(self._targetPose.translation()) < 0.35:
             self.cancel()
         else:
             Pathfinding.setStartPosition(currentPose.translation())

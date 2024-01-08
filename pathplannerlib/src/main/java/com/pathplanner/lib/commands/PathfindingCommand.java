@@ -171,7 +171,7 @@ public class PathfindingCommand extends Command {
       }
     }
 
-    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.25) {
+    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.35) {
       this.cancel();
     } else {
       Pathfinding.setStartPosition(currentPose.getTranslation());

@@ -352,7 +352,7 @@ public class LocalADStar implements Pathfinder {
   private List<GridPosition> extractPath(
       GridPosition sStart, GridPosition sGoal, Set<GridPosition> obstacles) {
     if (sGoal.equals(sStart)) {
-      return List.of(sStart, sGoal);
+      return new ArrayList<>();
     }
 
     List<GridPosition> path = new ArrayList<>();

@@ -94,7 +94,7 @@ void PathfindingCommand::Initialize() {
 	}
 
 	if (currentPose.Translation().Distance(m_targetPose.Translation())
-			< 0.25_m) {
+			< 0.35_m) {
 		Cancel();
 	} else {
 		Pathfinding::setStartPosition(currentPose.Translation());

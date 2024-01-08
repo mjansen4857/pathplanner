@@ -1,5 +1,35 @@
-from wpimath.geometry import Translation2d, Rotation2d
+from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 import math
+
+FIELD_LENGTH = 16.54
+
+
+def flipFieldPos(pos: Translation2d) -> Translation2d:
+    """
+    Flip a field position to the other side of the field, maintaining a blue alliance origin
+
+    :param pos: The position to flip
+    :return: The flipped position
+    """
+    return Translation2d(FIELD_LENGTH - pos.X(), pos.Y())
+
+
+def flipFieldRotation(rotation: Rotation2d) -> Rotation2d:
+    """
+    Flip a field rotation to the other side of the field, maintaining a blue alliance origin
+    :param rotation: The rotation to flip
+    :return: The flipped rotation
+    """
+    return Rotation2d.fromDegrees(180) - rotation
+
+
+def flipFieldPose(pose: Pose2d) -> Pose2d:
+    """
+    Flip a field pose to the other side of the field, maintaining a blue alliance origin
+    :param pose: The pose to flip
+    :return: The flipped pose
+    """
+    return Pose2d(flipFieldPos(pose.translation()), flipFieldRotation(pose.rotation()))
 
 
 def floatLerp(start_val: float, end_val: float, t: float) -> float:

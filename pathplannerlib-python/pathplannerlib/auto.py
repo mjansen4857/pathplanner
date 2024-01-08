@@ -4,9 +4,10 @@ from .path import PathPlannerPath, PathConstraints
 from typing import Callable, Tuple, List
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds
-from .commands import FollowPathWithEvents, FollowPathRamsete, FollowPathHolonomic, FollowPathLTV, PathfindLTV, \
+from .commands import FollowPathRamsete, FollowPathHolonomic, FollowPathLTV, PathfindLTV, \
     PathfindHolonomic, PathfindRamsete, PathfindThenFollowPathHolonomic, PathfindThenFollowPathRamsete, \
     PathfindThenFollowPathLTV
+from .geometry_util import flipFieldPose
 import os
 from wpilib import getDeployDirectory
 import json
@@ -116,9 +117,9 @@ class CommandUtil:
         pathName = str(data_json['pathName'])
 
         if load_choreo_paths:
-            return AutoBuilder.followPathWithEvents(PathPlannerPath.fromChoreoTrajectory(pathName))
+            return AutoBuilder.followPath(PathPlannerPath.fromChoreoTrajectory(pathName))
         else:
-            return AutoBuilder.followPathWithEvents(PathPlannerPath.fromPathFile(pathName))
+            return AutoBuilder.followPath(PathPlannerPath.fromPathFile(pathName))
 
     @staticmethod
     def _sequentialGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
@@ -147,6 +148,7 @@ class AutoBuilder:
     _pathFollowingCommandBuilder: Callable[[PathPlannerPath], Command] = None
     _getPose: Callable[[], Pose2d] = None
     _resetPose: Callable[[Pose2d], None] = None
+    _shouldFlipPath: Callable[[], bool] = None
 
     _pathfindingConfigured: bool = False
     _pathfindToPoseCommandBuilder: Callable[[Pose2d, PathConstraints, float, float], Command] = None
@@ -156,7 +158,8 @@ class AutoBuilder:
     def configureHolonomic(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
                            robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
                            robot_relative_output: Callable[[ChassisSpeeds], None],
-                           config: HolonomicPathFollowerConfig, drive_subsystem: Subsystem) -> None:
+                           config: HolonomicPathFollowerConfig, should_flip_path: Callable[[], bool],
+                           drive_subsystem: Subsystem) -> None:
         """
         Configures the AutoBuilder for a holonomic drivetrain.
 
@@ -165,6 +168,7 @@ class AutoBuilder:
         :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
         :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
         :param config: HolonomicPathFollowerConfig for configuring the path following commands
+        :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.
         :param drive_subsystem: the subsystem for the robot's drive
         """
         if AutoBuilder._configured:
@@ -176,6 +180,7 @@ class AutoBuilder:
             robot_relative_speeds_supplier,
             robot_relative_output,
             config,
+            should_flip_path,
             drive_subsystem
         )
         AutoBuilder._getPose = pose_supplier
@@ -189,6 +194,7 @@ class AutoBuilder:
                 robot_relative_speeds_supplier,
                 robot_relative_output,
                 config,
+                lambda: False,
                 drive_subsystem,
                 rotation_delay_distance=rotation_delay_distance,
                 target_pose=pose,
@@ -202,6 +208,7 @@ class AutoBuilder:
                 robot_relative_speeds_supplier,
                 robot_relative_output,
                 config,
+                should_flip_path,
                 drive_subsystem,
                 rotation_delay_distance=rotation_delay_distance
             )
@@ -211,7 +218,8 @@ class AutoBuilder:
     def configureRamsete(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
                          robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
                          robot_relative_output: Callable[[ChassisSpeeds], None],
-                         replanning_config: ReplanningConfig, drive_subsystem: Subsystem) -> None:
+                         replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool],
+                         drive_subsystem: Subsystem) -> None:
         """
         Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
 
@@ -220,6 +228,7 @@ class AutoBuilder:
         :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
         :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
         :param replanning_config: Path replanning configuration
+        :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.
         :param drive_subsystem: the subsystem for the robot's drive
         """
         if AutoBuilder._configured:
@@ -231,6 +240,7 @@ class AutoBuilder:
             robot_relative_speeds_supplier,
             robot_relative_output,
             replanning_config,
+            should_flip_path,
             drive_subsystem
         )
         AutoBuilder._getPose = pose_supplier
@@ -244,6 +254,7 @@ class AutoBuilder:
                 robot_relative_speeds_supplier,
                 robot_relative_output,
                 replanning_config,
+                lambda: False,
                 drive_subsystem,
                 target_position=pose.translation(),
                 goal_end_vel=goal_end_vel
@@ -256,6 +267,7 @@ class AutoBuilder:
                 robot_relative_speeds_supplier,
                 robot_relative_output,
                 replanning_config,
+                should_flip_path,
                 drive_subsystem
             )
         AutoBuilder._pathfindingConfigured = True
@@ -265,7 +277,8 @@ class AutoBuilder:
                      robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
                      robot_relative_output: Callable[[ChassisSpeeds], None],
                      qelems: Tuple[float, float, float], relems: Tuple[float, float], dt: float,
-                     replanning_config: ReplanningConfig, drive_subsystem: Subsystem) -> None:
+                     replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool],
+                     drive_subsystem: Subsystem) -> None:
         """
         Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path follower.
 
@@ -277,6 +290,7 @@ class AutoBuilder:
         :param relems: The maximum desired control effort for each input
         :param dt: The amount of time between each robot control loop, default is 0.02s
         :param replanning_config: Path replanning configuration
+        :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.
         :param drive_subsystem: the subsystem for the robot's drive
         """
         if AutoBuilder._configured:
@@ -289,6 +303,7 @@ class AutoBuilder:
             robot_relative_output,
             qelems, relems, dt,
             replanning_config,
+            should_flip_path,
             drive_subsystem
         )
         AutoBuilder._getPose = pose_supplier
@@ -303,6 +318,7 @@ class AutoBuilder:
                 robot_relative_output,
                 qelems, relems, dt,
                 replanning_config,
+                lambda: False,
                 drive_subsystem,
                 target_position=pose.translation(),
                 goal_end_vel=goal_end_vel
@@ -316,6 +332,7 @@ class AutoBuilder:
                 robot_relative_output,
                 qelems, relems, dt,
                 replanning_config,
+                should_flip_path,
                 drive_subsystem
             )
         AutoBuilder._pathfindingConfigured = True
@@ -359,7 +376,7 @@ class AutoBuilder:
         return AutoBuilder._pathfindingConfigured
 
     @staticmethod
-    def followPathWithEvents(path: PathPlannerPath) -> Command:
+    def followPath(path: PathPlannerPath) -> Command:
         """
         Builds a command to follow a path with event markers.
 
@@ -369,7 +386,7 @@ class AutoBuilder:
         if not AutoBuilder.isConfigured():
             raise RuntimeError('Auto builder was used to build a path following command before being configured')
 
-        return FollowPathWithEvents(AutoBuilder._pathFollowingCommandBuilder(path), path, AutoBuilder._getPose)
+        return AutoBuilder._pathFollowingCommandBuilder(path)
 
     @staticmethod
     def pathfindToPose(pose: Pose2d, constraints: PathConstraints, goal_end_vel: float = 0.0,
@@ -434,7 +451,8 @@ class AutoBuilder:
         autoCommand = CommandUtil.commandFromJson(commandJson, choreoAuto)
         if auto_json['startingPose'] is not None:
             startPose = AutoBuilder.getStartingPoseFromJson(auto_json['startingPose'])
-            return cmd.sequence(cmd.runOnce(lambda: AutoBuilder._resetPose(startPose)), autoCommand)
+            return cmd.sequence(cmd.runOnce(lambda: AutoBuilder._resetPose(
+                flipFieldPose(startPose) if AutoBuilder._shouldFlipPath() else startPose)), autoCommand)
         else:
             return autoCommand
 

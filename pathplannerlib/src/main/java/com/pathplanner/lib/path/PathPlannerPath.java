@@ -1076,7 +1076,9 @@ public class PathPlannerPath {
             .collect(Collectors.toList());
     GoalEndState newEndState =
         new GoalEndState(
-            goalEndState.getVelocity(), GeometryUtil.flipFieldRotation(goalEndState.getRotation()));
+            goalEndState.getVelocity(),
+            GeometryUtil.flipFieldRotation(goalEndState.getRotation()),
+            goalEndState.shouldRotateFast());
     Rotation2d newPreviewRot = GeometryUtil.flipFieldRotation(previewStartingRotation);
 
     return new PathPlannerPath(

@@ -37,6 +37,12 @@ public class PathPlannerPath {
   private PathPlannerTrajectory choreoTrajectory = null;
 
   /**
+   * Set to true to prevent this path from being flipped (useful for OTF paths that already have the
+   * correct coords)
+   */
+  public boolean preventFlipping = false;
+
+  /**
    * Create a new path planner path
    *
    * @param bezierPoints List of points representing the cubic Bezier curve of the path

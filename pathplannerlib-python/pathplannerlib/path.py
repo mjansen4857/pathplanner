@@ -334,6 +334,8 @@ class PathPlannerPath:
 
     _instances: int = 0
 
+    preventFlipping: bool = False
+
     def __init__(self, bezier_points: List[Translation2d], constraints: PathConstraints, goal_end_state: GoalEndState,
                  holonomic_rotations: List[RotationTarget] = [], constraint_zones: List[ConstraintsZone] = [],
                  event_markers: List[EventMarker] = [], is_reversed: bool = False,

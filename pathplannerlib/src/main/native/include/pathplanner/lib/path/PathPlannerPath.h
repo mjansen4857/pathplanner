@@ -20,6 +20,8 @@
 namespace pathplanner {
 class PathPlannerPath: public std::enable_shared_from_this<PathPlannerPath> {
 public:
+	bool preventFlipping = false;
+
 	/**
 	 * Create a new path planner path
 	 *

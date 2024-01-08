@@ -85,7 +85,7 @@ public class FollowPathCommand extends Command {
 
   @Override
   public void initialize() {
-    if (shouldFlipPath.getAsBoolean()) {
+    if (shouldFlipPath.getAsBoolean() && !originalPath.preventFlipping) {
       path = originalPath.flipPath();
     } else {
       path = originalPath;

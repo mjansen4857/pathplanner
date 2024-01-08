@@ -32,7 +32,7 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 }
 
 void FollowPathCommand::Initialize() {
-	if (m_shouldFlipPath()) {
+	if (m_shouldFlipPath() && !m_originalPath->preventFlipping) {
 		m_path = m_originalPath->flipPath();
 	} else {
 		m_path = m_originalPath;

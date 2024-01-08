@@ -72,7 +72,7 @@ class FollowPathCommand(Command):
             self.addRequirements(*reqs)
 
     def initialize(self):
-        if self._shouldFlipPath():
+        if self._shouldFlipPath() and not self._originalPath.preventFlipping:
             self._path = self._originalPath.flipPath()
         else:
             self._path = self._originalPath

@@ -17,6 +17,8 @@ public:
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
 	 * @param robotRelativeOutput a consumer for the output speeds (robot relative)
 	 * @param config HolonomicPathFollowerConfig for configuring the path following commands
+	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command (drive subsystem)
 	 * @param rotationDelayDistance Distance to delay the target rotation of the robot. This will
 	 *     cause the robot to hold its current rotation until it reaches the given distance along the
@@ -27,18 +29,18 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
-			HolonomicPathFollowerConfig config, frc2::Requirements requirements,
+			HolonomicPathFollowerConfig config,
+			std::function<bool()> shouldFlipPath,
+			frc2::Requirements requirements,
 			units::meter_t rotationDelayDistance = 0_m) {
 		AddCommands(
 				PathfindHolonomic(goalPath, pathfindingConstraints,
 						poseSupplier, currentRobotRelativeSpeeds,
-						robotRelativeOutput, config, requirements,
-						rotationDelayDistance),
-				FollowPathWithEvents(
-						FollowPathHolonomic(goalPath, poseSupplier,
-								currentRobotRelativeSpeeds, robotRelativeOutput,
-								config, requirements).ToPtr().Unwrap(),
-						goalPath, poseSupplier));
+						robotRelativeOutput, config, shouldFlipPath,
+						requirements, rotationDelayDistance),
+				FollowPathHolonomic(goalPath, poseSupplier,
+						currentRobotRelativeSpeeds, robotRelativeOutput, config,
+						shouldFlipPath, requirements));
 	}
 };
 }

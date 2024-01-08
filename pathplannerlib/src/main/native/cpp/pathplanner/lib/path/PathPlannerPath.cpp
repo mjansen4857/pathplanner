@@ -709,3 +709,81 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 	return std::make_shared < PathPlannerPath
 			> (replannedBezier, mappedTargets, mappedZones, mappedMarkers, m_globalConstraints, m_goalEndState, m_reversed);
 }
+
+std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
+	if (m_isChoreoPath) {
+		// Just mirror the choreo traj
+		std::vector < PathPlannerTrajectory::State > mirroredStates;
+		for (auto state : m_choreoTrajectory.getStates()) {
+			PathPlannerTrajectory::State mirrored;
+
+			mirrored.time = state.time;
+			mirrored.velocity = state.velocity;
+			mirrored.acceleration = state.acceleration;
+			mirrored.headingAngularVelocity = -state.headingAngularVelocity;
+			mirrored.position = GeometryUtil::flipFieldPosition(state.position);
+			mirrored.heading = GeometryUtil::flipFieldRotation(state.heading);
+			mirrored.targetHolonomicRotation = GeometryUtil::flipFieldRotation(
+					state.targetHolonomicRotation);
+			mirrored.holonomicAngularVelocityRps =
+					state.holonomicAngularVelocityRps;
+			if (mirrored.holonomicAngularVelocityRps) {
+				mirrored.holonomicAngularVelocityRps =
+						-mirrored.holonomicAngularVelocityRps.value();
+			}
+			mirrored.curvature = -state.curvature;
+			mirrored.constraints = state.constraints;
+			mirroredStates.emplace_back(mirrored);
+		}
+
+		auto path =
+				std::make_shared < PathPlannerPath
+						> (PathConstraints(units::meters_per_second_t {
+								std::numeric_limits<double>::infinity() },
+								units::meters_per_second_squared_t {
+										std::numeric_limits<double>::infinity() },
+								units::radians_per_second_t {
+										std::numeric_limits<double>::infinity() },
+								units::radians_per_second_squared_t {
+										std::numeric_limits<double>::infinity() }), GoalEndState(
+								mirroredStates[mirroredStates.size() - 1].velocity,
+								mirroredStates[mirroredStates.size() - 1].targetHolonomicRotation,
+								true));
+
+		std::vector < PathPoint > pathPoints;
+		for (auto state : mirroredStates) {
+			pathPoints.emplace_back(state.position);
+		}
+
+		path->m_allPoints = pathPoints;
+		path->m_isChoreoPath = true;
+		path->m_choreoTrajectory = PathPlannerTrajectory(mirroredStates);
+
+		return path;
+	}
+
+	std::vector < frc::Translation2d > newBezier;
+	std::vector < RotationTarget > newRotTargets;
+	std::vector < EventMarker > newMarkers;
+	GoalEndState newEndState = GoalEndState(m_goalEndState.getVelocity(),
+			-m_goalEndState.getRotation());
+	frc::Rotation2d newPreviewRot = -m_previewStartingRotation;
+
+	for (auto p : m_bezierPoints) {
+		newBezier.emplace_back(GeometryUtil::flipFieldPosition(p));
+	}
+
+	for (auto t : m_rotationTargets) {
+		newRotTargets.emplace_back(t.getPosition(),
+				GeometryUtil::flipFieldRotation(t.getTarget()),
+				t.shouldRotateFast());
+	}
+
+	for (auto e : m_eventMarkers) {
+		newMarkers.emplace_back(e.getWaypointRelativePos(), e.getCommand(),
+				e.getMinimumTriggerDistance());
+	}
+
+	return std::make_shared < PathPlannerPath
+			> (newBezier, newRotTargets, m_constraintZones, newMarkers, m_globalConstraints, newEndState, m_reversed, newPreviewRot);
+}

@@ -18,6 +18,8 @@ public:
 	 * @param Relems The maximum desired control effort for each input.
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
 	 * @param replanningConfig Path replanning configuration
+	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindLTV(std::shared_ptr<PathPlannerPath> targetPath,
@@ -27,10 +29,12 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			const wpi::array<double, 3> &Qelems,
 			const wpi::array<double, 2> &Relems, units::second_t dt,
-			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
-			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
-			output, std::make_unique < PPLTVController > (Qelems, Relems, dt),
-			0_m, replanningConfig, requirements) {
+			ReplanningConfig replanningConfig,
+			std::function<bool()> shouldFlipPath,
+			frc2::Requirements requirements) : PathfindingCommand(targetPath,
+			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
+			std::make_unique < PPLTVController > (Qelems, Relems, dt), 0_m,
+			replanningConfig, shouldFlipPath, requirements) {
 		if (targetPath->isChoreoPath()) {
 			throw FRC_MakeError(frc::err::CommandIllegalUse,
 					"Paths loaded from Choreo cannot be used with differential drivetrains");
@@ -47,6 +51,8 @@ public:
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param dt Period of the robot control loop in seconds (default 0.02)
 	 * @param replanningConfig Path replanning configuration
+	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindLTV(std::shared_ptr<PathPlannerPath> targetPath,
@@ -54,10 +60,12 @@ public:
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
-			ReplanningConfig replanningConfig, frc2::Requirements requirements) : PathfindingCommand(
-			targetPath, constraints, poseSupplier, currentRobotRelativeSpeeds,
-			output, std::make_unique < PPLTVController > (dt), 0_m,
-			replanningConfig, requirements) {
+			ReplanningConfig replanningConfig,
+			std::function<bool()> shouldFlipPath,
+			frc2::Requirements requirements) : PathfindingCommand(targetPath,
+			constraints, poseSupplier, currentRobotRelativeSpeeds, output,
+			std::make_unique < PPLTVController > (dt), 0_m, replanningConfig,
+			shouldFlipPath, requirements) {
 		if (targetPath->isChoreoPath()) {
 			throw FRC_MakeError(frc::err::CommandIllegalUse,
 					"Paths loaded from Choreo cannot be used with differential drivetrains");

@@ -24,6 +24,8 @@ public:
 	 *     distance from the center of the robot to the furthest module. For mecanum, this is the
 	 *     drive base width / 2
 	 * @param replanningConfig Path replanning configuration
+	 * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+	 *     maintain a global blue alliance origin.
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
 	 * @param period Period of the control loop in seconds, default is 0.02s
 	 */
@@ -34,11 +36,12 @@ public:
 			PIDConstants translationConstants, PIDConstants rotationConstants,
 			units::meters_per_second_t maxModuleSpeed,
 			units::meter_t driveBaseRadius, ReplanningConfig replanningConfig,
+			std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements, units::second_t period = 0.02_s) : FollowPathCommand(
 			path, poseSupplier, speedsSupplier, output,
 			std::make_unique < PPHolonomicDriveController
 					> (translationConstants, rotationConstants, maxModuleSpeed, driveBaseRadius, period),
-			replanningConfig, requirements) {
+			replanningConfig, shouldFlipPath, requirements) {
 	}
 
 	/**
@@ -51,17 +54,21 @@ public:
 	 * @param output Function that will apply the robot-relative output speeds of this
 	 *     command
 	 * @param config Holonomic path follower configuration
+	 * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+	 *     maintain a global blue alliance origin.
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
 	 */
 	FollowPathHolonomic(std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
-			HolonomicPathFollowerConfig config, frc2::Requirements requirements) : FollowPathHolonomic(
-			path, poseSupplier, speedsSupplier, output,
-			config.translationConstants, config.rotationConstants,
-			config.maxModuleSpeed, config.driveBaseRadius,
-			config.replanningConfig, requirements, config.period) {
+			HolonomicPathFollowerConfig config,
+			std::function<bool()> shouldFlipPath,
+			frc2::Requirements requirements) : FollowPathHolonomic(path,
+			poseSupplier, speedsSupplier, output, config.translationConstants,
+			config.rotationConstants, config.maxModuleSpeed,
+			config.driveBaseRadius, config.replanningConfig, shouldFlipPath,
+			requirements, config.period) {
 	}
 };
 }

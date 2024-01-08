@@ -67,11 +67,10 @@ frc2::CommandPtr CommandUtil::pathCommandFromJson(const wpi::json &json,
 	std::string pathName = json.at("pathName").get<std::string>();
 
 	if (loadChoreoPaths) {
-		return AutoBuilder::followPathWithEvents(
+		return AutoBuilder::followPath(
 				PathPlannerPath::fromChoreoTrajectory(pathName));
 	} else {
-		return AutoBuilder::followPathWithEvents(
-				PathPlannerPath::fromPathFile(pathName));
+		return AutoBuilder::followPath(PathPlannerPath::fromPathFile(pathName));
 	}
 }
 

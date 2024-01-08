@@ -7,14 +7,37 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
-		ReplanningConfig replanningConfig, frc2::Requirements requirements) : m_path(
-		path), m_poseSupplier(poseSupplier), m_speedsSupplier(speedsSupplier), m_output(
-		output), m_controller(std::move(controller)), m_replanningConfig(
-		replanningConfig) {
+		ReplanningConfig replanningConfig, std::function<bool()> shouldFlipPath,
+		frc2::Requirements requirements) : m_originalPath(path), m_poseSupplier(
+		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
+		std::move(controller)), m_replanningConfig(replanningConfig), m_shouldFlipPath(
+		shouldFlipPath) {
 	AddRequirements(requirements);
+
+	auto &&driveRequirements = GetRequirements();
+
+	for (EventMarker &marker : m_path->getEventMarkers()) {
+		auto reqs = marker.getCommand()->GetRequirements();
+
+		for (auto &&requirement : reqs) {
+			if (driveRequirements.find(requirement)
+					!= driveRequirements.end()) {
+				throw FRC_MakeError(frc::err::CommandIllegalUse,
+						"Events that are triggered during path following cannot require the drive subsystem");
+			}
+		}
+
+		AddRequirements(reqs);
+	}
 }
 
 void FollowPathCommand::Initialize() {
+	if (m_shouldFlipPath()) {
+		m_path = m_originalPath->flipPath();
+	} else {
+		m_path = m_originalPath;
+	}
+
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
 
@@ -40,6 +63,18 @@ void FollowPathCommand::Initialize() {
 				currentPose.Rotation());
 		PathPlannerLogging::logActivePath (m_path);
 		PPLibTelemetry::setCurrentPath(m_path);
+	}
+
+	// Initialize markers
+	m_currentEventCommands.clear();
+
+	for (EventMarker &marker : m_path->getEventMarkers()) {
+		marker.reset(currentPose);
+	}
+
+	m_markers.clear();
+	for (EventMarker &marker : m_path->getEventMarkers()) {
+		m_markers.emplace_back(marker, false);
 	}
 
 	m_timer.Reset();
@@ -96,6 +131,43 @@ void FollowPathCommand::Execute() {
 	PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());
 
 	m_output(targetSpeeds);
+
+	// Run event marker commands
+	for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
+		if (!runningCommand.second) {
+			continue;
+		}
+
+		runningCommand.first->Execute();
+		if (runningCommand.first->IsFinished()) {
+			runningCommand.first->End(false);
+			runningCommand.second = false;
+		}
+	}
+
+	for (std::pair<EventMarker, bool> &marker : m_markers) {
+		if (!marker.second) {
+			if (marker.first.shouldTrigger(currentPose)) {
+				marker.second = true;
+
+				for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
+					if (!runningCommand.second) {
+						continue;
+					}
+
+					if (!frc2::RequirementsDisjoint(runningCommand.first.get(),
+							marker.first.getCommand().get())) {
+						runningCommand.first->End(true);
+						runningCommand.second = false;
+					}
+				}
+
+				marker.first.getCommand()->Initialize();
+				m_currentEventCommands.emplace_back(marker.first.getCommand(),
+						true);
+			}
+		}
+	}
 }
 
 bool FollowPathCommand::IsFinished() {
@@ -112,4 +184,11 @@ void FollowPathCommand::End(bool interrupted) {
 	}
 
 	PathPlannerLogging::logActivePath(nullptr);
+
+	// End markers
+	for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
+		if (runningCommand.second) {
+			runningCommand.first->End(true);
+		}
+	}
 }

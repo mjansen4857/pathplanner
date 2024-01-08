@@ -32,6 +32,8 @@ public:
 	 *     command
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param replanningConfig Path replanning configuration
+	 * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
+	 *     maintain a global blue alliance origin.
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
 	 */
 	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
@@ -39,7 +41,9 @@ public:
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unique_ptr<PathFollowingController> controller,
-			ReplanningConfig replanningConfig, frc2::Requirements requirements);
+			ReplanningConfig replanningConfig,
+			std::function<bool()> shouldFlipPath,
+			frc2::Requirements requirements);
 
 	void Initialize() override;
 
@@ -51,13 +55,19 @@ public:
 
 private:
 	frc::Timer m_timer;
-	std::shared_ptr<PathPlannerPath> m_path;
+	std::shared_ptr<PathPlannerPath> m_originalPath;
 	std::function<frc::Pose2d()> m_poseSupplier;
 	std::function<frc::ChassisSpeeds()> m_speedsSupplier;
 	std::function<void(frc::ChassisSpeeds)> m_output;
 	std::unique_ptr<PathFollowingController> m_controller;
 	ReplanningConfig m_replanningConfig;
+	std::function<bool()> m_shouldFlipPath;
 
+	// For event markers
+	std::vector<std::pair<std::shared_ptr<frc2::Command>, bool>> m_currentEventCommands;
+	std::vector<std::pair<EventMarker, bool>> m_markers;
+
+	std::shared_ptr<PathPlannerPath> m_path;
 	PathPlannerTrajectory m_generatedTrajectory;
 
 	inline void replanPath(const frc::Pose2d &currentPose,

@@ -15,11 +15,12 @@ PathfindingCommand::PathfindingCommand(
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::unique_ptr<PathFollowingController> controller,
 		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
-		frc2::Requirements requirements) : m_targetPath(targetPath), m_targetPose(), m_goalEndState(
-		0_mps, frc::Rotation2d(), true), m_constraints(constraints), m_poseSupplier(
-		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
-		std::move(controller)), m_rotationDelayDistance(rotationDelayDistance), m_replanningConfig(
-		replanningConfig) {
+		std::function<bool()> shouldFlipPath, frc2::Requirements requirements) : m_targetPath(
+		targetPath), m_targetPose(), m_goalEndState(0_mps, frc::Rotation2d(),
+		true), m_constraints(constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
+		speedsSupplier), m_output(output), m_controller(std::move(controller)), m_rotationDelayDistance(
+		rotationDelayDistance), m_replanningConfig(replanningConfig), m_shouldFlipPath(
+		shouldFlipPath) {
 	AddRequirements(requirements);
 
 	Pathfinding::ensureInitialized();
@@ -63,7 +64,10 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 		targetPose), m_goalEndState(goalEndVel, targetPose.Rotation(), true), m_constraints(
 		constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
 		speedsSupplier), m_output(output), m_controller(std::move(controller)), m_rotationDelayDistance(
-		rotationDelayDistance), m_replanningConfig(replanningConfig) {
+		rotationDelayDistance), m_replanningConfig(replanningConfig), m_shouldFlipPath(
+		[]() {
+			return false;
+		}) {
 	AddRequirements(requirements);
 
 	Pathfinding::ensureInitialized();
@@ -84,6 +88,9 @@ void PathfindingCommand::Initialize() {
 	if (m_targetPath) {
 		m_targetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
 				m_goalEndState.getRotation());
+		if (m_shouldFlipPath()) {
+			m_targetPose = GeometryUtil::flipFieldPose(m_targetPose);
+		}
 	}
 
 	if (currentPose.Translation().Distance(m_targetPose.Translation())
@@ -254,8 +261,8 @@ bool PathfindingCommand::IsFinished() {
 		units::meter_t stoppingDistance = units::math::pow < 2
 				> (currentVel) / (2 * m_constraints.getMaxAcceleration());
 
-		return currentPose.Translation().Distance(
-				m_targetPath->getPoint(0).position) <= stoppingDistance;
+		return currentPose.Translation().Distance(m_targetPose.Translation())
+				<= stoppingDistance;
 	}
 
 	if (m_currentTrajectory.getStates().size() > 0) {

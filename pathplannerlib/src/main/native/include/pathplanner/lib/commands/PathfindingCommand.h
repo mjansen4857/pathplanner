@@ -34,6 +34,8 @@ public:
 	 * @param rotationDelayDistance How far the robot should travel before attempting to rotate to the
 	 *     final rotation
 	 * @param replanningConfig Path replanning configuration
+	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
+	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindingCommand(std::shared_ptr<PathPlannerPath> targetPath,
@@ -43,7 +45,9 @@ public:
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::unique_ptr<PathFollowingController> controller,
 			units::meter_t rotationDelayDistance,
-			ReplanningConfig replanningConfig, frc2::Requirements requirements);
+			ReplanningConfig replanningConfig,
+			std::function<bool()> shouldFlipPath,
+			frc2::Requirements requirements);
 
 	/**
 	 * Constructs a new base pathfinding command that will generate a path towards the given pose.
@@ -90,6 +94,7 @@ private:
 	std::unique_ptr<PathFollowingController> m_controller;
 	units::meter_t m_rotationDelayDistance;
 	ReplanningConfig m_replanningConfig;
+	std::function<bool()> m_shouldFlipPath;
 
 	std::shared_ptr<PathPlannerPath> m_currentPath;
 	PathPlannerTrajectory m_currentTrajectory;

@@ -21,7 +21,7 @@
           "width": 0.8999999761581421
         },
         "bottom": 544,
-        "builtin": "2023 Charged Up",
+        "builtin": "2024 Crescendo",
         "height": 8.013679504394531,
         "left": 46,
         "path": {
@@ -51,5 +51,8 @@
         }
       }
     }
+  },
+  "NetworkTables Info": {
+    "visible": true
   }
 }

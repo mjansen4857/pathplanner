@@ -64,7 +64,7 @@ class SwerveSubsystem : public frc2::SubsystemBase {
 
         inline void setTargetState(const frc::SwerveModuleState& targetState) {
           currentState = frc::SwerveModuleState::Optimize(targetState, currentState.angle);
-          currentPosition = frc::SwerveModulePosition(currentPosition.distance + (currentState.speed * 0.02_s), currentState.angle);
+          currentPosition = frc::SwerveModulePosition{currentPosition.distance + (currentState.speed * 0.02_s), currentState.angle};
         }
 
       private:

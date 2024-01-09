@@ -766,8 +766,10 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	std::vector < RotationTarget > newRotTargets;
 	std::vector < EventMarker > newMarkers;
 	GoalEndState newEndState = GoalEndState(m_goalEndState.getVelocity(),
-			-m_goalEndState.getRotation(), m_goalEndState.shouldRotateFast());
-	frc::Rotation2d newPreviewRot = -m_previewStartingRotation;
+			GeometryUtil::flipFieldRotation(m_goalEndState.getRotation()),
+			m_goalEndState.shouldRotateFast());
+	frc::Rotation2d newPreviewRot = GeometryUtil::flipFieldRotation(
+			m_previewStartingRotation);
 
 	for (auto p : m_bezierPoints) {
 		newBezier.emplace_back(GeometryUtil::flipFieldPosition(p));

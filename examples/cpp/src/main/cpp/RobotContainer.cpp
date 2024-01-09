@@ -44,7 +44,7 @@ void RobotContainer::ConfigureBindings() {
   frc::SmartDashboard::PutData("Pathfind to Scoring Pos", pathfindToScore.get());
 
   // Add a button to SmartDashboard that will create and follow an on-the-fly path
-  // This example will simply move the robot 2m forward of its current position
+  // This example will simply move the robot 2m in the +X field direction
   onTheFly = frc2::cmd::RunOnce([this]() {
     frc::Pose2d currentPose = this->swerve.getPose();
 
@@ -60,7 +60,10 @@ void RobotContainer::ConfigureBindings() {
       GoalEndState(0_mps, currentPose.Rotation())
     );
 
-    this->followOnTheFly = AutoBuilder::followPathWithEvents(path).Unwrap();
+    // Prevent this path from being flipped on the red alliance, since the given positions are already correct
+    path->preventFlipping = true;
+
+    this->followOnTheFly = AutoBuilder::followPath(path).Unwrap();
     this->followOnTheFly->Schedule();
   }).Unwrap();
   frc::SmartDashboard::PutData("On-the-fly path", onTheFly.get());

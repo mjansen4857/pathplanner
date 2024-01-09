@@ -6,6 +6,7 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <pathplanner/lib/auto/AutoBuilder.h>
 #include <pathplanner/lib/util/PathPlannerLogging.h>
+#include <frc/DriverStation.h>
 
 using namespace pathplanner;
 
@@ -20,6 +21,17 @@ SwerveSubsystem::SwerveSubsystem() : flModule(), frModule(), blModule(), brModul
         [this]() {return this->getSpeeds();},
         [this](frc::ChassisSpeeds robotRelativeSpeeds) {this->driveRobotRelative(robotRelativeSpeeds);},
         SwerveConstants::pathFollowerConfig,
+        []() {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+            auto alliance = frc::DriverStation::GetAlliance();
+            if (alliance) {
+                return alliance.value() == frc::DriverStation::Alliance::kRed;
+            }
+            return false;
+        },
         this
     );
 

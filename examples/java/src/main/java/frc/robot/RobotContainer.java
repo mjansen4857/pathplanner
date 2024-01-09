@@ -15,7 +15,6 @@ import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -86,7 +85,7 @@ public class RobotContainer {
     ));
 
     // Add a button to SmartDashboard that will create and follow an on-the-fly path
-    // This example will simply move the robot 2m forward of its current position
+    // This example will simply move the robot 2m in the +X field direction
     SmartDashboard.putData("On-the-fly path", Commands.runOnce(() -> {
       Pose2d currentPose = swerve.getPose();
       
@@ -104,7 +103,10 @@ public class RobotContainer {
         new GoalEndState(0.0, currentPose.getRotation())
       );
 
-      AutoBuilder.followPathWithEvents(path).schedule();
+      // Prevent this path from being flipped on the red alliance, since the given positions are already correct
+      path.preventFlipping = true;
+
+      AutoBuilder.followPath(path).schedule();
     }));
   }
 

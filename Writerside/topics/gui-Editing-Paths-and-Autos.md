@@ -232,9 +232,16 @@ that apply to command groups when creating them programmatically still apply her
 
 > **Note**
 >
-> You must hit enter after typing in new names to the named commands dropdown for the new name to be saved.
+> The ordering of commands in these groups follows the same rules as using command groups in WPILib. For example, a
+> deadline group will use the first command in the list as the deadline.
 >
 {style="note"}
+
+> **Warning**
+>
+> You must hit enter after typing in new names to the named commands dropdown for the new name to be saved.
+>
+{style="warning"}
 
 ## Editor Settings
 

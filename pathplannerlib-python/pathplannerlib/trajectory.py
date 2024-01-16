@@ -5,9 +5,11 @@ from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpimath import inputModulus
-import pathplannerlib.path as p
 from .geometry_util import floatLerp, translationLerp, rotationLerp
-from typing import List, Union
+from typing import List, Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .path import PathPlannerPath, PathConstraints
 
 
 @dataclass
@@ -21,7 +23,7 @@ class State:
     targetHolonomicRotation: Rotation2d = field(default_factory=Rotation2d)
     holonomicAngularVelocityRps: Union[float, None] = None
     curvatureRadPerMeter: float = 0
-    constraints: p.PathConstraints = None
+    constraints: PathConstraints = None
     deltaPos: float = 0
 
     def interpolate(self, end_val: State, t: float) -> State:
@@ -105,7 +107,7 @@ class State:
 class PathPlannerTrajectory:
     _states: List[State]
 
-    def __init__(self, path: Union[p.PathPlannerPath, None], starting_speeds: Union[ChassisSpeeds, None],
+    def __init__(self, path: Union[PathPlannerPath, None], starting_speeds: Union[ChassisSpeeds, None],
                  starting_rotation: Union[Rotation2d, None], states: List[State] = None):
         """
         Generate a PathPlannerTrajectory. If "states" is provided, the other arguments can be None
@@ -210,7 +212,7 @@ class PathPlannerTrajectory:
                                       (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds))
 
     @staticmethod
-    def _getNextRotationTarget(path: p.PathPlannerPath, starting_index: int) -> int:
+    def _getNextRotationTarget(path: PathPlannerPath, starting_index: int) -> int:
         idx = path.numPoints() - 1
 
         for i in range(starting_index, path.numPoints() - 1):
@@ -221,7 +223,7 @@ class PathPlannerTrajectory:
         return idx
 
     @staticmethod
-    def _generateStates(path: p.PathPlannerPath, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d) -> List[
+    def _generateStates(path: PathPlannerPath, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d) -> List[
         State]:
         states = []
 

@@ -94,7 +94,8 @@ void PathfindingCommand::Initialize() {
 	}
 
 	if (currentPose.Translation().Distance(m_targetPose.Translation())
-			< 0.35_m) {
+			< 0.5_m) {
+		m_output(frc::ChassisSpeeds());
 		Cancel();
 	} else {
 		Pathfinding::setStartPosition(currentPose.Translation());
@@ -126,7 +127,7 @@ void PathfindingCommand::Execute() {
 			// Find the two closest states in front of and behind robot
 			size_t closestState1Idx = 0;
 			size_t closestState2Idx = 1;
-			while (true) {
+			while (closestState2Idx < m_currentTrajectory.getStates().size() - 1) {
 				auto closest2Dist = m_currentTrajectory.getState(
 						closestState2Idx).position.Distance(
 						currentPose.Translation());

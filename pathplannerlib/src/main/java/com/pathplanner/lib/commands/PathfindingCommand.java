@@ -171,7 +171,8 @@ public class PathfindingCommand extends Command {
       }
     }
 
-    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.35) {
+    if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.5) {
+      output.accept(new ChassisSpeeds());
       this.cancel();
     } else {
       Pathfinding.setStartPosition(currentPose.getTranslation());
@@ -207,7 +208,7 @@ public class PathfindingCommand extends Command {
         // Find the two closest states in front of and behind robot
         int closestState1Idx = 0;
         int closestState2Idx = 1;
-        while (true) {
+        while (closestState2Idx < currentTrajectory.getStates().size() - 1) {
           double closest2Dist =
               currentTrajectory
                   .getState(closestState2Idx)

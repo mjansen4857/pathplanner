@@ -92,7 +92,8 @@ std::vector<PathPlannerTrajectory::State> PathPlannerTrajectory::generateStates(
 				t = 0.0;
 			}
 
-			state.targetHolonomicRotation = GeometryUtil::rotationLerp(prevRotationTargetRot, nextTarget.getTarget(), t);
+			state.targetHolonomicRotation = GeometryUtil::rotationLerp(
+					prevRotationTargetRot, nextTarget.getTarget(), t);
 		}
 
 		state.position = path->getPoint(i).position;

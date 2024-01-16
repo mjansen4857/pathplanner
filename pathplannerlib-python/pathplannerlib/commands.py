@@ -354,7 +354,8 @@ class PathfindingCommand(Command):
             if self._shouldFlipPath():
                 self._targetPose = flipFieldPose(self._targetPose)
 
-        if currentPose.translation().distance(self._targetPose.translation()) < 0.35:
+        if currentPose.translation().distance(self._targetPose.translation()) < 0.5:
+            self._output(ChassisSpeeds())
             self.cancel()
         else:
             Pathfinding.setStartPosition(currentPose.translation())
@@ -383,7 +384,7 @@ class PathfindingCommand(Command):
                 # Find the two closest states in front of and behind robot
                 closestState1Idx = 0
                 closestState2Idx = 1
-                while True:
+                while closestState2Idx < len(self._currentTrajectory.getStates()) - 1:
                     closest2Dist = self._currentTrajectory.getState(closestState2Idx).positionMeters.distance(
                         currentPose.translation())
                     nextDist = self._currentTrajectory.getState(closestState2Idx + 1).positionMeters.distance(

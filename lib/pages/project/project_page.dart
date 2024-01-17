@@ -135,17 +135,22 @@ class _ProjectPageState extends State<ProjectPage> {
           _chorWatcher = DirectoryWatcher(widget.choreoDirectory.path,
               pollingDelay: const Duration(seconds: 1));
 
-          _chorWatcherSub = _chorWatcher!.events.listen((event) {
-            _load();
-            if (mounted) {
-              if (Navigator.of(this.context).canPop()) {
-                // We might have a path or auto open, close it
-                Navigator.of(this.context).pop();
-              }
+          Timer? loadTimer;
 
-              ScaffoldMessenger.of(this.context).showSnackBar(
-                  const SnackBar(content: Text('Reloaded Choreo paths')));
-            }
+          _chorWatcherSub = _chorWatcher!.events.listen((event) {
+            loadTimer?.cancel();
+            loadTimer = Timer(const Duration(milliseconds: 500), () {
+              _load();
+              if (mounted) {
+                if (Navigator.of(this.context).canPop()) {
+                  // We might have a path or auto open, close it
+                  Navigator.of(this.context).pop();
+                }
+
+                ScaffoldMessenger.of(this.context).showSnackBar(
+                    const SnackBar(content: Text('Reloaded Choreo paths')));
+              }
+            });
           });
         }
       });

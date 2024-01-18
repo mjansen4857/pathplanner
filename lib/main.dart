@@ -47,6 +47,17 @@ void main() async {
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
+      // Ensure saved host is an IP
+      try {
+        String? hostIP = prefs.getString(PrefsKeys.ntServerAddress);
+        if (hostIP != null) {
+          Uri.parseIPv4Address(hostIP);
+        }
+      } catch (_) {
+        // Not a valid IP, reset to default
+        prefs.setString(PrefsKeys.ntServerAddress, Defaults.ntServerAddress);
+      }
+
       PPLibTelemetry telemetry = PPLibTelemetry(
           serverBaseAddress: prefs.getString(PrefsKeys.ntServerAddress) ??
               Defaults.ntServerAddress);

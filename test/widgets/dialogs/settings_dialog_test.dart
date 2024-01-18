@@ -23,7 +23,7 @@ void main() {
       PrefsKeys.holonomicMode: true,
       PrefsKeys.hotReloadEnabled: true,
       PrefsKeys.teamColor: Colors.black.value,
-      PrefsKeys.ntServerAddress: 'localhost',
+      PrefsKeys.ntServerAddress: '127.0.0.1',
       PrefsKeys.defaultMaxVel: 1.0,
       PrefsKeys.defaultMaxAccel: 2.0,
       PrefsKeys.defaultMaxAngVel: 3.0,
@@ -349,10 +349,11 @@ void main() {
       ),
     ));
 
-    final textField = find.widgetWithText(TextField, 'Host');
+    final textField =
+        find.widgetWithText(TextField, 'Host IP (localhost = 127.0.0.1)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('localhost')),
+    expect(find.descendant(of: textField, matching: find.text('127.0.0.1')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '10.30.15.2');

@@ -270,14 +270,21 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           Expanded(
                             child: _buildTextField(
                               context,
-                              'Host',
+                              'Host IP (localhost = 127.0.0.1)',
                               (value) {
-                                widget.prefs.setString(
-                                    PrefsKeys.ntServerAddress, value);
-                                setState(() {
-                                  _pplibClientHost = value;
-                                });
-                                widget.onSettingsChanged();
+                                // Check if valid IP
+                                try {
+                                  Uri.parseIPv4Address(value);
+
+                                  widget.prefs.setString(
+                                      PrefsKeys.ntServerAddress, value);
+                                  setState(() {
+                                    _pplibClientHost = value;
+                                  });
+                                  widget.onSettingsChanged();
+                                } catch (_) {
+                                  setState(() {});
+                                }
                               },
                               _pplibClientHost,
                               null,

@@ -35,7 +35,7 @@ class Defaults {
   static const bool holonomicMode = true;
   static const double projectLeftWeight = 0.5;
   static const double editorTreeWeight = 0.5;
-  static const String ntServerAddress = 'localhost';
+  static const String ntServerAddress = '127.0.0.1';
   static const bool treeOnRight = true;
   static const String pathSortOption = 'recent';
   static const String autoSortOption = 'recent';

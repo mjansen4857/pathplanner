@@ -727,9 +727,9 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 					state.targetHolonomicRotation);
 			mirrored.holonomicAngularVelocityRps =
 					state.holonomicAngularVelocityRps;
-			if (mirrored.holonomicAngularVelocityRps) {
+			if (state.holonomicAngularVelocityRps) {
 				mirrored.holonomicAngularVelocityRps =
-						-mirrored.holonomicAngularVelocityRps.value();
+						-state.holonomicAngularVelocityRps.value();
 			}
 			mirrored.curvature = -state.curvature;
 			mirrored.constraints = state.constraints;

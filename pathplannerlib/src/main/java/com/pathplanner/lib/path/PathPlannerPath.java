@@ -1038,7 +1038,7 @@ public class PathPlannerPath {
         mirrored.heading = GeometryUtil.flipFieldRotation(state.heading);
         mirrored.targetHolonomicRotation =
             GeometryUtil.flipFieldRotation(state.targetHolonomicRotation);
-        mirrored.holonomicAngularVelocityRps.ifPresent(
+        state.holonomicAngularVelocityRps.ifPresent(
             v -> mirrored.holonomicAngularVelocityRps = Optional.of(-v));
         mirrored.curvatureRadPerMeter = -state.curvatureRadPerMeter;
         mirrored.constraints = state.constraints;

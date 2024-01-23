@@ -1,6 +1,6 @@
 setuptools~=68.2.0
-pyntcore>=2024.1.1
-robotpy-wpimath>=2024.1.1
+pyntcore>=2024.2.1
+robotpy-wpimath>=2024.2.1
 robotpy-commands-v2>=2024.0.0b4
-robotpy-wpiutil>=2024.1.1
-robotpy-hal>=2024.1.1
+robotpy-wpiutil>=2024.2.1
+robotpy-hal>=2024.2.1

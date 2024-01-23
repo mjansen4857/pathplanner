@@ -299,8 +299,7 @@ public class PathPlannerPath {
       PPLibTelemetry.registerHotReloadPath(pathName, path);
       return path;
     } catch (Exception e) {
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
@@ -380,8 +379,7 @@ public class PathPlannerPath {
 
       return path;
     } catch (Exception e) {
-      e.printStackTrace();
-      return null;
+      throw new RuntimeException(e);
     }
   }
 

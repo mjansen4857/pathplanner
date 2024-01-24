@@ -9,7 +9,7 @@ from .commands import FollowPathRamsete, FollowPathHolonomic, FollowPathLTV, Pat
     PathfindThenFollowPathLTV
 from .geometry_util import flipFieldPose
 import os
-from wpilib import getDeployDirectory
+from wpilib import getDeployDirectory, reportError
 import json
 from commands2.command import Command
 from commands2.subsystem import Subsystem
@@ -172,7 +172,7 @@ class AutoBuilder:
         :param drive_subsystem: the subsystem for the robot's drive
         """
         if AutoBuilder._configured:
-            raise RuntimeError('AutoBuilder has already been configured. Please only configure AutoBuilder once')
+            reportError('AutoBuilder has already been configured. This is likely in error.', True)
 
         AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathHolonomic(
             path,
@@ -233,7 +233,7 @@ class AutoBuilder:
         :param drive_subsystem: the subsystem for the robot's drive
         """
         if AutoBuilder._configured:
-            raise RuntimeError('AutoBuilder has already been configured. Please only configure AutoBuilder once')
+            reportError('AutoBuilder has already been configured. This is likely in error.', True)
 
         AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathRamsete(
             path,
@@ -296,7 +296,7 @@ class AutoBuilder:
         :param drive_subsystem: the subsystem for the robot's drive
         """
         if AutoBuilder._configured:
-            raise RuntimeError('AutoBuilder has already been configured. Please only configure AutoBuilder once')
+            reportError('AutoBuilder has already been configured. This is likely in error.', True)
 
         AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathLTV(
             path,
@@ -351,7 +351,7 @@ class AutoBuilder:
         :param reset_pose: a consumer for resetting the robot's pose
         """
         if AutoBuilder._configured:
-            raise RuntimeError('AutoBuilder has already been configured. Please only configure AutoBuilder once')
+            reportError('AutoBuilder has already been configured. This is likely in error.', True)
 
         AutoBuilder._pathFollowingCommandBuilder = path_following_command_builder
         AutoBuilder._getPose = pose_supplier

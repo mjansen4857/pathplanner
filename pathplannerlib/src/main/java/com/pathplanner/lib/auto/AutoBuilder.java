@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -60,7 +61,6 @@ public class AutoBuilder {
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
    *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
-   * @throws AutoBuilderException if AutoBuilder has already been configured
    */
   public static void configureHolonomic(
       Supplier<Pose2d> poseSupplier,
@@ -71,8 +71,8 @@ public class AutoBuilder {
       BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
-      throw new AutoBuilderException(
-          "Auto builder has already been configured. Please only configure auto builder once");
+      DriverStation.reportError(
+          "Auto builder has already been configured. This is likely in error.", true);
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
@@ -128,7 +128,6 @@ public class AutoBuilder {
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
    *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
-   * @throws AutoBuilderException if AutoBuilder has already been configured
    */
   public static void configureRamsete(
       Supplier<Pose2d> poseSupplier,
@@ -139,8 +138,8 @@ public class AutoBuilder {
       BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
-      throw new AutoBuilderException(
-          "Auto builder has already been configured. Please only configure auto builder once");
+      DriverStation.reportError(
+          "Auto builder has already been configured. This is likely in error.", true);
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
@@ -198,7 +197,6 @@ public class AutoBuilder {
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
    *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
-   * @throws AutoBuilderException if AutoBuilder has already been configured
    */
   public static void configureRamsete(
       Supplier<Pose2d> poseSupplier,
@@ -211,8 +209,8 @@ public class AutoBuilder {
       BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
-      throw new AutoBuilderException(
-          "Auto builder has already been configured. Please only configure auto builder once");
+      DriverStation.reportError(
+          "Auto builder has already been configured. This is likely in error.", true);
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
@@ -274,7 +272,6 @@ public class AutoBuilder {
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
    *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
-   * @throws AutoBuilderException if AutoBuilder has already been configured
    */
   public static void configureLTV(
       Supplier<Pose2d> poseSupplier,
@@ -286,8 +283,8 @@ public class AutoBuilder {
       BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
-      throw new AutoBuilderException(
-          "Auto builder has already been configured. Please only configure auto builder once");
+      DriverStation.reportError(
+          "Auto builder has already been configured. This is likely in error.", true);
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
@@ -348,7 +345,6 @@ public class AutoBuilder {
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
    *     the field. This will maintain a global blue alliance origin.
    * @param driveSubsystem the subsystem for the robot's drive
-   * @throws AutoBuilderException if AutoBuilder has already been configured
    */
   public static void configureLTV(
       Supplier<Pose2d> poseSupplier,
@@ -362,8 +358,8 @@ public class AutoBuilder {
       BooleanSupplier shouldFlipPath,
       Subsystem driveSubsystem) {
     if (configured) {
-      throw new AutoBuilderException(
-          "Auto builder has already been configured. Please only configure auto builder once");
+      DriverStation.reportError(
+          "Auto builder has already been configured. This is likely in error.", true);
     }
 
     AutoBuilder.pathFollowingCommandBuilder =
@@ -423,15 +419,14 @@ public class AutoBuilder {
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
    * @param poseSupplier a supplier for the robot's current pose
    * @param resetPose a consumer for resetting the robot's pose
-   * @throws AutoBuilderException if AutoBuilder has already been configured
    */
   public static void configureCustom(
       Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose) {
     if (configured) {
-      throw new AutoBuilderException(
-          "Auto builder has already been configured. Please only configure auto builder once");
+      DriverStation.reportError(
+          "Auto builder has already been configured. This is likely in error.", true);
     }
 
     AutoBuilder.pathFollowingCommandBuilder = pathFollowingCommandBuilder;

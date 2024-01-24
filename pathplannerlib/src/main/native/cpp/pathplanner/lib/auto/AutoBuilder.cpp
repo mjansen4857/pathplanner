@@ -38,8 +38,8 @@ void AutoBuilder::configureHolonomic(std::function<frc::Pose2d()> poseSupplier,
 		HolonomicPathFollowerConfig config,
 		std::function<bool()> shouldFlipPath, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
-		throw std::runtime_error(
-				"Auto builder has already been configured. Please only configure auto builder once");
+		FRC_ReportError(frc::err::Error,
+				"Auto builder has already been configured. This is likely in error.");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier,
@@ -85,8 +85,8 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 		ReplanningConfig replanningConfig, std::function<bool()> shouldFlipPath,
 		frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
-		throw std::runtime_error(
-				"Auto builder has already been configured. Please only configure auto builder once");
+		FRC_ReportError(frc::err::Error,
+				"Auto builder has already been configured. This is likely in error.");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
@@ -128,8 +128,8 @@ void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
 		ReplanningConfig replanningConfig, std::function<bool()> shouldFlipPath,
 		frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
-		throw std::runtime_error(
-				"Auto builder has already been configured. Please only configure auto builder once");
+		FRC_ReportError(frc::err::Error,
+				"Auto builder has already been configured. This is likely in error.");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder =
@@ -172,8 +172,8 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 		units::second_t dt, ReplanningConfig replanningConfig,
 		std::function<bool()> shouldFlipPath, frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
-		throw std::runtime_error(
-				"Auto builder has already been configured. Please only configure auto builder once");
+		FRC_ReportError(frc::err::Error,
+				"Auto builder has already been configured. This is likely in error.");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder =
@@ -217,8 +217,8 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 		ReplanningConfig replanningConfig, std::function<bool()> shouldFlipPath,
 		frc2::Subsystem *driveSubsystem) {
 	if (m_configured) {
-		throw std::runtime_error(
-				"Auto builder has already been configured. Please only configure auto builder once");
+		FRC_ReportError(frc::err::Error,
+				"Auto builder has already been configured. This is likely in error.");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
@@ -256,8 +256,8 @@ void AutoBuilder::configureCustom(
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose) {
 	if (m_configured) {
-		throw std::runtime_error(
-				"Auto builder has already been configured. Please only configure auto builder once");
+		FRC_ReportError(frc::err::Error,
+				"Auto builder has already been configured. This is likely in error.");
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = pathFollowingCommandBuilder;

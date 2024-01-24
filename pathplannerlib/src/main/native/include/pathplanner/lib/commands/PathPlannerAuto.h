@@ -50,7 +50,7 @@ private:
 	std::unique_ptr<frc2::Command> m_autoCommand;
 
 	static std::vector<std::shared_ptr<PathPlannerPath>> pathsFromCommandJson(
-			const wpi::json &json);
+			const wpi::json &json, bool choreoPaths);
 
 	static int m_instances;
 };

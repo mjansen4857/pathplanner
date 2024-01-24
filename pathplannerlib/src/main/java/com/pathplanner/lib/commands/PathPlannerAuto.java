@@ -91,7 +91,8 @@ public class PathPlannerAuto extends Command {
 
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
-      return pathsFromCommandJson((JSONObject) json.get("command"));
+      boolean choreoAuto = json.get("choreoAuto") != null && (boolean) json.get("choreoAuto");
+      return pathsFromCommandJson((JSONObject) json.get("command"), choreoAuto);
     } catch (Exception e) {
       throw new RuntimeException(e.getMessage());
     }
@@ -128,7 +129,8 @@ public class PathPlannerAuto extends Command {
     autoCommand.end(interrupted);
   }
 
-  private static List<PathPlannerPath> pathsFromCommandJson(JSONObject commandJson) {
+  private static List<PathPlannerPath> pathsFromCommandJson(
+      JSONObject commandJson, boolean choreoPaths) {
     List<PathPlannerPath> paths = new ArrayList<>();
 
     String type = (String) commandJson.get("type");
@@ -136,13 +138,17 @@ public class PathPlannerAuto extends Command {
 
     if (type.equals("path")) {
       String pathName = (String) data.get("pathName");
-      paths.add(PathPlannerPath.fromPathFile(pathName));
+      if (choreoPaths) {
+        paths.add(PathPlannerPath.fromChoreoTrajectory(pathName));
+      } else {
+        paths.add(PathPlannerPath.fromPathFile(pathName));
+      }
     } else if (type.equals("sequential")
         || type.equals("parallel")
         || type.equals("race")
         || type.equals("deadline")) {
       for (var cmdJson : (JSONArray) data.get("commands")) {
-        paths.addAll(pathsFromCommandJson((JSONObject) cmdJson));
+        paths.addAll(pathsFromCommandJson((JSONObject) cmdJson, choreoPaths));
       }
     }
 

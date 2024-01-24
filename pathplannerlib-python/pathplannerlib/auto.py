@@ -513,7 +513,7 @@ class PathPlannerAuto(Command):
             return AutoBuilder.getStartingPoseFromJson(auto_json['startingPose'])
 
     @staticmethod
-    def _pathsFromCommandJson(command_json: dict) -> List[PathPlannerPath]:
+    def _pathsFromCommandJson(command_json: dict, choreo_paths: bool) -> List[PathPlannerPath]:
         paths = []
 
         cmdType = str(command_json['type'])
@@ -521,10 +521,13 @@ class PathPlannerAuto(Command):
 
         if cmdType == 'path':
             pathName = str(data['pathName'])
-            paths.append(PathPlannerPath.fromPathFile(pathName))
+            if choreo_paths:
+                paths.append(PathPlannerPath.fromChoreoTrajectory(pathName))
+            else:
+                paths.append(PathPlannerPath.fromPathFile(pathName))
         elif cmdType == 'sequential' or cmdType == 'parallel' or cmdType == 'race' or cmdType == 'deadline':
             for cmdJson in data['commands']:
-                paths.extend(PathPlannerAuto._pathsFromCommandJson(cmdJson))
+                paths.extend(PathPlannerAuto._pathsFromCommandJson(cmdJson, choreo_paths))
         return paths
 
     @staticmethod
@@ -539,7 +542,9 @@ class PathPlannerAuto(Command):
 
         with open(filePath, 'r') as f:
             auto_json = json.loads(f.read())
-            return PathPlannerAuto._pathsFromCommandJson(auto_json['command'])
+            choreoAuto = 'choreoAuto' in auto_json and bool(auto_json['choreoAuto'])
+
+            return PathPlannerAuto._pathsFromCommandJson(auto_json['command'], choreoAuto)
 
     def initialize(self):
         self._autoCommand.initialize()

@@ -37,8 +37,10 @@ std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromA
 	}
 
 	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+	bool choreoAuto = json.contains("choreoAuto")
+			&& json.at("choreoAuto").get<bool>();
 
-	return pathsFromCommandJson(json.at("command"));
+	return pathsFromCommandJson(json.at("command"), choreoAuto);
 }
 
 frc::Pose2d PathPlannerAuto::getStartingPoseFromAutoFile(std::string autoName) {
@@ -75,7 +77,7 @@ void PathPlannerAuto::End(bool interrupted) {
 }
 
 std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::pathsFromCommandJson(
-		const wpi::json &json) {
+		const wpi::json &json, bool choreoPaths) {
 	std::vector < std::shared_ptr < PathPlannerPath >> paths;
 
 	std::string type = json.at("type").get<std::string>();
@@ -83,11 +85,15 @@ std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::pathsFromCommandJ
 
 	if (type == "path") {
 		std::string pathName = data.at("pathName").get<std::string>();
-		paths.push_back(PathPlannerPath::fromPathFile(pathName));
+		if (choreoPaths) {
+			paths.push_back(PathPlannerPath::fromChoreoTrajectory(pathName));
+		} else {
+			paths.push_back(PathPlannerPath::fromPathFile(pathName));
+		}
 	} else if (type == "sequential" || type == "parallel" || type == "race"
 			|| type == "deadline") {
 		for (wpi::json::const_reference cmdJson : data.at("commands")) {
-			auto cmdPaths = pathsFromCommandJson(cmdJson);
+			auto cmdPaths = pathsFromCommandJson(cmdJson, choreoPaths);
 			paths.insert(paths.end(), cmdPaths.begin(), cmdPaths.end());
 		}
 	}

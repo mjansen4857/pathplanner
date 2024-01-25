@@ -105,7 +105,7 @@ private:
 	rpsPerMps_t m_mpsToRps;
 
 	frc::Translation2d m_translationError;
-	bool m_enabled;
+	bool m_enabled = true;
 
 	static std::function<std::optional<frc::Rotation2d>()> rotationTargetOverride;
 };

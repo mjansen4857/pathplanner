@@ -1,6 +1,7 @@
 package com.pathplanner.lib.auto;
 
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.*;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +62,11 @@ public class NamedCommands {
     if (hasCommand(name)) {
       return CommandUtil.wrappedEventCommand(namedCommands.get(name));
     } else {
+      DriverStation.reportWarning(
+          "PathPlanner attempted to create a command '"
+              + name
+              + "' that has not been registered with NamedCommands.registerCommand",
+          false);
       return Commands.none();
     }
   }

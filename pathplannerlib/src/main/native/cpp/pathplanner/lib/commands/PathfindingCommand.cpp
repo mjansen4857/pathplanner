@@ -87,8 +87,8 @@ void PathfindingCommand::Initialize() {
 	m_controller->reset(currentPose, m_speedsSupplier());
 
 	if (m_targetPath) {
-		m_targetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
-				m_goalEndState.getRotation());
+		m_originalTargetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
+				m_originalTargetPose.Rotation());
 		if (m_shouldFlipPath()) {
 			m_targetPose = GeometryUtil::flipFieldPose(m_originalTargetPose);
 			m_goalEndState = GoalEndState(m_goalEndState.getVelocity(),

@@ -170,7 +170,8 @@ public class PathfindingCommand extends Command {
     controller.reset(currentPose, speedsSupplier.get());
 
     if (targetPath != null) {
-      targetPose = new Pose2d(this.targetPath.getPoint(0).position, goalEndState.getRotation());
+      originalTargetPose =
+          new Pose2d(this.targetPath.getPoint(0).position, originalTargetPose.getRotation());
       if (shouldFlipPath.getAsBoolean()) {
         targetPose = GeometryUtil.flipFieldPose(this.originalTargetPose);
         goalEndState = new GoalEndState(goalEndState.getVelocity(), targetPose.getRotation());

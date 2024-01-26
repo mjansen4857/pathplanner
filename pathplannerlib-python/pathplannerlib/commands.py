@@ -353,7 +353,7 @@ class PathfindingCommand(Command):
         self._controller.reset(currentPose, self._speedsSupplier())
 
         if self._targetPath is not None:
-            self._targetPose = Pose2d(self._targetPath.getPoint(0).position, self._goalEndState.rotation)
+            self._originalTargetPose = Pose2d(self._targetPath.getPoint(0).position, self._originalTargetPose.rotation())
             if self._shouldFlipPath():
                 self._targetPose = flipFieldPose(self._originalTargetPose)
                 self._goalEndState = GoalEndState(self._goalEndState.velocity, self._targetPose.rotation(), True)

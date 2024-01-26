@@ -275,6 +275,7 @@ class PathfindingCommand(Command):
     _timer: Timer = Timer()
     _targetPath: Union[PathPlannerPath, None]
     _targetPose: Pose2d
+    _originalTargetPose: Pose2d
     _goalEndState: GoalEndState
     _constraints: PathConstraints
     _poseSupplier: Callable[[], Pose2d]
@@ -332,10 +333,12 @@ class PathfindingCommand(Command):
                         break
             self._targetPath = target_path
             self._targetPose = Pose2d(target_path.getPoint(0).position, targetRotation)
+            self._originalTargetPose = Pose2d(target_path.getPoint(0).position, targetRotation)
             self._goalEndState = GoalEndState(goalEndVel, targetRotation, True)
         else:
             self._targetPath = None
             self._targetPose = target_pose
+            self._originalTargetPose = target_pose
             self._goalEndState = GoalEndState(goal_end_vel, target_pose.rotation(), True)
 
         PathfindingCommand._instances += 1
@@ -352,7 +355,8 @@ class PathfindingCommand(Command):
         if self._targetPath is not None:
             self._targetPose = Pose2d(self._targetPath.getPoint(0).position, self._goalEndState.rotation)
             if self._shouldFlipPath():
-                self._targetPose = flipFieldPose(self._targetPose)
+                self._targetPose = flipFieldPose(self._originalTargetPose)
+                self._goalEndState = GoalEndState(self._goalEndState.velocity, self._targetPose.rotation(), True)
 
         if currentPose.translation().distance(self._targetPose.translation()) < 0.5:
             self._output(ChassisSpeeds())

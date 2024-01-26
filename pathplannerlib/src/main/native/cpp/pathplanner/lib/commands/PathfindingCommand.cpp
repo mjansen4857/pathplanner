@@ -46,6 +46,7 @@ PathfindingCommand::PathfindingCommand(
 
 	m_targetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
 			targetRotation);
+	m_originalTargetPose = m_targetPose;
 	m_goalEndState = GoalEndState(goalEndVel, targetRotation, true);
 
 	m_instances++;
@@ -61,13 +62,13 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 		std::unique_ptr<PathFollowingController> controller,
 		units::meter_t rotationDelayDistance, ReplanningConfig replanningConfig,
 		frc2::Requirements requirements) : m_targetPath(), m_targetPose(
-		targetPose), m_goalEndState(goalEndVel, targetPose.Rotation(), true), m_constraints(
-		constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
-		speedsSupplier), m_output(output), m_controller(std::move(controller)), m_rotationDelayDistance(
-		rotationDelayDistance), m_replanningConfig(replanningConfig), m_shouldFlipPath(
-		[]() {
-			return false;
-		}) {
+		targetPose), m_originalTargetPose(targetPose), m_goalEndState(
+		goalEndVel, targetPose.Rotation(), true), m_constraints(constraints), m_poseSupplier(
+		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
+		std::move(controller)), m_rotationDelayDistance(rotationDelayDistance), m_replanningConfig(
+		replanningConfig), m_shouldFlipPath([]() {
+	return false;
+}) {
 	AddRequirements(requirements);
 
 	Pathfinding::ensureInitialized();
@@ -89,7 +90,9 @@ void PathfindingCommand::Initialize() {
 		m_targetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
 				m_goalEndState.getRotation());
 		if (m_shouldFlipPath()) {
-			m_targetPose = GeometryUtil::flipFieldPose(m_targetPose);
+			m_targetPose = GeometryUtil::flipFieldPose(m_originalTargetPose);
+			m_goalEndState = GoalEndState(m_goalEndState.getVelocity(),
+					m_targetPose.Rotation(), true);
 		}
 	}
 

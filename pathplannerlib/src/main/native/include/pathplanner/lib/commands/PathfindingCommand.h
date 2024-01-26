@@ -86,6 +86,7 @@ private:
 	frc::Timer m_timer;
 	std::shared_ptr<PathPlannerPath> m_targetPath;
 	frc::Pose2d m_targetPose;
+	frc::Pose2d m_originalTargetPose;
 	GoalEndState m_goalEndState;
 	PathConstraints m_constraints;
 	std::function<frc::Pose2d()> m_poseSupplier;

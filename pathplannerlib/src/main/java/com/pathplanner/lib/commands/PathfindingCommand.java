@@ -27,7 +27,8 @@ public class PathfindingCommand extends Command {
   private final Timer timer = new Timer();
   private final PathPlannerPath targetPath;
   private Pose2d targetPose;
-  private final GoalEndState goalEndState;
+  private Pose2d originalTargetPose;
+  private GoalEndState goalEndState;
   private final PathConstraints constraints;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
@@ -94,6 +95,8 @@ public class PathfindingCommand extends Command {
 
     this.targetPath = targetPath;
     this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
+    this.originalTargetPose =
+        new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
     this.goalEndState = new GoalEndState(goalEndVel, targetRotation, true);
     this.constraints = constraints;
     this.controller = controller;
@@ -141,6 +144,8 @@ public class PathfindingCommand extends Command {
 
     this.targetPath = null;
     this.targetPose = targetPose;
+    this.originalTargetPose =
+        new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
     this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation(), true);
     this.constraints = constraints;
     this.controller = controller;
@@ -165,9 +170,11 @@ public class PathfindingCommand extends Command {
     controller.reset(currentPose, speedsSupplier.get());
 
     if (targetPath != null) {
-      targetPose = new Pose2d(this.targetPath.getPoint(0).position, goalEndState.getRotation());
+      originalTargetPose =
+          new Pose2d(this.targetPath.getPoint(0).position, originalTargetPose.getRotation());
       if (shouldFlipPath.getAsBoolean()) {
-        targetPose = GeometryUtil.flipFieldPose(targetPose);
+        targetPose = GeometryUtil.flipFieldPose(this.originalTargetPose);
+        goalEndState = new GoalEndState(goalEndState.getVelocity(), targetPose.getRotation());
       }
     }
 

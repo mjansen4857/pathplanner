@@ -9,7 +9,7 @@ from .commands import FollowPathRamsete, FollowPathHolonomic, FollowPathLTV, Pat
     PathfindThenFollowPathLTV
 from .geometry_util import flipFieldPose
 import os
-from wpilib import getDeployDirectory, reportError
+from wpilib import getDeployDirectory, reportError, reportWarning
 import json
 from commands2.command import Command
 from commands2.subsystem import Subsystem
@@ -51,6 +51,7 @@ class NamedCommands:
         if NamedCommands.hasCommand(name):
             return CommandUtil.wrappedEventCommand(NamedCommands._namedCommands[name])
         else:
+            reportWarning(f"PathPlanner attempted to create a command '{name}' that has not been registered with NamedCommands.registerCommand", False)
             return cmd.none()
 
 

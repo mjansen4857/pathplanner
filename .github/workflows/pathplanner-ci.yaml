@@ -14,7 +14,7 @@ on:
         required: true
 
 env:
-  FLUTTER_VERSION: 3.16.5
+  FLUTTER_VERSION: 3.16.9
 
 jobs:
   formatting-analysis:

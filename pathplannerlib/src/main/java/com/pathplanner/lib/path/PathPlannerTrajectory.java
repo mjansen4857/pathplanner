@@ -23,7 +23,11 @@ public class PathPlannerTrajectory {
    */
   public PathPlannerTrajectory(
       PathPlannerPath path, ChassisSpeeds startingSpeeds, Rotation2d startingRotation) {
-    this.states = generateStates(path, startingSpeeds, startingRotation);
+    if (path.isChoreoPath()) {
+      this.states = path.getTrajectory(startingSpeeds, startingRotation).getStates();
+    } else {
+      this.states = generateStates(path, startingSpeeds, startingRotation);
+    }
   }
 
   /**

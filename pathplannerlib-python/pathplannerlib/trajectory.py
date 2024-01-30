@@ -121,7 +121,10 @@ class PathPlannerTrajectory:
         if states is not None:
             self._states = states
         else:
-            self._states = PathPlannerTrajectory._generateStates(path, starting_speeds, starting_rotation)
+            if path.isChoreoPath():
+                self._states = path.getTrajectory(starting_speeds, starting_rotation).getStates()
+            else:
+                self._states = PathPlannerTrajectory._generateStates(path, starting_speeds, starting_rotation)
 
     def getStates(self) -> List[State]:
         """

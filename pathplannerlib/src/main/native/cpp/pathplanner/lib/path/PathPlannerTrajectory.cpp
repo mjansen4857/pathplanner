@@ -3,6 +3,18 @@
 
 using namespace pathplanner;
 
+PathPlannerTrajectory::PathPlannerTrajectory(
+		std::shared_ptr<PathPlannerPath> path,
+		const frc::ChassisSpeeds &startingSpeeds,
+		const frc::Rotation2d &startingRotation) {
+	if (path->isChoreoPath()) {
+		m_states =
+				path->getTrajectory(startingSpeeds, startingRotation).getStates();
+	} else {
+		m_states = generateStates(path, startingSpeeds, startingRotation);
+	}
+}
+
 PathPlannerTrajectory::State PathPlannerTrajectory::sample(
 		const units::second_t time) {
 	if (time <= getInitialState().time)

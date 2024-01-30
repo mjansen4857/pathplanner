@@ -150,9 +150,7 @@ public:
 	 */
 	PathPlannerTrajectory(std::shared_ptr<PathPlannerPath> path,
 			const frc::ChassisSpeeds &startingSpeeds,
-			const frc::Rotation2d &startingRotation) : m_states(
-			generateStates(path, startingSpeeds, startingRotation)) {
-	}
+			const frc::Rotation2d &startingRotation);
 
 	/**
 	 * Get the target state at the given point in time along the trajectory

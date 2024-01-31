@@ -50,7 +50,7 @@ jobs:
         working-directory: ./pathplannerlib
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
           path: pathplannerlib/build/allOutputs
@@ -62,7 +62,7 @@ jobs:
         include:
           - os: windows-2022
             artifact-name: PPLib-Win64
-          - os: macos-13
+          - os: macos-14
             artifact-name: PPLib-macOS
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     runs-on: ${{ matrix.os }}
@@ -71,7 +71,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Setup java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'zulu'
@@ -89,7 +89,7 @@ jobs:
         working-directory: ./pathplannerlib
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
           path: pathplannerlib/build/allOutputs
@@ -105,7 +105,7 @@ jobs:
           repository: wpilibsuite/build-tools
       
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: combiner/products/build/allOutputs
       
@@ -113,7 +113,7 @@ jobs:
         run: rsync -a --delete combiner/products/build/allOutputs/*/* combiner/products/build/allOutputs/
       
       - name: Setup java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'zulu'
@@ -123,7 +123,7 @@ jobs:
         working-directory: combiner
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: PPLib-Maven-v${{ github.event.inputs.version }}
           path: ~/releases

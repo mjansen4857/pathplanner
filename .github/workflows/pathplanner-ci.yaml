@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
           
       - name: Setup flutter
         uses: subosito/flutter-action@v2
@@ -50,7 +50,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Setup flutter
         uses: subosito/flutter-action@v2
@@ -87,7 +87,7 @@ jobs:
             build-option: "windows"
             artifact-path: "build/windows/x64/runner/Release"
             artifact-name: PathPlanner-Windows
-          - os: macos-13
+          - os: macos-14
             build-option: "macos"
             artifact-path: "build/macos/Build/Products/Release/PathPlanner-macOS.zip"
             artifact-name: PathPlanner-macOS
@@ -156,7 +156,7 @@ jobs:
           zip -r PathPlanner-macOS.zip PathPlanner.app --symlinks
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}
@@ -167,7 +167,7 @@ jobs:
       
       - name: Upload MSIX artifact
         if: ${{ matrix.build-option == 'windows' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}-MSIX-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}/pathplanner.msix

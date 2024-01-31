@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
           
       - name: Setup flutter
         uses: subosito/flutter-action@v2
@@ -50,7 +50,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Setup flutter
         uses: subosito/flutter-action@v2
@@ -72,7 +72,7 @@ jobs:
         run: flutter test --coverage
       
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           name: flutter-coverage
@@ -156,7 +156,7 @@ jobs:
           zip -r PathPlanner-macOS.zip PathPlanner.app --symlinks
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}
@@ -167,7 +167,7 @@ jobs:
       
       - name: Upload MSIX artifact
         if: ${{ matrix.build-option == 'windows' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}-MSIX-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}/pathplanner.msix

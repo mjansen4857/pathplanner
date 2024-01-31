@@ -184,7 +184,7 @@ jobs:
           distribution: 'zulu'
       
       - name: Set version
-        run: sed -i '' "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
+        run: sed -i "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Ensure spotless is applied

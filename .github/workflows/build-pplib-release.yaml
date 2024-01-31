@@ -62,8 +62,10 @@ jobs:
         include:
           - os: windows-2022
             artifact-name: PPLib-Win64
+            os-name: windows
           - os: macos-14
             artifact-name: PPLib-macOS
+            os-name: macos
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     runs-on: ${{ matrix.os }}
     steps:
@@ -77,6 +79,12 @@ jobs:
           distribution: 'zulu'
       
       - name: Set version
+        if: ${{ matrix.os-name != 'macos' }}
+        run: sed -i "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
+        working-directory: ./pathplannerlib
+      
+      - name: Set version (mac)
+        if: ${{ matrix.os-name == 'macos' }}
         run: sed -i '' "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
         working-directory: ./pathplannerlib
       

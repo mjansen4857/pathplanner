@@ -455,6 +455,17 @@ class PathPlannerPath:
             path._isChoreoPath = True
             path._choreoTrajectory = PathPlannerTrajectory(None, None, None, states=trajStates)
 
+            if 'eventMarker' in trajJson:
+                from .auto import CommandUtil
+                for m in trajJson['eventMarker']:
+                    timestamp = float(m['timestamp'])
+                    cmd = CommandUtil.commandFromJson(m['command'], False)
+
+                    eventMarker = EventMarker(timestamp, cmd)
+                    eventMarker.markerPos = path._choreoTrajectory.sample(timestamp).positionMeters
+
+                    path._eventMarkers.append(eventMarker)
+
             return path
 
     @staticmethod

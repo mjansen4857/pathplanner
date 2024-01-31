@@ -1,6 +1,7 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
+#include "pathplanner/lib/auto/CommandUtil.h"
 #include <frc/Filesystem.h>
 #include <frc/MathUtil.h>
 #include <wpi/MemoryBuffer.h>
@@ -197,6 +198,19 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 	path->m_allPoints = pathPoints;
 	path->m_isChoreoPath = true;
 	path->m_choreoTrajectory = PathPlannerTrajectory(trajStates);
+
+	if (json.contains("eventMarkers")) {
+		for (wpi::json::const_reference m : json.at("eventMarkers")) {
+			units::second_t timestamp { m.at("timestamp").get<double>() };
+
+			EventMarker eventMarker = EventMarker(timestamp(),
+					CommandUtil::commandFromJson(json.at("command"), false));
+			eventMarker.setMarkerPosition(
+					path->m_choreoTrajectory.sample(timestamp).position);
+
+			path->m_eventMarkers.emplace_back(eventMarker);
+		}
+	}
 
 	return path;
 }

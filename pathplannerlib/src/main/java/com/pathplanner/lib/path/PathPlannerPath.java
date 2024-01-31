@@ -1,5 +1,6 @@
 package com.pathplanner.lib.path;
 
+import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -10,6 +11,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj2.command.Command;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -376,6 +378,20 @@ public class PathPlannerPath {
       path.allPoints = pathPoints;
       path.isChoreoPath = true;
       path.choreoTrajectory = new PathPlannerTrajectory(trajStates);
+
+      if (json.containsKey("eventMarkers")) {
+        for (var m : (JSONArray) json.get("eventMarkers")) {
+          JSONObject marker = (JSONObject) m;
+
+          double timestamp = ((Number) marker.get("timestamp")).doubleValue();
+          Command cmd = CommandUtil.commandFromJson((JSONObject) marker.get("command"), false);
+
+          EventMarker eventMarker = new EventMarker(timestamp, cmd);
+          eventMarker.markerPos = path.choreoTrajectory.sample(timestamp).positionMeters;
+
+          path.eventMarkers.add(eventMarker);
+        }
+      }
 
       return path;
     } catch (Exception e) {

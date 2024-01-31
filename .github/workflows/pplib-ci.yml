@@ -184,7 +184,13 @@ jobs:
           distribution: 'zulu'
       
       - name: Set version
+        if: ${{ matrix.build-option != 'macos' }}
         run: sed -i "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
+        working-directory: ./pathplannerlib
+      
+      - name: Set version (mac)
+        if: ${{ matrix.build-option == 'macos' }}
+        run: sed -i '' "s/0.0.0/${{ env.VERSION_NAME }}/g" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Ensure spotless is applied

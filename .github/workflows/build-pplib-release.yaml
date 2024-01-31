@@ -83,7 +83,7 @@ jobs:
       
       - name: Set version (mac)
         if: ${{ matrix.build-option == 'macos' }}
-        run: sed -i "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
+        run: sed -i '' "s/0.0.0/${{ github.event.inputs.version }}/g" publish.gradle
         working-directory: ./pathplannerlib
       
       - name: Ensure spotless is applied

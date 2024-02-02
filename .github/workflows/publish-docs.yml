@@ -34,7 +34,7 @@ jobs:
           docker-version: ${{ env.DOCKER_VERSION }}
 
       - name: Upload documentation
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: docs
           path: |
@@ -43,7 +43,7 @@ jobs:
           retention-days: 7
 
       - name: Upload algolia-indexes
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: algolia-indexes
           path: artifacts/${{ env.ALGOLIA_ARTIFACT }}
@@ -54,7 +54,7 @@ jobs:
     needs: build-docs
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: docs
           path: artifacts
@@ -120,7 +120,7 @@ jobs:
           sudo mv pathplannerlib-python/docs _site/api/python
 
       - name: Download docs artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: docs
 

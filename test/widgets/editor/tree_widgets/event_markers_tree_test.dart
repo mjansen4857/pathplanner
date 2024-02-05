@@ -204,7 +204,7 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.eventMarkers[0].waypointRelativePos, 1.0);
+    expect(path.eventMarkers[0].waypointRelativePos, 0.5);
 
     undoStack.undo();
     await widgetTester.pump();

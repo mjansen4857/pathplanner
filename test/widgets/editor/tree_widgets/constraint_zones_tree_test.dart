@@ -29,13 +29,13 @@ void main() {
       ConstraintsZone(
         constraints: PathConstraints(),
         minWaypointRelativePos: 0.2,
-        maxWaypointRelativePos: 1.8,
+        maxWaypointRelativePos: 0.7,
         name: '0',
       ),
       ConstraintsZone(
         constraints: PathConstraints(),
-        minWaypointRelativePos: 1.2,
-        maxWaypointRelativePos: 1.8,
+        minWaypointRelativePos: 0.3,
+        maxWaypointRelativePos: 0.8,
         name: '1',
       ),
     ];
@@ -349,7 +349,7 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].minWaypointRelativePos, 1.0);
+    expect(path.constraintZones[0].minWaypointRelativePos, 0.5);
 
     undoStack.undo();
     await widgetTester.pump();
@@ -380,12 +380,12 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].maxWaypointRelativePos, 1.0);
+    expect(path.constraintZones[0].maxWaypointRelativePos, 0.5);
 
     undoStack.undo();
     await widgetTester.pump();
 
-    expect(path.constraintZones[0].maxWaypointRelativePos, 1.8);
+    expect(path.constraintZones[0].maxWaypointRelativePos, 0.7);
   });
 
   testWidgets('Delete zone button', (widgetTester) async {

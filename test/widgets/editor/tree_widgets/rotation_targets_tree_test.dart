@@ -24,12 +24,12 @@ void main() {
     );
     path.rotationTargets = [
       RotationTarget(
-        waypointRelativePos: 0.5,
+        waypointRelativePos: 0.2,
         rotationDegrees: 0.0,
         rotateFast: false,
       ),
       RotationTarget(
-        waypointRelativePos: 1.5,
+        waypointRelativePos: 0.7,
         rotationDegrees: 0.0,
         rotateFast: false,
       ),
@@ -103,8 +103,8 @@ void main() {
       ),
     ));
 
-    expect(find.text('Rotation Target at 0.50'), findsOneWidget);
-    expect(find.text('Rotation Target at 1.50'), findsOneWidget);
+    expect(find.text('Rotation Target at 0.20'), findsOneWidget);
+    expect(find.text('Rotation Target at 0.70'), findsOneWidget);
   });
 
   testWidgets('Target card hover', (widgetTester) async {
@@ -223,12 +223,12 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.rotationTargets[0].waypointRelativePos, 1.0);
+    expect(path.rotationTargets[0].waypointRelativePos, 0.5);
 
     undoStack.undo();
     await widgetTester.pump();
 
-    expect(path.rotationTargets[0].waypointRelativePos, 0.5);
+    expect(path.rotationTargets[0].waypointRelativePos, 0.2);
   });
 
   testWidgets('Delete target button', (widgetTester) async {

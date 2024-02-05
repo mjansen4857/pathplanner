@@ -41,7 +41,7 @@ void main() {
     ];
     path.eventMarkers = [
       EventMarker(
-        waypointRelativePos: 1.5,
+        waypointRelativePos: 0.5,
         command: SequentialCommandGroup(commands: []),
         name: 'm',
       ),
@@ -219,14 +219,14 @@ void main() {
     await widgetTester.tapAt(tapLocation);
     await widgetTester.pumpAndSettle();
 
-    expect(path.waypoints.length, 4);
+    expect(path.waypoints.length, 3);
     expect(path.waypoints.last.anchor.x, closeTo(1.0, 0.05));
     expect(path.waypoints.last.anchor.y, closeTo(1.0, 0.05));
 
     undoStack.undo();
     await widgetTester.pumpAndSettle();
 
-    expect(path.waypoints.length, 3);
+    expect(path.waypoints.length, 2);
   });
 
   testWidgets('drag waypoint', (widgetTester) async {
@@ -415,6 +415,7 @@ void main() {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.waypointsExpanded = true;
+    path.addWaypoint(const Point(7.0, 4.0));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -449,6 +450,7 @@ void main() {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.waypointsExpanded = true;
+    path.addWaypoint(const Point(7.0, 4.0));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

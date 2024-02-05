@@ -18,6 +18,7 @@ void main() {
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
+    path.useDefaultConstraints = false;
     path.globalConstraintsExpanded = true;
     path.globalConstraints = PathConstraints(
       maxVelocity: 1.0,

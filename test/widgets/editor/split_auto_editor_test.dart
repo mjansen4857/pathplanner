@@ -43,7 +43,7 @@ void main() {
     ];
     testPath.eventMarkers = [
       EventMarker(
-        waypointRelativePos: 1.5,
+        waypointRelativePos: 0.5,
         command: SequentialCommandGroup(commands: []),
       ),
     ];

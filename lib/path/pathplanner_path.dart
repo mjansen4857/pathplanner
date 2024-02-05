@@ -61,21 +61,16 @@ class PathPlannerPath {
         rotationTargets = [],
         eventMarkers = [],
         reversed = false,
-        previewStartingState = null,
-        useDefaultConstraints = false {
+        previewStartingState = PreviewStartingState(),
+        useDefaultConstraints = true {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),
-        nextControl: const Point(3.0, 6.5),
+        nextControl: const Point(3.0, 7.0),
       ),
       Waypoint(
-        prevControl: const Point(4.0, 6.0),
-        anchor: const Point(5.0, 5.0),
-        nextControl: const Point(6.0, 4.0),
-      ),
-      Waypoint(
-        prevControl: const Point(6.75, 2.5),
-        anchor: const Point(7.0, 1.0),
+        prevControl: const Point(3.0, 6.0),
+        anchor: const Point(4.0, 6.0),
       ),
     ]);
 

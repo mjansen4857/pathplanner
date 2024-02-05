@@ -535,15 +535,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 .toList() ??
             Defaults.autoFolders);
     widget.prefs.setDouble(PrefsKeys.defaultMaxVel,
-        json[PrefsKeys.defaultMaxVel] ?? Defaults.defaultMaxVel);
-    widget.prefs.setDouble(PrefsKeys.defaultMaxAccel,
-        json[PrefsKeys.defaultMaxAccel] ?? Defaults.defaultMaxAccel);
-    widget.prefs.setDouble(PrefsKeys.defaultMaxAngVel,
-        json[PrefsKeys.defaultMaxAngVel] ?? Defaults.defaultMaxAngVel);
-    widget.prefs.setDouble(PrefsKeys.defaultMaxAngAccel,
-        json[PrefsKeys.defaultMaxAngAccel] ?? Defaults.defaultMaxAngAccel);
+        json[PrefsKeys.defaultMaxVel]?.toDouble() ?? Defaults.defaultMaxVel);
+    widget.prefs.setDouble(
+        PrefsKeys.defaultMaxAccel,
+        json[PrefsKeys.defaultMaxAccel]?.toDouble() ??
+            Defaults.defaultMaxAccel);
+    widget.prefs.setDouble(
+        PrefsKeys.defaultMaxAngVel,
+        json[PrefsKeys.defaultMaxAngVel]?.toDouble() ??
+            Defaults.defaultMaxAngVel);
+    widget.prefs.setDouble(
+        PrefsKeys.defaultMaxAngAccel,
+        json[PrefsKeys.defaultMaxAngAccel]?.toDouble() ??
+            Defaults.defaultMaxAngAccel);
     widget.prefs.setDouble(PrefsKeys.maxModuleSpeed,
-        json[PrefsKeys.maxModuleSpeed] ?? Defaults.maxModuleSpeed);
+        json[PrefsKeys.maxModuleSpeed]?.toDouble() ?? Defaults.maxModuleSpeed);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {

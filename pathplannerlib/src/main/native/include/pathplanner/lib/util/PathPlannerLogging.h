@@ -42,10 +42,7 @@ public:
 			std::vector < frc::Pose2d > poses;
 
 			if (path) {
-				for (const PathPoint &point : path->getAllPathPoints()) {
-					poses.push_back(
-							frc::Pose2d(point.position, frc::Rotation2d()));
-				}
+				poses = path->getPathPoses();
 			}
 
 			m_logActivePath(poses);

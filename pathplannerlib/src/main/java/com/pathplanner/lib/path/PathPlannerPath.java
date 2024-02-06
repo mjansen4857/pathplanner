@@ -1118,6 +1118,18 @@ public class PathPlannerPath {
   }
 
   /**
+   * Get a list of poses representing every point in this path. This can be used to display a path
+   * on a field 2d widget, for example.
+   *
+   * @return List of poses for each point in this path
+   */
+  public List<Pose2d> getPathPoses() {
+    return allPoints.stream()
+        .map(p -> new Pose2d(p.position, new Rotation2d()))
+        .collect(Collectors.toList());
+  }
+
+  /**
    * Map a given percentage/waypoint relative position over 2 segments
    *
    * @param pct The percent to map

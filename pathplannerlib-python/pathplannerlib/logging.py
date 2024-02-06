@@ -64,7 +64,6 @@ class PathPlannerLogging:
         """
         if PathPlannerLogging._logActivePath is not None:
             if path is not None:
-                poses = [Pose2d(p.position, Rotation2d()) for p in path.getAllPathPoints()]
-                PathPlannerLogging._logActivePath(poses)
+                PathPlannerLogging._logActivePath(path.getPathPoses())
             else:
                 PathPlannerLogging._logActivePath([])

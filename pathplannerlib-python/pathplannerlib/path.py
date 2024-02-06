@@ -875,6 +875,15 @@ class PathPlannerPath:
         return PathPlannerPath(newBezier, self._globalConstraints, newEndState, newRotTargets, self._constraintZones,
                                newMarkers, self._reversed, newPreviewRot)
 
+    def getPathPoses(self) -> List[Pose2d]:
+        """
+        Get a list of poses representing every point in this path.
+        This can be used to display a path on a field 2d widget, for example.
+
+        :return: List of poses for each point in this path
+        """
+        return [Pose2d(p.position, Rotation2d()) for p in self._allPoints]
+
     @staticmethod
     def _mapPct(pct: float, seg1_pct: float) -> float:
         if pct <= seg1_pct:

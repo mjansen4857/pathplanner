@@ -87,6 +87,7 @@
     "forward_list": "cpp",
     "ranges": "cpp",
     "valarray": "cpp",
-    "*.mac": "cpp"
+    "*.mac": "cpp",
+    "charconv": "cpp"
   }
 }

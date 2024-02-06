@@ -234,6 +234,20 @@ public:
 	 */
 	std::shared_ptr<PathPlannerPath> flipPath();
 
+	/**
+	 * Get a list of poses representing every point in this path. This can be used to display a path
+	 * on a field 2d widget, for example.
+	 *
+	 * @return List of poses for each point in this path
+	 */
+	inline std::vector<frc::Pose2d> getPathPoses() {
+		std::vector < frc::Pose2d > poses;
+		for (const PathPoint &point : m_allPoints) {
+			poses.emplace_back(point.position, frc::Rotation2d());
+		}
+		return poses;
+	}
+
 private:
 	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);
 

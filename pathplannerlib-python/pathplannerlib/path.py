@@ -198,13 +198,9 @@ class EventMarker:
     Args:
         waypointRelativePos (float): The waypoint relative position of the marker
         command (Command): The command that should be triggered at this marker
-        minimumTriggerDistance (float): The minimum distance the robot must be within for this marker to be triggered
     """
     waypointRelativePos: float
     command: Command
-    minimumTriggerDistance: float = 0.5
-    markerPos: Translation2d = None
-    lastRobotPos: Translation2d = None
 
     @staticmethod
     def fromJson(json_dict: dict) -> EventMarker:
@@ -213,34 +209,9 @@ class EventMarker:
         command = CommandUtil.commandFromJson(json_dict['command'], False)
         return EventMarker(pos, command)
 
-    def reset(self, robot_pose: Pose2d) -> None:
-        """
-        Reset the current robot position
-
-        :param robot_pose: The current pose of the robot
-        """
-        self.lastRobotPos = robot_pose.translation()
-
-    def shouldTrigger(self, robot_pose: Pose2d) -> bool:
-        """
-        Get if this event marker should be triggered
-
-        :param robot_pose: Current pose of the robot
-        :return: True if this marker should be triggered
-        """
-        if self.lastRobotPos is None or self.markerPos is None:
-            self.lastRobotPos = robot_pose.translation()
-            return False
-
-        distanceToMarker = robot_pose.translation().distance(self.markerPos)
-        trigger = self.minimumTriggerDistance >= distanceToMarker > self.lastRobotPos.distance(self.markerPos)
-        self.lastRobotPos = robot_pose.translation()
-        return trigger
-
     def __eq__(self, other):
         return (isinstance(other, EventMarker)
                 and other.waypointRelativePos == self.waypointRelativePos
-                and other.minimumTriggerDistance == self.minimumTriggerDistance
                 and other.command == self.command)
 
 
@@ -453,18 +424,23 @@ class PathPlannerPath:
 
             path._allPoints = pathPoints
             path._isChoreoPath = True
-            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, states=trajStates)
 
-            if 'eventMarker' in trajJson:
+            eventCommands = []
+            if 'eventMarkers' in trajJson:
                 from .auto import CommandUtil
-                for m in trajJson['eventMarker']:
+                for m in trajJson['eventMarkers']:
                     timestamp = float(m['timestamp'])
                     cmd = CommandUtil.commandFromJson(m['command'], False)
 
                     eventMarker = EventMarker(timestamp, cmd)
-                    eventMarker.markerPos = path._choreoTrajectory.sample(timestamp).positionMeters
 
                     path._eventMarkers.append(eventMarker)
+                    eventCommands.append((timestamp, cmd))
+
+            eventCommands.sort(key=lambda a: a[0])
+
+            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, states=trajStates,
+                                                           event_commands=eventCommands)
 
             return path
 
@@ -671,7 +647,7 @@ class PathPlannerPath:
                      self._rotationTargets],
                     [ConstraintsZone(z.minWaypointPos + 1, z.maxWaypointPos + 1, z.constraints) for z in
                      self._constraintZones],
-                    [EventMarker(m.waypointRelativePos + 1, m.command, m.minimumTriggerDistance) for m in
+                    [EventMarker(m.waypointRelativePos + 1, m.command) for m in
                      self._eventMarkers],
                     self._reversed,
                     self._previewStartingRotation
@@ -787,11 +763,11 @@ class PathPlannerPath:
         for m in self._eventMarkers:
             if m.waypointRelativePos >= nextWaypointIdx:
                 mappedMarkers.append(
-                    EventMarker(m.waypointRelativePos - nextWaypointIdx + 2, m.command, m.minimumTriggerDistance))
+                    EventMarker(m.waypointRelativePos - nextWaypointIdx + 2, m.command))
             elif m.waypointRelativePos >= nextWaypointIdx - 1:
                 pct = m.waypointRelativePos - (nextWaypointIdx - 1)
                 mappedMarkers.append(
-                    EventMarker(PathPlannerPath._mapPct(pct, segment1Pct), m.command, m.minimumTriggerDistance))
+                    EventMarker(PathPlannerPath._mapPct(pct, segment1Pct), m.command))
 
         # Throw out everything before nextWaypointIdx - 1, map everything from nextWaypointIdx -
         # 1 to nextWaypointIdx on to the 2 joining segments (waypoint rel pos within old segment = %
@@ -869,7 +845,7 @@ class PathPlannerPath:
         newEndState = GoalEndState(self._goalEndState.velocity, flipFieldRotation(self._goalEndState.rotation),
                                    self._goalEndState.rotateFast)
         newPreviewRot = flipFieldRotation(self._previewStartingRotation)
-        newMarkers = [EventMarker(m.waypointRelativePos, m.command, m.minimumTriggerDistance) for m in
+        newMarkers = [EventMarker(m.waypointRelativePos, m.command) for m in
                       self._eventMarkers]
 
         return PathPlannerPath(newBezier, self._globalConstraints, newEndState, newRotTargets, self._constraintZones,
@@ -991,10 +967,6 @@ class PathPlannerPath:
                 if i != 0:
                     point.distanceAlongPath = self.getPoint(i - 1).distanceAlongPath + (
                         self.getPoint(i - 1).position.distance(point.position))
-
-            for m in self._eventMarkers:
-                pointIndex = int(m.waypointRelativePos / RESOLUTION)
-                m.markerPos = self.getPoint(pointIndex).position
 
             self.getPoint(self.numPoints() - 1).rotationTarget = RotationTarget(-1, self._goalEndState.rotation,
                                                                                 self._goalEndState.rotateFast)

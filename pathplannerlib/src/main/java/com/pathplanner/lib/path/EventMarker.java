@@ -1,8 +1,6 @@
 package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.auto.CommandUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.Objects;
 import org.json.simple.JSONObject;
@@ -11,26 +9,6 @@ import org.json.simple.JSONObject;
 public class EventMarker {
   private final double waypointRelativePos;
   private final Command command;
-  private final double minimumTriggerDistance;
-
-  Translation2d markerPos;
-  private Translation2d lastRobotPos;
-
-  /**
-   * Create a new event marker
-   *
-   * @param waypointRelativePos The waypoint relative position of the marker
-   * @param command The command that should be triggered at this marker
-   * @param minimumTriggerDistance The minimum distance the robot must be within for this marker to
-   *     be triggered
-   */
-  public EventMarker(double waypointRelativePos, Command command, double minimumTriggerDistance) {
-    this.waypointRelativePos = waypointRelativePos;
-    this.command = command;
-    this.minimumTriggerDistance = minimumTriggerDistance;
-
-    this.lastRobotPos = null;
-  }
 
   /**
    * Create a new event marker
@@ -39,7 +17,8 @@ public class EventMarker {
    * @param command The command that should be triggered at this marker
    */
   public EventMarker(double waypointRelativePos, Command command) {
-    this(waypointRelativePos, command, 0.5);
+    this.waypointRelativePos = waypointRelativePos;
+    this.command = command;
   }
 
   /**
@@ -52,35 +31,6 @@ public class EventMarker {
     double pos = ((Number) markerJson.get("waypointRelativePos")).doubleValue();
     Command cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"), false);
     return new EventMarker(pos, cmd);
-  }
-
-  /**
-   * Reset the current robot position
-   *
-   * @param robotPose The current pose of the robot
-   */
-  public void reset(Pose2d robotPose) {
-    lastRobotPos = robotPose.getTranslation();
-  }
-
-  /**
-   * Get if this event marker should be triggered
-   *
-   * @param robotPose Current pose of the robot
-   * @return True if this marker should be triggered
-   */
-  public boolean shouldTrigger(Pose2d robotPose) {
-    if (lastRobotPos == null || markerPos == null) {
-      lastRobotPos = robotPose.getTranslation();
-      return false;
-    }
-
-    double distanceToMarker = robotPose.getTranslation().getDistance(markerPos);
-    boolean trigger =
-        distanceToMarker <= minimumTriggerDistance
-            && lastRobotPos.getDistance(markerPos) < distanceToMarker;
-    lastRobotPos = robotPose.getTranslation();
-    return trigger;
   }
 
   /**
@@ -101,27 +51,17 @@ public class EventMarker {
     return waypointRelativePos;
   }
 
-  /**
-   * Get the minimum trigger distance for this marker
-   *
-   * @return The minimum trigger distance in meters
-   */
-  public double getMinimumTriggerDistance() {
-    return minimumTriggerDistance;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     EventMarker that = (EventMarker) o;
     return Math.abs(that.waypointRelativePos - waypointRelativePos) < 1E-3
-        && Math.abs(that.minimumTriggerDistance - minimumTriggerDistance) < 1E-3
         && Objects.equals(command, that.command);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(waypointRelativePos, command, minimumTriggerDistance);
+    return Objects.hash(waypointRelativePos, command);
   }
 }

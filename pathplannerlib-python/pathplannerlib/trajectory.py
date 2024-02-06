@@ -6,7 +6,8 @@ from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpimath import inputModulus
 from .geometry_util import floatLerp, translationLerp, rotationLerp
-from typing import List, Union, TYPE_CHECKING
+from typing import List, Tuple, Union, TYPE_CHECKING
+from commands2 import Command
 
 if TYPE_CHECKING:
     from .path import PathPlannerPath, PathConstraints
@@ -106,9 +107,11 @@ class State:
 
 class PathPlannerTrajectory:
     _states: List[State]
+    _eventCommands: List[Tuple[float, Command]]
 
     def __init__(self, path: Union[PathPlannerPath, None], starting_speeds: Union[ChassisSpeeds, None],
-                 starting_rotation: Union[Rotation2d, None], states: List[State] = None):
+                 starting_rotation: Union[Rotation2d, None], states: List[State] = None,
+                 event_commands: List[Tuple[float, Command]] = None):
         """
         Generate a PathPlannerTrajectory. If "states" is provided, the other arguments can be None
 
@@ -120,11 +123,25 @@ class PathPlannerTrajectory:
 
         if states is not None:
             self._states = states
+            if event_commands is not None:
+                self._eventCommands = event_commands
+            else:
+                self._eventCommands = []
         else:
             if path.isChoreoPath():
-                self._states = path.getTrajectory(starting_speeds, starting_rotation).getStates()
+                traj = path.getTrajectory(starting_speeds, starting_rotation)
+                self._states = traj._states
+                self._eventCommands = traj._eventCommands
             else:
                 self._states = PathPlannerTrajectory._generateStates(path, starting_speeds, starting_rotation)
+                self._eventCommands = []
+
+                from .path import RESOLUTION
+                for m in path.getEventMarkers():
+                    pointIndex = int(m.waypointRelativePos / RESOLUTION)
+                    self._eventCommands.append((self._states[pointIndex].timeSeconds, m.command))
+
+                self._eventCommands.sort(key=lambda a: a[0])
 
     def getStates(self) -> List[State]:
         """
@@ -133,6 +150,14 @@ class PathPlannerTrajectory:
         :return: List of all states
         """
         return self._states
+
+    def getEventCommands(self) -> List[Tuple[float, Command]]:
+        """
+        Get all of the pairs of timestamps + commands to run at those timestamps
+
+        :return: Pairs of timestamps and event commands
+        """
+        return self._eventCommands
 
     def getState(self, index: int) -> State:
         """

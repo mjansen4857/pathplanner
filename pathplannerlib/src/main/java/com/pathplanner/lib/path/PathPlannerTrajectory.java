@@ -2,17 +2,18 @@ package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import edu.wpi.first.wpilibj2.command.Command;
+import java.util.*;
 
 /** Trajectory created from a pathplanner path */
 public class PathPlannerTrajectory {
   private final List<State> states;
+  private final List<Pair<Double, Command>> eventCommands;
 
   /**
    * Generate a PathPlannerTrajectory
@@ -24,10 +25,31 @@ public class PathPlannerTrajectory {
   public PathPlannerTrajectory(
       PathPlannerPath path, ChassisSpeeds startingSpeeds, Rotation2d startingRotation) {
     if (path.isChoreoPath()) {
-      this.states = path.getTrajectory(startingSpeeds, startingRotation).getStates();
+      PathPlannerTrajectory traj = path.getTrajectory(startingSpeeds, startingRotation);
+      this.states = traj.states;
+      this.eventCommands = traj.eventCommands;
     } else {
       this.states = generateStates(path, startingSpeeds, startingRotation);
+      this.eventCommands = new ArrayList<>();
+
+      for (EventMarker m : path.getEventMarkers()) {
+        int pointIndex = (int) Math.round(m.getWaypointRelativePos() / PathSegment.RESOLUTION);
+        eventCommands.add(Pair.of(states.get(pointIndex).timeSeconds, m.getCommand()));
+      }
+
+      eventCommands.sort(Comparator.comparing(Pair::getFirst));
     }
+  }
+
+  /**
+   * Create a PathPlannerTrajectory from pre-generated states and event command timings.
+   *
+   * @param states Pre-generated trajectory states
+   * @param eventCommands Pairs of timestamps + commands to run at those timestamps
+   */
+  public PathPlannerTrajectory(List<State> states, List<Pair<Double, Command>> eventCommands) {
+    this.states = states;
+    this.eventCommands = eventCommands;
   }
 
   /**
@@ -36,7 +58,7 @@ public class PathPlannerTrajectory {
    * @param states Pre-generated trajectory states
    */
   public PathPlannerTrajectory(List<State> states) {
-    this.states = states;
+    this(states, Collections.emptyList());
   }
 
   private static int getNextRotationTargetIdx(PathPlannerPath path, int startingIndex) {
@@ -202,6 +224,15 @@ public class PathPlannerTrajectory {
    */
   public List<State> getStates() {
     return states;
+  }
+
+  /**
+   * Get all of the pairs of timestamps + commands to run at those timestamps
+   *
+   * @return Pairs of timestamps and event commands
+   */
+  public List<Pair<Double, Command>> getEventCommands() {
+    return eventCommands;
   }
 
   /**

@@ -6,6 +6,7 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -377,8 +378,8 @@ public class PathPlannerPath {
 
       path.allPoints = pathPoints;
       path.isChoreoPath = true;
-      path.choreoTrajectory = new PathPlannerTrajectory(trajStates);
 
+      List<Pair<Double, Command>> eventCommands = new ArrayList<>();
       if (json.containsKey("eventMarkers")) {
         for (var m : (JSONArray) json.get("eventMarkers")) {
           JSONObject marker = (JSONObject) m;
@@ -387,11 +388,14 @@ public class PathPlannerPath {
           Command cmd = CommandUtil.commandFromJson((JSONObject) marker.get("command"), false);
 
           EventMarker eventMarker = new EventMarker(timestamp, cmd);
-          eventMarker.markerPos = path.choreoTrajectory.sample(timestamp).positionMeters;
 
           path.eventMarkers.add(eventMarker);
+          eventCommands.add(Pair.of(timestamp, cmd));
         }
       }
+
+      eventCommands.sort(Comparator.comparing(Pair::getFirst));
+      path.choreoTrajectory = new PathPlannerTrajectory(trajStates, eventCommands);
 
       return path;
     } catch (Exception e) {
@@ -585,11 +589,6 @@ public class PathPlannerPath {
               allPoints.get(i - 1).distanceAlongPath
                   + (allPoints.get(i - 1).position.getDistance(point.position));
         }
-      }
-
-      for (EventMarker m : eventMarkers) {
-        int pointIndex = (int) Math.round(m.getWaypointRelativePos() / PathSegment.RESOLUTION);
-        m.markerPos = allPoints.get(pointIndex).position;
       }
 
       allPoints.get(allPoints.size() - 1).rotationTarget =
@@ -822,10 +821,7 @@ public class PathPlannerPath {
             eventMarkers.stream()
                 .map(
                     (marker) ->
-                        new EventMarker(
-                            marker.getWaypointRelativePos() + 1,
-                            marker.getCommand(),
-                            marker.getMinimumTriggerDistance()))
+                        new EventMarker(marker.getWaypointRelativePos() + 1, marker.getCommand()))
                 .collect(Collectors.toList()),
             globalConstraints,
             goalEndState,
@@ -981,15 +977,10 @@ public class PathPlannerPath {
     for (EventMarker m : eventMarkers) {
       if (m.getWaypointRelativePos() >= nextWaypointIdx) {
         mappedMarkers.add(
-            new EventMarker(
-                m.getWaypointRelativePos() - nextWaypointIdx + 2,
-                m.getCommand(),
-                m.getMinimumTriggerDistance()));
+            new EventMarker(m.getWaypointRelativePos() - nextWaypointIdx + 2, m.getCommand()));
       } else if (m.getWaypointRelativePos() >= nextWaypointIdx - 1) {
         double pct = m.getWaypointRelativePos() - (nextWaypointIdx - 1);
-        mappedMarkers.add(
-            new EventMarker(
-                mapPct(pct, segment1Pct), m.getCommand(), m.getMinimumTriggerDistance()));
+        mappedMarkers.add(new EventMarker(mapPct(pct, segment1Pct), m.getCommand()));
       }
     }
 
@@ -1106,10 +1097,7 @@ public class PathPlannerPath {
         newRotTargets,
         constraintZones,
         eventMarkers.stream()
-            .map(
-                e ->
-                    new EventMarker(
-                        e.getWaypointRelativePos(), e.getCommand(), e.getMinimumTriggerDistance()))
+            .map(e -> new EventMarker(e.getWaypointRelativePos(), e.getCommand()))
             .collect(Collectors.toList()),
         globalConstraints,
         newEndState,

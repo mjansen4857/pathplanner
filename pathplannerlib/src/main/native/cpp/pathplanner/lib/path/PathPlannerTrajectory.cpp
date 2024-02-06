@@ -9,9 +9,23 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		const frc::Rotation2d &startingRotation) {
 	if (path->isChoreoPath()) {
 		m_states =
-				path->getTrajectory(startingSpeeds, startingRotation).getStates();
+				path->getTrajectory(startingSpeeds, startingRotation).m_states;
+		m_eventCommands =
+				path->getTrajectory(startingSpeeds, startingRotation).m_eventCommands;
 	} else {
 		m_states = generateStates(path, startingSpeeds, startingRotation);
+
+		for (const EventMarker &m : path->getEventMarkers()) {
+			size_t pointIndex = static_cast<size_t>(std::round(
+					m.getWaypointRelativePos() / PathSegment::RESOLUTION));
+			m_eventCommands.emplace_back(m_states[pointIndex].time,
+					m.getCommand());
+		}
+
+		std::sort(m_eventCommands.begin(), m_eventCommands.end(),
+				[](auto &left, auto &right) {
+					return left.first < right.first;
+				});
 	}
 }
 

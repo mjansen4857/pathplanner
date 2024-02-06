@@ -5,6 +5,7 @@
 #include <frc2/command/Requirements.h>
 #include <memory>
 #include <functional>
+#include <deque>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/Timer.h>
@@ -65,7 +66,7 @@ private:
 
 	// For event markers
 	std::vector<std::pair<std::shared_ptr<frc2::Command>, bool>> m_currentEventCommands;
-	std::vector<std::pair<EventMarker, bool>> m_markers;
+	std::deque<std::pair<units::second_t, std::shared_ptr<frc2::Command>>> m_untriggeredEvents;
 
 	std::shared_ptr<PathPlannerPath> m_path;
 	PathPlannerTrajectory m_generatedTrajectory;
@@ -73,7 +74,7 @@ private:
 	inline void replanPath(const frc::Pose2d &currentPose,
 			const frc::ChassisSpeeds &currentSpeeds) {
 		auto replanned = m_path->replan(currentPose, currentSpeeds);
-		m_generatedTrajectory = PathPlannerTrajectory(replanned, currentSpeeds,
+		m_generatedTrajectory = replanned->getTrajectory(currentSpeeds,
 				currentPose.Rotation());
 		PathPlannerLogging::logActivePath(replanned);
 		PPLibTelemetry::setCurrentPath(replanned);

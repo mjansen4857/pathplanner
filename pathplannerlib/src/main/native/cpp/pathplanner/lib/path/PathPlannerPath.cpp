@@ -7,6 +7,7 @@
 #include <wpi/MemoryBuffer.h>
 #include <limits>
 #include <optional>
+#include <utility>
 #include <hal/FRCUsageReporting.h>
 
 using namespace pathplanner;
@@ -197,20 +198,27 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 
 	path->m_allPoints = pathPoints;
 	path->m_isChoreoPath = true;
-	path->m_choreoTrajectory = PathPlannerTrajectory(trajStates);
 
+	std::vector < std::pair<units::second_t, std::shared_ptr<frc2::Command>>
+			> eventCommands;
 	if (json.contains("eventMarkers")) {
 		for (wpi::json::const_reference m : json.at("eventMarkers")) {
 			units::second_t timestamp { m.at("timestamp").get<double>() };
 
 			EventMarker eventMarker = EventMarker(timestamp(),
 					CommandUtil::commandFromJson(json.at("command"), false));
-			eventMarker.setMarkerPosition(
-					path->m_choreoTrajectory.sample(timestamp).position);
 
 			path->m_eventMarkers.emplace_back(eventMarker);
+			eventCommands.emplace_back(timestamp, eventMarker.getCommand());
 		}
 	}
+
+	std::sort(eventCommands.begin(), eventCommands.end(),
+			[](auto &left, auto &right) {
+				return left.first < right.first;
+			});
+
+	path->m_choreoTrajectory = PathPlannerTrajectory(trajStates, eventCommands);
 
 	return path;
 }
@@ -394,12 +402,6 @@ void PathPlannerPath::precalcValues() {
 			}
 		}
 
-		for (EventMarker &m : m_eventMarkers) {
-			size_t pointIndex = static_cast<size_t>(std::round(
-					m.getWaypointRelativePos() / PathSegment::RESOLUTION));
-			m.setMarkerPosition(m_allPoints[pointIndex].position);
-		}
-
 		m_allPoints[m_allPoints.size() - 1].rotationTarget = RotationTarget(-1,
 				m_goalEndState.getRotation(),
 				m_goalEndState.shouldRotateFast());
@@ -553,8 +555,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 					std::back_inserter(markers),
 					[](EventMarker marker) {
 						return EventMarker(marker.getWaypointRelativePos() + 1,
-								marker.getCommand(),
-								marker.getMinimumTriggerDistance());
+								marker.getCommand());
 					});
 
 			return std::make_shared < PathPlannerPath
@@ -709,11 +710,11 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 		if (m.getWaypointRelativePos() >= nextWaypointIdx) {
 			mappedMarkers.emplace_back(
 					m.getWaypointRelativePos() - nextWaypointIdx + 2,
-					m.getCommand(), m.getMinimumTriggerDistance());
+					m.getCommand());
 		} else if (m.getWaypointRelativePos() >= nextWaypointIdx - 1) {
 			double pct = m.getWaypointRelativePos() - (nextWaypointIdx - 1);
-			mappedMarkers.emplace_back(mapPct(pct, segment1Pct), m.getCommand(),
-					m.getMinimumTriggerDistance());
+			mappedMarkers.emplace_back(mapPct(pct, segment1Pct),
+					m.getCommand());
 		}
 	}
 
@@ -796,8 +797,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	}
 
 	for (auto e : m_eventMarkers) {
-		newMarkers.emplace_back(e.getWaypointRelativePos(), e.getCommand(),
-				e.getMinimumTriggerDistance());
+		newMarkers.emplace_back(e.getWaypointRelativePos(), e.getCommand());
 	}
 
 	return std::make_shared < PathPlannerPath

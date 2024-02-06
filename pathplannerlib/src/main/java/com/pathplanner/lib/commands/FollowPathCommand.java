@@ -7,6 +7,7 @@ import com.pathplanner.lib.path.PathPlannerTrajectory;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -17,7 +18,6 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /** Base command for following a path */
 public class FollowPathCommand extends Command {
@@ -32,7 +32,7 @@ public class FollowPathCommand extends Command {
 
   // For event markers
   private final Map<Command, Boolean> currentEventCommands = new HashMap<>();
-  private final List<EventMarker> untriggeredMarkers = new ArrayList<>();
+  private final List<Pair<Double, Command>> untriggeredEvents = new ArrayList<>();
 
   private PathPlannerPath path;
   private PathPlannerTrajectory generatedTrajectory;
@@ -118,13 +118,10 @@ public class FollowPathCommand extends Command {
       PPLibTelemetry.setCurrentPath(path);
     }
 
-    // Initialize markers
+    // Initialize marker stuff
     currentEventCommands.clear();
-    for (EventMarker marker : path.getEventMarkers()) {
-      marker.reset(currentPose);
-    }
-    untriggeredMarkers.clear();
-    untriggeredMarkers.addAll(path.getEventMarkers());
+    untriggeredEvents.clear();
+    untriggeredEvents.addAll(generatedTrajectory.getEventCommands());
 
     timer.reset();
     timer.start();
@@ -179,6 +176,26 @@ public class FollowPathCommand extends Command {
 
     output.accept(targetSpeeds);
 
+    if (!untriggeredEvents.isEmpty() && timer.hasElapsed(untriggeredEvents.get(0).getFirst())) {
+      // Time to trigger this event command
+      Command cmd = untriggeredEvents.get(0).getSecond();
+
+      for (var runningCommand : currentEventCommands.entrySet()) {
+        if (!runningCommand.getValue()) {
+          continue;
+        }
+
+        if (!Collections.disjoint(
+            runningCommand.getKey().getRequirements(), cmd.getRequirements())) {
+          runningCommand.getKey().end(true);
+          runningCommand.setValue(false);
+        }
+      }
+
+      cmd.initialize();
+      currentEventCommands.put(cmd, true);
+    }
+
     // Run event marker commands
     for (Map.Entry<Command, Boolean> runningCommand : currentEventCommands.entrySet()) {
       if (!runningCommand.getValue()) {
@@ -191,28 +208,6 @@ public class FollowPathCommand extends Command {
         runningCommand.getKey().end(false);
         runningCommand.setValue(false);
       }
-    }
-
-    List<EventMarker> toTrigger =
-        untriggeredMarkers.stream()
-            .filter(marker -> marker.shouldTrigger(currentPose))
-            .collect(Collectors.toList());
-    untriggeredMarkers.removeAll(toTrigger);
-    for (EventMarker marker : toTrigger) {
-      for (var runningCommand : currentEventCommands.entrySet()) {
-        if (!runningCommand.getValue()) {
-          continue;
-        }
-
-        if (!Collections.disjoint(
-            runningCommand.getKey().getRequirements(), marker.getCommand().getRequirements())) {
-          runningCommand.getKey().end(true);
-          runningCommand.setValue(false);
-        }
-      }
-
-      marker.getCommand().initialize();
-      currentEventCommands.put(marker.getCommand(), true);
     }
   }
 
@@ -243,8 +238,7 @@ public class FollowPathCommand extends Command {
 
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
-    generatedTrajectory =
-        new PathPlannerTrajectory(replanned, currentSpeeds, currentPose.getRotation());
+    generatedTrajectory = replanned.getTrajectory(currentSpeeds, currentPose.getRotation());
     PathPlannerLogging.logActivePath(replanned);
     PPLibTelemetry.setCurrentPath(replanned);
   }

@@ -372,8 +372,7 @@ public class PathfindingCommand extends Command {
 
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     PathPlannerPath replanned = currentPath.replan(currentPose, currentSpeeds);
-    currentTrajectory =
-        new PathPlannerTrajectory(replanned, currentSpeeds, currentPose.getRotation());
+    currentTrajectory = replanned.getTrajectory(currentSpeeds, currentPose.getRotation());
     PathPlannerLogging.logActivePath(replanned);
     PPLibTelemetry.setCurrentPath(replanned);
   }

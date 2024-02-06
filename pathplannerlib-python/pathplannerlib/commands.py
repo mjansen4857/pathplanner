@@ -27,7 +27,7 @@ class FollowPathCommand(Command):
 
     # For event markers
     _currentEventCommands: dict = {}
-    _untriggeredMarkers: List[EventMarker] = []
+    _untriggeredEvents: List[Tuple[float, Command]] = []
 
     _timer: Timer = Timer()
     _path: PathPlannerPath = None
@@ -96,15 +96,11 @@ class FollowPathCommand(Command):
             PathPlannerLogging.logActivePath(self._path)
             PPLibTelemetry.setCurrentPath(self._path)
 
-        # Initialize markers
+        # Initialize marker stuff
         self._currentEventCommands.clear()
-
-        for marker in self._path.getEventMarkers():
-            marker.reset(currentPose)
-
-        self._untriggeredMarkers.clear()
-        for marker in self._path.getEventMarkers():
-            self._untriggeredMarkers.append(marker)
+        self._untriggeredEvents.clear()
+        for event in self._generatedTrajectory.getEventCommands():
+            self._untriggeredEvents.append(event)
 
         self._timer.reset()
         self._timer.start()
@@ -146,6 +142,23 @@ class FollowPathCommand(Command):
 
         self._output(targetSpeeds)
 
+        if len(self._untriggeredEvents) > 0 and self._timer.hasElapsed(self._untriggeredEvents[0][0]):
+            # Time to trigger this event command
+            cmd = self._untriggeredEvents.pop(0)[1]
+
+            for command in self._currentEventCommands:
+                if not self._currentEventCommands[command]:
+                    continue
+
+                for req in command.getRequirements():
+                    if req in cmd.getRequirements():
+                        command.end(True)
+                        self._currentEventCommands[command] = False
+                        break
+
+            cmd.initialize()
+            self._currentEventCommands[cmd] = True
+
         # Execute event marker commands
         for command in self._currentEventCommands:
             if not self._currentEventCommands[command]:
@@ -156,25 +169,6 @@ class FollowPathCommand(Command):
             if command.isFinished():
                 command.end(False)
                 self._currentEventCommands[command] = False
-
-        toTrigger = [marker for marker in self._untriggeredMarkers if marker.shouldTrigger(currentPose)]
-
-        for marker in toTrigger:
-            self._untriggeredMarkers.remove(marker)
-
-        for marker in toTrigger:
-            for command in self._currentEventCommands:
-                if not self._currentEventCommands[command]:
-                    continue
-
-                for req in command.getRequirements():
-                    if req in marker.command.getRequirements():
-                        command.end(True)
-                        self._currentEventCommands[command] = False
-                        break
-
-            marker.command.initialize()
-            self._currentEventCommands[marker.command] = True
 
     def isFinished(self) -> bool:
         return self._timer.hasElapsed(self._generatedTrajectory.getTotalTimeSeconds())
@@ -196,7 +190,7 @@ class FollowPathCommand(Command):
 
     def _replanPath(self, current_pose: Pose2d, current_speeds: ChassisSpeeds) -> None:
         replanned = self._path.replan(current_pose, current_speeds)
-        self._generatedTrajectory = PathPlannerTrajectory(replanned, current_speeds, current_pose.rotation())
+        self._generatedTrajectory = replanned.getTrajectory(current_speeds, current_pose.rotation())
         PathPlannerLogging.logActivePath(replanned)
         PPLibTelemetry.setCurrentPath(replanned)
 
@@ -353,7 +347,8 @@ class PathfindingCommand(Command):
         self._controller.reset(currentPose, self._speedsSupplier())
 
         if self._targetPath is not None:
-            self._originalTargetPose = Pose2d(self._targetPath.getPoint(0).position, self._originalTargetPose.rotation())
+            self._originalTargetPose = Pose2d(self._targetPath.getPoint(0).position,
+                                              self._originalTargetPose.rotation())
             if self._shouldFlipPath():
                 self._targetPose = flipFieldPose(self._originalTargetPose)
                 self._goalEndState = GoalEndState(self._goalEndState.velocity, self._targetPose.rotation(), True)
@@ -447,7 +442,7 @@ class PathfindingCommand(Command):
 
                 if currentError >= self._replanningConfig.dynamicReplanningTotalErrorThreshold or currentError - previousError >= self._replanningConfig.dynamicReplanningErrorSpikeThreshold:
                     replanned = self._currentPath.replan(currentPose, currentSpeeds)
-                    self._currentTrajectory = PathPlannerTrajectory(replanned, currentSpeeds, currentPose.rotation())
+                    self._currentTrajectory = replanned.getTrajectory(currentSpeeds, currentPose.rotation())
                     PathPlannerLogging.logActivePath(replanned)
                     PPLibTelemetry.setCurrentPath(replanned)
 

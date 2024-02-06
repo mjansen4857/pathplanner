@@ -178,7 +178,7 @@ public class FollowPathCommand extends Command {
 
     if (!untriggeredEvents.isEmpty() && timer.hasElapsed(untriggeredEvents.get(0).getFirst())) {
       // Time to trigger this event command
-      Command cmd = untriggeredEvents.get(0).getSecond();
+      Pair<Double, Command> event = untriggeredEvents.remove(0);
 
       for (var runningCommand : currentEventCommands.entrySet()) {
         if (!runningCommand.getValue()) {
@@ -186,14 +186,14 @@ public class FollowPathCommand extends Command {
         }
 
         if (!Collections.disjoint(
-            runningCommand.getKey().getRequirements(), cmd.getRequirements())) {
+            runningCommand.getKey().getRequirements(), event.getSecond().getRequirements())) {
           runningCommand.getKey().end(true);
           runningCommand.setValue(false);
         }
       }
 
-      cmd.initialize();
-      currentEventCommands.put(cmd, true);
+      event.getSecond().initialize();
+      currentEventCommands.put(event.getSecond(), true);
     }
 
     // Run event marker commands

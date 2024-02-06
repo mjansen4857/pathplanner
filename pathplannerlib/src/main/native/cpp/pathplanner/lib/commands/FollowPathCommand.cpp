@@ -65,17 +65,12 @@ void FollowPathCommand::Initialize() {
 		PPLibTelemetry::setCurrentPath(m_path);
 	}
 
-	// Initialize markers
+	// Initialize marker stuff
 	m_currentEventCommands.clear();
-
-	for (EventMarker &marker : m_path->getEventMarkers()) {
-		marker.reset(currentPose);
-	}
-
-	m_markers.clear();
-	for (EventMarker &marker : m_path->getEventMarkers()) {
-		m_markers.emplace_back(marker, false);
-	}
+	m_untriggeredEvents.clear();
+	m_untriggeredEvents.insert(m_untriggeredEvents.end(),
+			m_generatedTrajectory.getEventCommands().begin(),
+			m_generatedTrajectory.getEventCommands().end());
 
 	m_timer.Reset();
 	m_timer.Start();
@@ -132,6 +127,29 @@ void FollowPathCommand::Execute() {
 
 	m_output(targetSpeeds);
 
+	if (!m_untriggeredEvents.empty()
+			&& m_timer.HasElapsed(m_untriggeredEvents[0].first)) {
+		// Time to trigger this event command
+		auto event = m_untriggeredEvents[0];
+
+		for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
+			if (!runningCommand.second) {
+				continue;
+			}
+
+			if (!frc2::RequirementsDisjoint(runningCommand.first.get(),
+					event.second.get())) {
+				runningCommand.first->End(true);
+				runningCommand.second = false;
+			}
+		}
+
+		event.second->Initialize();
+		m_currentEventCommands.emplace_back(event.second, true);
+
+		m_untriggeredEvents.pop_front();
+	}
+
 	// Run event marker commands
 	for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
 		if (!runningCommand.second) {
@@ -142,30 +160,6 @@ void FollowPathCommand::Execute() {
 		if (runningCommand.first->IsFinished()) {
 			runningCommand.first->End(false);
 			runningCommand.second = false;
-		}
-	}
-
-	for (std::pair<EventMarker, bool> &marker : m_markers) {
-		if (!marker.second) {
-			if (marker.first.shouldTrigger(currentPose)) {
-				marker.second = true;
-
-				for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
-					if (!runningCommand.second) {
-						continue;
-					}
-
-					if (!frc2::RequirementsDisjoint(runningCommand.first.get(),
-							marker.first.getCommand().get())) {
-						runningCommand.first->End(true);
-						runningCommand.second = false;
-					}
-				}
-
-				marker.first.getCommand()->Initialize();
-				m_currentEventCommands.emplace_back(marker.first.getCommand(),
-						true);
-			}
 		}
 	}
 }

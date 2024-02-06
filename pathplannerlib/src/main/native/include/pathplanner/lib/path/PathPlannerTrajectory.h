@@ -11,7 +11,9 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/MathUtil.h>
+#include <frc2/command/Command.h>
 #include <vector>
+#include <utility>
 #include <memory>
 #include <optional>
 #include "pathplanner/lib/path/PathConstraints.h"
@@ -138,6 +140,12 @@ public:
 	PathPlannerTrajectory() {
 	}
 
+	PathPlannerTrajectory(std::vector<State> states,
+			std::vector<
+					std::pair<units::second_t, std::shared_ptr<frc2::Command>>> eventCommands) : m_states(
+			states), m_eventCommands(eventCommands) {
+	}
+
 	PathPlannerTrajectory(std::vector<State> states) : m_states(states) {
 	}
 
@@ -226,8 +234,19 @@ public:
 		return m_states[m_states.size() - 1];
 	}
 
+	/**
+	 * Get all of the pairs of timestamps + commands to run at those timestamps
+	 *
+	 * @return Pairs of timestamps and event commands
+	 */
+	inline std::vector<
+			std::pair<units::second_t, std::shared_ptr<frc2::Command>>> getEventCommands() {
+		return m_eventCommands;
+	}
+
 private:
 	std::vector<State> m_states;
+	std::vector<std::pair<units::second_t, std::shared_ptr<frc2::Command>>> m_eventCommands;
 
 	static size_t getNextRotationTargetIdx(
 			std::shared_ptr<PathPlannerPath> path, const size_t startingIndex);

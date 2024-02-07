@@ -21,7 +21,7 @@ public class RobotContainer {
         PathPlannerPath path = PathPlannerPath.fromPathFile("Example Path");
 
         // Create a path following command using AutoBuilder. This will also trigger event markers.
-        return AutoBuilder.followPathWithEvents(path);
+        return AutoBuilder.followPath(path);
     }
 }
 ```
@@ -40,7 +40,7 @@ frc2::CommandPtr RobotContainer::getAutonomousCommand(){
     auto path = PathPlannerPath::fromPathFile("Example Path");
 
     // Create a path following command using AutoBuilder. This will also trigger event markers.
-    return AutoBuilder::followPathWithEvents(path);
+    return AutoBuilder::followPath(path);
 }
 ```
 
@@ -56,7 +56,7 @@ def getAutonomousCommand():
     path = PathPlannerPath.fromPathFile('Example Path')
 
     # Create a path following command using AutoBuilder. This will also trigger event markers.
-    return AutoBuilder.followPathWithEvents(path);
+    return AutoBuilder.followPath(path);
 ```
 
 </tab>
@@ -149,7 +149,7 @@ frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
 
 ```Python
 from pathplannerlib.path import PathPlannerPath
-from pathplannerlib.commands import FollowPathWithEvents, FollowPathHolonomic
+from pathplannerlib.commands import FollowPathHolonomic
 from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
 
 # Assuming this is a method in your drive subsystem
@@ -255,7 +255,7 @@ frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
 
 ```Python
 from pathplannerlib.path import PathPlannerPath
-from pathplannerlib.commands import FollowPathWithEvents, FollowPathRamsete
+from pathplannerlib.commands import FollowPathRamsete
 from pathplannerlib.config import ReplanningConfig, PIDConstants
 
 # Assuming this is a method in your drive subsystem
@@ -357,7 +357,7 @@ frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
 
 ```Python
 from pathplannerlib.path import PathPlannerPath
-from pathplannerlib.commands import FollowPathWithEvents, FollowPathLTV
+from pathplannerlib.commands import FollowPathLTV
 from pathplannerlib.config import ReplanningConfig, PIDConstants
 
 # Assuming this is a method in your drive subsystem

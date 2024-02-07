@@ -109,6 +109,10 @@ class Waypoint {
     if (prevControl != null) {
       prevControl = Point(prevControl!.x + dx, prevControl!.y + dy);
     }
+
+    if (linkedName != null) {
+      linked[linkedName!] = anchor;
+    }
   }
 
   Waypoint clone() {

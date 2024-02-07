@@ -51,7 +51,9 @@ class NamedCommands:
         if NamedCommands.hasCommand(name):
             return CommandUtil.wrappedEventCommand(NamedCommands._namedCommands[name])
         else:
-            reportWarning(f"PathPlanner attempted to create a command '{name}' that has not been registered with NamedCommands.registerCommand", False)
+            reportWarning(
+                f"PathPlanner attempted to create a command '{name}' that has not been registered with NamedCommands.registerCommand",
+                False)
             return cmd.none()
 
 
@@ -397,18 +399,41 @@ class AutoBuilder:
     def pathfindToPose(pose: Pose2d, constraints: PathConstraints, goal_end_vel: float = 0.0,
                        rotation_delay_distance: float = 0.0) -> Command:
         """
-        Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose rotation and rotation delay distance will have no effect.
+        Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose rotation and
+        rotation delay distance will have no effect.
 
         :param pose: The pose to pathfind to
         :param constraints: The constraints to use while pathfinding
         :param goal_end_vel: The goal end velocity of the robot when reaching the target pose
-        :param rotation_delay_distance: The distance the robot should move from the start position before attempting to rotate to the final rotation
+        :param rotation_delay_distance: The distance the robot should move from the start position before attempting
+                to rotate to the final rotation
         :return: A command to pathfind to a given pose
         """
         if not AutoBuilder.isPathfindingConfigured():
             raise RuntimeError('Auto builder was used to build a pathfinding command before being configured')
 
         return AutoBuilder._pathfindToPoseCommandBuilder(pose, constraints, goal_end_vel, rotation_delay_distance)
+
+    @staticmethod
+    def pathfindToPoseFlipped(pose: Pose2d, constraints: PathConstraints, goal_end_vel: float = 0.0,
+                              rotation_delay_distance: float = 0.0) -> Command:
+        """
+        Build a command to pathfind to a given pose that will be flipped based on the value of the path flipping
+        supplier when this command is run. If not using a holonomic drivetrain, the pose rotation and rotation delay
+        distance will have no effect.
+
+        :param pose: The pose to pathfind to. This will be flipped if the path flipping supplier returns true
+        :param constraints: The constraints to use while pathfinding
+        :param goal_end_vel: The goal end velocity of the robot when reaching the target pose
+        :param rotation_delay_distance: The distance the robot should move from the start position before attempting
+                to rotate to the final rotation
+        :return: A command to pathfind to a given pose
+        """
+        return cmd.either(
+            AutoBuilder.pathfindToPose(flipFieldPose(pose), constraints, goal_end_vel, rotation_delay_distance),
+            AutoBuilder.pathfindToPose(pose, constraints, goal_end_vel, rotation_delay_distance),
+            AutoBuilder._shouldFlipPath
+        )
 
     @staticmethod
     def pathfindThenFollowPath(goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,

@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <frc2/command/CommandPtr.h>
+#include <frc2/command/Commands.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/controller/RamseteController.h>
@@ -205,6 +206,29 @@ public:
 	static frc2::CommandPtr pathfindToPose(frc::Pose2d pose,
 			PathConstraints constraints, units::meters_per_second_t goalEndVel =
 					0_mps, units::meter_t rotationDelayDistance = 0_m);
+
+	/**
+	 * Build a command to pathfind to a given pose that will be flipped based on the value of the path
+	 * flipping supplier when this command is run. If not using a holonomic drivetrain, the pose
+	 * rotation and rotation delay distance will have no effect.
+	 *
+	 * @param pose The pose to pathfind to. This will be flipped if the path flipping supplier returns
+	 *     true
+	 * @param constraints The constraints to use while pathfinding
+	 * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
+	 * @param rotationDelayDistance The distance the robot should move from the start position before
+	 *     attempting to rotate to the final rotation
+	 * @return A command to pathfind to a given pose
+	 */
+	static frc2::CommandPtr pathfindToPoseFlipped(frc::Pose2d pose,
+			PathConstraints constraints, units::meters_per_second_t goalEndVel =
+					0_mps, units::meter_t rotationDelayDistance = 0_m) {
+		return frc2::cmd::Either(
+				pathfindToPose(GeometryUtil::flipFieldPose(pose), constraints,
+						goalEndVel, rotationDelayDistance),
+				pathfindToPose(pose, constraints, goalEndVel,
+						rotationDelayDistance), m_shouldFlipPath);
+	}
 
 	/**
 	 * Build a command to pathfind to a given path, then follow that path. If not using a holonomic

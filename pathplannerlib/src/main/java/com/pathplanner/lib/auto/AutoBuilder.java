@@ -538,6 +538,61 @@ public class AutoBuilder {
   }
 
   /**
+   * Build a command to pathfind to a given pose that will be flipped based on the value of the path
+   * flipping supplier when this command is run. If not using a holonomic drivetrain, the pose
+   * rotation and rotation delay distance will have no effect.
+   *
+   * @param pose The pose to pathfind to. This will be flipped if the path flipping supplier returns
+   *     true
+   * @param constraints The constraints to use while pathfinding
+   * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
+   * @param rotationDelayDistance The distance the robot should move from the start position before
+   *     attempting to rotate to the final rotation
+   * @return A command to pathfind to a given pose
+   */
+  public static Command pathfindToPoseFlipped(
+      Pose2d pose,
+      PathConstraints constraints,
+      double goalEndVelocity,
+      double rotationDelayDistance) {
+    return Commands.either(
+        pathfindToPose(
+            GeometryUtil.flipFieldPose(pose), constraints, goalEndVelocity, rotationDelayDistance),
+        pathfindToPose(pose, constraints, goalEndVelocity, rotationDelayDistance),
+        shouldFlipPath);
+  }
+
+  /**
+   * Build a command to pathfind to a given pose that will be flipped based on the value of the path
+   * flipping supplier when this command is run. If not using a holonomic drivetrain, the pose
+   * rotation and rotation delay distance will have no effect.
+   *
+   * @param pose The pose to pathfind to. This will be flipped if the path flipping supplier returns
+   *     true
+   * @param constraints The constraints to use while pathfinding
+   * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
+   * @return A command to pathfind to a given pose
+   */
+  public static Command pathfindToPoseFlipped(
+      Pose2d pose, PathConstraints constraints, double goalEndVelocity) {
+    return pathfindToPoseFlipped(pose, constraints, goalEndVelocity, 0);
+  }
+
+  /**
+   * Build a command to pathfind to a given pose that will be flipped based on the value of the path
+   * flipping supplier when this command is run. If not using a holonomic drivetrain, the pose
+   * rotation and rotation delay distance will have no effect.
+   *
+   * @param pose The pose to pathfind to. This will be flipped if the path flipping supplier returns
+   *     true
+   * @param constraints The constraints to use while pathfinding
+   * @return A command to pathfind to a given pose
+   */
+  public static Command pathfindToPoseFlipped(Pose2d pose, PathConstraints constraints) {
+    return pathfindToPoseFlipped(pose, constraints, 0);
+  }
+
+  /**
    * Build a command to pathfind to a given path, then follow that path. If not using a holonomic
    * drivetrain, the pose rotation delay distance will have no effect.
    *

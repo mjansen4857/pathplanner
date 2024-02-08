@@ -68,9 +68,11 @@ void FollowPathCommand::Initialize() {
 	// Initialize marker stuff
 	m_currentEventCommands.clear();
 	m_untriggeredEvents.clear();
-	m_untriggeredEvents.insert(m_untriggeredEvents.end(),
-			m_generatedTrajectory.getEventCommands().begin(),
-			m_generatedTrajectory.getEventCommands().end());
+
+	const auto &eventCommands = m_generatedTrajectory.getEventCommands();
+
+	m_untriggeredEvents.insert(m_untriggeredEvents.end(), eventCommands.begin(),
+			eventCommands.end());
 
 	m_timer.Reset();
 	m_timer.Start();

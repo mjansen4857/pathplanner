@@ -174,7 +174,7 @@ public class PathfindingCommand extends Command {
           new Pose2d(this.targetPath.getPoint(0).position, originalTargetPose.getRotation());
       if (shouldFlipPath.getAsBoolean()) {
         targetPose = GeometryUtil.flipFieldPose(this.originalTargetPose);
-        goalEndState = new GoalEndState(goalEndState.getVelocity(), targetPose.getRotation());
+        goalEndState = new GoalEndState(goalEndState.getVelocity(), targetPose.getRotation(), true);
       }
     }
 

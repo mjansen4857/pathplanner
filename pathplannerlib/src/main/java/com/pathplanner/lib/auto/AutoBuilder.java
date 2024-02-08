@@ -734,10 +734,8 @@ public class AutoBuilder {
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
       return getAutoCommandFromJson(json);
-    } catch (AutoBuilderException e) {
-      throw e;
     } catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
+      throw new RuntimeException(String.format("Error building auto: %s", autoName), e);
     }
   }
 

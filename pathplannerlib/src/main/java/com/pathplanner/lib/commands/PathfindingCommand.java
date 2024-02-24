@@ -194,7 +194,7 @@ public class PathfindingCommand extends Command {
 
   @Override
   public void execute() {
-    if(finish){
+    if (finish) {
       return;
     }
 
@@ -344,10 +344,10 @@ public class PathfindingCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    if(finish){
+    if (finish) {
       return true;
     }
-    
+
     if (targetPath != null && !targetPath.isChoreoPath()) {
       Pose2d currentPose = poseSupplier.get();
       ChassisSpeeds currentSpeeds = speedsSupplier.get();

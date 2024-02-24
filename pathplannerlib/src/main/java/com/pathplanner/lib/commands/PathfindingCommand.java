@@ -44,6 +44,8 @@ public class PathfindingCommand extends Command {
 
   private double timeOffset = 0;
 
+  private boolean finish = false;
+
   /**
    * Constructs a new base pathfinding command that will generate a path towards the given path.
    *
@@ -164,6 +166,7 @@ public class PathfindingCommand extends Command {
   public void initialize() {
     currentTrajectory = null;
     timeOffset = 0;
+    finish = false;
 
     Pose2d currentPose = poseSupplier.get();
 
@@ -180,7 +183,7 @@ public class PathfindingCommand extends Command {
 
     if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.5) {
       output.accept(new ChassisSpeeds());
-      this.cancel();
+      finish = true;
     } else {
       Pathfinding.setStartPosition(currentPose.getTranslation());
       Pathfinding.setGoalPosition(targetPose.getTranslation());
@@ -191,6 +194,10 @@ public class PathfindingCommand extends Command {
 
   @Override
   public void execute() {
+    if(finish){
+      return;
+    }
+
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
 
@@ -337,6 +344,10 @@ public class PathfindingCommand extends Command {
 
   @Override
   public boolean isFinished() {
+    if(finish){
+      return true;
+    }
+    
     if (targetPath != null && !targetPath.isChoreoPath()) {
       Pose2d currentPose = poseSupplier.get();
       ChassisSpeeds currentSpeeds = speedsSupplier.get();

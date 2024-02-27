@@ -59,13 +59,14 @@ class FollowPathCommand(Command):
         self._replanningConfig = replanning_config
         self._shouldFlipPath = should_flip_path
 
-        self.addRequirements(*requirements)
+        self.driveRequirements = requirements
+        self.addRequirements(*self.driveRequirements)
 
         for marker in self._originalPath.getEventMarkers():
             reqs = marker.command.getRequirements()
 
-            for req in self.getRequirements():
-                if req in reqs:
+            for req in reqs:
+                if req in self.driveRequirements:
                     raise RuntimeError(
                         'Events that are triggered during path following cannot require the drive subsystem')
 

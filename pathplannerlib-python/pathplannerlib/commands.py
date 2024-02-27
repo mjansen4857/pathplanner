@@ -64,7 +64,7 @@ class FollowPathCommand(Command):
         for marker in self._originalPath.getEventMarkers():
             reqs = marker.command.getRequirements()
 
-            for req in self.getRequirements():
+            for req in requirements:
                 if req in reqs:
                     raise RuntimeError(
                         'Events that are triggered during path following cannot require the drive subsystem')

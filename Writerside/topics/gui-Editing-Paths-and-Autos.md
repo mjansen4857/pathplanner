@@ -125,7 +125,10 @@ Position Slider
 
 Event markers define points along the path where other commands should be triggered while path following. Each event
 marker has a command group associated with it that can be used to build more complex functionality via adding named
-commands, wait commands, and nested command groups. Event markers can be edited via the event markers tree.
+commands, wait commands, and nested command groups. Please note that when the robot reaches the end of a path, all
+commands triggered via event markers are commanded to end. If you'd like a command to activate when the robot reaches
+the end of a path, you may want to either experiment with Autos, or place that command at the start of the next path.
+Event markers can be edited via the event markers tree.
 
 #### Event Markers Tree
 

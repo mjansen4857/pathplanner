@@ -1069,7 +1069,7 @@ public class PathPlannerPath {
 
       path.allPoints = pathPoints;
       path.isChoreoPath = true;
-      path.choreoTrajectory = new PathPlannerTrajectory(mirroredStates);
+      path.choreoTrajectory = new PathPlannerTrajectory(mirroredStates, choreoTrajectory.getEventCommands());
 
       return path;
     }

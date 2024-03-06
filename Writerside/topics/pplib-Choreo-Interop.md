@@ -5,8 +5,9 @@ These can either be followed as a single path, or used in auto routines created 
 
 > **Note**
 >
-> Chore trajectories (.traj files) must be saved in the `deploy/choreo` directory. This will be done automatically
-> starting with the kickoff release of Choreo.
+> Choreo trajectories (.traj files) must be saved in the `deploy/choreo` directory. This will be done automatically
+> starting with the kickoff release of Choreo, if you save your .chor file in project root (i.e. adjacent to
+> `build.gradle` (C++/Java) or `robot.py` (Python).
 >
 {style="note"}
 

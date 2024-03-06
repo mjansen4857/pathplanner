@@ -835,7 +835,8 @@ class PathPlannerPath:
 
             path._allPoints = pathPoints
             path._isChoreoPath = True
-            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, states=mirroredStates)
+            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, states=mirroredStates,
+                                                           event_commands=self._choreoTrajectory.getEventCommands())
 
             return path
 

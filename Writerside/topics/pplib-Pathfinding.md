@@ -116,7 +116,7 @@ frc2::CommandPtr pathfindingCommand = AutoBuilder::pathfindToPose(
     constraints,
     0.0_mps, // Goal end velocity in meters/sec
     0.0_m // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-).ToPtr();
+);
 ```
 
 </tab>
@@ -208,7 +208,7 @@ frc2::CommandPtr pathfindingCommand = PathfindHolonomic(
     Constants::Swerve::pathFollowingConfig, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
     this, // Pointer to drive subsystem to set requirements
     0.0_m // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate. Optional
-).ToPtr();
+);
 ```
 
 </tab>
@@ -306,7 +306,7 @@ frc2::CommandPtr pathfindingCommand = AutoBuilder::pathfindThenFollowPath(
     path,
     constraints,
     3.0_m // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-).ToPtr();
+);
 ```
 
 </tab>
@@ -413,7 +413,7 @@ frc2::CommandPtr pathfindingCommand = PathfindThenFollowPathHolonomic(
     },
     this, // Reference to drive subsystem to set requirements
     3.0_m, // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate. Optional
-).ToPtr();
+);
 ```
 
 </tab>

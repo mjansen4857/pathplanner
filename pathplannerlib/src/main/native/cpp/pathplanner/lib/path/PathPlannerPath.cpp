@@ -772,7 +772,8 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 
 		path->m_allPoints = pathPoints;
 		path->m_isChoreoPath = true;
-		path->m_choreoTrajectory = PathPlannerTrajectory(mirroredStates);
+		path->m_choreoTrajectory = PathPlannerTrajectory(mirroredStates,
+				m_choreoTrajectory.getEventCommands());
 
 		return path;
 	}

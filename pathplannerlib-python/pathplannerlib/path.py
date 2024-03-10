@@ -584,7 +584,7 @@ class PathPlannerPath:
             stoppingDistance = (linearVel ** 2) / (2 * self._globalConstraints.maxAccelerationMpsSq)
 
             heading = Rotation2d(currentFieldRelativeSpeeds.vx, currentFieldRelativeSpeeds.vy)
-            robotNextControl = starting_pose.translation() + Translation2d(stoppingDistance, heading)
+            robotNextControl = starting_pose.translation() + Translation2d(stoppingDistance / 2.0, heading)
 
         closestPointIdx = 0
         comparePoint = robotNextControl if robotNextControl is not None else starting_pose.translation()

@@ -715,7 +715,7 @@ public class PathPlannerPath {
               currentFieldRelativeSpeeds.vxMetersPerSecond,
               currentFieldRelativeSpeeds.vyMetersPerSecond);
       robotNextControl =
-          startingPose.getTranslation().plus(new Translation2d(stoppingDistance, heading));
+          startingPose.getTranslation().plus(new Translation2d(stoppingDistance / 2.0, heading));
     }
 
     int closestPointIdx = 0;

@@ -449,7 +449,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 		frc::Rotation2d heading(currentFieldRelativeSpeeds.vx(),
 				currentFieldRelativeSpeeds.vy());
 		robotNextControl = startingPose.Translation()
-				+ frc::Translation2d(stoppingDistance, heading);
+				+ frc::Translation2d(stoppingDistance / 2.0, heading);
 	}
 
 	size_t closestPointIdx = 0;

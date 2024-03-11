@@ -432,7 +432,7 @@ class RobotContainer:
 
 > **Note**
 >
-> This feature is only available in the Java version of PathPlannerLib
+> This feature is only available in the Java and Python versions of PathPlannerLib
 >
 {style="note"}
 
@@ -469,6 +469,25 @@ public class RobotContainer {
     return autoChooser.getSelected();
   }
 }
+```
+
+```Python
+from pathplannerlib.auto import AutoBuilder
+
+class RobotContainer:
+    
+    def __init__():
+
+        # Build an auto chooser. This will use Commands.none() as the default option.
+        self.autoChooser = AutoBuilder.buildAutoChooser()
+        
+        # Another option that allows you to specify the default auto by its name
+        # self.autoChooser = AutoBuilder.buildAutoChooser("My Default Auto")
+        
+        SmartDashboard.putData("Auto Chooser", self.autoChooser)
+    
+    def getAutonomousCommand():
+        return self.autoChooser.getSelected()
 ```
 
 </snippet>

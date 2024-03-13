@@ -657,10 +657,10 @@ class _ProjectPageState extends State<ProjectPage> {
                   shrinkWrap: true,
                   children: [
                     DragTarget<PathPlannerPath>(
-                      onAccept: (data) {
+                      onAcceptWithDetails: (details) {
                         setState(() {
-                          data.folder = null;
-                          data.generateAndSavePath();
+                          details.data.folder = null;
+                          details.data.generateAndSavePath();
                         });
                       },
                       builder: (context, candidates, rejects) {
@@ -753,10 +753,10 @@ class _ProjectPageState extends State<ProjectPage> {
                       ),
                     for (int i = 0; i < _pathFolders.length; i++)
                       DragTarget<PathPlannerPath>(
-                        onAccept: (data) {
+                        onAcceptWithDetails: (details) {
                           setState(() {
-                            data.folder = _pathFolders[i];
-                            data.generateAndSavePath();
+                            details.data.folder = _pathFolders[i];
+                            details.data.generateAndSavePath();
                           });
                         },
                         builder: (context, candidates, rejects) {
@@ -1230,10 +1230,10 @@ class _ProjectPageState extends State<ProjectPage> {
                   shrinkWrap: true,
                   children: [
                     DragTarget<PathPlannerAuto>(
-                      onAccept: (data) {
+                      onAcceptWithDetails: (details) {
                         setState(() {
-                          data.folder = null;
-                          data.saveFile();
+                          details.data.folder = null;
+                          details.data.saveFile();
                         });
                       },
                       builder: (context, candidates, rejects) {
@@ -1293,10 +1293,10 @@ class _ProjectPageState extends State<ProjectPage> {
                   children: [
                     for (int i = 0; i < _autoFolders.length; i++)
                       DragTarget<PathPlannerAuto>(
-                        onAccept: (data) {
+                        onAcceptWithDetails: (details) {
                           setState(() {
-                            data.folder = _autoFolders[i];
-                            data.saveFile();
+                            details.data.folder = _autoFolders[i];
+                            details.data.saveFile();
                           });
                         },
                         builder: (context, candidates, rejects) {

@@ -52,15 +52,8 @@ class KeyBoardShortcuts extends StatefulWidget {
   /// Function when keys are pressed
   final VoidCallback? onKeysPressed;
 
-  /// Activate when this widget is the first of the page
-  final bool globalShortcuts;
-
   const KeyBoardShortcuts(
-      {this.keysToPress,
-      this.onKeysPressed,
-      this.globalShortcuts = false,
-      required this.child,
-      super.key});
+      {this.keysToPress, this.onKeysPressed, required this.child, super.key});
 
   @override
   State<KeyBoardShortcuts> createState() => _KeyBoardShortcuts();
@@ -96,55 +89,33 @@ class _KeyBoardShortcuts extends State<KeyBoardShortcuts> {
   void _attachKeyboardIfDetached() {
     if (listening) return;
     _keyBoardShortcuts.add(this);
-    RawKeyboard.instance.addListener(listener);
+    HardwareKeyboard.instance.addHandler(listener);
     listening = true;
   }
 
   void _detachKeyboardIfAttached() {
     if (!listening) return;
     _keyBoardShortcuts.remove(this);
-    RawKeyboard.instance.removeListener(listener);
+    HardwareKeyboard.instance.removeHandler(listener);
     listening = false;
   }
 
-  void listener(RawKeyEvent v) async {
-    if (!mounted) return;
+  bool listener(KeyEvent v) {
+    if (!mounted) return false;
 
-    Set<LogicalKeyboardKey> keysPressed = RawKeyboard.instance.keysPressed;
-    if (v.runtimeType == RawKeyDownEvent) {
+    Set<LogicalKeyboardKey> keysPressed =
+        HardwareKeyboard.instance.logicalKeysPressed;
+    if (v.runtimeType == KeyDownEvent) {
       // when user type keysToPress
       if (widget.keysToPress != null &&
           widget.onKeysPressed != null &&
           _isPressed(keysPressed, widget.keysToPress!)) {
         widget.onKeysPressed!();
-      } else if (widget.globalShortcuts) {
-        if (_isPressed(keysPressed, {LogicalKeyboardKey.escape})) {
-          Navigator.maybePop(context);
-        } else if (controllerIsReady &&
-                keysPressed.containsAll({LogicalKeyboardKey.pageDown}) ||
-            keysPressed.first.keyId == 0x10700000022) {
-          _controller.animateTo(
-            _controller.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 50),
-            curve: Curves.easeOut,
-          );
-        } else if (controllerIsReady &&
-                keysPressed.containsAll({LogicalKeyboardKey.pageUp}) ||
-            keysPressed.first.keyId == 0x10700000021) {
-          _controller.animateTo(
-            _controller.position.minScrollExtent,
-            duration: const Duration(milliseconds: 50),
-            curve: Curves.easeOut,
-          );
-        }
-        for (final newElement in _newGlobal) {
-          if (_isPressed(keysPressed, newElement.item1)) {
-            newElement.item2(context);
-            return;
-          }
-        }
+        return true;
       }
     }
+
+    return false;
   }
 
   @override

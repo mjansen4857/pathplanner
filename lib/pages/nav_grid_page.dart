@@ -215,7 +215,7 @@ class _NavGridPageState extends State<NavGridPage> {
                 _saveNavGrid();
 
                 if (mounted) {
-                  Navigator.of(context).pop();
+                  Navigator.of(this.context).pop();
                 }
               },
               child: const Text('Restore Default'),

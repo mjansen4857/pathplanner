@@ -889,9 +889,17 @@ class _ProjectPageState extends State<ProjectPage> {
         for (PathPlannerPath path in _paths) {
           pathNames.add(path.name);
         }
-        String pathName = 'Copy of ${_paths[i].name}';
+        String pathName = _paths[i].name;
+        RegExp exp = RegExp(r'\(\d+\)');
+        String source = pathName.substring(pathName.length-3);
         while (pathNames.contains(pathName)) {
-          pathName = 'Copy of $pathName';
+          if(exp.hasMatch(source)){
+            RegExpMatch? match = exp.firstMatch(source);
+            int index = int.parse(match![0]!.substring(1,2))+1; 
+            pathName = '${pathName.substring(0,pathName.length-3)}($index)'; 
+          } else{
+          pathName = '$pathName (1)';
+          }
         }
 
         setState(() {
@@ -1468,11 +1476,18 @@ class _ProjectPageState extends State<ProjectPage> {
         for (PathPlannerAuto auto in _autos) {
           autoNames.add(auto.name);
         }
-        String autoName = 'Copy of ${_autos[i].name}';
+        String autoName = _autos[i].name;
+        RegExp exp = RegExp(r'\(\d+\)');
+        String source = autoName.substring(autoName.length-3);
         while (autoNames.contains(autoName)) {
-          autoName = 'Copy of $autoName';
+          if(exp.hasMatch(source)){
+            RegExpMatch? match = exp.firstMatch(source);
+            int index = int.parse(match![0]!.substring(1,2))+1; 
+            autoName = '${autoName.substring(0,autoName.length-3)}($index)'; 
+          } else{
+          autoName = '$autoName (1)';
+          }
         }
-
         setState(() {
           _autos.add(_autos[i].duplicate(autoName));
           _sortAutos(_autoSortValue);

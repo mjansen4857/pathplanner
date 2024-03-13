@@ -501,7 +501,7 @@ class AutoBuilder:
             return AutoBuilder.getAutoCommandFromJson(auto_json)
         
     @staticmethod
-    def buildAutoChooser(default_auto_name: str) -> SendableChooser:
+    def buildAutoChooser(default_auto_name: str = "") -> SendableChooser:
         """
         Create and populate a sendable chooser with all PathPlannerAutos in the project and the default auto name selected.
         
@@ -510,8 +510,7 @@ class AutoBuilder:
         """
         if not AutoBuilder.isConfigured():
             raise RuntimeError('AutoBuilder was not configured before attempting to build an auto chooser')
-        
-        auto_folder_path = os.path.join(getDeployDirectory(), "/deploy/pathplanner/autos")
+        auto_folder_path = os.path.join(getDeployDirectory(), 'pathplanner', 'autos')
         auto_list = os.listdir(auto_folder_path)
         
         chooser = SendableChooser()

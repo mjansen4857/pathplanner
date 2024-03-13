@@ -449,6 +449,9 @@ every auto in the project.
 >
 {style="warning"}
 
+<tabs group="pplib-language">
+<tab title="Java" group-key="java">
+
 ```Java
 public class RobotContainer {
   private final SendableChooser<Command> autoChooser;
@@ -471,6 +474,9 @@ public class RobotContainer {
 }
 ```
 
+</tab>
+<tab title="Python" group-key="python">
+
 ```Python
 from pathplannerlib.auto import AutoBuilder
 
@@ -489,5 +495,8 @@ class RobotContainer:
     def getAutonomousCommand():
         return self.autoChooser.getSelected()
 ```
+
+</tab>
+</tabs>
 
 </snippet>

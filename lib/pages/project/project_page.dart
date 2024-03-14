@@ -512,7 +512,6 @@ class _ProjectPageState extends State<ProjectPage> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
@@ -649,222 +648,240 @@ class _ProjectPageState extends State<ProjectPage> {
                   });
                 },
               ),
-              ConditionalWidget(
-                condition: _pathFolder == null,
-                falseChild: GridView.count(
-                  crossAxisCount: _pathGridCount,
-                  childAspectRatio: 5.5,
+              Expanded(
+                child: ListView(
                   shrinkWrap: true,
                   children: [
-                    DragTarget<PathPlannerPath>(
-                      onAcceptWithDetails: (details) {
-                        setState(() {
-                          details.data.folder = null;
-                          details.data.generateAndSavePath();
-                        });
-                      },
-                      builder: (context, candidates, rejects) {
-                        ColorScheme colorScheme = Theme.of(context).colorScheme;
-                        return Card(
-                          elevation: 2,
-                          color: candidates.isNotEmpty
-                              ? colorScheme.primary
-                              : null,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () {
+                    ConditionalWidget(
+                      condition: _pathFolder == null,
+                      falseChild: GridView.count(
+                        crossAxisCount: _pathGridCount,
+                        childAspectRatio: 5.5,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          DragTarget<PathPlannerPath>(
+                            onAcceptWithDetails: (details) {
                               setState(() {
-                                _pathFolder = null;
+                                details.data.folder = null;
+                                details.data.generateAndSavePath();
                               });
                             },
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.drive_file_move_rtl_outlined,
-                                    color: candidates.isNotEmpty
-                                        ? colorScheme.onPrimary
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        'Root Folder',
-                                        style: TextStyle(
-                                          fontSize: 20,
+                            builder: (context, candidates, rejects) {
+                              ColorScheme colorScheme =
+                                  Theme.of(context).colorScheme;
+                              return Card(
+                                elevation: 2,
+                                color: candidates.isNotEmpty
+                                    ? colorScheme.primary
+                                    : null,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    setState(() {
+                                      _pathFolder = null;
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.drive_file_move_rtl_outlined,
                                           color: candidates.isNotEmpty
                                               ? colorScheme.onPrimary
                                               : null,
                                         ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                trueChild: GridView.count(
-                  crossAxisCount: _pathGridCount,
-                  childAspectRatio: 5.5,
-                  shrinkWrap: true,
-                  children: [
-                    if (_choreoPaths.isNotEmpty)
-                      Card(
-                        elevation: 2,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            setState(() {
-                              _inChoreoFolder = true;
-                            });
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Row(
-                              children: [
-                                Icon(Icons.folder_outlined),
-                                SizedBox(width: 12),
-                                Expanded(
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      'Choreo Paths',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                      ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(
+                                              'Root Folder',
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                color: candidates.isNotEmpty
+                                                    ? colorScheme.onPrimary
+                                                    : null,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                        ),
+                        ],
                       ),
-                    for (int i = 0; i < _pathFolders.length; i++)
-                      DragTarget<PathPlannerPath>(
-                        onAcceptWithDetails: (details) {
-                          setState(() {
-                            details.data.folder = _pathFolders[i];
-                            details.data.generateAndSavePath();
-                          });
-                        },
-                        builder: (context, candidates, rejects) {
-                          ColorScheme colorScheme =
-                              Theme.of(context).colorScheme;
-                          return Card(
-                            elevation: 2,
-                            color: candidates.isNotEmpty
-                                ? colorScheme.primary
-                                : null,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () {
+                      trueChild: GridView.count(
+                        crossAxisCount: _pathGridCount,
+                        childAspectRatio: 5.5,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        children: [
+                          if (_choreoPaths.isNotEmpty)
+                            Card(
+                              elevation: 2,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () {
+                                  setState(() {
+                                    _inChoreoFolder = true;
+                                  });
+                                },
+                                child: const Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.folder_outlined),
+                                      SizedBox(width: 12),
+                                      Expanded(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            'Choreo Paths',
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          for (int i = 0; i < _pathFolders.length; i++)
+                            DragTarget<PathPlannerPath>(
+                              onAcceptWithDetails: (details) {
                                 setState(() {
-                                  _pathFolder = _pathFolders[i];
+                                  details.data.folder = _pathFolders[i];
+                                  details.data.generateAndSavePath();
                                 });
                               },
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.folder_outlined,
-                                      color: candidates.isNotEmpty
-                                          ? colorScheme.onPrimary
-                                          : null,
-                                    ),
-                                    Expanded(
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: RenamableTitle(
-                                          title: _pathFolders[i],
-                                          textStyle: TextStyle(
-                                            fontSize: 20,
+                              builder: (context, candidates, rejects) {
+                                ColorScheme colorScheme =
+                                    Theme.of(context).colorScheme;
+                                return Card(
+                                  elevation: 2,
+                                  color: candidates.isNotEmpty
+                                      ? colorScheme.primary
+                                      : null,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () {
+                                      setState(() {
+                                        _pathFolder = _pathFolders[i];
+                                      });
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.folder_outlined,
                                             color: candidates.isNotEmpty
                                                 ? colorScheme.onPrimary
                                                 : null,
                                           ),
-                                          onRename: (newName) {
-                                            if (newName != _pathFolders[i]) {
-                                              if (_pathFolders
-                                                  .contains(newName)) {
-                                                showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext context) {
-                                                      return AlertDialog(
-                                                        title: const Text(
-                                                            'Unable to Rename'),
-                                                        content: Text(
-                                                            'The folder "$newName" already exists'),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed:
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pop,
-                                                            child: const Text(
-                                                                'OK'),
-                                                          ),
-                                                        ],
-                                                      );
-                                                    });
-                                              } else {
-                                                setState(() {
-                                                  for (PathPlannerPath path
-                                                      in _paths) {
-                                                    if (path.folder ==
-                                                        _pathFolders[i]) {
-                                                      path.folder = newName;
-                                                      path.generateAndSavePath();
+                                          Expanded(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: RenamableTitle(
+                                                title: _pathFolders[i],
+                                                textStyle: TextStyle(
+                                                  fontSize: 20,
+                                                  color: candidates.isNotEmpty
+                                                      ? colorScheme.onPrimary
+                                                      : null,
+                                                ),
+                                                onRename: (newName) {
+                                                  if (newName !=
+                                                      _pathFolders[i]) {
+                                                    if (_pathFolders
+                                                        .contains(newName)) {
+                                                      showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext
+                                                              context) {
+                                                            return AlertDialog(
+                                                              title: const Text(
+                                                                  'Unable to Rename'),
+                                                              content: Text(
+                                                                  'The folder "$newName" already exists'),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed:
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .pop,
+                                                                  child:
+                                                                      const Text(
+                                                                          'OK'),
+                                                                ),
+                                                              ],
+                                                            );
+                                                          });
+                                                    } else {
+                                                      setState(() {
+                                                        for (PathPlannerPath path
+                                                            in _paths) {
+                                                          if (path.folder ==
+                                                              _pathFolders[i]) {
+                                                            path.folder =
+                                                                newName;
+                                                            path.generateAndSavePath();
+                                                          }
+                                                        }
+                                                        _pathFolders[i] =
+                                                            newName;
+                                                      });
+                                                      widget.prefs
+                                                          .setStringList(
+                                                              PrefsKeys
+                                                                  .pathFolders,
+                                                              _pathFolders);
+                                                      widget.onFoldersChanged
+                                                          ?.call();
                                                     }
                                                   }
-                                                  _pathFolders[i] = newName;
-                                                });
-                                                widget.prefs.setStringList(
-                                                    PrefsKeys.pathFolders,
-                                                    _pathFolders);
-                                                widget.onFoldersChanged?.call();
-                                              }
-                                            }
-                                          },
-                                        ),
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
+                        ],
                       ),
-                  ],
-                ),
-              ),
-              if (_pathFolders.isNotEmpty || _choreoPaths.isNotEmpty)
-                const SizedBox(height: 8),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount:
-                      _pathsCompact ? _pathGridCount + 1 : _pathGridCount,
-                  childAspectRatio: _pathsCompact ? 2.5 : 1.55,
-                  children: [
-                    for (int i = 0; i < _paths.length; i++)
-                      if (_paths[i].folder == _pathFolder)
-                        _buildPathCard(i, context),
+                    ),
+                    if (_pathFolders.isNotEmpty || _choreoPaths.isNotEmpty)
+                      const SizedBox(height: 8),
+                    GridView.count(
+                      crossAxisCount:
+                          _pathsCompact ? _pathGridCount + 1 : _pathGridCount,
+                      childAspectRatio: _pathsCompact ? 2.5 : 1.55,
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      children: [
+                        for (int i = 0; i < _paths.length; i++)
+                          if (_paths[i].folder == _pathFolder)
+                            _buildPathCard(i, context),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -1074,7 +1091,6 @@ class _ProjectPageState extends State<ProjectPage> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
@@ -1222,188 +1238,202 @@ class _ProjectPageState extends State<ProjectPage> {
                   });
                 },
               ),
-              ConditionalWidget(
-                condition: _autoFolder == null,
-                falseChild: GridView.count(
-                  crossAxisCount: _autosGridCount,
-                  childAspectRatio: 5.5,
+              Expanded(
+                child: ListView(
                   shrinkWrap: true,
                   children: [
-                    DragTarget<PathPlannerAuto>(
-                      onAcceptWithDetails: (details) {
-                        setState(() {
-                          details.data.folder = null;
-                          details.data.saveFile();
-                        });
-                      },
-                      builder: (context, candidates, rejects) {
-                        ColorScheme colorScheme = Theme.of(context).colorScheme;
-                        return Card(
-                          elevation: 2,
-                          color: candidates.isNotEmpty
-                              ? colorScheme.primary
-                              : null,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () {
+                    ConditionalWidget(
+                      condition: _autoFolder == null,
+                      falseChild: GridView.count(
+                        crossAxisCount: _autosGridCount,
+                        childAspectRatio: 5.5,
+                        shrinkWrap: true,
+                        children: [
+                          DragTarget<PathPlannerAuto>(
+                            onAcceptWithDetails: (details) {
                               setState(() {
-                                _autoFolder = null;
+                                details.data.folder = null;
+                                details.data.saveFile();
                               });
                             },
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.drive_file_move_rtl_outlined,
-                                    color: candidates.isNotEmpty
-                                        ? colorScheme.onPrimary
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        'Root Folder',
-                                        style: TextStyle(
-                                          fontSize: 20,
+                            builder: (context, candidates, rejects) {
+                              ColorScheme colorScheme =
+                                  Theme.of(context).colorScheme;
+                              return Card(
+                                elevation: 2,
+                                color: candidates.isNotEmpty
+                                    ? colorScheme.primary
+                                    : null,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () {
+                                    setState(() {
+                                      _autoFolder = null;
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.drive_file_move_rtl_outlined,
                                           color: candidates.isNotEmpty
                                               ? colorScheme.onPrimary
                                               : null,
                                         ),
-                                      ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(
+                                              'Root Folder',
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                color: candidates.isNotEmpty
+                                                    ? colorScheme.onPrimary
+                                                    : null,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                trueChild: GridView.count(
-                  crossAxisCount: _autosGridCount,
-                  childAspectRatio: 5.5,
-                  shrinkWrap: true,
-                  children: [
-                    for (int i = 0; i < _autoFolders.length; i++)
-                      DragTarget<PathPlannerAuto>(
-                        onAcceptWithDetails: (details) {
-                          setState(() {
-                            details.data.folder = _autoFolders[i];
-                            details.data.saveFile();
-                          });
-                        },
-                        builder: (context, candidates, rejects) {
-                          ColorScheme colorScheme =
-                              Theme.of(context).colorScheme;
-                          return Card(
-                            elevation: 2,
-                            color: candidates.isNotEmpty
-                                ? colorScheme.primary
-                                : null,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
-                              onTap: () {
+                        ],
+                      ),
+                      trueChild: GridView.count(
+                        crossAxisCount: _autosGridCount,
+                        childAspectRatio: 5.5,
+                        shrinkWrap: true,
+                        children: [
+                          for (int i = 0; i < _autoFolders.length; i++)
+                            DragTarget<PathPlannerAuto>(
+                              onAcceptWithDetails: (details) {
                                 setState(() {
-                                  _autoFolder = _autoFolders[i];
+                                  details.data.folder = _autoFolders[i];
+                                  details.data.saveFile();
                                 });
                               },
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.folder_outlined,
-                                      color: candidates.isNotEmpty
-                                          ? colorScheme.onPrimary
-                                          : null,
-                                    ),
-                                    Expanded(
-                                      child: FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: RenamableTitle(
-                                          title: _autoFolders[i],
-                                          textStyle: TextStyle(
-                                            fontSize: 20,
+                              builder: (context, candidates, rejects) {
+                                ColorScheme colorScheme =
+                                    Theme.of(context).colorScheme;
+                                return Card(
+                                  elevation: 2,
+                                  color: candidates.isNotEmpty
+                                      ? colorScheme.primary
+                                      : null,
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(12),
+                                    onTap: () {
+                                      setState(() {
+                                        _autoFolder = _autoFolders[i];
+                                      });
+                                    },
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.folder_outlined,
                                             color: candidates.isNotEmpty
                                                 ? colorScheme.onPrimary
                                                 : null,
                                           ),
-                                          onRename: (newName) {
-                                            if (newName != _autoFolders[i]) {
-                                              if (_autoFolders
-                                                  .contains(newName)) {
-                                                showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext context) {
-                                                      return AlertDialog(
-                                                        title: const Text(
-                                                            'Unable to Rename'),
-                                                        content: Text(
-                                                            'The folder "$newName" already exists'),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed:
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pop,
-                                                            child: const Text(
-                                                                'OK'),
-                                                          ),
-                                                        ],
-                                                      );
-                                                    });
-                                              } else {
-                                                setState(() {
-                                                  for (PathPlannerAuto auto
-                                                      in _autos) {
-                                                    if (auto.folder ==
-                                                        _autoFolders[i]) {
-                                                      auto.folder = newName;
-                                                      auto.saveFile();
+                                          Expanded(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
+                                              child: RenamableTitle(
+                                                title: _autoFolders[i],
+                                                textStyle: TextStyle(
+                                                  fontSize: 20,
+                                                  color: candidates.isNotEmpty
+                                                      ? colorScheme.onPrimary
+                                                      : null,
+                                                ),
+                                                onRename: (newName) {
+                                                  if (newName !=
+                                                      _autoFolders[i]) {
+                                                    if (_autoFolders
+                                                        .contains(newName)) {
+                                                      showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext
+                                                              context) {
+                                                            return AlertDialog(
+                                                              title: const Text(
+                                                                  'Unable to Rename'),
+                                                              content: Text(
+                                                                  'The folder "$newName" already exists'),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed:
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .pop,
+                                                                  child:
+                                                                      const Text(
+                                                                          'OK'),
+                                                                ),
+                                                              ],
+                                                            );
+                                                          });
+                                                    } else {
+                                                      setState(() {
+                                                        for (PathPlannerAuto auto
+                                                            in _autos) {
+                                                          if (auto.folder ==
+                                                              _autoFolders[i]) {
+                                                            auto.folder =
+                                                                newName;
+                                                            auto.saveFile();
+                                                          }
+                                                        }
+                                                        _autoFolders[i] =
+                                                            newName;
+                                                      });
+                                                      widget.prefs
+                                                          .setStringList(
+                                                              PrefsKeys
+                                                                  .autoFolders,
+                                                              _autoFolders);
+                                                      widget.onFoldersChanged
+                                                          ?.call();
                                                     }
                                                   }
-                                                  _autoFolders[i] = newName;
-                                                });
-                                                widget.prefs.setStringList(
-                                                    PrefsKeys.autoFolders,
-                                                    _autoFolders);
-                                                widget.onFoldersChanged?.call();
-                                              }
-                                            }
-                                          },
-                                        ),
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
+                        ],
                       ),
-                  ],
-                ),
-              ),
-              if (_autoFolders.isNotEmpty) const SizedBox(height: 8),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount:
-                      _autosCompact ? _autosGridCount + 1 : _autosGridCount,
-                  childAspectRatio: _autosCompact ? 2.5 : 1.55,
-                  children: [
-                    for (int i = 0; i < _autos.length; i++)
-                      if (_autos[i].folder == _autoFolder)
-                        _buildAutoCard(i, context),
+                    ),
+                    if (_autoFolders.isNotEmpty) const SizedBox(height: 8),
+                    GridView.count(
+                      crossAxisCount:
+                          _autosCompact ? _autosGridCount + 1 : _autosGridCount,
+                      childAspectRatio: _autosCompact ? 2.5 : 1.55,
+                      shrinkWrap: true,
+                      children: [
+                        for (int i = 0; i < _autos.length; i++)
+                          if (_autos[i].folder == _autoFolder)
+                            _buildAutoCard(i, context),
+                      ],
+                    ),
                   ],
                 ),
               ),

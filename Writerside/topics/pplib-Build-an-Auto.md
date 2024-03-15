@@ -432,7 +432,7 @@ class RobotContainer:
 
 > **Note**
 >
-> This feature is only available in the Java version of PathPlannerLib
+> This feature is only available in the Java and Python versions of PathPlannerLib
 >
 {style="note"}
 
@@ -448,6 +448,9 @@ every auto in the project.
 > To remove old options, the deploy directory will need to be cleared manually via SSH, WinSCP, reimaging the RIO, etc.
 >
 {style="warning"}
+
+<tabs group="pplib-language">
+<tab title="Java" group-key="java">
 
 ```Java
 public class RobotContainer {
@@ -470,5 +473,30 @@ public class RobotContainer {
   }
 }
 ```
+
+</tab>
+<tab title="Python" group-key="python">
+
+```Python
+from pathplannerlib.auto import AutoBuilder
+
+class RobotContainer:
+    
+    def __init__():
+
+        # Build an auto chooser. This will use Commands.none() as the default option.
+        self.autoChooser = AutoBuilder.buildAutoChooser()
+        
+        # Another option that allows you to specify the default auto by its name
+        # self.autoChooser = AutoBuilder.buildAutoChooser("My Default Auto")
+        
+        SmartDashboard.putData("Auto Chooser", self.autoChooser)
+    
+    def getAutonomousCommand():
+        return self.autoChooser.getSelected()
+```
+
+</tab>
+</tabs>
 
 </snippet>

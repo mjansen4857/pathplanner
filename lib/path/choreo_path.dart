@@ -9,6 +9,7 @@ import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 class ChoreoPath {
   final String name;
   final Trajectory trajectory;
+  final List<num> eventMarkerTimes;
 
   final FileSystem fs;
   final String choreoDir;
@@ -18,6 +19,7 @@ class ChoreoPath {
     required this.trajectory,
     required this.fs,
     required this.choreoDir,
+    required this.eventMarkerTimes,
   });
 
   ChoreoPath.fromTrajJson(
@@ -36,6 +38,10 @@ class ChoreoPath {
           ),
           fs: fs,
           choreoDir: choreoDir,
+          eventMarkerTimes: [
+            for (Map<String, dynamic> m in json['eventMarkers'] ?? [])
+              m['timestamp'],
+          ],
         );
 
   static Future<List<ChoreoPath>> loadAllPathsInDir(

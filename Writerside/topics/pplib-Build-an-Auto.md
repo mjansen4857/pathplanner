@@ -387,6 +387,16 @@ class DriveSubsystem(Subsystem):
 After you have configured the AutoBuilder, creating an auto is as simple as constructing a `PathPlannerAuto` with the
 name of the auto you made in the GUI.
 
+> **Warning**
+>
+> It is highly recommended to create all of your autos when code starts, instead of creating them when you want to run
+> them. Large delays can happen when loading complex autos/paths, so it is best to load them before they are needed.
+>
+> In the interest of simplicity, this example will show an auto being loaded in the `getAutonomousCommand` function,
+> which is called when auto is enabled. This is not the recommended way to load your autos.
+>
+{style="warning"}
+
 <tabs group="pplib-language">
 <tab title="Java" group-key="java">
 
@@ -442,7 +452,8 @@ every auto in the project.
 > **Warning**
 >
 > This method will load all autos in the deploy directory. Since the deploy process does not automatically clear the
-> deploy directory, old auto files that have since been deleted from the project could remain on the RIO, therefore being
+> deploy directory, old auto files that have since been deleted from the project could remain on the RIO, therefore
+> being
 > added to the auto chooser.
 >
 > To remove old options, the deploy directory will need to be cleared manually via SSH, WinSCP, reimaging the RIO, etc.

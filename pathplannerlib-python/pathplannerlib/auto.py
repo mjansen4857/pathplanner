@@ -345,13 +345,15 @@ class AutoBuilder:
 
     @staticmethod
     def configureCustom(path_following_command_builder: Callable[[PathPlannerPath], Command],
-                        pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None]) -> None:
+                        pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
+                        should_flip_pose: Callable[[], bool] = lambda: False) -> None:
         """
         Configures the AutoBuilder with custom path following command builder. Building pathfinding commands is not supported if using a custom command builder.
 
         :param path_following_command_builder: a function that builds a command to follow a given path
         :param pose_supplier: a supplier for the robot's current pose
         :param reset_pose: a consumer for resetting the robot's pose
+        :param should_flip_pose: Supplier that determines if the starting pose should be flipped to the other side of the field. This will maintain a global blue alliance origin. NOTE: paths will not be flipped when configured with a custom path following command. Flipping the paths must be handled in your command.
         """
         if AutoBuilder._configured:
             reportError('AutoBuilder has already been configured. This is likely in error.', True)
@@ -360,7 +362,7 @@ class AutoBuilder:
         AutoBuilder._getPose = pose_supplier
         AutoBuilder._resetPose = reset_pose
         AutoBuilder._configured = True
-        AutoBuilder._shouldFlipPath = lambda: False
+        AutoBuilder._shouldFlipPath = should_flip_pose
 
         AutoBuilder._pathfindingConfigured = False
 
@@ -499,7 +501,7 @@ class AutoBuilder:
         with open(filePath, 'r') as f:
             auto_json = json.loads(f.read())
             return AutoBuilder.getAutoCommandFromJson(auto_json)
-        
+
     @staticmethod
     def buildAutoChooser(default_auto_name: str = "") -> SendableChooser:
         """
@@ -512,10 +514,10 @@ class AutoBuilder:
             raise RuntimeError('AutoBuilder was not configured before attempting to build an auto chooser')
         auto_folder_path = os.path.join(getDeployDirectory(), 'pathplanner', 'autos')
         auto_list = os.listdir(auto_folder_path)
-        
+
         chooser = SendableChooser()
         default_auto_added = False
-        
+
         for auto in auto_list:
             auto = auto.removesuffix(".auto")
             if auto == default_auto_name:
@@ -526,7 +528,7 @@ class AutoBuilder:
         if not default_auto_added:
             chooser.setDefaultOption("None", cmd.none())
         return chooser
-            
+
 
 class PathPlannerAuto(Command):
     _autoCommand: Command

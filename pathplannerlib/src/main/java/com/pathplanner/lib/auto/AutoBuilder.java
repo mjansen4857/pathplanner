@@ -419,11 +419,16 @@ public class AutoBuilder {
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
    * @param poseSupplier a supplier for the robot's current pose
    * @param resetPose a consumer for resetting the robot's pose
+   * @param shouldFlipPose Supplier that determines if the starting pose should be flipped to the
+   *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
+   *     not be flipped when configured with a custom path following command. Flipping the paths
+   *     must be handled in your command.
    */
   public static void configureCustom(
       Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
       Supplier<Pose2d> poseSupplier,
-      Consumer<Pose2d> resetPose) {
+      Consumer<Pose2d> resetPose,
+      BooleanSupplier shouldFlipPose) {
     if (configured) {
       DriverStation.reportError(
           "Auto builder has already been configured. This is likely in error.", true);
@@ -433,9 +438,25 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
-    AutoBuilder.shouldFlipPath = () -> false;
+    AutoBuilder.shouldFlipPath = shouldFlipPose;
 
     AutoBuilder.pathfindingConfigured = false;
+  }
+
+  /**
+   * Configures the AutoBuilder with custom path following command builder. Building pathfinding
+   * commands is not supported if using a custom command builder. Custom path following commands
+   * will not have the path flipped for them, and event markers will not be triggered automatically.
+   *
+   * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   */
+  public static void configureCustom(
+      Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose) {
+    configureCustom(pathFollowingCommandBuilder, poseSupplier, resetPose, () -> false);
   }
 
   /**

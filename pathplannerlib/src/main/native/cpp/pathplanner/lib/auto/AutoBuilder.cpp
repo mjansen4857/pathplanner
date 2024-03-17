@@ -254,7 +254,8 @@ void AutoBuilder::configureLTV(std::function<frc::Pose2d()> poseSupplier,
 void AutoBuilder::configureCustom(
 		std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
 		std::function<frc::Pose2d()> poseSupplier,
-		std::function<void(frc::Pose2d)> resetPose) {
+		std::function<void(frc::Pose2d)> resetPose,
+		std::function<bool()> shouldFlipPose) {
 	if (m_configured) {
 		FRC_ReportError(frc::err::Error,
 				"Auto builder has already been configured. This is likely in error.");
@@ -264,9 +265,7 @@ void AutoBuilder::configureCustom(
 	AutoBuilder::m_getPose = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
-	AutoBuilder::m_shouldFlipPath = []() {
-		return false;
-	};
+	AutoBuilder::m_shouldFlipPath = shouldFlipPose;
 
 	AutoBuilder::m_pathfindingConfigured = false;
 }

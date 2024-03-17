@@ -138,11 +138,18 @@ public:
 	 * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
 	 * @param poseSupplier a function that returns the robot's current pose
 	 * @param resetPose a function for resetting the robot's pose
+	 * @param shouldFlipPose Supplier that determines if the starting pose should be flipped to the
+	 *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
+	 *     not be flipped when configured with a custom path following command. Flipping the paths
+	 *     must be handled in your command.
 	 */
 	static void configureCustom(
 			std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
 			std::function<frc::Pose2d()> poseSupplier,
-			std::function<void(frc::Pose2d)> resetPose);
+			std::function<void(frc::Pose2d)> resetPose,
+			std::function<bool()> shouldFlipPose = []() {
+				return false;
+			});
 
 	/**
 	 * Returns whether the AutoBuilder has been configured.

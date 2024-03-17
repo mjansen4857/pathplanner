@@ -88,9 +88,13 @@ void main() {
           autoChoreoPaths: [
             ChoreoPath(
               name: 'test',
-              trajectory: Trajectory(states: [TrajectoryState(time: 1.0)]),
+              trajectory: Trajectory(states: [
+                TrajectoryState(time: 0.0),
+                TrajectoryState(time: 1.0),
+              ]),
               fs: fs,
               choreoDir: '/choreo',
+              eventMarkerTimes: [0.5],
             ),
           ],
           allPathNames: const ['testPath', 'otherPath'],

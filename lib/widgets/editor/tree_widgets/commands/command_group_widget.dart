@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
@@ -6,6 +7,7 @@ import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/duplicate_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/path_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
@@ -21,6 +23,7 @@ class CommandGroupWidget extends StatelessWidget {
   final List<String>? allPathNames;
   final ValueChanged<String?>? onPathCommandHovered;
   final ChangeStack undoStack;
+  final VoidCallback? onDuplicateCommand;
 
   const CommandGroupWidget({
     super.key,
@@ -33,6 +36,7 @@ class CommandGroupWidget extends StatelessWidget {
     this.allPathNames,
     this.onPathCommandHovered,
     required this.undoStack,
+    this.onDuplicateCommand,
   });
 
   @override
@@ -96,6 +100,12 @@ class CommandGroupWidget extends StatelessWidget {
               ),
             ),
             Expanded(child: Container()),
+            Visibility(
+              visible: removable,
+              child: DuplicateCommandButton(
+                  onPressed: onDuplicateCommand,
+              )
+            ),
             AddCommandButton(
               allowPathCommand: allPathNames != null,
               onTypeChosen: (value) {
@@ -262,6 +272,9 @@ class CommandGroupWidget extends StatelessWidget {
             },
           ));
         },
+        onDuplicateCommand: () {
+          _duplicateCommand(cmdIndex);
+        },
       );
     }
 
@@ -280,5 +293,9 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated?.call();
       },
     ));
+  }
+
+  void _duplicateCommand(int idx) {
+    // TODO: Duplicate command at index
   }
 }

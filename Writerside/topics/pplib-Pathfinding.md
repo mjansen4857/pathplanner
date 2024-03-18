@@ -55,10 +55,10 @@ rotation
 
 ```Java
 public void robotInit() {
-    // DO THIS FIRST
-    Pathfinding.setPathfinder(new LocalADStarAK());
+  // DO THIS FIRST
+  Pathfinding.setPathfinder(new LocalADStarAK());
 
-    // ... remaining robot initialization
+  // ... remaining robot initialization
 }
 ```
 
@@ -361,15 +361,15 @@ Command pathfindingCommand = new PathfindThenFollowPathHolonomic(
         Constants.Swerve.pathFollowingConfig, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
         3.0, // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate. Optional
         () -> {
-            // Boolean supplier that controls when the path will be mirrored for the red alliance
-            // This will flip the path being followed to the red side of the field.
-            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+          // Boolean supplier that controls when the path will be mirrored for the red alliance
+          // This will flip the path being followed to the red side of the field.
+          // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
 
-            var alliance = DriverStation.getAlliance();
-            if (alliance.isPresent()) {
-                return alliance.get() == DriverStation.Alliance.Red;
-            }
-            return false;
+          var alliance = DriverStation.getAlliance();
+          if (alliance.isPresent()) {
+            return alliance.get() == DriverStation.Alliance.Red;
+          }
+          return false;
         },
         swerveSubsystem // Reference to drive subsystem to set requirements
 );
@@ -480,63 +480,63 @@ so, your pathfinder must implement the methods in the `Pathfinder` interface.
 
 ```Java
 public class MyPathfinder implements Pathfinder {
-    /**
-     * Get if a new path has been calculated since the last time a path was retrieved
-     *
-     * @return True if a new path is available
-     */
-    @Override
-    public boolean isNewPathAvailable() {
-        // TODO: Implement your pathfinder
-    }
+  /**
+   * Get if a new path has been calculated since the last time a path was retrieved
+   *
+   * @return True if a new path is available
+   */
+  @Override
+  public boolean isNewPathAvailable() {
+    // TODO: Implement your pathfinder
+  }
 
-    /**
-     * Get the most recently calculated path
-     *
-     * @param constraints The path constraints to use when creating the path
-     * @param goalEndState The goal end state to use when creating the path
-     * @return The PathPlannerPath created from the points calculated by the pathfinder
-     */
-    @Override
-    public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
-        // TODO: Implement your pathfinder
-    }
+  /**
+   * Get the most recently calculated path
+   *
+   * @param constraints The path constraints to use when creating the path
+   * @param goalEndState The goal end state to use when creating the path
+   * @return The PathPlannerPath created from the points calculated by the pathfinder
+   */
+  @Override
+  public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
+    // TODO: Implement your pathfinder
+  }
 
-    /**
-     * Set the start position to pathfind from
-     *
-     * @param startPosition Start position on the field. If this is within an obstacle it will be
-     *     moved to the nearest non-obstacle node.
-     */
-    @Override
-    public void setStartPosition(Translation2d startPosition) {
-        // TODO: Implement your pathfinder
-    }
+  /**
+   * Set the start position to pathfind from
+   *
+   * @param startPosition Start position on the field. If this is within an obstacle it will be
+   *     moved to the nearest non-obstacle node.
+   */
+  @Override
+  public void setStartPosition(Translation2d startPosition) {
+    // TODO: Implement your pathfinder
+  }
 
-    /**
-     * Set the goal position to pathfind to
-     *
-     * @param goalPosition Goal position on the field. f this is within an obstacle it will be moved
-     *     to the nearest non-obstacle node.
-     */
-    @Override
-    public void setGoalPosition(Translation2d goalPosition) {
-        // TODO: Implement your pathfinder
-    }
+  /**
+   * Set the goal position to pathfind to
+   *
+   * @param goalPosition Goal position on the field. f this is within an obstacle it will be moved
+   *     to the nearest non-obstacle node.
+   */
+  @Override
+  public void setGoalPosition(Translation2d goalPosition) {
+    // TODO: Implement your pathfinder
+  }
 
-    /**
-     * Set the dynamic obstacles that should be avoided while pathfinding.
-     *
-     * @param obs A List of Translation2d pairs representing obstacles. Each Translation2d represents
-     *     opposite corners of a bounding box.
-     * @param currentRobotPos The current position of the robot. This is needed to change the start
-     *     position of the path to properly avoid obstacles
-     */
-    @Override
-    public void setDynamicObstacles(
-            List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos) {
-        // TODO: Implement your pathfinder
-    }
+  /**
+   * Set the dynamic obstacles that should be avoided while pathfinding.
+   *
+   * @param obs A List of Translation2d pairs representing obstacles. Each Translation2d represents
+   *     opposite corners of a bounding box.
+   * @param currentRobotPos The current position of the robot. This is needed to change the start
+   *     position of the path to properly avoid obstacles
+   */
+  @Override
+  public void setDynamicObstacles(
+          List<Pair<Translation2d, Translation2d>> obs, Translation2d currentRobotPos) {
+    // TODO: Implement your pathfinder
+  }
 }
 ```
 
@@ -667,10 +667,10 @@ the beginning of your `robotInit` method, before any pathfinding commands are cr
 
 ```Java
 public void robotInit() {
-    // DO THIS FIRST
-    Pathfinding.setPathfinder(new MyPathfinder());
+  // DO THIS FIRST
+  Pathfinding.setPathfinder(new MyPathfinder());
 
-    // ... remaining robot initialization
+  // ... remaining robot initialization
 }
 ```
 
@@ -705,3 +705,25 @@ def robotInit():
 
 </tab>
 </tabs>
+
+## Java Warmup
+
+> **Warning**
+>
+> Due to the nature of how Java works, the first run of a pathfinding command could have a significantly higher delay
+> compared with subsequent runs.
+>
+> To help alleviate this issue, you can run a warmup command in the background when code starts.
+>
+> This command will not control your robot, it will simply run through a full pathfinding command to warm up the library.
+>
+{style="warning"}
+
+```Java
+public void robotInit() {
+  // ... all other robot initialization
+
+  // DO THIS AFTER CONFIGURATION OF YOUR DESIRED PATHFINDER
+  PathfindingCommand.warmupCommand().schedule();
+}
+```

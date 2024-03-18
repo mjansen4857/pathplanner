@@ -16,13 +16,13 @@ The easiest way to create a command to follow a single path is by using AutoBuil
 
 ```Java
 public class RobotContainer {
-    public Command getAutonomousCommand() {
-        // Load the path you want to follow using its name in the GUI
-        PathPlannerPath path = PathPlannerPath.fromPathFile("Example Path");
+  public Command getAutonomousCommand() {
+    // Load the path you want to follow using its name in the GUI
+    PathPlannerPath path = PathPlannerPath.fromPathFile("Example Path");
 
-        // Create a path following command using AutoBuilder. This will also trigger event markers.
-        return AutoBuilder.followPath(path);
-    }
+    // Create a path following command using AutoBuilder. This will also trigger event markers.
+    return AutoBuilder.followPath(path);
+  }
 }
 ```
 
@@ -71,36 +71,36 @@ def getAutonomousCommand():
 
 ```Java
 public class DriveSubsystem extends SubsystemBase {
-    // Assuming this is a method in your drive subsystem
-    public Command followPathCommand(String pathName) {
-        PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+  // Assuming this is a method in your drive subsystem
+  public Command followPathCommand(String pathName) {
+    PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
 
-        return new FollowPathHolonomic(
-                path,
-                this::getPose, // Robot pose supplier
-                this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                this::driveRobotRelative, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-                new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
-                        new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-                        new PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
-                        4.5, // Max module speed, in m/s
-                        0.4, // Drive base radius in meters. Distance from robot center to furthest module.
-                        new ReplanningConfig() // Default path replanning config. See the API for the options here
-                ),
-                () -> {
-                    // Boolean supplier that controls when the path will be mirrored for the red alliance
-                    // This will flip the path being followed to the red side of the field.
-                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    return new FollowPathHolonomic(
+            path,
+            this::getPose, // Robot pose supplier
+            this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            this::driveRobotRelative, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+            new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+                    new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+                    new PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
+                    4.5, // Max module speed, in m/s
+                    0.4, // Drive base radius in meters. Distance from robot center to furthest module.
+                    new ReplanningConfig() // Default path replanning config. See the API for the options here
+            ),
+            () -> {
+              // Boolean supplier that controls when the path will be mirrored for the red alliance
+              // This will flip the path being followed to the red side of the field.
+              // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
 
-                    var alliance = DriverStation.getAlliance();
-                    if (alliance.isPresent()) {
-                        return alliance.get() == DriverStation.Alliance.Red;
-                    }
-                    return false;
-                },
-                this // Reference to this subsystem to set requirements
-        );
-    }
+              var alliance = DriverStation.getAlliance();
+              if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+              }
+              return false;
+            },
+            this // Reference to this subsystem to set requirements
+    );
+  }
 }
 ```
 
@@ -189,30 +189,30 @@ def shouldFlipPath():
 
 ```Java
 public class DriveSubsystem extends SubsystemBase {
-    // Assuming this is a method in your drive subsystem
-    public Command followPathCommand(String pathName) {
-        PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+  // Assuming this is a method in your drive subsystem
+  public Command followPathCommand(String pathName) {
+    PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
 
-        return new FollowPathRamsete(
-                path,
-                this::getPose, // Robot pose supplier
-                this::getCurrentSpeeds, // Current ChassisSpeeds supplier
-                this::drive, // Method that will drive the robot given ChassisSpeeds
-                new ReplanningConfig(), // Default path replanning config. See the API for the options here
-                () -> {
-                    // Boolean supplier that controls when the path will be mirrored for the red alliance
-                    // This will flip the path being followed to the red side of the field.
-                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    return new FollowPathRamsete(
+            path,
+            this::getPose, // Robot pose supplier
+            this::getCurrentSpeeds, // Current ChassisSpeeds supplier
+            this::drive, // Method that will drive the robot given ChassisSpeeds
+            new ReplanningConfig(), // Default path replanning config. See the API for the options here
+            () -> {
+              // Boolean supplier that controls when the path will be mirrored for the red alliance
+              // This will flip the path being followed to the red side of the field.
+              // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
 
-                    var alliance = DriverStation.getAlliance();
-                    if (alliance.isPresent()) {
-                        return alliance.get() == DriverStation.Alliance.Red;
-                    }
-                    return false;
-                },
-                this // Reference to this subsystem to set requirements
-        );
-    }
+              var alliance = DriverStation.getAlliance();
+              if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+              }
+              return false;
+            },
+            this // Reference to this subsystem to set requirements
+    );
+  }
 }
 ```
 
@@ -289,31 +289,31 @@ def shouldFlipPath():
 
 ```Java
 public class DriveSubsystem extends SubsystemBase {
-    // Assuming this is a method in your drive subsystem
-    public Command followPathCommand(String pathName) {
-        PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
+  // Assuming this is a method in your drive subsystem
+  public Command followPathCommand(String pathName) {
+    PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
 
-        return new FollowPathLTV(
-                path,
-                this::getPose, // Robot pose supplier
-                this::getCurrentSpeeds, // Current ChassisSpeeds supplier
-                this::drive, // Method that will drive the robot given ChassisSpeeds
-                0.02, // Robot control loop period in seconds. Default is 0.02
-                new ReplanningConfig(), // Default path replanning config. See the API for the options here
-                () -> {
-                    // Boolean supplier that controls when the path will be mirrored for the red alliance
-                    // This will flip the path being followed to the red side of the field.
-                    // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    return new FollowPathLTV(
+            path,
+            this::getPose, // Robot pose supplier
+            this::getCurrentSpeeds, // Current ChassisSpeeds supplier
+            this::drive, // Method that will drive the robot given ChassisSpeeds
+            0.02, // Robot control loop period in seconds. Default is 0.02
+            new ReplanningConfig(), // Default path replanning config. See the API for the options here
+            () -> {
+              // Boolean supplier that controls when the path will be mirrored for the red alliance
+              // This will flip the path being followed to the red side of the field.
+              // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
 
-                    var alliance = DriverStation.getAlliance();
-                    if (alliance.isPresent()) {
-                        return alliance.get() == DriverStation.Alliance.Red;
-                    }
-                    return false;
-                },
-                this // Reference to this subsystem to set requirements
-        );
-    }
+              var alliance = DriverStation.getAlliance();
+              if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+              }
+              return false;
+            },
+            this // Reference to this subsystem to set requirements
+    );
+  }
 }
 ```
 
@@ -386,3 +386,25 @@ def shouldFlipPath():
 
 </tab>
 </tabs>
+
+## Java Warmup
+
+> **Warning**
+>
+> Due to the nature of how Java works, the first run of a path following command could have a significantly higher delay
+> compared with subsequent runs, as all the classes involved will need to be loaded.
+>
+> To help alleviate this issue, you can run a warmup command in the background when code starts.
+>
+> This command will not control your robot, it will simply run through a full path following command to warm up the
+> library.
+>
+{style="warning"}
+
+```Java
+public void robotInit() {
+  // ... all other robot initialization
+
+  FollowPathCommand.warmupCommand().schedule();
+}
+```

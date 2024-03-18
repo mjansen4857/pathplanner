@@ -1,18 +1,19 @@
 package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.controllers.PathFollowingController;
-import com.pathplanner.lib.path.EventMarker;
-import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.PathPlannerTrajectory;
+import com.pathplanner.lib.path.*;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.*;
 import java.util.function.BooleanSupplier;
@@ -241,5 +242,26 @@ public class FollowPathCommand extends Command {
     generatedTrajectory = replanned.getTrajectory(currentSpeeds, currentPose.getRotation());
     PathPlannerLogging.logActivePath(replanned);
     PPLibTelemetry.setCurrentPath(replanned);
+  }
+
+  public static Command warmupCommand() {
+    List<Translation2d> bezierPoints =
+        PathPlannerPath.bezierFromPoses(
+            new Pose2d(3.0, 3.0, new Rotation2d()), new Pose2d(6.0, 6.0, new Rotation2d()));
+    PathPlannerPath path =
+        new PathPlannerPath(
+            bezierPoints,
+            new PathConstraints(4.0, 4.0, 4.0, 4.0),
+            new GoalEndState(0.0, Rotation2d.fromDegrees(90), true));
+
+    return new FollowPathHolonomic(
+            path,
+            Pose2d::new,
+            ChassisSpeeds::new,
+            (speeds) -> {},
+            new HolonomicPathFollowerConfig(4.5, 0.4, new ReplanningConfig()),
+            () -> true)
+        .andThen(Commands.print("[PathPlanner] FollowPathCommand finished warmup"))
+        .ignoringDisable(true);
   }
 }

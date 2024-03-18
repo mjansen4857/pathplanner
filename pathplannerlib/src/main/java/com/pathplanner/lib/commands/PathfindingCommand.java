@@ -3,10 +3,7 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinding;
-import com.pathplanner.lib.util.GeometryUtil;
-import com.pathplanner.lib.util.PPLibTelemetry;
-import com.pathplanner.lib.util.PathPlannerLogging;
-import com.pathplanner.lib.util.ReplanningConfig;
+import com.pathplanner.lib.util.*;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
@@ -15,6 +12,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -386,5 +384,17 @@ public class PathfindingCommand extends Command {
     currentTrajectory = replanned.getTrajectory(currentSpeeds, currentPose.getRotation());
     PathPlannerLogging.logActivePath(replanned);
     PPLibTelemetry.setCurrentPath(replanned);
+  }
+
+  public static Command warmupCommand() {
+    return new PathfindHolonomic(
+            new Pose2d(15.0, 4.0, Rotation2d.fromDegrees(180)),
+            new PathConstraints(4, 3, 4, 4),
+            () -> new Pose2d(1.5, 4, new Rotation2d()),
+            ChassisSpeeds::new,
+            (speeds) -> {},
+            new HolonomicPathFollowerConfig(4.5, 0.4, new ReplanningConfig()))
+        .andThen(Commands.print("[PathPlanner] PathfindingCommand finished warmup"))
+        .ignoringDisable(true);
   }
 }

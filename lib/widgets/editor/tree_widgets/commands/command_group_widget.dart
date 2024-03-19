@@ -177,6 +177,7 @@ class CommandGroupWidget extends StatelessWidget {
                         onUpdated: onUpdated,
                         onRemoved: () => _removeCommand(index),
                         undoStack: undoStack,
+                        onDuplicateCommand: () => _duplicateCommand(index),
                       ),
                     ),
                   ],
@@ -236,6 +237,7 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
         undoStack: undoStack,
+        onDuplicateCommand: () => _duplicateCommand(cmdIndex),
       );
     } else if (command.commands[cmdIndex] is WaitCommand) {
       return WaitCommandWidget(
@@ -243,6 +245,7 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
         undoStack: undoStack,
+        onDuplicateCommand: () => _duplicateCommand(cmdIndex),
       );
     } else if (command.commands[cmdIndex] is CommandGroup) {
       return CommandGroupWidget(
@@ -272,9 +275,7 @@ class CommandGroupWidget extends StatelessWidget {
             },
           ));
         },
-        onDuplicateCommand: () {
-          _duplicateCommand(cmdIndex);
-        },
+        onDuplicateCommand: () => _duplicateCommand(cmdIndex),
       );
     }
 

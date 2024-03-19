@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/path_command.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/duplicate_command_button.dart';
 import 'package:undo/undo.dart';
 
 class PathCommandWidget extends StatefulWidget {
@@ -8,6 +9,7 @@ class PathCommandWidget extends StatefulWidget {
   final VoidCallback? onUpdated;
   final VoidCallback? onRemoved;
   final ChangeStack undoStack;
+  final VoidCallback? onDuplicateCommand;
 
   const PathCommandWidget({
     super.key,
@@ -16,6 +18,7 @@ class PathCommandWidget extends StatefulWidget {
     this.onUpdated,
     this.onRemoved,
     required this.undoStack,
+    this.onDuplicateCommand,
   });
 
   @override
@@ -91,6 +94,9 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
               size: 32,
             ),
           ),
+        ),
+        DuplicateCommandButton(
+          onPressed: widget.onDuplicateCommand,
         ),
         Tooltip(
           message: 'Remove Command',

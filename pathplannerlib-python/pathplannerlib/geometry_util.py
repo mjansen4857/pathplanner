@@ -2,6 +2,7 @@ from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 import math
 
 FIELD_LENGTH = 16.54
+FIELD_WIDTH = 8.17
 
 
 def flipFieldPos(pos: Translation2d) -> Translation2d:
@@ -11,7 +12,7 @@ def flipFieldPos(pos: Translation2d) -> Translation2d:
     :param pos: The position to flip
     :return: The flipped position
     """
-    return Translation2d(FIELD_LENGTH - pos.X(), pos.Y())
+    return Translation2d(pos.X(), FIELD_WIDTH - pos.Y())
 
 
 def flipFieldRotation(rotation: Rotation2d) -> Rotation2d:

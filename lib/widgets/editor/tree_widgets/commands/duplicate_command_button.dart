@@ -11,6 +11,7 @@ class DuplicateCommandButton extends StatelessWidget {
 
     return IconButton(
         onPressed: onPressed,
+        tooltip: 'Duplicate',
         icon: Icon(Icons.copy, color: colorScheme.primary));
   }
 }

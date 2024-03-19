@@ -296,6 +296,17 @@ class CommandGroupWidget extends StatelessWidget {
   }
 
   void _duplicateCommand(int idx) {
-    // TODO: Duplicate command at index
+    undoStack.add(Change(
+      CommandGroup.cloneCommandsList(command.commands),
+      () {
+        Command commandToDuplicate = command.commands.elementAt(idx);
+        command.commands.insert(idx+1, commandToDuplicate);
+        onUpdated?.call();
+      },
+      (oldValue) {
+        command.commands = CommandGroup.cloneCommandsList(oldValue);
+        onUpdated?.call();
+      },
+    ));
   }
 }

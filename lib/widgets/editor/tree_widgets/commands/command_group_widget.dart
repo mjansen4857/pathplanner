@@ -100,11 +100,10 @@ class CommandGroupWidget extends StatelessWidget {
             ),
             Expanded(child: Container()),
             Visibility(
-              visible: removable,
-              child: DuplicateCommandButton(
+                visible: removable,
+                child: DuplicateCommandButton(
                   onPressed: onDuplicateCommand,
-              )
-            ),
+                )),
             AddCommandButton(
               allowPathCommand: allPathNames != null,
               onTypeChosen: (value) {
@@ -300,7 +299,7 @@ class CommandGroupWidget extends StatelessWidget {
       CommandGroup.cloneCommandsList(command.commands),
       () {
         Command commandToDuplicate = command.commands.elementAt(idx).clone();
-        command.commands.insert(idx+1, commandToDuplicate);
+        command.commands.insert(idx + 1, commandToDuplicate);
         onUpdated?.call();
       },
       (oldValue) {

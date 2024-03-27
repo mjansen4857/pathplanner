@@ -99,11 +99,6 @@ class CommandGroupWidget extends StatelessWidget {
               ),
             ),
             Expanded(child: Container()),
-            Visibility(
-                visible: removable,
-                child: DuplicateCommandButton(
-                  onPressed: onDuplicateCommand,
-                )),
             AddCommandButton(
               allowPathCommand: allPathNames != null,
               onTypeChosen: (value) {
@@ -120,6 +115,11 @@ class CommandGroupWidget extends StatelessWidget {
                 ));
               },
             ),
+            Visibility(
+                visible: removable,
+                child: DuplicateCommandButton(
+                  onPressed: onDuplicateCommand,
+                )),
             Visibility(
               visible: removable,
               child: Tooltip(

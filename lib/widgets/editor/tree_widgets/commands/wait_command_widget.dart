@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/wait_command.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/duplicate_command_button.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
@@ -8,6 +9,7 @@ class WaitCommandWidget extends StatelessWidget {
   final VoidCallback? onUpdated;
   final VoidCallback? onRemoved;
   final ChangeStack undoStack;
+  final VoidCallback? onDuplicateCommand;
 
   const WaitCommandWidget({
     super.key,
@@ -15,6 +17,7 @@ class WaitCommandWidget extends StatelessWidget {
     this.onUpdated,
     this.onRemoved,
     required this.undoStack,
+    this.onDuplicateCommand,
   });
 
   @override
@@ -43,6 +46,9 @@ class WaitCommandWidget extends StatelessWidget {
               }
             },
           ),
+        ),
+        DuplicateCommandButton(
+          onPressed: onDuplicateCommand,
         ),
         const SizedBox(width: 8),
         Tooltip(

@@ -1248,6 +1248,7 @@ class _ProjectPageState extends State<ProjectPage> {
                         crossAxisCount: _autosGridCount,
                         childAspectRatio: 5.5,
                         shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         children: [
                           DragTarget<PathPlannerAuto>(
                             onAcceptWithDetails: (details) {
@@ -1311,6 +1312,7 @@ class _ProjectPageState extends State<ProjectPage> {
                         crossAxisCount: _autosGridCount,
                         childAspectRatio: 5.5,
                         shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
                         children: [
                           for (int i = 0; i < _autoFolders.length; i++)
                             DragTarget<PathPlannerAuto>(
@@ -1427,6 +1429,7 @@ class _ProjectPageState extends State<ProjectPage> {
                       crossAxisCount:
                           _autosCompact ? _autosGridCount + 1 : _autosGridCount,
                       childAspectRatio: _autosCompact ? 2.5 : 1.55,
+                      physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       children: [
                         for (int i = 0; i < _autos.length; i++)

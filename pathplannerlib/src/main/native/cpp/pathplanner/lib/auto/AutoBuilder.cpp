@@ -358,7 +358,7 @@ frc2::CommandPtr AutoBuilder::pathfindThenFollowPath(
 			pathfindingConstraints, rotationDelayDistance);
 }
 
-frc::SendableChooser<Command*> AutoBuilder::buildAutoChooser(std::string defaultAutoName) {
+frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(std::string defaultAutoName) {
 	if(!m_configured) {
 		throw std::runtime_error(
 				"AutoBuilder was not configured before attempting to build an auto chooser");
@@ -372,9 +372,8 @@ frc::SendableChooser<Command*> AutoBuilder::buildAutoChooser(std::string default
 		pathplanner::PathPlannerAuto autoCommand(entry);
 		AutoBuilder::m_autoCommands.emplace_back(autoCommand);
 		if(defaultAutoName != "" && entry == defaultAutoName) {
-			defaultOption = pathplanner::PathPlannerAuto(autoCommand)
+			defaultOption = autoCommand;
 			chooser.SetDefaultOption(entry,m_commands.back().get());
-			m_defaultCommandPosition = m_command.size() - 1;
 		} else {
 			chooser.AddOption(entry,m_commands.back().get());
 		}
@@ -384,7 +383,6 @@ frc::SendableChooser<Command*> AutoBuilder::buildAutoChooser(std::string default
 	{
 		AutoBuilder::m_autoCommand.emplace_back(frc2::cmd::None());
 		chooser.SetDefaultOption("None",m_commands.back().get());
-		m_defaultCommandPosition = m_command.size() - 1;
 	}
 
 	return chooser;
@@ -409,10 +407,10 @@ wpi::SmallVector<std::string> AutoBuilder::getAllAutoNames() {
 		if(!entry.is_regular_file()) { 
 			continue; 
 		}
-		if(!entry.path().extention() != ".auto") { 
+		if(entry.path().extention() != ".auto") { 
 			continue; 
 		}
-		autoPaths.emplace_back(entry.path().stem());
+		autoPathNames.emplace_back(entry.path().stem());
 	}
 
 	return autoPathNames;

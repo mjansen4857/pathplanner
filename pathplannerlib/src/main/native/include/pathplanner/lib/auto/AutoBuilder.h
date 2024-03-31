@@ -264,7 +264,7 @@ public:
 	*     frc2::cmd::None()
 	* @return SendableChooser populated with all autos
 	*/
-	static frc::SendableChooser<Command*> buildAutoChooser(std::string defaultAutoName = "");
+	static frc::SendableChooser<frc2::Command*> buildAutoChooser(std::string defaultAutoName = "");
 
 	/**
 	* Get a vector of all auto names in the project
@@ -280,7 +280,7 @@ private:
 	static std::function<void(frc::Pose2d)> m_resetPose;
 	static std::function<bool()> m_shouldFlipPath;
 
-	static wpi::SmallVector<frc::CommandPtr,8> m_autoCommands;
+	static wpi::SmallVector<frc2::CommandPtr,8> m_autoCommands;
 
 	static bool m_pathfindingConfigured;
 	static std::function<

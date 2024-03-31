@@ -6,6 +6,9 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/controller/RamseteController.h>
+#include <wpi/SmallVector.h>
+#include <frc2/command/Command.h>
+#include <frc/smartdashboard/SendableChooser.h>
 #include <memory>
 #include <wpi/json.h>
 #include <wpi/array.h>
@@ -252,12 +255,32 @@ public:
 			PathConstraints pathfindingConstraints,
 			units::meter_t rotationDelayDistance = 0_m);
 
+
+	/**
+	* Create and populate a sendable chooser with all PathPlannerAutos in the project
+	*
+	* @param defaultAutoName The name of the auto that should be the default option. If this is an
+	*     empty string, or if an auto with the given name does not exist, the default option will be
+	*     frc2::cmd::None()
+	* @return SendableChooser populated with all autos
+	*/
+	static frc::SendableChooser<Command*> buildAutoChooser(std::string defaultAutoName = "");
+
+	/**
+	* Get a vector of all auto names in the project
+	*
+	* @return vector of all auto names
+	*/
+	static wpi::SmallVector<std::string> getAllAutoNames();
+	
 private:
 	static bool m_configured;
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
 	static std::function<frc::Pose2d()> m_getPose;
 	static std::function<void(frc::Pose2d)> m_resetPose;
 	static std::function<bool()> m_shouldFlipPath;
+
+	static wpi::SmallVector<frc::CommandPtr,8> m_autoCommands;
 
 	static bool m_pathfindingConfigured;
 	static std::function<

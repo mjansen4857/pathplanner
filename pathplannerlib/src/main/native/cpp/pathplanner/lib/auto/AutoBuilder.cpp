@@ -9,10 +9,13 @@
 #include "pathplanner/lib/commands/PathfindThenFollowPathRamsete.h"
 #include "pathplanner/lib/commands/PathfindLTV.h"
 #include "pathplanner/lib/commands/PathfindThenFollowPathLTV.h"
+#include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include <stdexcept>
 #include <frc2/command/Commands.h>
 #include <frc/Filesystem.h>
+#include <filesystem>
+#include <optional>
 #include <wpi/MemoryBuffer.h>
 
 using namespace pathplanner;
@@ -22,6 +25,8 @@ std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> AutoBuilder::m
 std::function<frc::Pose2d()> AutoBuilder::m_getPose;
 std::function<void(frc::Pose2d)> AutoBuilder::m_resetPose;
 std::function<bool()> AutoBuilder::m_shouldFlipPath;
+
+wpi::SmallVector<frc::CommandPtr,8> AutoBuilder::m_autoCommands;
 
 bool AutoBuilder::m_pathfindingConfigured = false;
 std::function<
@@ -351,4 +356,64 @@ frc2::CommandPtr AutoBuilder::pathfindThenFollowPath(
 
 	return m_pathfindThenFollowPathCommandBuilder(goalPath,
 			pathfindingConstraints, rotationDelayDistance);
+}
+
+frc::SendableChooser<Command*> AutoBuilder::buildAutoChooser(std::string defaultAutoName) {
+	if(!m_configured) {
+		throw std::runtime_error(
+				"AutoBuilder was not configured before attempting to build an auto chooser");
+	}
+
+	frc::SendableChooser<Command*> chooser;
+	std::optional<PathPlannerAuto> defaultOption;
+
+	for(std::string const& entry : getAllAutoNames() )
+	{
+		pathplanner::PathPlannerAuto autoCommand(entry);
+		AutoBuilder::m_autoCommands.emplace_back(autoCommand);
+		if(defaultAutoName != "" && entry == defaultAutoName) {
+			defaultOption = pathplanner::PathPlannerAuto(autoCommand)
+			chooser.SetDefaultOption(entry,m_commands.back().get());
+			m_defaultCommandPosition = m_command.size() - 1;
+		} else {
+			chooser.AddOption(entry,m_commands.back().get());
+		}
+	}
+
+	if(!defaultOption.has_value())
+	{
+		AutoBuilder::m_autoCommand.emplace_back(frc2::cmd::None());
+		chooser.SetDefaultOption("None",m_commands.back().get());
+		m_defaultCommandPosition = m_command.size() - 1;
+	}
+
+	return chooser;
+}
+
+wpi::SmallVector<std::string> AutoBuilder::getAllAutoNames() {
+	std::filesystem::path deployPath =  frc::filesystem::GetDeployDirectory();
+	std::filesystem::path autosPath = dir / "pathplanner/autos";
+
+	if(!std::filesystem::directory_entry{autos}.exists())
+	{
+		FRC_ReportError(frc::err::Error,
+				"AutoBuilder could not locate the pathplanner autos directory")
+
+		return wpi::SmallVector<std::string>(0);
+	}
+	
+	wpi::SmallVector<std::string> autoPathNames;
+
+	for(std::filesystem::directory_entry const& entry : std::filesystem::directory_iterator{autos})
+	{
+		if(!entry.is_regular_file()) { 
+			continue; 
+		}
+		if(!entry.path().extention() != ".auto") { 
+			continue; 
+		}
+		autoPaths.emplace_back(entry.path().stem());
+	}
+
+	return autoPathNames;
 }

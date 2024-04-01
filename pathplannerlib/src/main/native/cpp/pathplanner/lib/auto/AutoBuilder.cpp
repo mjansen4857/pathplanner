@@ -392,7 +392,7 @@ std::vector<std::string> AutoBuilder::getAllAutoNames() {
 	std::filesystem::path deployPath =  frc::filesystem::GetDeployDirectory();
 	std::filesystem::path autosPath = deployPath / "pathplanner/autos";
 
-	if(!std::filesystem::directory_entry{autos}.exists())
+	if(!std::filesystem::directory_entry{autosPath}.exists())
 	{
 		FRC_ReportError(frc::err::Error,
 				"AutoBuilder could not locate the pathplanner autos directory")
@@ -402,12 +402,12 @@ std::vector<std::string> AutoBuilder::getAllAutoNames() {
 	
 	std::vector<std::string> autoPathNames;
 
-	for(std::filesystem::directory_entry const& entry : std::filesystem::directory_iterator{autos})
+	for(std::filesystem::directory_entry const& entry : std::filesystem::directory_iterator{autosPath})
 	{
 		if(!entry.is_regular_file()) { 
 			continue; 
 		}
-		if(entry.path().extention() != ".auto") { 
+		if(entry.path().extension() != ".auto") { 
 			continue; 
 		}
 		autoPathNames.emplace_back(entry.path().stem());

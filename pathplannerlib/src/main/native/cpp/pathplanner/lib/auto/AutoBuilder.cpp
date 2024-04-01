@@ -358,8 +358,9 @@ frc2::CommandPtr AutoBuilder::pathfindThenFollowPath(
 			pathfindingConstraints, rotationDelayDistance);
 }
 
-frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(std::string defaultAutoName) {
-	if(!m_configured) {
+frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
+		std::string defaultAutoName) {
+	if (!m_configured) {
 		throw std::runtime_error(
 				"AutoBuilder was not configured before attempting to build an auto chooser");
 	}
@@ -367,47 +368,45 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(std::string d
 	frc::SendableChooser<frc2::Command*> chooser;
 	bool foundDefaultOption = false;
 
-	for(std::string const& entry : getAllAutoNames() )
-	{
-		AutoBuilder::m_autoCommands.emplace_back(pathplanner::PathPlannerAuto(entry).ToPtr());
-		if(defaultAutoName != "" && entry == defaultAutoName) {
+	for (std::string const &entry : getAllAutoNames()) {
+		AutoBuilder::m_autoCommands.emplace_back(
+				pathplanner::PathPlannerAuto(entry).ToPtr());
+		if (defaultAutoName != "" && entry == defaultAutoName) {
 			foundDefaultOption = true;
-			chooser.SetDefaultOption(entry,m_autoCommands.back().get());
+			chooser.SetDefaultOption(entry, m_autoCommands.back().get());
 		} else {
-			chooser.AddOption(entry,m_autoCommands.back().get());
+			chooser.AddOption(entry, m_autoCommands.back().get());
 		}
 	}
 
-	if(!foundDefaultOption)
-	{
+	if (!foundDefaultOption) {
 		AutoBuilder::m_autoCommands.emplace_back(frc2::cmd::None());
-		chooser.SetDefaultOption("None",m_autoCommands.back().get());
+		chooser.SetDefaultOption("None", m_autoCommands.back().get());
 	}
 
 	return chooser;
 }
 
 std::vector<std::string> AutoBuilder::getAllAutoNames() {
-	std::filesystem::path deployPath =  frc::filesystem::GetDeployDirectory();
+	std::filesystem::path deployPath = frc::filesystem::GetDeployDirectory();
 	std::filesystem::path autosPath = deployPath / "pathplanner/autos";
 
-	if(!std::filesystem::directory_entry{autosPath}.exists())
-	{
+	if (!std::filesystem::directory_entry { autosPath }.exists()) {
 		FRC_ReportError(frc::err::Error,
 				"AutoBuilder could not locate the pathplanner autos directory");
 
 		return {};
 	}
-	
-	std::vector<std::string> autoPathNames;
 
-	for(std::filesystem::directory_entry const& entry : std::filesystem::directory_iterator{autosPath})
-	{
-		if(!entry.is_regular_file()) { 
-			continue; 
+	std::vector < std::string > autoPathNames;
+
+	for (std::filesystem::directory_entry const &entry : std::filesystem::directory_iterator {
+			autosPath }) {
+		if (!entry.is_regular_file()) {
+			continue;
 		}
-		if(entry.path().extension() != ".auto") { 
-			continue; 
+		if (entry.path().extension() != ".auto") {
+			continue;
 		}
 		autoPathNames.emplace_back(entry.path().stem());
 	}

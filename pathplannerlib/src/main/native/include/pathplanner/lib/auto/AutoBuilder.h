@@ -255,24 +255,24 @@ public:
 			PathConstraints pathfindingConstraints,
 			units::meter_t rotationDelayDistance = 0_m);
 
+	/**
+	 * Create and populate a sendable chooser with all PathPlannerAutos in the project
+	 *
+	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
+	 *     empty string, or if an auto with the given name does not exist, the default option will be
+	 *     frc2::cmd::None()
+	 * @return SendableChooser populated with all autos
+	 */
+	static frc::SendableChooser<frc2::Command*> buildAutoChooser(
+			std::string defaultAutoName = "");
 
 	/**
-	* Create and populate a sendable chooser with all PathPlannerAutos in the project
-	*
-	* @param defaultAutoName The name of the auto that should be the default option. If this is an
-	*     empty string, or if an auto with the given name does not exist, the default option will be
-	*     frc2::cmd::None()
-	* @return SendableChooser populated with all autos
-	*/
-	static frc::SendableChooser<frc2::Command*> buildAutoChooser(std::string defaultAutoName = "");
-
-	/**
-	* Get a vector of all auto names in the project
-	*
-	* @return vector of all auto names
-	*/
+	 * Get a vector of all auto names in the project
+	 *
+	 * @return vector of all auto names
+	 */
 	static std::vector<std::string> getAllAutoNames();
-	
+
 private:
 	static bool m_configured;
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;

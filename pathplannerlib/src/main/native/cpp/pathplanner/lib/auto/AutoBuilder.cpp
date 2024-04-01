@@ -405,10 +405,10 @@ std::vector<std::string> AutoBuilder::getAllAutoNames() {
 		if (!entry.is_regular_file()) {
 			continue;
 		}
-		if (entry.path().extension() != ".auto") {
+		if (entry.path().extension().string() != ".auto") {
 			continue;
 		}
-		autoPathNames.emplace_back(entry.path().stem());
+		autoPathNames.emplace_back(entry.path().stem().string());
 	}
 
 	return autoPathNames;

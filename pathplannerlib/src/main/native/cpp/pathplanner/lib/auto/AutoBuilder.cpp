@@ -369,8 +369,7 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(std::string d
 
 	for(std::string const& entry : getAllAutoNames() )
 	{
-		pathplanner::PathPlannerAuto autoCommand(entry);
-		AutoBuilder::m_autoCommands.emplace_back(autoCommand);
+		AutoBuilder::m_autoCommands.emplace_back(pathplanner::PathPlannerAuto(entry).ToPtr());
 		if(defaultAutoName != "" && entry == defaultAutoName) {
 			foundDefaultOption = true;
 			chooser.SetDefaultOption(entry,m_autoCommands.back().get());
@@ -381,7 +380,7 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(std::string d
 
 	if(!foundDefaultOption)
 	{
-		AutoBuilder::m_autoCommand.emplace_back(frc2::cmd::None());
+		AutoBuilder::m_autoCommands.emplace_back(frc2::cmd::None());
 		chooser.SetDefaultOption("None",m_autoCommands.back().get());
 	}
 
@@ -395,7 +394,7 @@ std::vector<std::string> AutoBuilder::getAllAutoNames() {
 	if(!std::filesystem::directory_entry{autosPath}.exists())
 	{
 		FRC_ReportError(frc::err::Error,
-				"AutoBuilder could not locate the pathplanner autos directory")
+				"AutoBuilder could not locate the pathplanner autos directory");
 
 		return {};
 	}

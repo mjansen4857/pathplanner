@@ -26,7 +26,7 @@ std::function<frc::Pose2d()> AutoBuilder::m_getPose;
 std::function<void(frc::Pose2d)> AutoBuilder::m_resetPose;
 std::function<bool()> AutoBuilder::m_shouldFlipPath;
 
-wpi::SmallVector<frc::CommandPtr,8> AutoBuilder::m_autoCommands;
+std::vector<frc2::CommandPtr> AutoBuilder::m_autoCommands;
 
 bool AutoBuilder::m_pathfindingConfigured = false;
 std::function<
@@ -364,43 +364,43 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(std::string d
 				"AutoBuilder was not configured before attempting to build an auto chooser");
 	}
 
-	frc::SendableChooser<Command*> chooser;
-	std::optional<PathPlannerAuto> defaultOption;
+	frc::SendableChooser<frc2::Command*> chooser;
+	bool foundDefaultOption = false;
 
 	for(std::string const& entry : getAllAutoNames() )
 	{
 		pathplanner::PathPlannerAuto autoCommand(entry);
 		AutoBuilder::m_autoCommands.emplace_back(autoCommand);
 		if(defaultAutoName != "" && entry == defaultAutoName) {
-			defaultOption = autoCommand;
-			chooser.SetDefaultOption(entry,m_commands.back().get());
+			foundDefaultOption = true;
+			chooser.SetDefaultOption(entry,m_autoCommands.back().get());
 		} else {
-			chooser.AddOption(entry,m_commands.back().get());
+			chooser.AddOption(entry,m_autoCommands.back().get());
 		}
 	}
 
-	if(!defaultOption.has_value())
+	if(!foundDefaultOption)
 	{
 		AutoBuilder::m_autoCommand.emplace_back(frc2::cmd::None());
-		chooser.SetDefaultOption("None",m_commands.back().get());
+		chooser.SetDefaultOption("None",m_autoCommands.back().get());
 	}
 
 	return chooser;
 }
 
-wpi::SmallVector<std::string> AutoBuilder::getAllAutoNames() {
+std::vector<std::string> AutoBuilder::getAllAutoNames() {
 	std::filesystem::path deployPath =  frc::filesystem::GetDeployDirectory();
-	std::filesystem::path autosPath = dir / "pathplanner/autos";
+	std::filesystem::path autosPath = deployPath / "pathplanner/autos";
 
 	if(!std::filesystem::directory_entry{autos}.exists())
 	{
 		FRC_ReportError(frc::err::Error,
 				"AutoBuilder could not locate the pathplanner autos directory")
 
-		return wpi::SmallVector<std::string>(0);
+		return {};
 	}
 	
-	wpi::SmallVector<std::string> autoPathNames;
+	std::vector<std::string> autoPathNames;
 
 	for(std::filesystem::directory_entry const& entry : std::filesystem::directory_iterator{autos})
 	{

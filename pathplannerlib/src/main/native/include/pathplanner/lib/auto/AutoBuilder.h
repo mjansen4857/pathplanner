@@ -6,7 +6,7 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/controller/RamseteController.h>
-#include <wpi/SmallVector.h>
+#include <vector>
 #include <frc2/command/Command.h>
 #include <frc/smartdashboard/SendableChooser.h>
 #include <memory>
@@ -271,7 +271,7 @@ public:
 	*
 	* @return vector of all auto names
 	*/
-	static wpi::SmallVector<std::string> getAllAutoNames();
+	static std::vector<std::string> getAllAutoNames();
 	
 private:
 	static bool m_configured;
@@ -280,7 +280,7 @@ private:
 	static std::function<void(frc::Pose2d)> m_resetPose;
 	static std::function<bool()> m_shouldFlipPath;
 
-	static wpi::SmallVector<frc2::CommandPtr,8> m_autoCommands;
+	static std::vector<frc2::CommandPtr> m_autoCommands;
 
 	static bool m_pathfindingConfigured;
 	static std::function<

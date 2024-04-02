@@ -51,7 +51,7 @@ public class PathPlannerAuto extends Command {
    * @param autoName Name of the auto to get the pose from
    * @return Starting pose from the given auto
    */
-  public static Pose2d getStaringPoseFromAutoFile(String autoName) {
+  public static Pose2d getStartingPoseFromAutoFile(String autoName) {
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(

@@ -510,4 +510,43 @@ class RobotContainer:
 </tab>
 </tabs>
 
+## Create a SendableChooser with certain autos in project
+
+> **Note**
+>
+> This feature is only available in the Java version of PathPlannerLib
+>
+{style="note"}
+
+You can use the buildAutoChooserWithOptionsModifier method to process the 
+autos before they are shown on shuffle board
+
+```java
+public class RobotContainer {
+  private final SendableChooser<Command> autoChooser;
+
+  public RobotContainer() {
+    // ...
+
+    // Check if currently attached to the FMS
+    boolean isCompetition = DriverStation.isFMSAttached();
+    
+    // Build an auto chooser. This will use Commands.none() as the default option.
+    // As an example, this will only show autos that start with "comp" while
+    // currently attached to FMS
+    autoChooser = AutoBuilder.buildAutoChooserWithOptionsModifier(
+      (stream) -> isCompetition
+        ? stream.filter(auto -> auto.getName().startsWith("comp")) 
+        : stream
+    );
+
+    SmartDashboard.putData("Auto Chooser", autoChooser);
+  }
+
+  public Command getAutonomousCommand() {
+    return autoChooser.getSelected();
+  }
+}
+```
+
 </snippet>

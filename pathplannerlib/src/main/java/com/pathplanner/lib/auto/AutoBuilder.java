@@ -657,7 +657,7 @@ public class AutoBuilder {
   public static SendableChooser<Command> buildAutoChooser() {
     return buildAutoChooser("");
   }
-  
+
   /**
    * Create and populate a sendable chooser with all PathPlannerAutos in the project
    *
@@ -673,18 +673,16 @@ public class AutoBuilder {
   /**
    * Create and populate a sendable chooser with all PathPlannerAutos in the project. The default
    * option will be Commands.none()
-   * 
+   *
    * @param optionsModifier A lambda function that can be used to modify the options before they go
    *     into the AutoChooser
-   * 
    * @return SendableChooser populated with all autos
    */
   public static SendableChooser<Command> buildAutoChooserWithOptionsModifier(
-    Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier
-  ) {
+      Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier) {
     return buildAutoChooserWithOptionsModifier("", optionsModifier);
   }
-  
+
   /**
    * Create and populate a sendable chooser with all PathPlannerAutos in the project
    *
@@ -696,9 +694,8 @@ public class AutoBuilder {
    * @return SendableChooser populated with all autos
    */
   public static SendableChooser<Command> buildAutoChooserWithOptionsModifier(
-      String defaultAutoName, 
-      Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier
-    ) {
+      String defaultAutoName,
+      Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier) {
     if (!AutoBuilder.isConfigured()) {
       throw new RuntimeException(
           "AutoBuilder was not configured before attempting to build an auto chooser");
@@ -726,7 +723,9 @@ public class AutoBuilder {
       chooser.setDefaultOption(defaultOption.getName(), defaultOption);
     }
 
-    optionsModifier.apply(options.stream()).forEach(auto -> chooser.addOption(auto.getName(), auto));
+    optionsModifier
+        .apply(options.stream())
+        .forEach(auto -> chooser.addOption(auto.getName(), auto));
 
     return chooser;
   }

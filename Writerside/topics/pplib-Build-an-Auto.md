@@ -521,6 +521,14 @@ class RobotContainer:
 You can use the buildAutoChooserWithOptionsModifier method to process the 
 autos before they are shown on shuffle board
 
+> **Warning**
+>
+> Be careful using runtime values when generating AutoChooser, as RobotContainer is 
+> built at robot code startup. Things like FMS values may not be present at startup
+>
+{style="warning"}
+
+
 ```java
 public class RobotContainer {
   private final SendableChooser<Command> autoChooser;
@@ -528,12 +536,12 @@ public class RobotContainer {
   public RobotContainer() {
     // ...
 
-    // Check if currently attached to the FMS
-    boolean isCompetition = DriverStation.isFMSAttached();
+    // For convenience a programmer could change this when going to competition.
+    boolean isCompetition = true;
     
     // Build an auto chooser. This will use Commands.none() as the default option.
-    // As an example, this will only show autos that start with "comp" while
-    // currently attached to FMS
+    // As an example, this will only show autos that start with "comp" while at
+    // competition as defined by the programmer
     autoChooser = AutoBuilder.buildAutoChooserWithOptionsModifier(
       (stream) -> isCompetition
         ? stream.filter(auto -> auto.getName().startsWith("comp")) 

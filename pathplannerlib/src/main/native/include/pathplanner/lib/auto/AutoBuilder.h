@@ -14,6 +14,7 @@
 #include <wpi/array.h>
 #include <string>
 #include "pathplanner/lib/path/PathPlannerPath.h"
+#include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
 #include "pathplanner/lib/util/ReplanningConfig.h"
 
@@ -261,10 +262,15 @@ public:
 	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
 	 *     empty string, or if an auto with the given name does not exist, the default option will be
 	 *     frc2::cmd::None()
+	 * @param filterAutoNames A function that filters autos that are planned to be used 
 	 * @return SendableChooser populated with all autos
 	 */
 	static frc::SendableChooser<frc2::Command*> buildAutoChooser(
-			std::string defaultAutoName = "");
+			std::string defaultAutoName = "",
+			std::function<bool(pathplanner::PathPlannerAuto*)> filterAutos = [](
+					pathplanner::PathPlannerAuto*) {
+				return true;
+			});
 
 	/**
 	 * Get a vector of all auto names in the project

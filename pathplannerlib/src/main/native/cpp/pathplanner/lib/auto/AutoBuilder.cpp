@@ -9,7 +9,6 @@
 #include "pathplanner/lib/commands/PathfindThenFollowPathRamsete.h"
 #include "pathplanner/lib/commands/PathfindLTV.h"
 #include "pathplanner/lib/commands/PathfindThenFollowPathLTV.h"
-#include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include <stdexcept>
 #include <frc2/command/Commands.h>
@@ -359,7 +358,8 @@ frc2::CommandPtr AutoBuilder::pathfindThenFollowPath(
 }
 
 frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
-		std::string defaultAutoName) {
+		std::string defaultAutoName,
+		std::function<bool(pathplanner::PathPlannerAuto*)> filterAutos) {
 	if (!m_configured) {
 		throw std::runtime_error(
 				"AutoBuilder was not configured before attempting to build an auto chooser");
@@ -369,8 +369,16 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
 	bool foundDefaultOption = false;
 
 	for (std::string const &entry : getAllAutoNames()) {
-		AutoBuilder::m_autoCommands.emplace_back(
-				pathplanner::PathPlannerAuto(entry).ToPtr());
+
+		frc2::CommandPtr autoCommand =
+				pathplanner::PathPlannerAuto(entry).ToPtr();
+		// Downcast from frc2::Command* to PathPlannerAuto* to filter out unneccessary autos
+		if (!filterAutos(
+				static_cast<pathplanner::PathPlannerAuto*>(autoCommand.get()))) {
+			// autoCommand is out of scope and deleted
+			continue;
+		}
+		AutoBuilder::m_autoCommands.emplace_back(std::move(autoCommand));
 		if (defaultAutoName != "" && entry == defaultAutoName) {
 			foundDefaultOption = true;
 			chooser.SetDefaultOption(entry, m_autoCommands.back().get());

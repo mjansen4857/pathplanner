@@ -440,12 +440,6 @@ class RobotContainer:
 
 ## Create a SendableChooser with all autos in project
 
-> **Note**
->
-> This feature is only available in the Java and Python versions of PathPlannerLib
->
-{style="note"}
-
 After configuring the AutoBuilder, you have the option to build a SendableChooser that is automatically populated with
 every auto in the project.
 
@@ -482,6 +476,41 @@ public class RobotContainer {
   public Command getAutonomousCommand() {
     return autoChooser.getSelected();
   }
+}
+```
+
+</tab>
+<tab title="C++" group-key="cpp">
+
+```C++
+#include <pathplanner/lib/auto/AutoBuilder.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/CommandPtr.h>
+#include <frc2/command/Command.h>
+#include <memory>
+
+using namespace pathplanner;
+
+RobotContainer::RobotContainer() {
+  // ...
+
+  // Build an auto chooser. This will use frc2::cmd::None() as the default option.
+  autoChooser = AutoBuilder::buildAutoChooser();
+
+  // Another option that allows you to specify the default auto by its name
+  // autoChooser = AutoBuilder::buildAutoChooser("My Default Auto");
+
+  frc::SmartDashboard::PutData("Auto Chooser", &autoChooser);
+}
+
+frc2::Command* RobotContainer::getAutonomousCommand() {
+  // Returns a frc2::Command* that is freed at program termination
+  return autoChooser.GetSelected();
+}
+
+frc2::CommandPtr RobotContainer::getAutonomousCommand() {
+  // Returns a copy that is freed after reference is lost
+  return frc2::CommandPtr(std::make_unique<frc2::Command>(*autoChooser.GetSelected()));
 }
 ```
 

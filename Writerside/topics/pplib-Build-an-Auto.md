@@ -440,12 +440,6 @@ class RobotContainer:
 
 ## Create a SendableChooser with all autos in project
 
-> **Note**
->
-> This feature is only available in the Java and Python versions of PathPlannerLib
->
-{style="note"}
-
 After configuring the AutoBuilder, you have the option to build a SendableChooser that is automatically populated with
 every auto in the project.
 
@@ -486,6 +480,41 @@ public class RobotContainer {
 ```
 
 </tab>
+<tab title="C++" group-key="cpp">
+
+```C++
+#include <pathplanner/lib/auto/AutoBuilder.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/CommandPtr.h>
+#include <frc2/command/Command.h>
+#include <memory>
+
+using namespace pathplanner;
+
+RobotContainer::RobotContainer() {
+  // ...
+
+  // Build an auto chooser. This will use frc2::cmd::None() as the default option.
+  autoChooser = AutoBuilder::buildAutoChooser();
+
+  // Another option that allows you to specify the default auto by its name
+  // autoChooser = AutoBuilder::buildAutoChooser("My Default Auto");
+
+  frc::SmartDashboard::PutData("Auto Chooser", &autoChooser);
+}
+
+frc2::Command* RobotContainer::getAutonomousCommand() {
+  // Returns a frc2::Command* that is freed at program termination
+  return autoChooser.GetSelected();
+}
+
+frc2::CommandPtr RobotContainer::getAutonomousCommand() {
+  // Returns a copy that is freed after reference is lost
+  return frc2::CommandPtr(std::make_unique<frc2::Command>(*autoChooser.GetSelected()));
+}
+```
+
+</tab>
 <tab title="Python" group-key="python">
 
 ```Python
@@ -509,5 +538,52 @@ class RobotContainer:
 
 </tab>
 </tabs>
+
+## Create a SendableChooser with certain autos in project
+
+> **Note**
+>
+> This feature is only available in the Java version of PathPlannerLib
+>
+{style="note"}
+
+You can use the buildAutoChooserWithOptionsModifier method to process the 
+autos before they are shown on shuffle board
+
+> **Warning**
+>
+> Be careful using runtime values when generating AutoChooser, as RobotContainer is 
+> built at robot code startup. Things like FMS values may not be present at startup
+>
+{style="warning"}
+
+
+```java
+public class RobotContainer {
+  private final SendableChooser<Command> autoChooser;
+
+  public RobotContainer() {
+    // ...
+
+    // For convenience a programmer could change this when going to competition.
+    boolean isCompetition = true;
+    
+    // Build an auto chooser. This will use Commands.none() as the default option.
+    // As an example, this will only show autos that start with "comp" while at
+    // competition as defined by the programmer
+    autoChooser = AutoBuilder.buildAutoChooserWithOptionsModifier(
+      (stream) -> isCompetition
+        ? stream.filter(auto -> auto.getName().startsWith("comp")) 
+        : stream
+    );
+
+    SmartDashboard.putData("Auto Chooser", autoChooser);
+  }
+
+  public Command getAutonomousCommand() {
+    return autoChooser.getSelected();
+  }
+}
+```
 
 </snippet>

@@ -9,6 +9,7 @@
 #include "pathplanner/lib/commands/PathfindThenFollowPathRamsete.h"
 #include "pathplanner/lib/commands/PathfindLTV.h"
 #include "pathplanner/lib/commands/PathfindThenFollowPathLTV.h"
+#include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include <stdexcept>
 #include <frc2/command/Commands.h>
@@ -372,6 +373,13 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
 
 		frc2::CommandPtr autoCommand =
 				pathplanner::PathPlannerAuto(entry).ToPtr();
+		if (defaultAutoName != "" && entry == defaultAutoName) {
+			foundDefaultOption = true;
+			AutoBuilder::m_autoCommands.emplace_back(std::move(autoCommand));
+			chooser.SetDefaultOption(entry, m_autoCommands.back().get());
+			continue;
+		}
+
 		// Downcast from frc2::Command* to PathPlannerAuto* to filter out unneccessary autos
 		if (!filterAutos(
 				static_cast<pathplanner::PathPlannerAuto*>(autoCommand.get()))) {
@@ -379,12 +387,7 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
 			continue;
 		}
 		AutoBuilder::m_autoCommands.emplace_back(std::move(autoCommand));
-		if (defaultAutoName != "" && entry == defaultAutoName) {
-			foundDefaultOption = true;
-			chooser.SetDefaultOption(entry, m_autoCommands.back().get());
-		} else {
-			chooser.AddOption(entry, m_autoCommands.back().get());
-		}
+		chooser.AddOption(entry, m_autoCommands.back().get());
 	}
 
 	if (!foundDefaultOption) {

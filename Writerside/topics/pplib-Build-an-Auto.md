@@ -539,4 +539,114 @@ class RobotContainer:
 </tab>
 </tabs>
 
+## Create a SendableChooser with certain autos in project
+
+> **Note**
+>
+> This feature is unavailable in the Python version of PathPlannerLib
+>
+{style="note"}
+
+You can use the buildAutoChooserWithOptionsModifier method to process the 
+autos before they are shown on shuffle board
+
+> **Warning**
+>
+> Be careful using runtime values when generating AutoChooser, as RobotContainer is 
+> built at robot code startup. Things like FMS values may not be present at startup
+>
+{style="warning"}
+
+<tabs group="pplib-language">
+<tab title="Java" group-key="java">
+
+```java
+public class RobotContainer {
+  private final SendableChooser<Command> autoChooser;
+
+  public RobotContainer() {
+    // ...
+
+    // For convenience a programmer could change this when going to competition.
+    boolean isCompetition = true;
+    
+    // Build an auto chooser. This will use Commands.none() as the default option.
+    // As an example, this will only show autos that start with "comp" while at
+    // competition as defined by the programmer
+    autoChooser = AutoBuilder.buildAutoChooserWithOptionsModifier(
+      (stream) -> isCompetition
+        ? stream.filter(auto -> auto.getName().startsWith("comp")) 
+        : stream
+    );
+
+    SmartDashboard.putData("Auto Chooser", autoChooser);
+  }
+
+  public Command getAutonomousCommand() {
+    return autoChooser.getSelected();
+  }
+}
+```
+</tab>
+<tab title="C++" group-key="cpp">
+
+```C++
+#include <pathplanner/lib/auto/AutoBuilder.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/CommandPtr.h>
+#include <frc2/command/Command.h>
+#include <memory>
+
+using namespace pathplanner;
+
+RobotContainer::RobotContainer() {
+  // ...
+
+  // For convenience a programmer could change this when going to competition.
+  bool isCompetition = true;
+    
+  // Build an auto chooser. This will use frc2::cmd::None() as the default option.
+  // Default option is skipped, filtering will not result in "None" being removed.
+  // As an example, this will only show autos that start with "comp" while at
+  // competition as defined by the programmer
+  autoChooser = AutoBuilder.buildAutoChooser("",
+    [isCompetition](PathPlannerAuto* cmdPtr) {
+      if(isCompetition)
+      {
+        return cmdPtr->GetName().starts_with("comp");
+      }
+      return true;
+    }
+  );
+
+  // Another option that allows you to specify the default auto by its name.
+  // Default option is skipped, so "My Default Auto" is guaranteed to be 
+  // in SendableChooser, even though it fails when filtered.
+  // autoChooser = AutoBuilder::buildAutoChooser("My Default Auto",
+  //   [isCompetition](PathPlannerAuto* cmdPtr) {
+  //     if(isCompetition)
+  //     {
+  //       return cmdPtr->GetName().starts_with("comp");
+  //     }
+  //     return true;
+  //   }
+  // );
+
+  frc::SmartDashboard::PutData("Auto Chooser", &autoChooser);
+}
+
+frc2::Command* RobotContainer::getAutonomousCommand() {
+  // Returns a frc2::Command* that is freed at program termination
+  return autoChooser.GetSelected();
+}
+
+frc2::CommandPtr RobotContainer::getAutonomousCommand() {
+  // Returns a copy that is freed after reference is lost
+  return frc2::CommandPtr(std::make_unique<frc2::Command>(*autoChooser.GetSelected()));
+}
+```
+
+</tab>
+</tabs>
+
 </snippet>

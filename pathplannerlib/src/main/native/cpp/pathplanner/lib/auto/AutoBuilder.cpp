@@ -373,21 +373,21 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
 
 		frc2::CommandPtr autoCommand =
 				pathplanner::PathPlannerAuto(entry).ToPtr();
-		if (defaultAutoName != "" && entry == defaultAutoName) {
+		// Prevent multiple default options
+		if (!foundDefaultOption && defaultAutoName != ""
+				&& entry == defaultAutoName) {
 			foundDefaultOption = true;
-			AutoBuilder::m_autoCommands.emplace_back(std::move(autoCommand));
-			chooser.SetDefaultOption(entry, m_autoCommands.back().get());
-			continue;
+			chooser.SetDefaultOption(entry, autoCommand.get());
 		}
-
 		// Downcast from frc2::Command* to PathPlannerAuto* to filter out unneccessary autos
-		if (!filterAutos(
+		else if (filterAutos(
 				static_cast<pathplanner::PathPlannerAuto*>(autoCommand.get()))) {
+			chooser.AddOption(entry, autoCommand.get());
+		} else {
 			// autoCommand is out of scope and deleted
 			continue;
 		}
 		AutoBuilder::m_autoCommands.emplace_back(std::move(autoCommand));
-		chooser.AddOption(entry, m_autoCommands.back().get());
 	}
 
 	if (!foundDefaultOption) {

@@ -606,7 +606,7 @@ RobotContainer::RobotContainer() {
   bool isCompetition = true;
     
   // Build an auto chooser. This will use frc2::cmd::None() as the default option.
-  // Default option is skipped, filtering will not result in "None" being removed.
+  // Default option is skipped, filtering will not result in frc2::cmd::None() being removed.
   // As an example, this will only show autos that start with "comp" while at
   // competition as defined by the programmer
   autoChooser = AutoBuilder.buildAutoChooser("",

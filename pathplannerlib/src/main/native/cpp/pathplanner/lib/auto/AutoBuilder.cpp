@@ -372,21 +372,22 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
 	std::vector<std::string>::const_iterator defaultIterator =
 			std::ranges::find(autoPaths, defaultAutoName);
 	if (defaultIterator != autoPaths.end() && defaultAutoName != "") {
-		AutoBuilder::m_autoCommands.emplace_back(
-				PathPlannerAuto(*defaultIterator).ToPtr());
-		chooser.SetDefaultOption(*defaultIterator, m_autoCommands.back().get());
+		chooser.SetDefaultOption(*defaultIterator,
+				AutoBuilder::m_autoCommands.emplace_back(
+						PathPlannerAuto(*defaultIterator).ToPtr()).get());
 		autoPaths.erase(defaultIterator);
 	} else {
-		AutoBuilder::m_autoCommands.emplace_back(frc2::cmd::None());
-		chooser.SetDefaultOption("None", m_autoCommands.back().get());
+		chooser.SetDefaultOption("None",
+				AutoBuilder::m_autoCommands.emplace_back(frc2::cmd::None()).get());
 	}
 
 	for (const auto &autoName : autoPaths) {
 		PathPlannerAuto path(autoName);
 		// Pointer invalidated after return 
 		if (filterAutos(&path)) {
-			AutoBuilder::m_autoCommands.emplace_back(std::move(path).ToPtr());
-			chooser.AddOption(autoName, m_autoCommands.back().get());
+			chooser.AddOption(autoName,
+					AutoBuilder::m_autoCommands.emplace_back(
+							std::move(path).ToPtr()).get());
 		}
 	}
 

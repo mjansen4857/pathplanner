@@ -263,7 +263,8 @@ public:
 	 *     empty string, or if an auto with the given name does not exist, the default option will be
 	 *     frc2::cmd::None()
 	 * @param filterAutoNames A function that filters autos that are planned to be used, default 
-	 * 		option is skipped
+	 * 		option is skipped, and pointers are invalidated when returned
+	 * 
 	 * @return SendableChooser populated with all autos
 	 */
 	static frc::SendableChooser<frc2::Command*> buildAutoChooser(

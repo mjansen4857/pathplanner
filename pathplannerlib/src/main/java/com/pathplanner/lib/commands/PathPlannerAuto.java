@@ -47,9 +47,9 @@ public class PathPlannerAuto extends Command {
 
 /**
  * Gets the starting pose from the given auto file.
- * This is the misspelled version, to be used for backwards compatibility only, please use getStartingPoseFromAutoFile.
+ *
  * 
- * @deprecated
+ * @deprecated This is the misspelled version, to be used for backwards compatibility only, please use getStartingPoseFromAutoFile.
  * @param autoName Name of the auto to get the pose from
 * @return Starting pose from the given auto
  */

@@ -45,6 +45,17 @@ public class PathPlannerAuto extends Command {
     HAL.report(tResourceType.kResourceType_PathPlannerAuto, instances);
   }
 
+/**
+ * Gets the starting pose from the given auto file.
+ * This is the misspelled version, to be used for backwards compatibility only, please use getStartingPoseFromAutoFile.
+ * 
+ * @deprecated
+ * @param autoName Name of the auto to get the pose from
+* @return Starting pose from the given auto
+ */
+  public static Pose2d getStaringPoseFromAutoFile(String autoName) {
+    return getStartingPoseFromAutoFile(autoName);
+  }
   /**
    * Get the starting pose from the given auto file
    *

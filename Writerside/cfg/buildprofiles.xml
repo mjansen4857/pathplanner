@@ -13,6 +13,7 @@
         <algolia-index>PathPlanner_docs</algolia-index>
         <algolia-api-key>06b58ff141ea245f0a9e57fd77682f3f</algolia-api-key>
         <web-root>https://pathplanner.dev</web-root>
+        <product-web-url>https://pathplanner.dev</product-web-url>
     </variables>
 
     <build-profile instance="hi">

@@ -12,9 +12,13 @@ void main() {
   PathPlannerPath path = PathPlannerPath.defaultPath(pathDir: '/paths', fs: fs);
   ChoreoPath path2 = ChoreoPath(
     name: 'test',
-    trajectory: Trajectory(states: [TrajectoryState()]),
+    trajectory: Trajectory(states: [
+      TrajectoryState(time: 0.0),
+      TrajectoryState(time: 1.0),
+    ]),
     fs: fs,
     choreoDir: '/choreo',
+    eventMarkerTimes: [0.5],
   );
 
   testWidgets('mini preview w/ small image', (widgetTester) async {

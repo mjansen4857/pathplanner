@@ -31,9 +31,13 @@ void main() {
         pathDir: '/paths', fs: fs, name: 'testPath');
     testChoreoPath = ChoreoPath(
       name: 'test',
-      trajectory: Trajectory(states: [TrajectoryState(time: 1.0)]),
+      trajectory: Trajectory(states: [
+        TrajectoryState(time: 0.0),
+        TrajectoryState(time: 1.0),
+      ]),
       fs: fs,
       choreoDir: '/choreo',
+      eventMarkerTimes: [0.5],
     );
     undoStack = ChangeStack();
     SharedPreferences.setMockInitialValues({});

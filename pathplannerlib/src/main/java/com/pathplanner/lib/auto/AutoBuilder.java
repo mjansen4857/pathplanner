@@ -419,11 +419,16 @@ public class AutoBuilder {
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
    * @param poseSupplier a supplier for the robot's current pose
    * @param resetPose a consumer for resetting the robot's pose
+   * @param shouldFlipPose Supplier that determines if the starting pose should be flipped to the
+   *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
+   *     not be flipped when configured with a custom path following command. Flipping the paths
+   *     must be handled in your command.
    */
   public static void configureCustom(
       Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
       Supplier<Pose2d> poseSupplier,
-      Consumer<Pose2d> resetPose) {
+      Consumer<Pose2d> resetPose,
+      BooleanSupplier shouldFlipPose) {
     if (configured) {
       DriverStation.reportError(
           "Auto builder has already been configured. This is likely in error.", true);
@@ -433,9 +438,25 @@ public class AutoBuilder {
     AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
-    AutoBuilder.shouldFlipPath = () -> false;
+    AutoBuilder.shouldFlipPath = shouldFlipPose;
 
     AutoBuilder.pathfindingConfigured = false;
+  }
+
+  /**
+   * Configures the AutoBuilder with custom path following command builder. Building pathfinding
+   * commands is not supported if using a custom command builder. Custom path following commands
+   * will not have the path flipped for them, and event markers will not be triggered automatically.
+   *
+   * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   */
+  public static void configureCustom(
+      Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose) {
+    configureCustom(pathFollowingCommandBuilder, poseSupplier, resetPose, () -> false);
   }
 
   /**
@@ -646,6 +667,35 @@ public class AutoBuilder {
    * @return SendableChooser populated with all autos
    */
   public static SendableChooser<Command> buildAutoChooser(String defaultAutoName) {
+    return buildAutoChooserWithOptionsModifier(defaultAutoName, (stream) -> stream);
+  }
+
+  /**
+   * Create and populate a sendable chooser with all PathPlannerAutos in the project. The default
+   * option will be Commands.none()
+   *
+   * @param optionsModifier A lambda function that can be used to modify the options before they go
+   *     into the AutoChooser
+   * @return SendableChooser populated with all autos
+   */
+  public static SendableChooser<Command> buildAutoChooserWithOptionsModifier(
+      Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier) {
+    return buildAutoChooserWithOptionsModifier("", optionsModifier);
+  }
+
+  /**
+   * Create and populate a sendable chooser with all PathPlannerAutos in the project
+   *
+   * @param defaultAutoName The name of the auto that should be the default option. If this is an
+   *     empty string, or if an auto with the given name does not exist, the default option will be
+   *     Commands.none()
+   * @param optionsModifier A lambda function that can be used to modify the options before they go
+   *     into the AutoChooser
+   * @return SendableChooser populated with all autos
+   */
+  public static SendableChooser<Command> buildAutoChooserWithOptionsModifier(
+      String defaultAutoName,
+      Function<Stream<PathPlannerAuto>, Stream<PathPlannerAuto>> optionsModifier) {
     if (!AutoBuilder.isConfigured()) {
       throw new RuntimeException(
           "AutoBuilder was not configured before attempting to build an auto chooser");
@@ -673,7 +723,9 @@ public class AutoBuilder {
       chooser.setDefaultOption(defaultOption.getName(), defaultOption);
     }
 
-    options.forEach(auto -> chooser.addOption(auto.getName(), auto));
+    optionsModifier
+        .apply(options.stream())
+        .forEach(auto -> chooser.addOption(auto.getName(), auto));
 
     return chooser;
   }

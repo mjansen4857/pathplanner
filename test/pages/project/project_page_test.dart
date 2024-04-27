@@ -1186,6 +1186,11 @@ void main() {
               'heading': 0.0,
             },
           ],
+          'eventMarkers': [
+            {
+              'timestamp': 0.5,
+            },
+          ],
         }));
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));

@@ -249,9 +249,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   bool snapSetting =
                       widget.prefs.getBool(PrefsKeys.snapToGuidelines) ??
                           Defaults.snapToGuidelines;
-                  bool ctrlHeld = RawKeyboard.instance.keysPressed
+                  bool ctrlHeld = HardwareKeyboard.instance.logicalKeysPressed
                           .contains(LogicalKeyboardKey.controlLeft) ||
-                      RawKeyboard.instance.keysPressed
+                      HardwareKeyboard.instance.logicalKeysPressed
                           .contains(LogicalKeyboardKey.controlRight);
 
                   bool shouldSnap = snapSetting ^ ctrlHeld;

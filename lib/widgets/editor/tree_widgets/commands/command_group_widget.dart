@@ -6,6 +6,7 @@ import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/duplicate_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/path_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
@@ -21,6 +22,7 @@ class CommandGroupWidget extends StatelessWidget {
   final List<String>? allPathNames;
   final ValueChanged<String?>? onPathCommandHovered;
   final ChangeStack undoStack;
+  final VoidCallback? onDuplicateCommand;
 
   const CommandGroupWidget({
     super.key,
@@ -33,6 +35,7 @@ class CommandGroupWidget extends StatelessWidget {
     this.allPathNames,
     this.onPathCommandHovered,
     required this.undoStack,
+    this.onDuplicateCommand,
   });
 
   @override
@@ -113,6 +116,11 @@ class CommandGroupWidget extends StatelessWidget {
               },
             ),
             Visibility(
+                visible: removable,
+                child: DuplicateCommandButton(
+                  onPressed: onDuplicateCommand,
+                )),
+            Visibility(
               visible: removable,
               child: Tooltip(
                 message: 'Remove Command',
@@ -167,6 +175,7 @@ class CommandGroupWidget extends StatelessWidget {
                         onUpdated: onUpdated,
                         onRemoved: () => _removeCommand(index),
                         undoStack: undoStack,
+                        onDuplicateCommand: () => _duplicateCommand(index),
                       ),
                     ),
                   ],
@@ -226,6 +235,7 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
         undoStack: undoStack,
+        onDuplicateCommand: () => _duplicateCommand(cmdIndex),
       );
     } else if (command.commands[cmdIndex] is WaitCommand) {
       return WaitCommandWidget(
@@ -233,6 +243,7 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated: onUpdated,
         onRemoved: () => _removeCommand(cmdIndex),
         undoStack: undoStack,
+        onDuplicateCommand: () => _duplicateCommand(cmdIndex),
       );
     } else if (command.commands[cmdIndex] is CommandGroup) {
       return CommandGroupWidget(
@@ -262,6 +273,7 @@ class CommandGroupWidget extends StatelessWidget {
             },
           ));
         },
+        onDuplicateCommand: () => _duplicateCommand(cmdIndex),
       );
     }
 
@@ -273,6 +285,21 @@ class CommandGroupWidget extends StatelessWidget {
       CommandGroup.cloneCommandsList(command.commands),
       () {
         command.commands.removeAt(idx);
+        onUpdated?.call();
+      },
+      (oldValue) {
+        command.commands = CommandGroup.cloneCommandsList(oldValue);
+        onUpdated?.call();
+      },
+    ));
+  }
+
+  void _duplicateCommand(int idx) {
+    undoStack.add(Change(
+      CommandGroup.cloneCommandsList(command.commands),
+      () {
+        Command commandToDuplicate = command.commands.elementAt(idx).clone();
+        command.commands.insert(idx + 1, commandToDuplicate);
         onUpdated?.call();
       },
       (oldValue) {

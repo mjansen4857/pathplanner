@@ -206,7 +206,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 			units::second_t timestamp { m.at("timestamp").get<double>() };
 
 			EventMarker eventMarker = EventMarker(timestamp(),
-					CommandUtil::commandFromJson(json.at("command"), false));
+					CommandUtil::commandFromJson(m.at("command"), false));
 
 			path->m_eventMarkers.emplace_back(eventMarker);
 			eventCommands.emplace_back(timestamp, eventMarker.getCommand());

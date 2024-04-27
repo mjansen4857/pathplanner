@@ -6,6 +6,9 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/controller/RamseteController.h>
+#include <vector>
+#include <frc2/command/Command.h>
+#include <frc/smartdashboard/SendableChooser.h>
 #include <memory>
 #include <wpi/json.h>
 #include <wpi/array.h>
@@ -138,11 +141,18 @@ public:
 	 * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
 	 * @param poseSupplier a function that returns the robot's current pose
 	 * @param resetPose a function for resetting the robot's pose
+	 * @param shouldFlipPose Supplier that determines if the starting pose should be flipped to the
+	 *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
+	 *     not be flipped when configured with a custom path following command. Flipping the paths
+	 *     must be handled in your command.
 	 */
 	static void configureCustom(
 			std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
 			std::function<frc::Pose2d()> poseSupplier,
-			std::function<void(frc::Pose2d)> resetPose);
+			std::function<void(frc::Pose2d)> resetPose,
+			std::function<bool()> shouldFlipPose = []() {
+				return false;
+			});
 
 	/**
 	 * Returns whether the AutoBuilder has been configured.
@@ -245,12 +255,32 @@ public:
 			PathConstraints pathfindingConstraints,
 			units::meter_t rotationDelayDistance = 0_m);
 
+	/**
+	 * Create and populate a sendable chooser with all PathPlannerAutos in the project
+	 *
+	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
+	 *     empty string, or if an auto with the given name does not exist, the default option will be
+	 *     frc2::cmd::None()
+	 * @return SendableChooser populated with all autos
+	 */
+	static frc::SendableChooser<frc2::Command*> buildAutoChooser(
+			std::string defaultAutoName = "");
+
+	/**
+	 * Get a vector of all auto names in the project
+	 *
+	 * @return vector of all auto names
+	 */
+	static std::vector<std::string> getAllAutoNames();
+
 private:
 	static bool m_configured;
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
 	static std::function<frc::Pose2d()> m_getPose;
 	static std::function<void(frc::Pose2d)> m_resetPose;
 	static std::function<bool()> m_shouldFlipPath;
+
+	static std::vector<frc2::CommandPtr> m_autoCommands;
 
 	static bool m_pathfindingConfigured;
 	static std::function<

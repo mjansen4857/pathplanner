@@ -144,6 +144,7 @@ class PathPainter extends CustomPainter {
           choreoPaths[i].trajectory.states.first, canvas, Colors.green, scale);
       _paintChoreoWaypoint(
           choreoPaths[i].trajectory.states.last, canvas, Colors.red, scale);
+      _paintChoreoMarkers(choreoPaths[i], canvas);
     }
 
     if (startingPose != null) {
@@ -342,6 +343,16 @@ class PathPainter extends CustomPainter {
           path.pathPoints[pointIdx].position, scale, fieldImage);
 
       PathPainterUtil.paintMarker(canvas, markerPos, markerColor);
+    }
+  }
+
+  void _paintChoreoMarkers(ChoreoPath path, Canvas canvas) {
+    for (num timestamp in path.eventMarkerTimes) {
+      TrajectoryState s = path.trajectory.sample(timestamp);
+      Offset markerPos =
+          PathPainterUtil.pointToPixelOffset(s.position, scale, fieldImage);
+
+      PathPainterUtil.paintMarker(canvas, markerPos, Colors.grey[700]!);
     }
   }
 

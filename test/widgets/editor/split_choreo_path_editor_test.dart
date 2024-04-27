@@ -29,6 +29,7 @@ void main() {
       ),
       fs: MemoryFileSystem(),
       choreoDir: '/choreo',
+      eventMarkerTimes: [0.5],
     );
     undoStack = ChangeStack();
     SharedPreferences.setMockInitialValues({

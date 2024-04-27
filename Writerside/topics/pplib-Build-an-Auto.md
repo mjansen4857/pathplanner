@@ -387,6 +387,16 @@ class DriveSubsystem(Subsystem):
 After you have configured the AutoBuilder, creating an auto is as simple as constructing a `PathPlannerAuto` with the
 name of the auto you made in the GUI.
 
+> **Warning**
+>
+> It is highly recommended to create all of your autos when code starts, instead of creating them when you want to run
+> them. Large delays can happen when loading complex autos/paths, so it is best to load them before they are needed.
+>
+> In the interest of simplicity, this example will show an auto being loaded in the `getAutonomousCommand` function,
+> which is called when auto is enabled. This is not the recommended way to load your autos.
+>
+{style="warning"}
+
 <tabs group="pplib-language">
 <tab title="Java" group-key="java">
 
@@ -430,24 +440,22 @@ class RobotContainer:
 
 ## Create a SendableChooser with all autos in project
 
-> **Note**
->
-> This feature is only available in the Java version of PathPlannerLib
->
-{style="note"}
-
 After configuring the AutoBuilder, you have the option to build a SendableChooser that is automatically populated with
 every auto in the project.
 
 > **Warning**
 >
 > This method will load all autos in the deploy directory. Since the deploy process does not automatically clear the
-> deploy directory, old auto files that have since been deleted from the project could remain on the RIO, therefore being
+> deploy directory, old auto files that have since been deleted from the project could remain on the RIO, therefore
+> being
 > added to the auto chooser.
 >
 > To remove old options, the deploy directory will need to be cleared manually via SSH, WinSCP, reimaging the RIO, etc.
 >
 {style="warning"}
+
+<tabs group="pplib-language">
+<tab title="Java" group-key="java">
 
 ```Java
 public class RobotContainer {
@@ -461,6 +469,113 @@ public class RobotContainer {
 
     // Another option that allows you to specify the default auto by its name
     // autoChooser = AutoBuilder.buildAutoChooser("My Default Auto");
+
+    SmartDashboard.putData("Auto Chooser", autoChooser);
+  }
+
+  public Command getAutonomousCommand() {
+    return autoChooser.getSelected();
+  }
+}
+```
+
+</tab>
+<tab title="C++" group-key="cpp">
+
+```C++
+#include <pathplanner/lib/auto/AutoBuilder.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/CommandPtr.h>
+#include <frc2/command/Command.h>
+#include <memory>
+
+using namespace pathplanner;
+
+RobotContainer::RobotContainer() {
+  // ...
+
+  // Build an auto chooser. This will use frc2::cmd::None() as the default option.
+  autoChooser = AutoBuilder::buildAutoChooser();
+
+  // Another option that allows you to specify the default auto by its name
+  // autoChooser = AutoBuilder::buildAutoChooser("My Default Auto");
+
+  frc::SmartDashboard::PutData("Auto Chooser", &autoChooser);
+}
+
+frc2::Command* RobotContainer::getAutonomousCommand() {
+  // Returns a frc2::Command* that is freed at program termination
+  return autoChooser.GetSelected();
+}
+
+frc2::CommandPtr RobotContainer::getAutonomousCommand() {
+  // Returns a copy that is freed after reference is lost
+  return frc2::CommandPtr(std::make_unique<frc2::Command>(*autoChooser.GetSelected()));
+}
+```
+
+</tab>
+<tab title="Python" group-key="python">
+
+```Python
+from pathplannerlib.auto import AutoBuilder
+
+class RobotContainer:
+    
+    def __init__():
+
+        # Build an auto chooser. This will use Commands.none() as the default option.
+        self.autoChooser = AutoBuilder.buildAutoChooser()
+        
+        # Another option that allows you to specify the default auto by its name
+        # self.autoChooser = AutoBuilder.buildAutoChooser("My Default Auto")
+        
+        SmartDashboard.putData("Auto Chooser", self.autoChooser)
+    
+    def getAutonomousCommand():
+        return self.autoChooser.getSelected()
+```
+
+</tab>
+</tabs>
+
+## Create a SendableChooser with certain autos in project
+
+> **Note**
+>
+> This feature is only available in the Java version of PathPlannerLib
+>
+{style="note"}
+
+You can use the buildAutoChooserWithOptionsModifier method to process the 
+autos before they are shown on shuffle board
+
+> **Warning**
+>
+> Be careful using runtime values when generating AutoChooser, as RobotContainer is 
+> built at robot code startup. Things like FMS values may not be present at startup
+>
+{style="warning"}
+
+
+```java
+public class RobotContainer {
+  private final SendableChooser<Command> autoChooser;
+
+  public RobotContainer() {
+    // ...
+
+    // For convenience a programmer could change this when going to competition.
+    boolean isCompetition = true;
+    
+    // Build an auto chooser. This will use Commands.none() as the default option.
+    // As an example, this will only show autos that start with "comp" while at
+    // competition as defined by the programmer
+    autoChooser = AutoBuilder.buildAutoChooserWithOptionsModifier(
+      (stream) -> isCompetition
+        ? stream.filter(auto -> auto.getName().startsWith("comp")) 
+        : stream
+    );
 
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }

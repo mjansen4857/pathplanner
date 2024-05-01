@@ -14,6 +14,7 @@ import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/preview_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
+import 'package:pathplanner/path/spline.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/util/geometry_util.dart';
@@ -340,6 +341,27 @@ class PathPlannerPath {
         .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
 
     for (int i = 0; i < waypoints.length - 1; i++) {
+      Point start = waypoints[i].anchor;
+      Point? startV = waypoints[i].nextControl;
+      startV ??= startV = waypoints[i].prevControl;
+      num dx1 = startV!=null?startV.x-start.x:0.0;
+      num dy1 = startV!=null?startV.y-start.y:0.0;
+      Point end = waypoints[i+1].anchor;
+      Point? endV = waypoints[i+1].nextControl;
+      endV ??= endV = waypoints[i+1].prevControl;
+      num dx2 = endV!=null?endV.x-end.x:0.0;
+      num dy2 = endV!=null?endV.y-end.y:0.0;
+      Spline spline = Spline(
+        x1: start.x, 
+        x2: end.x, 
+        dx1: dx1, 
+        dx2: dx2, 
+        y1: start.y, 
+        y2: end.y, 
+        dy1: dy1, 
+        dy2: dy2
+      );
+
       for (double t = 0; t < 1.0; t += pathResolution) {
         num actualWaypointPos = i + t;
         RotationTarget? rotation;
@@ -364,12 +386,14 @@ class PathPlannerPath {
           }
         }
 
-        Point position = GeometryUtil.cubicLerp(
-            waypoints[i].anchor,
-            waypoints[i].nextControl!,
-            waypoints[i + 1].prevControl!,
-            waypoints[i + 1].anchor,
-            t);
+        // Point position = GeometryUtil.cubicLerp(
+        //     waypoints[i].anchor,
+        //     waypoints[i].nextControl!,
+        //     waypoints[i + 1].prevControl!,
+        //     waypoints[i + 1].anchor,
+        //     t);
+        Point position = spline.getPoint(t);
+        // print(position);
         num dist = (actualWaypointPos == 0)
             ? 0
             : (pathPoints.last.distanceAlongPath +

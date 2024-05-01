@@ -10,6 +10,7 @@ class PrefsKeys {
   static const String fieldImage = 'fieldImage';
   static const String seen2024ResetPopup = 'seen2024ResetPopup';
   static const String holonomicMode = 'holonomicMode';
+  static const String hermiteMode= 'hermiteMode';
   static const String ntServerAddress = 'pplibClientHost';
   static const String pathSortOption = 'pathSortOption';
   static const String autoSortOption = 'autoSortOption';
@@ -33,6 +34,7 @@ class Defaults {
   static const double robotWidth = 0.9;
   static const double robotLength = 0.9;
   static const bool holonomicMode = true;
+  static const bool hermiteMode = true;
   static const double projectLeftWeight = 0.5;
   static const double editorTreeWeight = 0.5;
   static const String ntServerAddress = '127.0.0.1';

@@ -522,6 +522,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json[PrefsKeys.robotLength]?.toDouble() ?? Defaults.robotLength);
     widget.prefs.setBool(PrefsKeys.holonomicMode,
         json[PrefsKeys.holonomicMode] ?? Defaults.holonomicMode);
+    widget.prefs.setBool(PrefsKeys.hermiteMode,
+        json[PrefsKeys.hermiteMode] ?? Defaults.hermiteMode);
     widget.prefs.setStringList(
         PrefsKeys.pathFolders,
         (json[PrefsKeys.pathFolders] as List<dynamic>?)
@@ -568,6 +570,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength,
       PrefsKeys.holonomicMode: widget.prefs.getBool(PrefsKeys.holonomicMode) ??
           Defaults.holonomicMode,
+      PrefsKeys.hermiteMode: widget.prefs.getBool(PrefsKeys.hermiteMode) ??
+          Defaults.hermiteMode,
       PrefsKeys.pathFolders:
           widget.prefs.getStringList(PrefsKeys.pathFolders) ??
               Defaults.pathFolders,

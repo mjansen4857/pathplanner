@@ -42,6 +42,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late num _defaultMaxAngVel;
   late num _defaultMaxAngAccel;
   late bool _holonomicMode;
+  late bool _hermiteMode;
   late bool _hotReload;
   late FieldImage _selectedField;
   late Color _teamColor;
@@ -67,6 +68,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
             Defaults.defaultMaxAngAccel;
     _holonomicMode =
         widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
+    _hermiteMode =
+        widget.prefs.getBool(PrefsKeys.hermiteMode) ?? Defaults.hermiteMode;
     _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
         Defaults.hotReloadEnabled;
     _selectedField = widget.selectedField;
@@ -313,6 +316,18 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                   .setBool(PrefsKeys.holonomicMode, value);
                               setState(() {
                                 _holonomicMode = value;
+                              });
+                              widget.onSettingsChanged();
+                            },
+                          ),
+                          FilterChip.elevated(
+                            label: const Text('Hermite Mode'),
+                            selected: _hermiteMode,
+                            onSelected: (value) {
+                              widget.prefs
+                                  .setBool(PrefsKeys.hermiteMode, value);
+                              setState(() {
+                                _hermiteMode = value;
                               });
                               widget.onSettingsChanged();
                             },

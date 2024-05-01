@@ -18,6 +18,8 @@ import 'package:pathplanner/path/spline.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/util/geometry_util.dart';
+import 'package:pathplanner/util/prefs.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const double pathResolution = 0.025;
 
@@ -48,10 +50,12 @@ class PathPlannerPath {
   bool previewStartingStateExpanded = false;
   bool isHermite = true;
   DateTime lastModified = DateTime.now().toUtc();
+  final SharedPreferences prefs;
 
   PathPlannerPath.defaultPath({
     required this.pathDir,
     required this.fs,
+    required this.prefs,
     this.name = 'New Path',
     this.folder,
     PathConstraints? constraints,
@@ -76,6 +80,8 @@ class PathPlannerPath {
       ),
     ]);
 
+    isHermite = prefs.getBool(PrefsKeys.hermiteMode) ?? Defaults.hermiteMode;
+
     generatePathPoints();
   }
 
@@ -93,13 +99,16 @@ class PathPlannerPath {
     required this.folder,
     required this.previewStartingState,
     required this.useDefaultConstraints,
+    required this.prefs
   }) : pathPoints = [] {
+    isHermite = prefs.getBool(PrefsKeys.hermiteMode) ?? Defaults.hermiteMode;
     generatePathPoints();
   }
 
   PathPlannerPath.fromJsonV1(
-      Map<String, dynamic> json, String name, String pathsDir, FileSystem fs)
+      Map<String, dynamic> json, String name, String pathsDir, FileSystem fs, SharedPreferences perfs)
       : this(
+          prefs: perfs,
           pathDir: pathsDir,
           fs: fs,
           name: name,
@@ -148,7 +157,7 @@ class PathPlannerPath {
   }
 
   static Future<List<PathPlannerPath>> loadAllPathsInDir(
-      String pathsDir, FileSystem fs) async {
+      String pathsDir, FileSystem fs, SharedPreferences perfs) async {
     List<PathPlannerPath> paths = [];
 
     List<FileSystemEntity> files = fs.directory(pathsDir).listSync();
@@ -162,7 +171,7 @@ class PathPlannerPath {
 
           if (json['version'] == 1.0) {
             PathPlannerPath path =
-                PathPlannerPath.fromJsonV1(json, pathName, pathsDir, fs);
+                PathPlannerPath.fromJsonV1(json, pathName, pathsDir, fs, perfs);
             path.lastModified = (await file.lastModified()).toUtc();
 
             paths.add(path);
@@ -331,6 +340,8 @@ class PathPlannerPath {
   }
 
   void generatePathPoints() {
+    isHermite = prefs.getBool(PrefsKeys.hermiteMode) ?? Defaults.hermiteMode;
+
     // Add all command names in this path to the available names
     for (EventMarker m in eventMarkers) {
       _addNamedCommandsToSet(m.command);
@@ -388,13 +399,15 @@ class PathPlannerPath {
           }
         }
 
-        // Point position = GeometryUtil.cubicLerp(
-        //     waypoints[i].anchor,
-        //     waypoints[i].nextControl!,
-        //     waypoints[i + 1].prevControl!,
-        //     waypoints[i + 1].anchor,
-        //     t);
-        Point position = spline.getPoint(t);
+
+        Point position = isHermite? 
+          spline.getPoint(t):
+          GeometryUtil.cubicLerp(
+            waypoints[i].anchor,
+            waypoints[i].nextControl!,
+            waypoints[i + 1].prevControl!,
+            waypoints[i + 1].anchor,
+            t);
         // print(position);
         num dist = (actualWaypointPos == 0)
             ? 0
@@ -475,6 +488,7 @@ class PathPlannerPath {
 
   PathPlannerPath duplicate(String newName) {
     return PathPlannerPath(
+      prefs: prefs,
       name: newName,
       waypoints: cloneWaypoints(waypoints),
       globalConstraints: globalConstraints.clone(),

@@ -46,6 +46,7 @@ class PathPlannerPath {
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
   bool previewStartingStateExpanded = false;
+  bool isHermite = true;
   DateTime lastModified = DateTime.now().toUtc();
 
   PathPlannerPath.defaultPath({
@@ -215,6 +216,7 @@ class PathPlannerPath {
       'folder': folder,
       'previewStartingState': previewStartingState?.toJson(),
       'useDefaultConstraints': useDefaultConstraints,
+      'isHermiteSpline': isHermite,
     };
   }
 

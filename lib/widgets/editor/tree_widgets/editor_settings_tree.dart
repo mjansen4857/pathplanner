@@ -8,10 +8,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 class EditorSettingsTree extends StatefulWidget {
   final bool initiallyExpanded;
   final PathPlannerPath? path;
+  final VoidCallback? onPathChanged;
 
   const EditorSettingsTree({
     super.key,
     this.initiallyExpanded = false, 
+    this.onPathChanged,
     required PathPlannerPath? pathP
   }):
     path = pathP
@@ -117,10 +119,17 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
                   _overrideIsHermite = val; 
                   setState(() {
                     if(!_overrideIsHermite){
+                      bool reset = path!.getIsHermiteOverride() == false;
                       path!.setIsHermiteOverride(null);
+                      if(reset){
+                        widget.onPathChanged?.call();
+                      }
                     }else{
-                      path!.setIsHermiteOverride(_isHermite);
-                    }                   
+                      if(!_isHermite){
+                        path!.setIsHermiteOverride(_isHermite);
+                        widget.onPathChanged?.call();
+                      }
+                    }              
                   });
                 }
               },
@@ -155,9 +164,11 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
                     _isHermite = val;
                     if(path != null){
                     if(_overrideIsHermite){
-                        path!.setIsHermiteOverride(_isHermite);
+                      path!.setIsHermiteOverride(_isHermite);
+                      widget.onPathChanged?.call();
                     }else{
                       path!.setIsHermiteOverride(null);
+                      widget.onPathChanged?.call();
                     }
                     }
                   });
@@ -166,9 +177,11 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
                     _isHermite = false;
                     if(_overrideIsHermite){
                       if(_overrideIsHermite){
-                      path!.setIsHermiteOverride(_isHermite);
+                        path!.setIsHermiteOverride(_isHermite);
+                        widget.onPathChanged?.call();
                       }else{
                         path!.setIsHermiteOverride(null);
+                        widget.onPathChanged?.call();
                       }
                     }
                   });

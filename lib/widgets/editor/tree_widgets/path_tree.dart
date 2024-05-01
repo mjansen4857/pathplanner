@@ -168,7 +168,7 @@ class _PathTreeState extends State<PathTree> {
                 ),
                 _buildReversedCheckbox(),
                 const Divider(),
-                EditorSettingsTree(pathP: path),
+                EditorSettingsTree(pathP: path, onPathChanged: widget.onPathChanged),
               ],
             ),
           ),

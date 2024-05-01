@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pathplanner/main.dart';
 import 'package:pathplanner/path/choreo_path.dart';
+import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dart';
 import 'package:undo/undo.dart';
 
@@ -18,10 +20,18 @@ class ChoreoPathTree extends StatefulWidget {
   });
 
   @override
-  State<ChoreoPathTree> createState() => _ChoreoPathTreeState();
+  State<ChoreoPathTree> createState() => _ChoreoPathTreeState(pathP: path);
 }
 
 class _ChoreoPathTreeState extends State<ChoreoPathTree> {
+  ChoreoPath path;
+
+  _ChoreoPathTreeState({
+    required ChoreoPath pathP
+  }):
+    path = pathP
+  ;
+ 
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -52,7 +62,7 @@ class _ChoreoPathTreeState extends State<ChoreoPathTree> {
             child: Column(
               children: [
                 Divider(),
-                EditorSettingsTree(),
+                EditorSettingsTree(pathP: null),
               ],
             ),
           ),

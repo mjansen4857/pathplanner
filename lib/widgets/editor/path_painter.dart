@@ -420,6 +420,7 @@ class PathPainter extends CustomPainter {
     }
 
     Waypoint waypoint = path.waypoints[waypointIdx];
+    bool isHermite = path.getIsHermiteOverride() ?? Defaults.hermiteMode;
 
     if (!simple) {
       //draw control point lines
@@ -440,7 +441,6 @@ class PathPainter extends CustomPainter {
             paint);
       }
 
-      bool isHermite = prefs.getBool(PrefsKeys.hermiteMode) ?? Defaults.hermiteMode;
       if (waypoint.prevControl != null && !isHermite) {
         canvas.drawLine(
             PathPainterUtil.pointToPixelOffset(
@@ -527,7 +527,6 @@ class PathPainter extends CustomPainter {
             paint);
       }
 
-      bool isHermite = prefs.getBool(PrefsKeys.hermiteMode) ?? Defaults.hermiteMode;
       if (waypoint.prevControl != null && !isHermite) {
         paint.style = PaintingStyle.fill;
         if (waypointIdx == selectedWaypoint) {

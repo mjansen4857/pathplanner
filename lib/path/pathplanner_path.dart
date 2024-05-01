@@ -48,6 +48,7 @@ class PathPlannerPath {
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
   bool previewStartingStateExpanded = false;
+  bool? overrideIsHermite = null;
   bool isHermite = true;
   DateTime lastModified = DateTime.now().toUtc();
   final SharedPreferences prefs;
@@ -339,8 +340,18 @@ class PathPlannerPath {
     return false;
   }
 
+  void setIsHermiteOverride(bool? override){
+    overrideIsHermite = override;
+
+    generateAndSavePath();
+  }
+
+  bool? getIsHermiteOverride(){
+    return overrideIsHermite;
+  }
+
   void generatePathPoints() {
-    isHermite = prefs.getBool(PrefsKeys.hermiteMode) ?? Defaults.hermiteMode;
+    isHermite = overrideIsHermite ?? (prefs.getBool(PrefsKeys.hermiteMode) ?? Defaults.hermiteMode);
 
     // Add all command names in this path to the available names
     for (EventMarker m in eventMarkers) {

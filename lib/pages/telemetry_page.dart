@@ -393,8 +393,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
           ),
         ).animate().fade(duration: 300.ms, curve: Curves.easeInOut),
         Center(
-          child: Column(
-            children: [
+          child:Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children:[
               TextButton(
                 onPressed: (){
                   PathLog.viewLogs = true;
@@ -413,8 +414,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 }, 
                 child: const Text('new log')
               )
-            ],
-          )
+            ]
+          ),
         ),
         Expanded(
           flex: 4,

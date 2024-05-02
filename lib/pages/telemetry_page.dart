@@ -367,24 +367,6 @@ class _TelemetryPageState extends State<TelemetryPage> {
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              TextButton(
-                onPressed: (){
-                  PathLog.viewLogs = true;
-                  _viewLogs = true;
-                  setState(() {});
-                }, 
-                child: const Text('view logs')
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: (){
-                  DateTime time = DateTime.now();
-                  String name = '${time.hour}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')} - ${time.month}/${time.day}/${time.year}';
-                  PathLog(name: name);
-                  chosenLogIdx = -1;
-                }, 
-                child: const Text('new log')
-              ),
               InteractiveViewer(
                 clipBehavior: Clip.none,
                 child: Padding(
@@ -410,6 +392,30 @@ class _TelemetryPageState extends State<TelemetryPage> {
             ],
           ),
         ).animate().fade(duration: 300.ms, curve: Curves.easeInOut),
+        Center(
+          child: Column(
+            children: [
+              TextButton(
+                onPressed: (){
+                  PathLog.viewLogs = true;
+                  _viewLogs = true;
+                  setState(() {});
+                }, 
+                child: const Text('view logs')
+              ),
+              const SizedBox(width: 2),
+              TextButton(
+                onPressed: (){
+                  DateTime time = DateTime.now();
+                  String name = '${time.hour}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')} - ${time.month}/${time.day}/${time.year}';
+                  PathLog(name: name);
+                  chosenLogIdx = -1;
+                }, 
+                child: const Text('new log')
+              )
+            ],
+          )
+        ),
         Expanded(
           flex: 4,
           child: Row(

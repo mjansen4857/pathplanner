@@ -7,7 +7,7 @@ import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/widgets/pplib_update_card.dart';
 
 import '../test_helpers.dart';
-import '../../source_assets/test/widgets/pplib_update_card_test.mocks.dart';
+import 'pplib_update_card_test.mocks.dart';
 
 @GenerateNiceMocks([MockSpec<UpdateChecker>()])
 void main() {

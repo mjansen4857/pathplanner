@@ -8,7 +8,7 @@ import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../source_assets/test/pages/telemetry_page_test.mocks.dart';
+import 'telemetry_page_test.mocks.dart';
 
 @GenerateNiceMocks([MockSpec<PPLibTelemetry>()])
 void main() {

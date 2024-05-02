@@ -5,7 +5,7 @@ import 'package:mockito/mockito.dart';
 import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/widgets/update_card.dart';
 
-import '../../source_assets/test/widgets/update_card_test.mocks.dart';
+import 'update_card_test.mocks.dart';
 import '../test_helpers.dart';
 
 @GenerateNiceMocks([MockSpec<UpdateChecker>()])

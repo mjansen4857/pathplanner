@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:mockito/annotations.dart';
 
-import '../source_assets/test/main_test.mocks.dart';
+import 'main_test.mocks.dart';
 
 @GenerateNiceMocks([MockSpec<PPLibTelemetry>(), MockSpec<UpdateChecker>()])
 void main() {

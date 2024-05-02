@@ -375,6 +375,16 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 }, 
                 child: const Text('view logs')
               ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: (){
+                  DateTime time = DateTime.now();
+                  String name = '${time.hour}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')} - ${time.month}/${time.day}/${time.year}';
+                  PathLog(name: name);
+                  chosenLogIdx = -1;
+                }, 
+                child: const Text('new log')
+              ),
               InteractiveViewer(
                 clipBehavior: Clip.none,
                 child: Padding(

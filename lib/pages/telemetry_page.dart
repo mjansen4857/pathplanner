@@ -10,13 +10,15 @@ import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class TelemetryPage extends StatefulWidget {
   final FieldImage fieldImage;
   final PPLibTelemetry telemetry;
   final SharedPreferences prefs;
 
-  const TelemetryPage({
+
+  TelemetryPage({
     super.key,
     required this.fieldImage,
     required this.telemetry,
@@ -27,14 +29,101 @@ class TelemetryPage extends StatefulWidget {
   State<TelemetryPage> createState() => _TelemetryPageState();
 }
 
+class PathLog {
+  static List<PathLog> logs = [];
+  static int chosenLogIdx = -1;
+  static bool viewLogs = false;
+
+  List<List<num>> _velData;
+  List<num> _inaccuracyData;
+  String _name;
+  
+
+  PathLog({
+    required name
+  }):
+    _name = name,
+    _velData = [],
+    _inaccuracyData = []
+    {
+      PathLog.logs.insert(0, this);
+    }
+
+  static List<Widget> getLogWidgets(void Function()? onPress, bool isConnected){
+    List<Widget> widgets = [];
+    widgets.add(const Text('Choose Log'));
+    widgets.add(const SizedBox(height: 8));
+    for(PathLog log in logs){
+      widgets.add(
+        TextButton(
+          onPressed: (){
+            PathLog.chosenLogIdx = logs.indexOf(log);
+            onPress?.call();
+          },
+          child: Text(log.getName())
+        )
+      );
+      widgets.add(const SizedBox(height: 8));
+    }
+
+    if(isConnected){
+      PathLog.viewLogs = true;
+
+      widgets.add(
+        TextButton(
+          onPressed: (){
+            PathLog.viewLogs = false;
+            onPress?.call();
+          },
+          child: const Text('View Active Telemetry')
+        )
+      );
+    }
+
+    return widgets;
+  }
+
+  static Widget getBackButton(void Function()? onPress){
+    return TextButton(
+        onPressed: (){
+          PathLog.chosenLogIdx = -1;
+          onPress?.call();
+        }, 
+        child: const Text('back')
+      );
+  }
+
+  String getName(){
+    return _name;
+  }
+
+  List<List<num>> getVelData(){
+    return _velData;
+  }
+
+  List<num> getInaccData(){
+    return _inaccuracyData;
+  }
+
+  void addVelPoint(List<num> data){
+    _velData.add(data);
+  }
+
+  void addInaccPoint(num data){
+    _inaccuracyData.add(data);
+  }
+}
+
 class _TelemetryPageState extends State<TelemetryPage> {
   bool _connected = false;
+  bool _viewLogs = false;
   final List<List<num>> _velData = [];
   final List<num> _inaccuracyData = [];
   List<num>? _currentPath;
   Pose2d? _currentPose;
   Pose2d? _targetPose;
   late final Size _robotSize;
+  int chosenLogIdx = -1;
 
   @override
   void initState() {
@@ -49,6 +138,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
     widget.telemetry.connectionStatusStream().listen((connected) {
       if (mounted) {
         setState(() {
+          if(!_connected && connected){
+            DateTime time = DateTime.now();
+            String name = '${time.hour}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')} - ${time.month}/${time.day}/${time.year}';
+            PathLog(name: name);
+            chosenLogIdx = -1;
+          }
           _connected = connected;
         });
       }
@@ -57,6 +152,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
     widget.telemetry.velocitiesStream().listen((vels) {
       if (mounted) {
         setState(() {
+          if(_connected){
+            PathLog.logs[0].addVelPoint(vels);
+          }
           _velData.add(vels);
           if (_velData.length > 150) {
             _velData.removeAt(0);
@@ -68,6 +166,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
     widget.telemetry.inaccuracyStream().listen((inaccuracy) {
       if (mounted) {
         setState(() {
+          if(_connected){
+            PathLog.logs[0].addInaccPoint(inaccuracy);
+          }
           _inaccuracyData.add(inaccuracy);
           if (_inaccuracyData.length > 150) {
             _inaccuracyData.removeAt(0);
@@ -77,7 +178,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     });
 
     widget.telemetry.currentPoseStream().listen((pose) {
-      if (mounted) {
+      if (mounted && _connected) {
         setState(() {
           if (pose == null) {
             _currentPose = null;
@@ -92,7 +193,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     });
 
     widget.telemetry.targetPoseStream().listen((pose) {
-      if (mounted) {
+      if (mounted && _connected) {
         setState(() {
           if (pose == null) {
             _targetPose = null;
@@ -107,7 +208,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     });
 
     widget.telemetry.currentPathStream().listen((path) {
-      if (mounted) {
+      if (mounted && _connected) {
         setState(() {
           _currentPath = path;
         });
@@ -117,17 +218,145 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_connected) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Attempting to connect to robot...'),
-          ],
-        ),
-      );
+    chosenLogIdx = PathLog.chosenLogIdx;
+    _viewLogs = PathLog.viewLogs;
+    if (!_connected || _viewLogs) {
+      if(PathLog.logs.isNotEmpty){
+        if(chosenLogIdx == -1){
+          return 
+            SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              controller: ScrollController(),
+              child: Column(
+                children: 
+                PathLog.getLogWidgets((){
+                  setState(() {});
+                },
+                _connected
+                )
+              ),
+            );
+        } else {
+          return Column(
+            children: [
+              Expanded(
+                flex: 4,
+                child: Column(
+                  children: [
+                    PathLog.getBackButton((){
+                      setState(() {});
+                    }),
+                    _buildGraph(
+                      title: 'Robot Velocity',
+                      legend: _buildLegend(Colors.green, Colors.deepPurple),
+                      data: _buildData(
+                        maxX: (PathLog.logs[chosenLogIdx].getVelData().length+2)*0.033,
+                        maxY: 6.0,
+                        horizontalInterval: 1.5,
+                        spots: [
+                          [
+                            for (int i = 0; i < PathLog.logs[chosenLogIdx].getVelData().length; i++)
+                              FlSpot(i * 0.033, PathLog.logs[chosenLogIdx].getVelData()[i][1].toDouble()),
+                          ],
+                          [
+                            for (int i = 0; i < PathLog.logs[chosenLogIdx].getVelData().length; i++)
+                              FlSpot(i * 0.033, PathLog.logs[chosenLogIdx].getVelData()[i][0].toDouble()),
+                          ],
+                        ],
+                        lineGradients: const [
+                          LinearGradient(
+                            colors: [
+                              Colors.deepPurple,
+                              Colors.deepPurpleAccent,
+                            ],
+                          ),
+                          LinearGradient(
+                            colors: [
+                              Colors.green,
+                              Colors.greenAccent,
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildGraph(
+                      title: 'Angular Velocity',
+                      legend: _buildLegend(Colors.orange, Colors.blue),
+                      data: _buildData(
+                        maxX: (PathLog.logs[chosenLogIdx].getVelData().length+2)*0.033,
+                        minY: -2 * pi,
+                        maxY: 2 * pi,
+                        horizontalInterval: pi,
+                        spots: [
+                          [
+                            for (int i = 0; i < PathLog.logs[chosenLogIdx].getVelData().length; i++)
+                              FlSpot(i * 0.033, PathLog.logs[chosenLogIdx].getVelData()[i][3].toDouble()),
+                          ],
+                          [
+                            for (int i = 0; i < PathLog.logs[chosenLogIdx].getVelData().length; i++)
+                              FlSpot(i * 0.033, PathLog.logs[chosenLogIdx].getVelData()[i][2].toDouble()),
+                          ],
+                        ],
+                        lineGradients: const [
+                          LinearGradient(
+                            colors: [
+                              Colors.blue,
+                              Colors.blueAccent,
+                            ],
+                          ),
+                          LinearGradient(
+                            colors: [
+                              Colors.orange,
+                              Colors.orangeAccent,
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildGraph(
+                      title: 'Path Inaccuracy',
+                      data: _buildData(
+                        maxX: (PathLog.logs[chosenLogIdx].getInaccData().length+2)*0.033,
+                        maxY: 1.0,
+                        horizontalInterval: 0.25,
+                        spots: [
+                          [
+                            for (int i = 0; i < PathLog.logs[chosenLogIdx].getInaccData().length; i++)
+                              FlSpot(i * 0.033, PathLog.logs[chosenLogIdx].getInaccData()[i].toDouble()),
+                          ],
+                        ],
+                        lineGradients: const [
+                          LinearGradient(
+                            colors: [
+                              Colors.red,
+                              Colors.redAccent,
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]
+                      .animate(interval: 100.ms)
+                      .fade(duration: 300.ms, curve: Curves.easeInOut)
+                      .slide(begin: const Offset(0, 0.3)),
+                ),
+              ),
+            ],
+          ); 
+        }
+      }
+      else{
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Attempting to connect to robot...'),
+            ],
+          ),
+        );
+      }
     }
 
     return Column(
@@ -138,6 +367,14 @@ class _TelemetryPageState extends State<TelemetryPage> {
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              TextButton(
+                onPressed: (){
+                  PathLog.viewLogs = true;
+                  _viewLogs = true;
+                  setState(() {});
+                }, 
+                child: const Text('view logs')
+              ),
               InteractiveViewer(
                 clipBehavior: Clip.none,
                 child: Padding(
@@ -309,6 +546,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     required List<LinearGradient> lineGradients,
     required double maxY,
     double minY = 0,
+    double maxX = 5,
     double? horizontalInterval,
   }) {
     assert(spots.length == lineGradients.length);
@@ -329,7 +567,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
         show: false,
       ),
       minX: 0,
-      maxX: 5,
+      maxX: maxX,
       minY: minY,
       maxY: maxY,
       lineBarsData: [

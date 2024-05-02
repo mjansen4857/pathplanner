@@ -40,7 +40,7 @@ class SplitAutoEditor extends StatefulWidget {
   });
 
   @override
-  State<SplitAutoEditor> createState() => _SplitAutoEditorState();
+  State<SplitAutoEditor> createState() => _SplitAutoEditorState(prefsP: prefs);
 }
 
 class _SplitAutoEditorState extends State<SplitAutoEditor>
@@ -53,9 +53,16 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   Pose2d? _dragOldValue;
   Trajectory? _simPath;
   bool _paused = false;
+  final SharedPreferences prefs;
 
   late Size _robotSize;
   late AnimationController _previewController;
+
+  _SplitAutoEditorState({
+    required prefsP
+  }):
+    prefs = prefsP
+  ;
 
   @override
   void initState() {
@@ -85,7 +92,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       ),
     ];
 
-    _simulateAuto();
+    _simulateAuto(prefs);
   }
 
   @override
@@ -189,12 +196,12 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                     () {
                       widget.auto.startingPose = dragEnd.clone();
                       widget.onAutoChanged?.call();
-                      _simulateAuto();
+                      _simulateAuto(prefs);
                     },
                     (oldValue) {
                       widget.auto.startingPose = oldValue!.clone();
                       widget.onAutoChanged?.call();
-                      _simulateAuto();
+                      _simulateAuto(prefs);
                     },
                   ));
                   _draggingStartPos = false;
@@ -286,7 +293,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                       // Delay this because it needs the parent widget to rebuild first
                       Future.delayed(const Duration(milliseconds: 100))
                           .then((_) {
-                        _simulateAuto();
+                        _simulateAuto(prefs);
                       });
                     },
                     onSideSwapped: () => setState(() {
@@ -312,7 +319,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   }
 
   // Marked as async so it can run from initState
-  void _simulateAuto() async {
+  void _simulateAuto(SharedPreferences prefs) async {
     Trajectory? simPath;
 
     if (widget.auto.choreoAuto) {
@@ -340,7 +347,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
       try {
         simPath = TrajectoryGenerator.simulateAuto(
-            widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius);
+            widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius, prefs);
       } catch (err) {
         Log.error('Failed to simulate auto', err);
       }

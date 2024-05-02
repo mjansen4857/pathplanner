@@ -1,24 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:pathplanner/main.dart';
+import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EditorSettingsTree extends StatefulWidget {
   final bool initiallyExpanded;
+  final PathPlannerPath? path;
+  final VoidCallback? onPathChanged;
 
   const EditorSettingsTree({
     super.key,
-    this.initiallyExpanded = false,
-  });
+    this.initiallyExpanded = false, 
+    this.onPathChanged,
+    required PathPlannerPath? pathP
+  }):
+    path = pathP
+  ;
 
   @override
-  State<EditorSettingsTree> createState() => _EditorSettingsTreeState();
+  State<EditorSettingsTree> createState() => _EditorSettingsTreeState(pathP: path);
 }
 
 class _EditorSettingsTreeState extends State<EditorSettingsTree> {
   late SharedPreferences _prefs;
   bool _snapToGuidelines = Defaults.snapToGuidelines;
   bool _hidePathsOnHover = Defaults.hidePathsOnHover;
+  bool _overrideIsHermite = false;
+  bool _isHermite = Defaults.hermiteMode;
+  PathPlannerPath? path;
+
+  _EditorSettingsTreeState({
+    required PathPlannerPath? pathP
+  }):
+    path = pathP
+  ;
 
   @override
   void initState() {
@@ -31,6 +48,8 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
             Defaults.snapToGuidelines;
         _hidePathsOnHover = _prefs.getBool(PrefsKeys.hidePathsOnHover) ??
             Defaults.hidePathsOnHover;
+        _isHermite = _prefs.getBool(PrefsKeys.hermiteMode) ??
+            Defaults.hermiteMode;
       });
     });
   }
@@ -86,6 +105,96 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
               ),
               child: Text(
                 'Hide Other Paths on Hover',
+                style: TextStyle(fontSize: 15),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Checkbox(
+              value: _overrideIsHermite,
+              onChanged: (val) {
+                if (val != null) {
+                  _overrideIsHermite = val; 
+                  setState(() {
+                    if(!_overrideIsHermite){
+                      bool reset = path!.getIsHermiteOverride() == false;
+                      path!.setIsHermiteOverride(null);
+                      if(reset){
+                        widget.onPathChanged?.call();
+                      }
+                    }else{
+                      if(!_isHermite){
+                        path!.setIsHermiteOverride(_isHermite);
+                        widget.onPathChanged?.call();
+                      }
+                    }              
+                  });
+                }
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.only(
+                bottom: 3.0,
+                left: 4.0,
+              ),
+              child: Text(
+                'Override Is Hermite',
+                style: TextStyle(fontSize: 15),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(
+                bottom: 0.0,
+                left: 8.0,
+              ),
+            ),
+            Checkbox(
+              tristate: true,
+              value: !_overrideIsHermite?null:_isHermite,
+              activeColor: !_overrideIsHermite?const Color.fromARGB(0, 255, 255, 255): Theme.of(context).colorScheme.secondary,
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _isHermite = val;
+                    if(path != null){
+                    if(_overrideIsHermite){
+                      path!.setIsHermiteOverride(_isHermite);
+                      widget.onPathChanged?.call();
+                    }else{
+                      path!.setIsHermiteOverride(null);
+                      widget.onPathChanged?.call();
+                    }
+                    }
+                  });
+                }else{
+                  setState(() {
+                    _isHermite = false;
+                    if(_overrideIsHermite){
+                      if(_overrideIsHermite){
+                        path!.setIsHermiteOverride(_isHermite);
+                        widget.onPathChanged?.call();
+                      }else{
+                        path!.setIsHermiteOverride(null);
+                        widget.onPathChanged?.call();
+                      }
+                    }
+                  });
+                }
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.only(
+                bottom: 3.0,
+                left: 4.0,
+              ),
+              child: Text(
+                'Is Hermite',
                 style: TextStyle(fontSize: 15),
               ),
             ),

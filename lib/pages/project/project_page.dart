@@ -62,7 +62,7 @@ class ProjectPage extends StatefulWidget {
   });
 
   @override
-  State<ProjectPage> createState() => _ProjectPageState();
+  State<ProjectPage> createState() => _ProjectPageState(prefsP: prefs);
 }
 
 class _ProjectPageState extends State<ProjectPage> {
@@ -84,6 +84,8 @@ class _ProjectPageState extends State<ProjectPage> {
   DirectoryWatcher? _chorWatcher;
   StreamSubscription<WatchEvent>? _chorWatcherSub;
 
+  final SharedPreferences prefs;
+
   bool _loading = true;
 
   String? _pathFolder;
@@ -93,6 +95,12 @@ class _ProjectPageState extends State<ProjectPage> {
   final GlobalKey _addAutoKey = GlobalKey();
 
   FileSystem get fs => widget.fs;
+
+  _ProjectPageState({
+    required prefsP
+  }):
+    prefs = prefsP
+  ;
 
   @override
   void initState() {
@@ -177,7 +185,7 @@ class _ProjectPageState extends State<ProjectPage> {
     _choreoDirectory = fs.directory(widget.choreoDirectory);
 
     var paths =
-        await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path, fs);
+        await PathPlannerPath.loadAllPathsInDir(_pathsDirectory.path, fs, prefs);
     var autos =
         await PathPlannerAuto.loadAllAutosInDir(_autosDirectory.path, fs);
     List<ChoreoPath> choreoPaths =
@@ -217,6 +225,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
       if (_paths.isEmpty) {
         _paths.add(PathPlannerPath.defaultPath(
+          prefs: prefs,
           pathDir: _pathsDirectory.path,
           name: 'Example Path',
           fs: fs,
@@ -616,6 +625,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
                         setState(() {
                           _paths.add(PathPlannerPath.defaultPath(
+                            prefs: prefs,
                             pathDir: _pathsDirectory.path,
                             name: pathName,
                             fs: fs,

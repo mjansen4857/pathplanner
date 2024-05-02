@@ -420,6 +420,7 @@ class PathPainter extends CustomPainter {
     }
 
     Waypoint waypoint = path.waypoints[waypointIdx];
+    bool isHermite = path.getIsHermiteOverride() ?? Defaults.hermiteMode;
 
     if (!simple) {
       //draw control point lines
@@ -432,6 +433,15 @@ class PathPainter extends CustomPainter {
             paint);
       }
       else if (waypoint.prevControl != null) {
+        canvas.drawLine(
+            PathPainterUtil.pointToPixelOffset(
+                waypoint.anchor, scale, fieldImage),
+            PathPainterUtil.pointToPixelOffset(
+                waypoint.prevControl!, scale, fieldImage),
+            paint);
+      }
+
+      if (waypoint.prevControl != null && !isHermite) {
         canvas.drawLine(
             PathPainterUtil.pointToPixelOffset(
                 waypoint.anchor, scale, fieldImage),
@@ -494,6 +504,30 @@ class PathPainter extends CustomPainter {
             paint);
       }
       else if (waypoint.prevControl != null) {
+        paint.style = PaintingStyle.fill;
+        if (waypointIdx == selectedWaypoint) {
+          paint.color = Colors.orange;
+        } else if (waypointIdx == hoveredWaypoint) {
+          paint.color = Colors.deepPurpleAccent;
+        } else {
+          paint.color = Colors.grey[300]!;
+        }
+
+        canvas.drawCircle(
+            PathPainterUtil.pointToPixelOffset(
+                waypoint.prevControl!, scale, fieldImage),
+            PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
+            paint);
+        paint.style = PaintingStyle.stroke;
+        paint.color = Colors.black;
+        canvas.drawCircle(
+            PathPainterUtil.pointToPixelOffset(
+                waypoint.prevControl!, scale, fieldImage),
+            PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
+            paint);
+      }
+
+      if (waypoint.prevControl != null && !isHermite) {
         paint.style = PaintingStyle.fill;
         if (waypointIdx == selectedWaypoint) {
           paint.color = Colors.orange;

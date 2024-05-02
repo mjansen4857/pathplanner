@@ -37,7 +37,7 @@ class WaypointsTree extends StatefulWidget {
   });
 
   @override
-  State<WaypointsTree> createState() => _WaypointsTreeState();
+  State<WaypointsTree> createState() => _WaypointsTreeState(pathP: path);
 }
 
 class _WaypointsTreeState extends State<WaypointsTree> {
@@ -49,6 +49,14 @@ class _WaypointsTreeState extends State<WaypointsTree> {
   bool _ignoreExpansionFromTile = false;
   final ExpansionTileController _expansionController =
       ExpansionTileController();
+
+  PathPlannerPath path;
+
+  _WaypointsTreeState({
+    required pathP
+  }):
+    path = pathP
+  ;
 
   @override
   void initState() {
@@ -235,14 +243,14 @@ class _WaypointsTreeState extends State<WaypointsTree> {
           padding: const EdgeInsets.symmetric(horizontal: 6.0),
           child: Row(
             children: [
-              if (waypointIdx == waypoints.length-1)
+              if (waypointIdx != 0 && !(path.getIsHermiteOverride()?? false) || waypointIdx == waypoints.length-1)
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: NumberTextField(
                       initialText:
                           waypoint.getPrevControlLength().toStringAsFixed(2),
-                      label: 'Point Speed (M/S)',
+                      label: (path.getIsHermiteOverride()?? false) ? 'Point Speed (M/S)': 'Prev Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null && value >= 0.05) {
                           Waypoint wRef = waypoints[waypointIdx];
@@ -266,7 +274,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                     child: NumberTextField(
                       initialText:
                           waypoint.getNextControlLength().toStringAsFixed(2),
-                      label: 'Point Speed (M/S)',
+                      label: (path.getIsHermiteOverride()?? false) ? 'Point Speed (M/S)': 'Next Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null && value >= 0.05) {
                           Waypoint wRef = waypoints[waypointIdx];

@@ -11,10 +11,11 @@ import 'package:pathplanner/services/simulator/rotation_controller.dart';
 import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/math_util.dart';
 import 'package:pathplanner/util/pose2d.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TrajectoryGenerator {
   static Trajectory? simulateAuto(List<PathPlannerPath> paths,
-      Pose2d? startingPose, num maxModuleSpeed, num driveRadius) {
+      Pose2d? startingPose, num maxModuleSpeed, num driveRadius, SharedPreferences prefs) {
     if (paths.isEmpty) return null;
 
     List<TrajectoryState> allStates = [];
@@ -25,7 +26,7 @@ class TrajectoryGenerator {
 
     for (PathPlannerPath p in paths) {
       PathPlannerPath replanned =
-          _replanPathIfNeeded(p, startPose, startSpeeds);
+          _replanPathIfNeeded(p, startPose, startSpeeds, prefs);
       num linearVel = sqrt(pow(startSpeeds.vx, 2) + pow(startSpeeds.vy, 2));
       Trajectory simPath = Trajectory.simulate(
           replanned, linearVel, GeometryUtil.toRadians(startPose.rotation),
@@ -52,7 +53,7 @@ class TrajectoryGenerator {
   }
 
   static PathPlannerPath _replanPathIfNeeded(
-      PathPlannerPath path, Pose2d startingPose, ChassisSpeeds startingSpeeds) {
+      PathPlannerPath path, Pose2d startingPose, ChassisSpeeds startingSpeeds, SharedPreferences prefs) {
     num linearVel = sqrt(pow(startingSpeeds.vx, 2) + pow(startingSpeeds.vy, 2));
     num currentHeading = atan2(startingSpeeds.vy, startingSpeeds.vx);
     var p1 = path.pathPoints[0].position;
@@ -113,6 +114,7 @@ class TrajectoryGenerator {
       // Throw out rotation targets, event markers, and constraint zones since we are skipping all
       // of the path
       return PathPlannerPath(
+        prefs: prefs,
         name: '',
         waypoints: [
           Waypoint(
@@ -174,6 +176,7 @@ class TrajectoryGenerator {
 
       // keep all rotations, markers, and zones and increment waypoint pos by 1
       return PathPlannerPath(
+        prefs: prefs,
         name: '',
         waypoints: replannedWaypoints,
         globalConstraints: path.globalConstraints,
@@ -224,6 +227,7 @@ class TrajectoryGenerator {
       // Throw out rotation targets, event markers, and constraint zones since we are skipping all
       // of the path
       return PathPlannerPath(
+        prefs: prefs,
         name: '',
         waypoints: [
           Waypoint(
@@ -361,6 +365,7 @@ class TrajectoryGenerator {
     // 1 to nextWaypointIdx on to the 2 joining segments (waypoint rel pos within old segment = %
     // along distance of both new segments)
     return PathPlannerPath(
+      prefs: prefs,
       name: '',
       waypoints: replannedWaypoints,
       globalConstraints: path.globalConstraints,

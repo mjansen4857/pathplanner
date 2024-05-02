@@ -691,6 +691,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
         _previewController.reset();
         _previewController.duration =
             Duration(milliseconds: (_simTraj!.states.last.time * 1000).toInt());
+        _previewController.duration == 
         _previewController.repeat();
       }
     }

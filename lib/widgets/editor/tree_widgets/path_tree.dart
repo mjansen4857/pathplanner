@@ -62,10 +62,18 @@ class PathTree extends StatefulWidget {
   });
 
   @override
-  State<PathTree> createState() => _PathTreeState();
+  State<PathTree> createState() => _PathTreeState(pathP: path);
 }
 
 class _PathTreeState extends State<PathTree> {
+  final PathPlannerPath path;
+
+  _PathTreeState({
+    required pathP
+  }):
+    path = pathP
+  ;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -160,7 +168,7 @@ class _PathTreeState extends State<PathTree> {
                 ),
                 _buildReversedCheckbox(),
                 const Divider(),
-                const EditorSettingsTree(),
+                EditorSettingsTree(pathP: path, onPathChanged: widget.onPathChanged),
               ],
             ),
           ),

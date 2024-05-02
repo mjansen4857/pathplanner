@@ -79,7 +79,7 @@ class _AutoTreeState extends State<AutoTree> {
                   ),
                 ),
                 const Divider(),
-                const EditorSettingsTree(),
+                const EditorSettingsTree(pathP: null),
               ],
             ),
           ),

@@ -235,14 +235,14 @@ class _WaypointsTreeState extends State<WaypointsTree> {
           padding: const EdgeInsets.symmetric(horizontal: 6.0),
           child: Row(
             children: [
-              if (waypointIdx != 0)
+              if (waypointIdx == waypoints.length-1)
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: NumberTextField(
                       initialText:
                           waypoint.getPrevControlLength().toStringAsFixed(2),
-                      label: 'Previous Control Length (M)',
+                      label: 'Point Speed (M/S)',
                       onSubmitted: (value) {
                         if (value != null && value >= 0.05) {
                           Waypoint wRef = waypoints[waypointIdx];
@@ -266,7 +266,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                     child: NumberTextField(
                       initialText:
                           waypoint.getNextControlLength().toStringAsFixed(2),
-                      label: 'Next Control Length (M)',
+                      label: 'Point Speed (M/S)',
                       onSubmitted: (value) {
                         if (value != null && value >= 0.05) {
                           Waypoint wRef = waypoints[waypointIdx];

@@ -431,7 +431,7 @@ class PathPainter extends CustomPainter {
                 waypoint.nextControl!, scale, fieldImage),
             paint);
       }
-      if (waypoint.prevControl != null) {
+      else if (waypoint.prevControl != null) {
         canvas.drawLine(
             PathPainterUtil.pointToPixelOffset(
                 waypoint.anchor, scale, fieldImage),
@@ -493,7 +493,7 @@ class PathPainter extends CustomPainter {
             PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
             paint);
       }
-      if (waypoint.prevControl != null) {
+      else if (waypoint.prevControl != null) {
         paint.style = PaintingStyle.fill;
         if (waypointIdx == selectedWaypoint) {
           paint.color = Colors.orange;

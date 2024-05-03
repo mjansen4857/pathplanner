@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/** A bezier curve segment */
+/** A bezier or hermite curve segment */
 public class PathSegment {
   /** The resolution used during path generation */
   public static final double RESOLUTION = 0.05;
@@ -17,8 +17,8 @@ public class PathSegment {
    * Generate a new path segment
    *
    * @param p1 Start anchor point
-   * @param p2 Start next control
-   * @param p3 End prev control
+   * @param p2 Start next control/velocity
+   * @param p3 End prev control/velocity
    * @param p4 End anchor point
    * @param targetHolonomicRotations Rotation targets for within this segment
    * @param constraintZones Constraint zones for within this segment
@@ -31,7 +31,31 @@ public class PathSegment {
       Translation2d p4,
       List<RotationTarget> targetHolonomicRotations,
       List<ConstraintsZone> constraintZones,
-      boolean endSegment) {
+      boolean endSegment){
+    this(p1, p2, p3, p4, targetHolonomicRotations, constraintZones, endSegment, false);
+  }
+
+  /**
+   * Generate a new path segment
+   *
+   * @param p1 Start anchor point
+   * @param p2 Start next control/velocity
+   * @param p3 End prev control/velocity
+   * @param p4 End anchor point
+   * @param targetHolonomicRotations Rotation targets for within this segment
+   * @param constraintZones Constraint zones for within this segment
+   * @param endSegment Is this the last segment in the path
+   * @param isHermite Is this segment a hermite spline or bezier curve
+   */
+  public PathSegment(
+      Translation2d p1,
+      Translation2d p2,
+      Translation2d p3,
+      Translation2d p4,
+      List<RotationTarget> targetHolonomicRotations,
+      List<ConstraintsZone> constraintZones,
+      boolean endSegment,
+      boolean isHermite) {
     this.segmentPoints = new ArrayList<>();
 
     for (double t = 0.0; t < 1.0; t += RESOLUTION) {
@@ -48,22 +72,40 @@ public class PathSegment {
       Optional<ConstraintsZone> currentZone = findConstraintsZone(constraintZones, t);
 
       if (currentZone.isPresent()) {
-        this.segmentPoints.add(
+        if(isHermite){
+          this.segmentPoints.add(
             new PathPoint(
-                GeometryUtil.cubicLerp(p1, p2, p3, p4, t),
+                Spline.getPoint(p1, p2, p4, p3, t),
                 holonomicRotation,
                 currentZone.get().getConstraints()));
+        }else{
+          this.segmentPoints.add(
+              new PathPoint(
+                  GeometryUtil.cubicLerp(p1, p2, p3, p4, t),
+                  holonomicRotation,
+                  currentZone.get().getConstraints()));
+        }
       } else {
-        this.segmentPoints.add(
-            new PathPoint(GeometryUtil.cubicLerp(p1, p2, p3, p4, t), holonomicRotation));
+        if(isHermite){
+          this.segmentPoints.add(
+              new PathPoint(Spline.getPoint(p1, p2, p4, p3, t), holonomicRotation));
+        }else{
+          this.segmentPoints.add(
+              new PathPoint(GeometryUtil.cubicLerp(p1, p2, p3, p4, t), holonomicRotation));
+        }
       }
     }
 
     if (endSegment) {
       RotationTarget holonomicRotation =
           targetHolonomicRotations.isEmpty() ? null : targetHolonomicRotations.remove(0);
-      this.segmentPoints.add(
-          new PathPoint(GeometryUtil.cubicLerp(p1, p2, p3, p4, 1.0), holonomicRotation));
+      if(isHermite){
+        this.segmentPoints.add(
+              new PathPoint(Spline.getPoint(p1, p2, p4, p3, 1.0), holonomicRotation));
+      }else{
+        this.segmentPoints.add(
+            new PathPoint(GeometryUtil.cubicLerp(p1, p2, p3, p4, 1.0), holonomicRotation));
+      }
     }
   }
 

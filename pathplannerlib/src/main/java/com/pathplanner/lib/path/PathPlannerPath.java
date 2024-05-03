@@ -645,14 +645,14 @@ public class PathPlannerPath {
 
     List<PathPoint> points = new ArrayList<>();
 
-    int numSegments = (hermitePoints.size()) / 2;
+    int numSegments = hermitePoints.size()-1;
     System.out.println("Num Segments: "+numSegments);
     for (int s = 0; s < numSegments; s++) {
-      int iOffset = s * 2;
-      Translation2d p1 = hermitePoints.get(iOffset).get(0);
-      Translation2d v1 = hermitePoints.get(iOffset).get(1);
-      Translation2d p2 = hermitePoints.get(iOffset + 1).get(0);
-      Translation2d v2 = hermitePoints.get(iOffset + 1).get(1);
+      // int iOffset = s * 2;
+      Translation2d p1 = hermitePoints.get(s).get(0);
+      Translation2d v1 = hermitePoints.get(s).get(1);
+      Translation2d p2 = hermitePoints.get(s+1).get(0);
+      Translation2d v2 = hermitePoints.get(s+1).get(1);
 
       int segmentIdx = s;
       List<RotationTarget> segmentRotations =
@@ -1329,6 +1329,7 @@ public class PathPlannerPath {
   public int hashCode() {
     return Objects.hash(
         bezierPoints,
+        hermitePoints,
         rotationTargets,
         constraintZones,
         eventMarkers,

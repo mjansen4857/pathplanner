@@ -38,6 +38,7 @@ public class PathPlannerPath {
   private Rotation2d previewStartingRotation;
 
   private boolean isChoreoPath = false;
+  private boolean isHermitePath = false;
   private PathPlannerTrajectory choreoTrajectory = null;
 
   /**
@@ -69,6 +70,7 @@ public class PathPlannerPath {
       Rotation2d previewStartingRotation) {
     if(points.get(0) instanceof List<?>){
       this.hermitePoints = (List<List<Translation2d>>) points;
+      this.isHermitePath = true;
     }else{
       this.bezierPoints = (List<Translation2d>) points;
     }
@@ -79,7 +81,7 @@ public class PathPlannerPath {
     this.goalEndState = goalEndState;
     this.reversed = reversed;
 
-    if(hermitePoints != null){
+    if(isHermitePath){
       this.allPoints = createHermitePath(this.hermitePoints, this.rotationTargets, this.constraintZones);
     }else{
       this.allPoints = createBezierPath(this.bezierPoints, this.rotationTargets, this.constraintZones);
@@ -887,7 +889,7 @@ public class PathPlannerPath {
       Translation2d joinPrevControl =
           getPoint(0).position.plus(new Translation2d(distToStart / 2.0, joinHeading));
 
-      if(hermitePoints != null){
+      if(isHermitePath){
         // replanning a hermite path is annoyingly complex just add points
         PathSegment joinSegment =
           new PathSegment(
@@ -988,7 +990,7 @@ public class PathPlannerPath {
           previewStartingRotation);
     }
 
-    if(hermitePoints != null){
+    if(isHermitePath){
       // replanning a hermite path is annoyingly complex just add points
       PathSegment joinSegment =
           new PathSegment(
@@ -1228,7 +1230,7 @@ public class PathPlannerPath {
             goalEndState.shouldRotateFast());
     Rotation2d newPreviewRot = GeometryUtil.flipFieldRotation(previewStartingRotation);
 
-    if(hermitePoints != null){
+    if(isHermitePath){
       List<List<Translation2d>> newHermite = new ArrayList<>();
 
       for (List<Translation2d> list : hermitePoints) {

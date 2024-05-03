@@ -124,6 +124,21 @@ public class PathSegment {
   }
 
   /**
+   * Generate a new path segment without constraint zones or rotation targets
+   *
+   * @param p1 Start anchor point
+   * @param p2 Start next control/Start Velocity
+   * @param p3 End prev control/End Velocity
+   * @param p4 End anchor point
+   * @param endSegment Is this the last segment in the path
+   * @param isHermite Is this a hermite path
+   */
+  public PathSegment(
+      Translation2d p1, Translation2d p2, Translation2d p3, Translation2d p4, boolean endSegment, boolean isHermite) {
+    this(p1, p2, p3, p4, new ArrayList<>(), new ArrayList<>(), endSegment, isHermite);
+  }
+
+  /**
    * Get the path points for this segment
    *
    * @return Path points for this segment

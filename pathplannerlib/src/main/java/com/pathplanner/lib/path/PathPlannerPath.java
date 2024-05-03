@@ -861,6 +861,7 @@ public class PathPlannerPath {
 
       // Throw out rotation targets, event markers, and constraint zones since we are skipping all
       // of the path
+
       return new PathPlannerPath(
           List.of(
               startingPose.getTranslation(),
@@ -890,14 +891,17 @@ public class PathPlannerPath {
           getPoint(0).position.plus(new Translation2d(distToStart / 2.0, joinHeading));
 
       if(isHermitePath){
-        // replanning a hermite path is annoyingly complex just add points
+        // create new hermite spline to join to start
+        joinHeading =
+          allPoints.get(1).position.minus(allPoints.get(0).position).getAngle();
         PathSegment joinSegment =
           new PathSegment(
               startingPose.getTranslation(),
-              robotNextControl,
-              joinPrevControl,
+              new Translation2d(currentFieldRelativeSpeeds.vxMetersPerSecond, currentFieldRelativeSpeeds.vyMetersPerSecond),
+              new Translation2d(1.0, joinHeading),
               getPoint(0).position,
-              false);
+              false,
+              true);
         List<PathPoint> replannedPoints = new ArrayList<>();
         replannedPoints.addAll(joinSegment.getSegmentPoints());
         replannedPoints.addAll(allPoints);
@@ -990,11 +994,19 @@ public class PathPlannerPath {
           previewStartingRotation);
     }
 
+    Rotation2d joinHeading =
+        allPoints.get(joinAnchorIdx+1).position.minus(allPoints.get(joinAnchorIdx).position).getAngle();
+
     if(isHermitePath){
-      // replanning a hermite path is annoyingly complex just add points
+      // create new hermite spline to join to path at join index
       PathSegment joinSegment =
-          new PathSegment(
-              startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor, false);
+        new PathSegment(
+            startingPose.getTranslation(),
+            new Translation2d(currentFieldRelativeSpeeds.vxMetersPerSecond, currentFieldRelativeSpeeds.vyMetersPerSecond),
+            new Translation2d(1.0, joinHeading),
+            getPoint(joinAnchorIdx).position,
+            false,
+            true);
       List<PathPoint> replannedPoints = new ArrayList<>();
       replannedPoints.addAll(joinSegment.getSegmentPoints());
       replannedPoints.addAll(allPoints.subList(joinAnchorIdx, allPoints.size()));
@@ -1019,7 +1031,7 @@ public class PathPlannerPath {
     int bezierPointIdx = nextWaypointIdx * 3;
     double waypointDelta = joinAnchor.getDistance(bezierPoints.get(bezierPointIdx));
 
-    Rotation2d joinHeading = joinAnchor.minus(joinPrevControl).getAngle();
+    joinHeading = joinAnchor.minus(joinPrevControl).getAngle();
     Translation2d joinNextControl =
         joinAnchor.plus(new Translation2d(waypointDelta / 3.0, joinHeading));
 

@@ -27,14 +27,29 @@ public class Spline {
         this.y5 = -6 * p1.getY() - 3 * v1.getY() - 3 * v2.getY() + 6 * p2.getY() - 0.5 * 0.0 + 0.5 * 0.0;
     }
 
-    static Translation2d getPoint(Translation2d p1, Translation2d v1, Translation2d p2, Translation2d v2, double t){
+    static Translation2d getPoint(Translation2d p1, Translation2d v1, Translation2d p2, Translation2d v2, double t) {
         return new Translation2d(
-            getValue(p1.getX(), v1.getX(), p2.getX(), v2.getX(), t),
-            getValue(p1.getY(), v1.getY(), p2.getY(), v2.getY(), t)
-        );
+                getValue(p1.getX(), v1.getX(), p2.getX(), v2.getX(), t),
+                getValue(p1.getY(), v1.getY(), p2.getY(), v2.getY(), t));
     }
 
-    private static double getValue(double x1, double dx1, double x2, double dx2, double t){
+    static Translation2d getVelocity(Translation2d p1, Translation2d v1, Translation2d p2, Translation2d v2, double t) {
+        return new Translation2d(
+                getdValue(p1.getX(), v1.getX(), p2.getX(), v2.getX(), t),
+                getdValue(p1.getY(), v1.getY(), p2.getY(), v2.getY(), t));
+    }
+
+    private static double getdValue(double x1, double dx1, double x2, double dx2, double t) {
+        double c1 = dx1;
+        double c2 = 0.5 * 0.0;
+        double c3 = -10 * x1 - 6 * dx1 - 4 * dx2 + 10 * x2 - 1.5 * 0.0 + 0.5 * 0.0;
+        double c4 = 15 * x1 + 8 * dx1 + 7 * dx2 - 15 * x2 + 1.5 * 0.0 - 0.0;
+        double c5 = -6 * x1 - 3 * dx1 - 3 * dx2 + 6 * x2 - 0.5 * 0.0 + 0.5 * 0.0;
+
+        return c1 + 2.0 * c2 * t + 3.0 * c3 * t * t + 4.0 * c4 * t * t * t + 5.0 * c5 * t * t * t * t;
+    }
+
+    private static double getValue(double x1, double dx1, double x2, double dx2, double t) {
         double c0 = x1;
         double c1 = dx1;
         double c2 = 0.5 * 0.0;

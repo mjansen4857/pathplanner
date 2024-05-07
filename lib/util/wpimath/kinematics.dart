@@ -23,6 +23,20 @@ class ChassisSpeeds {
 
   @override
   int get hashCode => Object.hash(vx, vy, omega);
+
+  static ChassisSpeeds fromFieldRelativeSpeeds(
+      ChassisSpeeds speeds, Rotation2d robotAngle) {
+    Translation2d rotated =
+        Translation2d(x: speeds.vx, y: speeds.vy).rotateBy(-robotAngle);
+    return ChassisSpeeds(vx: rotated.x, vy: rotated.y, omega: speeds.omega);
+  }
+
+  static ChassisSpeeds fromRobotRelativeSpeeds(
+      ChassisSpeeds speeds, Rotation2d robotAngle) {
+    Translation2d rotated =
+        Translation2d(x: speeds.vx, y: speeds.vy).rotateBy(robotAngle);
+    return ChassisSpeeds(vx: rotated.x, vy: rotated.y, omega: speeds.omega);
+  }
 }
 
 class SwerveModuleState {

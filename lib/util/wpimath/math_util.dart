@@ -1,6 +1,8 @@
 import 'dart:math';
 
 class MathUtil {
+  static const _kEpsilon = 1E-8;
+
   static num clamp(num value, num low, num high) {
     return max(low, min(value, high));
   }
@@ -20,5 +22,9 @@ class MathUtil {
       return 0;
     }
     return queryToStart / totalRange;
+  }
+
+  static bool epsilonEquals(num a, num b) {
+    return (a - _kEpsilon <= b) && (a + _kEpsilon >= b);
   }
 }

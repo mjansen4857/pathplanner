@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
-import 'package:pathplanner/services/log.dart';
-import 'package:pathplanner/services/simulator/trajectory_generator.dart';
+import 'package:pathplanner/services/trajectory/trajectory.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
@@ -51,7 +50,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   bool _draggingStartPos = false;
   bool _draggingStartRot = false;
   Pose2d? _dragOldValue;
-  Trajectory? _simPath;
+  PathPlannerTrajectory? _simPath;
   bool _paused = false;
 
   late Size _robotSize;
@@ -217,7 +216,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                               Defaults.hidePathsOnHover,
                           hoveredPath: _hoveredPath,
                           fieldImage: widget.fieldImage,
-                          startingPose: widget.auto.startingPose,
+                          startingPose: null, // TODO: widget.auto.startingPose,
                           simulatedPath: _simPath,
                           animation: _previewController.view,
                           previewColor: colorScheme.primary,
@@ -253,7 +252,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
-                  totalPathTime: _simPath?.states.last.time ?? 1.0,
+                  totalPathTime: _simPath?.states.last.timeSeconds ?? 1.0,
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -274,7 +273,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: AutoTree(
                     auto: widget.auto,
-                    autoRuntime: _simPath?.states.last.time,
+                    autoRuntime: _simPath?.states.last.timeSeconds,
                     allPathNames: widget.allPathNames,
                     onPathHovered: (value) {
                       setState(() {
@@ -302,7 +301,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
-                  totalPathTime: _simPath?.states.last.time ?? 1.0,
+                  totalPathTime: _simPath?.states.last.timeSeconds ?? 1.0,
                 ),
             ],
           ),
@@ -313,7 +312,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
   // Marked as async so it can run from initState
   void _simulateAuto() async {
-    Trajectory? simPath;
+    PathPlannerTrajectory? simPath;
 
     if (widget.auto.choreoAuto) {
       List<TrajectoryState> allStates = [];
@@ -321,34 +320,35 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
       for (ChoreoPath p in widget.autoChoreoPaths) {
         for (TrajectoryState s in p.trajectory.states) {
-          allStates.add(s.copyWithTime(s.time + timeOffset));
+          allStates.add(s.copyWithTime(s.timeSeconds + timeOffset));
         }
 
         if (allStates.isNotEmpty) {
-          timeOffset = allStates.last.time;
+          timeOffset = allStates.last.timeSeconds;
         }
       }
 
       if (allStates.isNotEmpty) {
-        simPath = Trajectory(states: allStates);
+        simPath = PathPlannerTrajectory.fromStates(allStates);
       }
     } else {
-      num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
-          Defaults.maxModuleSpeed;
-      num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
-          0.1; // Assuming ~3in thick bumpers
+      // num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
+      //     Defaults.maxModuleSpeed;
+      // num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
+      //     0.1; // Assuming ~3in thick bumpers
 
-      try {
-        simPath = TrajectoryGenerator.simulateAuto(
-            widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius);
-      } catch (err) {
-        Log.error('Failed to simulate auto', err);
-      }
+      // TODO: auto
+      // try {
+      //   simPath = TrajectoryGenerator.simulateAuto(
+      //       widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius);
+      // } catch (err) {
+      //   Log.error('Failed to simulate auto', err);
+      // }
     }
 
     if (simPath != null &&
-        simPath.states.last.time.isFinite &&
-        !simPath.states.last.time.isNaN) {
+        simPath.states.last.timeSeconds.isFinite &&
+        !simPath.states.last.timeSeconds.isNaN) {
       setState(() {
         _simPath = simPath;
       });
@@ -356,8 +356,8 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       if (!_paused) {
         _previewController.stop();
         _previewController.reset();
-        _previewController.duration =
-            Duration(milliseconds: (simPath.states.last.time * 1000).toInt());
+        _previewController.duration = Duration(
+            milliseconds: (simPath.states.last.timeSeconds * 1000).toInt());
         _previewController.repeat();
       }
     }

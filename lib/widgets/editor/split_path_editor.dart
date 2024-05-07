@@ -11,7 +11,12 @@ import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/services/simulator/trajectory_generator.dart';
+import 'package:pathplanner/services/trajectory/config.dart';
+import 'package:pathplanner/services/trajectory/motor_torque_curve.dart';
+import 'package:pathplanner/services/trajectory/trajectory.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
@@ -65,7 +70,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   Waypoint? _dragOldValue;
   int? _draggedRotationIdx;
   num? _dragRotationOldValue;
-  Trajectory? _simTraj;
+  PathPlannerTrajectory? _simTraj;
   bool _paused = false;
   late bool _holonomicMode;
 
@@ -477,7 +482,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
-                  totalPathTime: _simTraj?.states.last.time ?? 1.0,
+                  totalPathTime: _simTraj?.states.last.timeSeconds ?? 1.0,
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -498,7 +503,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
-                    pathRuntime: _simTraj?.states.last.time,
+                    pathRuntime: _simTraj?.states.last.timeSeconds,
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
                     initiallySelectedRotTarget: _selectedRotTarget,
@@ -660,7 +665,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
-                  totalPathTime: _simTraj?.states.last.time ?? 1.0,
+                  totalPathTime: _simTraj?.states.last.timeSeconds ?? 1.0,
                 ),
             ],
           ),
@@ -673,24 +678,46 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   void _simulatePath() async {
     if (widget.simulate) {
       num linearVel = widget.path.previewStartingState?.velocity ?? 0;
-      num rotationRadians =
-          (widget.path.previewStartingState?.rotation ?? 0) * (pi / 180.0);
+      Rotation2d startingRotation = Rotation2d.fromDegrees(
+          widget.path.previewStartingState?.rotation ?? 0);
 
       num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
           Defaults.maxModuleSpeed;
       num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
           0.1; // Assuming ~3in thick bumpers
 
+      List<Translation2d> moduleLocations = const [
+        Translation2d(x: 10.75 * 0.0254, y: 10.75 * 0.0254),
+        Translation2d(x: 10.75 * 0.0254, y: -10.75 * 0.0254),
+        Translation2d(x: -10.75 * 0.0254, y: 10.75 * 0.0254),
+        Translation2d(x: -10.75 * 0.0254, y: -10.75 * 0.0254),
+      ];
+
       setState(() {
-        _simTraj = Trajectory.simulate(widget.path, linearVel, rotationRadians,
-            maxModuleSpeed: maxModuleSpeed, driveBaseRadius: radius);
+        _simTraj = PathPlannerTrajectory(
+            path: widget.path,
+            startingSpeeds:
+                const ChassisSpeeds(), // TODO: actual starting speeds
+            startingRotation: startingRotation,
+            robotConfig: RobotConfig(
+              massKG: 74.088,
+              moi: 6.883,
+              moduleConfig: const ModuleConfig(
+                wheelRadiusMeters: 0.048,
+                driveGearing: 5.143,
+                maxDriveVelocityMPS: 5.5,
+                driveMotorTorqueCurve: MotorTorqueCurve.kraken60A,
+              ),
+              kinematics: SwerveDriveKinematics(moduleLocations),
+              moduleLocations: moduleLocations,
+            ));
       });
 
       if (!_paused) {
         _previewController.stop();
         _previewController.reset();
-        _previewController.duration =
-            Duration(milliseconds: (_simTraj!.states.last.time * 1000).toInt());
+        _previewController.duration = Duration(
+            milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
         _previewController.repeat();
       }
     }

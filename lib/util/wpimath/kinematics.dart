@@ -24,6 +24,11 @@ class ChassisSpeeds {
   @override
   int get hashCode => Object.hash(vx, vy, omega);
 
+  @override
+  String toString() {
+    return 'ChassisSpeeds(vx: ${vx.toStringAsFixed(2)}, vy: ${vy.toStringAsFixed(2)}, omega: ${omega.toStringAsFixed(2)})';
+  }
+
   static ChassisSpeeds fromFieldRelativeSpeeds(
       ChassisSpeeds speeds, Rotation2d robotAngle) {
     Translation2d rotated =
@@ -58,11 +63,11 @@ class SwerveDriveKinematics {
     _modules = List.of(modules);
     _moduleHeadings = List.generate(_numModules, (i) => Rotation2d());
     _inverseKinematics = Matrix.zero(_numModules * 2, 3);
-    _forwardKinematics = Matrix.zero(_numModules * 2, 3);
+    _forwardKinematics = Matrix.zero(3, _numModules * 2);
 
     for (int i = 0; i < _numModules; i++) {
       _inverseKinematics.setRow([1, 0, -_modules[i].y.toDouble()], i * 2);
-      _inverseKinematics.setRow([1, 0, -_modules[i].y.toDouble()], i * 2 + 1);
+      _inverseKinematics.setRow([0, 1, _modules[i].x.toDouble()], i * 2 + 1);
     }
 
     Array2d inverse = Array2d.fixed(_numModules * 2, 3);
@@ -135,8 +140,10 @@ class SwerveDriveKinematics {
     var moduleStatesMatrix = Matrix.zero(_numModules * 2, 1);
 
     for (int i = 0; i < _numModules; i++) {
-      moduleStatesMatrix
-          .setRow([moduleStates[i].speedMetersPerSecond.toDouble()], i * 2);
+      moduleStatesMatrix.setRow([
+        moduleStates[i].speedMetersPerSecond.toDouble() *
+            moduleStates[i].angle.getCos()
+      ], i * 2);
       moduleStatesMatrix.setRow([
         moduleStates[i].speedMetersPerSecond.toDouble() *
             moduleStates[i].angle.getSin()

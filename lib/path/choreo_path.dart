@@ -4,11 +4,12 @@ import 'dart:math';
 import 'package:file/file.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/services/log.dart';
-import 'package:pathplanner/services/simulator/trajectory_generator.dart';
+import 'package:pathplanner/services/trajectory/trajectory.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 
 class ChoreoPath {
   final String name;
-  final Trajectory trajectory;
+  final PathPlannerTrajectory trajectory;
   final List<num> eventMarkerTimes;
 
   final FileSystem fs;
@@ -26,13 +27,13 @@ class ChoreoPath {
       Map<String, dynamic> json, String name, String choreoDir, FileSystem fs)
       : this(
           name: name,
-          trajectory: Trajectory(
-            states: [
+          trajectory: PathPlannerTrajectory.fromStates(
+            [
               for (Map<String, dynamic> s in json['samples'])
-                TrajectoryState(
-                  time: s['timestamp'],
-                  position: Point(s['x'], s['y']),
-                  holonomicRotationRadians: s['heading'],
+                TrajectoryState.choreo(
+                  s['timestamp'],
+                  Pose2d(Translation2d(x: s['x'], y: s['y']),
+                      Rotation2d.fromRadians(s['heading'])),
                 ),
             ],
           ),
@@ -76,7 +77,8 @@ class ChoreoPath {
 
   List<Point> getPathPositions() {
     return [
-      for (TrajectoryState s in trajectory.states) s.position,
+      for (TrajectoryState s in trajectory.states)
+        Point(s.pose.translation.x, s.pose.translation.y),
     ];
   }
 }

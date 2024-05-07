@@ -10,14 +10,16 @@ import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
 
 class PathPlannerTrajectory {
-  final List<TrajectoryState> states = [];
+  final List<TrajectoryState> states;
+
+  PathPlannerTrajectory.fromStates(this.states);
 
   PathPlannerTrajectory({
     required PathPlannerPath path,
     required ChassisSpeeds startingSpeeds,
     required Rotation2d startingRotation,
     required RobotConfig robotConfig,
-  }) {
+  }) : states = [] {
     int prevRotationTargetIdx = 0;
     Rotation2d prevRotationTargetRot = startingRotation;
     int nextRotationTargetIdx = _getNextRotationTargetIdx(path, 0);
@@ -120,12 +122,12 @@ class PathPlannerTrajectory {
     states[0].fieldSpeeds = startingSpeeds;
 
     num frictionTorque = robotConfig.moduleConfig.driveMotorTorqueCurve.get(
-        robotConfig.moduleConfig.maxDriveVelocityMPS); // TODO: air resistance?
+        robotConfig.moduleConfig.maxDriveVelocityRPM); // TODO: air resistance?
 
     num cof = 1.2; // TODO: allow for custom COF
     num moduleFrictionForce = cof * (robotConfig.massKG * 9.8);
 
-    for (int i = 1; i < states.length; i++) {
+    for (int i = 1; i < states.length - 1; i++) {
       // Calculate the linear force vector and torque acting on the whole robot
       Translation2d linearForceVec = const Translation2d();
       num totalTorque = 0.0;
@@ -417,7 +419,7 @@ class PathPlannerTrajectory {
     int high = states.length - 1;
 
     while (low != high) {
-      int mid = ((low + high) / 2) as int;
+      int mid = ((low + high) / 2).floor();
       if (getState(mid).timeSeconds < time) {
         low = mid + 1;
       } else {
@@ -523,6 +525,23 @@ class TrajectoryState {
   Rotation2d deltaRot = Rotation2d();
 
   List<SwerveModuleTrajState> moduleStates = [];
+
+  TrajectoryState();
+
+  TrajectoryState.choreo(this.timeSeconds, this.pose);
+
+  TrajectoryState copyWithTime(num time) {
+    TrajectoryState s = TrajectoryState();
+    s.timeSeconds = time;
+    s.fieldSpeeds = fieldSpeeds;
+    s.pose = pose;
+    s.heading = heading;
+    s.deltaPos = deltaPos;
+    s.deltaRot = deltaRot;
+    s.moduleStates = moduleStates;
+
+    return s;
+  }
 
   TrajectoryState interpolate(TrajectoryState endVal, num t) {
     TrajectoryState lerpedState = TrajectoryState();

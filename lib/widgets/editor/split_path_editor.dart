@@ -684,6 +684,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
           widget.path.waypoints.first.getHeadingRadians());
       Translation2d xySpeed = Translation2d.fromAngle(linearVel, heading);
 
+      // TODO
       List<Translation2d> moduleLocations = const [
         Translation2d(x: 10.75 * 0.0254, y: 10.75 * 0.0254),
         Translation2d(x: 10.75 * 0.0254, y: -10.75 * 0.0254),
@@ -693,22 +694,23 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
       setState(() {
         _simTraj = PathPlannerTrajectory(
-            path: widget.path,
-            startingSpeeds:
-                ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0),
-            startingRotation: startingRotation,
-            robotConfig: RobotConfig(
-              massKG: 74.088,
-              moi: 6.883,
-              moduleConfig: const ModuleConfig(
-                wheelRadiusMeters: 0.048,
-                driveGearing: 5.143,
-                maxDriveVelocityMPS: 5.5,
-                driveMotorTorqueCurve: MotorTorqueCurve.kraken60A,
-              ),
-              kinematics: SwerveDriveKinematics(moduleLocations),
-              moduleLocations: moduleLocations,
-            ));
+          path: widget.path,
+          startingSpeeds:
+              ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0),
+          startingRotation: startingRotation,
+          robotConfig: RobotConfig(
+            massKG: 74.088,
+            moi: 6.883,
+            moduleConfig: const ModuleConfig(
+              wheelRadiusMeters: 0.048,
+              driveGearing: 5.143,
+              maxDriveVelocityMPS: 5.5,
+              driveMotorTorqueCurve: MotorTorqueCurve.kraken60A,
+            ),
+            kinematics: SwerveDriveKinematics(moduleLocations),
+            moduleLocations: moduleLocations,
+          ),
+        );
       });
 
       if (!_paused) {

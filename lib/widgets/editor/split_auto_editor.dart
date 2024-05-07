@@ -4,11 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
+import 'package:pathplanner/services/log.dart';
+import 'package:pathplanner/services/trajectory/auto_simulator.dart';
+import 'package:pathplanner/services/trajectory/config.dart';
+import 'package:pathplanner/services/trajectory/motor_torque_curve.dart';
 import 'package:pathplanner/services/trajectory/trajectory.dart';
-import 'package:pathplanner/util/pose2d.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/pose2d.dart' as old;
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
@@ -49,7 +55,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   late bool _treeOnRight;
   bool _draggingStartPos = false;
   bool _draggingStartRot = false;
-  Pose2d? _dragOldValue;
+  old.Pose2d? _dragOldValue;
   PathPlannerTrajectory? _simPath;
   bool _paused = false;
 
@@ -182,7 +188,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               onPanEnd: (details) {
                 if (widget.auto.startingPose != null &&
                     (_draggingStartPos || _draggingStartRot)) {
-                  Pose2d dragEnd = widget.auto.startingPose!.clone();
+                  old.Pose2d dragEnd = widget.auto.startingPose!.clone();
                   widget.undoStack.add(Change(
                     _dragOldValue,
                     () {
@@ -216,7 +222,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                               Defaults.hidePathsOnHover,
                           hoveredPath: _hoveredPath,
                           fieldImage: widget.fieldImage,
-                          startingPose: null, // TODO: widget.auto.startingPose,
+                          startingPose: widget.auto.startingPose != null
+                              ? Pose2d(
+                                  Translation2d(
+                                      x: widget.auto.startingPose!.position.x,
+                                      y: widget.auto.startingPose!.position.y),
+                                  Rotation2d.fromDegrees(
+                                      widget.auto.startingPose!.rotation))
+                              : null,
                           simulatedPath: _simPath,
                           animation: _previewController.view,
                           previewColor: colorScheme.primary,
@@ -332,18 +345,33 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
         simPath = PathPlannerTrajectory.fromStates(allStates);
       }
     } else {
-      // num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
-      //     Defaults.maxModuleSpeed;
-      // num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
-      //     0.1; // Assuming ~3in thick bumpers
+      // TODO
+      List<Translation2d> moduleLocations = const [
+        Translation2d(x: 10.75 * 0.0254, y: 10.75 * 0.0254),
+        Translation2d(x: 10.75 * 0.0254, y: -10.75 * 0.0254),
+        Translation2d(x: -10.75 * 0.0254, y: 10.75 * 0.0254),
+        Translation2d(x: -10.75 * 0.0254, y: -10.75 * 0.0254),
+      ];
 
-      // TODO: auto
-      // try {
-      //   simPath = TrajectoryGenerator.simulateAuto(
-      //       widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius);
-      // } catch (err) {
-      //   Log.error('Failed to simulate auto', err);
-      // }
+      try {
+        simPath = AutoSimulator.simulateAuto(
+            widget.autoPaths,
+            widget.auto.startingPose,
+            RobotConfig(
+              massKG: 74.088,
+              moi: 6.883,
+              moduleConfig: const ModuleConfig(
+                wheelRadiusMeters: 0.048,
+                driveGearing: 5.143,
+                maxDriveVelocityMPS: 5.5,
+                driveMotorTorqueCurve: MotorTorqueCurve.kraken60A,
+              ),
+              kinematics: SwerveDriveKinematics(moduleLocations),
+              moduleLocations: moduleLocations,
+            ));
+      } catch (err) {
+        Log.error('Failed to simulate auto', err);
+      }
     }
 
     if (simPath != null &&

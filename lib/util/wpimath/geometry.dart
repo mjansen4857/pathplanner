@@ -19,6 +19,10 @@ class Pose2d {
           rotation.interpolate(endValue.rotation, t));
     }
   }
+
+  Pose2d clone() {
+    return Pose2d(translation.clone(), rotation.clone());
+  }
 }
 
 class Translation2d {
@@ -78,6 +82,14 @@ class Translation2d {
       x: MathUtil.interpolate(x, endValue.x, t),
       y: MathUtil.interpolate(y, endValue.y, t),
     );
+  }
+
+  Point asPoint() {
+    return Point(x, y);
+  }
+
+  Translation2d clone() {
+    return Translation2d(x: x, y: y);
   }
 
   @override
@@ -176,6 +188,10 @@ class Rotation2d {
 
   Rotation2d interpolate(Rotation2d endValue, num t) {
     return this + ((endValue - this) * MathUtil.clamp(t, 0, 1));
+  }
+
+  Rotation2d clone() {
+    return Rotation2d.fromRadians(_value);
   }
 
   @override

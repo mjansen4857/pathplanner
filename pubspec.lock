@@ -600,6 +600,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.0"
+  matrices:
+    dependency: "direct main"
+    description:
+      name: matrices
+      sha256: e1277be104655d46bfe4aeb8917e7c31e2ffc06e9d0461b92fc139391fc931c2
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.2.7"
   messagepack:
     dependency: transitive
     description:
@@ -808,6 +816,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.0"
+  scidart:
+    dependency: "direct main"
+    description:
+      name: scidart
+      sha256: af816eed552cadb6a9a324c594515b0cdff41617839345c382047927bd8dc02d
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.2-dev.12"
   screen_retriever:
     dependency: transitive
     description:

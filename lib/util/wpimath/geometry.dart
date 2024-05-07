@@ -8,6 +8,17 @@ class Pose2d {
   final Rotation2d rotation;
 
   const Pose2d(this.translation, this.rotation);
+
+  Pose2d interpolate(Pose2d endValue, num t) {
+    if (t < 0) {
+      return this;
+    } else if (t > 1) {
+      return endValue;
+    } else {
+      return Pose2d(translation.interpolate(endValue.translation, t),
+          rotation.interpolate(endValue.rotation, t));
+    }
+  }
 }
 
 class Translation2d {

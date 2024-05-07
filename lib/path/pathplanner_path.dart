@@ -69,7 +69,9 @@ class PathPlannerPath {
         eventMarkers = [],
         reversed = false,
         previewStartingState = PreviewStartingState(),
-        useDefaultConstraints = true {
+        useDefaultConstraints = true,
+        isHermite = Defaults.hermiteMode,
+        overrideIsHermite = null {
     waypoints.addAll([
       Waypoint(
         anchor: const Point(2.0, 7.0),
@@ -100,6 +102,8 @@ class PathPlannerPath {
     required this.folder,
     required this.previewStartingState,
     required this.useDefaultConstraints,
+    required this.isHermite,
+    required this.overrideIsHermite,
     required this.prefs
   }) : pathPoints = [] {
     isHermite = prefs.getBool(PrefsKeys.hermiteMode) ?? Defaults.hermiteMode;
@@ -138,6 +142,8 @@ class PathPlannerPath {
               ? null
               : PreviewStartingState.fromJson(json['previewStartingState']),
           useDefaultConstraints: json['useDefaultConstraints'] ?? false,
+          isHermite: json['isHermiteSpline'] ?? Defaults.hermiteMode,
+          overrideIsHermite: json['overrideIsHermite'],
         );
 
   void generateAndSavePath() {
@@ -227,6 +233,7 @@ class PathPlannerPath {
       'previewStartingState': previewStartingState?.toJson(),
       'useDefaultConstraints': useDefaultConstraints,
       'isHermiteSpline': isHermite,
+      'overrideIsHermite': overrideIsHermite
     };
   }
 
@@ -513,6 +520,8 @@ class PathPlannerPath {
       folder: folder,
       previewStartingState: previewStartingState?.clone(),
       useDefaultConstraints: useDefaultConstraints,
+      isHermite: isHermite,
+      overrideIsHermite: overrideIsHermite
     );
   }
 

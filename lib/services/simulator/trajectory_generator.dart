@@ -137,6 +137,8 @@ class TrajectoryGenerator {
         folder: null,
         previewStartingState: null,
         useDefaultConstraints: path.useDefaultConstraints,
+        isHermite: path.isHermite,
+        overrideIsHermite: path.overrideIsHermite
       );
     } else if ((closestPointIdx == 0 && robotNextControl == null) ||
         ((closestDist -
@@ -199,6 +201,8 @@ class TrajectoryGenerator {
         folder: null,
         previewStartingState: null,
         useDefaultConstraints: path.useDefaultConstraints,
+        isHermite: path.isHermite,
+        overrideIsHermite: path.overrideIsHermite
       );
     }
 
@@ -250,6 +254,8 @@ class TrajectoryGenerator {
         folder: null,
         previewStartingState: null,
         useDefaultConstraints: path.useDefaultConstraints,
+        isHermite: path.isHermite,
+        overrideIsHermite: path.overrideIsHermite
       );
     }
 
@@ -379,6 +385,8 @@ class TrajectoryGenerator {
       folder: null,
       previewStartingState: null,
       useDefaultConstraints: path.useDefaultConstraints,
+      isHermite: path.isHermite,
+      overrideIsHermite: path.overrideIsHermite
     );
   }
 

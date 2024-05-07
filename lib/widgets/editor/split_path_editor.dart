@@ -10,7 +10,6 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
-import 'package:pathplanner/services/simulator/trajectory_generator.dart';
 import 'package:pathplanner/services/trajectory/config.dart';
 import 'package:pathplanner/services/trajectory/motor_torque_curve.dart';
 import 'package:pathplanner/services/trajectory/trajectory.dart';
@@ -681,10 +680,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       Rotation2d startingRotation = Rotation2d.fromDegrees(
           widget.path.previewStartingState?.rotation ?? 0);
 
-      num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
-          Defaults.maxModuleSpeed;
-      num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
-          0.1; // Assuming ~3in thick bumpers
+      Rotation2d heading = Rotation2d.fromRadians(
+          widget.path.waypoints.first.getHeadingRadians());
+      Translation2d xySpeed = Translation2d.fromAngle(linearVel, heading);
 
       List<Translation2d> moduleLocations = const [
         Translation2d(x: 10.75 * 0.0254, y: 10.75 * 0.0254),
@@ -697,7 +695,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
         _simTraj = PathPlannerTrajectory(
             path: widget.path,
             startingSpeeds:
-                const ChassisSpeeds(), // TODO: actual starting speeds
+                ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0),
             startingRotation: startingRotation,
             robotConfig: RobotConfig(
               massKG: 74.088,

@@ -528,7 +528,7 @@ class TrajectoryState {
 
   TrajectoryState();
 
-  TrajectoryState.choreo(this.timeSeconds, this.pose);
+  TrajectoryState.pregen(this.timeSeconds, this.pose);
 
   TrajectoryState copyWithTime(num time) {
     TrajectoryState s = TrajectoryState();

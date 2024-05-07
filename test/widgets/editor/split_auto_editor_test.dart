@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
-import 'package:pathplanner/services/simulator/trajectory_generator.dart';
-import 'package:pathplanner/util/pose2d.dart';
+import 'package:pathplanner/services/trajectory/trajectory.dart';
+import 'package:pathplanner/util/pose2d.dart' as old;
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/path/event_marker.dart';
@@ -15,6 +15,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
@@ -56,7 +57,7 @@ void main() {
       ),
       autoDir: '/autos',
       fs: fs,
-      startingPose: Pose2d(
+      startingPose: old.Pose2d(
         position: Point(testPath.waypoints[0].anchor.x - 0.5,
             testPath.waypoints[0].anchor.y - 0.5),
         rotation: 0.0,
@@ -88,9 +89,11 @@ void main() {
           autoChoreoPaths: [
             ChoreoPath(
               name: 'test',
-              trajectory: Trajectory(states: [
-                TrajectoryState(time: 0.0),
-                TrajectoryState(time: 1.0),
+              trajectory: PathPlannerTrajectory.fromStates([
+                TrajectoryState.pregen(
+                    0.0, Pose2d(const Translation2d(), Rotation2d())),
+                TrajectoryState.pregen(
+                    1.0, Pose2d(const Translation2d(), Rotation2d())),
               ]),
               fs: fs,
               choreoDir: '/choreo',

@@ -30,7 +30,7 @@ class ChoreoPath {
           trajectory: PathPlannerTrajectory.fromStates(
             [
               for (Map<String, dynamic> s in json['samples'])
-                TrajectoryState.choreo(
+                TrajectoryState.pregen(
                   s['timestamp'],
                   Pose2d(Translation2d(x: s['x'], y: s['y']),
                       Rotation2d.fromRadians(s['heading'])),

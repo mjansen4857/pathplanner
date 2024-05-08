@@ -7,7 +7,7 @@ import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/pages/auto_editor_page.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/services/trajectory/trajectory.dart';
+import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/pose2d.dart' as old;
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';

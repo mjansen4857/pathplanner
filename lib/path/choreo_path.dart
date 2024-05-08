@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:file/file.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/services/log.dart';
-import 'package:pathplanner/services/trajectory/trajectory.dart';
+import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 
 class ChoreoPath {

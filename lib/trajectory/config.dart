@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:pathplanner/services/trajectory/motor_torque_curve.dart';
+import 'package:pathplanner/trajectory/motor_torque_curve.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/kinematics.dart';
 

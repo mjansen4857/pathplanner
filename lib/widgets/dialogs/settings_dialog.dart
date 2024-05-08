@@ -354,7 +354,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                         items: const [
                                           DropdownMenuItem<String>(
                                             value: 'KRAKEN_60A',
-                                            child: Text('KRAKEN_60A'),
+                                            child: Text('Kraken (60A)'),
                                           )
                                         ],
                                       ),

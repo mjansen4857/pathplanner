@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/services/trajectory/config.dart';
+import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/kinematics.dart';

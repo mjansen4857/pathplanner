@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
-import 'package:pathplanner/services/trajectory/trajectory.dart';
+import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/pose2d.dart' as old;
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';

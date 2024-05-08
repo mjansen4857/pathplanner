@@ -365,19 +365,35 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                         items: const [
                                           DropdownMenuItem<String>(
                                             value: 'KRAKEN',
-                                            child: Text('Kraken'),
+                                            child: Text('Kraken X60'),
                                           ),
                                           DropdownMenuItem<String>(
                                             value: 'KRAKENFOC',
-                                            child: Text('Kraken FOC'),
+                                            child: Text('Kraken X60 FOC'),
                                           ),
                                           DropdownMenuItem<String>(
                                             value: 'FALCON',
-                                            child: Text('Falcon'),
+                                            child: Text('Falcon 500'),
                                           ),
                                           DropdownMenuItem<String>(
                                             value: 'FALCONFOC',
-                                            child: Text('Falcon FOC'),
+                                            child: Text('Falcon 500 FOC'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'VORTEX',
+                                            child: Text('NEO Vortex'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'NEO',
+                                            child: Text('NEO'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'CIM',
+                                            child: Text('CIM'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'MINICIM',
+                                            child: Text('MiniCIM'),
                                           ),
                                         ],
                                       ),

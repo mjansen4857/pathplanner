@@ -361,22 +361,22 @@ void main() {
     final dropdown = find.byType(DropdownButton<String>).first;
 
     expect(dropdown, findsOneWidget);
-    expect(find.descendant(of: dropdown, matching: find.text('Kraken')),
+    expect(find.descendant(of: dropdown, matching: find.text('Kraken X60')),
         findsOneWidget);
 
     await widgetTester.tap(dropdown);
     await widgetTester.pumpAndSettle();
 
-    expect(find.text('Kraken'), findsWidgets);
-    expect(find.text('Kraken FOC'), findsOneWidget);
+    expect(find.text('Kraken X60'), findsWidgets);
+    expect(find.text('Kraken X60 FOC'), findsOneWidget);
 
-    await widgetTester.tap(find.text('Kraken FOC'));
+    await widgetTester.tap(find.text('Kraken X60 FOC'));
     await widgetTester.pumpAndSettle();
 
     expect(settingsChanged, true);
     expect(prefs.getString(PrefsKeys.torqueCurve), 'KRAKENFOC_60A');
-    expect(find.text('Kraken FOC'), findsOneWidget);
-    expect(find.text('Kraken'), findsNothing);
+    expect(find.text('Kraken X60 FOC'), findsOneWidget);
+    expect(find.text('Kraken X60'), findsNothing);
   });
 
   testWidgets('current limit dropdown', (widgetTester) async {

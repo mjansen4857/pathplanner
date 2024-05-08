@@ -31,6 +31,36 @@ class MotorTorqueCurve extends InterpolatingMap {
     4848: 1.523,
     5800: 0.0,
   });
+  static const MotorTorqueCurve falcon40A = MotorTorqueCurve(0.0182, {
+    0: 0.703,
+    5412: 0.703,
+    6380: 0.0,
+  });
+  static const MotorTorqueCurve falcon60A = MotorTorqueCurve(0.0182, {
+    0: 1.068,
+    4920: 1.068,
+    6380: 0.0,
+  });
+  static const MotorTorqueCurve falcon80A = MotorTorqueCurve(0.0182, {
+    0: 1.433,
+    4407: 1.433,
+    6380: 0.0,
+  });
+  static const MotorTorqueCurve falconFOC40A = MotorTorqueCurve(0.0192, {
+    0: 0.74,
+    5295: 0.74,
+    6080: 0.0,
+  });
+  static const MotorTorqueCurve falconFOC60A = MotorTorqueCurve(0.0192, {
+    0: 1.124,
+    4888: 1.124,
+    6080: 0.0,
+  });
+  static const MotorTorqueCurve falconFOC80A = MotorTorqueCurve(0.0192, {
+    0: 1.508,
+    4501: 1.508,
+    6080: 0.0,
+  });
 
   final num nmPerAmp;
 
@@ -44,6 +74,12 @@ class MotorTorqueCurve extends InterpolatingMap {
       'KRAKEN_FOC_40A' => krakenFOC40A,
       'KRAKEN_FOC_60A' => krakenFOC60A,
       'KRAKEN_FOC_80A' => krakenFOC80A,
+      'FALCON_40A' => falcon40A,
+      'FALCON_60A' => falcon60A,
+      'FALCON_80A' => falcon80A,
+      'FALCON_FOC_40A' => falconFOC40A,
+      'FALCON_FOC_60A' => falconFOC60A,
+      'FALCON_FOC_80A' => falconFOC80A,
       _ => kraken60A,
     };
   }

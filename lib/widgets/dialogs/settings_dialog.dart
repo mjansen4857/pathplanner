@@ -379,6 +379,30 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                             value: 'KRAKEN_FOC_80A',
                                             child: Text('Kraken FOC (80A)'),
                                           ),
+                                          DropdownMenuItem<String>(
+                                            value: 'FALCON_40A',
+                                            child: Text('Falcon (40A)'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'FALCON_60A',
+                                            child: Text('Falcon (60A)'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'FALCON_80A',
+                                            child: Text('Falcon (80A)'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'FALCON_FOC_40A',
+                                            child: Text('Falcon FOC (40A)'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'FALCON_FOC_60A',
+                                            child: Text('Falcon FOC (60A)'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'FALCON_FOC_80A',
+                                            child: Text('Falcon FOC (80A)'),
+                                          ),
                                         ],
                                       ),
                                     ),

@@ -338,6 +338,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                         value: _driveMotor,
                                         isExpanded: true,
                                         underline: Container(),
+                                        menuMaxHeight: 250,
                                         icon: const Icon(Icons.arrow_drop_down),
                                         style: TextStyle(
                                             fontSize: 14,
@@ -355,12 +356,28 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                         },
                                         items: const [
                                           DropdownMenuItem<String>(
+                                            value: 'KRAKEN_40A',
+                                            child: Text('Kraken (40A)'),
+                                          ),
+                                          DropdownMenuItem<String>(
                                             value: 'KRAKEN_60A',
                                             child: Text('Kraken (60A)'),
                                           ),
                                           DropdownMenuItem<String>(
+                                            value: 'KRAKEN_80A',
+                                            child: Text('Kraken (80A)'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'KRAKEN_FOC_40A',
+                                            child: Text('Kraken FOC (40A)'),
+                                          ),
+                                          DropdownMenuItem<String>(
                                             value: 'KRAKEN_FOC_60A',
                                             child: Text('Kraken FOC (60A)'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'KRAKEN_FOC_80A',
+                                            child: Text('Kraken FOC (80A)'),
                                           ),
                                         ],
                                       ),

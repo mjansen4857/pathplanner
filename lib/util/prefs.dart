@@ -24,8 +24,15 @@ class PrefsKeys {
   static const String defaultMaxAccel = 'defaultMaxAccel';
   static const String defaultMaxAngVel = 'defaultMaxAngVel';
   static const String defaultMaxAngAccel = 'defaultMaxAngAccel';
-  static const String maxModuleSpeed = 'maxModuleSpeed';
   static const String seen2024Warning = 'seen2024Warning';
+  static const String robotMass = 'robotMass';
+  static const String robotMOI = 'robotMOI';
+  static const String robotWheelbase = 'robotWheelbase';
+  static const String robotTrackwidth = 'robotTrackwidth';
+  static const String driveWheelRadius = 'driveWheelRadius';
+  static const String driveGearing = 'driveGearing';
+  static const String maxDriveSpeed = 'maxDriveSpeed';
+  static const String driveMotor = 'driveMotor';
 }
 
 class Defaults {
@@ -52,5 +59,12 @@ class Defaults {
   static const double defaultMaxAccel = 3.0;
   static const double defaultMaxAngVel = 540.0;
   static const double defaultMaxAngAccel = 720.0;
-  static const double maxModuleSpeed = 4.5;
+  static const double robotMass = 74.088;
+  static const double robotMOI = 6.883;
+  static const double robotWheelbase = 0.546;
+  static const double robotTrackwidth = 0.546;
+  static const double driveWheelRadius = 0.048;
+  static const double driveGearing = 5.143;
+  static const double maxDriveSpeed = 5.5;
+  static const String driveMotor = 'KRAKEN_60A';
 }

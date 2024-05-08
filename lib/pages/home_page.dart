@@ -548,8 +548,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         PrefsKeys.defaultMaxAngAccel,
         json[PrefsKeys.defaultMaxAngAccel]?.toDouble() ??
             Defaults.defaultMaxAngAccel);
-    widget.prefs.setDouble(PrefsKeys.maxModuleSpeed,
-        json[PrefsKeys.maxModuleSpeed]?.toDouble() ?? Defaults.maxModuleSpeed);
+    widget.prefs.setDouble(PrefsKeys.robotMass,
+        json[PrefsKeys.robotMass]?.toDouble() ?? Defaults.robotMass);
+    widget.prefs.setDouble(PrefsKeys.robotMOI,
+        json[PrefsKeys.robotMOI]?.toDouble() ?? Defaults.robotMOI);
+    widget.prefs.setDouble(PrefsKeys.robotWheelbase,
+        json[PrefsKeys.robotWheelbase]?.toDouble() ?? Defaults.robotWheelbase);
+    widget.prefs.setDouble(
+        PrefsKeys.robotTrackwidth,
+        json[PrefsKeys.robotTrackwidth]?.toDouble() ??
+            Defaults.robotTrackwidth);
+    widget.prefs.setDouble(
+        PrefsKeys.driveWheelRadius,
+        json[PrefsKeys.driveWheelRadius]?.toDouble() ??
+            Defaults.driveWheelRadius);
+    widget.prefs.setDouble(PrefsKeys.driveGearing,
+        json[PrefsKeys.driveGearing]?.toDouble() ?? Defaults.driveGearing);
+    widget.prefs.setDouble(PrefsKeys.maxDriveSpeed,
+        json[PrefsKeys.maxDriveSpeed]?.toDouble() ?? Defaults.maxDriveSpeed);
+    widget.prefs.setString(PrefsKeys.driveMotor,
+        json[PrefsKeys.driveMotor] ?? Defaults.driveMotor);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
@@ -586,9 +604,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.defaultMaxAngAccel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAccel,
-      PrefsKeys.maxModuleSpeed:
-          widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
-              Defaults.maxModuleSpeed,
+      PrefsKeys.robotMass:
+          widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
+      PrefsKeys.robotMOI:
+          widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
+      PrefsKeys.robotWheelbase:
+          widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
+              Defaults.robotWheelbase,
+      PrefsKeys.robotTrackwidth:
+          widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
+              Defaults.robotTrackwidth,
+      PrefsKeys.driveWheelRadius:
+          widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+              Defaults.driveWheelRadius,
+      PrefsKeys.driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
+          Defaults.driveGearing,
+      PrefsKeys.maxDriveSpeed:
+          widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
+              Defaults.maxDriveSpeed,
+      PrefsKeys.driveMotor:
+          widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

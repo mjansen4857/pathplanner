@@ -6,8 +6,6 @@ import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../test_helpers.dart';
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -45,7 +43,6 @@ void main() {
   });
 
   testWidgets('robot width text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -64,7 +61,7 @@ void main() {
     final textField = find.widgetWithText(NumberTextField, 'Robot Width (M)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('0.10')),
+    expect(find.descendant(of: textField, matching: find.text('0.100')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '1.0');
@@ -76,7 +73,6 @@ void main() {
   });
 
   testWidgets('robot length text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -95,7 +91,7 @@ void main() {
     final textField = find.widgetWithText(NumberTextField, 'Robot Length (M)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('0.20')),
+    expect(find.descendant(of: textField, matching: find.text('0.200')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '1.0');
@@ -384,7 +380,6 @@ void main() {
   });
 
   testWidgets('default max vel text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -416,7 +411,6 @@ void main() {
   });
 
   testWidgets('default max accel text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -448,7 +442,6 @@ void main() {
   });
 
   testWidgets('default max ang vel text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -480,7 +473,6 @@ void main() {
   });
 
   testWidgets('default max ang accel text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -512,7 +504,6 @@ void main() {
   });
 
   testWidgets('field image dropdown', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -550,7 +541,6 @@ void main() {
   });
 
   testWidgets('team color picker', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -586,7 +576,6 @@ void main() {
   });
 
   testWidgets('telemetry host text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -618,7 +607,6 @@ void main() {
   });
 
   testWidgets('holonomic mode chip', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -651,7 +639,6 @@ void main() {
   });
 
   testWidgets('hot reload chip', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(

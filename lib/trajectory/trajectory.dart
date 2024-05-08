@@ -566,6 +566,11 @@ class TrajectoryState {
     lerpedState.deltaPos = MathUtil.interpolate(deltaPos, endVal.deltaPos, t);
     lerpedState.deltaRot = deltaRot.interpolate(endVal.deltaRot, t);
 
+    for (int i = 0; i < moduleStates.length; i++) {
+      lerpedState.moduleStates
+          .add(moduleStates[i].interpolate(endVal.moduleStates[i], t));
+    }
+
     return lerpedState;
   }
 }
@@ -575,4 +580,17 @@ class SwerveModuleTrajState extends SwerveModuleState {
   Translation2d fieldPos = const Translation2d();
 
   num deltaPos = 0.0;
+
+  SwerveModuleTrajState interpolate(SwerveModuleTrajState endValue, num t) {
+    SwerveModuleTrajState lerped = SwerveModuleTrajState();
+
+    lerped.speedMetersPerSecond = MathUtil.interpolate(
+        speedMetersPerSecond, endValue.speedMetersPerSecond, t);
+    lerped.angle = angle.interpolate(endValue.angle, t);
+    lerped.fieldAngle = fieldAngle.interpolate(endValue.fieldAngle, t);
+    lerped.fieldPos = fieldPos.interpolate(endValue.fieldPos, t);
+    lerped.deltaPos = MathUtil.interpolate(deltaPos, endValue.deltaPos, t);
+
+    return lerped;
+  }
 }

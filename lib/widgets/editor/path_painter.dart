@@ -189,11 +189,10 @@ class PathPainter extends CustomPainter {
       Rotation2d rotation = state.pose.rotation;
 
       PathPainterUtil.paintRobotModules(
-          Point(state.pose.translation.x, state.pose.translation.y),
-          rotation.getDegrees(),
+          state.moduleStates
+              .map((e) => Pose2d(e.fieldPos, e.fieldAngle))
+              .toList(),
           fieldImage,
-          wheelbase,
-          trackwidth,
           scale,
           canvas,
           previewColor ?? Colors.grey);

@@ -206,11 +206,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   num rotation;
                   Point pos;
                   if (i == -2) {
-                    if (widget.path.previewStartingState == null) {
-                      continue;
-                    }
-
-                    rotation = widget.path.previewStartingState!.rotation;
+                    rotation = widget.path.idealStartingState.rotation;
                     pos = widget.path.waypoints.first.anchor;
                   } else if (i == -1) {
                     rotation = widget.path.goalEndState.rotation;
@@ -315,7 +311,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
                   setState(() {
                     if (_draggedRotationIdx == -2) {
-                      widget.path.previewStartingState!.rotation = rotationDeg;
+                      widget.path.idealStartingState.rotation = rotationDeg;
                     } else if (_draggedRotationIdx == -1) {
                       widget.path.goalEndState.rotation = rotationDeg;
                     } else {
@@ -360,22 +356,19 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   _draggedPoint = null;
                 } else if (_draggedRotationIdx != null) {
                   if (_draggedRotationIdx == -2) {
-                    num endRotation =
-                        widget.path.previewStartingState!.rotation;
+                    num endRotation = widget.path.idealStartingState.rotation;
                     widget.undoStack.add(Change(
                       _dragRotationOldValue,
                       () {
                         setState(() {
-                          widget.path.previewStartingState!.rotation =
-                              endRotation;
+                          widget.path.idealStartingState.rotation = endRotation;
                           widget.path.generateAndSavePath();
                           _simulatePath();
                         });
                       },
                       (oldValue) {
                         setState(() {
-                          widget.path.previewStartingState!.rotation =
-                              oldValue!;
+                          widget.path.idealStartingState.rotation = oldValue!;
                           widget.path.generateAndSavePath();
                           _simulatePath();
                         });
@@ -676,9 +669,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   // marked as async so it can be called from initState
   void _simulatePath() async {
     if (widget.simulate) {
-      num linearVel = widget.path.previewStartingState?.velocity ?? 0;
-      Rotation2d startingRotation = Rotation2d.fromDegrees(
-          widget.path.previewStartingState?.rotation ?? 0);
+      num linearVel = widget.path.idealStartingState.velocity;
+      Rotation2d startingRotation =
+          Rotation2d.fromDegrees(widget.path.idealStartingState.rotation);
 
       Rotation2d heading = Rotation2d.fromRadians(
           widget.path.waypoints.first.getHeadingRadians());

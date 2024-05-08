@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/path/preview_starting_state.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
-class PreviewStartingStateTree extends StatelessWidget {
+class IdealStartingStateTree extends StatelessWidget {
   final PathPlannerPath path;
   final VoidCallback? onPathChanged;
   final ChangeStack undoStack;
   final bool holonomicMode;
 
-  const PreviewStartingStateTree({
+  const IdealStartingStateTree({
     super.key,
     required this.path,
     this.onPathChanged,
@@ -22,7 +21,7 @@ class PreviewStartingStateTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TreeCardNode(
-      title: const Text('Preview Starting State'),
+      title: const Text('Ideal Starting State'),
       initiallyExpanded: path.previewStartingStateExpanded,
       onExpansionChanged: (value) {
         if (value != null) {
@@ -38,15 +37,13 @@ class PreviewStartingStateTree extends StatelessWidget {
               Expanded(
                 child: NumberTextField(
                   initialText:
-                      path.previewStartingState?.velocity.toStringAsFixed(2) ??
-                          '',
+                      path.idealStartingState.velocity.toStringAsFixed(2),
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
-                  enabled: path.previewStartingState != null,
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          () => path.previewStartingState!.velocity = value);
+                          () => path.idealStartingState.velocity = value);
                     }
                   },
                 ),
@@ -55,11 +52,9 @@ class PreviewStartingStateTree extends StatelessWidget {
               if (holonomicMode)
                 Expanded(
                   child: NumberTextField(
-                    initialText: path.previewStartingState?.rotation
-                            .toStringAsFixed(2) ??
-                        '',
+                    initialText:
+                        path.idealStartingState.rotation.toStringAsFixed(2),
                     label: 'Rotation (Deg)',
-                    enabled: path.previewStartingState != null,
                     onSubmitted: (value) {
                       if (value != null) {
                         num rot = value % 360;
@@ -67,7 +62,7 @@ class PreviewStartingStateTree extends StatelessWidget {
                           rot -= 360;
                         }
                         _addChange(
-                            () => path.previewStartingState!.rotation = rot);
+                            () => path.idealStartingState.rotation = rot);
                       }
                     },
                   ),
@@ -75,43 +70,19 @@ class PreviewStartingStateTree extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Checkbox(
-              value: path.previewStartingState != null,
-              onChanged: (value) {
-                if (value ?? false) {
-                  _addChange(() {
-                    path.previewStartingState = PreviewStartingState();
-                  });
-                } else {
-                  _addChange(() {
-                    path.previewStartingState = null;
-                  });
-                }
-              },
-            ),
-            const SizedBox(width: 4),
-            const Text(
-              'Preset Starting State (Preview Only)',
-              style: TextStyle(fontSize: 18),
-            ),
-          ],
-        ),
       ],
     );
   }
 
   void _addChange(VoidCallback execute) {
     undoStack.add(Change(
-      path.previewStartingState?.clone(),
+      path.idealStartingState.clone(),
       () {
         execute.call();
         onPathChanged?.call();
       },
       (oldValue) {
-        path.previewStartingState = oldValue?.clone();
+        path.idealStartingState = oldValue.clone();
         onPathChanged?.call();
       },
     ));

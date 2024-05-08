@@ -9,7 +9,7 @@ import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/path/preview_starting_state.dart';
+import 'package:pathplanner/path/ideal_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -366,10 +366,10 @@ void main() {
     expect(path.goalEndState.rotation, closeTo(0, 0.1));
   });
 
-  testWidgets('drag preview starting state rotation', (widgetTester) async {
+  testWidgets('drag ideal starting state rotation', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    path.previewStartingState = PreviewStartingState();
+    path.idealStartingState = IdealStartingState();
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -403,12 +403,12 @@ void main() {
     await gesture.up();
     await widgetTester.pumpAndSettle();
 
-    expect(path.previewStartingState!.rotation, closeTo(90, 1.0));
+    expect(path.idealStartingState.rotation, closeTo(90, 1.0));
 
     undoStack.undo();
     await widgetTester.pumpAndSettle();
 
-    expect(path.previewStartingState!.rotation, closeTo(0, 0.1));
+    expect(path.idealStartingState.rotation, closeTo(0, 0.1));
   });
 
   testWidgets('delete waypoint', (widgetTester) async {

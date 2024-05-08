@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:file/memory.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
+import 'package:pathplanner/path/ideal_starting_state.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -132,7 +133,10 @@ class AutoSimulator {
         fs: MemoryFileSystem(),
         reversed: path.reversed,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(
+          velocity: linearVel,
+          rotation: startingPose.rotation,
+        ),
         useDefaultConstraints: path.useDefaultConstraints,
       );
     } else if ((closestPointIdx == 0 && robotNextControl == null) ||
@@ -193,7 +197,10 @@ class AutoSimulator {
         fs: MemoryFileSystem(),
         reversed: path.reversed,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(
+          velocity: linearVel,
+          rotation: startingPose.rotation,
+        ),
         useDefaultConstraints: path.useDefaultConstraints,
       );
     }
@@ -243,7 +250,10 @@ class AutoSimulator {
         fs: MemoryFileSystem(),
         reversed: path.reversed,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(
+          velocity: linearVel,
+          rotation: startingPose.rotation,
+        ),
         useDefaultConstraints: path.useDefaultConstraints,
       );
     }
@@ -371,7 +381,10 @@ class AutoSimulator {
       fs: MemoryFileSystem(),
       reversed: path.reversed,
       folder: null,
-      previewStartingState: null,
+      idealStartingState: IdealStartingState(
+        velocity: linearVel,
+        rotation: startingPose.rotation,
+      ),
       useDefaultConstraints: path.useDefaultConstraints,
     );
   }

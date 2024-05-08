@@ -200,6 +200,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         child: NumberTextField(
                           initialText: _wheelbase.toStringAsFixed(3),
                           label: 'Wheelbase (M)',
+                          enabled: _holonomicMode,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -349,6 +350,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                             widget.prefs.setString(
                                                 PrefsKeys.driveMotor,
                                                 _driveMotor);
+                                            widget.onSettingsChanged();
                                           }
                                         },
                                         items: const [
@@ -429,7 +431,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
                             child: NumberTextField(
                               initialText: _defaultMaxAngVel.toStringAsFixed(2),
                               label: 'Max Angular Velocity (Deg/S)',
-                              enabled: _holonomicMode,
                               onSubmitted: (value) {
                                 if (value != null) {
                                   widget.prefs.setDouble(
@@ -449,7 +450,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
                               initialText:
                                   _defaultMaxAngAccel.toStringAsFixed(2),
                               label: 'Max Angular Accel (Deg/S²)',
-                              enabled: _holonomicMode,
                               onSubmitted: (value) {
                                 if (value != null) {
                                   widget.prefs.setDouble(

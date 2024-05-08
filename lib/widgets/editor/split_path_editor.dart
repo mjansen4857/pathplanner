@@ -684,12 +684,17 @@ class _SplitPathEditorState extends State<SplitPathEditor>
           widget.path.waypoints.first.getHeadingRadians());
       Translation2d xySpeed = Translation2d.fromAngle(linearVel, heading);
 
-      // TODO
-      List<Translation2d> moduleLocations = const [
-        Translation2d(x: 10.75 * 0.0254, y: 10.75 * 0.0254),
-        Translation2d(x: 10.75 * 0.0254, y: -10.75 * 0.0254),
-        Translation2d(x: -10.75 * 0.0254, y: 10.75 * 0.0254),
-        Translation2d(x: -10.75 * 0.0254, y: -10.75 * 0.0254),
+      num halfWheelbase = (widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
+              Defaults.robotWheelbase) /
+          2;
+      num halfTrackwidth = (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
+              Defaults.robotTrackwidth) /
+          2;
+      List<Translation2d> moduleLocations = [
+        Translation2d(x: halfWheelbase, y: halfTrackwidth),
+        Translation2d(x: halfWheelbase, y: -halfTrackwidth),
+        Translation2d(x: -halfWheelbase, y: halfTrackwidth),
+        Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
       ];
 
       setState(() {
@@ -699,14 +704,24 @@ class _SplitPathEditorState extends State<SplitPathEditor>
               ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0),
           startingRotation: startingRotation,
           robotConfig: RobotConfig(
-            massKG: 74.088,
-            moi: 6.883,
-            moduleConfig: const ModuleConfig(
-              wheelRadiusMeters: 0.048,
-              driveGearing: 5.143,
-              maxDriveVelocityMPS: 5.5,
-              driveMotorTorqueCurve: MotorTorqueCurve.kraken60A,
-              wheelCOF: 1.2,
+            massKG: widget.prefs.getDouble(PrefsKeys.robotMass) ??
+                Defaults.robotMass,
+            moi:
+                widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
+            moduleConfig: ModuleConfig(
+              wheelRadiusMeters:
+                  widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+                      Defaults.driveWheelRadius,
+              driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
+                  Defaults.driveGearing,
+              maxDriveVelocityRPM:
+                  widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ??
+                      Defaults.maxDriveRPM,
+              driveMotorTorqueCurve: MotorTorqueCurve.fromString(
+                  widget.prefs.getString(PrefsKeys.driveMotor) ??
+                      Defaults.driveMotor),
+              wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
+                  Defaults.wheelCOF,
             ),
             kinematics: SwerveDriveKinematics(moduleLocations),
             moduleLocations: moduleLocations,

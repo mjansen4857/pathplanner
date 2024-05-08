@@ -564,8 +564,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Defaults.driveWheelRadius);
     widget.prefs.setDouble(PrefsKeys.driveGearing,
         json[PrefsKeys.driveGearing]?.toDouble() ?? Defaults.driveGearing);
-    widget.prefs.setDouble(PrefsKeys.maxDriveSpeed,
-        json[PrefsKeys.maxDriveSpeed]?.toDouble() ?? Defaults.maxDriveSpeed);
+    widget.prefs.setDouble(PrefsKeys.maxDriveRPM,
+        json[PrefsKeys.maxDriveRPM]?.toDouble() ?? Defaults.maxDriveRPM);
     widget.prefs.setString(PrefsKeys.driveMotor,
         json[PrefsKeys.driveMotor] ?? Defaults.driveMotor);
     widget.prefs.setDouble(PrefsKeys.wheelCOF,
@@ -621,9 +621,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Defaults.driveWheelRadius,
       PrefsKeys.driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
           Defaults.driveGearing,
-      PrefsKeys.maxDriveSpeed:
-          widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
-              Defaults.maxDriveSpeed,
+      PrefsKeys.maxDriveRPM:
+          widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM,
       PrefsKeys.driveMotor:
           widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
       PrefsKeys.wheelCOF:

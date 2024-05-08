@@ -31,7 +31,7 @@ class PrefsKeys {
   static const String robotTrackwidth = 'robotTrackwidth';
   static const String driveWheelRadius = 'driveWheelRadius';
   static const String driveGearing = 'driveGearing';
-  static const String maxDriveSpeed = 'maxDriveSpeed';
+  static const String maxDriveRPM = 'maxDriveRPM';
   static const String driveMotor = 'driveMotor';
   static const String wheelCOF = 'wheelCOF';
 }
@@ -66,7 +66,7 @@ class Defaults {
   static const double robotTrackwidth = 0.546;
   static const double driveWheelRadius = 0.048;
   static const double driveGearing = 5.143;
-  static const double maxDriveSpeed = 5.5;
+  static const double maxDriveRPM = 5650.0;
   static const String driveMotor = 'KRAKEN_60A';
   static const double wheelCOF = 1.2;
 }

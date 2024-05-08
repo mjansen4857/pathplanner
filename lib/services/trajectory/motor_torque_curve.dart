@@ -10,4 +10,15 @@ class MotorTorqueCurve extends InterpolatingMap {
   final num nmPerAmp;
 
   const MotorTorqueCurve(this.nmPerAmp, super._map);
+
+  static MotorTorqueCurve fromString(String curveName) {
+    return switch (curveName) {
+      _ => kraken60A,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'TorqueCurve($map)';
+  }
 }

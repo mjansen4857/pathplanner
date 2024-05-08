@@ -43,7 +43,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late num _trackwidth;
   late num _wheelRadius;
   late num _driveGearing;
-  late num _maxDriveSpeed;
+  late num _maxDriveRPM;
   late num _wheelCOF;
   late String _driveMotor;
   late num _defaultMaxVel;
@@ -74,8 +74,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
         Defaults.driveWheelRadius;
     _driveGearing =
         widget.prefs.getDouble(PrefsKeys.driveGearing) ?? Defaults.driveGearing;
-    _maxDriveSpeed = widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
-        Defaults.maxDriveSpeed;
+    _maxDriveRPM =
+        widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM;
     _wheelCOF = widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF;
     _driveMotor =
         widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor;
@@ -122,7 +122,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _width.toStringAsFixed(2),
+                          initialText: _width.toStringAsFixed(3),
                           label: 'Robot Width (M)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -139,7 +139,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _length.toStringAsFixed(2),
+                          initialText: _length.toStringAsFixed(3),
                           label: 'Robot Length (M)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -160,7 +160,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _mass.toStringAsFixed(2),
+                          initialText: _mass.toStringAsFixed(3),
                           label: 'Robot Mass (KG)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -177,7 +177,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _moi.toStringAsFixed(2),
+                          initialText: _moi.toStringAsFixed(3),
                           label: 'Robot MOI (KG*M²)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -198,7 +198,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _wheelbase.toStringAsFixed(2),
+                          initialText: _wheelbase.toStringAsFixed(3),
                           label: 'Wheelbase (M)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -215,7 +215,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _trackwidth.toStringAsFixed(2),
+                          initialText: _trackwidth.toStringAsFixed(3),
                           label: 'Trackwidth (M)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -238,7 +238,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _wheelRadius.toStringAsFixed(2),
+                          initialText: _wheelRadius.toStringAsFixed(3),
                           label: 'Wheel Radius (M)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -255,7 +255,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _driveGearing.toStringAsFixed(2),
+                          initialText: _driveGearing.toStringAsFixed(3),
                           label: 'Drive Gearing',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -276,14 +276,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _maxDriveSpeed.toStringAsFixed(2),
-                          label: 'Max Drive Speed (M/S)',
+                          initialText: _maxDriveRPM.round().toString(),
+                          label: 'Max Drive RPM',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
-                                  PrefsKeys.maxDriveSpeed, value.toDouble());
+                                  PrefsKeys.maxDriveRPM, value.toDouble());
                               setState(() {
-                                _maxDriveSpeed = value;
+                                _maxDriveRPM = value;
                               });
                             }
                             widget.onSettingsChanged();

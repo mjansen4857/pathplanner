@@ -1,22 +1,22 @@
 import 'package:pathplanner/util/wpimath/math_util.dart';
 
 class InterpolatingMap {
-  final Map<num, num> _map;
+  final Map<num, num> map;
 
-  const InterpolatingMap(this._map);
+  const InterpolatingMap(this.map);
 
   void put(num key, num value) {
-    _map[key] = value;
+    map[key] = value;
   }
 
   num get(num key) {
-    num? val = _map[key];
+    num? val = map[key];
 
     if (val == null) {
       num? ceilingKey;
       num? floorKey;
 
-      for (num k in _map.keys) {
+      for (num k in map.keys) {
         if (k > key && (ceilingKey == null || k < ceilingKey)) {
           ceilingKey = k;
         }
@@ -32,15 +32,15 @@ class InterpolatingMap {
       }
 
       if (ceilingKey == null) {
-        return _map[floorKey]!;
+        return map[floorKey]!;
       }
 
       if (floorKey == null) {
-        return _map[ceilingKey]!;
+        return map[ceilingKey]!;
       }
 
-      num floor = _map[floorKey]!;
-      num ceiling = _map[ceilingKey]!;
+      num floor = map[floorKey]!;
+      num ceiling = map[ceilingKey]!;
 
       return MathUtil.interpolate(floor, ceiling,
           MathUtil.inverseInterpolate(floorKey, ceilingKey, key));

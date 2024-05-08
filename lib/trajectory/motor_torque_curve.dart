@@ -6,6 +6,11 @@ class MotorTorqueCurve extends InterpolatingMap {
     5020: 1.133,
     6000: 0.0,
   });
+  static const MotorTorqueCurve krakenFOC60A = MotorTorqueCurve(0.0194, {
+    0: 1.135,
+    5080: 1.135,
+    5800: 0.0,
+  });
 
   final num nmPerAmp;
 
@@ -13,6 +18,8 @@ class MotorTorqueCurve extends InterpolatingMap {
 
   static MotorTorqueCurve fromString(String curveName) {
     return switch (curveName) {
+      'KRAKEN_60A' => kraken60A,
+      'KRAKEN_FOC_60A' => krakenFOC60A,
       _ => kraken60A,
     };
   }

@@ -355,7 +355,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                           DropdownMenuItem<String>(
                                             value: 'KRAKEN_60A',
                                             child: Text('Kraken (60A)'),
-                                          )
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'KRAKEN_FOC_60A',
+                                            child: Text('Kraken FOC (60A)'),
+                                          ),
                                         ],
                                       ),
                                     ),

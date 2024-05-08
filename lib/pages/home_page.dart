@@ -568,6 +568,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json[PrefsKeys.maxDriveSpeed]?.toDouble() ?? Defaults.maxDriveSpeed);
     widget.prefs.setString(PrefsKeys.driveMotor,
         json[PrefsKeys.driveMotor] ?? Defaults.driveMotor);
+    widget.prefs.setDouble(PrefsKeys.wheelCOF,
+        json[PrefsKeys.wheelCOF]?.toDouble() ?? Defaults.wheelCOF);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
@@ -624,6 +626,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Defaults.maxDriveSpeed,
       PrefsKeys.driveMotor:
           widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
+      PrefsKeys.wheelCOF:
+          widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

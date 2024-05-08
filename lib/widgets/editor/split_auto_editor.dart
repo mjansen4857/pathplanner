@@ -365,6 +365,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 driveGearing: 5.143,
                 maxDriveVelocityMPS: 5.5,
                 driveMotorTorqueCurve: MotorTorqueCurve.kraken60A,
+                wheelCOF: 1.2,
               ),
               kinematics: SwerveDriveKinematics(moduleLocations),
               moduleLocations: moduleLocations,

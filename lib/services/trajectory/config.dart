@@ -25,12 +25,14 @@ class ModuleConfig {
   final num driveGearing;
   final num maxDriveVelocityMPS;
   final MotorTorqueCurve driveMotorTorqueCurve;
+  final num wheelCOF;
 
   const ModuleConfig({
     required this.wheelRadiusMeters,
     required this.driveGearing,
     required this.maxDriveVelocityMPS,
     required this.driveMotorTorqueCurve,
+    required this.wheelCOF,
   });
 
   num get rpmToMPS =>

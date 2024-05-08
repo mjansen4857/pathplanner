@@ -124,8 +124,8 @@ class PathPlannerTrajectory {
     num frictionTorque = robotConfig.moduleConfig.driveMotorTorqueCurve.get(
         robotConfig.moduleConfig.maxDriveVelocityRPM); // TODO: air resistance?
 
-    num cof = 1.2; // TODO: allow for custom COF
-    num moduleFrictionForce = cof * (robotConfig.massKG * 9.8);
+    num moduleFrictionForce =
+        robotConfig.moduleConfig.wheelCOF * (robotConfig.massKG * 9.8);
 
     for (int i = 1; i < states.length - 1; i++) {
       // Calculate the linear force vector and torque acting on the whole robot

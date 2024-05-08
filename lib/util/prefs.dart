@@ -33,6 +33,7 @@ class PrefsKeys {
   static const String driveGearing = 'driveGearing';
   static const String maxDriveSpeed = 'maxDriveSpeed';
   static const String driveMotor = 'driveMotor';
+  static const String wheelCOF = 'wheelCOF';
 }
 
 class Defaults {
@@ -67,4 +68,5 @@ class Defaults {
   static const double driveGearing = 5.143;
   static const double maxDriveSpeed = 5.5;
   static const String driveMotor = 'KRAKEN_60A';
+  static const double wheelCOF = 1.2;
 }

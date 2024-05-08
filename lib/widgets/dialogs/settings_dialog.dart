@@ -44,6 +44,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late num _wheelRadius;
   late num _driveGearing;
   late num _maxDriveSpeed;
+  late num _wheelCOF;
   late String _driveMotor;
   late num _defaultMaxVel;
   late num _defaultMaxAccel;
@@ -75,6 +76,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         widget.prefs.getDouble(PrefsKeys.driveGearing) ?? Defaults.driveGearing;
     _maxDriveSpeed = widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
         Defaults.maxDriveSpeed;
+    _wheelCOF = widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF;
     _driveMotor =
         widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor;
 
@@ -273,63 +275,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
                   Row(
                     children: [
                       Expanded(
-                        child: Column(
-                          children: [
-                            Tooltip(
-                              message: 'Drive Motor',
-                              child: SizedBox(
-                                height: 48,
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: colorScheme.outline),
-                                    ),
-                                    child: ExcludeFocus(
-                                      child: ButtonTheme(
-                                        alignedDropdown: true,
-                                        child: DropdownButton<String>(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          value: _driveMotor,
-                                          isExpanded: true,
-                                          underline: Container(),
-                                          icon:
-                                              const Icon(Icons.arrow_drop_down),
-                                          style: TextStyle(
-                                              fontSize: 14,
-                                              color: colorScheme.onSurface),
-                                          onChanged: (String? newValue) {
-                                            if (newValue != null) {
-                                              setState(() {
-                                                _driveMotor = newValue;
-                                              });
-                                              widget.prefs.setString(
-                                                  PrefsKeys.driveMotor,
-                                                  _driveMotor);
-                                            }
-                                          },
-                                          items: const [
-                                            DropdownMenuItem<String>(
-                                              value: 'KRAKEN_60A',
-                                              child: Text('KRAKEN_60A'),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
                         child: NumberTextField(
                           initialText: _maxDriveSpeed.toStringAsFixed(2),
                           label: 'Max Drive Speed (M/S)',
@@ -343,6 +288,82 @@ class _SettingsDialogState extends State<SettingsDialog> {
                             }
                             widget.onSettingsChanged();
                           },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _wheelCOF.toStringAsFixed(2),
+                          label: 'Wheel COF',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.wheelCOF, value.toDouble());
+                              setState(() {
+                                _wheelCOF = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            const Text('Drive Motor:'),
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              height: 48,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border:
+                                        Border.all(color: colorScheme.outline),
+                                  ),
+                                  child: ExcludeFocus(
+                                    child: ButtonTheme(
+                                      alignedDropdown: true,
+                                      child: DropdownButton<String>(
+                                        borderRadius: BorderRadius.circular(8),
+                                        value: _driveMotor,
+                                        isExpanded: true,
+                                        underline: Container(),
+                                        icon: const Icon(Icons.arrow_drop_down),
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: colorScheme.onSurface),
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            setState(() {
+                                              _driveMotor = newValue;
+                                            });
+                                            widget.prefs.setString(
+                                                PrefsKeys.driveMotor,
+                                                _driveMotor);
+                                          }
+                                        },
+                                        items: const [
+                                          DropdownMenuItem<String>(
+                                            value: 'KRAKEN_60A',
+                                            child: Text('KRAKEN_60A'),
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],

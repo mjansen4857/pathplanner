@@ -42,7 +42,7 @@ void main() {
     teamColor = Colors.black;
   });
 
-  testWidgets('robot width text field', (widgetTester) async {
+  testWidgets('bumper width text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -58,7 +58,7 @@ void main() {
       ),
     ));
 
-    final textField = find.widgetWithText(NumberTextField, 'Robot Width (M)');
+    final textField = find.widgetWithText(NumberTextField, 'Bumper Width (M)');
 
     expect(textField, findsOneWidget);
     expect(find.descendant(of: textField, matching: find.text('0.100')),
@@ -72,7 +72,7 @@ void main() {
     expect(prefs.getDouble(PrefsKeys.robotWidth), 1.0);
   });
 
-  testWidgets('robot length text field', (widgetTester) async {
+  testWidgets('bumper length text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -88,7 +88,7 @@ void main() {
       ),
     ));
 
-    final textField = find.widgetWithText(NumberTextField, 'Robot Length (M)');
+    final textField = find.widgetWithText(NumberTextField, 'Bumper Length (M)');
 
     expect(textField, findsOneWidget);
     expect(find.descendant(of: textField, matching: find.text('0.200')),

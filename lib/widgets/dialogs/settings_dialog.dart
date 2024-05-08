@@ -123,7 +123,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       Expanded(
                         child: NumberTextField(
                           initialText: _width.toStringAsFixed(3),
-                          label: 'Robot Width (M)',
+                          label: 'Bumper Width (M)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -140,7 +140,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       Expanded(
                         child: NumberTextField(
                           initialText: _length.toStringAsFixed(3),
-                          label: 'Robot Length (M)',
+                          label: 'Bumper Length (M)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(

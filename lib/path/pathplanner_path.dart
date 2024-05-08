@@ -390,8 +390,7 @@ class PathPlannerPath {
           position: waypoints[waypoints.length - 1].anchor,
           rotationTarget: RotationTarget(
               rotationDegrees: goalEndState.rotation,
-              waypointRelativePos: waypoints.length - 1,
-              rotateFast: goalEndState.rotateFast),
+              waypointRelativePos: waypoints.length - 1),
           constraints: globalConstraints,
           distanceAlongPath: pathPoints.last.distanceAlongPath +
               (pathPoints.last.position

@@ -28,7 +28,7 @@ class PathPainterUtil {
                       25, scale, fieldImage),
                   height: PathPainterUtil.uiPointSizeToPixels(
                       12, scale, fieldImage)),
-              const Radius.circular(1.5)),
+              const Radius.circular(1.0)),
           paint);
       canvas.restore();
     }

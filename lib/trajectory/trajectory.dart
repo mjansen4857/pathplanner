@@ -511,8 +511,7 @@ class PathPlannerTrajectory {
 
   static Rotation2d _cosineInterpolate(Rotation2d a, Rotation2d b, double t) {
     double t2 = (1.0 - cos(t * pi)) / 2.0;
-    return Rotation2d.fromRadians(
-        a.getRadians() * (1.0 - t2) + b.getRadians() * t2);
+    return a.interpolate(b, t2);
   }
 }
 

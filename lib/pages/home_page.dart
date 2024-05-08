@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
   final GlobalKey _key = GlobalKey();
-  static const _settingsDir = '.pathplanner/settings.json';
+  static const _settingsDir = 'settings.json';
   int _selectedPage = 0;
   final PageController _pageController = PageController();
   late bool _hotReload;
@@ -502,7 +502,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadProjectSettingsFromFile(Directory projectDir) async {
-    File settingsFile = fs.file(join(projectDir.path, _settingsDir));
+    File settingsFile = fs.file(join(_pathplannerDir.path, _settingsDir));
 
     var json = {};
 
@@ -573,7 +573,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
-    File settingsFile = fs.file(join(projectDir.path, _settingsDir));
+    File settingsFile = fs.file(join(_pathplannerDir.path, _settingsDir));
 
     if (!settingsFile.existsSync()) {
       settingsFile.createSync(recursive: true);

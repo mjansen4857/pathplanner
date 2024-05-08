@@ -121,7 +121,7 @@ class PathPlannerTrajectory {
     states[0].timeSeconds = 0.0;
     states[0].fieldSpeeds = startingSpeeds;
 
-    num frictionTorque = robotConfig.moduleConfig.driveMotorTorqueCurve.get(
+    num torqueLoss = robotConfig.moduleConfig.driveMotorTorqueCurve.get(
         robotConfig.moduleConfig.maxDriveVelocityRPM); // TODO: air resistance?
 
     num moduleFrictionForce =
@@ -134,10 +134,10 @@ class PathPlannerTrajectory {
       for (int m = 0; m < numModules; m++) {
         num lastVel = states[i - 1].moduleStates[m].speedMetersPerSecond;
         // This pass will only be handling acceleration of the robot, meaning that the "torque"
-        // acting on the module due to friction will be fighting the motor
+        // acting on the module due to friction and other losses will be fighting the motor
         num availableTorque = robotConfig.moduleConfig.driveMotorTorqueCurve
                 .get(lastVel / robotConfig.moduleConfig.rpmToMPS) -
-            frictionTorque;
+            torqueLoss;
         num wheelTorque =
             availableTorque * robotConfig.moduleConfig.driveGearing;
         num forceAtCarpet =
@@ -280,7 +280,7 @@ class PathPlannerTrajectory {
       for (int m = 0; m < numModules; m++) {
         num lastVel = states[i - 1].moduleStates[m].speedMetersPerSecond;
         // This pass will only be handling deceleration of the robot, meaning that the "torque"
-        // acting on the module due to friction will be helping the motor
+        // acting on the module due to friction and other losses will not be fighting the motor
         num availableTorque = robotConfig.moduleConfig.driveMotorTorqueCurve
             .get(lastVel / robotConfig.moduleConfig.rpmToMPS);
         num wheelTorque =

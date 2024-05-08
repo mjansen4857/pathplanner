@@ -34,6 +34,8 @@ class PathPainter extends CustomPainter {
   late Size robotSize;
   late num robotRadius;
   late bool holonomicMode;
+  late num wheelbase;
+  late num trackwidth;
   Animation<num>? previewTime;
 
   static double scale = 1;
@@ -67,6 +69,10 @@ class PathPainter extends CustomPainter {
     robotRadius = sqrt((robotSize.width * robotSize.width) +
             (robotSize.height * robotSize.height)) /
         2.0;
+    wheelbase =
+        prefs.getDouble(PrefsKeys.robotWheelbase) ?? Defaults.robotWheelbase;
+    trackwidth =
+        prefs.getDouble(PrefsKeys.robotTrackwidth) ?? Defaults.robotTrackwidth;
 
     holonomicMode =
         prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
@@ -181,6 +187,16 @@ class PathPainter extends CustomPainter {
     if (previewTime != null) {
       TrajectoryState state = simulatedPath!.sample(previewTime!.value);
       Rotation2d rotation = state.pose.rotation;
+
+      PathPainterUtil.paintRobotModules(
+          Point(state.pose.translation.x, state.pose.translation.y),
+          rotation.getDegrees(),
+          fieldImage,
+          wheelbase,
+          trackwidth,
+          scale,
+          canvas,
+          previewColor ?? Colors.grey);
 
       PathPainterUtil.paintRobotOutline(
           Point(state.pose.translation.x, state.pose.translation.y),

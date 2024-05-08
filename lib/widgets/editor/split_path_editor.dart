@@ -711,8 +711,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ??
                       Defaults.maxDriveRPM,
               driveMotorTorqueCurve: MotorTorqueCurve.fromString(
-                  widget.prefs.getString(PrefsKeys.driveMotor) ??
-                      Defaults.driveMotor),
+                  widget.prefs.getString(PrefsKeys.torqueCurve) ??
+                      Defaults.torqueCurve),
               wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
                   Defaults.wheelCOF,
             ),

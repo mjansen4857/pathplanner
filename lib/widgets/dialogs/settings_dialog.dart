@@ -46,6 +46,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late num _maxDriveRPM;
   late num _wheelCOF;
   late String _driveMotor;
+  late String _currentLimit;
   late num _defaultMaxVel;
   late num _defaultMaxAccel;
   late num _defaultMaxAngVel;
@@ -77,8 +78,15 @@ class _SettingsDialogState extends State<SettingsDialog> {
     _maxDriveRPM =
         widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM;
     _wheelCOF = widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF;
-    _driveMotor =
-        widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor;
+
+    String torqueCurve =
+        widget.prefs.getString(PrefsKeys.torqueCurve) ?? Defaults.torqueCurve;
+    List<String> torqueCurveSplit = torqueCurve.split('_');
+    if (torqueCurveSplit.length != 2) {
+      torqueCurveSplit = const ['KRAKEN', '60A'];
+    }
+    _driveMotor = torqueCurveSplit[0];
+    _currentLimit = torqueCurveSplit[1];
 
     _defaultMaxVel = widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
         Defaults.defaultMaxVel;
@@ -349,59 +357,93 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                               _driveMotor = newValue;
                                             });
                                             widget.prefs.setString(
-                                                PrefsKeys.driveMotor,
-                                                _driveMotor);
+                                                PrefsKeys.torqueCurve,
+                                                '${_driveMotor}_$_currentLimit');
                                             widget.onSettingsChanged();
                                           }
                                         },
                                         items: const [
                                           DropdownMenuItem<String>(
-                                            value: 'KRAKEN_40A',
-                                            child: Text('Kraken (40A)'),
+                                            value: 'KRAKEN',
+                                            child: Text('Kraken'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'KRAKEN_60A',
-                                            child: Text('Kraken (60A)'),
+                                            value: 'KRAKENFOC',
+                                            child: Text('Kraken FOC'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'KRAKEN_80A',
-                                            child: Text('Kraken (80A)'),
+                                            value: 'FALCON',
+                                            child: Text('Falcon'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'KRAKEN_FOC_40A',
-                                            child: Text('Kraken FOC (40A)'),
+                                            value: 'FALCONFOC',
+                                            child: Text('Falcon FOC'),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            const Text('Current Limit:'),
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              height: 48,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border:
+                                        Border.all(color: colorScheme.outline),
+                                  ),
+                                  child: ExcludeFocus(
+                                    child: ButtonTheme(
+                                      alignedDropdown: true,
+                                      child: DropdownButton<String>(
+                                        borderRadius: BorderRadius.circular(8),
+                                        value: _currentLimit,
+                                        isExpanded: true,
+                                        underline: Container(),
+                                        menuMaxHeight: 250,
+                                        icon: const Icon(Icons.arrow_drop_down),
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: colorScheme.onSurface),
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            setState(() {
+                                              _currentLimit = newValue;
+                                            });
+                                            widget.prefs.setString(
+                                                PrefsKeys.torqueCurve,
+                                                '${_driveMotor}_$_currentLimit');
+                                            widget.onSettingsChanged();
+                                          }
+                                        },
+                                        items: const [
+                                          DropdownMenuItem<String>(
+                                            value: '40A',
+                                            child: Text('40A'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'KRAKEN_FOC_60A',
-                                            child: Text('Kraken FOC (60A)'),
+                                            value: '60A',
+                                            child: Text('60A'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'KRAKEN_FOC_80A',
-                                            child: Text('Kraken FOC (80A)'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'FALCON_40A',
-                                            child: Text('Falcon (40A)'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'FALCON_60A',
-                                            child: Text('Falcon (60A)'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'FALCON_80A',
-                                            child: Text('Falcon (80A)'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'FALCON_FOC_40A',
-                                            child: Text('Falcon FOC (40A)'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'FALCON_FOC_60A',
-                                            child: Text('Falcon FOC (60A)'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'FALCON_FOC_80A',
-                                            child: Text('Falcon FOC (80A)'),
+                                            value: '80A',
+                                            child: Text('80A'),
                                           ),
                                         ],
                                       ),

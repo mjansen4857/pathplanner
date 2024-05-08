@@ -26,7 +26,7 @@ void main() {
       PrefsKeys.driveGearing: 5.143,
       PrefsKeys.maxDriveRPM: 5600.0,
       PrefsKeys.wheelCOF: 1.2,
-      PrefsKeys.driveMotor: 'KRAKEN_60A',
+      PrefsKeys.torqueCurve: 'KRAKEN_60A',
       PrefsKeys.holonomicMode: true,
       PrefsKeys.hotReloadEnabled: true,
       PrefsKeys.teamColor: Colors.black.value,
@@ -358,25 +358,64 @@ void main() {
       ),
     ));
 
-    final dropdown = find.byType(DropdownButton<String>);
+    final dropdown = find.byType(DropdownButton<String>).first;
 
     expect(dropdown, findsOneWidget);
-    expect(find.descendant(of: dropdown, matching: find.text('Kraken (60A)')),
+    expect(find.descendant(of: dropdown, matching: find.text('Kraken')),
         findsOneWidget);
 
     await widgetTester.tap(dropdown);
     await widgetTester.pumpAndSettle();
 
-    expect(find.text('Kraken (60A)'), findsWidgets);
-    expect(find.text('Kraken FOC (60A)'), findsOneWidget);
+    expect(find.text('Kraken'), findsWidgets);
+    expect(find.text('Kraken FOC'), findsOneWidget);
 
-    await widgetTester.tap(find.text('Kraken FOC (60A)'));
+    await widgetTester.tap(find.text('Kraken FOC'));
     await widgetTester.pumpAndSettle();
 
     expect(settingsChanged, true);
-    expect(prefs.getString(PrefsKeys.driveMotor), 'KRAKEN_FOC_60A');
-    expect(find.text('Kraken FOC (60A)'), findsOneWidget);
-    expect(find.text('Kraken (60A)'), findsNothing);
+    expect(prefs.getString(PrefsKeys.torqueCurve), 'KRAKENFOC_60A');
+    expect(find.text('Kraken FOC'), findsOneWidget);
+    expect(find.text('Kraken'), findsNothing);
+  });
+
+  testWidgets('current limit dropdown', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final dropdown = find.byType(DropdownButton<String>).last;
+
+    expect(dropdown, findsOneWidget);
+    expect(find.descendant(of: dropdown, matching: find.text('60A')),
+        findsOneWidget);
+
+    await widgetTester.tap(dropdown);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('40A'), findsOneWidget);
+    expect(find.text('60A'), findsWidgets);
+    expect(find.text('80A'), findsOneWidget);
+
+    await widgetTester.tap(find.text('80A'));
+    await widgetTester.pumpAndSettle();
+
+    expect(settingsChanged, true);
+    expect(prefs.getString(PrefsKeys.torqueCurve), 'KRAKEN_80A');
+    expect(find.text('40A'), findsNothing);
+    expect(find.text('60A'), findsNothing);
+    expect(find.text('80A'), findsOneWidget);
   });
 
   testWidgets('default max vel text field', (widgetTester) async {

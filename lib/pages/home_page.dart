@@ -566,8 +566,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json[PrefsKeys.driveGearing]?.toDouble() ?? Defaults.driveGearing);
     widget.prefs.setDouble(PrefsKeys.maxDriveRPM,
         json[PrefsKeys.maxDriveRPM]?.toDouble() ?? Defaults.maxDriveRPM);
-    widget.prefs.setString(PrefsKeys.driveMotor,
-        json[PrefsKeys.driveMotor] ?? Defaults.driveMotor);
+    widget.prefs.setString(PrefsKeys.torqueCurve,
+        json[PrefsKeys.torqueCurve] ?? Defaults.torqueCurve);
     widget.prefs.setDouble(PrefsKeys.wheelCOF,
         json[PrefsKeys.wheelCOF]?.toDouble() ?? Defaults.wheelCOF);
   }
@@ -623,8 +623,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           Defaults.driveGearing,
       PrefsKeys.maxDriveRPM:
           widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM,
-      PrefsKeys.driveMotor:
-          widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
+      PrefsKeys.torqueCurve:
+          widget.prefs.getString(PrefsKeys.torqueCurve) ?? Defaults.torqueCurve,
       PrefsKeys.wheelCOF:
           widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
     };

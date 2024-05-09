@@ -64,7 +64,11 @@ class PathPlannerTrajectory {
       }
 
       if (!robotConfig.holonomic) {
-        states[i].pose = Pose2d(states[i].pose.translation, states[i].heading);
+        states[i].pose = Pose2d(
+            states[i].pose.translation,
+            path.reversed
+                ? (states[i].heading + Rotation2d.fromDegrees(180))
+                : states[i].heading);
       }
 
       if (i != 0) {

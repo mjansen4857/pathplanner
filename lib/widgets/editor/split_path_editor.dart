@@ -9,6 +9,7 @@ import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/motor_torque_curve.dart';
@@ -739,6 +740,14 @@ class _SplitPathEditorState extends State<SplitPathEditor>
         _previewController.duration = Duration(
             milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
         _previewController.repeat();
+      } else {
+        // Trajectory failed to generate. Notify the user
+        Log.warning(
+            'Failed to generate trajectory for path: ${widget.path.name}');
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets.'),
+        ));
       }
     }
   }

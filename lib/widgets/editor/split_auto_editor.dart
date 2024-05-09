@@ -415,6 +415,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
             milliseconds: (simPath.states.last.timeSeconds * 1000).toInt());
         _previewController.repeat();
       }
+    } else {
+      // Trajectory failed to generate. Notify the user
+      Log.warning(
+          'Failed to generate trajectory for auto: ${widget.auto.name}');
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets.'),
+      ));
     }
   }
 

@@ -683,12 +683,17 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       num halfTrackwidth = (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
               Defaults.robotTrackwidth) /
           2;
-      List<Translation2d> moduleLocations = [
-        Translation2d(x: halfWheelbase, y: halfTrackwidth),
-        Translation2d(x: halfWheelbase, y: -halfTrackwidth),
-        Translation2d(x: -halfWheelbase, y: halfTrackwidth),
-        Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
-      ];
+      List<Translation2d> moduleLocations = _holonomicMode
+          ? [
+              Translation2d(x: halfWheelbase, y: halfTrackwidth),
+              Translation2d(x: halfWheelbase, y: -halfTrackwidth),
+              Translation2d(x: -halfWheelbase, y: halfTrackwidth),
+              Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
+            ]
+          : [
+              Translation2d(x: 0, y: halfTrackwidth),
+              Translation2d(x: 0, y: -halfTrackwidth),
+            ];
 
       setState(() {
         _simTraj = PathPlannerTrajectory(
@@ -716,8 +721,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
               wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
                   Defaults.wheelCOF,
             ),
-            kinematics: SwerveDriveKinematics(moduleLocations),
             moduleLocations: moduleLocations,
+            holonomic: _holonomicMode,
           ),
         );
       });

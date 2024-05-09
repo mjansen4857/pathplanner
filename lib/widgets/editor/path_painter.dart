@@ -188,14 +188,16 @@ class PathPainter extends CustomPainter {
       TrajectoryState state = simulatedPath!.sample(previewTime!.value);
       Rotation2d rotation = state.pose.rotation;
 
-      PathPainterUtil.paintRobotModules(
-          state.moduleStates
-              .map((e) => Pose2d(e.fieldPos, e.fieldAngle))
-              .toList(),
-          fieldImage,
-          scale,
-          canvas,
-          previewColor ?? Colors.grey);
+      if (holonomicMode) {
+        PathPainterUtil.paintRobotModules(
+            state.moduleStates
+                .map((e) => Pose2d(e.fieldPos, e.fieldAngle))
+                .toList(),
+            fieldImage,
+            scale,
+            canvas,
+            previewColor ?? Colors.grey);
+      }
 
       PathPainterUtil.paintRobotOutline(
           Point(state.pose.translation.x, state.pose.translation.y),

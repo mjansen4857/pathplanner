@@ -52,6 +52,21 @@ class PathPlannerTrajectory {
       states[i].moduleStates =
           List.generate(numModules, (index) => SwerveModuleTrajState());
 
+      // Calculate robot heading
+      if (i != path.pathPoints.length - 1) {
+        states[i].heading = (Translation2d(
+                    x: path.pathPoints[i + 1].position.x,
+                    y: path.pathPoints[i + 1].position.y) -
+                states[i].pose.translation)
+            .getAngle();
+      } else {
+        states[i].heading = states[i - 1].heading;
+      }
+
+      if (!robotConfig.holonomic) {
+        states[i].pose = Pose2d(states[i].pose.translation, states[i].heading);
+      }
+
       if (i != 0) {
         states[i].deltaPos = states[i]
             .pose
@@ -62,8 +77,8 @@ class PathPlannerTrajectory {
       }
 
       for (int m = 0; m < numModules; m++) {
-        Translation2d moduleFieldPos = robotPose.translation +
-            robotConfig.moduleLocations[m].rotateBy(robotPose.rotation);
+        Translation2d moduleFieldPos = states[i].pose.translation +
+            robotConfig.moduleLocations[m].rotateBy(states[i].pose.rotation);
 
         states[i].moduleStates[m].fieldPos = moduleFieldPos;
 
@@ -76,38 +91,30 @@ class PathPlannerTrajectory {
       }
     }
 
-    // Pre-calculate the pivot distance of each module so that it is not
-    // calculated for every traj state
-    List<num> modulePivotDist = [];
-    for (int m = 0; m < numModules; m++) {
-      modulePivotDist.add(robotConfig.moduleLocations[m].getNorm());
-    }
-
-    // Calculate the headings at each state
+    // Calculate module headings
     for (int i = 0; i < states.length; i++) {
-      if (i != states.length - 1) {
-        states[i].heading =
-            (states[i + 1].pose.translation - states[i].pose.translation)
-                .getAngle();
-
-        for (int m = 0; m < numModules; m++) {
+      for (int m = 0; m < numModules; m++) {
+        if (i != path.pathPoints.length - 1) {
           states[i].moduleStates[m].fieldAngle =
               (states[i + 1].moduleStates[m].fieldPos -
                       states[i].moduleStates[m].fieldPos)
                   .getAngle();
           states[i].moduleStates[m].angle =
               states[i].moduleStates[m].fieldAngle - states[i].pose.rotation;
-        }
-      } else {
-        states[i].heading = states[i - 1].heading;
-
-        for (int m = 0; m < numModules; m++) {
+        } else {
           states[i].moduleStates[m].fieldAngle =
               states[i - 1].moduleStates[m].fieldAngle;
           states[i].moduleStates[m].angle =
               states[i].moduleStates[m].fieldAngle - states[i].pose.rotation;
         }
       }
+    }
+
+    // Pre-calculate the pivot distance of each module so that it is not
+    // calculated for every traj state
+    List<num> modulePivotDist = [];
+    for (int m = 0; m < numModules; m++) {
+      modulePivotDist.add(robotConfig.moduleLocations[m].getNorm());
     }
 
     // Set the initial module velocities
@@ -142,6 +149,10 @@ class PathPlannerTrajectory {
             availableTorque * robotConfig.moduleConfig.driveGearing;
         num forceAtCarpet =
             wheelTorque / robotConfig.moduleConfig.wheelRadiusMeters;
+        if (!robotConfig.holonomic) {
+          // Two motors per module if differential
+          forceAtCarpet *= 2;
+        }
         Translation2d forceVec = Translation2d.fromAngle(
             forceAtCarpet, states[i - 1].moduleStates[m].fieldAngle);
 
@@ -287,6 +298,10 @@ class PathPlannerTrajectory {
             availableTorque * robotConfig.moduleConfig.driveGearing;
         num forceAtCarpet =
             wheelTorque / robotConfig.moduleConfig.wheelRadiusMeters;
+        if (!robotConfig.holonomic) {
+          // Two motors per module if differential
+          forceAtCarpet *= 2;
+        }
         Translation2d forceVec = Translation2d.fromAngle(
             forceAtCarpet,
             states[i - 1].moduleStates[m].fieldAngle +

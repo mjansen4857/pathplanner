@@ -8,16 +8,17 @@ class RobotConfig {
   final num massKG;
   final num moi;
   final ModuleConfig moduleConfig;
-  final SwerveDriveKinematics kinematics;
   final List<Translation2d> moduleLocations;
+  final bool holonomic;
+  late final SwerveDriveKinematics kinematics;
 
-  const RobotConfig({
+  RobotConfig({
     required this.massKG,
     required this.moi,
     required this.moduleConfig,
-    required this.kinematics,
     required this.moduleLocations,
-  });
+    required this.holonomic,
+  }) : kinematics = SwerveDriveKinematics(moduleLocations);
 
   @override
   String toString() {

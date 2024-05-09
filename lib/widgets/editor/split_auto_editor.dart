@@ -14,7 +14,6 @@ import 'package:pathplanner/util/pose2d.dart' as old;
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
-import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
@@ -61,6 +60,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
   late Size _robotSize;
   late AnimationController _previewController;
+  late bool _holonomicMode;
 
   @override
   void initState() {
@@ -70,6 +70,8 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
+    _holonomicMode =
+        widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
 
     var width =
         widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
@@ -351,12 +353,17 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       num halfTrackwidth = (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
               Defaults.robotTrackwidth) /
           2;
-      List<Translation2d> moduleLocations = [
-        Translation2d(x: halfWheelbase, y: halfTrackwidth),
-        Translation2d(x: halfWheelbase, y: -halfTrackwidth),
-        Translation2d(x: -halfWheelbase, y: halfTrackwidth),
-        Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
-      ];
+      List<Translation2d> moduleLocations = _holonomicMode
+          ? [
+              Translation2d(x: halfWheelbase, y: halfTrackwidth),
+              Translation2d(x: halfWheelbase, y: -halfTrackwidth),
+              Translation2d(x: -halfWheelbase, y: halfTrackwidth),
+              Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
+            ]
+          : [
+              Translation2d(x: 0, y: halfTrackwidth),
+              Translation2d(x: 0, y: -halfTrackwidth),
+            ];
 
       try {
         simPath = AutoSimulator.simulateAuto(
@@ -382,8 +389,8 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
                   Defaults.wheelCOF,
             ),
-            kinematics: SwerveDriveKinematics(moduleLocations),
             moduleLocations: moduleLocations,
+            holonomic: _holonomicMode,
           ),
         );
       } catch (err) {

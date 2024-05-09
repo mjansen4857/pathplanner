@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -20,6 +21,8 @@ class PathPlannerTrajectory {
     required Rotation2d startingRotation,
     required RobotConfig robotConfig,
   }) : states = [] {
+    DateTime startTime = DateTime.now();
+
     int prevRotationTargetIdx = 0;
     Rotation2d prevRotationTargetRot = startingRotation;
     int nextRotationTargetIdx = _getNextRotationTargetIdx(path, 0);
@@ -432,6 +435,11 @@ class PathPlannerTrajectory {
       num dt = (2 * states[i].deltaPos) / (v + v0);
       states[i].timeSeconds = states[i - 1].timeSeconds + dt;
     }
+
+    DateTime now = DateTime.now();
+    Duration genTime = now.difference(startTime);
+    Log.debug(
+        'Generated trajectory for ${path.name} in ${(genTime.inMicroseconds / 1000).toStringAsFixed(1)}ms');
   }
 
   TrajectoryState sample(num time) {

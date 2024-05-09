@@ -393,6 +393,9 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
             holonomic: _holonomicMode,
           ),
         );
+        if (!(simPath?.getTotalTimeSeconds().isFinite ?? false)) {
+          simPath = null;
+        }
       } catch (err) {
         Log.error('Failed to simulate auto', err);
       }

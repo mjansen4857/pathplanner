@@ -39,9 +39,13 @@ class PathPlannerTrajectory {
             .pathPoints[nextRotationTargetIdx].rotationTarget!.rotationDegrees);
       }
 
-      // Holonomic rotation is interpolated
-      double t = (i - prevRotationTargetIdx) /
-          (nextRotationTargetIdx - prevRotationTargetIdx);
+      // Holonomic rotation is interpolated. We use the distance along the path
+      // to calculate how much to interpolate since the distribution of path points
+      // is not the same along the whole segment
+      double t = (path.pathPoints[i].distanceAlongPath -
+              path.pathPoints[prevRotationTargetIdx].distanceAlongPath) /
+          (path.pathPoints[nextRotationTargetIdx].distanceAlongPath -
+              path.pathPoints[prevRotationTargetIdx].distanceAlongPath);
       Rotation2d holonomicRot =
           _cosineInterpolate(prevRotationTargetRot, nextRotationTargetRot, t);
 

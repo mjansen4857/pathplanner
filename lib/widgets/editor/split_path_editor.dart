@@ -725,11 +725,17 @@ class _SplitPathEditorState extends State<SplitPathEditor>
             holonomic: _holonomicMode,
           ),
         );
+        if (!(_simTraj?.getTotalTimeSeconds().isFinite ?? false)) {
+          _simTraj = null;
+        }
       });
 
       if (!_paused) {
         _previewController.stop();
         _previewController.reset();
+      }
+
+      if (_simTraj != null) {
         _previewController.duration = Duration(
             milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
         _previewController.repeat();

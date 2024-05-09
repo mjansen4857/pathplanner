@@ -16,7 +16,6 @@ class ConstraintZonesTree extends StatefulWidget {
   final ValueChanged<int?>? onZoneSelected;
   final int? initiallySelectedZone;
   final ChangeStack undoStack;
-  final bool holonomicMode;
 
   const ConstraintZonesTree({
     super.key,
@@ -27,7 +26,6 @@ class ConstraintZonesTree extends StatefulWidget {
     this.onZoneSelected,
     this.initiallySelectedZone,
     required this.undoStack,
-    required this.holonomicMode,
   });
 
   @override
@@ -272,54 +270,53 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             ],
           ),
         ),
-        if (widget.holonomicMode) const SizedBox(height: 12),
-        if (widget.holonomicMode)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: NumberTextField(
-                    initialText: constraintZones[zoneIdx]
-                        .constraints
-                        .maxAngularVelocity
-                        .toStringAsFixed(2),
-                    label: 'Max Angular Velocity (Deg/S)',
-                    arrowKeyIncrement: 1.0,
-                    onSubmitted: (value) {
-                      if (value != null && value > 0) {
-                        _addConstraintsChange(
-                            zoneIdx,
-                            () => constraintZones[zoneIdx]
-                                .constraints
-                                .maxAngularVelocity = value);
-                      }
-                    },
-                  ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: NumberTextField(
+                  initialText: constraintZones[zoneIdx]
+                      .constraints
+                      .maxAngularVelocity
+                      .toStringAsFixed(2),
+                  label: 'Max Angular Velocity (Deg/S)',
+                  arrowKeyIncrement: 1.0,
+                  onSubmitted: (value) {
+                    if (value != null && value > 0) {
+                      _addConstraintsChange(
+                          zoneIdx,
+                          () => constraintZones[zoneIdx]
+                              .constraints
+                              .maxAngularVelocity = value);
+                    }
+                  },
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: NumberTextField(
-                    initialText: constraintZones[zoneIdx]
-                        .constraints
-                        .maxAngularAcceleration
-                        .toStringAsFixed(2),
-                    label: 'Max Angular Acceleration (Deg/S²)',
-                    arrowKeyIncrement: 1.0,
-                    onSubmitted: (value) {
-                      if (value != null && value > 0) {
-                        _addConstraintsChange(
-                            zoneIdx,
-                            () => constraintZones[zoneIdx]
-                                .constraints
-                                .maxAngularAcceleration = value);
-                      }
-                    },
-                  ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: NumberTextField(
+                  initialText: constraintZones[zoneIdx]
+                      .constraints
+                      .maxAngularAcceleration
+                      .toStringAsFixed(2),
+                  label: 'Max Angular Acceleration (Deg/S²)',
+                  arrowKeyIncrement: 1.0,
+                  onSubmitted: (value) {
+                    if (value != null && value > 0) {
+                      _addConstraintsChange(
+                          zoneIdx,
+                          () => constraintZones[zoneIdx]
+                              .constraints
+                              .maxAngularAcceleration = value);
+                    }
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
+        ),
         const SizedBox(height: 12),
         Slider(
           value: constraintZones[zoneIdx].minWaypointRelativePos.toDouble(),

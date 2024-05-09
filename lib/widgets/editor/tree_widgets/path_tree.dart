@@ -111,7 +111,6 @@ class _PathTreeState extends State<PathTree> {
                   path: widget.path,
                   onPathChanged: widget.onPathChanged,
                   undoStack: widget.undoStack,
-                  holonomicMode: widget.holonomicMode,
                   defaultConstraints: widget.defaultConstraints,
                 ),
                 IdealStartingStateTree(
@@ -156,7 +155,6 @@ class _PathTreeState extends State<PathTree> {
                   onZoneSelected: widget.onZoneSelected,
                   initiallySelectedZone: widget.initiallySelectedZone,
                   undoStack: widget.undoStack,
-                  holonomicMode: widget.holonomicMode,
                 ),
                 _buildReversedCheckbox(),
                 const Divider(),

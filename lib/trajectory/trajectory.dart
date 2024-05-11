@@ -250,7 +250,8 @@ class PathPlannerTrajectory {
 
       PathConstraints constraints = path.pathPoints[i].constraints;
       num maxChassisVel = constraints.maxVelocity;
-      num maxChassisAngVel = constraints.maxAngularVelocity;
+      num maxChassisAngVel =
+          GeometryUtil.toRadians(constraints.maxAngularVelocity);
 
       // Limit the max chassis vels based on the acceleration constraints
       num prevChassisVel = sqrt(pow(states[i - 1].fieldSpeeds.vx, 2) +
@@ -264,7 +265,8 @@ class PathPlannerTrajectory {
           maxChassisAngVel,
           sqrt(pow(prevChassisAngVel, 2) +
               (2 *
-                      constraints.maxAngularAcceleration *
+                      GeometryUtil.toRadians(
+                          constraints.maxAngularAcceleration) *
                       states[i].deltaRot.getRadians())
                   .abs()));
 
@@ -389,7 +391,8 @@ class PathPlannerTrajectory {
 
       PathConstraints constraints = path.pathPoints[i].constraints;
       num maxChassisVel = constraints.maxVelocity;
-      num maxChassisAngVel = constraints.maxAngularVelocity;
+      num maxChassisAngVel =
+          GeometryUtil.toRadians(constraints.maxAngularVelocity);
 
       // Limit the max chassis vels based on the acceleration constraints
       // Since this is a deceleration pass, we will consider the next state's vel as the previous
@@ -405,14 +408,16 @@ class PathPlannerTrajectory {
           maxChassisAngVel,
           sqrt(pow(prevChassisAngVel, 2) +
               (2 *
-                      constraints.maxAngularAcceleration *
+                      GeometryUtil.toRadians(
+                          constraints.maxAngularAcceleration) *
                       states[i + 1].deltaRot.getRadians())
                   .abs()));
 
       num currentVel = sqrt(
           pow(states[i].fieldSpeeds.vx, 2) + pow(states[i].fieldSpeeds.vy, 2));
       maxChassisVel = min(maxChassisVel, currentVel);
-      maxChassisAngVel = min(maxChassisAngVel, states[i].fieldSpeeds.omega);
+      maxChassisAngVel =
+          min(maxChassisAngVel, states[i].fieldSpeeds.omega.abs());
 
       desaturateWheelSpeeds(
           states[i].moduleStates,
@@ -511,7 +516,7 @@ class PathPlannerTrajectory {
 
     num rotationPct = 0.0;
     if (!MathUtil.epsilonEquals(maxRotationSpeed, 0.0)) {
-      rotationPct = desiredSpeeds.omega.abs() / maxRotationSpeed;
+      rotationPct = desiredSpeeds.omega.abs() / maxRotationSpeed.abs();
     }
 
     num maxPct = max(translationPct, rotationPct);

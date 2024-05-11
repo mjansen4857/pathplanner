@@ -110,7 +110,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       ),
     ];
 
-    _simulatePath();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _simulatePath());
   }
 
   @override

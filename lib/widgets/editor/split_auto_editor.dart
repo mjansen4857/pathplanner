@@ -92,7 +92,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       ),
     ];
 
-    _simulateAuto();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _simulateAuto());
   }
 
   @override

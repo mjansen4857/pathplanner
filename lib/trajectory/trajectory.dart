@@ -190,9 +190,9 @@ class PathPlannerTrajectory {
         Translation2d accelerationVector =
             Translation2d.fromAngle(linearAccel, linearForceVec.getAngle());
 
-        Rotation2d angleToModule =
-            (states[i].moduleStates[m].fieldPos - states[i].pose.translation)
-                .getAngle();
+        Rotation2d angleToModule = (states[i - 1].moduleStates[m].fieldPos -
+                states[i - 1].pose.translation)
+            .getAngle();
         num angAccelMps = angularAccel * modulePivotDist[m];
         Translation2d angAccelVector = Translation2d.fromAngle(
             angAccelMps, angleToModule + Rotation2d.fromDegrees(90));
@@ -201,7 +201,7 @@ class PathPlannerTrajectory {
 
         // Now that we have the acceleration vector, we can calculate how much the actual module
         // will accelerate
-        Rotation2d modHeadingDelta = states[i].moduleStates[m].fieldAngle -
+        Rotation2d modHeadingDelta = states[i - 1].moduleStates[m].fieldAngle -
             accelerationVector.getAngle();
         num moduleAcceleration =
             accelerationVector.getNorm() * modHeadingDelta.getCos();
@@ -341,9 +341,9 @@ class PathPlannerTrajectory {
         Translation2d accelerationVector =
             Translation2d.fromAngle(linearAccel, linearForceVec.getAngle());
 
-        Rotation2d angleToModule =
-            (states[i].moduleStates[m].fieldPos - states[i].pose.translation)
-                .getAngle();
+        Rotation2d angleToModule = (states[i - 1].moduleStates[m].fieldPos -
+                states[i - 1].pose.translation)
+            .getAngle();
         num angAccelMps = angularAccel * modulePivotDist[m];
         Translation2d angAccelVector = Translation2d.fromAngle(
             angAccelMps, angleToModule + Rotation2d.fromDegrees(90));
@@ -352,7 +352,7 @@ class PathPlannerTrajectory {
 
         // Now that we have the acceleration vector, we can calculate how much the actual module
         // will decelerate
-        Rotation2d modHeadingDelta = states[i].moduleStates[m].fieldAngle -
+        Rotation2d modHeadingDelta = states[i - 1].moduleStates[m].fieldAngle -
             accelerationVector.getAngle();
         num moduleAcceleration =
             accelerationVector.getNorm() * modHeadingDelta.getCos();

@@ -302,7 +302,7 @@ class PathPlannerTrajectory {
       Translation2d linearForceVec = const Translation2d();
       num totalTorque = 0.0;
       for (int m = 0; m < numModules; m++) {
-        num lastVel = states[i - 1].moduleStates[m].speedMetersPerSecond;
+        num lastVel = states[i + 1].moduleStates[m].speedMetersPerSecond;
         // This pass will only be handling deceleration of the robot, meaning that the "torque"
         // acting on the module due to friction and other losses will not be fighting the motor
         num availableTorque = robotConfig.moduleConfig.driveMotorTorqueCurve
@@ -324,8 +324,8 @@ class PathPlannerTrajectory {
         linearForceVec += forceVec;
 
         // Calculate the torque this module will apply to the robot
-        Rotation2d angleToModule = (states[i - 1].moduleStates[m].fieldPos -
-                states[i - 1].pose.translation)
+        Rotation2d angleToModule = (states[i + 1].moduleStates[m].fieldPos -
+                states[i + 1].pose.translation)
             .getAngle();
         Rotation2d theta = forceVec.getAngle() - angleToModule;
         totalTorque += forceAtCarpet * modulePivotDist[m] * theta.getSin();
@@ -343,8 +343,8 @@ class PathPlannerTrajectory {
         Translation2d accelerationVector =
             Translation2d.fromAngle(linearAccel, linearForceVec.getAngle());
 
-        Rotation2d angleToModule = (states[i - 1].moduleStates[m].fieldPos -
-                states[i - 1].pose.translation)
+        Rotation2d angleToModule = (states[i + 1].moduleStates[m].fieldPos -
+                states[i + 1].pose.translation)
             .getAngle();
         num angAccelMps = angularAccel * modulePivotDist[m];
         Translation2d angAccelVector = Translation2d.fromAngle(
@@ -354,7 +354,7 @@ class PathPlannerTrajectory {
 
         // Now that we have the acceleration vector, we can calculate how much the actual module
         // will decelerate
-        Rotation2d modHeadingDelta = states[i - 1].moduleStates[m].fieldAngle -
+        Rotation2d modHeadingDelta = states[i + 1].moduleStates[m].fieldAngle -
             accelerationVector.getAngle();
         num moduleAcceleration =
             accelerationVector.getNorm() * modHeadingDelta.getCos();

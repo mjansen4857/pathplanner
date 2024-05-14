@@ -6,6 +6,163 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 const num epsilon = 0.001;
 
 void main() {
+  group('Pose2d', () {
+    test('constructor', () {
+      var translation = const Translation2d(x: 3.0, y: 4.0);
+      var rotation = Rotation2d.fromDegrees(45);
+      var pose = Pose2d(translation, rotation);
+      expect(pose.translation, equals(translation));
+      expect(pose.rotation, equals(rotation));
+    });
+
+    test('interpolate', () {
+      var t1 = const Translation2d(x: 1.0, y: 2.0);
+      var r1 = Rotation2d.fromDegrees(0);
+      var p1 = Pose2d(t1, r1);
+
+      var t2 = const Translation2d(x: 3.0, y: 4.0);
+      var r2 = Rotation2d.fromDegrees(90);
+      var p2 = Pose2d(t2, r2);
+
+      var result = p1.interpolate(p2, 0.5);
+
+      expect(result.translation.x, closeTo(2.0, epsilon));
+      expect(result.translation.y, closeTo(3.0, epsilon));
+      expect(result.rotation.getDegrees(), closeTo(45.0, epsilon));
+    });
+
+    test('clone', () {
+      var translation = const Translation2d(x: 3.0, y: 4.0);
+      var rotation = Rotation2d.fromDegrees(45);
+      var pose = Pose2d(translation, rotation);
+      var clone = pose.clone();
+      expect(clone.translation, equals(pose.translation));
+      expect(clone.rotation, equals(pose.rotation));
+      expect(identical(clone, pose), isFalse);
+    });
+  });
+
+  group('Translation2d', () {
+    test('default constructor', () {
+      var t = const Translation2d();
+      expect(t.x, equals(0.0));
+      expect(t.y, equals(0.0));
+    });
+
+    test('constructor with values', () {
+      var t = const Translation2d(x: 3.0, y: 4.0);
+      expect(t.x, equals(3.0));
+      expect(t.y, equals(4.0));
+    });
+
+    test('constructor from angle', () {
+      var angle = Rotation2d.fromDegrees(-45);
+      var t = Translation2d.fromAngle(5.0, angle);
+      expect(t.x, closeTo(3.536, epsilon));
+      expect(t.y, closeTo(-3.536, epsilon));
+    });
+
+    test('addition operator', () {
+      var t1 = const Translation2d(x: 3.0, y: 4.0);
+      var t2 = const Translation2d(x: 1.0, y: 2.0);
+      var result = t1 + t2;
+      expect(result.x, equals(4.0));
+      expect(result.y, equals(6.0));
+    });
+
+    test('subtraction operator', () {
+      var t1 = const Translation2d(x: 3.0, y: 4.0);
+      var t2 = const Translation2d(x: 1.0, y: 2.0);
+      var result = t1 - t2;
+      expect(result.x, equals(2.0));
+      expect(result.y, equals(2.0));
+    });
+
+    test('multiplication operator', () {
+      var t1 = const Translation2d(x: 3.0, y: 4.0);
+      var result = t1 * 2.0;
+      expect(result.x, equals(6.0));
+      expect(result.y, equals(8.0));
+    });
+
+    test('division operator', () {
+      var t1 = const Translation2d(x: 3.0, y: 4.0);
+      var result = t1 / 2.0;
+      expect(result.x, equals(1.5));
+      expect(result.y, equals(2.0));
+    });
+
+    test('getDistance', () {
+      var t1 = const Translation2d(x: 3.0, y: 4.0);
+      var t2 = const Translation2d(x: 1.0, y: 2.0);
+      var distance = t1.getDistance(t2);
+      expect(distance, closeTo(2.828, epsilon));
+    });
+
+    test('getNorm', () {
+      var t = const Translation2d(x: 3.0, y: 4.0);
+      var norm = t.getNorm();
+      expect(norm, equals(5.0));
+    });
+
+    test('getAngle', () {
+      var t = const Translation2d(x: 3.0, y: 4.0);
+      var angle = t.getAngle();
+      expect(angle.getDegrees(), closeTo(53.130, epsilon));
+    });
+
+    test('rotateBy', () {
+      var t = const Translation2d(x: 1.0, y: 0.0);
+      var angle = Rotation2d.fromDegrees(90);
+      var result = t.rotateBy(angle);
+      expect(result.x, closeTo(0.0, epsilon));
+      expect(result.y, closeTo(1.0, epsilon));
+    });
+
+    test('interpolate', () {
+      var t1 = const Translation2d(x: 1.0, y: 2.0);
+      var t2 = const Translation2d(x: 3.0, y: 4.0);
+      var result = t1.interpolate(t2, 0.5);
+      expect(result.x, closeTo(2.0, epsilon));
+      expect(result.y, closeTo(3.0, epsilon));
+    });
+
+    test('asPoint', () {
+      var t1 = const Translation2d(x: 1.0, y: 2.0);
+      var p1 = const Point(1.0, 2.0);
+      expect(t1.asPoint().x, closeTo(p1.x, epsilon));
+      expect(t1.asPoint().y, closeTo(p1.y, epsilon));
+    });
+
+    test('clone', () {
+      var t = const Translation2d(x: 3.0, y: 4.0);
+      var clone = t.clone();
+      expect(clone, equals(t));
+      expect(identical(clone, t), isFalse);
+    });
+
+    test('== operator', () {
+      var t1 = const Translation2d(x: 3.0, y: 4.0);
+      var t2 = const Translation2d(x: 3.0, y: 4.0);
+      var t3 = const Translation2d(x: 4.0, y: 3.0);
+      expect(t1 == t2, isTrue);
+      expect(t1 == t3, isFalse);
+    });
+
+    test('hashCode', () {
+      var t1 = const Translation2d(x: 3.0, y: 4.0);
+      var t2 = const Translation2d(x: 3.0, y: 4.0);
+      var t3 = const Translation2d(x: 4.0, y: 3.0);
+      expect(t1.hashCode, equals(t2.hashCode));
+      expect(t1.hashCode, isNot(equals(t3.hashCode)));
+    });
+
+    test('toString', () {
+      var t = const Translation2d(x: 3.0, y: 4.0);
+      expect(t.toString(), equals('Translation2d(X: 3.00, Y: 4.00)'));
+    });
+  });
+
   group('Rotation2d', () {
     test('fromRadians', () {
       Rotation2d rot1 = Rotation2d.fromRadians(pi);

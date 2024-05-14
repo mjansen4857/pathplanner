@@ -5,10 +5,6 @@ class InterpolatingMap {
 
   const InterpolatingMap(this.map);
 
-  void put(num key, num value) {
-    map[key] = value;
-  }
-
   num get(num key) {
     num? val = map[key];
 

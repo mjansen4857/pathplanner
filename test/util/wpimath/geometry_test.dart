@@ -91,4 +91,93 @@ void main() {
     expect(rot2.getTan(), closeTo(1.732, epsilon));
     expect(rot3.getTan(), closeTo(-1.0, epsilon));
   });
+
+  test('plus', () {
+    Rotation2d a = Rotation2d.fromDegrees(90);
+    Rotation2d b = Rotation2d.fromDegrees(30);
+    Rotation2d c = Rotation2d.fromDegrees(360);
+
+    Rotation2d ab = a + b;
+    Rotation2d ba = b + a;
+    Rotation2d ac = a + c;
+
+    expect(ab.getDegrees(), closeTo(120.0, epsilon));
+    expect(ba.getDegrees(), closeTo(120.0, epsilon));
+    expect(ac.getDegrees(), closeTo(90.0, epsilon));
+  });
+
+  test('minus', () {
+    Rotation2d a = Rotation2d.fromDegrees(90);
+    Rotation2d b = Rotation2d.fromDegrees(30);
+    Rotation2d c = Rotation2d.fromDegrees(360);
+
+    Rotation2d ab = a - b;
+    Rotation2d ba = b - a;
+    Rotation2d ac = a - c;
+
+    expect(ab.getDegrees(), closeTo(60.0, epsilon));
+    expect(ba.getDegrees(), closeTo(-60.0, epsilon));
+    expect(ac.getDegrees(), closeTo(90.0, epsilon));
+  });
+
+  test('times', () {
+    Rotation2d a = Rotation2d.fromDegrees(90) * 0.5;
+    Rotation2d b = Rotation2d.fromDegrees(30) * 1.0;
+    Rotation2d c = Rotation2d.fromDegrees(360) * 2.0;
+
+    expect(a.getDegrees(), closeTo(45.0, epsilon));
+    expect(b.getDegrees(), closeTo(30.0, epsilon));
+    expect(c.getDegrees(), closeTo(720.0, epsilon));
+  });
+
+  test('div', () {
+    Rotation2d a = Rotation2d.fromDegrees(90) / 0.5;
+    Rotation2d b = Rotation2d.fromDegrees(30) / 1.0;
+    Rotation2d c = Rotation2d.fromDegrees(360) / 2.0;
+
+    expect(a.getDegrees(), closeTo(180.0, epsilon));
+    expect(b.getDegrees(), closeTo(30.0, epsilon));
+    expect(c.getDegrees(), closeTo(180.0, epsilon));
+  });
+
+  test('interpolate', () {
+    Rotation2d a =
+        Rotation2d.fromDegrees(0).interpolate(Rotation2d.fromDegrees(90), 0.5);
+    Rotation2d b = Rotation2d.fromDegrees(-30)
+        .interpolate(Rotation2d.fromDegrees(-90), 0.5);
+    Rotation2d c = Rotation2d.fromDegrees(120)
+        .interpolate(Rotation2d.fromDegrees(-120), 0.2);
+
+    expect(a.getDegrees(), closeTo(45.0, epsilon));
+    expect(b.getDegrees(), closeTo(-60.0, epsilon));
+    expect(c.getDegrees(), closeTo(144.0, epsilon));
+  });
+
+  test('clone', () {
+    Rotation2d a = Rotation2d.fromDegrees(67);
+    Rotation2d b = a.clone();
+
+    expect(a.getDegrees(), closeTo(67.0, epsilon));
+    expect(b.getDegrees(), closeTo(67.0, epsilon));
+  });
+
+  test('equals/hashcode', () {
+    Rotation2d a = Rotation2d.fromDegrees(67);
+    Rotation2d b = Rotation2d.fromDegrees(67);
+    Rotation2d c = Rotation2d.fromDegrees(-25);
+
+    expect(a == b, isTrue);
+    expect(b == a, isTrue);
+    expect(a == c, isFalse);
+    expect(c == b, isFalse);
+
+    expect(a.hashCode == b.hashCode, isTrue);
+    expect(a.hashCode == c.hashCode, isFalse);
+  });
+
+  test('toString', () {
+    Rotation2d a = Rotation2d.fromDegrees(180.0);
+
+    expect(a.toString(), 'Rotation2d(Rads: 3.14, Deg: 180.00)');
+  });
 }

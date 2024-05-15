@@ -56,7 +56,6 @@ jobs:
   test-python:
     name: "[PPLib Python] Unit Tests"
     runs-on: ubuntu-22.04
-    container: wpilib/ubuntu-base:22.04
 
     steps:
       - name: Checkout repo
@@ -81,7 +80,6 @@ jobs:
   build-python:
     name: "[PPLib Python] Build"
     runs-on: ubuntu-22.04
-    container: wpilib/ubuntu-base:22.04
     needs: [test-python]
 
     steps:

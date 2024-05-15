@@ -216,28 +216,6 @@ class FollowPathHolonomic(FollowPathCommand):
         ), config.replanningConfig, should_flip_path, *requirements)
 
 
-class FollowPathRamsete(FollowPathCommand):
-    def __init__(self, path: PathPlannerPath, pose_supplier: Callable[[], Pose2d],
-                 speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
-                 replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool], *requirements: Subsystem):
-        """
-        Construct a path following command that will use a Ramsete path following controller for differential drive trains
-
-        :param path: The path to follow
-        :param pose_supplier: Function that supplies the current field-relative pose of the robot
-        :param speeds_supplier: Function that supplies the current robot-relative chassis speeds
-        :param output_robot_relative: Function that will apply the robot-relative output speeds of this command
-        :param replanning_config: Path replanning configuration
-        :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.
-        :param requirements: Subsystems required by this command, usually just the drive subsystem
-        """
-        super().__init__(path, pose_supplier, speeds_supplier, output_robot_relative, PPRamseteController(),
-                         replanning_config, should_flip_path, *requirements)
-
-        if path.isChoreoPath():
-            raise ValueError('Paths loaded from Choreo cannot be used with differential drivetrains')
-
-
 class FollowPathLTV(FollowPathCommand):
     def __init__(self, path: PathPlannerPath, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
@@ -531,36 +509,6 @@ class PathfindHolonomic(PathfindingCommand):
                          target_pose=target_pose, goal_end_vel=goal_end_vel)
 
 
-class PathfindRamsete(PathfindingCommand):
-    def __init__(self, constraints: PathConstraints, pose_supplier: Callable[[], Pose2d],
-                 speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
-                 replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool], *requirements: Subsystem,
-                 target_path: PathPlannerPath = None, target_position: Translation2d = None,
-                 goal_end_vel: float = 0):
-        """
-        Constructs a new PathfindRamsete command that will generate a path towards the given path or pose.
-        NOTE: Either target_path or target_position must be specified.
-
-        :param constraints: the path constraints to use while pathfinding
-        :param pose_supplier: a supplier for the robot's current pose
-        :param speeds_supplier: a supplier for the robot's current robot relative speeds
-        :param output_robot_relative: a consumer for the output speeds (robot relative)
-        :param replanning_config: Path replanning configuration
-        :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.
-        :param requirements: the subsystems required by this command
-        :param target_path: the path to pathfind to
-        :param target_position: the position to pathfind to
-        :param goal_end_vel: The goal end velocity when reaching the given position
-        """
-        super().__init__(constraints, pose_supplier, speeds_supplier, output_robot_relative,
-                         PPRamseteController(), replanning_config, should_flip_path, *requirements,
-                         target_path=target_path,
-                         target_pose=Pose2d(target_position, Rotation2d()), goal_end_vel=goal_end_vel)
-
-        if target_path is not None and target_path.isChoreoPath():
-            raise ValueError('Paths loaded from Choreo cannot be used with differential drivetrains')
-
-
 class PathfindLTV(PathfindingCommand):
     def __init__(self, constraints: PathConstraints, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
@@ -640,48 +588,6 @@ class PathfindThenFollowPathHolonomic(SequentialCommandGroup):
         )
 
 
-class PathfindThenFollowPathRamsete(SequentialCommandGroup):
-    def __init__(self, goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
-                 pose_supplier: Callable[[], Pose2d],
-                 speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
-                 replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool], *requirements: Subsystem):
-        """
-        Constructs a new PathfindThenFollowPathRamsete command group.
-
-        :param goal_path: the goal path to follow
-        :param pathfinding_constraints: the path constraints for pathfinding
-        :param pose_supplier: a supplier for the robot's current pose
-        :param speeds_supplier: a supplier for the robot's current robot relative speeds
-        :param output_robot_relative: a consumer for the output speeds (robot relative)
-        :param replanning_config: Path replanning configuration
-        :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.
-        :param requirements: the subsystems required by this command (drive subsystem)
-        """
-        super().__init__()
-
-        self.addCommands(
-            PathfindRamsete(
-                pathfinding_constraints,
-                pose_supplier,
-                speeds_supplier,
-                output_robot_relative,
-                replanning_config,
-                should_flip_path,
-                *requirements,
-                target_path=goal_path
-            ),
-            FollowPathRamsete(
-                goal_path,
-                pose_supplier,
-                speeds_supplier,
-                output_robot_relative,
-                replanning_config,
-                should_flip_path,
-                *requirements
-            )
-        )
-
-
 class PathfindThenFollowPathLTV(SequentialCommandGroup):
     def __init__(self, goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
                  pose_supplier: Callable[[], Pose2d],
@@ -689,7 +595,7 @@ class PathfindThenFollowPathLTV(SequentialCommandGroup):
                  qelems: Tuple[float, float, float], relems: Tuple[float, float], dt: float,
                  replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool], *requirements: Subsystem):
         """
-        Constructs a new PathfindThenFollowPathRamsete command group.
+        Constructs a new PathfindThenFollowPathLTV command group.
 
         :param goal_path: the goal path to follow
         :param pathfinding_constraints: the path constraints for pathfinding

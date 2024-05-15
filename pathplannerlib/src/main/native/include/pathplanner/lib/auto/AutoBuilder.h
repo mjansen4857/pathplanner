@@ -42,52 +42,6 @@ public:
 			frc2::Subsystem *driveSubsystem);
 
 	/**
-	 * Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
-	 *
-	 * @param poseSupplier a supplier for the robot's current pose
-	 * @param resetPose a consumer for resetting the robot's pose
-	 * @param speedsSupplier a supplier for the robot's current chassis speeds
-	 * @param output a consumer for setting the robot's chassis speeds
-	 * @param replanningConfig Path replanning configuration
-	 * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
-	 *     the field. This will maintain a global blue alliance origin.
-	 * @param driveSubsystem the subsystem for the robot's drive
-	 */
-	static void configureRamsete(std::function<frc::Pose2d()> poseSupplier,
-			std::function<void(frc::Pose2d)> resetPose,
-			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> output,
-			ReplanningConfig replanningConfig,
-			std::function<bool()> shouldFlipPath,
-			frc2::Subsystem *driveSubsystem);
-
-	/**
-	 * Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
-	 *
-	 * @param poseSupplier a supplier for the robot's current pose
-	 * @param resetPose a consumer for resetting the robot's pose
-	 * @param speedsSupplier a supplier for the robot's current chassis speeds
-	 * @param output a consumer for setting the robot's chassis speeds
-	 * @param b Tuning parameter (b &gt; 0 rad^2/m^2) for which larger values make convergence more
-	 *     aggressive like a proportional term.
-	 * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
-	 *     more damping in response.
-	 * @param replanningConfig Path replanning configuration
-	 * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
-	 *     the field. This will maintain a global blue alliance origin.
-	 * @param driveSubsystem the subsystem for the robot's drive
-	 */
-	static void configureRamsete(std::function<frc::Pose2d()> poseSupplier,
-			std::function<void(frc::Pose2d)> resetPose,
-			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> output,
-			units::unit_t<frc::RamseteController::b_unit> b,
-			units::unit_t<frc::RamseteController::zeta_unit> zeta,
-			ReplanningConfig replanningConfig,
-			std::function<bool()> shouldFlipPath,
-			frc2::Subsystem *driveSubsystem);
-
-	/**
 	 * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
 	 * follower.
 	 *

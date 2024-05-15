@@ -1,12 +1,9 @@
 #include "pathplanner/lib/auto/AutoBuilder.h"
 #include "pathplanner/lib/commands/FollowPathHolonomic.h"
-#include "pathplanner/lib/commands/FollowPathRamsete.h"
 #include "pathplanner/lib/commands/FollowPathLTV.h"
 #include "pathplanner/lib/commands/FollowPathWithEvents.h"
 #include "pathplanner/lib/commands/PathfindHolonomic.h"
 #include "pathplanner/lib/commands/PathfindThenFollowPathHolonomic.h"
-#include "pathplanner/lib/commands/PathfindRamsete.h"
-#include "pathplanner/lib/commands/PathfindThenFollowPathRamsete.h"
 #include "pathplanner/lib/commands/PathfindLTV.h"
 #include "pathplanner/lib/commands/PathfindThenFollowPathLTV.h"
 #include "pathplanner/lib/commands/PathPlannerAuto.h"
@@ -80,92 +77,6 @@ void AutoBuilder::configureHolonomic(std::function<frc::Pose2d()> poseSupplier,
 						robotRelativeOutput, config, shouldFlipPath, {
 								driveSubsystem }, rotationDelayDistance).ToPtr();
 			};
-	AutoBuilder::m_pathfindingConfigured = true;
-}
-
-void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
-		std::function<void(frc::Pose2d)> resetPose,
-		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds)> output,
-		ReplanningConfig replanningConfig, std::function<bool()> shouldFlipPath,
-		frc2::Subsystem *driveSubsystem) {
-	if (m_configured) {
-		FRC_ReportError(frc::err::Error,
-				"Auto builder has already been configured. This is likely in error.");
-	}
-
-	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier, speedsSupplier,
-			output, replanningConfig, shouldFlipPath, driveSubsystem](
-			std::shared_ptr<PathPlannerPath> path) {
-		return FollowPathRamsete(path, poseSupplier, speedsSupplier, output,
-				replanningConfig, shouldFlipPath, { driveSubsystem }).ToPtr();
-	};
-	AutoBuilder::m_getPose = poseSupplier;
-	AutoBuilder::m_resetPose = resetPose;
-	AutoBuilder::m_configured = true;
-	AutoBuilder::m_shouldFlipPath = shouldFlipPath;
-
-	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
-			output, replanningConfig, driveSubsystem](frc::Pose2d pose,
-			PathConstraints constraints, units::meters_per_second_t goalEndVel,
-			units::meter_t rotationDelayDistance) {
-		return PathfindRamsete(pose.Translation(), constraints, goalEndVel,
-				poseSupplier, speedsSupplier, output, replanningConfig, {
-						driveSubsystem }).ToPtr();
-	};
-	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
-			speedsSupplier, output, replanningConfig, shouldFlipPath,
-			driveSubsystem](std::shared_ptr<PathPlannerPath> path,
-			PathConstraints constraints, units::meter_t rotationDelayDistance) {
-		return PathfindThenFollowPathRamsete(path, constraints, poseSupplier,
-				speedsSupplier, output, replanningConfig, shouldFlipPath, {
-						driveSubsystem }).ToPtr();
-	};
-	AutoBuilder::m_pathfindingConfigured = true;
-}
-
-void AutoBuilder::configureRamsete(std::function<frc::Pose2d()> poseSupplier,
-		std::function<void(frc::Pose2d)> resetPose,
-		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds)> output,
-		units::unit_t<frc::RamseteController::b_unit> b,
-		units::unit_t<frc::RamseteController::zeta_unit> zeta,
-		ReplanningConfig replanningConfig, std::function<bool()> shouldFlipPath,
-		frc2::Subsystem *driveSubsystem) {
-	if (m_configured) {
-		FRC_ReportError(frc::err::Error,
-				"Auto builder has already been configured. This is likely in error.");
-	}
-
-	AutoBuilder::m_pathFollowingCommandBuilder =
-			[poseSupplier, speedsSupplier, output, b, zeta, replanningConfig,
-					shouldFlipPath, driveSubsystem](
-					std::shared_ptr<PathPlannerPath> path) {
-				return FollowPathRamsete(path, poseSupplier, speedsSupplier,
-						output, b, zeta, replanningConfig, shouldFlipPath, {
-								driveSubsystem }).ToPtr();
-			};
-	AutoBuilder::m_getPose = poseSupplier;
-	AutoBuilder::m_resetPose = resetPose;
-	AutoBuilder::m_configured = true;
-	AutoBuilder::m_shouldFlipPath = shouldFlipPath;
-
-	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier, speedsSupplier,
-			output, b, zeta, replanningConfig, driveSubsystem](frc::Pose2d pose,
-			PathConstraints constraints, units::meters_per_second_t goalEndVel,
-			units::meter_t rotationDelayDistance) {
-		return PathfindRamsete(pose.Translation(), constraints, goalEndVel,
-				poseSupplier, speedsSupplier, output, b, zeta, replanningConfig,
-				{ driveSubsystem }).ToPtr();
-	};
-	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
-			speedsSupplier, output, b, zeta, replanningConfig, shouldFlipPath,
-			driveSubsystem](std::shared_ptr<PathPlannerPath> path,
-			PathConstraints constraints, units::meter_t rotationDelayDistance) {
-		return PathfindThenFollowPathRamsete(path, constraints, poseSupplier,
-				speedsSupplier, output, b, zeta, replanningConfig,
-				shouldFlipPath, { driveSubsystem }).ToPtr();
-	};
 	AutoBuilder::m_pathfindingConfigured = true;
 }
 

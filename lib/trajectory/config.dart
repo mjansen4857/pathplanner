@@ -19,11 +19,6 @@ class RobotConfig {
     required this.moduleLocations,
     required this.holonomic,
   }) : kinematics = SwerveDriveKinematics(moduleLocations);
-
-  @override
-  String toString() {
-    return 'RobotConfig(Mass: $massKG, MOI: $moi, Module Config: $moduleConfig, Module Locations: $moduleLocations)';
-  }
 }
 
 class ModuleConfig {
@@ -45,9 +40,4 @@ class ModuleConfig {
       ((1.0 / 60.0) / driveGearing) * (2.0 * pi * wheelRadiusMeters);
 
   num get maxDriveVelocityMPS => maxDriveVelocityRPM * rpmToMPS;
-
-  @override
-  String toString() {
-    return 'ModuleConfig(Wheel Radius: $wheelRadiusMeters, Gearing: $driveGearing, Max Vel: $maxDriveVelocityMPS, Torque Curve: $driveMotorTorqueCurve, COF: $wheelCOF)';
-  }
 }

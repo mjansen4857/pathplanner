@@ -155,9 +155,4 @@ class MotorTorqueCurve extends InterpolatingMap {
       _ => kraken60A,
     };
   }
-
-  @override
-  String toString() {
-    return 'TorqueCurve($map)';
-  }
 }

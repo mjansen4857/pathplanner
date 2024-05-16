@@ -58,6 +58,7 @@ dependencies:
   flutter_animate: ^4.5.0
   watcher: ^1.1.0
   dropdown_button2: ^2.3.9
+  flex_seed_scheme: ^2.0.0
 
 dev_dependencies:
   flutter_test:

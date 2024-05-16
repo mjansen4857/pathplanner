@@ -102,7 +102,7 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
         MultiSplitViewTheme(
           data: MultiSplitViewThemeData(
             dividerPainter: DividerPainters.grooved1(
-              color: colorScheme.surfaceVariant,
+              color: colorScheme.surfaceContainerHighest,
               highlightedColor: colorScheme.primary,
             ),
           ),

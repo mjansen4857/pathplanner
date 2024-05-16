@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file/file.dart';
 import 'package:file/local.dart';
+import 'package:flex_seed_scheme/flex_seed_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -108,9 +109,12 @@ class _PathPlannerState extends State<PathPlanner> {
     return MaterialApp(
       title: 'PathPlanner',
       theme: ThemeData(
-        brightness: Brightness.dark,
-        colorSchemeSeed: _teamColor,
         useMaterial3: true,
+        colorScheme: SeedColorScheme.fromSeeds(
+          primaryKey: _teamColor,
+          brightness: Brightness.dark,
+          tones: FlexTones.material3Legacy(Brightness.dark),
+        ),
       ),
       home: HomePage(
         appVersion: widget.appVersion,

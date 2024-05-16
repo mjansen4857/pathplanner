@@ -458,7 +458,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
         MultiSplitViewTheme(
           data: MultiSplitViewThemeData(
             dividerPainter: DividerPainters.grooved1(
-              color: colorScheme.surfaceVariant,
+              color: colorScheme.surfaceContainerHighest,
               highlightedColor: colorScheme.primary,
             ),
           ),
@@ -482,6 +482,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
               Card(
                 margin: const EdgeInsets.all(0),
                 elevation: 4.0,
+                color: colorScheme.surface,
+                surfaceTintColor: colorScheme.surfaceTint,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.only(
                     topLeft:

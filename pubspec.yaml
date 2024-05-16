@@ -28,41 +28,47 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.4
-  shared_preferences: ^2.0.11
-  file_selector: ^1.0.0
-  undo: ^1.4.0
-  tuple: ^2.0.0
+  shared_preferences: ^2.2.3
+  file_selector: ^1.0.3
+  undo: ^1.5.0
+  tuple: ^2.0.2
   visibility_detector: ^0.4.0+2
-  github: ^9.2.0
+  github: ^9.24.0
   version: ^3.0.2
-  url_launcher: ^6.0.17
-  macos_secure_bookmarks: ^0.2.0
-  function_tree: ^0.9.0
-  path_provider: ^2.0.9
-  image_size_getter: ^2.1.1
-  path: ^1.8.0
-  window_manager: ^0.3.5
-  flutter_colorpicker: ^1.0.3
-  logger: ^2.0.1
-  http: ^1.1.0
-  fl_chart: ^0.64.0
-  package_info_plus: ^5.0.0
+  url_launcher: ^6.2.6
+  macos_secure_bookmarks: ^0.2.1
+  function_tree: ^0.9.1
+  path_provider: ^2.1.3
+  image_size_getter: ^2.1.3
+  path: ^1.9.0
+  window_manager: ^0.3.8
+  # TODO: revert this back to a pub.dev version if the package is ever actually updated
+  flutter_colorpicker:
+    git:
+      url: https://github.com/mchome/flutter_colorpicker
+      ref: 92bdb69a313a56c391ef148c12ef6539bd31253d
+  logger: ^2.3.0
+  http: ^1.2.1
+  fl_chart: ^0.68.0
+  package_info_plus: ^8.0.0
   multi_split_view: ^2.4.0
-  file: ^6.1.4
-  collection: ^1.17.2
-  nt4: ^1.3.2
-  flutter_animate: ^4.2.0+1
+  file: ^7.0.0
+  collection: ^1.18.0
+  nt4: ^1.3.3
+  flutter_animate: ^4.5.0
   watcher: ^1.1.0
+  dropdown_button2: ^2.3.9
+  flex_seed_scheme: ^2.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   full_coverage: ^1.0.0
-  msix: ^3.7.0
-  flutter_lints: ^3.0.1
-  mockito: ^5.4.2
-  build_runner: ^2.4.6
-  cider: ^0.2.3
+  msix: ^3.16.7
+  flutter_lints: ^4.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.10
+  cider: ^0.2.7
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

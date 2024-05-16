@@ -266,6 +266,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   curve: Curves.easeInOut);
             });
           },
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
           children: [
             DrawerHeader(
               child: Stack(
@@ -404,8 +406,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   icon: const Icon(Icons.settings),
                   label: const Text('Settings'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.surface,
+                    backgroundColor: colorScheme.surfaceContainer,
                     foregroundColor: colorScheme.onSurface,
+                    surfaceTintColor: colorScheme.surfaceTint,
                     elevation: 4.0,
                     fixedSize: const Size(141, 56),
                     shape: RoundedRectangleBorder(

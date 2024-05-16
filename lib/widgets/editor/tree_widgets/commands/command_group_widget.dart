@@ -186,6 +186,8 @@ class CommandGroupWidget extends StatelessWidget {
         } else {
           return Card(
             elevation: subCommandElevation,
+            color: colorScheme.surface,
+            surfaceTintColor: colorScheme.surfaceTint,
             key: Key('$index'),
             child: Padding(
               padding:

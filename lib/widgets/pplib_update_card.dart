@@ -79,7 +79,7 @@ class _PPLibUpdateCardState extends State<PPLibUpdateCard>
                   const SizedBox(width: 12),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.surfaceVariant,
+                      backgroundColor: colorScheme.surfaceContainerHighest,
                       foregroundColor: colorScheme.onSurfaceVariant,
                     ),
                     onPressed: () {

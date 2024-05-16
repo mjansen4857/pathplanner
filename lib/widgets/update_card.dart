@@ -91,7 +91,7 @@ class _UpdateCardState extends State<UpdateCard> with TickerProviderStateMixin {
                   const SizedBox(width: 8),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.surfaceVariant,
+                      backgroundColor: colorScheme.surfaceContainerHighest,
                       foregroundColor: colorScheme.onSurfaceVariant,
                     ),
                     onPressed: () {

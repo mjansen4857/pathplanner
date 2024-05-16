@@ -262,7 +262,7 @@ class _ProjectPageState extends State<ProjectPage> {
           child: MultiSplitViewTheme(
             data: MultiSplitViewThemeData(
               dividerPainter: DividerPainters.grooved1(
-                color: colorScheme.surfaceVariant,
+                color: colorScheme.surfaceContainerHighest,
                 highlightedColor: colorScheme.primary,
               ),
             ),
@@ -405,12 +405,16 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Widget _buildPathsGrid(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     if (_inChoreoFolder) {
       return Padding(
         padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
         child: Card(
           elevation: 0.0,
           margin: const EdgeInsets.all(0),
+          color: colorScheme.primary,
+          surfaceTintColor: colorScheme.surfaceTint,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -509,6 +513,7 @@ class _ProjectPageState extends State<ProjectPage> {
       child: Card(
         elevation: 0.0,
         margin: const EdgeInsets.all(0),
+        color: colorScheme.surface,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -674,7 +679,8 @@ class _ProjectPageState extends State<ProjectPage> {
                                 elevation: 2,
                                 color: candidates.isNotEmpty
                                     ? colorScheme.primary
-                                    : null,
+                                    : colorScheme.surface,
+                                surfaceTintColor: colorScheme.surfaceTint,
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(12),
                                   onTap: () {
@@ -727,6 +733,8 @@ class _ProjectPageState extends State<ProjectPage> {
                           if (_choreoPaths.isNotEmpty)
                             Card(
                               elevation: 2,
+                              color: colorScheme.surface,
+                              surfaceTintColor: colorScheme.surfaceTint,
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(12),
                                 onTap: () {
@@ -773,7 +781,8 @@ class _ProjectPageState extends State<ProjectPage> {
                                   elevation: 2,
                                   color: candidates.isNotEmpty
                                       ? colorScheme.primary
-                                      : null,
+                                      : colorScheme.surface,
+                                  surfaceTintColor: colorScheme.surfaceTint,
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(12),
                                     onTap: () {
@@ -1083,11 +1092,14 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Widget _buildAutosGrid(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
       child: Card(
         elevation: 0.0,
         margin: const EdgeInsets.all(0),
+        color: colorScheme.surface,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
@@ -1264,7 +1276,8 @@ class _ProjectPageState extends State<ProjectPage> {
                                 elevation: 2,
                                 color: candidates.isNotEmpty
                                     ? colorScheme.primary
-                                    : null,
+                                    : colorScheme.surface,
+                                surfaceTintColor: colorScheme.surfaceTint,
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(12),
                                   onTap: () {
@@ -1329,7 +1342,8 @@ class _ProjectPageState extends State<ProjectPage> {
                                   elevation: 2,
                                   color: candidates.isNotEmpty
                                       ? colorScheme.primary
-                                      : null,
+                                      : colorScheme.surface,
+                                  surfaceTintColor: colorScheme.surfaceTint,
                                   child: InkWell(
                                     borderRadius: BorderRadius.circular(12),
                                     onTap: () {

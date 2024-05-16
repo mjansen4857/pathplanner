@@ -35,53 +35,52 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
     return Row(
       children: [
         Expanded(
-          child: LayoutBuilder(builder: (context, constraints) {
-            return DropdownMenu<String>(
-              label: const Text('Path Name'),
-              controller: _controller,
-              initialSelection: widget.command.pathName,
-              width: constraints.maxWidth,
-              dropdownMenuEntries: List.generate(
-                widget.allPathNames.length,
-                (index) => DropdownMenuEntry(
-                  value: widget.allPathNames[index],
-                  label: widget.allPathNames[index],
-                ),
+          child: DropdownMenu<String>(
+            label: const Text('Path Name'),
+            controller: _controller,
+            enableFilter: true,
+            enableSearch: true,
+            initialSelection: widget.command.pathName,
+            dropdownMenuEntries: List.generate(
+              widget.allPathNames.length,
+              (index) => DropdownMenuEntry(
+                value: widget.allPathNames[index],
+                label: widget.allPathNames[index],
               ),
-              inputDecorationTheme: InputDecorationTheme(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                contentPadding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-                isDense: true,
-                constraints: const BoxConstraints(
-                  maxHeight: 42,
-                ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
-              onSelected: (value) {
-                FocusScopeNode currentScope = FocusScope.of(context);
-                if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
-                  FocusManager.instance.primaryFocus!.unfocus();
-                }
+              contentPadding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+              isDense: true,
+              constraints: const BoxConstraints(
+                maxHeight: 42,
+              ),
+            ),
+            onSelected: (value) {
+              FocusScopeNode currentScope = FocusScope.of(context);
+              if (!currentScope.hasPrimaryFocus && currentScope.hasFocus) {
+                FocusManager.instance.primaryFocus!.unfocus();
+              }
 
-                if (value != null) {
-                  widget.undoStack.add(Change(
-                    widget.command.pathName,
-                    () {
-                      widget.command.pathName = value;
-                      widget.onUpdated?.call();
-                    },
-                    (oldValue) {
-                      widget.command.pathName = oldValue;
-                      widget.onUpdated?.call();
-                    },
-                  ));
-                } else if (widget.command.pathName != null) {
-                  _controller.text = widget.command.pathName!;
-                }
-              },
-            );
-          }),
+              if (value != null) {
+                widget.undoStack.add(Change(
+                  widget.command.pathName,
+                  () {
+                    widget.command.pathName = value;
+                    widget.onUpdated?.call();
+                  },
+                  (oldValue) {
+                    widget.command.pathName = oldValue;
+                    widget.onUpdated?.call();
+                  },
+                ));
+              } else if (widget.command.pathName != null) {
+                _controller.text = widget.command.pathName!;
+              }
+            },
+          ),
         ),
         const SizedBox(width: 8),
         Visibility(

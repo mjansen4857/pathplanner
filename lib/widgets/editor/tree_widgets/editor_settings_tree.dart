@@ -40,6 +40,7 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
     return TreeCardNode(
       initiallyExpanded: widget.initiallyExpanded,
       title: const Text('Editor Settings'),
+      elevation: 1.0,
       children: [
         Row(
           children: [

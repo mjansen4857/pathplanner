@@ -139,8 +139,8 @@ class PathPlannerTrajectory {
     states[0].timeSeconds = 0.0;
     states[0].fieldSpeeds = startingSpeeds;
 
-    num torqueLoss = robotConfig.moduleConfig.driveMotorTorqueCurve.get(
-        robotConfig.moduleConfig.maxDriveVelocityRPM); // TODO: air resistance?
+    num torqueLoss = robotConfig.moduleConfig.driveMotorTorqueCurve
+        .get(robotConfig.moduleConfig.maxDriveVelocityRPM);
 
     num moduleFrictionForce =
         robotConfig.moduleConfig.wheelCOF * (robotConfig.massKG * 9.8);

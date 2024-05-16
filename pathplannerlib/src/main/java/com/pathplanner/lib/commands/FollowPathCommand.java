@@ -244,6 +244,11 @@ public class FollowPathCommand extends Command {
     PPLibTelemetry.setCurrentPath(replanned);
   }
 
+  /**
+   * Create a command to warmup on-the-fly generation, replanning, and the path following command
+   *
+   * @return Path following warmup command
+   */
   public static Command warmupCommand() {
     List<Translation2d> bezierPoints =
         PathPlannerPath.bezierFromPoses(

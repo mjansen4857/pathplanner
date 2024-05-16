@@ -386,6 +386,11 @@ public class PathfindingCommand extends Command {
     PPLibTelemetry.setCurrentPath(replanned);
   }
 
+  /**
+   * Create a command to warmup the pathfinder and pathfinding command
+   *
+   * @return Pathfinding warmup command
+   */
   public static Command warmupCommand() {
     return new PathfindHolonomic(
             new Pose2d(15.0, 4.0, Rotation2d.fromDegrees(180)),

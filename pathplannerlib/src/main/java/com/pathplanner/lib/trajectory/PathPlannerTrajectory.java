@@ -5,7 +5,6 @@ import com.pathplanner.lib.trajectory.config.RobotConfig;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,31 +15,35 @@ public class PathPlannerTrajectory {
     this.states = states;
   }
 
-  public PathPlannerTrajectory(PathPlannerPath path, ChassisSpeeds startingSpeeds, Rotation2d startingRotation, RobotConfig config){
+  public PathPlannerTrajectory(
+      PathPlannerPath path,
+      ChassisSpeeds startingSpeeds,
+      Rotation2d startingRotation,
+      RobotConfig config) {
     this.states = new ArrayList<>(path.numPoints());
   }
 
-  public List<PathPlannerTrajectoryState> getStates(){
+  public List<PathPlannerTrajectoryState> getStates() {
     return states;
   }
 
-  public PathPlannerTrajectoryState getState(int index){
+  public PathPlannerTrajectoryState getState(int index) {
     return states.get(index);
   }
 
-  public PathPlannerTrajectoryState getInitialState(){
+  public PathPlannerTrajectoryState getInitialState() {
     return states.get(0);
   }
 
-  public PathPlannerTrajectoryState getEndState(){
+  public PathPlannerTrajectoryState getEndState() {
     return states.get(states.size() - 1);
   }
 
-  public double getTotalTimeSeconds(){
+  public double getTotalTimeSeconds() {
     return getEndState().timeSeconds;
   }
 
-  public PathPlannerTrajectoryState sample(double time){
+  public PathPlannerTrajectoryState sample(double time) {
     if (time <= getInitialState().timeSeconds) return getInitialState();
     if (time >= getTotalTimeSeconds()) return getEndState();
 
@@ -64,12 +67,15 @@ public class PathPlannerTrajectory {
     }
 
     return prevSample.interpolate(
-            sample,
-            (time - prevSample.timeSeconds) /
-                    (sample.timeSeconds - prevSample.timeSeconds));
+        sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
   }
 
-  private static void desaturateWheelSpeeds(SwerveModuleState[] moduleStates, ChassisSpeeds desiredSpeeds, double maxModuleSpeedMPS, double maxTranslationSpeed, double maxRotationSpeed) {
+  private static void desaturateWheelSpeeds(
+      SwerveModuleState[] moduleStates,
+      ChassisSpeeds desiredSpeeds,
+      double maxModuleSpeedMPS,
+      double maxTranslationSpeed,
+      double maxRotationSpeed) {
     double realMaxSpeed = 0.0;
     for (SwerveModuleState s : moduleStates) {
       realMaxSpeed = Math.max(realMaxSpeed, Math.abs(s.speedMetersPerSecond));
@@ -82,8 +88,10 @@ public class PathPlannerTrajectory {
     double translationPct = 0.0;
     if (Math.abs(maxTranslationSpeed) > 1e-8) {
       translationPct =
-              Math.sqrt(Math.pow(desiredSpeeds.vxMetersPerSecond, 2) + Math.pow(desiredSpeeds.vyMetersPerSecond, 2)) /
-                      maxTranslationSpeed;
+          Math.sqrt(
+                  Math.pow(desiredSpeeds.vxMetersPerSecond, 2)
+                      + Math.pow(desiredSpeeds.vyMetersPerSecond, 2))
+              / maxTranslationSpeed;
     }
 
     double rotationPct = 0.0;
@@ -103,9 +111,9 @@ public class PathPlannerTrajectory {
     }
   }
 
-  private static int getNextRotationTargetIdx(PathPlannerPath path, int startingIndex){
-    for(int i = startingIndex; i < path.numPoints() - 1; i++){
-      if(path.getPoint(i).rotationTarget != null){
+  private static int getNextRotationTargetIdx(PathPlannerPath path, int startingIndex) {
+    for (int i = startingIndex; i < path.numPoints() - 1; i++) {
+      if (path.getPoint(i).rotationTarget != null) {
         return i;
       }
     }
@@ -113,7 +121,7 @@ public class PathPlannerTrajectory {
     return path.numPoints() - 1;
   }
 
-  private static Rotation2d cosineInterpolate(Rotation2d start, Rotation2d end, double t){
+  private static Rotation2d cosineInterpolate(Rotation2d start, Rotation2d end, double t) {
     double t2 = (1.0 - Math.cos(t * Math.PI)) / 2.0;
     return start.interpolate(end, t2);
   }

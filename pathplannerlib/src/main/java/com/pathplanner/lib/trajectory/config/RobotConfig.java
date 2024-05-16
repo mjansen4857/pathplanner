@@ -61,7 +61,7 @@ public class RobotConfig {
     this.isHolonomic = false;
   }
 
-  public static RobotConfig fromGUISettings(){
+  public static RobotConfig fromGUISettings() {
     // TODO: load config from the GUI shared settings file
     return null;
   }

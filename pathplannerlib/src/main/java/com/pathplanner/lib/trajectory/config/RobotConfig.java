@@ -12,6 +12,11 @@ public class RobotConfig {
   public final SwerveDriveKinematics kinematics;
   public final boolean isHolonomic;
 
+  // Pre-calculated values that can be reused for every trajectory generation
+  public final int numModules;
+  public final double[] modulePivotDistance;
+  public final double wheelFrictionForce;
+
   /**
    * Create a robot config object for a HOLONOMIC DRIVE robot
    *
@@ -35,6 +40,13 @@ public class RobotConfig {
     this.moduleLocations = swerveModuleLocations;
     this.kinematics = kinematics;
     this.isHolonomic = true;
+
+    this.numModules = this.moduleLocations.length;
+    this.modulePivotDistance = new double[this.numModules];
+    for (int i = 0; i < this.numModules; i++) {
+      this.modulePivotDistance[i] = this.moduleLocations[i].getNorm();
+    }
+    this.wheelFrictionForce = this.moduleConfig.wheelCOF * (this.massKG * 9.8);
   }
 
   /**
@@ -59,6 +71,13 @@ public class RobotConfig {
         };
     this.kinematics = new SwerveDriveKinematics(moduleLocations);
     this.isHolonomic = false;
+
+    this.numModules = this.moduleLocations.length;
+    this.modulePivotDistance = new double[this.numModules];
+    for (int i = 0; i < this.numModules; i++) {
+      this.modulePivotDistance[i] = this.moduleLocations[i].getNorm();
+    }
+    this.wheelFrictionForce = this.moduleConfig.wheelCOF * (this.massKG * 9.8);
   }
 
   public static RobotConfig fromGUISettings() {

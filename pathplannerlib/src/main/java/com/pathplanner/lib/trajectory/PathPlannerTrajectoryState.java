@@ -1,5 +1,6 @@
 package com.pathplanner.lib.trajectory;
 
+import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -9,12 +10,14 @@ public class PathPlannerTrajectoryState {
   public double timeSeconds = 0.0;
   public ChassisSpeeds fieldSpeeds = new ChassisSpeeds();
   public Pose2d pose = Pose2d.kZero;
+  public double linearVelocity = 0.0;
 
   // Values used only during generation, these will not be interpolated
   protected Rotation2d heading = Rotation2d.kZero;
   protected double deltaPos = 0.0;
   protected Rotation2d deltaRot = Rotation2d.kZero;
   protected SwerveModuleTrajectoryState[] moduleStates;
+  protected PathConstraints constraints;
 
   public PathPlannerTrajectoryState interpolate(PathPlannerTrajectoryState endVal, double t) {
     var lerpedState = new PathPlannerTrajectoryState();
@@ -35,6 +38,7 @@ public class PathPlannerTrajectoryState {
             MathUtil.interpolate(
                 fieldSpeeds.omegaRadiansPerSecond, endVal.fieldSpeeds.omegaRadiansPerSecond, t));
     lerpedState.pose = pose.interpolate(endVal.pose, t);
+    lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
 
     return lerpedState;
   }

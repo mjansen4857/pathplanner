@@ -105,7 +105,7 @@ class PathPlannerTrajectory {
     // Calculate module headings
     for (int i = 0; i < states.length; i++) {
       for (int m = 0; m < numModules; m++) {
-        if (i != path.pathPoints.length - 1) {
+        if (i != states.length - 1) {
           states[i].moduleStates[m].fieldAngle =
               (states[i + 1].moduleStates[m].fieldPos -
                       states[i].moduleStates[m].fieldPos)

@@ -18,20 +18,41 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+/** Trajectory generated for a PathPlanner path */
 public class PathPlannerTrajectory {
   private final List<PathPlannerTrajectoryState> states;
   private final List<Pair<Double, Command>> eventCommands;
 
+  /**
+   * Create a trajectory with pre-generated states and list of events
+   *
+   * @param states Pre-generated states
+   * @param eventCommands Event commands
+   */
   public PathPlannerTrajectory(
       List<PathPlannerTrajectoryState> states, List<Pair<Double, Command>> eventCommands) {
     this.states = states;
     this.eventCommands = eventCommands;
   }
 
+  /**
+   * Create a trajectory with pre-generated states
+   *
+   * @param states Pre-generated states
+   */
   public PathPlannerTrajectory(List<PathPlannerTrajectoryState> states) {
     this(states, Collections.emptyList());
   }
 
+  /**
+   * Generate a new trajectory for a given path
+   *
+   * @param path The path to generate a trajectory for
+   * @param startingSpeeds The starting robot-relative chassis speeds of the robot
+   * @param startingRotation The starting field-relative rotation of the robot
+   * @param config The {@link com.pathplanner.lib.trajectory.config.RobotConfig} describing the
+   *     robot
+   */
   public PathPlannerTrajectory(
       PathPlannerPath path,
       ChassisSpeeds startingSpeeds,
@@ -475,30 +496,76 @@ public class PathPlannerTrajectory {
     }
   }
 
+  /**
+   * Get all of the pairs of timestamps + commands to run at those timestamps
+   *
+   * @return Pairs of timestamps and event commands
+   */
   public List<Pair<Double, Command>> getEventCommands() {
     return eventCommands;
   }
 
+  /**
+   * Get all of the pre-generated states in the trajectory
+   *
+   * @return List of all states
+   */
   public List<PathPlannerTrajectoryState> getStates() {
     return states;
   }
 
+  /**
+   * Get the goal state at the given index
+   *
+   * @param index Index of the state to get
+   * @return The state at the given index
+   */
   public PathPlannerTrajectoryState getState(int index) {
     return states.get(index);
   }
 
+  /**
+   * Get the initial state of the trajectory
+   *
+   * @return The initial state
+   */
   public PathPlannerTrajectoryState getInitialState() {
     return states.get(0);
   }
 
+  /**
+   * Get the end state of the trajectory
+   *
+   * @return The end state
+   */
   public PathPlannerTrajectoryState getEndState() {
     return states.get(states.size() - 1);
   }
 
+  /**
+   * Get the total run time of the trajectory
+   *
+   * @return Total run time in seconds
+   */
   public double getTotalTimeSeconds() {
     return getEndState().timeSeconds;
   }
 
+  /**
+   * Get the initial robot pose at the start of the trajectory
+   *
+   * @return Pose of the robot at the initial state
+   */
+  public Pose2d getInitialPose() {
+    return getInitialState().pose;
+  }
+
+  /**
+   * Get the target state at the given point in time along the trajectory
+   *
+   * @param time The time to sample the trajectory at in seconds
+   * @return The target state
+   */
   public PathPlannerTrajectoryState sample(double time) {
     if (time <= getInitialState().timeSeconds) return getInitialState();
     if (time >= getTotalTimeSeconds()) return getEndState();

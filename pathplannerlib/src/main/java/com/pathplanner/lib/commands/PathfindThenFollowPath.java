@@ -13,6 +13,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/** Command group that will pathfind to the start of a path, then follow that path */
 public class PathfindThenFollowPath extends SequentialCommandGroup {
   /**
    * Constructs a new PathfindThenFollowPath command group.

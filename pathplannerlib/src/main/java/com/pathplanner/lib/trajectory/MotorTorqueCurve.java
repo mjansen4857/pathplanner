@@ -2,21 +2,35 @@ package com.pathplanner.lib.trajectory;
 
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 
+/** Interpolating tree map representing the torque curve of a motor */
 public class MotorTorqueCurve extends InterpolatingDoubleTreeMap {
+  /** The type of motor */
   public enum MotorType {
+    /** Kraken X60 */
     krakenX60,
+    /** Kraken X60 with FOC */
     krakenX60_FOC,
+    /** Falcon 500 */
     falcon500,
+    /** Falcon 500 with FOC */
     falcon500_FOC,
+    /** NEO Vortex */
     neoVortex,
+    /** NEO */
     neo,
+    /** CIM */
     cim,
+    /** Mini CIM */
     miniCim,
   }
 
+  /** The current limit of the motor */
   public enum CurrentLimit {
+    /** 40 Amp limit */
     k40A,
+    /** 60 Amp Limit */
     k60A,
+    /** 80 Amp limit */
     k80A,
   }
 

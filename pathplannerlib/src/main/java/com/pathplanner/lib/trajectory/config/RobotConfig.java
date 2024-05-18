@@ -3,18 +3,34 @@ package com.pathplanner.lib.trajectory.config;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 
+/**
+ * Configuration class describing everything that needs to be known about the robot to generate
+ * trajectories
+ */
 public class RobotConfig {
+  /** The mass of the robot, including bumpers and battery, in KG */
   public final double massKG;
+  /** The moment of inertia of the robot, in KG*M^2 */
   public final double MOI;
+  /** The drive module config */
   public final ModuleConfig moduleConfig;
 
+  /** Robot-relative locations of each drive module in meters */
   public final Translation2d[] moduleLocations;
+  /**
+   * Swerve kinematics used to convert ChassisSpeeds to/from module states. This can also be used
+   * for differential robots by assuming they just have 2 swerve modules.
+   */
   public final SwerveDriveKinematics kinematics;
+  /** Is the robot holonomic? */
   public final boolean isHolonomic;
 
   // Pre-calculated values that can be reused for every trajectory generation
+  /** Number od drive modules */
   public final int numModules;
+  /** The distance from the robot center to each module in meters */
   public final double[] modulePivotDistance;
+  /** The force of static friction between the robot's drive wheels and the carpet, in Newtons */
   public final double wheelFrictionForce;
 
   /**
@@ -80,6 +96,11 @@ public class RobotConfig {
     this.wheelFrictionForce = this.moduleConfig.wheelCOF * (this.massKG * 9.8);
   }
 
+  /**
+   * Load the robot config from the shared settings file created by the GUI
+   *
+   * @return RobotConfig matching the robot settings in the GUI
+   */
   public static RobotConfig fromGUISettings() {
     // TODO: load config from the GUI shared settings file
     return null;

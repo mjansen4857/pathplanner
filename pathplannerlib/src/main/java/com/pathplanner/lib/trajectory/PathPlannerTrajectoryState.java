@@ -4,6 +4,7 @@ import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class PathPlannerTrajectoryState {
@@ -41,5 +42,21 @@ public class PathPlannerTrajectoryState {
     lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
 
     return lerpedState;
+  }
+
+  public PathPlannerTrajectoryState reverse() {
+    var reversed = new PathPlannerTrajectoryState();
+
+    reversed.timeSeconds = timeSeconds;
+    Translation2d reversedSpeeds =
+        new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond)
+            .rotateBy(Rotation2d.k180deg);
+    reversed.fieldSpeeds =
+        new ChassisSpeeds(
+            reversedSpeeds.getX(), reversedSpeeds.getY(), fieldSpeeds.omegaRadiansPerSecond);
+    reversed.pose = new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.k180deg));
+    reversed.linearVelocity = -linearVelocity;
+
+    return reversed;
   }
 }

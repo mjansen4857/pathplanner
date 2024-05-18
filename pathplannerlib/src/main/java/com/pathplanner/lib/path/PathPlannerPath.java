@@ -1,6 +1,9 @@
 package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.auto.CommandUtil;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import com.pathplanner.lib.trajectory.config.RobotConfig;
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -34,7 +37,6 @@ public class PathPlannerPath {
   private GoalEndState goalEndState;
   private List<PathPoint> allPoints;
   private boolean reversed;
-  private Rotation2d previewStartingRotation;
 
   private boolean isChoreoPath = false;
   private PathPlannerTrajectory choreoTrajectory = null;
@@ -55,43 +57,6 @@ public class PathPlannerPath {
    * @param globalConstraints The global constraints of the path
    * @param goalEndState The goal end state of the path
    * @param reversed Should the robot follow the path reversed (differential drive only)
-   * @param previewStartingRotation The settings used for previews in the UI
-   */
-  public PathPlannerPath(
-      List<Translation2d> bezierPoints,
-      List<RotationTarget> holonomicRotations,
-      List<ConstraintsZone> constraintZones,
-      List<EventMarker> eventMarkers,
-      PathConstraints globalConstraints,
-      GoalEndState goalEndState,
-      boolean reversed,
-      Rotation2d previewStartingRotation) {
-    this.bezierPoints = bezierPoints;
-    this.rotationTargets = holonomicRotations;
-    this.constraintZones = constraintZones;
-    this.eventMarkers = eventMarkers;
-    this.globalConstraints = globalConstraints;
-    this.goalEndState = goalEndState;
-    this.reversed = reversed;
-    this.allPoints = createPath(this.bezierPoints, this.rotationTargets, this.constraintZones);
-    this.previewStartingRotation = previewStartingRotation;
-
-    precalcValues();
-
-    instances++;
-    HAL.report(tResourceType.kResourceType_PathPlannerPath, instances);
-  }
-
-  /**
-   * Create a new path planner path
-   *
-   * @param bezierPoints List of points representing the cubic Bezier curve of the path
-   * @param holonomicRotations List of rotation targets along the path
-   * @param constraintZones List of constraint zones along the path
-   * @param eventMarkers List of event markers along the path
-   * @param globalConstraints The global constraints of the path
-   * @param goalEndState The goal end state of the path
-   * @param reversed Should the robot follow the path reversed (differential drive only)
    */
   public PathPlannerPath(
       List<Translation2d> bezierPoints,
@@ -101,15 +66,19 @@ public class PathPlannerPath {
       PathConstraints globalConstraints,
       GoalEndState goalEndState,
       boolean reversed) {
-    this(
-        bezierPoints,
-        holonomicRotations,
-        constraintZones,
-        eventMarkers,
-        globalConstraints,
-        goalEndState,
-        reversed,
-        Rotation2d.fromDegrees(0));
+    this.bezierPoints = bezierPoints;
+    this.rotationTargets = holonomicRotations;
+    this.constraintZones = constraintZones;
+    this.eventMarkers = eventMarkers;
+    this.globalConstraints = globalConstraints;
+    this.goalEndState = goalEndState;
+    this.reversed = reversed;
+    this.allPoints = createPath(this.bezierPoints, this.rotationTargets, this.constraintZones);
+
+    precalcValues();
+
+    instances++;
+    HAL.report(tResourceType.kResourceType_PathPlannerPath, instances);
   }
 
   /**
@@ -135,8 +104,7 @@ public class PathPlannerPath {
         Collections.emptyList(),
         constraints,
         goalEndState,
-        reversed,
-        Rotation2d.fromDegrees(0));
+        reversed);
   }
 
   /**
@@ -163,7 +131,6 @@ public class PathPlannerPath {
     this.goalEndState = goalEndState;
     this.reversed = false;
     this.allPoints = new ArrayList<>();
-    this.previewStartingRotation = Rotation2d.fromDegrees(0);
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathPlannerPath, instances);
@@ -274,7 +241,6 @@ public class PathPlannerPath {
     this.goalEndState = updatedPath.goalEndState;
     this.allPoints = updatedPath.allPoints;
     this.reversed = updatedPath.reversed;
-    this.previewStartingRotation = updatedPath.previewStartingRotation;
   }
 
   /**
@@ -327,10 +293,10 @@ public class PathPlannerPath {
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
 
-      List<PathPlannerTrajectory.State> trajStates = new ArrayList<>();
+      List<PathPlannerTrajectoryState> trajStates = new ArrayList<>();
       for (var s : (JSONArray) json.get("samples")) {
         JSONObject sample = (JSONObject) s;
-        PathPlannerTrajectory.State state = new PathPlannerTrajectory.State();
+        var state = new PathPlannerTrajectoryState();
 
         double time = ((Number) sample.get("timestamp")).doubleValue();
         double xPos = ((Number) sample.get("x")).doubleValue();
@@ -341,20 +307,9 @@ public class PathPlannerPath {
         double angularVelRps = ((Number) sample.get("angularVelocity")).doubleValue();
 
         state.timeSeconds = time;
-        state.velocityMps = Math.hypot(xVel, yVel);
-        state.accelerationMpsSq = 0.0; // Not encoded, not needed anyway
-        state.headingAngularVelocityRps = 0.0; // Not encoded, only used for diff drive anyway
-        state.positionMeters = new Translation2d(xPos, yPos);
-        state.heading = new Rotation2d(xVel, yVel);
-        state.targetHolonomicRotation = new Rotation2d(rotationRad);
-        state.holonomicAngularVelocityRps = Optional.of(angularVelRps);
-        state.curvatureRadPerMeter = 0.0; // Not encoded, only used for diff drive anyway
-        state.constraints =
-            new PathConstraints(
-                Double.POSITIVE_INFINITY,
-                Double.POSITIVE_INFINITY,
-                Double.POSITIVE_INFINITY,
-                Double.POSITIVE_INFINITY);
+        state.linearVelocity = Math.hypot(xVel, yVel);
+        state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
+        state.fieldSpeeds = new ChassisSpeeds(xVel, yVel, angularVelRps);
 
         trajStates.add(state);
       }
@@ -367,13 +322,13 @@ public class PathPlannerPath {
                   Double.POSITIVE_INFINITY,
                   Double.POSITIVE_INFINITY),
               new GoalEndState(
-                  trajStates.get(trajStates.size() - 1).velocityMps,
-                  trajStates.get(trajStates.size() - 1).targetHolonomicRotation,
+                  trajStates.get(trajStates.size() - 1).linearVelocity,
+                  trajStates.get(trajStates.size() - 1).pose.getRotation(),
                   true));
 
       List<PathPoint> pathPoints = new ArrayList<>();
       for (var state : trajStates) {
-        pathPoints.add(new PathPoint(state.positionMeters));
+        pathPoints.add(new PathPoint(state.pose.getTranslation()));
       }
 
       path.allPoints = pathPoints;
@@ -426,16 +381,6 @@ public class PathPlannerPath {
       eventMarkers.add(EventMarker.fromJson((JSONObject) markerJson));
     }
 
-    Rotation2d previewStartingRotation = Rotation2d.fromDegrees(0);
-    if (pathJson.containsKey("previewStartingState")) {
-      JSONObject previewStartingStateJson = (JSONObject) pathJson.get("previewStartingState");
-      if (previewStartingStateJson != null) {
-        previewStartingRotation =
-            Rotation2d.fromDegrees(
-                ((Number) previewStartingStateJson.get("rotation")).doubleValue());
-      }
-    }
-
     return new PathPlannerPath(
         bezierPoints,
         rotationTargets,
@@ -443,8 +388,7 @@ public class PathPlannerPath {
         eventMarkers,
         globalConstraints,
         goalEndState,
-        reversed,
-        previewStartingRotation);
+        reversed);
   }
 
   private static List<Translation2d> bezierPointsFromWaypointsJson(JSONArray waypointsJson) {
@@ -493,22 +437,6 @@ public class PathPlannerPath {
     }
 
     return new Pose2d(startPos, heading);
-  }
-
-  /**
-   * Get the starting pose for the holomonic path based on the preview settings.
-   *
-   * <p>NOTE: This should only be used for the first path you are running, and only if you are not
-   * using an auto mode file. Using this pose to reset the robots pose between sequential paths will
-   * cause a loss of accuracy.
-   *
-   * @return Pose at the path's starting point
-   */
-  public Pose2d getPreviewStartingHolonomicPose() {
-    Rotation2d heading =
-        previewStartingRotation == null ? Rotation2d.fromDegrees(0) : previewStartingRotation;
-
-    return new Pose2d(getPoint(0).position, heading);
   }
 
   /**
@@ -761,8 +689,7 @@ public class PathPlannerPath {
           Collections.emptyList(),
           globalConstraints,
           goalEndState,
-          reversed,
-          previewStartingRotation);
+          reversed);
     } else if ((closestPointIdx == 0 && robotNextControl == null)
         || (Math.abs(closestDist - startingPose.getTranslation().getDistance(getPoint(0).position))
                 <= 0.25
@@ -825,8 +752,7 @@ public class PathPlannerPath {
                 .collect(Collectors.toList()),
             globalConstraints,
             goalEndState,
-            reversed,
-            previewStartingRotation);
+            reversed);
       }
     }
 
@@ -859,8 +785,7 @@ public class PathPlannerPath {
           Collections.emptyList(),
           globalConstraints,
           goalEndState,
-          reversed,
-          previewStartingRotation);
+          reversed);
     }
 
     if (bezierPoints.isEmpty()) {
@@ -994,8 +919,7 @@ public class PathPlannerPath {
         mappedMarkers,
         globalConstraints,
         goalEndState,
-        reversed,
-        previewStartingRotation);
+        reversed);
   }
 
   /**
@@ -1012,14 +936,15 @@ public class PathPlannerPath {
    *
    * @param startingSpeeds The robot-relative starting speeds.
    * @param startingRotation The starting rotation of the robot.
+   * @param config The robot configuration
    * @return The generated trajectory.
    */
   public PathPlannerTrajectory getTrajectory(
-      ChassisSpeeds startingSpeeds, Rotation2d startingRotation) {
+      ChassisSpeeds startingSpeeds, Rotation2d startingRotation, RobotConfig config) {
     if (isChoreoPath) {
       return choreoTrajectory;
     } else {
-      return new PathPlannerTrajectory(this, startingSpeeds, startingRotation);
+      return new PathPlannerTrajectory(this, startingSpeeds, startingRotation, config);
     }
   }
 
@@ -1031,22 +956,18 @@ public class PathPlannerPath {
   public PathPlannerPath flipPath() {
     if (isChoreoPath) {
       // Just flip the choreo traj
-      List<PathPlannerTrajectory.State> mirroredStates = new ArrayList<>();
-      for (PathPlannerTrajectory.State state : choreoTrajectory.getStates()) {
-        PathPlannerTrajectory.State mirrored = new PathPlannerTrajectory.State();
+      List<PathPlannerTrajectoryState> mirroredStates = new ArrayList<>();
+      for (var state : choreoTrajectory.getStates()) {
+        var mirrored = new PathPlannerTrajectoryState();
 
         mirrored.timeSeconds = state.timeSeconds;
-        mirrored.velocityMps = state.velocityMps;
-        mirrored.accelerationMpsSq = state.accelerationMpsSq;
-        mirrored.headingAngularVelocityRps = -state.headingAngularVelocityRps;
-        mirrored.positionMeters = GeometryUtil.flipFieldPosition(state.positionMeters);
-        mirrored.heading = GeometryUtil.flipFieldRotation(state.heading);
-        mirrored.targetHolonomicRotation =
-            GeometryUtil.flipFieldRotation(state.targetHolonomicRotation);
-        state.holonomicAngularVelocityRps.ifPresent(
-            v -> mirrored.holonomicAngularVelocityRps = Optional.of(-v));
-        mirrored.curvatureRadPerMeter = -state.curvatureRadPerMeter;
-        mirrored.constraints = state.constraints;
+        mirrored.linearVelocity = state.linearVelocity;
+        mirrored.pose = GeometryUtil.flipFieldPose(state.pose);
+        mirrored.fieldSpeeds =
+            new ChassisSpeeds(
+                -state.fieldSpeeds.vxMetersPerSecond,
+                state.fieldSpeeds.vyMetersPerSecond,
+                -state.fieldSpeeds.omegaRadiansPerSecond);
         mirroredStates.add(mirrored);
       }
 
@@ -1058,13 +979,13 @@ public class PathPlannerPath {
                   Double.POSITIVE_INFINITY,
                   Double.POSITIVE_INFINITY),
               new GoalEndState(
-                  mirroredStates.get(mirroredStates.size() - 1).velocityMps,
-                  mirroredStates.get(mirroredStates.size() - 1).targetHolonomicRotation,
+                  mirroredStates.get(mirroredStates.size() - 1).linearVelocity,
+                  mirroredStates.get(mirroredStates.size() - 1).pose.getRotation(),
                   true));
 
       List<PathPoint> pathPoints = new ArrayList<>();
       for (var state : mirroredStates) {
-        pathPoints.add(new PathPoint(state.positionMeters));
+        pathPoints.add(new PathPoint(state.pose.getTranslation()));
       }
 
       path.allPoints = pathPoints;
@@ -1091,7 +1012,6 @@ public class PathPlannerPath {
             goalEndState.getVelocity(),
             GeometryUtil.flipFieldRotation(goalEndState.getRotation()),
             goalEndState.shouldRotateFast());
-    Rotation2d newPreviewRot = GeometryUtil.flipFieldRotation(previewStartingRotation);
 
     return new PathPlannerPath(
         newBezier,
@@ -1102,8 +1022,7 @@ public class PathPlannerPath {
             .collect(Collectors.toList()),
         globalConstraints,
         newEndState,
-        reversed,
-        newPreviewRot);
+        reversed);
   }
 
   /**

@@ -1,22 +1,35 @@
 package com.pathplanner.lib.trajectory;
 
+import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
+import com.pathplanner.lib.path.PathSegment;
 import com.pathplanner.lib.trajectory.config.RobotConfig;
 import com.pathplanner.lib.util.GeometryUtil;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj2.command.Command;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class PathPlannerTrajectory {
   private final List<PathPlannerTrajectoryState> states;
+  private final List<Pair<Double, Command>> eventCommands;
+
+  public PathPlannerTrajectory(
+      List<PathPlannerTrajectoryState> states, List<Pair<Double, Command>> eventCommands) {
+    this.states = states;
+    this.eventCommands = eventCommands;
+  }
 
   public PathPlannerTrajectory(List<PathPlannerTrajectoryState> states) {
-    this.states = states;
+    this(states, Collections.emptyList());
   }
 
   public PathPlannerTrajectory(
@@ -24,52 +37,67 @@ public class PathPlannerTrajectory {
       ChassisSpeeds startingSpeeds,
       Rotation2d startingRotation,
       RobotConfig config) {
-    this.states = new ArrayList<>(path.numPoints());
+    if (path.isChoreoPath()) {
+      var traj = path.getTrajectory(startingSpeeds, startingRotation, config);
+      this.states = traj.states;
+      this.eventCommands = traj.eventCommands;
+    } else {
+      this.states = new ArrayList<>(path.numPoints());
+      this.eventCommands = new ArrayList<>(path.getEventMarkers().size());
 
-    // Create all states
-    generateStates(states, path, startingRotation, config);
+      // Create all states
+      generateStates(states, path, startingRotation, config);
 
-    // Set the initial module velocities
-    ChassisSpeeds fieldStartingSpeeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(startingSpeeds, states.get(0).pose.getRotation());
-    var initialStates = config.kinematics.toSwerveModuleStates(fieldStartingSpeeds);
-    for (int m = 0; m < config.numModules; m++) {
-      states.get(0).moduleStates[m].speedMetersPerSecond = initialStates[m].speedMetersPerSecond;
-    }
-    states.get(0).timeSeconds = 0.0;
-    states.get(0).fieldSpeeds = fieldStartingSpeeds;
-    states.get(0).linearVelocity =
-        Math.hypot(fieldStartingSpeeds.vxMetersPerSecond, fieldStartingSpeeds.vyMetersPerSecond);
+      // Set the initial module velocities
+      ChassisSpeeds fieldStartingSpeeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(startingSpeeds, states.get(0).pose.getRotation());
+      var initialStates = config.kinematics.toSwerveModuleStates(fieldStartingSpeeds);
+      for (int m = 0; m < config.numModules; m++) {
+        states.get(0).moduleStates[m].speedMetersPerSecond = initialStates[m].speedMetersPerSecond;
+      }
+      states.get(0).timeSeconds = 0.0;
+      states.get(0).fieldSpeeds = fieldStartingSpeeds;
+      states.get(0).linearVelocity =
+          Math.hypot(fieldStartingSpeeds.vxMetersPerSecond, fieldStartingSpeeds.vyMetersPerSecond);
 
-    // Forward pass
-    forwardAccelPass(states, config);
+      // Forward pass
+      forwardAccelPass(states, config);
 
-    // Set the final module velocities
-    Translation2d endSpeedTrans =
-        new Translation2d(
-            path.getGoalEndState().getVelocity(), states.get(states.size() - 1).heading);
-    ChassisSpeeds endFieldSpeeds =
-        new ChassisSpeeds(endSpeedTrans.getX(), endSpeedTrans.getY(), 0.0);
-    var endStates =
-        config.kinematics.toSwerveModuleStates(
-            ChassisSpeeds.fromFieldRelativeSpeeds(
-                endFieldSpeeds, states.get(states.size() - 1).pose.getRotation()));
-    for (int m = 0; m < config.numModules; m++) {
-      states.get(states.size() - 1).moduleStates[m].speedMetersPerSecond =
-          endStates[m].speedMetersPerSecond;
-    }
-    states.get(states.size() - 1).fieldSpeeds = endFieldSpeeds;
-    states.get(0).linearVelocity = path.getGoalEndState().getVelocity();
+      // Set the final module velocities
+      Translation2d endSpeedTrans =
+          new Translation2d(
+              path.getGoalEndState().getVelocity(), states.get(states.size() - 1).heading);
+      ChassisSpeeds endFieldSpeeds =
+          new ChassisSpeeds(endSpeedTrans.getX(), endSpeedTrans.getY(), 0.0);
+      var endStates =
+          config.kinematics.toSwerveModuleStates(
+              ChassisSpeeds.fromFieldRelativeSpeeds(
+                  endFieldSpeeds, states.get(states.size() - 1).pose.getRotation()));
+      for (int m = 0; m < config.numModules; m++) {
+        states.get(states.size() - 1).moduleStates[m].speedMetersPerSecond =
+            endStates[m].speedMetersPerSecond;
+      }
+      states.get(states.size() - 1).fieldSpeeds = endFieldSpeeds;
+      states.get(0).linearVelocity = path.getGoalEndState().getVelocity();
 
-    // Reverse pass
-    reverseAccelPass(states, config);
+      // Reverse pass
+      reverseAccelPass(states, config);
 
-    // Loop back over and calculate time
-    for (int i = 1; i < states.size(); i++) {
-      double v0 = states.get(i - 1).linearVelocity;
-      double v = states.get(i).linearVelocity;
-      double dt = (2 * states.get(i).deltaPos) / (v + v0);
-      states.get(i).timeSeconds = states.get(i - 1).timeSeconds + dt;
+      // Loop back over and calculate time
+      for (int i = 1; i < states.size(); i++) {
+        double v0 = states.get(i - 1).linearVelocity;
+        double v = states.get(i).linearVelocity;
+        double dt = (2 * states.get(i).deltaPos) / (v + v0);
+        states.get(i).timeSeconds = states.get(i - 1).timeSeconds + dt;
+      }
+
+      for (EventMarker m : path.getEventMarkers()) {
+        // TODO: this will need to be changed for dynamic resolution
+        int pointIndex = (int) Math.round(m.getWaypointRelativePos() / PathSegment.RESOLUTION);
+        eventCommands.add(Pair.of(states.get(pointIndex).timeSeconds, m.getCommand()));
+      }
+
+      eventCommands.sort(Comparator.comparing(Pair::getFirst));
     }
   }
 
@@ -445,6 +473,10 @@ public class PathPlannerTrajectory {
       state.linearVelocity =
           Math.hypot(state.fieldSpeeds.vxMetersPerSecond, state.fieldSpeeds.vyMetersPerSecond);
     }
+  }
+
+  public List<Pair<Double, Command>> getEventCommands() {
+    return eventCommands;
   }
 
   public List<PathPlannerTrajectoryState> getStates() {

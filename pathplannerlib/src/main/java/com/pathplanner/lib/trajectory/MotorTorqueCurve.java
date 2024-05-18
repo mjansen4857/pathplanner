@@ -21,7 +21,21 @@ public class MotorTorqueCurve extends InterpolatingDoubleTreeMap {
     /** CIM */
     cim,
     /** Mini CIM */
-    miniCim,
+    miniCim;
+
+    private static MotorType fromSettingsString(String name) {
+      return switch (name) {
+        case "KRAKEN" -> krakenX60;
+        case "KRAKENFOC" -> krakenX60_FOC;
+        case "FALCON" -> falcon500;
+        case "FALCONFOC" -> falcon500_FOC;
+        case "VORTEX" -> neoVortex;
+        case "NEO" -> neo;
+        case "CIM" -> cim;
+        case "MINICIM" -> miniCim;
+        default -> throw new IllegalArgumentException("Unknown motor type string: " + name);
+      };
+    }
   }
 
   /** The current limit of the motor */
@@ -31,7 +45,16 @@ public class MotorTorqueCurve extends InterpolatingDoubleTreeMap {
     /** 60 Amp Limit */
     k60A,
     /** 80 Amp limit */
-    k80A,
+    k80A;
+
+    private static CurrentLimit fromSettingsString(String name) {
+      return switch (name) {
+        case "40A" -> k40A;
+        case "60A" -> k60A;
+        case "80A" -> k80A;
+        default -> throw new IllegalArgumentException("Unknown current limit string: " + name);
+      };
+    }
   }
 
   private final double nmPerAmp;
@@ -99,6 +122,26 @@ public class MotorTorqueCurve extends InterpolatingDoubleTreeMap {
    */
   public double getNmPerAmp() {
     return nmPerAmp;
+  }
+
+  /**
+   * Create a motor torque curve for the string representing a motor and current limit saved in the
+   * GUI settings
+   *
+   * @param torqueCurveName The name of the torque curve
+   * @return The torque curve corresponding to the given name
+   */
+  public static MotorTorqueCurve fromSettingsString(String torqueCurveName) {
+    String[] parts = torqueCurveName.split("_");
+
+    if (parts.length != 2) {
+      throw new IllegalArgumentException("Invalid torque curve name: " + torqueCurveName);
+    }
+
+    MotorType motorType = MotorType.fromSettingsString(parts[0]);
+    CurrentLimit currentLimit = CurrentLimit.fromSettingsString(parts[1]);
+
+    return new MotorTorqueCurve(motorType, currentLimit);
   }
 
   private void initKrakenX60(CurrentLimit currentLimit) {

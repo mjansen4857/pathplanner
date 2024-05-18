@@ -1,7 +1,13 @@
 package com.pathplanner.lib.trajectory.config;
 
+import com.pathplanner.lib.trajectory.MotorTorqueCurve;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.wpilibj.Filesystem;
+import java.io.*;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * Configuration class describing everything that needs to be known about the robot to generate
@@ -100,9 +106,56 @@ public class RobotConfig {
    * Load the robot config from the shared settings file created by the GUI
    *
    * @return RobotConfig matching the robot settings in the GUI
+   * @throws IOException if an I/O error occurs
+   * @throws ParseException if a JSON parsing error occurs
    */
-  public static RobotConfig fromGUISettings() {
-    // TODO: load config from the GUI shared settings file
-    return null;
+  public static RobotConfig fromGUISettings() throws IOException, ParseException {
+    BufferedReader br =
+        new BufferedReader(
+            new FileReader(new File(Filesystem.getDeployDirectory(), "pathplanner/settings.json")));
+
+    StringBuilder fileContentBuilder = new StringBuilder();
+    String line;
+    while ((line = br.readLine()) != null) {
+      fileContentBuilder.append(line);
+    }
+    br.close();
+
+    String fileContent = fileContentBuilder.toString();
+    JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+    boolean isHolonomic = (boolean) json.get("holonomicMode");
+    double massKG = (double) json.get("robotMass");
+    double MOI = (double) json.get("robotMOI");
+    double wheelbase = (double) json.get("robotWheelbase");
+    double trackwidth = (double) json.get("robotWheelbase");
+    double wheelRadius = (double) json.get("driveWheelRadius");
+    double gearing = (double) json.get("driveGearing");
+    double maxDriveRPM = (double) json.get("maxDriveRPM");
+    double wheelCOF = (double) json.get("wheelCOF");
+    String driveMotor = (String) json.get("driveMotor");
+
+    ModuleConfig moduleConfig =
+        new ModuleConfig(
+            wheelRadius,
+            gearing,
+            maxDriveRPM,
+            wheelCOF,
+            MotorTorqueCurve.fromSettingsString(driveMotor));
+
+    if (isHolonomic) {
+      var moduleLocations =
+          new Translation2d[] {
+            new Translation2d(wheelbase / 2.0, trackwidth / 2.0),
+            new Translation2d(wheelbase / 2.0, -trackwidth / 2.0),
+            new Translation2d(-wheelbase / 2.0, trackwidth / 2.0),
+            new Translation2d(-wheelbase / 2.0, -trackwidth / 2.0),
+          };
+
+      return new RobotConfig(
+          massKG, MOI, moduleConfig, moduleLocations, new SwerveDriveKinematics(moduleLocations));
+    } else {
+      return new RobotConfig(massKG, MOI, moduleConfig, trackwidth);
+    }
   }
 }

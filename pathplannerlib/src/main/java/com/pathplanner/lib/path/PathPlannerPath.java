@@ -323,8 +323,7 @@ public class PathPlannerPath {
                   Double.POSITIVE_INFINITY),
               new GoalEndState(
                   trajStates.get(trajStates.size() - 1).linearVelocity,
-                  trajStates.get(trajStates.size() - 1).pose.getRotation(),
-                  true));
+                  trajStates.get(trajStates.size() - 1).pose.getRotation()));
 
       List<PathPoint> pathPoints = new ArrayList<>();
       for (var state : trajStates) {
@@ -520,7 +519,7 @@ public class PathPlannerPath {
       }
 
       allPoints.get(allPoints.size() - 1).rotationTarget =
-          new RotationTarget(-1, goalEndState.getRotation(), goalEndState.shouldRotateFast());
+          new RotationTarget(-1, goalEndState.getRotation());
       allPoints.get(allPoints.size() - 1).maxV = goalEndState.getVelocity();
     }
   }
@@ -730,12 +729,7 @@ public class PathPlannerPath {
         return new PathPlannerPath(
             replannedBezier,
             rotationTargets.stream()
-                .map(
-                    (target) ->
-                        new RotationTarget(
-                            target.getPosition() + 1,
-                            target.getTarget(),
-                            target.shouldRotateFast()))
+                .map((target) -> new RotationTarget(target.getPosition() + 1, target.getTarget()))
                 .collect(Collectors.toList()),
             constraintZones.stream()
                 .map(
@@ -866,13 +860,10 @@ public class PathPlannerPath {
 
     for (RotationTarget t : rotationTargets) {
       if (t.getPosition() >= nextWaypointIdx) {
-        mappedTargets.add(
-            new RotationTarget(
-                t.getPosition() - nextWaypointIdx + 2, t.getTarget(), t.shouldRotateFast()));
+        mappedTargets.add(new RotationTarget(t.getPosition() - nextWaypointIdx + 2, t.getTarget()));
       } else if (t.getPosition() >= nextWaypointIdx - 1) {
         double pct = t.getPosition() - (nextWaypointIdx - 1);
-        mappedTargets.add(
-            new RotationTarget(mapPct(pct, segment1Pct), t.getTarget(), t.shouldRotateFast()));
+        mappedTargets.add(new RotationTarget(mapPct(pct, segment1Pct), t.getTarget()));
       }
     }
 
@@ -980,8 +971,7 @@ public class PathPlannerPath {
                   Double.POSITIVE_INFINITY),
               new GoalEndState(
                   mirroredStates.get(mirroredStates.size() - 1).linearVelocity,
-                  mirroredStates.get(mirroredStates.size() - 1).pose.getRotation(),
-                  true));
+                  mirroredStates.get(mirroredStates.size() - 1).pose.getRotation()));
 
       List<PathPoint> pathPoints = new ArrayList<>();
       for (var state : mirroredStates) {
@@ -1003,15 +993,11 @@ public class PathPlannerPath {
             .map(
                 (t) ->
                     new RotationTarget(
-                        t.getPosition(),
-                        GeometryUtil.flipFieldRotation(t.getTarget()),
-                        t.shouldRotateFast()))
+                        t.getPosition(), GeometryUtil.flipFieldRotation(t.getTarget())))
             .collect(Collectors.toList());
     GoalEndState newEndState =
         new GoalEndState(
-            goalEndState.getVelocity(),
-            GeometryUtil.flipFieldRotation(goalEndState.getRotation()),
-            goalEndState.shouldRotateFast());
+            goalEndState.getVelocity(), GeometryUtil.flipFieldRotation(goalEndState.getRotation()));
 
     return new PathPlannerPath(
         newBezier,

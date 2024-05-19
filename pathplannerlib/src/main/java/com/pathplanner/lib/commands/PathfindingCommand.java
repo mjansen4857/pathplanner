@@ -102,7 +102,7 @@ public class PathfindingCommand extends Command {
     this.targetPose = new Pose2d(this.targetPath.getPoint(0).position, targetRotation);
     this.originalTargetPose =
         new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
-    this.goalEndState = new GoalEndState(goalEndVel, targetRotation, true);
+    this.goalEndState = new GoalEndState(goalEndVel, targetRotation);
     this.constraints = constraints;
     this.controller = controller;
     this.poseSupplier = poseSupplier;
@@ -150,7 +150,7 @@ public class PathfindingCommand extends Command {
     this.targetPose = targetPose;
     this.originalTargetPose =
         new Pose2d(this.targetPose.getTranslation(), this.targetPose.getRotation());
-    this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation(), true);
+    this.goalEndState = new GoalEndState(goalEndVel, targetPose.getRotation());
     this.constraints = constraints;
     this.controller = controller;
     this.poseSupplier = poseSupplier;
@@ -216,7 +216,7 @@ public class PathfindingCommand extends Command {
           new Pose2d(this.targetPath.getPoint(0).position, originalTargetPose.getRotation());
       if (shouldFlipPath.getAsBoolean()) {
         targetPose = GeometryUtil.flipFieldPose(this.originalTargetPose);
-        goalEndState = new GoalEndState(goalEndState.getVelocity(), targetPose.getRotation(), true);
+        goalEndState = new GoalEndState(goalEndState.getVelocity(), targetPose.getRotation());
       }
     }
 

@@ -264,7 +264,7 @@ public class FollowPathCommand extends Command {
         new PathPlannerPath(
             bezierPoints,
             new PathConstraints(4.0, 4.0, 4.0, 4.0),
-            new GoalEndState(0.0, Rotation2d.fromDegrees(90), true));
+            new GoalEndState(0.0, Rotation2d.fromDegrees(90)));
 
     return new FollowPathCommand(
             path,

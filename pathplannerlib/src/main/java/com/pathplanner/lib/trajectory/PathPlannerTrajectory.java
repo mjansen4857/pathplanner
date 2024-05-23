@@ -6,6 +6,7 @@ import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.path.PathSegment;
 import com.pathplanner.lib.trajectory.config.RobotConfig;
 import com.pathplanner.lib.util.GeometryUtil;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -254,31 +255,26 @@ public class PathPlannerTrajectory {
         totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
       }
 
-      // Convert the max forces experienced by the robot into linear and angular acceleration
-      double linearAccel = linearForceVec.getNorm() / config.massKG;
-      double angularAccel = totalTorque / config.MOI;
-
       // Use the robot accelerations to calculate how each module should accelerate
+      // Even though kinematics is usually used for velocities, it can still
+      // convert chassis accelerations to module accelerations
+      double maxAngAccel = state.constraints.getMaxAngularAccelerationRpsSq();
+      double angularAccel = MathUtil.clamp(totalTorque / config.MOI, -maxAngAccel, maxAngAccel);
+
+      Translation2d accelVec = linearForceVec.div(config.massKG);
+      double maxAccel = state.constraints.getMaxAccelerationMpsSq();
+      double accel = accelVec.getNorm();
+      if (accel > maxAccel) {
+        accelVec = accelVec.times(maxAccel / accel);
+      }
+
+      ChassisSpeeds chassisAccel =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              new ChassisSpeeds(accelVec.getX(), accelVec.getY(), angularAccel),
+              state.pose.getRotation());
+      var accelStates = config.kinematics.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < config.numModules; m++) {
-        // First, we need to calculate the acceleration vector at the location of the module
-        // This vector will be the robot's linear acceleration vector + the acceleration vector due
-        // to angular accel at the location of the module
-        Translation2d accelerationVector =
-            new Translation2d(linearAccel, linearForceVec.getAngle());
-
-        Rotation2d angleToModule =
-            state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
-        double angAccelMps = angularAccel * config.modulePivotDistance[m];
-        Translation2d angAccelVector =
-            new Translation2d(angAccelMps, angleToModule.plus(Rotation2d.kCCW_90deg));
-
-        accelerationVector = accelerationVector.plus(angAccelVector);
-
-        // Now that we have the acceleration vector, we can calculate how much the actual module
-        // will accelerate
-        Rotation2d modHeadingDelta =
-            state.moduleStates[m].fieldAngle.minus(accelerationVector.getAngle());
-        double moduleAcceleration = accelerationVector.getNorm() * modHeadingDelta.getCos();
+        double moduleAcceleration = accelStates[m].speedMetersPerSecond;
 
         // Calculate the module velocity at the current state
         // vf^2 = v0^2 + 2ad
@@ -327,24 +323,6 @@ public class PathPlannerTrajectory {
 
       double maxChassisVel = state.constraints.getMaxVelocityMps();
       double maxChassisAngVel = state.constraints.getMaxAngularVelocityRps();
-
-      // Limit the max chassis vels based on the acceleration constraints
-      double prevChassisAngVel = prevState.fieldSpeeds.omegaRadiansPerSecond;
-      maxChassisVel =
-          Math.min(
-              maxChassisVel,
-              Math.sqrt(
-                  Math.pow(prevState.linearVelocity, 2)
-                      + (2 * state.constraints.getMaxAccelerationMpsSq() * state.deltaPos)));
-      maxChassisAngVel =
-          Math.min(
-              maxChassisAngVel,
-              Math.sqrt(
-                  Math.pow(prevChassisAngVel, 2)
-                      + Math.abs(
-                          2
-                              * state.constraints.getMaxAngularAccelerationRpsSq()
-                              * state.deltaRot.getRadians())));
 
       desaturateWheelSpeeds(
           state.moduleStates,
@@ -397,31 +375,26 @@ public class PathPlannerTrajectory {
         totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
       }
 
-      // Convert the max forces experienced by the robot into linear and angular acceleration
-      double linearAccel = linearForceVec.getNorm() / config.massKG;
-      double angularAccel = totalTorque / config.MOI;
-
       // Use the robot accelerations to calculate how each module should accelerate
+      // Even though kinematics is usually used for velocities, it can still
+      // convert chassis accelerations to module accelerations
+      double maxAngAccel = state.constraints.getMaxAngularAccelerationRpsSq();
+      double angularAccel = MathUtil.clamp(totalTorque / config.MOI, -maxAngAccel, maxAngAccel);
+
+      Translation2d accelVec = linearForceVec.div(config.massKG);
+      double maxAccel = state.constraints.getMaxAccelerationMpsSq();
+      double accel = accelVec.getNorm();
+      if (accel > maxAccel) {
+        accelVec = accelVec.times(maxAccel / accel);
+      }
+
+      ChassisSpeeds chassisAccel =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              new ChassisSpeeds(accelVec.getX(), accelVec.getY(), angularAccel),
+              state.pose.getRotation());
+      var accelStates = config.kinematics.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < config.numModules; m++) {
-        // First, we need to calculate the acceleration vector at the location of the module
-        // This vector will be the robot's linear acceleration vector + the acceleration vector due
-        // to angular accel at the location of the module
-        Translation2d accelerationVector =
-            new Translation2d(linearAccel, linearForceVec.getAngle());
-
-        Rotation2d angleToModule =
-            state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
-        double angAccelMps = angularAccel * config.modulePivotDistance[m];
-        Translation2d angAccelVector =
-            new Translation2d(angAccelMps, angleToModule.plus(Rotation2d.kCCW_90deg));
-
-        accelerationVector = accelerationVector.plus(angAccelVector);
-
-        // Now that we have the acceleration vector, we can calculate how much the actual module
-        // will accelerate
-        Rotation2d modHeadingDelta =
-            state.moduleStates[m].fieldAngle.minus(accelerationVector.getAngle());
-        double moduleAcceleration = accelerationVector.getNorm() * modHeadingDelta.getCos();
+        double moduleAcceleration = accelStates[m].speedMetersPerSecond;
 
         // Calculate the module velocity at the current state
         // vf^2 = v0^2 + 2ad
@@ -456,26 +429,6 @@ public class PathPlannerTrajectory {
 
       double maxChassisVel = state.constraints.getMaxVelocityMps();
       double maxChassisAngVel = state.constraints.getMaxAngularVelocityRps();
-
-      // Limit the max chassis vels based on the acceleration constraints
-      // Since this is a deceleration pass, we will consider the next state's vel as the previous
-      // We will also make sure that this max vel is not higher than was already calculated
-      double prevChassisAngVel = nextState.fieldSpeeds.omegaRadiansPerSecond;
-      maxChassisVel =
-          Math.min(
-              maxChassisVel,
-              Math.sqrt(
-                  Math.pow(nextState.linearVelocity, 2)
-                      + (2 * state.constraints.getMaxAccelerationMpsSq() * nextState.deltaPos)));
-      maxChassisAngVel =
-          Math.min(
-              maxChassisAngVel,
-              Math.sqrt(
-                  Math.pow(prevChassisAngVel, 2)
-                      + Math.abs(
-                          2
-                              * state.constraints.getMaxAngularAccelerationRpsSq()
-                              * nextState.deltaRot.getRadians())));
 
       maxChassisVel = Math.min(maxChassisVel, state.linearVelocity);
       maxChassisAngVel =

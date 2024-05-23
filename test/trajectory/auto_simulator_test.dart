@@ -87,11 +87,11 @@ void main() {
     sim = AutoSimulator.simulateAuto(
         [test], old.Pose2d(position: const Point(8, 2)), config);
     expect(sim, isNotNull);
-    expect(sim!.states.last.timeSeconds, closeTo(1.85, 0.05));
+    expect(sim!.states.last.timeSeconds, closeTo(1.94, 0.05));
 
     sim = AutoSimulator.simulateAuto(
         [test], old.Pose2d(position: const Point(3, 1)), config);
     expect(sim, isNotNull);
-    expect(sim!.states.last.timeSeconds, closeTo(2.38, 0.05));
+    expect(sim!.states.last.timeSeconds, closeTo(2.49, 0.05));
   });
 }

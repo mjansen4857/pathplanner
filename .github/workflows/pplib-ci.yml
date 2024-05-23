@@ -56,16 +56,15 @@ jobs:
   test-python:
     name: "[PPLib Python] Unit Tests"
     runs-on: ubuntu-22.04
-    container: wpilib/ubuntu-base:22.04
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
       
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       
       - name: Install dependencies
         working-directory: ./pathplannerlib-python
@@ -81,17 +80,16 @@ jobs:
   build-python:
     name: "[PPLib Python] Build"
     runs-on: ubuntu-22.04
-    container: wpilib/ubuntu-base:22.04
     needs: [test-python]
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
       
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v4
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.12"
       
       - name: Install dependencies
         working-directory: ./pathplannerlib-python

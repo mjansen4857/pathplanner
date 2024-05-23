@@ -1,9 +1,39 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
 class PathPainterUtil {
+  static void paintRobotModules(List<Pose2d> modulePoses, FieldImage fieldImage,
+      double scale, Canvas canvas, Color color) {
+    var paint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = color
+      ..strokeWidth = 2;
+
+    for (Pose2d m in modulePoses) {
+      Offset pos = PathPainterUtil.pointToPixelOffset(
+          m.translation.asPoint(), scale, fieldImage);
+
+      canvas.save();
+      canvas.translate(pos.dx, pos.dy);
+      canvas.rotate(-m.rotation.getRadians().toDouble());
+      canvas.translate(-pos.dx, -pos.dy);
+      canvas.drawRRect(
+          RRect.fromRectAndRadius(
+              Rect.fromCenter(
+                  center: pos,
+                  width: PathPainterUtil.uiPointSizeToPixels(
+                      25, scale, fieldImage),
+                  height: PathPainterUtil.uiPointSizeToPixels(
+                      12, scale, fieldImage)),
+              const Radius.circular(1.0)),
+          paint);
+      canvas.restore();
+    }
+  }
+
   static void paintRobotOutline(
       Point position,
       num rotationDegrees,
@@ -20,32 +50,23 @@ class PathPainterUtil {
     Offset center =
         PathPainterUtil.pointToPixelOffset(position, scale, fieldImage);
     num angle = -rotationDegrees / 180 * pi;
-    double halfWidth =
-        PathPainterUtil.metersToPixels(robotSize.width / 2, scale, fieldImage);
-    double halfLength =
-        PathPainterUtil.metersToPixels(robotSize.height / 2, scale, fieldImage);
 
-    Offset l = Offset(center.dx + (halfWidth * sin(angle)),
-        center.dy - (halfWidth * cos(angle)));
-    Offset r = Offset(center.dx - (halfWidth * sin(angle)),
-        center.dy + (halfWidth * cos(angle)));
+    double width =
+        PathPainterUtil.metersToPixels(robotSize.width, scale, fieldImage);
+    double length =
+        PathPainterUtil.metersToPixels(robotSize.height, scale, fieldImage);
 
-    Offset frontLeft = Offset(
-        l.dx + (halfLength * cos(angle)), l.dy + (halfLength * sin(angle)));
-    Offset backLeft = Offset(
-        l.dx - (halfLength * cos(angle)), l.dy - (halfLength * sin(angle)));
-    Offset frontRight = Offset(
-        r.dx + (halfLength * cos(angle)), r.dy + (halfLength * sin(angle)));
-    Offset backRight = Offset(
-        r.dx - (halfLength * cos(angle)), r.dy - (halfLength * sin(angle)));
-
-    canvas.drawLine(backLeft, frontLeft, paint);
-    canvas.drawLine(frontLeft, frontRight, paint);
-    canvas.drawLine(frontRight, backRight, paint);
-    canvas.drawLine(backRight, backLeft, paint);
-
-    Offset frontMiddle = frontLeft + ((frontRight - frontLeft) * 0.5);
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(angle.toDouble());
+    canvas.translate(-center.dx, -center.dy);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromCenter(center: center, width: length, height: width),
+            const Radius.circular(5)),
+        paint);
     paint.style = PaintingStyle.fill;
+    Offset frontMiddle = center + Offset(length / 2, 0);
     canvas.drawCircle(frontMiddle,
         PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
     paint.style = PaintingStyle.stroke;
@@ -53,6 +74,7 @@ class PathPainterUtil {
     paint.color = Colors.black;
     canvas.drawCircle(frontMiddle,
         PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
+    canvas.restore();
   }
 
   static void paintMarker(Canvas canvas, Offset location, Color color) {

@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/services/simulator/trajectory_generator.dart';
+import 'package:pathplanner/trajectory/trajectory.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/mini_path_preview.dart';
 
@@ -12,9 +13,9 @@ void main() {
   PathPlannerPath path = PathPlannerPath.defaultPath(pathDir: '/paths', fs: fs);
   ChoreoPath path2 = ChoreoPath(
     name: 'test',
-    trajectory: Trajectory(states: [
-      TrajectoryState(time: 0.0),
-      TrajectoryState(time: 1.0),
+    trajectory: PathPlannerTrajectory.fromStates([
+      TrajectoryState.pregen(0.0, Pose2d(const Translation2d(), Rotation2d())),
+      TrajectoryState.pregen(1.0, Pose2d(const Translation2d(), Rotation2d())),
     ]),
     fs: fs,
     choreoDir: '/choreo',

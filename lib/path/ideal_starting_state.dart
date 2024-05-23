@@ -1,10 +1,10 @@
-class PreviewStartingState {
+class IdealStartingState {
   num rotation;
   num velocity;
 
-  PreviewStartingState({this.rotation = 0, this.velocity = 0});
+  IdealStartingState({this.rotation = 0, this.velocity = 0});
 
-  PreviewStartingState.fromJson(Map<String, dynamic> json)
+  IdealStartingState.fromJson(Map<String, dynamic> json)
       : this(
           rotation: json['rotation'],
           velocity: json['velocity'],
@@ -17,8 +17,8 @@ class PreviewStartingState {
     };
   }
 
-  PreviewStartingState clone() {
-    return PreviewStartingState(
+  IdealStartingState clone() {
+    return IdealStartingState(
       rotation: rotation,
       velocity: velocity,
     );
@@ -26,7 +26,7 @@ class PreviewStartingState {
 
   @override
   bool operator ==(Object other) =>
-      other is PreviewStartingState &&
+      other is IdealStartingState &&
       other.runtimeType == runtimeType &&
       other.velocity == velocity &&
       other.rotation == rotation;

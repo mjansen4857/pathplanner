@@ -37,6 +37,16 @@ class SettingsDialog extends StatefulWidget {
 class _SettingsDialogState extends State<SettingsDialog> {
   late num _width;
   late num _length;
+  late num _mass;
+  late num _moi;
+  late num _wheelbase;
+  late num _trackwidth;
+  late num _wheelRadius;
+  late num _driveGearing;
+  late num _maxDriveRPM;
+  late num _wheelCOF;
+  late String _driveMotor;
+  late String _currentLimit;
   late num _defaultMaxVel;
   late num _defaultMaxAccel;
   late num _defaultMaxAngVel;
@@ -46,7 +56,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late FieldImage _selectedField;
   late Color _teamColor;
   late String _pplibClientHost;
-  late num _maxModuleSpeed;
 
   @override
   void initState() {
@@ -56,6 +65,29 @@ class _SettingsDialogState extends State<SettingsDialog> {
         widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
     _length =
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
+    _mass = widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass;
+    _moi = widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI;
+    _wheelbase = widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
+        Defaults.robotWheelbase;
+    _trackwidth = widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
+        Defaults.robotTrackwidth;
+    _wheelRadius = widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+        Defaults.driveWheelRadius;
+    _driveGearing =
+        widget.prefs.getDouble(PrefsKeys.driveGearing) ?? Defaults.driveGearing;
+    _maxDriveRPM =
+        widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM;
+    _wheelCOF = widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF;
+
+    String torqueCurve =
+        widget.prefs.getString(PrefsKeys.torqueCurve) ?? Defaults.torqueCurve;
+    List<String> torqueCurveSplit = torqueCurve.split('_');
+    if (torqueCurveSplit.length != 2) {
+      torqueCurveSplit = const ['KRAKEN', '60A'];
+    }
+    _driveMotor = torqueCurveSplit[0];
+    _currentLimit = torqueCurveSplit[1];
+
     _defaultMaxVel = widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
         Defaults.defaultMaxVel;
     _defaultMaxAccel = widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
@@ -74,12 +106,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
         Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
     _pplibClientHost = widget.prefs.getString(PrefsKeys.ntServerAddress) ??
         Defaults.ntServerAddress;
-    _maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
-        Defaults.maxModuleSpeed;
   }
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return AlertDialog(
       title: const Text('Settings'),
       content: SizedBox(
@@ -92,14 +124,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Robot Attributes:'),
+                  const Text('Robot Config:'),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _width.toStringAsFixed(2),
-                          label: 'Robot Width (M)',
+                          initialText: _width.toStringAsFixed(3),
+                          label: 'Bumper Width (M)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -115,8 +147,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _length.toStringAsFixed(2),
-                          label: 'Robot Length (M)',
+                          initialText: _length.toStringAsFixed(3),
+                          label: 'Bumper Length (M)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -136,15 +168,31 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _maxModuleSpeed.toStringAsFixed(2),
-                          label: 'Max Module Speed (M/S)',
-                          enabled: _holonomicMode,
+                          initialText: _mass.toStringAsFixed(3),
+                          label: 'Robot Mass (KG)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
-                                  PrefsKeys.maxModuleSpeed, value.toDouble());
+                                  PrefsKeys.robotMass, value.toDouble());
                               setState(() {
-                                _maxModuleSpeed = value;
+                                _mass = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _moi.toStringAsFixed(3),
+                          label: 'Robot MOI (KG*M²)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.robotMOI, value.toDouble());
+                              setState(() {
+                                _moi = value;
                               });
                             }
                             widget.onSettingsChanged();
@@ -154,6 +202,286 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _wheelbase.toStringAsFixed(3),
+                          label: 'Wheelbase (M)',
+                          enabled: _holonomicMode,
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.robotWheelbase, value.toDouble());
+                              setState(() {
+                                _wheelbase = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _trackwidth.toStringAsFixed(3),
+                          label: 'Trackwidth (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.robotTrackwidth, value.toDouble());
+                              setState(() {
+                                _trackwidth = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Module Config:'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _wheelRadius.toStringAsFixed(3),
+                          label: 'Wheel Radius (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.driveWheelRadius, value.toDouble());
+                              setState(() {
+                                _wheelRadius = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _driveGearing.toStringAsFixed(3),
+                          label: 'Drive Gearing',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.driveGearing, value.toDouble());
+                              setState(() {
+                                _driveGearing = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _maxDriveRPM.round().toString(),
+                          label: 'Max Drive RPM',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.maxDriveRPM, value.toDouble());
+                              setState(() {
+                                _maxDriveRPM = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialText: _wheelCOF.toStringAsFixed(2),
+                          label: 'Wheel COF',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.wheelCOF, value.toDouble());
+                              setState(() {
+                                _wheelCOF = value;
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            const Text('Drive Motor:'),
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              height: 48,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border:
+                                        Border.all(color: colorScheme.outline),
+                                  ),
+                                  child: ExcludeFocus(
+                                    child: ButtonTheme(
+                                      alignedDropdown: true,
+                                      child: DropdownButton<String>(
+                                        borderRadius: BorderRadius.circular(8),
+                                        value: _driveMotor,
+                                        isExpanded: true,
+                                        underline: Container(),
+                                        menuMaxHeight: 250,
+                                        icon: const Icon(Icons.arrow_drop_down),
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: colorScheme.onSurface),
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            setState(() {
+                                              _driveMotor = newValue;
+                                            });
+                                            widget.prefs.setString(
+                                                PrefsKeys.torqueCurve,
+                                                '${_driveMotor}_$_currentLimit');
+                                            widget.onSettingsChanged();
+                                          }
+                                        },
+                                        items: const [
+                                          DropdownMenuItem<String>(
+                                            value: 'KRAKEN',
+                                            child: Text('Kraken X60'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'KRAKENFOC',
+                                            child: Text('Kraken X60 FOC'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'FALCON',
+                                            child: Text('Falcon 500'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'FALCONFOC',
+                                            child: Text('Falcon 500 FOC'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'VORTEX',
+                                            child: Text('NEO Vortex'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'NEO',
+                                            child: Text('NEO'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'CIM',
+                                            child: Text('CIM'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: 'MINICIM',
+                                            child: Text('MiniCIM'),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            const Text('Current Limit:'),
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              height: 48,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 4),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8),
+                                    border:
+                                        Border.all(color: colorScheme.outline),
+                                  ),
+                                  child: ExcludeFocus(
+                                    child: ButtonTheme(
+                                      alignedDropdown: true,
+                                      child: DropdownButton<String>(
+                                        borderRadius: BorderRadius.circular(8),
+                                        value: _currentLimit,
+                                        isExpanded: true,
+                                        underline: Container(),
+                                        menuMaxHeight: 250,
+                                        icon: const Icon(Icons.arrow_drop_down),
+                                        style: TextStyle(
+                                            fontSize: 14,
+                                            color: colorScheme.onSurface),
+                                        onChanged: (String? newValue) {
+                                          if (newValue != null) {
+                                            setState(() {
+                                              _currentLimit = newValue;
+                                            });
+                                            widget.prefs.setString(
+                                                PrefsKeys.torqueCurve,
+                                                '${_driveMotor}_$_currentLimit');
+                                            widget.onSettingsChanged();
+                                          }
+                                        },
+                                        items: const [
+                                          DropdownMenuItem<String>(
+                                            value: '40A',
+                                            child: Text('40A'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: '60A',
+                                            child: Text('60A'),
+                                          ),
+                                          DropdownMenuItem<String>(
+                                            value: '80A',
+                                            child: Text('80A'),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   const Text('Default Constraints:'),
                   const SizedBox(height: 8),
                   Row(
@@ -202,7 +530,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
                             child: NumberTextField(
                               initialText: _defaultMaxAngVel.toStringAsFixed(2),
                               label: 'Max Angular Velocity (Deg/S)',
-                              enabled: _holonomicMode,
                               onSubmitted: (value) {
                                 if (value != null) {
                                   widget.prefs.setDouble(
@@ -222,7 +549,6 @@ class _SettingsDialogState extends State<SettingsDialog> {
                               initialText:
                                   _defaultMaxAngAccel.toStringAsFixed(2),
                               label: 'Max Angular Accel (Deg/S²)',
-                              enabled: _holonomicMode,
                               onSubmitted: (value) {
                                 if (value != null) {
                                   widget.prefs.setDouble(
@@ -240,15 +566,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                  const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,

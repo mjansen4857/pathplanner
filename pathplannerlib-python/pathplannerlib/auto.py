@@ -4,9 +4,8 @@ from .path import PathPlannerPath, PathConstraints
 from typing import Callable, Tuple, List
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds
-from .commands import FollowPathRamsete, FollowPathHolonomic, FollowPathLTV, PathfindLTV, \
-    PathfindHolonomic, PathfindRamsete, PathfindThenFollowPathHolonomic, PathfindThenFollowPathRamsete, \
-    PathfindThenFollowPathLTV
+from .commands import FollowPathHolonomic, FollowPathLTV, PathfindLTV, \
+    PathfindHolonomic, PathfindThenFollowPathHolonomic, PathfindThenFollowPathLTV
 from .geometry_util import flipFieldPose
 import os
 from wpilib import getDeployDirectory, reportError, reportWarning, SendableChooser
@@ -215,65 +214,6 @@ class AutoBuilder:
                 should_flip_path,
                 drive_subsystem,
                 rotation_delay_distance=rotation_delay_distance
-            )
-        AutoBuilder._pathfindingConfigured = True
-
-    @staticmethod
-    def configureRamsete(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
-                         robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
-                         robot_relative_output: Callable[[ChassisSpeeds], None],
-                         replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool],
-                         drive_subsystem: Subsystem) -> None:
-        """
-        Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
-
-        :param pose_supplier: a supplier for the robot's current pose
-        :param reset_pose: a consumer for resetting the robot's pose
-        :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
-        :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
-        :param replanning_config: Path replanning configuration
-        :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.
-        :param drive_subsystem: the subsystem for the robot's drive
-        """
-        if AutoBuilder._configured:
-            reportError('AutoBuilder has already been configured. This is likely in error.', True)
-
-        AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathRamsete(
-            path,
-            pose_supplier,
-            robot_relative_speeds_supplier,
-            robot_relative_output,
-            replanning_config,
-            should_flip_path,
-            drive_subsystem
-        )
-        AutoBuilder._getPose = pose_supplier
-        AutoBuilder._resetPose = reset_pose
-        AutoBuilder._configured = True
-        AutoBuilder._shouldFlipPath = should_flip_path
-
-        AutoBuilder._pathfindToPoseCommandBuilder = \
-            lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindRamsete(
-                constraints,
-                pose_supplier,
-                robot_relative_speeds_supplier,
-                robot_relative_output,
-                replanning_config,
-                lambda: False,
-                drive_subsystem,
-                target_position=pose.translation(),
-                goal_end_vel=goal_end_vel
-            )
-        AutoBuilder._pathfindThenFollowPathCommandBuilder = \
-            lambda path, constraints, rotation_delay_distance: PathfindThenFollowPathRamsete(
-                path,
-                constraints,
-                pose_supplier,
-                robot_relative_speeds_supplier,
-                robot_relative_output,
-                replanning_config,
-                should_flip_path,
-                drive_subsystem
             )
         AutoBuilder._pathfindingConfigured = True
 

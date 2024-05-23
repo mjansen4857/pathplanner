@@ -6,8 +6,6 @@ import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../test_helpers.dart';
-
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -20,6 +18,15 @@ void main() {
     SharedPreferences.setMockInitialValues({
       PrefsKeys.robotWidth: 0.1,
       PrefsKeys.robotLength: 0.2,
+      PrefsKeys.robotMass: 50.0,
+      PrefsKeys.robotMOI: 6.0,
+      PrefsKeys.robotWheelbase: 0.5,
+      PrefsKeys.robotTrackwidth: 0.6,
+      PrefsKeys.driveWheelRadius: 0.05,
+      PrefsKeys.driveGearing: 5.143,
+      PrefsKeys.maxDriveRPM: 5600.0,
+      PrefsKeys.wheelCOF: 1.2,
+      PrefsKeys.torqueCurve: 'KRAKEN_60A',
       PrefsKeys.holonomicMode: true,
       PrefsKeys.hotReloadEnabled: true,
       PrefsKeys.teamColor: Colors.black.value,
@@ -28,7 +35,6 @@ void main() {
       PrefsKeys.defaultMaxAccel: 2.0,
       PrefsKeys.defaultMaxAngVel: 3.0,
       PrefsKeys.defaultMaxAngAccel: 4.0,
-      PrefsKeys.maxModuleSpeed: 4.5,
     });
     prefs = await SharedPreferences.getInstance();
     settingsChanged = false;
@@ -36,8 +42,7 @@ void main() {
     teamColor = Colors.black;
   });
 
-  testWidgets('robot width text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
+  testWidgets('bumper width text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -53,10 +58,10 @@ void main() {
       ),
     ));
 
-    final textField = find.widgetWithText(NumberTextField, 'Robot Width (M)');
+    final textField = find.widgetWithText(NumberTextField, 'Bumper Width (M)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('0.10')),
+    expect(find.descendant(of: textField, matching: find.text('0.100')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '1.0');
@@ -67,8 +72,7 @@ void main() {
     expect(prefs.getDouble(PrefsKeys.robotWidth), 1.0);
   });
 
-  testWidgets('robot length text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
+  testWidgets('bumper length text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -84,10 +88,10 @@ void main() {
       ),
     ));
 
-    final textField = find.widgetWithText(NumberTextField, 'Robot Length (M)');
+    final textField = find.widgetWithText(NumberTextField, 'Bumper Length (M)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('0.20')),
+    expect(find.descendant(of: textField, matching: find.text('0.200')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '1.0');
@@ -98,8 +102,7 @@ void main() {
     expect(prefs.getDouble(PrefsKeys.robotLength), 1.0);
   });
 
-  testWidgets('max module speed text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
+  testWidgets('robot mass text field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -115,11 +118,10 @@ void main() {
       ),
     ));
 
-    final textField =
-        find.widgetWithText(NumberTextField, 'Max Module Speed (M/S)');
+    final textField = find.widgetWithText(NumberTextField, 'Robot Mass (KG)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('4.50')),
+    expect(find.descendant(of: textField, matching: find.text('50.000')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '1.0');
@@ -127,11 +129,296 @@ void main() {
     await widgetTester.pump();
 
     expect(settingsChanged, true);
-    expect(prefs.getDouble(PrefsKeys.maxModuleSpeed), 1.0);
+    expect(prefs.getDouble(PrefsKeys.robotMass), 1.0);
+  });
+
+  testWidgets('robot moi text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Robot MOI (KG*M²)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('6.000')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.robotMOI), 1.0);
+  });
+
+  testWidgets('robot wheelbase text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Wheelbase (M)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('0.500')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.robotWheelbase), 1.0);
+  });
+
+  testWidgets('robot trackwidth text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Trackwidth (M)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('0.600')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.robotTrackwidth), 1.0);
+  });
+
+  testWidgets('wheel radius text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Wheel Radius (M)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('0.050')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.driveWheelRadius), 1.0);
+  });
+
+  testWidgets('drive gearing text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Drive Gearing');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('5.143')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.driveGearing), 1.0);
+  });
+
+  testWidgets('max RPM text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Max Drive RPM');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('5600')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.maxDriveRPM), 1.0);
+  });
+
+  testWidgets('wheel cof text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField = find.widgetWithText(NumberTextField, 'Wheel COF');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('1.20')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '1.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.wheelCOF), 1.0);
+  });
+
+  testWidgets('drive motor dropdown', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final dropdown = find.byType(DropdownButton<String>).first;
+
+    expect(dropdown, findsOneWidget);
+    expect(find.descendant(of: dropdown, matching: find.text('Kraken X60')),
+        findsOneWidget);
+
+    await widgetTester.tap(dropdown);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('Kraken X60'), findsWidgets);
+    expect(find.text('Kraken X60 FOC'), findsOneWidget);
+
+    await widgetTester.tap(find.text('Kraken X60 FOC'));
+    await widgetTester.pumpAndSettle();
+
+    expect(settingsChanged, true);
+    expect(prefs.getString(PrefsKeys.torqueCurve), 'KRAKENFOC_60A');
+    expect(find.text('Kraken X60 FOC'), findsOneWidget);
+    expect(find.text('Kraken X60'), findsNothing);
+  });
+
+  testWidgets('current limit dropdown', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final dropdown = find.byType(DropdownButton<String>).last;
+
+    expect(dropdown, findsOneWidget);
+    expect(find.descendant(of: dropdown, matching: find.text('60A')),
+        findsOneWidget);
+
+    await widgetTester.tap(dropdown);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('40A'), findsOneWidget);
+    expect(find.text('60A'), findsWidgets);
+    expect(find.text('80A'), findsOneWidget);
+
+    await widgetTester.tap(find.text('80A'));
+    await widgetTester.pumpAndSettle();
+
+    expect(settingsChanged, true);
+    expect(prefs.getString(PrefsKeys.torqueCurve), 'KRAKEN_80A');
+    expect(find.text('40A'), findsNothing);
+    expect(find.text('60A'), findsNothing);
+    expect(find.text('80A'), findsOneWidget);
   });
 
   testWidgets('default max vel text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -163,7 +450,6 @@ void main() {
   });
 
   testWidgets('default max accel text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -195,7 +481,6 @@ void main() {
   });
 
   testWidgets('default max ang vel text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -227,7 +512,6 @@ void main() {
   });
 
   testWidgets('default max ang accel text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -259,7 +543,6 @@ void main() {
   });
 
   testWidgets('field image dropdown', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -297,7 +580,6 @@ void main() {
   });
 
   testWidgets('team color picker', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -333,7 +615,6 @@ void main() {
   });
 
   testWidgets('telemetry host text field', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -365,7 +646,6 @@ void main() {
   });
 
   testWidgets('holonomic mode chip', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -398,7 +678,6 @@ void main() {
   });
 
   testWidgets('hot reload chip', (widgetTester) async {
-    FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(

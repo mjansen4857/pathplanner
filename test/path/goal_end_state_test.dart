@@ -6,19 +6,16 @@ void main() {
     GoalEndState g = GoalEndState(
       velocity: 1.0,
       rotation: 2.0,
-      rotateFast: true,
     );
 
     expect(g.velocity, 1.0);
     expect(g.rotation, 2.0);
-    expect(g.rotateFast, true);
   });
 
   test('toJson/fromJson interoperability', () {
     GoalEndState g = GoalEndState(
       velocity: 1.0,
       rotation: 2.0,
-      rotateFast: true,
     );
 
     Map<String, dynamic> json = g.toJson();

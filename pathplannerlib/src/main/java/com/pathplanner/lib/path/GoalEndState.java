@@ -8,20 +8,6 @@ import org.json.simple.JSONObject;
 public class GoalEndState {
   private final double velocity;
   private final Rotation2d rotation;
-  private final boolean rotateFast;
-
-  /**
-   * Create a new goal end state
-   *
-   * @param velocity The goal end velocity (M/S)
-   * @param rotation The goal rotation
-   * @param rotateFast Should the robot reach the rotation as fast as possible
-   */
-  public GoalEndState(double velocity, Rotation2d rotation, boolean rotateFast) {
-    this.velocity = velocity;
-    this.rotation = rotation;
-    this.rotateFast = rotateFast;
-  }
 
   /**
    * Create a new goal end state
@@ -30,7 +16,8 @@ public class GoalEndState {
    * @param rotation The goal rotation
    */
   public GoalEndState(double velocity, Rotation2d rotation) {
-    this(velocity, rotation, false);
+    this.velocity = velocity;
+    this.rotation = rotation;
   }
 
   /**
@@ -42,11 +29,7 @@ public class GoalEndState {
   static GoalEndState fromJson(JSONObject endStateJson) {
     double vel = ((Number) endStateJson.get("velocity")).doubleValue();
     double deg = ((Number) endStateJson.get("rotation")).doubleValue();
-    boolean rotateFast = false;
-    if (endStateJson.get("rotateFast") != null) {
-      rotateFast = (boolean) endStateJson.get("rotateFast");
-    }
-    return new GoalEndState(vel, Rotation2d.fromDegrees(deg), rotateFast);
+    return new GoalEndState(vel, Rotation2d.fromDegrees(deg));
   }
 
   /**
@@ -67,39 +50,21 @@ public class GoalEndState {
     return rotation;
   }
 
-  /**
-   * Get if the robot should reach the rotation as fast as possible
-   *
-   * @return True if the robot should reach the rotation as fast as possible
-   */
-  public boolean shouldRotateFast() {
-    return rotateFast;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     GoalEndState that = (GoalEndState) o;
-    return Math.abs(that.velocity - velocity) < 1E-3
-        && Objects.equals(rotation, that.rotation)
-        && rotateFast == that.rotateFast;
+    return Math.abs(that.velocity - velocity) < 1E-3 && Objects.equals(rotation, that.rotation);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(velocity, rotation, rotateFast);
+    return Objects.hash(velocity, rotation);
   }
 
   @Override
   public String toString() {
-    return "GoalEndState{"
-        + "velocity="
-        + velocity
-        + ", rotation="
-        + rotation
-        + ", rotateFast="
-        + rotateFast
-        + "}";
+    return "GoalEndState{" + "velocity=" + velocity + ", rotation=" + rotation + "}";
   }
 }

@@ -194,32 +194,6 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
           ),
         ),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Checkbox(
-              value: rotations[targetIdx].rotateFast,
-              onChanged: (value) {
-                widget.undoStack.add(Change(
-                  rotations[targetIdx].clone(),
-                  () {
-                    rotations[targetIdx].rotateFast = value ?? false;
-                    widget.onPathChanged?.call();
-                  },
-                  (oldValue) {
-                    rotations[targetIdx].rotateFast = oldValue.rotateFast;
-                    widget.onPathChanged?.call();
-                  },
-                ));
-              },
-            ),
-            const SizedBox(width: 4),
-            const Text(
-              'Reach as Fast as Possible',
-              style: TextStyle(fontSize: 18),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
         Slider(
           value: rotations[targetIdx].waypointRelativePos.toDouble(),
           min: 0.0,

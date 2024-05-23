@@ -1,9 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
-import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
@@ -82,9 +83,11 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
                   .firstWhere((e) => e.name == pathNames.first);
               if (first.trajectory.states.isNotEmpty) {
                 Pose2d startPose = Pose2d(
-                  position: first.trajectory.states.first.position,
-                  rotation: GeometryUtil.toDegrees(
-                      first.trajectory.states.first.holonomicRotationRadians),
+                  position: Point(
+                      first.trajectory.states.first.pose.translation.x,
+                      first.trajectory.states.first.pose.translation.y),
+                  rotation:
+                      first.trajectory.states.first.pose.rotation.getDegrees(),
                 );
                 widget.auto.startingPose = startPose;
               }

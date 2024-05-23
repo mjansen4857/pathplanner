@@ -1,22 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pathplanner/path/preview_starting_state.dart';
+import 'package:pathplanner/path/ideal_starting_state.dart';
 
 void main() {
   test('toJson/fromJson interoperability', () {
-    PreviewStartingState state = PreviewStartingState(
+    IdealStartingState state = IdealStartingState(
       rotation: 10.0,
       velocity: 0.5,
     );
 
     Map<String, dynamic> json = state.toJson();
-    PreviewStartingState fromJson = PreviewStartingState.fromJson(json);
+    IdealStartingState fromJson = IdealStartingState.fromJson(json);
 
     expect(fromJson, state);
   });
 
   test('Proper cloning', () {
-    PreviewStartingState state = PreviewStartingState();
-    PreviewStartingState cloned = state.clone();
+    IdealStartingState state = IdealStartingState();
+    IdealStartingState cloned = state.clone();
 
     expect(cloned, state);
 
@@ -26,15 +26,15 @@ void main() {
   });
 
   test('equals/hashCode', () {
-    PreviewStartingState s1 = PreviewStartingState(
+    IdealStartingState s1 = IdealStartingState(
       velocity: 1.0,
       rotation: 10.0,
     );
-    PreviewStartingState s2 = PreviewStartingState(
+    IdealStartingState s2 = IdealStartingState(
       velocity: 1.0,
       rotation: 10.0,
     );
-    PreviewStartingState s3 = PreviewStartingState(
+    IdealStartingState s3 = IdealStartingState(
       velocity: 1.5,
       rotation: 15.0,
     );

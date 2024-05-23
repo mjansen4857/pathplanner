@@ -2,57 +2,57 @@ import 'dart:math';
 
 import 'package:file/memory.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
-import 'package:pathplanner/path/path_constraints.dart';
+import 'package:pathplanner/path/ideal_starting_state.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
-import 'package:pathplanner/services/simulator/chassis_speeds.dart';
-import 'package:pathplanner/services/simulator/rotation_controller.dart';
+import 'package:pathplanner/trajectory/config.dart';
+import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/geometry_util.dart';
-import 'package:pathplanner/util/math_util.dart';
-import 'package:pathplanner/util/pose2d.dart';
+import 'package:pathplanner/util/pose2d.dart' as old;
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/kinematics.dart';
 
-class TrajectoryGenerator {
-  static Trajectory? simulateAuto(List<PathPlannerPath> paths,
-      Pose2d? startingPose, num maxModuleSpeed, num driveRadius) {
+class AutoSimulator {
+  static const double pathResolution = 0.025;
+
+  static PathPlannerTrajectory? simulateAuto(List<PathPlannerPath> paths,
+      old.Pose2d? startingPose, RobotConfig robotConfig) {
     if (paths.isEmpty) return null;
 
     List<TrajectoryState> allStates = [];
 
-    Pose2d startPose = startingPose ??
-        Pose2d(position: paths[0].pathPoints[0].position, rotation: 0);
-    ChassisSpeeds startSpeeds = ChassisSpeeds();
+    old.Pose2d startPose = startingPose ??
+        old.Pose2d(position: paths[0].pathPoints[0].position, rotation: 0);
+    ChassisSpeeds startSpeeds = const ChassisSpeeds();
 
     for (PathPlannerPath p in paths) {
       PathPlannerPath replanned =
           _replanPathIfNeeded(p, startPose, startSpeeds);
-      num linearVel = sqrt(pow(startSpeeds.vx, 2) + pow(startSpeeds.vy, 2));
-      Trajectory simPath = Trajectory.simulate(
-          replanned, linearVel, GeometryUtil.toRadians(startPose.rotation),
-          maxModuleSpeed: maxModuleSpeed, driveBaseRadius: driveRadius);
+      PathPlannerTrajectory simPath = PathPlannerTrajectory(
+          path: replanned,
+          startingSpeeds: startSpeeds,
+          startingRotation: Rotation2d.fromDegrees(startPose.rotation),
+          robotConfig: robotConfig);
 
-      num startTime = allStates.isNotEmpty ? allStates.last.time : 0;
+      num startTime = allStates.isNotEmpty ? allStates.last.timeSeconds : 0;
       for (TrajectoryState s in simPath.states) {
-        s.time += startTime;
+        s.timeSeconds += startTime;
         allStates.add(s);
       }
 
-      startPose = Pose2d(
-        position: allStates.last.position,
-        rotation:
-            GeometryUtil.toDegrees(allStates.last.holonomicRotationRadians),
+      startPose = old.Pose2d(
+        position: allStates.last.pose.translation.asPoint(),
+        rotation: allStates.last.pose.rotation.getDegrees(),
       );
-      startSpeeds = ChassisSpeeds(
-        vx: allStates.last.velocity * cos(allStates.last.headingRadians),
-        vy: allStates.last.velocity * sin(allStates.last.headingRadians),
-      );
+      startSpeeds = allStates.last.fieldSpeeds;
     }
 
-    return Trajectory(states: allStates);
+    return PathPlannerTrajectory.fromStates(allStates);
   }
 
-  static PathPlannerPath _replanPathIfNeeded(
-      PathPlannerPath path, Pose2d startingPose, ChassisSpeeds startingSpeeds) {
+  static PathPlannerPath _replanPathIfNeeded(PathPlannerPath path,
+      old.Pose2d startingPose, ChassisSpeeds startingSpeeds) {
     num linearVel = sqrt(pow(startingSpeeds.vx, 2) + pow(startingSpeeds.vy, 2));
     num currentHeading = atan2(startingSpeeds.vy, startingSpeeds.vx);
     var p1 = path.pathPoints[0].position;
@@ -133,7 +133,10 @@ class TrajectoryGenerator {
         fs: MemoryFileSystem(),
         reversed: path.reversed,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(
+          velocity: linearVel,
+          rotation: startingPose.rotation,
+        ),
         useDefaultConstraints: path.useDefaultConstraints,
       );
     } else if ((closestPointIdx == 0 && robotNextControl == null) ||
@@ -194,7 +197,10 @@ class TrajectoryGenerator {
         fs: MemoryFileSystem(),
         reversed: path.reversed,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(
+          velocity: linearVel,
+          rotation: startingPose.rotation,
+        ),
         useDefaultConstraints: path.useDefaultConstraints,
       );
     }
@@ -244,7 +250,10 @@ class TrajectoryGenerator {
         fs: MemoryFileSystem(),
         reversed: path.reversed,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(
+          velocity: linearVel,
+          rotation: startingPose.rotation,
+        ),
         useDefaultConstraints: path.useDefaultConstraints,
       );
     }
@@ -372,7 +381,10 @@ class TrajectoryGenerator {
       fs: MemoryFileSystem(),
       reversed: path.reversed,
       folder: null,
-      previewStartingState: null,
+      idealStartingState: IdealStartingState(
+        velocity: linearVel,
+        rotation: startingPose.rotation,
+      ),
       useDefaultConstraints: path.useDefaultConstraints,
     );
   }
@@ -387,270 +399,5 @@ class TrajectoryGenerator {
 
     return (mappedPct * (1.0 / pathResolution)).round() /
         (1.0 / pathResolution);
-  }
-}
-
-class Trajectory {
-  final List<TrajectoryState> states;
-
-  Trajectory({required this.states});
-
-  // Just using default values for the kinematics stuff. It will be a good enough approximation
-  Trajectory.simulate(
-    PathPlannerPath path,
-    num linearVel,
-    num startingRotationRadians, {
-    required num maxModuleSpeed,
-    required num driveBaseRadius,
-  }) : states = _generateStates(path, linearVel, startingRotationRadians) {
-    _simulateRotation(startingRotationRadians, maxModuleSpeed, driveBaseRadius);
-  }
-
-  TrajectoryState sample(num time) {
-    if (time <= states.first.time) return states.first;
-    if (time >= states.last.time) return states.last;
-
-    int low = 1;
-    int high = states.length - 1;
-
-    while (low != high) {
-      int mid = ((low + high) / 2).floor();
-      if (states[mid].time < time) {
-        low = mid + 1;
-      } else {
-        high = mid;
-      }
-    }
-
-    TrajectoryState sample = states[low];
-    TrajectoryState prevSample = states[low - 1];
-
-    if ((sample.time - prevSample.time).abs() < 1E-3) return sample;
-
-    return prevSample.interpolate(
-        sample, (time - prevSample.time) / (sample.time - prevSample.time));
-  }
-
-  void _simulateRotation(
-      num startingRotationRadians, num maxModuleSpeed, num driveBaseRadius) {
-    num mpsToRps = 1.0 / driveBaseRadius;
-
-    RotationController controller = RotationController(
-        setpoint: State(position: startingRotationRadians, velocity: 0));
-
-    states.first.holonomicRotationRadians = startingRotationRadians;
-
-    for (int i = 1; i < states.length; i++) {
-      num angVelConstraint =
-          GeometryUtil.toRadians(states[i].constraints.maxAngularVelocity);
-
-      // Approximation of available module speed to do rotation with
-      num maxAngVelModule =
-          max(0, maxModuleSpeed - states[i].velocity) * mpsToRps;
-      num maxAngVel = min(angVelConstraint, maxAngVelModule);
-
-      num dt = states[i].time - states[i - 1].time;
-      num rot = controller.calculate(
-          states[i - 1].holonomicRotationRadians,
-          states[i].holonomicRotationRadians,
-          maxAngVel,
-          GeometryUtil.toRadians(states[i].constraints.maxAngularAcceleration),
-          dt);
-
-      states[i].holonomicRotationRadians = MathUtil.inputModulus(rot, -pi, pi);
-    }
-  }
-
-  static int _getNextRotationTargetIdx(
-      PathPlannerPath path, int startingIndex) {
-    int idx = path.pathPoints.length - 1;
-
-    for (int i = startingIndex; i < path.pathPoints.length - 2; i++) {
-      if (path.pathPoints[i].rotationTarget != null) {
-        idx = i;
-        break;
-      }
-    }
-
-    return idx;
-  }
-
-  static List<TrajectoryState> _generateStates(
-      PathPlannerPath path, num linearVel, num currentRotationRadians) {
-    List<TrajectoryState> states = [];
-
-    num startVel = linearVel.abs();
-
-    num prevRotationTargetDist = 0;
-    num prevRotationTargetRot = currentRotationRadians;
-    int nextRotationTargetIdx = _getNextRotationTargetIdx(path, 0);
-    num distBetweenTargets =
-        path.pathPoints[nextRotationTargetIdx].distanceAlongPath;
-
-    // Initial pass. Creates all states and handles linear acceleration
-    for (int i = 0; i < path.pathPoints.length; i++) {
-      TrajectoryState state = TrajectoryState();
-
-      PathConstraints constraints = path.pathPoints[i].constraints;
-      state.constraints = constraints;
-
-      if (i > nextRotationTargetIdx) {
-        prevRotationTargetDist =
-            path.pathPoints[nextRotationTargetIdx].distanceAlongPath;
-        prevRotationTargetRot = GeometryUtil.toRadians(path
-            .pathPoints[nextRotationTargetIdx].rotationTarget!.rotationDegrees);
-        nextRotationTargetIdx = _getNextRotationTargetIdx(path, i);
-        distBetweenTargets =
-            path.pathPoints[nextRotationTargetIdx].distanceAlongPath -
-                prevRotationTargetDist;
-      }
-
-      RotationTarget nextTarget =
-          path.pathPoints[nextRotationTargetIdx].rotationTarget!;
-
-      if (nextTarget.rotateFast) {
-        state.holonomicRotationRadians =
-            GeometryUtil.toRadians(nextTarget.rotationDegrees);
-      } else {
-        double t =
-            (path.pathPoints[i].distanceAlongPath - prevRotationTargetDist) /
-                distBetweenTargets;
-        t = min(max(0.0, t), 1.0);
-        if (!t.isFinite) {
-          t = 0;
-        }
-
-        state.holonomicRotationRadians = GeometryUtil.rotationLerp(
-            prevRotationTargetRot,
-            GeometryUtil.toRadians(nextTarget.rotationDegrees),
-            t,
-            pi);
-      }
-
-      state.position = path.pathPoints[i].position;
-
-      if (i == path.pathPoints.length - 1) {
-        state.headingRadians = states[states.length - 1].headingRadians;
-        state.deltaPos = path.pathPoints[i].distanceAlongPath -
-            path.pathPoints[i - 1].distanceAlongPath;
-        state.velocity = path.goalEndState.velocity;
-      } else if (i == 0) {
-        Point delta = path.pathPoints[i + 1].position - state.position;
-        state.headingRadians = atan2(delta.y, delta.x);
-        state.deltaPos = 0;
-        state.velocity = startVel;
-
-        if (path.reversed) {
-          state.headingRadians += pi;
-          if (state.headingRadians > pi) {
-            state.headingRadians -= 2 * pi;
-          }
-        }
-      } else {
-        Point delta = path.pathPoints[i + 1].position - state.position;
-        state.headingRadians = atan2(delta.y, delta.x);
-        state.deltaPos = path.pathPoints[i + 1].distanceAlongPath -
-            path.pathPoints[i].distanceAlongPath;
-
-        num v0 = states[states.length - 1].velocity;
-        num vMax = sqrt(
-            (pow(v0, 2) + (2 * constraints.maxAcceleration * state.deltaPos))
-                .abs());
-        state.velocity = min(vMax, path.pathPoints[i].maxV);
-
-        if (path.reversed) {
-          state.headingRadians += pi;
-          if (state.headingRadians > pi) {
-            state.headingRadians -= 2 * pi;
-          }
-        }
-      }
-
-      states.add(state);
-    }
-
-    // Second pass. Handles linear deceleration
-    for (int i = states.length - 2; i > 1; i--) {
-      PathConstraints constraints = states[i].constraints;
-
-      num v0 = states[i + 1].velocity;
-
-      num vMax = sqrt(pow(v0, 2) +
-          (2 * constraints.maxAcceleration * states[i + 1].deltaPos).abs());
-      states[i].velocity = min(vMax, states[i].velocity);
-    }
-
-    // Final pass. Calculates time, linear acceleration, and angular velocity
-    num time = 0;
-    states.first.time = 0;
-
-    for (int i = 1; i < states.length; i++) {
-      num v0 = states[i - 1].velocity;
-      num v = states[i].velocity;
-      num dt = (2 * states[i].deltaPos) / (v + v0);
-
-      time += dt;
-      states[i].time = time;
-    }
-
-    return states;
-  }
-}
-
-class TrajectoryState {
-  num time = 0;
-  num velocity = 0;
-
-  Point position = const Point(0, 0);
-  num headingRadians = 0;
-
-  num holonomicRotationRadians = 0;
-  PathConstraints constraints = PathConstraints();
-
-  num deltaPos = 0;
-
-  TrajectoryState({
-    this.time = 0,
-    this.position = const Point(0, 0),
-    this.holonomicRotationRadians = 0.0,
-  });
-
-  TrajectoryState interpolate(TrajectoryState endVal, num t) {
-    TrajectoryState lerpedState = TrajectoryState();
-
-    lerpedState.time = GeometryUtil.numLerp(time, endVal.time, t);
-    num deltaT = lerpedState.time - time;
-
-    if (deltaT < 0) {
-      return endVal.interpolate(this, 1 - t);
-    }
-
-    lerpedState.velocity = GeometryUtil.numLerp(velocity, endVal.velocity, t);
-    lerpedState.position = GeometryUtil.pointLerp(position, endVal.position, t);
-    lerpedState.headingRadians =
-        GeometryUtil.rotationLerp(headingRadians, endVal.headingRadians, t, pi);
-    lerpedState.deltaPos = GeometryUtil.numLerp(deltaPos, endVal.deltaPos, t);
-    lerpedState.holonomicRotationRadians = GeometryUtil.rotationLerp(
-        holonomicRotationRadians, endVal.holonomicRotationRadians, t, pi);
-
-    if (t < 0.5) {
-      lerpedState.constraints = constraints;
-    } else {
-      lerpedState.constraints = endVal.constraints;
-    }
-
-    return lerpedState;
-  }
-
-  TrajectoryState copyWithTime(num time) {
-    TrajectoryState ret = TrajectoryState();
-    ret.time = time;
-    ret.velocity = velocity;
-    ret.position = position;
-    ret.headingRadians = headingRadians;
-    ret.holonomicRotationRadians = holonomicRotationRadians;
-    ret.constraints = constraints;
-    ret.deltaPos = deltaPos;
-    return ret;
   }
 }

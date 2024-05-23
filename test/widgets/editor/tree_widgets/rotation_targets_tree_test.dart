@@ -26,12 +26,10 @@ void main() {
       RotationTarget(
         waypointRelativePos: 0.2,
         rotationDegrees: 0.0,
-        rotateFast: false,
       ),
       RotationTarget(
         waypointRelativePos: 0.7,
         rotationDegrees: 0.0,
-        rotateFast: false,
       ),
     ];
     path.rotationTargetsExpanded = true;
@@ -288,35 +286,5 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.rotationTargets.length, 2);
-  });
-
-  testWidgets('rotate fast', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: RotationTargetsTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          onTargetHovered: (value) => hoveredTarget = value,
-          onTargetSelected: (value) => selectedTarget = value,
-          undoStack: undoStack,
-          initiallySelectedTarget: 0,
-        ),
-      ),
-    ));
-
-    var checkbox = find.byType(Checkbox);
-
-    expect(checkbox, findsOneWidget);
-
-    await widgetTester.tap(checkbox);
-    await widgetTester.pump();
-
-    expect(pathChanged, true);
-    expect(path.rotationTargets[0].rotateFast, true);
-
-    undoStack.undo();
-    await widgetTester.pump();
-
-    expect(path.rotationTargets[0].rotateFast, false);
   });
 }

@@ -12,7 +12,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
-import 'package:pathplanner/path/preview_starting_state.dart';
+import 'package:pathplanner/path/ideal_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
@@ -30,7 +30,7 @@ class PathPlannerPath {
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
   bool reversed;
-  PreviewStartingState? previewStartingState;
+  IdealStartingState idealStartingState;
   String? folder;
   bool useDefaultConstraints;
 
@@ -61,7 +61,7 @@ class PathPlannerPath {
         rotationTargets = [],
         eventMarkers = [],
         reversed = false,
-        previewStartingState = PreviewStartingState(),
+        idealStartingState = IdealStartingState(),
         useDefaultConstraints = true {
     waypoints.addAll([
       Waypoint(
@@ -89,7 +89,7 @@ class PathPlannerPath {
     required this.fs,
     required this.reversed,
     required this.folder,
-    required this.previewStartingState,
+    required this.idealStartingState,
     required this.useDefaultConstraints,
   }) : pathPoints = [] {
     generatePathPoints();
@@ -122,9 +122,9 @@ class PathPlannerPath {
           ],
           reversed: json['reversed'] ?? false,
           folder: json['folder'],
-          previewStartingState: json['previewStartingState'] == null
-              ? null
-              : PreviewStartingState.fromJson(json['previewStartingState']),
+          idealStartingState: json['idealStartingState'] == null
+              ? IdealStartingState()
+              : IdealStartingState.fromJson(json['idealStartingState']),
           useDefaultConstraints: json['useDefaultConstraints'] ?? false,
         );
 
@@ -212,7 +212,7 @@ class PathPlannerPath {
       'goalEndState': goalEndState.toJson(),
       'reversed': reversed,
       'folder': folder,
-      'previewStartingState': previewStartingState?.toJson(),
+      'idealStartingState': idealStartingState.toJson(),
       'useDefaultConstraints': useDefaultConstraints,
     };
   }
@@ -390,8 +390,7 @@ class PathPlannerPath {
           position: waypoints[waypoints.length - 1].anchor,
           rotationTarget: RotationTarget(
               rotationDegrees: goalEndState.rotation,
-              waypointRelativePos: waypoints.length - 1,
-              rotateFast: goalEndState.rotateFast),
+              waypointRelativePos: waypoints.length - 1),
           constraints: globalConstraints,
           distanceAlongPath: pathPoints.last.distanceAlongPath +
               (pathPoints.last.position
@@ -460,7 +459,7 @@ class PathPlannerPath {
       fs: fs,
       reversed: reversed,
       folder: folder,
-      previewStartingState: previewStartingState?.clone(),
+      idealStartingState: idealStartingState.clone(),
       useDefaultConstraints: useDefaultConstraints,
     );
   }

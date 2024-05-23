@@ -1,14 +1,12 @@
 package com.pathplanner.lib.controllers;
 
-import com.pathplanner.lib.path.PathPlannerTrajectory;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.PIDConstants;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -16,9 +14,7 @@ import java.util.function.Supplier;
 public class PPHolonomicDriveController implements PathFollowingController {
   private final PIDController xController;
   private final PIDController yController;
-  private final ProfiledPIDController rotationController;
-  private final double maxModuleSpeed;
-  private final double mpsToRps;
+  private final PIDController rotationController;
 
   private Translation2d translationError = new Translation2d();
   private boolean isEnabled = true;
@@ -31,17 +27,9 @@ public class PPHolonomicDriveController implements PathFollowingController {
    * @param translationConstants PID constants for the translation PID controllers
    * @param rotationConstants PID constants for the rotation controller
    * @param period Period of the control loop in seconds
-   * @param maxModuleSpeed The max speed of a drive module in meters/sec
-   * @param driveBaseRadius The radius of the drive base in meters. For swerve drive, this is the
-   *     distance from the center of the robot to the furthest module. For mecanum, this is the
-   *     drive base width / 2
    */
   public PPHolonomicDriveController(
-      PIDConstants translationConstants,
-      PIDConstants rotationConstants,
-      double period,
-      double maxModuleSpeed,
-      double driveBaseRadius) {
+      PIDConstants translationConstants, PIDConstants rotationConstants, double period) {
     this.xController =
         new PIDController(
             translationConstants.kP, translationConstants.kI, translationConstants.kD, period);
@@ -54,17 +42,9 @@ public class PPHolonomicDriveController implements PathFollowingController {
 
     // Temp rate limit of 0, will be changed in calculate
     this.rotationController =
-        new ProfiledPIDController(
-            rotationConstants.kP,
-            rotationConstants.kI,
-            rotationConstants.kD,
-            new TrapezoidProfile.Constraints(0, 0),
-            period);
+        new PIDController(rotationConstants.kP, rotationConstants.kI, rotationConstants.kD, period);
     this.rotationController.setIntegratorRange(-rotationConstants.iZone, rotationConstants.iZone);
     this.rotationController.enableContinuousInput(-Math.PI, Math.PI);
-
-    this.maxModuleSpeed = maxModuleSpeed;
-    this.mpsToRps = 1.0 / driveBaseRadius;
   }
 
   /**
@@ -72,17 +52,10 @@ public class PPHolonomicDriveController implements PathFollowingController {
    *
    * @param translationConstants PID constants for the translation PID controllers
    * @param rotationConstants PID constants for the rotation controller
-   * @param maxModuleSpeed The max speed of a drive module in meters/sec
-   * @param driveBaseRadius The radius of the drive base in meters. For swerve drive, this is the
-   *     distance from the center of the robot to the furthest module. For mecanum, this is the
-   *     drive base width / 2
    */
   public PPHolonomicDriveController(
-      PIDConstants translationConstants,
-      PIDConstants rotationConstants,
-      double maxModuleSpeed,
-      double driveBaseRadius) {
-    this(translationConstants, rotationConstants, 0.02, maxModuleSpeed, driveBaseRadius);
+      PIDConstants translationConstants, PIDConstants rotationConstants) {
+    this(translationConstants, rotationConstants, 0.02);
   }
 
   /**
@@ -103,8 +76,9 @@ public class PPHolonomicDriveController implements PathFollowingController {
    */
   @Override
   public void reset(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
-    rotationController.reset(
-        currentPose.getRotation().getRadians(), currentSpeeds.omegaRadiansPerSecond);
+    xController.reset();
+    yController.reset();
+    rotationController.reset();
   }
 
   /**
@@ -116,46 +90,28 @@ public class PPHolonomicDriveController implements PathFollowingController {
    */
   @Override
   public ChassisSpeeds calculateRobotRelativeSpeeds(
-      Pose2d currentPose, PathPlannerTrajectory.State targetState) {
-    double xFF = targetState.velocityMps * targetState.heading.getCos();
-    double yFF = targetState.velocityMps * targetState.heading.getSin();
+      Pose2d currentPose, PathPlannerTrajectoryState targetState) {
+    double xFF = targetState.fieldSpeeds.vxMetersPerSecond;
+    double yFF = targetState.fieldSpeeds.vyMetersPerSecond;
 
-    this.translationError = currentPose.getTranslation().minus(targetState.positionMeters);
+    this.translationError = currentPose.getTranslation().minus(targetState.pose.getTranslation());
 
     if (!this.isEnabled) {
       return ChassisSpeeds.fromFieldRelativeSpeeds(xFF, yFF, 0, currentPose.getRotation());
     }
 
-    double xFeedback =
-        this.xController.calculate(currentPose.getX(), targetState.positionMeters.getX());
-    double yFeedback =
-        this.yController.calculate(currentPose.getY(), targetState.positionMeters.getY());
+    double xFeedback = this.xController.calculate(currentPose.getX(), targetState.pose.getX());
+    double yFeedback = this.yController.calculate(currentPose.getY(), targetState.pose.getY());
 
-    double angVelConstraint = targetState.constraints.getMaxAngularVelocityRps();
-    double maxAngVel = angVelConstraint;
-
-    if (Double.isFinite(maxAngVel)) {
-      // Approximation of available module speed to do rotation with
-      double maxAngVelModule = Math.max(0, maxModuleSpeed - targetState.velocityMps) * mpsToRps;
-      maxAngVel = Math.min(angVelConstraint, maxAngVelModule);
-    }
-
-    var rotationConstraints =
-        new TrapezoidProfile.Constraints(
-            maxAngVel, targetState.constraints.getMaxAngularAccelerationRpsSq());
-
-    Rotation2d targetRotation = targetState.targetHolonomicRotation;
+    Rotation2d targetRotation = targetState.pose.getRotation();
     if (rotationTargetOverride != null) {
       targetRotation = rotationTargetOverride.get().orElse(targetRotation);
     }
 
     double rotationFeedback =
         rotationController.calculate(
-            currentPose.getRotation().getRadians(),
-            new TrapezoidProfile.State(targetRotation.getRadians(), 0),
-            rotationConstraints);
-    double rotationFF =
-        targetState.holonomicAngularVelocityRps.orElse(rotationController.getSetpoint().velocity);
+            currentPose.getRotation().getRadians(), targetRotation.getRadians());
+    double rotationFF = targetState.fieldSpeeds.omegaRadiansPerSecond;
 
     return ChassisSpeeds.fromFieldRelativeSpeeds(
         xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback, currentPose.getRotation());

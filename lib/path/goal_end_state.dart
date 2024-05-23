@@ -1,30 +1,25 @@
 class GoalEndState {
   num velocity;
   num rotation;
-  bool rotateFast;
 
   GoalEndState({
     this.velocity = 0,
     this.rotation = 0,
-    this.rotateFast = false,
   });
 
   GoalEndState.fromJson(Map<String, dynamic> json)
       : velocity = json['velocity'] ?? 0,
-        rotation = json['rotation'] ?? 0,
-        rotateFast = json['rotateFast'] ?? false;
+        rotation = json['rotation'] ?? 0;
 
   Map<String, dynamic> toJson() {
     return {
       'velocity': velocity,
       'rotation': rotation,
-      'rotateFast': rotateFast,
     };
   }
 
   GoalEndState clone() {
-    return GoalEndState(
-        velocity: velocity, rotation: rotation, rotateFast: rotateFast);
+    return GoalEndState(velocity: velocity, rotation: rotation);
   }
 
   @override
@@ -32,9 +27,8 @@ class GoalEndState {
       other is GoalEndState &&
       other.runtimeType == runtimeType &&
       other.velocity == velocity &&
-      other.rotation == rotation &&
-      other.rotateFast == rotateFast;
+      other.rotation == rotation;
 
   @override
-  int get hashCode => Object.hash(velocity, rotation, rotateFast);
+  int get hashCode => Object.hash(velocity, rotation);
 }

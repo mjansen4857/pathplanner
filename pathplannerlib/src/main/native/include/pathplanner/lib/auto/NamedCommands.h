@@ -16,7 +16,7 @@ public:
 	 */
 	static inline void registerCommand(std::string name,
 			std::shared_ptr<frc2::Command> command) {
-		NamedCommands::namedCommands.emplace(name, command);
+		NamedCommands::GetNamedCommands().emplace(name, command);
 	}
 
 	static inline void registerCommand(std::string name,
@@ -33,7 +33,7 @@ public:
 	 * @return true if a command with the given name has been registered, false otherwise
 	 */
 	static inline bool hasCommand(std::string name) {
-		return NamedCommands::namedCommands.contains(name);
+		return NamedCommands::GetNamedCommands().contains(name);
 	}
 
 	/**
@@ -44,7 +44,6 @@ public:
 	 */
 	static frc2::CommandPtr getCommand(std::string name);
 
-private:
-	static std::unordered_map<std::string, std::shared_ptr<frc2::Command>> namedCommands;
+	static std::unordered_map<std::string, std::shared_ptr<frc2::Command>>& GetNamedCommands();
 };
 }

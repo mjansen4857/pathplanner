@@ -24,7 +24,7 @@ class _EditNavGridDialogState extends State<EditNavGridDialog> {
   void initState() {
     super.initState();
     _nodeSize = widget.grid.nodeSizeMeters;
-    // These are right...
+    // These match the UI
     _fieldLength = widget.grid.fieldSize.width;
     _fieldWidth = widget.grid.fieldSize.height;
   }
@@ -107,7 +107,6 @@ class _EditNavGridDialogState extends State<EditNavGridDialog> {
             );
             widget.onGridChange(grid);
             Navigator.of(context).pop();
-            // }
           },
           child: const Text('Confirm'),
         ),

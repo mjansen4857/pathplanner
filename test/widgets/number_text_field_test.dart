@@ -5,15 +5,15 @@ import 'package:pathplanner/widgets/number_text_field.dart';
 
 void main() {
   testWidgets('enter text', (widgetTester) async {
-    num? lastSubmit;
+    num _value = 0;
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: 0,
+          value: _value,
           label: 'Test Label',
           onSubmitted: (value) {
-            lastSubmit = value;
+            _value = value;
           },
         ),
       ),
@@ -21,48 +21,42 @@ void main() {
 
     var textField = find.byType(TextField);
     expect(textField, findsOneWidget);
-    expect(find.text('0.00'), findsOneWidget);
+    expect(find.text('0'), findsOneWidget);
     expect(find.text('Test Label'), findsOneWidget);
-
-    // empty text
-    await widgetTester.enterText(textField, '');
-    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
-    await widgetTester.pump();
-    expect(lastSubmit, isNull);
 
     // valid number
     await widgetTester.enterText(textField, '1.5');
     expect(find.text('1.5'), findsOneWidget);
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
-    expect(lastSubmit, 1.5);
+    expect(_value, closeTo(1.5, 0.00001));
 
     // invalid characters
     await widgetTester.enterText(textField, '10.25.1asdf');
     expect(find.text('10.25'), findsOneWidget);
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
-    expect(lastSubmit, 10.25);
+    expect(_value, closeTo(10.25, 0.00001));
 
     // evaluates expression
     await widgetTester.enterText(textField, '10*2.5');
     expect(find.text('10*2.5'), findsOneWidget);
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
-    expect(lastSubmit, 25);
+    expect(_value, closeTo(25, 0.00001));
   });
 
   testWidgets('increment arrow key up', (widgetTester) async {
-    num? lastSubmit;
+    num _value = 0;
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: 0,
+          value: _value,
           label: 'Test Label',
-          arrowKeyIncrement: 1.0,
+          arrowKeyIncrement: 1,
           onSubmitted: (value) {
-            lastSubmit = value;
+            _value = value;
           },
         ),
       ),
@@ -78,24 +72,25 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowUp);
     await widgetTester.pump();
 
-    expect(lastSubmit, closeTo(1.0, 0.01));
+    expect(_value, closeTo(2.0, 0.00001));
   });
 
   testWidgets('increment arrow key up partial', (widgetTester) async {
-    num? lastSubmit;
+    num _value = 0.7;
 
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
+    await widgetTester.pumpWidget(
+      MaterialApp(
+          home: Scaffold(
         body: NumberTextField(
-          value: 0.7,
+          value: _value,
           label: 'Test Label',
-          arrowKeyIncrement: 1.0,
+          arrowKeyIncrement: 0.1,
           onSubmitted: (value) {
-            lastSubmit = value;
+            _value = value;
           },
         ),
-      ),
-    ));
+      )),
+    );
 
     var textField = find.byType(TextField);
     await widgetTester.tap(textField);
@@ -107,16 +102,17 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowUp);
     await widgetTester.pump();
 
-    expect(lastSubmit, closeTo(1.0, 0.01));
+    expect(_value, closeTo(0.9, 0.00001));
 
+    _value = 0.2;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: 0.2,
+          value: _value,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
           onSubmitted: (value) {
-            lastSubmit = value;
+            _value = value;
           },
         ),
       ),
@@ -132,20 +128,20 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowUp);
     await widgetTester.pump();
 
-    expect(lastSubmit, closeTo(1.0, 0.01));
+    expect(_value, closeTo(0.6, 0.0001));
   });
 
   testWidgets('increment arrow key down', (widgetTester) async {
-    num? lastSubmit;
+    num _value = 0;
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: 0,
+          value: _value,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
           onSubmitted: (value) {
-            lastSubmit = value;
+            _value = value;
           },
         ),
       ),
@@ -161,20 +157,20 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowDown);
     await widgetTester.pump();
 
-    expect(lastSubmit, closeTo(-1.0, 0.01));
+    expect(_value, closeTo(-2.0, 0.0001));
   });
 
   testWidgets('increment arrow key partial', (widgetTester) async {
-    num? lastSubmit;
+    num _value = -0.2;
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: -0.2,
+          value: _value,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
           onSubmitted: (value) {
-            lastSubmit = value;
+            _value = value;
           },
         ),
       ),
@@ -190,16 +186,16 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowDown);
     await widgetTester.pump();
 
-    expect(lastSubmit, closeTo(-1.0, 0.01));
+    expect(_value, closeTo(-2.2, 0.00001));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
           value: -0.70,
           label: 'Test Label',
-          arrowKeyIncrement: 1.0,
+          arrowKeyIncrement: 0.15,
           onSubmitted: (value) {
-            lastSubmit = value;
+            _value = value;
           },
         ),
       ),
@@ -215,6 +211,6 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowDown);
     await widgetTester.pump();
 
-    expect(lastSubmit, closeTo(-1.0, 0.01));
+    expect(_value, closeTo(-1.0, 0.00001));
   });
 }

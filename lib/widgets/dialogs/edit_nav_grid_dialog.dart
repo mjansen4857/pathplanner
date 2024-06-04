@@ -4,18 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 
-class NavGridEditDialog extends StatefulWidget {
+class EditNavGridDialog extends StatefulWidget {
   final NavGrid grid;
   final ValueChanged<NavGrid> onGridChange;
 
-  const NavGridEditDialog(
+  const EditNavGridDialog(
       {super.key, required this.grid, required this.onGridChange});
 
   @override
-  State<StatefulWidget> createState() => _NavGridEditDialogState();
+  State<StatefulWidget> createState() => _EditNavGridDialogState();
 }
 
-class _NavGridEditDialogState extends State<NavGridEditDialog> {
+class _EditNavGridDialogState extends State<EditNavGridDialog> {
   late num _nodeSize;
   late num _fieldLength;
   late num _fieldWidth;
@@ -115,7 +115,3 @@ class _NavGridEditDialogState extends State<NavGridEditDialog> {
     );
   }
 }
-
-// TextEditingController nodeSizeController = TextEditingController();
-// TextEditingController fieldLengthController = TextEditingController();
-// TextEditingController fieldWidthController = TextEditingController();

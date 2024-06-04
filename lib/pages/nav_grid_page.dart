@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 // import 'package:function_tree/function_tree.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
-import 'package:pathplanner/widgets/dialogs/nav_grid_edit_dialog.dart';
+import 'package:pathplanner/widgets/dialogs/edit_nav_grid_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 
@@ -159,7 +159,7 @@ class _NavGridPageState extends State<NavGridPage> {
     showDialog(
         context: this.context,
         builder: (context) =>
-            NavGridEditDialog(grid: _grid, onGridChange: _handleGridChange));
+            EditNavGridDialog(grid: _grid, onGridChange: _handleGridChange));
   }
 
   double _xPixelsToMeters(double pixels) {

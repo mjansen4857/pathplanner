@@ -234,34 +234,30 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  value: constraintZones[zoneIdx].constraints.maxVelocity,
-                  label: 'Max Velocity (M/S)',
-                  onSubmitted: (value) {
-                    if (value > 0) {
+                    value: constraintZones[zoneIdx].constraints.maxVelocity,
+                    label: 'Max Velocity (M/S)',
+                    lowerBound: LowerBound.greaterThanZero,
+                    onSubmitted: (value) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
                               .maxVelocity = value);
-                    }
-                  },
-                ),
+                    }),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  value: constraintZones[zoneIdx].constraints.maxAcceleration,
-                  label: 'Max Acceleration (M/S²)',
-                  onSubmitted: (value) {
-                    if (value > 0) {
+                    value: constraintZones[zoneIdx].constraints.maxAcceleration,
+                    label: 'Max Acceleration (M/S²)',
+                    lowerBound: LowerBound.greaterThanZero,
+                    onSubmitted: (value) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
                               .maxAcceleration = value);
-                    }
-                  },
-                ),
+                    }),
               ),
             ],
           ),
@@ -297,14 +293,13 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                         .maxAngularAcceleration,
                     label: 'Max Angular Acceleration (Deg/S²)',
                     arrowKeyIncrement: 1.0,
+                    lowerBound: LowerBound.greaterThanZero,
                     onSubmitted: (value) {
-                      if (value > 0) {
-                        _addConstraintsChange(
-                            zoneIdx,
-                            () => constraintZones[zoneIdx]
-                                .constraints
-                                .maxAngularAcceleration = value);
-                      }
+                      _addConstraintsChange(
+                          zoneIdx,
+                          () => constraintZones[zoneIdx]
+                              .constraints
+                              .maxAngularAcceleration = value);
                     },
                   ),
                 ),

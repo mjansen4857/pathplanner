@@ -101,13 +101,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           value: _width,
                           label: 'Robot Width (M)',
                           onSubmitted: (value) {
-                            if (value != null) {
-                              widget.prefs.setDouble(
-                                  PrefsKeys.robotWidth, value.toDouble());
-                              setState(() {
-                                _width = value;
-                              });
-                            }
+                            widget.prefs.setDouble(
+                                PrefsKeys.robotWidth, value.toDouble());
+                            setState(() {
+                              _width = value;
+                            });
                             widget.onSettingsChanged();
                           },
                         ),
@@ -118,13 +116,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           value: _length,
                           label: 'Robot Length (M)',
                           onSubmitted: (value) {
-                            if (value != null) {
-                              widget.prefs.setDouble(
-                                  PrefsKeys.robotLength, value.toDouble());
-                              setState(() {
-                                _length = value;
-                              });
-                            }
+                            widget.prefs.setDouble(
+                                PrefsKeys.robotLength, value.toDouble());
+                            setState(() {
+                              _length = value;
+                            });
                             widget.onSettingsChanged();
                           },
                         ),
@@ -140,13 +136,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           label: 'Max Module Speed (M/S)',
                           enabled: _holonomicMode,
                           onSubmitted: (value) {
-                            if (value != null) {
-                              widget.prefs.setDouble(
-                                  PrefsKeys.maxModuleSpeed, value.toDouble());
-                              setState(() {
-                                _maxModuleSpeed = value;
-                              });
-                            }
+                            widget.prefs.setDouble(
+                                PrefsKeys.maxModuleSpeed, value.toDouble());
+                            setState(() {
+                              _maxModuleSpeed = value;
+                            });
                             widget.onSettingsChanged();
                           },
                         ),
@@ -163,13 +157,11 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           value: _defaultMaxVel,
                           label: 'Max Velocity (M/S)',
                           onSubmitted: (value) {
-                            if (value != null) {
-                              widget.prefs.setDouble(
-                                  PrefsKeys.defaultMaxVel, value.toDouble());
-                              setState(() {
-                                _defaultMaxVel = value;
-                              });
-                            }
+                            widget.prefs.setDouble(
+                                PrefsKeys.defaultMaxVel, value.toDouble());
+                            setState(() {
+                              _defaultMaxVel = value;
+                            });
                             widget.onSettingsChanged();
                           },
                         ),

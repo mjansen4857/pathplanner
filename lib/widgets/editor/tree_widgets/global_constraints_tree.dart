@@ -42,11 +42,10 @@ class GlobalConstraintsTree extends StatelessWidget {
                   value: path.globalConstraints.maxVelocity,
                   label: 'Max Velocity (M/S)',
                   enabled: !path.useDefaultConstraints,
+                  lowerBound: LowerBound.greaterThanZero,
                   onSubmitted: (value) {
-                    if (value > 0) {
-                      _addChange(
-                          () => path.globalConstraints.maxVelocity = value);
-                    }
+                    _addChange(
+                        () => path.globalConstraints.maxVelocity = value);
                   },
                 ),
               ),
@@ -56,11 +55,10 @@ class GlobalConstraintsTree extends StatelessWidget {
                   value: path.globalConstraints.maxAcceleration,
                   label: 'Max Acceleration (M/S²)',
                   enabled: !path.useDefaultConstraints,
+                  lowerBound: LowerBound.greaterThanZero,
                   onSubmitted: (value) {
-                    if (value > 0) {
-                      _addChange(
-                          () => path.globalConstraints.maxAcceleration = value);
-                    }
+                    _addChange(
+                        () => path.globalConstraints.maxAcceleration = value);
                   },
                 ),
               ),
@@ -75,17 +73,15 @@ class GlobalConstraintsTree extends StatelessWidget {
               children: [
                 Expanded(
                   child: NumberTextField(
-                    value: path.globalConstraints.maxAngularVelocity,
-                    label: 'Max Angular Velocity (Deg/S)',
-                    arrowKeyIncrement: 1.0,
-                    enabled: !path.useDefaultConstraints,
-                    onSubmitted: (value) {
-                      if (value > 0) {
+                      value: path.globalConstraints.maxAngularVelocity,
+                      label: 'Max Angular Velocity (Deg/S)',
+                      arrowKeyIncrement: 1.0,
+                      enabled: !path.useDefaultConstraints,
+                      lowerBound: LowerBound.greaterThanZero,
+                      onSubmitted: (value) {
                         _addChange(() =>
                             path.globalConstraints.maxAngularVelocity = value);
-                      }
-                    },
-                  ),
+                      }),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -94,11 +90,10 @@ class GlobalConstraintsTree extends StatelessWidget {
                     label: 'Max Angular Acceleration (Deg/S²)',
                     arrowKeyIncrement: 1.0,
                     enabled: !path.useDefaultConstraints,
+                    lowerBound: LowerBound.greaterThanZero,
                     onSubmitted: (value) {
-                      if (value > 0) {
-                        _addChange(() => path
-                            .globalConstraints.maxAngularAcceleration = value);
-                      }
+                      _addChange(() => path
+                          .globalConstraints.maxAngularAcceleration = value);
                     },
                   ),
                 ),

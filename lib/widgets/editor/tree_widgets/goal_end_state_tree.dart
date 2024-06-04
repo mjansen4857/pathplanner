@@ -39,10 +39,9 @@ class GoalEndStateTree extends StatelessWidget {
                   value: path.goalEndState.velocity,
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
+                  lowerBound: LowerBound.zero,
                   onSubmitted: (value) {
-                    if (value >= 0) {
-                      _addChange(() => path.goalEndState.velocity = value);
-                    }
+                    _addChange(() => path.goalEndState.velocity = value);
                   },
                 ),
               ),

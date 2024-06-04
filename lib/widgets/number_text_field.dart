@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:function_tree/function_tree.dart';
-import 'package:pathplanner/services/log.dart';
 import 'package:intl/intl.dart';
+import 'package:pathplanner/services/log.dart';
+
+enum LowerBound { none, zero, greaterThanZero }
 
 class NumberTextField extends StatefulWidget {
   final num value;
@@ -11,16 +13,17 @@ class NumberTextField extends StatefulWidget {
   final bool enabled;
   final ValueChanged<num> onSubmitted;
   final num arrowKeyIncrement;
+  final LowerBound lowerBound;
 
-  const NumberTextField({
-    super.key,
-    required this.value,
-    required this.label,
-    this.height = 42,
-    required this.onSubmitted,
-    this.enabled = true,
-    this.arrowKeyIncrement = 0.05,
-  });
+  const NumberTextField(
+      {super.key,
+      required this.value,
+      required this.label,
+      this.height = 42,
+      required this.onSubmitted,
+      this.enabled = true,
+      this.arrowKeyIncrement = 0.05,
+      this.lowerBound = LowerBound.none});
 
   @override
   State<NumberTextField> createState() => _NumberTextFieldState();
@@ -35,16 +38,22 @@ class _NumberTextFieldState extends State<NumberTextField> {
   @override
   void initState() {
     super.initState();
+    _setControllerText();
+
     _focusNode.addListener(() {
       bool isFocused = _focusNode.hasPrimaryFocus;
-      Log.debug("Debug changed. Has primary focus?: $isFocused");
-      Log.debug(_focusNode.hasFocus);
+      // Component gained focus
+      if (!_isEditing && isFocused) {
+        _controller.selection =
+            TextSelection(baseOffset: 0, extentOffset: _controller.text.length);
+      }
+      // Component lost focus
+      else if (_isEditing && !isFocused) {
+        _handleExpressionSubmit(_controller.text);
+      }
       setState(() {
         _isEditing = isFocused;
       });
-      if (!_isEditing) {
-        _handleExpressionSubmit(_controller.text);
-      }
     });
   }
 
@@ -56,49 +65,61 @@ class _NumberTextFieldState extends State<NumberTextField> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    NumberFormat formatter = NumberFormat();
-    formatter.minimumFractionDigits = 0;
-    if (_isEditing) {
-      // display with extra precision
-      formatter.maximumFractionDigits = 3;
-    } else {
-      formatter.maximumFractionDigits = 2;
+  void didUpdateWidget(NumberTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      _setControllerText();
     }
-    _controller.text = formatter.format(widget.value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    TextField textField = TextField(
+      enabled: widget.enabled,
+      controller: _controller,
+      focusNode: _focusNode,
+      onSubmitted: _handleExpressionSubmit,
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(
+            // Matches basic expressions like 3 + 5, 4 * 2 + 6, etc.
+            RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
+      ],
+      style: const TextStyle(fontSize: 14),
+      decoration: InputDecoration(
+        contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+        labelText: widget.label,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
 
     return SizedBox(
       height: widget.height,
-      child: CallbackShortcuts(
-        bindings: {
-          const SingleActivator(LogicalKeyboardKey.arrowUp): () {
-            _handleIncrement(_controller.text);
-          },
-          const SingleActivator(LogicalKeyboardKey.arrowDown): () {
-            _handleDecrement(_controller.text);
-          },
+      child: CallbackShortcuts(bindings: {
+        const SingleActivator(LogicalKeyboardKey.arrowUp): () {
+          _handleIncrement(_controller.text);
         },
-        child: TextField(
-          enabled: widget.enabled,
-          controller: _controller,
-          focusNode: _focusNode,
-          onSubmitted: _handleExpressionSubmit,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(
-                RegExp(r'(^(-?)\d*\.?\d*)([+/\*\-](-?)\d*\.?\d*)*')),
-          ],
-          style: const TextStyle(fontSize: 14),
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-            labelText: widget.label,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        ),
-      ),
+        const SingleActivator(LogicalKeyboardKey.arrowDown): () {
+          _handleDecrement(_controller.text);
+        },
+      }, child: textField),
     );
   }
 
+  /// Sets the controller's text based on the current value.
+  void _setControllerText() {
+    // Format number for display
+    NumberFormat formatter = NumberFormat();
+    formatter.minimumFractionDigits = 0;
+    formatter.maximumFractionDigits = 3;
+    _controller.value =
+        _controller.value.copyWith(text: formatter.format(widget.value));
+  }
+
+  /// Parses an expression entered by the user. Returns null if the expression is invalid.
   num? _parse(String expression) {
+    if (expression.isEmpty) {
+      return null;
+    }
     try {
       return expression.interpret();
     } catch (_) {
@@ -106,6 +127,7 @@ class _NumberTextFieldState extends State<NumberTextField> {
     }
   }
 
+  /// Handles the submission of an expression.
   void _handleExpressionSubmit(String expression) {
     num? parsed = _parse(expression);
     if (parsed == null) {
@@ -114,11 +136,25 @@ class _NumberTextFieldState extends State<NumberTextField> {
     _handleSubmit(parsed);
   }
 
+  /// Handles the submission of a value.
   void _handleSubmit(num value) {
-    // We only care about debouncing exact repetition
+    switch (widget.lowerBound) {
+      case LowerBound.zero:
+        if (value < 0) {
+          return;
+        }
+      case LowerBound.greaterThanZero:
+        if (value <= 0) {
+          return;
+        }
+      case LowerBound.none:
+        break;
+    }
+    // == okay since we only care about debouncing exact repetition
     if (_lastSubmitted == value) {
       return;
     }
+    Log.debug("Submitted!");
     _lastSubmitted = value;
     widget.onSubmitted(value);
   }
@@ -128,8 +164,8 @@ class _NumberTextFieldState extends State<NumberTextField> {
     if (parsed == null) {
       return;
     }
-    // Even though _lastSubmitted is guaranteed to be different from value,
-    // We still need to update _lastSubmitted so we don't debounce the wrong thing
+    // Even though _lastSubmitted is guaranteed to be different from value at this point,
+    // We still need to update _lastSubmitted so we don't debounce a real update
     _handleSubmit(parsed + widget.arrowKeyIncrement);
   }
 
@@ -139,22 +175,5 @@ class _NumberTextFieldState extends State<NumberTextField> {
       return;
     }
     _handleSubmit(parsed - widget.arrowKeyIncrement);
-    // if (val.isNotEmpty) {
-    //   num parsed = val.interpret();
-
-    //   // Doing this dumb thing cuz dart modulo has insane floating point errors
-    //   num n = (parsed / arrowKeyIncrement).round() * arrowKeyIncrement;
-    //   num remainder = parsed - n;
-
-    //   if (remainder.abs() > 1E-3) {
-    //     if (remainder < 0) {
-    //       onSubmitted?.call(parsed - (arrowKeyIncrement - remainder.abs()));
-    //     } else {
-    //       onSubmitted?.call(parsed - remainder.abs());
-    //     }
-    //   } else {
-    //     onSubmitted?.call(parsed - arrowKeyIncrement);
-    //   }
-    // }
   }
 }

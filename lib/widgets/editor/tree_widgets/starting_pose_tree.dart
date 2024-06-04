@@ -37,11 +37,10 @@ class StartingPoseTree extends StatelessWidget {
                   value: auto.startingPose?.position.x ?? 0,
                   label: 'X Position (M)',
                   enabled: auto.startingPose != null,
+                  lowerBound: LowerBound.zero,
                   onSubmitted: (value) {
-                    if (value >= 0) {
-                      _addChange(() => auto.startingPose!.position =
-                          Point(value, auto.startingPose!.position.y));
-                    }
+                    _addChange(() => auto.startingPose!.position =
+                        Point(value, auto.startingPose!.position.y));
                   },
                 ),
               ),
@@ -51,11 +50,10 @@ class StartingPoseTree extends StatelessWidget {
                   value: auto.startingPose?.position.y ?? 0,
                   label: 'Y Position (M)',
                   enabled: auto.startingPose != null,
+                  lowerBound: LowerBound.zero,
                   onSubmitted: (value) {
-                    if (value >= 0) {
                       _addChange(() => auto.startingPose!.position =
                           Point(auto.startingPose!.position.x, value));
-                    }
                   },
                 ),
               ),

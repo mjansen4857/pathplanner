@@ -34,12 +34,11 @@ class StartingPoseTree extends StatelessWidget {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      auto.startingPose?.position.x.toStringAsFixed(2) ?? '',
+                  value: auto.startingPose?.position.x ?? 0,
                   label: 'X Position (M)',
                   enabled: auto.startingPose != null,
                   onSubmitted: (value) {
-                    if (value != null && value >= 0) {
+                    if (value >= 0) {
                       _addChange(() => auto.startingPose!.position =
                           Point(value, auto.startingPose!.position.y));
                     }
@@ -49,12 +48,11 @@ class StartingPoseTree extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      auto.startingPose?.position.y.toStringAsFixed(2) ?? '',
+                  value: auto.startingPose?.position.y ?? 0,
                   label: 'Y Position (M)',
                   enabled: auto.startingPose != null,
                   onSubmitted: (value) {
-                    if (value != null && value >= 0) {
+                    if (value >= 0) {
                       _addChange(() => auto.startingPose!.position =
                           Point(auto.startingPose!.position.x, value));
                     }
@@ -64,19 +62,16 @@ class StartingPoseTree extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      auto.startingPose?.rotation.toStringAsFixed(2) ?? '',
+                  value: auto.startingPose?.rotation ?? 0,
                   label: 'Rotation (Deg)',
                   enabled: auto.startingPose != null,
                   onSubmitted: (value) {
-                    if (value != null) {
-                      num rot = value % 360;
-                      if (rot > 180) {
-                        rot -= 360;
-                      }
-
-                      _addChange(() => auto.startingPose!.rotation = rot);
+                    num rot = value % 360;
+                    if (rot > 180) {
+                      rot -= 360;
                     }
+
+                    _addChange(() => auto.startingPose!.rotation = rot);
                   },
                 ),
               ),

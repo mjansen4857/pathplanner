@@ -10,7 +10,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          initialText: '0.00',
+          value: 0,
           label: 'Test Label',
           onSubmitted: (value) {
             lastSubmit = value;
@@ -58,7 +58,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          initialText: '0.00',
+          value: 0,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
           onSubmitted: (value) {
@@ -87,7 +87,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          initialText: '0.7',
+          value: 0.7,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
           onSubmitted: (value) {
@@ -112,7 +112,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          initialText: '0.2',
+          value: 0.2,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
           onSubmitted: (value) {
@@ -141,7 +141,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          initialText: '0.00',
+          value: 0,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
           onSubmitted: (value) {
@@ -170,7 +170,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          initialText: '-0.20',
+          value: -0.2,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
           onSubmitted: (value) {
@@ -195,7 +195,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          initialText: '-0.70',
+          value: -0.70,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
           onSubmitted: (value) {

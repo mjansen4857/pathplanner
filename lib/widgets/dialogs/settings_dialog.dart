@@ -98,7 +98,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _width.toStringAsFixed(2),
+                          value: _width,
                           label: 'Robot Width (M)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -115,7 +115,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _length.toStringAsFixed(2),
+                          value: _length,
                           label: 'Robot Length (M)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -136,7 +136,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _maxModuleSpeed.toStringAsFixed(2),
+                          value: _maxModuleSpeed,
                           label: 'Max Module Speed (M/S)',
                           enabled: _holonomicMode,
                           onSubmitted: (value) {
@@ -160,7 +160,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _defaultMaxVel.toStringAsFixed(2),
+                          value: _defaultMaxVel,
                           label: 'Max Velocity (M/S)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -177,16 +177,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _defaultMaxAccel.toStringAsFixed(2),
+                          value: _defaultMaxAccel,
                           label: 'Max Acceleration (M/S²)',
                           onSubmitted: (value) {
-                            if (value != null) {
-                              widget.prefs.setDouble(
-                                  PrefsKeys.defaultMaxAccel, value.toDouble());
-                              setState(() {
-                                _defaultMaxAccel = value;
-                              });
-                            }
+                            widget.prefs.setDouble(
+                                PrefsKeys.defaultMaxAccel, value.toDouble());
+                            setState(() {
+                              _defaultMaxAccel = value;
+                            });
                             widget.onSettingsChanged();
                           },
                         ),
@@ -200,18 +198,16 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         children: [
                           Expanded(
                             child: NumberTextField(
-                              initialText: _defaultMaxAngVel.toStringAsFixed(2),
+                              value: _defaultMaxAngVel,
                               label: 'Max Angular Velocity (Deg/S)',
                               enabled: _holonomicMode,
                               onSubmitted: (value) {
-                                if (value != null) {
-                                  widget.prefs.setDouble(
-                                      PrefsKeys.defaultMaxAngVel,
-                                      value.toDouble());
-                                  setState(() {
-                                    _defaultMaxAngVel = value;
-                                  });
-                                }
+                                widget.prefs.setDouble(
+                                    PrefsKeys.defaultMaxAngVel,
+                                    value.toDouble());
+                                setState(() {
+                                  _defaultMaxAngVel = value;
+                                });
                                 widget.onSettingsChanged();
                               },
                             ),
@@ -219,19 +215,16 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: NumberTextField(
-                              initialText:
-                                  _defaultMaxAngAccel.toStringAsFixed(2),
+                              value: _defaultMaxAngAccel,
                               label: 'Max Angular Accel (Deg/S²)',
                               enabled: _holonomicMode,
                               onSubmitted: (value) {
-                                if (value != null) {
-                                  widget.prefs.setDouble(
-                                      PrefsKeys.defaultMaxAngAccel,
-                                      value.toDouble());
-                                  setState(() {
-                                    _defaultMaxAngAccel = value;
-                                  });
-                                }
+                                widget.prefs.setDouble(
+                                    PrefsKeys.defaultMaxAngAccel,
+                                    value.toDouble());
+                                setState(() {
+                                  _defaultMaxAngAccel = value;
+                                });
                                 widget.onSettingsChanged();
                               },
                             ),

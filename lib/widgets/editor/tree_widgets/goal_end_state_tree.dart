@@ -36,11 +36,11 @@ class GoalEndStateTree extends StatelessWidget {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText: path.goalEndState.velocity.toStringAsFixed(2),
+                  value: path.goalEndState.velocity,
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
                   onSubmitted: (value) {
-                    if (value != null && value >= 0) {
+                    if (value >= 0) {
                       _addChange(() => path.goalEndState.velocity = value);
                     }
                   },
@@ -50,16 +50,14 @@ class GoalEndStateTree extends StatelessWidget {
               if (holonomicMode)
                 Expanded(
                   child: NumberTextField(
-                    initialText: path.goalEndState.rotation.toStringAsFixed(2),
+                    value: path.goalEndState.rotation,
                     label: 'Rotation (Deg)',
                     onSubmitted: (value) {
-                      if (value != null) {
-                        num rot = value % 360;
-                        if (rot > 180) {
-                          rot -= 360;
-                        }
-                        _addChange(() => path.goalEndState.rotation = rot);
+                      num rot = value % 360;
+                      if (rot > 180) {
+                        rot -= 360;
                       }
+                      _addChange(() => path.goalEndState.rotation = rot);
                     },
                   ),
                 ),

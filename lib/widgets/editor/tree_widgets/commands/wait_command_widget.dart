@@ -28,10 +28,10 @@ class WaitCommandWidget extends StatelessWidget {
       children: [
         Expanded(
           child: NumberTextField(
-            initialText: command.waitTime.toStringAsFixed(2),
+            value: command.waitTime,
             label: 'Wait Time (S)',
             onSubmitted: (value) {
-              if (value != null && value >= 0) {
+              if (value >= 0) {
                 undoStack.add(Change(
                   command.waitTime,
                   () {

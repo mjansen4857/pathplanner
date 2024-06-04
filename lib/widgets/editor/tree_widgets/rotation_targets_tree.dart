@@ -163,12 +163,10 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      rotations[targetIdx].rotationDegrees.toStringAsFixed(2),
-                  label: 'Rotation (Deg)',
-                  arrowKeyIncrement: 1.0,
-                  onSubmitted: (value) {
-                    if (value != null) {
+                    value: rotations[targetIdx].rotationDegrees,
+                    label: 'Rotation (Deg)',
+                    arrowKeyIncrement: 1.0,
+                    onSubmitted: (value) {
                       num rot = value % 360;
                       if (rot > 180) {
                         rot -= 360;
@@ -186,9 +184,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                           widget.onPathChanged?.call();
                         },
                       ));
-                    }
-                  },
-                ),
+                    }),
               ),
             ],
           ),

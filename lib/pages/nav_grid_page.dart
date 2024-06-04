@@ -3,7 +3,7 @@ import 'dart:math';
 
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
-import 'package:function_tree/function_tree.dart';
+// import 'package:function_tree/function_tree.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -149,9 +149,12 @@ class _NavGridPageState extends State<NavGridPage> {
   }
 
   void _showEditDialog() {
-    TextEditingController nodeSizeController = TextEditingController();
-    TextEditingController fieldLengthController = TextEditingController();
-    TextEditingController fieldWidthController = TextEditingController();
+    // TextEditingController nodeSizeController = TextEditingController();
+    // TextEditingController fieldLengthController = TextEditingController();
+    // TextEditingController fieldWidthController = TextEditingController();
+    // num nodeSize;
+    // num fieldLength;
+    // num fieldWidth;
 
     showDialog(
       context: this.context,
@@ -168,10 +171,11 @@ class _NavGridPageState extends State<NavGridPage> {
                   children: [
                     Expanded(
                         child: NumberTextField(
-                      initialText: _grid.nodeSizeMeters.toStringAsFixed(2),
+                      value: _grid.nodeSizeMeters,
                       label: 'Node Size (M)',
                       arrowKeyIncrement: 0.05,
-                      controller: nodeSizeController,
+                      onSubmitted: (_) => (),
+                      // controller: nodeSizeController,
                     )),
                   ],
                 ),
@@ -182,18 +186,20 @@ class _NavGridPageState extends State<NavGridPage> {
                   children: [
                     Expanded(
                         child: NumberTextField(
-                      initialText: _grid.fieldSize.width.toStringAsFixed(2),
+                      value: _grid.fieldSize.width,
                       label: 'Field Length (M)',
                       arrowKeyIncrement: 0.01,
-                      controller: fieldLengthController,
+                      onSubmitted: (_) => (),
+                      // controller: fieldLengthController,
                     )),
                     const SizedBox(width: 8),
                     Expanded(
                         child: NumberTextField(
-                      initialText: _grid.fieldSize.height.toStringAsFixed(2),
+                      value: _grid.fieldSize.height,
                       label: 'Field Width (M)',
                       arrowKeyIncrement: 0.01,
-                      controller: fieldWidthController,
+                      onSubmitted: (_) => (),
+                      // controller: fieldWidthController,
                     )),
                   ],
                 ),
@@ -222,23 +228,26 @@ class _NavGridPageState extends State<NavGridPage> {
             ),
             TextButton(
               onPressed: () {
-                if (nodeSizeController.text.isNotEmpty &&
-                    fieldLengthController.text.isNotEmpty &&
-                    fieldWidthController.text.isNotEmpty) {
-                  num nodeSize = nodeSizeController.text.interpret();
-                  num fieldLength = fieldLengthController.text.interpret();
-                  num fieldWidth = fieldWidthController.text.interpret();
+                // if (nodeSizeController.text.isNotEmpty &&
+                //     fieldLengthController.text.isNotEmpty &&
+                //     fieldWidthController.text.isNotEmpty) {
+                // num nodeSize = nodeSizeController.text.interpret();
+                // num fieldLength = fieldLengthController.text.interpret();
+                // num fieldWidth = fieldWidthController.text.interpret();
+                num nodeSize = 0;
+                num fieldLength = 0;
+                num fieldWidth = 0;
 
-                  setState(() {
-                    _grid = NavGrid.blankGrid(
-                      nodeSizeMeters: nodeSize,
-                      fieldSize:
-                          Size(fieldLength.toDouble(), fieldWidth.toDouble()),
-                    );
-                  });
-                  _saveNavGrid();
-                  Navigator.of(context).pop();
-                }
+                setState(() {
+                  _grid = NavGrid.blankGrid(
+                    nodeSizeMeters: nodeSize,
+                    fieldSize:
+                        Size(fieldLength.toDouble(), fieldWidth.toDouble()),
+                  );
+                });
+                _saveNavGrid();
+                Navigator.of(context).pop();
+                // }
               },
               child: const Text('Confirm'),
             ),

@@ -37,17 +37,13 @@ class PreviewStartingStateTree extends StatelessWidget {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      path.previewStartingState?.velocity.toStringAsFixed(2) ??
-                          '',
+                  value: path.previewStartingState?.velocity ?? 0,
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
                   enabled: path.previewStartingState != null,
                   onSubmitted: (value) {
-                    if (value != null) {
-                      _addChange(
-                          () => path.previewStartingState!.velocity = value);
-                    }
+                    _addChange(
+                        () => path.previewStartingState!.velocity = value);
                   },
                 ),
               ),
@@ -55,20 +51,16 @@ class PreviewStartingStateTree extends StatelessWidget {
               if (holonomicMode)
                 Expanded(
                   child: NumberTextField(
-                    initialText: path.previewStartingState?.rotation
-                            .toStringAsFixed(2) ??
-                        '',
+                    value: path.previewStartingState?.rotation ?? 0,
                     label: 'Rotation (Deg)',
                     enabled: path.previewStartingState != null,
                     onSubmitted: (value) {
-                      if (value != null) {
-                        num rot = value % 360;
-                        if (rot > 180) {
-                          rot -= 360;
-                        }
-                        _addChange(
-                            () => path.previewStartingState!.rotation = rot);
+                      num rot = value % 360;
+                      if (rot > 180) {
+                        rot -= 360;
                       }
+                      _addChange(
+                          () => path.previewStartingState!.rotation = rot);
                     },
                   ),
                 ),

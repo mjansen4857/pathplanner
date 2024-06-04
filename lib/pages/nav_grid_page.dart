@@ -6,9 +6,9 @@ import 'package:flutter/material.dart';
 // import 'package:function_tree/function_tree.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
+import 'package:pathplanner/widgets/dialogs/nav_grid_edit_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
-import 'package:pathplanner/widgets/number_text_field.dart';
 
 class NavGridPage extends StatefulWidget {
   final Directory deployDirectory;
@@ -148,113 +148,18 @@ class _NavGridPageState extends State<NavGridPage> {
     );
   }
 
+  void _handleGridChange(NavGrid newGrid) {
+    setState(() {
+      _grid = newGrid;
+    });
+    _saveNavGrid();
+  }
+
   void _showEditDialog() {
-    // TextEditingController nodeSizeController = TextEditingController();
-    // TextEditingController fieldLengthController = TextEditingController();
-    // TextEditingController fieldWidthController = TextEditingController();
-    // num nodeSize;
-    // num fieldLength;
-    // num fieldWidth;
-
     showDialog(
-      context: this.context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Grid'),
-          content: SizedBox(
-            width: 350,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                        child: NumberTextField(
-                      value: _grid.nodeSizeMeters,
-                      label: 'Node Size (M)',
-                      arrowKeyIncrement: 0.05,
-                      onSubmitted: (_) => (),
-                      // controller: nodeSizeController,
-                    )),
-                  ],
-                ),
-                const Text(
-                    'Larger node size = more performance, but less accuracy'),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                        child: NumberTextField(
-                      value: _grid.fieldSize.width,
-                      label: 'Field Length (M)',
-                      arrowKeyIncrement: 0.01,
-                      onSubmitted: (_) => (),
-                      // controller: fieldLengthController,
-                    )),
-                    const SizedBox(width: 8),
-                    Expanded(
-                        child: NumberTextField(
-                      value: _grid.fieldSize.height,
-                      label: 'Field Width (M)',
-                      arrowKeyIncrement: 0.01,
-                      onSubmitted: (_) => (),
-                      // controller: fieldWidthController,
-                    )),
-                  ],
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                    'Note: Changing these attributes will clear the navgrid. This cannot be undone.'),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () async {
-                String fileContent = await DefaultAssetBundle.of(this.context)
-                    .loadString('resources/default_navgrid.json');
-
-                setState(() {
-                  _grid = NavGrid.fromJson(jsonDecode(fileContent));
-                });
-                _saveNavGrid();
-
-                if (mounted) {
-                  Navigator.of(this.context).pop();
-                }
-              },
-              child: const Text('Restore Default'),
-            ),
-            TextButton(
-              onPressed: () {
-                // if (nodeSizeController.text.isNotEmpty &&
-                //     fieldLengthController.text.isNotEmpty &&
-                //     fieldWidthController.text.isNotEmpty) {
-                // num nodeSize = nodeSizeController.text.interpret();
-                // num fieldLength = fieldLengthController.text.interpret();
-                // num fieldWidth = fieldWidthController.text.interpret();
-                num nodeSize = 0;
-                num fieldLength = 0;
-                num fieldWidth = 0;
-
-                setState(() {
-                  _grid = NavGrid.blankGrid(
-                    nodeSizeMeters: nodeSize,
-                    fieldSize:
-                        Size(fieldLength.toDouble(), fieldWidth.toDouble()),
-                  );
-                });
-                _saveNavGrid();
-                Navigator.of(context).pop();
-                // }
-              },
-              child: const Text('Confirm'),
-            ),
-          ],
-        );
-      },
-    );
+        context: this.context,
+        builder: (context) =>
+            NavGridEditDialog(grid: _grid, onGridChange: _handleGridChange));
   }
 
   double _xPixelsToMeters(double pixels) {

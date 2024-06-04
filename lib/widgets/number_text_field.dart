@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:function_tree/function_tree.dart';
 import 'package:intl/intl.dart';
-import 'package:pathplanner/services/log.dart';
 
 enum LowerBound { none, zero, greaterThanZero }
 
 class NumberTextField extends StatefulWidget {
   final num value;
   final String label;
+  final ValueChanged<num> onSubmitted;
   final double height;
   final bool enabled;
-  final ValueChanged<num> onSubmitted;
   final num arrowKeyIncrement;
   final LowerBound lowerBound;
 
@@ -19,8 +18,8 @@ class NumberTextField extends StatefulWidget {
       {super.key,
       required this.value,
       required this.label,
-      this.height = 42,
       required this.onSubmitted,
+      this.height = 42,
       this.enabled = true,
       this.arrowKeyIncrement = 0.05,
       this.lowerBound = LowerBound.none});
@@ -154,7 +153,6 @@ class _NumberTextFieldState extends State<NumberTextField> {
     if (_lastSubmitted == value) {
       return;
     }
-    Log.debug("Submitted!");
     _lastSubmitted = value;
     widget.onSubmitted(value);
   }

@@ -5,15 +5,15 @@ import 'package:pathplanner/widgets/number_text_field.dart';
 
 void main() {
   testWidgets('enter text', (widgetTester) async {
-    num _value = 0;
+    num value = 0;
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: _value,
+          value: value,
           label: 'Test Label',
-          onSubmitted: (value) {
-            _value = value;
+          onSubmitted: (newValue) {
+            value = newValue;
           },
         ),
       ),
@@ -29,34 +29,34 @@ void main() {
     expect(find.text('1.5'), findsOneWidget);
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
-    expect(_value, closeTo(1.5, 0.00001));
+    expect(value, closeTo(1.5, 0.00001));
 
-    // invalid characters
+    // invalid characters are ignored
     await widgetTester.enterText(textField, '10.25.1asdf');
     expect(find.text('10.25'), findsOneWidget);
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
-    expect(_value, closeTo(10.25, 0.00001));
+    expect(value, closeTo(10.25, 0.00001));
 
     // evaluates expression
     await widgetTester.enterText(textField, '10*2.5');
     expect(find.text('10*2.5'), findsOneWidget);
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
-    expect(_value, closeTo(25, 0.00001));
+    expect(value, closeTo(25, 0.00001));
   });
 
   testWidgets('increment arrow key up', (widgetTester) async {
-    num _value = 0;
+    num value = 0;
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: _value,
+          value: value,
           label: 'Test Label',
           arrowKeyIncrement: 1,
-          onSubmitted: (value) {
-            _value = value;
+          onSubmitted: (newValue) {
+            value = newValue;
           },
         ),
       ),
@@ -72,21 +72,21 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowUp);
     await widgetTester.pump();
 
-    expect(_value, closeTo(2.0, 0.00001));
+    expect(value, closeTo(2.0, 0.00001));
   });
 
   testWidgets('increment arrow key up partial', (widgetTester) async {
-    num _value = 0.7;
+    num value = 0.7;
 
     await widgetTester.pumpWidget(
       MaterialApp(
           home: Scaffold(
         body: NumberTextField(
-          value: _value,
+          value: value,
           label: 'Test Label',
           arrowKeyIncrement: 0.1,
-          onSubmitted: (value) {
-            _value = value;
+          onSubmitted: (newValue) {
+            value = newValue;
           },
         ),
       )),
@@ -102,17 +102,17 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowUp);
     await widgetTester.pump();
 
-    expect(_value, closeTo(0.9, 0.00001));
+    expect(value, closeTo(0.9, 0.00001));
 
-    _value = 0.2;
+    value = 0.2;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: _value,
+          value: value,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
-          onSubmitted: (value) {
-            _value = value;
+          onSubmitted: (newValue) {
+            value = newValue;
           },
         ),
       ),
@@ -128,20 +128,20 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowUp);
     await widgetTester.pump();
 
-    expect(_value, closeTo(0.6, 0.0001));
+    expect(value, closeTo(0.6, 0.0001));
   });
 
   testWidgets('increment arrow key down', (widgetTester) async {
-    num _value = 0;
+    num value = 0;
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: _value,
+          value: value,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
-          onSubmitted: (value) {
-            _value = value;
+          onSubmitted: (newValue) {
+            value = newValue;
           },
         ),
       ),
@@ -157,20 +157,20 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowDown);
     await widgetTester.pump();
 
-    expect(_value, closeTo(-2.0, 0.0001));
+    expect(value, closeTo(-2.0, 0.00001));
   });
 
   testWidgets('increment arrow key partial', (widgetTester) async {
-    num _value = -0.2;
+    num value = -0.2;
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: NumberTextField(
-          value: _value,
+          value: value,
           label: 'Test Label',
           arrowKeyIncrement: 1.0,
-          onSubmitted: (value) {
-            _value = value;
+          onSubmitted: (newValue) {
+            value = newValue;
           },
         ),
       ),
@@ -186,7 +186,7 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowDown);
     await widgetTester.pump();
 
-    expect(_value, closeTo(-2.2, 0.00001));
+    expect(value, closeTo(-2.2, 0.00001));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -194,8 +194,8 @@ void main() {
           value: -0.70,
           label: 'Test Label',
           arrowKeyIncrement: 0.15,
-          onSubmitted: (value) {
-            _value = value;
+          onSubmitted: (newValue) {
+            value = newValue;
           },
         ),
       ),
@@ -211,6 +211,6 @@ void main() {
     await simulateKeyUpEvent(LogicalKeyboardKey.arrowDown);
     await widgetTester.pump();
 
-    expect(_value, closeTo(-1.0, 0.00001));
+    expect(value, closeTo(-1.0, 0.00001));
   });
 }

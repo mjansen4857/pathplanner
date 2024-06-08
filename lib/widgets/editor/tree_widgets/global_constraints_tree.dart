@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/units.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -42,7 +43,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                   value: path.globalConstraints.maxVelocity,
                   label: 'Max Velocity (M/S)',
                   enabled: !path.useDefaultConstraints,
-                  lowerBound: LowerBound.greaterThanZero,
+                  minValue: nonZeroLength,
                   onSubmitted: (value) {
                     _addChange(
                         () => path.globalConstraints.maxVelocity = value);
@@ -55,7 +56,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                   value: path.globalConstraints.maxAcceleration,
                   label: 'Max Acceleration (M/S²)',
                   enabled: !path.useDefaultConstraints,
-                  lowerBound: LowerBound.greaterThanZero,
+                  minValue: nonZeroLength,
                   onSubmitted: (value) {
                     _addChange(
                         () => path.globalConstraints.maxAcceleration = value);
@@ -77,7 +78,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                       label: 'Max Angular Velocity (Deg/S)',
                       arrowKeyIncrement: 1.0,
                       enabled: !path.useDefaultConstraints,
-                      lowerBound: LowerBound.greaterThanZero,
+                      minValue: nonZeroAngle,
                       onSubmitted: (value) {
                         _addChange(() =>
                             path.globalConstraints.maxAngularVelocity = value);
@@ -90,7 +91,7 @@ class GlobalConstraintsTree extends StatelessWidget {
                     label: 'Max Angular Acceleration (Deg/S²)',
                     arrowKeyIncrement: 1.0,
                     enabled: !path.useDefaultConstraints,
-                    lowerBound: LowerBound.greaterThanZero,
+                    minValue: nonZeroAngle,
                     onSubmitted: (value) {
                       _addChange(() => path
                           .globalConstraints.maxAngularAcceleration = value);

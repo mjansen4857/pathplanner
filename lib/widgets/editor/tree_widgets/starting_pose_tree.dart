@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/util/pose2d.dart';
+import 'package:pathplanner/util/units.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -37,7 +38,7 @@ class StartingPoseTree extends StatelessWidget {
                   value: auto.startingPose?.position.x ?? 0,
                   label: 'X Position (M)',
                   enabled: auto.startingPose != null,
-                  lowerBound: LowerBound.zero,
+                  minValue: 0,
                   onSubmitted: (value) {
                     _addChange(() => auto.startingPose!.position =
                         Point(value, auto.startingPose!.position.y));
@@ -50,10 +51,10 @@ class StartingPoseTree extends StatelessWidget {
                   value: auto.startingPose?.position.y ?? 0,
                   label: 'Y Position (M)',
                   enabled: auto.startingPose != null,
-                  lowerBound: LowerBound.zero,
+                  minValue: 0,
                   onSubmitted: (value) {
-                      _addChange(() => auto.startingPose!.position =
-                          Point(auto.startingPose!.position.x, value));
+                    _addChange(() => auto.startingPose!.position =
+                        Point(auto.startingPose!.position.x, value));
                   },
                 ),
               ),
@@ -63,13 +64,10 @@ class StartingPoseTree extends StatelessWidget {
                   value: auto.startingPose?.rotation ?? 0,
                   label: 'Rotation (Deg)',
                   enabled: auto.startingPose != null,
+                  minValue: nonZeroAngle,
                   onSubmitted: (value) {
-                    num rot = value % 360;
-                    if (rot > 180) {
-                      rot -= 360;
-                    }
-
-                    _addChange(() => auto.startingPose!.rotation = rot);
+                    _addChange(
+                        () => auto.startingPose!.rotation = adjustAngle(value));
                   },
                 ),
               ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/preview_starting_state.dart';
+import 'package:pathplanner/util/units.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -55,12 +56,8 @@ class PreviewStartingStateTree extends StatelessWidget {
                     label: 'Rotation (Deg)',
                     enabled: path.previewStartingState != null,
                     onSubmitted: (value) {
-                      num rot = value % 360;
-                      if (rot > 180) {
-                        rot -= 360;
-                      }
-                      _addChange(
-                          () => path.previewStartingState!.rotation = rot);
+                      _addChange(() => path.previewStartingState!.rotation =
+                          adjustAngle(value));
                     },
                   ),
                 ),

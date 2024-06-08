@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/units.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -39,7 +40,7 @@ class GoalEndStateTree extends StatelessWidget {
                   value: path.goalEndState.velocity,
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
-                  lowerBound: LowerBound.zero,
+                  minValue: 0,
                   onSubmitted: (value) {
                     _addChange(() => path.goalEndState.velocity = value);
                   },
@@ -52,11 +53,8 @@ class GoalEndStateTree extends StatelessWidget {
                     value: path.goalEndState.rotation,
                     label: 'Rotation (Deg)',
                     onSubmitted: (value) {
-                      num rot = value % 360;
-                      if (rot > 180) {
-                        rot -= 360;
-                      }
-                      _addChange(() => path.goalEndState.rotation = rot);
+                      _addChange(() =>
+                          path.goalEndState.rotation = adjustAngle(value));
                     },
                   ),
                 ),

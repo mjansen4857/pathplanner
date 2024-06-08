@@ -3,26 +3,28 @@ import 'package:flutter/services.dart';
 import 'package:function_tree/function_tree.dart';
 import 'package:intl/intl.dart';
 
-enum LowerBound { none, zero, greaterThanZero }
-
 class NumberTextField extends StatefulWidget {
   final num value;
   final String label;
   final ValueChanged<num> onSubmitted;
+  final int displayPrecision;
   final double height;
   final bool enabled;
   final num arrowKeyIncrement;
-  final LowerBound lowerBound;
+  final num minValue;
+  final num maxValue;
 
   const NumberTextField(
       {super.key,
       required this.value,
       required this.label,
       required this.onSubmitted,
+      this.displayPrecision = 3,
       this.height = 42,
       this.enabled = true,
       this.arrowKeyIncrement = 0.05,
-      this.lowerBound = LowerBound.none});
+      this.minValue = double.negativeInfinity,
+      this.maxValue = double.infinity});
 
   @override
   State<NumberTextField> createState() => _NumberTextFieldState();
@@ -109,7 +111,7 @@ class _NumberTextFieldState extends State<NumberTextField> {
     // Format number for display
     NumberFormat formatter = NumberFormat();
     formatter.minimumFractionDigits = 0;
-    formatter.maximumFractionDigits = 3;
+    formatter.maximumFractionDigits = widget.displayPrecision;
     _controller.value =
         _controller.value.copyWith(text: formatter.format(widget.value));
   }
@@ -137,17 +139,11 @@ class _NumberTextFieldState extends State<NumberTextField> {
 
   /// Handles the submission of a value.
   void _handleSubmit(num value) {
-    switch (widget.lowerBound) {
-      case LowerBound.zero:
-        if (value < 0) {
-          return;
-        }
-      case LowerBound.greaterThanZero:
-        if (value <= 0) {
-          return;
-        }
-      case LowerBound.none:
-        break;
+    if (value > widget.maxValue) {
+      return;
+    }
+    if (value < widget.minValue) {
+      return;
     }
     // == okay since we only care about debouncing exact repetition
     if (_lastSubmitted == value) {

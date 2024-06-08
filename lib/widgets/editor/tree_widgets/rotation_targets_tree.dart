@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/units.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -167,15 +168,11 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                     label: 'Rotation (Deg)',
                     arrowKeyIncrement: 1.0,
                     onSubmitted: (value) {
-                      num rot = value % 360;
-                      if (rot > 180) {
-                        rot -= 360;
-                      }
-
                       widget.undoStack.add(Change(
                         rotations[targetIdx].clone(),
                         () {
-                          rotations[targetIdx].rotationDegrees = rot;
+                          rotations[targetIdx].rotationDegrees =
+                              adjustAngle(value);
                           widget.onPathChanged?.call();
                         },
                         (oldValue) {

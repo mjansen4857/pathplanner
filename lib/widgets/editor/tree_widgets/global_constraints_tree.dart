@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/units.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -39,30 +40,26 @@ class GlobalConstraintsTree extends StatelessWidget {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      path.globalConstraints.maxVelocity.toStringAsFixed(2),
+                  value: path.globalConstraints.maxVelocity,
                   label: 'Max Velocity (M/S)',
                   enabled: !path.useDefaultConstraints,
+                  minValue: nonZeroLength,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
-                      _addChange(
-                          () => path.globalConstraints.maxVelocity = value);
-                    }
+                    _addChange(
+                        () => path.globalConstraints.maxVelocity = value);
                   },
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      path.globalConstraints.maxAcceleration.toStringAsFixed(2),
+                  value: path.globalConstraints.maxAcceleration,
                   label: 'Max Acceleration (M/S²)',
                   enabled: !path.useDefaultConstraints,
+                  minValue: nonZeroLength,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
-                      _addChange(
-                          () => path.globalConstraints.maxAcceleration = value);
-                    }
+                    _addChange(
+                        () => path.globalConstraints.maxAcceleration = value);
                   },
                 ),
               ),
@@ -77,32 +74,27 @@ class GlobalConstraintsTree extends StatelessWidget {
               children: [
                 Expanded(
                   child: NumberTextField(
-                    initialText: path.globalConstraints.maxAngularVelocity
-                        .toStringAsFixed(2),
-                    label: 'Max Angular Velocity (Deg/S)',
-                    arrowKeyIncrement: 1.0,
-                    enabled: !path.useDefaultConstraints,
-                    onSubmitted: (value) {
-                      if (value != null && value > 0) {
+                      value: path.globalConstraints.maxAngularVelocity,
+                      label: 'Max Angular Velocity (Deg/S)',
+                      arrowKeyIncrement: 1.0,
+                      enabled: !path.useDefaultConstraints,
+                      minValue: nonZeroAngle,
+                      onSubmitted: (value) {
                         _addChange(() =>
                             path.globalConstraints.maxAngularVelocity = value);
-                      }
-                    },
-                  ),
+                      }),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: NumberTextField(
-                    initialText: path.globalConstraints.maxAngularAcceleration
-                        .toStringAsFixed(2),
+                    value: path.globalConstraints.maxAngularAcceleration,
                     label: 'Max Angular Acceleration (Deg/S²)',
                     arrowKeyIncrement: 1.0,
                     enabled: !path.useDefaultConstraints,
+                    minValue: nonZeroAngle,
                     onSubmitted: (value) {
-                      if (value != null && value > 0) {
-                        _addChange(() => path
-                            .globalConstraints.maxAngularAcceleration = value);
-                      }
+                      _addChange(() => path
+                          .globalConstraints.maxAngularAcceleration = value);
                     },
                   ),
                 ),

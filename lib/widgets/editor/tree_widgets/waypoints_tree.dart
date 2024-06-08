@@ -179,54 +179,47 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText: waypoint.anchor.x.toStringAsFixed(2),
+                  value: waypoint.anchor.x,
                   label: 'X Position (M)',
                   onSubmitted: (value) {
-                    if (value != null) {
-                      Waypoint wRef = waypoints[waypointIdx];
-                      widget.undoStack.add(_waypointChange(
-                        wRef,
-                        () => wRef.move(value, wRef.anchor.y),
-                        (oldVal) => wRef.move(oldVal.anchor.x, oldVal.anchor.y),
-                      ));
-                    }
+                    Waypoint wRef = waypoints[waypointIdx];
+                    widget.undoStack.add(_waypointChange(
+                      wRef,
+                      () => wRef.move(value, wRef.anchor.y),
+                      (oldVal) => wRef.move(oldVal.anchor.x, oldVal.anchor.y),
+                    ));
                   },
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText: waypoint.anchor.y.toStringAsFixed(2),
+                  value: waypoint.anchor.y,
                   label: 'Y Position (M)',
                   onSubmitted: (value) {
-                    if (value != null) {
-                      Waypoint wRef = waypoints[waypointIdx];
-                      widget.undoStack.add(_waypointChange(
-                        wRef,
-                        () => wRef.move(wRef.anchor.x, value),
-                        (oldVal) => wRef.move(oldVal.anchor.x, oldVal.anchor.y),
-                      ));
-                    }
+                    Waypoint wRef = waypoints[waypointIdx];
+                    widget.undoStack.add(_waypointChange(
+                      wRef,
+                      () => wRef.move(wRef.anchor.x, value),
+                      (oldVal) => wRef.move(oldVal.anchor.x, oldVal.anchor.y),
+                    ));
                   },
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText: waypoint.getHeadingDegrees().toStringAsFixed(2),
-                  label: 'Heading (Deg)',
-                  arrowKeyIncrement: 1.0,
-                  onSubmitted: (value) {
-                    if (value != null) {
+                    value: waypoint.getHeadingDegrees(),
+                    label: 'Heading (Deg)',
+                    arrowKeyIncrement: 1.0,
+                    onSubmitted: (value) {
                       Waypoint wRef = waypoints[waypointIdx];
                       widget.undoStack.add(_waypointChange(
                         wRef,
                         () => wRef.setHeading(value),
                         (oldVal) => wRef.setHeading(oldVal.getHeadingDegrees()),
                       ));
-                    }
-                  },
-                ),
+                    }),
               ),
             ],
           ),
@@ -240,11 +233,10 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: NumberTextField(
-                      initialText:
-                          waypoint.getPrevControlLength().toStringAsFixed(2),
+                      value: waypoint.getPrevControlLength(),
                       label: 'Previous Control Length (M)',
                       onSubmitted: (value) {
-                        if (value != null && value >= 0.05) {
+                        if (value >= 0.05) {
                           Waypoint wRef = waypoints[waypointIdx];
                           widget.undoStack.add(_waypointChange(
                             wRef,
@@ -264,11 +256,10 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: NumberTextField(
-                      initialText:
-                          waypoint.getNextControlLength().toStringAsFixed(2),
+                      value: waypoint.getNextControlLength(),
                       label: 'Next Control Length (M)',
                       onSubmitted: (value) {
-                        if (value != null && value >= 0.05) {
+                        if (value >= 0.05) {
                           Waypoint wRef = waypoints[waypointIdx];
                           widget.undoStack.add(_waypointChange(
                             wRef,

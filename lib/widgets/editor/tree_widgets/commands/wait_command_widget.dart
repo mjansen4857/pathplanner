@@ -28,22 +28,21 @@ class WaitCommandWidget extends StatelessWidget {
       children: [
         Expanded(
           child: NumberTextField(
-            initialText: command.waitTime.toStringAsFixed(2),
+            value: command.waitTime,
             label: 'Wait Time (S)',
+            minValue: 0,
             onSubmitted: (value) {
-              if (value != null && value >= 0) {
-                undoStack.add(Change(
-                  command.waitTime,
-                  () {
-                    command.waitTime = value;
-                    onUpdated?.call();
-                  },
-                  (oldValue) {
-                    command.waitTime = oldValue;
-                    onUpdated?.call();
-                  },
-                ));
-              }
+              undoStack.add(Change(
+                command.waitTime,
+                () {
+                  command.waitTime = value;
+                  onUpdated?.call();
+                },
+                (oldValue) {
+                  command.waitTime = oldValue;
+                  onUpdated?.call();
+                },
+              ));
             },
           ),
         ),

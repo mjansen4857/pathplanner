@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/util/pose2d.dart';
+import 'package:pathplanner/util/units.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -34,49 +35,39 @@ class StartingPoseTree extends StatelessWidget {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      auto.startingPose?.position.x.toStringAsFixed(2) ?? '',
+                  value: auto.startingPose?.position.x ?? 0,
                   label: 'X Position (M)',
                   enabled: auto.startingPose != null,
+                  minValue: 0,
                   onSubmitted: (value) {
-                    if (value != null && value >= 0) {
-                      _addChange(() => auto.startingPose!.position =
-                          Point(value, auto.startingPose!.position.y));
-                    }
+                    _addChange(() => auto.startingPose!.position =
+                        Point(value, auto.startingPose!.position.y));
                   },
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      auto.startingPose?.position.y.toStringAsFixed(2) ?? '',
+                  value: auto.startingPose?.position.y ?? 0,
                   label: 'Y Position (M)',
                   enabled: auto.startingPose != null,
+                  minValue: 0,
                   onSubmitted: (value) {
-                    if (value != null && value >= 0) {
-                      _addChange(() => auto.startingPose!.position =
-                          Point(auto.startingPose!.position.x, value));
-                    }
+                    _addChange(() => auto.startingPose!.position =
+                        Point(auto.startingPose!.position.x, value));
                   },
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      auto.startingPose?.rotation.toStringAsFixed(2) ?? '',
+                  value: auto.startingPose?.rotation ?? 0,
                   label: 'Rotation (Deg)',
                   enabled: auto.startingPose != null,
+                  minValue: nonZeroAngle,
                   onSubmitted: (value) {
-                    if (value != null) {
-                      num rot = value % 360;
-                      if (rot > 180) {
-                        rot -= 360;
-                      }
-
-                      _addChange(() => auto.startingPose!.rotation = rot);
-                    }
+                    _addChange(
+                        () => auto.startingPose!.rotation = adjustAngle(value));
                   },
                 ),
               ),

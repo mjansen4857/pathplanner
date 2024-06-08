@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/units.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -163,21 +164,15 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      rotations[targetIdx].rotationDegrees.toStringAsFixed(2),
-                  label: 'Rotation (Deg)',
-                  arrowKeyIncrement: 1.0,
-                  onSubmitted: (value) {
-                    if (value != null) {
-                      num rot = value % 360;
-                      if (rot > 180) {
-                        rot -= 360;
-                      }
-
+                    value: rotations[targetIdx].rotationDegrees,
+                    label: 'Rotation (Deg)',
+                    arrowKeyIncrement: 1.0,
+                    onSubmitted: (value) {
                       widget.undoStack.add(Change(
                         rotations[targetIdx].clone(),
                         () {
-                          rotations[targetIdx].rotationDegrees = rot;
+                          rotations[targetIdx].rotationDegrees =
+                              adjustAngle(value);
                           widget.onPathChanged?.call();
                         },
                         (oldValue) {
@@ -186,9 +181,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                           widget.onPathChanged?.call();
                         },
                       ));
-                    }
-                  },
-                ),
+                    }),
               ),
             ],
           ),

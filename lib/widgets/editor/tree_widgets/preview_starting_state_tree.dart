@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/preview_starting_state.dart';
+import 'package:pathplanner/util/units.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -37,17 +38,13 @@ class PreviewStartingStateTree extends StatelessWidget {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      path.previewStartingState?.velocity.toStringAsFixed(2) ??
-                          '',
+                  value: path.previewStartingState?.velocity ?? 0,
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
                   enabled: path.previewStartingState != null,
                   onSubmitted: (value) {
-                    if (value != null) {
-                      _addChange(
-                          () => path.previewStartingState!.velocity = value);
-                    }
+                    _addChange(
+                        () => path.previewStartingState!.velocity = value);
                   },
                 ),
               ),
@@ -55,20 +52,12 @@ class PreviewStartingStateTree extends StatelessWidget {
               if (holonomicMode)
                 Expanded(
                   child: NumberTextField(
-                    initialText: path.previewStartingState?.rotation
-                            .toStringAsFixed(2) ??
-                        '',
+                    value: path.previewStartingState?.rotation ?? 0,
                     label: 'Rotation (Deg)',
                     enabled: path.previewStartingState != null,
                     onSubmitted: (value) {
-                      if (value != null) {
-                        num rot = value % 360;
-                        if (rot > 180) {
-                          rot -= 360;
-                        }
-                        _addChange(
-                            () => path.previewStartingState!.rotation = rot);
-                      }
+                      _addChange(() => path.previewStartingState!.rotation =
+                          adjustAngle(value));
                     },
                   ),
                 ),

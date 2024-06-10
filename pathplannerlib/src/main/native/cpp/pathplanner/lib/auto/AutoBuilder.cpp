@@ -9,13 +9,13 @@
 #include "pathplanner/lib/commands/PathfindThenFollowPathRamsete.h"
 #include "pathplanner/lib/commands/PathfindLTV.h"
 #include "pathplanner/lib/commands/PathfindThenFollowPathLTV.h"
-#include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include <stdexcept>
 #include <frc2/command/Commands.h>
 #include <frc/Filesystem.h>
 #include <filesystem>
 #include <optional>
+#include <algorithm>
 #include <wpi/MemoryBuffer.h>
 
 using namespace pathplanner;
@@ -359,29 +359,36 @@ frc2::CommandPtr AutoBuilder::pathfindThenFollowPath(
 }
 
 frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
-		std::string defaultAutoName) {
+		std::string defaultAutoName,
+		std::function<bool(pathplanner::PathPlannerAuto*)> filterAutos) {
 	if (!m_configured) {
 		throw std::runtime_error(
 				"AutoBuilder was not configured before attempting to build an auto chooser");
 	}
 
 	frc::SendableChooser<frc2::Command*> chooser;
-	bool foundDefaultOption = false;
+	std::vector < std::string > autoPaths = getAllAutoNames();
 
-	for (std::string const &entry : getAllAutoNames()) {
-		AutoBuilder::m_autoCommands.emplace_back(
-				pathplanner::PathPlannerAuto(entry).ToPtr());
-		if (defaultAutoName != "" && entry == defaultAutoName) {
-			foundDefaultOption = true;
-			chooser.SetDefaultOption(entry, m_autoCommands.back().get());
-		} else {
-			chooser.AddOption(entry, m_autoCommands.back().get());
-		}
+	std::vector<std::string>::const_iterator defaultIterator =
+			std::ranges::find(autoPaths, defaultAutoName);
+	if (defaultIterator != autoPaths.end() && defaultAutoName != "") {
+		chooser.SetDefaultOption(*defaultIterator,
+				AutoBuilder::m_autoCommands.emplace_back(
+						PathPlannerAuto(*defaultIterator).ToPtr()).get());
+		autoPaths.erase(defaultIterator);
+	} else {
+		chooser.SetDefaultOption("None",
+				AutoBuilder::m_autoCommands.emplace_back(frc2::cmd::None()).get());
 	}
 
-	if (!foundDefaultOption) {
-		AutoBuilder::m_autoCommands.emplace_back(frc2::cmd::None());
-		chooser.SetDefaultOption("None", m_autoCommands.back().get());
+	for (const auto &autoName : autoPaths) {
+		PathPlannerAuto path(autoName);
+		// Pointer invalidated after return 
+		if (filterAutos(&path)) {
+			chooser.AddOption(autoName,
+					AutoBuilder::m_autoCommands.emplace_back(
+							std::move(path).ToPtr()).get());
+		}
 	}
 
 	return chooser;

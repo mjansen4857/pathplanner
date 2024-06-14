@@ -465,6 +465,24 @@ class PathPlannerPath {
     );
   }
 
+  PathPlannerPath reverse(String newName) {
+    return PathPlannerPath(
+      name: newName,
+      waypoints: reverseWaypoints(waypoints),
+      globalConstraints: globalConstraints.clone(),
+      goalEndState: goalEndState.reverse(),
+      constraintZones: cloneConstraintZones(constraintZones),
+      rotationTargets: cloneRotationTargets(rotationTargets),
+      eventMarkers: cloneEventMarkers(eventMarkers),
+      pathDir: pathDir,
+      fs: fs,
+      reversed: reversed,
+      folder: folder,
+      previewStartingState: previewStartingState?.reverse(),
+      useDefaultConstraints: useDefaultConstraints,
+    );
+  }
+
   List<Point> getPathPositions() {
     return [
       for (PathPoint p in pathPoints) p.position,
@@ -474,6 +492,12 @@ class PathPlannerPath {
   static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {
     return [
       for (Waypoint waypoint in waypoints) waypoint.clone(),
+    ];
+  }
+
+  static List<Waypoint> reverseWaypoints(List<Waypoint> waypoints) {
+    return [
+      for (Waypoint waypoint in waypoints) waypoint.reverse(),
     ];
   }
 

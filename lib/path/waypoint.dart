@@ -130,6 +130,23 @@ class Waypoint {
     );
   }
 
+  Waypoint reverse() {
+    Point anchorPt = Point(16.54 - anchor.x, anchor.y);
+    Point? prev = prevControl == null
+        ? null
+        : Point(16.54 - prevControl!.x, prevControl!.y);
+    Point? next = nextControl == null
+        ? null
+        : Point(16.54 - nextControl!.x, nextControl!.y);
+
+    return Waypoint(
+      anchor: anchorPt,
+      prevControl: prev,
+      nextControl: next,
+      linkedName: linkedName,
+    );
+  }
+
   void setHeading(num headingDegrees) {
     var theta = headingDegrees * pi / 180;
     if (nextControl != null) {

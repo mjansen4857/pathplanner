@@ -925,6 +925,21 @@ class _ProjectPageState extends State<ProjectPage> {
           _sortPaths(_pathSortValue);
         });
       },
+      onReverse: () {
+        List<String> pathNames = [];
+        for (PathPlannerPath path in _paths) {
+          pathNames.add(path.name);
+        }
+        String pathName = 'Reverse of ${_paths[i].name}';
+        while (pathNames.contains(pathName)) {
+          pathName = 'Reverse of $pathName';
+        }
+
+        setState(() {
+          _paths.add(_paths[i].reverse(pathName));
+          _sortPaths(_pathSortValue);
+        });
+      },
       onDeleted: () {
         _paths[i].deletePath();
         setState(() {

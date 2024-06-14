@@ -24,6 +24,13 @@ class PreviewStartingState {
     );
   }
 
+  PreviewStartingState reverse() {
+    return PreviewStartingState(
+      rotation: 180 + rotation,
+      velocity: velocity,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       other is PreviewStartingState &&

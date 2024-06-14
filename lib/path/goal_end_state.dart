@@ -27,6 +27,11 @@ class GoalEndState {
         velocity: velocity, rotation: rotation, rotateFast: rotateFast);
   }
 
+  GoalEndState reverse() {
+    return GoalEndState(
+        velocity: velocity, rotation: 180 + rotation, rotateFast: rotateFast);
+  }
+
   @override
   bool operator ==(Object other) =>
       other is GoalEndState &&

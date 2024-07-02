@@ -1,4 +1,4 @@
-package com.pathplanner.lib.util;
+package com.pathplanner.lib.config;
 
 /** Configuration for path replanning */
 public class ReplanningConfig {

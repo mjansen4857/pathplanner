@@ -1,10 +1,10 @@
 package com.pathplanner.lib.commands;
 
+import com.pathplanner.lib.config.ReplanningConfig;
+import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.trajectory.config.RobotConfig;
-import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;

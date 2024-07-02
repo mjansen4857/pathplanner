@@ -1,4 +1,4 @@
-package com.pathplanner.lib.util;
+package com.pathplanner.lib.config;
 
 /** PID constants used to create PID controllers */
 public class PIDConstants {

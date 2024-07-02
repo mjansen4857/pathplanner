@@ -1,9 +1,9 @@
 package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.auto.CommandUtil;
+import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import com.pathplanner.lib.trajectory.config.RobotConfig;
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;

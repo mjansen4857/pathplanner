@@ -1,13 +1,15 @@
 package com.pathplanner.lib.commands;
 
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.ReplanningConfig;
+import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.trajectory.MotorTorqueCurve;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import com.pathplanner.lib.trajectory.config.ModuleConfig;
-import com.pathplanner.lib.trajectory.config.RobotConfig;
 import com.pathplanner.lib.util.*;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;

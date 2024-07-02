@@ -1,7 +1,7 @@
 package com.pathplanner.lib.controllers;
 
+import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import com.pathplanner.lib.util.PIDConstants;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;

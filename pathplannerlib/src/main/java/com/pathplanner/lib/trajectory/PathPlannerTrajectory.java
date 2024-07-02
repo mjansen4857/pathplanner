@@ -1,10 +1,10 @@
 package com.pathplanner.lib.trajectory;
 
+import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.path.PathSegment;
-import com.pathplanner.lib.trajectory.config.RobotConfig;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
@@ -51,8 +51,7 @@ public class PathPlannerTrajectory {
    * @param path The path to generate a trajectory for
    * @param startingSpeeds The starting robot-relative chassis speeds of the robot
    * @param startingRotation The starting field-relative rotation of the robot
-   * @param config The {@link com.pathplanner.lib.trajectory.config.RobotConfig} describing the
-   *     robot
+   * @param config The {@link RobotConfig} describing the robot
    */
   public PathPlannerTrajectory(
       PathPlannerPath path,

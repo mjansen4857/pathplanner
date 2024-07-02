@@ -1,4 +1,4 @@
-package com.pathplanner.lib.trajectory.config;
+package com.pathplanner.lib.config;
 
 import com.pathplanner.lib.trajectory.MotorTorqueCurve;
 

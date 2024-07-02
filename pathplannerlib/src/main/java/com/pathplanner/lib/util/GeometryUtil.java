@@ -52,18 +52,6 @@ public class GeometryUtil {
   }
 
   /**
-   * Interpolate between two Rotation2ds
-   *
-   * @param startVal Start value
-   * @param endVal End value
-   * @param t Interpolation factor (0.0-1.0)
-   * @return Interpolated value
-   */
-  public static Rotation2d rotationLerp(Rotation2d startVal, Rotation2d endVal, double t) {
-    return startVal.plus(endVal.minus(startVal).times(t));
-  }
-
-  /**
    * Linear interpolation between Translation2ds
    *
    * @param a Position 1

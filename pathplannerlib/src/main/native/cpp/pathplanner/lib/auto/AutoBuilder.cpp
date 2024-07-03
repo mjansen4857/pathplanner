@@ -1,7 +1,6 @@
 #include "pathplanner/lib/auto/AutoBuilder.h"
 #include "pathplanner/lib/commands/FollowPathHolonomic.h"
 #include "pathplanner/lib/commands/FollowPathLTV.h"
-#include "pathplanner/lib/commands/FollowPathWithEvents.h"
 #include "pathplanner/lib/commands/PathfindHolonomic.h"
 #include "pathplanner/lib/commands/PathfindThenFollowPathHolonomic.h"
 #include "pathplanner/lib/commands/PathfindLTV.h"

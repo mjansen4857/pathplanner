@@ -3,7 +3,6 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include "pathplanner/lib/commands/FollowPathLTV.h"
 #include "pathplanner/lib/commands/PathfindLTV.h"
-#include "pathplanner/lib/commands/FollowPathWithEvents.h"
 
 namespace pathplanner {
 class PathfindThenFollowPathLTV: public frc2::SequentialCommandGroup {

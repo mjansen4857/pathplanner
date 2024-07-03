@@ -13,7 +13,7 @@
 #include <functional>
 #include <optional>
 #include "pathplanner/lib/util/GeometryUtil.h"
-#include "pathplanner/lib/util/PIDConstants.h"
+#include "pathplanner/lib/config/PIDConstants.h"
 #include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
 #include "pathplanner/lib/path/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"

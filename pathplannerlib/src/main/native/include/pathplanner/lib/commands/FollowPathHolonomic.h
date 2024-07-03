@@ -2,7 +2,7 @@
 
 #include "pathplanner/lib/commands/FollowPathCommand.h"
 #include "pathplanner/lib/controllers/PPHolonomicDriveController.h"
-#include "pathplanner/lib/util/PIDConstants.h"
+#include "pathplanner/lib/config/PIDConstants.h"
 #include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
 
 namespace pathplanner {

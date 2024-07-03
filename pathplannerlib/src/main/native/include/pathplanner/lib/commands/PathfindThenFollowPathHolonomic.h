@@ -3,7 +3,6 @@
 #include <frc2/command/SequentialCommandGroup.h>
 #include "pathplanner/lib/commands/FollowPathHolonomic.h"
 #include "pathplanner/lib/commands/PathfindHolonomic.h"
-#include "pathplanner/lib/commands/FollowPathWithEvents.h"
 
 namespace pathplanner {
 class PathfindThenFollowPathHolonomic: public frc2::SequentialCommandGroup {

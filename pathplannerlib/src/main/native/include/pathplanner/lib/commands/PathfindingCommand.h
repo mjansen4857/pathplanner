@@ -14,7 +14,7 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/path/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
-#include "pathplanner/lib/util/ReplanningConfig.h"
+#include "pathplanner/lib/config/ReplanningConfig.h"
 #include "pathplanner/lib/util/PathPlannerLogging.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 

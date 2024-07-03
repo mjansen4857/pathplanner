@@ -15,7 +15,7 @@
 #include <string>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
-#include "pathplanner/lib/util/ReplanningConfig.h"
+#include "pathplanner/lib/config/ReplanningConfig.h"
 
 namespace pathplanner {
 class AutoBuilder {

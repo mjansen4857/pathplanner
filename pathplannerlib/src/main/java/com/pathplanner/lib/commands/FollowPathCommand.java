@@ -79,7 +79,7 @@ public class FollowPathCommand extends Command {
     this.shouldFlipPath = shouldFlipPath;
 
     Set<Subsystem> driveRequirements = Set.of(requirements);
-    m_requirements.addAll(driveRequirements);
+    addRequirements(requirements);
 
     for (EventMarker marker : this.originalPath.getEventMarkers()) {
       var reqs = marker.getCommand().getRequirements();
@@ -89,7 +89,7 @@ public class FollowPathCommand extends Command {
             "Events that are triggered during path following cannot require the drive subsystem");
       }
 
-      m_requirements.addAll(reqs);
+      addRequirements(reqs.toArray(new Subsystem[0]));
     }
   }
 

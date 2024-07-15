@@ -7,35 +7,35 @@ MotorTorqueCurve::MotorTorqueCurve(MotorType motorType,
 		CurrentLimit currentLimit) {
 	switch (motorType) {
 	case krakenX60:
-		m_nmPerAmp = 0.0194;
+		m_nmPerAmp = units::newton_meter_per_amp_t { 0.0194 };
 		initKrakenX60(currentLimit);
 		break;
 	case krakenX60_FOC:
-		m_nmPerAmp = 0.0194;
+		m_nmPerAmp = units::newton_meter_per_amp_t { 0.0194 };
 		initKrakenX60FOC(currentLimit);
 		break;
 	case falcon500:
-		m_nmPerAmp = 0.0182;
+		m_nmPerAmp = units::newton_meter_per_amp_t { 0.0182 };
 		initFalcon500(currentLimit);
 		break;
 	case falcon500_FOC:
-		m_nmPerAmp = 0.0192;
+		m_nmPerAmp = units::newton_meter_per_amp_t { 0.0192 };
 		initFalcon500FOC(currentLimit);
 		break;
 	case neoVortex:
-		m_nmPerAmp = 0.0171;
+		m_nmPerAmp = units::newton_meter_per_amp_t { 0.0171 };
 		initNEOVortex(currentLimit);
 		break;
 	case neo:
-		m_nmPerAmp = 0.0181;
+		m_nmPerAmp = units::newton_meter_per_amp_t { 0.0181 };
 		initNEO(currentLimit);
 		break;
 	case cim:
-		m_nmPerAmp = 0.0184;
+		m_nmPerAmp = units::newton_meter_per_amp_t { 0.0184 };
 		initCIM(currentLimit);
 		break;
 	case miniCim:
-		m_nmPerAmp = 0.0158;
+		m_nmPerAmp = units::newton_meter_per_amp_t { 0.0158 };
 		initMiniCIM(currentLimit);
 		break;
 	default:
@@ -100,19 +100,28 @@ CurrentLimit MotorTorqueCurve::currentLimitFromSettingsString(
 void MotorTorqueCurve::initKrakenX60(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
-		insert(0.0, 0.746);
-		insert(5363.0, 0.746);
-		insert(6000.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.746 });
+		insert(units::revolutions_per_minute_t { 5363.0 },
+				units::newton_meter_t { 0.746 });
+		insert(units::revolutions_per_minute_t { 6000.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k60A:
-		insert(0.0, 1.133);
-		insert(5020.0, 1.133);
-		insert(6000.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.133 });
+		insert(units::revolutions_per_minute_t { 5020.0 },
+				units::newton_meter_t { 1.133 });
+		insert(units::revolutions_per_minute_t { 6000.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k80A:
-		insert(0.0, 1.521);
-		insert(4699.0, 1.521);
-		insert(6000.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.521 });
+		insert(units::revolutions_per_minute_t { 4699.0 },
+				units::newton_meter_t { 1.521 });
+		insert(units::revolutions_per_minute_t { 6000.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	}
 }
@@ -120,19 +129,28 @@ void MotorTorqueCurve::initKrakenX60(const CurrentLimit currentLimit) {
 void MotorTorqueCurve::initKrakenX60FOC(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
-		insert(0.0, 0.747);
-		insert(5333.0, 0.747);
-		insert(5800.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.747 });
+		insert(units::revolutions_per_minute_t { 5333.0 },
+				units::newton_meter_t { 0.747 });
+		insert(units::revolutions_per_minute_t { 5800.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k60A:
-		insert(0.0, 1.135);
-		insert(5081.0, 1.135);
-		insert(5800.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.135 });
+		insert(units::revolutions_per_minute_t { 5081.0 },
+				units::newton_meter_t { 1.135 });
+		insert(units::revolutions_per_minute_t { 5800.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k80A:
-		insert(0.0, 1.523);
-		insert(4848.0, 1.523);
-		insert(5800.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.523 });
+		insert(units::revolutions_per_minute_t { 4848.0 },
+				units::newton_meter_t { 1.523 });
+		insert(units::revolutions_per_minute_t { 5800.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	}
 }
@@ -140,19 +158,28 @@ void MotorTorqueCurve::initKrakenX60FOC(const CurrentLimit currentLimit) {
 void MotorTorqueCurve::initFalcon500(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
-		insert(0.0, 0.703);
-		insert(5412.0, 0.703);
-		insert(6380.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.703 });
+		insert(units::revolutions_per_minute_t { 5412.0 },
+				units::newton_meter_t { 0.703 });
+		insert(units::revolutions_per_minute_t { 6380.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k60A:
-		insert(0.0, 1.068);
-		insert(4920.0, 1.068);
-		insert(6380.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.068 });
+		insert(units::revolutions_per_minute_t { 4920.0 },
+				units::newton_meter_t { 1.068 });
+		insert(units::revolutions_per_minute_t { 6380.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k80A:
-		insert(0.0, 1.433);
-		insert(4407.0, 1.433);
-		insert(6380.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.433 });
+		insert(units::revolutions_per_minute_t { 4407.0 },
+				units::newton_meter_t { 1.433 });
+		insert(units::revolutions_per_minute_t { 6380.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	}
 }
@@ -160,19 +187,28 @@ void MotorTorqueCurve::initFalcon500(const CurrentLimit currentLimit) {
 void MotorTorqueCurve::initFalcon500FOC(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
-		insert(0.0, 0.74);
-		insert(5295.0, 0.74);
-		insert(6080.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.74 });
+		insert(units::revolutions_per_minute_t { 5295.0 },
+				units::newton_meter_t { 0.74 });
+		insert(units::revolutions_per_minute_t { 6080.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k60A:
-		insert(0.0, 1.124);
-		insert(4888.0, 1.124);
-		insert(6080.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.124 });
+		insert(units::revolutions_per_minute_t { 4888.0 },
+				units::newton_meter_t { 1.124 });
+		insert(units::revolutions_per_minute_t { 6080.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k80A:
-		insert(0.0, 1.508);
-		insert(4501.0, 1.508);
-		insert(6080.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.508 });
+		insert(units::revolutions_per_minute_t { 4501.0 },
+				units::newton_meter_t { 1.508 });
+		insert(units::revolutions_per_minute_t { 6080.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	}
 }
@@ -180,19 +216,28 @@ void MotorTorqueCurve::initFalcon500FOC(const CurrentLimit currentLimit) {
 void MotorTorqueCurve::initNEOVortex(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
-		insert(0.0, 0.621);
-		insert(5590.0, 0.621);
-		insert(6784.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.621 });
+		insert(units::revolutions_per_minute_t { 5590.0 },
+				units::newton_meter_t { 0.621 });
+		insert(units::revolutions_per_minute_t { 6784.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k60A:
-		insert(0.0, 0.962);
-		insert(4923.0, 0.962);
-		insert(6784.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.962 });
+		insert(units::revolutions_per_minute_t { 4923.0 },
+				units::newton_meter_t { 0.962 });
+		insert(units::revolutions_per_minute_t { 6784.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k80A:
-		insert(0.0, 1.304);
-		insert(4279.0, 1.304);
-		insert(6784.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.304 });
+		insert(units::revolutions_per_minute_t { 4279.0 },
+				units::newton_meter_t { 1.304 });
+		insert(units::revolutions_per_minute_t { 6784.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	}
 }
@@ -200,19 +245,28 @@ void MotorTorqueCurve::initNEOVortex(const CurrentLimit currentLimit) {
 void MotorTorqueCurve::initNEO(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
-		insert(0.0, 0.686);
-		insert(3773.0, 0.686);
-		insert(5330.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.686 });
+		insert(units::revolutions_per_minute_t { 3773.0 },
+				units::newton_meter_t { 0.686 });
+		insert(units::revolutions_per_minute_t { 5330.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k60A:
-		insert(0.0, 1.054);
-		insert(2939.0, 1.054);
-		insert(5330.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.054 });
+		insert(units::revolutions_per_minute_t { 2939.0 },
+				units::newton_meter_t { 1.054 });
+		insert(units::revolutions_per_minute_t { 5330.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k80A:
-		insert(0.0, 1.422);
-		insert(2104.0, 1.422);
-		insert(5330.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.422 });
+		insert(units::revolutions_per_minute_t { 2104.0 },
+				units::newton_meter_t { 1.422 });
+		insert(units::revolutions_per_minute_t { 5330.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	}
 }
@@ -220,19 +274,28 @@ void MotorTorqueCurve::initNEO(const CurrentLimit currentLimit) {
 void MotorTorqueCurve::initCIM(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
-		insert(0.0, 0.586);
-		insert(3324.0, 0.586);
-		insert(5840.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.586 });
+		insert(units::revolutions_per_minute_t { 3324.0 },
+				units::newton_meter_t { 0.586 });
+		insert(units::revolutions_per_minute_t { 5840.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k60A:
-		insert(0.0, 0.903);
-		insert(1954.0, 0.903);
-		insert(5840.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.903 });
+		insert(units::revolutions_per_minute_t { 1954.0 },
+				units::newton_meter_t { 0.903 });
+		insert(units::revolutions_per_minute_t { 5840.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k80A:
-		insert(0.0, 1.22);
-		insert(604.0, 1.22);
-		insert(5840.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.22 });
+		insert(units::revolutions_per_minute_t { 604.0 },
+				units::newton_meter_t { 1.22 });
+		insert(units::revolutions_per_minute_t { 5840.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	}
 }
@@ -240,19 +303,28 @@ void MotorTorqueCurve::initCIM(const CurrentLimit currentLimit) {
 void MotorTorqueCurve::initMiniCIM(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
-		insert(0.0, 0.701);
-		insert(4620.0, 0.701);
-		insert(5880.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.701 });
+		insert(units::revolutions_per_minute_t { 4620.0 },
+				units::newton_meter_t { 0.701 });
+		insert(units::revolutions_per_minute_t { 5880.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k60A:
-		insert(0.0, 1.064);
-		insert(3948.0, 1.064);
-		insert(5880.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.064 });
+		insert(units::revolutions_per_minute_t { 3948.0 },
+				units::newton_meter_t { 1.064 });
+		insert(units::revolutions_per_minute_t { 5880.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	case k80A:
-		insert(0.0, 1.426);
-		insert(3297.0, 1.426);
-		insert(5880.0, 0.0);
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.426 });
+		insert(units::revolutions_per_minute_t { 3297.0 },
+				units::newton_meter_t { 1.426 });
+		insert(units::revolutions_per_minute_t { 5880.0 },
+				units::newton_meter_t { 0.0 });
 		break;
 	}
 }

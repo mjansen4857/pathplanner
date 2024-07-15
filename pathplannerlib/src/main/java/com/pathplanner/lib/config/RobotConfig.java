@@ -32,7 +32,7 @@ public class RobotConfig {
   public final boolean isHolonomic;
 
   // Pre-calculated values that can be reused for every trajectory generation
-  /** Number od drive modules */
+  /** Number of drive modules */
   public final int numModules;
   /** The distance from the robot center to each module in meters */
   public final double[] modulePivotDistance;
@@ -45,22 +45,29 @@ public class RobotConfig {
    * @param massKG The mass of the robot, including bumpers and battery, in KG
    * @param MOI The moment of inertia of the robot, in KG*M^2
    * @param moduleConfig The drive module config
-   * @param swerveModuleLocations Robot-relative locations of each swerve module in meters, these
-   *     should be the same locations used to create your kinematics
-   * @param kinematics Swerve drive kinematics
+   * @param trackwidthMeters The distance between the left and right side of the drivetrain, in
+   *     meters
+   * @param wheelbaseMeters The distance between the front and back side of the drivetrain, in
+   *     meters
    */
   public RobotConfig(
       double massKG,
       double MOI,
       ModuleConfig moduleConfig,
-      Translation2d[] swerveModuleLocations,
-      SwerveDriveKinematics kinematics) {
+      double trackwidthMeters,
+      double wheelbaseMeters) {
     this.massKG = massKG;
     this.MOI = MOI;
     this.moduleConfig = moduleConfig;
 
-    this.moduleLocations = swerveModuleLocations;
-    this.kinematics = kinematics;
+    this.moduleLocations =
+        new Translation2d[] {
+          new Translation2d(wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
+          new Translation2d(wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
+          new Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
+          new Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
+        };
+    this.kinematics = new SwerveDriveKinematics(this.moduleLocations);
     this.isHolonomic = true;
 
     this.numModules = this.moduleLocations.length;
@@ -144,16 +151,7 @@ public class RobotConfig {
             MotorTorqueCurve.fromSettingsString(driveMotor));
 
     if (isHolonomic) {
-      var moduleLocations =
-          new Translation2d[] {
-            new Translation2d(wheelbase / 2.0, trackwidth / 2.0),
-            new Translation2d(wheelbase / 2.0, -trackwidth / 2.0),
-            new Translation2d(-wheelbase / 2.0, trackwidth / 2.0),
-            new Translation2d(-wheelbase / 2.0, -trackwidth / 2.0),
-          };
-
-      return new RobotConfig(
-          massKG, MOI, moduleConfig, moduleLocations, new SwerveDriveKinematics(moduleLocations));
+      return new RobotConfig(massKG, MOI, moduleConfig, trackwidth, wheelbase);
     } else {
       return new RobotConfig(massKG, MOI, moduleConfig, trackwidth);
     }

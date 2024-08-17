@@ -148,11 +148,11 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
         const SizedBox(width: 8),
         Visibility(
           visible: widget.command.pathName == null,
-          child: const Tooltip(
+          child: Tooltip(
             message: 'Missing path name',
             child: Icon(
               Icons.warning_amber_rounded,
-              color: Colors.yellow,
+              color: Colors.orange[300]!,
               size: 32,
             ),
           ),
@@ -168,7 +168,7 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
             visualDensity: const VisualDensity(
                 horizontal: VisualDensity.minimumDensity,
                 vertical: VisualDensity.minimumDensity),
-            icon: Icon(Icons.close, color: colorScheme.error),
+            icon: Icon(Icons.delete, color: colorScheme.error),
           ),
         ),
       ],

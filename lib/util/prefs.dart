@@ -26,6 +26,8 @@ class PrefsKeys {
   static const String defaultMaxAngAccel = 'defaultMaxAngAccel';
   static const String maxModuleSpeed = 'maxModuleSpeed';
   static const String seen2024Warning = 'seen2024Warning';
+  static const String showRobotDetails = 'showRobotDetails';
+  static const String showGrid = 'showGrid';
 }
 
 class Defaults {
@@ -53,4 +55,6 @@ class Defaults {
   static const double defaultMaxAngVel = 540.0;
   static const double defaultMaxAngAccel = 720.0;
   static const double maxModuleSpeed = 4.5;
+  static const bool showRobotDetails = false;
+  static const bool showGrid = false;
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -54,28 +55,12 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Rotation Targets'),
-      trailing: ItemCount(count: widget.path.rotationTargets.length),
-      initiallyExpanded: widget.path.rotationTargetsExpanded,
-      onExpansionChanged: (value) {
-        if (value != null) {
-          widget.path.rotationTargetsExpanded = value;
-          if (value == false) {
-            _selectedTarget = null;
-            widget.onTargetSelected?.call(null);
-          }
-        }
-      },
-      elevation: 1.0,
-      children: [
-        for (int i = 0; i < rotations.length; i++) _buildRotationCard(i),
-        const SizedBox(height: 12),
-        Center(
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.add),
-            style: ElevatedButton.styleFrom(
-              elevation: 4.0,
-            ),
-            label: const Text('Add New Rotation Target'),
+      icon: const Icon(Icons.rotate_90_degrees_cw_rounded),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.add, size: 20),
             onPressed: () {
               widget.undoStack.add(Change(
                 PathPlannerPath.cloneRotationTargets(rotations),
@@ -93,16 +78,37 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                 },
               ));
             },
+            tooltip: 'Add New Rotation Target',
           ),
-        ),
+          const SizedBox(width: 8),
+          ItemCount(count: widget.path.rotationTargets.length),
+        ],
+      ),
+      initiallyExpanded: widget.path.rotationTargetsExpanded,
+      onExpansionChanged: (value) {
+        if (value != null) {
+          widget.path.rotationTargetsExpanded = value;
+          if (value == false) {
+            _selectedTarget = null;
+            widget.onTargetSelected?.call(null);
+          }
+        }
+      },
+      elevation: 1.0,
+      children: [
+        for (int i = 0; i < rotations.length; i++) _buildRotationCard(i),
       ],
     );
   }
 
   Widget _buildRotationCard(int targetIdx) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextEditingController timeController = TextEditingController(
+      text: rotations[targetIdx].waypointRelativePos.toStringAsFixed(2),
+    );
 
     return TreeCardNode(
+      icon: const Icon(Icons.rotate_right_rounded),
       controller: _controllers[targetIdx],
       onHoverStart: () => widget.onTargetHovered?.call(targetIdx),
       onHoverEnd: () => widget.onTargetHovered?.call(null),
@@ -122,9 +128,13 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
       },
       title: Row(
         children: [
-          Text(
-              'Rotation Target at ${rotations[targetIdx].waypointRelativePos.toStringAsFixed(2)}'),
+          Text('Rotation Target ${targetIdx + 1}'),
           Expanded(child: Container()),
+          InfoCard(
+            value:
+                '${rotations[targetIdx].rotationDegrees.toStringAsFixed(2)}° at ${rotations[targetIdx].waypointRelativePos.toStringAsFixed(2)}',
+          ),
+          const SizedBox(width: 8),
           Tooltip(
             message: 'Delete Target',
             waitDuration: const Duration(seconds: 1),
@@ -166,7 +176,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                   initialText:
                       rotations[targetIdx].rotationDegrees.toStringAsFixed(2),
                   label: 'Rotation (Deg)',
-                  arrowKeyIncrement: 1.0,
+                  arrowKeyIncrement: 45,
                   onSubmitted: (value) {
                     if (value != null) {
                       num rot = value % 360;
@@ -190,10 +200,65 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                   },
                 ),
               ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 100,
+                child: NumberTextField(
+                  initialText: rotations[targetIdx]
+                      .waypointRelativePos
+                      .toStringAsFixed(2),
+                  label: 'Position',
+                  arrowKeyIncrement: 0.1,
+                  onSubmitted: (value) {
+                    if (value != null &&
+                        value >= 0.0 &&
+                        value <= (waypoints.length - 1.0)) {
+                      setState(() {
+                        rotations[targetIdx].waypointRelativePos = value;
+                        widget.onPathChangedNoSim?.call();
+                      });
+                    } else {
+                      // Optional: Show error message or handle invalid input
+                    }
+                  },
+                ),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 12),
+        Slider(
+          value: rotations[targetIdx].waypointRelativePos.toDouble(),
+          min: 0.0,
+          max: waypoints.length - 1.0,
+          divisions: (waypoints.length - 1) * 20,
+          label: rotations[targetIdx].waypointRelativePos.toStringAsFixed(2),
+          onChangeStart: (value) {
+            _sliderChangeStart = value;
+          },
+          onChangeEnd: (value) {
+            widget.undoStack.add(Change(
+              _sliderChangeStart,
+              () {
+                rotations[targetIdx].waypointRelativePos = value;
+                timeController.text = value.toStringAsFixed(2);
+                widget.onPathChanged?.call();
+              },
+              (oldValue) {
+                rotations[targetIdx].waypointRelativePos = oldValue;
+                timeController.text = oldValue.toStringAsFixed(2);
+                widget.onPathChanged?.call();
+              },
+            ));
+          },
+          onChanged: (value) {
+            setState(() {
+              rotations[targetIdx].waypointRelativePos = value;
+              timeController.text = value.toStringAsFixed(2);
+              widget.onPathChangedNoSim?.call();
+            });
+          },
+        ),
         Row(
           children: [
             Checkbox(
@@ -215,38 +280,11 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             const SizedBox(width: 4),
             const Text(
               'Reach as Fast as Possible',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 15),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        Slider(
-          value: rotations[targetIdx].waypointRelativePos.toDouble(),
-          min: 0.0,
-          max: waypoints.length - 1.0,
-          divisions: (waypoints.length - 1) * 20,
-          label: rotations[targetIdx].waypointRelativePos.toStringAsFixed(2),
-          onChangeStart: (value) {
-            _sliderChangeStart = value;
-          },
-          onChangeEnd: (value) {
-            widget.undoStack.add(Change(
-              _sliderChangeStart,
-              () {
-                rotations[targetIdx].waypointRelativePos = value;
-                widget.onPathChanged?.call();
-              },
-              (oldValue) {
-                rotations[targetIdx].waypointRelativePos = oldValue;
-                widget.onPathChanged?.call();
-              },
-            ));
-          },
-          onChanged: (value) {
-            rotations[targetIdx].waypointRelativePos = value;
-            widget.onPathChangedNoSim?.call();
-          },
-        ),
+        const SizedBox(height: 4),
       ],
     );
   }

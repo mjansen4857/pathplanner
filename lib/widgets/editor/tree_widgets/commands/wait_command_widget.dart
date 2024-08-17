@@ -20,37 +20,63 @@ class WaitCommandWidget extends StatelessWidget {
     this.onDuplicateCommand,
   });
 
+  void _increaseWaitTime() {
+    _updateWaitTime(command.waitTime + 0.2);
+  }
+
+  void _decreaseWaitTime() {
+    _updateWaitTime(command.waitTime - 0.2);
+  }
+
+  void _updateWaitTime(double newValue) {
+    if (newValue >= 0) {
+      undoStack.add(Change(
+        command.waitTime,
+        () {
+          command.waitTime = newValue;
+          onUpdated?.call();
+        },
+        (oldValue) {
+          command.waitTime = oldValue;
+          onUpdated?.call();
+        },
+      ));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Row(
       children: [
+        const SizedBox(width: 5),
+        IconButton(
+          onPressed: _decreaseWaitTime,
+          icon: Icon(Icons.remove, color: colorScheme.primary, size: 15),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: NumberTextField(
             initialText: command.waitTime.toStringAsFixed(2),
             label: 'Wait Time (S)',
             onSubmitted: (value) {
-              if (value != null && value >= 0) {
-                undoStack.add(Change(
-                  command.waitTime,
-                  () {
-                    command.waitTime = value;
-                    onUpdated?.call();
-                  },
-                  (oldValue) {
-                    command.waitTime = oldValue;
-                    onUpdated?.call();
-                  },
-                ));
+              double? parsedValue = double.tryParse(value.toString());
+              if (parsedValue != null && parsedValue >= 0) {
+                _updateWaitTime(parsedValue);
               }
             },
           ),
         ),
+        const SizedBox(width: 12),
+        IconButton(
+          onPressed: _increaseWaitTime,
+          icon: Icon(Icons.add, color: colorScheme.primary, size: 15),
+        ),
+        const SizedBox(width: 12),
         DuplicateCommandButton(
           onPressed: onDuplicateCommand,
         ),
-        const SizedBox(width: 8),
         Tooltip(
           message: 'Remove Command',
           waitDuration: const Duration(milliseconds: 500),
@@ -59,7 +85,7 @@ class WaitCommandWidget extends StatelessWidget {
             visualDensity: const VisualDensity(
                 horizontal: VisualDensity.minimumDensity,
                 vertical: VisualDensity.minimumDensity),
-            icon: Icon(Icons.close, color: colorScheme.error),
+            icon: Icon(Icons.delete, color: colorScheme.error),
           ),
         ),
       ],

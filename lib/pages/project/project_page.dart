@@ -287,7 +287,7 @@ class _ProjectPageState extends State<ProjectPage> {
           ),
         ),
         Align(
-          alignment: Alignment.bottomRight,
+          alignment: Alignment.bottomLeft,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: FloatingActionButton(
@@ -509,7 +509,7 @@ class _ProjectPageState extends State<ProjectPage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+      padding: const EdgeInsets.only(left: 8.0, top: 8.0),
       child: Card(
         elevation: 0.0,
         margin: const EdgeInsets.all(0),
@@ -533,7 +533,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     falseChild: Tooltip(
                       message: 'Delete path folder',
                       waitDuration: const Duration(seconds: 1),
-                      child: IconButton.filledTonal(
+                      child: IconButton(
                         onPressed: () {
                           showDialog(
                               context: context,
@@ -585,7 +585,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     trueChild: Tooltip(
                       message: 'Add new path folder',
                       waitDuration: const Duration(seconds: 1),
-                      child: IconButton.filledTonal(
+                      child: IconButton(
                         onPressed: () {
                           String folderName = 'New Folder';
                           while (_pathFolders.contains(folderName)) {
@@ -608,7 +608,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   Tooltip(
                     message: 'Add new path',
                     waitDuration: const Duration(seconds: 1),
-                    child: IconButton.filled(
+                    child: IconButton(
                       onPressed: () {
                         List<String> pathNames = [];
                         for (PathPlannerPath path in _paths) {
@@ -1095,7 +1095,7 @@ class _ProjectPageState extends State<ProjectPage> {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 8.0, bottom: 8.0),
+      padding: const EdgeInsets.only(right: 8.0, top: 8.0),
       child: Card(
         elevation: 0.0,
         margin: const EdgeInsets.all(0),
@@ -1119,7 +1119,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     falseChild: Tooltip(
                       message: 'Delete auto folder',
                       waitDuration: const Duration(seconds: 1),
-                      child: IconButton.filledTonal(
+                      child: IconButton(
                         onPressed: () {
                           showDialog(
                               context: context,
@@ -1171,7 +1171,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     trueChild: Tooltip(
                       message: 'Add new auto folder',
                       waitDuration: const Duration(seconds: 1),
-                      child: IconButton.filledTonal(
+                      child: IconButton(
                         onPressed: () {
                           String folderName = 'New Folder';
                           while (_autoFolders.contains(folderName)) {
@@ -1194,7 +1194,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   Tooltip(
                     message: 'Add new auto',
                     waitDuration: const Duration(seconds: 1),
-                    child: IconButton.filled(
+                    child: IconButton(
                       key: _addAutoKey,
                       onPressed: () {
                         if (_choreoPaths.isNotEmpty) {
@@ -1593,7 +1593,7 @@ class _ProjectPageState extends State<ProjectPage> {
             children: [
               const Text(
                 'Sort:',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 15),
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -1627,7 +1627,7 @@ class _ProjectPageState extends State<ProjectPage> {
             children: [
               const Text(
                 'View:',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 15),
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
@@ -1657,7 +1657,7 @@ class _ProjectPageState extends State<ProjectPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(viewValue ? 'Compact' : 'Default',
-                              style: const TextStyle(fontSize: 16)),
+                              style: const TextStyle(fontSize: 15)),
                           const Icon(Icons.arrow_drop_down),
                         ],
                       ),
@@ -1782,10 +1782,10 @@ class _ProjectPageState extends State<ProjectPage> {
 
   Widget _sortLabel(String optionValue) {
     return switch (optionValue) {
-      'recent' => const Text('Recent', style: TextStyle(fontSize: 16)),
+      'recent' => const Text('Recent', style: TextStyle(fontSize: 15)),
       'nameDesc' =>
-        const Text('Name Descending', style: TextStyle(fontSize: 16)),
-      'nameAsc' => const Text('Name Ascending', style: TextStyle(fontSize: 16)),
+        const Text('Name Descending', style: TextStyle(fontSize: 15)),
+      'nameAsc' => const Text('Name Ascending', style: TextStyle(fontSize: 15)),
       _ => throw FormatException('Invalid sort value', optionValue),
     };
   }

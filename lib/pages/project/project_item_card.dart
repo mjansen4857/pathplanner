@@ -217,7 +217,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                   child: Icon(
                     Icons.warning_amber_rounded,
                     size: widget.compact ? 32 : 48,
-                    color: Colors.yellow,
+                    color: Colors.orange[300]!,
                     shadows: widget.compact
                         ? null
                         : const [

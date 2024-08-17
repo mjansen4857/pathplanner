@@ -4,9 +4,11 @@ import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
+import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:undo/undo.dart';
 
@@ -55,28 +57,12 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Event Markers'),
-      trailing: ItemCount(count: widget.path.eventMarkers.length),
-      initiallyExpanded: widget.path.eventMarkersExpanded,
-      onExpansionChanged: (value) {
-        if (value != null) {
-          widget.path.eventMarkersExpanded = value;
-          if (value == false) {
-            _selectedMarker = null;
-            widget.onMarkerSelected?.call(null);
-          }
-        }
-      },
-      elevation: 1.0,
-      children: [
-        for (int i = 0; i < markers.length; i++) _buildMarkerCard(i),
-        const SizedBox(height: 12),
-        Center(
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              elevation: 4.0,
-            ),
-            icon: const Icon(Icons.add),
-            label: const Text('Add New Marker'),
+      icon: const Icon(Icons.pin_drop_rounded),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.add, size: 20),
             onPressed: () {
               widget.undoStack.add(Change(
                 PathPlannerPath.cloneEventMarkers(markers),
@@ -94,16 +80,37 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                 },
               ));
             },
+            tooltip: 'Add New Event Marker',
           ),
-        ),
+          const SizedBox(width: 8),
+          ItemCount(count: widget.path.eventMarkers.length),
+        ],
+      ),
+      initiallyExpanded: widget.path.eventMarkersExpanded,
+      onExpansionChanged: (value) {
+        if (value != null) {
+          widget.path.eventMarkersExpanded = value;
+          if (value == false) {
+            _selectedMarker = null;
+            widget.onMarkerSelected?.call(null);
+          }
+        }
+      },
+      elevation: 1.0,
+      children: [
+        for (int i = 0; i < markers.length; i++) _buildMarkerCard(i),
       ],
     );
   }
 
   Widget _buildMarkerCard(int markerIdx) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final TextEditingController timeController = TextEditingController(
+      text: markers[markerIdx].waypointRelativePos.toStringAsFixed(2),
+    );
 
     return TreeCardNode(
+      icon: const Icon(Icons.pin_drop_rounded),
       controller: _controllers[markerIdx],
       onHoverStart: () => widget.onMarkerHovered?.call(markerIdx),
       onHoverEnd: () => widget.onMarkerHovered?.call(null),
@@ -140,6 +147,10 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             },
           ),
           Expanded(child: Container()),
+          const SizedBox(width: 12),
+          InfoCard(
+              value:
+                  'Positioned at ${markers[markerIdx].waypointRelativePos.toStringAsFixed(2)}'),
           Tooltip(
             message: 'Delete Marker',
             waitDuration: const Duration(seconds: 1),
@@ -171,33 +182,71 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
       initiallyExpanded: markerIdx == _selectedMarker,
       elevation: 4.0,
       children: [
-        Slider(
-          value: markers[markerIdx].waypointRelativePos.toDouble(),
-          min: 0.0,
-          max: waypoints.length - 1.0,
-          divisions: (waypoints.length - 1) * 20,
-          label: markers[markerIdx].waypointRelativePos.toStringAsFixed(2),
-          onChangeStart: (value) {
-            _sliderChangeStart = value;
-          },
-          onChangeEnd: (value) {
-            widget.undoStack.add(Change(
-              _sliderChangeStart,
-              () {
-                markers[markerIdx].waypointRelativePos = value;
-                widget.onPathChangedNoSim?.call();
-              },
-              (oldValue) {
-                markers[markerIdx].waypointRelativePos = oldValue;
-                widget.onPathChangedNoSim?.call();
-              },
-            ));
-          },
-          onChanged: (value) {
-            markers[markerIdx].waypointRelativePos = value;
-            widget.onPathChangedNoSim?.call();
-          },
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+          child: Row(
+            children: [
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 100,
+                child: NumberTextField(
+                  initialText:
+                      markers[markerIdx].waypointRelativePos.toStringAsFixed(2),
+                  label: 'Location',
+                  arrowKeyIncrement: 0.1,
+                  onSubmitted: (value) {
+                    if (value != null &&
+                        value >= 0.0 &&
+                        value <= (waypoints.length - 1.0)) {
+                      setState(() {
+                        markers[markerIdx].waypointRelativePos = value;
+                        widget.onPathChangedNoSim?.call();
+                      });
+                    } else {
+                      // Optional: Show error message or handle invalid input
+                    }
+                  },
+                ),
+              ),
+              Expanded(
+                child: Slider(
+                  value: markers[markerIdx].waypointRelativePos.toDouble(),
+                  min: 0.0,
+                  max: waypoints.length - 1.0,
+                  divisions: (waypoints.length - 1) * 20,
+                  label:
+                      markers[markerIdx].waypointRelativePos.toStringAsFixed(2),
+                  onChangeStart: (value) {
+                    _sliderChangeStart = value;
+                  },
+                  onChangeEnd: (value) {
+                    widget.undoStack.add(Change(
+                      _sliderChangeStart,
+                      () {
+                        markers[markerIdx].waypointRelativePos = value;
+                        timeController.text = value.toStringAsFixed(2);
+                        widget.onPathChangedNoSim?.call();
+                      },
+                      (oldValue) {
+                        markers[markerIdx].waypointRelativePos = oldValue;
+                        timeController.text = oldValue.toStringAsFixed(2);
+                        widget.onPathChangedNoSim?.call();
+                      },
+                    ));
+                  },
+                  onChanged: (value) {
+                    setState(() {
+                      markers[markerIdx].waypointRelativePos = value;
+                      timeController.text = value.toStringAsFixed(2);
+                      widget.onPathChangedNoSim?.call();
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(height: 12),
         _buildCommandCard(markerIdx),
       ],
     );

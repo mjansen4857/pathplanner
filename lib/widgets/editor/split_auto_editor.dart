@@ -209,6 +209,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                     Positioned.fill(
                       child: CustomPaint(
                         painter: PathPainter(
+                          context: context,
                           paths: widget.autoPaths,
                           choreoPaths: widget.autoChoreoPaths,
                           simple: true,

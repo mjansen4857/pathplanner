@@ -23,6 +23,7 @@ class PreviewStartingStateTree extends StatelessWidget {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Preview Starting State'),
+      icon: const Icon(Icons.play_circle_outline),
       initiallyExpanded: path.previewStartingStateExpanded,
       onExpansionChanged: (value) {
         if (value != null) {
@@ -95,7 +96,7 @@ class PreviewStartingStateTree extends StatelessWidget {
             const SizedBox(width: 4),
             const Text(
               'Preset Starting State (Preview Only)',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 15),
             ),
           ],
         ),

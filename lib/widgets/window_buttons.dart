@@ -8,14 +8,16 @@ class WindowButton extends StatefulWidget {
   final VoidCallback onPressed;
   final IconData icon;
   final EdgeInsets padding;
+  final double iconSize;
 
   const WindowButton({
-    this.buttonWidth = 56,
+    this.buttonWidth = 45,
     this.hoverBackgroundColor = const Color(0xFF404040),
     this.pressedBackgroundColor = const Color(0xFF202020),
     required this.onPressed,
     required this.icon,
     this.padding = const EdgeInsets.all(8),
+    this.iconSize = 16,
     super.key,
   });
 
@@ -47,6 +49,7 @@ class _WindowButtonState extends State<WindowButton> {
               child: Icon(
                 widget.icon,
                 color: colorScheme.onSurface,
+                size: widget.iconSize,
               ),
             ),
           ),

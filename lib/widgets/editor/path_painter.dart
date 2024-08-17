@@ -13,6 +13,7 @@ import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PathPainter extends CustomPainter {
+  final BuildContext context;
   final List<PathPlannerPath> paths;
   final List<ChoreoPath> choreoPaths;
   final FieldImage fieldImage;
@@ -40,6 +41,7 @@ class PathPainter extends CustomPainter {
   static double scale = 1;
 
   PathPainter({
+    required this.context,
     required this.paths,
     this.choreoPaths = const [],
     required this.fieldImage,
@@ -82,6 +84,9 @@ class PathPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     scale = size.width / fieldImage.defaultSize.width;
 
+    _paintGrid(
+        canvas, size, prefs.getBool(PrefsKeys.showGrid) ?? Defaults.showGrid);
+
     for (int i = 0; i < paths.length; i++) {
       if (hideOtherPathsOnHover &&
           hoveredPath != null &&
@@ -93,8 +98,12 @@ class PathPainter extends CustomPainter {
         _paintRadius(paths[i], canvas, scale);
       }
 
-      _paintPathPoints(paths[i], canvas,
-          (hoveredPath == paths[i].name) ? Colors.orange : Colors.grey[300]!);
+      _paintPathPoints(
+          paths[i],
+          canvas,
+          (hoveredPath == paths[i].name)
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey[300]!);
 
       if (holonomicMode) {
         _paintRotations(paths[i], canvas, scale);
@@ -115,7 +124,8 @@ class PathPainter extends CustomPainter {
               robotSize,
               scale,
               canvas,
-              Colors.green.withOpacity(0.5));
+              Colors.green.withOpacity(0.5),
+              robotIcon: Icons.start);
         }
       } else {
         _paintWaypoint(paths[i], canvas, scale, 0);
@@ -138,7 +148,7 @@ class PathPainter extends CustomPainter {
           choreoPaths[i].trajectory,
           canvas,
           (hoveredPath == choreoPaths[i].name)
-              ? Colors.orange
+              ? Theme.of(context).colorScheme.primary
               : Colors.grey[300]!);
       _paintChoreoWaypoint(
           choreoPaths[i].trajectory.states.first, canvas, Colors.green, scale);
@@ -155,7 +165,8 @@ class PathPainter extends CustomPainter {
           robotSize,
           scale,
           canvas,
-          Colors.green.withOpacity(0.8));
+          Colors.green.withOpacity(0.8),
+          robotIcon: Icons.start);
 
       var paint = Paint()
         ..style = PaintingStyle.fill
@@ -181,6 +192,7 @@ class PathPainter extends CustomPainter {
       num rotation =
           holonomicMode ? state.holonomicRotationRadians : state.headingRadians;
 
+      // Paints the main moving robot
       PathPainterUtil.paintRobotOutline(
           state.position,
           GeometryUtil.toDegrees(rotation),
@@ -188,7 +200,11 @@ class PathPainter extends CustomPainter {
           robotSize,
           scale,
           canvas,
-          previewColor ?? Colors.grey);
+          previewColor ?? Colors.grey,
+          robotIcon: Icons.drive_eta,
+          hasArrow: true,
+          showDetails: prefs.getBool(PrefsKeys.showRobotDetails) ??
+              Defaults.showRobotDetails);
     }
   }
 
@@ -241,20 +257,21 @@ class PathPainter extends CustomPainter {
 
     // Draw robot
     PathPainterUtil.paintRobotOutline(
-        state.position,
-        GeometryUtil.toDegrees(state.holonomicRotationRadians),
-        fieldImage,
-        robotSize,
-        scale,
-        canvas,
-        color.withOpacity(0.5));
+      state.position,
+      GeometryUtil.toDegrees(state.holonomicRotationRadians),
+      fieldImage,
+      robotSize,
+      scale,
+      canvas,
+      color.withOpacity(0.5),
+    );
   }
 
   void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
-      ..strokeWidth = 2;
+      ..strokeWidth = 2; // Default stroke width for path points
 
     Path p = Path();
 
@@ -272,8 +289,9 @@ class PathPainter extends CustomPainter {
     canvas.drawPath(p, paint);
 
     if (selectedZone != null) {
-      paint.color = Colors.orange;
-      paint.strokeWidth = 4;
+      paint.color = Theme.of(context).colorScheme.primary;
+      paint.strokeWidth =
+          6; // Thicker stroke width for selected constraint zone
       p.reset();
 
       int startIdx =
@@ -298,9 +316,10 @@ class PathPainter extends CustomPainter {
 
       canvas.drawPath(p, paint);
     }
+
     if (hoveredZone != null && selectedZone != hoveredZone) {
       paint.color = Colors.deepPurpleAccent;
-      paint.strokeWidth = 4;
+      paint.strokeWidth = 6; // Thicker stroke width for hovered constraint zone
       p.reset();
 
       int startIdx =
@@ -333,8 +352,9 @@ class PathPainter extends CustomPainter {
           (path.eventMarkers[i].waypointRelativePos / pathResolution).round();
 
       Color markerColor = Colors.grey[700]!;
+      Color markerStrokeColor = Colors.black;
       if (selectedMarker == i) {
-        markerColor = Colors.orange;
+        markerColor = Theme.of(context).colorScheme.primary;
       } else if (hoveredMarker == i) {
         markerColor = Colors.deepPurpleAccent;
       }
@@ -342,7 +362,8 @@ class PathPainter extends CustomPainter {
       Offset markerPos = PathPainterUtil.pointToPixelOffset(
           path.pathPoints[pointIdx].position, scale, fieldImage);
 
-      PathPainterUtil.paintMarker(canvas, markerPos, markerColor);
+      PathPainterUtil.paintMarker(
+          canvas, markerPos, markerColor, markerStrokeColor);
     }
   }
 
@@ -352,7 +373,8 @@ class PathPainter extends CustomPainter {
       Offset markerPos =
           PathPainterUtil.pointToPixelOffset(s.position, scale, fieldImage);
 
-      PathPainterUtil.paintMarker(canvas, markerPos, Colors.grey[700]!);
+      PathPainterUtil.paintMarker(
+          canvas, markerPos, Colors.grey[700]!, Colors.black);
     }
   }
 
@@ -364,7 +386,7 @@ class PathPainter extends CustomPainter {
 
       Color rotationColor = Colors.grey[700]!;
       if (selectedRotTarget == i) {
-        rotationColor = Colors.orange;
+        rotationColor = Theme.of(context).colorScheme.primary;
       } else if (hoveredRotTarget == i) {
         rotationColor = Colors.deepPurpleAccent;
       }
@@ -376,7 +398,8 @@ class PathPainter extends CustomPainter {
           robotSize,
           scale,
           canvas,
-          rotationColor);
+          rotationColor,
+          robotIcon: Icons.rotate_right_rounded);
     }
 
     PathPainterUtil.paintRobotOutline(
@@ -386,7 +409,8 @@ class PathPainter extends CustomPainter {
         robotSize,
         scale,
         canvas,
-        Colors.red.withOpacity(0.5));
+        Colors.red.withOpacity(0.5),
+        robotIcon: Icons.flag);
   }
 
   void _paintRadius(PathPlannerPath path, Canvas canvas, double scale) {
@@ -412,7 +436,7 @@ class PathPainter extends CustomPainter {
       ..strokeWidth = 2;
 
     if (waypointIdx == selectedWaypoint) {
-      paint.color = Colors.orange;
+      paint.color = Theme.of(context).colorScheme.primary;
     } else if (waypointIdx == hoveredWaypoint) {
       paint.color = Colors.deepPurpleAccent;
     } else {
@@ -450,7 +474,7 @@ class PathPainter extends CustomPainter {
     }
 
     if (waypointIdx == selectedWaypoint) {
-      paint.color = Colors.orange;
+      paint.color = Theme.of(context).colorScheme.primary;
     } else if (waypointIdx == hoveredWaypoint) {
       paint.color = Colors.deepPurpleAccent;
     }
@@ -473,7 +497,7 @@ class PathPainter extends CustomPainter {
       if (waypoint.nextControl != null) {
         paint.style = PaintingStyle.fill;
         if (waypointIdx == selectedWaypoint) {
-          paint.color = Colors.orange;
+          paint.color = Theme.of(context).colorScheme.primary;
         } else if (waypointIdx == hoveredWaypoint) {
           paint.color = Colors.deepPurpleAccent;
         } else {
@@ -496,7 +520,7 @@ class PathPainter extends CustomPainter {
       if (waypoint.prevControl != null) {
         paint.style = PaintingStyle.fill;
         if (waypointIdx == selectedWaypoint) {
-          paint.color = Colors.orange;
+          paint.color = Theme.of(context).colorScheme.primary;
         } else if (waypointIdx == hoveredWaypoint) {
           paint.color = Colors.deepPurpleAccent;
         } else {
@@ -516,6 +540,24 @@ class PathPainter extends CustomPainter {
             PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
             paint);
       }
+    }
+  }
+
+  void _paintGrid(Canvas canvas, Size size, bool showGrid) {
+    if (!showGrid) return;
+
+    final paint = Paint()
+      ..color = Colors.grey.withOpacity(0.2) // More transparent
+      ..strokeWidth = 1;
+
+    double gridSpacing = PathPainterUtil.metersToPixels(0.5, scale, fieldImage);
+
+    for (double x = 0; x <= size.width; x += gridSpacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    for (double y = 0; y <= size.height; y += gridSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
 }

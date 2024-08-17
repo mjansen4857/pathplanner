@@ -24,6 +24,7 @@ class StartingPoseTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TreeCardNode(
+      icon: const Icon(Icons.start_rounded),
       title: const Text('Starting Pose'),
       initiallyExpanded: initiallyExpanded,
       elevation: 1.0,
@@ -103,7 +104,7 @@ class StartingPoseTree extends StatelessWidget {
             const SizedBox(width: 4),
             const Text(
               'Preset Starting Pose',
-              style: TextStyle(fontSize: 18),
+              style: TextStyle(fontSize: 15),
             ),
           ],
         ),

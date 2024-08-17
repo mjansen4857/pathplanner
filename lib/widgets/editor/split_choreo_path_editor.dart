@@ -84,6 +84,7 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
                   Positioned.fill(
                     child: CustomPaint(
                       painter: PathPainter(
+                        context: context,
                         paths: [],
                         choreoPaths: [widget.path],
                         fieldImage: widget.fieldImage,

@@ -17,7 +17,6 @@ import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/util/prefs.dart';
-import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
@@ -26,6 +25,7 @@ import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:window_manager/window_manager.dart';
 
 class HomePage extends StatefulWidget {
   final String appVersion;
@@ -60,14 +60,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final List<FieldImage> _fieldImages = FieldImage.offialFields();
   FieldImage? _fieldImage;
   late AnimationController _animController;
-  late Animation<double> _scaleAnimation;
   final GlobalKey _key = GlobalKey();
   static const _settingsDir = '.pathplanner/settings.json';
   int _selectedPage = 0;
   final PageController _pageController = PageController();
   late bool _hotReload;
+  bool _isSidebarOpen = true;
 
   FileSystem get fs => widget.fs;
+
+  void _toggleSidebar() {
+    setState(() {
+      _isSidebarOpen = !_isSidebarOpen;
+    });
+  }
 
   @override
   void initState() {
@@ -75,8 +81,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _animController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 250));
-    _scaleAnimation =
-        CurvedAnimation(parent: _animController, curve: Curves.ease);
 
     _loadFieldImages().then((_) async {
       String? projectDir = widget.prefs.getString(PrefsKeys.currentProjectDir);
@@ -237,255 +241,238 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _key,
       appBar: CustomAppBar(
+        leading: IconButton(
+          icon: Icon(_isSidebarOpen ? Icons.menu_open : Icons.menu),
+          onPressed: _toggleSidebar,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+        ),
         titleWidget: Text(
-          _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+          _getPageTitle(),
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
         ),
       ),
-      drawer: _projectDir == null ? null : _buildDrawer(context),
-      body: ScaleTransition(
-        scale: _scaleAnimation,
-        child: _buildBody(context),
+      body: Row(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: _isSidebarOpen ? 200 : 0,
+            child: _isSidebarOpen ? _buildSidebar() : null,
+          ),
+          Expanded(child: _buildMainContent()),
+        ],
       ),
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
-    ColorScheme colorScheme = Theme.of(context).colorScheme;
+  Widget _buildSidebar() {
+    return Container(
+      width: 200,
+      color: Theme.of(this.context).colorScheme.surface,
+      child: Column(
+        children: [
+          _buildProjectHeader(),
+          Expanded(child: _buildNavigationList()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProjectHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(15),
+      child: Text(
+        _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
+  Widget _buildNavigationList() {
+    return ListView(
+      children: [
+        const Divider(),
+        _buildNavItem(0, 'Project Browser', Icons.folder_rounded),
+        StreamBuilder<bool>(
+          stream: widget.telemetry.connectionStatusStream(),
+          builder: (context, snapshot) {
+            final isConnected = snapshot.data ?? false;
+            return _buildNavItem(
+              1,
+              'Telemetry',
+              _getConnectedIcon(isConnected),
+              iconColor: _getConnectedIconColor(isConnected),
+              tooltip:
+                  isConnected ? 'Connected to Robot' : 'Not Connected to Robot',
+            );
+          },
+        ),
+        _buildNavItem(2, 'Navigation Grid', Icons.grid_on_rounded),
+        const Divider(),
+        _buildNavItem(
+          -1,
+          'Switch Project',
+          Icons.swap_horiz,
+          onTap: () => _openProjectDialog(this.context),
+        ),
+        _buildNavItem(
+          -2,
+          'Documentation',
+          Icons.description,
+          onTap: () => launchUrl(Uri.parse('https://pathplanner.dev')),
+        ),
+        _buildNavItem(
+          -3,
+          'Settings',
+          Icons.settings,
+          onTap: () => _showSettingsDialog(),
+        ),
+      ],
+    );
+  }
+
+  IconData _getConnectedIcon(bool isConnected) {
+    return isConnected ? Icons.lan : Icons.lan_outlined;
+  }
+
+  Color _getConnectedIconColor(bool isConnected) {
+    return isConnected ? Colors.green : Colors.red;
+  }
+
+  Widget _buildNavItem(
+    int index,
+    String title,
+    IconData icon, {
+    Color? iconColor,
+    String? tooltip,
+    VoidCallback? onTap,
+  }) {
+    Widget iconWidget = Icon(icon, color: iconColor);
+    if (tooltip != null) {
+      iconWidget = Tooltip(
+        message: tooltip,
+        child: iconWidget,
+      );
+    }
+
+    return ListTile(
+      leading: iconWidget,
+      title: Text(title),
+      selected: _selectedPage == index,
+      onTap: onTap ?? (index >= 0 ? () => _selectPage(index) : null),
+    );
+  }
+
+  Widget _buildMainContent() {
+    if (_projectDir == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Stack(
       children: [
-        NavigationDrawer(
-          selectedIndex: _selectedPage,
-          onDestinationSelected: (idx) {
-            setState(() {
-              _selectedPage = idx;
-              _pageController.animateToPage(_selectedPage,
-                  duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeInOut);
-            });
-          },
-          backgroundColor: colorScheme.surface,
-          surfaceTintColor: colorScheme.surfaceTint,
+        PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
           children: [
-            DrawerHeader(
-              child: Stack(
-                children: [
-                  Align(
-                    alignment: FractionalOffset.bottomLeft,
-                    child: Text(
-                      'v${widget.appVersion}',
-                      style: TextStyle(color: colorScheme.onSurface),
-                    ),
-                  ),
-                  Align(
-                    alignment: FractionalOffset.bottomRight,
-                    child: StreamBuilder(
-                        stream: widget.telemetry.connectionStatusStream(),
-                        builder: (context, snapshot) {
-                          return ConditionalWidget(
-                            condition: snapshot.data ?? false,
-                            trueChild: const Tooltip(
-                              message: 'Connected to Robot',
-                              child: Icon(
-                                Icons.lan,
-                                size: 20,
-                                color: Colors.green,
-                              ),
-                            ),
-                            falseChild: const Tooltip(
-                              message: 'Not Connected to Robot',
-                              child: Icon(
-                                Icons.lan_outlined,
-                                size: 20,
-                                color: Colors.red,
-                              ),
-                            ),
-                          );
-                        }),
-                  ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Container(),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            basename(_projectDir!.path),
-                            style: const TextStyle(
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            foregroundColor: colorScheme.onPrimaryContainer,
-                            backgroundColor: colorScheme.primaryContainer,
-                          ),
-                          onPressed: () {
-                            _openProjectDialog(context);
-                          },
-                          child: const Text('Switch Project'),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: Container(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+            ProjectPage(
+              key: ValueKey(_projectDir!.path.hashCode),
+              prefs: widget.prefs,
+              fieldImage: _fieldImage ?? FieldImage.defaultField,
+              pathplannerDirectory: _pathplannerDir,
+              choreoDirectory: _choreoDir,
+              fs: fs,
+              undoStack: widget.undoStack,
+              telemetry: widget.telemetry,
+              hotReload: _hotReload,
+              onFoldersChanged: () => _saveProjectSettingsToFile(_projectDir!),
+              simulatePath: true,
+              watchChorDir: true,
             ),
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.folder_outlined),
-              label: Text('Project Browser'),
+            TelemetryPage(
+              fieldImage: _fieldImage ?? FieldImage.defaultField,
+              telemetry: widget.telemetry,
+              prefs: widget.prefs,
             ),
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.bar_chart),
-              label: Text('Telemetry'),
-            ),
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.grid_on),
-              label: Text('Navigation Grid'),
+            NavGridPage(
+              deployDirectory: _pathplannerDir,
+              fs: fs,
+              fieldImage: _fieldImage ?? FieldImage.defaultField,
             ),
           ],
         ),
-        Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 12.0, left: 8.0),
-            child: Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    launchUrl(Uri.parse('https://pathplanner.dev'));
-                  },
-                  icon: const Icon(Icons.description),
-                  label: const Text('Docs'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primaryContainer,
-                    foregroundColor: colorScheme.onPrimaryContainer,
-                    elevation: 4.0,
-                    fixedSize: const Size(141, 56),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return SettingsDialog(
-                          prefs: widget.prefs,
-                          onTeamColorChanged: widget.onTeamColorChanged,
-                          fieldImages: _fieldImages,
-                          selectedField: _fieldImage ?? FieldImage.defaultField,
-                          onFieldSelected: (FieldImage image) {
-                            setState(() {
-                              _fieldImage = image;
-                              if (!_fieldImages.contains(image)) {
-                                _fieldImages.add(image);
-                              }
-                              widget.prefs
-                                  .setString(PrefsKeys.fieldImage, image.name);
-                            });
-                          },
-                          onSettingsChanged: _onProjectSettingsChanged,
-                        );
-                      },
-                    );
-                  },
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Settings'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.surfaceContainer,
-                    foregroundColor: colorScheme.onSurface,
-                    surfaceTintColor: colorScheme.surfaceTint,
-                    elevation: 4.0,
-                    fixedSize: const Size(141, 56),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ],
-            ),
+        Positioned(
+          bottom: 8,
+          left: 8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              UpdateCard(
+                currentVersion: widget.appVersion,
+                updateChecker: widget.updateChecker,
+              ),
+              const SizedBox(height: 8),
+              PPLibUpdateCard(
+                projectDir: _projectDir!,
+                fs: widget.fs,
+                updateChecker: widget.updateChecker,
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildBody(BuildContext context) {
-    if (_projectDir != null) {
-      return Stack(
-        children: [
-          Center(
-            child: PageView(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                ProjectPage(
-                  key: ValueKey(_projectDir!.path.hashCode),
-                  prefs: widget.prefs,
-                  fieldImage: _fieldImage ?? FieldImage.defaultField,
-                  pathplannerDirectory: _pathplannerDir,
-                  choreoDirectory: _choreoDir,
-                  fs: fs,
-                  undoStack: widget.undoStack,
-                  telemetry: widget.telemetry,
-                  hotReload: _hotReload,
-                  onFoldersChanged: () =>
-                      _saveProjectSettingsToFile(_projectDir!),
-                  simulatePath: true,
-                  watchChorDir: true,
-                ),
-                TelemetryPage(
-                  fieldImage: _fieldImage ?? FieldImage.defaultField,
-                  telemetry: widget.telemetry,
-                  prefs: widget.prefs,
-                ),
-                NavGridPage(
-                  deployDirectory: _pathplannerDir,
-                  fs: fs,
-                  fieldImage: _fieldImage ?? FieldImage.defaultField,
-                ),
-              ],
-            ),
-          ),
-          Align(
-            alignment: FractionalOffset.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  UpdateCard(
-                    currentVersion: widget.appVersion,
-                    updateChecker: widget.updateChecker,
-                  ),
-                  PPLibUpdateCard(
-                    projectDir: _projectDir!,
-                    fs: widget.fs,
-                    updateChecker: widget.updateChecker,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
-    } else {
-      return Container();
+  String _getPageTitle() {
+    switch (_selectedPage) {
+      case 0:
+        return 'Project Browser';
+      case 1:
+        return 'Telemetry';
+      case 2:
+        return 'Navigation Grid';
+      default:
+        return 'PathPlanner';
     }
+  }
+
+  void _selectPage(int index) {
+    setState(() {
+      _selectedPage = index;
+      _pageController.animateToPage(
+        _selectedPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: this.context,
+      builder: (BuildContext context) {
+        return SettingsDialog(
+          prefs: widget.prefs,
+          onTeamColorChanged: widget.onTeamColorChanged,
+          fieldImages: _fieldImages,
+          selectedField: _fieldImage ?? FieldImage.defaultField,
+          onFieldSelected: _onFieldSelected,
+          onSettingsChanged: _onProjectSettingsChanged,
+        );
+      },
+    );
+  }
+
+  void _onFieldSelected(FieldImage image) {
+    setState(() {
+      _fieldImage = image;
+      if (!_fieldImages.contains(image)) {
+        _fieldImages.add(image);
+      }
+      widget.prefs.setString(PrefsKeys.fieldImage, image.name);
+    });
   }
 
   void _onProjectSettingsChanged() {
@@ -671,5 +658,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     for (FileSystemEntity e in fileEntities) {
       _fieldImages.add(FieldImage.custom(fs.file(e.path)));
     }
+  }
+}
+
+class _MoveWindowArea extends StatelessWidget {
+  final Widget? child;
+
+  const _MoveWindowArea({this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onPanStart: (details) {
+        windowManager.startDragging();
+      },
+      onDoubleTap: () async {
+        if (await windowManager.isMaximized()) {
+          windowManager.unmaximize();
+        } else {
+          windowManager.maximize();
+        }
+      },
+      child: child ?? Container(),
+    );
   }
 }

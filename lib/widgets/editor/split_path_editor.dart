@@ -431,6 +431,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     Positioned.fill(
                       child: CustomPaint(
                         painter: PathPainter(
+                          context: context,
                           paths: [widget.path],
                           simple: false,
                           fieldImage: widget.fieldImage,

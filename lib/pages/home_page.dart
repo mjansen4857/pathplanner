@@ -69,9 +69,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   FileSystem get fs => widget.fs;
 
+  late AnimationController _sidebarAnimationController;
+
   void _toggleSidebar() {
     setState(() {
       _isSidebarOpen = !_isSidebarOpen;
+      if (_isSidebarOpen) {
+        _sidebarAnimationController.forward();
+      } else {
+        _sidebarAnimationController.reverse();
+      }
     });
   }
 
@@ -81,6 +88,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _animController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 250));
+
+    _sidebarAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    if (_isSidebarOpen) {
+      _sidebarAnimationController.value = 1.0;
+    }
 
     _loadFieldImages().then((_) async {
       String? projectDir = widget.prefs.getString(PrefsKeys.currentProjectDir);
@@ -235,6 +251,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _pageController.dispose();
 
+    _sidebarAnimationController.dispose();
+
     super.dispose();
   }
 
@@ -255,26 +273,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
       body: Row(
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            width: _isSidebarOpen ? 200 : 0,
-            child: _isSidebarOpen ? _buildSidebar() : null,
+          _buildSidebar(),
+          Expanded(
+            child: _buildMainContent(),
           ),
-          Expanded(child: _buildMainContent()),
         ],
       ),
     );
   }
 
   Widget _buildSidebar() {
-    return Container(
-      width: 200,
-      color: Theme.of(this.context).colorScheme.surface,
-      child: Column(
-        children: [
-          _buildProjectHeader(),
-          Expanded(child: _buildNavigationList()),
-        ],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: _isSidebarOpen ? 200 : 0,
+      child: OverflowBox(
+        minWidth: 0,
+        maxWidth: 200,
+        alignment: Alignment.topLeft,
+        child: Container(
+          width: 200,
+          color: Theme.of(this.context).colorScheme.surface,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(-1, 0),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: _sidebarAnimationController,
+              curve: Curves.easeInOut,
+            )),
+            child: Column(
+              children: [
+                _buildProjectHeader(),
+                Expanded(child: _buildNavigationList()),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -1,7 +1,5 @@
 package com.pathplanner.lib.config;
 
-import com.pathplanner.lib.trajectory.MotorTorqueCurve;
-
 /** Configuration class describing a robot's drive module */
 public class ModuleConfig {
   /** Wheel radius in meters */
@@ -12,7 +10,7 @@ public class ModuleConfig {
   public final double maxDriveVelocityRPM;
   /** The coefficient of friction between the drive wheel and the carpet. */
   public final double wheelCOF;
-  /** The {@link com.pathplanner.lib.trajectory.MotorTorqueCurve} for the drive motor */
+  /** The {@link MotorTorqueCurve} for the drive motor */
   public final MotorTorqueCurve driveMotorTorqueCurve;
 
   // Pre-calculated values that can be reused for every trajectory generation
@@ -37,8 +35,7 @@ public class ModuleConfig {
    *     the robot at full output.
    * @param wheelCOF The coefficient of friction between the drive wheel and the carpet. If you are
    *     unsure, just use a placeholder value of 1.0.
-   * @param driveMotorTorqueCurve The {@link com.pathplanner.lib.trajectory.MotorTorqueCurve} for
-   *     the drive motor
+   * @param driveMotorTorqueCurve The {@link MotorTorqueCurve} for the drive motor
    */
   public ModuleConfig(
       double wheelRadiusMeters,

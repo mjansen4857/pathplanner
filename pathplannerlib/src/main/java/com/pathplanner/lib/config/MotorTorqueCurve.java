@@ -1,4 +1,4 @@
-package com.pathplanner.lib.trajectory;
+package com.pathplanner.lib.config;
 
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 

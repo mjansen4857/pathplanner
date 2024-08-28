@@ -1,6 +1,5 @@
 package com.pathplanner.lib.config;
 
-import com.pathplanner.lib.trajectory.MotorTorqueCurve;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj.Filesystem;

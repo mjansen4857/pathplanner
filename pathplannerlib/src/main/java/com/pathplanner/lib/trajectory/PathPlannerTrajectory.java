@@ -341,7 +341,7 @@ public class PathPlannerTrajectory {
   private static void reverseAccelPass(
       List<PathPlannerTrajectoryState> states, RobotConfig config) {
     for (int i = states.size() - 2; i > 0; i--) {
-      var prevState = states.get(i - 1);
+      //      var prevState = states.get(i - 1);
       var state = states.get(i);
       var nextState = states.get(i + 1);
 

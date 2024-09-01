@@ -64,7 +64,8 @@ public:
 
 		reversed.time = time;
 		auto reversedSpeeds =
-				frc::Translation2d(fieldSpeeds.vx, fieldSpeeds.vy).RotateBy(
+				frc::Translation2d(units::meter_t { fieldSpeeds.vx() },
+						units::meter_t { fieldSpeeds.vy() }).RotateBy(
 						frc::Rotation2d(180_deg));
 		reversed.fieldSpeeds = frc::ChassisSpeeds(units::meters_per_second_t {
 				reversedSpeeds.X()() }, units::meters_per_second_t {

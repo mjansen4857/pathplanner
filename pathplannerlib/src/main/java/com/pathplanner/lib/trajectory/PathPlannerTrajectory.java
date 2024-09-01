@@ -269,8 +269,7 @@ public class PathPlannerTrajectory {
 
       ChassisSpeeds chassisAccel =
           ChassisSpeeds.fromFieldRelativeSpeeds(
-              new ChassisSpeeds(accelVec.getX(), accelVec.getY(), angularAccel),
-              state.pose.getRotation());
+              accelVec.getX(), accelVec.getY(), angularAccel, state.pose.getRotation());
       var accelStates = config.kinematics.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < config.numModules; m++) {
         double moduleAcceleration = accelStates[m].speedMetersPerSecond;
@@ -290,14 +289,12 @@ public class PathPlannerTrajectory {
                 nextState.moduleStates[m].fieldPos);
         // Find the max velocity that would keep the centripetal force under the friction force
         // Fc = M * v^2 / R
-        double maxSafeVel = Double.POSITIVE_INFINITY;
         if (Double.isFinite(curveRadius)) {
-          maxSafeVel =
+          double maxSafeVel =
               Math.sqrt((config.wheelFrictionForce * Math.abs(curveRadius)) / config.massKG);
+          state.moduleStates[m].speedMetersPerSecond =
+              Math.min(state.moduleStates[m].speedMetersPerSecond, maxSafeVel);
         }
-
-        state.moduleStates[m].speedMetersPerSecond =
-            Math.min(state.moduleStates[m].speedMetersPerSecond, maxSafeVel);
       }
 
       // Go over the modules again to make sure they take the same amount of time to reach the next
@@ -341,7 +338,6 @@ public class PathPlannerTrajectory {
   private static void reverseAccelPass(
       List<PathPlannerTrajectoryState> states, RobotConfig config) {
     for (int i = states.size() - 2; i > 0; i--) {
-      //      var prevState = states.get(i - 1);
       var state = states.get(i);
       var nextState = states.get(i + 1);
 

@@ -8,6 +8,7 @@
 #include <frc/kinematics/SwerveDriveKinematics.h>
 #include <vector>
 #include "pathplanner/lib/config/ModuleConfig.h"
+#include "pathplanner/lib/trajectory/SwerveModuleTrajectoryState.h"
 
 namespace pathplanner {
 class RobotConfig {

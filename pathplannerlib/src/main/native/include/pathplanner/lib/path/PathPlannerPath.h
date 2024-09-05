@@ -208,15 +208,15 @@ public:
 	}
 
 	inline PathPlannerTrajectory getTrajectory(
-		frc::ChassisSpeeds startingSpeeds, frc::Rotation2d startingRotation,
-		const RobotConfig& config) {
-	if (m_isChoreoPath) {
-		return m_choreoTrajectory;
-	} else {
-		return PathPlannerTrajectory(shared_from_this(), startingSpeeds,
-				startingRotation, config);
+			frc::ChassisSpeeds startingSpeeds, frc::Rotation2d startingRotation,
+			const RobotConfig &config) {
+		if (m_isChoreoPath) {
+			return m_choreoTrajectory;
+		} else {
+			return PathPlannerTrajectory(shared_from_this(), startingSpeeds,
+					startingRotation, config);
+		}
 	}
-}
 
 	/**
 	 * Replan this path based on the current robot position and speeds

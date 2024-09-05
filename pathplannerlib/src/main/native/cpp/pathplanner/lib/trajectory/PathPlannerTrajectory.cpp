@@ -5,13 +5,14 @@
 
 using namespace pathplanner;
 
-// PathPlannerTrajectory::PathPlannerTrajectory(std::shared_ptr<PathPlannerPath> path,
-// 			const frc::ChassisSpeeds &startingSpeeds,
-// 			const frc::Rotation2d &startingRotation, const RobotConfig &config){
-//     if(path->isChoreoPath()){
+PathPlannerTrajectory::PathPlannerTrajectory(
+		std::shared_ptr<PathPlannerPath> path,
+		const frc::ChassisSpeeds &startingSpeeds,
+		const frc::Rotation2d &startingRotation, const RobotConfig &config) {
+	if (path->isChoreoPath()) {
 
-//     }
-// }
+	}
+}
 
 PathPlannerTrajectoryState PathPlannerTrajectory::sample(
 		const units::second_t time) {

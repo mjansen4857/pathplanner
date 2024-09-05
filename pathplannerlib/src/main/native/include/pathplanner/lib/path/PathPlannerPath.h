@@ -7,7 +7,8 @@
 #include "pathplanner/lib/path/GoalEndState.h"
 #include "pathplanner/lib/path/PathPoint.h"
 #include "pathplanner/lib/path/PathSegment.h"
-#include "pathplanner/lib/path/PathPlannerTrajectory.h"
+#include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
+#include "pathplanner/lib/config/RobotConfig.h"
 #include <vector>
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
@@ -207,15 +208,15 @@ public:
 	}
 
 	inline PathPlannerTrajectory getTrajectory(
-			frc::ChassisSpeeds startingSpeeds,
-			frc::Rotation2d startingRotation) {
-		if (m_isChoreoPath) {
-			return m_choreoTrajectory;
-		} else {
-			return PathPlannerTrajectory(shared_from_this(), startingSpeeds,
-					startingRotation);
-		}
+		frc::ChassisSpeeds startingSpeeds, frc::Rotation2d startingRotation,
+		const RobotConfig& config) {
+	if (m_isChoreoPath) {
+		return m_choreoTrajectory;
+	} else {
+		return PathPlannerTrajectory(shared_from_this(), startingSpeeds,
+				startingRotation, config);
 	}
+}
 
 	/**
 	 * Replan this path based on the current robot position and speeds

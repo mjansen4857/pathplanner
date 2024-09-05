@@ -1,5 +1,5 @@
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
-// #include "pathplanner/lib/path/PathPlannerPath.h"
+#include "pathplanner/lib/path/PathPlannerPath.h"
 #include <units/force.h>
 #include <units/torque.h>
 

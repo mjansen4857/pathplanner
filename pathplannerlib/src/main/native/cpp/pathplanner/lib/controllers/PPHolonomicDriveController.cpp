@@ -11,9 +11,8 @@ PPHolonomicDriveController::PPHolonomicDriveController(
 		translationConstants.kP, translationConstants.kI,
 		translationConstants.kD, period), m_yController(translationConstants.kP,
 		translationConstants.kI, translationConstants.kD, period), m_rotationController(
-		rotationConstants.kP, rotationConstants.kI, rotationConstants.kD, {
-				0_rad_per_s, 0_rad_per_s_sq }, period), m_maxModuleSpeed(
-		maxModuleSpeed), m_mpsToRps { 1.0 / driveBaseRadius() } {
+		rotationConstants.kP, rotationConstants.kI, rotationConstants.kD,
+		period) {
 	m_xController.SetIntegratorRange(-translationConstants.iZone,
 			translationConstants.iZone);
 	m_yController.SetIntegratorRange(-translationConstants.iZone,
@@ -21,19 +20,19 @@ PPHolonomicDriveController::PPHolonomicDriveController(
 
 	m_rotationController.SetIntegratorRange(-rotationConstants.iZone,
 			rotationConstants.iZone);
-	m_rotationController.EnableContinuousInput(units::radian_t { -PI },
-			units::radian_t { PI });
+	m_rotationController.EnableContinuousInput(-PI, PI);
 }
 
 frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 		const frc::Pose2d &currentPose,
-		const PathPlannerTrajectory::State &referenceState) {
-	units::meters_per_second_t xFF = referenceState.velocity
+		const PathPlannerTrajectoryState &referenceState) {
+	units::meters_per_second_t xFF = referenceState.linearVelocity
 			* referenceState.heading.Cos();
-	units::meters_per_second_t yFF = referenceState.velocity
+	units::meters_per_second_t yFF = referenceState.linearVelocity
 			* referenceState.heading.Sin();
 
-	m_translationError = currentPose.Translation() - referenceState.position;
+	m_translationError = currentPose.Translation()
+			- referenceState.pose.Translation();
 
 	if (!m_enabled) {
 		return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF, yFF,
@@ -41,34 +40,19 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 	}
 
 	units::meters_per_second_t xFeedback { m_xController.Calculate(
-			currentPose.X()(), referenceState.position.X()()) };
+			currentPose.X()(), referenceState.pose.X()()) };
 	units::meters_per_second_t yFeedback { m_yController.Calculate(
-			currentPose.Y()(), referenceState.position.Y()()) };
+			currentPose.Y()(), referenceState.pose.Y()()) };
 
-	units::radians_per_second_t angVelConstraint =
-			referenceState.constraints.getMaxAngularVelocity();
-	units::radians_per_second_t maxAngVel = angVelConstraint;
-	if (std::isfinite(maxAngVel())) {
-		// Approximation of available module speed to do rotation with
-		units::radians_per_second_t maxAngVelModule = units::math::max(
-				0_rad_per_s,
-				(m_maxModuleSpeed - referenceState.velocity) * m_mpsToRps);
-		maxAngVel = units::math::min(angVelConstraint, maxAngVelModule);
-	}
-
-	frc::Rotation2d targetRotation = referenceState.targetHolonomicRotation;
+	frc::Rotation2d targetRotation = referenceState.pose.Rotation();
 	if (rotationTargetOverride) {
 		targetRotation = rotationTargetOverride().value_or(targetRotation);
 	}
 
 	units::radians_per_second_t rotationFeedback {
-			m_rotationController.Calculate(currentPose.Rotation().Radians(),
-					referenceState.targetHolonomicRotation.Radians(),
-					{ maxAngVel,
-							referenceState.constraints.getMaxAngularAcceleration() }) };
-	units::radians_per_second_t rotationFF =
-			referenceState.holonomicAngularVelocityRps.value_or(
-					m_rotationController.GetSetpoint().velocity);
+			m_rotationController.Calculate(currentPose.Rotation().Radians()(),
+					referenceState.pose.Rotation().Radians()()) };
+	units::radians_per_second_t rotationFF = referenceState.fieldSpeeds.omega;
 
 	return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF + xFeedback,
 			yFF + yFeedback, rotationFF + rotationFeedback,

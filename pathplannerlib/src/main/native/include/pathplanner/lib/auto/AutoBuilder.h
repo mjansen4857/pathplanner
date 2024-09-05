@@ -14,86 +14,42 @@
 #include <wpi/array.h>
 #include <string>
 #include "pathplanner/lib/path/PathPlannerPath.h"
-#include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
+#include "pathplanner/lib/config/RobotConfig.h"
 #include "pathplanner/lib/config/ReplanningConfig.h"
+#include "pathplanner/lib/controllers/PathFollowingController.h"
 
 namespace pathplanner {
 class AutoBuilder {
 public:
 	/**
-	 * Configures the AutoBuilder for a holonomic drivetrain.
+	 * Configures the AutoBuilder for using PathPlanner's built-in commands.
 	 *
 	 * @param poseSupplier a function that returns the robot's current pose
 	 * @param resetPose a function used for resetting the robot's pose
 	 * @param robotRelativeSpeedsSupplier a function that returns the robot's current robot relative chassis speeds
 	 * @param robotRelativeOutput a function for setting the robot's robot-relative chassis speeds
-	 * @param config HolonomicPathFollowerConfig for configuring the
-	 *     path following commands
+	 * @param controller Path following controller that will be used to follow the path
+	 * @param robotConfig The robot configuration
+	 * @param replanningConfig Path replanning configuration
 	 * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
 	 *     the field. This will maintain a global blue alliance origin.
 	 * @param driveSubsystem a pointer to the subsystem for the robot's drive
 	 */
-	static void configureHolonomic(std::function<frc::Pose2d()> poseSupplier,
+	static void configure(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
-			HolonomicPathFollowerConfig config,
+			std::shared_ptr<PathFollowingController> controller,
+			RobotConfig robotConfig, ReplanningConfig replanningConfig,
 			std::function<bool()> shouldFlipPath,
 			frc2::Subsystem *driveSubsystem);
 
 	/**
-	 * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
-	 * follower.
-	 *
-	 * @param poseSupplier a supplier for the robot's current pose
-	 * @param resetPose a consumer for resetting the robot's pose
-	 * @param speedsSupplier a supplier for the robot's current chassis speeds
-	 * @param output a consumer for setting the robot's chassis speeds
-	 * @param qelems The maximum desired error tolerance for each state.
-	 * @param relems The maximum desired control effort for each input.
-	 * @param dt Period of the robot control loop in seconds (default 0.02)
-	 * @param replanningConfig Path replanning configuration
-	 * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
-	 *     the field. This will maintain a global blue alliance origin.
-	 * @param driveSubsystem the subsystem for the robot's drive
-	 */
-	static void configureLTV(std::function<frc::Pose2d()> poseSupplier,
-			std::function<void(frc::Pose2d)> resetPose,
-			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> output,
-			const wpi::array<double, 3> &Qelms,
-			const wpi::array<double, 2> &Relms, units::second_t dt,
-			ReplanningConfig replanningConfig,
-			std::function<bool()> shouldFlipPath,
-			frc2::Subsystem *driveSubsystem);
-
-	/**
-	 * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
-	 * follower.
-	 *
-	 * @param poseSupplier a supplier for the robot's current pose
-	 * @param resetPose a consumer for resetting the robot's pose
-	 * @param speedsSupplier a supplier for the robot's current chassis speeds
-	 * @param output a consumer for setting the robot's chassis speeds
-	 * @param dt Period of the robot control loop in seconds (default 0.02)
-	 * @param replanningConfig Path replanning configuration
-	 * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
-	 *     the field. This will maintain a global blue alliance origin.
-	 * @param driveSubsystem the subsystem for the robot's drive
-	 */
-	static void configureLTV(std::function<frc::Pose2d()> poseSupplier,
-			std::function<void(frc::Pose2d)> resetPose,
-			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> output, units::second_t dt,
-			ReplanningConfig replanningConfig,
-			std::function<bool()> shouldFlipPath,
-			frc2::Subsystem *driveSubsystem);
-
-	/**
-	 * Configures the AutoBuilder with custom path following command builder. Building pathfinding commands is not supported when using a custom path following command builder.
+	 * Configures the AutoBuilder with custom path following command builder. Building pathfinding
+	 * commands is not supported if using a custom command builder. Custom path following commands
+	 * will not have the path flipped for them, and event markers will not be triggered automatically.
 	 *
 	 * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
-	 * @param poseSupplier a function that returns the robot's current pose
 	 * @param resetPose a function for resetting the robot's pose
 	 * @param shouldFlipPose Supplier that determines if the starting pose should be flipped to the
 	 *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
@@ -102,7 +58,6 @@ public:
 	 */
 	static void configureCustom(
 			std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
-			std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::function<bool()> shouldFlipPose = []() {
 				return false;
@@ -163,13 +118,11 @@ public:
 	 * @param pose The pose to pathfind to
 	 * @param constraints The constraints to use while pathfinding
 	 * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
-	 * @param rotationDelayDistance The distance the robot should move from the start position before
-	 *     attempting to rotate to the final rotation
 	 * @return A command to pathfind to a given pose
 	 */
 	static frc2::CommandPtr pathfindToPose(frc::Pose2d pose,
 			PathConstraints constraints, units::meters_per_second_t goalEndVel =
-					0_mps, units::meter_t rotationDelayDistance = 0_m);
+					0_mps);
 
 	/**
 	 * Build a command to pathfind to a given pose that will be flipped based on the value of the path
@@ -180,18 +133,15 @@ public:
 	 *     true
 	 * @param constraints The constraints to use while pathfinding
 	 * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
-	 * @param rotationDelayDistance The distance the robot should move from the start position before
-	 *     attempting to rotate to the final rotation
 	 * @return A command to pathfind to a given pose
 	 */
 	static frc2::CommandPtr pathfindToPoseFlipped(frc::Pose2d pose,
 			PathConstraints constraints, units::meters_per_second_t goalEndVel =
-					0_mps, units::meter_t rotationDelayDistance = 0_m) {
+					0_mps) {
 		return frc2::cmd::Either(
 				pathfindToPose(GeometryUtil::flipFieldPose(pose), constraints,
-						goalEndVel, rotationDelayDistance),
-				pathfindToPose(pose, constraints, goalEndVel,
-						rotationDelayDistance), m_shouldFlipPath);
+						goalEndVel),
+				pathfindToPose(pose, constraints, goalEndVel), m_shouldFlipPath);
 	}
 
 	/**
@@ -200,14 +150,11 @@ public:
 	 *
 	 * @param goalPath The path to pathfind to, then follow
 	 * @param pathfindingConstraints The constraints to use while pathfinding
-	 * @param rotationDelayDistance The distance the robot should move from the start position before
-	 *     attempting to rotate to the final rotation
 	 * @return A command to pathfind to a given path, then follow the path
 	 */
 	static frc2::CommandPtr pathfindThenFollowPath(
 			std::shared_ptr<PathPlannerPath> goalPath,
-			PathConstraints pathfindingConstraints,
-			units::meter_t rotationDelayDistance = 0_m);
+			PathConstraints pathfindingConstraints);
 
 	/**
 	 * Create and populate a sendable chooser with all PathPlannerAutos in the project
@@ -230,7 +177,6 @@ public:
 private:
 	static bool m_configured;
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
-	static std::function<frc::Pose2d()> m_getPose;
 	static std::function<void(frc::Pose2d)> m_resetPose;
 	static std::function<bool()> m_shouldFlipPath;
 
@@ -239,9 +185,8 @@ private:
 	static bool m_pathfindingConfigured;
 	static std::function<
 			frc2::CommandPtr(frc::Pose2d, PathConstraints,
-					units::meters_per_second_t, units::meter_t)> m_pathfindToPoseCommandBuilder;
+					units::meters_per_second_t)> m_pathfindToPoseCommandBuilder;
 	static std::function<
-			frc2::CommandPtr(std::shared_ptr<PathPlannerPath>, PathConstraints,
-					units::meter_t)> m_pathfindThenFollowPathCommandBuilder;
+			frc2::CommandPtr(std::shared_ptr<PathPlannerPath>, PathConstraints)> m_pathfindThenFollowPathCommandBuilder;
 };
 }

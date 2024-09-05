@@ -46,7 +46,6 @@ public class PathfindingCommand extends Command {
 
   private PathPlannerPath currentPath;
   private PathPlannerTrajectory currentTrajectory;
-  private Pose2d startingPose;
 
   private double timeOffset = 0;
 
@@ -229,8 +228,6 @@ public class PathfindingCommand extends Command {
       Pathfinding.setStartPosition(currentPose.getTranslation());
       Pathfinding.setGoalPosition(targetPose.getTranslation());
     }
-
-    startingPose = currentPose;
   }
 
   @Override

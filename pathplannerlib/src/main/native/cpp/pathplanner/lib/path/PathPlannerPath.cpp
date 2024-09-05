@@ -144,9 +144,9 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 
 	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
-	std::vector < PathPlannerTrajectory::State > trajStates;
+	std::vector < PathPlannerTrajectoryState > trajStates;
 	for (wpi::json::const_reference s : json.at("samples")) {
-		PathPlannerTrajectory::State state;
+		PathPlannerTrajectoryState state;
 
 		units::second_t time { s.at("timestamp").get<double>() };
 		units::meter_t xPos { s.at("x").get<double>() };
@@ -158,22 +158,10 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 				double>() };
 
 		state.time = time;
-		state.velocity = units::math::hypot(xVel, yVel);
-		state.acceleration = 0_mps_sq; // Not encoded, not needed anyway
-		state.headingAngularVelocity = 0_rad_per_s; // Not encoded, only used for diff drive anyway
-		state.position = frc::Translation2d(xPos, yPos);
-		state.heading = frc::Rotation2d(xVel(), yVel());
-		state.targetHolonomicRotation = frc::Rotation2d(rotationRad);
-		state.holonomicAngularVelocityRps = angularVelRps;
-		state.curvature = units::curvature_t { 0.0 };
-		state.constraints = PathConstraints(units::meters_per_second_t {
-				std::numeric_limits<double>::infinity() },
-				units::meters_per_second_squared_t {
-						std::numeric_limits<double>::infinity() },
-				units::radians_per_second_t {
-						std::numeric_limits<double>::infinity() },
-				units::radians_per_second_squared_t {
-						std::numeric_limits<double>::infinity() });
+		state.linearVelocity = units::math::hypot(xVel, yVel);
+		state.pose = frc::Pose2d(frc::Translation2d(xPos, yPos),
+				frc::Rotation2d(rotationRad));
+		state.fieldSpeeds = frc::ChassisSpeeds(xVel, yVel, angularVelRps);
 
 		trajStates.emplace_back(state);
 	}
@@ -187,13 +175,12 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 							std::numeric_limits<double>::infinity() },
 					units::radians_per_second_squared_t { std::numeric_limits<
 							double>::infinity() }), GoalEndState(
-					trajStates[trajStates.size() - 1].velocity,
-					trajStates[trajStates.size() - 1].targetHolonomicRotation,
-					true));
+					trajStates[trajStates.size() - 1].linearVelocity,
+					trajStates[trajStates.size() - 1].pose.Rotation(), true));
 
 	std::vector < PathPoint > pathPoints;
 	for (auto state : trajStates) {
-		pathPoints.emplace_back(state.position);
+		pathPoints.emplace_back(state.pose.Translation());
 	}
 
 	path->m_allPoints = pathPoints;
@@ -728,26 +715,15 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	if (m_isChoreoPath) {
 		// Just mirror the choreo traj
-		std::vector < PathPlannerTrajectory::State > mirroredStates;
+		std::vector < PathPlannerTrajectoryState > mirroredStates;
 		for (auto state : m_choreoTrajectory.getStates()) {
-			PathPlannerTrajectory::State mirrored;
+			PathPlannerTrajectoryState mirrored;
 
 			mirrored.time = state.time;
-			mirrored.velocity = state.velocity;
-			mirrored.acceleration = state.acceleration;
-			mirrored.headingAngularVelocity = -state.headingAngularVelocity;
-			mirrored.position = GeometryUtil::flipFieldPosition(state.position);
-			mirrored.heading = GeometryUtil::flipFieldRotation(state.heading);
-			mirrored.targetHolonomicRotation = GeometryUtil::flipFieldRotation(
-					state.targetHolonomicRotation);
-			mirrored.holonomicAngularVelocityRps =
-					state.holonomicAngularVelocityRps;
-			if (state.holonomicAngularVelocityRps) {
-				mirrored.holonomicAngularVelocityRps =
-						-state.holonomicAngularVelocityRps.value();
-			}
-			mirrored.curvature = -state.curvature;
-			mirrored.constraints = state.constraints;
+			mirrored.linearVelocity = state.linearVelocity;
+			mirrored.pose = GeometryUtil::flipFieldPose(state.pose);
+			mirrored.fieldSpeeds = frc::ChassisSpeeds(-state.fieldSpeeds.vx,
+					state.fieldSpeeds.vy, -state.fieldSpeeds.omega);
 			mirroredStates.emplace_back(mirrored);
 		}
 
@@ -761,13 +737,13 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 										std::numeric_limits<double>::infinity() },
 								units::radians_per_second_squared_t {
 										std::numeric_limits<double>::infinity() }), GoalEndState(
-								mirroredStates[mirroredStates.size() - 1].velocity,
-								mirroredStates[mirroredStates.size() - 1].targetHolonomicRotation,
+								mirroredStates[mirroredStates.size() - 1].linearVelocity,
+								mirroredStates[mirroredStates.size() - 1].pose.Rotation(),
 								true));
 
 		std::vector < PathPoint > pathPoints;
 		for (auto state : mirroredStates) {
-			pathPoints.emplace_back(state.position);
+			pathPoints.emplace_back(state.pose.Translation());
 		}
 
 		path->m_allPoints = pathPoints;

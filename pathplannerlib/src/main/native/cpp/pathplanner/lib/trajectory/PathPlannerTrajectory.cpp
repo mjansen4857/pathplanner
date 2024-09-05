@@ -10,7 +10,71 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		const frc::ChassisSpeeds &startingSpeeds,
 		const frc::Rotation2d &startingRotation, const RobotConfig &config) {
 	if (path->isChoreoPath()) {
+		PathPlannerTrajectory traj = path->getTrajectory(startingSpeeds,
+				startingRotation, config);
+		m_states = traj.m_states;
+		m_eventCommands = traj.m_eventCommands;
+	} else {
+		// Create all states
+		generateStates(m_states, path, startingRotation, config);
 
+		// Set the initial module velocities
+		frc::ChassisSpeeds fieldStartingSpeeds =
+				frc::ChassisSpeeds::FromRobotRelativeSpeeds(startingSpeeds,
+						m_states[0].pose.Rotation());
+		auto initialStates = toSwerveModuleStates(config, fieldStartingSpeeds);
+		for (size_t m = 0; m < config.numModules; m++) {
+			m_states[0].moduleStates[m].speed = initialStates[m].speed;
+		}
+		m_states[0].time = 0.0_s;
+		m_states[0].fieldSpeeds = fieldStartingSpeeds;
+		m_states[0].linearVelocity = units::math::hypot(fieldStartingSpeeds.vx,
+				fieldStartingSpeeds.vy);
+
+		// Forward pass
+		forwardAccelPass(m_states, config);
+
+		// Set the final module velocities
+		frc::Translation2d endSpeedTrans(units::meter_t {
+				path->getGoalEndState().getVelocity()() },
+				m_states[m_states.size() - 1].heading);
+		frc::ChassisSpeeds endFieldSpeeds(units::meters_per_second_t {
+				endSpeedTrans.X()() }, units::meters_per_second_t {
+				endSpeedTrans.Y()() }, 0_rad_per_s);
+		auto endStates = toSwerveModuleStates(config,
+				frc::ChassisSpeeds::FromFieldRelativeSpeeds(endFieldSpeeds,
+						m_states[m_states.size() - 1].pose.Rotation()));
+		for (size_t m = 0; m < config.numModules; m++) {
+			m_states[m_states.size() - 1].moduleStates[m].speed =
+					endStates[m].speed;
+		}
+		m_states[m_states.size() - 1].fieldSpeeds = endFieldSpeeds;
+		m_states[m_states.size() - 1].linearVelocity =
+				path->getGoalEndState().getVelocity();
+
+		// Reverse pass
+		reverseAccelPass(m_states, config);
+
+		// Loop back over and calculate time
+		for (size_t i = 1; i < m_states.size(); i++) {
+			units::meters_per_second_t v0 = m_states[i - 1].linearVelocity;
+			units::meters_per_second_t v = m_states[i].linearVelocity;
+			units::second_t dt = (2 * m_states[i].deltaPos) / (v + v0);
+			m_states[i].time = m_states[i - 1].time + dt;
+		}
+
+		for (const EventMarker &m : path->getEventMarkers()) {
+			// TODO: this will need to be changed for dynamic resolution
+			size_t pointIndex = static_cast<size_t>(std::round(
+					m.getWaypointRelativePos() / PathSegment::RESOLUTION));
+			m_eventCommands.emplace_back(m_states[pointIndex].time,
+					m.getCommand());
+		}
+
+		std::sort(m_eventCommands.begin(), m_eventCommands.end(),
+				[](auto &left, auto &right) {
+					return left.first < right.first;
+				});
 	}
 }
 
@@ -355,15 +419,14 @@ void PathPlannerTrajectory::desaturateWheelSpeeds(
 
 size_t PathPlannerTrajectory::getNextRotationTargetIdx(
 		std::shared_ptr<PathPlannerPath> path, const size_t startingIndex) {
-	//         size_t idx = path->numPoints() - 1;
+	size_t idx = path->numPoints() - 1;
 
-	// for (size_t i = startingIndex; i < path->numPoints() - 1; i++) {
-	// 	if (path->getPoint(i).rotationTarget) {
-	// 		idx = i;
-	// 		break;
-	// 	}
-	// }
+	for (size_t i = startingIndex; i < path->numPoints() - 1; i++) {
+		if (path->getPoint(i).rotationTarget) {
+			idx = i;
+			break;
+		}
+	}
 
-	// return idx;
-	return 0; // TODO: import path after fixing everything
+	return idx;
 }

@@ -71,7 +71,7 @@ public class PathPlannerTrajectory {
 
       // Set the initial module velocities
       ChassisSpeeds fieldStartingSpeeds =
-          ChassisSpeeds.fromFieldRelativeSpeeds(startingSpeeds, states.get(0).pose.getRotation());
+          ChassisSpeeds.fromRobotRelativeSpeeds(startingSpeeds, states.get(0).pose.getRotation());
       var initialStates = config.kinematics.toSwerveModuleStates(fieldStartingSpeeds);
       for (int m = 0; m < config.numModules; m++) {
         states.get(0).moduleStates[m].speedMetersPerSecond = initialStates[m].speedMetersPerSecond;
@@ -99,7 +99,7 @@ public class PathPlannerTrajectory {
             endStates[m].speedMetersPerSecond;
       }
       states.get(states.size() - 1).fieldSpeeds = endFieldSpeeds;
-      states.get(0).linearVelocity = path.getGoalEndState().getVelocity();
+      states.get(states.size() - 1).linearVelocity = path.getGoalEndState().getVelocity();
 
       // Reverse pass
       reverseAccelPass(states, config);

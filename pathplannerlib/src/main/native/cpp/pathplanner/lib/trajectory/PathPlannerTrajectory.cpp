@@ -111,7 +111,96 @@ void PathPlannerTrajectory::generateStates(
 		std::vector<PathPlannerTrajectoryState> &states,
 		std::shared_ptr<PathPlannerPath> path,
 		const frc::Rotation2d &startingRotation, const RobotConfig &config) {
-	// TODO
+	size_t prevRotationTargetIdx = 0;
+	frc::Rotation2d prevRotationTargetRot = startingRotation;
+	size_t nextRotationTargetIdx = getNextRotationTargetIdx(path, 0);
+	frc::Rotation2d nextRotationTargetRot = path->getPoint(
+			nextRotationTargetIdx).rotationTarget.value().getTarget();
+
+	for (size_t i = 0; i < path->numPoints(); i++) {
+		PathPoint p = path->getPoint(i);
+
+		if (i > nextRotationTargetIdx) {
+			prevRotationTargetIdx = nextRotationTargetIdx;
+			prevRotationTargetRot = nextRotationTargetRot;
+			nextRotationTargetIdx = getNextRotationTargetIdx(path, i);
+			nextRotationTargetRot =
+					path->getPoint(nextRotationTargetIdx).rotationTarget.value().getTarget();
+		}
+
+		// Holonomic rotation is interpolated. We use the distance along the path
+		// to calculate how much to interpolate since the distribution of path points
+		// is not the same along the whole segment
+		double t =
+				(path->getPoint(i).distanceAlongPath
+						- path->getPoint(prevRotationTargetIdx).distanceAlongPath)()
+						/ (path->getPoint(nextRotationTargetIdx).distanceAlongPath
+								- path->getPoint(prevRotationTargetIdx).distanceAlongPath)();
+		frc::Rotation2d holonomicRot = cosineInterpolate(prevRotationTargetRot,
+				nextRotationTargetRot, t);
+
+		frc::Pose2d robotPose(p.position, holonomicRot);
+		PathPlannerTrajectoryState state;
+		state.pose = robotPose;
+		state.constraints = path->getConstraintsForPoint(i);
+
+		// Calculate robot heading
+		if (i != path->numPoints() - 1) {
+			state.heading = (path->getPoint(i + 1).position
+					- state.pose.Translation()).Angle();
+		} else {
+			state.heading = states[i - 1].heading;
+		}
+
+		if (!config.isHolonomic) {
+			state.pose = frc::Pose2d(state.pose.Translation(),
+					path->isReversed() ?
+							(state.heading + frc::Rotation2d(180_deg)) :
+							state.heading);
+		}
+
+		if (i != 0) {
+			state.deltaPos = state.pose.Translation().Distance(
+					states[i - 1].pose.Translation());
+			state.deltaRot = state.pose.Rotation()
+					- states[i - 1].pose.Rotation();
+		}
+
+		for (size_t m = 0; m < config.numModules; m++) {
+			SwerveModuleTrajectoryState s;
+			s.fieldPos = state.pose.Translation()
+					+ config.moduleLocations[m].RotateBy(state.pose.Rotation());
+
+			if (i != 0) {
+				s.deltaPos = s.fieldPos.Distance(
+						states[i - 1].moduleStates[m].fieldPos);
+			}
+
+			state.moduleStates.emplace_back(s);
+		}
+
+		states.emplace_back(state);
+	}
+
+	// Calculate module headings
+	for (size_t i = 0; i < states.size(); i++) {
+		for (size_t m = 0; m < config.numModules; m++) {
+			if (i != states.size() - 1) {
+				states[i].moduleStates[m].fieldAngle =
+						(states[i + 1].moduleStates[m].fieldPos
+								- states[i].moduleStates[m].fieldPos).Angle();
+				states[i].moduleStates[m].angle =
+						states[i].moduleStates[m].fieldAngle
+								- states[i].pose.Rotation();
+			} else {
+				states[i].moduleStates[m].fieldAngle =
+						states[i - 1].moduleStates[m].fieldAngle;
+				states[i].moduleStates[m].angle =
+						states[i].moduleStates[m].fieldAngle
+								- states[i].pose.Rotation();
+			}
+		}
+	}
 }
 
 void PathPlannerTrajectory::forwardAccelPass(

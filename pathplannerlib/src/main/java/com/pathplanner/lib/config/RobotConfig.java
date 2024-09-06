@@ -134,7 +134,7 @@ public class RobotConfig {
     double massKG = (double) json.get("robotMass");
     double MOI = (double) json.get("robotMOI");
     double wheelbase = (double) json.get("robotWheelbase");
-    double trackwidth = (double) json.get("robotWheelbase");
+    double trackwidth = (double) json.get("robotTrackwidth");
     double wheelRadius = (double) json.get("driveWheelRadius");
     double gearing = (double) json.get("driveGearing");
     double maxDriveRPM = (double) json.get("maxDriveRPM");

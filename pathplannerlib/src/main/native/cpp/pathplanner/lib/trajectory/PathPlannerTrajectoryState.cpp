@@ -13,11 +13,10 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 		return endVal.interpolate(*this, 1.0 - t);
 	}
 
-	lerpedState.fieldSpeeds = frc::ChassisSpeeds(
-			GeometryUtil::unitLerp(fieldSpeeds.vx, endVal.fieldSpeeds.vx, t),
-			GeometryUtil::unitLerp(fieldSpeeds.vy, endVal.fieldSpeeds.vy, t),
-			GeometryUtil::unitLerp(fieldSpeeds.omega, endVal.fieldSpeeds.omega,
-					t));
+	lerpedState.fieldSpeeds = frc::ChassisSpeeds { GeometryUtil::unitLerp(
+			fieldSpeeds.vx, endVal.fieldSpeeds.vx, t), GeometryUtil::unitLerp(
+			fieldSpeeds.vy, endVal.fieldSpeeds.vy, t), GeometryUtil::unitLerp(
+			fieldSpeeds.omega, endVal.fieldSpeeds.omega, t) };
 	lerpedState.pose = frc::Pose2d(
 			GeometryUtil::translationLerp(pose.Translation(),
 					endVal.pose.Translation(), t),

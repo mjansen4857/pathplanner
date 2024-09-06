@@ -161,7 +161,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 		state.linearVelocity = units::math::hypot(xVel, yVel);
 		state.pose = frc::Pose2d(frc::Translation2d(xPos, yPos),
 				frc::Rotation2d(rotationRad));
-		state.fieldSpeeds = frc::ChassisSpeeds(xVel, yVel, angularVelRps);
+		state.fieldSpeeds = frc::ChassisSpeeds { xVel, yVel, angularVelRps };
 
 		trajStates.emplace_back(state);
 	}
@@ -722,8 +722,8 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 			mirrored.time = state.time;
 			mirrored.linearVelocity = state.linearVelocity;
 			mirrored.pose = GeometryUtil::flipFieldPose(state.pose);
-			mirrored.fieldSpeeds = frc::ChassisSpeeds(-state.fieldSpeeds.vx,
-					state.fieldSpeeds.vy, -state.fieldSpeeds.omega);
+			mirrored.fieldSpeeds = frc::ChassisSpeeds { -state.fieldSpeeds.vx,
+					state.fieldSpeeds.vy, -state.fieldSpeeds.omega };
 			mirroredStates.emplace_back(mirrored);
 		}
 

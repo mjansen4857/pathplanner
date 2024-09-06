@@ -38,9 +38,9 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		frc::Translation2d endSpeedTrans(units::meter_t {
 				path->getGoalEndState().getVelocity()() },
 				m_states[m_states.size() - 1].heading);
-		frc::ChassisSpeeds endFieldSpeeds(units::meters_per_second_t {
+		frc::ChassisSpeeds endFieldSpeeds { units::meters_per_second_t {
 				endSpeedTrans.X()() }, units::meters_per_second_t {
-				endSpeedTrans.Y()() }, 0_rad_per_s);
+				endSpeedTrans.Y()() }, 0_rad_per_s };
 		auto endStates = toSwerveModuleStates(config,
 				frc::ChassisSpeeds::FromFieldRelativeSpeeds(endFieldSpeeds,
 						m_states[m_states.size() - 1].pose.Rotation()));

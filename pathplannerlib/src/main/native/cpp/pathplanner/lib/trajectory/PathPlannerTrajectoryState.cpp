@@ -36,10 +36,9 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 	auto reversedSpeeds = frc::Translation2d(
 			units::meter_t { fieldSpeeds.vx() }, units::meter_t {
 					fieldSpeeds.vy() }).RotateBy(frc::Rotation2d(180_deg));
-	reversed.fieldSpeeds = frc::ChassisSpeeds(units::meters_per_second_t {
-			reversedSpeeds.X()() },
-			units::meters_per_second_t { reversedSpeeds.Y()() },
-			fieldSpeeds.omega);
+	reversed.fieldSpeeds = frc::ChassisSpeeds { units::meters_per_second_t {
+			reversedSpeeds.X()() }, units::meters_per_second_t {
+			reversedSpeeds.Y()() }, fieldSpeeds.omega };
 	reversed.pose = frc::Pose2d(pose.Translation(),
 			pose.Rotation() + frc::Rotation2d(180_deg));
 	reversed.linearVelocity = -linearVelocity;

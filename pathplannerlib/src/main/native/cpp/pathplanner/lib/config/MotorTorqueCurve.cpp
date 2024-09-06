@@ -246,6 +246,35 @@ void MotorTorqueCurve::initNEO(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
 		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				0.701 });
+		insert(units::revolutions_per_minute_t { 4620.0 },
+				units::newton_meter_t { 0.701 });
+		insert(units::revolutions_per_minute_t { 5880.0 },
+				units::newton_meter_t { 0.0 });
+		break;
+	case k60A:
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.064 });
+		insert(units::revolutions_per_minute_t { 3948.0 },
+				units::newton_meter_t { 1.064 });
+		insert(units::revolutions_per_minute_t { 5880.0 },
+				units::newton_meter_t { 0.0 });
+		break;
+	case k80A:
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
+				1.426 });
+		insert(units::revolutions_per_minute_t { 3297.0 },
+				units::newton_meter_t { 1.426 });
+		insert(units::revolutions_per_minute_t { 5880.0 },
+				units::newton_meter_t { 0.0 });
+		break;
+	}
+}
+
+void MotorTorqueCurve::initCIM(const CurrentLimit currentLimit) {
+	switch (currentLimit) {
+	case k40A:
+		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
 				0.686 });
 		insert(units::revolutions_per_minute_t { 3773.0 },
 				units::newton_meter_t { 0.686 });
@@ -271,7 +300,7 @@ void MotorTorqueCurve::initNEO(const CurrentLimit currentLimit) {
 	}
 }
 
-void MotorTorqueCurve::initCIM(const CurrentLimit currentLimit) {
+void MotorTorqueCurve::initMiniCIM(const CurrentLimit currentLimit) {
 	switch (currentLimit) {
 	case k40A:
 		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
@@ -295,35 +324,6 @@ void MotorTorqueCurve::initCIM(const CurrentLimit currentLimit) {
 		insert(units::revolutions_per_minute_t { 604.0 },
 				units::newton_meter_t { 1.22 });
 		insert(units::revolutions_per_minute_t { 5840.0 },
-				units::newton_meter_t { 0.0 });
-		break;
-	}
-}
-
-void MotorTorqueCurve::initMiniCIM(const CurrentLimit currentLimit) {
-	switch (currentLimit) {
-	case k40A:
-		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
-				0.701 });
-		insert(units::revolutions_per_minute_t { 4620.0 },
-				units::newton_meter_t { 0.701 });
-		insert(units::revolutions_per_minute_t { 5880.0 },
-				units::newton_meter_t { 0.0 });
-		break;
-	case k60A:
-		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
-				1.064 });
-		insert(units::revolutions_per_minute_t { 3948.0 },
-				units::newton_meter_t { 1.064 });
-		insert(units::revolutions_per_minute_t { 5880.0 },
-				units::newton_meter_t { 0.0 });
-		break;
-	case k80A:
-		insert(units::revolutions_per_minute_t { 0.0 }, units::newton_meter_t {
-				1.426 });
-		insert(units::revolutions_per_minute_t { 3297.0 },
-				units::newton_meter_t { 1.426 });
-		insert(units::revolutions_per_minute_t { 5880.0 },
 				units::newton_meter_t { 0.0 });
 		break;
 	}

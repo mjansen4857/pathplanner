@@ -247,6 +247,26 @@ public class MotorTorqueCurve extends InterpolatingDoubleTreeMap {
   private void initNEO(CurrentLimit currentLimit) {
     switch (currentLimit) {
       case k40A:
+        put(0.0, 0.701);
+        put(4620.0, 0.701);
+        put(5880.0, 0.0);
+        break;
+      case k60A:
+        put(0.0, 1.064);
+        put(3948.0, 1.064);
+        put(5880.0, 0.0);
+        break;
+      case k80A:
+        put(0.0, 1.426);
+        put(3297.0, 1.426);
+        put(5880.0, 0.0);
+        break;
+    }
+  }
+
+  private void initCIM(CurrentLimit currentLimit) {
+    switch (currentLimit) {
+      case k40A:
         put(0.0, 0.686);
         put(3773.0, 0.686);
         put(5330.0, 0.0);
@@ -264,7 +284,7 @@ public class MotorTorqueCurve extends InterpolatingDoubleTreeMap {
     }
   }
 
-  private void initCIM(CurrentLimit currentLimit) {
+  private void initMiniCIM(CurrentLimit currentLimit) {
     switch (currentLimit) {
       case k40A:
         put(0.0, 0.586);
@@ -280,26 +300,6 @@ public class MotorTorqueCurve extends InterpolatingDoubleTreeMap {
         put(0.0, 1.22);
         put(604.0, 1.22);
         put(5840.0, 0.0);
-        break;
-    }
-  }
-
-  private void initMiniCIM(CurrentLimit currentLimit) {
-    switch (currentLimit) {
-      case k40A:
-        put(0.0, 0.701);
-        put(4620.0, 0.701);
-        put(5880.0, 0.0);
-        break;
-      case k60A:
-        put(0.0, 1.064);
-        put(3948.0, 1.064);
-        put(5880.0, 0.0);
-        break;
-      case k80A:
-        put(0.0, 1.426);
-        put(3297.0, 1.426);
-        put(5880.0, 0.0);
         break;
     }
   }

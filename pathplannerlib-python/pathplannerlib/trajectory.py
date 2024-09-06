@@ -14,6 +14,11 @@ if TYPE_CHECKING:
 
 
 @dataclass
+class PathPlannerTrajectoryState:
+    pass
+
+
+@dataclass
 class State:
     timeSeconds: float = 0
     velocityMps: float = 0

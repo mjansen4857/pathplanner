@@ -9,7 +9,8 @@ import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
 from .geometry_util import decimal_range, cubicLerp, calculateRadius, flipFieldPos, flipFieldRotation
-from .trajectory import PathPlannerTrajectory, State
+from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
+from .config import RobotConfig
 from wpilib import getDeployDirectory
 from hal import report, tResourceType
 import os
@@ -506,6 +507,18 @@ class PathPlannerPath:
         """
         return self._allPoints[index]
 
+    def getConstraintsForPoint(self, idx: int) -> PathConstraints:
+        """
+        Get the constraints for a point along the path
+
+        :param idx: Index of the point to get constraints for
+        :return: The constraints that should apply to the point
+        """
+        if self.getPoint(idx).constraints is None:
+            return self.getPoint(idx).constraints
+
+        return self._globalConstraints
+
     def getGlobalConstraints(self) -> PathConstraints:
         """
         Get the global constraints for this path
@@ -785,18 +798,20 @@ class PathPlannerPath:
         """
         return self._isChoreoPath
 
-    def getTrajectory(self, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d) -> PathPlannerTrajectory:
+    def getTrajectory(self, starting_speeds: ChassisSpeeds, starting_rotation: Rotation2d,
+                      config: RobotConfig) -> PathPlannerTrajectory:
         """
         Generate a trajectory for this path.
 
         :param starting_speeds: The robot-relative starting speeds.
         :param starting_rotation: The starting rotation of the robot.
+        :param config: The robot configuration
         :return: The generated trajectory.
         """
         if self._isChoreoPath:
             return self._choreoTrajectory
         else:
-            return PathPlannerTrajectory(self, starting_speeds, starting_rotation)
+            return PathPlannerTrajectory(self, starting_speeds, starting_rotation, config)
 
     def flipPath(self) -> PathPlannerPath:
         """

@@ -58,13 +58,25 @@ def translationLerp(a: Translation2d, b: Translation2d, t: float) -> Translation
 
 def rotationLerp(a: Rotation2d, b: Rotation2d, t: float) -> Rotation2d:
     """
-        Interpolate between two Rotation2ds
+    Interpolate between two Rotation2ds
 
-        :param a: Start value
-        :param b: End value
-        :param t: Interpolation factor (0.0-1.0)
-        :return: Interpolated value
-        """
+    :param a: Start value
+    :param b: End value
+    :param t: Interpolation factor (0.0-1.0)
+    :return: Interpolated value
+    """
+    return a + ((b - a) * t)
+
+
+def poseLerp(a: Pose2d, b: Pose2d, t: float) -> Pose2d:
+    """
+    Interpolate between two Pose2ds
+
+    :param a: Start value
+    :param b: End value
+    :param t: Interpolation factor (0.0-1.0)
+    :return: Interpolated value
+    """
     return a + ((b - a) * t)
 
 

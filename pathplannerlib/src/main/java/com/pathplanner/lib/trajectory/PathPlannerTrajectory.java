@@ -566,7 +566,7 @@ public class PathPlannerTrajectory {
     }
 
     double rotationPct = 0.0;
-    if (Math.abs(maxRotationSpeed) < 1e-8) {
+    if (Math.abs(maxRotationSpeed) > 1e-8) {
       rotationPct = Math.abs(desiredSpeeds.omegaRadiansPerSecond) / Math.abs(maxRotationSpeed);
     }
 

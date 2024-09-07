@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Union, List
-from geometry_util import floatLerp
+from .geometry_util import floatLerp
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import SwerveDrive2Kinematics, SwerveDrive4Kinematics
 import math

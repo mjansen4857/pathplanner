@@ -26,10 +26,8 @@ PPHolonomicDriveController::PPHolonomicDriveController(
 frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 		const frc::Pose2d &currentPose,
 		const PathPlannerTrajectoryState &referenceState) {
-	units::meters_per_second_t xFF = referenceState.linearVelocity
-			* referenceState.heading.Cos();
-	units::meters_per_second_t yFF = referenceState.linearVelocity
-			* referenceState.heading.Sin();
+	units::meters_per_second_t xFF = referenceState.fieldSpeeds.vx;
+	units::meters_per_second_t yFF = referenceState.fieldSpeeds.vy;
 
 	m_translationError = currentPose.Translation()
 			- referenceState.pose.Translation();

@@ -396,24 +396,3 @@ class RobotConfig:
                 return RobotConfig(massKG, MOI, moduleConfig, trackwidth, wheelbase)
             else:
                 return RobotConfig(massKG, MOI, moduleConfig, trackwidth)
-
-
-@dataclass
-class HolonomicPathFollowerConfig:
-    """
-    Configuration for the holonomic path following commands
-
-    Args:
-        translationConstants (PIDConstants): PIDConstants used for creating the translation PID controllers
-        rotationConstants (PIDConstants): PIDConstants used for creating the rotation PID controller
-        maxModuleSpeed (float): Max speed of an individual drive module in meters/sec
-        driveBaseRadius (float): The radius of the drive base in meters. This is the distance from the center of the robot to the furthest module.
-        replanningConfig (ReplanningConfig): Path replanning configuration
-        period (float): Control loop period in seconds (Default = 0.02)
-    """
-    translationConstants: PIDConstants
-    rotationConstants: PIDConstants
-    maxModuleSpeed: float
-    driveBaseRadius: float
-    replanningConfig: ReplanningConfig
-    period: float = 0.02

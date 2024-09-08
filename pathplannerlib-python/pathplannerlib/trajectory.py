@@ -4,14 +4,13 @@ import math
 from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
-from wpimath import inputModulus
-from .geometry_util import floatLerp, translationLerp, rotationLerp, poseLerp, calculateRadius
+from .geometry_util import floatLerp, rotationLerp, poseLerp, calculateRadius
 from .config import RobotConfig
 from typing import List, Tuple, Union, TYPE_CHECKING
 from commands2 import Command
 
 if TYPE_CHECKING:
-    from .path import PathPlannerPath, PathConstraints, PathSegment, RESOLUTION
+    from .path import PathPlannerPath, PathConstraints, RESOLUTION
 
 
 @dataclass

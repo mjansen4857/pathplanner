@@ -213,6 +213,8 @@ class PathfindingCommand(Command):
 
     _timeOffset: float = 0
 
+    _finish: bool = False
+
     _instances: int = 0
 
     def __init__(self, constraints: PathConstraints, pose_supplier: Callable[[], Pose2d],
@@ -268,6 +270,7 @@ class PathfindingCommand(Command):
     def initialize(self):
         self._currentTrajectory = None
         self._timeOffset = 0.0
+        self._finished = False
 
         currentPose = self._poseSupplier()
 
@@ -282,12 +285,15 @@ class PathfindingCommand(Command):
 
         if currentPose.translation().distance(self._targetPose.translation()) < 0.5:
             self._output(ChassisSpeeds())
-            self.cancel()
+            self._finish = True
         else:
             Pathfinding.setStartPosition(currentPose.translation())
             Pathfinding.setGoalPosition(self._targetPose.translation())
 
     def execute(self):
+        if self._finish:
+            return
+
         currentPose = self._poseSupplier()
         currentSpeeds = self._speedsSupplier()
 
@@ -393,6 +399,9 @@ class PathfindingCommand(Command):
             self._output(targetSpeeds)
 
     def isFinished(self) -> bool:
+        if self._finish:
+            return True
+
         if self._targetPath is not None and not self._targetPath.isChoreoPath():
             currentPose = self._poseSupplier()
             currentSpeeds = self._speedsSupplier()

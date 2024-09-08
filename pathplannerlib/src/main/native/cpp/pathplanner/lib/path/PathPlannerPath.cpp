@@ -176,7 +176,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 					units::radians_per_second_squared_t { std::numeric_limits<
 							double>::infinity() }), GoalEndState(
 					trajStates[trajStates.size() - 1].linearVelocity,
-					trajStates[trajStates.size() - 1].pose.Rotation(), true));
+					trajStates[trajStates.size() - 1].pose.Rotation()));
 
 	std::vector < PathPoint > pathPoints;
 	for (auto state : trajStates) {
@@ -390,8 +390,7 @@ void PathPlannerPath::precalcValues() {
 		}
 
 		m_allPoints[m_allPoints.size() - 1].rotationTarget = RotationTarget(-1,
-				m_goalEndState.getRotation(),
-				m_goalEndState.shouldRotateFast());
+				m_goalEndState.getRotation());
 		m_allPoints[m_allPoints.size() - 1].maxV = m_goalEndState.getVelocity();
 	}
 }
@@ -526,7 +525,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 					std::back_inserter(targets),
 					[](RotationTarget target) {
 						return RotationTarget(target.getPosition() + 1,
-								target.getTarget(), target.shouldRotateFast());
+								target.getTarget());
 					});
 			std::vector < ConstraintsZone > zones;
 			std::transform(m_constraintZones.begin(), m_constraintZones.end(),
@@ -662,11 +661,10 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 	for (RotationTarget t : m_rotationTargets) {
 		if (t.getPosition() >= nextWaypointIdx) {
 			mappedTargets.emplace_back(t.getPosition() - nextWaypointIdx + 2,
-					t.getTarget(), t.shouldRotateFast());
+					t.getTarget());
 		} else if (t.getPosition() >= nextWaypointIdx - 1) {
 			double pct = t.getPosition() - (nextWaypointIdx - 1);
-			mappedTargets.emplace_back(mapPct(pct, segment1Pct), t.getTarget(),
-					t.shouldRotateFast());
+			mappedTargets.emplace_back(mapPct(pct, segment1Pct), t.getTarget());
 		}
 	}
 
@@ -738,8 +736,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 								units::radians_per_second_squared_t {
 										std::numeric_limits<double>::infinity() }), GoalEndState(
 								mirroredStates[mirroredStates.size() - 1].linearVelocity,
-								mirroredStates[mirroredStates.size() - 1].pose.Rotation(),
-								true));
+								mirroredStates[mirroredStates.size() - 1].pose.Rotation()));
 
 		std::vector < PathPoint > pathPoints;
 		for (auto state : mirroredStates) {
@@ -758,8 +755,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	std::vector < RotationTarget > newRotTargets;
 	std::vector < EventMarker > newMarkers;
 	GoalEndState newEndState = GoalEndState(m_goalEndState.getVelocity(),
-			GeometryUtil::flipFieldRotation(m_goalEndState.getRotation()),
-			m_goalEndState.shouldRotateFast());
+			GeometryUtil::flipFieldRotation(m_goalEndState.getRotation()));
 	frc::Rotation2d newPreviewRot = GeometryUtil::flipFieldRotation(
 			m_previewStartingRotation);
 
@@ -769,8 +765,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 
 	for (auto t : m_rotationTargets) {
 		newRotTargets.emplace_back(t.getPosition(),
-				GeometryUtil::flipFieldRotation(t.getTarget()),
-				t.shouldRotateFast());
+				GeometryUtil::flipFieldRotation(t.getTarget()));
 	}
 
 	for (auto e : m_eventMarkers) {

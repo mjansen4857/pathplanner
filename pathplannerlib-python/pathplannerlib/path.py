@@ -8,7 +8,7 @@ from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
-from .geometry_util import decimal_range, cubicLerp, calculateRadius, flipFieldPos, flipFieldRotation
+from .geometry_util import decimal_range, cubicLerp, calculateRadius, flipFieldPose, flipFieldPos, flipFieldRotation
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
 from wpilib import getDeployDirectory
@@ -64,28 +64,21 @@ class GoalEndState:
     Args:
         velocity (float): The goal end velocity (M/S)
         rotation (Rotation2d): The goal rotation
-        rotateFast (bool): Should the robot reach the rotation as fast as possible
     """
     velocity: float
     rotation: Rotation2d
-    rotateFast: bool = False
 
     @staticmethod
     def fromJson(json_dict: dict) -> GoalEndState:
         vel = float(json_dict['velocity'])
         deg = float(json_dict['rotation'])
 
-        rotateFast = False
-        if 'rotateFast' in json_dict:
-            rotateFast = bool(json_dict['rotateFast'])
-
-        return GoalEndState(vel, Rotation2d.fromDegrees(deg), rotateFast)
+        return GoalEndState(vel, Rotation2d.fromDegrees(deg))
 
     def __eq__(self, other):
         return (isinstance(other, GoalEndState)
                 and other.velocity == self.velocity
-                and other.rotation == self.rotation
-                and other.rotateFast == self.rotateFast)
+                and other.rotation == self.rotation)
 
 
 @dataclass(frozen=True)
@@ -156,22 +149,16 @@ class RotationTarget:
     Args:
         waypointRelativePosition (float): Waypoint relative position of this target
         target (Rotation2d): Target rotation
-        rotateFast (bool): Should the robot reach the rotation as fast as possible
     """
     waypointRelativePosition: float
     target: Rotation2d
-    rotateFast: bool = False
 
     @staticmethod
     def fromJson(json_dict: dict) -> RotationTarget:
         pos = float(json_dict['waypointRelativePos'])
         deg = float(json_dict['rotationDegrees'])
 
-        rotateFast = False
-        if 'rotateFast' in json_dict:
-            rotateFast = bool(json_dict['rotateFast'])
-
-        return RotationTarget(pos, Rotation2d.fromDegrees(deg), rotateFast)
+        return RotationTarget(pos, Rotation2d.fromDegrees(deg))
 
     def forSegmentIndex(self, segment_index: int) -> RotationTarget:
         """
@@ -182,13 +169,12 @@ class RotationTarget:
         :param segment_index: The segment index to transform position for
         :return: The transformed target
         """
-        return RotationTarget(self.waypointRelativePosition - segment_index, self.target, self.rotateFast)
+        return RotationTarget(self.waypointRelativePosition - segment_index, self.target)
 
     def __eq__(self, other):
         return (isinstance(other, RotationTarget)
                 and other.waypointRelativePosition == self.waypointRelativePosition
-                and other.target == self.target
-                and other.rotateFast == self.rotateFast)
+                and other.target == self.target)
 
 
 @dataclass
@@ -386,7 +372,7 @@ class PathPlannerPath:
 
             trajStates = []
             for s in trajJson['samples']:
-                state = State()
+                state = PathPlannerTrajectoryState()
 
                 time = float(s['timestamp'])
                 xPos = float(s['x'])
@@ -397,20 +383,9 @@ class PathPlannerPath:
                 angularVelRps = float(s['angularVelocity'])
 
                 state.timeSeconds = time
-                state.velocityMps = math.hypot(xVel, yVel)
-                state.accelerationMpsSq = 0.0  # Not encoded, not needed anyway
-                state.headingAngularVelocityRps = 0.0  # Not encoded, only used for diff drive anyway
-                state.positionMeters = Translation2d(xPos, yPos)
-                state.heading = Rotation2d(xVel, yVel)
-                state.targetHolonomicRotation = Rotation2d(rotationRad)
-                state.holonomicAngularVelocityRps = angularVelRps
-                state.curvatureRadPerMeter = 0.0  # Not encoded, only used for diff drive anyway
-                state.constraints = PathConstraints(
-                    float('inf'),
-                    float('inf'),
-                    float('inf'),
-                    float('inf')
-                )
+                state.linearVelocity = math.hypot(xVel, yVel)
+                state.pose = Pose2d(xPos, yPos, rotationRad)
+                state.fieldSpeeds = ChassisSpeeds(xVel, yVel, angularVelRps)
 
                 trajStates.append(state)
 
@@ -419,9 +394,9 @@ class PathPlannerPath:
                 float('inf'),
                 float('inf'),
                 float('inf')
-            ), GoalEndState(trajStates[-1].velocityMps, trajStates[-1].targetHolonomicRotation, True))
+            ), GoalEndState(trajStates[-1].linearVelocity, trajStates[-1].pose.rotation()))
 
-            pathPoints = [PathPoint(state.positionMeters) for state in trajStates]
+            pathPoints = [PathPoint(state.pose.translation()) for state in trajStates]
 
             path._allPoints = pathPoints
             path._isChoreoPath = True
@@ -440,7 +415,7 @@ class PathPlannerPath:
 
             eventCommands.sort(key=lambda a: a[0])
 
-            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, states=trajStates,
+            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, None, states=trajStates,
                                                            event_commands=eventCommands)
 
             return path
@@ -656,7 +631,7 @@ class PathPlannerPath:
                 # Keep all rotations, markers, and zones and increment waypoint pos by 1
                 return PathPlannerPath(
                     replannedBezier, self._globalConstraints, self._goalEndState,
-                    [RotationTarget(t.waypointRelativePosition + 1, t.target, t.rotateFast) for t in
+                    [RotationTarget(t.waypointRelativePosition + 1, t.target) for t in
                      self._rotationTargets],
                     [ConstraintsZone(z.minWaypointPos + 1, z.maxWaypointPos + 1, z.constraints) for z in
                      self._constraintZones],
@@ -749,10 +724,10 @@ class PathPlannerPath:
         for t in self._rotationTargets:
             if t.waypointRelativePosition >= nextWaypointIdx:
                 mappedTargets.append(
-                    RotationTarget(t.waypointRelativePosition - nextWaypointIdx + 2, t.target, t.rotateFast))
+                    RotationTarget(t.waypointRelativePosition - nextWaypointIdx + 2, t.target))
             elif t.waypointRelativePosition >= nextWaypointIdx - 1:
                 pct = t.waypointRelativePosition - (nextWaypointIdx - 1)
-                mappedTargets.append(RotationTarget(PathPlannerPath._mapPct(pct, segment1Pct), t.target, t.rotateFast))
+                mappedTargets.append(RotationTarget(PathPlannerPath._mapPct(pct, segment1Pct), t.target))
 
         for z in self._constraintZones:
             minPos = 0
@@ -823,19 +798,13 @@ class PathPlannerPath:
             mirroredStates = []
 
             for state in self._choreoTrajectory.getStates():
-                mirrored = State()
+                mirrored = PathPlannerTrajectoryState()
 
                 mirrored.timeSeconds = state.timeSeconds
-                mirrored.velocityMps = state.velocityMps
-                mirrored.accelerationMpsSq = state.accelerationMpsSq
-                mirrored.headingAngularVelocityRps = -state.headingAngularVelocityRps
-                mirrored.positionMeters = flipFieldPos(state.positionMeters)
-                mirrored.heading = flipFieldRotation(state.heading)
-                mirrored.targetHolonomicRotation = flipFieldRotation(state.targetHolonomicRotation)
-                if state.holonomicAngularVelocityRps is not None:
-                    mirrored.holonomicAngularVelocityRps = -state.holonomicAngularVelocityRps
-                mirrored.curvatureRadPerMeter = -state.curvatureRadPerMeter
-                mirrored.constraints = state.constraints
+                mirrored.linearVelocity = state.linearVelocity
+                mirrored.pose = flipFieldPose(state.pose)
+                mirrored.fieldSpeeds = ChassisSpeeds(-state.fieldSpeeds.vx, state.fieldSpeeds.vy,
+                                                     -state.fieldSpeeds.omega)
 
                 mirroredStates.append(mirrored)
 
@@ -844,22 +813,21 @@ class PathPlannerPath:
                 float('inf'),
                 float('inf'),
                 float('inf')
-            ), GoalEndState(mirroredStates[-1].velocityMps, mirroredStates[-1].targetHolonomicRotation, True))
+            ), GoalEndState(mirroredStates[-1].linearVelocity, mirroredStates[-1].pose.rotation()))
 
-            pathPoints = [PathPoint(state.positionMeters) for state in mirroredStates]
+            pathPoints = [PathPoint(state.pose.translation()) for state in mirroredStates]
 
             path._allPoints = pathPoints
             path._isChoreoPath = True
-            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, states=mirroredStates,
+            path._choreoTrajectory = PathPlannerTrajectory(None, None, None, None, states=mirroredStates,
                                                            event_commands=self._choreoTrajectory.getEventCommands())
 
             return path
 
         newBezier = [flipFieldPos(pos) for pos in self._bezierPoints]
-        newRotTargets = [RotationTarget(t.waypointRelativePosition, flipFieldRotation(t.target), t.rotateFast) for t in
+        newRotTargets = [RotationTarget(t.waypointRelativePosition, flipFieldRotation(t.target)) for t in
                          self._rotationTargets]
-        newEndState = GoalEndState(self._goalEndState.velocity, flipFieldRotation(self._goalEndState.rotation),
-                                   self._goalEndState.rotateFast)
+        newEndState = GoalEndState(self._goalEndState.velocity, flipFieldRotation(self._goalEndState.rotation))
         newPreviewRot = flipFieldRotation(self._previewStartingRotation)
         newMarkers = [EventMarker(m.waypointRelativePos, m.command) for m in
                       self._eventMarkers]
@@ -984,8 +952,7 @@ class PathPlannerPath:
                     point.distanceAlongPath = self.getPoint(i - 1).distanceAlongPath + (
                         self.getPoint(i - 1).position.distance(point.position))
 
-            self.getPoint(self.numPoints() - 1).rotationTarget = RotationTarget(-1, self._goalEndState.rotation,
-                                                                                self._goalEndState.rotateFast)
+            self.getPoint(self.numPoints() - 1).rotationTarget = RotationTarget(-1, self._goalEndState.rotation)
             self.getPoint(self.numPoints() - 1).maxV = self._goalEndState.velocity
 
     def _getCurveRadiusAtPoint(self, index: int) -> float:

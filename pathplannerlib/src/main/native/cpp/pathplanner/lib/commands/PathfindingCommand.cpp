@@ -18,8 +18,8 @@ PathfindingCommand::PathfindingCommand(
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, ReplanningConfig replanningConfig,
 		std::function<bool()> shouldFlipPath, frc2::Requirements requirements) : m_targetPath(
-		targetPath), m_targetPose(), m_goalEndState(0_mps, frc::Rotation2d(),
-		true), m_constraints(constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
+		targetPath), m_targetPose(), m_goalEndState(0_mps, frc::Rotation2d()), m_constraints(
+		constraints), m_poseSupplier(poseSupplier), m_speedsSupplier(
 		speedsSupplier), m_output(output), m_controller(controller), m_robotConfig(
 		robotConfig), m_replanningConfig(replanningConfig), m_shouldFlipPath(
 		shouldFlipPath) {
@@ -49,7 +49,7 @@ PathfindingCommand::PathfindingCommand(
 	m_targetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
 			targetRotation);
 	m_originalTargetPose = m_targetPose;
-	m_goalEndState = GoalEndState(goalEndVel, targetRotation, true);
+	m_goalEndState = GoalEndState(goalEndVel, targetRotation);
 
 	m_instances++;
 	HAL_Report(HALUsageReporting::kResourceType_PathFindingCommand,
@@ -65,7 +65,7 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 		RobotConfig robotConfig, ReplanningConfig replanningConfig,
 		frc2::Requirements requirements) : m_targetPath(), m_targetPose(
 		targetPose), m_originalTargetPose(targetPose), m_goalEndState(
-		goalEndVel, targetPose.Rotation(), true), m_constraints(constraints), m_poseSupplier(
+		goalEndVel, targetPose.Rotation()), m_constraints(constraints), m_poseSupplier(
 		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
 		controller), m_robotConfig(robotConfig), m_replanningConfig(
 		replanningConfig), m_shouldFlipPath([]() {
@@ -94,7 +94,7 @@ void PathfindingCommand::Initialize() {
 		if (m_shouldFlipPath()) {
 			m_targetPose = GeometryUtil::flipFieldPose(m_originalTargetPose);
 			m_goalEndState = GoalEndState(m_goalEndState.getVelocity(),
-					m_targetPose.Rotation(), true);
+					m_targetPose.Rotation());
 		}
 	}
 

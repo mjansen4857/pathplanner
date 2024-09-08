@@ -318,8 +318,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
               ),
             ),
             Positioned(
-              top: 8,
-              left: 40,
+              top: 10,
+              left: 12,
               child: Text(
                 title,
                 style:
@@ -352,15 +352,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
         show: true,
         drawVerticalLine: true,
         drawHorizontalLine: true,
-        verticalInterval: 1,
-        horizontalInterval: horizontalInterval,
         getDrawingVerticalLine: (value) => FlLine(
-          color: Colors.grey.withOpacity(0.2),
-          strokeWidth: 1,
+          color: Colors.grey.withOpacity(0.1),
+          strokeWidth: 0.5,
         ),
         getDrawingHorizontalLine: (value) => FlLine(
-          color: Colors.grey.withOpacity(0.2),
-          strokeWidth: 1,
+          color: Colors.grey.withOpacity(0.1),
+          strokeWidth: 0.5,
         ),
       ),
       lineTouchData: LineTouchData(
@@ -386,45 +384,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
           },
         ),
       ),
-      titlesData: FlTitlesData(
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 22,
-            interval: 1,
-            getTitlesWidget: (value, meta) {
-              return SideTitleWidget(
-                axisSide: meta.axisSide,
-                space: 8,
-                child: Text(value.toInt().toString(),
-                    style: const TextStyle(fontSize: 10)),
-              );
-            },
-          ),
-        ),
-        leftTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            interval: (maxY - minY) / 4,
-            getTitlesWidget: (value, meta) {
-              return SideTitleWidget(
-                axisSide: meta.axisSide,
-                space: 8,
-                child: Text(value.toStringAsFixed(1),
-                    style: const TextStyle(fontSize: 10)),
-              );
-            },
-            reservedSize: 30,
-          ),
-        ),
-        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        rightTitles:
-            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      titlesData: const FlTitlesData(
+        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
-      borderData: FlBorderData(
-        show: true,
-        border: Border.all(color: Colors.grey.withOpacity(0.5)),
-      ),
+      borderData: FlBorderData(show: false),
       minX: 0,
       maxX: 5,
       minY: minY,

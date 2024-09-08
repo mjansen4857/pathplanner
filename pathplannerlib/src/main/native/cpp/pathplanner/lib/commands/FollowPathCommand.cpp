@@ -1,4 +1,6 @@
 #include "pathplanner/lib/commands/FollowPathCommand.h"
+#include "pathplanner/lib/path/PathPlannerPath.h"
+#include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 
 using namespace pathplanner;
 
@@ -6,12 +8,12 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
-		std::unique_ptr<PathFollowingController> controller,
-		ReplanningConfig replanningConfig, std::function<bool()> shouldFlipPath,
-		frc2::Requirements requirements) : m_originalPath(path), m_poseSupplier(
-		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
-		std::move(controller)), m_replanningConfig(replanningConfig), m_shouldFlipPath(
-		shouldFlipPath) {
+		std::shared_ptr<PathFollowingController> controller,
+		RobotConfig robotConfig, ReplanningConfig replanningConfig,
+		std::function<bool()> shouldFlipPath, frc2::Requirements requirements) : m_originalPath(
+		path), m_poseSupplier(poseSupplier), m_speedsSupplier(speedsSupplier), m_output(
+		output), m_controller(controller), m_robotConfig(robotConfig), m_replanningConfig(
+		replanningConfig), m_shouldFlipPath(shouldFlipPath) {
 	AddRequirements(requirements);
 
 	auto &&driveRequirements = GetRequirements();
@@ -60,7 +62,7 @@ void FollowPathCommand::Initialize() {
 		replanPath(currentPose, currentSpeeds);
 	} else {
 		m_generatedTrajectory = m_path->getTrajectory(currentSpeeds,
-				currentPose.Rotation());
+				currentPose.Rotation(), m_robotConfig);
 		PathPlannerLogging::logActivePath (m_path);
 		PPLibTelemetry::setCurrentPath(m_path);
 	}
@@ -80,7 +82,7 @@ void FollowPathCommand::Initialize() {
 
 void FollowPathCommand::Execute() {
 	units::second_t currentTime = m_timer.Get();
-	PathPlannerTrajectory::State targetState = m_generatedTrajectory.sample(
+	PathPlannerTrajectoryState targetState = m_generatedTrajectory.sample(
 			currentTime);
 	if (m_controller->isHolonomic()) {
 		targetState = targetState.reverse();
@@ -93,7 +95,7 @@ void FollowPathCommand::Execute() {
 		units::meter_t previousError = units::math::abs(
 				m_controller->getPositionalError());
 		units::meter_t currentError = currentPose.Translation().Distance(
-				targetState.position);
+				targetState.pose.Translation());
 
 		if (currentError
 				>= m_replanningConfig.dynamicReplanningTotalErrorThreshold
@@ -115,15 +117,10 @@ void FollowPathCommand::Execute() {
 	PPLibTelemetry::setCurrentPose(currentPose);
 	PathPlannerLogging::logCurrentPose(currentPose);
 
-	if (m_controller->isHolonomic()) {
-		PPLibTelemetry::setTargetPose(targetState.getTargetHolonomicPose());
-		PathPlannerLogging::logTargetPose(targetState.getTargetHolonomicPose());
-	} else {
-		PPLibTelemetry::setTargetPose(targetState.getDifferentialPose());
-		PathPlannerLogging::logTargetPose(targetState.getDifferentialPose());
-	}
+	PPLibTelemetry::setTargetPose(targetState.pose);
+	PathPlannerLogging::logTargetPose(targetState.pose);
 
-	PPLibTelemetry::setVelocities(currentVel, targetState.velocity,
+	PPLibTelemetry::setVelocities(currentVel, targetState.linearVelocity,
 			currentSpeeds.omega, targetSpeeds.omega);
 	PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());
 

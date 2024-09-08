@@ -61,34 +61,7 @@ class RuntimeDisplay extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (!isNoSignificantChange)
-                  AnimatedSlide(
-                    duration: const Duration(milliseconds: 500),
-                    curve: isShortened
-                        ? Curves.easeOut // Slide down
-                        : isMinorIncrease
-                            ? Curves.easeInOut // Slide right
-                            : Curves.bounceOut, // Bounce up
-                    offset: isShortened
-                        ? const Offset(0, 0.1) // Slide down
-                        : isMinorIncrease
-                            ? const Offset(0.1, 0) // Slide right
-                            : const Offset(0, -0.1), // Bounce up
-                    child: Icon(
-                      isShortened
-                          ? Icons.arrow_downward
-                          : isMinorIncrease
-                              ? Icons.arrow_forward
-                              : Icons.arrow_upward,
-                      color: isShortened
-                          ? Colors.green[700]
-                          : isMinorIncrease
-                              ? Colors.orange[700]
-                              : Colors.red[700],
-                      size: 16.0,
-                    ),
-                  ),
-                const SizedBox(width: 4),
+                if (!isNoSignificantChange) const SizedBox(width: 4),
                 Text(
                   '~${runtime.toStringAsFixed(2)}s',
                   style: TextStyle(
@@ -117,6 +90,33 @@ class RuntimeDisplay extends StatelessWidget {
                     ),
                   ),
                 ],
+                if (!isNoSignificantChange)
+                  AnimatedSlide(
+                    duration: const Duration(milliseconds: 500),
+                    curve: isShortened
+                        ? Curves.easeOut // Slide down
+                        : isMinorIncrease
+                            ? Curves.easeInOut // Slide right
+                            : Curves.bounceOut, // Bounce up
+                    offset: isShortened
+                        ? const Offset(0, 0.1) // Slide down
+                        : isMinorIncrease
+                            ? const Offset(0.1, 0) // Slide right
+                            : const Offset(0, -0.1), // Bounce up
+                    child: Icon(
+                      isShortened
+                          ? Icons.arrow_downward
+                          : isMinorIncrease
+                              ? Icons.arrow_forward
+                              : Icons.arrow_upward,
+                      color: isShortened
+                          ? Colors.green[700]
+                          : isMinorIncrease
+                              ? Colors.orange[700]
+                              : Colors.red[700],
+                      size: 16.0,
+                    ),
+                  ),
               ],
             ),
           ),

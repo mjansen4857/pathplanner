@@ -10,7 +10,7 @@ TEST(PathPlannerPathTest, DifferentialStartingPose) {
 			std::vector<ConstraintsZone>(),
 			std::vector<EventMarker>(),
 			PathConstraints {1_mps, 2_mps_sq, 3_rad_per_s, 4_rad_per_s_sq},
-			GoalEndState(0_mps, 0_deg, false),
+			GoalEndState(0_mps, 0_deg),
 			true);
 
 	frc::Pose2d initialPose = path.getStartingDifferentialPose();
@@ -27,7 +27,7 @@ TEST(PathPlannerPathTest, HolomonicStartingPoseSet)
 			std::vector<ConstraintsZone>(),
 			std::vector<EventMarker>(),
 			PathConstraints {1_mps, 2_mps_sq, 3_rad_per_s, 4_rad_per_s_sq},
-			GoalEndState(0_mps, 0_deg, false),
+			GoalEndState(0_mps, 0_deg),
 			true,
 			frc::Rotation2d {90_deg});
 
@@ -45,7 +45,7 @@ TEST(PathPlannerPathTest, HolomonicStartingPoseNotSet)
 			std::vector<ConstraintsZone>(),
 			std::vector<EventMarker>(),
 			PathConstraints {1_mps, 2_mps_sq, 3_rad_per_s, 4_rad_per_s_sq},
-			GoalEndState(0_mps, 0_deg, false),
+			GoalEndState(0_mps, 0_deg),
 			true);
 
 	frc::Pose2d initialPose = path.getPreviewStartingHolonomicPose();

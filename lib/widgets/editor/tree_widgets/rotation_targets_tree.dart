@@ -103,9 +103,6 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
 
   Widget _buildRotationCard(int targetIdx) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final TextEditingController timeController = TextEditingController(
-      text: rotations[targetIdx].waypointRelativePos.toStringAsFixed(2),
-    );
 
     return TreeCardNode(
       icon: const Icon(Icons.rotate_right_rounded),
@@ -217,8 +214,6 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                         rotations[targetIdx].waypointRelativePos = value;
                         widget.onPathChangedNoSim?.call();
                       });
-                    } else {
-                      // Optional: Show error message or handle invalid input
                     }
                   },
                 ),
@@ -241,12 +236,10 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
               _sliderChangeStart,
               () {
                 rotations[targetIdx].waypointRelativePos = value;
-                timeController.text = value.toStringAsFixed(2);
                 widget.onPathChanged?.call();
               },
               (oldValue) {
                 rotations[targetIdx].waypointRelativePos = oldValue;
-                timeController.text = oldValue.toStringAsFixed(2);
                 widget.onPathChanged?.call();
               },
             ));
@@ -254,37 +247,10 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
           onChanged: (value) {
             setState(() {
               rotations[targetIdx].waypointRelativePos = value;
-              timeController.text = value.toStringAsFixed(2);
               widget.onPathChangedNoSim?.call();
             });
           },
         ),
-        Row(
-          children: [
-            Checkbox(
-              value: rotations[targetIdx].rotateFast,
-              onChanged: (value) {
-                widget.undoStack.add(Change(
-                  rotations[targetIdx].clone(),
-                  () {
-                    rotations[targetIdx].rotateFast = value ?? false;
-                    widget.onPathChanged?.call();
-                  },
-                  (oldValue) {
-                    rotations[targetIdx].rotateFast = oldValue.rotateFast;
-                    widget.onPathChanged?.call();
-                  },
-                ));
-              },
-            ),
-            const SizedBox(width: 4),
-            const Text(
-              'Reach as Fast as Possible',
-              style: TextStyle(fontSize: 15),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
       ],
     );
   }

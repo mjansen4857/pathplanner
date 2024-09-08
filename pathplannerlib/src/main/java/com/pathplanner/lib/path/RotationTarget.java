@@ -8,20 +8,6 @@ import org.json.simple.JSONObject;
 public class RotationTarget {
   private final double waypointRelativePosition;
   private final Rotation2d target;
-  private final boolean rotateFast;
-
-  /**
-   * Create a new rotation target
-   *
-   * @param waypointRelativePosition Waypoint relative position of this target
-   * @param target Target rotation
-   * @param rotateFast Should the robot reach the rotation as fast as possible
-   */
-  public RotationTarget(double waypointRelativePosition, Rotation2d target, boolean rotateFast) {
-    this.waypointRelativePosition = waypointRelativePosition;
-    this.target = target;
-    this.rotateFast = rotateFast;
-  }
 
   /**
    * Create a new rotation target
@@ -30,7 +16,8 @@ public class RotationTarget {
    * @param target Target rotation
    */
   public RotationTarget(double waypointRelativePosition, Rotation2d target) {
-    this(waypointRelativePosition, target, false);
+    this.waypointRelativePosition = waypointRelativePosition;
+    this.target = target;
   }
 
   /**
@@ -42,11 +29,7 @@ public class RotationTarget {
   static RotationTarget fromJson(JSONObject targetJson) {
     double pos = ((Number) targetJson.get("waypointRelativePos")).doubleValue();
     double deg = ((Number) targetJson.get("rotationDegrees")).doubleValue();
-    boolean rotateFast = false;
-    if (targetJson.get("rotateFast") != null) {
-      rotateFast = (boolean) targetJson.get("rotateFast");
-    }
-    return new RotationTarget(pos, Rotation2d.fromDegrees(deg), rotateFast);
+    return new RotationTarget(pos, Rotation2d.fromDegrees(deg));
   }
 
   /**
@@ -68,15 +51,6 @@ public class RotationTarget {
   }
 
   /**
-   * Get if the robot should reach the rotation as fast as possible
-   *
-   * @return True if the robot should reach the rotation as fast as possible
-   */
-  public boolean shouldRotateFast() {
-    return rotateFast;
-  }
-
-  /**
    * Transform the position of this target for a given segment number.
    *
    * <p>For example, a target with position 1.5 for the segment 1 will have the position 0.5
@@ -85,7 +59,7 @@ public class RotationTarget {
    * @return The transformed target
    */
   public RotationTarget forSegmentIndex(int segmentIndex) {
-    return new RotationTarget(waypointRelativePosition - segmentIndex, target, rotateFast);
+    return new RotationTarget(waypointRelativePosition - segmentIndex, target);
   }
 
   @Override
@@ -94,8 +68,7 @@ public class RotationTarget {
     if (o == null || getClass() != o.getClass()) return false;
     RotationTarget that = (RotationTarget) o;
     return Math.abs(that.waypointRelativePosition - waypointRelativePosition) < 1E-3
-        && Objects.equals(target, that.target)
-        && rotateFast == that.rotateFast;
+        && Objects.equals(target, that.target);
   }
 
   @Override
@@ -110,8 +83,6 @@ public class RotationTarget {
         + waypointRelativePosition
         + ", target="
         + target
-        + ", rotateFast="
-        + rotateFast
         + "}";
   }
 }

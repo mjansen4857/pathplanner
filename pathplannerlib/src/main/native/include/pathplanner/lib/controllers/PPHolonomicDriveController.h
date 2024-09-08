@@ -13,9 +13,9 @@
 #include <functional>
 #include <optional>
 #include "pathplanner/lib/util/GeometryUtil.h"
-#include "pathplanner/lib/util/PIDConstants.h"
+#include "pathplanner/lib/config/PIDConstants.h"
 #include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
-#include "pathplanner/lib/path/PathPlannerTrajectory.h"
+#include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
 
 namespace pathplanner {
@@ -49,8 +49,9 @@ public:
 
 	inline void reset(const frc::Pose2d &currentPose,
 			const frc::ChassisSpeeds &currentSpeeds) override {
-		m_rotationController.Reset(currentPose.Rotation().Radians(),
-				currentSpeeds.omega);
+		m_xController.Reset();
+		m_yController.Reset();
+		m_rotationController.Reset();
 	}
 
 	/**
@@ -71,7 +72,7 @@ public:
 	 */
 	frc::ChassisSpeeds calculateRobotRelativeSpeeds(
 			const frc::Pose2d &currentPose,
-			const PathPlannerTrajectory::State &referenceState) override;
+			const PathPlannerTrajectoryState &referenceState) override;
 
 	/**
 	 * Is this controller for holonomic drivetrains? Used to handle some differences in functionality
@@ -100,9 +101,7 @@ private:
 
 	frc::PIDController m_xController;
 	frc::PIDController m_yController;
-	frc::ProfiledPIDController<units::radians> m_rotationController;
-	units::meters_per_second_t m_maxModuleSpeed;
-	rpsPerMps_t m_mpsToRps;
+	frc::PIDController m_rotationController;
 
 	frc::Translation2d m_translationError;
 	bool m_enabled = true;

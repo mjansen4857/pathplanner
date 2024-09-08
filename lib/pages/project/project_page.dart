@@ -83,6 +83,8 @@ class _ProjectPageState extends State<ProjectPage> {
   late int _autosGridCount;
   DirectoryWatcher? _chorWatcher;
   StreamSubscription<WatchEvent>? _chorWatcherSub;
+  String _pathSearchQuery = '';
+  String _autoSearchQuery = '';
 
   bool _loading = true;
 
@@ -520,14 +522,45 @@ class _ProjectPageState extends State<ProjectPage> {
             children: [
               Row(
                 children: [
+                  const SizedBox(width: 8),
                   Padding(
                     padding: const EdgeInsets.only(left: 4.0),
                     child: Text(
                       _pathFolder ?? 'Paths',
-                      style: const TextStyle(fontSize: 32),
+                      style: const TextStyle(
+                          fontSize: 32, fontWeight: FontWeight.w400),
                     ),
                   ),
-                  Expanded(child: Container()),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: SizedBox(
+                        height: 40,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintStyle: const TextStyle(
+                                fontSize: 17, color: Colors.grey),
+                            hintText: 'Search paths...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 0, horizontal: 16),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _pathSearchQuery = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 15,
+                  ),
                   ConditionalWidget(
                     condition: _pathFolder == null,
                     falseChild: Tooltip(
@@ -585,7 +618,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     trueChild: Tooltip(
                       message: 'Add new path folder',
                       waitDuration: const Duration(seconds: 1),
-                      child: IconButton(
+                      child: IconButton.filledTonal(
                         onPressed: () {
                           String folderName = 'New Folder';
                           while (_pathFolders.contains(folderName)) {
@@ -604,11 +637,11 @@ class _ProjectPageState extends State<ProjectPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 8),
                   Tooltip(
                     message: 'Add new path',
                     waitDuration: const Duration(seconds: 1),
-                    child: IconButton(
+                    child: IconButton.filled(
                       onPressed: () {
                         List<String> pathNames = [];
                         for (PathPlannerPath path in _paths) {
@@ -887,7 +920,11 @@ class _ProjectPageState extends State<ProjectPage> {
                       shrinkWrap: true,
                       children: [
                         for (int i = 0; i < _paths.length; i++)
-                          if (_paths[i].folder == _pathFolder)
+                          if (_paths[i].folder == _pathFolder &&
+                              _paths[i]
+                                  .name
+                                  .toLowerCase()
+                                  .contains(_pathSearchQuery.toLowerCase()))
                             _buildPathCard(i, context),
                       ],
                     ),
@@ -1106,14 +1143,43 @@ class _ProjectPageState extends State<ProjectPage> {
             children: [
               Row(
                 children: [
+                  const SizedBox(width: 8),
                   Padding(
                     padding: const EdgeInsets.only(left: 4.0),
                     child: Text(
                       _autoFolder ?? 'Autos',
-                      style: const TextStyle(fontSize: 32),
+                      style: const TextStyle(
+                          fontSize: 32, fontWeight: FontWeight.w400),
                     ),
                   ),
-                  Expanded(child: Container()),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: SizedBox(
+                        height: 40,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintStyle: const TextStyle(
+                                fontSize: 17, color: Colors.grey),
+                            hintText: 'Search autos...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 0, horizontal: 16),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _autoSearchQuery = value;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
                   ConditionalWidget(
                     condition: _autoFolder == null,
                     falseChild: Tooltip(
@@ -1171,7 +1237,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     trueChild: Tooltip(
                       message: 'Add new auto folder',
                       waitDuration: const Duration(seconds: 1),
-                      child: IconButton(
+                      child: IconButton.filledTonal(
                         onPressed: () {
                           String folderName = 'New Folder';
                           while (_autoFolders.contains(folderName)) {
@@ -1190,11 +1256,11 @@ class _ProjectPageState extends State<ProjectPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 8),
                   Tooltip(
                     message: 'Add new auto',
                     waitDuration: const Duration(seconds: 1),
-                    child: IconButton(
+                    child: IconButton.filled(
                       key: _addAutoKey,
                       onPressed: () {
                         if (_choreoPaths.isNotEmpty) {
@@ -1447,7 +1513,11 @@ class _ProjectPageState extends State<ProjectPage> {
                       shrinkWrap: true,
                       children: [
                         for (int i = 0; i < _autos.length; i++)
-                          if (_autos[i].folder == _autoFolder)
+                          if (_autos[i].folder == _autoFolder &&
+                              _autos[i]
+                                  .name
+                                  .toLowerCase()
+                                  .contains(_autoSearchQuery.toLowerCase()))
                             _buildAutoCard(i, context),
                       ],
                     ),

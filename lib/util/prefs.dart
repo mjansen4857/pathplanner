@@ -24,8 +24,16 @@ class PrefsKeys {
   static const String defaultMaxAccel = 'defaultMaxAccel';
   static const String defaultMaxAngVel = 'defaultMaxAngVel';
   static const String defaultMaxAngAccel = 'defaultMaxAngAccel';
-  static const String maxModuleSpeed = 'maxModuleSpeed';
   static const String seen2024Warning = 'seen2024Warning';
+  static const String robotMass = 'robotMass';
+  static const String robotMOI = 'robotMOI';
+  static const String robotWheelbase = 'robotWheelbase';
+  static const String robotTrackwidth = 'robotTrackwidth';
+  static const String driveWheelRadius = 'driveWheelRadius';
+  static const String driveGearing = 'driveGearing';
+  static const String maxDriveRPM = 'maxDriveRPM';
+  static const String torqueCurve = 'driveMotor';
+  static const String wheelCOF = 'wheelCOF';
   static const String showRobotDetails = 'showRobotDetails';
   static const String showGrid = 'showGrid';
 }
@@ -54,7 +62,15 @@ class Defaults {
   static const double defaultMaxAccel = 3.0;
   static const double defaultMaxAngVel = 540.0;
   static const double defaultMaxAngAccel = 720.0;
-  static const double maxModuleSpeed = 4.5;
+  static const double robotMass = 74.088;
+  static const double robotMOI = 6.883;
+  static const double robotWheelbase = 0.546;
+  static const double robotTrackwidth = 0.546;
+  static const double driveWheelRadius = 0.048;
+  static const double driveGearing = 5.143;
+  static const double maxDriveRPM = 5650.0;
+  static const String torqueCurve = 'KRAKEN_60A';
+  static const double wheelCOF = 1.2;
   static const bool showRobotDetails = false;
   static const bool showGrid = false;
 }

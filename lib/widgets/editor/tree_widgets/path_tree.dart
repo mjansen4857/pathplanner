@@ -6,7 +6,6 @@ import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dar
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
-import 'package:pathplanner/widgets/editor/tree_widgets/preview_starting_state_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/editor/runtime_display.dart';
@@ -105,7 +104,7 @@ class _PathTreeState extends State<PathTree> {
                 _buildGlobalConstraintsTree(),
                 _buildConstraintZonesTree(),
                 const Divider(),
-                _buildPreviewStartingStateTree(),
+                // _buildPreviewStartingStateTree(), // TODO: CHECK THIS
                 const EditorSettingsTree(),
               ],
             ),
@@ -133,14 +132,6 @@ class _PathTreeState extends State<PathTree> {
               ),
             ),
           ],
-          const SizedBox(width: 16),
-          Tooltip(
-            message:
-                'In ${widget.holonomicMode ? 'Holonomic Mode.' : 'Non-Holonomic Mode. Designed for tank drive.  '}',
-            child: _buildInfoCard(
-              value: widget.holonomicMode ? 'HOLO' : 'NON-HOLO',
-            ),
-          ),
           const SizedBox(width: 16),
           _buildRuntimeDisplay(),
           const SizedBox(width: 16),
@@ -202,7 +193,7 @@ class _PathTreeState extends State<PathTree> {
       path: widget.path,
       onPathChanged: widget.onPathChanged,
       undoStack: widget.undoStack,
-      holonomicMode: widget.holonomicMode,
+      //holonomicMode: widget.holonomicMode, TODO: CHECK THIS
       defaultConstraints: widget.defaultConstraints,
     );
   }
@@ -251,10 +242,11 @@ class _PathTreeState extends State<PathTree> {
       onZoneSelected: widget.onZoneSelected,
       initiallySelectedZone: widget.initiallySelectedZone,
       undoStack: widget.undoStack,
-      holonomicMode: widget.holonomicMode,
+      //holonomicMode: widget.holonomicMode, TODO: CHECK THIS
     );
   }
 
+/*
   Widget _buildPreviewStartingStateTree() {
     return PreviewStartingStateTree(
       path: widget.path,
@@ -263,6 +255,7 @@ class _PathTreeState extends State<PathTree> {
       onPathChanged: widget.onPathChanged,
     );
   }
+  */
 
   Widget _buildReversedButton() {
     return Tooltip(

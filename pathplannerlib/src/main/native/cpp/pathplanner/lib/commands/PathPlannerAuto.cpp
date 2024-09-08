@@ -16,7 +16,7 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 	}
 
 	m_autoCommand = AutoBuilder::buildAuto(autoName).Unwrap();
-	m_requirements = m_autoCommand->GetRequirements();
+	AddRequirements(m_autoCommand->GetRequirements());
 	SetName(autoName);
 
 	m_instances++;

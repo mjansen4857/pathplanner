@@ -25,7 +25,8 @@ import 'package:pathplanner/widgets/update_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:window_manager/window_manager.dart';
+
+/* EDIT THIS CODE TO USE OLD STYLE OF SIDEBAR */
 
 class HomePage extends StatefulWidget {
   final String appVersion;
@@ -60,27 +61,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final List<FieldImage> _fieldImages = FieldImage.offialFields();
   FieldImage? _fieldImage;
   late AnimationController _animController;
+  late Animation<double> _scaleAnimation;
   final GlobalKey _key = GlobalKey();
-  static const _settingsDir = '.pathplanner/settings.json';
+  static const _settingsDir = 'settings.json';
   int _selectedPage = 0;
   final PageController _pageController = PageController();
   late bool _hotReload;
-  bool _isSidebarOpen = true;
 
   FileSystem get fs => widget.fs;
-
-  late AnimationController _sidebarAnimationController;
-
-  void _toggleSidebar() {
-    setState(() {
-      _isSidebarOpen = !_isSidebarOpen;
-      if (_isSidebarOpen) {
-        _sidebarAnimationController.forward();
-      } else {
-        _sidebarAnimationController.reverse();
-      }
-    });
-  }
 
   @override
   void initState() {
@@ -88,15 +76,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _animController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 250));
-
-    _sidebarAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-
-    if (_isSidebarOpen) {
-      _sidebarAnimationController.value = 1.0;
-    }
+    _scaleAnimation =
+        CurvedAnimation(parent: _animController, curve: Curves.ease);
 
     _loadFieldImages().then((_) async {
       String? projectDir = widget.prefs.getString(PrefsKeys.currentProjectDir);
@@ -251,8 +232,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
     _pageController.dispose();
 
-    _sidebarAnimationController.dispose();
-
     super.dispose();
   }
 
@@ -260,111 +239,168 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        leading: IconButton(
-          icon: Icon(_isSidebarOpen ? Icons.menu_open : Icons.menu),
-          onPressed: _toggleSidebar,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: 'Menu',
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            );
+          },
         ),
         titleWidget: Text(
-          _getPageTitle(),
+          _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),
           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
         ),
       ),
-      body: Row(
+      drawer: _projectDir == null ? null : _buildDrawer(context),
+      body: ScaleTransition(
+        scale: _scaleAnimation,
+        child: _buildBody(context),
+      ),
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return Stack(
+      children: [
+        SizedBox(
+          width: 260,
+          child: NavigationDrawer(
+            selectedIndex: _selectedPage,
+            onDestinationSelected: _handleDestinationSelected,
+            backgroundColor: colorScheme.surface,
+            surfaceTintColor: colorScheme.surfaceTint,
+            children: [
+              _buildDrawerHeader(colorScheme),
+              ..._buildNavigationDestinations(),
+            ],
+          ),
+        ),
+        _buildBottomButtons(colorScheme),
+      ],
+    );
+  }
+
+  Widget _buildDrawerHeader(ColorScheme colorScheme) {
+    return DrawerHeader(
+      child: Column(
         children: [
-          _buildSidebar(),
           Expanded(
-            child: _buildMainContent(),
+            child: Center(
+              child: Text(
+                basename(_projectDir!.path),
+                style: const TextStyle(fontSize: 20),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'v${widget.appVersion}',
+                style: TextStyle(color: colorScheme.onSurface),
+              ),
+              IconButton(
+                icon: const Icon(Icons.open_in_new_rounded, size: 20),
+                tooltip: 'Open Project',
+                onPressed: () => _openProjectDialog(this.context),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSidebar() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      width: _isSidebarOpen ? 200 : 0,
-      child: OverflowBox(
-        minWidth: 0,
-        maxWidth: 200,
-        alignment: Alignment.topLeft,
-        child: Container(
-          width: 200,
-          color: Theme.of(this.context).colorScheme.surface,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(-1, 0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: _sidebarAnimationController,
-              curve: Curves.easeInOut,
-            )),
-            child: Column(
-              children: [
-                _buildProjectHeader(),
-                Expanded(child: _buildNavigationList()),
-              ],
+  List<Widget> _buildNavigationDestinations() {
+    return [
+      const NavigationDrawerDestination(
+        icon: Icon(Icons.folder_rounded),
+        label: Text('Project Browser'),
+      ),
+      const SizedBox(height: 5),
+      NavigationDrawerDestination(
+        icon: Icon(
+          _getConnectedIcon(widget.telemetry.isConnected),
+          color: _getConnectedIconColor(widget.telemetry.isConnected),
+        ),
+        label: const Text('Telemetry'),
+      ),
+      const SizedBox(height: 5),
+      const NavigationDrawerDestination(
+        icon: Icon(Icons.grid_on_rounded),
+        label: Text('Navigation Grid'),
+      ),
+    ];
+  }
+
+  Widget _buildBottomButtons(ColorScheme colorScheme) {
+    return Align(
+      alignment: Alignment.bottomLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12.0, left: 8.0),
+        child: Row(
+          children: [
+            _buildButton(
+              onPressed: () => launchUrl(Uri.parse('https://pathplanner.dev')),
+              icon: const Icon(Icons.description),
+              label: 'Docs',
+              backgroundColor: colorScheme.primaryContainer,
+              foregroundColor: colorScheme.onPrimaryContainer,
             ),
-          ),
+            const SizedBox(width: 6),
+            _buildButton(
+              onPressed: () {
+                Navigator.pop(this.context);
+                _showSettingsDialog();
+              },
+              icon: const Icon(Icons.settings),
+              label: 'Settings',
+              backgroundColor: colorScheme.surfaceContainer,
+              foregroundColor: colorScheme.onSurface,
+              surfaceTintColor: colorScheme.surfaceTint,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildProjectHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(15),
-      child: Text(
-        _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-        textAlign: TextAlign.center,
+  Widget _buildButton({
+    required VoidCallback onPressed,
+    required Widget icon,
+    required String label,
+    required Color backgroundColor,
+    required Color foregroundColor,
+    Color? surfaceTintColor,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: icon,
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: ElevatedButton.styleFrom(
+        fixedSize: const Size(120, 50),
+        backgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
+        surfaceTintColor: surfaceTintColor,
+        elevation: 4.0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
 
-  Widget _buildNavigationList() {
-    return ListView(
-      children: [
-        const Divider(),
-        _buildNavItem(0, 'Project Browser', Icons.folder_rounded),
-        StreamBuilder<bool>(
-          stream: widget.telemetry.connectionStatusStream(),
-          builder: (context, snapshot) {
-            final isConnected = snapshot.data ?? false;
-            return _buildNavItem(
-              1,
-              'Telemetry',
-              _getConnectedIcon(isConnected),
-              iconColor: _getConnectedIconColor(isConnected),
-              tooltip:
-                  isConnected ? 'Connected to Robot' : 'Not Connected to Robot',
-            );
-          },
-        ),
-        _buildNavItem(2, 'Navigation Grid', Icons.grid_on_rounded),
-        const Divider(),
-        _buildNavItem(
-          -1,
-          'Switch Project',
-          Icons.swap_horiz,
-          onTap: () => _openProjectDialog(this.context),
-        ),
-        _buildNavItem(
-          -2,
-          'Documentation',
-          Icons.description,
-          onTap: () => launchUrl(Uri.parse('https://pathplanner.dev')),
-        ),
-        _buildNavItem(
-          -3,
-          'Settings',
-          Icons.settings,
-          onTap: () => _showSettingsDialog(),
-        ),
-      ],
-    );
+  void _handleDestinationSelected(int index) {
+    setState(() {
+      _selectedPage = index;
+      _pageController.animateToPage(
+        _selectedPage,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+      );
+    });
+    Navigator.pop(this.context);
   }
 
   IconData _getConnectedIcon(bool isConnected) {
@@ -375,138 +411,100 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return isConnected ? Colors.green : Colors.red;
   }
 
-  Widget _buildNavItem(
-    int index,
-    String title,
-    IconData icon, {
-    Color? iconColor,
-    String? tooltip,
-    VoidCallback? onTap,
-  }) {
-    Widget iconWidget = Icon(icon, color: iconColor);
-    if (tooltip != null) {
-      iconWidget = Tooltip(
-        message: tooltip,
-        child: iconWidget,
-      );
-    }
-
-    return ListTile(
-      leading: iconWidget,
-      title: Text(title),
-      selected: _selectedPage == index,
-      onTap: onTap ?? (index >= 0 ? () => _selectPage(index) : null),
-    );
-  }
-
-  Widget _buildMainContent() {
-    if (_projectDir == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return Stack(
-      children: [
-        PageView(
-          controller: _pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            ProjectPage(
-              key: ValueKey(_projectDir!.path.hashCode),
-              prefs: widget.prefs,
-              fieldImage: _fieldImage ?? FieldImage.defaultField,
-              pathplannerDirectory: _pathplannerDir,
-              choreoDirectory: _choreoDir,
-              fs: fs,
-              undoStack: widget.undoStack,
-              telemetry: widget.telemetry,
-              hotReload: _hotReload,
-              onFoldersChanged: () => _saveProjectSettingsToFile(_projectDir!),
-              simulatePath: true,
-              watchChorDir: true,
-            ),
-            TelemetryPage(
-              fieldImage: _fieldImage ?? FieldImage.defaultField,
-              telemetry: widget.telemetry,
-              prefs: widget.prefs,
-            ),
-            NavGridPage(
-              deployDirectory: _pathplannerDir,
-              fs: fs,
-              fieldImage: _fieldImage ?? FieldImage.defaultField,
-            ),
-          ],
-        ),
-        Positioned(
-          bottom: 8,
-          left: 8,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              UpdateCard(
-                currentVersion: widget.appVersion,
-                updateChecker: widget.updateChecker,
-              ),
-              const SizedBox(height: 8),
-              PPLibUpdateCard(
-                projectDir: _projectDir!,
-                fs: widget.fs,
-                updateChecker: widget.updateChecker,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _getPageTitle() {
-    switch (_selectedPage) {
-      case 0:
-        return 'Project Browser';
-      case 1:
-        return 'Telemetry';
-      case 2:
-        return 'Navigation Grid';
-      default:
-        return 'PathPlanner';
-    }
-  }
-
-  void _selectPage(int index) {
-    setState(() {
-      _selectedPage = index;
-      _pageController.animateToPage(
-        _selectedPage,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    });
-  }
-
   void _showSettingsDialog() {
     showDialog(
       context: this.context,
+      barrierDismissible: true, // Allow dismissing by tapping outside
       builder: (BuildContext context) {
-        return SettingsDialog(
-          prefs: widget.prefs,
-          onTeamColorChanged: widget.onTeamColorChanged,
-          fieldImages: _fieldImages,
-          selectedField: _fieldImage ?? FieldImage.defaultField,
-          onFieldSelected: _onFieldSelected,
-          onSettingsChanged: _onProjectSettingsChanged,
+        return Theme(
+          data: Theme.of(context), // Use the current theme
+          child: SettingsDialog(
+            prefs: widget.prefs,
+            onTeamColorChanged: widget.onTeamColorChanged,
+            fieldImages: _fieldImages,
+            selectedField: _fieldImage ?? FieldImage.defaultField,
+            onFieldSelected: (FieldImage image) {
+              setState(() {
+                _fieldImage = image;
+                if (!_fieldImages.contains(image)) {
+                  _fieldImages.add(image);
+                }
+                widget.prefs.setString(PrefsKeys.fieldImage, image.name);
+              });
+            },
+            onSettingsChanged: _onProjectSettingsChanged,
+          ),
         );
       },
-    );
+    ).then((_) {
+      // Ensure the app rebuilds correctly after dialog is closed
+      setState(() {});
+    });
   }
 
-  void _onFieldSelected(FieldImage image) {
-    setState(() {
-      _fieldImage = image;
-      if (!_fieldImages.contains(image)) {
-        _fieldImages.add(image);
-      }
-      widget.prefs.setString(PrefsKeys.fieldImage, image.name);
-    });
+  Widget _buildBody(BuildContext context) {
+    if (_projectDir != null) {
+      return Stack(
+        children: [
+          Center(
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                ProjectPage(
+                  key: ValueKey(_projectDir!.path.hashCode),
+                  prefs: widget.prefs,
+                  fieldImage: _fieldImage ?? FieldImage.defaultField,
+                  pathplannerDirectory: _pathplannerDir,
+                  choreoDirectory: _choreoDir,
+                  fs: fs,
+                  undoStack: widget.undoStack,
+                  telemetry: widget.telemetry,
+                  hotReload: _hotReload,
+                  onFoldersChanged: () =>
+                      _saveProjectSettingsToFile(_projectDir!),
+                  simulatePath: true,
+                  watchChorDir: true,
+                ),
+                TelemetryPage(
+                  fieldImage: _fieldImage ?? FieldImage.defaultField,
+                  telemetry: widget.telemetry,
+                  prefs: widget.prefs,
+                ),
+                NavGridPage(
+                  deployDirectory: _pathplannerDir,
+                  fs: fs,
+                  fieldImage: _fieldImage ?? FieldImage.defaultField,
+                ),
+              ],
+            ),
+          ),
+          Align(
+            alignment: FractionalOffset.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  UpdateCard(
+                    currentVersion: widget.appVersion,
+                    updateChecker: widget.updateChecker,
+                  ),
+                  PPLibUpdateCard(
+                    projectDir: _projectDir!,
+                    fs: widget.fs,
+                    updateChecker: widget.updateChecker,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      return Container();
+    }
   }
 
   void _onProjectSettingsChanged() {
@@ -526,7 +524,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadProjectSettingsFromFile(Directory projectDir) async {
-    File settingsFile = fs.file(join(projectDir.path, _settingsDir));
+    File settingsFile = fs.file(join(_pathplannerDir.path, _settingsDir));
 
     var json = {};
 
@@ -572,12 +570,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         PrefsKeys.defaultMaxAngAccel,
         json[PrefsKeys.defaultMaxAngAccel]?.toDouble() ??
             Defaults.defaultMaxAngAccel);
-    widget.prefs.setDouble(PrefsKeys.maxModuleSpeed,
-        json[PrefsKeys.maxModuleSpeed]?.toDouble() ?? Defaults.maxModuleSpeed);
+    widget.prefs.setDouble(PrefsKeys.robotMass,
+        json[PrefsKeys.robotMass]?.toDouble() ?? Defaults.robotMass);
+    widget.prefs.setDouble(PrefsKeys.robotMOI,
+        json[PrefsKeys.robotMOI]?.toDouble() ?? Defaults.robotMOI);
+    widget.prefs.setDouble(PrefsKeys.robotWheelbase,
+        json[PrefsKeys.robotWheelbase]?.toDouble() ?? Defaults.robotWheelbase);
+    widget.prefs.setDouble(
+        PrefsKeys.robotTrackwidth,
+        json[PrefsKeys.robotTrackwidth]?.toDouble() ??
+            Defaults.robotTrackwidth);
+    widget.prefs.setDouble(
+        PrefsKeys.driveWheelRadius,
+        json[PrefsKeys.driveWheelRadius]?.toDouble() ??
+            Defaults.driveWheelRadius);
+    widget.prefs.setDouble(PrefsKeys.driveGearing,
+        json[PrefsKeys.driveGearing]?.toDouble() ?? Defaults.driveGearing);
+    widget.prefs.setDouble(PrefsKeys.maxDriveRPM,
+        json[PrefsKeys.maxDriveRPM]?.toDouble() ?? Defaults.maxDriveRPM);
+    widget.prefs.setString(PrefsKeys.torqueCurve,
+        json[PrefsKeys.torqueCurve] ?? Defaults.torqueCurve);
+    widget.prefs.setDouble(PrefsKeys.wheelCOF,
+        json[PrefsKeys.wheelCOF]?.toDouble() ?? Defaults.wheelCOF);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
-    File settingsFile = fs.file(join(projectDir.path, _settingsDir));
+    File settingsFile = fs.file(join(_pathplannerDir.path, _settingsDir));
 
     if (!settingsFile.existsSync()) {
       settingsFile.createSync(recursive: true);
@@ -610,9 +628,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.defaultMaxAngAccel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAccel,
-      PrefsKeys.maxModuleSpeed:
-          widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
-              Defaults.maxModuleSpeed,
+      PrefsKeys.robotMass:
+          widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
+      PrefsKeys.robotMOI:
+          widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
+      PrefsKeys.robotWheelbase:
+          widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
+              Defaults.robotWheelbase,
+      PrefsKeys.robotTrackwidth:
+          widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
+              Defaults.robotTrackwidth,
+      PrefsKeys.driveWheelRadius:
+          widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+              Defaults.driveWheelRadius,
+      PrefsKeys.driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
+          Defaults.driveGearing,
+      PrefsKeys.maxDriveRPM:
+          widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM,
+      PrefsKeys.torqueCurve:
+          widget.prefs.getString(PrefsKeys.torqueCurve) ?? Defaults.torqueCurve,
+      PrefsKeys.wheelCOF:
+          widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {
@@ -692,29 +728,5 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     for (FileSystemEntity e in fileEntities) {
       _fieldImages.add(FieldImage.custom(fs.file(e.path)));
     }
-  }
-}
-
-class _MoveWindowArea extends StatelessWidget {
-  final Widget? child;
-
-  const _MoveWindowArea({this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onPanStart: (details) {
-        windowManager.startDragging();
-      },
-      onDoubleTap: () async {
-        if (await windowManager.isMaximized()) {
-          windowManager.unmaximize();
-        } else {
-          windowManager.maximize();
-        }
-      },
-      child: child ?? Container(),
-    );
   }
 }

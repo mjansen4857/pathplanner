@@ -26,7 +26,9 @@ class GoalEndStateTree extends StatelessWidget {
         children: [
           const Text('Final State'),
           Expanded(child: Container()),
-          InfoCard(value: '${path.goalEndState.rotation.toStringAsFixed(2)}°'),
+          InfoCard(
+              value:
+                  '${path.goalEndState.rotation.toStringAsFixed(2)}° with ${path.goalEndState.velocity.toStringAsFixed(2)} M/S'),
         ],
       ),
       icon: const Icon(Icons.flag_circle_rounded),
@@ -77,24 +79,6 @@ class GoalEndStateTree extends StatelessWidget {
             ],
           ),
         ),
-        if (holonomicMode) const SizedBox(height: 12),
-        if (holonomicMode)
-          Row(
-            children: [
-              Checkbox(
-                value: path.goalEndState.rotateFast,
-                onChanged: (value) {
-                  _addChange(
-                      () => path.goalEndState.rotateFast = value ?? false);
-                },
-              ),
-              const SizedBox(width: 4),
-              const Text(
-                'Rotate as Fast as Possible',
-                style: TextStyle(fontSize: 15),
-              ),
-            ],
-          ),
       ],
     );
   }

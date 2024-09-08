@@ -1,18 +1,18 @@
 from commands2.functionalcommand import FunctionalCommand
 import commands2.cmd as cmd
 from .path import PathPlannerPath, PathConstraints
-from typing import Callable, Tuple, List
+from typing import Callable, List
 from wpimath.geometry import Pose2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds
-from .commands import FollowPathHolonomic, FollowPathLTV, PathfindLTV, \
-    PathfindHolonomic, PathfindThenFollowPathHolonomic, PathfindThenFollowPathLTV
+from .commands import FollowPathCommand, PathfindingCommand, PathfindThenFollowPath
 from .geometry_util import flipFieldPose
+from .controller import PathFollowingController
 import os
 from wpilib import getDeployDirectory, reportError, reportWarning, SendableChooser
 import json
 from commands2.command import Command
 from commands2.subsystem import Subsystem
-from .config import HolonomicPathFollowerConfig, ReplanningConfig
+from .config import RobotConfig, ReplanningConfig
 from hal import report, tResourceType
 
 
@@ -153,100 +153,40 @@ class AutoBuilder:
     _shouldFlipPath: Callable[[], bool] = None
 
     _pathfindingConfigured: bool = False
-    _pathfindToPoseCommandBuilder: Callable[[Pose2d, PathConstraints, float, float], Command] = None
-    _pathfindThenFollowPathCommandBuilder: Callable[[PathPlannerPath, PathConstraints, float], Command] = None
+    _pathfindToPoseCommandBuilder: Callable[[Pose2d, PathConstraints, float], Command] = None
+    _pathfindThenFollowPathCommandBuilder: Callable[[PathPlannerPath, PathConstraints], Command] = None
 
     @staticmethod
-    def configureHolonomic(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
-                           robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
-                           robot_relative_output: Callable[[ChassisSpeeds], None],
-                           config: HolonomicPathFollowerConfig, should_flip_path: Callable[[], bool],
-                           drive_subsystem: Subsystem) -> None:
+    def configure(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
+                  robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
+                  robot_relative_output: Callable[[ChassisSpeeds], None],
+                  controller: PathFollowingController,
+                  robot_config: RobotConfig,
+                  replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool],
+                  drive_subsystem: Subsystem) -> None:
         """
-        Configures the AutoBuilder for a holonomic drivetrain.
+        Configures the AutoBuilder for using PathPlanner's built-in commands.
 
         :param pose_supplier: a supplier for the robot's current pose
         :param reset_pose: a consumer for resetting the robot's pose
         :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
         :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
-        :param config: HolonomicPathFollowerConfig for configuring the path following commands
+        :param controller Path following controller that will be used to follow paths
+        :param robot_config The robot configuration
+        :param replanning_config Path replanning configuration
         :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.
         :param drive_subsystem: the subsystem for the robot's drive
         """
         if AutoBuilder._configured:
             reportError('AutoBuilder has already been configured. This is likely in error.', True)
 
-        AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathHolonomic(
+        AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathCommand(
             path,
             pose_supplier,
             robot_relative_speeds_supplier,
             robot_relative_output,
-            config,
-            should_flip_path,
-            drive_subsystem
-        )
-        AutoBuilder._getPose = pose_supplier
-        AutoBuilder._resetPose = reset_pose
-        AutoBuilder._configured = True
-        AutoBuilder._shouldFlipPath = should_flip_path
-
-        AutoBuilder._pathfindToPoseCommandBuilder = \
-            lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindHolonomic(
-                constraints,
-                pose_supplier,
-                robot_relative_speeds_supplier,
-                robot_relative_output,
-                config,
-                lambda: False,
-                drive_subsystem,
-                rotation_delay_distance=rotation_delay_distance,
-                target_pose=pose,
-                goal_end_vel=goal_end_vel
-            )
-        AutoBuilder._pathfindThenFollowPathCommandBuilder = \
-            lambda path, constraints, rotation_delay_distance: PathfindThenFollowPathHolonomic(
-                path,
-                constraints,
-                pose_supplier,
-                robot_relative_speeds_supplier,
-                robot_relative_output,
-                config,
-                should_flip_path,
-                drive_subsystem,
-                rotation_delay_distance=rotation_delay_distance
-            )
-        AutoBuilder._pathfindingConfigured = True
-
-    @staticmethod
-    def configureLTV(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
-                     robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
-                     robot_relative_output: Callable[[ChassisSpeeds], None],
-                     qelems: Tuple[float, float, float], relems: Tuple[float, float], dt: float,
-                     replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool],
-                     drive_subsystem: Subsystem) -> None:
-        """
-        Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path follower.
-
-        :param pose_supplier: a supplier for the robot's current pose
-        :param reset_pose: a consumer for resetting the robot's pose
-        :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
-        :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
-        :param qelems: The maximum desired error tolerance for each state
-        :param relems: The maximum desired control effort for each input
-        :param dt: The amount of time between each robot control loop, default is 0.02s
-        :param replanning_config: Path replanning configuration
-        :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.
-        :param drive_subsystem: the subsystem for the robot's drive
-        """
-        if AutoBuilder._configured:
-            reportError('AutoBuilder has already been configured. This is likely in error.', True)
-
-        AutoBuilder._pathFollowingCommandBuilder = lambda path: FollowPathLTV(
-            path,
-            pose_supplier,
-            robot_relative_speeds_supplier,
-            robot_relative_output,
-            qelems, relems, dt,
+            controller,
+            robot_config,
             replanning_config,
             should_flip_path,
             drive_subsystem
@@ -257,26 +197,28 @@ class AutoBuilder:
         AutoBuilder._shouldFlipPath = should_flip_path
 
         AutoBuilder._pathfindToPoseCommandBuilder = \
-            lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindLTV(
+            lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindingCommand(
                 constraints,
                 pose_supplier,
                 robot_relative_speeds_supplier,
                 robot_relative_output,
-                qelems, relems, dt,
+                controller,
+                robot_config,
                 replanning_config,
                 lambda: False,
                 drive_subsystem,
-                target_position=pose.translation(),
+                target_pose=pose,
                 goal_end_vel=goal_end_vel
             )
         AutoBuilder._pathfindThenFollowPathCommandBuilder = \
-            lambda path, constraints, rotation_delay_distance: PathfindThenFollowPathLTV(
+            lambda path, constraints, rotation_delay_distance: PathfindThenFollowPath(
                 path,
                 constraints,
                 pose_supplier,
                 robot_relative_speeds_supplier,
                 robot_relative_output,
-                qelems, relems, dt,
+                controller,
+                robot_config,
                 replanning_config,
                 should_flip_path,
                 drive_subsystem
@@ -285,13 +227,12 @@ class AutoBuilder:
 
     @staticmethod
     def configureCustom(path_following_command_builder: Callable[[PathPlannerPath], Command],
-                        pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
+                        reset_pose: Callable[[Pose2d], None],
                         should_flip_pose: Callable[[], bool] = lambda: False) -> None:
         """
         Configures the AutoBuilder with custom path following command builder. Building pathfinding commands is not supported if using a custom command builder.
 
         :param path_following_command_builder: a function that builds a command to follow a given path
-        :param pose_supplier: a supplier for the robot's current pose
         :param reset_pose: a consumer for resetting the robot's pose
         :param should_flip_pose: Supplier that determines if the starting pose should be flipped to the other side of the field. This will maintain a global blue alliance origin. NOTE: paths will not be flipped when configured with a custom path following command. Flipping the paths must be handled in your command.
         """
@@ -299,7 +240,6 @@ class AutoBuilder:
             reportError('AutoBuilder has already been configured. This is likely in error.', True)
 
         AutoBuilder._pathFollowingCommandBuilder = path_following_command_builder
-        AutoBuilder._getPose = pose_supplier
         AutoBuilder._resetPose = reset_pose
         AutoBuilder._configured = True
         AutoBuilder._shouldFlipPath = should_flip_pose
@@ -338,8 +278,7 @@ class AutoBuilder:
         return AutoBuilder._pathFollowingCommandBuilder(path)
 
     @staticmethod
-    def pathfindToPose(pose: Pose2d, constraints: PathConstraints, goal_end_vel: float = 0.0,
-                       rotation_delay_distance: float = 0.0) -> Command:
+    def pathfindToPose(pose: Pose2d, constraints: PathConstraints, goal_end_vel: float = 0.0) -> Command:
         """
         Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose rotation and
         rotation delay distance will have no effect.
@@ -347,18 +286,15 @@ class AutoBuilder:
         :param pose: The pose to pathfind to
         :param constraints: The constraints to use while pathfinding
         :param goal_end_vel: The goal end velocity of the robot when reaching the target pose
-        :param rotation_delay_distance: The distance the robot should move from the start position before attempting
-                to rotate to the final rotation
         :return: A command to pathfind to a given pose
         """
         if not AutoBuilder.isPathfindingConfigured():
             raise RuntimeError('Auto builder was used to build a pathfinding command before being configured')
 
-        return AutoBuilder._pathfindToPoseCommandBuilder(pose, constraints, goal_end_vel, rotation_delay_distance)
+        return AutoBuilder._pathfindToPoseCommandBuilder(pose, constraints, goal_end_vel)
 
     @staticmethod
-    def pathfindToPoseFlipped(pose: Pose2d, constraints: PathConstraints, goal_end_vel: float = 0.0,
-                              rotation_delay_distance: float = 0.0) -> Command:
+    def pathfindToPoseFlipped(pose: Pose2d, constraints: PathConstraints, goal_end_vel: float = 0.0) -> Command:
         """
         Build a command to pathfind to a given pose that will be flipped based on the value of the path flipping
         supplier when this command is run. If not using a holonomic drivetrain, the pose rotation and rotation delay
@@ -367,32 +303,27 @@ class AutoBuilder:
         :param pose: The pose to pathfind to. This will be flipped if the path flipping supplier returns true
         :param constraints: The constraints to use while pathfinding
         :param goal_end_vel: The goal end velocity of the robot when reaching the target pose
-        :param rotation_delay_distance: The distance the robot should move from the start position before attempting
-                to rotate to the final rotation
         :return: A command to pathfind to a given pose
         """
         return cmd.either(
-            AutoBuilder.pathfindToPose(flipFieldPose(pose), constraints, goal_end_vel, rotation_delay_distance),
-            AutoBuilder.pathfindToPose(pose, constraints, goal_end_vel, rotation_delay_distance),
+            AutoBuilder.pathfindToPose(flipFieldPose(pose), constraints, goal_end_vel),
+            AutoBuilder.pathfindToPose(pose, constraints, goal_end_vel),
             AutoBuilder._shouldFlipPath
         )
 
     @staticmethod
-    def pathfindThenFollowPath(goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
-                               rotation_delay_distance: float = 0.0) -> Command:
+    def pathfindThenFollowPath(goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints) -> Command:
         """
         Build a command to pathfind to a given path, then follow that path. If not using a holonomic drivetrain, the pose rotation delay distance will have no effect.
 
         :param goal_path: The path to pathfind to, then follow
         :param pathfinding_constraints: The constraints to use while pathfinding
-        :param rotation_delay_distance: The distance the robot should move from the start position before attempting to rotate to the final rotation
         :return: A command to pathfind to a given path, then follow the path
         """
         if not AutoBuilder.isPathfindingConfigured():
             raise RuntimeError('Auto builder was used to build a pathfinding command before being configured')
 
-        return AutoBuilder._pathfindThenFollowPathCommandBuilder(goal_path, pathfinding_constraints,
-                                                                 rotation_delay_distance)
+        return AutoBuilder._pathfindThenFollowPathCommandBuilder(goal_path, pathfinding_constraints)
 
     @staticmethod
     def getStartingPoseFromJson(starting_pose_json: dict) -> Pose2d:

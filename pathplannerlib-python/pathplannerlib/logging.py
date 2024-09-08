@@ -1,5 +1,5 @@
 from typing import Callable, List, Union
-from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.geometry import Pose2d
 from .path import PathPlannerPath
 
 

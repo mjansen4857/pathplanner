@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
 from wpimath import inputModulus
-from .geometry_util import floatLerp, translationLerp, rotationLerp, poseLerp
+from .geometry_util import floatLerp, translationLerp, rotationLerp, poseLerp, calculateRadius
 from .config import RobotConfig
 from typing import List, Tuple, Union, TYPE_CHECKING
 from commands2 import Command
@@ -308,8 +308,8 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
         # to calculate how much to interpolate since the distribution of path points
         # is not the same along the whole segment
         t = (path.getPoint(i).distanceAlongPath - path.getPoint(prevRotationTargetIdx).distanceAlongPath) / (
-                    path.getPoint(nextRotationTargetIdx).distanceAlongPath - path.getPoint(
-                prevRotationTargetIdx).distanceAlongPath)
+                path.getPoint(nextRotationTargetIdx).distanceAlongPath - path.getPoint(
+            prevRotationTargetIdx).distanceAlongPath)
         holonomicRot = _cosineInterpolate(prevRotationTargetRot, nextRotationTargetRot, t)
 
         robotPose = Pose2d(p.position, holonomicRot)
@@ -347,7 +347,7 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
         for m in range(config.numModules):
             if i != len(states) - 1:
                 states[i].moduleStates[m].fieldAngle = (
-                            states[i + 1].moduleStates[m].fieldPos - states[i].moduleStates[m].fieldPos).angle()
+                        states[i + 1].moduleStates[m].fieldPos - states[i].moduleStates[m].fieldPos).angle()
                 states[i].moduleStates[m].angle = states[i].moduleStates[m].fieldAngle - states[i].pose.rotation()
             else:
                 states[i].moduleStates[m].fieldAngle = states[i - 1].moduleStates[m].fieldAngle
@@ -355,11 +355,174 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
 
 
 def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotConfig):
-    pass  # TODO
+    for i in range(1, len(states) - 1):
+        prevState = states[i - 1]
+        state = states[i]
+        nextState = states[i + 1]
+
+        # Calculate the linear force vector and torque acting on the whole robot
+        linearForceVec = Translation2d()
+        totalTorque = 0.0
+        for m in range(config.numModules):
+            lastVel = prevState.moduleStates[m].speed
+            # This pass will only be handling acceleration of the robot, meaning that the "torque"
+            # acting on the module due to friction and other losses will be fighting the motor
+            availableTorque = config.moduleConfig.driveMotorTorqueCurve.get(
+                lastVel / config.moduleConfig.rpmToMps) - config.moduleConfig.torqueLoss
+            wheelTorque = availableTorque * config.moduleConfig.driveGearing
+            forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters
+            if not config.isHolonomic:
+                # Two motors per module if differential
+                forceAtCarpet *= 2
+            forceVec = Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle)
+
+            # Add the module force vector to the robot force vector
+            linearForceVec = linearForceVec + forceVec
+
+            # Calculate the torque this module will apply to the robot
+            angleToModule = (state.moduleStates[m].fieldPos - state.pose.translation()).angle()
+            theta = forceVec.angle() - angleToModule
+            totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.sin()
+
+        # Use the robot accelerations to calculate how each module should accelerate
+        # Even though kinematics is usually used for velocities, it can still
+        # convert chassis accelerations to module accelerations
+        maxAngAccel = state.constraints.maxAngularAccelerationRpsSq
+        angularAccel = max(min(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
+
+        accelVec = linearForceVec / config.massKG
+        maxAccel = state.constraints.maxAccelerationMpsSq
+        accel = accelVec.norm()
+        if accel > maxAccel:
+            accelVec = accelVec * (maxAccel / accel)
+
+        chassisAccel = ChassisSpeeds.fromFieldRelativeSpeeds(accelVec.x, accelVec.y, angularAccel,
+                                                             state.pose.rotation())
+        accelStates = _toSwerveModuleStates(config, chassisAccel)
+        for m in range(config.numModules):
+            moduleAcceleration = accelStates[m].speed
+
+            # Calculate the module velocity at the current state
+            # vf^2 = v0^2 + 2ad
+            state.moduleStates[m].speed = math.sqrt(abs(math.pow(prevState.moduleStates[m].speed, 2) + (
+                        2 * moduleAcceleration * state.moduleStates[m].deltaPos)))
+
+            curveRadius = calculateRadius(prevState.moduleStates[m].fieldPos, state.moduleStates[m].fieldPos,
+                                          nextState.moduleStates[m].fieldPos)
+            # Find the max velocity that would keep the centripetal force under the friction force
+            # Fc = M * v^2 / R
+            if math.isfinite(curveRadius):
+                maxSafeVel = math.sqrt((config.wheelFrictionForce * abs(curveRadius)) / config.massKG)
+                state.moduleStates[m].speed = min(state.moduleStates[m].speed, maxSafeVel)
+
+        # Go over the modules again to make sure they take the same amount of time to reach the next state
+        maxDT = 0.0
+        for m in range(config.numModules):
+            modVel = state.moduleStates[m].speed
+            dt = nextState.moduleStates[m].deltaPos / modVel
+
+            if math.isfinite(dt):
+                maxDT = max(maxDT, dt)
+
+        # Recalculate all module velocities with the allowed DT
+        for m in range(config.numModules):
+            state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
+
+        # Use the calculated module velocities to calculate the robot speeds
+        desiredSpeeds = _toChassisSpeeds(config, state.moduleStates)
+
+        maxChassisVel = state.constraints.maxVelocityMps
+        maxChassisAngVel = state.constraints.maxAngularVelocityRps
+
+        _desaturateWheelSpeeds(state.moduleStates, desiredSpeeds, config.moduleConfig.maxDriveVelocityMPS,
+                               maxChassisVel, maxChassisAngVel)
+
+        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(_toChassisSpeeds(config, state.moduleStates),
+                                                                  state.pose.rotation())
+        state.linearVelocity = math.hypot(state.fieldSpeeds.vx, state.fieldSpeeds.vy)
 
 
 def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotConfig):
-    pass  # TODO
+    for i in range(len(states) - 2, 0, -1):
+        state = states[i]
+        nextState = states[i + 1]
+
+        # Calculate the linear force vector and torque acting on the whole robot
+        linearForceVec = Translation2d()
+        totalTorque = 0.0
+        for m in range(config.numModules):
+            lastVel = nextState.moduleStates[m].speed
+            # This pass will only be handling deceleration of the robot, meaning that the "torque"
+            # acting on the module due to friction and other losses will not be fighting the motor
+            availableTorque = config.moduleConfig.driveMotorTorqueCurve.get(
+                lastVel / config.moduleConfig.rpmToMps)
+            wheelTorque = availableTorque * config.moduleConfig.driveGearing
+            forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters
+            if not config.isHolonomic:
+                # Two motors per module if differential
+                forceAtCarpet *= 2
+            forceVec = Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle + Rotation2d.fromDegrees(180))
+
+            # Add the module force vector to the robot force vector
+            linearForceVec = linearForceVec + forceVec
+
+            # Calculate the torque this module will apply to the robot
+            angleToModule = (state.moduleStates[m].fieldPos - state.pose.translation()).angle()
+            theta = forceVec.angle() - angleToModule
+            totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.sin()
+
+        # Use the robot accelerations to calculate how each module should accelerate
+        # Even though kinematics is usually used for velocities, it can still
+        # convert chassis accelerations to module accelerations
+        maxAngAccel = state.constraints.maxAngularAccelerationRpsSq
+        angularAccel = max(min(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
+
+        accelVec = linearForceVec / config.massKG
+        maxAccel = state.constraints.maxAccelerationMpsSq
+        accel = accelVec.norm()
+        if accel > maxAccel:
+            accelVec = accelVec * (maxAccel / accel)
+
+        chassisAccel = ChassisSpeeds.fromFieldRelativeSpeeds(accelVec.x, accelVec.y, angularAccel,
+                                                             state.pose.rotation())
+        accelStates = _toSwerveModuleStates(config, chassisAccel)
+        for m in range(config.numModules):
+            moduleAcceleration = accelStates[m].speed
+
+            # Calculate the module velocity at the current state
+            # vf^2 = v0^2 + 2ad
+            maxVel = math.sqrt(abs(math.pow(nextState.moduleStates[m].speed, 2) + (
+                    2 * moduleAcceleration * nextState.moduleStates[m].deltaPos)))
+            state.moduleStates[m].speed = min(maxVel, nextState.moduleStates[m].speed)
+
+        # Go over the modules again to make sure they take the same amount of time to reach the next state
+        maxDT = 0.0
+        for m in range(config.numModules):
+            modVel = state.moduleStates[m].speed
+            dt = nextState.moduleStates[m].deltaPos / modVel
+
+            if math.isfinite(dt):
+                maxDT = max(maxDT, dt)
+
+        # Recalculate all module velocities with the allowed DT
+        for m in range(config.numModules):
+            state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
+
+        # Use the calculated module velocities to calculate the robot speeds
+        desiredSpeeds = _toChassisSpeeds(config, state.moduleStates)
+
+        maxChassisVel = state.constraints.maxVelocityMps
+        maxChassisAngVel = state.constraints.maxAngularVelocityRps
+
+        maxChassisVel = min(maxChassisVel, state.linearVelocity)
+        maxChassisAngVel = min(maxChassisAngVel, abs(state.fieldSpeeds.omega))
+
+        _desaturateWheelSpeeds(state.moduleStates, desiredSpeeds, config.moduleConfig.maxDriveVelocityMPS,
+                               maxChassisVel, maxChassisAngVel)
+
+        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(_toChassisSpeeds(config, state.moduleStates),
+                                                                  state.pose.rotation())
+        state.linearVelocity = math.hypot(state.fieldSpeeds.vx, state.fieldSpeeds.vy)
 
 
 def _toSwerveModuleStates(config: RobotConfig, chassisSpeeds: ChassisSpeeds) -> List[SwerveModuleState]:

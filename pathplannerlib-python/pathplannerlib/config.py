@@ -5,6 +5,9 @@ from .geometry_util import floatLerp
 from wpimath.geometry import Translation2d
 from wpimath.kinematics import SwerveDrive2Kinematics, SwerveDrive4Kinematics
 import math
+import os
+import json
+from wpilib import getDeployDirectory
 
 
 @dataclass
@@ -357,6 +360,42 @@ class RobotConfig:
         self.numModules = len(self.moduleLocations)
         self.modulePivotDistance = [t.norm() for t in self.moduleLocations]
         self.wheelFrictionForce = self.moduleConfig.wheelCOF * (self.massKG * 9.8)
+
+    @staticmethod
+    def fromGUISettings() -> 'RobotConfig':
+        """
+        Load the robot config from the shared settings file created by the GUI
+
+        :return: RobotConfig matching the robot settings in the GUI
+        """
+        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'settings.json')
+
+        with open(filePath, 'r') as f:
+            settingsJson = json.loads(f.read())
+
+            isHolonomic = bool(settingsJson['holonomicMode'])
+            massKG = float(settingsJson['robotMass'])
+            MOI = float(settingsJson['robotMOI'])
+            wheelbase = float(settingsJson['robotWheelbase'])
+            trackwidth = float(settingsJson['robotTrackwidth'])
+            wheelRadius = float(settingsJson['driveWheelRadius'])
+            gearing = float(settingsJson['driveGearing'])
+            maxDriveRPM = float(settingsJson['maxDriveRPM'])
+            wheelCOF = float(settingsJson['wheelCOF'])
+            driveMotor = str(settingsJson['driveMotor'])
+
+            moduleConfig = ModuleConfig(
+                wheelRadius,
+                gearing,
+                maxDriveRPM,
+                wheelCOF,
+                MotorTorqueCurve.fromSettingsString(driveMotor)
+            )
+
+            if isHolonomic:
+                return RobotConfig(massKG, MOI, moduleConfig, trackwidth, wheelbase)
+            else:
+                return RobotConfig(massKG, MOI, moduleConfig, trackwidth)
 
 
 @dataclass

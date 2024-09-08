@@ -5,8 +5,12 @@ import 'package:multi_split_view/multi_split_view.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/services/log.dart';
-import 'package:pathplanner/services/simulator/trajectory_generator.dart';
-import 'package:pathplanner/util/pose2d.dart';
+import 'package:pathplanner/trajectory/auto_simulator.dart';
+import 'package:pathplanner/trajectory/config.dart';
+import 'package:pathplanner/trajectory/motor_torque_curve.dart';
+import 'package:pathplanner/trajectory/trajectory.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/pose2d.dart' as old;
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -50,12 +54,13 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   late bool _treeOnRight;
   bool _draggingStartPos = false;
   bool _draggingStartRot = false;
-  Pose2d? _dragOldValue;
-  Trajectory? _simPath;
+  old.Pose2d? _dragOldValue;
+  PathPlannerTrajectory? _simPath;
   bool _paused = false;
 
   late Size _robotSize;
   late AnimationController _previewController;
+  late bool _holonomicMode;
 
   @override
   void initState() {
@@ -65,6 +70,8 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
+    _holonomicMode =
+        widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
 
     var width =
         widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
@@ -85,7 +92,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       ),
     ];
 
-    _simulateAuto();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _simulateAuto());
   }
 
   @override
@@ -183,7 +190,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               onPanEnd: (details) {
                 if (widget.auto.startingPose != null &&
                     (_draggingStartPos || _draggingStartRot)) {
-                  Pose2d dragEnd = widget.auto.startingPose!.clone();
+                  old.Pose2d dragEnd = widget.auto.startingPose!.clone();
                   widget.undoStack.add(Change(
                     _dragOldValue,
                     () {
@@ -217,7 +224,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                               Defaults.hidePathsOnHover,
                           hoveredPath: _hoveredPath,
                           fieldImage: widget.fieldImage,
-                          startingPose: widget.auto.startingPose,
+                          startingPose: widget.auto.startingPose != null
+                              ? Pose2d(
+                                  Translation2d(
+                                      x: widget.auto.startingPose!.position.x,
+                                      y: widget.auto.startingPose!.position.y),
+                                  Rotation2d.fromDegrees(
+                                      widget.auto.startingPose!.rotation))
+                              : null,
                           simulatedPath: _simPath,
                           animation: _previewController.view,
                           previewColor: colorScheme.primary,
@@ -253,7 +267,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
-                  totalPathTime: _simPath?.states.last.time ?? 1.0,
+                  totalPathTime: _simPath?.states.last.timeSeconds ?? 1.0,
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -276,7 +290,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: AutoTree(
                     auto: widget.auto,
-                    autoRuntime: _simPath?.states.last.time,
+                    autoRuntime: _simPath?.states.last.timeSeconds,
                     allPathNames: widget.allPathNames,
                     onPathHovered: (value) {
                       setState(() {
@@ -304,7 +318,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
-                  totalPathTime: _simPath?.states.last.time ?? 1.0,
+                  totalPathTime: _simPath?.states.last.timeSeconds ?? 1.0,
                 ),
             ],
           ),
@@ -315,7 +329,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
   // Marked as async so it can run from initState
   void _simulateAuto() async {
-    Trajectory? simPath;
+    PathPlannerTrajectory? simPath;
 
     if (widget.auto.choreoAuto) {
       List<TrajectoryState> allStates = [];
@@ -323,34 +337,75 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
       for (ChoreoPath p in widget.autoChoreoPaths) {
         for (TrajectoryState s in p.trajectory.states) {
-          allStates.add(s.copyWithTime(s.time + timeOffset));
+          allStates.add(s.copyWithTime(s.timeSeconds + timeOffset));
         }
 
         if (allStates.isNotEmpty) {
-          timeOffset = allStates.last.time;
+          timeOffset = allStates.last.timeSeconds;
         }
       }
 
       if (allStates.isNotEmpty) {
-        simPath = Trajectory(states: allStates);
+        simPath = PathPlannerTrajectory.fromStates(allStates);
       }
     } else {
-      num maxModuleSpeed = widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
-          Defaults.maxModuleSpeed;
-      num radius = sqrt(pow(_robotSize.width, 2) + pow(_robotSize.height, 2)) -
-          0.1; // Assuming ~3in thick bumpers
+      num halfWheelbase = (widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
+              Defaults.robotWheelbase) /
+          2;
+      num halfTrackwidth = (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
+              Defaults.robotTrackwidth) /
+          2;
+      List<Translation2d> moduleLocations = _holonomicMode
+          ? [
+              Translation2d(x: halfWheelbase, y: halfTrackwidth),
+              Translation2d(x: halfWheelbase, y: -halfTrackwidth),
+              Translation2d(x: -halfWheelbase, y: halfTrackwidth),
+              Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
+            ]
+          : [
+              Translation2d(x: 0, y: halfTrackwidth),
+              Translation2d(x: 0, y: -halfTrackwidth),
+            ];
 
       try {
-        simPath = TrajectoryGenerator.simulateAuto(
-            widget.autoPaths, widget.auto.startingPose, maxModuleSpeed, radius);
+        simPath = AutoSimulator.simulateAuto(
+          widget.autoPaths,
+          widget.auto.startingPose,
+          RobotConfig(
+            massKG: widget.prefs.getDouble(PrefsKeys.robotMass) ??
+                Defaults.robotMass,
+            moi:
+                widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
+            moduleConfig: ModuleConfig(
+              wheelRadiusMeters:
+                  widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+                      Defaults.driveWheelRadius,
+              driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
+                  Defaults.driveGearing,
+              maxDriveVelocityRPM:
+                  widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ??
+                      Defaults.maxDriveRPM,
+              driveMotorTorqueCurve: MotorTorqueCurve.fromString(
+                  widget.prefs.getString(PrefsKeys.torqueCurve) ??
+                      Defaults.torqueCurve),
+              wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
+                  Defaults.wheelCOF,
+            ),
+            moduleLocations: moduleLocations,
+            holonomic: _holonomicMode,
+          ),
+        );
+        if (!(simPath?.getTotalTimeSeconds().isFinite ?? false)) {
+          simPath = null;
+        }
       } catch (err) {
         Log.error('Failed to simulate auto', err);
       }
     }
 
     if (simPath != null &&
-        simPath.states.last.time.isFinite &&
-        !simPath.states.last.time.isNaN) {
+        simPath.states.last.timeSeconds.isFinite &&
+        !simPath.states.last.timeSeconds.isNaN) {
       setState(() {
         _simPath = simPath;
       });
@@ -358,10 +413,18 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       if (!_paused) {
         _previewController.stop();
         _previewController.reset();
-        _previewController.duration =
-            Duration(milliseconds: (simPath.states.last.time * 1000).toInt());
+        _previewController.duration = Duration(
+            milliseconds: (simPath.states.last.timeSeconds * 1000).toInt());
         _previewController.repeat();
       }
+    } else {
+      // Trajectory failed to generate. Notify the user
+      Log.warning(
+          'Failed to generate trajectory for auto: ${widget.auto.name}');
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets.'),
+      ));
     }
   }
 

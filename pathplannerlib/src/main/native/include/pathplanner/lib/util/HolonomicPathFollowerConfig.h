@@ -3,8 +3,8 @@
 #include <units/velocity.h>
 #include <units/length.h>
 #include <units/time.h>
-#include "pathplanner/lib/util/PIDConstants.h"
-#include "pathplanner/lib/util/ReplanningConfig.h"
+#include "pathplanner/lib/config/PIDConstants.h"
+#include "pathplanner/lib/config/ReplanningConfig.h"
 
 namespace pathplanner {
 class HolonomicPathFollowerConfig {

@@ -13,11 +13,10 @@ public:
 	 *
 	 * @param velocity The goal end velocity (M/S)
 	 * @param rotation The goal rotation
-	 * @param rotateFast Should the robot reach the rotation as fast as possible
 	 */
 	constexpr GoalEndState(units::meters_per_second_t velocity,
-			frc::Rotation2d rotation, bool rotateFast = false) : m_velocity(
-			velocity), m_rotation(rotation), m_rotateFast(rotateFast) {
+			frc::Rotation2d rotation) : m_velocity(velocity), m_rotation(
+			rotation) {
 	}
 
 	/**
@@ -46,24 +45,13 @@ public:
 		return m_rotation;
 	}
 
-	/**
-	 * Get if the robot should reach the rotation as fast as possible
-	 *
-	 * @return True if the robot should reach the rotation as fast as possible
-	 */
-	constexpr bool shouldRotateFast() const {
-		return m_rotateFast;
-	}
-
 	inline bool operator==(const GoalEndState &other) const {
 		return std::abs(m_velocity() - other.m_velocity()) < 1E-9
-				&& m_rotation == other.m_rotation
-				&& m_rotateFast == other.m_rotateFast;
+				&& m_rotation == other.m_rotation;
 	}
 
 private:
 	units::meters_per_second_t m_velocity;
 	frc::Rotation2d m_rotation;
-	bool m_rotateFast;
 };
 }

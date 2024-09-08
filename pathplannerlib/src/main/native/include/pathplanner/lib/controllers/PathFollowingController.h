@@ -3,7 +3,7 @@
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/geometry/Pose2d.h>
 #include <units/length.h>
-#include "pathplanner/lib/path/PathPlannerTrajectory.h"
+#include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 
 namespace pathplanner {
 class PathFollowingController {
@@ -20,7 +20,7 @@ public:
 	 */
 	virtual frc::ChassisSpeeds calculateRobotRelativeSpeeds(
 			const frc::Pose2d &currentPose,
-			const PathPlannerTrajectory::State &targetState) = 0;
+			const PathPlannerTrajectoryState &targetState) = 0;
 
 	/**
 	 * Resets the controller based on the current state of the robot

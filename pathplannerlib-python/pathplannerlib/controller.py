@@ -1,15 +1,15 @@
 from wpimath.geometry import Pose2d, Translation2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds
-from wpimath.controller import PIDController, ProfiledPIDController, RamseteController, LTVUnicycleController
-from wpimath.trajectory import TrapezoidProfile
-from .trajectory import State
+from wpimath.controller import PIDController, LTVUnicycleController
+from .trajectory import PathPlannerTrajectoryState
 from typing import Callable, Union
 from .config import PIDConstants
 import math
 
 
 class PathFollowingController:
-    def calculateRobotRelativeSpeeds(self, current_pose: Pose2d, target_state: State) -> ChassisSpeeds:
+    def calculateRobotRelativeSpeeds(self, current_pose: Pose2d,
+                                     target_state: PathPlannerTrajectoryState) -> ChassisSpeeds:
         """
         Calculates the next output of the path following controller
 
@@ -48,23 +48,19 @@ class PathFollowingController:
 class PPHolonomicDriveController(PathFollowingController):
     _xController: PIDController
     _yController: PIDController
-    _rotationController: ProfiledPIDController
-    _maxModuleSpeed: float
-    _mpsToRps: float
-    _translationError: Translation2d
+    _rotationController: PIDController
 
+    _translationError: Translation2d
     _isEnabled: bool = True
+
     _rotationTargetOverride: Union[Callable[[], Union[Rotation2d, None]], None] = None
 
-    def __init__(self, translation_constants: PIDConstants, rotation_constants: PIDConstants, max_module_speed: float,
-                 drive_base_radius: float, period: float = 0.02):
+    def __init__(self, translation_constants: PIDConstants, rotation_constants: PIDConstants, period: float = 0.02):
         """
         Constructs a HolonomicDriveController
 
         :param translation_constants: PID constants for the translation PID controllers
         :param rotation_constants: PID constants for the rotation controller
-        :param max_module_speed: The max speed of a drive module in meters/sec
-        :param drive_base_radius: The radius of the drive base in meters. For swerve drive, this is the distance from the center of the robot to the furthest module. For mecanum, this is the drive base width / 2
         :param period: Period of the control loop in seconds
         """
         self._xController = PIDController(translation_constants.kP, translation_constants.kI, translation_constants.kD,
@@ -76,15 +72,10 @@ class PPHolonomicDriveController(PathFollowingController):
         self._yController.setIntegratorRange(-translation_constants.iZone, translation_constants.iZone)
 
         # Temp rate limit of 0, will be changed in calculate
-        self._rotationController = ProfiledPIDController(
-            rotation_constants.kP, rotation_constants.kI, rotation_constants.kD,
-            TrapezoidProfile.Constraints(0, 0), period
-        )
+        self._rotationController = PIDController(rotation_constants.kP, rotation_constants.kI, rotation_constants.kD,
+                                                 period)
         self._rotationController.setIntegratorRange(-rotation_constants.iZone, rotation_constants.iZone)
         self._rotationController.enableContinuousInput(-math.pi, math.pi)
-
-        self._maxModuleSpeed = max_module_speed
-        self._mpsToRps = 1.0 / drive_base_radius
 
     def setEnabled(self, enabled: bool) -> None:
         """
@@ -94,7 +85,8 @@ class PPHolonomicDriveController(PathFollowingController):
         """
         self._isEnabled = enabled
 
-    def calculateRobotRelativeSpeeds(self, current_pose: Pose2d, target_state: State) -> ChassisSpeeds:
+    def calculateRobotRelativeSpeeds(self, current_pose: Pose2d,
+                                     target_state: PathPlannerTrajectoryState) -> ChassisSpeeds:
         """
         Calculates the next output of the path following controller
 
@@ -102,29 +94,18 @@ class PPHolonomicDriveController(PathFollowingController):
         :param target_state: The desired trajectory state
         :return: The next robot relative output of the path following controller
         """
-        xFF = target_state.velocityMps * target_state.heading.cos()
-        yFF = target_state.velocityMps * target_state.heading.sin()
+        xFF = target_state.fieldSpeeds.vx
+        yFF = target_state.fieldSpeeds.vy
 
-        self._translationError = current_pose.translation() - target_state.positionMeters
+        self._translationError = current_pose.translation() - target_state.pose.translation()
 
         if not self._isEnabled:
             return ChassisSpeeds.fromFieldRelativeSpeeds(xFF, yFF, 0, current_pose.rotation())
 
-        xFeedback = self._xController.calculate(current_pose.X(), target_state.positionMeters.X())
-        yFeedback = self._yController.calculate(current_pose.Y(), target_state.positionMeters.Y())
+        xFeedback = self._xController.calculate(current_pose.X(), target_state.pose.x)
+        yFeedback = self._yController.calculate(current_pose.Y(), target_state.pose.y)
 
-        angVelConstraint = target_state.constraints.maxAngularVelocityRps
-        maxAngVel = angVelConstraint
-
-        if math.isfinite(maxAngVel):
-            # Approximation of available module speed to do rotation with
-            maxAngVelModule = max(0.0, self._maxModuleSpeed - target_state.velocityMps) * self._mpsToRps
-            maxAngVel = min(angVelConstraint, maxAngVelModule)
-
-        rotationConstraints = TrapezoidProfile.Constraints(maxAngVel,
-                                                           target_state.constraints.maxAngularAccelerationRpsSq)
-
-        targetRotation = target_state.targetHolonomicRotation
+        targetRotation = target_state.pose.rotation()
         if PPHolonomicDriveController._rotationTargetOverride is not None:
             rot = PPHolonomicDriveController._rotationTargetOverride()
             if rot is not None:
@@ -132,13 +113,9 @@ class PPHolonomicDriveController(PathFollowingController):
 
         rotationFeedback = self._rotationController.calculate(
             current_pose.rotation().radians(),
-            targetRotation.radians(),
-            rotationConstraints
+            targetRotation.radians()
         )
-        if target_state.holonomicAngularVelocityRps is not None:
-            rotationFF = target_state.holonomicAngularVelocityRps
-        else:
-            rotationFF = self._rotationController.getSetpoint().velocity
+        rotationFF = target_state.fieldSpeeds.omega
 
         return ChassisSpeeds.fromFieldRelativeSpeeds(xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback,
                                                      current_pose.rotation())
@@ -150,7 +127,9 @@ class PPHolonomicDriveController(PathFollowingController):
         :param current_pose: Current robot pose
         :param current_speeds: Current robot relative chassis speeds
         """
-        self._rotationController.reset(current_pose.rotation().radians(), current_speeds.omega)
+        self._xController.reset()
+        self._yController.reset()
+        self._rotationController.reset()
 
     def getPositionalError(self) -> float:
         """
@@ -178,71 +157,6 @@ class PPHolonomicDriveController(PathFollowingController):
         :param rotation_target_override: Supplier to override rotation targets
         """
         PPHolonomicDriveController._rotationTargetOverride = rotation_target_override
-        test = PPRamseteController(1.0, 1.0)
-
-
-class PPRamseteController(PathFollowingController, RamseteController):
-    _lastError: float = 0.0
-
-    def __init__(self, *args, **kwargs):
-        """
-        __init__(*args, **kwargs)
-        Overloaded function.
-
-        1. __init__(self, b: float, zeta: float) -> None
-
-        Construct a Ramsete unicycle controller.
-
-        :param b:    Tuning parameter (b > 0 rad²/m²) for which larger values make
-                     convergence more aggressive like a proportional term.
-        :param zeta: Tuning parameter (0 rad⁻¹ < zeta < 1 rad⁻¹) for which larger
-                     values provide more damping in response.
-
-        2. __init__(self) -> None
-
-        Construct a Ramsete unicycle controller. The default arguments for
-        b and zeta of 2.0 rad²/m² and 0.7 rad⁻¹ have been well-tested to produce
-        desirable results.
-        """
-        super().__init__(*args, **kwargs)
-
-    def calculateRobotRelativeSpeeds(self, current_pose: Pose2d, target_state: State) -> ChassisSpeeds:
-        """
-        Calculates the next output of the path following controller
-
-        :param current_pose: The current robot pose
-        :param target_state: The desired trajectory state
-        :return: The next robot relative output of the path following controller
-        """
-        self._lastError = current_pose.translation().distance(target_state.positionMeters)
-
-        return self.calculate(current_pose, target_state.getDifferentialPose(), target_state.velocityMps,
-                              target_state.headingAngularVelocityRps)
-
-    def reset(self, current_pose: Pose2d, current_speeds: ChassisSpeeds) -> None:
-        """
-        Resets the controller based on the current state of the robot
-
-        :param current_pose: Current robot pose
-        :param current_speeds: Current robot relative chassis speeds
-        """
-        self._lastError = 0.0
-
-    def getPositionalError(self) -> float:
-        """
-        Get the current positional error between the robot's actual and target positions
-
-        :return: Positional error, in meters
-        """
-        return self._lastError
-
-    def isHolonomic(self) -> bool:
-        """
-        Is this controller for holonomic drivetrains? Used to handle some differences in functionality in the path following command.
-
-        :return: True if this controller is for a holonomic drive train
-        """
-        return False
 
 
 class PPLTVController(PathFollowingController, LTVUnicycleController):
@@ -281,7 +195,8 @@ class PPLTVController(PathFollowingController, LTVUnicycleController):
         """
         super().__init__(*args, **kwargs)
 
-    def calculateRobotRelativeSpeeds(self, current_pose: Pose2d, target_state: State) -> ChassisSpeeds:
+    def calculateRobotRelativeSpeeds(self, current_pose: Pose2d,
+                                     target_state: PathPlannerTrajectoryState) -> ChassisSpeeds:
         """
         Calculates the next output of the path following controller
 
@@ -289,10 +204,10 @@ class PPLTVController(PathFollowingController, LTVUnicycleController):
         :param target_state: The desired trajectory state
         :return: The next robot relative output of the path following controller
         """
-        self._lastError = current_pose.translation().distance(target_state.positionMeters)
+        self._lastError = current_pose.translation().distance(target_state.pose.translation())
 
-        return self.calculate(current_pose, target_state.getDifferentialPose(), target_state.velocityMps,
-                              target_state.headingAngularVelocityRps)
+        return self.calculate(current_pose, target_state.pose, target_state.linearVelocity,
+                              target_state.fieldSpeeds.omega)
 
     def reset(self, current_pose: Pose2d, current_speeds: ChassisSpeeds) -> None:
         """

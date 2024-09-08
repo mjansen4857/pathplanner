@@ -14,7 +14,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/path/preview_starting_state.dart';
+import 'package:pathplanner/path/ideal_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 
@@ -56,7 +56,7 @@ void main() {
         eventMarkers: List.generate(5, (index) => EventMarker.defaultMarker()),
         reversed: false,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(),
         useDefaultConstraints: false,
       );
 
@@ -94,7 +94,7 @@ void main() {
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        previewStartingState: PreviewStartingState(rotation: 10, velocity: 1),
+        idealStartingState: IdealStartingState(rotation: 10, velocity: 1),
         useDefaultConstraints: false,
       );
 
@@ -129,7 +129,7 @@ void main() {
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(),
         useDefaultConstraints: false,
       );
       PathPlannerPath cloned = path.duplicate('test');
@@ -165,7 +165,7 @@ void main() {
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(),
         useDefaultConstraints: false,
       );
       PathPlannerPath path2 = PathPlannerPath(
@@ -189,7 +189,7 @@ void main() {
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(),
         useDefaultConstraints: false,
       );
       PathPlannerPath path3 = PathPlannerPath(
@@ -213,7 +213,7 @@ void main() {
         eventMarkers: [],
         reversed: false,
         folder: null,
-        previewStartingState: null,
+        idealStartingState: IdealStartingState(),
         useDefaultConstraints: false,
       );
 
@@ -249,7 +249,7 @@ void main() {
       eventMarkers: [EventMarker.defaultMarker()],
       reversed: false,
       folder: null,
-      previewStartingState: null,
+      idealStartingState: IdealStartingState(),
       useDefaultConstraints: false,
     );
 
@@ -299,7 +299,7 @@ void main() {
       ],
       reversed: false,
       folder: null,
-      previewStartingState: null,
+      idealStartingState: IdealStartingState(),
       useDefaultConstraints: false,
     );
 

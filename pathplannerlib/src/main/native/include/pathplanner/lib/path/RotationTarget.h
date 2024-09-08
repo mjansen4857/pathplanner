@@ -11,12 +11,10 @@ public:
 	 *
 	 * @param waypointRelativePosition Waypoint relative position of this target
 	 * @param target Target rotation
-	 * @param rotateFast Should the robot reach the rotation as fast as possible
 	 */
 	constexpr RotationTarget(double waypointRelativePosition,
-			frc::Rotation2d target, bool rotateFast = false) : m_position(
-			waypointRelativePosition), m_target(target), m_rotateFast(
-			rotateFast) {
+			frc::Rotation2d target) : m_position(waypointRelativePosition), m_target(
+			target) {
 	}
 
 	/**
@@ -46,15 +44,6 @@ public:
 	}
 
 	/**
-	 * Get if the robot should reach the rotation as fast as possible
-	 *
-	 * @return True if the robot should reach the rotation as fast as possible
-	 */
-	constexpr bool shouldRotateFast() const {
-		return m_rotateFast;
-	}
-
-	/**
 	 * Transform the position of this target for a given segment number.
 	 *
 	 * <p>For example, a target with position 1.5 for the segment 1 will have the position 0.5
@@ -63,18 +52,16 @@ public:
 	 * @return The transformed target
 	 */
 	constexpr RotationTarget forSegmentIndex(int segmentIndex) const {
-		return RotationTarget(m_position - segmentIndex, m_target, m_rotateFast);
+		return RotationTarget(m_position - segmentIndex, m_target);
 	}
 
 	inline bool operator==(const RotationTarget &other) const {
 		return std::abs(m_position - other.m_position) < 1E-9
-				&& m_target == other.m_target
-				&& m_rotateFast == other.m_rotateFast;
+				&& m_target == other.m_target;
 	}
 
 private:
 	double m_position;
 	frc::Rotation2d m_target;
-	bool m_rotateFast;
 };
 }

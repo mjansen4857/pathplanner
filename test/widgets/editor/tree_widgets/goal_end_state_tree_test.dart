@@ -22,7 +22,6 @@ void main() {
     path.goalEndState = GoalEndState(
       velocity: 1.0,
       rotation: 1.0,
-      rotateFast: false,
     );
     pathChanged = false;
   });
@@ -108,32 +107,5 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.goalEndState.rotation, 1.0);
-  });
-
-  testWidgets('rotate fast', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: GoalEndStateTree(
-          path: path,
-          onPathChanged: () => pathChanged = true,
-          undoStack: undoStack,
-          holonomicMode: true,
-        ),
-      ),
-    ));
-
-    final checkbox = find.byType(Checkbox);
-
-    expect(checkbox, findsOneWidget);
-
-    await widgetTester.tap(checkbox);
-    await widgetTester.pump();
-
-    expect(pathChanged, true);
-    expect(path.goalEndState.rotateFast, true);
-
-    undoStack.undo();
-    await widgetTester.pump();
-    expect(path.goalEndState.rotateFast, false);
   });
 }

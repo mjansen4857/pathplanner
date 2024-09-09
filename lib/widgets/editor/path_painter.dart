@@ -309,49 +309,38 @@ class PathPainter extends CustomPainter {
       paint.strokeWidth = 4;
       p.reset();
 
-      int startIdx =
-          (path.constraintZones[selectedZone!].minWaypointRelativePos /
-                  pathResolution)
-              .round();
-      int endIdx = min(
-          (path.constraintZones[selectedZone!].maxWaypointRelativePos /
-                  pathResolution)
-              .round(),
-          path.pathPoints.length - 1);
+      num startPos = path.constraintZones[selectedZone!].minWaypointRelativePos;
+      num endPos = path.constraintZones[selectedZone!].maxWaypointRelativePos;
+
       Offset start = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[startIdx].position, scale, fieldImage);
+          path.samplePath(startPos), scale, fieldImage);
       p.moveTo(start.dx, start.dy);
 
-      for (int i = startIdx; i <= endIdx; i++) {
+      for (num t = startPos + 0.05; t <= endPos; t += 0.05) {
         Offset pos = PathPainterUtil.pointToPixelOffset(
-            path.pathPoints[i].position, scale, fieldImage);
+            path.samplePath(t), scale, fieldImage);
 
         p.lineTo(pos.dx, pos.dy);
       }
 
       canvas.drawPath(p, paint);
     }
+
     if (hoveredZone != null && selectedZone != hoveredZone) {
       paint.color = Colors.deepPurpleAccent;
       paint.strokeWidth = 4;
       p.reset();
 
-      int startIdx =
-          (path.constraintZones[hoveredZone!].minWaypointRelativePos /
-                  pathResolution)
-              .round();
-      int endIdx = min(
-          (path.constraintZones[hoveredZone!].maxWaypointRelativePos /
-                  pathResolution)
-              .round(),
-          path.pathPoints.length - 1);
+      num startPos = path.constraintZones[hoveredZone!].minWaypointRelativePos;
+      num endPos = path.constraintZones[hoveredZone!].maxWaypointRelativePos;
+
       Offset start = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[startIdx].position, scale, fieldImage);
+          path.samplePath(startPos), scale, fieldImage);
       p.moveTo(start.dx, start.dy);
 
-      for (int i = startIdx; i <= endIdx; i++) {
+      for (num t = startPos + 0.05; t <= endPos; t += 0.05) {
         Offset pos = PathPainterUtil.pointToPixelOffset(
-            path.pathPoints[i].position, scale, fieldImage);
+            path.samplePath(t), scale, fieldImage);
 
         p.lineTo(pos.dx, pos.dy);
       }
@@ -362,8 +351,7 @@ class PathPainter extends CustomPainter {
 
   void _paintMarkers(PathPlannerPath path, Canvas canvas) {
     for (int i = 0; i < path.eventMarkers.length; i++) {
-      int pointIdx =
-          (path.eventMarkers[i].waypointRelativePos / pathResolution).round();
+      var position = path.samplePath(path.eventMarkers[i].waypointRelativePos);
 
       Color markerColor = Colors.grey[700]!;
       if (selectedMarker == i) {
@@ -372,8 +360,8 @@ class PathPainter extends CustomPainter {
         markerColor = Colors.deepPurpleAccent;
       }
 
-      Offset markerPos = PathPainterUtil.pointToPixelOffset(
-          path.pathPoints[pointIdx].position, scale, fieldImage);
+      Offset markerPos =
+          PathPainterUtil.pointToPixelOffset(position, scale, fieldImage);
 
       PathPainterUtil.paintMarker(canvas, markerPos, markerColor);
     }
@@ -390,26 +378,24 @@ class PathPainter extends CustomPainter {
   }
 
   void _paintRotations(PathPlannerPath path, Canvas canvas, double scale) {
-    for (int i = 0; i < path.rotationTargets.length; i++) {
-      int pointIdx =
-          (path.rotationTargets[i].waypointRelativePos / pathResolution)
-              .round();
+    for (int i = 0; i < path.pathPoints.length - 1; i++) {
+      if (path.pathPoints[i].rotationTarget != null) {
+        Color rotationColor = Colors.grey[700]!;
+        if (selectedRotTarget == i) {
+          rotationColor = Colors.orange;
+        } else if (hoveredRotTarget == i) {
+          rotationColor = Colors.deepPurpleAccent;
+        }
 
-      Color rotationColor = Colors.grey[700]!;
-      if (selectedRotTarget == i) {
-        rotationColor = Colors.orange;
-      } else if (hoveredRotTarget == i) {
-        rotationColor = Colors.deepPurpleAccent;
+        PathPainterUtil.paintRobotOutline(
+            path.pathPoints[i].position,
+            path.pathPoints[i].rotationTarget!.rotationDegrees,
+            fieldImage,
+            robotSize,
+            scale,
+            canvas,
+            rotationColor);
       }
-
-      PathPainterUtil.paintRobotOutline(
-          path.pathPoints[pointIdx].position,
-          path.rotationTargets[i].rotationDegrees,
-          fieldImage,
-          robotSize,
-          scale,
-          canvas,
-          rotationColor);
     }
 
     PathPainterUtil.paintRobotOutline(

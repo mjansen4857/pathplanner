@@ -191,14 +191,33 @@ class PathPainter extends CustomPainter {
       Rotation2d rotation = state.pose.rotation;
 
       if (holonomicMode) {
+        // Calculate the module positions based off of the robot position
+        // so they don't move relative to the robot when interpolating
+        // between trajectory states
+        List<Pose2d> modPoses = [
+          Pose2d(
+              state.pose.translation +
+                  Translation2d(x: wheelbase / 2, y: trackwidth / 2)
+                      .rotateBy(rotation),
+              state.moduleStates[0].fieldAngle),
+          Pose2d(
+              state.pose.translation +
+                  Translation2d(x: wheelbase / 2, y: -trackwidth / 2)
+                      .rotateBy(rotation),
+              state.moduleStates[1].fieldAngle),
+          Pose2d(
+              state.pose.translation +
+                  Translation2d(x: -wheelbase / 2, y: trackwidth / 2)
+                      .rotateBy(rotation),
+              state.moduleStates[2].fieldAngle),
+          Pose2d(
+              state.pose.translation +
+                  Translation2d(x: -wheelbase / 2, y: -trackwidth / 2)
+                      .rotateBy(rotation),
+              state.moduleStates[3].fieldAngle),
+        ];
         PathPainterUtil.paintRobotModules(
-            state.moduleStates
-                .map((e) => Pose2d(e.fieldPos, e.fieldAngle))
-                .toList(),
-            fieldImage,
-            scale,
-            canvas,
-            previewColor ?? Colors.grey);
+            modPoses, fieldImage, scale, canvas, previewColor ?? Colors.grey);
       }
 
       PathPainterUtil.paintRobotOutline(

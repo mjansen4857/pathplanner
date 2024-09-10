@@ -73,7 +73,7 @@ public class PathPlannerPath {
     this.globalConstraints = globalConstraints;
     this.goalEndState = goalEndState;
     this.reversed = reversed;
-    this.allPoints = createPath(this.bezierPoints, this.rotationTargets, this.constraintZones);
+    this.allPoints = createPath();
 
     precalcValues();
 
@@ -452,42 +452,44 @@ public class PathPlannerPath {
     return globalConstraints;
   }
 
-  private static List<PathPoint> createPath(
-      List<Translation2d> bezierPoints,
-      List<RotationTarget> holonomicRotations,
-      List<ConstraintsZone> constraintZones) {
-    if (bezierPoints.size() < 4) {
-      throw new IllegalArgumentException("Not enough bezier points");
+  private List<PathPoint> createPath() {
+    if (bezierPoints.size() < 4 || (bezierPoints.size() - 1) % 3 != 0) {
+      throw new IllegalArgumentException("Invalid number of bezier points");
     }
 
-    List<PathPoint> points = new ArrayList<>();
-
     int numSegments = (bezierPoints.size() - 1) / 3;
+
+    List<PathPoint> points = new ArrayList<>();
+    List<RotationTarget> sortedTargets =
+        rotationTargets.stream()
+            .sorted((a, b) -> Double.compare(a.getPosition(), b.getPosition()))
+            .toList();
+
     for (int s = 0; s < numSegments; s++) {
       int iOffset = s * 3;
       Translation2d p1 = bezierPoints.get(iOffset);
       Translation2d p2 = bezierPoints.get(iOffset + 1);
       Translation2d p3 = bezierPoints.get(iOffset + 2);
       Translation2d p4 = bezierPoints.get(iOffset + 3);
+      PathSegment segment = new PathSegment(p1, p2, p3, p4);
 
-      int segmentIdx = s;
-      List<RotationTarget> segmentRotations =
-          holonomicRotations.stream()
-              .filter(
-                  target ->
-                      target.getPosition() >= segmentIdx && target.getPosition() <= segmentIdx + 1)
-              .map(target -> target.forSegmentIndex(segmentIdx))
-              .collect(Collectors.toList());
-      List<ConstraintsZone> segmentZones =
-          constraintZones.stream()
-              .filter(zone -> zone.overlapsRange(segmentIdx, segmentIdx + 1))
-              .map(zone -> zone.forSegmentIndex(segmentIdx))
-              .collect(Collectors.toList());
-
-      PathSegment segment =
-          new PathSegment(p1, p2, p3, p4, segmentRotations, segmentZones, s == numSegments - 1);
-      points.addAll(segment.getSegmentPoints());
+      segment.generatePathPoints(points, s, constraintZones, sortedTargets, globalConstraints);
     }
+
+    // Add the final path point
+    PathConstraints endConstraints = globalConstraints;
+    for (ConstraintsZone z : constraintZones) {
+      if (numSegments >= z.getMinWaypointPos() && numSegments <= z.getMaxWaypointPos()) {
+        endConstraints = z.getConstraints();
+        break;
+      }
+    }
+    points.add(
+        new PathPoint(
+            bezierPoints.get(bezierPoints.size() - 1),
+            new RotationTarget(numSegments, goalEndState.getRotation()),
+            endConstraints));
+    points.get(points.size() - 1).waypointRelativePos = numSegments;
 
     return points;
   }
@@ -711,10 +713,14 @@ public class PathPlannerPath {
                 startingPose.getTranslation(),
                 robotNextControl,
                 joinPrevControl,
-                getPoint(0).position,
-                false);
+                getPoint(0).position);
         List<PathPoint> replannedPoints = new ArrayList<>();
-        replannedPoints.addAll(joinSegment.getSegmentPoints());
+        joinSegment.generatePathPoints(
+            replannedPoints,
+            0,
+            Collections.emptyList(),
+            Collections.emptyList(),
+            globalConstraints);
         replannedPoints.addAll(allPoints);
 
         return PathPlannerPath.fromPathPoints(replannedPoints, globalConstraints, goalEndState);
@@ -786,16 +792,17 @@ public class PathPlannerPath {
       // We don't have any bezier points to reference
       PathSegment joinSegment =
           new PathSegment(
-              startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor, false);
+              startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor);
       List<PathPoint> replannedPoints = new ArrayList<>();
-      replannedPoints.addAll(joinSegment.getSegmentPoints());
+      joinSegment.generatePathPoints(
+          replannedPoints, 0, Collections.emptyList(), Collections.emptyList(), globalConstraints);
       replannedPoints.addAll(allPoints.subList(joinAnchorIdx, allPoints.size()));
 
       return PathPlannerPath.fromPathPoints(replannedPoints, globalConstraints, goalEndState);
     }
 
     // We can reference bezier points
-    int nextWaypointIdx = (int) Math.ceil((joinAnchorIdx + 1) * PathSegment.RESOLUTION);
+    int nextWaypointIdx = (int) Math.ceil(allPoints.get(joinAnchorIdx + 1).waypointRelativePos);
     int bezierPointIdx = nextWaypointIdx * 3;
     double waypointDelta = joinAnchor.getDistance(bezierPoints.get(bezierPointIdx));
 
@@ -833,7 +840,7 @@ public class PathPlannerPath {
     double segment2Length = 0;
     Translation2d lastSegment2Pos = joinAnchor;
 
-    for (double t = PathSegment.RESOLUTION; t < 1.0; t += PathSegment.RESOLUTION) {
+    for (double t = 0.05; t < 1.0; t += 0.05) {
       Translation2d p1 =
           GeometryUtil.cubicLerp(
               startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor, t);
@@ -1040,8 +1047,7 @@ public class PathPlannerPath {
       mappedPct = 1 + ((pct - seg1Pct) / (1.0 - seg1Pct));
     }
 
-    // Round to nearest resolution step
-    return Math.round(mappedPct * (1.0 / PathSegment.RESOLUTION)) / (1.0 / PathSegment.RESOLUTION);
+    return mappedPct;
   }
 
   private static double positionDelta(Translation2d a, Translation2d b) {

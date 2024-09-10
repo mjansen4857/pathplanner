@@ -136,8 +136,7 @@ public class PathSegment {
       }
 
       // We don't actually want to add the last point if it is valid. The last point of this segment
-      // will be the
-      // first of the next
+      // will be the first of the next
       if (t < 1.0) {
         points.add(
             new PathPoint(

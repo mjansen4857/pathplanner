@@ -128,12 +128,6 @@ public:
 			std::vector<PathPoint> pathPoints,
 			PathConstraints globalConstraints, GoalEndState goalEndState);
 
-	/** Generate path points for a path. This is used internally and should not be used directly. */
-	static std::vector<PathPoint> createPath(
-			std::vector<frc::Translation2d> bezierPoints,
-			std::vector<RotationTarget> holonomicRotations,
-			std::vector<ConstraintsZone> constraintZones);
-
 	/**
 	 * Get all the path points in this path
 	 *
@@ -250,6 +244,8 @@ public:
 	}
 
 private:
+	std::vector<PathPoint> createPath();
+
 	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);
 
 	static std::vector<frc::Translation2d> bezierPointsFromWaypointsJson(
@@ -269,7 +265,7 @@ private:
 	 * @param seg1Pct The percentage of the 2 segments made up by the first segment
 	 * @return The waypoint relative position over the 2 segments
 	 */
-	static double mapPct(double pct, double seg1Pct) {
+	static inline double mapPct(double pct, double seg1Pct) {
 		double mappedPct;
 		if (pct <= seg1Pct) {
 			// Map to segment 1
@@ -279,8 +275,7 @@ private:
 			mappedPct = 1.0 + ((pct - seg1Pct) / (1.0 - seg1Pct));
 		}
 
-		return std::round(mappedPct * (1.0 / PathSegment::RESOLUTION))
-				/ (1.0 / PathSegment::RESOLUTION);
+		return mappedPct;
 	}
 
 	static inline units::meter_t positionDelta(const frc::Translation2d &a,

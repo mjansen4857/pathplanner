@@ -1,60 +1,103 @@
 #include "pathplanner/lib/path/PathSegment.h"
-#include "pathplanner/lib/util/GeometryUtil.h"
 
 using namespace pathplanner;
 
-PathSegment::PathSegment(frc::Translation2d p1, frc::Translation2d p2,
-		frc::Translation2d p3, frc::Translation2d p4,
-		std::vector<RotationTarget> targetHolonomicRotations,
-		std::vector<ConstraintsZone> constraintZones, bool endSegment) : m_segmentPoints() {
+void PathSegment::generatePathPoints(std::vector<PathPoint> &points,
+		size_t segmentIdx, std::vector<ConstraintsZone> constraintZones,
+		std::vector<RotationTarget> sortedTargets,
+		std::optional<PathConstraints> globalConstraints) {
+	std::vector < RotationTarget > unaddedTargets;
+	for (RotationTarget r : sortedTargets) {
+		if (r.getPosition() >= segmentIdx
+				&& r.getPosition() < segmentIdx + 1.0) {
+			unaddedTargets.emplace_back(r);
+		}
+	}
 
-	for (double t = 0.0; t < 1.0; t += PathSegment::RESOLUTION) {
-		std::optional < RotationTarget > holonomicRotation = std::nullopt;
+	double t = 0.0;
 
-		if (!targetHolonomicRotations.empty()) {
-			if (std::abs(targetHolonomicRotations[0].getPosition() - t)
-					<= std::abs(
-							targetHolonomicRotations[0].getPosition()
-									- std::min(t + PathSegment::RESOLUTION,
-											1.0))) {
-				holonomicRotation = targetHolonomicRotations[0];
-				targetHolonomicRotations.erase(
-						targetHolonomicRotations.begin());
+	if (points.empty()) {
+		// First path point
+		points.emplace_back(sample(t), std::nullopt,
+				constraintsForWaypointPos(segmentIdx, constraintZones,
+						globalConstraints));
+		points[points.size() - 1].waypointRelativePos = segmentIdx;
+
+		t += targetIncrement;
+	}
+
+	while (t <= 0.0) {
+		frc::Translation2d position = sample(t);
+
+		units::meter_t distance = points[points.size() - 1].position.Distance(
+				position);
+		if (distance <= 0.01_m) {
+			if (t < 1.0) {
+				t = std::min(t + targetIncrement, 1.0);
+				continue;
+			} else {
+				break;
 			}
 		}
 
-		std::optional < ConstraintsZone > currentZone = findConstraintsZone(
-				constraintZones, t);
+		double prevWaypointPos = (segmentIdx + t) - targetIncrement;
 
-		if (currentZone) {
-			m_segmentPoints.push_back(
-					PathPoint(GeometryUtil::cubicLerp(p1, p2, p3, p4, t),
-							holonomicRotation, currentZone->getConstraints()));
+		units::meter_t delta = distance - targetSpacing;
+		if (delta > targetSpacing * 0.25) {
+			// Points are too far apart, increment t by correct amount
+			double correctIncrement = (targetSpacing * targetIncrement)
+					/ distance;
+			t = t - targetIncrement + correctIncrement;
+
+			position = sample(t);
+
+			if (points[points.size() - 1].position.Distance(position)
+					- targetSpacing > targetSpacing * 0.25) {
+				// Points are still too far apart. Probably because of weird control
+				// point placement. Just cut the correct increment in half and hope for the best
+				t = t - (correctIncrement * 0.5);
+				position = sample(t);
+			}
+		} else if (delta < -targetSpacing * 0.25 && t < 1.0) {
+			// Points are too close, increment waypoint relative pos by correct amount
+			double correctIncrement = (targetSpacing * targetIncrement)
+					/ distance;
+			t = t - targetIncrement + correctIncrement;
+
+			position = sample(t);
+
+			if (points[points.size() - 1].position.Distance(position)
+					- targetSpacing < -targetSpacing * 0.25) {
+				// Points are still too close. Probably because of weird control
+				// point placement. Just cut the correct increment in half and hope for the best
+				t = t + (correctIncrement * 0.5);
+				position = sample(t);
+			}
+		}
+
+		// Add a rotation target to the previous point if it is closer to it than
+		// the current point
+		if (!unaddedTargets.empty()) {
+			if (std::abs(unaddedTargets[0].getPosition() - prevWaypointPos)
+					<= std::abs(
+							unaddedTargets[0].getPosition()
+									- (segmentIdx + t))) {
+				points[points.size() - 1].rotationTarget = unaddedTargets[0];
+				unaddedTargets.erase(unaddedTargets.begin());
+			}
+		}
+
+		// We don't actually want to add the last point if it is valid. The last point of this segment
+		// will be the
+		// first of the next
+		if (t < 1.0) {
+			points.emplace_back(position, std::nullopt,
+					constraintsForWaypointPos(t, constraintZones,
+							globalConstraints));
+			points[points.size() - 1].waypointRelativePos = segmentIdx + t;
+			t = std::min(t + targetIncrement, 1.0);
 		} else {
-			m_segmentPoints.push_back(
-					PathPoint(GeometryUtil::cubicLerp(p1, p2, p3, p4, t),
-							holonomicRotation, std::nullopt));
+			break;
 		}
 	}
-
-	if (endSegment) {
-		std::optional < RotationTarget > holonomicRotation = std::nullopt;
-		if (!targetHolonomicRotations.empty()) {
-			holonomicRotation = targetHolonomicRotations[0];
-		}
-
-		m_segmentPoints.push_back(
-				PathPoint(GeometryUtil::cubicLerp(p1, p2, p3, p4, 1.0),
-						holonomicRotation, std::nullopt));
-	}
-}
-
-std::optional<ConstraintsZone> PathSegment::findConstraintsZone(
-		std::vector<ConstraintsZone> &zones, double t) const {
-	for (ConstraintsZone &zone : zones) {
-		if (zone.isWithinZone(t)) {
-			return zone;
-		}
-	}
-	return std::nullopt;
 }

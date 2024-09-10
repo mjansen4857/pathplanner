@@ -112,7 +112,6 @@ public class PathSegment {
         }
       } else if (delta < -targetSpacing * 0.25 && t < 1.0) {
         // Points are too close, increment waypoint relative pos by correct amount
-
         double correctIncrement = (targetSpacing * targetIncrement) / distance;
         t = t - targetIncrement + correctIncrement;
 

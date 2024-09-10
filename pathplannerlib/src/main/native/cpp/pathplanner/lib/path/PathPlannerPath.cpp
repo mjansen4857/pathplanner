@@ -24,8 +24,7 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 		constraintZones), m_eventMarkers(eventMarkers), m_globalConstraints(
 		globalConstraints), m_goalEndState(goalEndState), m_reversed(reversed), m_previewStartingRotation(
 		previewStartingRotation), m_isChoreoPath(false), m_choreoTrajectory() {
-	m_allPoints = PathPlannerPath::createPath(m_bezierPoints, m_rotationTargets,
-			m_constraintZones);
+	createPath();
 
 	precalcValues();
 
@@ -299,44 +298,44 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathPoints(
 	return path;
 }
 
-std::vector<PathPoint> PathPlannerPath::createPath(
-		std::vector<frc::Translation2d> bezierPoints,
-		std::vector<RotationTarget> holonomicRotations,
-		std::vector<ConstraintsZone> constraintZones) {
-	if (bezierPoints.size() < 4) {
-		throw std::runtime_error(
-				"Failed to create path, not enough bezier points");
+std::vector<PathPoint> PathPlannerPath::createPath() {
+	if (m_bezierPoints.size() < 4 || (m_bezierPoints.size() - 1) % 3 != 0) {
+		throw std::runtime_error("Invalid number of bezier points");
 	}
+
+	size_t numSegments = (m_bezierPoints.size() - 1) / 3;
 
 	std::vector < PathPoint > points;
+	std::sort(m_rotationTargets.begin(), m_rotationTargets.end(),
+			[](auto &left, auto &right) {
+				return left.getPosition() < right.getPosition();
+			});
 
-	size_t numSegments = (bezierPoints.size() - 1) / 3;
 	for (size_t s = 0; s < numSegments; s++) {
 		size_t iOffset = s * 3;
-		frc::Translation2d p1 = bezierPoints[iOffset];
-		frc::Translation2d p2 = bezierPoints[iOffset + 1];
-		frc::Translation2d p3 = bezierPoints[iOffset + 2];
-		frc::Translation2d p4 = bezierPoints[iOffset + 3];
+		frc::Translation2d p1 = m_bezierPoints[iOffset];
+		frc::Translation2d p2 = m_bezierPoints[iOffset + 1];
+		frc::Translation2d p3 = m_bezierPoints[iOffset + 2];
+		frc::Translation2d p4 = m_bezierPoints[iOffset + 3];
+		PathSegment segment(p1, p2, p3, p4);
 
-		std::vector < RotationTarget > segmentRotations;
-		for (RotationTarget t : holonomicRotations) {
-			if (t.getPosition() >= s && t.getPosition() <= s + 1) {
-				segmentRotations.push_back(t.forSegmentIndex(s));
-			}
-		}
-
-		std::vector < ConstraintsZone > segmentZones;
-		for (ConstraintsZone z : constraintZones) {
-			if (z.overlapsRange(s, s + 1)) {
-				segmentZones.push_back(z.forSegmentIndex(s));
-			}
-		}
-
-		PathSegment segment(p1, p2, p3, p4, segmentRotations, segmentZones,
-				s == numSegments - 1);
-		auto segmentPoints = segment.getSegmentPoints();
-		points.insert(points.end(), segmentPoints.begin(), segmentPoints.end());
+		segment.generatePathPoints(points, s, m_constraintZones,
+				m_rotationTargets, m_globalConstraints);
 	}
+
+	// Add the final path point
+	PathConstraints endConstraints = m_globalConstraints;
+	for (const ConstraintsZone &z : m_constraintZones) {
+		if (numSegments >= z.getMinWaypointRelativePos()
+				&& numSegments <= z.getMaxWaypointRelativePos()) {
+			endConstraints = z.getConstraints();
+			break;
+		}
+	}
+	points.emplace_back(m_bezierPoints[m_bezierPoints.size() - 1],
+			RotationTarget(numSegments, m_goalEndState.getRotation()),
+			endConstraints);
+	points[points.size() - 1].waypointRelativePos = numSegments;
 
 	return points;
 }
@@ -501,11 +500,10 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 			// We don't have any bezier points to reference
 			PathSegment joinSegment(startingPose.Translation(),
 					robotNextControl.value(), joinPrevControl,
-					m_allPoints[0].position, false);
+					m_allPoints[0].position);
 			std::vector < PathPoint > replannedPoints;
-			auto joinPoints = joinSegment.getSegmentPoints();
-			replannedPoints.insert(replannedPoints.end(), joinPoints.begin(),
-					joinPoints.end());
+			joinSegment.generatePathPoints(replannedPoints, 0, { }, { },
+					m_globalConstraints);
 			replannedPoints.insert(replannedPoints.end(), m_allPoints.begin(),
 					m_allPoints.end());
 
@@ -586,11 +584,10 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 	if (m_bezierPoints.empty()) {
 		// We don't have any bezier points to reference
 		PathSegment joinSegment(startingPose.Translation(),
-				robotNextControl.value(), joinPrevControl, joinAnchor, false);
+				robotNextControl.value(), joinPrevControl, joinAnchor);
 		std::vector < PathPoint > replannedPoints;
-		auto joinPoints = joinSegment.getSegmentPoints();
-		replannedPoints.insert(replannedPoints.end(), joinPoints.begin(),
-				joinPoints.end());
+		joinSegment.generatePathPoints(replannedPoints, 0, { }, { },
+				m_globalConstraints);
 		replannedPoints.insert(replannedPoints.end(),
 				m_allPoints.begin() + joinAnchorIdx, m_allPoints.end());
 
@@ -600,7 +597,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 
 	// We can reference bezier points
 	size_t nextWaypointIdx = static_cast<size_t>(std::ceil(
-			(joinAnchorIdx + 1) * PathSegment::RESOLUTION));
+			m_allPoints[joinAnchorIdx + 1].waypointRelativePos));
 	size_t bezierPointIdx = nextWaypointIdx * 3;
 	units::meter_t waypointDelta = joinAnchor.Distance(
 			m_bezierPoints[bezierPointIdx]);
@@ -635,8 +632,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 	units::meter_t segment2Length = 0_m;
 	frc::Translation2d lastSegment2Pos = joinAnchor;
 
-	for (double t = PathSegment::RESOLUTION; t < 1.0; t +=
-			PathSegment::RESOLUTION) {
+	for (double t = 0.05; t < 1.0; t += 0.05) {
 		frc::Translation2d p1 = GeometryUtil::cubicLerp(
 				startingPose.Translation(), robotNextControl.value(),
 				joinPrevControl, joinAnchor, t);

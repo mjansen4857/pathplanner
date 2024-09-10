@@ -358,6 +358,7 @@ class PathPlannerPath {
       constraints: _constraintsForPos(0.0),
       distanceAlongPath: 0.0,
     ));
+    pathPoints.last.waypointPos = 0.0;
 
     double pos = targetIncrement;
     while (pos < waypoints.length - 1) {
@@ -419,6 +420,7 @@ class PathPlannerPath {
         distanceAlongPath: pathPoints.last.distanceAlongPath +
             pathPoints.last.position.distanceTo(position),
       ));
+      pathPoints.last.waypointPos = pos;
       pos = min(pos + targetIncrement, waypoints.length - 1);
     }
 
@@ -474,6 +476,7 @@ class PathPlannerPath {
         distanceAlongPath: pathPoints.last.distanceAlongPath +
             pathPoints.last.position.distanceTo(position),
       ));
+      pathPoints.last.waypointPos = pos;
       pos = waypoints.length - 1;
     }
 

@@ -14,8 +14,6 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/kinematics.dart';
 
 class AutoSimulator {
-  static const double pathResolution = 0.025;
-
   static PathPlannerTrajectory? simulateAuto(List<PathPlannerPath> paths,
       old.Pose2d? startingPose, RobotConfig robotConfig) {
     if (paths.isEmpty) return null;
@@ -208,7 +206,8 @@ class AutoSimulator {
     int joinAnchorIdx = path.pathPoints.length - 1;
     for (int i = closestPointIdx; i < path.pathPoints.length; i++) {
       if (path.pathPoints[i].distanceAlongPath >=
-          path.pathPoints[closestPointIdx].distanceAlongPath + closestDist) {
+          path.pathPoints[closestPointIdx].distanceAlongPath +
+              (closestDist / 2)) {
         joinAnchorIdx = i;
         break;
       }
@@ -258,7 +257,7 @@ class AutoSimulator {
       );
     }
 
-    int nextWaypointIdx = ((joinAnchorIdx + 1) * pathResolution).ceil();
+    int nextWaypointIdx = path.pathPoints[joinAnchorIdx + 1].waypointPos.ceil();
     double waypointDelta =
         joinAnchor.distanceTo(path.waypoints[nextWaypointIdx].anchor);
 
@@ -309,7 +308,7 @@ class AutoSimulator {
     num segment2Length = 0;
     Point lastSegment2Pos = joinAnchor;
 
-    for (double t = pathResolution; t < 1.0; t += pathResolution) {
+    for (double t = 0.05; t < 1.0; t += 0.05) {
       Point p1 = GeometryUtil.cubicLerp(startingPose.position, robotNextControl,
           joinPrevControl, joinAnchor, t);
       Point p2 = GeometryUtil.cubicLerp(joinAnchor, joinNextControl,
@@ -397,7 +396,6 @@ class AutoSimulator {
       mappedPct = 1 + ((pct - seg1Pct) / (1.0 - seg1Pct));
     }
 
-    return (mappedPct * (1.0 / pathResolution)).round() /
-        (1.0 / pathResolution);
+    return mappedPct;
   }
 }

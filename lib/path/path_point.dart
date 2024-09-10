@@ -9,6 +9,7 @@ class PathPoint {
   final PathConstraints constraints;
   final num distanceAlongPath;
   num maxV = double.infinity;
+  num waypointPos = 0.0;
 
   PathPoint({
     required this.position,

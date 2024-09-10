@@ -371,7 +371,7 @@ class PathPlannerPath {
 
       num prevPos = pos - targetIncrement;
 
-      num delta = (distance - targetSpacing);
+      num delta = distance - targetSpacing;
       if (delta > targetSpacing * 0.25) {
         // Points are too far apart, increment waypoint relative pos by correct amount
         double correctIncrement = (targetSpacing * targetIncrement) / distance;
@@ -437,7 +437,7 @@ class PathPlannerPath {
 
       num prevPos = pos - trueIncrement;
 
-      num delta = (distance - targetSpacing);
+      num delta = distance - targetSpacing;
       if (delta > targetSpacing * 0.25) {
         // Points are too far apart, increment waypoint relative pos by correct amount
         double correctIncrement = (targetSpacing * trueIncrement) / distance;

@@ -67,9 +67,15 @@ public class PathPlannerPath {
       GoalEndState goalEndState,
       boolean reversed) {
     this.bezierPoints = bezierPoints;
-    this.rotationTargets = holonomicRotations;
+    this.rotationTargets =
+        holonomicRotations.stream()
+            .sorted(Comparator.comparingDouble(RotationTarget::getPosition))
+            .toList();
     this.constraintZones = constraintZones;
-    this.eventMarkers = eventMarkers;
+    this.eventMarkers =
+        eventMarkers.stream()
+            .sorted(Comparator.comparingDouble(EventMarker::getWaypointRelativePos))
+            .toList();
     this.globalConstraints = globalConstraints;
     this.goalEndState = goalEndState;
     this.reversed = reversed;
@@ -460,10 +466,6 @@ public class PathPlannerPath {
     int numSegments = (bezierPoints.size() - 1) / 3;
 
     List<PathPoint> points = new ArrayList<>();
-    List<RotationTarget> sortedTargets =
-        rotationTargets.stream()
-            .sorted((a, b) -> Double.compare(a.getPosition(), b.getPosition()))
-            .toList();
 
     for (int s = 0; s < numSegments; s++) {
       int iOffset = s * 3;
@@ -473,7 +475,7 @@ public class PathPlannerPath {
       Translation2d p4 = bezierPoints.get(iOffset + 3);
       PathSegment segment = new PathSegment(p1, p2, p3, p4);
 
-      segment.generatePathPoints(points, s, constraintZones, sortedTargets, globalConstraints);
+      segment.generatePathPoints(points, s, constraintZones, rotationTargets, globalConstraints);
     }
 
     // Add the final path point

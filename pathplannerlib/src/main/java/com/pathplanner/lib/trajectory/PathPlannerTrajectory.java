@@ -15,7 +15,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /** Trajectory generated for a PathPlanner path */
@@ -103,11 +102,7 @@ public class PathPlannerTrajectory {
       // Reverse pass
       reverseAccelPass(states, config);
 
-      List<EventMarker> unaddedMarkers =
-          new ArrayList<>(
-              path.getEventMarkers().stream()
-                  .sorted(Comparator.comparingDouble(EventMarker::getWaypointRelativePos))
-                  .toList());
+      List<EventMarker> unaddedMarkers = new ArrayList<>(path.getEventMarkers());
 
       // Loop back over and calculate time
       for (int i = 1; i < states.size(); i++) {
@@ -128,8 +123,6 @@ public class PathPlannerTrajectory {
           }
         }
       }
-
-      eventCommands.sort(Comparator.comparing(Pair::getFirst));
     }
   }
 

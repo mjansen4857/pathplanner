@@ -165,7 +165,7 @@ jobs:
     if: ${{ github.event_name != 'pull_request' }}
     needs: test-docs
     container:
-      image: registry.jetbrains.team/p/writerside/builder/algolia-publisher:2.0.32-2
+      image: registry.jetbrains.team/p/writerside/builder/algolia-publisher:2.0.32-3
 
     steps:
       - name: Download artifact

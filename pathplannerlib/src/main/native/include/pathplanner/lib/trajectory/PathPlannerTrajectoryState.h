@@ -25,6 +25,7 @@ public:
 	frc::Rotation2d deltaRot;
 	std::vector<SwerveModuleTrajectoryState> moduleStates;
 	PathConstraints constraints;
+	double waypointRelativePos = 0.0;
 
 	PathPlannerTrajectoryState() : constraints(0_mps, 0_mps_sq, 0_rad_per_s,
 			0_rad_per_s_sq) {

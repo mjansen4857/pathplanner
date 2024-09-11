@@ -5,10 +5,11 @@ import 'package:pathplanner/path/rotation_target.dart';
 
 class PathPoint {
   final Point position;
-  final RotationTarget? rotationTarget;
+  RotationTarget? rotationTarget;
   final PathConstraints constraints;
   final num distanceAlongPath;
   num maxV = double.infinity;
+  num waypointPos = 0.0;
 
   PathPoint({
     required this.position,

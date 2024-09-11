@@ -18,6 +18,7 @@ public:
 			std::numeric_limits<double>::infinity() };
 	std::optional<RotationTarget> rotationTarget = std::nullopt;
 	std::optional<PathConstraints> constraints = std::nullopt;
+	double waypointRelativePos = 0.0;
 
 	constexpr PathPoint(frc::Translation2d pos,
 			std::optional<RotationTarget> rot,

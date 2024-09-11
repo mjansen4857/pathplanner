@@ -17,8 +17,10 @@ import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/util/geometry_util.dart';
+import 'package:pathplanner/util/wpimath/math_util.dart';
 
-const double pathResolution = 0.025;
+const double targetIncrement = 0.05;
+const double targetSpacing = 0.2;
 
 class PathPlannerPath {
   String name;
@@ -327,6 +329,16 @@ class PathPlannerPath {
     return false;
   }
 
+  PathConstraints _constraintsForPos(num waypointPos) {
+    for (ConstraintsZone z in constraintZones) {
+      if (waypointPos >= z.minWaypointRelativePos &&
+          waypointPos <= z.maxWaypointRelativePos) {
+        return z.constraints;
+      }
+    }
+    return globalConstraints;
+  }
+
   void generatePathPoints() {
     // Add all command names in this path to the available names
     for (EventMarker m in eventMarkers) {
@@ -339,65 +351,138 @@ class PathPlannerPath {
     unaddedTargets
         .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
 
-    for (int i = 0; i < waypoints.length - 1; i++) {
-      for (double t = 0; t < 1.0; t += pathResolution) {
-        num actualWaypointPos = i + t;
-        RotationTarget? rotation;
+    // first point
+    pathPoints.add(PathPoint(
+      position: samplePath(0.0),
+      rotationTarget: null,
+      constraints: _constraintsForPos(0.0),
+      distanceAlongPath: 0.0,
+    ));
+    pathPoints.last.waypointPos = 0.0;
 
-        if (unaddedTargets.isNotEmpty) {
-          if ((unaddedTargets[0].waypointRelativePos - actualWaypointPos)
-                  .abs() <=
-              (unaddedTargets[0].waypointRelativePos -
-                      min(actualWaypointPos + pathResolution,
-                          waypoints.length - 1))
-                  .abs()) {
-            rotation = unaddedTargets.removeAt(0);
-          }
-        }
+    double pos = targetIncrement;
+    while (pos < waypoints.length - 1) {
+      var position = samplePath(pos);
 
-        PathConstraints? constraints;
-        for (ConstraintsZone z in constraintZones) {
-          if (actualWaypointPos >= z.minWaypointRelativePos &&
-              actualWaypointPos <= z.maxWaypointRelativePos) {
-            constraints = z.constraints;
-            break;
-          }
-        }
-
-        Point position = GeometryUtil.cubicLerp(
-            waypoints[i].anchor,
-            waypoints[i].nextControl!,
-            waypoints[i + 1].prevControl!,
-            waypoints[i + 1].anchor,
-            t);
-        num dist = (actualWaypointPos == 0)
-            ? 0
-            : (pathPoints.last.distanceAlongPath +
-                (pathPoints.last.position.distanceTo(position)));
-
-        pathPoints.add(
-          PathPoint(
-            position: position,
-            rotationTarget: rotation,
-            constraints: constraints ?? globalConstraints,
-            distanceAlongPath: dist,
-          ),
-        );
+      num distance = pathPoints.last.position.distanceTo(position);
+      if (distance == 0.0) {
+        pos = min(pos + targetIncrement, waypoints.length - 1);
+        continue;
       }
 
-      if (i == waypoints.length - 2) {
-        pathPoints.add(PathPoint(
-          position: waypoints[waypoints.length - 1].anchor,
-          rotationTarget: RotationTarget(
-              rotationDegrees: goalEndState.rotation,
-              waypointRelativePos: waypoints.length - 1),
-          constraints: globalConstraints,
-          distanceAlongPath: pathPoints.last.distanceAlongPath +
-              (pathPoints.last.position
-                  .distanceTo(waypoints[waypoints.length - 1].anchor)),
-        ));
+      num prevPos = pos - targetIncrement;
+
+      num delta = distance - targetSpacing;
+      if (delta > targetSpacing * 0.25) {
+        // Points are too far apart, increment waypoint relative pos by correct amount
+        double correctIncrement = (targetSpacing * targetIncrement) / distance;
+        pos = pos - targetIncrement + correctIncrement;
+
+        position = samplePath(pos);
+
+        if (pathPoints.last.position.distanceTo(position) - targetSpacing >
+            targetSpacing * 0.25) {
+          // Points are still too far apart. Probably because of weird control
+          // point placement. Just cut the correct increment in half and hope for the best
+          pos = pos - (correctIncrement * 0.5);
+          position = samplePath(pos);
+        }
+      } else if (delta < -targetSpacing * 0.25) {
+        // Points are too close, increment waypoint relative pos by correct amount
+
+        double correctIncrement = (targetSpacing * targetIncrement) / distance;
+        pos = pos - targetIncrement + correctIncrement;
+
+        position = samplePath(pos);
+
+        if (pathPoints.last.position.distanceTo(position) - targetSpacing <
+            -targetSpacing * 0.25) {
+          // Points are still too close. Probably because of weird control
+          // point placement. Just cut the correct increment in half and hope for the best
+          pos = pos + (correctIncrement * 0.5);
+          position = samplePath(pos);
+        }
       }
+
+      // Add a rotation target to the previous point if it is closer to it than
+      // the current point
+      if (unaddedTargets.isNotEmpty) {
+        if ((unaddedTargets[0].waypointRelativePos - prevPos).abs() <=
+            (unaddedTargets[0].waypointRelativePos - pos).abs()) {
+          pathPoints.last.rotationTarget = unaddedTargets.removeAt(0);
+        }
+      }
+
+      pathPoints.add(PathPoint(
+        position: position,
+        rotationTarget: null,
+        constraints: _constraintsForPos(pos),
+        distanceAlongPath: pathPoints.last.distanceAlongPath +
+            pathPoints.last.position.distanceTo(position),
+      ));
+      pathPoints.last.waypointPos = pos;
+      pos = min(pos + targetIncrement, waypoints.length - 1);
     }
+
+    // Keep trying to add the end point until its close enough to the prev point
+    num trueIncrement = (waypoints.length - 1) - (pos - targetIncrement);
+    pos = waypoints.length - 1;
+    bool invalid = true;
+    while (invalid) {
+      var position = samplePath(pos);
+
+      num distance = pathPoints.last.position.distanceTo(position);
+      if (distance == 0.0) {
+        invalid = false;
+        break;
+      }
+
+      num prevPos = pos - trueIncrement;
+
+      num delta = distance - targetSpacing;
+      if (delta > targetSpacing * 0.25) {
+        // Points are too far apart, increment waypoint relative pos by correct amount
+        double correctIncrement = (targetSpacing * trueIncrement) / distance;
+        pos = pos - trueIncrement + correctIncrement;
+        trueIncrement = correctIncrement;
+
+        position = samplePath(pos);
+
+        if (pathPoints.last.position.distanceTo(position) - targetSpacing >
+            targetSpacing * 0.25) {
+          // Points are still too far apart. Probably because of weird control
+          // point placement. Just cut the correct increment in half and hope for the best
+          pos = pos - (correctIncrement * 0.5);
+          trueIncrement = correctIncrement * 0.5;
+          position = samplePath(pos);
+        }
+      } else {
+        invalid = false;
+      }
+
+      // Add a rotation target to the previous point if it is closer to it than
+      // the current point
+      if (unaddedTargets.isNotEmpty) {
+        if ((unaddedTargets[0].waypointRelativePos - prevPos).abs() <=
+            (unaddedTargets[0].waypointRelativePos - pos).abs()) {
+          pathPoints.last.rotationTarget = unaddedTargets.removeAt(0);
+        }
+      }
+
+      pathPoints.add(PathPoint(
+        position: position,
+        rotationTarget: null,
+        constraints: _constraintsForPos(pos),
+        distanceAlongPath: pathPoints.last.distanceAlongPath +
+            pathPoints.last.position.distanceTo(position),
+      ));
+      pathPoints.last.waypointPos = pos;
+      pos = waypoints.length - 1;
+    }
+
+    pathPoints.last.rotationTarget = RotationTarget(
+        rotationDegrees: goalEndState.rotation,
+        waypointRelativePos: waypoints.length - 1);
 
     for (int i = 0; i < pathPoints.length; i++) {
       num curveRadius = _getCurveRadiusAtPoint(i).abs();
@@ -412,6 +497,24 @@ class PathPlannerPath {
     }
 
     pathPoints.last.maxV = goalEndState.velocity;
+  }
+
+  Point<num> samplePath(num waypointRelativePos) {
+    num pos = MathUtil.clamp(waypointRelativePos, 0, waypoints.length - 1);
+
+    int i = pos.floor();
+    if (i == waypoints.length - 1) {
+      i--;
+    }
+
+    num t = pos - i;
+
+    return GeometryUtil.cubicLerp(
+        waypoints[i].anchor,
+        waypoints[i].nextControl!,
+        waypoints[i + 1].prevControl!,
+        waypoints[i + 1].anchor,
+        t);
   }
 
   num _getCurveRadiusAtPoint(int index) {

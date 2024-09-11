@@ -33,6 +33,7 @@ class PathPlannerTrajectoryState:
     deltaRot: Rotation2d = Rotation2d()
     moduleStates: List[SwerveModuleTrajectoryState] = field(default_factory=list)
     constraints: PathConstraints = None
+    waypointRelativePos: float = 0.0
 
     def interpolate(self, end_val: PathPlannerTrajectoryState, t: float) -> PathPlannerTrajectoryState:
         """
@@ -138,6 +139,9 @@ class PathPlannerTrajectory:
                 self._states[-1].fieldSpeeds = endFieldSpeeds
                 self._states[-1].linearVelocity = path.getGoalEndState().velocity
 
+                unaddedMarkers = [m for m in path.getEventMarkers()]
+                unaddedMarkers.sort(key=lambda x: x.waypointRelativePos)
+
                 # Reverse pass
                 _reverseAccelPass(self._states, config)
 
@@ -148,12 +152,14 @@ class PathPlannerTrajectory:
                     dt = (2 * self._states[i].deltaPos) / (v + v0)
                     self._states[i].timeSeconds = self._states[i - 1].timeSeconds + dt
 
-                for m in path.getEventMarkers():
-                    # TODO: this will need to be changed for dynamic resolution
-                    pointIndex = int(round(m.waypointRelativePos / RESOLUTION))
-                    self._eventCommands.append((self._states[pointIndex].timeSeconds, m.command))
+                    if len(unaddedMarkers) > 0:
+                        prevPos = self._states[i - 1].waypointRelativePos
+                        pos = self._states[i].waypointRelativePos
 
-                self._eventCommands.sort(key=lambda a: a[0])
+                        m = unaddedMarkers[0]
+                        if abs(m.waypointRelativePos - prevPos) <= abs(m.waypointRelativePos - pos):
+                            self._eventCommands.append((self._states[i - 1].timeSeconds, m.command))
+                            unaddedMarkers.pop(0)
 
     def getEventCommands(self) -> List[Tuple[float, Command]]:
         """
@@ -404,7 +410,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # Calculate the module velocity at the current state
             # vf^2 = v0^2 + 2ad
             state.moduleStates[m].speed = math.sqrt(abs(math.pow(prevState.moduleStates[m].speed, 2) + (
-                        2 * moduleAcceleration * state.moduleStates[m].deltaPos)))
+                    2 * moduleAcceleration * state.moduleStates[m].deltaPos)))
 
             curveRadius = calculateRadius(prevState.moduleStates[m].fieldPos, state.moduleStates[m].fieldPos,
                                           nextState.moduleStates[m].fieldPos)
@@ -417,6 +423,10 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         # Go over the modules again to make sure they take the same amount of time to reach the next state
         maxDT = 0.0
         for m in range(config.numModules):
+            prevRotDelta = state.moduleStates[m].angle - prevState.moduleStates[m].angle
+            if abs(prevRotDelta.degrees()) >= 45:
+                continue
+
             modVel = state.moduleStates[m].speed
             dt = nextState.moduleStates[m].deltaPos / modVel
 
@@ -425,6 +435,10 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
         # Recalculate all module velocities with the allowed DT
         for m in range(config.numModules):
+            prevRotDelta = state.moduleStates[m].angle - prevState.moduleStates[m].angle
+            if abs(prevRotDelta.degrees()) >= 45:
+                continue
+
             state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
 
         # Use the calculated module velocities to calculate the robot speeds
@@ -497,6 +511,10 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         # Go over the modules again to make sure they take the same amount of time to reach the next state
         maxDT = 0.0
         for m in range(config.numModules):
+            prevRotDelta = state.moduleStates[m].angle - states[i - 1].moduleStates[m].angle
+            if abs(prevRotDelta.degrees()) >= 45:
+                continue
+
             modVel = state.moduleStates[m].speed
             dt = nextState.moduleStates[m].deltaPos / modVel
 
@@ -505,6 +523,10 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
         # Recalculate all module velocities with the allowed DT
         for m in range(config.numModules):
+            prevRotDelta = state.moduleStates[m].angle - states[i - 1].moduleStates[m].angle
+            if abs(prevRotDelta.degrees()) >= 45:
+                continue
+
             state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
 
         # Use the calculated module velocities to calculate the robot speeds

@@ -31,6 +31,8 @@ public class PathPlannerTrajectoryState {
   protected SwerveModuleTrajectoryState[] moduleStates;
   /** The {@link com.pathplanner.lib.path.PathConstraints} for this state */
   protected PathConstraints constraints;
+  /** The waypoint relative position of this state. Used to determine proper event marker timing */
+  protected double waypointRelativePos = 0.0;
 
   /**
    * Interpolate between this state and the given state

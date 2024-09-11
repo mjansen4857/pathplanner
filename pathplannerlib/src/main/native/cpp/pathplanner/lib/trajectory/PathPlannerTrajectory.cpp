@@ -58,11 +58,6 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		std::vector < EventMarker
 				> unaddedMarkers(path->getEventMarkers().begin(),
 						path->getEventMarkers().end());
-		std::sort(unaddedMarkers.begin(), unaddedMarkers.end(),
-				[](auto &left, auto &right) {
-					return left.getWaypointRelativePos()
-							< right.getWaypointRelativePos();
-				});
 
 		// Loop back over and calculate time
 		for (size_t i = 1; i < m_states.size(); i++) {

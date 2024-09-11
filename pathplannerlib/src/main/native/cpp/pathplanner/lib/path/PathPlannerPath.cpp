@@ -24,6 +24,16 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 		constraintZones), m_eventMarkers(eventMarkers), m_globalConstraints(
 		globalConstraints), m_goalEndState(goalEndState), m_reversed(reversed), m_previewStartingRotation(
 		previewStartingRotation), m_isChoreoPath(false), m_choreoTrajectory() {
+	std::sort(m_rotationTargets.begin(), m_rotationTargets.end(),
+			[](auto &left, auto &right) {
+				return left.getPosition() < right.getPosition();
+			});
+	std::sort(m_eventMarkers.begin(), m_eventMarkers.end(),
+			[](auto &left, auto &right) {
+				return left.getWaypointRelativePos()
+						< right.getWaypointRelativePos();
+			});
+
 	createPath();
 
 	precalcValues();
@@ -306,10 +316,6 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 	size_t numSegments = (m_bezierPoints.size() - 1) / 3;
 
 	std::vector < PathPoint > points;
-	std::sort(m_rotationTargets.begin(), m_rotationTargets.end(),
-			[](auto &left, auto &right) {
-				return left.getPosition() < right.getPosition();
-			});
 
 	for (size_t s = 0; s < numSegments; s++) {
 		size_t iOffset = s * 3;

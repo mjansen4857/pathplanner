@@ -19,11 +19,15 @@ class PreviewSeekbar extends StatefulWidget {
 class _PreviewSeekbarState extends State<PreviewSeekbar> {
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
         padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
         child: Card(
+          color: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
           elevation: 2.0,
           child: SizedBox(
             height: 32,

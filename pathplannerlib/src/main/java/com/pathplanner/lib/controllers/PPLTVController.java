@@ -1,6 +1,6 @@
 package com.pathplanner.lib.controllers;
 
-import com.pathplanner.lib.path.PathPlannerTrajectory;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.LTVUnicycleController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -79,14 +79,14 @@ public class PPLTVController extends LTVUnicycleController implements PathFollow
    */
   @Override
   public ChassisSpeeds calculateRobotRelativeSpeeds(
-      Pose2d currentPose, PathPlannerTrajectory.State targetState) {
-    lastError = currentPose.getTranslation().getDistance(targetState.positionMeters);
+      Pose2d currentPose, PathPlannerTrajectoryState targetState) {
+    lastError = currentPose.getTranslation().getDistance(targetState.pose.getTranslation());
 
     return calculate(
         currentPose,
-        targetState.getDifferentialPose(),
-        targetState.velocityMps,
-        targetState.headingAngularVelocityRps);
+        targetState.pose,
+        targetState.linearVelocity,
+        targetState.fieldSpeeds.omegaRadiansPerSecond);
   }
 
   /**

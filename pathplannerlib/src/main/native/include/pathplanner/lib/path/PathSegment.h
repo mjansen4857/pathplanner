@@ -3,7 +3,7 @@
 #include "pathplanner/lib/path/PathPoint.h"
 #include "pathplanner/lib/path/RotationTarget.h"
 #include "pathplanner/lib/path/ConstraintsZone.h"
-#include <frc/geometry/Rotation2d.h>
+#include "pathplanner/lib/util/GeometryUtil.h"
 #include <frc/geometry/Translation2d.h>
 #include <vector>
 #include <optional>
@@ -11,52 +11,53 @@
 namespace pathplanner {
 class PathSegment {
 public:
-	static constexpr double RESOLUTION = 0.05;
+	static constexpr double targetIncrement = 0.05;
+	static constexpr units::meter_t targetSpacing = 0.2_m;
+
+	const frc::Translation2d p1;
+	const frc::Translation2d p2;
+	const frc::Translation2d p3;
+	const frc::Translation2d p4;
 
 	/**
-	 * Generate a new path segment
+	 * Create a new path segment
 	 *
-	 * @param p1 Start anchor point
-	 * @param p2 Start next control
-	 * @param p3 End prev control
-	 * @param p4 End anchor point
-	 * @param targetHolonomicRotations Rotation targets for within this segment
-	 * @param constraintZones Constraint zones for within this segment
-	 * @param endSegment Is this the last segment in the path
+	 * @param point1 Start anchor point
+	 * @param point2 Start next control
+	 * @param point3 End prev control
+	 * @param point4 End anchor point
 	 */
-	PathSegment(frc::Translation2d p1, frc::Translation2d p2,
-			frc::Translation2d p3, frc::Translation2d p4,
-			std::vector<RotationTarget> targetHolonomicRotations,
-			std::vector<ConstraintsZone> constraintZones, bool endSegment);
-
-	/**
-	 * Generate a new path segment without constraint zones or rotation targets
-	 *
-	 * @param p1 Start anchor point
-	 * @param p2 Start next control
-	 * @param p3 End prev control
-	 * @param p4 End anchor point
-	 * @param endSegment Is this the last segment in the path
-	 */
-	PathSegment(frc::Translation2d p1, frc::Translation2d p2,
-			frc::Translation2d p3, frc::Translation2d p4, bool endSegment) : PathSegment(
-			p1, p2, p3, p4, std::vector<RotationTarget>(),
-			std::vector<ConstraintsZone>(), endSegment) {
+	constexpr PathSegment(frc::Translation2d point1, frc::Translation2d point2,
+			frc::Translation2d point3, frc::Translation2d point4) : p1(point1), p2(
+			point2), p3(point3), p4(point4) {
 	}
 
 	/**
-	 * Get the path points for this segment
+	 * Sample a point along this segment
 	 *
-	 * @return Path points for this segment
+	 * @param t Interpolation factor, essentially the percentage along the segment
+	 * @return Point along the segment at the given t value
 	 */
-	constexpr std::vector<PathPoint>& getSegmentPoints() {
-		return m_segmentPoints;
+	constexpr frc::Translation2d sample(double t) {
+		return GeometryUtil::cubicLerp(p1, p2, p3, p4, t);
 	}
+
+	void generatePathPoints(std::vector<PathPoint> &points, size_t segmentIdx,
+			std::vector<ConstraintsZone> constraintZones,
+			std::vector<RotationTarget> sortedTargets,
+			std::optional<PathConstraints> globalConstraints);
 
 private:
-	std::vector<PathPoint> m_segmentPoints;
-
-	std::optional<ConstraintsZone> findConstraintsZone(
-			std::vector<ConstraintsZone> &zones, double t) const;
+	inline std::optional<PathConstraints> constraintsForWaypointPos(double pos,
+			std::vector<ConstraintsZone> constraintZones,
+			std::optional<PathConstraints> globalConstraints) {
+		for (const ConstraintsZone &z : constraintZones) {
+			if (pos >= z.getMinWaypointRelativePos()
+					&& pos <= z.getMaxWaypointRelativePos()) {
+				return z.getConstraints();
+			}
+		}
+		return globalConstraints;
+	}
 };
 }

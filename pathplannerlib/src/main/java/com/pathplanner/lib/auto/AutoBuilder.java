@@ -1,17 +1,15 @@
 package com.pathplanner.lib.auto;
 
 import com.pathplanner.lib.commands.*;
+import com.pathplanner.lib.config.ReplanningConfig;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.GeometryUtil;
-import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
-import com.pathplanner.lib.util.ReplanningConfig;
-import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -23,10 +21,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.json.simple.JSONObject;
@@ -37,39 +32,40 @@ public class AutoBuilder {
   private static boolean configured = false;
 
   private static Function<PathPlannerPath, Command> pathFollowingCommandBuilder;
-  private static Supplier<Pose2d> getPose;
   private static Consumer<Pose2d> resetPose;
   private static BooleanSupplier shouldFlipPath;
 
   // Pathfinding builders
   private static boolean pathfindingConfigured = false;
-  private static QuadFunction<Pose2d, PathConstraints, Double, Double, Command>
-      pathfindToPoseCommandBuilder;
-  private static TriFunction<PathPlannerPath, PathConstraints, Double, Command>
+  private static TriFunction<Pose2d, PathConstraints, Double, Command> pathfindToPoseCommandBuilder;
+  private static BiFunction<PathPlannerPath, PathConstraints, Command>
       pathfindThenFollowPathCommandBuilder;
 
   /**
-   * Configures the AutoBuilder for a holonomic drivetrain.
+   * Configures the AutoBuilder for using PathPlanner's built-in commands.
    *
    * @param poseSupplier a supplier for the robot's current pose
    * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
    * @param robotRelativeOutput a consumer for setting the robot's robot-relative chassis speeds
-   * @param config {@link com.pathplanner.lib.util.HolonomicPathFollowerConfig} for configuring the
-   *     path following commands
+   * @param controller Path following controller that will be used to follow paths
+   * @param robotConfig The robot configuration
+   * @param replanningConfig Path replanning configuration
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
    *     the field. This will maintain a global blue alliance origin.
-   * @param driveSubsystem the subsystem for the robot's drive
+   * @param driveRequirements the subsystem requirements for the robot's drive train
    */
-  public static void configureHolonomic(
+  public static void configure(
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
       Consumer<ChassisSpeeds> robotRelativeOutput,
-      HolonomicPathFollowerConfig config,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      ReplanningConfig replanningConfig,
       BooleanSupplier shouldFlipPath,
-      Subsystem driveSubsystem) {
+      Subsystem... driveRequirements) {
     if (configured) {
       DriverStation.reportError(
           "Auto builder has already been configured. This is likely in error.", true);
@@ -77,337 +73,46 @@ public class AutoBuilder {
 
     AutoBuilder.pathFollowingCommandBuilder =
         (path) ->
-            new FollowPathHolonomic(
+            new FollowPathCommand(
                 path,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
                 robotRelativeOutput,
-                config,
+                controller,
+                robotConfig,
+                replanningConfig,
                 shouldFlipPath,
-                driveSubsystem);
-    AutoBuilder.getPose = poseSupplier;
+                driveRequirements);
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
     AutoBuilder.shouldFlipPath = shouldFlipPath;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
-        (pose, constraints, goalEndVel, rotationDelayDistance) ->
-            new PathfindHolonomic(
+        (pose, constraints, goalEndVel) ->
+            new PathfindingCommand(
                 pose,
                 constraints,
                 goalEndVel,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
                 robotRelativeOutput,
-                config,
-                rotationDelayDistance,
-                driveSubsystem);
+                controller,
+                robotConfig,
+                replanningConfig,
+                driveRequirements);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
-        (path, constraints, rotationDelayDistance) ->
-            new PathfindThenFollowPathHolonomic(
+        (path, constraints) ->
+            new PathfindThenFollowPath(
                 path,
                 constraints,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
                 robotRelativeOutput,
-                config,
-                rotationDelayDistance,
-                shouldFlipPath,
-                driveSubsystem);
-    AutoBuilder.pathfindingConfigured = true;
-  }
-
-  /**
-   * Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
-   *
-   * @param poseSupplier a supplier for the robot's current pose
-   * @param resetPose a consumer for resetting the robot's pose
-   * @param speedsSupplier a supplier for the robot's current chassis speeds
-   * @param output a consumer for setting the robot's chassis speeds
-   * @param replanningConfig Path replanning configuration
-   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
-   *     the field. This will maintain a global blue alliance origin.
-   * @param driveSubsystem the subsystem for the robot's drive
-   */
-  public static void configureRamsete(
-      Supplier<Pose2d> poseSupplier,
-      Consumer<Pose2d> resetPose,
-      Supplier<ChassisSpeeds> speedsSupplier,
-      Consumer<ChassisSpeeds> output,
-      ReplanningConfig replanningConfig,
-      BooleanSupplier shouldFlipPath,
-      Subsystem driveSubsystem) {
-    if (configured) {
-      DriverStation.reportError(
-          "Auto builder has already been configured. This is likely in error.", true);
-    }
-
-    AutoBuilder.pathFollowingCommandBuilder =
-        (path) ->
-            new FollowPathRamsete(
-                path,
-                poseSupplier,
-                speedsSupplier,
-                output,
+                controller,
+                robotConfig,
                 replanningConfig,
                 shouldFlipPath,
-                driveSubsystem);
-    AutoBuilder.getPose = poseSupplier;
-    AutoBuilder.resetPose = resetPose;
-    AutoBuilder.configured = true;
-    AutoBuilder.shouldFlipPath = shouldFlipPath;
-
-    AutoBuilder.pathfindToPoseCommandBuilder =
-        (pose, constraints, goalEndVel, rotationDelayDistance) ->
-            new PathfindRamsete(
-                pose.getTranslation(),
-                constraints,
-                goalEndVel,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                replanningConfig,
-                driveSubsystem);
-    AutoBuilder.pathfindThenFollowPathCommandBuilder =
-        (path, constraints, rotationDelayDistance) ->
-            new PathfindThenFollowPathRamsete(
-                path,
-                constraints,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                replanningConfig,
-                shouldFlipPath,
-                driveSubsystem);
-    AutoBuilder.pathfindingConfigured = true;
-  }
-
-  /**
-   * Configures the AutoBuilder for a differential drivetrain using a RAMSETE path follower.
-   *
-   * @param poseSupplier a supplier for the robot's current pose
-   * @param resetPose a consumer for resetting the robot's pose
-   * @param speedsSupplier a supplier for the robot's current chassis speeds
-   * @param output a consumer for setting the robot's chassis speeds
-   * @param b Tuning parameter (b &gt; 0 rad^2/m^2) for which larger values make convergence more
-   *     aggressive like a proportional term.
-   * @param zeta Tuning parameter (0 rad^-1 &lt; zeta &lt; 1 rad^-1) for which larger values provide
-   *     more damping in response.
-   * @param replanningConfig Path replanning configuration
-   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
-   *     the field. This will maintain a global blue alliance origin.
-   * @param driveSubsystem the subsystem for the robot's drive
-   */
-  public static void configureRamsete(
-      Supplier<Pose2d> poseSupplier,
-      Consumer<Pose2d> resetPose,
-      Supplier<ChassisSpeeds> speedsSupplier,
-      Consumer<ChassisSpeeds> output,
-      double b,
-      double zeta,
-      ReplanningConfig replanningConfig,
-      BooleanSupplier shouldFlipPath,
-      Subsystem driveSubsystem) {
-    if (configured) {
-      DriverStation.reportError(
-          "Auto builder has already been configured. This is likely in error.", true);
-    }
-
-    AutoBuilder.pathFollowingCommandBuilder =
-        (path) ->
-            new FollowPathRamsete(
-                path,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                b,
-                zeta,
-                replanningConfig,
-                shouldFlipPath,
-                driveSubsystem);
-    AutoBuilder.getPose = poseSupplier;
-    AutoBuilder.resetPose = resetPose;
-    AutoBuilder.configured = true;
-    AutoBuilder.shouldFlipPath = shouldFlipPath;
-
-    AutoBuilder.pathfindToPoseCommandBuilder =
-        (pose, constraints, goalEndVel, rotationDelayDistance) ->
-            new PathfindRamsete(
-                pose.getTranslation(),
-                constraints,
-                goalEndVel,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                b,
-                zeta,
-                replanningConfig,
-                driveSubsystem);
-    AutoBuilder.pathfindThenFollowPathCommandBuilder =
-        (path, constraints, rotationDelayDistance) ->
-            new PathfindThenFollowPathRamsete(
-                path,
-                constraints,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                b,
-                zeta,
-                replanningConfig,
-                shouldFlipPath,
-                driveSubsystem);
-    AutoBuilder.pathfindingConfigured = true;
-  }
-
-  /**
-   * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
-   * follower.
-   *
-   * @param poseSupplier a supplier for the robot's current pose
-   * @param resetPose a consumer for resetting the robot's pose
-   * @param speedsSupplier a supplier for the robot's current chassis speeds
-   * @param output a consumer for setting the robot's chassis speeds
-   * @param dt Period of the robot control loop in seconds (default 0.02)
-   * @param replanningConfig Path replanning configuration
-   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
-   *     the field. This will maintain a global blue alliance origin.
-   * @param driveSubsystem the subsystem for the robot's drive
-   */
-  public static void configureLTV(
-      Supplier<Pose2d> poseSupplier,
-      Consumer<Pose2d> resetPose,
-      Supplier<ChassisSpeeds> speedsSupplier,
-      Consumer<ChassisSpeeds> output,
-      double dt,
-      ReplanningConfig replanningConfig,
-      BooleanSupplier shouldFlipPath,
-      Subsystem driveSubsystem) {
-    if (configured) {
-      DriverStation.reportError(
-          "Auto builder has already been configured. This is likely in error.", true);
-    }
-
-    AutoBuilder.pathFollowingCommandBuilder =
-        (path) ->
-            new FollowPathLTV(
-                path,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                dt,
-                replanningConfig,
-                shouldFlipPath,
-                driveSubsystem);
-    AutoBuilder.getPose = poseSupplier;
-    AutoBuilder.resetPose = resetPose;
-    AutoBuilder.configured = true;
-    AutoBuilder.shouldFlipPath = shouldFlipPath;
-
-    AutoBuilder.pathfindToPoseCommandBuilder =
-        (pose, constraints, goalEndVel, rotationDelayDistance) ->
-            new PathfindLTV(
-                pose.getTranslation(),
-                constraints,
-                goalEndVel,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                dt,
-                replanningConfig,
-                driveSubsystem);
-    AutoBuilder.pathfindThenFollowPathCommandBuilder =
-        (path, constraints, rotationDelayDistance) ->
-            new PathfindThenFollowPathLTV(
-                path,
-                constraints,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                dt,
-                replanningConfig,
-                shouldFlipPath,
-                driveSubsystem);
-    AutoBuilder.pathfindingConfigured = true;
-  }
-
-  /**
-   * Configures the AutoBuilder for a differential drivetrain using a LTVUnicycleController path
-   * follower.
-   *
-   * @param poseSupplier a supplier for the robot's current pose
-   * @param resetPose a consumer for resetting the robot's pose
-   * @param speedsSupplier a supplier for the robot's current chassis speeds
-   * @param output a consumer for setting the robot's chassis speeds
-   * @param qelems The maximum desired error tolerance for each state.
-   * @param relems The maximum desired control effort for each input.
-   * @param dt Period of the robot control loop in seconds (default 0.02)
-   * @param replanningConfig Path replanning configuration
-   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
-   *     the field. This will maintain a global blue alliance origin.
-   * @param driveSubsystem the subsystem for the robot's drive
-   */
-  public static void configureLTV(
-      Supplier<Pose2d> poseSupplier,
-      Consumer<Pose2d> resetPose,
-      Supplier<ChassisSpeeds> speedsSupplier,
-      Consumer<ChassisSpeeds> output,
-      Vector<N3> qelems,
-      Vector<N2> relems,
-      double dt,
-      ReplanningConfig replanningConfig,
-      BooleanSupplier shouldFlipPath,
-      Subsystem driveSubsystem) {
-    if (configured) {
-      DriverStation.reportError(
-          "Auto builder has already been configured. This is likely in error.", true);
-    }
-
-    AutoBuilder.pathFollowingCommandBuilder =
-        (path) ->
-            new FollowPathLTV(
-                path,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                qelems,
-                relems,
-                dt,
-                replanningConfig,
-                shouldFlipPath,
-                driveSubsystem);
-    AutoBuilder.getPose = poseSupplier;
-    AutoBuilder.resetPose = resetPose;
-    AutoBuilder.configured = true;
-    AutoBuilder.shouldFlipPath = shouldFlipPath;
-
-    AutoBuilder.pathfindToPoseCommandBuilder =
-        (pose, constraints, goalEndVel, rotationDelayDistance) ->
-            new PathfindLTV(
-                pose.getTranslation(),
-                constraints,
-                goalEndVel,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                qelems,
-                relems,
-                dt,
-                replanningConfig,
-                driveSubsystem);
-    AutoBuilder.pathfindThenFollowPathCommandBuilder =
-        (path, constraints, rotationDelayDistance) ->
-            new PathfindThenFollowPathLTV(
-                path,
-                constraints,
-                poseSupplier,
-                speedsSupplier,
-                output,
-                qelems,
-                relems,
-                dt,
-                replanningConfig,
-                shouldFlipPath,
-                driveSubsystem);
+                driveRequirements);
     AutoBuilder.pathfindingConfigured = true;
   }
 
@@ -417,7 +122,6 @@ public class AutoBuilder {
    * will not have the path flipped for them, and event markers will not be triggered automatically.
    *
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
-   * @param poseSupplier a supplier for the robot's current pose
    * @param resetPose a consumer for resetting the robot's pose
    * @param shouldFlipPose Supplier that determines if the starting pose should be flipped to the
    *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
@@ -426,7 +130,6 @@ public class AutoBuilder {
    */
   public static void configureCustom(
       Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
-      Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       BooleanSupplier shouldFlipPose) {
     if (configured) {
@@ -435,7 +138,6 @@ public class AutoBuilder {
     }
 
     AutoBuilder.pathFollowingCommandBuilder = pathFollowingCommandBuilder;
-    AutoBuilder.getPose = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
     AutoBuilder.shouldFlipPath = shouldFlipPose;
@@ -449,14 +151,11 @@ public class AutoBuilder {
    * will not have the path flipped for them, and event markers will not be triggered automatically.
    *
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
-   * @param poseSupplier a supplier for the robot's current pose
    * @param resetPose a consumer for resetting the robot's pose
    */
   public static void configureCustom(
-      Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
-      Supplier<Pose2d> poseSupplier,
-      Consumer<Pose2d> resetPose) {
-    configureCustom(pathFollowingCommandBuilder, poseSupplier, resetPose, () -> false);
+      Function<PathPlannerPath, Command> pathFollowingCommandBuilder, Consumer<Pose2d> resetPose) {
+    configureCustom(pathFollowingCommandBuilder, resetPose, () -> false);
   }
 
   /**
@@ -514,36 +213,16 @@ public class AutoBuilder {
    * @param pose The pose to pathfind to
    * @param constraints The constraints to use while pathfinding
    * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
-   * @param rotationDelayDistance The distance the robot should move from the start position before
-   *     attempting to rotate to the final rotation
    * @return A command to pathfind to a given pose
    */
   public static Command pathfindToPose(
-      Pose2d pose,
-      PathConstraints constraints,
-      double goalEndVelocity,
-      double rotationDelayDistance) {
+      Pose2d pose, PathConstraints constraints, double goalEndVelocity) {
     if (!isPathfindingConfigured()) {
       throw new AutoBuilderException(
           "Auto builder was used to build a pathfinding command before being configured");
     }
 
-    return pathfindToPoseCommandBuilder.apply(
-        pose, constraints, goalEndVelocity, rotationDelayDistance);
-  }
-
-  /**
-   * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
-   * rotation will have no effect.
-   *
-   * @param pose The pose to pathfind to
-   * @param constraints The constraints to use while pathfinding
-   * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
-   * @return A command to pathfind to a given pose
-   */
-  public static Command pathfindToPose(
-      Pose2d pose, PathConstraints constraints, double goalEndVelocity) {
-    return pathfindToPose(pose, constraints, goalEndVelocity, 0);
+    return pathfindToPoseCommandBuilder.apply(pose, constraints, goalEndVelocity);
   }
 
   /**
@@ -567,36 +246,14 @@ public class AutoBuilder {
    *     true
    * @param constraints The constraints to use while pathfinding
    * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
-   * @param rotationDelayDistance The distance the robot should move from the start position before
-   *     attempting to rotate to the final rotation
-   * @return A command to pathfind to a given pose
-   */
-  public static Command pathfindToPoseFlipped(
-      Pose2d pose,
-      PathConstraints constraints,
-      double goalEndVelocity,
-      double rotationDelayDistance) {
-    return Commands.either(
-        pathfindToPose(
-            GeometryUtil.flipFieldPose(pose), constraints, goalEndVelocity, rotationDelayDistance),
-        pathfindToPose(pose, constraints, goalEndVelocity, rotationDelayDistance),
-        shouldFlipPath);
-  }
-
-  /**
-   * Build a command to pathfind to a given pose that will be flipped based on the value of the path
-   * flipping supplier when this command is run. If not using a holonomic drivetrain, the pose
-   * rotation and rotation delay distance will have no effect.
-   *
-   * @param pose The pose to pathfind to. This will be flipped if the path flipping supplier returns
-   *     true
-   * @param constraints The constraints to use while pathfinding
-   * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
    * @return A command to pathfind to a given pose
    */
   public static Command pathfindToPoseFlipped(
       Pose2d pose, PathConstraints constraints, double goalEndVelocity) {
-    return pathfindToPoseFlipped(pose, constraints, goalEndVelocity, 0);
+    return Commands.either(
+        pathfindToPose(GeometryUtil.flipFieldPose(pose), constraints, goalEndVelocity),
+        pathfindToPose(pose, constraints, goalEndVelocity),
+        shouldFlipPath);
   }
 
   /**
@@ -619,33 +276,16 @@ public class AutoBuilder {
    *
    * @param goalPath The path to pathfind to, then follow
    * @param pathfindingConstraints The constraints to use while pathfinding
-   * @param rotationDelayDistance The distance the robot should move from the start position before
-   *     attempting to rotate to the final rotation
    * @return A command to pathfind to a given path, then follow the path
    */
   public static Command pathfindThenFollowPath(
-      PathPlannerPath goalPath,
-      PathConstraints pathfindingConstraints,
-      double rotationDelayDistance) {
+      PathPlannerPath goalPath, PathConstraints pathfindingConstraints) {
     if (!isPathfindingConfigured()) {
       throw new AutoBuilderException(
           "Auto builder was used to build a pathfinding command before being configured");
     }
 
-    return pathfindThenFollowPathCommandBuilder.apply(
-        goalPath, pathfindingConstraints, rotationDelayDistance);
-  }
-
-  /**
-   * Build a command to pathfind to a given path, then follow that path.
-   *
-   * @param goalPath The path to pathfind to, then follow
-   * @param pathfindingConstraints The constraints to use while pathfinding
-   * @return A command to pathfind to a given path, then follow the path
-   */
-  public static Command pathfindThenFollowPath(
-      PathPlannerPath goalPath, PathConstraints pathfindingConstraints) {
-    return pathfindThenFollowPath(goalPath, pathfindingConstraints, 0);
+    return pathfindThenFollowPathCommandBuilder.apply(goalPath, pathfindingConstraints);
   }
 
   /**
@@ -832,20 +472,5 @@ public class AutoBuilder {
      * @return Output
      */
     Out apply(In1 in1, In2 in2, In3 in3);
-  }
-
-  /** Functional interface for a function that takes 4 inputs */
-  @FunctionalInterface
-  public interface QuadFunction<In1, In2, In3, In4, Out> {
-    /**
-     * Apply the inputs to this function
-     *
-     * @param in1 Input 1
-     * @param in2 Input 2
-     * @param in3 Input 3
-     * @param in4 Input 4
-     * @return Output
-     */
-    Out apply(In1 in1, In2 in2, In3 in3, In4 in4);
   }
 }

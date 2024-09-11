@@ -18,6 +18,8 @@ public class PathPoint {
   public RotationTarget rotationTarget = null;
   /** The constraints applied to this point */
   public PathConstraints constraints = null;
+  /** The waypoint relative position of this point. Used to determine proper event marker timing */
+  public double waypointRelativePos = 0.0;
 
   /**
    * Create a path point

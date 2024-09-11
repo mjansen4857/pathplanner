@@ -43,11 +43,12 @@ public:
 
 	frc::ChassisSpeeds calculateRobotRelativeSpeeds(
 			const frc::Pose2d &currentPose,
-			const PathPlannerTrajectory::State &targetState) override {
-		m_lastError = currentPose.Translation().Distance(targetState.position);
+			const PathPlannerTrajectoryState &targetState) override {
+		m_lastError = currentPose.Translation().Distance(
+				targetState.pose.Translation());
 
-		return Calculate(currentPose, targetState.getDifferentialPose(),
-				targetState.velocity, targetState.headingAngularVelocity);
+		return Calculate(currentPose, targetState.pose,
+				targetState.linearVelocity, targetState.fieldSpeeds.omega);
 	}
 
 	inline void reset(const frc::Pose2d &currentPose,

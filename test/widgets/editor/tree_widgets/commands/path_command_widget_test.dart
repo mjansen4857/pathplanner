@@ -1,3 +1,4 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -30,7 +31,7 @@ void main() {
       ),
     ));
 
-    final dropdown = find.byType(DropdownMenu<String>);
+    final dropdown = find.byType(DropdownButton2<String>);
 
     expect(dropdown, findsOneWidget);
 

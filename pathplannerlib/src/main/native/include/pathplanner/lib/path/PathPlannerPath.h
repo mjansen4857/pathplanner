@@ -7,7 +7,8 @@
 #include "pathplanner/lib/path/GoalEndState.h"
 #include "pathplanner/lib/path/PathPoint.h"
 #include "pathplanner/lib/path/PathSegment.h"
-#include "pathplanner/lib/path/PathPlannerTrajectory.h"
+#include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
+#include "pathplanner/lib/config/RobotConfig.h"
 #include <vector>
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
@@ -127,12 +128,6 @@ public:
 			std::vector<PathPoint> pathPoints,
 			PathConstraints globalConstraints, GoalEndState goalEndState);
 
-	/** Generate path points for a path. This is used internally and should not be used directly. */
-	static std::vector<PathPoint> createPath(
-			std::vector<frc::Translation2d> bezierPoints,
-			std::vector<RotationTarget> holonomicRotations,
-			std::vector<ConstraintsZone> constraintZones);
-
 	/**
 	 * Get all the path points in this path
 	 *
@@ -207,13 +202,13 @@ public:
 	}
 
 	inline PathPlannerTrajectory getTrajectory(
-			frc::ChassisSpeeds startingSpeeds,
-			frc::Rotation2d startingRotation) {
+			frc::ChassisSpeeds startingSpeeds, frc::Rotation2d startingRotation,
+			const RobotConfig &config) {
 		if (m_isChoreoPath) {
 			return m_choreoTrajectory;
 		} else {
 			return PathPlannerTrajectory(shared_from_this(), startingSpeeds,
-					startingRotation);
+					startingRotation, config);
 		}
 	}
 
@@ -249,6 +244,8 @@ public:
 	}
 
 private:
+	std::vector<PathPoint> createPath();
+
 	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);
 
 	static std::vector<frc::Translation2d> bezierPointsFromWaypointsJson(
@@ -268,7 +265,7 @@ private:
 	 * @param seg1Pct The percentage of the 2 segments made up by the first segment
 	 * @return The waypoint relative position over the 2 segments
 	 */
-	static double mapPct(double pct, double seg1Pct) {
+	static inline double mapPct(double pct, double seg1Pct) {
 		double mappedPct;
 		if (pct <= seg1Pct) {
 			// Map to segment 1
@@ -278,8 +275,7 @@ private:
 			mappedPct = 1.0 + ((pct - seg1Pct) / (1.0 - seg1Pct));
 		}
 
-		return std::round(mappedPct * (1.0 / PathSegment::RESOLUTION))
-				/ (1.0 / PathSegment::RESOLUTION);
+		return mappedPct;
 	}
 
 	static inline units::meter_t positionDelta(const frc::Translation2d &a,

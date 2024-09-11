@@ -1,6 +1,6 @@
 package com.pathplanner.lib.controllers;
 
-import com.pathplanner.lib.path.PathPlannerTrajectory;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
@@ -14,7 +14,7 @@ public interface PathFollowingController {
    * @return The next robot relative output of the path following controller
    */
   ChassisSpeeds calculateRobotRelativeSpeeds(
-      Pose2d currentPose, PathPlannerTrajectory.State targetState);
+      Pose2d currentPose, PathPlannerTrajectoryState targetState);
 
   /**
    * Resets the controller based on the current state of the robot

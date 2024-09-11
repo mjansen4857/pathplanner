@@ -190,7 +190,7 @@ class PathPainter extends CustomPainter {
       TrajectoryState state = simulatedPath!.sample(previewTime!.value);
       Rotation2d rotation = state.pose.rotation;
 
-      if (holonomicMode) {
+      if (holonomicMode && state.moduleStates.isNotEmpty) {
         // Calculate the module positions based off of the robot position
         // so they don't move relative to the robot when interpolating
         // between trajectory states

@@ -196,6 +196,12 @@ class PathPlannerPath {
   }
 
   Map<String, dynamic> toJson() {
+    // Make sure rotation targets and event markers are sorted
+    rotationTargets
+        .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+    eventMarkers
+        .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+
     return {
       'version': 1.0,
       'waypoints': [

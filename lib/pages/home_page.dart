@@ -62,7 +62,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _scaleAnimation;
   final GlobalKey _key = GlobalKey();
-  static const _settingsDir = '.pathplanner/settings.json';
+  static const _settingsDir = 'settings.json';
   int _selectedPage = 0;
   final PageController _pageController = PageController();
   late bool _hotReload;
@@ -266,6 +266,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   curve: Curves.easeInOut);
             });
           },
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
           children: [
             DrawerHeader(
               child: Stack(
@@ -404,8 +406,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   icon: const Icon(Icons.settings),
                   label: const Text('Settings'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.surface,
+                    backgroundColor: colorScheme.surfaceContainer,
                     foregroundColor: colorScheme.onSurface,
+                    surfaceTintColor: colorScheme.surfaceTint,
                     elevation: 4.0,
                     fixedSize: const Size(141, 56),
                     shape: RoundedRectangleBorder(
@@ -502,7 +505,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   Future<void> _loadProjectSettingsFromFile(Directory projectDir) async {
-    File settingsFile = fs.file(join(projectDir.path, _settingsDir));
+    File settingsFile = fs.file(join(_pathplannerDir.path, _settingsDir));
 
     var json = {};
 
@@ -548,12 +551,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         PrefsKeys.defaultMaxAngAccel,
         json[PrefsKeys.defaultMaxAngAccel]?.toDouble() ??
             Defaults.defaultMaxAngAccel);
-    widget.prefs.setDouble(PrefsKeys.maxModuleSpeed,
-        json[PrefsKeys.maxModuleSpeed]?.toDouble() ?? Defaults.maxModuleSpeed);
+    widget.prefs.setDouble(PrefsKeys.robotMass,
+        json[PrefsKeys.robotMass]?.toDouble() ?? Defaults.robotMass);
+    widget.prefs.setDouble(PrefsKeys.robotMOI,
+        json[PrefsKeys.robotMOI]?.toDouble() ?? Defaults.robotMOI);
+    widget.prefs.setDouble(PrefsKeys.robotWheelbase,
+        json[PrefsKeys.robotWheelbase]?.toDouble() ?? Defaults.robotWheelbase);
+    widget.prefs.setDouble(
+        PrefsKeys.robotTrackwidth,
+        json[PrefsKeys.robotTrackwidth]?.toDouble() ??
+            Defaults.robotTrackwidth);
+    widget.prefs.setDouble(
+        PrefsKeys.driveWheelRadius,
+        json[PrefsKeys.driveWheelRadius]?.toDouble() ??
+            Defaults.driveWheelRadius);
+    widget.prefs.setDouble(PrefsKeys.driveGearing,
+        json[PrefsKeys.driveGearing]?.toDouble() ?? Defaults.driveGearing);
+    widget.prefs.setDouble(PrefsKeys.maxDriveRPM,
+        json[PrefsKeys.maxDriveRPM]?.toDouble() ?? Defaults.maxDriveRPM);
+    widget.prefs.setString(PrefsKeys.torqueCurve,
+        json[PrefsKeys.torqueCurve] ?? Defaults.torqueCurve);
+    widget.prefs.setDouble(PrefsKeys.wheelCOF,
+        json[PrefsKeys.wheelCOF]?.toDouble() ?? Defaults.wheelCOF);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
-    File settingsFile = fs.file(join(projectDir.path, _settingsDir));
+    File settingsFile = fs.file(join(_pathplannerDir.path, _settingsDir));
 
     if (!settingsFile.existsSync()) {
       settingsFile.createSync(recursive: true);
@@ -586,9 +609,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.defaultMaxAngAccel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAccel,
-      PrefsKeys.maxModuleSpeed:
-          widget.prefs.getDouble(PrefsKeys.maxModuleSpeed) ??
-              Defaults.maxModuleSpeed,
+      PrefsKeys.robotMass:
+          widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
+      PrefsKeys.robotMOI:
+          widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
+      PrefsKeys.robotWheelbase:
+          widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
+              Defaults.robotWheelbase,
+      PrefsKeys.robotTrackwidth:
+          widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
+              Defaults.robotTrackwidth,
+      PrefsKeys.driveWheelRadius:
+          widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+              Defaults.driveWheelRadius,
+      PrefsKeys.driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
+          Defaults.driveGearing,
+      PrefsKeys.maxDriveRPM:
+          widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM,
+      PrefsKeys.torqueCurve:
+          widget.prefs.getString(PrefsKeys.torqueCurve) ?? Defaults.torqueCurve,
+      PrefsKeys.wheelCOF:
+          widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

@@ -102,7 +102,7 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
         MultiSplitViewTheme(
           data: MultiSplitViewThemeData(
             dividerPainter: DividerPainters.grooved1(
-              color: colorScheme.surfaceVariant,
+              color: colorScheme.surfaceContainerHighest,
               highlightedColor: colorScheme.primary,
             ),
           ),
@@ -121,7 +121,7 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
-                  totalPathTime: widget.path.trajectory.states.last.time,
+                  totalPathTime: widget.path.trajectory.states.last.timeSeconds,
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -143,7 +143,7 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
                   child: ChoreoPathTree(
                     path: widget.path,
                     pathRuntime: widget.path.trajectory.states.isNotEmpty
-                        ? widget.path.trajectory.states.last.time
+                        ? widget.path.trajectory.states.last.timeSeconds
                         : null,
                     undoStack: widget.undoStack,
                     onSideSwapped: () => setState(() {
@@ -159,7 +159,7 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
                   totalPathTime: widget.path.trajectory.states.isNotEmpty
-                      ? widget.path.trajectory.states.last.time
+                      ? widget.path.trajectory.states.last.timeSeconds
                       : 1.0,
                 ),
             ],
@@ -177,7 +177,8 @@ class _SplitChoreoPathEditorState extends State<SplitChoreoPathEditor>
         _previewController.reset();
         _previewController.duration = Duration(
             milliseconds:
-                (widget.path.trajectory.states.last.time * 1000).toInt());
+                (widget.path.trajectory.states.last.timeSeconds * 1000)
+                    .toInt());
         _previewController.repeat();
       }
     }

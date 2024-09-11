@@ -28,11 +28,15 @@ class TreeCardNode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Card(
         clipBehavior: Clip.antiAlias,
         elevation: elevation,
+        color: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
         child: MouseRegion(
           onEnter: (event) => onHoverStart?.call(),
           onExit: (event) => onHoverEnd?.call(),

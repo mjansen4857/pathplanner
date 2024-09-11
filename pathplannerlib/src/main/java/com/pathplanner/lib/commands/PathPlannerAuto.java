@@ -8,6 +8,7 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -37,7 +38,7 @@ public class PathPlannerAuto extends Command {
     }
 
     this.autoCommand = AutoBuilder.buildAuto(autoName);
-    m_requirements = autoCommand.getRequirements();
+    addRequirements(autoCommand.getRequirements().toArray(new Subsystem[0]));
     setName(autoName);
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
 
@@ -106,7 +107,6 @@ public class PathPlannerAuto extends Command {
    */
   public void hotReload(JSONObject autoJson) {
     autoCommand = AutoBuilder.getAutoCommandFromJson(autoJson);
-    m_requirements = autoCommand.getRequirements();
   }
 
   @Override

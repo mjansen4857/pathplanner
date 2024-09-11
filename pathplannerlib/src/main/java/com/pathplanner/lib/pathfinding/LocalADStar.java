@@ -1,7 +1,6 @@
 package com.pathplanner.lib.pathfinding;
 
 import com.pathplanner.lib.path.*;
-import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -454,8 +453,7 @@ public class LocalADStar implements Pathfinder {
     bezierPoints.add(fieldPosPath.get(fieldPosPath.size() - 1));
 
     int numSegments = (bezierPoints.size() - 1) / 3;
-    List<PathPoint> pathPoints =
-        new ArrayList<>((int) Math.ceil(numSegments / PathSegment.RESOLUTION));
+    List<PathPoint> pathPoints = new ArrayList<>();
 
     for (int i = 0; i < numSegments; i++) {
       int iOffset = i * 3;
@@ -465,16 +463,12 @@ public class LocalADStar implements Pathfinder {
       Translation2d p3 = bezierPoints.get(iOffset + 2);
       Translation2d p4 = bezierPoints.get(iOffset + 3);
 
-      double resolution = PathSegment.RESOLUTION;
-      if (p1.getDistance(p4) <= 1.0) {
-        resolution = 0.2;
-      }
-
-      for (double t = 0.0; t < 1.0; t += resolution) {
-        pathPoints.add(new PathPoint(GeometryUtil.cubicLerp(p1, p2, p3, p4, t)));
-      }
+      PathSegment segment = new PathSegment(p1, p2, p3, p4);
+      segment.generatePathPoints(
+          pathPoints, i, Collections.emptyList(), Collections.emptyList(), null);
     }
     pathPoints.add(new PathPoint(bezierPoints.get(bezierPoints.size() - 1)));
+    pathPoints.get(pathPoints.size() - 1).waypointRelativePos = numSegments;
 
     return pathPoints;
   }

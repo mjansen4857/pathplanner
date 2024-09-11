@@ -50,6 +50,8 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
       children: [
         Card(
           clipBehavior: Clip.antiAlias,
+          color: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
           child: Column(
             children: [
               Expanded(

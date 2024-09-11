@@ -7,8 +7,9 @@ import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/pages/auto_editor_page.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
-import 'package:pathplanner/services/simulator/trajectory_generator.dart';
-import 'package:pathplanner/util/pose2d.dart';
+import 'package:pathplanner/trajectory/trajectory.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/pose2d.dart' as old;
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -31,9 +32,11 @@ void main() {
         pathDir: '/paths', fs: fs, name: 'testPath');
     testChoreoPath = ChoreoPath(
       name: 'test',
-      trajectory: Trajectory(states: [
-        TrajectoryState(time: 0.0),
-        TrajectoryState(time: 1.0),
+      trajectory: PathPlannerTrajectory.fromStates([
+        TrajectoryState.pregen(
+            0.0, Pose2d(const Translation2d(), Rotation2d())),
+        TrajectoryState.pregen(
+            1.0, Pose2d(const Translation2d(), Rotation2d())),
       ]),
       fs: fs,
       choreoDir: '/choreo',
@@ -154,6 +157,6 @@ void main() {
     await widgetTester.tap(find.byType(Checkbox));
     await widgetTester.pump(const Duration(seconds: 1));
 
-    expect(auto.startingPose, Pose2d());
+    expect(auto.startingPose, old.Pose2d());
   });
 }

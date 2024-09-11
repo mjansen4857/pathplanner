@@ -3,12 +3,11 @@ import 'package:pathplanner/path/rotation_target.dart';
 
 void main() {
   test('Constructor functions', () {
-    RotationTarget t = RotationTarget(
-        waypointRelativePos: 1.0, rotationDegrees: 5.0, rotateFast: true);
+    RotationTarget t =
+        RotationTarget(waypointRelativePos: 1.0, rotationDegrees: 5.0);
 
     expect(t.waypointRelativePos, 1.0);
     expect(t.rotationDegrees, 5.0);
-    expect(t.rotateFast, true);
   });
 
   test('toJson/fromJson interoperability', () {

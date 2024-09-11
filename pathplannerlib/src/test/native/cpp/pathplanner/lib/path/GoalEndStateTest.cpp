@@ -4,7 +4,7 @@
 using namespace pathplanner;
 
 TEST(GoalEndStateTest, TestGetters) {
-	GoalEndState endState(2_mps, frc::Rotation2d(35_deg), false);
+	GoalEndState endState(2_mps, frc::Rotation2d(35_deg));
 
 	EXPECT_DOUBLE_EQ(2.0, endState.getVelocity()());
 	EXPECT_EQ(frc::Rotation2d(35_deg), endState.getRotation());
@@ -14,7 +14,6 @@ TEST(GoalEndStateTest, TestFromJson) {
 	wpi::json json;
 	json.emplace("velocity", 1.25);
 	json.emplace("rotation", -15.5);
-	json.emplace("rotateFast", true);
 
-	EXPECT_EQ(GoalEndState(1.25_mps, frc::Rotation2d(-15.5_deg), true), GoalEndState::fromJson(json));
+	EXPECT_EQ(GoalEndState(1.25_mps, frc::Rotation2d(-15.5_deg)), GoalEndState::fromJson(json));
 }

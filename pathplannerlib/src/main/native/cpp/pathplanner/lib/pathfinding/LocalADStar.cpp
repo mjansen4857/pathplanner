@@ -427,18 +427,12 @@ std::vector<PathPoint> LocalADStar::createPathPoints(
 		frc::Translation2d p3 = bezierPoints[iOffset + 2];
 		frc::Translation2d p4 = bezierPoints[iOffset + 3];
 
-		double resolution = PathSegment::RESOLUTION;
-		if (p1.Distance(p4) <= 1_m) {
-			resolution = 0.2;
-		}
-
-		for (double t = 0.0; t < 1.0; t += resolution) {
-			pathPoints.emplace_back(GeometryUtil::cubicLerp(p1, p2, p3, p4, t),
-					std::nullopt, std::nullopt);
-		}
+		PathSegment segment(p1, p2, p3, p4);
+		segment.generatePathPoints(pathPoints, i, { }, { }, std::nullopt);
 	}
 	pathPoints.emplace_back(bezierPoints[bezierPoints.size() - 1], std::nullopt,
 			std::nullopt);
+	pathPoints[pathPoints.size() - 1].waypointRelativePos = numSegments;
 
 	return pathPoints;
 }

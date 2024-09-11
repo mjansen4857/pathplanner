@@ -140,7 +140,6 @@ class PathPlannerTrajectory:
                 self._states[-1].linearVelocity = path.getGoalEndState().velocity
 
                 unaddedMarkers = [m for m in path.getEventMarkers()]
-                unaddedMarkers.sort(key=lambda x: x.waypointRelativePos)
 
                 # Reverse pass
                 _reverseAccelPass(self._states, config)

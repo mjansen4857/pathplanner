@@ -238,7 +238,8 @@ class PathSegment:
     p3: Translation2d
     p4: Translation2d
 
-    def generatePathPoints(self, points: List[PathPoint], segmentIdx: int, constraintZones: List[ConstraintsZone], sortedTargets: List[RotationTarget], globalConstraints: Union[PathConstraints, None]):
+    def generatePathPoints(self, points: List[PathPoint], segmentIdx: int, constraintZones: List[ConstraintsZone],
+                           sortedTargets: List[RotationTarget], globalConstraints: Union[PathConstraints, None]):
         """
         Generate path points along this segment and insert them into the given list of path points
 
@@ -254,7 +255,9 @@ class PathSegment:
 
         if len(points) == 0:
             # First path point
-            points.append(PathPoint(self.sample(t), None, PathSegment._constraintsForWaypointPos(segmentIdx, constraintZones, globalConstraints)))
+            points.append(PathPoint(self.sample(t), None,
+                                    PathSegment._constraintsForWaypointPos(segmentIdx, constraintZones,
+                                                                           globalConstraints)))
             points[-1].waypointRelativePos = segmentIdx
 
             t += targetIncrement
@@ -301,13 +304,16 @@ class PathSegment:
             # Add a rotation target to the previous point if it is closer to it than
             # the current point
             if len(unaddedTargets) > 0:
-                if abs(unaddedTargets[0].waypointRelativePosition - prevWaypointPos) <= abs(unaddedTargets[0].waypointRelativePosition - (segmentIdx + t)):
+                if abs(unaddedTargets[0].waypointRelativePosition - prevWaypointPos) <= abs(
+                        unaddedTargets[0].waypointRelativePosition - (segmentIdx + t)):
                     points[-1].rotationTarget = unaddedTargets.pop(0)
 
             # We don't actually want to add the last point if it is valid. The last point of this segment
             # will be the first of the next
             if t < 1.0:
-                points.append(PathPoint(position, None, PathSegment._constraintsForWaypointPos(segmentIdx, constraintZones, globalConstraints)))
+                points.append(PathPoint(position, None,
+                                        PathSegment._constraintsForWaypointPos(segmentIdx, constraintZones,
+                                                                               globalConstraints)))
                 points[-1].waypointRelativePos = segmentIdx + t
                 t = min(t + targetIncrement, 1.0)
             else:
@@ -323,7 +329,8 @@ class PathSegment:
         return cubicLerp(self.p1, self.p2, self.p3, self.p4, min(max(t, 0.0), 1.0))
 
     @staticmethod
-    def _constraintsForWaypointPos(pos: float, constraintZones: List[ConstraintsZone], globalConstraints: Union[PathConstraints, None]) -> PathConstraints:
+    def _constraintsForWaypointPos(pos: float, constraintZones: List[ConstraintsZone],
+                                   globalConstraints: Union[PathConstraints, None]) -> PathConstraints:
         for z in constraintZones:
             if z.minWaypointPos <= pos <= z.maxWaypointPos:
                 return z.constraints
@@ -348,8 +355,8 @@ class PathPlannerPath:
     preventFlipping: bool = False
 
     def __init__(self, bezier_points: List[Translation2d], constraints: PathConstraints, goal_end_state: GoalEndState,
-                 holonomic_rotations: List[RotationTarget] = [], constraint_zones: List[ConstraintsZone] = [],
-                 event_markers: List[EventMarker] = [], is_reversed: bool = False,
+                 holonomic_rotations: List[RotationTarget] = None, constraint_zones: List[ConstraintsZone] = None,
+                 event_markers: List[EventMarker] = None, is_reversed: bool = False,
                  preview_starting_rotation: Rotation2d = Rotation2d()):
         """
         Create a new path planner path
@@ -364,15 +371,25 @@ class PathPlannerPath:
         :param preview_starting_rotation: The settings used for previews in the UI
         """
         self._bezierPoints = bezier_points
-        self._rotationTargets = holonomic_rotations
-        self._constraintZones = constraint_zones
-        self._eventMarkers = event_markers
+        if holonomic_rotations is None:
+            self._rotationTargets = []
+        else:
+            self._rotationTargets = holonomic_rotations
+            self._rotationTargets.sort(key=lambda x: x.waypointRelativePosition)
+        if constraint_zones is None:
+            self._constraintZones = []
+        else:
+            self._constraintZones = constraint_zones
+        if event_markers is None:
+            self._eventMarkers = []
+        else:
+            self._eventMarkers = event_markers
+            self._eventMarkers.sort(key=lambda x: x.waypointRelativePosition)
         self._globalConstraints = constraints
         self._goalEndState = goal_end_state
         self._reversed = is_reversed
-        if len(bezier_points) >= 4:
-            self._allPoints = PathPlannerPath._createPath(self._bezierPoints, self._rotationTargets,
-                                                          self._constraintZones)
+        if len(bezier_points) >= 4 and (len(bezier_points) - 1) % 3 == 0:
+            self._allPoints = self._createPath()
             self._precalcValues()
         self._previewStartingRotation = preview_starting_rotation
 
@@ -965,8 +982,6 @@ class PathPlannerPath:
         numSegments = int((len(self._bezierPoints) - 1) / 3)
 
         points = []
-        sortedTargets = [r for r in self._rotationTargets]
-        sortedTargets.sort(key=lambda x: x.waypointRelativePosition)
 
         for s in range(numSegments):
             iOffset = s * 3
@@ -976,7 +991,7 @@ class PathPlannerPath:
             p4 = self._bezierPoints[iOffset + 3]
             segment = PathSegment(p1, p2, p3, p4)
 
-            segment.generatePathPoints(points, s, self._constraintZones, sortedTargets, self._globalConstraints)
+            segment.generatePathPoints(points, s, self._constraintZones, self._rotationTargets, self._globalConstraints)
 
         # Add the final path point
         endConstraints = self._globalConstraints
@@ -985,7 +1000,8 @@ class PathPlannerPath:
                 endConstraints = z
                 break
 
-        points.append(PathPoint(self._bezierPoints[-1], RotationTarget(numSegments, self._goalEndState.rotation), endConstraints))
+        points.append(
+            PathPoint(self._bezierPoints[-1], RotationTarget(numSegments, self._goalEndState.rotation), endConstraints))
         points[-1].waypointRelativePos = numSegments
 
         return points

@@ -42,7 +42,7 @@ public class FollowPathCommand extends Command {
   private final List<Pair<Double, Command>> untriggeredEvents = new ArrayList<>();
 
   private PathPlannerPath path;
-  private PathPlannerTrajectory generatedTrajectory;
+  private PathPlannerTrajectory trajectory;
 
   /**
    * Construct a base path following command
@@ -91,6 +91,12 @@ public class FollowPathCommand extends Command {
 
       addRequirements(reqs.toArray(new Subsystem[0]));
     }
+
+    this.path = this.originalPath;
+    // Ensure the ideal trajectory is generated
+    Optional<PathPlannerTrajectory> idealTrajectory =
+        this.path.getIdealTrajectory(this.robotConfig);
+    idealTrajectory.ifPresent(traj -> this.trajectory = traj);
   }
 
   @Override
@@ -110,8 +116,7 @@ public class FollowPathCommand extends Command {
         ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.getRotation());
     Rotation2d currentHeading =
         new Rotation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
-    Rotation2d targetHeading =
-        path.getPoint(1).position.minus(path.getPoint(0).position).getAngle();
+    Rotation2d targetHeading = path.getInitialHeading();
     Rotation2d headingError = currentHeading.minus(targetHeading);
     boolean onHeading =
         Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 0.25
@@ -123,8 +128,12 @@ public class FollowPathCommand extends Command {
             || !onHeading)) {
       replanPath(currentPose, currentSpeeds);
     } else {
-      generatedTrajectory =
-          path.getTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
+      var idealTraj = path.getIdealTrajectory(robotConfig);
+      idealTraj.ifPresentOrElse(
+          pathPlannerTrajectory -> trajectory = pathPlannerTrajectory,
+          () ->
+              trajectory =
+                  path.generateTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig));
       PathPlannerLogging.logActivePath(path);
       PPLibTelemetry.setCurrentPath(path);
     }
@@ -132,7 +141,7 @@ public class FollowPathCommand extends Command {
     // Initialize marker stuff
     currentEventCommands.clear();
     untriggeredEvents.clear();
-    untriggeredEvents.addAll(generatedTrajectory.getEventCommands());
+    untriggeredEvents.addAll(trajectory.getEventCommands());
 
     timer.reset();
     timer.start();
@@ -141,7 +150,7 @@ public class FollowPathCommand extends Command {
   @Override
   public void execute() {
     double currentTime = timer.get();
-    var targetState = generatedTrajectory.sample(currentTime);
+    var targetState = trajectory.sample(currentTime);
     if (!controller.isHolonomic() && path.isReversed()) {
       targetState = targetState.reverse();
     }
@@ -159,7 +168,7 @@ public class FollowPathCommand extends Command {
               >= replanningConfig.dynamicReplanningErrorSpikeThreshold) {
         replanPath(currentPose, currentSpeeds);
         timer.reset();
-        targetState = generatedTrajectory.sample(0);
+        targetState = trajectory.sample(0);
       }
     }
 
@@ -220,7 +229,7 @@ public class FollowPathCommand extends Command {
 
   @Override
   public boolean isFinished() {
-    return timer.hasElapsed(generatedTrajectory.getTotalTimeSeconds());
+    return timer.hasElapsed(trajectory.getTotalTimeSeconds());
   }
 
   @Override
@@ -245,8 +254,8 @@ public class FollowPathCommand extends Command {
 
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
-    generatedTrajectory =
-        replanned.getTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
+    trajectory =
+        replanned.generateTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
     PathPlannerLogging.logActivePath(replanned);
     PPLibTelemetry.setCurrentPath(replanned);
   }
@@ -264,7 +273,8 @@ public class FollowPathCommand extends Command {
         new PathPlannerPath(
             bezierPoints,
             new PathConstraints(4.0, 4.0, 4.0, 4.0),
-            new GoalEndState(0.0, Rotation2d.fromDegrees(90)));
+            new IdealStartingState(0.0, Rotation2d.kZero),
+            new GoalEndState(0.0, Rotation2d.kCCW_90deg));
 
     return new FollowPathCommand(
             path,

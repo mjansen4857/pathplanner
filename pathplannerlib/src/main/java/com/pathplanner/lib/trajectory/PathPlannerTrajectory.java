@@ -57,7 +57,7 @@ public class PathPlannerTrajectory {
       Rotation2d startingRotation,
       RobotConfig config) {
     if (path.isChoreoPath()) {
-      var traj = path.getTrajectory(startingSpeeds, startingRotation, config);
+      var traj = path.getIdealTrajectory(config).orElseThrow();
       this.states = traj.states;
       this.eventCommands = traj.eventCommands;
     } else {
@@ -161,6 +161,7 @@ public class PathPlannerTrajectory {
       var state = new PathPlannerTrajectoryState();
       state.pose = robotPose;
       state.constraints = path.getConstraintsForPoint(i);
+      state.waypointRelativePos = p.waypointRelativePos;
 
       // Calculate robot heading
       if (i != path.numPoints() - 1) {

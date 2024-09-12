@@ -31,10 +31,9 @@ PathfindingCommand::PathfindingCommand(
 	units::meters_per_second_t goalEndVel =
 			targetPath->getGlobalConstraints().getMaxVelocity();
 	if (targetPath->isChoreoPath()) {
-		// Can call getTrajectory here without proper speeds since it will just return the choreo
-		// trajectory
-		PathPlannerTrajectory choreoTraj = targetPath->getTrajectory(
-				frc::ChassisSpeeds(), frc::Rotation2d(), m_robotConfig);
+		// Can value() here without issue since all choreo trajectories have ideal trajectories
+		PathPlannerTrajectory choreoTraj = targetPath->getIdealTrajectory(
+				m_robotConfig).value();
 		targetRotation = choreoTraj.getInitialState().pose.Rotation();
 		goalEndVel = choreoTraj.getInitialState().linearVelocity;
 	} else {

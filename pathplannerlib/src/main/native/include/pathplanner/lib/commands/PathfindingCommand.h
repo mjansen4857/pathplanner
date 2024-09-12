@@ -103,7 +103,7 @@ private:
 	inline void replanPath(const frc::Pose2d &currentPose,
 			const frc::ChassisSpeeds &currentSpeeds) {
 		auto replanned = m_currentPath->replan(currentPose, currentSpeeds);
-		m_currentTrajectory = replanned->getTrajectory(currentSpeeds,
+		m_currentTrajectory = replanned->generateTrajectory(currentSpeeds,
 				currentPose.Rotation(), m_robotConfig);
 		PathPlannerLogging::logActivePath(replanned);
 		PPLibTelemetry::setCurrentPath(replanned);

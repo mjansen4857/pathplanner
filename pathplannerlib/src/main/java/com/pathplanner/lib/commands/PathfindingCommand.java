@@ -84,10 +84,8 @@ public class PathfindingCommand extends Command {
     Rotation2d targetRotation = new Rotation2d();
     double goalEndVel = targetPath.getGlobalConstraints().getMaxVelocityMps();
     if (targetPath.isChoreoPath()) {
-      // Can call getTrajectory here without proper speeds since it will just return the choreo
-      // trajectory
-      PathPlannerTrajectory choreoTraj =
-          targetPath.getTrajectory(new ChassisSpeeds(), new Rotation2d(), robotConfig);
+      // Can get() here without issue since all choreo trajectories have ideal trajectories
+      PathPlannerTrajectory choreoTraj = targetPath.getIdealTrajectory(robotConfig).orElseThrow();
       targetRotation = choreoTraj.getInitialState().pose.getRotation();
       goalEndVel = choreoTraj.getInitialState().linearVelocity;
     } else {
@@ -422,7 +420,7 @@ public class PathfindingCommand extends Command {
   private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
     PathPlannerPath replanned = currentPath.replan(currentPose, currentSpeeds);
     currentTrajectory =
-        replanned.getTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
+        replanned.generateTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
     PathPlannerLogging.logActivePath(replanned);
     PPLibTelemetry.setCurrentPath(replanned);
   }

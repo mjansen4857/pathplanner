@@ -72,12 +72,12 @@ private:
 	std::deque<std::pair<units::second_t, std::shared_ptr<frc2::Command>>> m_untriggeredEvents;
 
 	std::shared_ptr<PathPlannerPath> m_path;
-	PathPlannerTrajectory m_generatedTrajectory;
+	PathPlannerTrajectory m_trajectory;
 
 	inline void replanPath(const frc::Pose2d &currentPose,
 			const frc::ChassisSpeeds &currentSpeeds) {
 		auto replanned = m_path->replan(currentPose, currentSpeeds);
-		m_generatedTrajectory = replanned->getTrajectory(currentSpeeds,
+		m_trajectory = replanned->generateTrajectory(currentSpeeds,
 				currentPose.Rotation(), m_robotConfig);
 		PathPlannerLogging::logActivePath(replanned);
 		PPLibTelemetry::setCurrentPath(replanned);

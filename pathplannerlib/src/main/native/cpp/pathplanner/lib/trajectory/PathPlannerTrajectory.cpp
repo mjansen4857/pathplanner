@@ -10,8 +10,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		const frc::ChassisSpeeds &startingSpeeds,
 		const frc::Rotation2d &startingRotation, const RobotConfig &config) {
 	if (path->isChoreoPath()) {
-		PathPlannerTrajectory traj = path->getTrajectory(startingSpeeds,
-				startingRotation, config);
+		PathPlannerTrajectory traj = path->getIdealTrajectory(config).value();
 		m_states = traj.m_states;
 		m_eventCommands = traj.m_eventCommands;
 	} else {
@@ -147,6 +146,7 @@ void PathPlannerTrajectory::generateStates(
 		PathPlannerTrajectoryState state;
 		state.pose = robotPose;
 		state.constraints = path->getConstraintsForPoint(i);
+		state.waypointRelativePos = p.waypointRelativePos;
 
 		// Calculate robot heading
 		if (i != path->numPoints() - 1) {

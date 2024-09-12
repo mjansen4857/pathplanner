@@ -31,6 +31,13 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 
 		AddRequirements(reqs);
 	}
+
+	m_path = m_originalPath;
+	// Ensure the ideal trajectory is generated
+	auto idealTraj = m_path->getIdealTrajectory(m_robotConfig);
+	if (idealTraj.has_value()) {
+		m_trajectory = idealTraj.value();
+	}
 }
 
 void FollowPathCommand::Initialize() {
@@ -50,8 +57,7 @@ void FollowPathCommand::Initialize() {
 					currentPose.Rotation());
 	frc::Rotation2d currentHeading = frc::Rotation2d(fieldSpeeds.vx(),
 			fieldSpeeds.vy());
-	frc::Rotation2d targetHeading = (m_path->getPoint(1).position
-			- m_path->getPoint(0).position).Angle();
+	frc::Rotation2d targetHeading = m_path->getInitialHeading();
 	frc::Rotation2d headingError = currentHeading - targetHeading;
 	bool onHeading = units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
 			< 0.25_mps || units::math::abs(headingError.Degrees()) < 30_deg;
@@ -61,8 +67,13 @@ void FollowPathCommand::Initialize() {
 					> 0.25_m || !onHeading)) {
 		replanPath(currentPose, currentSpeeds);
 	} else {
-		m_generatedTrajectory = m_path->getTrajectory(currentSpeeds,
-				currentPose.Rotation(), m_robotConfig);
+		auto idealTraj = m_path->getIdealTrajectory(m_robotConfig);
+		if (idealTraj.has_value()) {
+			m_trajectory = idealTraj.value();
+		} else {
+			m_trajectory = m_path->generateTrajectory(currentSpeeds,
+					currentPose.Rotation(), m_robotConfig);
+		}
 		PathPlannerLogging::logActivePath (m_path);
 		PPLibTelemetry::setCurrentPath(m_path);
 	}
@@ -71,7 +82,7 @@ void FollowPathCommand::Initialize() {
 	m_currentEventCommands.clear();
 	m_untriggeredEvents.clear();
 
-	const auto &eventCommands = m_generatedTrajectory.getEventCommands();
+	const auto &eventCommands = m_trajectory.getEventCommands();
 
 	m_untriggeredEvents.insert(m_untriggeredEvents.end(), eventCommands.begin(),
 			eventCommands.end());
@@ -82,8 +93,7 @@ void FollowPathCommand::Initialize() {
 
 void FollowPathCommand::Execute() {
 	units::second_t currentTime = m_timer.Get();
-	PathPlannerTrajectoryState targetState = m_generatedTrajectory.sample(
-			currentTime);
+	PathPlannerTrajectoryState targetState = m_trajectory.sample(currentTime);
 	if (m_controller->isHolonomic()) {
 		targetState = targetState.reverse();
 	}
@@ -103,7 +113,7 @@ void FollowPathCommand::Execute() {
 						>= m_replanningConfig.dynamicReplanningErrorSpikeThreshold) {
 			replanPath(currentPose, currentSpeeds);
 			m_timer.Reset();
-			targetState = m_generatedTrajectory.sample(0_s);
+			targetState = m_trajectory.sample(0_s);
 		}
 	}
 
@@ -164,7 +174,7 @@ void FollowPathCommand::Execute() {
 }
 
 bool FollowPathCommand::IsFinished() {
-	return m_timer.HasElapsed(m_generatedTrajectory.getTotalTime());
+	return m_timer.HasElapsed(m_trajectory.getTotalTime());
 }
 
 void FollowPathCommand::End(bool interrupted) {

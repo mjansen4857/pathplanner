@@ -161,6 +161,7 @@ public class PathPlannerTrajectory {
       var state = new PathPlannerTrajectoryState();
       state.pose = robotPose;
       state.constraints = path.getConstraintsForPoint(i);
+      state.waypointRelativePos = p.waypointRelativePos;
 
       // Calculate robot heading
       if (i != path.numPoints() - 1) {

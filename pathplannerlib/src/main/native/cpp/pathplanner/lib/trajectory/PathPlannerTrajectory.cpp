@@ -147,6 +147,7 @@ void PathPlannerTrajectory::generateStates(
 		PathPlannerTrajectoryState state;
 		state.pose = robotPose;
 		state.constraints = path->getConstraintsForPoint(i);
+		state.waypointRelativePos = p.waypointRelativePos;
 
 		// Calculate robot heading
 		if (i != path->numPoints() - 1) {

@@ -320,6 +320,7 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
         state = PathPlannerTrajectoryState()
         state.pose = robotPose
         state.constraints = path.getConstraintsForPoint(i)
+        state.waypointRelativePos = p.waypointRelativePos
 
         # Calculate robot heading
         if i != path.numPoints() - 1:

@@ -14,13 +14,13 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/kinematics.dart';
 
 class AutoSimulator {
-  static PathPlannerTrajectory? simulateAuto(List<PathPlannerPath> paths,
-      old.Pose2d? startingPose, RobotConfig robotConfig) {
+  static PathPlannerTrajectory? simulateAuto(
+      List<PathPlannerPath> paths, RobotConfig robotConfig) {
     if (paths.isEmpty) return null;
 
     List<TrajectoryState> allStates = [];
 
-    old.Pose2d startPose = startingPose ??
+    old.Pose2d startPose =
         old.Pose2d(position: paths[0].pathPoints[0].position, rotation: 0);
     ChassisSpeeds startSpeeds = const ChassisSpeeds();
 

@@ -119,7 +119,6 @@ void main() {
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -178,7 +177,6 @@ void main() {
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -400,7 +398,6 @@ void main() {
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -500,7 +497,6 @@ void main() {
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -568,7 +564,6 @@ void main() {
         ],
       ),
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -982,7 +977,6 @@ void main() {
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 

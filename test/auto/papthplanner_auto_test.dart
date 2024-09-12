@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/named_command.dart';
-import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
@@ -23,7 +22,6 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
         folder: null,
@@ -33,7 +31,6 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
         folder: null,
@@ -44,7 +41,6 @@ void main() {
         autoDir: '/autos',
         fs: fs,
         sequence: SequentialCommandGroup(commands: []),
-        startingPose: null,
         folder: null,
         choreoAuto: false,
       );
@@ -62,7 +58,6 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
         folder: null,
@@ -86,7 +81,6 @@ void main() {
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
         folder: null,
-        startingPose: null,
         choreoAuto: false,
       );
       PathPlannerAuto cloned = auto.duplicate(auto.name);
@@ -107,7 +101,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
@@ -134,7 +127,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
@@ -156,7 +148,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
@@ -182,7 +173,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
@@ -215,7 +205,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           SequentialCommandGroup(
@@ -242,7 +231,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),

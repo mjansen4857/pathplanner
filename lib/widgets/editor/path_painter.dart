@@ -26,7 +26,6 @@ class PathPainter extends CustomPainter {
   final int? selectedRotTarget;
   final int? hoveredMarker;
   final int? selectedMarker;
-  final Pose2d? startingPose;
   final PathPlannerTrajectory? simulatedPath;
   final Color? previewColor;
   final SharedPreferences prefs;
@@ -55,7 +54,6 @@ class PathPainter extends CustomPainter {
     this.selectedRotTarget,
     this.hoveredMarker,
     this.selectedMarker,
-    this.startingPose,
     this.simulatedPath,
     Animation<double>? animation,
     this.previewColor,
@@ -112,17 +110,6 @@ class PathPainter extends CustomPainter {
         for (int w = 0; w < paths[i].waypoints.length; w++) {
           _paintWaypoint(paths[i], canvas, scale, w);
         }
-
-        if (holonomicMode) {
-          PathPainterUtil.paintRobotOutline(
-              paths[i].waypoints.first.anchor,
-              paths[i].idealStartingState.rotation,
-              fieldImage,
-              robotSize,
-              scale,
-              canvas,
-              Colors.green.withOpacity(0.5));
-        }
       } else {
         _paintWaypoint(paths[i], canvas, scale, 0);
         _paintWaypoint(paths[i], canvas, scale, paths[i].waypoints.length - 1);
@@ -151,39 +138,6 @@ class PathPainter extends CustomPainter {
       _paintChoreoWaypoint(
           choreoPaths[i].trajectory.states.last, canvas, Colors.red, scale);
       _paintChoreoMarkers(choreoPaths[i], canvas);
-    }
-
-    if (startingPose != null) {
-      PathPainterUtil.paintRobotOutline(
-          Point(startingPose!.translation.x, startingPose!.translation.y),
-          startingPose!.rotation.getDegrees(),
-          fieldImage,
-          robotSize,
-          scale,
-          canvas,
-          Colors.green.withOpacity(0.8));
-
-      var paint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = Colors.green.withOpacity(0.5)
-        ..strokeWidth = 2;
-
-      canvas.drawCircle(
-          PathPainterUtil.pointToPixelOffset(
-              Point(startingPose!.translation.x, startingPose!.translation.y),
-              scale,
-              fieldImage),
-          PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
-          paint);
-      paint.style = PaintingStyle.stroke;
-      paint.color = Colors.black;
-      canvas.drawCircle(
-          PathPainterUtil.pointToPixelOffset(
-              Point(startingPose!.translation.x, startingPose!.translation.y),
-              scale,
-              fieldImage),
-          PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
-          paint);
     }
 
     if (previewTime != null) {
@@ -416,6 +370,15 @@ class PathPainter extends CustomPainter {
             rotationColor);
       }
     }
+
+    PathPainterUtil.paintRobotOutline(
+        path.waypoints.first.anchor,
+        path.idealStartingState.rotation,
+        fieldImage,
+        robotSize,
+        scale,
+        canvas,
+        Colors.green.withOpacity(0.5));
 
     PathPainterUtil.paintRobotOutline(
         path.waypoints[path.waypoints.length - 1].anchor,

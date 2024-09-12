@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
-import 'package:pathplanner/widgets/editor/tree_widgets/starting_pose_tree.dart';
 import 'package:undo/undo.dart';
 
 void main() {
@@ -52,20 +51,6 @@ void main() {
     await widgetTester.tap(btn);
     await widgetTester.pump();
     expect(sideSwapped, true);
-  });
-
-  testWidgets('has starting pose tree', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: AutoTree(
-          auto: auto,
-          undoStack: ChangeStack(),
-          allPathNames: const [],
-        ),
-      ),
-    ));
-
-    expect(find.byType(StartingPoseTree), findsOneWidget);
   });
 
   testWidgets('has command group', (widgetTester) async {

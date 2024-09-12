@@ -18,12 +18,13 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 		std::vector<RotationTarget> rotationTargets,
 		std::vector<ConstraintsZone> constraintZones,
 		std::vector<EventMarker> eventMarkers,
-		PathConstraints globalConstraints, GoalEndState goalEndState,
-		bool reversed, frc::Rotation2d previewStartingRotation) : m_bezierPoints(
+		PathConstraints globalConstraints,
+		std::optional<IdealStartingState> idealStartingState,
+		GoalEndState goalEndState, bool reversed) : m_bezierPoints(
 		bezierPoints), m_rotationTargets(rotationTargets), m_constraintZones(
 		constraintZones), m_eventMarkers(eventMarkers), m_globalConstraints(
-		globalConstraints), m_goalEndState(goalEndState), m_reversed(reversed), m_previewStartingRotation(
-		previewStartingRotation), m_isChoreoPath(false), m_choreoTrajectory() {
+		globalConstraints), m_idealStartingState(idealStartingState), m_goalEndState(
+		goalEndState), m_reversed(reversed), m_isChoreoPath(false) {
 	std::sort(m_rotationTargets.begin(), m_rotationTargets.end(),
 			[](auto &left, auto &right) {
 				return left.getPosition() < right.getPosition();
@@ -44,8 +45,8 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 
 PathPlannerPath::PathPlannerPath(PathConstraints constraints,
 		GoalEndState goalEndState) : m_bezierPoints(), m_rotationTargets(), m_constraintZones(), m_eventMarkers(), m_globalConstraints(
-		constraints), m_goalEndState(goalEndState), m_reversed(false), m_previewStartingRotation(), m_isChoreoPath(
-		false), m_choreoTrajectory() {
+		constraints), m_idealStartingState(std::nullopt), m_goalEndState(
+		goalEndState), m_reversed(false), m_isChoreoPath(false) {
 	m_instances++;
 	HAL_Report(HALUsageReporting::kResourceType_PathPlannerPath, m_instances);
 }
@@ -58,10 +59,10 @@ void PathPlannerPath::hotReload(const wpi::json &json) {
 	m_constraintZones = updatedPath->m_constraintZones;
 	m_eventMarkers = updatedPath->m_eventMarkers;
 	m_globalConstraints = updatedPath->m_globalConstraints;
+	m_idealStartingState = updatedPath->m_idealStartingState;
 	m_goalEndState = updatedPath->m_goalEndState;
 	m_reversed = updatedPath->m_reversed;
 	m_allPoints = updatedPath->m_allPoints;
-	m_previewStartingRotation = updatedPath->m_previewStartingRotation;
 }
 
 std::vector<frc::Translation2d> PathPlannerPath::bezierFromPoses(
@@ -214,7 +215,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 				return left.first < right.first;
 			});
 
-	path->m_choreoTrajectory = PathPlannerTrajectory(trajStates, eventCommands);
+	path->m_idealTrajectory = PathPlannerTrajectory(trajStates, eventCommands);
 
 	return path;
 }
@@ -227,6 +228,8 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
 	PathConstraints globalConstraints = PathConstraints::fromJson(
 			json.at("globalConstraints"));
 	GoalEndState goalEndState = GoalEndState::fromJson(json.at("goalEndState"));
+	IdealStartingState idealStartingState = IdealStartingState::fromJson(
+			json.at("idealStartingState"));
 	bool reversed = json.at("reversed").get<bool>();
 	std::vector < RotationTarget > rotationTargets;
 	std::vector < ConstraintsZone > constraintZones;
@@ -244,17 +247,8 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
 		eventMarkers.push_back(EventMarker::fromJson(markerJson));
 	}
 
-	frc::Rotation2d previewStartingRotation;
-	if (json.contains("previewStartingState")
-			&& !json.at("previewStartingState").is_null()) {
-		auto jsonStartingState = json.at("previewStartingState");
-		previewStartingRotation = frc::Rotation2d(
-				units::degree_t(
-						jsonStartingState.at("rotation").get<double>()));
-	}
-
 	return std::make_shared < PathPlannerPath
-			> (bezierPoints, rotationTargets, constraintZones, eventMarkers, globalConstraints, goalEndState, reversed, previewStartingRotation);
+			> (bezierPoints, rotationTargets, constraintZones, eventMarkers, globalConstraints, idealStartingState, goalEndState, reversed);
 }
 
 std::vector<frc::Translation2d> PathPlannerPath::bezierPointsFromWaypointsJson(
@@ -348,8 +342,7 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 
 frc::Pose2d PathPlannerPath::getStartingDifferentialPose() {
 	frc::Translation2d startPos = getPoint(0).position;
-	frc::Rotation2d heading =
-			(getPoint(1).position - getPoint(0).position).Angle();
+	frc::Rotation2d heading = getInitialHeading();
 
 	if (m_reversed) {
 		heading = frc::Rotation2d(
@@ -360,8 +353,25 @@ frc::Pose2d PathPlannerPath::getStartingDifferentialPose() {
 	return frc::Pose2d(startPos, heading);
 }
 
-frc::Pose2d PathPlannerPath::getPreviewStartingHolonomicPose() {
-	return frc::Pose2d(getPoint(0).position, m_previewStartingRotation);
+std::optional<PathPlannerTrajectory> PathPlannerPath::getIdealTrajectory(
+		RobotConfig robotConfig) {
+	if (!m_idealTrajectory.has_value() && m_idealStartingState.has_value()) {
+		// The ideal starting state is known, generate the ideal trajectory
+		frc::Rotation2d heading = getInitialHeading();
+		frc::Translation2d fieldSpeeds(
+				units::meter_t { m_idealStartingState.value().getVelocity()() },
+				heading);
+		frc::ChassisSpeeds startingSpeeds =
+				frc::ChassisSpeeds::FromFieldRelativeSpeeds(frc::ChassisSpeeds {
+						units::meters_per_second_t { fieldSpeeds.X()() },
+						units::meters_per_second_t { fieldSpeeds.Y()() },
+						0.0_rad_per_s },
+						m_idealStartingState.value().getRotation());
+		m_idealTrajectory = generateTrajectory(startingSpeeds,
+				m_idealStartingState.value().getRotation(), robotConfig);
+	}
+
+	return m_idealTrajectory;
 }
 
 void PathPlannerPath::precalcValues() {
@@ -372,15 +382,14 @@ void PathPlannerPath::precalcValues() {
 			if (!m_allPoints[i].constraints) {
 				m_allPoints[i].constraints = m_globalConstraints;
 			}
-			m_allPoints[i].curveRadius = units::math::abs(
+			units::meter_t curveRadius = units::math::abs(
 					getCurveRadiusAtPoint(i, m_allPoints));
 
-			if (GeometryUtil::isFinite(m_allPoints[i].curveRadius)) {
+			if (GeometryUtil::isFinite(curveRadius)) {
 				m_allPoints[i].maxV = units::math::min(
 						units::math::sqrt(
 								constraints.getMaxAcceleration()
-										* units::math::abs(
-												m_allPoints[i].curveRadius)),
+										* units::math::abs(curveRadius)),
 						constraints.getMaxVelocity());
 			} else {
 				m_allPoints[i].maxV = constraints.getMaxVelocity();
@@ -482,7 +491,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 							endPrevControl,
 							getPoint(numPoints() - 1).position
 						}), std::vector<RotationTarget>(), std::vector<
-						ConstraintsZone>(), std::vector<EventMarker>(), m_globalConstraints, m_goalEndState, m_reversed);
+						ConstraintsZone>(), std::vector<EventMarker>(), m_globalConstraints, std::nullopt, m_goalEndState, m_reversed);
 	} else if ((closestPointIdx == 0 && !robotNextControl)
 			|| (units::math::abs(
 					closestDist
@@ -549,7 +558,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 					});
 
 			return std::make_shared < PathPlannerPath
-					> (replannedBezier, targets, zones, markers, m_globalConstraints, m_goalEndState, m_reversed);
+					> (replannedBezier, targets, zones, markers, m_globalConstraints, std::nullopt, m_goalEndState, m_reversed);
 		}
 	}
 
@@ -584,7 +593,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 							joinPrevControl,
 							joinAnchor
 						}), std::vector<RotationTarget>(), std::vector<
-						ConstraintsZone>(), std::vector<EventMarker>(), m_globalConstraints, m_goalEndState, m_reversed);
+						ConstraintsZone>(), std::vector<EventMarker>(), m_globalConstraints, std::nullopt, m_goalEndState, m_reversed);
 	}
 
 	if (m_bezierPoints.empty()) {
@@ -709,14 +718,15 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::replan(
 	// 1 to nextWaypointIdx on to the 2 joining segments (waypoint rel pos within old segment = %
 	// along distance of both new segments)
 	return std::make_shared < PathPlannerPath
-			> (replannedBezier, mappedTargets, mappedZones, mappedMarkers, m_globalConstraints, m_goalEndState, m_reversed);
+			> (replannedBezier, mappedTargets, mappedZones, mappedMarkers, m_globalConstraints, std::nullopt, m_goalEndState, m_reversed);
 }
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
-	if (m_isChoreoPath) {
-		// Just mirror the choreo traj
+	std::optional < PathPlannerTrajectory > flippedTraj = std::nullopt;
+	if (m_idealTrajectory.has_value()) {
+		// Flip the ideal trajectory
 		std::vector < PathPlannerTrajectoryState > mirroredStates;
-		for (auto state : m_choreoTrajectory.getStates()) {
+		for (auto state : m_idealTrajectory.value().getStates()) {
 			PathPlannerTrajectoryState mirrored;
 
 			mirrored.time = state.time;
@@ -726,54 +736,37 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 					state.fieldSpeeds.vy, -state.fieldSpeeds.omega };
 			mirroredStates.emplace_back(mirrored);
 		}
-
-		auto path =
-				std::make_shared < PathPlannerPath
-						> (PathConstraints(units::meters_per_second_t {
-								std::numeric_limits<double>::infinity() },
-								units::meters_per_second_squared_t {
-										std::numeric_limits<double>::infinity() },
-								units::radians_per_second_t {
-										std::numeric_limits<double>::infinity() },
-								units::radians_per_second_squared_t {
-										std::numeric_limits<double>::infinity() }), GoalEndState(
-								mirroredStates[mirroredStates.size() - 1].linearVelocity,
-								mirroredStates[mirroredStates.size() - 1].pose.Rotation()));
-
-		std::vector < PathPoint > pathPoints;
-		for (auto state : mirroredStates) {
-			pathPoints.emplace_back(state.pose.Translation());
-		}
-
-		path->m_allPoints = pathPoints;
-		path->m_isChoreoPath = true;
-		path->m_choreoTrajectory = PathPlannerTrajectory(mirroredStates,
-				m_choreoTrajectory.getEventCommands());
-
-		return path;
+		flippedTraj = PathPlannerTrajectory(mirroredStates,
+				m_idealTrajectory.value().getEventCommands());
 	}
 
 	std::vector < frc::Translation2d > newBezier;
-	std::vector < RotationTarget > newRotTargets;
-	std::vector < EventMarker > newMarkers;
-	GoalEndState newEndState = GoalEndState(m_goalEndState.getVelocity(),
-			GeometryUtil::flipFieldRotation(m_goalEndState.getRotation()));
-	frc::Rotation2d newPreviewRot = GeometryUtil::flipFieldRotation(
-			m_previewStartingRotation);
-
 	for (auto p : m_bezierPoints) {
 		newBezier.emplace_back(GeometryUtil::flipFieldPosition(p));
 	}
 
+	std::vector < RotationTarget > newRotTargets;
 	for (auto t : m_rotationTargets) {
 		newRotTargets.emplace_back(t.getPosition(),
 				GeometryUtil::flipFieldRotation(t.getTarget()));
 	}
 
-	for (auto e : m_eventMarkers) {
-		newMarkers.emplace_back(e.getWaypointRelativePos(), e.getCommand());
+	std::vector < PathPoint > newPoints;
+	for (auto p : m_allPoints) {
+		newPoints.emplace_back(p.flip());
+	}
+
+	GoalEndState newEndState = GoalEndState(m_goalEndState.getVelocity(),
+			GeometryUtil::flipFieldRotation(m_goalEndState.getRotation()));
+
+	std::optional < IdealStartingState > newStartState = std::nullopt;
+	if (m_idealStartingState.has_value()) {
+		newStartState = IdealStartingState(
+				m_idealStartingState.value().getVelocity(),
+				GeometryUtil::flipFieldRotation(
+						m_idealStartingState.value().getRotation()));
 	}
 
 	return std::make_shared < PathPlannerPath
-			> (newBezier, newRotTargets, m_constraintZones, newMarkers, m_globalConstraints, newEndState, m_reversed, newPreviewRot);
+			> (newBezier, newRotTargets, m_constraintZones, m_eventMarkers, m_globalConstraints, newStartState, newEndState, m_reversed);
 }

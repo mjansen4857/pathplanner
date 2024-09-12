@@ -7,13 +7,13 @@
 #include <units/velocity.h>
 #include "pathplanner/lib/path/PathConstraints.h"
 #include "pathplanner/lib/path/RotationTarget.h"
+#include "pathplanner/lib/util/GeometryUtil.h"
 
 namespace pathplanner {
 class PathPoint {
 public:
 	frc::Translation2d position;
 	units::meter_t distanceAlongPath = 0_m;
-	units::meter_t curveRadius = 0_m;
 	units::meters_per_second_t maxV = units::meters_per_second_t {
 			std::numeric_limits<double>::infinity() };
 	std::optional<RotationTarget> rotationTarget = std::nullopt;
@@ -27,6 +27,21 @@ public:
 	}
 
 	constexpr PathPoint(frc::Translation2d pos) : position(pos) {
+	}
+
+	constexpr PathPoint flip() const {
+		PathPoint flipped(GeometryUtil::flipFieldPosition(position));
+		flipped.distanceAlongPath = distanceAlongPath;
+		flipped.maxV = maxV;
+		if (rotationTarget.has_value()) {
+			flipped.rotationTarget = RotationTarget(
+					rotationTarget.value().getPosition(),
+					GeometryUtil::flipFieldRotation(
+							rotationTarget.value().getTarget()));
+		}
+		flipped.constraints = constraints;
+		flipped.waypointRelativePos = waypointRelativePos;
+		return flipped;
 	}
 };
 }

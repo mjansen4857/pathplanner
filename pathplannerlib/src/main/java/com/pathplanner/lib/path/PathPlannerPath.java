@@ -258,6 +258,7 @@ public class PathPlannerPath {
     this.constraintZones = updatedPath.constraintZones;
     this.eventMarkers = updatedPath.eventMarkers;
     this.globalConstraints = updatedPath.globalConstraints;
+    this.idealStartingState = updatedPath.idealStartingState;
     this.goalEndState = updatedPath.goalEndState;
     this.allPoints = updatedPath.allPoints;
     this.reversed = updatedPath.reversed;
@@ -997,7 +998,7 @@ public class PathPlannerPath {
   public PathPlannerTrajectory generateTrajectory(
       ChassisSpeeds startingSpeeds, Rotation2d startingRotation, RobotConfig config) {
     if (isChoreoPath) {
-      return idealTrajectory.get();
+      return idealTrajectory.orElseThrow();
     } else {
       return new PathPlannerTrajectory(this, startingSpeeds, startingRotation, config);
     }

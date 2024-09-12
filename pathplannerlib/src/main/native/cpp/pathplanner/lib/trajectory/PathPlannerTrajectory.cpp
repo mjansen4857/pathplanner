@@ -10,8 +10,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		const frc::ChassisSpeeds &startingSpeeds,
 		const frc::Rotation2d &startingRotation, const RobotConfig &config) {
 	if (path->isChoreoPath()) {
-		PathPlannerTrajectory traj = path->getTrajectory(startingSpeeds,
-				startingRotation, config);
+		PathPlannerTrajectory traj = path->getIdealTrajectory(config).value();
 		m_states = traj.m_states;
 		m_eventCommands = traj.m_eventCommands;
 	} else {

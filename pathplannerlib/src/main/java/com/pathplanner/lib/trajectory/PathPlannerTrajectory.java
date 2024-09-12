@@ -57,7 +57,7 @@ public class PathPlannerTrajectory {
       Rotation2d startingRotation,
       RobotConfig config) {
     if (path.isChoreoPath()) {
-      var traj = path.generateTrajectory(startingSpeeds, startingRotation, config);
+      var traj = path.getIdealTrajectory(config).orElseThrow();
       this.states = traj.states;
       this.eventCommands = traj.eventCommands;
     } else {

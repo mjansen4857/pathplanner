@@ -26,8 +26,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-/* EDIT THIS CODE TO USE OLD STYLE OF SIDEBAR */
-
 class HomePage extends StatefulWidget {
   final String appVersion;
   final SharedPreferences prefs;

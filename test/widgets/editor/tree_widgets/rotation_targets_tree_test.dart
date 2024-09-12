@@ -101,8 +101,7 @@ void main() {
       ),
     ));
 
-    expect(find.text('Rotation Target at 0.20'), findsOneWidget);
-    expect(find.text('Rotation Target at 0.70'), findsOneWidget);
+    expect(find.text('Rotation Target 1'), findsOneWidget);
   });
 
   testWidgets('Target card hover', (widgetTester) async {
@@ -273,11 +272,21 @@ void main() {
       ),
     ));
 
-    var newTargetButton = find.text('Add New Rotation Target');
+    final addIcon = find.byIcon(Icons.add);
+    expect(addIcon, findsOneWidget);
 
-    expect(newTargetButton, findsOneWidget);
+    // Find the parent IconButton of the Icon
+    final addButton = find.ancestor(
+      of: addIcon,
+      matching: find.byType(IconButton),
+    );
+    expect(addButton, findsOneWidget);
 
-    await widgetTester.tap(newTargetButton);
+    // Check the tooltip of the IconButton
+    expect((widgetTester.widget(addButton) as IconButton).tooltip,
+        'Add New Rotation Target');
+
+    await widgetTester.tap(addButton);
     await widgetTester.pump();
 
     expect(pathChanged, true);
@@ -285,6 +294,7 @@ void main() {
 
     undoStack.undo();
     await widgetTester.pump();
+
     expect(path.rotationTargets.length, 2);
   });
 }

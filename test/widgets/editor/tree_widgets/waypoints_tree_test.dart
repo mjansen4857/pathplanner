@@ -398,7 +398,11 @@ void main() {
       ),
     ));
 
-    var insertButton = find.text('New Waypoint After');
+    // Expand the waypoint card first
+    await widgetTester.tap(find.byType(TreeCardNode).first);
+    await widgetTester.pumpAndSettle();
+
+    var insertButton = find.byIcon(Icons.add);
 
     expect(insertButton, findsOneWidget);
 
@@ -431,7 +435,11 @@ void main() {
       ),
     ));
 
-    var button = find.text('Add Rotation Target');
+    // Expand the waypoint card first
+    await widgetTester.tap(find.byType(TreeCardNode).at(1));
+    await widgetTester.pumpAndSettle();
+
+    var button = find.byIcon(Icons.rotate_right_rounded);
 
     expect(button, findsOneWidget);
 
@@ -446,7 +454,6 @@ void main() {
 
     expect(path.rotationTargets.length, 0);
   });
-
   testWidgets('linked waypoint', (widgetTester) async {
     Waypoint.linked['existing link'] = const Point(0, 0);
     Waypoint.linked['new link'] = const Point(0, 0);
@@ -466,61 +473,65 @@ void main() {
       ),
     ));
 
-    var button = find.text('Link Waypoint');
-
-    expect(button, findsOneWidget);
-
-    await widgetTester.tap(button);
+    // Expand the waypoint card first
+    await widgetTester.tap(find.byType(TreeCardNode).at(1));
     await widgetTester.pumpAndSettle();
 
-    final cancelButton = find.text('Cancel');
+    // Find the link waypoint button by its tooltip
+    var linkButton = find.byTooltip('Link Waypoint');
+    expect(linkButton, findsOneWidget);
 
+    await widgetTester.tap(linkButton);
+    await widgetTester.pumpAndSettle();
+
+    // Now we should see the dialog
+    expect(find.byType(AlertDialog), findsOneWidget);
+
+    final cancelButton = find.text('Cancel');
     expect(cancelButton, findsOneWidget);
     await widgetTester.tap(cancelButton);
     await widgetTester.pumpAndSettle();
-
     expect(find.byType(AlertDialog), findsNothing);
 
-    await widgetTester.tap(button);
+    // Open the dialog again
+    await widgetTester.tap(linkButton);
     await widgetTester.pumpAndSettle();
 
-    final dropdown =
-        find.widgetWithText(DropdownMenu<String>, 'Linked Waypoint Name');
+    final dropdown = find.byType(DropdownMenu<String>);
     expect(dropdown, findsOneWidget);
-
     await widgetTester.tap(dropdown);
     await widgetTester.pumpAndSettle();
 
     Waypoint.linked.remove('new link');
 
-    // Stupid that there are duplicate text widgets. The dropdown menu is the worst widget in flutter
+    // Select 'new link' from the dropdown
     await widgetTester.tap(find.text('new link').last);
     await widgetTester.pumpAndSettle();
 
     final confirmButton = find.text('Confirm');
     expect(confirmButton, findsOneWidget);
-
     await widgetTester.tap(confirmButton);
     await widgetTester.pumpAndSettle();
 
     expect(find.byType(AlertDialog), findsNothing);
-
     expect(pathChanged, true);
     expect(path.waypoints[1].linkedName, 'new link');
 
-    final unlinkButton = find.text('Unlink');
+    // Find the unlink button by its tooltip
+    final unlinkButton = find.byTooltip('Unlink Waypoint');
+    expect(unlinkButton, findsOneWidget);
     await widgetTester.tap(unlinkButton);
     await widgetTester.pumpAndSettle();
 
     expect(path.waypoints[1].linkedName, null);
 
-    await widgetTester.tap(button);
+    // Link to existing waypoint
+    await widgetTester.tap(linkButton);
     await widgetTester.pumpAndSettle();
 
     await widgetTester.tap(dropdown);
     await widgetTester.pumpAndSettle();
 
-    // Stupid that there are duplicate text widgets. The dropdown menu is the worst widget in flutter
     await widgetTester.tap(find.text('existing link').last);
     await widgetTester.pumpAndSettle();
 
@@ -561,20 +572,21 @@ void main() {
       ),
     ));
 
-    var lockButtons = find.byTooltip('Lock');
+    var lockButtons = find.byIcon(Icons.lock_open_rounded);
 
     expect(lockButtons, findsNWidgets(2));
 
-    await widgetTester.tap(lockButtons.at(1));
+    await widgetTester.tap(lockButtons.first);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].isLocked, true);
+    expect(path.waypoints[0].isLocked, true);
 
-    await widgetTester.tap(lockButtons.at(1));
+    lockButtons = find.byIcon(Icons.lock_rounded);
+    await widgetTester.tap(lockButtons.first);
     await widgetTester.pump();
 
-    expect(path.waypoints[1].isLocked, false);
+    expect(path.waypoints[0].isLocked, false);
   });
 
   testWidgets('Delete waypoint button', (widgetTester) async {

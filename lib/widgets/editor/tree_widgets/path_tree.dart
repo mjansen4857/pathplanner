@@ -104,7 +104,6 @@ class _PathTreeState extends State<PathTree> {
                 _buildGlobalConstraintsTree(),
                 _buildConstraintZonesTree(),
                 const Divider(),
-                // _buildPreviewStartingStateTree(), // TODO: CHECK THIS
                 const EditorSettingsTree(),
               ],
             ),
@@ -193,7 +192,6 @@ class _PathTreeState extends State<PathTree> {
       path: widget.path,
       onPathChanged: widget.onPathChanged,
       undoStack: widget.undoStack,
-      //holonomicMode: widget.holonomicMode, TODO: CHECK THIS
       defaultConstraints: widget.defaultConstraints,
     );
   }
@@ -242,20 +240,8 @@ class _PathTreeState extends State<PathTree> {
       onZoneSelected: widget.onZoneSelected,
       initiallySelectedZone: widget.initiallySelectedZone,
       undoStack: widget.undoStack,
-      //holonomicMode: widget.holonomicMode, TODO: CHECK THIS
     );
   }
-
-/*
-  Widget _buildPreviewStartingStateTree() {
-    return PreviewStartingStateTree(
-      path: widget.path,
-      undoStack: widget.undoStack,
-      holonomicMode: widget.holonomicMode,
-      onPathChanged: widget.onPathChanged,
-    );
-  }
-  */
 
   Widget _buildReversedButton() {
     return Tooltip(

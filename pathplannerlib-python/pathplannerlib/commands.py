@@ -29,8 +29,9 @@ class FollowPathCommand(Command):
     _untriggeredEvents: List[Tuple[float, Command]] = []
 
     _timer: Timer = Timer()
+
     _path: PathPlannerPath = None
-    _generatedTrajectory: PathPlannerTrajectory = None
+    _trajectory: PathPlannerTrajectory = None
 
     def __init__(self, path: PathPlannerPath, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
@@ -72,6 +73,12 @@ class FollowPathCommand(Command):
 
             self.addRequirements(*reqs)
 
+        self._path = self._originalPath
+        # Ensure the ideal trajectory is generated
+        idealTrajectory = self._path.getIdealTrajectory(self._robotConfig)
+        if idealTrajectory is not None:
+            self._trajectory = idealTrajectory
+
     def initialize(self):
         if self._shouldFlipPath() and not self._originalPath.preventFlipping:
             self._path = self._originalPath.flipPath()
@@ -85,7 +92,7 @@ class FollowPathCommand(Command):
 
         fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.rotation())
         currentHeading = Rotation2d(fieldSpeeds.vx, fieldSpeeds.vy)
-        targetHeading = (self._path.getPoint(1).position - self._path.getPoint(0).position).angle()
+        targetHeading = self._path.getInitialHeading()
         headingError = currentHeading - targetHeading
         onHeading = math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 0.25 or abs(headingError.degrees()) < 30
 
@@ -93,7 +100,11 @@ class FollowPathCommand(Command):
                 currentPose.translation().distance(self._path.getPoint(0).position) > 0.25 or not onHeading):
             self._replanPath(currentPose, currentSpeeds)
         else:
-            self._generatedTrajectory = self._path.getTrajectory(currentSpeeds, currentPose.rotation(),
+            idealTraj = self._path.getIdealTrajectory(self._robotConfig)
+            if idealTraj is not None:
+                self._trajectory = idealTraj
+            else:
+                self._trajectory = self._path.generateTrajectory(currentSpeeds, currentPose.rotation(),
                                                                  self._robotConfig)
             PathPlannerLogging.logActivePath(self._path)
             PPLibTelemetry.setCurrentPath(self._path)
@@ -101,7 +112,7 @@ class FollowPathCommand(Command):
         # Initialize marker stuff
         self._currentEventCommands.clear()
         self._untriggeredEvents.clear()
-        for event in self._generatedTrajectory.getEventCommands():
+        for event in self._trajectory.getEventCommands():
             self._untriggeredEvents.append(event)
 
         self._timer.reset()
@@ -109,7 +120,7 @@ class FollowPathCommand(Command):
 
     def execute(self):
         currentTime = self._timer.get()
-        targetState = self._generatedTrajectory.sample(currentTime)
+        targetState = self._trajectory.sample(currentTime)
         if not self._controller.isHolonomic() and self._path.isReversed():
             targetState = targetState.reverse()
 
@@ -123,7 +134,7 @@ class FollowPathCommand(Command):
             if currentError >= self._replanningConfig.dynamicReplanningTotalErrorThreshold or currentError - previousError >= self._replanningConfig.dynamicReplanningErrorSpikeThreshold:
                 self._replanPath(currentPose, currentSpeeds)
                 self._timer.reset()
-                targetState = self._generatedTrajectory.sample(0.0)
+                targetState = self._trajectory.sample(0.0)
 
         targetSpeeds = self._controller.calculateRobotRelativeSpeeds(currentPose, targetState)
 
@@ -169,7 +180,7 @@ class FollowPathCommand(Command):
                 self._currentEventCommands[command] = False
 
     def isFinished(self) -> bool:
-        return self._timer.hasElapsed(self._generatedTrajectory.getTotalTimeSeconds())
+        return self._timer.hasElapsed(self._trajectory.getTotalTimeSeconds())
 
     def end(self, interrupted: bool):
         self._timer.stop()
@@ -188,7 +199,8 @@ class FollowPathCommand(Command):
 
     def _replanPath(self, current_pose: Pose2d, current_speeds: ChassisSpeeds) -> None:
         replanned = self._path.replan(current_pose, current_speeds)
-        self._generatedTrajectory = replanned.getTrajectory(current_speeds, current_pose.rotation(), self._robotConfig)
+        self._generatedTrajectory = replanned.generateTrajectory(current_speeds, current_pose.rotation(),
+                                                                 self._robotConfig)
         PathPlannerLogging.logActivePath(replanned)
         PPLibTelemetry.setCurrentPath(replanned)
 
@@ -244,9 +256,8 @@ class PathfindingCommand(Command):
             targetRotation = Rotation2d()
             goalEndVel = target_path.getGlobalConstraints().maxVelocityMps
             if target_path.isChoreoPath():
-                # Can call getTrajectory here without proper speeds since it will just return the choreo
-                # trajectory
-                choreoTraj = target_path.getTrajectory(ChassisSpeeds(), Rotation2d(), self._robotConfig)
+                # Can use ideal trajectory here without issue since all choreo paths have an ideal trajectory
+                choreoTraj = target_path.getIdealTrajectory(self._robotConfig)
                 targetRotation = choreoTraj.getInitialState().pose.rotation()
                 goalEndVel = choreoTraj.getInitialState().linearVelocity
             else:
@@ -373,8 +384,8 @@ class PathfindingCommand(Command):
 
                 if currentError >= self._replanningConfig.dynamicReplanningTotalErrorThreshold or currentError - previousError >= self._replanningConfig.dynamicReplanningErrorSpikeThreshold:
                     replanned = self._currentPath.replan(currentPose, currentSpeeds)
-                    self._currentTrajectory = replanned.getTrajectory(currentSpeeds, currentPose.rotation(),
-                                                                      self._robotConfig)
+                    self._currentTrajectory = replanned.generateTrajectory(currentSpeeds, currentPose.rotation(),
+                                                                           self._robotConfig)
                     PathPlannerLogging.logActivePath(replanned)
                     PPLibTelemetry.setCurrentPath(replanned)
 

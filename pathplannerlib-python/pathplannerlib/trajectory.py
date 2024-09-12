@@ -10,7 +10,7 @@ from typing import List, Tuple, Union, TYPE_CHECKING
 from commands2 import Command
 
 if TYPE_CHECKING:
-    from .path import PathPlannerPath, PathConstraints, RESOLUTION
+    from .path import PathPlannerPath, PathConstraints
 
 
 @dataclass
@@ -105,7 +105,7 @@ class PathPlannerTrajectory:
                 self._eventCommands = []
         else:
             if path.isChoreoPath():
-                traj = path.getTrajectory(starting_speeds, starting_rotation, config)
+                traj = path.generateTrajectory(starting_speeds, starting_rotation, config)
                 self._states = traj._states
                 self._eventCommands = traj._eventCommands
             else:

@@ -767,6 +767,17 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 						m_idealStartingState.value().getRotation()));
 	}
 
-	return std::make_shared < PathPlannerPath
-			> (newBezier, newRotTargets, m_constraintZones, m_eventMarkers, m_globalConstraints, newStartState, newEndState, m_reversed);
+	auto path = PathPlannerPath::fromPathPoints(newPoints, m_globalConstraints,
+			newEndState);
+	path->m_bezierPoints = newBezier;
+	path->m_rotationTargets = newRotTargets;
+	path->m_constraintZones = m_constraintZones;
+	path->m_eventMarkers = m_eventMarkers;
+	path->m_idealStartingState = newStartState;
+	path->m_reversed = m_reversed;
+	path->m_isChoreoPath = m_isChoreoPath;
+	path->m_idealTrajectory = flippedTraj;
+	path->preventFlipping = preventFlipping;
+
+	return path;
 }

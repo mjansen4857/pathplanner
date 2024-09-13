@@ -171,19 +171,6 @@ public class AutoBuilder {
   }
 
   /**
-   * Builds a command to follow a path with event markers.
-   *
-   * @param path the path to follow
-   * @return a path following command with events for the given path
-   * @throws AutoBuilderException if the AutoBuilder has not been configured
-   * @deprecated Renamed to "followPath"
-   */
-  @Deprecated(forRemoval = true)
-  public static Command followPathWithEvents(PathPlannerPath path) {
-    return followPath(path);
-  }
-
-  /**
    * Builds a command to follow a path. PathPlannerLib commands will also trigger event markers
    * along the way.
    *

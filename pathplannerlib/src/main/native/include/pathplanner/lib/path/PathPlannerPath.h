@@ -193,6 +193,15 @@ public:
 	}
 
 	/**
+	 * Get the ideal starting state of this path
+	 *
+	 * @return The ideal starting state
+	 */
+	constexpr const std::optional<IdealStartingState>& getIdealStartingState() const {
+		return m_idealStartingState;
+	}
+
+	/**
 	 * Get all the event markers for this path
 	 *
 	 * @return The event markers for this path
@@ -229,16 +238,6 @@ public:
 					startingRotation, config);
 		}
 	}
-
-	/**
-	 * Replan this path based on the current robot position and speeds
-	 *
-	 * @param startingPose New starting pose for the replanned path
-	 * @param currentSpeeds Current chassis speeds of the robot
-	 * @return The replanned path
-	 */
-	std::shared_ptr<PathPlannerPath> replan(const frc::Pose2d startingPose,
-			const frc::ChassisSpeeds currentSpeeds);
 
 	/**
 	 * Flip a path to the other side of the field, maintaining a global blue alliance origin

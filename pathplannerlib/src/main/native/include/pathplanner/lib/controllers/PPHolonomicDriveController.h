@@ -14,7 +14,6 @@
 #include <optional>
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include "pathplanner/lib/config/PIDConstants.h"
-#include "pathplanner/lib/util/HolonomicPathFollowerConfig.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
 

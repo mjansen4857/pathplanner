@@ -15,7 +15,6 @@
 #include <string>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/config/RobotConfig.h"
-#include "pathplanner/lib/config/ReplanningConfig.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
 
 namespace pathplanner {
@@ -30,7 +29,6 @@ public:
 	 * @param robotRelativeOutput a function for setting the robot's robot-relative chassis speeds
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
-	 * @param replanningConfig Path replanning configuration
 	 * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
 	 *     the field. This will maintain a global blue alliance origin.
 	 * @param driveSubsystem a pointer to the subsystem for the robot's drive
@@ -40,8 +38,7 @@ public:
 			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
 			std::shared_ptr<PathFollowingController> controller,
-			RobotConfig robotConfig, ReplanningConfig replanningConfig,
-			std::function<bool()> shouldFlipPath,
+			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Subsystem *driveSubsystem);
 
 	/**
@@ -79,19 +76,6 @@ public:
 	 * @return a path following command with events for the given path
 	 */
 	static frc2::CommandPtr followPath(std::shared_ptr<PathPlannerPath> path);
-
-	/**
-	 * Builds a command to follow a path with event markers.
-	 *
-	 * @param path the path to follow
-	 * @return a path following command with events for the given path
-	 * @deprecated Renamed to followPath
-	 */
-	[[deprecated("Renamed to followPath")]]
-	static frc2::CommandPtr followPathWithEvents(
-			std::shared_ptr<PathPlannerPath> path) {
-		return followPath(path);
-	}
 
 	/**
 	 * Builds an auto command for the given auto name.

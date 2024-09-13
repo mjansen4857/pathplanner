@@ -15,7 +15,6 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
-#include "pathplanner/lib/config/ReplanningConfig.h"
 #include "pathplanner/lib/config/RobotConfig.h"
 #include "pathplanner/lib/util/PathPlannerLogging.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
@@ -34,7 +33,6 @@ public:
 	 *     command
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
-	 * @param replanningConfig Path replanning configuration
 	 * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
 	 *     maintain a global blue alliance origin.
 	 * @param requirements Subsystems required by this command, usually just the drive subsystem
@@ -44,8 +42,7 @@ public:
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::shared_ptr<PathFollowingController> controller,
-			RobotConfig robotConfig, ReplanningConfig replanningConfig,
-			std::function<bool()> shouldFlipPath,
+			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements);
 
 	void Initialize() override;
@@ -64,7 +61,6 @@ private:
 	std::function<void(frc::ChassisSpeeds)> m_output;
 	std::shared_ptr<PathFollowingController> m_controller;
 	RobotConfig m_robotConfig;
-	ReplanningConfig m_replanningConfig;
 	std::function<bool()> m_shouldFlipPath;
 
 	// For event markers
@@ -73,14 +69,5 @@ private:
 
 	std::shared_ptr<PathPlannerPath> m_path;
 	PathPlannerTrajectory m_trajectory;
-
-	inline void replanPath(const frc::Pose2d &currentPose,
-			const frc::ChassisSpeeds &currentSpeeds) {
-		auto replanned = m_path->replan(currentPose, currentSpeeds);
-		m_trajectory = replanned->generateTrajectory(currentSpeeds,
-				currentPose.Rotation(), m_robotConfig);
-		PathPlannerLogging::logActivePath(replanned);
-		PPLibTelemetry::setCurrentPath(replanned);
-	}
 };
 }

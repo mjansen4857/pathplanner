@@ -9,11 +9,11 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
 		std::function<void(frc::ChassisSpeeds)> output,
 		std::shared_ptr<PathFollowingController> controller,
-		RobotConfig robotConfig, ReplanningConfig replanningConfig,
-		std::function<bool()> shouldFlipPath, frc2::Requirements requirements) : m_originalPath(
-		path), m_poseSupplier(poseSupplier), m_speedsSupplier(speedsSupplier), m_output(
-		output), m_controller(controller), m_robotConfig(robotConfig), m_replanningConfig(
-		replanningConfig), m_shouldFlipPath(shouldFlipPath) {
+		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
+		frc2::Requirements requirements) : m_originalPath(path), m_poseSupplier(
+		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
+		controller), m_robotConfig(robotConfig), m_shouldFlipPath(
+		shouldFlipPath) {
 	AddRequirements(requirements);
 
 	auto &&driveRequirements = GetRequirements();
@@ -52,31 +52,36 @@ void FollowPathCommand::Initialize() {
 
 	m_controller->reset(currentPose, currentSpeeds);
 
-	frc::ChassisSpeeds fieldSpeeds =
-			frc::ChassisSpeeds::FromRobotRelativeSpeeds(currentSpeeds,
-					currentPose.Rotation());
-	frc::Rotation2d currentHeading = frc::Rotation2d(fieldSpeeds.vx(),
-			fieldSpeeds.vy());
-	frc::Rotation2d targetHeading = m_path->getInitialHeading();
-	frc::Rotation2d headingError = currentHeading - targetHeading;
-	bool onHeading = units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
-			< 0.25_mps || units::math::abs(headingError.Degrees()) < 30_deg;
+	auto linearVel = units::math::hypot(currentSpeeds.vx, currentSpeeds.vy);
 
-	if (!m_path->isChoreoPath() && m_replanningConfig.enableInitialReplanning
-			&& (currentPose.Translation().Distance(m_path->getPoint(0).position)
-					> 0.25_m || !onHeading)) {
-		replanPath(currentPose, currentSpeeds);
-	} else {
-		auto idealTraj = m_path->getIdealTrajectory(m_robotConfig);
-		if (idealTraj.has_value()) {
-			m_trajectory = idealTraj.value();
+	if (m_path->getIdealStartingState().has_value()) {
+		// Check if we match the ideal starting state
+		bool idealVelocity = units::math::abs(
+				linearVel
+						- m_path->getIdealStartingState().value().getVelocity())
+				<= 0.25_mps;
+		bool idealRotation =
+				!m_robotConfig.isHolonomic
+						|| units::math::abs(
+								(currentPose.Rotation()
+										- m_path->getIdealStartingState().value().getRotation()).Degrees())
+								<= 30_deg;
+		if (idealVelocity && idealRotation) {
+			// We can use the ideal trajectory
+			m_trajectory = m_path->getIdealTrajectory(m_robotConfig).value();
 		} else {
+			// We need to regenerate
 			m_trajectory = m_path->generateTrajectory(currentSpeeds,
 					currentPose.Rotation(), m_robotConfig);
 		}
-		PathPlannerLogging::logActivePath (m_path);
-		PPLibTelemetry::setCurrentPath(m_path);
+	} else {
+		// No ideal starting state, generate the trajectory
+		m_trajectory = m_path->generateTrajectory(currentSpeeds,
+				currentPose.Rotation(), m_robotConfig);
 	}
+
+	PathPlannerLogging::logActivePath (m_path);
+	PPLibTelemetry::setCurrentPath(m_path);
 
 	// Initialize marker stuff
 	m_currentEventCommands.clear();
@@ -100,22 +105,6 @@ void FollowPathCommand::Execute() {
 
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
-
-	if (!m_path->isChoreoPath() && m_replanningConfig.enableDynamicReplanning) {
-		units::meter_t previousError = units::math::abs(
-				m_controller->getPositionalError());
-		units::meter_t currentError = currentPose.Translation().Distance(
-				targetState.pose.Translation());
-
-		if (currentError
-				>= m_replanningConfig.dynamicReplanningTotalErrorThreshold
-				|| currentError - previousError
-						>= m_replanningConfig.dynamicReplanningErrorSpikeThreshold) {
-			replanPath(currentPose, currentSpeeds);
-			m_timer.Reset();
-			targetState = m_trajectory.sample(0_s);
-		}
-	}
 
 	units::meters_per_second_t currentVel = units::math::hypot(currentSpeeds.vx,
 			currentSpeeds.vy);

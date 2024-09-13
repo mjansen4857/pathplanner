@@ -12,7 +12,7 @@ from wpilib import getDeployDirectory, reportError, reportWarning, SendableChoos
 import json
 from commands2.command import Command
 from commands2.subsystem import Subsystem
-from .config import RobotConfig, ReplanningConfig
+from .config import RobotConfig
 from hal import report, tResourceType
 
 
@@ -162,7 +162,7 @@ class AutoBuilder:
                   robot_relative_output: Callable[[ChassisSpeeds], None],
                   controller: PathFollowingController,
                   robot_config: RobotConfig,
-                  replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool],
+                  should_flip_path: Callable[[], bool],
                   drive_subsystem: Subsystem) -> None:
         """
         Configures the AutoBuilder for using PathPlanner's built-in commands.
@@ -173,7 +173,6 @@ class AutoBuilder:
         :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
         :param controller Path following controller that will be used to follow paths
         :param robot_config The robot configuration
-        :param replanning_config Path replanning configuration
         :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.
         :param drive_subsystem: the subsystem for the robot's drive
         """
@@ -187,7 +186,6 @@ class AutoBuilder:
             robot_relative_output,
             controller,
             robot_config,
-            replanning_config,
             should_flip_path,
             drive_subsystem
         )
@@ -204,7 +202,6 @@ class AutoBuilder:
                 robot_relative_output,
                 controller,
                 robot_config,
-                replanning_config,
                 lambda: False,
                 drive_subsystem,
                 target_pose=pose,
@@ -219,7 +216,6 @@ class AutoBuilder:
                 robot_relative_output,
                 controller,
                 robot_config,
-                replanning_config,
                 should_flip_path,
                 drive_subsystem
             )

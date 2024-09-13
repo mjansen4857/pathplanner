@@ -9,7 +9,7 @@ from wpimath.kinematics import ChassisSpeeds
 from wpilib import Timer
 from commands2 import Command, Subsystem, SequentialCommandGroup
 from typing import Callable, Tuple, List
-from .config import ReplanningConfig, RobotConfig
+from .config import RobotConfig
 from .pathfinding import Pathfinding
 from hal import report, tResourceType
 
@@ -21,7 +21,6 @@ class FollowPathCommand(Command):
     _output: Callable[[ChassisSpeeds], None]
     _controller: PathFollowingController
     _robotConfig: RobotConfig
-    _replanningConfig: ReplanningConfig
     _shouldFlipPath: Callable[[], bool]
 
     # For event markers
@@ -35,7 +34,7 @@ class FollowPathCommand(Command):
 
     def __init__(self, path: PathPlannerPath, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
-                 controller: PathFollowingController, robot_config: RobotConfig, replanning_config: ReplanningConfig,
+                 controller: PathFollowingController, robot_config: RobotConfig,
                  should_flip_path: Callable[[], bool], *requirements: Subsystem):
         """
         Construct a base path following command
@@ -46,7 +45,6 @@ class FollowPathCommand(Command):
         :param output_robot_relative: Function that will apply the robot-relative output speeds of this command
         :param controller: Path following controller that will be used to follow the path
         :param robot_config The robot configuration
-        :param replanning_config: Path replanning configuration
         :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.
         :param requirements: Subsystems required by this command, usually just the drive subsystem
         """
@@ -58,7 +56,6 @@ class FollowPathCommand(Command):
         self._output = output_robot_relative
         self._controller = controller
         self._robotConfig = robot_config
-        self._replanningConfig = replanning_config
         self._shouldFlipPath = should_flip_path
 
         self.addRequirements(*requirements)
@@ -90,24 +87,25 @@ class FollowPathCommand(Command):
 
         self._controller.reset(currentPose, currentSpeeds)
 
-        fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.rotation())
-        currentHeading = Rotation2d(fieldSpeeds.vx, fieldSpeeds.vy)
-        targetHeading = self._path.getInitialHeading()
-        headingError = currentHeading - targetHeading
-        onHeading = math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 0.25 or abs(headingError.degrees()) < 30
+        linearVel = math.hypot(currentSpeeds.vx, currentSpeeds.vy)
 
-        if not self._path.isChoreoPath() and self._replanningConfig.enableInitialReplanning and (
-                currentPose.translation().distance(self._path.getPoint(0).position) > 0.25 or not onHeading):
-            self._replanPath(currentPose, currentSpeeds)
-        else:
-            idealTraj = self._path.getIdealTrajectory(self._robotConfig)
-            if idealTraj is not None:
-                self._trajectory = idealTraj
+        if self._path.getIdealStartingState() is not None:
+            # Check if we match the ideal starting state
+            idealVelocity = abs(linearVel - self._path.getIdealStartingState().velocity) <= 0.25
+            idealRotation = (not self._robotConfig.isHolonomic) or abs(
+                (currentPose.rotation() - self._path._idealStartingState.rotation).degrees()) <= 30.0
+            if idealVelocity and idealRotation:
+                # We can use the ideal trajectory
+                self._trajectory = self._path.getIdealTrajectory(self._robotConfig)
             else:
-                self._trajectory = self._path.generateTrajectory(currentSpeeds, currentPose.rotation(),
-                                                                 self._robotConfig)
-            PathPlannerLogging.logActivePath(self._path)
-            PPLibTelemetry.setCurrentPath(self._path)
+                # We need to regenerate
+                self._path.generateTrajectory(currentSpeeds, currentPose.rotation(), self._robotConfig)
+        else:
+            # No ideal starting state, generate the trajectory
+            self._path.generateTrajectory(currentSpeeds, currentPose.rotation(), self._robotConfig)
+
+        PathPlannerLogging.logActivePath(self._path)
+        PPLibTelemetry.setCurrentPath(self._path)
 
         # Initialize marker stuff
         self._currentEventCommands.clear()
@@ -126,15 +124,6 @@ class FollowPathCommand(Command):
 
         currentPose = self._poseSupplier()
         currentSpeeds = self._speedsSupplier()
-
-        if not self._path.isChoreoPath() and self._replanningConfig.enableDynamicReplanning:
-            previousError = abs(self._controller.getPositionalError())
-            currentError = currentPose.translation().distance(targetState.pose.translation())
-
-            if currentError >= self._replanningConfig.dynamicReplanningTotalErrorThreshold or currentError - previousError >= self._replanningConfig.dynamicReplanningErrorSpikeThreshold:
-                self._replanPath(currentPose, currentSpeeds)
-                self._timer.reset()
-                targetState = self._trajectory.sample(0.0)
 
         targetSpeeds = self._controller.calculateRobotRelativeSpeeds(currentPose, targetState)
 
@@ -197,13 +186,6 @@ class FollowPathCommand(Command):
             if self._currentEventCommands[command]:
                 command.end(True)
 
-    def _replanPath(self, current_pose: Pose2d, current_speeds: ChassisSpeeds) -> None:
-        replanned = self._path.replan(current_pose, current_speeds)
-        self._generatedTrajectory = replanned.generateTrajectory(current_speeds, current_pose.rotation(),
-                                                                 self._robotConfig)
-        PathPlannerLogging.logActivePath(replanned)
-        PPLibTelemetry.setCurrentPath(replanned)
-
 
 class PathfindingCommand(Command):
     _timer: Timer = Timer()
@@ -217,7 +199,6 @@ class PathfindingCommand(Command):
     _output: Callable[[ChassisSpeeds], None]
     _controller: PathFollowingController
     _robotConfig: RobotConfig
-    _replanningConfig: ReplanningConfig
     _shouldFlipPath: Callable[[], bool]
 
     _currentPath: Union[PathPlannerPath, None]
@@ -231,7 +212,7 @@ class PathfindingCommand(Command):
 
     def __init__(self, constraints: PathConstraints, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
-                 controller: PathFollowingController, robot_config: RobotConfig, replanning_config: ReplanningConfig,
+                 controller: PathFollowingController, robot_config: RobotConfig,
                  should_flip_path: Callable[[], bool], *requirements: Subsystem,
                  target_path: PathPlannerPath = None, target_pose: Pose2d = None,
                  goal_end_vel: float = 0):
@@ -249,7 +230,6 @@ class PathfindingCommand(Command):
         self._speedsSupplier = speeds_supplier
         self._output = output_robot_relative
         self._robotConfig = robot_config
-        self._replanningConfig = replanning_config
         self._shouldFlipPath = should_flip_path
 
         if target_path is not None:
@@ -281,7 +261,7 @@ class PathfindingCommand(Command):
     def initialize(self):
         self._currentTrajectory = None
         self._timeOffset = 0.0
-        self._finished = False
+        self._finish = False
 
         currentPose = self._poseSupplier()
 
@@ -342,32 +322,19 @@ class PathfindingCommand(Command):
                 closestState1 = self._currentTrajectory.getState(closestState1Idx)
                 closestState2 = self._currentTrajectory.getState(closestState2Idx)
 
-                fieldRelativeSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.rotation())
-                currentHeading = Rotation2d(fieldRelativeSpeeds.vx, fieldRelativeSpeeds.vy)
-                headingError = currentHeading - closestState1.heading
-                onHeading = math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 1.0 or abs(headingError.degrees()) < 45
+                d = closestState1.pose.translation().distance(closestState2.pose.translation())
+                t = (currentPose.translation().distance(closestState1.pose.translation())) / d
+                t = min(1.0, max(0.0, t))
 
-                # Replan the path if our heading is off
-                if onHeading or not self._replanningConfig.enableInitialReplanning:
-                    d = closestState1.pose.translation().distance(closestState2.pose.translation())
-                    t = (currentPose.translation().distance(closestState1.pose.translation())) / d
-                    t = min(1.0, max(0.0, t))
+                self._timeOffset = floatLerp(closestState1.timeSeconds, closestState2.timeSeconds, t)
 
-                    self._timeOffset = floatLerp(closestState1.timeSeconds, closestState2.timeSeconds, t)
+                # If the robot is stationary and at the start of the path, set the time offset to the
+                # next loop
+                # This can prevent an issue where the robot will remain stationary if new paths come in
+                # every loop
 
-                    # If the robot is stationary and at the start of the path, set the time offset to the
-                    # next loop
-                    # This can prevent an issue where the robot will remain stationary if new paths come in
-                    # every loop
-
-                    if self._timeOffset <= 0.02 and math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 0.1:
-                        self._timeOffset = 0.02
-                else:
-                    self._currentPath = self._currentPath.replan(currentPose, currentSpeeds)
-                    self._currentTrajectory = PathPlannerTrajectory(self._currentPath, currentSpeeds,
-                                                                    currentPose.rotation(), self._robotConfig)
-
-                    self._timeOffset = 0.0
+                if self._timeOffset <= 0.02 and math.hypot(currentSpeeds.vx, currentSpeeds.vy) < 0.1:
+                    self._timeOffset = 0.02
 
                 PathPlannerLogging.logActivePath(self._currentPath)
                 PPLibTelemetry.setCurrentPath(self._currentPath)
@@ -377,21 +344,6 @@ class PathfindingCommand(Command):
 
         if self._currentTrajectory is not None:
             targetState = self._currentTrajectory.sample(self._timer.get() + self._timeOffset)
-
-            if self._replanningConfig.enableDynamicReplanning:
-                previousError = abs(self._controller.getPositionalError())
-                currentError = currentPose.translation().distance(targetState.pose.translation())
-
-                if currentError >= self._replanningConfig.dynamicReplanningTotalErrorThreshold or currentError - previousError >= self._replanningConfig.dynamicReplanningErrorSpikeThreshold:
-                    replanned = self._currentPath.replan(currentPose, currentSpeeds)
-                    self._currentTrajectory = replanned.generateTrajectory(currentSpeeds, currentPose.rotation(),
-                                                                           self._robotConfig)
-                    PathPlannerLogging.logActivePath(replanned)
-                    PPLibTelemetry.setCurrentPath(replanned)
-
-                    self._timer.reset()
-                    self._timeOffset = 0.0
-                    targetState = self._currentTrajectory.sample(0.0)
 
             targetSpeeds = self._controller.calculateRobotRelativeSpeeds(currentPose, targetState)
 
@@ -442,7 +394,7 @@ class PathfindThenFollowPath(SequentialCommandGroup):
     def __init__(self, goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
                  pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
-                 controller: PathFollowingController, robot_config: RobotConfig, replanning_config: ReplanningConfig,
+                 controller: PathFollowingController, robot_config: RobotConfig,
                  should_flip_path: Callable[[], bool], *requirements: Subsystem):
         """
         Constructs a new PathfindThenFollowPath command group.
@@ -454,7 +406,6 @@ class PathfindThenFollowPath(SequentialCommandGroup):
         :param output_robot_relative: a consumer for the output speeds (robot relative)
         :param controller Path following controller that will be used to follow the path
         :param robot_config The robot configuration
-        :param replanning_config Path replanning configuration
         :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.
         :param requirements: the subsystems required by this command (drive subsystem)
         """
@@ -468,7 +419,6 @@ class PathfindThenFollowPath(SequentialCommandGroup):
                 output_robot_relative,
                 controller,
                 robot_config,
-                replanning_config,
                 should_flip_path,
                 *requirements,
                 target_path=goal_path
@@ -480,7 +430,6 @@ class PathfindThenFollowPath(SequentialCommandGroup):
                 output_robot_relative,
                 controller,
                 robot_config,
-                replanning_config,
                 should_flip_path,
                 *requirements
             )

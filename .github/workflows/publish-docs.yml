@@ -81,8 +81,8 @@ jobs:
       - name: Build PathPlannerLib
         working-directory: pathplannerlib
         run: |
-          ./gradlew build -PreleaseMode
-          ./gradlew publish -PreleaseMode
+          ./gradlew build
+          ./gradlew publish
 
       - name: Get Doxygen theme
         working-directory: pathplannerlib

@@ -151,9 +151,8 @@ class PathPainter extends CustomPainter {
       }
     }
 
-    if (prefs.getBool(PrefsKeys.showStates) ??
-        Defaults.showStates && simulatedPath != null) {
-      _paintTrajectoryStates(simulatedPath!, canvas);
+    if (prefs.getBool(PrefsKeys.showStates) ?? Defaults.showStates) {
+      _paintTrajectoryStates(simulatedPath, canvas);
     }
 
     if (previewTime != null) {
@@ -206,7 +205,11 @@ class PathPainter extends CustomPainter {
     return true; // This will just be repainted all the time anyways from the animation
   }
 
-  void _paintTrajectoryStates(PathPlannerTrajectory traj, Canvas canvas) {
+  void _paintTrajectoryStates(PathPlannerTrajectory? traj, Canvas canvas) {
+    if (traj == null) {
+      return;
+    }
+
     var paint = Paint()..style = PaintingStyle.fill;
 
     num maxVel = 0.0;

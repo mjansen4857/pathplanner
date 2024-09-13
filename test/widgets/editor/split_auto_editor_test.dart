@@ -62,6 +62,7 @@ void main() {
       PrefsKeys.treeOnRight: true,
       PrefsKeys.robotWidth: 1.0,
       PrefsKeys.robotLength: 1.0,
+      PrefsKeys.showStates: true,
     });
     prefs = await SharedPreferences.getInstance();
   });

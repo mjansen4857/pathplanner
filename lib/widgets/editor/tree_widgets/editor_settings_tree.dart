@@ -19,6 +19,7 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
   late SharedPreferences _prefs;
   bool _snapToGuidelines = Defaults.snapToGuidelines;
   bool _hidePathsOnHover = Defaults.hidePathsOnHover;
+  bool _showStates = Defaults.showStates;
 
   @override
   void initState() {
@@ -31,6 +32,8 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
             Defaults.snapToGuidelines;
         _hidePathsOnHover = _prefs.getBool(PrefsKeys.hidePathsOnHover) ??
             Defaults.hidePathsOnHover;
+        _showStates =
+            _prefs.getBool(PrefsKeys.showStates) ?? Defaults.showStates;
       });
     });
   }
@@ -87,6 +90,31 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
               ),
               child: Text(
                 'Hide Other Paths on Hover',
+                style: TextStyle(fontSize: 15),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Checkbox(
+              value: _showStates,
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _showStates = val;
+                    _prefs.setBool(PrefsKeys.showStates, val);
+                  });
+                }
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.only(
+                bottom: 3.0,
+                left: 4.0,
+              ),
+              child: Text(
+                'Show Trajectory States',
                 style: TextStyle(fontSize: 15),
               ),
             ),

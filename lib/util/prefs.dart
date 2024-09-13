@@ -34,6 +34,7 @@ class PrefsKeys {
   static const String maxDriveRPM = 'maxDriveRPM';
   static const String torqueCurve = 'driveMotor';
   static const String wheelCOF = 'wheelCOF';
+  static const String showStates = 'showStates';
 }
 
 class Defaults {
@@ -69,4 +70,5 @@ class Defaults {
   static const double maxDriveRPM = 5650.0;
   static const String torqueCurve = 'KRAKEN_60A';
   static const double wheelCOF = 1.2;
+  static const bool showStates = false;
 }

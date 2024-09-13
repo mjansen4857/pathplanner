@@ -73,4 +73,33 @@ void main() {
 
     expect(prefs.getBool(PrefsKeys.hidePathsOnHover), false);
   });
+
+  testWidgets('show states check', (widgetTester) async {
+    await widgetTester.pumpWidget(const MaterialApp(
+      home: Scaffold(
+        body: EditorSettingsTree(
+          initiallyExpanded: true,
+        ),
+      ),
+    ));
+    await widgetTester.pump();
+
+    final row = find.widgetWithText(Row, 'Show Trajectory States');
+
+    expect(row, findsOneWidget);
+
+    final check = find.descendant(of: row, matching: find.byType(Checkbox));
+
+    expect(check, findsOneWidget);
+
+    await widgetTester.tap(check);
+    await widgetTester.pumpAndSettle();
+
+    expect(prefs.getBool(PrefsKeys.showStates), true);
+
+    await widgetTester.tap(check);
+    await widgetTester.pumpAndSettle();
+
+    expect(prefs.getBool(PrefsKeys.showStates), false);
+  });
 }

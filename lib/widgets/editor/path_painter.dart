@@ -151,6 +151,11 @@ class PathPainter extends CustomPainter {
       }
     }
 
+    if (prefs.getBool(PrefsKeys.showStates) ??
+        Defaults.showStates && simulatedPath != null) {
+      _paintTrajectoryStates(simulatedPath!, canvas);
+    }
+
     if (previewTime != null) {
       TrajectoryState state = simulatedPath!.sample(previewTime!.value);
       Rotation2d rotation = state.pose.rotation;
@@ -199,6 +204,39 @@ class PathPainter extends CustomPainter {
   @override
   bool shouldRepaint(PathPainter oldDelegate) {
     return true; // This will just be repainted all the time anyways from the animation
+  }
+
+  void _paintTrajectoryStates(PathPlannerTrajectory traj, Canvas canvas) {
+    var paint = Paint()..style = PaintingStyle.fill;
+
+    num maxVel = 0.0;
+    for (TrajectoryState s in traj.states) {
+      maxVel = max(
+          maxVel, sqrt(pow(s.fieldSpeeds.vx, 2) + pow(s.fieldSpeeds.vy, 2)));
+    }
+
+    for (TrajectoryState s in traj.states) {
+      num normalizedVel =
+          sqrt(pow(s.fieldSpeeds.vx, 2) + pow(s.fieldSpeeds.vy, 2)) / maxVel;
+      normalizedVel = normalizedVel.clamp(0.0, 1.0);
+
+      if (normalizedVel <= 0.33) {
+        // Lerp between red and orange
+        paint.color =
+            Color.lerp(Colors.red, Colors.orange, normalizedVel / 0.33)!;
+      } else if (normalizedVel <= 0.67) {
+        // Lerp between orange and yellow
+        paint.color = Color.lerp(
+            Colors.orange, Colors.yellow, (normalizedVel - 0.33) / 0.34)!;
+      } else {
+        // Lerp between yellow and green
+        paint.color = Color.lerp(
+            Colors.yellow, Colors.green, (normalizedVel - 0.67) / 0.33)!;
+      }
+      Offset pos = PathPainterUtil.pointToPixelOffset(
+          Point(s.pose.translation.x, s.pose.translation.y), scale, fieldImage);
+      canvas.drawCircle(pos, 3.0, paint);
+    }
   }
 
   void _paintTrajectory(

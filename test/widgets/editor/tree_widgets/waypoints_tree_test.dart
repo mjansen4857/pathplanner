@@ -454,6 +454,7 @@ void main() {
 
     expect(path.rotationTargets.length, 0);
   });
+
   testWidgets('linked waypoint', (widgetTester) async {
     Waypoint.linked['existing link'] = const Point(0, 0);
     Waypoint.linked['new link'] = const Point(0, 0);
@@ -473,65 +474,62 @@ void main() {
       ),
     ));
 
-    // Expand the waypoint card first
-    await widgetTester.tap(find.byType(TreeCardNode).at(1));
-    await widgetTester.pumpAndSettle();
+    // Find the link icon button
+    var linkButton = find.byIcon(Icons.add_link_rounded);
 
-    // Find the link waypoint button by its tooltip
-    var linkButton = find.byTooltip('Link Waypoint');
     expect(linkButton, findsOneWidget);
 
     await widgetTester.tap(linkButton);
     await widgetTester.pumpAndSettle();
 
-    // Now we should see the dialog
-    expect(find.byType(AlertDialog), findsOneWidget);
-
     final cancelButton = find.text('Cancel');
+
     expect(cancelButton, findsOneWidget);
     await widgetTester.tap(cancelButton);
     await widgetTester.pumpAndSettle();
+
     expect(find.byType(AlertDialog), findsNothing);
 
-    // Open the dialog again
     await widgetTester.tap(linkButton);
     await widgetTester.pumpAndSettle();
 
-    final dropdown = find.byType(DropdownMenu<String>);
+    final dropdown =
+        find.widgetWithText(DropdownMenu<String>, 'Linked Waypoint Name');
     expect(dropdown, findsOneWidget);
+
     await widgetTester.tap(dropdown);
     await widgetTester.pumpAndSettle();
 
     Waypoint.linked.remove('new link');
 
-    // Select 'new link' from the dropdown
+    // Stupid that there are duplicate text widgets. The dropdown menu is the worst widget in flutter
     await widgetTester.tap(find.text('new link').last);
     await widgetTester.pumpAndSettle();
 
     final confirmButton = find.text('Confirm');
     expect(confirmButton, findsOneWidget);
+
     await widgetTester.tap(confirmButton);
     await widgetTester.pumpAndSettle();
 
     expect(find.byType(AlertDialog), findsNothing);
+
     expect(pathChanged, true);
     expect(path.waypoints[1].linkedName, 'new link');
 
-    // Find the unlink button by its tooltip
-    final unlinkButton = find.byTooltip('Unlink Waypoint');
-    expect(unlinkButton, findsOneWidget);
+    final unlinkButton = find.byIcon(Icons.link_off);
     await widgetTester.tap(unlinkButton);
     await widgetTester.pumpAndSettle();
 
     expect(path.waypoints[1].linkedName, null);
 
-    // Link to existing waypoint
     await widgetTester.tap(linkButton);
     await widgetTester.pumpAndSettle();
 
     await widgetTester.tap(dropdown);
     await widgetTester.pumpAndSettle();
 
+    // Stupid that there are duplicate text widgets. The dropdown menu is the worst widget in flutter
     await widgetTester.tap(find.text('existing link').last);
     await widgetTester.pumpAndSettle();
 

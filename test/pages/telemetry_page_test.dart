@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pathplanner/pages/telemetry_page.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
@@ -9,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'telemetry_page_test.mocks.dart';
 
+@GenerateMocks([PPLibTelemetry])
 void main() {
   late SharedPreferences prefs;
   late MockPPLibTelemetry telemetry;

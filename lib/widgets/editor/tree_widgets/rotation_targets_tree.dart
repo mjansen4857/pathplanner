@@ -125,8 +125,10 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
       },
       title: Row(
         children: [
-          Text('Rotation Target ${targetIdx + 1}'),
-          Expanded(child: Container()),
+          Expanded(
+            child: Text('Rotation Target ${targetIdx + 1}'),
+          ),
+          const SizedBox(width: 8),
           InfoCard(
             value:
                 '${rotations[targetIdx].rotationDegrees.toStringAsFixed(2)}° at ${rotations[targetIdx].waypointRelativePos.toStringAsFixed(2)}',

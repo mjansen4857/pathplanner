@@ -15,7 +15,6 @@
 #include <string>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/config/RobotConfig.h"
-#include "pathplanner/lib/config/ReplanningConfig.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
 
 namespace pathplanner {
@@ -30,7 +29,6 @@ public:
 	 * @param robotRelativeOutput a function for setting the robot's robot-relative chassis speeds
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
-	 * @param replanningConfig Path replanning configuration
 	 * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
 	 *     the field. This will maintain a global blue alliance origin.
 	 * @param driveSubsystem a pointer to the subsystem for the robot's drive
@@ -40,8 +38,7 @@ public:
 			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
 			std::shared_ptr<PathFollowingController> controller,
-			RobotConfig robotConfig, ReplanningConfig replanningConfig,
-			std::function<bool()> shouldFlipPath,
+			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Subsystem *driveSubsystem);
 
 	/**
@@ -51,6 +48,7 @@ public:
 	 *
 	 * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
 	 * @param resetPose a function for resetting the robot's pose
+	 * @param isHolonomic Does the robot have a holonomic drivetrain
 	 * @param shouldFlipPose Supplier that determines if the starting pose should be flipped to the
 	 *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
 	 *     not be flipped when configured with a custom path following command. Flipping the paths
@@ -58,7 +56,7 @@ public:
 	 */
 	static void configureCustom(
 			std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
-			std::function<void(frc::Pose2d)> resetPose,
+			std::function<void(frc::Pose2d)> resetPose, bool isHolonomic,
 			std::function<bool()> shouldFlipPose = []() {
 				return false;
 			});
@@ -73,6 +71,15 @@ public:
 	}
 
 	/**
+	 * Returns whether the AutoBuilder has been configured for a holonomic drivetrain.
+	 *
+	 * @return true if the AutoBuilder has been configured for a holonomic drivetrain, false otherwise
+	 */
+	static inline bool isHolonomic() {
+		return m_isHolonomic;
+	}
+
+	/**
 	 * Builds a command to follow a path with event markers.
 	 *
 	 * @param path the path to follow
@@ -81,35 +88,20 @@ public:
 	static frc2::CommandPtr followPath(std::shared_ptr<PathPlannerPath> path);
 
 	/**
-	 * Builds a command to follow a path with event markers.
-	 *
-	 * @param path the path to follow
-	 * @return a path following command with events for the given path
-	 * @deprecated Renamed to followPath
-	 */
-	[[deprecated("Renamed to followPath")]]
-	static frc2::CommandPtr followPathWithEvents(
-			std::shared_ptr<PathPlannerPath> path) {
-		return followPath(path);
-	}
-
-	/**
 	 * Builds an auto command for the given auto name.
 	 *
 	 * @param autoName the name of the auto to build
 	 * @return an auto command for the given auto name
 	 */
-	static frc2::CommandPtr buildAuto(std::string autoName);
+	static inline frc2::CommandPtr buildAuto(std::string autoName);
 
 	/**
-	 * Builds an auto command from the given JSON.
-	 *
-	 * @param json the JSON to build the command from
-	 * @return an auto command built from the JSON
+	 * Create a command to reset the robot's odometry to a given blue alliance pose
+	 * 
+	 * @param bluePose The pose to reset to, relative to blue alliance origin
+	 * @return Command to reset the robot's odometry
 	 */
-	static frc2::CommandPtr getAutoCommandFromJson(const wpi::json &json);
-
-	static frc::Pose2d getStartingPoseFromJson(const wpi::json &json);
+	static frc2::CommandPtr resetOdom(frc::Pose2d bluePose);
 
 	/**
 	 * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
@@ -179,6 +171,7 @@ private:
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
 	static std::function<void(frc::Pose2d)> m_resetPose;
 	static std::function<bool()> m_shouldFlipPath;
+	static bool m_isHolonomic;
 
 	static std::vector<frc2::CommandPtr> m_autoCommands;
 

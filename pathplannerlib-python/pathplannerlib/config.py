@@ -27,23 +27,6 @@ class PIDConstants:
     iZone: float = 0.0
 
 
-@dataclass
-class ReplanningConfig:
-    """
-    Configuration for path replanning
-
-    Args:
-        enableInitialReplanning (bool): Should the path be replanned at the start of path following if the robot is not already at the starting point?
-        enableDynamicReplanning (bool): Should the path be replanned if the error grows too large or if a large error spike happens while following the path?
-        dynamicReplanningTotalErrorThreshold (float): The total error threshold, in meters, that will cause the path to be replanned
-        dynamicReplanningErrorSpikeThreshold (float): The error spike threshold, in meters, that will cause the path to be replanned
-    """
-    enableInitialReplanning: bool = True
-    enableDynamicReplanning: bool = False
-    dynamicReplanningTotalErrorThreshold: float = 1.0
-    dynamicReplanningErrorSpikeThreshold: float = 0.25
-
-
 class MotorType(Enum):
     krakenX60 = 'KRAKEN'
     krakenX60_FOC = 'KRAKENFOC'

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dart';
-import 'package:pathplanner/widgets/editor/tree_widgets/starting_pose_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/reset_odom_tree.dart';
 import 'package:undo/undo.dart';
 
 class AutoTree extends StatefulWidget {
@@ -59,11 +59,6 @@ class _AutoTreeState extends State<AutoTree> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                StartingPoseTree(
-                  auto: widget.auto,
-                  onAutoChanged: widget.onAutoChanged,
-                  undoStack: widget.undoStack,
-                ),
                 Card(
                   elevation: 1.0,
                   child: Padding(
@@ -77,6 +72,11 @@ class _AutoTreeState extends State<AutoTree> {
                       undoStack: widget.undoStack,
                     ),
                   ),
+                ),
+                ResetOdomTree(
+                  auto: widget.auto,
+                  onAutoChanged: widget.onAutoChanged,
+                  undoStack: widget.undoStack,
                 ),
                 const Divider(),
                 const EditorSettingsTree(),

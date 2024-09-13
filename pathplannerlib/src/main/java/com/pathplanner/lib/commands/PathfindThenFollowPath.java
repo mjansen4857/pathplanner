@@ -1,6 +1,5 @@
 package com.pathplanner.lib.commands;
 
-import com.pathplanner.lib.config.ReplanningConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
@@ -25,7 +24,6 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
    * @param robotRelativeOutput a consumer for the output speeds (robot relative)
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
-   * @param replanningConfig Path replanning configuration
    * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
    *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command (drive subsystem)
@@ -38,7 +36,6 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
       Consumer<ChassisSpeeds> robotRelativeOutput,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      ReplanningConfig replanningConfig,
       BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     addCommands(
@@ -50,7 +47,6 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
             robotRelativeOutput,
             controller,
             robotConfig,
-            replanningConfig,
             shouldFlipPath,
             requirements),
         new FollowPathCommand(
@@ -60,7 +56,6 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
             robotRelativeOutput,
             controller,
             robotConfig,
-            replanningConfig,
             shouldFlipPath,
             requirements));
   }

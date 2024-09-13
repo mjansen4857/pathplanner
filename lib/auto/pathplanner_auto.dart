@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/named_command.dart';
-import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -12,8 +10,8 @@ import 'package:pathplanner/services/log.dart';
 
 class PathPlannerAuto {
   String name;
-  Pose2d? startingPose;
   SequentialCommandGroup sequence;
+  bool resetOdom;
   bool choreoAuto;
 
   String? folder;
@@ -27,10 +25,10 @@ class PathPlannerAuto {
   PathPlannerAuto({
     required this.name,
     required this.sequence,
+    required this.resetOdom,
     required this.autoDir,
     required this.fs,
     required this.folder,
-    required this.startingPose,
     required this.choreoAuto,
   }) {
     _addNamedCommandsToSet(sequence.commands);
@@ -38,20 +36,20 @@ class PathPlannerAuto {
 
   PathPlannerAuto.defaultAuto({
     this.name = 'New Auto',
+    this.resetOdom = true,
     required this.autoDir,
     required this.fs,
     this.folder,
     this.choreoAuto = false,
-  })  : sequence = SequentialCommandGroup(commands: []),
-        startingPose = Pose2d(position: const Point(2, 2));
+  }) : sequence = SequentialCommandGroup(commands: []);
 
   PathPlannerAuto duplicate(String newName) {
     return PathPlannerAuto(
       name: newName,
       sequence: sequence.clone() as SequentialCommandGroup,
+      resetOdom: resetOdom,
       autoDir: autoDir,
       fs: fs,
-      startingPose: startingPose,
       folder: folder,
       choreoAuto: choreoAuto,
     );
@@ -63,11 +61,9 @@ class PathPlannerAuto {
           autoDir: autosDir,
           fs: fs,
           name: name,
-          startingPose: json['startingPose'] == null
-              ? null
-              : Pose2d.fromJson(json['startingPose']),
           sequence:
               Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
+          resetOdom: json['resetOdom'] ?? true,
           folder: json['folder'],
           choreoAuto: json['choreoAuto'] ?? false,
         );
@@ -75,8 +71,8 @@ class PathPlannerAuto {
   Map<String, dynamic> toJson() {
     return {
       'version': 1.0,
-      'startingPose': startingPose?.toJson(),
       'command': sequence.toJson(),
+      'resetOdom': resetOdom,
       'folder': folder,
       'choreoAuto': choreoAuto,
     };
@@ -244,9 +240,9 @@ class PathPlannerAuto {
       other is PathPlannerAuto &&
       other.runtimeType == runtimeType &&
       other.name == name &&
-      other.startingPose == startingPose &&
-      other.sequence == sequence;
+      other.sequence == sequence &&
+      other.resetOdom == resetOdom;
 
   @override
-  int get hashCode => Object.hash(name, startingPose, sequence);
+  int get hashCode => Object.hash(name, sequence, resetOdom);
 }

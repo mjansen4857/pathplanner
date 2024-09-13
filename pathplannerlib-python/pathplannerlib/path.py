@@ -8,7 +8,7 @@ from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
-from .geometry_util import decimal_range, cubicLerp, calculateRadius, flipFieldPose, flipFieldPos, flipFieldRotation
+from .geometry_util import cubicLerp, calculateRadius, flipFieldPose, flipFieldPos, flipFieldRotation
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
 from wpilib import getDeployDirectory
@@ -615,6 +615,14 @@ class PathPlannerPath:
         """
         return self._goalEndState
 
+    def getIdealStartingState(self) -> Union[IdealStartingState, None]:
+        """
+        Get the ideal starting state of this path
+
+        :return: The ideal starting state
+        """
+        return self._idealStartingState
+
     def getEventMarkers(self) -> List[EventMarker]:
         """
         Get all the event markers for this path
@@ -644,219 +652,6 @@ class PathPlannerPath:
             heading = Rotation2d.fromDegrees(inputModulus(heading.degrees() + 180, -180, 180))
 
         return Pose2d(startPos, heading)
-
-    def replan(self, starting_pose: Pose2d, current_speeds: ChassisSpeeds) -> PathPlannerPath:
-        """
-        Replan this path based on the current robot position and speeds
-
-        :param starting_pose: New starting pose for the replanned path
-        :param current_speeds: Current chassis speeds of the robot
-        :return: The replanned path
-        """
-        if self._isChoreoPath:
-            # This path is from choreo, cannot be replanned
-            return self
-
-        currentFieldRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(current_speeds.vx, current_speeds.vy,
-                                                                           current_speeds.omega,
-                                                                           -starting_pose.rotation())
-
-        robotNextControl = None
-        linearVel = math.hypot(currentFieldRelativeSpeeds.vx, currentFieldRelativeSpeeds.vy)
-        if linearVel > 0.1:
-            stoppingDistance = (linearVel ** 2) / (2 * self._globalConstraints.maxAccelerationMpsSq)
-
-            heading = Rotation2d(currentFieldRelativeSpeeds.vx, currentFieldRelativeSpeeds.vy)
-            robotNextControl = starting_pose.translation() + Translation2d(stoppingDistance / 2.0, heading)
-
-        closestPointIdx = 0
-        comparePoint = robotNextControl if robotNextControl is not None else starting_pose.translation()
-        closestDist = PathPlannerPath._positionDelta(comparePoint, self.getPoint(closestPointIdx).position)
-
-        for i in range(1, self.numPoints()):
-            d = PathPlannerPath._positionDelta(comparePoint, self.getPoint(i).position)
-
-            if d < closestDist:
-                closestPointIdx = i
-                closestDist = d
-
-        if closestPointIdx == self.numPoints() - 1:
-            heading = (self.getPoint(self.numPoints() - 1).position - comparePoint).angle()
-
-            if robotNextControl is None:
-                robotNextControl = starting_pose.translation() + Translation2d(closestDist / 3.0, heading)
-
-            endPrevControlHeading = (self.getPoint(self.numPoints() - 1).position - robotNextControl).angle()
-
-            endPrevControl = self.getPoint(self.numPoints() - 1).position - Translation2d(closestDist / 3.0,
-                                                                                          endPrevControlHeading)
-
-            # Throw out rotation targets, event markers, and constraint zones since we are skipping all
-            # of the path
-            return PathPlannerPath(
-                [starting_pose.translation(), robotNextControl, endPrevControl,
-                 self.getPoint(self.numPoints() - 1).position],
-                self._globalConstraints, None,
-                self._goalEndState, [], [], [], self._reversed)
-        elif (closestPointIdx == 0 and robotNextControl is None) or (math.fabs(
-                closestDist - starting_pose.translation().distance(
-                    self.getPoint(0).position)) <= 0.25 and linearVel < 0.1):
-            distToStart = starting_pose.translation().distance(self.getPoint(0).position)
-
-            heading = (self.getPoint(0).position - starting_pose.translation()).angle()
-            robotNextControl = starting_pose.translation() + Translation2d(distToStart / 3.0, heading)
-
-            joinHeading = (self.getPoint(0).position - self.getPoint(1).position).angle()
-            joinPrevControl = self.getPoint(0).position + Translation2d(distToStart / 2.0, joinHeading)
-
-            if len(self._bezierPoints) == 0:
-                # We don't have any bezier points to reference
-                joinSegment = PathSegment(starting_pose.translation(), robotNextControl, joinPrevControl,
-                                          self.getPoint(0).position)
-                replannedPoints = []
-                joinSegment.generatePathPoints(replannedPoints, 0, [], [], self._globalConstraints)
-                replannedPoints.extend(self._allPoints)
-
-                return PathPlannerPath.fromPathPoints(replannedPoints, self._globalConstraints, self._goalEndState)
-            else:
-                # We can use the bezier points
-                replannedBezier = [starting_pose.translation(), robotNextControl, joinPrevControl]
-                replannedBezier.extend(self._bezierPoints)
-
-                # Keep all rotations, markers, and zones and increment waypoint pos by 1
-                return PathPlannerPath(
-                    replannedBezier, self._globalConstraints, None, self._goalEndState,
-                    [RotationTarget(t.waypointRelativePosition + 1, t.target) for t in
-                     self._rotationTargets],
-                    [ConstraintsZone(z.minWaypointPos + 1, z.maxWaypointPos + 1, z.constraints) for z in
-                     self._constraintZones],
-                    [EventMarker(m.waypointRelativePos + 1, m.command) for m in
-                     self._eventMarkers],
-                    self._reversed
-                )
-
-        joinAnchorIdx = self.numPoints() - 1
-        for i in range(closestPointIdx, self.numPoints()):
-            if self.getPoint(i).distanceAlongPath >= self.getPoint(closestPointIdx).distanceAlongPath + closestDist:
-                joinAnchorIdx = i
-                break
-
-        joinPrevControl = self.getPoint(closestPointIdx).position
-        joinAnchor = self.getPoint(joinAnchorIdx).position
-
-        if robotNextControl is None:
-            robotToJoinDelta = starting_pose.translation().distance(joinAnchor)
-            heading = (joinPrevControl - starting_pose.translation()).angle()
-            robotNextControl = starting_pose.translation() + Translation2d(robotToJoinDelta / 3.0, heading)
-
-        if joinAnchorIdx == self.numPoints() - 1:
-            # Throw out rotation targets, event markers, and constraint zones since we are skipping all
-            # of the path
-            return PathPlannerPath(
-                [starting_pose.translation(), robotNextControl, joinPrevControl, joinAnchor],
-                self._globalConstraints, None, self._goalEndState,
-                [], [], [], self._reversed
-            )
-
-        if len(self._bezierPoints) == 0:
-            # We don't have any bezier points to reference
-            joinSegment = PathSegment(starting_pose.translation(), robotNextControl, joinPrevControl, joinAnchor)
-            replannedPoints = []
-            joinSegment.generatePathPoints(replannedPoints, 0, [], [], self._globalConstraints)
-            replannedPoints.extend(self._allPoints[joinAnchorIdx:])
-
-            return PathPlannerPath.fromPathPoints(replannedPoints, self._globalConstraints, self._goalEndState)
-
-        # We can reference bezier points
-        nextWaypointIdx = math.ceil(self._allPoints[joinAnchorIdx + 1].waypointRelativePos)
-        bezierPointIdx = nextWaypointIdx * 3
-        waypointDelta = joinAnchor.distance(self._bezierPoints[bezierPointIdx])
-
-        joinHeading = (joinAnchor - joinPrevControl).angle()
-        joinNextControl = joinAnchor + Translation2d(waypointDelta / 3.0, joinHeading)
-
-        if bezierPointIdx == len(self._bezierPoints) - 1:
-            nextWaypointHeading = (self._bezierPoints[bezierPointIdx - 1] - self._bezierPoints[bezierPointIdx]).angle()
-        else:
-            nextWaypointHeading = (self._bezierPoints[bezierPointIdx] - self._bezierPoints[bezierPointIdx + 1]).angle()
-
-        nextWaypointPrevControl = self._bezierPoints[bezierPointIdx] + Translation2d(max(waypointDelta / 3.0, 0.15),
-                                                                                     nextWaypointHeading)
-
-        replannedBezier = [
-            starting_pose.translation(),
-            robotNextControl,
-            joinPrevControl,
-            joinAnchor,
-            joinNextControl,
-            nextWaypointPrevControl
-        ]
-        replannedBezier.extend(self._bezierPoints[bezierPointIdx:])
-
-        segment1Length = 0
-        lastSegment1Pos = starting_pose.translation()
-        segment2Length = 0
-        lastSegment2Pos = joinAnchor
-
-        for t in decimal_range(0.05, 1.0, 0.05):
-            p1 = cubicLerp(starting_pose.translation(), robotNextControl, joinPrevControl, joinAnchor, t)
-            p2 = cubicLerp(joinAnchor, joinNextControl, nextWaypointPrevControl, self._bezierPoints[bezierPointIdx], t)
-
-            segment1Length += PathPlannerPath._positionDelta(lastSegment1Pos, p1)
-            segment2Length += PathPlannerPath._positionDelta(lastSegment2Pos, p2)
-
-            lastSegment1Pos = p1
-            lastSegment2Pos = p2
-
-        segment1Pct = segment1Length / (segment1Length + segment2Length)
-
-        mappedTargets = []
-        mappedZones = []
-        mappedMarkers = []
-
-        for t in self._rotationTargets:
-            if t.waypointRelativePosition >= nextWaypointIdx:
-                mappedTargets.append(
-                    RotationTarget(t.waypointRelativePosition - nextWaypointIdx + 2, t.target))
-            elif t.waypointRelativePosition >= nextWaypointIdx - 1:
-                pct = t.waypointRelativePosition - (nextWaypointIdx - 1)
-                mappedTargets.append(RotationTarget(PathPlannerPath._mapPct(pct, segment1Pct), t.target))
-
-        for z in self._constraintZones:
-            minPos = 0
-            maxPos = 0
-
-            if z.minWaypointPos >= nextWaypointIdx:
-                minPos = z.minWaypointPos - nextWaypointIdx + 2
-            elif z.minWaypointPos >= nextWaypointIdx - 1:
-                pct = z.minWaypointPos - (nextWaypointIdx - 1)
-                minPos = PathPlannerPath._mapPct(pct, segment1Pct)
-
-            if z.maxWaypointPos >= nextWaypointIdx:
-                maxPos = z.maxWaypointPos - nextWaypointIdx + 2
-            elif z.maxWaypointPos >= nextWaypointIdx - 1:
-                pct = z.maxWaypointPos - (nextWaypointIdx - 1)
-                maxPos = PathPlannerPath._mapPct(pct, segment1Pct)
-
-            if maxPos > 0:
-                mappedZones.append(ConstraintsZone(minPos, maxPos, z.constraints))
-
-        for m in self._eventMarkers:
-            if m.waypointRelativePos >= nextWaypointIdx:
-                mappedMarkers.append(
-                    EventMarker(m.waypointRelativePos - nextWaypointIdx + 2, m.command))
-            elif m.waypointRelativePos >= nextWaypointIdx - 1:
-                pct = m.waypointRelativePos - (nextWaypointIdx - 1)
-                mappedMarkers.append(
-                    EventMarker(PathPlannerPath._mapPct(pct, segment1Pct), m.command))
-
-        # Throw out everything before nextWaypointIdx - 1, map everything from nextWaypointIdx -
-        # 1 to nextWaypointIdx on to the 2 joining segments (waypoint rel pos within old segment = %
-        # along distance of both new segments)
-        return PathPlannerPath(
-            replannedBezier, self._globalConstraints, None, self._goalEndState,
-            mappedTargets, mappedZones, mappedMarkers, self._reversed
-        )
 
     def isChoreoPath(self) -> bool:
         """

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/choreo_path.dart';
@@ -26,7 +27,6 @@ class PathPainter extends CustomPainter {
   final int? selectedRotTarget;
   final int? hoveredMarker;
   final int? selectedMarker;
-  final Pose2d? startingPose;
   final PathPlannerTrajectory? simulatedPath;
   final Color? previewColor;
   final SharedPreferences prefs;
@@ -55,7 +55,6 @@ class PathPainter extends CustomPainter {
     this.selectedRotTarget,
     this.hoveredMarker,
     this.selectedMarker,
-    this.startingPose,
     this.simulatedPath,
     Animation<double>? animation,
     this.previewColor,
@@ -112,17 +111,6 @@ class PathPainter extends CustomPainter {
         for (int w = 0; w < paths[i].waypoints.length; w++) {
           _paintWaypoint(paths[i], canvas, scale, w);
         }
-
-        if (holonomicMode) {
-          PathPainterUtil.paintRobotOutline(
-              paths[i].waypoints.first.anchor,
-              paths[i].idealStartingState.rotation,
-              fieldImage,
-              robotSize,
-              scale,
-              canvas,
-              Colors.green.withOpacity(0.5));
-        }
       } else {
         _paintWaypoint(paths[i], canvas, scale, 0);
         _paintWaypoint(paths[i], canvas, scale, paths[i].waypoints.length - 1);
@@ -153,37 +141,14 @@ class PathPainter extends CustomPainter {
       _paintChoreoMarkers(choreoPaths[i], canvas);
     }
 
-    if (startingPose != null) {
-      PathPainterUtil.paintRobotOutline(
-          Point(startingPose!.translation.x, startingPose!.translation.y),
-          startingPose!.rotation.getDegrees(),
-          fieldImage,
-          robotSize,
-          scale,
-          canvas,
-          Colors.green.withOpacity(0.8));
+    for (int i = 1; i < paths.length; i++) {
+      // Paint warnings between rbeaks in paths
+      Point<num> prevPathEnd = paths[i - 1].pathPoints.last.position;
+      Point<num> pathStart = paths[i].pathPoints.first.position;
 
-      var paint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = Colors.green.withOpacity(0.5)
-        ..strokeWidth = 2;
-
-      canvas.drawCircle(
-          PathPainterUtil.pointToPixelOffset(
-              Point(startingPose!.translation.x, startingPose!.translation.y),
-              scale,
-              fieldImage),
-          PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
-          paint);
-      paint.style = PaintingStyle.stroke;
-      paint.color = Colors.black;
-      canvas.drawCircle(
-          PathPainterUtil.pointToPixelOffset(
-              Point(startingPose!.translation.x, startingPose!.translation.y),
-              scale,
-              fieldImage),
-          PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
-          paint);
+      if (prevPathEnd.distanceTo(pathStart) >= 0.25) {
+        _paintBreakWarning(prevPathEnd, pathStart, canvas, scale);
+      }
     }
 
     if (previewTime != null) {
@@ -418,6 +383,15 @@ class PathPainter extends CustomPainter {
     }
 
     PathPainterUtil.paintRobotOutline(
+        path.waypoints.first.anchor,
+        path.idealStartingState.rotation,
+        fieldImage,
+        robotSize,
+        scale,
+        canvas,
+        Colors.green.withOpacity(0.5));
+
+    PathPainterUtil.paintRobotOutline(
         path.waypoints[path.waypoints.length - 1].anchor,
         path.goalEndState.rotation,
         fieldImage,
@@ -425,6 +399,68 @@ class PathPainter extends CustomPainter {
         scale,
         canvas,
         Colors.red.withOpacity(0.5));
+  }
+
+  void _paintBreakWarning(Point<num> prevPathEnd, Point<num> pathStart,
+      Canvas canvas, double scale) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = Colors.yellow[800]!
+      ..strokeWidth = 3;
+
+    final p1 =
+        PathPainterUtil.pointToPixelOffset(prevPathEnd, scale, fieldImage);
+    final p2 = PathPainterUtil.pointToPixelOffset(pathStart, scale, fieldImage);
+    final distance = (p2 - p1).distance;
+    final normalizedPattern = [7, 5].map((width) => width / distance).toList();
+    final points = <Offset>[];
+    double t = 0.0;
+    int i = 0;
+    while (t < 1.0) {
+      points.add(Offset.lerp(p1, p2, t)!);
+      t += normalizedPattern[i++];
+      points.add(Offset.lerp(p1, p2, t.clamp(0.0, 1.0))!);
+      t += normalizedPattern[i++];
+      i %= normalizedPattern.length;
+    }
+    canvas.drawPoints(PointMode.lines, points, paint);
+
+    Offset middle = Offset.lerp(p1, p2, 0.5)!;
+
+    const IconData warningIcon = Icons.warning_rounded;
+
+    TextPainter textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      text: TextSpan(
+        text: String.fromCharCode(warningIcon.codePoint),
+        style: TextStyle(
+          fontSize: 40,
+          color: Colors.yellow[700]!,
+          fontFamily: warningIcon.fontFamily,
+        ),
+      ),
+    );
+
+    TextPainter textStrokePainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      text: TextSpan(
+        text: String.fromCharCode(warningIcon.codePoint),
+        style: TextStyle(
+          fontSize: 40,
+          fontFamily: warningIcon.fontFamily,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 0.5
+            ..color = Colors.black,
+        ),
+      ),
+    );
+
+    textPainter.layout();
+    textStrokePainter.layout();
+
+    textPainter.paint(canvas, middle - const Offset(20, 25));
+    textStrokePainter.paint(canvas, middle - const Offset(20, 25));
   }
 
   void _paintRadius(PathPlannerPath path, Canvas canvas, double scale) {

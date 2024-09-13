@@ -31,12 +31,14 @@ public:
 			std::string autoName);
 
 	/**
-	 * Get the starting pose from the given auto file
+	 * Get the starting pose of this auto, relative to a blue alliance origin. If there are no paths
+	 * in this auto, the starting pose will be (0, 0, 0).
 	 *
-	 * @param autoName Name of the auto to get the pose from
-	 * @return Starting pose from the given auto
+	 * @return The blue alliance starting pose
 	 */
-	static frc::Pose2d getStartingPoseFromAutoFile(std::string autoName);
+	constexpr frc::Pose2d getStartingPose() const {
+		return m_startingPose;
+	}
 
 	void Initialize() override;
 
@@ -48,9 +50,12 @@ public:
 
 private:
 	std::unique_ptr<frc2::Command> m_autoCommand;
+	frc::Pose2d m_startingPose;
 
 	static std::vector<std::shared_ptr<PathPlannerPath>> pathsFromCommandJson(
 			const wpi::json &json, bool choreoPaths);
+
+	void initFromJson(const wpi::json &json);
 
 	static int m_instances;
 };

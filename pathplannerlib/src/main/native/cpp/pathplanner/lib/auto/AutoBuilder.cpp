@@ -17,6 +17,7 @@ bool AutoBuilder::m_configured = false;
 std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> AutoBuilder::m_pathFollowingCommandBuilder;
 std::function<void(frc::Pose2d)> AutoBuilder::m_resetPose;
 std::function<bool()> AutoBuilder::m_shouldFlipPath;
+bool AutoBuilder::m_isHolonomic = false;
 
 std::vector<frc2::CommandPtr> AutoBuilder::m_autoCommands;
 
@@ -50,6 +51,7 @@ void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 	AutoBuilder::m_shouldFlipPath = shouldFlipPath;
+	AutoBuilder::m_isHolonomic = robotConfig.isHolonomic;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier,
 			robotRelativeSpeedsSupplier, robotRelativeOutput, controller,
@@ -74,7 +76,7 @@ void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 
 void AutoBuilder::configureCustom(
 		std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
-		std::function<void(frc::Pose2d)> resetPose,
+		std::function<void(frc::Pose2d)> resetPose, bool isHolonomic,
 		std::function<bool()> shouldFlipPose) {
 	if (m_configured) {
 		FRC_ReportError(frc::err::Error,
@@ -85,6 +87,7 @@ void AutoBuilder::configureCustom(
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 	AutoBuilder::m_shouldFlipPath = shouldFlipPose;
+	AutoBuilder::m_isHolonomic = isHolonomic;
 
 	AutoBuilder::m_pathfindingConfigured = false;
 }
@@ -100,51 +103,22 @@ frc2::CommandPtr AutoBuilder::followPath(
 }
 
 frc2::CommandPtr AutoBuilder::buildAuto(std::string autoName) {
-	const std::string filePath = frc::filesystem::GetDeployDirectory()
-			+ "/pathplanner/autos/" + autoName + ".auto";
-
-	std::error_code error_code;
-	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
-			wpi::MemoryBuffer::GetFile(filePath, error_code);
-
-	if (fileBuffer == nullptr || error_code) {
-		throw std::runtime_error("Cannot open file: " + filePath);
-	}
-
-	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
-
-	return getAutoCommandFromJson(json);
+	return PathPlannerAuto(autoName).ToPtr();
 }
 
-frc2::CommandPtr AutoBuilder::getAutoCommandFromJson(const wpi::json &json) {
-	wpi::json::const_reference commandJson = json.at("command");
-	bool choreoAuto = json.contains("choreoAuto")
-			&& json.at("choreoAuto").get<bool>();
-
-	frc2::CommandPtr autoCommand = CommandUtil::commandFromJson(commandJson,
-			choreoAuto);
-	if (!json.at("startingPose").is_null()) {
-		frc::Pose2d startPose = getStartingPoseFromJson(
-				json.at("startingPose"));
-		return frc2::cmd::Sequence(frc2::cmd::RunOnce([startPose]() {
-			if (m_shouldFlipPath()) {
-				m_resetPose(GeometryUtil::flipFieldPose(startPose));
-			} else {
-				m_resetPose(startPose);
-			}
-		}), std::move(autoCommand));
-	} else {
-		return autoCommand;
+frc2::CommandPtr AutoBuilder::resetOdom(frc::Pose2d bluePose) {
+	if (!m_configured) {
+		throw std::runtime_error(
+				"Auto builder was used to build a command before being configured");
 	}
-}
 
-frc::Pose2d AutoBuilder::getStartingPoseFromJson(const wpi::json &json) {
-	wpi::json::const_reference pos = json.at("position");
-	units::meter_t x = units::meter_t { pos.at("x").get<double>() };
-	units::meter_t y = units::meter_t { pos.at("y").get<double>() };
-	units::degree_t deg = units::degree_t { json.at("rotation").get<double>() };
-
-	return frc::Pose2d(x, y, frc::Rotation2d(deg));
+	return frc2::cmd::RunOnce([bluePose]() {
+		if (m_shouldFlipPath()) {
+			m_resetPose(GeometryUtil::flipFieldPose(bluePose));
+		} else {
+			m_resetPose(bluePose);
+		}
+	});
 }
 
 frc2::CommandPtr AutoBuilder::pathfindToPose(frc::Pose2d pose,

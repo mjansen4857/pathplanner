@@ -48,6 +48,7 @@ public:
 	 *
 	 * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
 	 * @param resetPose a function for resetting the robot's pose
+	 * @param isHolonomic Does the robot have a holonomic drivetrain
 	 * @param shouldFlipPose Supplier that determines if the starting pose should be flipped to the
 	 *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
 	 *     not be flipped when configured with a custom path following command. Flipping the paths
@@ -55,7 +56,7 @@ public:
 	 */
 	static void configureCustom(
 			std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
-			std::function<void(frc::Pose2d)> resetPose,
+			std::function<void(frc::Pose2d)> resetPose, bool isHolonomic,
 			std::function<bool()> shouldFlipPose = []() {
 				return false;
 			});
@@ -67,6 +68,15 @@ public:
 	 */
 	static inline bool isConfigured() {
 		return m_configured;
+	}
+
+	/**
+	 * Returns whether the AutoBuilder has been configured for a holonomic drivetrain.
+	 *
+	 * @return true if the AutoBuilder has been configured for a holonomic drivetrain, false otherwise
+	 */
+	static inline bool isHolonomic() {
+		return m_isHolonomic;
 	}
 
 	/**
@@ -83,17 +93,15 @@ public:
 	 * @param autoName the name of the auto to build
 	 * @return an auto command for the given auto name
 	 */
-	static frc2::CommandPtr buildAuto(std::string autoName);
+	static inline frc2::CommandPtr buildAuto(std::string autoName);
 
 	/**
-	 * Builds an auto command from the given JSON.
-	 *
-	 * @param json the JSON to build the command from
-	 * @return an auto command built from the JSON
+	 * Create a command to reset the robot's odometry to a given blue alliance pose
+	 * 
+	 * @param bluePose The pose to reset to, relative to blue alliance origin
+	 * @return Command to reset the robot's odometry
 	 */
-	static frc2::CommandPtr getAutoCommandFromJson(const wpi::json &json);
-
-	static frc::Pose2d getStartingPoseFromJson(const wpi::json &json);
+	static frc2::CommandPtr resetOdom(frc::Pose2d bluePose);
 
 	/**
 	 * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
@@ -163,6 +171,7 @@ private:
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
 	static std::function<void(frc::Pose2d)> m_resetPose;
 	static std::function<bool()> m_shouldFlipPath;
+	static bool m_isHolonomic;
 
 	static std::vector<frc2::CommandPtr> m_autoCommands;
 

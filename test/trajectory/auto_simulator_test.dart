@@ -116,9 +116,8 @@ void main() {
     expect(sim, isNotNull);
     expect(sim!.states.last.timeSeconds, closeTo(6.06, 0.05));
 
-    // TODO: add back when replanning is changed
-    // sim = AutoSimulator.simulateAuto([test, test.duplicate('')], config);
-    // expect(sim, isNotNull);
-    // expect(sim!.states.last.timeSeconds, closeTo(4.0, 0.05));
+    sim = AutoSimulator.simulateAuto([test, test.duplicate('')], config);
+    expect(sim, isNotNull);
+    expect(sim!.states.last.timeSeconds, closeTo(8.53, 0.05));
   });
 }

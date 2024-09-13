@@ -115,10 +115,10 @@ public class PathPlannerAuto extends Command {
 
   private void initFromJson(JSONObject autoJson) {
     boolean choreoAuto = autoJson.get("choreoAuto") != null && (boolean) autoJson.get("choreoAuto");
-    Command cmd = CommandUtil.commandFromJson((JSONObject) autoJson.get("command"), choreoAuto);
+    JSONObject commandJson = (JSONObject) autoJson.get("command");
+    Command cmd = CommandUtil.commandFromJson(commandJson, choreoAuto);
     boolean resetOdom = autoJson.get("resetOdom") != null && (boolean) autoJson.get("resetOdom");
-    List<PathPlannerPath> pathsInAuto =
-        pathsFromCommandJson((JSONObject) autoJson.get("command"), choreoAuto);
+    List<PathPlannerPath> pathsInAuto = pathsFromCommandJson(commandJson, choreoAuto);
     if (!pathsInAuto.isEmpty()) {
       if (AutoBuilder.isHolonomic()) {
         this.startingPose =

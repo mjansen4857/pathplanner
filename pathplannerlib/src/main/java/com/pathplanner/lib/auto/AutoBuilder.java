@@ -7,7 +7,6 @@ import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -15,16 +14,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 /** Utility class used to build auto routines */
 public class AutoBuilder {
@@ -33,6 +28,7 @@ public class AutoBuilder {
   private static Function<PathPlannerPath, Command> pathFollowingCommandBuilder;
   private static Consumer<Pose2d> resetPose;
   private static BooleanSupplier shouldFlipPath;
+  private static boolean isHolonomic;
 
   // Pathfinding builders
   private static boolean pathfindingConfigured = false;
@@ -82,6 +78,7 @@ public class AutoBuilder {
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
     AutoBuilder.shouldFlipPath = shouldFlipPath;
+    AutoBuilder.isHolonomic = robotConfig.isHolonomic;
 
     AutoBuilder.pathfindToPoseCommandBuilder =
         (pose, constraints, goalEndVel) ->
@@ -121,11 +118,13 @@ public class AutoBuilder {
    *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
    *     not be flipped when configured with a custom path following command. Flipping the paths
    *     must be handled in your command.
+   * @param isHolonomic Does the robot have a holonomic drivetrain
    */
   public static void configureCustom(
       Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
       Consumer<Pose2d> resetPose,
-      BooleanSupplier shouldFlipPose) {
+      BooleanSupplier shouldFlipPose,
+      boolean isHolonomic) {
     if (configured) {
       DriverStation.reportError(
           "Auto builder has already been configured. This is likely in error.", true);
@@ -135,6 +134,7 @@ public class AutoBuilder {
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
     AutoBuilder.shouldFlipPath = shouldFlipPose;
+    AutoBuilder.isHolonomic = isHolonomic;
 
     AutoBuilder.pathfindingConfigured = false;
   }
@@ -146,10 +146,13 @@ public class AutoBuilder {
    *
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
    * @param resetPose a consumer for resetting the robot's pose
+   * @param isHolonomic Does the robot have a holonomic drivetrain
    */
   public static void configureCustom(
-      Function<PathPlannerPath, Command> pathFollowingCommandBuilder, Consumer<Pose2d> resetPose) {
-    configureCustom(pathFollowingCommandBuilder, resetPose, () -> false);
+      Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
+      Consumer<Pose2d> resetPose,
+      boolean isHolonomic) {
+    configureCustom(pathFollowingCommandBuilder, resetPose, () -> false, isHolonomic);
   }
 
   /**
@@ -372,18 +375,16 @@ public class AutoBuilder {
   }
 
   /**
-   * Get the starting pose from its JSON representation. This is only used internally.
+   * Get if AutoBuilder was configured for a holonomic drive train
    *
-   * @param startingPoseJson JSON object representing a starting pose.
-   * @return The Pose2d starting pose
+   * @return True if holonomic
    */
-  public static Pose2d getStartingPoseFromJson(JSONObject startingPoseJson) {
-    JSONObject pos = (JSONObject) startingPoseJson.get("position");
-    double x = ((Number) pos.get("x")).doubleValue();
-    double y = ((Number) pos.get("y")).doubleValue();
-    double deg = ((Number) startingPoseJson.get("rotation")).doubleValue();
+  public static boolean isHolonomic() {
+    if (!AutoBuilder.isConfigured()) {
+      throw new RuntimeException("AutoBuilder was not configured before use");
+    }
 
-    return new Pose2d(x, y, Rotation2d.fromDegrees(deg));
+    return isHolonomic;
   }
 
   /**
@@ -393,52 +394,29 @@ public class AutoBuilder {
    * @return an auto command for the given auto name
    */
   public static Command buildAuto(String autoName) {
-    try (BufferedReader br =
-        new BufferedReader(
-            new FileReader(
-                new File(
-                    Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
-      StringBuilder fileContentBuilder = new StringBuilder();
-      String line;
-      while ((line = br.readLine()) != null) {
-        fileContentBuilder.append(line);
-      }
-
-      String fileContent = fileContentBuilder.toString();
-      JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
-      return getAutoCommandFromJson(json);
-    } catch (Exception e) {
-      throw new RuntimeException(String.format("Error building auto: %s", autoName), e);
-    }
+    return new PathPlannerAuto(autoName);
   }
 
   /**
-   * Builds an auto command from the given JSON object.
+   * Create a command to reset the robot's odometry to a given blue alliance pose
    *
-   * @param autoJson the JSON object to build the command from
-   * @return an auto command built from the JSON object
+   * @param bluePose The pose to reset to, relative to blue alliance origin
+   * @return Command to reset the robot's odometry
    */
-  public static Command getAutoCommandFromJson(JSONObject autoJson) {
-    JSONObject commandJson = (JSONObject) autoJson.get("command");
-    boolean choreoAuto = autoJson.get("choreoAuto") != null && (boolean) autoJson.get("choreoAuto");
-
-    Command autoCommand = CommandUtil.commandFromJson(commandJson, choreoAuto);
-    if (autoJson.get("startingPose") != null) {
-      Pose2d startPose = getStartingPoseFromJson((JSONObject) autoJson.get("startingPose"));
-      return Commands.sequence(
-          Commands.runOnce(
-              () -> {
-                boolean flip = shouldFlipPath.getAsBoolean();
-                if (flip) {
-                  resetPose.accept(GeometryUtil.flipFieldPose(startPose));
-                } else {
-                  resetPose.accept(startPose);
-                }
-              }),
-          autoCommand);
-    } else {
-      return autoCommand;
+  public static Command resetOdom(Pose2d bluePose) {
+    if (!AutoBuilder.isConfigured()) {
+      throw new RuntimeException("AutoBuilder was not configured before use");
     }
+
+    return Commands.runOnce(
+        () -> {
+          boolean flip = shouldFlipPath.getAsBoolean();
+          if (flip) {
+            resetPose.accept(GeometryUtil.flipFieldPose(bluePose));
+          } else {
+            resetPose.accept(bluePose);
+          }
+        });
   }
 
   /** Functional interface for a function that takes 3 inputs */

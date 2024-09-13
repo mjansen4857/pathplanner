@@ -1,7 +1,6 @@
 package com.pathplanner.lib.auto;
 
 import com.pathplanner.lib.commands.*;
-import com.pathplanner.lib.config.ReplanningConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
@@ -51,7 +50,6 @@ public class AutoBuilder {
    * @param robotRelativeOutput a consumer for setting the robot's robot-relative chassis speeds
    * @param controller Path following controller that will be used to follow paths
    * @param robotConfig The robot configuration
-   * @param replanningConfig Path replanning configuration
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
    *     the field. This will maintain a global blue alliance origin.
    * @param driveRequirements the subsystem requirements for the robot's drive train
@@ -63,7 +61,6 @@ public class AutoBuilder {
       Consumer<ChassisSpeeds> robotRelativeOutput,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      ReplanningConfig replanningConfig,
       BooleanSupplier shouldFlipPath,
       Subsystem... driveRequirements) {
     if (configured) {
@@ -80,7 +77,6 @@ public class AutoBuilder {
                 robotRelativeOutput,
                 controller,
                 robotConfig,
-                replanningConfig,
                 shouldFlipPath,
                 driveRequirements);
     AutoBuilder.resetPose = resetPose;
@@ -98,7 +94,6 @@ public class AutoBuilder {
                 robotRelativeOutput,
                 controller,
                 robotConfig,
-                replanningConfig,
                 driveRequirements);
     AutoBuilder.pathfindThenFollowPathCommandBuilder =
         (path, constraints) ->
@@ -110,7 +105,6 @@ public class AutoBuilder {
                 robotRelativeOutput,
                 controller,
                 robotConfig,
-                replanningConfig,
                 shouldFlipPath,
                 driveRequirements);
     AutoBuilder.pathfindingConfigured = true;

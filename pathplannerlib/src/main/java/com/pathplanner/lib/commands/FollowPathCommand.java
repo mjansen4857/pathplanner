@@ -3,7 +3,6 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.MotorTorqueCurve;
 import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.ReplanningConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
@@ -34,7 +33,6 @@ public class FollowPathCommand extends Command {
   private final Consumer<ChassisSpeeds> output;
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
-  private final ReplanningConfig replanningConfig;
   private final BooleanSupplier shouldFlipPath;
 
   // For event markers
@@ -54,7 +52,6 @@ public class FollowPathCommand extends Command {
    *     command
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
-   * @param replanningConfig Path replanning configuration
    * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
    *     maintain a global blue alliance origin.
    * @param requirements Subsystems required by this command, usually just the drive subsystem
@@ -66,7 +63,6 @@ public class FollowPathCommand extends Command {
       Consumer<ChassisSpeeds> outputRobotRelative,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      ReplanningConfig replanningConfig,
       BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     this.originalPath = path;
@@ -75,7 +71,6 @@ public class FollowPathCommand extends Command {
     this.output = outputRobotRelative;
     this.controller = controller;
     this.robotConfig = robotConfig;
-    this.replanningConfig = replanningConfig;
     this.shouldFlipPath = shouldFlipPath;
 
     Set<Subsystem> driveRequirements = Set.of(requirements);
@@ -112,31 +107,34 @@ public class FollowPathCommand extends Command {
 
     controller.reset(currentPose, currentSpeeds);
 
-    ChassisSpeeds fieldSpeeds =
-        ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.getRotation());
-    Rotation2d currentHeading =
-        new Rotation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond);
-    Rotation2d targetHeading = path.getInitialHeading();
-    Rotation2d headingError = currentHeading.minus(targetHeading);
-    boolean onHeading =
-        Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 0.25
-            || Math.abs(headingError.getDegrees()) < 30;
+    double linearVel = Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
 
-    if (!path.isChoreoPath()
-        && replanningConfig.enableInitialReplanning
-        && (currentPose.getTranslation().getDistance(path.getPoint(0).position) > 0.25
-            || !onHeading)) {
-      replanPath(currentPose, currentSpeeds);
+    if (path.getIdealStartingState() != null) {
+      // Check if we match the ideal starting state
+      boolean idealVelocity =
+          Math.abs(linearVel - path.getIdealStartingState().getVelocity()) <= 0.25;
+      boolean idealRotation =
+          !robotConfig.isHolonomic
+              || Math.abs(
+                      currentPose
+                          .getRotation()
+                          .minus(path.getIdealStartingState().getRotation())
+                          .getDegrees())
+                  <= 30.0;
+      if (idealVelocity && idealRotation) {
+        // We can use the ideal trajectory
+        trajectory = path.getIdealTrajectory(robotConfig).orElseThrow();
+      } else {
+        // We need to regenerate
+        trajectory = path.generateTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
+      }
     } else {
-      var idealTraj = path.getIdealTrajectory(robotConfig);
-      idealTraj.ifPresentOrElse(
-          pathPlannerTrajectory -> trajectory = pathPlannerTrajectory,
-          () ->
-              trajectory =
-                  path.generateTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig));
-      PathPlannerLogging.logActivePath(path);
-      PPLibTelemetry.setCurrentPath(path);
+      // No ideal starting state, generate the trajectory
+      trajectory = path.generateTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
     }
+
+    PathPlannerLogging.logActivePath(path);
+    PPLibTelemetry.setCurrentPath(path);
 
     // Initialize marker stuff
     currentEventCommands.clear();
@@ -157,20 +155,6 @@ public class FollowPathCommand extends Command {
 
     Pose2d currentPose = poseSupplier.get();
     ChassisSpeeds currentSpeeds = speedsSupplier.get();
-
-    if (!path.isChoreoPath() && replanningConfig.enableDynamicReplanning) {
-      double previousError = Math.abs(controller.getPositionalError());
-      double currentError =
-          currentPose.getTranslation().getDistance(targetState.pose.getTranslation());
-
-      if (currentError >= replanningConfig.dynamicReplanningTotalErrorThreshold
-          || currentError - previousError
-              >= replanningConfig.dynamicReplanningErrorSpikeThreshold) {
-        replanPath(currentPose, currentSpeeds);
-        timer.reset();
-        targetState = trajectory.sample(0);
-      }
-    }
 
     ChassisSpeeds targetSpeeds = controller.calculateRobotRelativeSpeeds(currentPose, targetState);
 
@@ -252,14 +236,6 @@ public class FollowPathCommand extends Command {
     }
   }
 
-  private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
-    PathPlannerPath replanned = path.replan(currentPose, currentSpeeds);
-    trajectory =
-        replanned.generateTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
-    PathPlannerLogging.logActivePath(replanned);
-    PPLibTelemetry.setCurrentPath(replanned);
-  }
-
   /**
    * Create a command to warmup on-the-fly generation, replanning, and the path following command
    *
@@ -268,7 +244,7 @@ public class FollowPathCommand extends Command {
   public static Command warmupCommand() {
     List<Translation2d> bezierPoints =
         PathPlannerPath.bezierFromPoses(
-            new Pose2d(3.0, 3.0, new Rotation2d()), new Pose2d(6.0, 6.0, new Rotation2d()));
+            new Pose2d(0.0, 0.0, new Rotation2d()), new Pose2d(6.0, 6.0, new Rotation2d()));
     PathPlannerPath path =
         new PathPlannerPath(
             bezierPoints,
@@ -294,7 +270,6 @@ public class FollowPathCommand extends Command {
                     new MotorTorqueCurve(
                         MotorTorqueCurve.MotorType.krakenX60, MotorTorqueCurve.CurrentLimit.k60A)),
                 0.55),
-            new ReplanningConfig(),
             () -> true)
         .andThen(Commands.print("[PathPlanner] FollowPathCommand finished warmup"))
         .ignoringDisable(true);

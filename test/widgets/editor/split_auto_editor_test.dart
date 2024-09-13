@@ -50,6 +50,7 @@ void main() {
           PathCommand(pathName: 'testPath'),
         ],
       ),
+      resetOdom: true,
       autoDir: '/autos',
       fs: fs,
       folder: null,

@@ -11,6 +11,7 @@ import 'package:pathplanner/services/log.dart';
 class PathPlannerAuto {
   String name;
   SequentialCommandGroup sequence;
+  bool resetOdom;
   bool choreoAuto;
 
   String? folder;
@@ -24,6 +25,7 @@ class PathPlannerAuto {
   PathPlannerAuto({
     required this.name,
     required this.sequence,
+    required this.resetOdom,
     required this.autoDir,
     required this.fs,
     required this.folder,
@@ -34,6 +36,7 @@ class PathPlannerAuto {
 
   PathPlannerAuto.defaultAuto({
     this.name = 'New Auto',
+    this.resetOdom = true,
     required this.autoDir,
     required this.fs,
     this.folder,
@@ -44,6 +47,7 @@ class PathPlannerAuto {
     return PathPlannerAuto(
       name: newName,
       sequence: sequence.clone() as SequentialCommandGroup,
+      resetOdom: resetOdom,
       autoDir: autoDir,
       fs: fs,
       folder: folder,
@@ -59,6 +63,7 @@ class PathPlannerAuto {
           name: name,
           sequence:
               Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
+          resetOdom: json['resetOdom'] ?? true,
           folder: json['folder'],
           choreoAuto: json['choreoAuto'] ?? false,
         );
@@ -67,6 +72,7 @@ class PathPlannerAuto {
     return {
       'version': 1.0,
       'command': sequence.toJson(),
+      'resetOdom': resetOdom,
       'folder': folder,
       'choreoAuto': choreoAuto,
     };
@@ -234,8 +240,9 @@ class PathPlannerAuto {
       other is PathPlannerAuto &&
       other.runtimeType == runtimeType &&
       other.name == name &&
-      other.sequence == sequence;
+      other.sequence == sequence &&
+      other.resetOdom == resetOdom;
 
   @override
-  int get hashCode => Object.hash(name, sequence);
+  int get hashCode => Object.hash(name, sequence, resetOdom);
 }

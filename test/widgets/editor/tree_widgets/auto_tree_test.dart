@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/reset_odom_tree.dart';
 import 'package:undo/undo.dart';
 
 void main() {
@@ -65,5 +66,19 @@ void main() {
     ));
 
     expect(find.byType(CommandGroupWidget), findsWidgets);
+  });
+
+  testWidgets('has reset odom check', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: AutoTree(
+          auto: auto,
+          undoStack: ChangeStack(),
+          allPathNames: const [],
+        ),
+      ),
+    ));
+
+    expect(find.byType(ResetOdomTree), findsWidgets);
   });
 }

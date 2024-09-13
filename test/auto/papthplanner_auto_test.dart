@@ -24,6 +24,7 @@ void main() {
         fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
@@ -33,6 +34,7 @@ void main() {
         fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
@@ -41,6 +43,7 @@ void main() {
         autoDir: '/autos',
         fs: fs,
         sequence: SequentialCommandGroup(commands: []),
+        resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
@@ -60,6 +63,7 @@ void main() {
         fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
@@ -80,6 +84,7 @@ void main() {
         fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
@@ -112,6 +117,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -138,6 +144,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -159,6 +166,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -184,6 +192,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -214,6 +223,7 @@ void main() {
           ),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -242,6 +252,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 

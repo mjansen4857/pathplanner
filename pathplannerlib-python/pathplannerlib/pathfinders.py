@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from wpimath.geometry import Translation2d
 import time
 
-from .path import PathConstraints, GoalEndState, PathPlannerPath, PathPoint, RESOLUTION
+from .path import PathConstraints, GoalEndState, PathPlannerPath, PathPoint, PathSegment
 from .geometry_util import cubicLerp, decimal_range
 import math
 from threading import Thread, RLock
@@ -538,13 +538,10 @@ class LocalADStar(Pathfinder):
             p3 = bezierPoints[iOffset + 2]
             p4 = bezierPoints[iOffset + 3]
 
-            resolution = RESOLUTION
-            if p1.distance(p4) <= 1.0:
-                resolution = 0.2
-
-            for t in decimal_range(0.0, 1.0, resolution):
-                pathPoints.append(PathPoint(cubicLerp(p1, p2, p3, p4, t)))
+            segment = PathSegment(p1, p2, p3, p4)
+            segment.generatePathPoints(pathPoints, i, [], [], None)
         pathPoints.append(PathPoint(bezierPoints[-1]))
+        pathPoints[-1].waypointRelativePos = numSegments
 
         return pathPoints
 

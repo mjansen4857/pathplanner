@@ -3,7 +3,6 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.MotorTorqueCurve;
 import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.ReplanningConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
@@ -16,7 +15,6 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -41,7 +39,6 @@ public class PathfindingCommand extends Command {
   private final Consumer<ChassisSpeeds> output;
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
-  private final ReplanningConfig replanningConfig;
   private final BooleanSupplier shouldFlipPath;
 
   private PathPlannerPath currentPath;
@@ -61,7 +58,6 @@ public class PathfindingCommand extends Command {
    * @param outputRobotRelative a consumer for the output speeds (robot relative)
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
-   * @param replanningConfig Path replanning configuration
    * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
    *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command
@@ -74,7 +70,6 @@ public class PathfindingCommand extends Command {
       Consumer<ChassisSpeeds> outputRobotRelative,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      ReplanningConfig replanningConfig,
       BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     addRequirements(requirements);
@@ -84,10 +79,8 @@ public class PathfindingCommand extends Command {
     Rotation2d targetRotation = new Rotation2d();
     double goalEndVel = targetPath.getGlobalConstraints().getMaxVelocityMps();
     if (targetPath.isChoreoPath()) {
-      // Can call getTrajectory here without proper speeds since it will just return the choreo
-      // trajectory
-      PathPlannerTrajectory choreoTraj =
-          targetPath.getTrajectory(new ChassisSpeeds(), new Rotation2d(), robotConfig);
+      // Can get() here without issue since all choreo trajectories have ideal trajectories
+      PathPlannerTrajectory choreoTraj = targetPath.getIdealTrajectory(robotConfig).orElseThrow();
       targetRotation = choreoTraj.getInitialState().pose.getRotation();
       goalEndVel = choreoTraj.getInitialState().linearVelocity;
     } else {
@@ -110,7 +103,6 @@ public class PathfindingCommand extends Command {
     this.speedsSupplier = speedsSupplier;
     this.output = outputRobotRelative;
     this.robotConfig = robotConfig;
-    this.replanningConfig = replanningConfig;
     this.shouldFlipPath = shouldFlipPath;
 
     instances++;
@@ -129,7 +121,6 @@ public class PathfindingCommand extends Command {
    * @param outputRobotRelative a consumer for the output speeds (robot relative)
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
-   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
@@ -141,7 +132,6 @@ public class PathfindingCommand extends Command {
       Consumer<ChassisSpeeds> outputRobotRelative,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     addRequirements(requirements);
 
@@ -158,7 +148,6 @@ public class PathfindingCommand extends Command {
     this.speedsSupplier = speedsSupplier;
     this.output = outputRobotRelative;
     this.robotConfig = robotConfig;
-    this.replanningConfig = replanningConfig;
     this.shouldFlipPath = () -> false;
 
     instances++;
@@ -176,7 +165,6 @@ public class PathfindingCommand extends Command {
    * @param outputRobotRelative a consumer for the output speeds (robot relative)
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
-   * @param replanningConfig Path replanning configuration
    * @param requirements the subsystems required by this command
    */
   public PathfindingCommand(
@@ -187,7 +175,6 @@ public class PathfindingCommand extends Command {
       Consumer<ChassisSpeeds> outputRobotRelative,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      ReplanningConfig replanningConfig,
       Subsystem... requirements) {
     this(
         targetPose,
@@ -198,7 +185,6 @@ public class PathfindingCommand extends Command {
         outputRobotRelative,
         controller,
         robotConfig,
-        replanningConfig,
         requirements);
   }
 
@@ -287,48 +273,22 @@ public class PathfindingCommand extends Command {
         var closestState1 = currentTrajectory.getState(closestState1Idx);
         var closestState2 = currentTrajectory.getState(closestState2Idx);
 
-        ChassisSpeeds fieldRelativeSpeeds =
-            ChassisSpeeds.fromRobotRelativeSpeeds(currentSpeeds, currentPose.getRotation());
-        Rotation2d currentHeading =
-            new Rotation2d(
-                fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
-        Rotation2d headingError =
-            currentHeading.minus(
-                new Translation2d(
-                        closestState1.fieldSpeeds.vxMetersPerSecond,
-                        closestState1.fieldSpeeds.vyMetersPerSecond)
-                    .getAngle());
-        boolean onHeading =
-            Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 1.0
-                || Math.abs(headingError.getDegrees()) < 45;
+        double d =
+            closestState1.pose.getTranslation().getDistance(closestState2.pose.getTranslation());
+        double t =
+            (currentPose.getTranslation().getDistance(closestState1.pose.getTranslation())) / d;
+        t = MathUtil.clamp(t, 0.0, 1.0);
 
-        // Replan the path if our heading is off
-        if (onHeading || !replanningConfig.enableInitialReplanning) {
-          double d =
-              closestState1.pose.getTranslation().getDistance(closestState2.pose.getTranslation());
-          double t =
-              (currentPose.getTranslation().getDistance(closestState1.pose.getTranslation())) / d;
-          t = MathUtil.clamp(t, 0.0, 1.0);
+        timeOffset =
+            GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
 
-          timeOffset =
-              GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
-
-          // If the robot is stationary and at the start of the path, set the time offset to the
-          // next loop
-          // This can prevent an issue where the robot will remain stationary if new paths come in
-          // every loop
-          if (timeOffset <= 0.02
-              && Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond)
-                  < 0.1) {
-            timeOffset = 0.02;
-          }
-        } else {
-          currentPath = currentPath.replan(currentPose, currentSpeeds);
-          currentTrajectory =
-              new PathPlannerTrajectory(
-                  currentPath, currentSpeeds, currentPose.getRotation(), robotConfig);
-
-          timeOffset = 0;
+        // If the robot is stationary and at the start of the path, set the time offset to the next
+        // loop
+        // This can prevent an issue where the robot will remain stationary if new paths come in
+        // every loop
+        if (timeOffset <= 0.02
+            && Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond) < 0.1) {
+          timeOffset = 0.02;
         }
 
         PathPlannerLogging.logActivePath(currentPath);
@@ -341,21 +301,6 @@ public class PathfindingCommand extends Command {
 
     if (currentTrajectory != null) {
       var targetState = currentTrajectory.sample(timer.get() + timeOffset);
-
-      if (replanningConfig.enableDynamicReplanning) {
-        double previousError = Math.abs(controller.getPositionalError());
-        double currentError =
-            currentPose.getTranslation().getDistance(targetState.pose.getTranslation());
-
-        if (currentError >= replanningConfig.dynamicReplanningTotalErrorThreshold
-            || currentError - previousError
-                >= replanningConfig.dynamicReplanningErrorSpikeThreshold) {
-          replanPath(currentPose, currentSpeeds);
-          timer.reset();
-          timeOffset = 0.0;
-          targetState = currentTrajectory.sample(0);
-        }
-      }
 
       ChassisSpeeds targetSpeeds =
           controller.calculateRobotRelativeSpeeds(currentPose, targetState);
@@ -419,14 +364,6 @@ public class PathfindingCommand extends Command {
     PathPlannerLogging.logActivePath(null);
   }
 
-  private void replanPath(Pose2d currentPose, ChassisSpeeds currentSpeeds) {
-    PathPlannerPath replanned = currentPath.replan(currentPose, currentSpeeds);
-    currentTrajectory =
-        replanned.getTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
-    PathPlannerLogging.logActivePath(replanned);
-    PPLibTelemetry.setCurrentPath(replanned);
-  }
-
   /**
    * Create a command to warmup the pathfinder and pathfinding command
    *
@@ -451,8 +388,7 @@ public class PathfindingCommand extends Command {
                     1.2,
                     new MotorTorqueCurve(
                         MotorTorqueCurve.MotorType.krakenX60, MotorTorqueCurve.CurrentLimit.k60A)),
-                0.55),
-            new ReplanningConfig())
+                0.55))
         .andThen(Commands.print("[PathPlanner] PathfindingCommand finished warmup"))
         .ignoringDisable(true);
   }

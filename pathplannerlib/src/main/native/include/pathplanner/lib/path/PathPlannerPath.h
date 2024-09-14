@@ -4,12 +4,14 @@
 #include "pathplanner/lib/path/ConstraintsZone.h"
 #include "pathplanner/lib/path/EventMarker.h"
 #include "pathplanner/lib/path/PathConstraints.h"
+#include "pathplanner/lib/path/IdealStartingState.h"
 #include "pathplanner/lib/path/GoalEndState.h"
 #include "pathplanner/lib/path/PathPoint.h"
 #include "pathplanner/lib/path/PathSegment.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/config/RobotConfig.h"
 #include <vector>
+#include <optional>
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <wpi/json.h>
@@ -31,6 +33,7 @@ public:
 	 * @param constraintZones List of constraint zones along the path
 	 * @param eventMarkers List of event markers along the path
 	 * @param globalConstraints The global constraints of the path
+	 * @param idealStartingState The ideal starting state of the path. Can be nullopt if unknown
 	 * @param goalEndState The goal end state of the path
 	 * @param reversed Should the robot follow the path reversed (differential drive only)
 	 */
@@ -38,9 +41,9 @@ public:
 			std::vector<RotationTarget> rotationTargets,
 			std::vector<ConstraintsZone> constraintZones,
 			std::vector<EventMarker> eventMarkers,
-			PathConstraints globalConstraints, GoalEndState goalEndState,
-			bool reversed, frc::Rotation2d previewStartingRotation =
-					frc::Rotation2d());
+			PathConstraints globalConstraints,
+			std::optional<IdealStartingState> idealStartingState,
+			GoalEndState goalEndState, bool reversed);
 
 	/**
 	 * Simplified constructor to create a path with no rotation targets, constraint zones, or event
@@ -50,14 +53,17 @@ public:
 	 *
 	 * @param bezierPoints List of points representing the cubic Bezier curve of the path
 	 * @param constraints The global constraints of the path
+	 * @param idealStartingState The ideal starting state of the path. Can be nullopt if unknown
 	 * @param goalEndState The goal end state of the path
 	 * @param reversed Should the robot follow the path reversed (differential drive only)
 	 */
 	PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
-			PathConstraints constraints, GoalEndState goalEndState,
-			bool reversed = false) : PathPlannerPath(bezierPoints,
-			std::vector<RotationTarget>(), std::vector<ConstraintsZone>(),
-			std::vector<EventMarker>(), constraints, goalEndState, reversed) {
+			PathConstraints constraints,
+			std::optional<IdealStartingState> idealStartingState,
+			GoalEndState goalEndState, bool reversed = false) : PathPlannerPath(
+			bezierPoints, std::vector<RotationTarget>(),
+			std::vector<ConstraintsZone>(), std::vector<EventMarker>(),
+			constraints, idealStartingState, goalEndState, reversed) {
 	}
 
 	/**
@@ -102,15 +108,6 @@ public:
 	frc::Pose2d getStartingDifferentialPose();
 
 	/**
-	 * Get the starting pose for the holomonic path based on the preview settings.
-	 *
-	 * NOTE: This should only be used for the first path you are running, and only if you are not using an auto mode file. Using this pose to reset the robots pose between sequential paths will cause a loss of accuracy.
-	 *
-	 * @return Pose at the path's starting point
-	 */
-	frc::Pose2d getPreviewStartingHolonomicPose();
-
-	/**
 	 * Get the constraints for a point along the path
 	 *
 	 * @param idx Index of the point to get constraints for
@@ -127,12 +124,6 @@ public:
 	static std::shared_ptr<PathPlannerPath> fromPathPoints(
 			std::vector<PathPoint> pathPoints,
 			PathConstraints globalConstraints, GoalEndState goalEndState);
-
-	/** Generate path points for a path. This is used internally and should not be used directly. */
-	static std::vector<PathPoint> createPath(
-			std::vector<frc::Translation2d> bezierPoints,
-			std::vector<RotationTarget> holonomicRotations,
-			std::vector<ConstraintsZone> constraintZones);
 
 	/**
 	 * Get all the path points in this path
@@ -163,6 +154,27 @@ public:
 	}
 
 	/**
+	 * If possible, get the ideal trajectory for this path. This trajectory can be used if the robot
+	 * is currently near the start of the path and at the ideal starting state. If there is no ideal
+	 * starting state, there can be no ideal trajectory.
+	 *
+	 * @param robotConfig The config to generate the ideal trajectory with if it has not already been
+	 *     generated
+	 * @return An optional containing the ideal trajectory if it exists, an empty optional otherwise
+	 */
+	std::optional<PathPlannerTrajectory> getIdealTrajectory(
+			RobotConfig robotConfig);
+
+	/**
+	 * Get the initial heading, or direction of travel, at the start of the path.
+	 *
+	 * @return Initial heading
+	 */
+	inline frc::Rotation2d getInitialHeading() const {
+		return (getPoint(1).position - getPoint(0).position).Angle();
+	}
+
+	/**
 	 * Get the global constraints for this path
 	 *
 	 * @return Global constraints that apply to this path
@@ -178,6 +190,15 @@ public:
 	 */
 	constexpr const GoalEndState& getGoalEndState() const {
 		return m_goalEndState;
+	}
+
+	/**
+	 * Get the ideal starting state of this path
+	 *
+	 * @return The ideal starting state
+	 */
+	constexpr const std::optional<IdealStartingState>& getIdealStartingState() const {
+		return m_idealStartingState;
 	}
 
 	/**
@@ -207,26 +228,16 @@ public:
 		return m_isChoreoPath;
 	}
 
-	inline PathPlannerTrajectory getTrajectory(
+	inline PathPlannerTrajectory generateTrajectory(
 			frc::ChassisSpeeds startingSpeeds, frc::Rotation2d startingRotation,
 			const RobotConfig &config) {
 		if (m_isChoreoPath) {
-			return m_choreoTrajectory;
+			return m_idealTrajectory.value();
 		} else {
 			return PathPlannerTrajectory(shared_from_this(), startingSpeeds,
 					startingRotation, config);
 		}
 	}
-
-	/**
-	 * Replan this path based on the current robot position and speeds
-	 *
-	 * @param startingPose New starting pose for the replanned path
-	 * @param currentSpeeds Current chassis speeds of the robot
-	 * @return The replanned path
-	 */
-	std::shared_ptr<PathPlannerPath> replan(const frc::Pose2d startingPose,
-			const frc::ChassisSpeeds currentSpeeds);
 
 	/**
 	 * Flip a path to the other side of the field, maintaining a global blue alliance origin
@@ -250,6 +261,8 @@ public:
 	}
 
 private:
+	std::vector<PathPoint> createPath();
+
 	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);
 
 	static std::vector<frc::Translation2d> bezierPointsFromWaypointsJson(
@@ -269,7 +282,7 @@ private:
 	 * @param seg1Pct The percentage of the 2 segments made up by the first segment
 	 * @return The waypoint relative position over the 2 segments
 	 */
-	static double mapPct(double pct, double seg1Pct) {
+	static inline double mapPct(double pct, double seg1Pct) {
 		double mappedPct;
 		if (pct <= seg1Pct) {
 			// Map to segment 1
@@ -279,8 +292,7 @@ private:
 			mappedPct = 1.0 + ((pct - seg1Pct) / (1.0 - seg1Pct));
 		}
 
-		return std::round(mappedPct * (1.0 / PathSegment::RESOLUTION))
-				/ (1.0 / PathSegment::RESOLUTION);
+		return mappedPct;
 	}
 
 	static inline units::meter_t positionDelta(const frc::Translation2d &a,
@@ -295,12 +307,13 @@ private:
 	std::vector<ConstraintsZone> m_constraintZones;
 	std::vector<EventMarker> m_eventMarkers;
 	PathConstraints m_globalConstraints;
+	std::optional<IdealStartingState> m_idealStartingState;
 	GoalEndState m_goalEndState;
 	std::vector<PathPoint> m_allPoints;
 	bool m_reversed;
-	frc::Rotation2d m_previewStartingRotation;
+
 	bool m_isChoreoPath;
-	PathPlannerTrajectory m_choreoTrajectory;
+	std::optional<PathPlannerTrajectory> m_idealTrajectory = std::nullopt;
 
 	static int m_instances;
 };

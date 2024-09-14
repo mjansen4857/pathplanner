@@ -81,6 +81,31 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
           (val) => _updateSetting(PrefsKeys.showGrid, val),
           'Toggle the visibility of the grid on the field. Each cell is 0.5M x 0.5M.',
         ),
+        Row(
+          children: [
+            Checkbox(
+              value: _showStates,
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() {
+                    _showStates = val;
+                    _prefs.setBool(PrefsKeys.showStates, val);
+                  });
+                }
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.only(
+                bottom: 3.0,
+                left: 4.0,
+              ),
+              child: Text(
+                'Show Trajectory States',
+                style: TextStyle(fontSize: 15),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

@@ -34,7 +34,7 @@ jobs:
           docker-version: ${{ env.DOCKER_VERSION }}
 
       - name: Upload documentation
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: docs
           path: |
@@ -43,7 +43,7 @@ jobs:
           retention-days: 7
 
       - name: Upload algolia-indexes
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: algolia-indexes
           path: artifacts/${{ env.ALGOLIA_ARTIFACT }}
@@ -54,7 +54,7 @@ jobs:
     needs: build-docs
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docs
           path: artifacts
@@ -72,11 +72,17 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Setup java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
       - name: Build PathPlannerLib
         working-directory: pathplannerlib
         run: |
-          ./gradlew build -PreleaseMode
-          ./gradlew publish -PreleaseMode
+          ./gradlew build
+          ./gradlew publish
 
       - name: Get Doxygen theme
         working-directory: pathplannerlib
@@ -120,7 +126,7 @@ jobs:
           sudo mv pathplannerlib-python/docs _site/api/python
 
       - name: Download docs artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docs
 
@@ -159,11 +165,11 @@ jobs:
     if: ${{ github.event_name != 'pull_request' }}
     needs: test-docs
     container:
-      image: registry.jetbrains.team/p/writerside/builder/algolia-publisher:2.0.32-2
+      image: registry.jetbrains.team/p/writerside/builder/algolia-publisher:2.0.32-3
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: algolia-indexes
 

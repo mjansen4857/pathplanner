@@ -27,13 +27,12 @@ LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/navgrid.json";
 
-	std::error_code error_code;
-	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
-			wpi::MemoryBuffer::GetFile(filePath, error_code);
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
 
-	if (!error_code) {
+	if (fileBuffer) {
 		try {
-			wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+			wpi::json json = wpi::json::parse(
+					fileBuffer.value()->GetCharBuffer());
 
 			nodeSize = json.at("nodeSizeMeters").get<double>();
 			wpi::json::const_reference grid = json.at("grid");
@@ -427,18 +426,12 @@ std::vector<PathPoint> LocalADStar::createPathPoints(
 		frc::Translation2d p3 = bezierPoints[iOffset + 2];
 		frc::Translation2d p4 = bezierPoints[iOffset + 3];
 
-		double resolution = PathSegment::RESOLUTION;
-		if (p1.Distance(p4) <= 1_m) {
-			resolution = 0.2;
-		}
-
-		for (double t = 0.0; t < 1.0; t += resolution) {
-			pathPoints.emplace_back(GeometryUtil::cubicLerp(p1, p2, p3, p4, t),
-					std::nullopt, std::nullopt);
-		}
+		PathSegment segment(p1, p2, p3, p4);
+		segment.generatePathPoints(pathPoints, i, { }, { }, std::nullopt);
 	}
 	pathPoints.emplace_back(bezierPoints[bezierPoints.size() - 1], std::nullopt,
 			std::nullopt);
+	pathPoints[pathPoints.size() - 1].waypointRelativePos = numSegments;
 
 	return pathPoints;
 }

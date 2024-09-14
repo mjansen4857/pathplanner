@@ -10,8 +10,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		const frc::ChassisSpeeds &startingSpeeds,
 		const frc::Rotation2d &startingRotation, const RobotConfig &config) {
 	if (path->isChoreoPath()) {
-		PathPlannerTrajectory traj = path->getTrajectory(startingSpeeds,
-				startingRotation, config);
+		PathPlannerTrajectory traj = path->getIdealTrajectory(config).value();
 		m_states = traj.m_states;
 		m_eventCommands = traj.m_eventCommands;
 	} else {
@@ -55,26 +54,30 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		// Reverse pass
 		reverseAccelPass(m_states, config);
 
+		std::vector < EventMarker
+				> unaddedMarkers(path->getEventMarkers().begin(),
+						path->getEventMarkers().end());
+
 		// Loop back over and calculate time
 		for (size_t i = 1; i < m_states.size(); i++) {
 			units::meters_per_second_t v0 = m_states[i - 1].linearVelocity;
 			units::meters_per_second_t v = m_states[i].linearVelocity;
 			units::second_t dt = (2 * m_states[i].deltaPos) / (v + v0);
 			m_states[i].time = m_states[i - 1].time + dt;
-		}
 
-		for (const EventMarker &m : path->getEventMarkers()) {
-			// TODO: this will need to be changed for dynamic resolution
-			size_t pointIndex = static_cast<size_t>(std::round(
-					m.getWaypointRelativePos() / PathSegment::RESOLUTION));
-			m_eventCommands.emplace_back(m_states[pointIndex].time,
-					m.getCommand());
-		}
+			if (!unaddedMarkers.empty()) {
+				double prevPos = m_states[i - 1].waypointRelativePos;
+				double pos = m_states[i].waypointRelativePos;
 
-		std::sort(m_eventCommands.begin(), m_eventCommands.end(),
-				[](auto &left, auto &right) {
-					return left.first < right.first;
-				});
+				EventMarker next = unaddedMarkers[0];
+				if (std::abs(next.getWaypointRelativePos() - prevPos)
+						<= std::abs(next.getWaypointRelativePos() - pos)) {
+					m_eventCommands.emplace_back(m_states[i - 1].time,
+							next.getCommand());
+					unaddedMarkers.erase(unaddedMarkers.begin());
+				}
+			}
+		}
 	}
 }
 
@@ -143,6 +146,7 @@ void PathPlannerTrajectory::generateStates(
 		PathPlannerTrajectoryState state;
 		state.pose = robotPose;
 		state.constraints = path->getConstraintsForPoint(i);
+		state.waypointRelativePos = p.waypointRelativePos;
 
 		// Calculate robot heading
 		if (i != path->numPoints() - 1) {
@@ -303,6 +307,12 @@ void PathPlannerTrajectory::forwardAccelPass(
 		// state
 		units::second_t maxDT = 0_s;
 		for (size_t m = 0; m < config.numModules; m++) {
+			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
+					- prevState.moduleStates[m].angle;
+			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
+				continue;
+			}
+
 			units::meters_per_second_t modVel = state.moduleStates[m].speed;
 			units::second_t dt = nextState.moduleStates[m].deltaPos / modVel;
 
@@ -313,6 +323,12 @@ void PathPlannerTrajectory::forwardAccelPass(
 
 		// Recalculate all module velocities with the allowed DT
 		for (size_t m = 0; m < config.numModules; m++) {
+			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
+					- prevState.moduleStates[m].angle;
+			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
+				continue;
+			}
+
 			state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos
 					/ maxDT;
 		}
@@ -425,6 +441,12 @@ void PathPlannerTrajectory::reverseAccelPass(
 		// state
 		units::second_t maxDT = 0_s;
 		for (size_t m = 0; m < config.numModules; m++) {
+			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
+					- states[i - 1].moduleStates[m].angle;
+			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
+				continue;
+			}
+
 			units::meters_per_second_t modVel = state.moduleStates[m].speed;
 			units::second_t dt = nextState.moduleStates[m].deltaPos / modVel;
 
@@ -435,6 +457,12 @@ void PathPlannerTrajectory::reverseAccelPass(
 
 		// Recalculate all module velocities with the allowed DT
 		for (size_t m = 0; m < config.numModules; m++) {
+			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
+					- states[i - 1].moduleStates[m].angle;
+			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
+				continue;
+			}
+
 			state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos
 					/ maxDT;
 		}

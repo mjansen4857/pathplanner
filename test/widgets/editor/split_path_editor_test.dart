@@ -278,6 +278,8 @@ void main() {
   });
 
   testWidgets('drag rotation target', (widgetTester) async {
+    path.generatePathPoints();
+
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
@@ -293,9 +295,9 @@ void main() {
       ),
     ));
 
-    int pointIdx =
-        (path.rotationTargets[0].waypointRelativePos / pathResolution).round();
-    Point targetPos = path.pathPoints[pointIdx].position;
+    Point targetPos = path.pathPoints
+        .firstWhere((p) => p.rotationTarget == path.rotationTargets[0])
+        .position;
     var dragLocation = PathPainterUtil.pointToPixelOffset(
             targetPos + const Point(0.5, 0.0), PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding

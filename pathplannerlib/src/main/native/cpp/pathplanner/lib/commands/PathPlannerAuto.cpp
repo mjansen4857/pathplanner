@@ -1,5 +1,6 @@
 #include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include "pathplanner/lib/auto/AutoBuilder.h"
+#include "pathplanner/lib/auto/CommandUtil.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include <frc/Filesystem.h>
 #include <wpi/MemoryBuffer.h>
@@ -15,7 +16,18 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 				"AutoBuilder was not configured before attempting to load a PathPlannerAuto from file");
 	}
 
-	m_autoCommand = AutoBuilder::buildAuto(autoName).Unwrap();
+	const std::string filePath = frc::filesystem::GetDeployDirectory()
+			+ "/pathplanner/autos/" + autoName + ".auto";
+
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
+
+	if (!fileBuffer) {
+		throw std::runtime_error("Cannot open file: " + filePath);
+	}
+
+	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
+	initFromJson(json);
+
 	AddRequirements(m_autoCommand->GetRequirements());
 	SetName(autoName);
 
@@ -28,36 +40,46 @@ std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromA
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/autos/" + autoName + ".auto";
 
-	std::error_code error_code;
-	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
-			wpi::MemoryBuffer::GetFile(filePath, error_code);
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
 
-	if (fileBuffer == nullptr || error_code) {
+	if (!fileBuffer) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
 	bool choreoAuto = json.contains("choreoAuto")
 			&& json.at("choreoAuto").get<bool>();
 
 	return pathsFromCommandJson(json.at("command"), choreoAuto);
 }
 
-frc::Pose2d PathPlannerAuto::getStartingPoseFromAutoFile(std::string autoName) {
-	const std::string filePath = frc::filesystem::GetDeployDirectory()
-			+ "/pathplanner/autos/" + autoName + ".auto";
-
-	std::error_code error_code;
-	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
-			wpi::MemoryBuffer::GetFile(filePath, error_code);
-
-	if (fileBuffer == nullptr || error_code) {
-		throw std::runtime_error("Cannot open file: " + filePath);
+void PathPlannerAuto::initFromJson(const wpi::json &json) {
+	bool choreoAuto = json.contains("choreoAuto")
+			&& json.at("choreoAuto").get<bool>();
+	wpi::json::const_reference commandJson = json.at("command");
+	bool resetOdom = json.contains("resetOdom")
+			&& json.at("resetOdom").get<bool>();
+	auto pathsInAuto = pathsFromCommandJson(commandJson, choreoAuto);
+	if (!pathsInAuto.empty()) {
+		if (AutoBuilder::isHolonomic()) {
+			m_startingPose =
+					frc::Pose2d(pathsInAuto[0]->getPoint(0).position,
+							pathsInAuto[0]->getIdealStartingState().value().getRotation());
+		} else {
+			m_startingPose = pathsInAuto[0]->getStartingDifferentialPose();
+		}
+	} else {
+		m_startingPose = frc::Pose2d();
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
-
-	return AutoBuilder::getStartingPoseFromJson(json.at("startingPose"));
+	if (resetOdom) {
+		m_autoCommand = frc2::cmd::Sequence(
+				AutoBuilder::resetOdom(m_startingPose),
+				CommandUtil::commandFromJson(commandJson, choreoAuto)).Unwrap();
+	} else {
+		m_autoCommand =
+				CommandUtil::commandFromJson(commandJson, choreoAuto).Unwrap();
+	}
 }
 
 void PathPlannerAuto::Initialize() {

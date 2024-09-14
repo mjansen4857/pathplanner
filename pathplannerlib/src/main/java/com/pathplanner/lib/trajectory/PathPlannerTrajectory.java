@@ -4,7 +4,6 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
-import com.pathplanner.lib.path.PathSegment;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
@@ -16,7 +15,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /** Trajectory generated for a PathPlanner path */
@@ -59,7 +57,7 @@ public class PathPlannerTrajectory {
       Rotation2d startingRotation,
       RobotConfig config) {
     if (path.isChoreoPath()) {
-      var traj = path.getTrajectory(startingSpeeds, startingRotation, config);
+      var traj = path.getIdealTrajectory(config).orElseThrow();
       this.states = traj.states;
       this.eventCommands = traj.eventCommands;
     } else {
@@ -104,21 +102,27 @@ public class PathPlannerTrajectory {
       // Reverse pass
       reverseAccelPass(states, config);
 
+      List<EventMarker> unaddedMarkers = new ArrayList<>(path.getEventMarkers());
+
       // Loop back over and calculate time
       for (int i = 1; i < states.size(); i++) {
         double v0 = states.get(i - 1).linearVelocity;
         double v = states.get(i).linearVelocity;
         double dt = (2 * states.get(i).deltaPos) / (v + v0);
         states.get(i).timeSeconds = states.get(i - 1).timeSeconds + dt;
-      }
 
-      for (EventMarker m : path.getEventMarkers()) {
-        // TODO: this will need to be changed for dynamic resolution
-        int pointIndex = (int) Math.round(m.getWaypointRelativePos() / PathSegment.RESOLUTION);
-        eventCommands.add(Pair.of(states.get(pointIndex).timeSeconds, m.getCommand()));
-      }
+        if (!unaddedMarkers.isEmpty()) {
+          double prevPos = states.get(i - 1).waypointRelativePos;
+          double pos = states.get(i).waypointRelativePos;
 
-      eventCommands.sort(Comparator.comparing(Pair::getFirst));
+          EventMarker next = unaddedMarkers.get(0);
+          if (Math.abs(next.getWaypointRelativePos() - prevPos)
+              <= Math.abs(next.getWaypointRelativePos() - pos)) {
+            eventCommands.add(Pair.of(states.get(i - 1).timeSeconds, next.getCommand()));
+            unaddedMarkers.remove(0);
+          }
+        }
+      }
     }
   }
 
@@ -157,6 +161,7 @@ public class PathPlannerTrajectory {
       var state = new PathPlannerTrajectoryState();
       state.pose = robotPose;
       state.constraints = path.getConstraintsForPoint(i);
+      state.waypointRelativePos = p.waypointRelativePos;
 
       // Calculate robot heading
       if (i != path.numPoints() - 1) {
@@ -301,6 +306,12 @@ public class PathPlannerTrajectory {
       // state
       double maxDT = 0.0;
       for (int m = 0; m < config.numModules; m++) {
+        Rotation2d prevRotDelta =
+            state.moduleStates[m].angle.minus(prevState.moduleStates[m].angle);
+        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
+          continue;
+        }
+
         double modVel = state.moduleStates[m].speedMetersPerSecond;
         double dt = nextState.moduleStates[m].deltaPos / modVel;
 
@@ -311,6 +322,12 @@ public class PathPlannerTrajectory {
 
       // Recalculate all module velocities with the allowed DT
       for (int m = 0; m < config.numModules; m++) {
+        Rotation2d prevRotDelta =
+            state.moduleStates[m].angle.minus(prevState.moduleStates[m].angle);
+        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
+          continue;
+        }
+
         state.moduleStates[m].speedMetersPerSecond = nextState.moduleStates[m].deltaPos / maxDT;
       }
 
@@ -406,6 +423,12 @@ public class PathPlannerTrajectory {
       // state
       double maxDT = 0.0;
       for (int m = 0; m < config.numModules; m++) {
+        Rotation2d prevRotDelta =
+            state.moduleStates[m].angle.minus(states.get(i - 1).moduleStates[m].angle);
+        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
+          continue;
+        }
+
         double modVel = state.moduleStates[m].speedMetersPerSecond;
         double dt = nextState.moduleStates[m].deltaPos / modVel;
 
@@ -416,6 +439,12 @@ public class PathPlannerTrajectory {
 
       // Recalculate all module velocities with the allowed DT
       for (int m = 0; m < config.numModules; m++) {
+        Rotation2d prevRotDelta =
+            state.moduleStates[m].angle.minus(states.get(i - 1).moduleStates[m].angle);
+        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
+          continue;
+        }
+
         state.moduleStates[m].speedMetersPerSecond = nextState.moduleStates[m].deltaPos / maxDT;
       }
 

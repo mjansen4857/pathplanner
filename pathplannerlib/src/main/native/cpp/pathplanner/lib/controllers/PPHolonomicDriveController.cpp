@@ -49,7 +49,7 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 
 	units::radians_per_second_t rotationFeedback {
 			m_rotationController.Calculate(currentPose.Rotation().Radians()(),
-					referenceState.pose.Rotation().Radians()()) };
+					targetRotation.Radians()()) };
 	units::radians_per_second_t rotationFF = referenceState.fieldSpeeds.omega;
 
 	return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF + xFeedback,

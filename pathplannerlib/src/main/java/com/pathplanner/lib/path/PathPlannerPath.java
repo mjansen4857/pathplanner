@@ -34,12 +34,13 @@ public class PathPlannerPath {
   private List<ConstraintsZone> constraintZones;
   private List<EventMarker> eventMarkers;
   private PathConstraints globalConstraints;
+  private IdealStartingState idealStartingState;
   private GoalEndState goalEndState;
   private List<PathPoint> allPoints;
   private boolean reversed;
 
   private boolean isChoreoPath = false;
-  private PathPlannerTrajectory choreoTrajectory = null;
+  private Optional<PathPlannerTrajectory> idealTrajectory = Optional.empty();
 
   /**
    * Set to true to prevent this path from being flipped (useful for OTF paths that already have the
@@ -55,6 +56,7 @@ public class PathPlannerPath {
    * @param constraintZones List of constraint zones along the path
    * @param eventMarkers List of event markers along the path
    * @param globalConstraints The global constraints of the path
+   * @param idealStartingState The ideal starting state of the path. Can be null if unknown
    * @param goalEndState The goal end state of the path
    * @param reversed Should the robot follow the path reversed (differential drive only)
    */
@@ -64,16 +66,24 @@ public class PathPlannerPath {
       List<ConstraintsZone> constraintZones,
       List<EventMarker> eventMarkers,
       PathConstraints globalConstraints,
+      IdealStartingState idealStartingState,
       GoalEndState goalEndState,
       boolean reversed) {
     this.bezierPoints = bezierPoints;
-    this.rotationTargets = holonomicRotations;
+    this.rotationTargets =
+        holonomicRotations.stream()
+            .sorted(Comparator.comparingDouble(RotationTarget::getPosition))
+            .toList();
     this.constraintZones = constraintZones;
-    this.eventMarkers = eventMarkers;
+    this.eventMarkers =
+        eventMarkers.stream()
+            .sorted(Comparator.comparingDouble(EventMarker::getWaypointRelativePos))
+            .toList();
     this.globalConstraints = globalConstraints;
+    this.idealStartingState = idealStartingState;
     this.goalEndState = goalEndState;
     this.reversed = reversed;
-    this.allPoints = createPath(this.bezierPoints, this.rotationTargets, this.constraintZones);
+    this.allPoints = createPath();
 
     precalcValues();
 
@@ -89,12 +99,14 @@ public class PathPlannerPath {
    *
    * @param bezierPoints List of points representing the cubic Bezier curve of the path
    * @param constraints The global constraints of the path
+   * @param idealStartingState The ideal starting state of the path. Can be null if unknown
    * @param goalEndState The goal end state of the path
    * @param reversed Should the robot follow the path reversed (differential drive only)
    */
   public PathPlannerPath(
       List<Translation2d> bezierPoints,
       PathConstraints constraints,
+      IdealStartingState idealStartingState,
       GoalEndState goalEndState,
       boolean reversed) {
     this(
@@ -103,6 +115,7 @@ public class PathPlannerPath {
         Collections.emptyList(),
         Collections.emptyList(),
         constraints,
+        idealStartingState,
         goalEndState,
         reversed);
   }
@@ -115,20 +128,25 @@ public class PathPlannerPath {
    *
    * @param bezierPoints List of points representing the cubic Bezier curve of the path
    * @param constraints The global constraints of the path
+   * @param idealStartingState The ideal starting state of the path. Can be null if unknown
    * @param goalEndState The goal end state of the path
    */
   public PathPlannerPath(
-      List<Translation2d> bezierPoints, PathConstraints constraints, GoalEndState goalEndState) {
-    this(bezierPoints, constraints, goalEndState, false);
+      List<Translation2d> bezierPoints,
+      PathConstraints constraints,
+      IdealStartingState idealStartingState,
+      GoalEndState goalEndState) {
+    this(bezierPoints, constraints, idealStartingState, goalEndState, false);
   }
 
-  private PathPlannerPath(PathConstraints globalConstraints, GoalEndState goalEndState) {
+  private PathPlannerPath() {
     this.bezierPoints = new ArrayList<>();
     this.rotationTargets = new ArrayList<>();
     this.constraintZones = new ArrayList<>();
     this.eventMarkers = new ArrayList<>();
-    this.globalConstraints = globalConstraints;
-    this.goalEndState = goalEndState;
+    this.globalConstraints = null;
+    this.idealStartingState = null;
+    this.goalEndState = null;
     this.reversed = false;
     this.allPoints = new ArrayList<>();
 
@@ -146,7 +164,9 @@ public class PathPlannerPath {
    */
   public static PathPlannerPath fromPathPoints(
       List<PathPoint> pathPoints, PathConstraints constraints, GoalEndState goalEndState) {
-    PathPlannerPath path = new PathPlannerPath(constraints, goalEndState);
+    PathPlannerPath path = new PathPlannerPath();
+    path.globalConstraints = constraints;
+    path.goalEndState = goalEndState;
     path.allPoints = pathPoints;
     path.precalcValues();
 
@@ -238,6 +258,7 @@ public class PathPlannerPath {
     this.constraintZones = updatedPath.constraintZones;
     this.eventMarkers = updatedPath.eventMarkers;
     this.globalConstraints = updatedPath.globalConstraints;
+    this.idealStartingState = updatedPath.idealStartingState;
     this.goalEndState = updatedPath.goalEndState;
     this.allPoints = updatedPath.allPoints;
     this.reversed = updatedPath.reversed;
@@ -314,16 +335,17 @@ public class PathPlannerPath {
         trajStates.add(state);
       }
 
-      PathPlannerPath path =
-          new PathPlannerPath(
-              new PathConstraints(
-                  Double.POSITIVE_INFINITY,
-                  Double.POSITIVE_INFINITY,
-                  Double.POSITIVE_INFINITY,
-                  Double.POSITIVE_INFINITY),
-              new GoalEndState(
-                  trajStates.get(trajStates.size() - 1).linearVelocity,
-                  trajStates.get(trajStates.size() - 1).pose.getRotation()));
+      PathPlannerPath path = new PathPlannerPath();
+      path.globalConstraints =
+          new PathConstraints(
+              Double.POSITIVE_INFINITY,
+              Double.POSITIVE_INFINITY,
+              Double.POSITIVE_INFINITY,
+              Double.POSITIVE_INFINITY);
+      path.goalEndState =
+          new GoalEndState(
+              trajStates.get(trajStates.size() - 1).linearVelocity,
+              trajStates.get(trajStates.size() - 1).pose.getRotation());
 
       List<PathPoint> pathPoints = new ArrayList<>();
       for (var state : trajStates) {
@@ -349,7 +371,7 @@ public class PathPlannerPath {
       }
 
       eventCommands.sort(Comparator.comparing(Pair::getFirst));
-      path.choreoTrajectory = new PathPlannerTrajectory(trajStates, eventCommands);
+      path.idealTrajectory = Optional.of(new PathPlannerTrajectory(trajStates, eventCommands));
 
       return path;
     } catch (Exception e) {
@@ -362,6 +384,8 @@ public class PathPlannerPath {
         bezierPointsFromWaypointsJson((JSONArray) pathJson.get("waypoints"));
     PathConstraints globalConstraints =
         PathConstraints.fromJson((JSONObject) pathJson.get("globalConstraints"));
+    IdealStartingState idealStartingState =
+        IdealStartingState.fromJson((JSONObject) pathJson.get("idealStartingState"));
     GoalEndState goalEndState = GoalEndState.fromJson((JSONObject) pathJson.get("goalEndState"));
     boolean reversed = (boolean) pathJson.get("reversed");
     List<RotationTarget> rotationTargets = new ArrayList<>();
@@ -386,6 +410,7 @@ public class PathPlannerPath {
         constraintZones,
         eventMarkers,
         globalConstraints,
+        idealStartingState,
         goalEndState,
         reversed);
   }
@@ -422,13 +447,47 @@ public class PathPlannerPath {
   }
 
   /**
+   * If possible, get the ideal trajectory for this path. This trajectory can be used if the robot
+   * is currently near the start of the path and at the ideal starting state. If there is no ideal
+   * starting state, there can be no ideal trajectory.
+   *
+   * @param robotConfig The config to generate the ideal trajectory with if it has not already been
+   *     generated
+   * @return An optional containing the ideal trajectory if it exists, an empty optional otherwise
+   */
+  public Optional<PathPlannerTrajectory> getIdealTrajectory(RobotConfig robotConfig) {
+    if (idealTrajectory.isEmpty() && idealStartingState != null) {
+      // The ideal starting state is known, generate the ideal trajectory
+      Rotation2d heading = getInitialHeading();
+      Translation2d fieldSpeeds = new Translation2d(idealStartingState.getVelocity(), heading);
+      ChassisSpeeds startingSpeeds =
+          ChassisSpeeds.fromFieldRelativeSpeeds(
+              fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0, idealStartingState.getRotation());
+      idealTrajectory =
+          Optional.of(
+              generateTrajectory(startingSpeeds, idealStartingState.getRotation(), robotConfig));
+    }
+
+    return idealTrajectory;
+  }
+
+  /**
+   * Get the initial heading, or direction of travel, at the start of the path.
+   *
+   * @return Initial heading
+   */
+  public Rotation2d getInitialHeading() {
+    return getPoint(1).position.minus(getPoint(0).position).getAngle();
+  }
+
+  /**
    * Get the differential pose for the start point of this path
    *
    * @return Pose at the path's starting point
    */
   public Pose2d getStartingDifferentialPose() {
     Translation2d startPos = getPoint(0).position;
-    Rotation2d heading = getPoint(1).position.minus(getPoint(0).position).getAngle();
+    Rotation2d heading = getInitialHeading();
 
     if (reversed) {
       heading =
@@ -452,42 +511,40 @@ public class PathPlannerPath {
     return globalConstraints;
   }
 
-  private static List<PathPoint> createPath(
-      List<Translation2d> bezierPoints,
-      List<RotationTarget> holonomicRotations,
-      List<ConstraintsZone> constraintZones) {
-    if (bezierPoints.size() < 4) {
-      throw new IllegalArgumentException("Not enough bezier points");
+  private List<PathPoint> createPath() {
+    if (bezierPoints.size() < 4 || (bezierPoints.size() - 1) % 3 != 0) {
+      throw new IllegalArgumentException("Invalid number of bezier points");
     }
+
+    int numSegments = (bezierPoints.size() - 1) / 3;
 
     List<PathPoint> points = new ArrayList<>();
 
-    int numSegments = (bezierPoints.size() - 1) / 3;
     for (int s = 0; s < numSegments; s++) {
       int iOffset = s * 3;
       Translation2d p1 = bezierPoints.get(iOffset);
       Translation2d p2 = bezierPoints.get(iOffset + 1);
       Translation2d p3 = bezierPoints.get(iOffset + 2);
       Translation2d p4 = bezierPoints.get(iOffset + 3);
+      PathSegment segment = new PathSegment(p1, p2, p3, p4);
 
-      int segmentIdx = s;
-      List<RotationTarget> segmentRotations =
-          holonomicRotations.stream()
-              .filter(
-                  target ->
-                      target.getPosition() >= segmentIdx && target.getPosition() <= segmentIdx + 1)
-              .map(target -> target.forSegmentIndex(segmentIdx))
-              .collect(Collectors.toList());
-      List<ConstraintsZone> segmentZones =
-          constraintZones.stream()
-              .filter(zone -> zone.overlapsRange(segmentIdx, segmentIdx + 1))
-              .map(zone -> zone.forSegmentIndex(segmentIdx))
-              .collect(Collectors.toList());
-
-      PathSegment segment =
-          new PathSegment(p1, p2, p3, p4, segmentRotations, segmentZones, s == numSegments - 1);
-      points.addAll(segment.getSegmentPoints());
+      segment.generatePathPoints(points, s, constraintZones, rotationTargets, globalConstraints);
     }
+
+    // Add the final path point
+    PathConstraints endConstraints = globalConstraints;
+    for (ConstraintsZone z : constraintZones) {
+      if (numSegments >= z.getMinWaypointPos() && numSegments <= z.getMaxWaypointPos()) {
+        endConstraints = z.getConstraints();
+        break;
+      }
+    }
+    points.add(
+        new PathPoint(
+            bezierPoints.get(bezierPoints.size() - 1),
+            new RotationTarget(numSegments, goalEndState.getRotation()),
+            endConstraints));
+    points.get(points.size() - 1).waypointRelativePos = numSegments;
 
     return points;
   }
@@ -499,13 +556,12 @@ public class PathPlannerPath {
         if (point.constraints == null) {
           point.constraints = globalConstraints;
         }
-        point.curveRadius = getCurveRadiusAtPoint(i, allPoints);
+        double curveRadius = getCurveRadiusAtPoint(i, allPoints);
 
-        if (Double.isFinite(point.curveRadius)) {
+        if (Double.isFinite(curveRadius)) {
           point.maxV =
               Math.min(
-                  Math.sqrt(
-                      point.constraints.getMaxAccelerationMpsSq() * Math.abs(point.curveRadius)),
+                  Math.sqrt(point.constraints.getMaxAccelerationMpsSq() * Math.abs(curveRadius)),
                   point.constraints.getMaxVelocityMps());
         } else {
           point.maxV = point.constraints.getMaxVelocityMps();
@@ -570,6 +626,15 @@ public class PathPlannerPath {
     return goalEndState;
   }
 
+  /**
+   * Get the ideal starting state of this path
+   *
+   * @return The ideal starting state
+   */
+  public IdealStartingState getIdealStartingState() {
+    return idealStartingState;
+  }
+
   private static double getCurveRadiusAtPoint(int index, List<PathPoint> points) {
     if (points.size() < 3) {
       return Double.POSITIVE_INFINITY;
@@ -612,308 +677,6 @@ public class PathPlannerPath {
   }
 
   /**
-   * Replan this path based on the current robot position and speeds
-   *
-   * @param startingPose New starting pose for the replanned path
-   * @param currentSpeeds Current chassis speeds of the robot
-   * @return The replanned path
-   */
-  public PathPlannerPath replan(Pose2d startingPose, ChassisSpeeds currentSpeeds) {
-    if (isChoreoPath) {
-      // This path is from choreo, cannot be replanned
-      return this;
-    }
-
-    ChassisSpeeds currentFieldRelativeSpeeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(
-            currentSpeeds, startingPose.getRotation().unaryMinus());
-
-    Translation2d robotNextControl = null;
-    double linearVel =
-        Math.hypot(
-            currentFieldRelativeSpeeds.vxMetersPerSecond,
-            currentFieldRelativeSpeeds.vyMetersPerSecond);
-    if (linearVel > 0.1) {
-      double stoppingDistance =
-          Math.pow(linearVel, 2) / (2 * globalConstraints.getMaxAccelerationMpsSq());
-
-      Rotation2d heading =
-          new Rotation2d(
-              currentFieldRelativeSpeeds.vxMetersPerSecond,
-              currentFieldRelativeSpeeds.vyMetersPerSecond);
-      robotNextControl =
-          startingPose.getTranslation().plus(new Translation2d(stoppingDistance / 2.0, heading));
-    }
-
-    int closestPointIdx = 0;
-    Translation2d comparePoint =
-        (robotNextControl != null) ? robotNextControl : startingPose.getTranslation();
-    double closestDist = positionDelta(comparePoint, getPoint(closestPointIdx).position);
-
-    for (int i = 1; i < numPoints(); i++) {
-      double d = positionDelta(comparePoint, getPoint(i).position);
-
-      if (d < closestDist) {
-        closestPointIdx = i;
-        closestDist = d;
-      }
-    }
-
-    if (closestPointIdx == numPoints() - 1) {
-      Rotation2d heading = getPoint(numPoints() - 1).position.minus(comparePoint).getAngle();
-
-      if (robotNextControl == null) {
-        robotNextControl =
-            startingPose.getTranslation().plus(new Translation2d(closestDist / 3.0, heading));
-      }
-
-      Rotation2d endPrevControlHeading =
-          getPoint(numPoints() - 1).position.minus(robotNextControl).getAngle();
-
-      Translation2d endPrevControl =
-          getPoint(numPoints() - 1)
-              .position
-              .minus(new Translation2d(closestDist / 3.0, endPrevControlHeading));
-
-      // Throw out rotation targets, event markers, and constraint zones since we are skipping all
-      // of the path
-      return new PathPlannerPath(
-          List.of(
-              startingPose.getTranslation(),
-              robotNextControl,
-              endPrevControl,
-              getPoint(numPoints() - 1).position),
-          Collections.emptyList(),
-          Collections.emptyList(),
-          Collections.emptyList(),
-          globalConstraints,
-          goalEndState,
-          reversed);
-    } else if ((closestPointIdx == 0 && robotNextControl == null)
-        || (Math.abs(closestDist - startingPose.getTranslation().getDistance(getPoint(0).position))
-                <= 0.25
-            && linearVel < 0.1)) {
-      double distToStart = startingPose.getTranslation().getDistance(getPoint(0).position);
-
-      Rotation2d heading = getPoint(0).position.minus(startingPose.getTranslation()).getAngle();
-      robotNextControl =
-          startingPose.getTranslation().plus(new Translation2d(distToStart / 3.0, heading));
-
-      Rotation2d joinHeading =
-          allPoints.get(0).position.minus(allPoints.get(1).position).getAngle();
-      Translation2d joinPrevControl =
-          getPoint(0).position.plus(new Translation2d(distToStart / 2.0, joinHeading));
-
-      if (bezierPoints.isEmpty()) {
-        // We don't have any bezier points to reference
-        PathSegment joinSegment =
-            new PathSegment(
-                startingPose.getTranslation(),
-                robotNextControl,
-                joinPrevControl,
-                getPoint(0).position,
-                false);
-        List<PathPoint> replannedPoints = new ArrayList<>();
-        replannedPoints.addAll(joinSegment.getSegmentPoints());
-        replannedPoints.addAll(allPoints);
-
-        return PathPlannerPath.fromPathPoints(replannedPoints, globalConstraints, goalEndState);
-      } else {
-        // We can use the bezier points
-        List<Translation2d> replannedBezier = new ArrayList<>();
-        replannedBezier.addAll(
-            List.of(startingPose.getTranslation(), robotNextControl, joinPrevControl));
-        replannedBezier.addAll(bezierPoints);
-
-        // keep all rotations, markers, and zones and increment waypoint pos by 1
-        return new PathPlannerPath(
-            replannedBezier,
-            rotationTargets.stream()
-                .map((target) -> new RotationTarget(target.getPosition() + 1, target.getTarget()))
-                .collect(Collectors.toList()),
-            constraintZones.stream()
-                .map(
-                    (zone) ->
-                        new ConstraintsZone(
-                            zone.getMinWaypointPos() + 1,
-                            zone.getMaxWaypointPos() + 1,
-                            zone.getConstraints()))
-                .collect(Collectors.toList()),
-            eventMarkers.stream()
-                .map(
-                    (marker) ->
-                        new EventMarker(marker.getWaypointRelativePos() + 1, marker.getCommand()))
-                .collect(Collectors.toList()),
-            globalConstraints,
-            goalEndState,
-            reversed);
-      }
-    }
-
-    int joinAnchorIdx = numPoints() - 1;
-    for (int i = closestPointIdx; i < numPoints(); i++) {
-      if (getPoint(i).distanceAlongPath
-          >= getPoint(closestPointIdx).distanceAlongPath + closestDist) {
-        joinAnchorIdx = i;
-        break;
-      }
-    }
-
-    Translation2d joinPrevControl = getPoint(closestPointIdx).position;
-    Translation2d joinAnchor = getPoint(joinAnchorIdx).position;
-
-    if (robotNextControl == null) {
-      double robotToJoinDelta = startingPose.getTranslation().getDistance(joinAnchor);
-      Rotation2d heading = joinPrevControl.minus(startingPose.getTranslation()).getAngle();
-      robotNextControl =
-          startingPose.getTranslation().plus(new Translation2d(robotToJoinDelta / 3.0, heading));
-    }
-
-    if (joinAnchorIdx == numPoints() - 1) {
-      // Throw out rotation targets, event markers, and constraint zones since we are skipping all
-      // of the path
-      return new PathPlannerPath(
-          List.of(startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor),
-          Collections.emptyList(),
-          Collections.emptyList(),
-          Collections.emptyList(),
-          globalConstraints,
-          goalEndState,
-          reversed);
-    }
-
-    if (bezierPoints.isEmpty()) {
-      // We don't have any bezier points to reference
-      PathSegment joinSegment =
-          new PathSegment(
-              startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor, false);
-      List<PathPoint> replannedPoints = new ArrayList<>();
-      replannedPoints.addAll(joinSegment.getSegmentPoints());
-      replannedPoints.addAll(allPoints.subList(joinAnchorIdx, allPoints.size()));
-
-      return PathPlannerPath.fromPathPoints(replannedPoints, globalConstraints, goalEndState);
-    }
-
-    // We can reference bezier points
-    int nextWaypointIdx = (int) Math.ceil((joinAnchorIdx + 1) * PathSegment.RESOLUTION);
-    int bezierPointIdx = nextWaypointIdx * 3;
-    double waypointDelta = joinAnchor.getDistance(bezierPoints.get(bezierPointIdx));
-
-    Rotation2d joinHeading = joinAnchor.minus(joinPrevControl).getAngle();
-    Translation2d joinNextControl =
-        joinAnchor.plus(new Translation2d(waypointDelta / 3.0, joinHeading));
-
-    Rotation2d nextWaypointHeading;
-    if (bezierPointIdx == bezierPoints.size() - 1) {
-      nextWaypointHeading =
-          bezierPoints.get(bezierPointIdx - 1).minus(bezierPoints.get(bezierPointIdx)).getAngle();
-    } else {
-      nextWaypointHeading =
-          bezierPoints.get(bezierPointIdx).minus(bezierPoints.get(bezierPointIdx + 1)).getAngle();
-    }
-
-    Translation2d nextWaypointPrevControl =
-        bezierPoints
-            .get(bezierPointIdx)
-            .plus(new Translation2d(Math.max(waypointDelta / 3.0, 0.15), nextWaypointHeading));
-
-    List<Translation2d> replannedBezier = new ArrayList<>();
-    replannedBezier.addAll(
-        List.of(
-            startingPose.getTranslation(),
-            robotNextControl,
-            joinPrevControl,
-            joinAnchor,
-            joinNextControl,
-            nextWaypointPrevControl));
-    replannedBezier.addAll(bezierPoints.subList(bezierPointIdx, bezierPoints.size()));
-
-    double segment1Length = 0;
-    Translation2d lastSegment1Pos = startingPose.getTranslation();
-    double segment2Length = 0;
-    Translation2d lastSegment2Pos = joinAnchor;
-
-    for (double t = PathSegment.RESOLUTION; t < 1.0; t += PathSegment.RESOLUTION) {
-      Translation2d p1 =
-          GeometryUtil.cubicLerp(
-              startingPose.getTranslation(), robotNextControl, joinPrevControl, joinAnchor, t);
-      Translation2d p2 =
-          GeometryUtil.cubicLerp(
-              joinAnchor,
-              joinNextControl,
-              nextWaypointPrevControl,
-              bezierPoints.get(bezierPointIdx),
-              t);
-
-      segment1Length += positionDelta(lastSegment1Pos, p1);
-      segment2Length += positionDelta(lastSegment2Pos, p2);
-
-      lastSegment1Pos = p1;
-      lastSegment2Pos = p2;
-    }
-
-    double segment1Pct = segment1Length / (segment1Length + segment2Length);
-
-    List<RotationTarget> mappedTargets = new ArrayList<>();
-    List<ConstraintsZone> mappedZones = new ArrayList<>();
-    List<EventMarker> mappedMarkers = new ArrayList<>();
-
-    for (RotationTarget t : rotationTargets) {
-      if (t.getPosition() >= nextWaypointIdx) {
-        mappedTargets.add(new RotationTarget(t.getPosition() - nextWaypointIdx + 2, t.getTarget()));
-      } else if (t.getPosition() >= nextWaypointIdx - 1) {
-        double pct = t.getPosition() - (nextWaypointIdx - 1);
-        mappedTargets.add(new RotationTarget(mapPct(pct, segment1Pct), t.getTarget()));
-      }
-    }
-
-    for (ConstraintsZone z : constraintZones) {
-      double minPos = 0;
-      double maxPos = 0;
-
-      if (z.getMinWaypointPos() >= nextWaypointIdx) {
-        minPos = z.getMinWaypointPos() - nextWaypointIdx + 2;
-      } else if (z.getMinWaypointPos() >= nextWaypointIdx - 1) {
-        double pct = z.getMinWaypointPos() - (nextWaypointIdx - 1);
-        minPos = mapPct(pct, segment1Pct);
-      }
-
-      if (z.getMaxWaypointPos() >= nextWaypointIdx) {
-        maxPos = z.getMaxWaypointPos() - nextWaypointIdx + 2;
-      } else if (z.getMaxWaypointPos() >= nextWaypointIdx - 1) {
-        double pct = z.getMaxWaypointPos() - (nextWaypointIdx - 1);
-        maxPos = mapPct(pct, segment1Pct);
-      }
-
-      if (maxPos > 0) {
-        mappedZones.add(new ConstraintsZone(minPos, maxPos, z.getConstraints()));
-      }
-    }
-
-    for (EventMarker m : eventMarkers) {
-      if (m.getWaypointRelativePos() >= nextWaypointIdx) {
-        mappedMarkers.add(
-            new EventMarker(m.getWaypointRelativePos() - nextWaypointIdx + 2, m.getCommand()));
-      } else if (m.getWaypointRelativePos() >= nextWaypointIdx - 1) {
-        double pct = m.getWaypointRelativePos() - (nextWaypointIdx - 1);
-        mappedMarkers.add(new EventMarker(mapPct(pct, segment1Pct), m.getCommand()));
-      }
-    }
-
-    // Throw out everything before nextWaypointIdx - 1, map everything from nextWaypointIdx -
-    // 1 to nextWaypointIdx on to the 2 joining segments (waypoint rel pos within old segment = %
-    // along distance of both new segments)
-    return new PathPlannerPath(
-        replannedBezier,
-        mappedTargets,
-        mappedZones,
-        mappedMarkers,
-        globalConstraints,
-        goalEndState,
-        reversed);
-  }
-
-  /**
    * Check if this path is loaded from a Choreo trajectory
    *
    * @return True if this path is from choreo, false otherwise
@@ -930,10 +693,10 @@ public class PathPlannerPath {
    * @param config The robot configuration
    * @return The generated trajectory.
    */
-  public PathPlannerTrajectory getTrajectory(
+  public PathPlannerTrajectory generateTrajectory(
       ChassisSpeeds startingSpeeds, Rotation2d startingRotation, RobotConfig config) {
     if (isChoreoPath) {
-      return choreoTrajectory;
+      return idealTrajectory.orElseThrow();
     } else {
       return new PathPlannerTrajectory(this, startingSpeeds, startingRotation, config);
     }
@@ -945,10 +708,12 @@ public class PathPlannerPath {
    * @return The flipped path
    */
   public PathPlannerPath flipPath() {
-    if (isChoreoPath) {
-      // Just flip the choreo traj
+    Optional<PathPlannerTrajectory> flippedTraj = Optional.empty();
+    if (idealTrajectory.isPresent()) {
+      // Flip the ideal trajectory
       List<PathPlannerTrajectoryState> mirroredStates = new ArrayList<>();
-      for (var state : choreoTrajectory.getStates()) {
+      PathPlannerTrajectory traj = idealTrajectory.get();
+      for (var state : traj.getStates()) {
         var mirrored = new PathPlannerTrajectoryState();
 
         mirrored.timeSeconds = state.timeSeconds;
@@ -961,54 +726,49 @@ public class PathPlannerPath {
                 -state.fieldSpeeds.omegaRadiansPerSecond);
         mirroredStates.add(mirrored);
       }
-
-      PathPlannerPath path =
-          new PathPlannerPath(
-              new PathConstraints(
-                  Double.POSITIVE_INFINITY,
-                  Double.POSITIVE_INFINITY,
-                  Double.POSITIVE_INFINITY,
-                  Double.POSITIVE_INFINITY),
-              new GoalEndState(
-                  mirroredStates.get(mirroredStates.size() - 1).linearVelocity,
-                  mirroredStates.get(mirroredStates.size() - 1).pose.getRotation()));
-
-      List<PathPoint> pathPoints = new ArrayList<>();
-      for (var state : mirroredStates) {
-        pathPoints.add(new PathPoint(state.pose.getTranslation()));
-      }
-
-      path.allPoints = pathPoints;
-      path.isChoreoPath = true;
-      path.choreoTrajectory =
-          new PathPlannerTrajectory(mirroredStates, choreoTrajectory.getEventCommands());
-
-      return path;
+      flippedTraj = Optional.of(new PathPlannerTrajectory(mirroredStates, traj.getEventCommands()));
     }
 
-    List<Translation2d> newBezier =
-        bezierPoints.stream().map(GeometryUtil::flipFieldPosition).collect(Collectors.toList());
-    List<RotationTarget> newRotTargets =
-        rotationTargets.stream()
-            .map(
-                (t) ->
-                    new RotationTarget(
-                        t.getPosition(), GeometryUtil.flipFieldRotation(t.getTarget())))
-            .collect(Collectors.toList());
-    GoalEndState newEndState =
+    List<Translation2d> flippedBezier = new ArrayList<>(bezierPoints.size());
+    for (Translation2d t : bezierPoints) {
+      flippedBezier.add(GeometryUtil.flipFieldPosition(t));
+    }
+
+    List<RotationTarget> flippedTargets = new ArrayList<>(rotationTargets.size());
+    for (RotationTarget t : rotationTargets) {
+      flippedTargets.add(
+          new RotationTarget(t.getPosition(), GeometryUtil.flipFieldRotation(t.getTarget())));
+    }
+
+    List<PathPoint> flippedPoints = new ArrayList<>(allPoints.size());
+    for (PathPoint p : allPoints) {
+      flippedPoints.add(p.flip());
+    }
+
+    PathPlannerPath path = new PathPlannerPath();
+    path.bezierPoints = flippedBezier;
+    path.rotationTargets = flippedTargets;
+    path.constraintZones = constraintZones;
+    path.eventMarkers = eventMarkers;
+    path.globalConstraints = globalConstraints;
+    if (idealStartingState != null) {
+      path.idealStartingState =
+          new IdealStartingState(
+              idealStartingState.getVelocity(),
+              GeometryUtil.flipFieldRotation(idealStartingState.getRotation()));
+    } else {
+      path.idealStartingState = null;
+    }
+    path.goalEndState =
         new GoalEndState(
             goalEndState.getVelocity(), GeometryUtil.flipFieldRotation(goalEndState.getRotation()));
+    path.allPoints = flippedPoints;
+    path.reversed = reversed;
+    path.isChoreoPath = isChoreoPath;
+    path.idealTrajectory = flippedTraj;
+    path.preventFlipping = preventFlipping;
 
-    return new PathPlannerPath(
-        newBezier,
-        newRotTargets,
-        constraintZones,
-        eventMarkers.stream()
-            .map(e -> new EventMarker(e.getWaypointRelativePos(), e.getCommand()))
-            .collect(Collectors.toList()),
-        globalConstraints,
-        newEndState,
-        reversed);
+    return path;
   }
 
   /**
@@ -1040,8 +800,7 @@ public class PathPlannerPath {
       mappedPct = 1 + ((pct - seg1Pct) / (1.0 - seg1Pct));
     }
 
-    // Round to nearest resolution step
-    return Math.round(mappedPct * (1.0 / PathSegment.RESOLUTION)) / (1.0 / PathSegment.RESOLUTION);
+    return mappedPct;
   }
 
   private static double positionDelta(Translation2d a, Translation2d b) {

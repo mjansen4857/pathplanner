@@ -1,5 +1,6 @@
 package com.pathplanner.lib.path;
 
+import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.geometry.Translation2d;
 import java.util.Objects;
 
@@ -10,14 +11,14 @@ public class PathPoint {
 
   /** The distance of this point along the path, in meters */
   public double distanceAlongPath = 0.0;
-  /** The curve radius at this point */
-  public double curveRadius = 0.0;
   /** The max velocity at this point */
   public double maxV = Double.POSITIVE_INFINITY;
   /** The target rotation at this point */
   public RotationTarget rotationTarget = null;
   /** The constraints applied to this point */
   public PathConstraints constraints = null;
+  /** The waypoint relative position of this point. Used to determine proper event marker timing */
+  public double waypointRelativePos = 0.0;
 
   /**
    * Create a path point
@@ -51,6 +52,26 @@ public class PathPoint {
    */
   public PathPoint(Translation2d position) {
     this.position = position;
+  }
+
+  /**
+   * Flip this path point to the other side of the field, maintaining a blue alliance origin
+   *
+   * @return The flipped point
+   */
+  public PathPoint flip() {
+    PathPoint flipped = new PathPoint(GeometryUtil.flipFieldPosition(position));
+    flipped.distanceAlongPath = distanceAlongPath;
+    flipped.maxV = maxV;
+    if (rotationTarget != null) {
+      flipped.rotationTarget =
+          new RotationTarget(
+              rotationTarget.getPosition(),
+              GeometryUtil.flipFieldRotation(rotationTarget.getTarget()));
+    }
+    flipped.constraints = constraints;
+    flipped.waypointRelativePos = waypointRelativePos;
+    return flipped;
   }
 
   @Override

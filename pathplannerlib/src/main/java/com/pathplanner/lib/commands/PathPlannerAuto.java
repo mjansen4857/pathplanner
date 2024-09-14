@@ -1,6 +1,7 @@
 package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -8,6 +9,7 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,6 +25,7 @@ public class PathPlannerAuto extends Command {
   private static int instances = 0;
 
   private Command autoCommand;
+  private Pose2d startingPose;
 
   /**
    * Constructs a new PathPlannerAuto command.
@@ -37,22 +40,6 @@ public class PathPlannerAuto extends Command {
           "AutoBuilder was not configured before attempting to load a PathPlannerAuto from file");
     }
 
-    this.autoCommand = AutoBuilder.buildAuto(autoName);
-    addRequirements(autoCommand.getRequirements().toArray(new Subsystem[0]));
-    setName(autoName);
-    PPLibTelemetry.registerHotReloadAuto(autoName, this);
-
-    instances++;
-    HAL.report(tResourceType.kResourceType_PathPlannerAuto, instances);
-  }
-
-  /**
-   * Get the starting pose from the given auto file
-   *
-   * @param autoName Name of the auto to get the pose from
-   * @return Starting pose from the given auto
-   */
-  public static Pose2d getStaringPoseFromAutoFile(String autoName) {
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(
@@ -66,10 +53,27 @@ public class PathPlannerAuto extends Command {
 
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
-      return AutoBuilder.getStartingPoseFromJson((JSONObject) json.get("startingPose"));
+      initFromJson(json);
     } catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
+      throw new RuntimeException(String.format("Error building auto: %s", autoName), e);
     }
+
+    addRequirements(autoCommand.getRequirements().toArray(new Subsystem[0]));
+    setName(autoName);
+    PPLibTelemetry.registerHotReloadAuto(autoName, this);
+
+    instances++;
+    HAL.report(tResourceType.kResourceType_PathPlannerAuto, instances);
+  }
+
+  /**
+   * Get the starting pose of this auto, relative to a blue alliance origin. If there are no paths
+   * in this auto, the starting pose will be null.
+   *
+   * @return The blue alliance starting pose
+   */
+  public Pose2d getStartingPose() {
+    return startingPose;
   }
 
   /**
@@ -106,7 +110,33 @@ public class PathPlannerAuto extends Command {
    * @param autoJson the JSON object representing the updated autonomous routine
    */
   public void hotReload(JSONObject autoJson) {
-    autoCommand = AutoBuilder.getAutoCommandFromJson(autoJson);
+    initFromJson(autoJson);
+  }
+
+  private void initFromJson(JSONObject autoJson) {
+    boolean choreoAuto = autoJson.get("choreoAuto") != null && (boolean) autoJson.get("choreoAuto");
+    JSONObject commandJson = (JSONObject) autoJson.get("command");
+    Command cmd = CommandUtil.commandFromJson(commandJson, choreoAuto);
+    boolean resetOdom = autoJson.get("resetOdom") != null && (boolean) autoJson.get("resetOdom");
+    List<PathPlannerPath> pathsInAuto = pathsFromCommandJson(commandJson, choreoAuto);
+    if (!pathsInAuto.isEmpty()) {
+      if (AutoBuilder.isHolonomic()) {
+        this.startingPose =
+            new Pose2d(
+                pathsInAuto.get(0).getPoint(0).position,
+                pathsInAuto.get(0).getIdealStartingState().getRotation());
+      } else {
+        this.startingPose = pathsInAuto.get(0).getStartingDifferentialPose();
+      }
+    } else {
+      this.startingPose = null;
+    }
+
+    if (resetOdom) {
+      this.autoCommand = Commands.sequence(AutoBuilder.resetOdom(this.startingPose), cmd);
+    } else {
+      this.autoCommand = cmd;
+    }
   }
 
   @Override

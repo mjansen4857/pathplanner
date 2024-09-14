@@ -69,6 +69,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   Waypoint? _draggedPoint;
   Waypoint? _dragOldValue;
   int? _draggedRotationIdx;
+  Point<num>? _draggedRotationPos;
   num? _dragRotationOldValue;
   PathPlannerTrajectory? _simTraj;
   bool _paused = false;
@@ -202,23 +203,21 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                 num dotRadius = _pixelsToMeters(
                     PathPainterUtil.uiPointSizeToPixels(
                         15, PathPainter.scale, widget.fieldImage));
-                // This is a little bit stupid but whatever
-                for (int i = -2; i < widget.path.rotationTargets.length; i++) {
+                for (int i = 0; i < widget.path.pathPoints.length; i++) {
                   num rotation;
                   Point pos;
-                  if (i == -2) {
+                  if (i == 0) {
                     rotation = widget.path.idealStartingState.rotation;
-                    pos = widget.path.waypoints.first.anchor;
-                  } else if (i == -1) {
+                    pos = widget.path.pathPoints.first.position;
+                  } else if (i == widget.path.pathPoints.length - 1) {
                     rotation = widget.path.goalEndState.rotation;
-                    pos = widget.path.waypoints.last.anchor;
+                    pos = widget.path.pathPoints.last.position;
+                  } else if (widget.path.pathPoints[i].rotationTarget != null) {
+                    rotation = widget
+                        .path.pathPoints[i].rotationTarget!.rotationDegrees;
+                    pos = widget.path.pathPoints[i].position;
                   } else {
-                    rotation = widget.path.rotationTargets[i].rotationDegrees;
-                    int pointIdx =
-                        (widget.path.rotationTargets[i].waypointRelativePos /
-                                pathResolution)
-                            .round();
-                    pos = widget.path.pathPoints[pointIdx].position;
+                    continue;
                   }
 
                   num angleRadians = rotation / 180.0 * pi;
@@ -228,7 +227,15 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       pos.y + (_robotSize.height / 2 * sin(angleRadians));
                   if (pow(xPos - dotX, 2) + pow(yPos - dotY, 2) <
                       pow(dotRadius, 2)) {
-                    _draggedRotationIdx = i;
+                    if (i == 0) {
+                      _draggedRotationIdx = -2;
+                    } else if (i == widget.path.pathPoints.length - 2) {
+                      _draggedRotationIdx = -1;
+                    } else {
+                      _draggedRotationIdx = widget.path.rotationTargets
+                          .indexOf(widget.path.pathPoints[i].rotationTarget!);
+                    }
+                    _draggedRotationPos = pos;
                     _dragRotationOldValue = rotation;
                     return;
                   }
@@ -296,13 +303,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   } else if (_draggedRotationIdx == -1) {
                     pos = widget.path.waypoints.last.anchor;
                   } else {
-                    int pointIdx = (widget
-                                .path
-                                .rotationTargets[_draggedRotationIdx!]
-                                .waypointRelativePos /
-                            pathResolution)
-                        .round();
-                    pos = widget.path.pathPoints[pointIdx].position;
+                    pos = _draggedRotationPos!;
                   }
 
                   double x = _xPixelsToMeters(details.localPosition.dx);
@@ -419,6 +420,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     ));
                   }
                   _draggedRotationIdx = null;
+                  _draggedRotationPos = null;
                 }
               },
               child: Padding(
@@ -747,10 +749,27 @@ class _SplitPathEditorState extends State<SplitPathEditor>
         // Trajectory failed to generate. Notify the user
         Log.warning(
             'Failed to generate trajectory for path: ${widget.path.name}');
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets.'),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets',
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              textColor: Theme.of(context).colorScheme.primary,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
+          ),
+        );
       }
     }
   }

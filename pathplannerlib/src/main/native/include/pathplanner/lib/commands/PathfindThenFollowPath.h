@@ -17,7 +17,6 @@ public:
 	 * @param robotRelativeOutput a consumer for the output speeds (robot relative)
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
-	 * @param replanningConfig Path replanning configuration
 	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
 	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command (drive subsystem)
@@ -28,18 +27,16 @@ public:
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
 			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
 			std::shared_ptr<PathFollowingController> controller,
-			RobotConfig robotConfig, ReplanningConfig replanningConfig,
-			std::function<bool()> shouldFlipPath,
+			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindingCommand(goalPath, pathfindingConstraints,
 						poseSupplier, currentRobotRelativeSpeeds,
 						robotRelativeOutput, controller, robotConfig,
-						replanningConfig, shouldFlipPath, requirements),
+						shouldFlipPath, requirements),
 				FollowPathCommand(goalPath, poseSupplier,
 						currentRobotRelativeSpeeds, robotRelativeOutput,
-						controller, robotConfig, replanningConfig,
-						shouldFlipPath, requirements));
+						controller, robotConfig, shouldFlipPath, requirements));
 	}
 };
 }

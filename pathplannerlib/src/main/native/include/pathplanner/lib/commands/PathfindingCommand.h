@@ -14,7 +14,6 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
-#include "pathplanner/lib/config/ReplanningConfig.h"
 #include "pathplanner/lib/config/RobotConfig.h"
 #include "pathplanner/lib/util/PathPlannerLogging.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
@@ -33,7 +32,6 @@ public:
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
-	 * @param replanningConfig Path replanning configuration
 	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
 	 *     will maintain a global blue alliance origin.
 	 * @param requirements the subsystems required by this command
@@ -44,8 +42,7 @@ public:
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::shared_ptr<PathFollowingController> controller,
-			RobotConfig robotConfig, ReplanningConfig replanningConfig,
-			std::function<bool()> shouldFlipPath,
+			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements);
 
 	/**
@@ -60,7 +57,6 @@ public:
 	 * @param output a consumer for the output speeds (robot relative)
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
-	 * @param replanningConfig Path replanning configuration
 	 * @param requirements the subsystems required by this command
 	 */
 	PathfindingCommand(frc::Pose2d targetPose, PathConstraints constraints,
@@ -69,8 +65,7 @@ public:
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
 			std::function<void(frc::ChassisSpeeds)> output,
 			std::shared_ptr<PathFollowingController> controller,
-			RobotConfig robotConfig, ReplanningConfig replanningConfig,
-			frc2::Requirements requirements);
+			RobotConfig robotConfig, frc2::Requirements requirements);
 
 	void Initialize() override;
 
@@ -92,22 +87,12 @@ private:
 	std::function<void(frc::ChassisSpeeds)> m_output;
 	std::shared_ptr<PathFollowingController> m_controller;
 	RobotConfig m_robotConfig;
-	ReplanningConfig m_replanningConfig;
 	std::function<bool()> m_shouldFlipPath;
 
 	std::shared_ptr<PathPlannerPath> m_currentPath;
 	PathPlannerTrajectory m_currentTrajectory;
 
 	units::second_t m_timeOffset;
-
-	inline void replanPath(const frc::Pose2d &currentPose,
-			const frc::ChassisSpeeds &currentSpeeds) {
-		auto replanned = m_currentPath->replan(currentPose, currentSpeeds);
-		m_currentTrajectory = replanned->getTrajectory(currentSpeeds,
-				currentPose.Rotation(), m_robotConfig);
-		PathPlannerLogging::logActivePath(replanned);
-		PPLibTelemetry::setCurrentPath(replanned);
-	}
 
 	static int m_instances;
 };

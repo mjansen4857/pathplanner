@@ -2,7 +2,7 @@ from commands2.functionalcommand import FunctionalCommand
 import commands2.cmd as cmd
 from .path import PathPlannerPath, PathConstraints
 from typing import Callable, List
-from wpimath.geometry import Pose2d, Rotation2d
+from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from .commands import FollowPathCommand, PathfindingCommand, PathfindThenFollowPath
 from .geometry_util import flipFieldPose
@@ -12,7 +12,7 @@ from wpilib import getDeployDirectory, reportError, reportWarning, SendableChoos
 import json
 from commands2.command import Command
 from commands2.subsystem import Subsystem
-from .config import RobotConfig, ReplanningConfig
+from .config import RobotConfig
 from hal import report, tResourceType
 
 
@@ -151,6 +151,7 @@ class AutoBuilder:
     _getPose: Callable[[], Pose2d] = None
     _resetPose: Callable[[Pose2d], None] = None
     _shouldFlipPath: Callable[[], bool] = None
+    _isHolonomic: bool = False
 
     _pathfindingConfigured: bool = False
     _pathfindToPoseCommandBuilder: Callable[[Pose2d, PathConstraints, float], Command] = None
@@ -162,7 +163,7 @@ class AutoBuilder:
                   robot_relative_output: Callable[[ChassisSpeeds], None],
                   controller: PathFollowingController,
                   robot_config: RobotConfig,
-                  replanning_config: ReplanningConfig, should_flip_path: Callable[[], bool],
+                  should_flip_path: Callable[[], bool],
                   drive_subsystem: Subsystem) -> None:
         """
         Configures the AutoBuilder for using PathPlanner's built-in commands.
@@ -173,7 +174,6 @@ class AutoBuilder:
         :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
         :param controller Path following controller that will be used to follow paths
         :param robot_config The robot configuration
-        :param replanning_config Path replanning configuration
         :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.
         :param drive_subsystem: the subsystem for the robot's drive
         """
@@ -187,7 +187,6 @@ class AutoBuilder:
             robot_relative_output,
             controller,
             robot_config,
-            replanning_config,
             should_flip_path,
             drive_subsystem
         )
@@ -195,6 +194,7 @@ class AutoBuilder:
         AutoBuilder._resetPose = reset_pose
         AutoBuilder._configured = True
         AutoBuilder._shouldFlipPath = should_flip_path
+        AutoBuilder._isHolonomic = robot_config.isHolonomic
 
         AutoBuilder._pathfindToPoseCommandBuilder = \
             lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindingCommand(
@@ -204,7 +204,6 @@ class AutoBuilder:
                 robot_relative_output,
                 controller,
                 robot_config,
-                replanning_config,
                 lambda: False,
                 drive_subsystem,
                 target_pose=pose,
@@ -219,7 +218,6 @@ class AutoBuilder:
                 robot_relative_output,
                 controller,
                 robot_config,
-                replanning_config,
                 should_flip_path,
                 drive_subsystem
             )
@@ -228,12 +226,14 @@ class AutoBuilder:
     @staticmethod
     def configureCustom(path_following_command_builder: Callable[[PathPlannerPath], Command],
                         reset_pose: Callable[[Pose2d], None],
+                        isHolonomic: bool,
                         should_flip_pose: Callable[[], bool] = lambda: False) -> None:
         """
         Configures the AutoBuilder with custom path following command builder. Building pathfinding commands is not supported if using a custom command builder.
 
         :param path_following_command_builder: a function that builds a command to follow a given path
         :param reset_pose: a consumer for resetting the robot's pose
+        :param isHolonomic Does the robot have a holonomic drivetrain
         :param should_flip_pose: Supplier that determines if the starting pose should be flipped to the other side of the field. This will maintain a global blue alliance origin. NOTE: paths will not be flipped when configured with a custom path following command. Flipping the paths must be handled in your command.
         """
         if AutoBuilder._configured:
@@ -243,6 +243,7 @@ class AutoBuilder:
         AutoBuilder._resetPose = reset_pose
         AutoBuilder._configured = True
         AutoBuilder._shouldFlipPath = should_flip_pose
+        AutoBuilder._isHolonomic = isHolonomic
 
         AutoBuilder._pathfindingConfigured = False
 
@@ -263,6 +264,15 @@ class AutoBuilder:
         :return: true if the AutoBuilder has been configured for pathfinding, false otherwise
         """
         return AutoBuilder._pathfindingConfigured
+
+    @staticmethod
+    def isHolonomic() -> bool:
+        """
+        Get if AutoBuilder was configured for a holonomic drive train
+
+        :return: True if holonomic
+        """
+        return AutoBuilder._isHolonomic
 
     @staticmethod
     def followPath(path: PathPlannerPath) -> Command:
@@ -326,38 +336,15 @@ class AutoBuilder:
         return AutoBuilder._pathfindThenFollowPathCommandBuilder(goal_path, pathfinding_constraints)
 
     @staticmethod
-    def getStartingPoseFromJson(starting_pose_json: dict) -> Pose2d:
+    def resetOdom(bluePose: Pose2d) -> Command:
         """
-        Get the starting pose from its JSON representation. This is only used internally.
+        Create a command to reset the robot's odometry to a given blue alliance pose
 
-        :param starting_pose_json: JSON dict representing a starting pose.
-        :return: The Pose2d starting pose
+        :param bluePose: The pose to reset to, relative to blue alliance origin
+        :return: Command to reset the robot's odometry
         """
-        pos = starting_pose_json['position']
-        x = float(pos['x'])
-        y = float(pos['y'])
-        deg = float(starting_pose_json['rotation'])
-
-        return Pose2d(x, y, Rotation2d.fromDegrees(deg))
-
-    @staticmethod
-    def getAutoCommandFromJson(auto_json: dict) -> Command:
-        """
-        Builds an auto command from the given JSON dict.
-
-        :param auto_json: the JSON dict to build the command from
-        :return: an auto command built from the JSON object
-        """
-        commandJson = auto_json['command']
-        choreoAuto = 'choreoAuto' in auto_json and bool(auto_json['choreoAuto'])
-
-        autoCommand = CommandUtil.commandFromJson(commandJson, choreoAuto)
-        if auto_json['startingPose'] is not None:
-            startPose = AutoBuilder.getStartingPoseFromJson(auto_json['startingPose'])
-            return cmd.sequence(cmd.runOnce(lambda: AutoBuilder._resetPose(
-                flipFieldPose(startPose) if AutoBuilder._shouldFlipPath() else startPose)), autoCommand)
-        else:
-            return autoCommand
+        return cmd.runOnce(lambda: AutoBuilder._resetPose(
+            flipFieldPose(bluePose) if AutoBuilder._shouldFlipPath() else bluePose))
 
     @staticmethod
     def buildAuto(auto_name: str) -> Command:
@@ -367,11 +354,7 @@ class AutoBuilder:
         :param auto_name: the name of the auto to build
         :return: an auto command for the given auto name
         """
-        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
-
-        with open(filePath, 'r') as f:
-            auto_json = json.loads(f.read())
-            return AutoBuilder.getAutoCommandFromJson(auto_json)
+        return PathPlannerAuto(auto_name)
 
     @staticmethod
     def buildAutoChooser(default_auto_name: str = "") -> SendableChooser:
@@ -403,6 +386,7 @@ class AutoBuilder:
 
 class PathPlannerAuto(Command):
     _autoCommand: Command
+    _startingPose: Pose2d
 
     _instances: int = 0
 
@@ -417,26 +401,37 @@ class PathPlannerAuto(Command):
         if not AutoBuilder.isConfigured():
             raise RuntimeError('AutoBuilder was not configured before attempting to load a PathPlannerAuto from file')
 
-        self._autoCommand = AutoBuilder.buildAuto(auto_name)
+        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
+
+        with open(filePath, 'r') as f:
+            auto_json = json.loads(f.read())
+            self._initFromJson(auto_json)
+
         self.addRequirements(*self._autoCommand.getRequirements())
         self.setName(auto_name)
 
         PathPlannerAuto._instances += 1
         report(tResourceType.kResourceType_PathPlannerAuto.value, PathPlannerAuto._instances)
 
-    @staticmethod
-    def getStartingPoseFromAutoFile(auto_name: str) -> Pose2d:
-        """
-        Get the starting pose from the given auto file
+    def _initFromJson(self, auto_json: dict):
+        commandJson = auto_json['command']
+        choreoAuto = 'choreoAuto' in auto_json and bool(auto_json['choreoAuto'])
+        command = CommandUtil.commandFromJson(commandJson, choreoAuto)
+        resetOdom = 'resetOdom' in auto_json and bool(auto_json['resetOdom'])
+        pathsInAuto = PathPlannerAuto._pathsFromCommandJson(commandJson, choreoAuto)
+        if len(pathsInAuto) > 0:
+            if AutoBuilder.isHolonomic():
+                self._startingPose = Pose2d(pathsInAuto[0].getPoint(0).position,
+                                            pathsInAuto[0].getIdealStartingState().rotation)
+            else:
+                self._startingPose = pathsInAuto[0].getStartingDifferentialPose()
+        else:
+            self._startingPose = Pose2d()
 
-        :param auto_name: Name of the auto to get the pose from
-        :return: Starting pose from the given auto
-        """
-        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
-
-        with open(filePath, 'r') as f:
-            auto_json = json.loads(f.read())
-            return AutoBuilder.getStartingPoseFromJson(auto_json['startingPose'])
+        if resetOdom:
+            self._autoCommand = cmd.sequence(AutoBuilder.resetOdom(self._startingPose), command)
+        else:
+            self._autoCommand = command
 
     @staticmethod
     def _pathsFromCommandJson(command_json: dict, choreo_paths: bool) -> List[PathPlannerPath]:

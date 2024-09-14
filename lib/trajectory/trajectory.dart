@@ -56,6 +56,7 @@ class PathPlannerTrajectory {
           Pose2d(Translation2d(x: p.position.x, y: p.position.y), holonomicRot);
       states.add(TrajectoryState());
       states[i].pose = robotPose;
+      states[i].constraints = path.pathPoints[i].constraints;
       states[i].moduleStates =
           List.generate(numModules, (index) => SwerveModuleTrajState());
 
@@ -181,13 +182,13 @@ class PathPlannerTrajectory {
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      num maxAngAccel = GeometryUtil.toRadians(
-          path.pathPoints[i].constraints.maxAngularAcceleration);
+      num maxAngAccel =
+          GeometryUtil.toRadians(states[i].constraints.maxAngularAcceleration);
       num angularAccel = MathUtil.clamp(
           totalTorque / robotConfig.moi, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec / robotConfig.massKG;
-      num maxAccel = path.pathPoints[i].constraints.maxAcceleration;
+      num maxAccel = states[i].constraints.maxAcceleration;
       num accel = accelVec.getNorm();
       if (accel > maxAccel) {
         num pct = maxAccel / accel;
@@ -228,6 +229,12 @@ class PathPlannerTrajectory {
       // state
       num maxDT = 0.0;
       for (int m = 0; m < numModules; m++) {
+        Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
+            states[i - 1].moduleStates[m].angle;
+        if (prevRotDelta.getDegrees().abs() >= 45) {
+          continue;
+        }
+
         num modVel = states[i].moduleStates[m].speedMetersPerSecond;
 
         num dt = states[i + 1].moduleStates[m].deltaPos / modVel;
@@ -236,6 +243,11 @@ class PathPlannerTrajectory {
 
       // Recalculate all module velocities with the allowed DT
       for (int m = 0; m < numModules; m++) {
+        Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
+            states[i - 1].moduleStates[m].angle;
+        if (prevRotDelta.getDegrees().abs() >= 60) {
+          continue;
+        }
         states[i].moduleStates[m].speedMetersPerSecond =
             states[i + 1].moduleStates[m].deltaPos / maxDT;
       }
@@ -244,7 +256,7 @@ class PathPlannerTrajectory {
       ChassisSpeeds desiredSpeeds =
           robotConfig.kinematics.toChassisSpeeds(states[i].moduleStates);
 
-      PathConstraints constraints = path.pathPoints[i].constraints;
+      PathConstraints constraints = states[i].constraints;
       num maxChassisVel = constraints.maxVelocity;
       num maxChassisAngVel =
           GeometryUtil.toRadians(constraints.maxAngularVelocity);
@@ -311,13 +323,13 @@ class PathPlannerTrajectory {
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      num maxAngAccel = GeometryUtil.toRadians(
-          path.pathPoints[i].constraints.maxAngularAcceleration);
+      num maxAngAccel =
+          GeometryUtil.toRadians(states[i].constraints.maxAngularAcceleration);
       num angularAccel = MathUtil.clamp(
           totalTorque / robotConfig.moi, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec / robotConfig.massKG;
-      num maxAccel = path.pathPoints[i].constraints.maxAcceleration;
+      num maxAccel = states[i].constraints.maxAcceleration;
       num accel = accelVec.getNorm();
       if (accel > maxAccel) {
         num pct = maxAccel / accel;
@@ -348,6 +360,11 @@ class PathPlannerTrajectory {
       // state
       num maxDT = 0.0;
       for (int m = 0; m < numModules; m++) {
+        Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
+            states[i - 1].moduleStates[m].angle;
+        if (prevRotDelta.getDegrees().abs() >= 45) {
+          continue;
+        }
         num modVel = states[i].moduleStates[m].speedMetersPerSecond;
 
         num dt = states[i + 1].moduleStates[m].deltaPos / modVel;
@@ -356,6 +373,13 @@ class PathPlannerTrajectory {
 
       // Recalculate all module velocities with the allowed DT
       for (int m = 0; m < numModules; m++) {
+        Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
+            states[i - 1].moduleStates[m].angle;
+        if (prevRotDelta.getDegrees().abs() >= 60) {
+          // print('v: ${states[i].moduleStates[m].speedMetersPerSecond}');
+          continue;
+        }
+
         states[i].moduleStates[m].speedMetersPerSecond =
             states[i + 1].moduleStates[m].deltaPos / maxDT;
       }
@@ -364,7 +388,7 @@ class PathPlannerTrajectory {
       ChassisSpeeds desiredSpeeds =
           robotConfig.kinematics.toChassisSpeeds(states[i].moduleStates);
 
-      PathConstraints constraints = path.pathPoints[i].constraints;
+      PathConstraints constraints = states[i].constraints;
       num maxChassisVel = constraints.maxVelocity;
       num maxChassisAngVel =
           GeometryUtil.toRadians(constraints.maxAngularVelocity);
@@ -516,6 +540,8 @@ class TrajectoryState {
   Rotation2d deltaRot = Rotation2d();
 
   List<SwerveModuleTrajState> moduleStates = [];
+
+  PathConstraints constraints = PathConstraints();
 
   TrajectoryState();
 

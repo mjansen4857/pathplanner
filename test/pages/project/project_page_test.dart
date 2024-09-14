@@ -116,10 +116,10 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
+      resetOdom: true,
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -175,10 +175,10 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
+      resetOdom: true,
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -433,10 +433,10 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
+      resetOdom: true,
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -533,10 +533,10 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
+      resetOdom: true,
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -603,8 +603,8 @@ void main() {
           PathCommand(pathName: 'path1'),
         ],
       ),
+      resetOdom: true,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 
@@ -1015,10 +1015,10 @@ void main() {
           PathCommand(pathName: 'path2'),
         ],
       ),
+      resetOdom: true,
       autoDir: join(deployPath, 'autos'),
       fs: fs,
       folder: null,
-      startingPose: null,
       choreoAuto: false,
     );
 

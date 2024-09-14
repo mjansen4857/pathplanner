@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/choreo_path.dart';
@@ -163,6 +164,16 @@ class PathPainter extends CustomPainter {
       _paintChoreoMarkers(choreoPaths[i], canvas);
     }
 
+    for (int i = 1; i < paths.length; i++) {
+      // Paint warnings between breaks in paths
+      Point<num> prevPathEnd = paths[i - 1].pathPoints.last.position;
+      Point<num> pathStart = paths[i].pathPoints.first.position;
+
+      if (prevPathEnd.distanceTo(pathStart) >= 0.25) {
+        _paintBreakWarning(prevPathEnd, pathStart, canvas, scale);
+      }
+    }
+
     if (startingPose != null) {
       PathPainterUtil.paintRobotOutline(
         Point(startingPose!.translation.x, startingPose!.translation.y),
@@ -197,19 +208,42 @@ class PathPainter extends CustomPainter {
           paint);
     }
 
+    if (prefs.getBool(PrefsKeys.showStates) ?? Defaults.showStates) {
+      _paintTrajectoryStates(simulatedPath, canvas);
+    }
+
     if (previewTime != null) {
       TrajectoryState state = simulatedPath!.sample(previewTime!.value);
       Rotation2d rotation = state.pose.rotation;
 
-      if (holonomicMode) {
+      if (holonomicMode && state.moduleStates.isNotEmpty) {
+        // Calculate the module positions based off of the robot position
+        // so they don't move relative to the robot when interpolating
+        // between trajectory states
+        List<Pose2d> modPoses = [
+          Pose2d(
+              state.pose.translation +
+                  Translation2d(x: wheelbase / 2, y: trackwidth / 2)
+                      .rotateBy(rotation),
+              state.moduleStates[0].fieldAngle),
+          Pose2d(
+              state.pose.translation +
+                  Translation2d(x: wheelbase / 2, y: -trackwidth / 2)
+                      .rotateBy(rotation),
+              state.moduleStates[1].fieldAngle),
+          Pose2d(
+              state.pose.translation +
+                  Translation2d(x: -wheelbase / 2, y: trackwidth / 2)
+                      .rotateBy(rotation),
+              state.moduleStates[2].fieldAngle),
+          Pose2d(
+              state.pose.translation +
+                  Translation2d(x: -wheelbase / 2, y: -trackwidth / 2)
+                      .rotateBy(rotation),
+              state.moduleStates[3].fieldAngle),
+        ];
         PathPainterUtil.paintRobotModules(
-            state.moduleStates
-                .map((e) => Pose2d(e.fieldPos, e.fieldAngle))
-                .toList(),
-            fieldImage,
-            scale,
-            canvas,
-            previewColor ?? Colors.grey);
+            modPoses, fieldImage, scale, canvas, previewColor ?? Colors.grey);
       }
 
       PathPainterUtil.paintRobotOutline(
@@ -220,8 +254,6 @@ class PathPainter extends CustomPainter {
           scale,
           canvas,
           previewColor ?? Colors.grey,
-          //robotIcon: Icons.drive_eta,
-          //hasArrow: true,
           showDetails: prefs.getBool(PrefsKeys.showRobotDetails) ??
               Defaults.showRobotDetails);
     }
@@ -571,6 +603,105 @@ class PathPainter extends CustomPainter {
             PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
             paint);
       }
+    }
+  }
+
+  void _paintBreakWarning(Point<num> prevPathEnd, Point<num> pathStart,
+      Canvas canvas, double scale) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = Colors.yellow[800]!
+      ..strokeWidth = 3;
+
+    final p1 =
+        PathPainterUtil.pointToPixelOffset(prevPathEnd, scale, fieldImage);
+    final p2 = PathPainterUtil.pointToPixelOffset(pathStart, scale, fieldImage);
+    final distance = (p2 - p1).distance;
+    final normalizedPattern = [7, 5].map((width) => width / distance).toList();
+    final points = <Offset>[];
+    double t = 0.0;
+    int i = 0;
+    while (t < 1.0) {
+      points.add(Offset.lerp(p1, p2, t)!);
+      t += normalizedPattern[i++];
+      points.add(Offset.lerp(p1, p2, t.clamp(0.0, 1.0))!);
+      t += normalizedPattern[i++];
+      i %= normalizedPattern.length;
+    }
+    canvas.drawPoints(PointMode.lines, points, paint);
+
+    Offset middle = Offset.lerp(p1, p2, 0.5)!;
+
+    const IconData warningIcon = Icons.warning_rounded;
+
+    TextPainter textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      text: TextSpan(
+        text: String.fromCharCode(warningIcon.codePoint),
+        style: TextStyle(
+          fontSize: 40,
+          color: Colors.yellow[700]!,
+          fontFamily: warningIcon.fontFamily,
+        ),
+      ),
+    );
+
+    TextPainter textStrokePainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      text: TextSpan(
+        text: String.fromCharCode(warningIcon.codePoint),
+        style: TextStyle(
+          fontSize: 40,
+          fontFamily: warningIcon.fontFamily,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 0.5
+            ..color = Colors.black,
+        ),
+      ),
+    );
+
+    textPainter.layout();
+    textStrokePainter.layout();
+
+    textPainter.paint(canvas, middle - const Offset(20, 25));
+    textStrokePainter.paint(canvas, middle - const Offset(20, 25));
+  }
+
+  void _paintTrajectoryStates(PathPlannerTrajectory? traj, Canvas canvas) {
+    if (traj == null) {
+      return;
+    }
+
+    var paint = Paint()..style = PaintingStyle.fill;
+
+    num maxVel = 0.0;
+    for (TrajectoryState s in traj.states) {
+      maxVel = max(
+          maxVel, sqrt(pow(s.fieldSpeeds.vx, 2) + pow(s.fieldSpeeds.vy, 2)));
+    }
+
+    for (TrajectoryState s in traj.states) {
+      num normalizedVel =
+          sqrt(pow(s.fieldSpeeds.vx, 2) + pow(s.fieldSpeeds.vy, 2)) / maxVel;
+      normalizedVel = normalizedVel.clamp(0.0, 1.0);
+
+      if (normalizedVel <= 0.33) {
+        // Lerp between red and orange
+        paint.color =
+            Color.lerp(Colors.red, Colors.orange, normalizedVel / 0.33)!;
+      } else if (normalizedVel <= 0.67) {
+        // Lerp between orange and yellow
+        paint.color = Color.lerp(
+            Colors.orange, Colors.yellow, (normalizedVel - 0.33) / 0.34)!;
+      } else {
+        // Lerp between yellow and green
+        paint.color = Color.lerp(
+            Colors.yellow, Colors.green, (normalizedVel - 0.67) / 0.33)!;
+      }
+      Offset pos = PathPainterUtil.pointToPixelOffset(
+          Point(s.pose.translation.x, s.pose.translation.y), scale, fieldImage);
+      canvas.drawCircle(pos, 3.0, paint);
     }
   }
 

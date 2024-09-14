@@ -19,6 +19,7 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
   late SharedPreferences _prefs;
   bool _snapToGuidelines = Defaults.snapToGuidelines;
   bool _hidePathsOnHover = Defaults.hidePathsOnHover;
+  bool _showStates = Defaults.showStates;
   bool _showRobotDetails = Defaults.showRobotDetails;
   bool _showGrid = Defaults.showGrid;
 
@@ -33,6 +34,8 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
             Defaults.snapToGuidelines;
         _hidePathsOnHover = _prefs.getBool(PrefsKeys.hidePathsOnHover) ??
             Defaults.hidePathsOnHover;
+        _showStates =
+            _prefs.getBool(PrefsKeys.showStates) ?? Defaults.showStates;
         _showRobotDetails = _prefs.getBool(PrefsKeys.showRobotDetails) ??
             Defaults.showRobotDetails;
         _showGrid = _prefs.getBool(PrefsKeys.showGrid) ?? Defaults.showGrid;
@@ -61,10 +64,16 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
           'Hide other paths when hovering over a specific path.',
         ),
         _buildCheckboxRow(
+          'Show Trajectory States',
+          _showStates,
+          (val) => _updateSetting(PrefsKeys.showStates, val),
+          'Display trajectory states.',
+        ),
+        _buildCheckboxRow(
           'Show Robot Details',
           _showRobotDetails,
           (val) => _updateSetting(PrefsKeys.showRobotDetails, val),
-          'Display additional details about the robots current rotation and position.',
+          'Display additional details about the robot\'s current rotation and position.',
         ),
         _buildCheckboxRow(
           'Show Grid',
@@ -110,6 +119,9 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
             break;
           case PrefsKeys.hidePathsOnHover:
             _hidePathsOnHover = value;
+            break;
+          case PrefsKeys.showStates:
+            _showStates = value;
             break;
           case PrefsKeys.showRobotDetails:
             _showRobotDetails = value;

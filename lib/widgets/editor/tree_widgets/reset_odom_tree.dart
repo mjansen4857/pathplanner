@@ -49,7 +49,7 @@ class ResetOdomTree extends StatelessWidget {
                 ),
                 child: Text(
                   'Reset Odometry',
-                  style: TextStyle(fontSize: 18),
+                  style: TextStyle(fontSize: 16),
                 ),
               ),
             ],

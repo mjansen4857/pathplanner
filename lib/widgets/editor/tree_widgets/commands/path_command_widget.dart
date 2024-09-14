@@ -53,11 +53,15 @@ class _PathCommandWidgetState extends State<PathCommandWidget> {
                 widget.allPathNames.length,
                 (index) => DropdownMenuItem(
                   value: widget.allPathNames[index],
-                  child: Text(
-                    widget.allPathNames[index],
-                    style: TextStyle(
-                      fontWeight: FontWeight.normal,
-                      color: colorScheme.onPrimaryContainer,
+                  child: Tooltip(
+                    message: widget.allPathNames[index],
+                    child: Text(
+                      widget.allPathNames[index],
+                      style: TextStyle(
+                        fontWeight: FontWeight.normal,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),

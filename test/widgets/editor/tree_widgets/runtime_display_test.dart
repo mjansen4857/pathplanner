@@ -6,7 +6,7 @@ void main() {
   testWidgets('RuntimeDisplay shows current runtime',
       (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: RuntimeDisplay(
             currentRuntime: 5.0,
@@ -22,7 +22,7 @@ void main() {
   testWidgets('RuntimeDisplay shows runtime decrease',
       (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: RuntimeDisplay(
             currentRuntime: 4.5,
@@ -40,7 +40,7 @@ void main() {
   testWidgets('RuntimeDisplay shows runtime increase',
       (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: RuntimeDisplay(
             currentRuntime: 5.5,
@@ -58,7 +58,7 @@ void main() {
   testWidgets('RuntimeDisplay shows no significant change',
       (WidgetTester tester) async {
     await tester.pumpWidget(
-      MaterialApp(
+      const MaterialApp(
         home: Scaffold(
           body: RuntimeDisplay(
             currentRuntime: 5.03,

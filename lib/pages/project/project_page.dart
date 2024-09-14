@@ -1356,28 +1356,6 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
-  void _createNewAuto({bool choreo = false}) {
-    List<String> autoNames = [];
-    for (PathPlannerAuto auto in _autos) {
-      autoNames.add(auto.name);
-    }
-    String autoName = 'New Auto';
-    while (autoNames.contains(autoName)) {
-      autoName = 'New $autoName';
-    }
-
-    setState(() {
-      _autos.add(PathPlannerAuto.defaultAuto(
-        autoDir: _autosDirectory.path,
-        name: autoName,
-        fs: fs,
-        folder: _autoFolder,
-        choreoAuto: choreo,
-      ));
-      _sortAutos(_autoSortValue);
-    });
-  }
-
   Widget _buildAutoCard(int i, BuildContext context) {
     String? warningMessage;
 
@@ -1625,7 +1603,11 @@ class _ProjectPageState extends State<ProjectPage> {
       icon: Icon(isRootFolder
           ? Icons.create_new_folder_outlined
           : Icons.delete_forever_rounded),
-      tooltip: isRootFolder ? 'Add new folder' : 'Delete folder',
+      tooltip: isRootFolder
+          ? 'Add new folder'
+          : isPathsView
+              ? 'Delete path folder'
+              : 'Delete auto folder',
       onPressed: () {
         if (isRootFolder) {
           onAddFolder();
@@ -1640,11 +1622,73 @@ class _ProjectPageState extends State<ProjectPage> {
     required bool isPathsView,
     required VoidCallback onAddItem,
   }) {
-    return IconButton.filled(
-      tooltip: 'Add new ${isPathsView ? "path" : "auto"}',
-      icon: const Icon(Icons.add_rounded),
-      onPressed: onAddItem,
-    );
+    if (!isPathsView) {
+      return Tooltip(
+        message: 'Add new auto',
+        waitDuration: const Duration(seconds: 1),
+        child: IconButton.filled(
+          key: _addAutoKey,
+          onPressed: () {
+            if (_choreoPaths.isNotEmpty) {
+              final RenderBox renderBox =
+                  _addAutoKey.currentContext?.findRenderObject() as RenderBox;
+              final Size size = renderBox.size;
+              final Offset offset = renderBox.localToGlobal(Offset.zero);
+              showMenu(
+                context: this.context,
+                position: RelativeRect.fromLTRB(
+                  offset.dx,
+                  offset.dy + size.height,
+                  offset.dx + size.width,
+                  offset.dy + size.height,
+                ),
+                items: [
+                  PopupMenuItem(
+                    child: const Text('New PathPlanner Auto'),
+                    onTap: () => _createNewAuto(),
+                  ),
+                  PopupMenuItem(
+                    child: const Text('New Choreo Auto'),
+                    onTap: () => _createNewAuto(choreo: true),
+                  ),
+                ],
+              );
+            } else {
+              _createNewAuto();
+            }
+          },
+          icon: const Icon(Icons.add_rounded),
+        ),
+      );
+    } else {
+      return IconButton.filled(
+        tooltip: 'Add new path',
+        icon: const Icon(Icons.add_rounded),
+        onPressed: onAddItem,
+      );
+    }
+  }
+
+  void _createNewAuto({bool choreo = false}) {
+    List<String> autoNames = [];
+    for (PathPlannerAuto auto in _autos) {
+      autoNames.add(auto.name);
+    }
+    String autoName = 'New Auto';
+    while (autoNames.contains(autoName)) {
+      autoName = 'New $autoName';
+    }
+
+    setState(() {
+      _autos.add(PathPlannerAuto.defaultAuto(
+        autoDir: _autosDirectory.path,
+        name: autoName,
+        fs: fs,
+        folder: _autoFolder,
+        choreoAuto: choreo,
+      ));
+      _sortAutos(_autoSortValue);
+    });
   }
 
   Widget _buildSearchBar({

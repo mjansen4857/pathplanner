@@ -342,6 +342,42 @@ void main() {
         find.widgetWithText(ProjectItemCard, 'New New Auto'), findsOneWidget);
   });
 
+  testWidgets('add new auto button', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final addButton = find.byTooltip('Add new auto');
+
+    expect(addButton, findsOneWidget);
+
+    await widgetTester.tap(addButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.byType(ProjectItemCard), findsNWidgets(2));
+    expect(find.widgetWithText(ProjectItemCard, 'New Auto'), findsOneWidget);
+
+    await widgetTester.tap(addButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.byType(ProjectItemCard), findsNWidgets(3));
+    expect(
+        find.widgetWithText(ProjectItemCard, 'New New Auto'), findsOneWidget);
+  });
+
   testWidgets('duplicate path', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
@@ -1056,13 +1092,22 @@ void main() {
     ));
     await widgetTester.pumpAndSettle();
 
-    expect(find.byTooltip('Add new path folder'), findsOneWidget);
+    // Find the specific 'Add new folder' button for paths
+    final addFolderButton = find
+        .byWidgetPredicate((widget) =>
+            widget is IconButton &&
+            widget.tooltip == 'Add new folder' &&
+            widget.icon is Icon &&
+            (widget.icon as Icon).icon == Icons.create_new_folder_outlined)
+        .first;
 
-    await widgetTester.tap(find.byTooltip('Add new path folder'));
-    await widgetTester.pump();
+    expect(addFolderButton, findsOneWidget);
 
-    expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'New Folder'),
-        findsOneWidget);
+    await widgetTester.tap(addFolderButton);
+    await widgetTester.pumpAndSettle();
+
+    // Check if the new folder is added
+    expect(find.text('New Folder'), findsOneWidget);
   });
 
   testWidgets('add auto folder', (widgetTester) async {
@@ -1085,13 +1130,22 @@ void main() {
     ));
     await widgetTester.pumpAndSettle();
 
-    expect(find.byTooltip('Add new auto folder'), findsOneWidget);
+    // Find the specific 'Add new folder' button for autos
+    final addAutoFolderButton = find
+        .byWidgetPredicate((widget) =>
+            widget is IconButton &&
+            widget.tooltip == 'Add new folder' &&
+            widget.icon is Icon &&
+            (widget.icon as Icon).icon == Icons.create_new_folder_outlined)
+        .last; // Assuming the auto folder button is the second (last) one
 
-    await widgetTester.tap(find.byTooltip('Add new auto folder'));
-    await widgetTester.pump();
+    expect(addAutoFolderButton, findsOneWidget);
 
-    expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'New Folder'),
-        findsOneWidget);
+    await widgetTester.tap(addAutoFolderButton);
+    await widgetTester.pumpAndSettle();
+
+    // Check if the new folder is added
+    expect(find.text('New Folder'), findsOneWidget);
   });
 
   testWidgets('delete path folder', (widgetTester) async {

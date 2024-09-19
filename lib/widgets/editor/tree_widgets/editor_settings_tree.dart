@@ -48,77 +48,52 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
     return TreeCardNode(
       initiallyExpanded: widget.initiallyExpanded,
       title: const Text('Editor Settings'),
-      icon: const Icon(Icons.settings),
+      leading: const Icon(Icons.settings),
       elevation: 1.0,
       children: [
         _buildCheckboxRow(
           'Snap To Guidelines',
           _snapToGuidelines,
-          (val) => _updateSetting(PrefsKeys.snapToGuidelines, val),
+          _updateSnapToGuidelines,
           'Enable or disable snapping to guidelines.',
         ),
         _buildCheckboxRow(
           'Hide Other Paths on Hover',
           _hidePathsOnHover,
-          (val) => _updateSetting(PrefsKeys.hidePathsOnHover, val),
+          _updateHidePathsOnHover,
           'Hide other paths when hovering over a specific path.',
         ),
         _buildCheckboxRow(
           'Show Trajectory States',
           _showStates,
-          (val) => _updateSetting(PrefsKeys.showStates, val),
+          _updateShowStates,
           'Display trajectory states.',
         ),
         _buildCheckboxRow(
           'Show Robot Details',
           _showRobotDetails,
-          (val) => _updateSetting(PrefsKeys.showRobotDetails, val),
+          _updateShowRobotDetails,
           'Display additional details about the robot\'s current rotation and position.',
         ),
         _buildCheckboxRow(
           'Show Grid',
           _showGrid,
-          (val) => _updateSetting(PrefsKeys.showGrid, val),
+          _updateShowGrid,
           'Toggle the visibility of the grid on the field. Each cell is 0.5M x 0.5M.',
-        ),
-        Row(
-          children: [
-            Checkbox(
-              value: _showStates,
-              onChanged: (val) {
-                if (val != null) {
-                  setState(() {
-                    _showStates = val;
-                    _prefs.setBool(PrefsKeys.showStates, val);
-                  });
-                }
-              },
-            ),
-            const Padding(
-              padding: EdgeInsets.only(
-                bottom: 3.0,
-                left: 4.0,
-              ),
-              child: Text(
-                'Show Trajectory States',
-                style: TextStyle(fontSize: 15),
-              ),
-            ),
-          ],
         ),
       ],
     );
   }
 
   Widget _buildCheckboxRow(
-      String label, bool value, Function(bool?) onChanged, String tooltip) {
+      String label, bool value, Function(bool) onChanged, String tooltip) {
     return Row(
       children: [
         Tooltip(
           message: tooltip,
           child: Checkbox(
             value: value,
-            onChanged: onChanged,
+            onChanged: (val) => onChanged(val!),
           ),
         ),
         Padding(
@@ -135,28 +110,38 @@ class _EditorSettingsTreeState extends State<EditorSettingsTree> {
     );
   }
 
-  void _updateSetting(String key, bool? value) {
-    if (value != null) {
-      setState(() {
-        switch (key) {
-          case PrefsKeys.snapToGuidelines:
-            _snapToGuidelines = value;
-            break;
-          case PrefsKeys.hidePathsOnHover:
-            _hidePathsOnHover = value;
-            break;
-          case PrefsKeys.showStates:
-            _showStates = value;
-            break;
-          case PrefsKeys.showRobotDetails:
-            _showRobotDetails = value;
-            break;
-          case PrefsKeys.showGrid:
-            _showGrid = value;
-            break;
-        }
-        _prefs.setBool(key, value);
-      });
-    }
+  void _updateSnapToGuidelines(bool value) {
+    setState(() {
+      _snapToGuidelines = value;
+    });
+    _prefs.setBool(PrefsKeys.snapToGuidelines, _snapToGuidelines);
+  }
+
+  void _updateHidePathsOnHover(bool value) {
+    setState(() {
+      _hidePathsOnHover = value;
+    });
+    _prefs.setBool(PrefsKeys.hidePathsOnHover, _hidePathsOnHover);
+  }
+
+  void _updateShowStates(bool value) {
+    setState(() {
+      _showStates = value;
+    });
+    _prefs.setBool(PrefsKeys.showStates, _showStates);
+  }
+
+  void _updateShowRobotDetails(bool value) {
+    setState(() {
+      _showRobotDetails = value;
+    });
+    _prefs.setBool(PrefsKeys.showRobotDetails, _showRobotDetails);
+  }
+
+  void _updateShowGrid(bool value) {
+    setState(() {
+      _showGrid = value;
+    });
+    _prefs.setBool(PrefsKeys.showGrid, _showGrid);
   }
 }

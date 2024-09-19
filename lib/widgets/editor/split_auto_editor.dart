@@ -102,22 +102,20 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                   widget.fieldImage.getWidget(),
                   Positioned.fill(
                     child: CustomPaint(
-                      painter: PathPainter(
-                        paths: widget.autoPaths,
-                        choreoPaths: widget.autoChoreoPaths,
-                        simple: true,
-                        hideOtherPathsOnHover:
-                            widget.prefs.getBool(PrefsKeys.hidePathsOnHover) ??
+                        painter: PathPainter(
+                            colorScheme: colorScheme,
+                            paths: widget.autoPaths,
+                            choreoPaths: widget.autoChoreoPaths,
+                            simple: true,
+                            hideOtherPathsOnHover: widget.prefs
+                                    .getBool(PrefsKeys.hidePathsOnHover) ??
                                 Defaults.hidePathsOnHover,
-                        hoveredPath: _hoveredPath,
-                        fieldImage: widget.fieldImage,
-                        simulatedPath: _simPath,
-                        animation: _previewController.view,
-                        previewColor: colorScheme.primary,
-                        prefs: widget.prefs,
-                        context: context,
-                      ),
-                    ),
+                            hoveredPath: _hoveredPath,
+                            fieldImage: widget.fieldImage,
+                            simulatedPath: _simPath,
+                            animation: _previewController.view,
+                            previewColor: colorScheme.primary,
+                            prefs: widget.prefs)),
                   ),
                 ],
               ),
@@ -316,16 +314,16 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
           content: Text(
             'Failed to generate trajectory for ${widget.auto.name}. Try adjusting the path shape or the positions of rotation targets.',
             style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant),
+                color: Theme.of(context).colorScheme.onErrorContainer),
           ),
-          backgroundColor: Theme.of(context).colorScheme.surface,
+          backgroundColor: Theme.of(context).colorScheme.errorContainer,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
           action: SnackBarAction(
             label: 'Dismiss',
-            textColor: Theme.of(context).colorScheme.primary,
+            textColor: Theme.of(context).colorScheme.onErrorContainer,
             onPressed: () {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
             },

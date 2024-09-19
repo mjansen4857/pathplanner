@@ -19,6 +19,7 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
+import 'package:pathplanner/widgets/editor/runtime_display.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -79,6 +80,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   late AnimationController _previewController;
 
   List<Waypoint> get waypoints => widget.path.waypoints;
+
+  RuntimeDisplay? _runtimeDisplay;
 
   @override
   void initState() {
@@ -431,7 +434,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     Positioned.fill(
                       child: CustomPaint(
                         painter: PathPainter(
-                          context: context,
+                          colorScheme: colorScheme,
                           paths: [widget.path],
                           simple: false,
                           fieldImage: widget.fieldImage,
@@ -501,7 +504,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
-                    pathRuntime: _simTraj?.states.last.timeSeconds,
+                    runtimeDisplay: _runtimeDisplay,
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
                     initiallySelectedRotTarget: _selectedRotTarget,
@@ -734,6 +737,12 @@ class _SplitPathEditorState extends State<SplitPathEditor>
         if (!(_simTraj?.getTotalTimeSeconds().isFinite ?? false)) {
           _simTraj = null;
         }
+
+        // Update the RuntimeDisplay widget
+        _runtimeDisplay = RuntimeDisplay(
+          currentRuntime: _simTraj?.states.last.timeSeconds,
+          previousRuntime: _runtimeDisplay?.currentRuntime,
+        );
       });
 
       if (!_paused) {
@@ -754,16 +763,16 @@ class _SplitPathEditorState extends State<SplitPathEditor>
             content: Text(
               'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets',
               style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  color: Theme.of(context).colorScheme.onErrorContainer),
             ),
-            backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundColor: Theme.of(context).colorScheme.errorContainer,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
             action: SnackBarAction(
               label: 'Dismiss',
-              textColor: Theme.of(context).colorScheme.primary,
+              textColor: Theme.of(context).colorScheme.onErrorContainer,
               onPressed: () {
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
               },

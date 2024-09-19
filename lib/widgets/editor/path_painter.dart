@@ -13,7 +13,7 @@ import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PathPainter extends CustomPainter {
-  final BuildContext context;
+  final ColorScheme colorScheme;
   final List<PathPlannerPath> paths;
   final List<ChoreoPath> choreoPaths;
   final FieldImage fieldImage;
@@ -42,7 +42,7 @@ class PathPainter extends CustomPainter {
   static double scale = 1;
 
   PathPainter({
-    required this.context,
+    required this.colorScheme,
     required this.paths,
     this.choreoPaths = const [],
     required this.fieldImage,
@@ -103,12 +103,8 @@ class PathPainter extends CustomPainter {
         _paintRadius(paths[i], canvas, scale);
       }
 
-      _paintPathPoints(
-          paths[i],
-          canvas,
-          (hoveredPath == paths[i].name)
-              ? Theme.of(context).colorScheme.primary
-              : Colors.grey[300]!);
+      _paintPathPoints(paths[i], canvas,
+          (hoveredPath == paths[i].name) ? Colors.orange : Colors.grey[300]!);
 
       if (holonomicMode) {
         _paintRotations(paths[i], canvas, scale);
@@ -141,7 +137,7 @@ class PathPainter extends CustomPainter {
           choreoPaths[i].trajectory,
           canvas,
           (hoveredPath == choreoPaths[i].name)
-              ? Theme.of(context).colorScheme.primary
+              ? colorScheme.primary
               : Colors.grey[300]!);
       _paintChoreoWaypoint(
           choreoPaths[i].trajectory.states.first, canvas, Colors.green, scale);
@@ -341,7 +337,7 @@ class PathPainter extends CustomPainter {
     canvas.drawPath(p, paint);
 
     if (selectedZone != null) {
-      paint.color = Theme.of(context).colorScheme.primary;
+      paint.color = Colors.orange;
       paint.strokeWidth =
           6; // Thicker stroke width for selected constraint zone
       p.reset();
@@ -393,7 +389,7 @@ class PathPainter extends CustomPainter {
       Color markerColor = Colors.grey[700]!;
       Color markerStrokeColor = Colors.black;
       if (selectedMarker == i) {
-        markerColor = Theme.of(context).colorScheme.primary;
+        markerColor = Colors.orange;
       } else if (hoveredMarker == i) {
         markerColor = Colors.deepPurpleAccent;
       }
@@ -422,7 +418,7 @@ class PathPainter extends CustomPainter {
       if (path.pathPoints[i].rotationTarget != null) {
         Color rotationColor = Colors.grey[700]!;
         if (selectedRotTarget == i) {
-          rotationColor = Theme.of(context).colorScheme.primary;
+          rotationColor = Colors.orange;
         } else if (hoveredRotTarget == i) {
           rotationColor = Colors.deepPurpleAccent;
         }
@@ -542,7 +538,7 @@ class PathPainter extends CustomPainter {
       ..strokeWidth = 2;
 
     if (waypointIdx == selectedWaypoint) {
-      paint.color = Theme.of(context).colorScheme.primary;
+      paint.color = Colors.orange;
     } else if (waypointIdx == hoveredWaypoint) {
       paint.color = Colors.deepPurpleAccent;
     } else {
@@ -580,7 +576,7 @@ class PathPainter extends CustomPainter {
     }
 
     if (waypointIdx == selectedWaypoint) {
-      paint.color = Theme.of(context).colorScheme.primary;
+      paint.color = Colors.orange;
     } else if (waypointIdx == hoveredWaypoint) {
       paint.color = Colors.deepPurpleAccent;
     }
@@ -603,7 +599,7 @@ class PathPainter extends CustomPainter {
       if (waypoint.nextControl != null) {
         paint.style = PaintingStyle.fill;
         if (waypointIdx == selectedWaypoint) {
-          paint.color = Theme.of(context).colorScheme.primary;
+          paint.color = Colors.orange;
         } else if (waypointIdx == hoveredWaypoint) {
           paint.color = Colors.deepPurpleAccent;
         } else {
@@ -626,7 +622,7 @@ class PathPainter extends CustomPainter {
       if (waypoint.prevControl != null) {
         paint.style = PaintingStyle.fill;
         if (waypointIdx == selectedWaypoint) {
-          paint.color = Theme.of(context).colorScheme.primary;
+          paint.color = Colors.orange;
         } else if (waypointIdx == hoveredWaypoint) {
           paint.color = Colors.deepPurpleAccent;
         } else {

@@ -55,7 +55,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Rotation Targets'),
-      icon: const Icon(Icons.rotate_90_degrees_cw_rounded),
+      leading: const Icon(Icons.rotate_90_degrees_cw_rounded),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -105,7 +105,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return TreeCardNode(
-      icon: const Icon(Icons.rotate_right_rounded),
+      leading: const Icon(Icons.rotate_right_rounded),
       controller: _controllers[targetIdx],
       onHoverStart: () => widget.onTargetHovered?.call(targetIdx),
       onHoverEnd: () => widget.onTargetHovered?.call(null),

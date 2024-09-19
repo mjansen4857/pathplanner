@@ -57,7 +57,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Event Markers'),
-      icon: const Icon(Icons.pin_drop_rounded),
+      leading: const Icon(Icons.pin_drop_rounded),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -110,7 +110,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
     );
 
     return TreeCardNode(
-      icon: const Icon(Icons.pin_drop_rounded),
+      leading: const Icon(Icons.pin_drop_rounded),
       controller: _controllers[markerIdx],
       onHoverStart: () => widget.onMarkerHovered?.call(markerIdx),
       onHoverEnd: () => widget.onMarkerHovered?.call(null),

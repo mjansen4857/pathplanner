@@ -23,7 +23,7 @@ class GlobalConstraintsTree extends StatelessWidget {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Global Constraints'),
-      icon: const Icon(Icons.escalator_rounded),
+      leading: const Icon(Icons.escalator_rounded),
       initiallyExpanded: path.globalConstraintsExpanded,
       onExpansionChanged: (value) {
         if (value != null) {

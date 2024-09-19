@@ -55,7 +55,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Constraint Zones'),
-      icon: const Icon(Icons.speed_rounded),
+      leading: const Icon(Icons.speed_rounded),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

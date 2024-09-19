@@ -31,7 +31,7 @@ class GoalEndStateTree extends StatelessWidget {
                   '${path.goalEndState.rotation.toStringAsFixed(2)}° with ${path.goalEndState.velocity.toStringAsFixed(2)} M/S'),
         ],
       ),
-      icon: const Icon(Icons.flag_circle_rounded),
+      leading: const Icon(Icons.flag_circle_rounded),
       initiallyExpanded: path.goalEndStateExpanded,
       onExpansionChanged: (value) {
         if (value != null) {

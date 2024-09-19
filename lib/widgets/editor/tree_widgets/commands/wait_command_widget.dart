@@ -20,14 +20,6 @@ class WaitCommandWidget extends StatelessWidget {
     this.onDuplicateCommand,
   });
 
-  void _increaseWaitTime() {
-    _updateWaitTime(command.waitTime + 0.2);
-  }
-
-  void _decreaseWaitTime() {
-    _updateWaitTime(command.waitTime - 0.2);
-  }
-
   void _updateWaitTime(double newValue) {
     if (newValue >= 0) {
       undoStack.add(Change(
@@ -50,12 +42,7 @@ class WaitCommandWidget extends StatelessWidget {
 
     return Row(
       children: [
-        const SizedBox(width: 5),
-        IconButton(
-          onPressed: _decreaseWaitTime,
-          icon: Icon(Icons.remove, color: colorScheme.primary, size: 15),
-        ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 8),
         Expanded(
           child: NumberTextField(
             initialText: command.waitTime.toStringAsFixed(2),
@@ -66,12 +53,8 @@ class WaitCommandWidget extends StatelessWidget {
                 _updateWaitTime(parsedValue);
               }
             },
+            arrowKeyIncrement: 0.1,
           ),
-        ),
-        const SizedBox(width: 12),
-        IconButton(
-          onPressed: _increaseWaitTime,
-          icon: Icon(Icons.add, color: colorScheme.primary, size: 15),
         ),
         const SizedBox(width: 12),
         DuplicateCommandButton(

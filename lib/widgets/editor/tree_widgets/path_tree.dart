@@ -31,10 +31,9 @@ class PathTree extends StatefulWidget {
   final int? initiallySelectedRotTarget;
   final int? initiallySelectedMarker;
   final ChangeStack undoStack;
-  final num? pathRuntime;
+  final Widget? runtimeDisplay;
   final bool holonomicMode;
   final PathConstraints defaultConstraints;
-  final num? previousPathRuntime;
 
   const PathTree({
     super.key,
@@ -56,11 +55,10 @@ class PathTree extends StatefulWidget {
     this.onMarkerSelected,
     this.initiallySelectedMarker,
     required this.undoStack,
-    this.pathRuntime,
+    this.runtimeDisplay,
     this.onPathChangedNoSim,
     required this.holonomicMode,
     required this.defaultConstraints,
-    this.previousPathRuntime,
   });
 
   @override
@@ -68,22 +66,9 @@ class PathTree extends StatefulWidget {
 }
 
 class _PathTreeState extends State<PathTree> {
-  num? _previousRuntime;
-
   @override
   void initState() {
     super.initState();
-    _previousRuntime = widget.previousPathRuntime;
-  }
-
-  @override
-  void didUpdateWidget(covariant PathTree oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.pathRuntime != oldWidget.pathRuntime) {
-      setState(() {
-        _previousRuntime = oldWidget.pathRuntime;
-      });
-    }
   }
 
   @override
@@ -132,7 +117,7 @@ class _PathTreeState extends State<PathTree> {
             ),
           ],
           const SizedBox(width: 16),
-          _buildRuntimeDisplay(),
+          if (widget.runtimeDisplay != null) widget.runtimeDisplay!,
           const SizedBox(width: 16),
           Tooltip(
             message: 'Move to Other Side',
@@ -162,13 +147,6 @@ class _PathTreeState extends State<PathTree> {
           fontSize: 12,
         ),
       ),
-    );
-  }
-
-  Widget _buildRuntimeDisplay() {
-    return RuntimeDisplay(
-      currentRuntime: widget.pathRuntime,
-      previousRuntime: _previousRuntime,
     );
   }
 

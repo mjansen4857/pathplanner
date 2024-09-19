@@ -67,7 +67,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Waypoints'),
-      icon: const Icon(Icons.location_on_rounded),
+      leading: const Icon(Icons.location_on_rounded),
       trailing: ItemCount(count: widget.path.waypoints.length),
       initiallyExpanded: widget.path.waypointsExpanded,
       controller: _expansionController,
@@ -159,14 +159,14 @@ class _WaypointsTreeState extends State<WaypointsTree> {
           Tooltip(
             message: waypoint.isLocked ? 'Unlock' : 'Lock',
             waitDuration: const Duration(seconds: 1),
-            child: GestureDetector(
-              onTap: () {
+            child: IconButton(
+              onPressed: () {
                 setState(() {
                   waypoint.isLocked = !waypoint.isLocked;
                 });
                 widget.onPathChanged?.call();
               },
-              child: AnimatedSwitcher(
+              icon: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 transitionBuilder: (Widget child, Animation<double> animation) {
                   return ScaleTransition(scale: animation, child: child);

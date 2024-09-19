@@ -298,7 +298,7 @@ class _ProjectPageState extends State<ProjectPage> {
           ),
         ),
         Align(
-          alignment: Alignment.bottomLeft,
+          alignment: Alignment.bottomRight,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: FloatingActionButton(
@@ -424,7 +424,7 @@ class _ProjectPageState extends State<ProjectPage> {
         child: Card(
           elevation: 0.0,
           margin: const EdgeInsets.all(0),
-          surfaceTintColor: colorScheme.surface,
+          color: colorScheme.surface,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(

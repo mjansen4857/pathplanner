@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class TreeCardNode extends StatelessWidget {
   final Widget title;
-  final Widget? icon;
+  final Widget? leading;
   final double elevation;
   final List<Widget> children;
   final VoidCallback? onHoverStart;
@@ -16,7 +16,7 @@ class TreeCardNode extends StatelessWidget {
   const TreeCardNode({
     super.key,
     required this.title,
-    this.icon,
+    this.leading,
     this.elevation = 2,
     required this.children,
     this.onHoverStart,
@@ -45,8 +45,8 @@ class TreeCardNode extends StatelessWidget {
           child: ExpansionTile(
             title: Row(
               children: [
-                if (icon != null) icon!,
-                if (icon != null) const SizedBox(width: 8),
+                if (leading != null) leading!,
+                if (leading != null) const SizedBox(width: 8),
                 Expanded(child: title),
               ],
             ),

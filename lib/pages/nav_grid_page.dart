@@ -134,7 +134,7 @@ class _NavGridPageState extends State<NavGridPage> {
           ),
         ),
         Align(
-          alignment: Alignment.bottomLeft,
+          alignment: Alignment.bottomRight,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: FloatingActionButton.extended(

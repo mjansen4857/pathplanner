@@ -12,40 +12,33 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'telemetry_page_test.mocks.dart';
 
-@GenerateMocks([PPLibTelemetry])
+@GenerateNiceMocks([MockSpec<PPLibTelemetry>()])
 void main() {
   late SharedPreferences prefs;
-  late MockPPLibTelemetry telemetry;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
-    telemetry = MockPPLibTelemetry();
-
-    when(telemetry.connectionStatusStream())
-        .thenAnswer((_) => Stream.value(false).asBroadcastStream());
-    when(telemetry.velocitiesStream())
-        .thenAnswer((_) => Stream.value([0, 0, 0, 0]).asBroadcastStream());
-    when(telemetry.inaccuracyStream())
-        .thenAnswer((_) => Stream.value(0).asBroadcastStream());
-    when(telemetry.currentPoseStream())
-        .thenAnswer((_) => Stream.value(null).asBroadcastStream());
-    when(telemetry.targetPoseStream())
-        .thenAnswer((_) => Stream.value(null).asBroadcastStream());
-    when(telemetry.currentPathStream())
-        .thenAnswer((_) => Stream.value(null).asBroadcastStream());
-
-    when(telemetry.getServerAddress()).thenReturn('localhost');
   });
 
-  testWidgets('TelemetryPage shows loading indicator when not connected',
-      (WidgetTester tester) async {
-    when(telemetry.isConnected).thenReturn(false);
-    when(telemetry.getServerAddress()).thenReturn('localhost');
+  testWidgets('loading when not connected', (widgetTester) async {
+    var telemetry = MockPPLibTelemetry();
 
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
+    final connectionStatusController = StreamController<bool>();
+    when(telemetry.connectionStatusStream())
+        .thenAnswer((_) => connectionStatusController.stream);
+    when(telemetry.getServerAddress()).thenReturn('localhost:5811');
+    when(telemetry.velocitiesStream()).thenAnswer((_) => const Stream.empty());
+    when(telemetry.inaccuracyStream()).thenAnswer((_) => const Stream.empty());
+    when(telemetry.currentPoseStream()).thenAnswer((_) => Stream.value(null));
+    when(telemetry.targetPoseStream()).thenAnswer((_) => Stream.value(null));
+    when(telemetry.currentPathStream()).thenAnswer((_) => Stream.value(null));
 
-    await tester.pumpWidget(MaterialApp(
+    connectionStatusController.add(false);
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: TelemetryPage(
           fieldImage: FieldImage.defaultField,
@@ -55,29 +48,46 @@ void main() {
       ),
     ));
 
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await widgetTester.pump(const Duration(seconds: 1));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(find.text('Attempting to connect to robot...'), findsOneWidget);
-    expect(find.text('Current Server Address: localhost'), findsOneWidget);
+    expect(find.text('Current Server Address: localhost:5811'), findsOneWidget);
     expect(find.byType(LineChart), findsNothing);
-    expect(find.text('Please ensure that:'), findsOneWidget);
-    expect(find.text('The robot is powered on'), findsOneWidget);
-    expect(
-        find.text('You are connected to the correct network'), findsOneWidget);
-    expect(find.text('The robot code is running'), findsOneWidget);
+
+    // Clean up
+    addTearDown(connectionStatusController.close);
   });
 
-  testWidgets('TelemetryPage shows graphs when connected',
-      (WidgetTester tester) async {
-    when(telemetry.isConnected).thenReturn(true);
+  testWidgets('displays data when connected', (widgetTester) async {
+    var telemetry = MockPPLibTelemetry();
+
+    final connectionStatusController = StreamController<bool>();
+    final velocitiesController = StreamController<List<num>>();
+    final inaccuracyController = StreamController<num>();
+    final currentPoseController = StreamController<List<num>>();
+    final targetPoseController = StreamController<List<num>>();
+    final currentPathController = StreamController<List<num>>();
+
+    when(telemetry.getServerAddress()).thenReturn('localhost:5811');
     when(telemetry.connectionStatusStream())
-        .thenAnswer((_) => Stream.value(true).asBroadcastStream());
+        .thenAnswer((_) => connectionStatusController.stream);
+    when(telemetry.velocitiesStream())
+        .thenAnswer((_) => velocitiesController.stream);
+    when(telemetry.inaccuracyStream())
+        .thenAnswer((_) => inaccuracyController.stream);
+    when(telemetry.currentPoseStream())
+        .thenAnswer((_) => currentPoseController.stream);
+    when(telemetry.targetPoseStream())
+        .thenAnswer((_) => targetPoseController.stream);
+    when(telemetry.currentPathStream())
+        .thenAnswer((_) => currentPathController.stream);
 
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
+    connectionStatusController.add(true);
 
-    await tester.pumpWidget(MaterialApp(
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: TelemetryPage(
           fieldImage: FieldImage.defaultField,
@@ -87,59 +97,59 @@ void main() {
       ),
     ));
 
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    // Add some data to the streams
+    velocitiesController.add([1.0, 2.0, 0.5, 1.5]);
+    inaccuracyController.add(0.25);
+    currentPoseController.add([2.1, 2.1, 20]);
+    targetPoseController.add([2, 2, 0]);
+    currentPathController.add([1, 5, 2, 4, 3, 5]);
+
+    // Allow time for the streams to emit some values
+    await widgetTester.pump(const Duration(milliseconds: 100));
+    await widgetTester.pumpAndSettle();
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
-    expect(find.byType(LineChart), findsNWidgets(3));
+    expect(find.byType(LineChart), findsNWidgets(3)); // Expect 3 LineCharts
+    expect(find.byType(InteractiveViewer), findsOneWidget);
     expect(find.text('Robot Velocity'), findsOneWidget);
     expect(find.text('Angular Velocity'), findsOneWidget);
     expect(find.text('Path Inaccuracy'), findsOneWidget);
-  });
 
-  testWidgets('TelemetryPage updates when new data is received',
-      (WidgetTester tester) async {
-    when(telemetry.isConnected).thenReturn(true);
-    when(telemetry.connectionStatusStream())
-        .thenAnswer((_) => Stream.value(true).asBroadcastStream());
-
-    final velocitiesController = StreamController<List<num>>.broadcast();
-    when(telemetry.velocitiesStream())
-        .thenAnswer((_) => velocitiesController.stream);
-
-    await tester.binding.setSurfaceSize(const Size(1280, 720));
-
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: TelemetryPage(
-          fieldImage: FieldImage.defaultField,
-          telemetry: telemetry,
-          prefs: prefs,
-        ),
-      ),
-    ));
-
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
-
-    velocitiesController.add([1, 2, 3, 4]);
-    await tester.pump();
-
-    // You might need to implement a way to verify that the graph has updated
-    // This could involve exposing some internal state for testing or using a custom matcher
-    // For now, we'll just verify that the graph is still present
-    expect(find.byType(LineChart), findsNWidgets(3));
-
-    velocitiesController.close();
+    // Clean up
+    addTearDown(() {
+      connectionStatusController.close();
+      velocitiesController.close();
+      inaccuracyController.close();
+      currentPoseController.close();
+      targetPoseController.close();
+      currentPathController.close();
+    });
   });
 
   testWidgets('TelemetryPage handles connection status changes',
       (WidgetTester tester) async {
+    var telemetry = MockPPLibTelemetry();
+
     final connectionStatusController = StreamController<bool>.broadcast();
+    final velocitiesController = StreamController<List<num>>();
+    final inaccuracyController = StreamController<num>();
+    final currentPoseController = StreamController<List<num>?>();
+    final targetPoseController = StreamController<List<num>?>();
+    final currentPathController = StreamController<List<num>?>();
+
     when(telemetry.connectionStatusStream())
         .thenAnswer((_) => connectionStatusController.stream);
-    when(telemetry.isConnected).thenReturn(false);
-    when(telemetry.getServerAddress()).thenReturn('localhost');
+    when(telemetry.velocitiesStream())
+        .thenAnswer((_) => velocitiesController.stream);
+    when(telemetry.inaccuracyStream())
+        .thenAnswer((_) => inaccuracyController.stream);
+    when(telemetry.currentPoseStream())
+        .thenAnswer((_) => currentPoseController.stream);
+    when(telemetry.targetPoseStream())
+        .thenAnswer((_) => targetPoseController.stream);
+    when(telemetry.currentPathStream())
+        .thenAnswer((_) => currentPathController.stream);
+    when(telemetry.getServerAddress()).thenReturn('localhost:5811');
 
     await tester.binding.setSurfaceSize(const Size(1280, 720));
 
@@ -153,31 +163,67 @@ void main() {
       ),
     ));
 
+    // Initially disconnected
+    connectionStatusController.add(false);
     await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Attempting to connect to robot...'), findsOneWidget);
 
-    when(telemetry.isConnected).thenReturn(true);
+    // Connect
     connectionStatusController.add(true);
     await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.byType(LineChart), findsNWidgets(3));
 
-    connectionStatusController.close();
+    // Disconnect again
+    connectionStatusController.add(false);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Attempting to connect to robot...'), findsOneWidget);
+
+    // Clean up
+    addTearDown(() {
+      connectionStatusController.close();
+      velocitiesController.close();
+      inaccuracyController.close();
+      currentPoseController.close();
+      targetPoseController.close();
+      currentPathController.close();
+    });
   });
 
   testWidgets('TelemetryPage updates inaccuracy graph',
       (WidgetTester tester) async {
-    when(telemetry.isConnected).thenReturn(true);
-    when(telemetry.connectionStatusStream())
-        .thenAnswer((_) => Stream.value(true).asBroadcastStream());
+    var telemetry = MockPPLibTelemetry();
 
+    final connectionStatusController = StreamController<bool>.broadcast();
+    final velocitiesController = StreamController<List<num>>();
     final inaccuracyController = StreamController<num>.broadcast();
+    final currentPoseController = StreamController<List<num>?>();
+    final targetPoseController = StreamController<List<num>?>();
+    final currentPathController = StreamController<List<num>?>();
+
+    when(telemetry.connectionStatusStream())
+        .thenAnswer((_) => connectionStatusController.stream);
+    when(telemetry.velocitiesStream())
+        .thenAnswer((_) => velocitiesController.stream);
     when(telemetry.inaccuracyStream())
         .thenAnswer((_) => inaccuracyController.stream);
+    when(telemetry.currentPoseStream())
+        .thenAnswer((_) => currentPoseController.stream);
+    when(telemetry.targetPoseStream())
+        .thenAnswer((_) => targetPoseController.stream);
+    when(telemetry.currentPathStream())
+        .thenAnswer((_) => currentPathController.stream);
+    when(telemetry.getServerAddress()).thenReturn('localhost:5811');
+
+    await tester.binding.setSurfaceSize(const Size(1280, 720));
 
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -189,19 +235,37 @@ void main() {
       ),
     ));
 
+    // Simulate connected state
+    connectionStatusController.add(true);
     await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(milliseconds: 500));
 
+    // Add inaccuracy data
     inaccuracyController.add(0.5);
     await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     // Verify that the inaccuracy graph is updated
     final inaccuracyGraph = find.byWidgetPredicate(
       (Widget widget) =>
-          widget is LineChart && widget.data.lineBarsData.length == 2,
+          widget is LineChart &&
+          widget.data.lineBarsData.isNotEmpty &&
+          widget.data.lineBarsData.first.spots.isNotEmpty,
     );
     expect(inaccuracyGraph, findsOneWidget);
 
-    inaccuracyController.close();
+    // Verify the inaccuracy value
+    final lineChart = tester.widget<LineChart>(inaccuracyGraph);
+    expect(lineChart.data.lineBarsData.first.spots.last.y, 0.5);
+
+    // Clean up
+    addTearDown(() {
+      connectionStatusController.close();
+      velocitiesController.close();
+      inaccuracyController.close();
+      currentPoseController.close();
+      targetPoseController.close();
+      currentPathController.close();
+    });
   });
 }

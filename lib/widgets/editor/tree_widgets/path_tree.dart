@@ -8,7 +8,6 @@ import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
-import 'package:pathplanner/widgets/editor/runtime_display.dart';
 import 'package:undo/undo.dart';
 
 class PathTree extends StatefulWidget {

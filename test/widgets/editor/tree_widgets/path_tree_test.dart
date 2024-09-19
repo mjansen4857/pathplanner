@@ -34,7 +34,10 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
-          pathRuntime: 5.0,
+          runtimeDisplay: const RuntimeDisplay(
+            currentRuntime: 5.0,
+            previousRuntime: null,
+          ),
         ),
       ),
     ));

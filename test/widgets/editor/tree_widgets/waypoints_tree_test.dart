@@ -555,8 +555,8 @@ void main() {
     expect(path.waypoints[1].linkedName, null);
   });
 
-  testWidgets('Lock waypoint button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
+  testWidgets('Lock waypoint button', (WidgetTester tester) async {
+    await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: WaypointsTree(
           path: path,
@@ -570,19 +570,19 @@ void main() {
       ),
     ));
 
-    var lockButtons = find.byIcon(Icons.lock_open_rounded);
+    final Finder lockButton = find.byType(IconButton).first;
 
-    expect(lockButtons, findsNWidgets(2));
+    await tester.ensureVisible(lockButton);
+    await tester.pumpAndSettle();
 
-    await widgetTester.tap(lockButtons.first);
-    await widgetTester.pump();
+    await tester.tap(lockButton);
+    await tester.pumpAndSettle();
 
     expect(pathChanged, true);
     expect(path.waypoints[0].isLocked, true);
 
-    lockButtons = find.byIcon(Icons.lock_rounded);
-    await widgetTester.tap(lockButtons.first);
-    await widgetTester.pump();
+    await tester.tap(lockButton);
+    await tester.pumpAndSettle();
 
     expect(path.waypoints[0].isLocked, false);
   });

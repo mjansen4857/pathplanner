@@ -557,6 +557,8 @@ autos before they are shown on shuffle board
 >
 {style="warning"}
 
+<tabs group="pplib-language">
+<tab title="Java" group-key="java">
 
 ```java
 public class RobotContainer {
@@ -585,5 +587,78 @@ public class RobotContainer {
   }
 }
 ```
+
+</tab>
+
+<tab title="C++" group-key="cpp">
+
+```C++
+#include <pathplanner/lib/auto/AutoBuilder.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/CommandPtr.h>
+#include <frc2/command/Command.h>
+#include <memory>
+
+using namespace pathplanner;
+
+RobotContainer::RobotContainer() {
+  // ...
+
+  // For convenience a programmer could change this when going to competition.
+  bool isCompetition = true;
+
+  // Build an auto chooser. This will use frc2::cmd::None() as the default option.
+  // As an example, this will only show autos that start with "comp" while at
+  // competition as defined by the programmer
+  autoChooser = AutoBuilder::buildAutoChooser(
+    "", // If empty it will choose frc2::cmd::None()
+    [&isCompetition](const PathPlannerAuto *const autoCommand,
+            std::filesystem::path autoPath)
+    {
+      return isCompetition ? autoCommand->GetName().starts_with("comp") : true;
+    }
+  );
+
+  // Another option that allows you to specify the default auto by its name
+  /*
+  autoChooser = AutoBuilder::buildAutoChooser(
+    "autoDefault", // If filled it will choosen always, regardless of filter
+    [&isCompetition](const PathPlannerAuto *const autoCommand,
+            std::filesystem::path autoP)
+    {
+      return isCompetition ? autoCommand->GetName().starts_with("comp") : true;
+    }
+  ); 
+  */
+
+  // Another option allows you to filter out current directories relative to pathplanner/auto deploy directory
+  // Allows only autos in directory deploy/pathplanner/autos/comp
+  /*
+  autoChooser = AutoBuilder::buildAutoChooser(
+    "",
+    [&isCompetition](const PathPlannerAuto *const autoCommand,
+            std::filesystem::path autoPath)
+    {
+      return autoPath.compare("/comp") < 0;
+    }
+  ); 
+  */
+
+  frc::SmartDashboard::PutData("Auto Chooser", &autoChooser);
+}
+
+frc2::Command* RobotContainer::getAutonomousCommand() {
+  // Returns a frc2::Command* that is freed at program termination
+  return autoChooser.GetSelected();
+}
+
+frc2::CommandPtr RobotContainer::getAutonomousCommand() {
+  // Returns a copy that is freed after reference is lost
+  return frc2::CommandPtr(std::make_unique<frc2::Command>(*autoChooser.GetSelected()));
+}
+```
+
+</tab>
+</tabs>
 
 </snippet>

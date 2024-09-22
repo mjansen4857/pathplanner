@@ -7,7 +7,7 @@
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/controller/RamseteController.h>
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <frc2/command/Command.h>
 #include <frc/smartdashboard/SendableChooser.h>
 #include <memory>
@@ -202,7 +202,7 @@ private:
 
 	static bool m_commandRefsGeneratedForSendable;
 	static frc2::CommandPtr m_noneCommand;
-	static std::unordered_map<std::filesystem::path, frc2::CommandPtr> m_autoCommands;
+	static std::map<std::filesystem::path, frc2::CommandPtr> m_autoCommands;
 
 	static bool m_pathfindingConfigured;
 	static std::function<

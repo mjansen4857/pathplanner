@@ -19,7 +19,7 @@ bool AutoBuilder::m_isHolonomic = false;
 
 bool AutoBuilder::m_commandRefsGeneratedForSendable = false;
 frc2::CommandPtr AutoBuilder::m_noneCommand = frc2::cmd::None();
-std::unordered_map<std::filesystem::path, frc2::CommandPtr> AutoBuilder::m_autoCommands;
+std::map<std::filesystem::path, frc2::CommandPtr> AutoBuilder::m_autoCommands;
 
 bool AutoBuilder::m_pathfindingConfigured = false;
 std::function<

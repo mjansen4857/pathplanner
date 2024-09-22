@@ -326,7 +326,18 @@ public class PathPlannerPath {
         double xVel = ((Number) sample.get("velocityX")).doubleValue();
         double yVel = ((Number) sample.get("velocityY")).doubleValue();
         double angularVelRps = ((Number) sample.get("angularVelocity")).doubleValue();
-
+        JSONArray moduleForcesXArray = (JSONArray) sample.get("moduleForcesX");
+        List<Double> moduleForcesX = new ArrayList<>();
+        for (Object force : moduleForcesXArray) {
+          moduleForcesX.add(((Number) force).doubleValue());
+        }
+        state.moduleForcesX = Optional.of(moduleForcesX);
+        JSONArray moduleForcesYArray = (JSONArray) sample.get("moduleForcesY");
+        List<Double> moduleForcesY = new ArrayList<>();
+        for (Object force : moduleForcesYArray) {
+          moduleForcesY.add(((Number) force).doubleValue());
+        }
+        state.moduleForcesY = Optional.of(moduleForcesY);
         state.timeSeconds = time;
         state.linearVelocity = Math.hypot(xVel, yVel);
         state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));

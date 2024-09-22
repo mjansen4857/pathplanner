@@ -1,5 +1,8 @@
 package com.pathplanner.lib.trajectory;
 
+import java.util.List;
+import java.util.Optional;
+
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -17,7 +20,10 @@ public class PathPlannerTrajectoryState {
   public Pose2d pose = Pose2d.kZero;
   /** The linear velocity at this state in m/s */
   public double linearVelocity = 0.0;
-
+  /** Optional module forces in the X direction in N on each module. Module forces appear in the following order: [FL, FR, BL, BR]. Will only be provided for Choreo paths*/
+  public Optional<List<Double>> moduleForcesX = Optional.empty();
+  /** Optional module forces in the Y direction in N on each module. Module forces appear in the following order: [FL, FR, BL, BR]. Will only be provided for Choreo paths*/
+  public Optional<List<Double>> moduleForcesY = Optional.empty();
   // Values used only during generation, these will not be interpolated
   /** The field-relative heading, or direction of travel, at this state */
   protected Rotation2d heading = Rotation2d.kZero;

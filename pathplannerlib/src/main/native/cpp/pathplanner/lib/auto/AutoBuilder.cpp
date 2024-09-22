@@ -19,7 +19,7 @@ bool AutoBuilder::m_isHolonomic = false;
 
 bool AutoBuilder::m_commandRefsGeneratedForSendable = false;
 frc2::CommandPtr AutoBuilder::m_noneCommand = frc2::cmd::None();
-std::unordered_map<std::string, frc2::CommandPtr> AutoBuilder::m_autoCommands;
+std::unordered_map<std::filesystem::path, frc2::CommandPtr> AutoBuilder::m_autoCommands;
 
 bool AutoBuilder::m_pathfindingConfigured = false;
 std::function<
@@ -148,8 +148,7 @@ void AutoBuilder::regenerateSendableReferences() {
 
 	for (std::filesystem::path path : autoPathFilepaths) {
 		// A command which is an auto that come from a path
-		m_autoCommands.insert_or_assign(
-				"/" + path.replace_extension("").string(),
+		m_autoCommands.insert_or_assign(path,
 				buildAuto(path.replace_extension("").string()));
 	}
 }
@@ -164,14 +163,14 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
 
 	if (!m_commandRefsGeneratedForSendable) {
 		regenerateSendableReferences();
+		m_commandRefsGeneratedForSendable = true;
 	}
 
 	frc::SendableChooser<frc2::Command*> sendableChooser;
 	bool defaultSelected = false;
 
-	for (const std::pair<const std::string, frc2::CommandPtr> &entry : m_autoCommands) {
-		std::string autoName =
-				std::filesystem::path(entry.first).filename().string();
+	for (const std::pair<const std::filesystem::path, frc2::CommandPtr> &entry : m_autoCommands) {
+		std::string autoName = entry.first.stem().string();
 
 		// Found the default for sendableChooser
 		if (defaultAutoName == autoName) {
@@ -200,7 +199,7 @@ std::vector<std::string> AutoBuilder::getAllAutoNames() {
 	std::vector < std::string > autoNames;
 
 	for (const std::filesystem::path &path : getAllAutoPaths()) {
-		autoNames.push_back(path.filename().string());
+		autoNames.push_back(path.stem().string());
 	}
 
 	return autoNames;

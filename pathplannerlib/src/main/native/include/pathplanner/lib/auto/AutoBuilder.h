@@ -167,7 +167,7 @@ public:
 	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
 	 * 		while returning false prevents it from being added. 
 	 * 		First param: autoCommand, pointer to PathPlannerAuto command which was generated
-	 * 		Second param: autoPath, path to the autoCommand relative to pathplanner/auto deploy directory with extension removed
+	 * 		Second param: autoPath, path to the autoCommand relative to pathplanner/auto deploy directory with extension ".auto"
 	 * @return SendableChooser populated with all autos
 	 */
 	static frc::SendableChooser<frc2::Command*> buildAutoChooser(
@@ -202,7 +202,7 @@ private:
 
 	static bool m_commandRefsGeneratedForSendable;
 	static frc2::CommandPtr m_noneCommand;
-	static std::unordered_map<std::string, frc2::CommandPtr> m_autoCommands;
+	static std::unordered_map<std::filesystem::path, frc2::CommandPtr> m_autoCommands;
 
 	static bool m_pathfindingConfigured;
 	static std::function<

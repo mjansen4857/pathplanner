@@ -171,7 +171,11 @@ class AutoBuilder:
         :param pose_supplier: a supplier for the robot's current pose
         :param reset_pose: a consumer for resetting the robot's pose
         :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
-        :param output: Output function that accepts robot-relative ChassisSpeeds and torque-current feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If using a differential drive, they will be in L, R order
+        :param output: Output function that accepts robot-relative ChassisSpeeds and torque-current feedforwards for
+            each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If using a
+            differential drive, they will be in L, R order.
+            NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+            module states, you will need to negate the torque for modules that have been flipped
         :param controller Path following controller that will be used to follow paths
         :param robot_config The robot configuration
         :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.

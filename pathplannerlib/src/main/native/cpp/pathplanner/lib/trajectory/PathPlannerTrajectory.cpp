@@ -96,6 +96,12 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 					motorTorque /= 2.0;
 				}
 
+				// Negate the torque if the motor is slowing down
+				if (state.moduleStates[m].speed
+						< prevState.moduleStates[m].speed) {
+					motorTorque *= -1;
+				}
+
 				prevState.driveMotorTorque.emplace_back(motorTorque);
 			}
 

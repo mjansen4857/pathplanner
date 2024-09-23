@@ -7,6 +7,7 @@
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/controller/RamseteController.h>
 #include <vector>
+#include <map>
 #include <frc2/command/Command.h>
 #include <frc/smartdashboard/SendableChooser.h>
 #include <memory>
@@ -14,6 +15,7 @@
 #include <wpi/array.h>
 #include <string>
 #include "pathplanner/lib/path/PathPlannerPath.h"
+#include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include "pathplanner/lib/config/RobotConfig.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
 
@@ -149,22 +151,47 @@ public:
 			PathConstraints pathfindingConstraints);
 
 	/**
-	 * Create and populate a sendable chooser with all PathPlannerAutos in the project
+	 * Modifies the existing references that buildAutoChooser returns in SendableChooser to the most recent in the pathplanner/auto deploy directory
+	 * 
+	 * Adds new auto paths from the pathplanner/auto deploy directory however doesn't remove autos already previously loaded
+	 */
+
+	static void regenerateSendableReferences();
+
+	/**
+	 * Create and populate a sendable chooser with all PathPlannerAutos in the project in pathplanner/auto deploy directory (recurively)
 	 *
 	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
 	 *     empty string, or if an auto with the given name does not exist, the default option will be
-	 *     frc2::cmd::None()
+	 *     frc2::cmd::None(), defaultAutoName doesn't get filter out and always is in final sendable chooser
+	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
+	 * 		while returning false prevents it from being added. 
+	 * 		First param: autoCommand, pointer to PathPlannerAuto command which was generated
+	 * 		Second param: autoPath, path to the autoCommand relative to pathplanner/auto deploy directory with extension ".auto"
 	 * @return SendableChooser populated with all autos
 	 */
 	static frc::SendableChooser<frc2::Command*> buildAutoChooser(
-			std::string defaultAutoName = "");
+			std::string defaultAutoName = "",
+			std::function<
+					bool(const PathPlannerAuto* const, std::filesystem::path)> filter =
+					[](const PathPlannerAuto *const autoCommand,
+							std::filesystem::path autoPath) {
+						return true;
+					});
 
 	/**
-	 * Get a vector of all auto names in the project
+	 * Get a vector of all auto names in the pathplanner/auto deploy directory (recurively)
 	 *
-	 * @return vector of all auto names
+	 * @return Vector of strings containing all auto names
 	 */
 	static std::vector<std::string> getAllAutoNames();
+
+	/**
+	 * Get a vector of all auto paths in the pathplanner/auto deploy directory (recurively)
+	 * 
+	 * @return Vector of paths relative to autos deploy directory
+	 */
+	static std::vector<std::filesystem::path> getAllAutoPaths();
 
 private:
 	static bool m_configured;
@@ -173,7 +200,9 @@ private:
 	static std::function<bool()> m_shouldFlipPath;
 	static bool m_isHolonomic;
 
-	static std::vector<frc2::CommandPtr> m_autoCommands;
+	static bool m_commandRefsGeneratedForSendable;
+	static frc2::CommandPtr m_noneCommand;
+	static std::map<std::filesystem::path, frc2::CommandPtr> m_autoCommands;
 
 	static bool m_pathfindingConfigured;
 	static std::function<

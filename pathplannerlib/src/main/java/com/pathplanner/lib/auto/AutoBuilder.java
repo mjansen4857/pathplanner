@@ -110,6 +110,40 @@ public class AutoBuilder {
   }
 
   /**
+   * Configures the AutoBuilder for using PathPlanner's built-in commands.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
+   *     speeds
+   * @param output Output function that supplies robot-relative ChassisSpeeds.
+   * @param controller Path following controller that will be used to follow paths
+   * @param robotConfig The robot configuration
+   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
+   *     the field. This will maintain a global blue alliance origin.
+   * @param driveRequirements the subsystem requirements for the robot's drive train
+   */
+  public static void configure(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
+      Consumer<ChassisSpeeds> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      BooleanSupplier shouldFlipPath,
+      Subsystem... driveRequirements) {
+    configure(
+        poseSupplier,
+        resetPose,
+        robotRelativeSpeedsSupplier,
+        (speeds, torqueCurrent) -> output.accept(speeds),
+        controller,
+        robotConfig,
+        shouldFlipPath,
+        driveRequirements);
+  }
+
+  /**
    * Configures the AutoBuilder with custom path following command builder. Building pathfinding
    * commands is not supported if using a custom command builder. Custom path following commands
    * will not have the path flipped for them, and event markers will not be triggered automatically.

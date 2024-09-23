@@ -7,7 +7,7 @@ using namespace pathplanner;
 FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds)> output,
+		std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 		frc2::Requirements requirements) : m_originalPath(path), m_poseSupplier(
@@ -123,7 +123,15 @@ void FollowPathCommand::Execute() {
 			currentSpeeds.omega, targetSpeeds.omega);
 	PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());
 
-	m_output(targetSpeeds);
+	// Convert the motor torque at this state to torque-current
+	std::vector < units::ampere_t > torqueCurrentFF;
+	for (size_t m = 0; m < targetState.driveMotorTorque.size(); m++) {
+		torqueCurrentFF.emplace_back(
+				targetState.driveMotorTorque[m]
+						/ m_robotConfig.moduleConfig.driveMotorTorqueCurve.getNmPerAmp());
+	}
+
+	m_output(targetSpeeds, torqueCurrentFF);
 
 	if (!m_untriggeredEvents.empty()
 			&& m_timer.HasElapsed(m_untriggeredEvents[0].first)) {
@@ -172,7 +180,11 @@ void FollowPathCommand::End(bool interrupted) {
 	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
 	// the command to smoothly transition into some auto-alignment routine
 	if (!interrupted && m_path->getGoalEndState().getVelocity() < 0.1_mps) {
-		m_output(frc::ChassisSpeeds());
+		std::vector < units::ampere_t > torqueCurrentFF;
+		for (size_t m = 0; m < m_robotConfig.numModules; m++) {
+			torqueCurrentFF.emplace_back(0_A);
+		}
+		m_output(frc::ChassisSpeeds(), torqueCurrentFF);
 	}
 
 	PathPlannerLogging::logActivePath(nullptr);

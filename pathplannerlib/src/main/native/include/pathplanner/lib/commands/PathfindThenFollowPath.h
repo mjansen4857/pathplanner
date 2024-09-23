@@ -14,7 +14,9 @@ public:
 	 * @param pathfindingConstraints the path constraints for pathfinding
 	 * @param poseSupplier a supplier for the robot's current pose
 	 * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
-	 * @param robotRelativeOutput a consumer for the output speeds (robot relative)
+	 * @param output Output function that supplies robot-relative ChassisSpeeds and torque-current
+	 *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+	 *     BL, BR order. If using a differential drive, they will be in L, R order.
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
 	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
@@ -25,18 +27,17 @@ public:
 			PathConstraints pathfindingConstraints,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
-			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
+			std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements) {
 		AddCommands(
 				PathfindingCommand(goalPath, pathfindingConstraints,
-						poseSupplier, currentRobotRelativeSpeeds,
-						robotRelativeOutput, controller, robotConfig,
-						shouldFlipPath, requirements),
+						poseSupplier, currentRobotRelativeSpeeds, output,
+						controller, robotConfig, shouldFlipPath, requirements),
 				FollowPathCommand(goalPath, poseSupplier,
-						currentRobotRelativeSpeeds, robotRelativeOutput,
-						controller, robotConfig, shouldFlipPath, requirements));
+						currentRobotRelativeSpeeds, output, controller,
+						robotConfig, shouldFlipPath, requirements));
 	}
 };
 }

@@ -24,6 +24,11 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 					t));
 	lerpedState.linearVelocity = GeometryUtil::unitLerp(linearVelocity,
 			endVal.linearVelocity, t);
+	for (size_t m = 0; m < driveMotorTorque.size(); m++) {
+		lerpedState.driveMotorTorque.emplace_back(
+				GeometryUtil::unitLerp(driveMotorTorque[m],
+						endVal.driveMotorTorque[m], t));
+	}
 
 	return lerpedState;
 }
@@ -41,6 +46,9 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 	reversed.pose = frc::Pose2d(pose.Translation(),
 			pose.Rotation() + frc::Rotation2d(180_deg));
 	reversed.linearVelocity = -linearVelocity;
+	for (auto torque : driveMotorTorque) {
+		reversed.driveMotorTorque.emplace_back(-torque);
+	}
 
 	return reversed;
 }

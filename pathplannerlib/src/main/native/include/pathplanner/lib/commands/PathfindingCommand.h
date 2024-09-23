@@ -11,6 +11,7 @@
 #include <units/velocity.h>
 #include <units/length.h>
 #include <units/time.h>
+#include <units/current.h>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
@@ -29,7 +30,9 @@ public:
 	 * @param constraints the path constraints to use while pathfinding
 	 * @param poseSupplier a supplier for the robot's current pose
 	 * @param speedsSupplier a supplier for the robot's current robot relative speeds
-	 * @param output a consumer for the output speeds (robot relative)
+	 * @param output Output function that supplies robot-relative ChassisSpeeds and torque-current
+	 *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+	 *     BL, BR order. If using a differential drive, they will be in L, R order.
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
 	 * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
@@ -40,7 +43,7 @@ public:
 			PathConstraints constraints,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> output,
+			std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements);
@@ -54,7 +57,9 @@ public:
 	 * @param goalEndVel The goal end velocity when reaching the target pose
 	 * @param poseSupplier a supplier for the robot's current pose
 	 * @param speedsSupplier a supplier for the robot's current robot relative speeds
-	 * @param output a consumer for the output speeds (robot relative)
+	 * @param output Output function that supplies robot-relative ChassisSpeeds and torque-current
+	 *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+	 *     BL, BR order. If using a differential drive, they will be in L, R order.
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
 	 * @param requirements the subsystems required by this command
@@ -63,7 +68,7 @@ public:
 			units::meters_per_second_t goalEndVel,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> output,
+			std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, frc2::Requirements requirements);
 
@@ -84,7 +89,7 @@ private:
 	PathConstraints m_constraints;
 	std::function<frc::Pose2d()> m_poseSupplier;
 	std::function<frc::ChassisSpeeds()> m_speedsSupplier;
-	std::function<void(frc::ChassisSpeeds)> m_output;
+	std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> m_output;
 	std::shared_ptr<PathFollowingController> m_controller;
 	RobotConfig m_robotConfig;
 	std::function<bool()> m_shouldFlipPath;

@@ -104,7 +104,7 @@ public class PathPlannerTrajectory {
 
       List<EventMarker> unaddedMarkers = new ArrayList<>(path.getEventMarkers());
 
-      // Loop back over and calculate time, and module accel/torque
+      // Loop back over and calculate time and module accel/torque
       for (int i = 1; i < states.size(); i++) {
         PathPlannerTrajectoryState prevState = states.get(i - 1);
         PathPlannerTrajectoryState state = states.get(i);

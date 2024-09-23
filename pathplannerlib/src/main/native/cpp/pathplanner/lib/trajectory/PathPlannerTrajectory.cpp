@@ -58,21 +58,57 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 				> unaddedMarkers(path->getEventMarkers().begin(),
 						path->getEventMarkers().end());
 
-		// Loop back over and calculate time
+		// Loop back over and calculate time and module accel/torque
 		for (size_t i = 1; i < m_states.size(); i++) {
-			units::meters_per_second_t v0 = m_states[i - 1].linearVelocity;
-			units::meters_per_second_t v = m_states[i].linearVelocity;
-			units::second_t dt = (2 * m_states[i].deltaPos) / (v + v0);
-			m_states[i].time = m_states[i - 1].time + dt;
+			PathPlannerTrajectoryState &prevState = m_states[i - 1];
+			PathPlannerTrajectoryState &state = m_states[i];
+
+			units::meters_per_second_t v0 = prevState.linearVelocity;
+			units::meters_per_second_t v = state.linearVelocity;
+			units::second_t dt = (2 * state.deltaPos) / (v + v0);
+			state.time = prevState.time + dt;
+
+			units::meters_per_second_squared_t linearAccel =
+					(state.linearVelocity - prevState.linearVelocity) / dt;
+			frc::Translation2d forceVec = frc::Translation2d(units::meter_t {
+					linearAccel() }, prevState.heading) * config.mass();
+
+			units::radians_per_second_squared_t angularAccel =
+					(state.fieldSpeeds.omega - prevState.fieldSpeeds.omega)
+							/ dt;
+			double angTorque = angularAccel() * config.MOI();
+
+			// Use kinematics to convert chassis forces to wheel forces
+			auto wheelForces = toSwerveModuleStates(config,
+					frc::ChassisSpeeds(units::meters_per_second_t {
+							forceVec.X()() }, units::meters_per_second_t {
+							forceVec.Y()() }, units::radians_per_second_t {
+							angTorque }));
+
+			for (size_t m = 0; m < config.numModules; m++) {
+				units::newton_t forceAtCarpet { wheelForces[m].speed() };
+				units::newton_meter_t wheelTorque = forceAtCarpet
+						* config.moduleConfig.wheelRadius;
+				units::newton_meter_t motorTorque = wheelTorque
+						/ config.moduleConfig.driveGearing;
+
+				if (!config.isHolonomic) {
+					// Split the torque over 2 drive motors if using differential drive
+					motorTorque /= 2.0;
+				}
+
+				prevState.driveMotorTorque.emplace_back(motorTorque);
+			}
 
 			if (!unaddedMarkers.empty()) {
-				double prevPos = m_states[i - 1].waypointRelativePos;
-				double pos = m_states[i].waypointRelativePos;
-
 				EventMarker next = unaddedMarkers[0];
-				if (std::abs(next.getWaypointRelativePos() - prevPos)
-						<= std::abs(next.getWaypointRelativePos() - pos)) {
-					m_eventCommands.emplace_back(m_states[i - 1].time,
+				if (std::abs(
+						next.getWaypointRelativePos()
+								- prevState.waypointRelativePos)
+						<= std::abs(
+								next.getWaypointRelativePos()
+										- state.waypointRelativePos)) {
+					m_eventCommands.emplace_back(prevState.time,
 							next.getCommand());
 					unaddedMarkers.erase(unaddedMarkers.begin());
 				}

@@ -331,7 +331,6 @@ public class PathPlannerPath {
         state.linearVelocity = Math.hypot(xVel, yVel);
         state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
         state.fieldSpeeds = new ChassisSpeeds(xVel, yVel, angularVelRps);
-        state.driveMotorTorque = new double[4]; // TODO: read module forces from file
 
         trajStates.add(state);
       }
@@ -733,7 +732,7 @@ public class PathPlannerPath {
                 state.driveMotorTorque[3],
                 state.driveMotorTorque[2],
               };
-        } else {
+        } else if (state.driveMotorTorque.length == 2) {
           mirrored.driveMotorTorque =
               new double[] {
                 state.driveMotorTorque[1], state.driveMotorTorque[0],

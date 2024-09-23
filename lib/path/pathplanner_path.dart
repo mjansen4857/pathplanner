@@ -370,7 +370,7 @@ class PathPlannerPath {
       var position = samplePath(pos);
 
       num distance = pathPoints.last.position.distanceTo(position);
-      if (distance == 0.0) {
+      if (distance <= 0.01) {
         pos = min(pos + targetIncrement, waypoints.length - 1);
         continue;
       }
@@ -394,7 +394,6 @@ class PathPlannerPath {
         }
       } else if (delta < -targetSpacing * 0.25) {
         // Points are too close, increment waypoint relative pos by correct amount
-
         double correctIncrement = (targetSpacing * targetIncrement) / distance;
         pos = pos - targetIncrement + correctIncrement;
 
@@ -435,7 +434,7 @@ class PathPlannerPath {
       var position = samplePath(pos);
 
       num distance = pathPoints.last.position.distanceTo(position);
-      if (distance == 0.0) {
+      if (distance <= 0.01) {
         invalid = false;
         break;
       }

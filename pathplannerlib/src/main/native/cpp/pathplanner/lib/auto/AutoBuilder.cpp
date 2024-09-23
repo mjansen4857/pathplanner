@@ -1,5 +1,4 @@
 #include "pathplanner/lib/auto/AutoBuilder.h"
-#include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include "pathplanner/lib/commands/FollowPathCommand.h"
 #include "pathplanner/lib/commands/PathfindingCommand.h"
 #include "pathplanner/lib/commands/PathfindThenFollowPath.h"
@@ -7,7 +6,6 @@
 #include <stdexcept>
 #include <frc2/command/Commands.h>
 #include <frc/Filesystem.h>
-#include <filesystem>
 #include <optional>
 #include <wpi/MemoryBuffer.h>
 
@@ -19,7 +17,9 @@ std::function<void(frc::Pose2d)> AutoBuilder::m_resetPose;
 std::function<bool()> AutoBuilder::m_shouldFlipPath;
 bool AutoBuilder::m_isHolonomic = false;
 
-std::vector<frc2::CommandPtr> AutoBuilder::m_autoCommands;
+bool AutoBuilder::m_commandRefsGeneratedForSendable = false;
+frc2::CommandPtr AutoBuilder::m_noneCommand = frc2::cmd::None();
+std::map<std::filesystem::path, frc2::CommandPtr> AutoBuilder::m_autoCommands;
 
 bool AutoBuilder::m_pathfindingConfigured = false;
 std::function<
@@ -143,36 +143,69 @@ frc2::CommandPtr AutoBuilder::pathfindThenFollowPath(
 			pathfindingConstraints);
 }
 
+void AutoBuilder::regenerateSendableReferences() {
+	std::vector < std::filesystem::path > autoPathFilepaths = getAllAutoPaths();
+
+	for (std::filesystem::path path : autoPathFilepaths) {
+		// A command which is an auto that come from a path
+		m_autoCommands.insert_or_assign(path,
+				buildAuto(path.replace_extension("").string()));
+	}
+}
+
 frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
-		std::string defaultAutoName) {
+		std::string defaultAutoName,
+		std::function<bool(const PathPlannerAuto* const, std::filesystem::path)> filter) {
 	if (!m_configured) {
 		throw std::runtime_error(
 				"AutoBuilder was not configured before attempting to build an auto chooser");
 	}
 
-	frc::SendableChooser<frc2::Command*> chooser;
-	bool foundDefaultOption = false;
+	if (!m_commandRefsGeneratedForSendable) {
+		regenerateSendableReferences();
+		m_commandRefsGeneratedForSendable = true;
+	}
 
-	for (std::string const &entry : getAllAutoNames()) {
-		AutoBuilder::m_autoCommands.emplace_back(
-				pathplanner::PathPlannerAuto(entry).ToPtr());
-		if (defaultAutoName != "" && entry == defaultAutoName) {
-			foundDefaultOption = true;
-			chooser.SetDefaultOption(entry, m_autoCommands.back().get());
-		} else {
-			chooser.AddOption(entry, m_autoCommands.back().get());
+	frc::SendableChooser<frc2::Command*> sendableChooser;
+	bool defaultSelected = false;
+
+	for (const std::pair<const std::filesystem::path, frc2::CommandPtr> &entry : m_autoCommands) {
+		std::string autoName = entry.first.stem().string();
+
+		// Found the default for sendableChooser
+		if (defaultAutoName == autoName) {
+			sendableChooser.SetDefaultOption(autoName, entry.second.get());
+			defaultSelected = true;
+		} else if (filter(
+				dynamic_cast<const PathPlannerAuto* const >(entry.second.get()),
+				entry.first)) {
+			sendableChooser.AddOption(autoName, entry.second.get());
 		}
 	}
 
-	if (!foundDefaultOption) {
-		AutoBuilder::m_autoCommands.emplace_back(frc2::cmd::None());
-		chooser.SetDefaultOption("None", m_autoCommands.back().get());
+	// None is the default
+	if (!defaultSelected || defaultAutoName == "") {
+		sendableChooser.SetDefaultOption("None", m_noneCommand.get());
+	}
+	// None is just there, extra precaution for programmers
+	else {
+		sendableChooser.AddOption("None", m_noneCommand.get());
 	}
 
-	return chooser;
+	return sendableChooser;
 }
 
 std::vector<std::string> AutoBuilder::getAllAutoNames() {
+	std::vector < std::string > autoNames;
+
+	for (const std::filesystem::path &path : getAllAutoPaths()) {
+		autoNames.push_back(path.stem().string());
+	}
+
+	return autoNames;
+}
+
+std::vector<std::filesystem::path> AutoBuilder::getAllAutoPaths() {
 	std::filesystem::path deployPath = frc::filesystem::GetDeployDirectory();
 	std::filesystem::path autosPath = deployPath / "pathplanner/autos";
 
@@ -183,17 +216,16 @@ std::vector<std::string> AutoBuilder::getAllAutoNames() {
 		return {};
 	}
 
-	std::vector < std::string > autoPathNames;
+	std::vector < std::filesystem::path > autoPathNames;
 
-	for (std::filesystem::directory_entry const &entry : std::filesystem::directory_iterator {
-			autosPath }) {
-		if (!entry.is_regular_file()) {
+	for (std::filesystem::directory_entry const &entry : std::filesystem::recursive_directory_iterator {
+			autosPath,
+			std::filesystem::directory_options::skip_permission_denied }) {
+		if (!entry.is_regular_file()
+				|| entry.path().extension().string() != ".auto") {
 			continue;
 		}
-		if (entry.path().extension().string() != ".auto") {
-			continue;
-		}
-		autoPathNames.emplace_back(entry.path().stem().string());
+		autoPathNames.emplace_back(entry.path().lexically_relative(autosPath));
 	}
 
 	return autoPathNames;

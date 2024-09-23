@@ -8,7 +8,6 @@ class PathPoint {
   RotationTarget? rotationTarget;
   final PathConstraints constraints;
   num distanceAlongPath = 0.0;
-  num curveRadius = 0.0;
   num maxV = double.infinity;
   final num waypointPos;
 

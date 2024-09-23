@@ -559,8 +559,6 @@ class PathPlannerPath {
     for (int i = 0; i < pathPoints.length; i++) {
       num curveRadius = _getCurveRadiusAtPoint(i).abs();
 
-      pathPoints[i].curveRadius = curveRadius;
-
       if (curveRadius.isFinite) {
         pathPoints[i].maxV = min(
             sqrt(pathPoints[i].constraints.maxAcceleration * curveRadius.abs()),

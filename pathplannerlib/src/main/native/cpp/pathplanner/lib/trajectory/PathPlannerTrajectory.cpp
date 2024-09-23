@@ -79,11 +79,10 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 			double angTorque = angularAccel() * config.MOI();
 
 			// Use kinematics to convert chassis forces to wheel forces
-			auto wheelForces = toSwerveModuleStates(config,
-					frc::ChassisSpeeds{units::meters_per_second_t {
-							forceVec.X()() }, units::meters_per_second_t {
-							forceVec.Y()() }, units::radians_per_second_t {
-							angTorque }});
+			auto wheelForces = toSwerveModuleStates(config, frc::ChassisSpeeds {
+					units::meters_per_second_t { forceVec.X()() },
+					units::meters_per_second_t { forceVec.Y()() },
+					units::radians_per_second_t { angTorque } });
 
 			for (size_t m = 0; m < config.numModules; m++) {
 				units::newton_t forceAtCarpet { wheelForces[m].speed() };

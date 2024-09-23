@@ -337,26 +337,30 @@ public class PathPlannerTrajectory {
       // Go over the modules again to make sure they take the same amount of time to reach the next
       // state
       double maxDT = 0.0;
+      double realMaxDT = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         Rotation2d prevRotDelta =
             state.moduleStates[m].angle.minus(prevState.moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
-          continue;
-        }
-
         double modVel = state.moduleStates[m].speedMetersPerSecond;
         double dt = nextState.moduleStates[m].deltaPos / modVel;
 
         if (Double.isFinite(dt)) {
+          realMaxDT = Math.max(dt, realMaxDT);
+        }
+
+        if (Math.abs(prevRotDelta.getDegrees()) < 60) {
           maxDT = Math.max(dt, maxDT);
         }
+      }
+      if (maxDT == 0.0) {
+        maxDT = realMaxDT;
       }
 
       // Recalculate all module velocities with the allowed DT
       for (int m = 0; m < config.numModules; m++) {
         Rotation2d prevRotDelta =
             state.moduleStates[m].angle.minus(prevState.moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
+        if (Math.abs(prevRotDelta.getDegrees()) >= 60) {
           continue;
         }
 
@@ -454,26 +458,30 @@ public class PathPlannerTrajectory {
       // Go over the modules again to make sure they take the same amount of time to reach the next
       // state
       double maxDT = 0.0;
+      double realMaxDT = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         Rotation2d prevRotDelta =
             state.moduleStates[m].angle.minus(states.get(i - 1).moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
-          continue;
-        }
-
         double modVel = state.moduleStates[m].speedMetersPerSecond;
         double dt = nextState.moduleStates[m].deltaPos / modVel;
 
         if (Double.isFinite(dt)) {
+          realMaxDT = Math.max(dt, realMaxDT);
+        }
+
+        if (Math.abs(prevRotDelta.getDegrees()) < 60) {
           maxDT = Math.max(dt, maxDT);
         }
+      }
+      if (maxDT == 0.0) {
+        maxDT = realMaxDT;
       }
 
       // Recalculate all module velocities with the allowed DT
       for (int m = 0; m < config.numModules; m++) {
         Rotation2d prevRotDelta =
             state.moduleStates[m].angle.minus(states.get(i - 1).moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
+        if (Math.abs(prevRotDelta.getDegrees()) >= 60) {
           continue;
         }
 

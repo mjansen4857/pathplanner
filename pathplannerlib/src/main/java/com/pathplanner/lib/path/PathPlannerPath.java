@@ -541,7 +541,7 @@ public class PathPlannerPath {
     }
 
     List<RotationTarget> unaddedTargets = new ArrayList<>(rotationTargets);
-    List<PathPoint> points = new ArrayList<>();
+    ArrayList<PathPoint> points = new ArrayList<>();
     int numSegments = (bezierPoints.size() - 1) / 3;
 
     // Add the first path point
@@ -652,6 +652,70 @@ public class PathPlannerPath {
       points.add(new PathPoint(position, null, constraintsForWaypointPos(pos)));
       points.get(points.size() - 1).waypointRelativePos = pos;
       pos = numSegments;
+    }
+
+    for (int i = 1; i < points.size(); i++) {
+      double curveRadius =
+          GeometryUtil.calculateRadius(
+              points.get(i - 1).position, points.get(i).position, points.get(i + 1).position);
+
+      if (!Double.isFinite(curveRadius)) {
+        continue;
+      }
+
+      if (Math.abs(curveRadius) < 0.25) {
+        // Curve radius is too tight for default spacing, insert 4 more points
+        double before1WaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.33);
+        double before2WaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.67);
+        double after1WaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.33);
+        double after2WaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.67);
+
+        PathPoint before1 =
+            new PathPoint(samplePath(before1WaypointPos), null, points.get(i).constraints);
+        before1.waypointRelativePos = before1WaypointPos;
+        PathPoint before2 =
+            new PathPoint(samplePath(before2WaypointPos), null, points.get(i).constraints);
+        before2.waypointRelativePos = before2WaypointPos;
+        PathPoint after1 =
+            new PathPoint(samplePath(after1WaypointPos), null, points.get(i).constraints);
+        after1.waypointRelativePos = after1WaypointPos;
+        PathPoint after2 =
+            new PathPoint(samplePath(after2WaypointPos), null, points.get(i).constraints);
+        after2.waypointRelativePos = after2WaypointPos;
+
+        points.add(i, before2);
+        points.add(i, before1);
+        points.add(i + 3, after2);
+        points.add(i + 3, after1);
+        i += 4;
+      } else if (Math.abs(curveRadius) < 0.5) {
+        // Curve radius is too tight for default spacing, insert 2 more points
+        double beforeWaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.5);
+        double afterWaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.5);
+
+        PathPoint before =
+            new PathPoint(samplePath(beforeWaypointPos), null, points.get(i).constraints);
+        before.waypointRelativePos = beforeWaypointPos;
+        PathPoint after =
+            new PathPoint(samplePath(afterWaypointPos), null, points.get(i).constraints);
+        after.waypointRelativePos = afterWaypointPos;
+
+        points.add(i, before);
+        points.add(i + 2, after);
+        i += 2;
+      }
     }
 
     return points;

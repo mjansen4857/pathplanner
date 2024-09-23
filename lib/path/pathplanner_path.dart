@@ -488,7 +488,11 @@ class PathPlannerPath {
       num curveRadius = _calculateRadius(pathPoints[i - 1].position,
           pathPoints[i].position, pathPoints[i + 1].position);
 
-      if (curveRadius.isFinite && curveRadius.abs() < 0.25) {
+      if (!curveRadius.isFinite) {
+        continue;
+      }
+
+      if (curveRadius.abs() < 0.25) {
         // Curve radius is too tight for default spacing, insert 4 more points
         num before1WaypointPos = GeometryUtil.numLerp(
             pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.33);
@@ -529,7 +533,7 @@ class PathPlannerPath {
         pathPoints.insert(i + 3, after2);
         pathPoints.insert(i + 3, after1);
         i += 4;
-      } else if (curveRadius.isFinite && curveRadius.abs() < 0.5) {
+      } else if (curveRadius.abs() < 0.5) {
         // Curve radius is too tight for default spacing, insert 2 more points
         num beforeWaypointPos = GeometryUtil.numLerp(
             pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.5);

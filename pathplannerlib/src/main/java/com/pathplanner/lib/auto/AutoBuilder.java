@@ -43,7 +43,7 @@ public class AutoBuilder {
    * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
-   * @param output Output function that supplies robot-relative ChassisSpeeds and torque-current
+   * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
    *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
    *     BL, BR order. If using a differential drive, they will be in L, R order.
    * @param controller Path following controller that will be used to follow paths
@@ -116,7 +116,7 @@ public class AutoBuilder {
    * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
-   * @param output Output function that supplies robot-relative ChassisSpeeds.
+   * @param output Output function that accepts robot-relative ChassisSpeeds.
    * @param controller Path following controller that will be used to follow paths
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of

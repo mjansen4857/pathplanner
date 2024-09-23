@@ -30,7 +30,7 @@ public:
 	 * @param constraints the path constraints to use while pathfinding
 	 * @param poseSupplier a supplier for the robot's current pose
 	 * @param speedsSupplier a supplier for the robot's current robot relative speeds
-	 * @param output Output function that supplies robot-relative ChassisSpeeds and torque-current
+	 * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
 	 *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
 	 *     BL, BR order. If using a differential drive, they will be in L, R order.
 	 * @param controller Path following controller that will be used to follow the path
@@ -57,7 +57,7 @@ public:
 	 * @param goalEndVel The goal end velocity when reaching the target pose
 	 * @param poseSupplier a supplier for the robot's current pose
 	 * @param speedsSupplier a supplier for the robot's current robot relative speeds
-	 * @param output Output function that supplies robot-relative ChassisSpeeds and torque-current
+	 * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
 	 *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
 	 *     BL, BR order. If using a differential drive, they will be in L, R order.
 	 * @param controller Path following controller that will be used to follow the path

@@ -58,7 +58,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 				> unaddedMarkers(path->getEventMarkers().begin(),
 						path->getEventMarkers().end());
 
-		// Loop back over and calculate time and module accel/torque
+		// Loop back over and calculate time and module torque
 		for (size_t i = 1; i < m_states.size(); i++) {
 			PathPlannerTrajectoryState &prevState = m_states[i - 1];
 			PathPlannerTrajectoryState &state = m_states[i];

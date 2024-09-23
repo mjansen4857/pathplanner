@@ -18,7 +18,7 @@ class FollowPathCommand(Command):
     _originalPath: PathPlannerPath
     _poseSupplier: Callable[[], Pose2d]
     _speedsSupplier: Callable[[], ChassisSpeeds]
-    _output: Callable[[ChassisSpeeds], None]
+    _output: Callable[[ChassisSpeeds, List[float]], None]
     _controller: PathFollowingController
     _robotConfig: RobotConfig
     _shouldFlipPath: Callable[[], bool]
@@ -33,7 +33,7 @@ class FollowPathCommand(Command):
     _trajectory: PathPlannerTrajectory = None
 
     def __init__(self, path: PathPlannerPath, pose_supplier: Callable[[], Pose2d],
-                 speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
+                 speeds_supplier: Callable[[], ChassisSpeeds], output: Callable[[ChassisSpeeds, List[float]], None],
                  controller: PathFollowingController, robot_config: RobotConfig,
                  should_flip_path: Callable[[], bool], *requirements: Subsystem):
         """
@@ -42,7 +42,7 @@ class FollowPathCommand(Command):
         :param path: The path to follow
         :param pose_supplier: Function that supplies the current field-relative pose of the robot
         :param speeds_supplier: Function that supplies the current robot-relative chassis speeds
-        :param output_robot_relative: Function that will apply the robot-relative output speeds of this command
+        :param output: Output function that accepts robot-relative ChassisSpeeds and torque-current feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If using a differential drive, they will be in L, R order
         :param controller: Path following controller that will be used to follow the path
         :param robot_config The robot configuration
         :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.
@@ -53,7 +53,7 @@ class FollowPathCommand(Command):
         self._originalPath = path
         self._poseSupplier = pose_supplier
         self._speedsSupplier = speeds_supplier
-        self._output = output_robot_relative
+        self._output = output
         self._controller = controller
         self._robotConfig = robot_config
         self._shouldFlipPath = should_flip_path
@@ -138,7 +138,12 @@ class FollowPathCommand(Command):
         PPLibTelemetry.setVelocities(currentVel, targetState.linearVelocity, currentSpeeds.omega, targetSpeeds.omega)
         PPLibTelemetry.setPathInaccuracy(self._controller.getPositionalError())
 
-        self._output(targetSpeeds)
+        # Convert the motor torque at this state to torque-current
+        torqueCurrentFF = [
+            t / self._robotConfig.moduleConfig.driveMotorTorqueCurve.getNmPerAmp() for t in targetState.driveMotorTorque
+        ]
+
+        self._output(targetSpeeds, torqueCurrentFF)
 
         if len(self._untriggeredEvents) > 0 and self._timer.hasElapsed(self._untriggeredEvents[0][0]):
             # Time to trigger this event command
@@ -177,7 +182,7 @@ class FollowPathCommand(Command):
         # Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
         # the command to smoothly transition into some auto-alignment routine
         if not interrupted and self._path.getGoalEndState().velocity < 0.1:
-            self._output(ChassisSpeeds())
+            self._output(ChassisSpeeds(), [0.0] * self._robotConfig.numModules)
 
         PathPlannerLogging.logActivePath(None)
 
@@ -196,7 +201,7 @@ class PathfindingCommand(Command):
     _constraints: PathConstraints
     _poseSupplier: Callable[[], Pose2d]
     _speedsSupplier: Callable[[], ChassisSpeeds]
-    _output: Callable[[ChassisSpeeds], None]
+    _output: Callable[[ChassisSpeeds, List[float]], None]
     _controller: PathFollowingController
     _robotConfig: RobotConfig
     _shouldFlipPath: Callable[[], bool]
@@ -211,7 +216,7 @@ class PathfindingCommand(Command):
     _instances: int = 0
 
     def __init__(self, constraints: PathConstraints, pose_supplier: Callable[[], Pose2d],
-                 speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
+                 speeds_supplier: Callable[[], ChassisSpeeds], output: Callable[[ChassisSpeeds, List[float]], None],
                  controller: PathFollowingController, robot_config: RobotConfig,
                  should_flip_path: Callable[[], bool], *requirements: Subsystem,
                  target_path: PathPlannerPath = None, target_pose: Pose2d = None,
@@ -228,7 +233,7 @@ class PathfindingCommand(Command):
         self._controller = controller
         self._poseSupplier = pose_supplier
         self._speedsSupplier = speeds_supplier
-        self._output = output_robot_relative
+        self._output = output
         self._robotConfig = robot_config
         self._shouldFlipPath = should_flip_path
 
@@ -275,7 +280,7 @@ class PathfindingCommand(Command):
                 self._goalEndState = GoalEndState(self._goalEndState.velocity, self._targetPose.rotation())
 
         if currentPose.translation().distance(self._targetPose.translation()) < 0.5:
-            self._output(ChassisSpeeds())
+            self._output(ChassisSpeeds(), [0.0] * self._robotConfig.numModules)
             self._finish = True
         else:
             Pathfinding.setStartPosition(currentPose.translation())
@@ -359,7 +364,13 @@ class PathfindingCommand(Command):
                                          targetSpeeds.omega)
             PPLibTelemetry.setPathInaccuracy(self._controller.getPositionalError())
 
-            self._output(targetSpeeds)
+            # Convert the motor torque at this state to torque-current
+            torqueCurrentFF = [
+                t / self._robotConfig.moduleConfig.driveMotorTorqueCurve.getNmPerAmp() for t in
+                targetState.driveMotorTorque
+            ]
+
+            self._output(targetSpeeds, torqueCurrentFF)
 
     def isFinished(self) -> bool:
         if self._finish:
@@ -385,7 +396,7 @@ class PathfindingCommand(Command):
         # Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
         # the command to smoothly transition into some auto-alignment routine
         if not interrupted and self._goalEndState.velocity < 0.1:
-            self._output(ChassisSpeeds())
+            self._output(ChassisSpeeds(), [0.0] * self._robotConfig.numModules)
 
         PathPlannerLogging.logActivePath(None)
 
@@ -393,7 +404,7 @@ class PathfindingCommand(Command):
 class PathfindThenFollowPath(SequentialCommandGroup):
     def __init__(self, goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
                  pose_supplier: Callable[[], Pose2d],
-                 speeds_supplier: Callable[[], ChassisSpeeds], output_robot_relative: Callable[[ChassisSpeeds], None],
+                 speeds_supplier: Callable[[], ChassisSpeeds], output: Callable[[ChassisSpeeds, List[float]], None],
                  controller: PathFollowingController, robot_config: RobotConfig,
                  should_flip_path: Callable[[], bool], *requirements: Subsystem):
         """
@@ -403,7 +414,7 @@ class PathfindThenFollowPath(SequentialCommandGroup):
         :param pathfinding_constraints: the path constraints for pathfinding
         :param pose_supplier: a supplier for the robot's current pose
         :param speeds_supplier: a supplier for the robot's current robot relative speeds
-        :param output_robot_relative: a consumer for the output speeds (robot relative)
+        :param output: Output function that accepts robot-relative ChassisSpeeds and torque-current feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If using a differential drive, they will be in L, R order
         :param controller Path following controller that will be used to follow the path
         :param robot_config The robot configuration
         :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.
@@ -416,7 +427,7 @@ class PathfindThenFollowPath(SequentialCommandGroup):
                 pathfinding_constraints,
                 pose_supplier,
                 speeds_supplier,
-                output_robot_relative,
+                output,
                 controller,
                 robot_config,
                 should_flip_path,
@@ -427,7 +438,7 @@ class PathfindThenFollowPath(SequentialCommandGroup):
                 goal_path,
                 pose_supplier,
                 speeds_supplier,
-                output_robot_relative,
+                output,
                 controller,
                 robot_config,
                 should_flip_path,

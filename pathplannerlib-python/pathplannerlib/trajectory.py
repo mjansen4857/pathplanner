@@ -27,6 +27,7 @@ class PathPlannerTrajectoryState:
     fieldSpeeds: ChassisSpeeds = ChassisSpeeds()
     pose: Pose2d = Pose2d()
     linearVelocity: float = 0.0
+    driveMotorTorque: List[float] = field(default_factory=list)
 
     heading: Rotation2d = Rotation2d()
     deltaPos: float = 0.0
@@ -58,6 +59,10 @@ class PathPlannerTrajectoryState:
         )
         lerpedState.pose = poseLerp(self.pose, end_val.pose, t)
         lerpedState.linearVelocity = floatLerp(self.linearVelocity, end_val.linearVelocity, t)
+        lerpedState.driveMotorTorque = [
+            floatLerp(self.driveMotorTorque[m], end_val.driveMotorTorque[m], t) for m in
+            range(len(self.driveMotorTorque))
+        ]
 
         return lerpedState
 
@@ -74,6 +79,7 @@ class PathPlannerTrajectoryState:
         reversedState.fieldSpeeds = ChassisSpeeds(reversedSpeeds.x, reversedSpeeds.y, self.fieldSpeeds.omega)
         reversedState.pose = Pose2d(self.pose.translation(), self.pose.rotation() + Rotation2d.fromDegrees(180))
         reversedState.linearVelocity = -self.linearVelocity
+        reversedState.driveMotorTorque = [-torque for torque in self.driveMotorTorque]
 
         return reversedState
 
@@ -144,20 +150,41 @@ class PathPlannerTrajectory:
                 # Reverse pass
                 _reverseAccelPass(self._states, config)
 
-                # Loop back over and calculate time
+                # Loop back over and calculate time and module torque
                 for i in range(1, len(self._states)):
-                    v0 = self._states[i - 1].linearVelocity
-                    v = self._states[i].linearVelocity
-                    dt = (2 * self._states[i].deltaPos) / (v + v0)
-                    self._states[i].timeSeconds = self._states[i - 1].timeSeconds + dt
+                    prevState = self._states[i - 1]
+                    state = self._states[i]
+
+                    v0 = prevState.linearVelocity
+                    v = state.linearVelocity
+                    dt = (2 * state.deltaPos) / (v + v0)
+                    state.timeSeconds = prevState.timeSeconds + dt
+
+                    linearAccel = (state.linearVelocity - prevState.linearVelocity) / dt
+                    forceVec = Translation2d(linearAccel, prevState.heading) * config.massKG
+
+                    angularAccel = (state.fieldSpeeds.omega - prevState.fieldSpeeds.omega) / dt
+                    angTorque = angularAccel * config.MOI
+
+                    # Use kinematics to convert chassis forces to wheel forces
+                    wheelForces = _toSwerveModuleStates(config, ChassisSpeeds(forceVec.x, forceVec.y, angTorque))
+
+                    for m in range(config.numModules):
+                        forceAtCarpet = wheelForces[m].speed
+                        wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters
+                        motorTorque = wheelTorque / config.moduleConfig.driveGearing
+
+                        if not config.isHolonomic:
+                            # Split the torque over 2 drive motors if using differential drive
+                            motorTorque /= 2.0
+
+                        prevState.driveMotorTorque.append(motorTorque)
 
                     if len(unaddedMarkers) > 0:
-                        prevPos = self._states[i - 1].waypointRelativePos
-                        pos = self._states[i].waypointRelativePos
-
                         m = unaddedMarkers[0]
-                        if abs(m.waypointRelativePos - prevPos) <= abs(m.waypointRelativePos - pos):
-                            self._eventCommands.append((self._states[i - 1].timeSeconds, m.command))
+                        if abs(m.waypointRelativePos - prevState.waypointRelativePos) <= abs(
+                                m.waypointRelativePos - state.waypointRelativePos):
+                            self._eventCommands.append((prevState.timeSeconds, m.command))
                             unaddedMarkers.pop(0)
 
     def getEventCommands(self) -> List[Tuple[float, Command]]:

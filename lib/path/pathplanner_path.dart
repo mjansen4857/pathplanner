@@ -362,9 +362,8 @@ class PathPlannerPath {
       position: samplePath(0.0),
       rotationTarget: null,
       constraints: _constraintsForPos(0.0),
-      distanceAlongPath: 0.0,
+      waypointPos: 0.0,
     ));
-    pathPoints.last.waypointPos = 0.0;
 
     double pos = targetIncrement;
     while (pos < waypoints.length - 1) {
@@ -423,10 +422,8 @@ class PathPlannerPath {
         position: position,
         rotationTarget: null,
         constraints: _constraintsForPos(pos),
-        distanceAlongPath: pathPoints.last.distanceAlongPath +
-            pathPoints.last.position.distanceTo(position),
+        waypointPos: pos,
       ));
-      pathPoints.last.waypointPos = pos;
       pos = min(pos + targetIncrement, waypoints.length - 1);
     }
 
@@ -479,10 +476,8 @@ class PathPlannerPath {
         position: position,
         rotationTarget: null,
         constraints: _constraintsForPos(pos),
-        distanceAlongPath: pathPoints.last.distanceAlongPath +
-            pathPoints.last.position.distanceTo(position),
+        waypointPos: pos,
       ));
-      pathPoints.last.waypointPos = pos;
       pos = waypoints.length - 1;
     }
 
@@ -490,8 +485,81 @@ class PathPlannerPath {
         rotationDegrees: goalEndState.rotation,
         waypointRelativePos: waypoints.length - 1);
 
+    for (int i = 1; i < pathPoints.length - 1; i++) {
+      num curveRadius = _calculateRadius(pathPoints[i - 1].position,
+          pathPoints[i].position, pathPoints[i + 1].position);
+
+      if (curveRadius.isFinite && curveRadius.abs() < 0.25) {
+        // Curve radius is too tight for default spacing, insert 4 more points
+        num before1WaypointPos = GeometryUtil.numLerp(
+            pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.33);
+        num before2WaypointPos = GeometryUtil.numLerp(
+            pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.67);
+        num after1WaypointPos = GeometryUtil.numLerp(
+            pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.33);
+        num after2WaypointPos = GeometryUtil.numLerp(
+            pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.67);
+
+        PathPoint before1 = PathPoint(
+          position: samplePath(before1WaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: before1WaypointPos,
+        );
+        PathPoint before2 = PathPoint(
+          position: samplePath(before2WaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: before2WaypointPos,
+        );
+        PathPoint after1 = PathPoint(
+          position: samplePath(after1WaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: after1WaypointPos,
+        );
+        PathPoint after2 = PathPoint(
+          position: samplePath(after2WaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: after2WaypointPos,
+        );
+
+        pathPoints.insert(i, before2);
+        pathPoints.insert(i, before1);
+        pathPoints.insert(i + 3, after2);
+        pathPoints.insert(i + 3, after1);
+        i += 4;
+      } else if (curveRadius.isFinite && curveRadius.abs() < 0.5) {
+        // Curve radius is too tight for default spacing, insert 2 more points
+        num beforeWaypointPos = GeometryUtil.numLerp(
+            pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.5);
+        num afterWaypointPos = GeometryUtil.numLerp(
+            pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.5);
+
+        PathPoint before = PathPoint(
+          position: samplePath(beforeWaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: beforeWaypointPos,
+        );
+        PathPoint after = PathPoint(
+          position: samplePath(afterWaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: afterWaypointPos,
+        );
+
+        pathPoints.insert(i, before);
+        pathPoints.insert(i + 2, after);
+        i += 2;
+      }
+    }
+
     for (int i = 0; i < pathPoints.length; i++) {
       num curveRadius = _getCurveRadiusAtPoint(i).abs();
+
+      pathPoints[i].curveRadius = curveRadius;
 
       if (curveRadius.isFinite) {
         pathPoints[i].maxV = min(
@@ -499,6 +567,11 @@ class PathPlannerPath {
             pathPoints[i].constraints.maxVelocity);
       } else {
         pathPoints[i].maxV = pathPoints[i].constraints.maxVelocity;
+      }
+
+      if (i > 0) {
+        pathPoints[i].distanceAlongPath = pathPoints[i - 1].distanceAlongPath +
+            pathPoints[i].position.distanceTo(pathPoints[i - 1].position);
       }
     }
 

@@ -311,7 +311,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
           'Failed to generate trajectory for auto: ${widget.auto.name}');
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text(
-            'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets.'),
+            'Failed to generate trajectory. Please open an issue on the pathplanner github and include the failing path file.'),
       ));
     }
   }

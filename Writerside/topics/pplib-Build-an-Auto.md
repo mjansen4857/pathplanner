@@ -639,7 +639,7 @@ RobotContainer::RobotContainer() {
     [&isCompetition](const PathPlannerAuto *const autoCommand,
             std::filesystem::path autoPath)
     {
-      return autoPath.compare(frc::filesystem::GetDeployDirectory() + "/pathplanner/auto/comp") > 0;
+      return isCompetition ? autoPath.compare("comp") > 0 : true;
     }
   ); 
   */

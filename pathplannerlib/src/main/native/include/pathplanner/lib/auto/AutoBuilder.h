@@ -28,7 +28,9 @@ public:
 	 * @param poseSupplier a function that returns the robot's current pose
 	 * @param resetPose a function used for resetting the robot's pose
 	 * @param robotRelativeSpeedsSupplier a function that returns the robot's current robot relative chassis speeds
-	 * @param robotRelativeOutput a function for setting the robot's robot-relative chassis speeds
+	 * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
+	 *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+	 *     BL, BR order. If using a differential drive, they will be in L, R order.
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
 	 * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
@@ -38,10 +40,36 @@ public:
 	static void configure(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
+			std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Subsystem *driveSubsystem);
+
+	/**
+	 * Configures the AutoBuilder for using PathPlanner's built-in commands.
+	 *
+	 * @param poseSupplier a function that returns the robot's current pose
+	 * @param resetPose a function used for resetting the robot's pose
+	 * @param robotRelativeSpeedsSupplier a function that returns the robot's current robot relative chassis speeds
+	 * @param output Output function that accepts robot-relative ChassisSpeeds.
+	 * @param controller Path following controller that will be used to follow the path
+	 * @param robotConfig The robot configuration
+	 * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
+	 *     the field. This will maintain a global blue alliance origin.
+	 * @param driveSubsystem a pointer to the subsystem for the robot's drive
+	 */
+	static inline void configure(std::function<frc::Pose2d()> poseSupplier,
+			std::function<void(frc::Pose2d)> resetPose,
+			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
+			std::function<void(frc::ChassisSpeeds)> output,
+			std::shared_ptr<PathFollowingController> controller,
+			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
+			frc2::Subsystem *driveSubsystem) {
+		configure(poseSupplier, resetPose, robotRelativeSpeedsSupplier,
+				[output](auto speeds, auto torqueCurrent) {
+					output(speeds);
+				}, controller, robotConfig, shouldFlipPath, driveSubsystem);
+	}
 
 	/**
 	 * Configures the AutoBuilder with custom path following command builder. Building pathfinding

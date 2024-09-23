@@ -724,6 +724,21 @@ public class PathPlannerPath {
                 -state.fieldSpeeds.vxMetersPerSecond,
                 state.fieldSpeeds.vyMetersPerSecond,
                 -state.fieldSpeeds.omegaRadiansPerSecond);
+        if (state.driveMotorTorque.length == 4) {
+          mirrored.driveMotorTorque =
+              new double[] {
+                state.driveMotorTorque[1],
+                state.driveMotorTorque[0],
+                state.driveMotorTorque[3],
+                state.driveMotorTorque[2],
+              };
+        } else if (state.driveMotorTorque.length == 2) {
+          mirrored.driveMotorTorque =
+              new double[] {
+                state.driveMotorTorque[1], state.driveMotorTorque[0],
+              };
+        }
+
         mirroredStates.add(mirrored);
       }
       flippedTraj = Optional.of(new PathPlannerTrajectory(mirroredStates, traj.getEventCommands()));

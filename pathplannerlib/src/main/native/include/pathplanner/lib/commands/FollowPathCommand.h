@@ -12,6 +12,7 @@
 #include <units/velocity.h>
 #include <units/length.h>
 #include <units/time.h>
+#include <units/current.h>
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
@@ -29,8 +30,9 @@ public:
 	 * @param path The path to follow
 	 * @param poseSupplier Function that supplies the current field-relative pose of the robot
 	 * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
-	 * @param output Function that will apply the robot-relative output speeds of this
-	 *     command
+	 * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
+	 *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+	 *     BL, BR order. If using a differential drive, they will be in L, R order.
 	 * @param controller Path following controller that will be used to follow the path
 	 * @param robotConfig The robot configuration
 	 * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
@@ -40,7 +42,7 @@ public:
 	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> output,
+			std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements);
@@ -58,7 +60,7 @@ private:
 	std::shared_ptr<PathPlannerPath> m_originalPath;
 	std::function<frc::Pose2d()> m_poseSupplier;
 	std::function<frc::ChassisSpeeds()> m_speedsSupplier;
-	std::function<void(frc::ChassisSpeeds)> m_output;
+	std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> m_output;
 	std::shared_ptr<PathFollowingController> m_controller;
 	RobotConfig m_robotConfig;
 	std::function<bool()> m_shouldFlipPath;

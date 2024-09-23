@@ -3,6 +3,7 @@
 #include <units/velocity.h>
 #include <units/length.h>
 #include <units/time.h>
+#include <units/torque.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Translation2d.h>
@@ -19,6 +20,7 @@ public:
 	frc::ChassisSpeeds fieldSpeeds;
 	frc::Pose2d pose;
 	units::meters_per_second_t linearVelocity = 0_mps;
+	std::vector<units::newton_meter_t> driveMotorTorque;
 
 	frc::Rotation2d heading;
 	units::meter_t deltaPos = 0_m;

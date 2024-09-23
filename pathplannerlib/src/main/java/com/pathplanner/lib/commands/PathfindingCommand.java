@@ -20,8 +20,8 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /** Base pathfinding command */
@@ -36,7 +36,7 @@ public class PathfindingCommand extends Command {
   private final PathConstraints constraints;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
-  private final Consumer<ChassisSpeeds> output;
+  private final BiConsumer<ChassisSpeeds, double[]> output;
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
   private final BooleanSupplier shouldFlipPath;
@@ -55,7 +55,9 @@ public class PathfindingCommand extends Command {
    * @param constraints the path constraints to use while pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param speedsSupplier a supplier for the robot's current robot relative speeds
-   * @param outputRobotRelative a consumer for the output speeds (robot relative)
+   * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
+   *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+   *     BL, BR order. If using a differential drive, they will be in L, R order.
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
@@ -67,7 +69,7 @@ public class PathfindingCommand extends Command {
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      Consumer<ChassisSpeeds> outputRobotRelative,
+      BiConsumer<ChassisSpeeds, double[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -101,7 +103,7 @@ public class PathfindingCommand extends Command {
     this.controller = controller;
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = speedsSupplier;
-    this.output = outputRobotRelative;
+    this.output = output;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
 
@@ -118,7 +120,9 @@ public class PathfindingCommand extends Command {
    * @param goalEndVel The goal end velocity when reaching the target pose
    * @param poseSupplier a supplier for the robot's current pose
    * @param speedsSupplier a supplier for the robot's current robot relative speeds
-   * @param outputRobotRelative a consumer for the output speeds (robot relative)
+   * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
+   *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+   *     BL, BR order. If using a differential drive, they will be in L, R order.
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
    * @param requirements the subsystems required by this command
@@ -129,7 +133,7 @@ public class PathfindingCommand extends Command {
       double goalEndVel,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      Consumer<ChassisSpeeds> outputRobotRelative,
+      BiConsumer<ChassisSpeeds, double[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       Subsystem... requirements) {
@@ -146,7 +150,7 @@ public class PathfindingCommand extends Command {
     this.controller = controller;
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = speedsSupplier;
-    this.output = outputRobotRelative;
+    this.output = output;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = () -> false;
 
@@ -162,7 +166,9 @@ public class PathfindingCommand extends Command {
    * @param constraints the path constraints to use while pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param speedsSupplier a supplier for the robot's current robot relative speeds
-   * @param outputRobotRelative a consumer for the output speeds (robot relative)
+   * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
+   *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+   *     BL, BR order. If using a differential drive, they will be in L, R order.
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
    * @param requirements the subsystems required by this command
@@ -172,7 +178,7 @@ public class PathfindingCommand extends Command {
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      Consumer<ChassisSpeeds> outputRobotRelative,
+      BiConsumer<ChassisSpeeds, double[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       Subsystem... requirements) {
@@ -182,7 +188,7 @@ public class PathfindingCommand extends Command {
         0.0,
         poseSupplier,
         speedsSupplier,
-        outputRobotRelative,
+        output,
         controller,
         robotConfig,
         requirements);
@@ -208,7 +214,7 @@ public class PathfindingCommand extends Command {
     }
 
     if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.5) {
-      output.accept(new ChassisSpeeds());
+      output.accept(new ChassisSpeeds(), new double[robotConfig.numModules]);
       finish = true;
     } else {
       Pathfinding.setStartPosition(currentPose.getTranslation());
@@ -321,7 +327,15 @@ public class PathfindingCommand extends Command {
           targetSpeeds.omegaRadiansPerSecond);
       PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
 
-      output.accept(targetSpeeds);
+      // Convert the motor torque at this state to torque-current
+      double[] torqueCurrentFF = new double[targetState.driveMotorTorque.length];
+      for (int i = 0; i < targetState.driveMotorTorque.length; i++) {
+        torqueCurrentFF[i] =
+            targetState.driveMotorTorque[i]
+                / robotConfig.moduleConfig.driveMotorTorqueCurve.getNmPerAmp();
+      }
+
+      output.accept(targetSpeeds, torqueCurrentFF);
     }
   }
 
@@ -358,7 +372,7 @@ public class PathfindingCommand extends Command {
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine
     if (!interrupted && goalEndState.getVelocity() < 0.1) {
-      output.accept(new ChassisSpeeds());
+      output.accept(new ChassisSpeeds(), new double[robotConfig.numModules]);
     }
 
     PathPlannerLogging.logActivePath(null);
@@ -375,7 +389,7 @@ public class PathfindingCommand extends Command {
             new PathConstraints(4, 3, 4, 4),
             () -> new Pose2d(1.5, 4, new Rotation2d()),
             ChassisSpeeds::new,
-            (speeds) -> {},
+            (speeds, torqueCurrent) -> {},
             new PPHolonomicDriveController(
                 new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
             new RobotConfig(

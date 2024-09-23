@@ -20,8 +20,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /** Base command for following a path */
@@ -30,7 +30,7 @@ public class FollowPathCommand extends Command {
   private final PathPlannerPath originalPath;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
-  private final Consumer<ChassisSpeeds> output;
+  private final BiConsumer<ChassisSpeeds, double[]> output;
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
   private final BooleanSupplier shouldFlipPath;
@@ -48,8 +48,9 @@ public class FollowPathCommand extends Command {
    * @param path The path to follow
    * @param poseSupplier Function that supplies the current field-relative pose of the robot
    * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
-   * @param outputRobotRelative Function that will apply the robot-relative output speeds of this
-   *     command
+   * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
+   *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+   *     BL, BR order. If using a differential drive, they will be in L, R order.
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
@@ -60,7 +61,7 @@ public class FollowPathCommand extends Command {
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      Consumer<ChassisSpeeds> outputRobotRelative,
+      BiConsumer<ChassisSpeeds, double[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -68,7 +69,7 @@ public class FollowPathCommand extends Command {
     this.originalPath = path;
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = speedsSupplier;
-    this.output = outputRobotRelative;
+    this.output = output;
     this.controller = controller;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
@@ -174,7 +175,15 @@ public class FollowPathCommand extends Command {
         targetSpeeds.omegaRadiansPerSecond);
     PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
 
-    output.accept(targetSpeeds);
+    // Convert the motor torque at this state to torque-current
+    double[] torqueCurrentFF = new double[targetState.driveMotorTorque.length];
+    for (int i = 0; i < targetState.driveMotorTorque.length; i++) {
+      torqueCurrentFF[i] =
+          targetState.driveMotorTorque[i]
+              / robotConfig.moduleConfig.driveMotorTorqueCurve.getNmPerAmp();
+    }
+
+    output.accept(targetSpeeds, torqueCurrentFF);
 
     if (!untriggeredEvents.isEmpty() && timer.hasElapsed(untriggeredEvents.get(0).getFirst())) {
       // Time to trigger this event command
@@ -223,7 +232,7 @@ public class FollowPathCommand extends Command {
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine
     if (!interrupted && path.getGoalEndState().getVelocity() < 0.1) {
-      output.accept(new ChassisSpeeds());
+      output.accept(new ChassisSpeeds(), new double[robotConfig.numModules]);
     }
 
     PathPlannerLogging.logActivePath(null);
@@ -256,7 +265,7 @@ public class FollowPathCommand extends Command {
             path,
             Pose2d::new,
             ChassisSpeeds::new,
-            (speeds) -> {},
+            (speeds, torqueCurrent) -> {},
             new PPHolonomicDriveController(
                 new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
             new RobotConfig(

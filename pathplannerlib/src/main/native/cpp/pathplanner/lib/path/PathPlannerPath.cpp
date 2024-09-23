@@ -436,6 +436,21 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 			mirrored.pose = GeometryUtil::flipFieldPose(state.pose);
 			mirrored.fieldSpeeds = frc::ChassisSpeeds { -state.fieldSpeeds.vx,
 					state.fieldSpeeds.vy, -state.fieldSpeeds.omega };
+			if (state.driveMotorTorque.size() == 4) {
+				mirrored.driveMotorTorque.emplace_back(
+						state.driveMotorTorque[1]);
+				mirrored.driveMotorTorque.emplace_back(
+						state.driveMotorTorque[0]);
+				mirrored.driveMotorTorque.emplace_back(
+						state.driveMotorTorque[3]);
+				mirrored.driveMotorTorque.emplace_back(
+						state.driveMotorTorque[2]);
+			} else if (state.driveMotorTorque.size() == 2) {
+				mirrored.driveMotorTorque.emplace_back(
+						state.driveMotorTorque[1]);
+				mirrored.driveMotorTorque.emplace_back(
+						state.driveMotorTorque[0]);
+			}
 			mirroredStates.emplace_back(mirrored);
 		}
 		flippedTraj = PathPlannerTrajectory(mirroredStates,

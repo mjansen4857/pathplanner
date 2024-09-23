@@ -1,6 +1,7 @@
 package com.pathplanner.lib.trajectory;
 
 import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -17,6 +18,11 @@ public class PathPlannerTrajectoryState {
   public Pose2d pose = Pose2d.kZero;
   /** The linear velocity at this state in m/s */
   public double linearVelocity = 0.0;
+  /**
+   * The torque being applied by each module's drive motor, in Newton-Meters. NOTE: This is motor
+   * torque, not wheel torque.
+   */
+  public double[] driveMotorTorque;
 
   // Values used only during generation, these will not be interpolated
   /** The field-relative heading, or direction of travel, at this state */
@@ -61,6 +67,11 @@ public class PathPlannerTrajectoryState {
                 fieldSpeeds.omegaRadiansPerSecond, endVal.fieldSpeeds.omegaRadiansPerSecond, t));
     lerpedState.pose = pose.interpolate(endVal.pose, t);
     lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
+    lerpedState.driveMotorTorque = new double[driveMotorTorque.length];
+    for (int m = 0; m < driveMotorTorque.length; m++) {
+      lerpedState.driveMotorTorque[m] =
+          GeometryUtil.doubleLerp(driveMotorTorque[m], endVal.driveMotorTorque[m], t);
+    }
 
     return lerpedState;
   }
@@ -82,6 +93,10 @@ public class PathPlannerTrajectoryState {
             reversedSpeeds.getX(), reversedSpeeds.getY(), fieldSpeeds.omegaRadiansPerSecond);
     reversed.pose = new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.k180deg));
     reversed.linearVelocity = -linearVelocity;
+    reversed.driveMotorTorque = new double[driveMotorTorque.length];
+    for (int m = 0; m < driveMotorTorque.length; m++) {
+      reversed.driveMotorTorque[m] = -driveMotorTorque[m];
+    }
 
     return reversed;
   }

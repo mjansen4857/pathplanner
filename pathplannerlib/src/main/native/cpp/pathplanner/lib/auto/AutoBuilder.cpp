@@ -31,7 +31,7 @@ std::function<
 void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose,
 		std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-		std::function<void(frc::ChassisSpeeds)> robotRelativeOutput,
+		std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 		frc2::Subsystem *driveSubsystem) {
@@ -41,12 +41,12 @@ void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = [poseSupplier,
-			robotRelativeSpeedsSupplier, robotRelativeOutput, controller,
-			robotConfig, shouldFlipPath, driveSubsystem](
+			robotRelativeSpeedsSupplier, output, controller, robotConfig,
+			shouldFlipPath, driveSubsystem](
 			std::shared_ptr<PathPlannerPath> path) {
 		return FollowPathCommand(path, poseSupplier,
-				robotRelativeSpeedsSupplier, robotRelativeOutput, controller,
-				robotConfig, shouldFlipPath, { driveSubsystem }).ToPtr();
+				robotRelativeSpeedsSupplier, output, controller, robotConfig,
+				shouldFlipPath, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
@@ -54,22 +54,21 @@ void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_isHolonomic = robotConfig.isHolonomic;
 
 	AutoBuilder::m_pathfindToPoseCommandBuilder = [poseSupplier,
-			robotRelativeSpeedsSupplier, robotRelativeOutput, controller,
-			robotConfig, driveSubsystem](frc::Pose2d pose,
-			PathConstraints constraints,
+			robotRelativeSpeedsSupplier, output, controller, robotConfig,
+			driveSubsystem](frc::Pose2d pose, PathConstraints constraints,
 			units::meters_per_second_t goalEndVel) {
 		return PathfindingCommand(pose, constraints, goalEndVel, poseSupplier,
-				robotRelativeSpeedsSupplier, robotRelativeOutput, controller,
-				robotConfig, { driveSubsystem }).ToPtr();
+				robotRelativeSpeedsSupplier, output, controller, robotConfig, {
+						driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_pathfindThenFollowPathCommandBuilder = [poseSupplier,
-			robotRelativeSpeedsSupplier, robotRelativeOutput, controller,
-			robotConfig, shouldFlipPath, driveSubsystem](
+			robotRelativeSpeedsSupplier, output, controller, robotConfig,
+			shouldFlipPath, driveSubsystem](
 			std::shared_ptr<PathPlannerPath> path,
 			PathConstraints constraints) {
 		return PathfindThenFollowPath(path, constraints, poseSupplier,
-				robotRelativeSpeedsSupplier, robotRelativeOutput, controller,
-				robotConfig, shouldFlipPath, { driveSubsystem }).ToPtr();
+				robotRelativeSpeedsSupplier, output, controller, robotConfig,
+				shouldFlipPath, { driveSubsystem }).ToPtr();
 	};
 	AutoBuilder::m_pathfindingConfigured = true;
 }

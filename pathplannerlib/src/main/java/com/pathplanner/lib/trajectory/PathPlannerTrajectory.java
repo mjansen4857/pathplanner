@@ -104,21 +104,46 @@ public class PathPlannerTrajectory {
 
       List<EventMarker> unaddedMarkers = new ArrayList<>(path.getEventMarkers());
 
-      // Loop back over and calculate time
+      // Loop back over and calculate time, and module accel/torque
       for (int i = 1; i < states.size(); i++) {
-        double v0 = states.get(i - 1).linearVelocity;
-        double v = states.get(i).linearVelocity;
-        double dt = (2 * states.get(i).deltaPos) / (v + v0);
-        states.get(i).timeSeconds = states.get(i - 1).timeSeconds + dt;
+        PathPlannerTrajectoryState prevState = states.get(i - 1);
+        PathPlannerTrajectoryState state = states.get(i);
+
+        double v0 = prevState.linearVelocity;
+        double v = state.linearVelocity;
+        double dt = (2 * state.deltaPos) / (v + v0);
+        state.timeSeconds = prevState.timeSeconds + dt;
+
+        double linearAccel = (state.linearVelocity - prevState.linearVelocity) / dt;
+        Translation2d forceVec =
+            new Translation2d(linearAccel, prevState.heading).times(config.massKG);
+
+        double angularAccel =
+            (state.fieldSpeeds.omegaRadiansPerSecond - prevState.fieldSpeeds.omegaRadiansPerSecond)
+                / dt;
+        double angTorque = angularAccel * config.MOI;
+
+        // Use kinematics to convert chassis forces to wheel forces
+        var wheelForces =
+            config.kinematics.toSwerveModuleStates(
+                new ChassisSpeeds(forceVec.getX(), forceVec.getY(), angTorque));
+
+        for (int m = 0; m < config.numModules; m++) {
+          double forceAtCarpet = wheelForces[m].speedMetersPerSecond;
+          double wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters;
+          prevState.driveMotorTorque[m] = wheelTorque / config.moduleConfig.driveGearing;
+
+          if (!config.isHolonomic) {
+            // Split the torque over 2 drive motors if using differential drive
+            prevState.driveMotorTorque[m] /= 2.0;
+          }
+        }
 
         if (!unaddedMarkers.isEmpty()) {
-          double prevPos = states.get(i - 1).waypointRelativePos;
-          double pos = states.get(i).waypointRelativePos;
-
           EventMarker next = unaddedMarkers.get(0);
-          if (Math.abs(next.getWaypointRelativePos() - prevPos)
-              <= Math.abs(next.getWaypointRelativePos() - pos)) {
-            eventCommands.add(Pair.of(states.get(i - 1).timeSeconds, next.getCommand()));
+          if (Math.abs(next.getWaypointRelativePos() - prevState.waypointRelativePos)
+              <= Math.abs(next.getWaypointRelativePos() - state.waypointRelativePos)) {
+            eventCommands.add(Pair.of(prevState.timeSeconds, next.getCommand()));
             unaddedMarkers.remove(0);
           }
         }
@@ -184,6 +209,7 @@ public class PathPlannerTrajectory {
       }
 
       state.moduleStates = new SwerveModuleTrajectoryState[config.numModules];
+      state.driveMotorTorque = new double[config.numModules];
       for (int m = 0; m < config.numModules; m++) {
         state.moduleStates[m] = new SwerveModuleTrajectoryState();
         state.moduleStates[m].fieldPos =

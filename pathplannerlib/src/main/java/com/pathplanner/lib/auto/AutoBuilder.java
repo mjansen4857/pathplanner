@@ -43,7 +43,9 @@ public class AutoBuilder {
    * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
-   * @param robotRelativeOutput a consumer for setting the robot's robot-relative chassis speeds
+   * @param output Output function that supplies robot-relative ChassisSpeeds and torque-current
+   *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
+   *     BL, BR order. If using a differential drive, they will be in L, R order.
    * @param controller Path following controller that will be used to follow paths
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
@@ -54,7 +56,7 @@ public class AutoBuilder {
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
-      Consumer<ChassisSpeeds> robotRelativeOutput,
+      BiConsumer<ChassisSpeeds, double[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -70,7 +72,7 @@ public class AutoBuilder {
                 path,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
-                robotRelativeOutput,
+                output,
                 controller,
                 robotConfig,
                 shouldFlipPath,
@@ -88,7 +90,7 @@ public class AutoBuilder {
                 goalEndVel,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
-                robotRelativeOutput,
+                output,
                 controller,
                 robotConfig,
                 driveRequirements);
@@ -99,7 +101,7 @@ public class AutoBuilder {
                 constraints,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
-                robotRelativeOutput,
+                output,
                 controller,
                 robotConfig,
                 shouldFlipPath,

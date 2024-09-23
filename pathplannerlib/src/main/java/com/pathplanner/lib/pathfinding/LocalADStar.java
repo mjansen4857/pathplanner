@@ -58,7 +58,7 @@ public class LocalADStar implements Pathfinder {
   private final ReadWriteLock pathLock = new ReentrantReadWriteLock();
   private final ReadWriteLock requestLock = new ReentrantReadWriteLock();
 
-  private List<PathPoint> currentPathPoints = new ArrayList<>();
+  private List<Translation2d> currentBezierPoints = new ArrayList<>();
   private List<GridPosition> currentPathFull = new ArrayList<>();
 
   /** Create a new pathfinder that runs AD* locally in a background thread */
@@ -143,20 +143,20 @@ public class LocalADStar implements Pathfinder {
    */
   @Override
   public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
-    List<PathPoint> pathPoints;
+    List<Translation2d> bezierPoints;
 
     pathLock.readLock().lock();
-    pathPoints = new ArrayList<>(currentPathPoints);
+    bezierPoints = new ArrayList<>(currentBezierPoints);
     pathLock.readLock().unlock();
 
     newPathAvailable = false;
 
-    if (currentPathPoints.isEmpty()) {
+    if (bezierPoints.size() < 4 || (bezierPoints.size() - 1) % 3 != 0) {
       // Not enough points. Something got borked somewhere
       return null;
     }
 
-    return PathPlannerPath.fromPathPoints(pathPoints, constraints, goalEndState);
+    return new PathPlannerPath(bezierPoints, constraints, null, goalEndState);
   }
 
   /**
@@ -316,12 +316,12 @@ public class LocalADStar implements Pathfinder {
       computeOrImprovePath(sStart, sGoal, obstacles);
 
       List<GridPosition> pathPositions = extractPath(sStart, sGoal, obstacles);
-      List<PathPoint> pathPoints =
-          createPathPoints(pathPositions, realStartPos, realGoalPos, obstacles);
+      List<Translation2d> bezierPoints =
+          createBezierPoints(pathPositions, realStartPos, realGoalPos, obstacles);
 
       pathLock.writeLock().lock();
       currentPathFull = pathPositions;
-      currentPathPoints = pathPoints;
+      currentBezierPoints = bezierPoints;
       pathLock.writeLock().unlock();
 
       newPathAvailable = true;
@@ -335,12 +335,12 @@ public class LocalADStar implements Pathfinder {
         computeOrImprovePath(sStart, sGoal, obstacles);
 
         List<GridPosition> pathPositions = extractPath(sStart, sGoal, obstacles);
-        List<PathPoint> pathPoints =
-            createPathPoints(pathPositions, realStartPos, realGoalPos, obstacles);
+        List<Translation2d> bezierPoints =
+            createBezierPoints(pathPositions, realStartPos, realGoalPos, obstacles);
 
         pathLock.writeLock().lock();
         currentPathFull = pathPositions;
-        currentPathPoints = pathPoints;
+        currentBezierPoints = bezierPoints;
         pathLock.writeLock().unlock();
 
         newPathAvailable = true;
@@ -383,7 +383,7 @@ public class LocalADStar implements Pathfinder {
     return path;
   }
 
-  private List<PathPoint> createPathPoints(
+  private List<Translation2d> createBezierPoints(
       List<GridPosition> path,
       Translation2d realStartPos,
       Translation2d realGoalPos,
@@ -452,25 +452,7 @@ public class LocalADStar implements Pathfinder {
             .plus(fieldPosPath.get(fieldPosPath.size() - 1)));
     bezierPoints.add(fieldPosPath.get(fieldPosPath.size() - 1));
 
-    int numSegments = (bezierPoints.size() - 1) / 3;
-    List<PathPoint> pathPoints = new ArrayList<>();
-
-    for (int i = 0; i < numSegments; i++) {
-      int iOffset = i * 3;
-
-      Translation2d p1 = bezierPoints.get(iOffset);
-      Translation2d p2 = bezierPoints.get(iOffset + 1);
-      Translation2d p3 = bezierPoints.get(iOffset + 2);
-      Translation2d p4 = bezierPoints.get(iOffset + 3);
-
-      PathSegment segment = new PathSegment(p1, p2, p3, p4);
-      segment.generatePathPoints(
-          pathPoints, i, Collections.emptyList(), Collections.emptyList(), null);
-    }
-    pathPoints.add(new PathPoint(bezierPoints.get(bezierPoints.size() - 1)));
-    pathPoints.get(pathPoints.size() - 1).waypointRelativePos = numSegments;
-
-    return pathPoints;
+    return bezierPoints;
   }
 
   private GridPosition findClosestNonObstacle(GridPosition pos, Set<GridPosition> obstacles) {

@@ -347,26 +347,31 @@ void PathPlannerTrajectory::forwardAccelPass(
 		// Go over the modules again to make sure they take the same amount of time to reach the next
 		// state
 		units::second_t maxDT = 0_s;
+		units::second_t realMaxDT = 0_s;
 		for (size_t m = 0; m < config.numModules; m++) {
 			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
 					- prevState.moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
-				continue;
-			}
-
 			units::meters_per_second_t modVel = state.moduleStates[m].speed;
 			units::second_t dt = nextState.moduleStates[m].deltaPos / modVel;
 
 			if (GeometryUtil::isFinite(dt)) {
-				maxDT = units::math::max(dt, maxDT);
+				realMaxDT = units::math::max(dt, realMaxDT);
+
+				if (units::math::abs(prevRotDelta.Degrees()) < 60_deg) {
+					maxDT = units::math::max(dt, maxDT);
+				}
 			}
+		}
+
+		if (maxDT == 0_s) {
+			maxDT = realMaxDT;
 		}
 
 		// Recalculate all module velocities with the allowed DT
 		for (size_t m = 0; m < config.numModules; m++) {
 			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
 					- prevState.moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
+			if (units::math::abs(prevRotDelta.Degrees()) >= 60_deg) {
 				continue;
 			}
 
@@ -481,19 +486,24 @@ void PathPlannerTrajectory::reverseAccelPass(
 		// Go over the modules again to make sure they take the same amount of time to reach the next
 		// state
 		units::second_t maxDT = 0_s;
+		units::second_t realMaxDT = 0_s;
 		for (size_t m = 0; m < config.numModules; m++) {
 			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
 					- states[i - 1].moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
-				continue;
-			}
-
 			units::meters_per_second_t modVel = state.moduleStates[m].speed;
 			units::second_t dt = nextState.moduleStates[m].deltaPos / modVel;
 
 			if (GeometryUtil::isFinite(dt)) {
-				maxDT = units::math::max(dt, maxDT);
+				realMaxDT = units::math::max(dt, realMaxDT);
+
+				if (units::math::abs(prevRotDelta.Degrees()) < 60_deg) {
+					maxDT = units::math::max(dt, maxDT);
+				}
 			}
+		}
+
+		if (maxDT == 0_s) {
+			maxDT = realMaxDT;
 		}
 
 		// Recalculate all module velocities with the allowed DT

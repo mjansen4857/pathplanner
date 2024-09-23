@@ -346,12 +346,13 @@ public class PathPlannerTrajectory {
 
         if (Double.isFinite(dt)) {
           realMaxDT = Math.max(dt, realMaxDT);
-        }
 
-        if (Math.abs(prevRotDelta.getDegrees()) < 60) {
-          maxDT = Math.max(dt, maxDT);
+          if (Math.abs(prevRotDelta.getDegrees()) < 60) {
+            maxDT = Math.max(dt, maxDT);
+          }
         }
       }
+
       if (maxDT == 0.0) {
         maxDT = realMaxDT;
       }
@@ -467,12 +468,13 @@ public class PathPlannerTrajectory {
 
         if (Double.isFinite(dt)) {
           realMaxDT = Math.max(dt, realMaxDT);
-        }
 
-        if (Math.abs(prevRotDelta.getDegrees()) < 60) {
-          maxDT = Math.max(dt, maxDT);
+          if (Math.abs(prevRotDelta.getDegrees()) < 60) {
+            maxDT = Math.max(dt, maxDT);
+          }
         }
       }
+
       if (maxDT == 0.0) {
         maxDT = realMaxDT;
       }

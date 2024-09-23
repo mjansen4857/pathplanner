@@ -431,6 +431,70 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 		pos = numSegments;
 	}
 
+	for (size_t i = 1; i < points.size(); i++) {
+		units::meter_t curveRadius = GeometryUtil::calculateRadius(
+				points[i - 1].position, points[i].position,
+				points[i + 1].position);
+
+		if (!GeometryUtil::isFinite(curveRadius)) {
+			continue;
+		}
+
+		if (units::math::abs(curveRadius) < 0.25_m) {
+			// Curve radius is too tight for default spacing, insert 4 more points
+			double before1WaypointPos = GeometryUtil::doubleLerp(
+					points[i - 1].waypointRelativePos,
+					points[i].waypointRelativePos, 0.33);
+			double before2WaypointPos = GeometryUtil::doubleLerp(
+					points[i - 1].waypointRelativePos,
+					points[i].waypointRelativePos, 0.67);
+			double after1WaypointPos = GeometryUtil::doubleLerp(
+					points[i].waypointRelativePos,
+					points[i + 1].waypointRelativePos, 0.33);
+			double after2WaypointPos = GeometryUtil::doubleLerp(
+					points[i].waypointRelativePos,
+					points[i + 1].waypointRelativePos, 0.67);
+
+			PathPoint before1(samplePath(before1WaypointPos), std::nullopt,
+					points[i].constraints);
+			before1.waypointRelativePos = before1WaypointPos;
+			PathPoint before2(samplePath(before2WaypointPos), std::nullopt,
+					points[i].constraints);
+			before2.waypointRelativePos = before2WaypointPos;
+			PathPoint after1(samplePath(after1WaypointPos), std::nullopt,
+					points[i].constraints);
+			after1.waypointRelativePos = after1WaypointPos;
+			PathPoint after2(samplePath(after2WaypointPos), std::nullopt,
+					points[i].constraints);
+			after2.waypointRelativePos = after2WaypointPos;
+
+			points.insert(points.begin() + i, before2);
+			points.insert(points.begin() + i, before1);
+			points.insert(points.begin() + (i + 3), after2);
+			points.insert(points.begin() + (i + 3), after1);
+			i += 4;
+		} else if (units::math::abs(curveRadius) < 0.5_m) {
+			// Curve radius is too tight for default spacing, insert 2 more points
+			double beforeWaypointPos = GeometryUtil::doubleLerp(
+					points[i - 1].waypointRelativePos,
+					points[i].waypointRelativePos, 0.5);
+			double afterWaypointPos = GeometryUtil::doubleLerp(
+					points[i].waypointRelativePos,
+					points[i + 1].waypointRelativePos, 0.5);
+
+			PathPoint before(samplePath(beforeWaypointPos), std::nullopt,
+					points[i].constraints);
+			before.waypointRelativePos = beforeWaypointPos;
+			PathPoint after(samplePath(afterWaypointPos), std::nullopt,
+					points[i].constraints);
+			after.waypointRelativePos = afterWaypointPos;
+
+			points.insert(points.begin() + i, before);
+			points.insert(points.begin() + (i + 2), after);
+			i += 2;
+		}
+	}
+
 	return points;
 }
 

@@ -541,7 +541,7 @@ public class PathPlannerPath {
     }
 
     List<RotationTarget> unaddedTargets = new ArrayList<>(rotationTargets);
-    ArrayList<PathPoint> points = new ArrayList<>();
+    List<PathPoint> points = new ArrayList<>();
     int numSegments = (bezierPoints.size() - 1) / 3;
 
     // Add the first path point

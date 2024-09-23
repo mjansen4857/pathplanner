@@ -178,6 +178,10 @@ class PathPlannerTrajectory:
                             # Split the torque over 2 drive motors if using differential drive
                             motorTorque /= 2.0
 
+                        # Negate the torque if the motor is slowing down
+                        if state.moduleStates[m].speed < prevState.moduleStates[m].speed:
+                            motorTorque *= -1
+
                         prevState.driveMotorTorque.append(motorTorque)
 
                     if len(unaddedMarkers) > 0:

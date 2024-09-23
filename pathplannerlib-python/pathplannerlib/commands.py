@@ -42,7 +42,11 @@ class FollowPathCommand(Command):
         :param path: The path to follow
         :param pose_supplier: Function that supplies the current field-relative pose of the robot
         :param speeds_supplier: Function that supplies the current robot-relative chassis speeds
-        :param output: Output function that accepts robot-relative ChassisSpeeds and torque-current feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If using a differential drive, they will be in L, R order
+        :param output: Output function that accepts robot-relative ChassisSpeeds and torque-current feedforwards for
+            each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If using a
+            differential drive, they will be in L, R order.
+            NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+            module states, you will need to negate the torque for modules that have been flipped
         :param controller: Path following controller that will be used to follow the path
         :param robot_config The robot configuration
         :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.
@@ -93,7 +97,7 @@ class FollowPathCommand(Command):
             # Check if we match the ideal starting state
             idealVelocity = abs(linearVel - self._path.getIdealStartingState().velocity) <= 0.25
             idealRotation = (not self._robotConfig.isHolonomic) or abs(
-                (currentPose.rotation() - self._path._idealStartingState.rotation).degrees()) <= 30.0
+                (currentPose.rotation() - self._path.getIdealStartingState().rotation).degrees()) <= 30.0
             if idealVelocity and idealRotation:
                 # We can use the ideal trajectory
                 self._trajectory = self._path.getIdealTrajectory(self._robotConfig)
@@ -221,6 +225,25 @@ class PathfindingCommand(Command):
                  should_flip_path: Callable[[], bool], *requirements: Subsystem,
                  target_path: PathPlannerPath = None, target_pose: Pose2d = None,
                  goal_end_vel: float = 0):
+        """
+        Construct a pathfinding command
+
+        :param constraints: The constraints to use while path following
+        :param pose_supplier: Function that supplies the current field-relative pose of the robot
+        :param speeds_supplier: Function that supplies the current robot-relative chassis speeds
+        :param output: Output function that accepts robot-relative ChassisSpeeds and torque-current feedforwards for
+            each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If using a
+            differential drive, they will be in L, R order.
+            NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+            module states, you will need to negate the torque for modules that have been flipped
+        :param controller: Path following controller that will be used to follow the path
+        :param robot_config The robot configuration
+        :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.
+        :param requirements: Subsystems required by this command, usually just the drive subsystem
+        :param target_path: The path to pathfind to. This should be None if target_pose is specified
+        :param target_pose: The pose to pathfind to. This should be None if target_path is specified
+        :param goal_end_vel: The goal end velocity when reaching the target path/pose
+        """
         super().__init__()
         if target_path is None and target_pose is None:
             raise ValueError('Either target_path or target_pose must be specified for PathfindingCommand')
@@ -414,7 +437,11 @@ class PathfindThenFollowPath(SequentialCommandGroup):
         :param pathfinding_constraints: the path constraints for pathfinding
         :param pose_supplier: a supplier for the robot's current pose
         :param speeds_supplier: a supplier for the robot's current robot relative speeds
-        :param output: Output function that accepts robot-relative ChassisSpeeds and torque-current feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If using a differential drive, they will be in L, R order
+        :param output: Output function that accepts robot-relative ChassisSpeeds and torque-current feedforwards for
+            each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If using a
+            differential drive, they will be in L, R order.
+            NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+            module states, you will need to negate the torque for modules that have been flipped
         :param controller Path following controller that will be used to follow the path
         :param robot_config The robot configuration
         :param should_flip_path: Should the path be flipped to the other side of the field? This will maintain a global blue alliance origin.

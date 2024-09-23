@@ -50,7 +50,9 @@ public class FollowPathCommand extends Command {
    * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
    * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
    *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
-   *     BL, BR order. If using a differential drive, they will be in L, R order.
+   *     BL, BR order. If using a differential drive, they will be in L, R order. * *
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to negate the torque for modules that have been flipped
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Should the path be flipped to the other side of the field? This will

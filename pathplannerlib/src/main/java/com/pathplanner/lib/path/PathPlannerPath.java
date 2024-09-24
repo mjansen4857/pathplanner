@@ -941,32 +941,6 @@ public class PathPlannerPath {
         .collect(Collectors.toList());
   }
 
-  /**
-   * Map a given percentage/waypoint relative position over 2 segments
-   *
-   * @param pct The percent to map
-   * @param seg1Pct The percentage of the 2 segments made up by the first segment
-   * @return The waypoint relative position over the 2 segments
-   */
-  private static double mapPct(double pct, double seg1Pct) {
-    double mappedPct;
-    if (pct <= seg1Pct) {
-      // Map to segment 1
-      mappedPct = pct / seg1Pct;
-    } else {
-      // Map to segment 2
-      mappedPct = 1 + ((pct - seg1Pct) / (1.0 - seg1Pct));
-    }
-
-    return mappedPct;
-  }
-
-  private static double positionDelta(Translation2d a, Translation2d b) {
-    Translation2d delta = a.minus(b);
-
-    return Math.abs(delta.getX()) + Math.abs(delta.getY());
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

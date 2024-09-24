@@ -228,17 +228,22 @@ class PathPlannerTrajectory {
       // Go over the modules again to make sure they take the same amount of time to reach the next
       // state
       num maxDT = 0.0;
+      num realMaxDT = 0.0;
       for (int m = 0; m < numModules; m++) {
         Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
             states[i - 1].moduleStates[m].angle;
-        if (prevRotDelta.getDegrees().abs() >= 45) {
-          continue;
-        }
 
         num modVel = states[i].moduleStates[m].speedMetersPerSecond;
 
         num dt = states[i + 1].moduleStates[m].deltaPos / modVel;
-        maxDT = max(dt, maxDT);
+        realMaxDT = max(dt, realMaxDT);
+
+        if (prevRotDelta.getDegrees().abs() < 60) {
+          maxDT = max(dt, maxDT);
+        }
+      }
+      if (maxDT == 0.0) {
+        maxDT = realMaxDT;
       }
 
       // Recalculate all module velocities with the allowed DT
@@ -359,16 +364,21 @@ class PathPlannerTrajectory {
       // Go over the modules again to make sure they take the same amount of time to reach the next
       // state
       num maxDT = 0.0;
+      num realMaxDT = 0.0;
       for (int m = 0; m < numModules; m++) {
         Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
             states[i - 1].moduleStates[m].angle;
-        if (prevRotDelta.getDegrees().abs() >= 45) {
-          continue;
-        }
         num modVel = states[i].moduleStates[m].speedMetersPerSecond;
 
         num dt = states[i + 1].moduleStates[m].deltaPos / modVel;
-        maxDT = max(dt, maxDT);
+        realMaxDT = max(dt, realMaxDT);
+
+        if (prevRotDelta.getDegrees().abs() < 60) {
+          maxDT = max(dt, maxDT);
+        }
+      }
+      if (maxDT == 0.0) {
+        maxDT = realMaxDT;
       }
 
       // Recalculate all module velocities with the allowed DT
@@ -376,7 +386,6 @@ class PathPlannerTrajectory {
         Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
             states[i - 1].moduleStates[m].angle;
         if (prevRotDelta.getDegrees().abs() >= 60) {
-          // print('v: ${states[i].moduleStates[m].speedMetersPerSecond}');
           continue;
         }
 

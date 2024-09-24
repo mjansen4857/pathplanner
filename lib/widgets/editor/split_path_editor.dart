@@ -750,7 +750,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
             'Failed to generate trajectory for path: ${widget.path.name}');
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
-              'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets.'),
+              'Failed to generate trajectory. Please open an issue on the pathplanner github and include this path file.'),
         ));
       }
     }

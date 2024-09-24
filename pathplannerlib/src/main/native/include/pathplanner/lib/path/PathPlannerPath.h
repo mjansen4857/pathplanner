@@ -7,7 +7,6 @@
 #include "pathplanner/lib/path/IdealStartingState.h"
 #include "pathplanner/lib/path/GoalEndState.h"
 #include "pathplanner/lib/path/PathPoint.h"
-#include "pathplanner/lib/path/PathSegment.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/config/RobotConfig.h"
 #include <vector>
@@ -275,32 +274,17 @@ private:
 	static units::meter_t getCurveRadiusAtPoint(size_t index,
 			std::vector<PathPoint> &points);
 
-	/**
-	 * Map a given percentage/waypoint relative position over 2 segments
-	 *
-	 * @param pct The percent to map
-	 * @param seg1Pct The percentage of the 2 segments made up by the first segment
-	 * @return The waypoint relative position over the 2 segments
-	 */
-	static inline double mapPct(double pct, double seg1Pct) {
-		double mappedPct;
-		if (pct <= seg1Pct) {
-			// Map to segment 1
-			mappedPct = pct / seg1Pct;
-		} else {
-			// Map to segment 2
-			mappedPct = 1.0 + ((pct - seg1Pct) / (1.0 - seg1Pct));
+	inline PathConstraints constraintsForWaypointPos(double pos) const {
+		for (auto z : m_constraintZones) {
+			if (pos >= z.getMinWaypointRelativePos()
+					&& pos <= z.getMaxWaypointRelativePos()) {
+				return z.getConstraints();
+			}
 		}
-
-		return mappedPct;
+		return m_globalConstraints;
 	}
 
-	static inline units::meter_t positionDelta(const frc::Translation2d &a,
-			const frc::Translation2d &b) {
-		frc::Translation2d delta = a - b;
-
-		return units::math::abs(delta.X()) + units::math::abs(delta.Y());
-	}
+	frc::Translation2d samplePath(double waypointRelativePos) const;
 
 	std::vector<frc::Translation2d> m_bezierPoints;
 	std::vector<RotationTarget> m_rotationTargets;
@@ -316,5 +300,8 @@ private:
 	std::optional<PathPlannerTrajectory> m_idealTrajectory = std::nullopt;
 
 	static int m_instances;
+
+	static constexpr double targetIncrement = 0.05;
+	static constexpr units::meter_t targetSpacing = 0.2_m;
 };
 }

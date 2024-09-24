@@ -27,6 +27,9 @@ import org.json.simple.parser.JSONParser;
 
 /** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {
+  private static final double targetIncrement = 0.05;
+  private static final double targetSpacing = 0.2;
+
   private static int instances = 0;
 
   private List<Translation2d> bezierPoints;
@@ -511,40 +514,209 @@ public class PathPlannerPath {
     return globalConstraints;
   }
 
+  private PathConstraints constraintsForWaypointPos(double pos) {
+    for (ConstraintsZone z : constraintZones) {
+      if (pos >= z.getMinWaypointPos() && pos <= z.getMaxWaypointPos()) {
+        return z.getConstraints();
+      }
+    }
+    return globalConstraints;
+  }
+
+  private Translation2d samplePath(double waypointRelativePos) {
+    int s = (int) waypointRelativePos;
+    int iOffset = s * 3;
+    double t = waypointRelativePos - s;
+
+    Translation2d p1 = bezierPoints.get(iOffset);
+    Translation2d p2 = bezierPoints.get(iOffset + 1);
+    Translation2d p3 = bezierPoints.get(iOffset + 2);
+    Translation2d p4 = bezierPoints.get(iOffset + 3);
+    return GeometryUtil.cubicLerp(p1, p2, p3, p4, t);
+  }
+
   private List<PathPoint> createPath() {
     if (bezierPoints.size() < 4 || (bezierPoints.size() - 1) % 3 != 0) {
       throw new IllegalArgumentException("Invalid number of bezier points");
     }
 
+    List<RotationTarget> unaddedTargets = new ArrayList<>(rotationTargets);
+    List<PathPoint> points = new ArrayList<>();
     int numSegments = (bezierPoints.size() - 1) / 3;
 
-    List<PathPoint> points = new ArrayList<>();
+    // Add the first path point
+    points.add(new PathPoint(samplePath(0.0), null, constraintsForWaypointPos(0.0)));
+    points.get(0).waypointRelativePos = 0.0;
 
-    for (int s = 0; s < numSegments; s++) {
-      int iOffset = s * 3;
-      Translation2d p1 = bezierPoints.get(iOffset);
-      Translation2d p2 = bezierPoints.get(iOffset + 1);
-      Translation2d p3 = bezierPoints.get(iOffset + 2);
-      Translation2d p4 = bezierPoints.get(iOffset + 3);
-      PathSegment segment = new PathSegment(p1, p2, p3, p4);
+    double pos = targetIncrement;
+    while (pos <= numSegments) {
+      Translation2d position = samplePath(pos);
 
-      segment.generatePathPoints(points, s, constraintZones, rotationTargets, globalConstraints);
+      double distance = points.get(points.size() - 1).position.getDistance(position);
+      if (distance <= 0.01) {
+        pos = Math.min(pos + targetIncrement, numSegments);
+      }
+
+      double prevWaypointPos = pos - targetIncrement;
+
+      double delta = distance - targetSpacing;
+      if (delta > targetSpacing * 0.25) {
+        // Points are too far apart, increment pos by correct amount
+        double correctIncrement = (targetSpacing * targetIncrement) / distance;
+        pos = pos - targetIncrement + correctIncrement;
+
+        position = samplePath(pos);
+
+        if (points.get(points.size() - 1).position.getDistance(position) - targetSpacing
+            > targetSpacing * 0.25) {
+          // Points are still too far apart. Probably because of weird control
+          // point placement. Just cut the correct increment in half and hope for the best
+          pos = pos - (correctIncrement * 0.5);
+          position = samplePath(pos);
+        }
+      } else if (delta < -targetSpacing * 0.25) {
+        // Points are too close, increment waypoint relative pos by correct amount
+        double correctIncrement = (targetSpacing * targetIncrement) / distance;
+        pos = pos - targetIncrement + correctIncrement;
+
+        position = samplePath(pos);
+
+        if (points.get(points.size() - 1).position.getDistance(position) - targetSpacing
+            < -targetSpacing * 0.25) {
+          // Points are still too close. Probably because of weird control
+          // point placement. Just cut the correct increment in half and hope for the best
+          pos = pos + (correctIncrement * 0.5);
+          position = samplePath(pos);
+        }
+      }
+
+      // Add a rotation target to the previous point if it is closer to it than
+      // the current point
+      if (!unaddedTargets.isEmpty()) {
+        if (Math.abs(unaddedTargets.get(0).getPosition() - prevWaypointPos)
+            <= Math.abs(unaddedTargets.get(0).getPosition() - pos)) {
+          points.get(points.size() - 1).rotationTarget = unaddedTargets.remove(0);
+        }
+      }
+
+      points.add(new PathPoint(position, null, constraintsForWaypointPos(pos)));
+      points.get(points.size() - 1).waypointRelativePos = pos;
+      pos = Math.min(pos + targetIncrement, numSegments);
     }
 
-    // Add the final path point
-    PathConstraints endConstraints = globalConstraints;
-    for (ConstraintsZone z : constraintZones) {
-      if (numSegments >= z.getMinWaypointPos() && numSegments <= z.getMaxWaypointPos()) {
-        endConstraints = z.getConstraints();
+    // Keep trying to add the end point until its close enough to the prev point
+    double trueIncrement = numSegments - (pos - targetIncrement);
+    pos = numSegments;
+    boolean invalid = true;
+    while (invalid) {
+      Translation2d position = samplePath(pos);
+
+      double distance = points.get(points.size() - 1).position.getDistance(position);
+      if (distance <= 0.01) {
+        invalid = false;
         break;
       }
+
+      double prevPos = pos - trueIncrement;
+
+      double delta = distance - targetSpacing;
+      if (delta > targetSpacing * 0.25) {
+        // Points are too far apart, increment waypoint relative pos by correct amount
+        double correctIncrement = (targetSpacing * trueIncrement) / distance;
+        pos = pos - trueIncrement + correctIncrement;
+        trueIncrement = correctIncrement;
+
+        position = samplePath(pos);
+
+        if (points.get(points.size() - 1).position.getDistance(position) - targetSpacing
+            > targetSpacing * 0.25) {
+          // Points are still too far apart. Probably because of weird control
+          // point placement. Just cut the correct increment in half and hope for the best
+          pos = pos - (correctIncrement * 0.5);
+          trueIncrement = correctIncrement * 0.5;
+          position = samplePath(pos);
+        }
+      } else {
+        invalid = false;
+      }
+
+      // Add a rotation target to the previous point if it is closer to it than
+      // the current point
+      if (!unaddedTargets.isEmpty()) {
+        if (Math.abs(unaddedTargets.get(0).getPosition() - prevPos)
+            <= Math.abs(unaddedTargets.get(0).getPosition() - pos)) {
+          points.get(points.size() - 1).rotationTarget = unaddedTargets.remove(0);
+        }
+      }
+
+      points.add(new PathPoint(position, null, constraintsForWaypointPos(pos)));
+      points.get(points.size() - 1).waypointRelativePos = pos;
+      pos = numSegments;
     }
-    points.add(
-        new PathPoint(
-            bezierPoints.get(bezierPoints.size() - 1),
-            new RotationTarget(numSegments, goalEndState.getRotation()),
-            endConstraints));
-    points.get(points.size() - 1).waypointRelativePos = numSegments;
+
+    for (int i = 1; i < points.size() - 1; i++) {
+      double curveRadius =
+          GeometryUtil.calculateRadius(
+              points.get(i - 1).position, points.get(i).position, points.get(i + 1).position);
+
+      if (!Double.isFinite(curveRadius)) {
+        continue;
+      }
+
+      if (Math.abs(curveRadius) < 0.25) {
+        // Curve radius is too tight for default spacing, insert 4 more points
+        double before1WaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.33);
+        double before2WaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.67);
+        double after1WaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.33);
+        double after2WaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.67);
+
+        PathPoint before1 =
+            new PathPoint(samplePath(before1WaypointPos), null, points.get(i).constraints);
+        before1.waypointRelativePos = before1WaypointPos;
+        PathPoint before2 =
+            new PathPoint(samplePath(before2WaypointPos), null, points.get(i).constraints);
+        before2.waypointRelativePos = before2WaypointPos;
+        PathPoint after1 =
+            new PathPoint(samplePath(after1WaypointPos), null, points.get(i).constraints);
+        after1.waypointRelativePos = after1WaypointPos;
+        PathPoint after2 =
+            new PathPoint(samplePath(after2WaypointPos), null, points.get(i).constraints);
+        after2.waypointRelativePos = after2WaypointPos;
+
+        points.add(i, before2);
+        points.add(i, before1);
+        points.add(i + 3, after2);
+        points.add(i + 3, after1);
+        i += 4;
+      } else if (Math.abs(curveRadius) < 0.5) {
+        // Curve radius is too tight for default spacing, insert 2 more points
+        double beforeWaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.5);
+        double afterWaypointPos =
+            GeometryUtil.doubleLerp(
+                points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.5);
+
+        PathPoint before =
+            new PathPoint(samplePath(beforeWaypointPos), null, points.get(i).constraints);
+        before.waypointRelativePos = beforeWaypointPos;
+        PathPoint after =
+            new PathPoint(samplePath(afterWaypointPos), null, points.get(i).constraints);
+        after.waypointRelativePos = afterWaypointPos;
+
+        points.add(i, before);
+        points.add(i + 2, after);
+        i += 2;
+      }
+    }
 
     return points;
   }

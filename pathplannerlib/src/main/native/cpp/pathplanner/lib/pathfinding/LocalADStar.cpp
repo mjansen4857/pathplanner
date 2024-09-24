@@ -1,5 +1,4 @@
 #include "pathplanner/lib/pathfinding/LocalADStar.h"
-#include "pathplanner/lib/path/PathSegment.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include <cmath>
 #include <frc/Filesystem.h>
@@ -15,7 +14,7 @@ LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 		0.2), nodesX(static_cast<int>(std::ceil(fieldLength / nodeSize))), nodesY(
 		static_cast<int>(std::ceil(fieldWidth / nodeSize))), g(), rhs(), open(), incons(), closed(), staticObstacles(), dynamicObstacles(), requestObstacles(), requestStart(), requestRealStartPos(), requestGoal(), requestRealGoalPos(), eps(
 		EPS), planningThread(), pathMutex(), requestMutex(), requestMinor(true), requestMajor(
-		true), requestReset(true), newPathAvailable(false), currentPathPoints() {
+		true), requestReset(true), newPathAvailable(false), currentBezierPoints() {
 	requestStart = GridPosition(0, 0);
 	requestRealStartPos = frc::Translation2d(0_m, 0_m);
 	requestGoal = GridPosition(0, 0);
@@ -137,13 +136,13 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 		computeOrImprovePath(sStart, sGoal, obstacles);
 		std::vector < GridPosition > pathPositions = extractPath(sStart, sGoal,
 				obstacles);
-		std::vector < PathPoint > pathPoints = createPathPoints(pathPositions,
-				realStartPos, realGoalPos, obstacles);
+		std::vector < frc::Translation2d > bezierPoints = createBezierPoints(
+				pathPositions, realStartPos, realGoalPos, obstacles);
 
 		{
 			std::scoped_lock lock { pathMutex };
 			currentPathFull = pathPositions;
-			currentPathPoints = pathPoints;
+			currentBezierPoints = bezierPoints;
 		}
 
 		newPathAvailable = true;
@@ -159,13 +158,14 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 			computeOrImprovePath(sStart, sGoal, obstacles);
 			std::vector < GridPosition > pathPositions = extractPath(sStart,
 					sGoal, obstacles);
-			std::vector < PathPoint > pathPoints = createPathPoints(
-					pathPositions, realStartPos, realGoalPos, obstacles);
+			std::vector < frc::Translation2d > bezierPoints =
+					createBezierPoints(pathPositions, realStartPos, realGoalPos,
+							obstacles);
 
 			{
 				std::scoped_lock lock { pathMutex };
 				currentPathFull = pathPositions;
-				currentPathPoints = pathPoints;
+				currentBezierPoints = bezierPoints;
 			}
 
 			newPathAvailable = true;
@@ -175,22 +175,23 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 
 std::shared_ptr<PathPlannerPath> LocalADStar::getCurrentPath(
 		PathConstraints constraints, GoalEndState goalEndState) {
-	std::vector < PathPoint > pathPoints;
+	std::vector < frc::Translation2d > bezierPoints;
 
 	{
 		std::scoped_lock lock { pathMutex };
-		pathPoints = currentPathPoints;
+		bezierPoints.insert(bezierPoints.end(), currentBezierPoints.begin(),
+				currentBezierPoints.end());
 	}
 
 	newPathAvailable = false;
 
-	if (pathPoints.empty()) {
+	if (bezierPoints.size() < 4 || (bezierPoints.size() - 1) % 3 != 0) {
 		// Not enough points to make a path
 		return nullptr;
 	}
 
-	return PathPlannerPath::fromPathPoints(pathPoints, constraints,
-			goalEndState);
+	return std::make_shared < PathPlannerPath
+			> (bezierPoints, constraints, std::nullopt, goalEndState);
 }
 
 void LocalADStar::setStartPosition(const frc::Translation2d &start) {
@@ -344,13 +345,13 @@ std::vector<GridPosition> LocalADStar::extractPath(const GridPosition &sStart,
 	return path;
 }
 
-std::vector<PathPoint> LocalADStar::createPathPoints(
+std::vector<frc::Translation2d> LocalADStar::createBezierPoints(
 		const std::vector<GridPosition> &path,
 		const frc::Translation2d &realStartPos,
 		const frc::Translation2d &realGoalPos,
 		const std::unordered_set<GridPosition> &obstacles) {
 	if (path.empty()) {
-		return std::vector<PathPoint>();
+		return std::vector<frc::Translation2d>();
 	}
 
 	std::vector < GridPosition > simplifiedPath;
@@ -415,25 +416,7 @@ std::vector<PathPoint> LocalADStar::createPathPoints(
 					+ fieldPosPath[fieldPosPath.size() - 1]);
 	bezierPoints.push_back(fieldPosPath[fieldPosPath.size() - 1]);
 
-	size_t numSegments = (bezierPoints.size() - 1) / 3;
-	std::vector < PathPoint > pathPoints;
-
-	for (size_t i = 0; i < numSegments; i++) {
-		size_t iOffset = i * 3;
-
-		frc::Translation2d p1 = bezierPoints[iOffset];
-		frc::Translation2d p2 = bezierPoints[iOffset + 1];
-		frc::Translation2d p3 = bezierPoints[iOffset + 2];
-		frc::Translation2d p4 = bezierPoints[iOffset + 3];
-
-		PathSegment segment(p1, p2, p3, p4);
-		segment.generatePathPoints(pathPoints, i, { }, { }, std::nullopt);
-	}
-	pathPoints.emplace_back(bezierPoints[bezierPoints.size() - 1], std::nullopt,
-			std::nullopt);
-	pathPoints[pathPoints.size() - 1].waypointRelativePos = numSegments;
-
-	return pathPoints;
+	return bezierPoints;
 }
 
 bool LocalADStar::walkable(const GridPosition &s1, const GridPosition &s2,

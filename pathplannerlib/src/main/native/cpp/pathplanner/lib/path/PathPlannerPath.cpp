@@ -35,7 +35,7 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 						< right.getWaypointRelativePos();
 			});
 
-	createPath();
+	m_allPoints = createPath();
 
 	precalcValues();
 
@@ -303,35 +303,197 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 		throw std::runtime_error("Invalid number of bezier points");
 	}
 
+	std::vector < RotationTarget > unaddedTargets;
+	unaddedTargets.insert(unaddedTargets.begin(), m_rotationTargets.begin(),
+			m_rotationTargets.end());
+	std::vector < PathPoint > points;
 	size_t numSegments = (m_bezierPoints.size() - 1) / 3;
 
-	std::vector < PathPoint > points;
+	// Add the first path point
+	points.emplace_back(samplePath(0.0), std::nullopt,
+			constraintsForWaypointPos(0.0));
+	points[0].waypointRelativePos = 0.0;
 
-	for (size_t s = 0; s < numSegments; s++) {
-		size_t iOffset = s * 3;
-		frc::Translation2d p1 = m_bezierPoints[iOffset];
-		frc::Translation2d p2 = m_bezierPoints[iOffset + 1];
-		frc::Translation2d p3 = m_bezierPoints[iOffset + 2];
-		frc::Translation2d p4 = m_bezierPoints[iOffset + 3];
-		PathSegment segment(p1, p2, p3, p4);
+	double pos = targetIncrement;
 
-		segment.generatePathPoints(points, s, m_constraintZones,
-				m_rotationTargets, m_globalConstraints);
+	while (pos <= numSegments) {
+		frc::Translation2d position = samplePath(pos);
+
+		units::meter_t distance = points[points.size() - 1].position.Distance(
+				position);
+		if (distance <= 0.01_m) {
+			pos = std::min(pos + targetIncrement,
+					static_cast<double>(numSegments));
+		}
+
+		double prevWaypointPos = pos - targetIncrement;
+
+		units::meter_t delta = distance - targetSpacing;
+		if (delta > targetSpacing * 0.25) {
+			// Points are too far apart, increment t by correct amount
+			double correctIncrement = (targetSpacing * targetIncrement)
+					/ distance;
+			pos = pos - targetIncrement + correctIncrement;
+
+			position = samplePath(pos);
+
+			if (points[points.size() - 1].position.Distance(position)
+					- targetSpacing > targetSpacing * 0.25) {
+				// Points are still too far apart. Probably because of weird control
+				// point placement. Just cut the correct increment in half and hope for the best
+				pos = pos - (correctIncrement * 0.5);
+				position = samplePath(pos);
+			}
+		} else if (delta < -targetSpacing * 0.25) {
+			// Points are too close, increment waypoint relative pos by correct amount
+			double correctIncrement = (targetSpacing * targetIncrement)
+					/ distance;
+			pos = pos - targetIncrement + correctIncrement;
+
+			position = samplePath(pos);
+
+			if (points[points.size() - 1].position.Distance(position)
+					- targetSpacing < -targetSpacing * 0.25) {
+				// Points are still too close. Probably because of weird control
+				// point placement. Just cut the correct increment in half and hope for the best
+				pos = pos + (correctIncrement * 0.5);
+				position = samplePath(pos);
+			}
+		}
+
+		// Add a rotation target to the previous point if it is closer to it than
+		// the current point
+		if (!unaddedTargets.empty()) {
+			if (std::abs(unaddedTargets[0].getPosition() - prevWaypointPos)
+					<= std::abs(unaddedTargets[0].getPosition() - pos)) {
+				points[points.size() - 1].rotationTarget = unaddedTargets[0];
+				unaddedTargets.erase(unaddedTargets.begin());
+			}
+		}
+
+		points.emplace_back(position, std::nullopt,
+				constraintsForWaypointPos(pos));
+		points[points.size() - 1].waypointRelativePos = pos;
+		pos = std::min(pos + targetIncrement, static_cast<double>(numSegments));
 	}
 
-	// Add the final path point
-	PathConstraints endConstraints = m_globalConstraints;
-	for (const ConstraintsZone &z : m_constraintZones) {
-		if (numSegments >= z.getMinWaypointRelativePos()
-				&& numSegments <= z.getMaxWaypointRelativePos()) {
-			endConstraints = z.getConstraints();
+	// Keep trying to add the end point until its close enough to the prev point
+	double trueIncrement = numSegments - (pos - targetIncrement);
+	pos = numSegments;
+	bool invalid = true;
+	while (invalid) {
+		frc::Translation2d position = samplePath(pos);
+
+		units::meter_t distance = points[points.size() - 1].position.Distance(
+				position);
+		if (distance <= 0.01_m) {
+			invalid = false;
 			break;
 		}
+
+		double prevPos = pos - trueIncrement;
+
+		units::meter_t delta = distance - targetSpacing;
+		if (delta > targetSpacing * 0.25) {
+			// Points are too far apart, increment waypoint relative pos by correct amount
+			double correctIncrement = (targetSpacing * trueIncrement)
+					/ distance;
+			pos = pos - trueIncrement + correctIncrement;
+			trueIncrement = correctIncrement;
+
+			position = samplePath(pos);
+
+			if (points[points.size() - 1].position.Distance(position)
+					- targetSpacing > targetSpacing * 0.25) {
+				// Points are still too far apart. Probably because of weird control
+				// point placement. Just cut the correct increment in half and hope for the best
+				pos = pos - (correctIncrement * 0.5);
+				trueIncrement = correctIncrement * 0.5;
+				position = samplePath(pos);
+			}
+		} else {
+			invalid = false;
+		}
+
+		// Add a rotation target to the previous point if it is closer to it than
+		// the current point
+		if (!unaddedTargets.empty()) {
+			if (std::abs(unaddedTargets[0].getPosition() - prevPos)
+					<= std::abs(unaddedTargets[0].getPosition() - pos)) {
+				points[points.size() - 1].rotationTarget = unaddedTargets[0];
+				unaddedTargets.erase(unaddedTargets.begin());
+			}
+		}
+
+		points.emplace_back(position, std::nullopt,
+				constraintsForWaypointPos(pos));
+		points[points.size() - 1].waypointRelativePos = pos;
+		pos = numSegments;
 	}
-	points.emplace_back(m_bezierPoints[m_bezierPoints.size() - 1],
-			RotationTarget(numSegments, m_goalEndState.getRotation()),
-			endConstraints);
-	points[points.size() - 1].waypointRelativePos = numSegments;
+
+	for (size_t i = 1; i < points.size() - 1; i++) {
+		units::meter_t curveRadius = GeometryUtil::calculateRadius(
+				points[i - 1].position, points[i].position,
+				points[i + 1].position);
+
+		if (!GeometryUtil::isFinite(curveRadius)) {
+			continue;
+		}
+
+		if (units::math::abs(curveRadius) < 0.25_m) {
+			// Curve radius is too tight for default spacing, insert 4 more points
+			double before1WaypointPos = GeometryUtil::doubleLerp(
+					points[i - 1].waypointRelativePos,
+					points[i].waypointRelativePos, 0.33);
+			double before2WaypointPos = GeometryUtil::doubleLerp(
+					points[i - 1].waypointRelativePos,
+					points[i].waypointRelativePos, 0.67);
+			double after1WaypointPos = GeometryUtil::doubleLerp(
+					points[i].waypointRelativePos,
+					points[i + 1].waypointRelativePos, 0.33);
+			double after2WaypointPos = GeometryUtil::doubleLerp(
+					points[i].waypointRelativePos,
+					points[i + 1].waypointRelativePos, 0.67);
+
+			PathPoint before1(samplePath(before1WaypointPos), std::nullopt,
+					points[i].constraints);
+			before1.waypointRelativePos = before1WaypointPos;
+			PathPoint before2(samplePath(before2WaypointPos), std::nullopt,
+					points[i].constraints);
+			before2.waypointRelativePos = before2WaypointPos;
+			PathPoint after1(samplePath(after1WaypointPos), std::nullopt,
+					points[i].constraints);
+			after1.waypointRelativePos = after1WaypointPos;
+			PathPoint after2(samplePath(after2WaypointPos), std::nullopt,
+					points[i].constraints);
+			after2.waypointRelativePos = after2WaypointPos;
+
+			points.insert(points.begin() + i, before2);
+			points.insert(points.begin() + i, before1);
+			points.insert(points.begin() + (i + 3), after2);
+			points.insert(points.begin() + (i + 3), after1);
+			i += 4;
+		} else if (units::math::abs(curveRadius) < 0.5_m) {
+			// Curve radius is too tight for default spacing, insert 2 more points
+			double beforeWaypointPos = GeometryUtil::doubleLerp(
+					points[i - 1].waypointRelativePos,
+					points[i].waypointRelativePos, 0.5);
+			double afterWaypointPos = GeometryUtil::doubleLerp(
+					points[i].waypointRelativePos,
+					points[i + 1].waypointRelativePos, 0.5);
+
+			PathPoint before(samplePath(beforeWaypointPos), std::nullopt,
+					points[i].constraints);
+			before.waypointRelativePos = beforeWaypointPos;
+			PathPoint after(samplePath(afterWaypointPos), std::nullopt,
+					points[i].constraints);
+			after.waypointRelativePos = afterWaypointPos;
+
+			points.insert(points.begin() + i, before);
+			points.insert(points.begin() + (i + 2), after);
+			i += 2;
+		}
+	}
 
 	return points;
 }
@@ -497,4 +659,17 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	path->preventFlipping = preventFlipping;
 
 	return path;
+}
+
+frc::Translation2d PathPlannerPath::samplePath(
+		double waypointRelativePos) const {
+	size_t s = static_cast<size_t>(waypointRelativePos);
+	size_t iOffset = s * 3;
+	double t = waypointRelativePos - s;
+
+	auto p1 = m_bezierPoints[iOffset];
+	auto p2 = m_bezierPoints[iOffset + 1];
+	auto p3 = m_bezierPoints[iOffset + 2];
+	auto p4 = m_bezierPoints[iOffset + 3];
+	return GeometryUtil::cubicLerp(p1, p2, p3, p4, t);
 }

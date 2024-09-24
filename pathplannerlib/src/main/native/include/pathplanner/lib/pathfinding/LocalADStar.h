@@ -104,7 +104,7 @@ private:
 	bool requestReset;
 	bool newPathAvailable;
 
-	std::vector<PathPoint> currentPathPoints;
+	std::vector<frc::Translation2d> currentBezierPoints;
 	std::vector<GridPosition> currentPathFull;
 
 	void runThread();
@@ -122,7 +122,7 @@ private:
 			const GridPosition &sGoal,
 			const std::unordered_set<GridPosition> &obstacles);
 
-	std::vector<PathPoint> createPathPoints(
+	std::vector<frc::Translation2d> createBezierPoints(
 			const std::vector<GridPosition> &path,
 			const frc::Translation2d &realStartPos,
 			const frc::Translation2d &realGoalPos,

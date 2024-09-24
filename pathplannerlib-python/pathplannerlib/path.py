@@ -8,9 +8,10 @@ from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
-from .geometry_util import cubicLerp, calculateRadius, flipFieldPose, flipFieldPos, flipFieldRotation, floatLerp
+from .geometry_util import cubicLerp, calculateRadius, flipFieldPos, flipFieldRotation, floatLerp
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
+from .events import ScheduleCommandEvent
 from wpilib import getDeployDirectory
 from hal import report, tResourceType
 import os
@@ -400,7 +401,7 @@ class PathPlannerPath:
             path._allPoints = pathPoints
             path._isChoreoPath = True
 
-            eventCommands = []
+            events = []
             if 'eventMarkers' in trajJson:
                 from .auto import CommandUtil
                 for m in trajJson['eventMarkers']:
@@ -410,12 +411,12 @@ class PathPlannerPath:
                     eventMarker = EventMarker(timestamp, cmd)
 
                     path._eventMarkers.append(eventMarker)
-                    eventCommands.append((timestamp, cmd))
+                    events.append(ScheduleCommandEvent(timestamp, cmd))
 
-            eventCommands.sort(key=lambda a: a[0])
+            events.sort(key=lambda a: a.getTimestamp())
 
             path._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=trajStates,
-                                                          event_commands=eventCommands)
+                                                          events=events)
 
             return path
 

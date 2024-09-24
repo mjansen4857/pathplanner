@@ -8,9 +8,10 @@ from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpilib import Timer
 from commands2 import Command, Subsystem, SequentialCommandGroup
-from typing import Callable, Tuple, List
+from typing import Callable, List
 from .config import RobotConfig
 from .pathfinding import Pathfinding
+from .events import EventScheduler
 from hal import report, tResourceType
 
 
@@ -23,9 +24,7 @@ class FollowPathCommand(Command):
     _robotConfig: RobotConfig
     _shouldFlipPath: Callable[[], bool]
 
-    # For event markers
-    _currentEventCommands: dict = {}
-    _untriggeredEvents: List[Tuple[float, Command]] = []
+    _eventScheduler: EventScheduler
 
     _timer: Timer = Timer()
 
@@ -61,18 +60,16 @@ class FollowPathCommand(Command):
         self._controller = controller
         self._robotConfig = robot_config
         self._shouldFlipPath = should_flip_path
+        self._eventScheduler = EventScheduler()
 
         self.addRequirements(*requirements)
 
-        for marker in self._originalPath.getEventMarkers():
-            reqs = marker.command.getRequirements()
-
-            for req in requirements:
-                if req in reqs:
-                    raise RuntimeError(
-                        'Events that are triggered during path following cannot require the drive subsystem')
-
-            self.addRequirements(*reqs)
+        eventReqs = EventScheduler.getSchedulerRequirements(self._originalPath)
+        for req in requirements:
+            if req in eventReqs:
+                raise RuntimeError(
+                    'Events that are triggered during path following cannot require the drive subsystem')
+        self.addRequirements(*eventReqs)
 
         self._path = self._originalPath
         # Ensure the ideal trajectory is generated
@@ -111,11 +108,7 @@ class FollowPathCommand(Command):
         PathPlannerLogging.logActivePath(self._path)
         PPLibTelemetry.setCurrentPath(self._path)
 
-        # Initialize marker stuff
-        self._currentEventCommands.clear()
-        self._untriggeredEvents.clear()
-        for event in self._trajectory.getEventCommands():
-            self._untriggeredEvents.append(event)
+        self._eventScheduler.initialize(self._trajectory)
 
         self._timer.reset()
         self._timer.start()
@@ -149,33 +142,7 @@ class FollowPathCommand(Command):
 
         self._output(targetSpeeds, torqueCurrentFF)
 
-        if len(self._untriggeredEvents) > 0 and self._timer.hasElapsed(self._untriggeredEvents[0][0]):
-            # Time to trigger this event command
-            cmd = self._untriggeredEvents.pop(0)[1]
-
-            for command in self._currentEventCommands:
-                if not self._currentEventCommands[command]:
-                    continue
-
-                for req in command.getRequirements():
-                    if req in cmd.getRequirements():
-                        command.end(True)
-                        self._currentEventCommands[command] = False
-                        break
-
-            cmd.initialize()
-            self._currentEventCommands[cmd] = True
-
-        # Execute event marker commands
-        for command in self._currentEventCommands:
-            if not self._currentEventCommands[command]:
-                continue
-
-            command.execute()
-
-            if command.isFinished():
-                command.end(False)
-                self._currentEventCommands[command] = False
+        self._eventScheduler.execute(currentTime)
 
     def isFinished(self) -> bool:
         return self._timer.hasElapsed(self._trajectory.getTotalTimeSeconds())
@@ -190,10 +157,7 @@ class FollowPathCommand(Command):
 
         PathPlannerLogging.logActivePath(None)
 
-        # End event marker commands
-        for command in self._currentEventCommands:
-            if self._currentEventCommands[command]:
-                command.end(True)
+        self._eventScheduler.end()
 
 
 class PathfindingCommand(Command):

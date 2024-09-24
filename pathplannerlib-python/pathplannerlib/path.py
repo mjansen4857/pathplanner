@@ -648,7 +648,7 @@ class PathPlannerPath:
         return self._globalConstraints
 
     def _samplePath(self, waypointRelativePos: float) -> Translation2d:
-        s = int(waypointRelativePos)
+        s = min(int(waypointRelativePos), int((len(self._bezierPoints) - 1) / 3) - 1)
         iOffset = s * 3
         t = waypointRelativePos - s
 
@@ -716,7 +716,7 @@ class PathPlannerPath:
         points[-1].waypointRelativePos = 0.0
 
         pos = targetIncrement
-        while pos <= numSegments:
+        while pos < numSegments:
             position = self._samplePath(pos)
 
             distance = points[-1].position.distance(position)

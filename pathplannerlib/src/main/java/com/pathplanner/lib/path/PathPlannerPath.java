@@ -525,7 +525,7 @@ public class PathPlannerPath {
   }
 
   private Translation2d samplePath(double waypointRelativePos) {
-    int s = (int) waypointRelativePos;
+    int s = Math.min((int) waypointRelativePos, ((bezierPoints.size() - 1) / 3) - 1);
     int iOffset = s * 3;
     double t = waypointRelativePos - s;
 

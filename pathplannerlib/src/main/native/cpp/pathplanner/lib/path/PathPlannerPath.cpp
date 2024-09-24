@@ -318,7 +318,7 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 
 	double pos = targetIncrement;
 
-	while (pos <= numSegments) {
+	while (pos < numSegments) {
 		frc::Translation2d position = samplePath(pos);
 
 		units::meter_t distance = points[points.size() - 1].position.Distance(
@@ -638,7 +638,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 
 frc::Translation2d PathPlannerPath::samplePath(
 		double waypointRelativePos) const {
-	size_t s = static_cast<size_t>(waypointRelativePos);
+	size_t s = std::min(static_cast<size_t>(waypointRelativePos), ((m_bezierPoints.size() - 1) / 3) - 1);
 	size_t iOffset = s * 3;
 	double t = waypointRelativePos - s;
 

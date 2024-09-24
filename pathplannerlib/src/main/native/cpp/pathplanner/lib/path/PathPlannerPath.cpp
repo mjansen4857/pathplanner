@@ -660,3 +660,16 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 
 	return path;
 }
+
+frc::Translation2d PathPlannerPath::samplePath(
+		double waypointRelativePos) const {
+	size_t s = static_cast<size_t>(waypointRelativePos);
+	size_t iOffset = s * 3;
+	double t = waypointRelativePos - s;
+
+	auto p1 = m_bezierPoints[iOffset];
+	auto p2 = m_bezierPoints[iOffset + 1];
+	auto p3 = m_bezierPoints[iOffset + 2];
+	auto p4 = m_bezierPoints[iOffset + 3];
+	return GeometryUtil::cubicLerp(p1, p2, p3, p4, t);
+}

@@ -20,6 +20,7 @@
 #include "pathplanner/lib/path/PathConstraints.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include "pathplanner/lib/config/RobotConfig.h"
+#include "pathplanner/lib/events/Event.h"
 
 namespace pathplanner {
 
@@ -34,12 +35,11 @@ public:
 	 * Create a trajectory with pre-generated states and list of events
 	 *
 	 * @param states Pre-generated states
-	 * @param eventCommands Event commands
+	 * @param events Events for this trajectory
 	 */
 	PathPlannerTrajectory(std::vector<PathPlannerTrajectoryState> states,
-			std::vector<
-					std::pair<units::second_t, std::shared_ptr<frc2::Command>>> eventCommands) : m_states(
-			states), m_eventCommands(eventCommands) {
+			std::vector<std::shared_ptr<Event>> events) : m_states(states), m_events(
+			events) {
 	}
 
 	/**
@@ -64,13 +64,12 @@ public:
 			const frc::Rotation2d &startingRotation, const RobotConfig &config);
 
 	/**
-	 * Get all of the pairs of timestamps + commands to run at those timestamps
+	 * Get all the events to run while following this trajectory
 	 *
-	 * @return Pairs of timestamps and event commands
+	 * @return Events in this trajectory
 	 */
-	inline std::vector<
-			std::pair<units::second_t, std::shared_ptr<frc2::Command>>> getEventCommands() {
-		return m_eventCommands;
+	inline std::vector<std::shared_ptr<Event>> getEvents() {
+		return m_events;
 	}
 
 	/**
@@ -146,11 +145,11 @@ public:
 		for (auto state : m_states) {
 			mirroredStates.emplace_back(state.flip());
 		}
-		return PathPlannerTrajectory(mirroredStates, getEventCommands());
+		return PathPlannerTrajectory(mirroredStates, getEvents());
 	}
 private:
 	std::vector<PathPlannerTrajectoryState> m_states;
-	std::vector<std::pair<units::second_t, std::shared_ptr<frc2::Command>>> m_eventCommands;
+	std::vector<std::shared_ptr<Event>> m_events;
 
 	static void generateStates(std::vector<PathPlannerTrajectoryState> &states,
 			std::shared_ptr<PathPlannerPath> path,

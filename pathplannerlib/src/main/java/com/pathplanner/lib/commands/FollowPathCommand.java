@@ -78,12 +78,12 @@ public class FollowPathCommand extends Command {
     addRequirements(requirements);
 
     // Add all event scheduler requirements to this command's requirements
-    var reqs = EventScheduler.getSchedulerRequirements(this.originalPath);
-    if (!Collections.disjoint(driveRequirements, reqs)) {
+    var eventReqs = EventScheduler.getSchedulerRequirements(this.originalPath);
+    if (!Collections.disjoint(driveRequirements, eventReqs)) {
       throw new IllegalArgumentException(
           "Events that are triggered during path following cannot require the drive subsystem");
     }
-    addRequirements(reqs);
+    addRequirements(eventReqs);
 
     this.path = this.originalPath;
     // Ensure the ideal trajectory is generated

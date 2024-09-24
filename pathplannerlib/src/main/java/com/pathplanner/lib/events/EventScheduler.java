@@ -14,12 +14,12 @@ import java.util.*;
  * that will be run during the path being followed.
  */
 public class EventScheduler {
-  private final Set<Command> runningEventCommands;
+  private final Map<Command, Boolean> eventCommands;
   private final Queue<Event> upcomingEvents;
 
   /** Create a new EventScheduler */
   public EventScheduler() {
-    this.runningEventCommands = new HashSet<>();
+    this.eventCommands = new HashMap<>();
     this.upcomingEvents = new LinkedList<>();
   }
 
@@ -30,7 +30,7 @@ public class EventScheduler {
    * @param trajectory The trajectory this scheduler should handle events for
    */
   public void initialize(PathPlannerTrajectory trajectory) {
-    runningEventCommands.clear();
+    eventCommands.clear();
     upcomingEvents.clear();
 
     upcomingEvents.addAll(trajectory.getEvents());
@@ -49,13 +49,15 @@ public class EventScheduler {
     }
 
     // Run currently running commands
-    for (var i = runningEventCommands.iterator(); i.hasNext(); ) {
-      Command command = i.next();
-      command.execute();
+    for (var entry : eventCommands.entrySet()) {
+      if (!entry.getValue()) {
+        continue;
+      }
 
-      if (command.isFinished()) {
-        command.end(false);
-        i.remove();
+      entry.getKey().execute();
+      if (entry.getKey().isFinished()) {
+        entry.getKey().end(false);
+        eventCommands.put(entry.getKey(), false);
       }
     }
   }
@@ -66,11 +68,15 @@ public class EventScheduler {
    */
   public void end() {
     // Cancel all currently running commands
-    for (Command command : runningEventCommands) {
-      command.end(true);
+    for (var entry : eventCommands.entrySet()) {
+      if (!entry.getValue()) {
+        continue;
+      }
+
+      entry.getKey().end(true);
     }
 
-    runningEventCommands.clear();
+    eventCommands.clear();
     upcomingEvents.clear();
   }
 
@@ -98,14 +104,18 @@ public class EventScheduler {
    */
   protected void scheduleCommand(Command command) {
     // Check for commands that should be cancelled by this command
-    for (Command other : runningEventCommands) {
-      if (!Collections.disjoint(other.getRequirements(), command.getRequirements())) {
-        cancelCommand(command);
+    for (var entry : eventCommands.entrySet()) {
+      if (!entry.getValue()) {
+        continue;
+      }
+
+      if (!Collections.disjoint(entry.getKey().getRequirements(), command.getRequirements())) {
+        cancelCommand(entry.getKey());
       }
     }
 
     command.initialize();
-    runningEventCommands.add(command);
+    eventCommands.put(command, true);
   }
 
   /**
@@ -114,12 +124,12 @@ public class EventScheduler {
    * @param command The command to cancel
    */
   protected void cancelCommand(Command command) {
-    if (!runningEventCommands.contains(command)) {
+    if (!eventCommands.containsKey(command) || !eventCommands.get(command)) {
       // Command is not currently running
       return;
     }
 
     command.end(true);
-    runningEventCommands.remove(command);
+    eventCommands.put(command, false);
   }
 }

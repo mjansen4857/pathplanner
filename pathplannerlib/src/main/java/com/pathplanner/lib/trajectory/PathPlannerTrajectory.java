@@ -612,6 +612,19 @@ public class PathPlannerTrajectory {
         sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
   }
 
+  /**
+   * Flip this trajectory for the other side of the field, maintaining a blue alliance origin
+   *
+   * @return This trajectory with all states flipped to the other side of the field
+   */
+  public PathPlannerTrajectory flip() {
+    List<PathPlannerTrajectoryState> mirroredStates = new ArrayList<>(states.size());
+    for (var state : states) {
+      mirroredStates.add(state.flip());
+    }
+    return new PathPlannerTrajectory(mirroredStates, getEventCommands());
+  }
+
   private static void desaturateWheelSpeeds(
       SwerveModuleState[] moduleStates,
       ChassisSpeeds desiredSpeeds,

@@ -291,8 +291,7 @@ public class PathfindingCommand extends Command {
             (currentPose.getTranslation().getDistance(closestState1.pose.getTranslation())) / d;
         t = MathUtil.clamp(t, 0.0, 1.0);
 
-        timeOffset =
-            GeometryUtil.doubleLerp(closestState1.timeSeconds, closestState2.timeSeconds, t);
+        timeOffset = MathUtil.interpolate(closestState1.timeSeconds, closestState2.timeSeconds, t);
 
         // If the robot is stationary and at the start of the path, set the time offset to the next
         // loop

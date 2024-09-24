@@ -638,7 +638,8 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 
 frc::Translation2d PathPlannerPath::samplePath(
 		double waypointRelativePos) const {
-	size_t s = std::min(static_cast<size_t>(waypointRelativePos), ((m_bezierPoints.size() - 1) / 3) - 1);
+	size_t s = std::min(static_cast<size_t>(waypointRelativePos),
+			((m_bezierPoints.size() - 1) / 3) - 1);
 	size_t iOffset = s * 3;
 	double t = waypointRelativePos - s;
 

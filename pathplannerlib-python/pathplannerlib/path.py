@@ -8,7 +8,7 @@ from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
-from .geometry_util import cubicLerp, calculateRadius, flipFieldPose, flipFieldPos, flipFieldRotation
+from .geometry_util import cubicLerp, calculateRadius, flipFieldPose, flipFieldPos, flipFieldRotation, floatLerp
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
 from wpilib import getDeployDirectory
@@ -827,6 +827,53 @@ class PathPlannerPath:
             points.append(PathPoint(position, None, self._constraintsForWaypointPos(pos)))
             points[-1].waypointRelativePos = pos
             pos = numSegments
+
+        for i in range(1, len(points) - 1):
+            curveRadius = calculateRadius(points[i - 1].position, points[i].position, points[i + 1].position)
+
+            if not math.isfinite(curveRadius):
+                continue
+
+            if abs(curveRadius) < 0.25:
+                # Curve radius is too tight for default spacing, insert 4 more points
+                before1WaypointPos = floatLerp(points[i - 1].waypointRelativePos, points[i].waypointRelativePos, 0.33)
+                before2WaypointPos = floatLerp(points[i - 1].waypointRelativePos, points[i].waypointRelativePos, 0.67)
+                after1WaypointPos = floatLerp(points[i].waypointRelativePos, points[i + 1].waypointRelativePos, 0.33)
+                after2WaypointPos = floatLerp(points[i].waypointRelativePos, points[i + 1].waypointRelativePos, 0.67)
+
+                before1 = PathPoint(self._samplePath(before1WaypointPos), None,
+                                    self._constraintsForWaypointPos(before1WaypointPos))
+                before1.waypointRelativePos = before1WaypointPos
+                before2 = PathPoint(self._samplePath(before2WaypointPos), None,
+                                    self._constraintsForWaypointPos(before2WaypointPos))
+                before2.waypointRelativePos = before2WaypointPos
+                after1 = PathPoint(self._samplePath(after1WaypointPos), None,
+                                   self._constraintsForWaypointPos(after1WaypointPos))
+                after1.waypointRelativePos = after1WaypointPos
+                after2 = PathPoint(self._samplePath(after2WaypointPos), None,
+                                   self._constraintsForWaypointPos(after2WaypointPos))
+                after2.waypointRelativePos = after2WaypointPos
+
+                points.insert(i, before2)
+                points.insert(i, before1)
+                points.insert(i + 3, after2)
+                points.insert(i + 3, after1)
+                i += 4
+            elif abs(curveRadius) < 0.5:
+                # Curve radius is too tight for default spacing, insert 2 more points
+                beforeWaypointPos = floatLerp(points[i - 1].waypointRelativePos, points[i].waypointRelativePos, 0.5)
+                afterWaypointPos = floatLerp(points[i].waypointRelativePos, points[i + 1].waypointRelativePos, 0.5)
+
+                before = PathPoint(self._samplePath(beforeWaypointPos), None,
+                                   self._constraintsForWaypointPos(beforeWaypointPos))
+                before.waypointRelativePos = beforeWaypointPos
+                after = PathPoint(self._samplePath(afterWaypointPos), None,
+                                  self._constraintsForWaypointPos(afterWaypointPos))
+                after.waypointRelativePos = afterWaypointPos
+
+                points.insert(i, before)
+                points.insert(i + 2, after)
+                i += 2
 
         return points
 

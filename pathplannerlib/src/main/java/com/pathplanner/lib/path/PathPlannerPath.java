@@ -654,7 +654,7 @@ public class PathPlannerPath {
       pos = numSegments;
     }
 
-    for (int i = 1; i < points.size(); i++) {
+    for (int i = 1; i < points.size() - 1; i++) {
       double curveRadius =
           GeometryUtil.calculateRadius(
               points.get(i - 1).position, points.get(i).position, points.get(i + 1).position);

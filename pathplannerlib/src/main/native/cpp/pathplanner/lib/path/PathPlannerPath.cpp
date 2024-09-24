@@ -431,7 +431,7 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 		pos = numSegments;
 	}
 
-	for (size_t i = 1; i < points.size(); i++) {
+	for (size_t i = 1; i < points.size() - 1; i++) {
 		units::meter_t curveRadius = GeometryUtil::calculateRadius(
 				points[i - 1].position, points[i].position,
 				points[i + 1].position);

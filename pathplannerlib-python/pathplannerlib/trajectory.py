@@ -453,21 +453,24 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
         # Go over the modules again to make sure they take the same amount of time to reach the next state
         maxDT = 0.0
+        realMaxDT = 0.0
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - prevState.moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 45:
-                continue
-
             modVel = state.moduleStates[m].speed
             dt = nextState.moduleStates[m].deltaPos / modVel
 
             if math.isfinite(dt):
-                maxDT = max(maxDT, dt)
+                realMaxDT = max(realMaxDT, dt)
+                if abs(prevRotDelta.degrees()) < 60:
+                    maxDT = max(maxDT, dt)
+
+        if maxDT == 0.0:
+            maxDT = realMaxDT
 
         # Recalculate all module velocities with the allowed DT
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - prevState.moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 45:
+            if abs(prevRotDelta.degrees()) >= 60:
                 continue
 
             state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
@@ -541,21 +544,25 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
         # Go over the modules again to make sure they take the same amount of time to reach the next state
         maxDT = 0.0
+        realMaxDT = 0.0
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - states[i - 1].moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 45:
-                continue
-
             modVel = state.moduleStates[m].speed
             dt = nextState.moduleStates[m].deltaPos / modVel
 
             if math.isfinite(dt):
-                maxDT = max(maxDT, dt)
+                realMaxDT = max(realMaxDT, dt)
+
+                if abs(prevRotDelta.degrees()) < 60:
+                    maxDT = max(maxDT, dt)
+
+        if maxDT == 0.0:
+            maxDT = realMaxDT
 
         # Recalculate all module velocities with the allowed DT
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - states[i - 1].moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 45:
+            if abs(prevRotDelta.degrees()) >= 60:
                 continue
 
             state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT

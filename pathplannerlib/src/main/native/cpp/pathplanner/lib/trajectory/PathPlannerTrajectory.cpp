@@ -510,7 +510,7 @@ void PathPlannerTrajectory::reverseAccelPass(
 		for (size_t m = 0; m < config.numModules; m++) {
 			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
 					- states[i - 1].moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
+			if (units::math::abs(prevRotDelta.Degrees()) >= 60_deg) {
 				continue;
 			}
 

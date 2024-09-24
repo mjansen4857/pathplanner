@@ -33,9 +33,28 @@ public:
 			0_rad_per_s_sq) {
 	}
 
+	/**
+	 * Interpolate between this state and the given state
+	 *
+	 * @param endVal State to interpolate with
+	 * @param t Interpolation factor (0.0-1.0)
+	 * @return Interpolated state
+	 */
 	PathPlannerTrajectoryState interpolate(
 			const PathPlannerTrajectoryState &endVal, const double t) const;
 
+	/**
+	 * Get the state reversed, used for following a trajectory reversed with a differential drivetrain
+	 *
+	 * @return The reversed state
+	 */
 	PathPlannerTrajectoryState reverse() const;
+
+	/**
+	 * Flip this trajectory state for the other side of the field, maintaining a blue alliance origin
+	 *
+	 * @return This trajectory state flipped to the other side of the field
+	 */
+	PathPlannerTrajectoryState flip() const;
 };
 }

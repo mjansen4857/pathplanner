@@ -666,16 +666,16 @@ public class PathPlannerPath {
       if (Math.abs(curveRadius) < 0.25) {
         // Curve radius is too tight for default spacing, insert 4 more points
         double before1WaypointPos =
-            GeometryUtil.doubleLerp(
+            MathUtil.interpolate(
                 points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.33);
         double before2WaypointPos =
-            GeometryUtil.doubleLerp(
+            MathUtil.interpolate(
                 points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.67);
         double after1WaypointPos =
-            GeometryUtil.doubleLerp(
+            MathUtil.interpolate(
                 points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.33);
         double after2WaypointPos =
-            GeometryUtil.doubleLerp(
+            MathUtil.interpolate(
                 points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.67);
 
         PathPoint before1 =
@@ -699,10 +699,10 @@ public class PathPlannerPath {
       } else if (Math.abs(curveRadius) < 0.5) {
         // Curve radius is too tight for default spacing, insert 2 more points
         double beforeWaypointPos =
-            GeometryUtil.doubleLerp(
+            MathUtil.interpolate(
                 points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.5);
         double afterWaypointPos =
-            GeometryUtil.doubleLerp(
+            MathUtil.interpolate(
                 points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.5);
 
         PathPoint before =
@@ -883,37 +883,7 @@ public class PathPlannerPath {
     Optional<PathPlannerTrajectory> flippedTraj = Optional.empty();
     if (idealTrajectory.isPresent()) {
       // Flip the ideal trajectory
-      List<PathPlannerTrajectoryState> mirroredStates = new ArrayList<>();
-      PathPlannerTrajectory traj = idealTrajectory.get();
-      for (var state : traj.getStates()) {
-        var mirrored = new PathPlannerTrajectoryState();
-
-        mirrored.timeSeconds = state.timeSeconds;
-        mirrored.linearVelocity = state.linearVelocity;
-        mirrored.pose = GeometryUtil.flipFieldPose(state.pose);
-        mirrored.fieldSpeeds =
-            new ChassisSpeeds(
-                -state.fieldSpeeds.vxMetersPerSecond,
-                state.fieldSpeeds.vyMetersPerSecond,
-                -state.fieldSpeeds.omegaRadiansPerSecond);
-        if (state.driveMotorTorque.length == 4) {
-          mirrored.driveMotorTorque =
-              new double[] {
-                state.driveMotorTorque[1],
-                state.driveMotorTorque[0],
-                state.driveMotorTorque[3],
-                state.driveMotorTorque[2],
-              };
-        } else if (state.driveMotorTorque.length == 2) {
-          mirrored.driveMotorTorque =
-              new double[] {
-                state.driveMotorTorque[1], state.driveMotorTorque[0],
-              };
-        }
-
-        mirroredStates.add(mirrored);
-      }
-      flippedTraj = Optional.of(new PathPlannerTrajectory(mirroredStates, traj.getEventCommands()));
+      flippedTraj = Optional.of(idealTrajectory.get().flip());
     }
 
     List<Translation2d> flippedBezier = new ArrayList<>(bezierPoints.size());

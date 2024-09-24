@@ -6,10 +6,11 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.Interpolatable;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 /** A state along the a {@link com.pathplanner.lib.trajectory.PathPlannerTrajectory} */
-public class PathPlannerTrajectoryState {
+public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTrajectoryState> {
   /** The time at this state in seconds */
   public double timeSeconds = 0.0;
   /** Field-relative chassis speeds at this state */
@@ -70,7 +71,7 @@ public class PathPlannerTrajectoryState {
     lerpedState.driveMotorTorque = new double[driveMotorTorque.length];
     for (int m = 0; m < driveMotorTorque.length; m++) {
       lerpedState.driveMotorTorque[m] =
-          GeometryUtil.doubleLerp(driveMotorTorque[m], endVal.driveMotorTorque[m], t);
+          MathUtil.interpolate(driveMotorTorque[m], endVal.driveMotorTorque[m], t);
     }
 
     return lerpedState;
@@ -99,5 +100,36 @@ public class PathPlannerTrajectoryState {
     }
 
     return reversed;
+  }
+
+  /**
+   * Flip this trajectory state for the other side of the field, maintaining a blue alliance origin
+   *
+   * @return This trajectory state flipped to the other side of the field
+   */
+  public PathPlannerTrajectoryState flip() {
+    var mirrored = new PathPlannerTrajectoryState();
+
+    mirrored.timeSeconds = timeSeconds;
+    mirrored.linearVelocity = linearVelocity;
+    mirrored.pose = GeometryUtil.flipFieldPose(pose);
+    mirrored.fieldSpeeds =
+        new ChassisSpeeds(
+            -fieldSpeeds.vxMetersPerSecond,
+            fieldSpeeds.vyMetersPerSecond,
+            -fieldSpeeds.omegaRadiansPerSecond);
+    if (driveMotorTorque.length == 4) {
+      mirrored.driveMotorTorque =
+          new double[] {
+            driveMotorTorque[1], driveMotorTorque[0], driveMotorTorque[3], driveMotorTorque[2],
+          };
+    } else if (driveMotorTorque.length == 2) {
+      mirrored.driveMotorTorque =
+          new double[] {
+            driveMotorTorque[1], driveMotorTorque[0],
+          };
+    }
+
+    return mirrored;
   }
 }

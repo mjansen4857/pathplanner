@@ -52,3 +52,24 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 
 	return reversed;
 }
+
+PathPlannerTrajectoryState PathPlannerTrajectoryState::flip() const {
+	PathPlannerTrajectoryState mirrored;
+
+	mirrored.time = time;
+	mirrored.linearVelocity = linearVelocity;
+	mirrored.pose = GeometryUtil::flipFieldPose(pose);
+	mirrored.fieldSpeeds = frc::ChassisSpeeds { -fieldSpeeds.vx, fieldSpeeds.vy,
+			-fieldSpeeds.omega };
+	if (driveMotorTorque.size() == 4) {
+		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[1]);
+		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[0]);
+		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[3]);
+		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[2]);
+	} else if (driveMotorTorque.size() == 2) {
+		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[1]);
+		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[0]);
+	}
+
+	return mirrored;
+}

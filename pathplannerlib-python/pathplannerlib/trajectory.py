@@ -4,13 +4,13 @@ import math
 from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
-from .geometry_util import floatLerp, rotationLerp, poseLerp, calculateRadius
+from .geometry_util import floatLerp, rotationLerp, poseLerp, calculateRadius, flipFieldPose
 from .config import RobotConfig
 from typing import List, Tuple, Union, TYPE_CHECKING
 from commands2 import Command
 
 if TYPE_CHECKING:
-    from .path import PathPlannerPath, PathConstraints
+    from .path import PathPlannerPath, PathConstraints, PathPoint
 
 
 @dataclass
@@ -82,6 +82,34 @@ class PathPlannerTrajectoryState:
         reversedState.driveMotorTorque = [-torque for torque in self.driveMotorTorque]
 
         return reversedState
+
+    def flip(self) -> PathPlannerTrajectoryState:
+        """
+        Flip this trajectory state for the other side of the field, maintaining a blue alliance origin
+
+        :return: This trajectory state flipped to the other side of the field
+        """
+        mirrored = PathPlannerTrajectoryState()
+
+        mirrored.timeSeconds = self.timeSeconds
+        mirrored.linearVelocity = self.linearVelocity
+        mirrored.pose = flipFieldPose(self.pose)
+        mirrored.fieldSpeeds = ChassisSpeeds(-self.fieldSpeeds.vx, self.fieldSpeeds.vy,
+                                             -self.fieldSpeeds.omega)
+        if len(self.driveMotorTorque) == 4:
+            mirrored.driveMotorTorque = [
+                self.driveMotorTorque[1],
+                self.driveMotorTorque[0],
+                self.driveMotorTorque[3],
+                self.driveMotorTorque[2],
+            ]
+        elif len(self.driveMotorTorque) == 2:
+            mirrored.driveMotorTorque = [
+                self.driveMotorTorque[1],
+                self.driveMotorTorque[0],
+            ]
+
+        return mirrored
 
 
 class PathPlannerTrajectory:
@@ -278,6 +306,15 @@ class PathPlannerTrajectory:
 
         return prevSample.interpolate(sample,
                                       (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds))
+
+    def flip(self) -> PathPlannerTrajectory:
+        """
+        Flip this trajectory for the other side of the field, maintaining a blue alliance origin
+
+        :return: This trajectory with all states flipped to the other side of the field
+        """
+        return PathPlannerTrajectory(None, None, None, None, [s.flip() for s in self.getStates()],
+                                     self.getEventCommands())
 
 
 def _getNextRotationTargetIdx(path: PathPlannerPath, starting_index: int) -> int:

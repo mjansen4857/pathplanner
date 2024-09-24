@@ -123,6 +123,10 @@ std::vector<frc::Translation2d> PathPlannerPath::bezierFromPoses(
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 		std::string pathName) {
+	if (PathPlannerPath::getPathCache().contains(pathName)) {
+		return PathPlannerPath::getPathCache()[pathName];
+	}
+
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/paths/" + pathName + ".path";
 
@@ -136,11 +140,18 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 
 	std::shared_ptr < PathPlannerPath > path = PathPlannerPath::fromJson(json);
 	PPLibTelemetry::registerHotReloadPath(pathName, path);
+
+	PathPlannerPath::getPathCache().emplace(pathName, path);
+
 	return path;
 }
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 		std::string trajectoryName) {
+	if (PathPlannerPath::getChoreoPathCache().contains(trajectoryName)) {
+		return PathPlannerPath::getChoreoPathCache()[trajectoryName];
+	}
+
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/choreo/" + trajectoryName + ".traj";
 
@@ -214,6 +225,8 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 	});
 
 	path->m_idealTrajectory = PathPlannerTrajectory(trajStates, events);
+
+	PathPlannerPath::getChoreoPathCache().emplace(trajectoryName, path);
 
 	return path;
 }
@@ -648,4 +661,16 @@ frc::Translation2d PathPlannerPath::samplePath(
 	auto p3 = m_bezierPoints[iOffset + 2];
 	auto p4 = m_bezierPoints[iOffset + 3];
 	return GeometryUtil::cubicLerp(p1, p2, p3, p4, t);
+}
+
+std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& PathPlannerPath::getPathCache() {
+	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>> *pathCache =
+			new std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>();
+	return *pathCache;
+}
+
+std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& PathPlannerPath::getChoreoPathCache() {
+	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>> *choreoPathCache =
+			new std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>();
+	return *choreoPathCache;
 }

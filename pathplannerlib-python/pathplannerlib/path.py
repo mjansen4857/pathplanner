@@ -578,31 +578,7 @@ class PathPlannerPath:
         flippedTraj = None
         if self._idealTrajectory is not None:
             # Flip the ideal trajectory
-            mirroredStates = []
-            for state in self._idealTrajectory.getStates():
-                mirrored = PathPlannerTrajectoryState()
-
-                mirrored.timeSeconds = state.timeSeconds
-                mirrored.linearVelocity = state.linearVelocity
-                mirrored.pose = flipFieldPose(state.pose)
-                mirrored.fieldSpeeds = ChassisSpeeds(-state.fieldSpeeds.vx, state.fieldSpeeds.vy,
-                                                     -state.fieldSpeeds.omega)
-                if len(state.driveMotorTorque) == 4:
-                    mirrored.driveMotorTorque = [
-                        state.driveMotorTorque[1],
-                        state.driveMotorTorque[0],
-                        state.driveMotorTorque[3],
-                        state.driveMotorTorque[2],
-                    ]
-                elif len(state.driveMotorTorque) == 2:
-                    mirrored.driveMotorTorque = [
-                        state.driveMotorTorque[1],
-                        state.driveMotorTorque[0],
-                    ]
-
-                mirroredStates.append(mirrored)
-            flippedTraj = PathPlannerTrajectory(None, None, None, None, states=mirroredStates,
-                                                event_commands=self._idealTrajectory.getEventCommands())
+            flippedTraj = self._idealTrajectory.flip()
 
         newBezier = [flipFieldPos(pos) for pos in self._bezierPoints]
 

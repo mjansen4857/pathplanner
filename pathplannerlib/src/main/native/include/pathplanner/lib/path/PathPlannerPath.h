@@ -15,6 +15,7 @@
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <wpi/json.h>
 #include <string>
+#include <unordered_map>
 #include <units/length.h>
 #include <memory>
 #include <initializer_list>
@@ -259,6 +260,12 @@ public:
 		return poses;
 	}
 
+	/** Clear the cache of previously loaded paths. */
+	static inline void clearPathCache() {
+		PathPlannerPath::getPathCache().clear();
+		PathPlannerPath::getChoreoPathCache().clear();
+	}
+
 private:
 	std::vector<PathPoint> createPath();
 
@@ -285,6 +292,10 @@ private:
 	}
 
 	frc::Translation2d samplePath(double waypointRelativePos) const;
+
+	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& getPathCache();
+
+	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& getChoreoPathCache();
 
 	std::vector<frc::Translation2d> m_bezierPoints;
 	std::vector<RotationTarget> m_rotationTargets;

@@ -282,6 +282,9 @@ class PathPlannerPath:
 
     _instances: int = 0
 
+    _pathCache: dict[str, PathPlannerPath] = {}
+    _choreoPathCache: dict[str, PathPlannerPath] = {}
+
     preventFlipping: bool = False
 
     def __init__(self, bezier_points: List[Translation2d], constraints: PathConstraints,
@@ -351,11 +354,16 @@ class PathPlannerPath:
         :param path_name: The name of the path to load
         :return: PathPlannerPath created from the given file name
         """
+        if path_name in PathPlannerPath._pathCache:
+            return PathPlannerPath._pathCache[path_name]
+
         filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'paths', path_name + '.path')
 
         with open(filePath, 'r') as f:
             pathJson = json.loads(f.read())
-            return PathPlannerPath._fromJson(pathJson)
+            path = PathPlannerPath._fromJson(pathJson)
+            PathPlannerPath._pathCache[path_name] = path
+            return path
 
     @staticmethod
     def fromChoreoTrajectory(trajectory_name: str) -> PathPlannerPath:
@@ -365,6 +373,9 @@ class PathPlannerPath:
         :param trajectory_name: The name of the Choreo trajectory to load. This should be just the name of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
         :return: PathPlannerPath created from the given Choreo trajectory file
         """
+        if trajectory_name in PathPlannerPath._choreoPathCache:
+            return PathPlannerPath._choreoPathCache[trajectory_name]
+
         filePath = os.path.join(getDeployDirectory(), 'choreo', trajectory_name + '.traj')
 
         with open(filePath, 'r') as f:
@@ -418,7 +429,18 @@ class PathPlannerPath:
             path._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=trajStates,
                                                           events=events)
 
+            PathPlannerPath._choreoPathCache[trajectory_name] = path
+
             return path
+
+    @staticmethod
+    def clearPathCache():
+        """
+        Clear the cache of previously loaded paths.
+        :return:
+        """
+        PathPlannerPath._pathCache.clear()
+        PathPlannerPath._choreoPathCache.clear()
 
     @staticmethod
     def bezierFromPoses(poses: List[Pose2d]) -> List[Translation2d]:

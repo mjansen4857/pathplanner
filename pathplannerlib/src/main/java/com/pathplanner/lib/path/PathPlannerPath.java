@@ -33,6 +33,9 @@ public class PathPlannerPath {
 
   private static int instances = 0;
 
+  private static final Map<String, PathPlannerPath> pathCache = new HashMap<>();
+  private static final Map<String, PathPlannerPath> choreoPathCache = new HashMap<>();
+
   private List<Translation2d> bezierPoints;
   private List<RotationTarget> rotationTargets;
   private List<ConstraintsZone> constraintZones;
@@ -275,6 +278,10 @@ public class PathPlannerPath {
    * @return PathPlannerPath created from the given file name
    */
   public static PathPlannerPath fromPathFile(String pathName) {
+    if (pathCache.containsKey(pathName)) {
+      return pathCache.get(pathName);
+    }
+
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(
@@ -291,6 +298,7 @@ public class PathPlannerPath {
 
       PathPlannerPath path = PathPlannerPath.fromJson(json);
       PPLibTelemetry.registerHotReloadPath(pathName, path);
+      pathCache.put(pathName, path);
       return path;
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -305,6 +313,10 @@ public class PathPlannerPath {
    * @return PathPlannerPath created from the given Choreo trajectory file
    */
   public static PathPlannerPath fromChoreoTrajectory(String trajectoryName) {
+    if (choreoPathCache.containsKey(trajectoryName)) {
+      return choreoPathCache.get(trajectoryName);
+    }
+
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(
@@ -377,10 +389,18 @@ public class PathPlannerPath {
       events.sort(Comparator.comparing(Event::getTimestamp));
       path.idealTrajectory = Optional.of(new PathPlannerTrajectory(trajStates, events));
 
+      choreoPathCache.put(trajectoryName, path);
+
       return path;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /** Clear the cache of previously loaded paths. */
+  public static void clearCache() {
+    pathCache.clear();
+    choreoPathCache.clear();
   }
 
   private static PathPlannerPath fromJson(JSONObject pathJson) {

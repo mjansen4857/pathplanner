@@ -13,24 +13,20 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		frc2::Requirements requirements) : m_originalPath(path), m_poseSupplier(
 		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
 		controller), m_robotConfig(robotConfig), m_shouldFlipPath(
-		shouldFlipPath) {
+		shouldFlipPath), m_eventScheduler() {
 	AddRequirements(requirements);
 
-	auto &&driveRequirements = GetRequirements();
+	auto driveRequirements = GetRequirements();
+	auto eventReqs = EventScheduler::getSchedulerRequirements(m_originalPath);
 
-	for (EventMarker &marker : m_originalPath->getEventMarkers()) {
-		auto reqs = marker.getCommand()->GetRequirements();
-
-		for (auto &&requirement : reqs) {
-			if (driveRequirements.find(requirement)
-					!= driveRequirements.end()) {
-				throw FRC_MakeError(frc::err::CommandIllegalUse,
-						"Events that are triggered during path following cannot require the drive subsystem");
-			}
+	for (auto requirement : eventReqs) {
+		if (driveRequirements.find(requirement) != driveRequirements.end()) {
+			throw FRC_MakeError(frc::err::CommandIllegalUse,
+					"Events that are triggered during path following cannot require the drive subsystem");
 		}
-
-		AddRequirements(reqs);
 	}
+
+	AddRequirements(eventReqs);
 
 	m_path = m_originalPath;
 	// Ensure the ideal trajectory is generated
@@ -83,14 +79,7 @@ void FollowPathCommand::Initialize() {
 	PathPlannerLogging::logActivePath (m_path);
 	PPLibTelemetry::setCurrentPath(m_path);
 
-	// Initialize marker stuff
-	m_currentEventCommands.clear();
-	m_untriggeredEvents.clear();
-
-	const auto &eventCommands = m_trajectory.getEventCommands();
-
-	m_untriggeredEvents.insert(m_untriggeredEvents.end(), eventCommands.begin(),
-			eventCommands.end());
+	m_eventScheduler.initialize(m_trajectory);
 
 	m_timer.Reset();
 	m_timer.Start();
@@ -133,41 +122,7 @@ void FollowPathCommand::Execute() {
 
 	m_output(targetSpeeds, torqueCurrentFF);
 
-	if (!m_untriggeredEvents.empty()
-			&& m_timer.HasElapsed(m_untriggeredEvents[0].first)) {
-		// Time to trigger this event command
-		auto event = m_untriggeredEvents[0];
-
-		for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
-			if (!runningCommand.second) {
-				continue;
-			}
-
-			if (!frc2::RequirementsDisjoint(runningCommand.first.get(),
-					event.second.get())) {
-				runningCommand.first->End(true);
-				runningCommand.second = false;
-			}
-		}
-
-		event.second->Initialize();
-		m_currentEventCommands.emplace_back(event.second, true);
-
-		m_untriggeredEvents.pop_front();
-	}
-
-	// Run event marker commands
-	for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
-		if (!runningCommand.second) {
-			continue;
-		}
-
-		runningCommand.first->Execute();
-		if (runningCommand.first->IsFinished()) {
-			runningCommand.first->End(false);
-			runningCommand.second = false;
-		}
-	}
+	m_eventScheduler.execute(currentTime);
 }
 
 bool FollowPathCommand::IsFinished() {
@@ -189,10 +144,5 @@ void FollowPathCommand::End(bool interrupted) {
 
 	PathPlannerLogging::logActivePath(nullptr);
 
-	// End markers
-	for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
-		if (runningCommand.second) {
-			runningCommand.first->End(true);
-		}
-	}
+	m_eventScheduler.end();
 }

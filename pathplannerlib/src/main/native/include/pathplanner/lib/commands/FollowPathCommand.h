@@ -19,6 +19,7 @@
 #include "pathplanner/lib/config/RobotConfig.h"
 #include "pathplanner/lib/util/PathPlannerLogging.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
+#include "pathplanner/lib/events/EventScheduler.h"
 
 namespace pathplanner {
 class FollowPathCommand: public frc2::CommandHelper<frc2::Command,
@@ -67,9 +68,7 @@ private:
 	RobotConfig m_robotConfig;
 	std::function<bool()> m_shouldFlipPath;
 
-	// For event markers
-	std::vector<std::pair<std::shared_ptr<frc2::Command>, bool>> m_currentEventCommands;
-	std::deque<std::pair<units::second_t, std::shared_ptr<frc2::Command>>> m_untriggeredEvents;
+	EventScheduler m_eventScheduler;
 
 	std::shared_ptr<PathPlannerPath> m_path;
 	PathPlannerTrajectory m_trajectory;

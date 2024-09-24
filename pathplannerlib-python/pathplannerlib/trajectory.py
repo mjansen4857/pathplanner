@@ -6,11 +6,11 @@ from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
 from .geometry_util import floatLerp, rotationLerp, poseLerp, calculateRadius, flipFieldPose
 from .config import RobotConfig
-from typing import List, Tuple, Union, TYPE_CHECKING
-from commands2 import Command
+from .events import Event, ScheduleCommandEvent
+from typing import List, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .path import PathPlannerPath, PathConstraints, PathPoint
+    from .path import PathPlannerPath, PathConstraints
 
 
 @dataclass
@@ -114,12 +114,12 @@ class PathPlannerTrajectoryState:
 
 class PathPlannerTrajectory:
     _states: List[PathPlannerTrajectoryState]
-    _eventCommands: List[Tuple[float, Command]]
+    _events: List[Event]
 
     def __init__(self, path: Union[PathPlannerPath, None], starting_speeds: Union[ChassisSpeeds, None],
                  starting_rotation: Union[Rotation2d, None], config: Union[RobotConfig, None],
                  states: List[PathPlannerTrajectoryState] = None,
-                 event_commands: List[Tuple[float, Command]] = None):
+                 events: List[Event] = None):
         """
         Generate a PathPlannerTrajectory. If "states" is provided, the other arguments can be None
 
@@ -128,23 +128,23 @@ class PathPlannerTrajectory:
         :param starting_rotation: Starting rotation of the robot when starting the trajectory
         :param config: The RobotConfig describing the robot
         :param states: Pre-generated trajectory states
-        :param event_commands: Event commands
+        :param events: Events for this trajectory
         """
 
         if states is not None:
             self._states = states
-            if event_commands is not None:
-                self._eventCommands = event_commands
+            if events is not None:
+                self._events = events
             else:
-                self._eventCommands = []
+                self._events = []
         else:
             if path.isChoreoPath():
                 traj = path.generateTrajectory(starting_speeds, starting_rotation, config)
                 self._states = traj._states
-                self._eventCommands = traj._eventCommands
+                self._events = traj._events
             else:
                 self._states = []
-                self._eventCommands = []
+                self._events = []
 
                 # Create all states
                 _generateStates(self._states, path, starting_rotation, config)
@@ -216,16 +216,16 @@ class PathPlannerTrajectory:
                         m = unaddedMarkers[0]
                         if abs(m.waypointRelativePos - prevState.waypointRelativePos) <= abs(
                                 m.waypointRelativePos - state.waypointRelativePos):
-                            self._eventCommands.append((prevState.timeSeconds, m.command))
+                            self._events.append(ScheduleCommandEvent(prevState.timeSeconds, m.command))
                             unaddedMarkers.pop(0)
 
-    def getEventCommands(self) -> List[Tuple[float, Command]]:
+    def getEvents(self) -> List[Event]:
         """
-        Get all of the pairs of timestamps + commands to run at those timestamps
+        Get all the events to run while following this trajectory
 
-        :return: Pairs of timestamps and event commands
+        :return: Events in this trajectory
         """
-        return self._eventCommands
+        return self._events
 
     def getStates(self) -> List[PathPlannerTrajectoryState]:
         """
@@ -314,7 +314,7 @@ class PathPlannerTrajectory:
         :return: This trajectory with all states flipped to the other side of the field
         """
         return PathPlannerTrajectory(None, None, None, None, [s.flip() for s in self.getStates()],
-                                     self.getEventCommands())
+                                     self.getEvents())
 
 
 def _getNextRotationTargetIdx(path: PathPlannerPath, starting_index: int) -> int:

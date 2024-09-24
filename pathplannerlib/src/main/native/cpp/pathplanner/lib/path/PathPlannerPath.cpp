@@ -2,6 +2,8 @@
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
+#include "pathplanner/lib/events/Event.h"
+#include "pathplanner/lib/events/ScheduleCommandEvent.h"
 #include <frc/Filesystem.h>
 #include <frc/MathUtil.h>
 #include <wpi/MemoryBuffer.h>
@@ -192,8 +194,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 	path->m_allPoints = pathPoints;
 	path->m_isChoreoPath = true;
 
-	std::vector < std::pair<units::second_t, std::shared_ptr<frc2::Command>>
-			> eventCommands;
+	std::vector < std::shared_ptr < Event >> events;
 	if (json.contains("eventMarkers")) {
 		for (wpi::json::const_reference m : json.at("eventMarkers")) {
 			units::second_t timestamp { m.at("timestamp").get<double>() };
@@ -202,16 +203,17 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 					CommandUtil::commandFromJson(m.at("command"), false));
 
 			path->m_eventMarkers.emplace_back(eventMarker);
-			eventCommands.emplace_back(timestamp, eventMarker.getCommand());
+			events.emplace_back(
+					std::make_shared < ScheduleCommandEvent
+							> (timestamp, eventMarker.getCommand()));
 		}
 	}
 
-	std::sort(eventCommands.begin(), eventCommands.end(),
-			[](auto &left, auto &right) {
-				return left.first < right.first;
-			});
+	std::sort(events.begin(), events.end(), [](auto left, auto right) {
+		return left->getTimestamp() < right->getTimestamp();
+	});
 
-	path->m_idealTrajectory = PathPlannerTrajectory(trajStates, eventCommands);
+	path->m_idealTrajectory = PathPlannerTrajectory(trajStates, events);
 
 	return path;
 }
@@ -316,7 +318,7 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 
 	double pos = targetIncrement;
 
-	while (pos <= numSegments) {
+	while (pos < numSegments) {
 		frc::Translation2d position = samplePath(pos);
 
 		units::meter_t distance = points[points.size() - 1].position.Distance(
@@ -636,7 +638,8 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 
 frc::Translation2d PathPlannerPath::samplePath(
 		double waypointRelativePos) const {
-	size_t s = static_cast<size_t>(waypointRelativePos);
+	size_t s = std::min(static_cast<size_t>(waypointRelativePos),
+			((m_bezierPoints.size() - 1) / 3) - 1);
 	size_t iOffset = s * 3;
 	double t = waypointRelativePos - s;
 

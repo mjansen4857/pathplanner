@@ -1,5 +1,7 @@
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/path/PathPlannerPath.h"
+#include "pathplanner/lib/events/ScheduleCommandEvent.h"
+#include <memory>
 #include <units/force.h>
 #include <units/torque.h>
 
@@ -12,7 +14,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 	if (path->isChoreoPath()) {
 		PathPlannerTrajectory traj = path->getIdealTrajectory(config).value();
 		m_states = traj.m_states;
-		m_eventCommands = traj.m_eventCommands;
+		m_events = traj.m_events;
 	} else {
 		// Create all states
 		generateStates(m_states, path, startingRotation, config);
@@ -113,8 +115,9 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 						<= std::abs(
 								next.getWaypointRelativePos()
 										- state.waypointRelativePos)) {
-					m_eventCommands.emplace_back(prevState.time,
-							next.getCommand());
+					m_events.emplace_back(
+							std::make_shared < ScheduleCommandEvent
+									> (prevState.time, next.getCommand()));
 					unaddedMarkers.erase(unaddedMarkers.begin());
 				}
 			}

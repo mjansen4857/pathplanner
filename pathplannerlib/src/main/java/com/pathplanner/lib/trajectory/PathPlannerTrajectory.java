@@ -1,18 +1,18 @@
 package com.pathplanner.lib.trajectory;
 
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.events.Event;
+import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj2.command.Command;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,18 +20,17 @@ import java.util.List;
 /** Trajectory generated for a PathPlanner path */
 public class PathPlannerTrajectory {
   private final List<PathPlannerTrajectoryState> states;
-  private final List<Pair<Double, Command>> eventCommands;
+  private final List<Event> events;
 
   /**
    * Create a trajectory with pre-generated states and list of events
    *
    * @param states Pre-generated states
-   * @param eventCommands Event commands
+   * @param events Events for this trajectory
    */
-  public PathPlannerTrajectory(
-      List<PathPlannerTrajectoryState> states, List<Pair<Double, Command>> eventCommands) {
+  public PathPlannerTrajectory(List<PathPlannerTrajectoryState> states, List<Event> events) {
     this.states = states;
-    this.eventCommands = eventCommands;
+    this.events = events;
   }
 
   /**
@@ -59,10 +58,10 @@ public class PathPlannerTrajectory {
     if (path.isChoreoPath()) {
       var traj = path.getIdealTrajectory(config).orElseThrow();
       this.states = traj.states;
-      this.eventCommands = traj.eventCommands;
+      this.events = traj.events;
     } else {
       this.states = new ArrayList<>(path.numPoints());
-      this.eventCommands = new ArrayList<>(path.getEventMarkers().size());
+      this.events = new ArrayList<>(path.getEventMarkers().size());
 
       // Create all states
       generateStates(states, path, startingRotation, config);
@@ -149,7 +148,7 @@ public class PathPlannerTrajectory {
           EventMarker next = unaddedMarkers.get(0);
           if (Math.abs(next.getWaypointRelativePos() - prevState.waypointRelativePos)
               <= Math.abs(next.getWaypointRelativePos() - state.waypointRelativePos)) {
-            eventCommands.add(Pair.of(prevState.timeSeconds, next.getCommand()));
+            events.add(new ScheduleCommandEvent(prevState.timeSeconds, next.getCommand()));
             unaddedMarkers.remove(0);
           }
         }
@@ -516,12 +515,12 @@ public class PathPlannerTrajectory {
   }
 
   /**
-   * Get all of the pairs of timestamps + commands to run at those timestamps
+   * Get all the events to run while following this trajectory
    *
-   * @return Pairs of timestamps and event commands
+   * @return Events in this trajectory
    */
-  public List<Pair<Double, Command>> getEventCommands() {
-    return eventCommands;
+  public List<Event> getEvents() {
+    return events;
   }
 
   /**
@@ -622,7 +621,7 @@ public class PathPlannerTrajectory {
     for (var state : states) {
       mirroredStates.add(state.flip());
     }
-    return new PathPlannerTrajectory(mirroredStates, getEventCommands());
+    return new PathPlannerTrajectory(mirroredStates, getEvents());
   }
 
   private static void desaturateWheelSpeeds(

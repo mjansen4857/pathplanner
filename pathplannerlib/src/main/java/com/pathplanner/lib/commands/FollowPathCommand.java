@@ -6,11 +6,11 @@ import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
+import com.pathplanner.lib.events.EventScheduler;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -34,10 +34,7 @@ public class FollowPathCommand extends Command {
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
   private final BooleanSupplier shouldFlipPath;
-
-  // For event markers
-  private final Map<Command, Boolean> currentEventCommands = new HashMap<>();
-  private final List<Pair<Double, Command>> untriggeredEvents = new ArrayList<>();
+  private final EventScheduler eventScheduler;
 
   private PathPlannerPath path;
   private PathPlannerTrajectory trajectory;
@@ -75,20 +72,18 @@ public class FollowPathCommand extends Command {
     this.controller = controller;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
+    this.eventScheduler = new EventScheduler();
 
     Set<Subsystem> driveRequirements = Set.of(requirements);
     addRequirements(requirements);
 
-    for (EventMarker marker : this.originalPath.getEventMarkers()) {
-      var reqs = marker.getCommand().getRequirements();
-
-      if (!Collections.disjoint(driveRequirements, reqs)) {
-        throw new IllegalArgumentException(
-            "Events that are triggered during path following cannot require the drive subsystem");
-      }
-
-      addRequirements(reqs.toArray(new Subsystem[0]));
+    // Add all event scheduler requirements to this command's requirements
+    var eventReqs = EventScheduler.getSchedulerRequirements(this.originalPath);
+    if (!Collections.disjoint(driveRequirements, eventReqs)) {
+      throw new IllegalArgumentException(
+          "Events that are triggered during path following cannot require the drive subsystem");
     }
+    addRequirements(eventReqs);
 
     this.path = this.originalPath;
     // Ensure the ideal trajectory is generated
@@ -139,10 +134,7 @@ public class FollowPathCommand extends Command {
     PathPlannerLogging.logActivePath(path);
     PPLibTelemetry.setCurrentPath(path);
 
-    // Initialize marker stuff
-    currentEventCommands.clear();
-    untriggeredEvents.clear();
-    untriggeredEvents.addAll(trajectory.getEventCommands());
+    eventScheduler.initialize(trajectory);
 
     timer.reset();
     timer.start();
@@ -187,39 +179,7 @@ public class FollowPathCommand extends Command {
 
     output.accept(targetSpeeds, torqueCurrentFF);
 
-    if (!untriggeredEvents.isEmpty() && timer.hasElapsed(untriggeredEvents.get(0).getFirst())) {
-      // Time to trigger this event command
-      Pair<Double, Command> event = untriggeredEvents.remove(0);
-
-      for (var runningCommand : currentEventCommands.entrySet()) {
-        if (!runningCommand.getValue()) {
-          continue;
-        }
-
-        if (!Collections.disjoint(
-            runningCommand.getKey().getRequirements(), event.getSecond().getRequirements())) {
-          runningCommand.getKey().end(true);
-          runningCommand.setValue(false);
-        }
-      }
-
-      event.getSecond().initialize();
-      currentEventCommands.put(event.getSecond(), true);
-    }
-
-    // Run event marker commands
-    for (Map.Entry<Command, Boolean> runningCommand : currentEventCommands.entrySet()) {
-      if (!runningCommand.getValue()) {
-        continue;
-      }
-
-      runningCommand.getKey().execute();
-
-      if (runningCommand.getKey().isFinished()) {
-        runningCommand.getKey().end(false);
-        runningCommand.setValue(false);
-      }
-    }
+    eventScheduler.execute(currentTime);
   }
 
   @Override
@@ -239,12 +199,7 @@ public class FollowPathCommand extends Command {
 
     PathPlannerLogging.logActivePath(null);
 
-    // End markers
-    for (Map.Entry<Command, Boolean> runningCommand : currentEventCommands.entrySet()) {
-      if (runningCommand.getValue()) {
-        runningCommand.getKey().end(true);
-      }
-    }
+    eventScheduler.end();
   }
 
   /**

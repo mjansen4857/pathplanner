@@ -2,6 +2,8 @@ package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.events.Event;
+import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.GeometryUtil;
@@ -9,7 +11,6 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -358,7 +359,7 @@ public class PathPlannerPath {
       path.allPoints = pathPoints;
       path.isChoreoPath = true;
 
-      List<Pair<Double, Command>> eventCommands = new ArrayList<>();
+      List<Event> events = new ArrayList<>();
       if (json.containsKey("eventMarkers")) {
         for (var m : (JSONArray) json.get("eventMarkers")) {
           JSONObject marker = (JSONObject) m;
@@ -369,12 +370,12 @@ public class PathPlannerPath {
           EventMarker eventMarker = new EventMarker(timestamp, cmd);
 
           path.eventMarkers.add(eventMarker);
-          eventCommands.add(Pair.of(timestamp, cmd));
+          events.add(new ScheduleCommandEvent(timestamp, cmd));
         }
       }
 
-      eventCommands.sort(Comparator.comparing(Pair::getFirst));
-      path.idealTrajectory = Optional.of(new PathPlannerTrajectory(trajStates, eventCommands));
+      events.sort(Comparator.comparing(Event::getTimestamp));
+      path.idealTrajectory = Optional.of(new PathPlannerTrajectory(trajStates, events));
 
       return path;
     } catch (Exception e) {
@@ -524,7 +525,7 @@ public class PathPlannerPath {
   }
 
   private Translation2d samplePath(double waypointRelativePos) {
-    int s = (int) waypointRelativePos;
+    int s = Math.min((int) waypointRelativePos, ((bezierPoints.size() - 1) / 3) - 1);
     int iOffset = s * 3;
     double t = waypointRelativePos - s;
 
@@ -938,32 +939,6 @@ public class PathPlannerPath {
     return allPoints.stream()
         .map(p -> new Pose2d(p.position, new Rotation2d()))
         .collect(Collectors.toList());
-  }
-
-  /**
-   * Map a given percentage/waypoint relative position over 2 segments
-   *
-   * @param pct The percent to map
-   * @param seg1Pct The percentage of the 2 segments made up by the first segment
-   * @return The waypoint relative position over the 2 segments
-   */
-  private static double mapPct(double pct, double seg1Pct) {
-    double mappedPct;
-    if (pct <= seg1Pct) {
-      // Map to segment 1
-      mappedPct = pct / seg1Pct;
-    } else {
-      // Map to segment 2
-      mappedPct = 1 + ((pct - seg1Pct) / (1.0 - seg1Pct));
-    }
-
-    return mappedPct;
-  }
-
-  private static double positionDelta(Translation2d a, Translation2d b) {
-    Translation2d delta = a.minus(b);
-
-    return Math.abs(delta.getX()) + Math.abs(delta.getY());
   }
 
   @Override

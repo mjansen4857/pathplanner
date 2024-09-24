@@ -265,112 +265,6 @@ class PathPoint:
                 and other.maxV == self.maxV)
 
 
-@dataclass(frozen=True)
-class PathSegment:
-    p1: Translation2d
-    p2: Translation2d
-    p3: Translation2d
-    p4: Translation2d
-
-    def generatePathPoints(self, points: List[PathPoint], segmentIdx: int, constraintZones: List[ConstraintsZone],
-                           sortedTargets: List[RotationTarget], globalConstraints: Union[PathConstraints, None]):
-        """
-        Generate path points along this segment and insert them into the given list of path points
-
-        :param points: The list to insert the generated points into
-        :param segmentIdx: The index of this segment within the whole path being generated
-        :param constraintZones: All constraint zones along the path
-        :param sortedTargets: All rotation targets along the path, sorted by waypoint relative position
-        :param globalConstraints: The global constraints to apply to a path point if it is not covered by a constraints zone
-        """
-        unaddedTargets = [r for r in sortedTargets if segmentIdx <= r.waypointRelativePosition < segmentIdx + 1.0]
-
-        t = 0.0
-
-        if len(points) == 0:
-            # First path point
-            points.append(PathPoint(self.sample(t), None,
-                                    PathSegment._constraintsForWaypointPos(segmentIdx, constraintZones,
-                                                                           globalConstraints)))
-            points[-1].waypointRelativePos = segmentIdx
-
-            t += targetIncrement
-
-        while t <= 1.0:
-            position = self.sample(t)
-
-            distance = points[-1].position.distance(position)
-            if distance <= 0.01:
-                if t < 1.0:
-                    t = min(t + targetIncrement, 1.0)
-                    continue
-                else:
-                    break
-
-            prevWaypointPos = (segmentIdx + t) - targetIncrement
-
-            delta = distance - targetSpacing
-            if delta > targetSpacing * 0.25:
-                # Points are too far apart, increment t by correct amount
-                correctIncrement = (targetSpacing * targetIncrement) / distance
-                t = t - targetIncrement + correctIncrement
-
-                position = self.sample(t)
-
-                if points[-1].position.distance(position) - targetSpacing > targetSpacing * 0.25:
-                    # Points are still too far apart.Probably because of weird control
-                    # point placement.Just cut the correct increment in half and hope for the best
-                    t = t - (correctIncrement * 0.5)
-                    position = self.sample(t)
-            elif delta < -targetSpacing * 0.25 and t < 1.0:
-                # Points are too close, increment waypoint relative pos by correct amount
-                correctIncrement = (targetSpacing * targetIncrement) / distance
-                t = t - targetIncrement + correctIncrement
-
-                position = self.sample(t)
-
-                if points[-1].position.distance(position) - targetSpacing < -targetSpacing * 0.25:
-                    # Points are still too close. Probably because of weird control
-                    # point placement. Just cut the correct increment in half and hope for the best
-                    t = t + (correctIncrement * 0.5)
-                    position = self.sample(t)
-
-            # Add a rotation target to the previous point if it is closer to it than
-            # the current point
-            if len(unaddedTargets) > 0:
-                if abs(unaddedTargets[0].waypointRelativePosition - prevWaypointPos) <= abs(
-                        unaddedTargets[0].waypointRelativePosition - (segmentIdx + t)):
-                    points[-1].rotationTarget = unaddedTargets.pop(0)
-
-            # We don't actually want to add the last point if it is valid. The last point of this segment
-            # will be the first of the next
-            if t < 1.0:
-                points.append(PathPoint(position, None,
-                                        PathSegment._constraintsForWaypointPos(segmentIdx, constraintZones,
-                                                                               globalConstraints)))
-                points[-1].waypointRelativePos = segmentIdx + t
-                t = min(t + targetIncrement, 1.0)
-            else:
-                break
-
-    def sample(self, t: float) -> Translation2d:
-        """
-        Sample a point along this segment
-
-        :param t: Interpolation factor, essentially the percentage along the segment
-        :return: Point along the segment at the given t value
-        """
-        return cubicLerp(self.p1, self.p2, self.p3, self.p4, min(max(t, 0.0), 1.0))
-
-    @staticmethod
-    def _constraintsForWaypointPos(pos: float, constraintZones: List[ConstraintsZone],
-                                   globalConstraints: Union[PathConstraints, None]) -> PathConstraints:
-        for z in constraintZones:
-            if z.minWaypointPos <= pos <= z.maxWaypointPos:
-                return z.constraints
-        return globalConstraints
-
-
 class PathPlannerPath:
     _bezierPoints: List[Translation2d]
     _rotationTargets: List[RotationTarget]
@@ -770,21 +664,22 @@ class PathPlannerPath:
 
         return self._idealTrajectory
 
-    @staticmethod
-    def _mapPct(pct: float, seg1_pct: float) -> float:
-        if pct <= seg1_pct:
-            # Map to segment 1
-            mappedPct = pct / seg1_pct
-        else:
-            # Map to segment 2
-            mappedPct = 1 + ((pct - seg1_pct) / (1.0 - seg1_pct))
+    def _constraintsForWaypointPos(self, pos: float) -> PathConstraints:
+        for z in self._constraintZones:
+            if z.minWaypointPos <= pos <= z.maxWaypointPos:
+                return z.constraints
+        return self._globalConstraints
 
-        return mappedPct
+    def _samplePath(self, waypointRelativePos: float) -> Translation2d:
+        s = int(waypointRelativePos)
+        iOffset = s * 3
+        t = waypointRelativePos - s
 
-    @staticmethod
-    def _positionDelta(a: Translation2d, b: Translation2d) -> float:
-        delta = a - b
-        return math.fabs(delta.X()) + math.fabs(delta.Y())
+        p1 = self._bezierPoints[iOffset]
+        p2 = self._bezierPoints[iOffset + 1]
+        p3 = self._bezierPoints[iOffset + 2]
+        p4 = self._bezierPoints[iOffset + 3]
+        return cubicLerp(p1, p2, p3, p4, t)
 
     @staticmethod
     def _fromJson(path_json: dict) -> PathPlannerPath:
@@ -835,30 +730,103 @@ class PathPlannerPath:
         if len(self._bezierPoints) < 4 or (len(self._bezierPoints) - 1) % 3 != 0:
             raise ValueError('Invalid number of bezier points')
 
+        unaddedTargets = [r for r in self._rotationTargets]
+        points = []
         numSegments = int((len(self._bezierPoints) - 1) / 3)
 
-        points = []
+        # Add the first path point
+        points.append(PathPoint(self._samplePath(0.0), None, self._constraintsForWaypointPos(0.0)))
+        points[-1].waypointRelativePos = 0.0
 
-        for s in range(numSegments):
-            iOffset = s * 3
-            p1 = self._bezierPoints[iOffset]
-            p2 = self._bezierPoints[iOffset + 1]
-            p3 = self._bezierPoints[iOffset + 2]
-            p4 = self._bezierPoints[iOffset + 3]
-            segment = PathSegment(p1, p2, p3, p4)
+        pos = targetIncrement
+        while pos <= numSegments:
+            position = self._samplePath(pos)
 
-            segment.generatePathPoints(points, s, self._constraintZones, self._rotationTargets, self._globalConstraints)
+            distance = points[-1].position.distance(position)
+            if distance <= 0.01:
+                pos = min(pos + targetIncrement, numSegments)
 
-        # Add the final path point
-        endConstraints = self._globalConstraints
-        for z in self._constraintZones:
-            if z.minWaypointPos <= numSegments <= z.maxWaypointPos:
-                endConstraints = z
+            prevWaypointPos = pos - targetIncrement
+
+            delta = distance - targetSpacing
+            if delta > targetSpacing * 0.25:
+                # Points are too far apart, increment t by correct amount
+                correctIncrement = (targetSpacing * targetIncrement) / distance
+                pos = pos - targetIncrement + correctIncrement
+
+                position = self._samplePath(pos)
+
+                if points[-1].position.distance(position) - targetSpacing > targetSpacing * 0.25:
+                    # Points are still too far apart.Probably because of weird control
+                    # point placement.Just cut the correct increment in half and hope for the best
+                    pos = pos - (correctIncrement * 0.5)
+                    position = self._samplePath(pos)
+            elif delta < -targetSpacing * 0.25:
+                # Points are too close, increment waypoint relative pos by correct amount
+                correctIncrement = (targetSpacing * targetIncrement) / distance
+                pos = pos - targetIncrement + correctIncrement
+
+                position = self._samplePath(pos)
+
+                if points[-1].position.distance(position) - targetSpacing < -targetSpacing * 0.25:
+                    # Points are still too close. Probably because of weird control
+                    # point placement. Just cut the correct increment in half and hope for the best
+                    pos = pos + (correctIncrement * 0.5)
+                    position = self._samplePath(pos)
+
+            # Add a rotation target to the previous point if it is closer to it than
+            # the current point
+            if len(unaddedTargets) > 0:
+                if abs(unaddedTargets[0].waypointRelativePosition - prevWaypointPos) <= abs(
+                        unaddedTargets[0].waypointRelativePosition - pos):
+                    points[-1].rotationTarget = unaddedTargets.pop(0)
+
+            points.append(PathPoint(position, None, self._constraintsForWaypointPos(pos)))
+            points[-1].waypointRelativePos = pos
+            pos = min(pos + targetIncrement, numSegments)
+
+        # Keep trying to add the end point until its close enough to the prev point
+        trueIncrement = numSegments - (pos - targetIncrement)
+        pos = numSegments
+        invalid = True
+        while invalid:
+            position = self._samplePath(pos)
+
+            distance = points[-1].position.distance(position)
+            if distance <= 0.01:
+                invalid = False
                 break
 
-        points.append(
-            PathPoint(self._bezierPoints[-1], RotationTarget(numSegments, self._goalEndState.rotation), endConstraints))
-        points[-1].waypointRelativePos = numSegments
+            prevPos = pos - trueIncrement
+
+            delta = distance - targetSpacing
+            if delta > targetSpacing * 0.25:
+                # Points are too far apart, increment t by correct amount
+                correctIncrement = (targetSpacing * targetIncrement) / distance
+                pos = pos - targetIncrement + correctIncrement
+                trueIncrement = correctIncrement
+
+                position = self._samplePath(pos)
+
+                if points[-1].position.distance(position) - targetSpacing > targetSpacing * 0.25:
+                    # Points are still too far apart.Probably because of weird control
+                    # point placement.Just cut the correct increment in half and hope for the best
+                    pos = pos - (correctIncrement * 0.5)
+                    trueIncrement = correctIncrement * 0.5
+                    position = self._samplePath(pos)
+                else:
+                    invalid = False
+
+            # Add a rotation target to the previous point if it is closer to it than
+            # the current point
+            if len(unaddedTargets) > 0:
+                if abs(unaddedTargets[0].waypointRelativePosition - prevPos) <= abs(
+                        unaddedTargets[0].waypointRelativePosition - pos):
+                    points[-1].rotationTarget = unaddedTargets.pop(0)
+
+            points.append(PathPoint(position, None, self._constraintsForWaypointPos(pos)))
+            points[-1].waypointRelativePos = pos
+            pos = numSegments
 
         return points
 

@@ -589,34 +589,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	std::optional < PathPlannerTrajectory > flippedTraj = std::nullopt;
 	if (m_idealTrajectory.has_value()) {
 		// Flip the ideal trajectory
-		std::vector < PathPlannerTrajectoryState > mirroredStates;
-		for (auto state : m_idealTrajectory.value().getStates()) {
-			PathPlannerTrajectoryState mirrored;
-
-			mirrored.time = state.time;
-			mirrored.linearVelocity = state.linearVelocity;
-			mirrored.pose = GeometryUtil::flipFieldPose(state.pose);
-			mirrored.fieldSpeeds = frc::ChassisSpeeds { -state.fieldSpeeds.vx,
-					state.fieldSpeeds.vy, -state.fieldSpeeds.omega };
-			if (state.driveMotorTorque.size() == 4) {
-				mirrored.driveMotorTorque.emplace_back(
-						state.driveMotorTorque[1]);
-				mirrored.driveMotorTorque.emplace_back(
-						state.driveMotorTorque[0]);
-				mirrored.driveMotorTorque.emplace_back(
-						state.driveMotorTorque[3]);
-				mirrored.driveMotorTorque.emplace_back(
-						state.driveMotorTorque[2]);
-			} else if (state.driveMotorTorque.size() == 2) {
-				mirrored.driveMotorTorque.emplace_back(
-						state.driveMotorTorque[1]);
-				mirrored.driveMotorTorque.emplace_back(
-						state.driveMotorTorque[0]);
-			}
-			mirroredStates.emplace_back(mirrored);
-		}
-		flippedTraj = PathPlannerTrajectory(mirroredStates,
-				m_idealTrajectory.value().getEventCommands());
+		flippedTraj = m_idealTrajectory.value().flip();
 	}
 
 	std::vector < frc::Translation2d > newBezier;

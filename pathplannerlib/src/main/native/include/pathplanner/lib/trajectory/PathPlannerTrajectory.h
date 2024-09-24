@@ -135,6 +135,19 @@ public:
 	 * @return The target state
 	 */
 	PathPlannerTrajectoryState sample(const units::second_t time);
+
+	/**
+	 * Flip this trajectory for the other side of the field, maintaining a blue alliance origin
+	 *
+	 * @return This trajectory with all states flipped to the other side of the field
+	 */
+	inline PathPlannerTrajectory flip() {
+		std::vector < PathPlannerTrajectoryState > mirroredStates;
+		for (auto state : m_states) {
+			mirroredStates.emplace_back(state.flip());
+		}
+		return PathPlannerTrajectory(mirroredStates, getEventCommands());
+	}
 private:
 	std::vector<PathPlannerTrajectoryState> m_states;
 	std::vector<std::pair<units::second_t, std::shared_ptr<frc2::Command>>> m_eventCommands;

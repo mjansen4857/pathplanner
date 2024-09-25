@@ -5,8 +5,6 @@ See [Build an Auto](pplib-Build-an-Auto.md). However, you can still use autos to
 available in previous PathPlanner
 versions.
 
-Furthermore, the starting pose can be retrieved from auto files to reset the robot's odometry manually.
-
 > **Note**
 >
 > Getting a path group will only retrieve the paths added to that auto. Any other commands added to the auto will not be
@@ -20,9 +18,6 @@ Furthermore, the starting pose can be retrieved from auto files to reset the rob
 ```Java
 // Use the PathPlannerAuto class to get a path group from an auto
 List<PathPlannerPath> pathGroup = PathPlannerAuto.getPathGroupFromAutoFile("Example Auto");
-
-// You can also get the starting pose from the auto. Only call this if the auto actually has a starting pose.
-Pose2d startingPose = PathPlannerAuto.getStartingPoseFromAutoFile("Example Auto");
 ```
 
 </tab>
@@ -35,9 +30,6 @@ using namespace pathplanner;
 
 // Use the PathPlannerAuto class to get a path group from an auto
 auto pathGroup = PathPlannerAuto::getPathGroupFromAutoFile("Example Auto");
-
-// You can also get the starting pose from the auto. Only call this if the auto actually has a starting pose.
-frc::Pose2d startingPose = PathPlannerAuto::getStartingPoseFromAutoFile("Example Auto");
 ```
 
 </tab>
@@ -48,9 +40,6 @@ from pathplannerlib.auto import PathPlannerAuto
 
 # Use the PathPlannerAuto class to get a path group from an auto
 pathGroup = PathPlannerAuto.getPathGroupFromAutoFile('Example Auto');
-
-# You can also get the starting pose from the auto. Only call this if the auto actually has a starting pose.
-startingPose = PathPlannerAuto.getStartingPoseFromAutoFile('Example Auto');
 ```
 
 </tab>

@@ -27,9 +27,9 @@ loaded trajectory.
 
 > **Warning**
 >
-> Due to the pre-generated nature of Choreo trajectories, they do not support path replanning. Extra care must be taken
-> when following Choreo trajectories to ensure that the robot closely matches the expected starting state of each
-> trajectory.
+> Due to the pre-generated nature of Choreo trajectories, they do not support regenerating the trajectory to match the
+> actual starting state of the robot (linear velocity / rotation). Extra care should be taken to ensure that the state of
+> the robot closely matches the expected starting state of Choreo trajectories.
 >
 {style="warning"}
 

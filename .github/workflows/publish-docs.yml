@@ -14,7 +14,7 @@ env:
   ALGOLIA_INDEX_NAME: PathPlanner_docs
   ALGOLIA_KEY: ${{ secrets.ALGOLIA_KEY }}
   CONFIG_JSON_PRODUCT: HI
-  CONFIG_JSON_VERSION: 2024
+  CONFIG_JSON_VERSION: 2025
 
 jobs:
   build-docs:

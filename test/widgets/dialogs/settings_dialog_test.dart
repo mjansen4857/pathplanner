@@ -24,9 +24,10 @@ void main() {
       PrefsKeys.robotTrackwidth: 0.6,
       PrefsKeys.driveWheelRadius: 0.05,
       PrefsKeys.driveGearing: 5.143,
-      PrefsKeys.maxDriveRPM: 5600.0,
+      PrefsKeys.maxDriveSpeed: 5.4,
       PrefsKeys.wheelCOF: 1.2,
-      PrefsKeys.torqueCurve: 'KRAKEN_60A',
+      PrefsKeys.driveMotor: 'krakenX60',
+      PrefsKeys.driveCurrentLimit: 60.0,
       PrefsKeys.holonomicMode: true,
       PrefsKeys.hotReloadEnabled: true,
       PrefsKeys.teamColor: Colors.black.value,
@@ -282,7 +283,7 @@ void main() {
     expect(prefs.getDouble(PrefsKeys.driveGearing), 1.0);
   });
 
-  testWidgets('max RPM text field', (widgetTester) async {
+  testWidgets('max drive speed field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -298,10 +299,11 @@ void main() {
       ),
     ));
 
-    final textField = find.widgetWithText(NumberTextField, 'Max Drive RPM');
+    final textField =
+        find.widgetWithText(NumberTextField, 'True Max Drive Speed (M/S)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('5600')),
+    expect(find.descendant(of: textField, matching: find.text('5.40')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '1.0');
@@ -309,7 +311,7 @@ void main() {
     await widgetTester.pump();
 
     expect(settingsChanged, true);
-    expect(prefs.getDouble(PrefsKeys.maxDriveRPM), 1.0);
+    expect(prefs.getDouble(PrefsKeys.maxDriveSpeed), 1.0);
   });
 
   testWidgets('wheel cof text field', (widgetTester) async {
@@ -374,12 +376,12 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(settingsChanged, true);
-    expect(prefs.getString(PrefsKeys.torqueCurve), 'KRAKENFOC_60A');
+    expect(prefs.getString(PrefsKeys.driveMotor), 'krakenX60FOC');
     expect(find.text('Kraken X60 FOC'), findsOneWidget);
     expect(find.text('Kraken X60'), findsNothing);
   });
 
-  testWidgets('current limit dropdown', (widgetTester) async {
+  testWidgets('current limit field', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -395,27 +397,19 @@ void main() {
       ),
     ));
 
-    final dropdown = find.byType(DropdownButton<String>).last;
+    final textField =
+        find.widgetWithText(NumberTextField, 'Drive Current Limit (A)');
 
-    expect(dropdown, findsOneWidget);
-    expect(find.descendant(of: dropdown, matching: find.text('60A')),
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('60')),
         findsOneWidget);
 
-    await widgetTester.tap(dropdown);
-    await widgetTester.pumpAndSettle();
-
-    expect(find.text('40A'), findsOneWidget);
-    expect(find.text('60A'), findsWidgets);
-    expect(find.text('80A'), findsOneWidget);
-
-    await widgetTester.tap(find.text('80A'));
-    await widgetTester.pumpAndSettle();
+    await widgetTester.enterText(textField, '1.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
 
     expect(settingsChanged, true);
-    expect(prefs.getString(PrefsKeys.torqueCurve), 'KRAKEN_80A');
-    expect(find.text('40A'), findsNothing);
-    expect(find.text('60A'), findsNothing);
-    expect(find.text('80A'), findsOneWidget);
+    expect(prefs.getDouble(PrefsKeys.driveCurrentLimit), 1.0);
   });
 
   testWidgets('default max vel text field', (widgetTester) async {

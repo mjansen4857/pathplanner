@@ -27,7 +27,7 @@ class PathPlannerTrajectoryState:
     fieldSpeeds: ChassisSpeeds = ChassisSpeeds()
     pose: Pose2d = Pose2d()
     linearVelocity: float = 0.0
-    driveMotorTorque: List[float] = field(default_factory=list)
+    driveMotorTorqueCurrent: List[float] = field(default_factory=list)
 
     heading: Rotation2d = Rotation2d()
     deltaPos: float = 0.0
@@ -59,9 +59,9 @@ class PathPlannerTrajectoryState:
         )
         lerpedState.pose = poseLerp(self.pose, end_val.pose, t)
         lerpedState.linearVelocity = floatLerp(self.linearVelocity, end_val.linearVelocity, t)
-        lerpedState.driveMotorTorque = [
-            floatLerp(self.driveMotorTorque[m], end_val.driveMotorTorque[m], t) for m in
-            range(len(self.driveMotorTorque))
+        lerpedState.driveMotorTorqueCurrent = [
+            floatLerp(self.driveMotorTorqueCurrent[m], end_val.driveMotorTorqueCurrent[m], t) for m in
+            range(len(self.driveMotorTorqueCurrent))
         ]
 
         return lerpedState
@@ -79,7 +79,7 @@ class PathPlannerTrajectoryState:
         reversedState.fieldSpeeds = ChassisSpeeds(reversedSpeeds.x, reversedSpeeds.y, self.fieldSpeeds.omega)
         reversedState.pose = Pose2d(self.pose.translation(), self.pose.rotation() + Rotation2d.fromDegrees(180))
         reversedState.linearVelocity = -self.linearVelocity
-        reversedState.driveMotorTorque = [-torque for torque in self.driveMotorTorque]
+        reversedState.driveMotorTorqueCurrent = [-c for c in self.driveMotorTorqueCurrent]
 
         return reversedState
 
@@ -96,17 +96,17 @@ class PathPlannerTrajectoryState:
         mirrored.pose = flipFieldPose(self.pose)
         mirrored.fieldSpeeds = ChassisSpeeds(-self.fieldSpeeds.vx, self.fieldSpeeds.vy,
                                              -self.fieldSpeeds.omega)
-        if len(self.driveMotorTorque) == 4:
-            mirrored.driveMotorTorque = [
-                self.driveMotorTorque[1],
-                self.driveMotorTorque[0],
-                self.driveMotorTorque[3],
-                self.driveMotorTorque[2],
+        if len(self.driveMotorTorqueCurrent) == 4:
+            mirrored.driveMotorTorqueCurrent = [
+                self.driveMotorTorqueCurrent[1],
+                self.driveMotorTorqueCurrent[0],
+                self.driveMotorTorqueCurrent[3],
+                self.driveMotorTorqueCurrent[2],
             ]
-        elif len(self.driveMotorTorque) == 2:
-            mirrored.driveMotorTorque = [
-                self.driveMotorTorque[1],
-                self.driveMotorTorque[0],
+        elif len(self.driveMotorTorqueCurrent) == 2:
+            mirrored.driveMotorTorqueCurrent = [
+                self.driveMotorTorqueCurrent[1],
+                self.driveMotorTorqueCurrent[0],
             ]
 
         return mirrored
@@ -200,17 +200,13 @@ class PathPlannerTrajectory:
                     for m in range(config.numModules):
                         forceAtCarpet = wheelForces[m].speed
                         wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters
-                        motorTorque = wheelTorque / config.moduleConfig.driveGearing
-
-                        if not config.isHolonomic:
-                            # Split the torque over 2 drive motors if using differential drive
-                            motorTorque /= 2.0
+                        torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
 
                         # Negate the torque if the motor is slowing down
                         if state.moduleStates[m].speed < prevState.moduleStates[m].speed:
-                            motorTorque *= -1
+                            torqueCurrent *= -1
 
-                        prevState.driveMotorTorque.append(motorTorque)
+                        prevState.driveMotorTorqueCurrent.append(torqueCurrent)
 
                     if len(unaddedMarkers) > 0:
                         m = unaddedMarkers[0]
@@ -440,13 +436,12 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             lastVel = prevState.moduleStates[m].speed
             # This pass will only be handling acceleration of the robot, meaning that the "torque"
             # acting on the module due to friction and other losses will be fighting the motor
-            availableTorque = config.moduleConfig.driveMotorTorqueCurve.get(
-                lastVel / config.moduleConfig.rpmToMps) - config.moduleConfig.torqueLoss
-            wheelTorque = availableTorque * config.moduleConfig.driveGearing
-            forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters
-            if not config.isHolonomic:
-                # Two motors per module if differential
-                forceAtCarpet *= 2
+            lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters
+            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, 12.0),
+                              config.moduleConfig.driveCurrentLimit)
+            availableTorque = config.moduleConfig.driveMotor.torque(currentDraw) - config.moduleConfig.torqueLoss
+            forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters
+
             forceVec = Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle)
 
             # Add the module force vector to the robot force vector
@@ -538,13 +533,12 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             lastVel = nextState.moduleStates[m].speed
             # This pass will only be handling deceleration of the robot, meaning that the "torque"
             # acting on the module due to friction and other losses will not be fighting the motor
-            availableTorque = config.moduleConfig.driveMotorTorqueCurve.get(
-                lastVel / config.moduleConfig.rpmToMps)
-            wheelTorque = availableTorque * config.moduleConfig.driveGearing
-            forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters
-            if not config.isHolonomic:
-                # Two motors per module if differential
-                forceAtCarpet *= 2
+            lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters
+            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, 12.0),
+                              config.moduleConfig.driveCurrentLimit)
+            availableTorque = config.moduleConfig.driveMotor.torque(currentDraw)
+            forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters
+
             forceVec = Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle + Rotation2d.fromDegrees(180))
 
             # Add the module force vector to the robot force vector

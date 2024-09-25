@@ -19,11 +19,8 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   public Pose2d pose = Pose2d.kZero;
   /** The linear velocity at this state in m/s */
   public double linearVelocity = 0.0;
-  /**
-   * The torque being applied by each module's drive motor, in Newton-Meters. NOTE: This is motor
-   * torque, not wheel torque.
-   */
-  public double[] driveMotorTorque;
+  /** The torque current feedforward for each module's drive motor, in Amps. */
+  public double[] driveMotorTorqueCurrent;
 
   // Values used only during generation, these will not be interpolated
   /** The field-relative heading, or direction of travel, at this state */
@@ -68,10 +65,10 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
                 fieldSpeeds.omegaRadiansPerSecond, endVal.fieldSpeeds.omegaRadiansPerSecond, t));
     lerpedState.pose = pose.interpolate(endVal.pose, t);
     lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
-    lerpedState.driveMotorTorque = new double[driveMotorTorque.length];
-    for (int m = 0; m < driveMotorTorque.length; m++) {
-      lerpedState.driveMotorTorque[m] =
-          MathUtil.interpolate(driveMotorTorque[m], endVal.driveMotorTorque[m], t);
+    lerpedState.driveMotorTorqueCurrent = new double[driveMotorTorqueCurrent.length];
+    for (int m = 0; m < driveMotorTorqueCurrent.length; m++) {
+      lerpedState.driveMotorTorqueCurrent[m] =
+          MathUtil.interpolate(driveMotorTorqueCurrent[m], endVal.driveMotorTorqueCurrent[m], t);
     }
 
     return lerpedState;
@@ -94,9 +91,9 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
             reversedSpeeds.getX(), reversedSpeeds.getY(), fieldSpeeds.omegaRadiansPerSecond);
     reversed.pose = new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.k180deg));
     reversed.linearVelocity = -linearVelocity;
-    reversed.driveMotorTorque = new double[driveMotorTorque.length];
-    for (int m = 0; m < driveMotorTorque.length; m++) {
-      reversed.driveMotorTorque[m] = -driveMotorTorque[m];
+    reversed.driveMotorTorqueCurrent = new double[driveMotorTorqueCurrent.length];
+    for (int m = 0; m < driveMotorTorqueCurrent.length; m++) {
+      reversed.driveMotorTorqueCurrent[m] = -driveMotorTorqueCurrent[m];
     }
 
     return reversed;
@@ -118,15 +115,18 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
             -fieldSpeeds.vxMetersPerSecond,
             fieldSpeeds.vyMetersPerSecond,
             -fieldSpeeds.omegaRadiansPerSecond);
-    if (driveMotorTorque.length == 4) {
-      mirrored.driveMotorTorque =
+    if (driveMotorTorqueCurrent.length == 4) {
+      mirrored.driveMotorTorqueCurrent =
           new double[] {
-            driveMotorTorque[1], driveMotorTorque[0], driveMotorTorque[3], driveMotorTorque[2],
+            driveMotorTorqueCurrent[1],
+            driveMotorTorqueCurrent[0],
+            driveMotorTorqueCurrent[3],
+            driveMotorTorqueCurrent[2],
           };
-    } else if (driveMotorTorque.length == 2) {
-      mirrored.driveMotorTorque =
+    } else if (driveMotorTorqueCurrent.length == 2) {
+      mirrored.driveMotorTorqueCurrent =
           new double[] {
-            driveMotorTorque[1], driveMotorTorque[0],
+            driveMotorTorqueCurrent[1], driveMotorTorqueCurrent[0],
           };
     }
 

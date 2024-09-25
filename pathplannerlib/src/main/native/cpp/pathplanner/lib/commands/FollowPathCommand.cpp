@@ -112,15 +112,7 @@ void FollowPathCommand::Execute() {
 			currentSpeeds.omega, targetSpeeds.omega);
 	PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());
 
-	// Convert the motor torque at this state to torque-current
-	std::vector < units::ampere_t > torqueCurrentFF;
-	for (size_t m = 0; m < targetState.driveMotorTorque.size(); m++) {
-		torqueCurrentFF.emplace_back(
-				targetState.driveMotorTorque[m]
-						/ m_robotConfig.moduleConfig.driveMotorTorqueCurve.getNmPerAmp());
-	}
-
-	m_output(targetSpeeds, torqueCurrentFF);
+	m_output(targetSpeeds, targetState.driveMotorTorqueCurrent);
 
 	m_eventScheduler.execute(currentTime);
 }

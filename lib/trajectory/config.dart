@@ -1,6 +1,4 @@
-import 'dart:math';
-
-import 'package:pathplanner/trajectory/motor_torque_curve.dart';
+import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/kinematics.dart';
 
@@ -23,21 +21,18 @@ class RobotConfig {
 
 class ModuleConfig {
   final num wheelRadiusMeters;
-  final num driveGearing;
-  final num maxDriveVelocityRPM;
-  final MotorTorqueCurve driveMotorTorqueCurve;
+  final num maxDriveVelocityMPS;
+  final DCMotor driveMotor;
+  final num driveCurrentLimit;
   final num wheelCOF;
 
   const ModuleConfig({
     required this.wheelRadiusMeters,
-    required this.driveGearing,
-    required this.maxDriveVelocityRPM,
-    required this.driveMotorTorqueCurve,
+    required this.maxDriveVelocityMPS,
+    required this.driveMotor,
+    required this.driveCurrentLimit,
     required this.wheelCOF,
   });
 
-  num get rpmToMPS =>
-      ((1.0 / 60.0) / driveGearing) * (2.0 * pi * wheelRadiusMeters);
-
-  num get maxDriveVelocityMPS => maxDriveVelocityRPM * rpmToMPS;
+  num get maxDriveVelocityRadPerSec => maxDriveVelocityMPS / wheelRadiusMeters;
 }

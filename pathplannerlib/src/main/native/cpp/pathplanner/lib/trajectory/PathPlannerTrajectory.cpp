@@ -90,21 +90,16 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 				units::newton_t forceAtCarpet { wheelForces[m].speed() };
 				units::newton_meter_t wheelTorque = forceAtCarpet
 						* config.moduleConfig.wheelRadius;
-				units::newton_meter_t motorTorque = wheelTorque
-						/ config.moduleConfig.driveGearing;
-
-				if (!config.isHolonomic) {
-					// Split the torque over 2 drive motors if using differential drive
-					motorTorque /= 2.0;
-				}
+				units::ampere_t torqueCurrent = wheelTorque
+						/ config.moduleConfig.driveMotor.Kt;
 
 				// Negate the torque if the motor is slowing down
 				if (state.moduleStates[m].speed
 						< prevState.moduleStates[m].speed) {
-					motorTorque *= -1;
+					torqueCurrent *= -1;
 				}
 
-				prevState.driveMotorTorque.emplace_back(motorTorque);
+				prevState.driveMotorTorqueCurrent.emplace_back(torqueCurrent);
 			}
 
 			if (!unaddedMarkers.empty()) {
@@ -266,18 +261,16 @@ void PathPlannerTrajectory::forwardAccelPass(
 			units::meters_per_second_t lastVel = prevState.moduleStates[m].speed;
 			// This pass will only be handling acceleration of the robot, meaning that the "torque"
 			// acting on the module due to friction and other losses will be fighting the motor
+			units::radians_per_second_t lastVelRadPerSec { lastVel()
+					/ config.moduleConfig.wheelRadius() };
+			units::ampere_t currentDraw = units::math::min(
+					config.moduleConfig.driveMotor.Current(lastVelRadPerSec,
+							12_V), config.moduleConfig.driveCurrentLimit);
 			units::newton_meter_t availableTorque =
-					config.moduleConfig.driveMotorTorqueCurve[lastVel
-							/ config.moduleConfig.rpmToMps]
+					config.moduleConfig.driveMotor.Torque(currentDraw)
 							- config.moduleConfig.torqueLoss;
-			units::newton_meter_t wheelTorque = availableTorque
-					* config.moduleConfig.driveGearing;
-			units::newton_t forceAtCarpet = wheelTorque
+			units::newton_t forceAtCarpet = availableTorque
 					/ config.moduleConfig.wheelRadius;
-			if (!config.isHolonomic) {
-				// Two motors per module if differential
-				forceAtCarpet *= 2;
-			}
 
 			frc::Translation2d forceVec(units::meter_t { forceAtCarpet() },
 					state.moduleStates[m].fieldAngle);
@@ -417,17 +410,15 @@ void PathPlannerTrajectory::reverseAccelPass(
 			units::meters_per_second_t lastVel = nextState.moduleStates[m].speed;
 			// This pass will only be handling deceleration of the robot, meaning that the "torque"
 			// acting on the module due to friction and other losses will not be fighting the motor
+			units::radians_per_second_t lastVelRadPerSec { lastVel()
+					/ config.moduleConfig.wheelRadius() };
+			units::ampere_t currentDraw = units::math::min(
+					config.moduleConfig.driveMotor.Current(lastVelRadPerSec,
+							12_V), config.moduleConfig.driveCurrentLimit);
 			units::newton_meter_t availableTorque =
-					config.moduleConfig.driveMotorTorqueCurve[lastVel
-							/ config.moduleConfig.rpmToMps];
-			units::newton_meter_t wheelTorque = availableTorque
-					* config.moduleConfig.driveGearing;
-			units::newton_t forceAtCarpet = wheelTorque
+					config.moduleConfig.driveMotor.Torque(currentDraw);
+			units::newton_t forceAtCarpet = availableTorque
 					/ config.moduleConfig.wheelRadius;
-			if (!config.isHolonomic) {
-				// Two motors per module if differential
-				forceAtCarpet *= 2;
-			}
 
 			frc::Translation2d forceVec(units::meter_t { forceAtCarpet() },
 					state.moduleStates[m].fieldAngle

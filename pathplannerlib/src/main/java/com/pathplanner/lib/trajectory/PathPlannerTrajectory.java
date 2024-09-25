@@ -130,17 +130,14 @@ public class PathPlannerTrajectory {
         for (int m = 0; m < config.numModules; m++) {
           double forceAtCarpet = wheelForces[m].speedMetersPerSecond;
           double wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters;
-          prevState.driveMotorTorque[m] = wheelTorque / config.moduleConfig.driveGearing;
 
-          if (!config.isHolonomic) {
-            // Split the torque over 2 drive motors if using differential drive
-            prevState.driveMotorTorque[m] /= 2.0;
-          }
+          prevState.driveMotorTorqueCurrent[m] =
+              wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
 
           // Negate the torque if the motor is slowing down
           if (state.moduleStates[m].speedMetersPerSecond
               < prevState.moduleStates[m].speedMetersPerSecond) {
-            prevState.driveMotorTorque[m] *= -1;
+            prevState.driveMotorTorqueCurrent[m] *= -1;
           }
         }
 
@@ -214,7 +211,7 @@ public class PathPlannerTrajectory {
       }
 
       state.moduleStates = new SwerveModuleTrajectoryState[config.numModules];
-      state.driveMotorTorque = new double[config.numModules];
+      state.driveMotorTorqueCurrent = new double[config.numModules];
       for (int m = 0; m < config.numModules; m++) {
         state.moduleStates[m] = new SwerveModuleTrajectoryState();
         state.moduleStates[m].fieldPos =
@@ -269,15 +266,15 @@ public class PathPlannerTrajectory {
         double lastVel = prevState.moduleStates[m].speedMetersPerSecond;
         // This pass will only be handling acceleration of the robot, meaning that the "torque"
         // acting on the module due to friction and other losses will be fighting the motor
+        double lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters;
+        double currentDraw =
+            Math.min(
+                config.moduleConfig.driveMotor.getCurrent(lastVelRadPerSec, 12.0),
+                config.moduleConfig.driveCurrentLimit);
         double availableTorque =
-            config.moduleConfig.driveMotorTorqueCurve.get(lastVel / config.moduleConfig.rpmToMps)
-                - config.moduleConfig.torqueLoss;
-        double wheelTorque = availableTorque * config.moduleConfig.driveGearing;
-        double forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters;
-        if (!config.isHolonomic) {
-          // Two motors per module if differential
-          forceAtCarpet *= 2;
-        }
+            config.moduleConfig.driveMotor.getTorque(currentDraw) - config.moduleConfig.torqueLoss;
+        double forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters;
+
         Translation2d forceVec = new Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle);
 
         // Add the module force vector to the robot force vector
@@ -401,14 +398,14 @@ public class PathPlannerTrajectory {
         double lastVel = nextState.moduleStates[m].speedMetersPerSecond;
         // This pass will only be handling deceleration of the robot, meaning that the "torque"
         // acting on the module due to friction and other losses will not be fighting the motor
-        double availableTorque =
-            config.moduleConfig.driveMotorTorqueCurve.get(lastVel / config.moduleConfig.rpmToMps);
-        double wheelTorque = availableTorque * config.moduleConfig.driveGearing;
-        double forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters;
-        if (!config.isHolonomic) {
-          // Two motors per module if differential
-          forceAtCarpet *= 2;
-        }
+        double lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters;
+        double currentDraw =
+            Math.min(
+                config.moduleConfig.driveMotor.getCurrent(lastVelRadPerSec, 12.0),
+                config.moduleConfig.driveCurrentLimit);
+        double availableTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
+        double forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters;
+
         Translation2d forceVec =
             new Translation2d(
                 forceAtCarpet, state.moduleStates[m].fieldAngle.plus(Rotation2d.k180deg));

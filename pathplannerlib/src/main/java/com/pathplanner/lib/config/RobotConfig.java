@@ -2,6 +2,7 @@ package com.pathplanner.lib.config;
 
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.*;
 import org.json.simple.JSONObject;
@@ -137,17 +138,28 @@ public class RobotConfig {
     double trackwidth = (double) json.get("robotTrackwidth");
     double wheelRadius = (double) json.get("driveWheelRadius");
     double gearing = (double) json.get("driveGearing");
-    double maxDriveRPM = (double) json.get("maxDriveRPM");
+    double maxDriveSpeed = (double) json.get("maxDriveSpeed");
     double wheelCOF = (double) json.get("wheelCOF");
-    String driveMotor = (String) json.get("driveMotor");
+    String driveMotor = (String) json.get("driveMotorType");
+    double driveCurrentLimit = (double) json.get("driveCurrentLimit");
+
+    int numMotors = isHolonomic ? 1 : 2;
+    DCMotor gearbox =
+        switch (driveMotor) {
+          case "krakenX60" -> DCMotor.getKrakenX60(numMotors);
+          case "krakenX60FOC" -> DCMotor.getKrakenX60Foc(numMotors);
+          case "falcon500" -> DCMotor.getFalcon500(numMotors);
+          case "falcon500FOC" -> DCMotor.getFalcon500Foc(numMotors);
+          case "vortex" -> DCMotor.getNeoVortex(numMotors);
+          case "NEO" -> DCMotor.getNEO(numMotors);
+          case "CIM" -> DCMotor.getCIM(numMotors);
+          case "miniCIM" -> DCMotor.getMiniCIM(numMotors);
+          default -> throw new IllegalArgumentException("Invalid motor type: " + driveMotor);
+        };
+    gearbox = gearbox.withReduction(gearing);
 
     ModuleConfig moduleConfig =
-        new ModuleConfig(
-            wheelRadius,
-            gearing,
-            maxDriveRPM,
-            wheelCOF,
-            MotorTorqueCurve.fromSettingsString(driveMotor));
+        new ModuleConfig(wheelRadius, maxDriveSpeed, wheelCOF, gearbox, driveCurrentLimit);
 
     if (isHolonomic) {
       return new RobotConfig(massKG, MOI, moduleConfig, trackwidth, wheelbase);

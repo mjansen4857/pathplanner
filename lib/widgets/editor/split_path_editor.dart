@@ -12,7 +12,7 @@ import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/trajectory/config.dart';
-import 'package:pathplanner/trajectory/motor_torque_curve.dart';
+import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -700,35 +700,51 @@ class _SplitPathEditorState extends State<SplitPathEditor>
               Translation2d(x: 0, y: -halfTrackwidth),
             ];
 
+      int numMotors = _holonomicMode ? 1 : 2;
+      DCMotor driveMotor = switch (
+          widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor) {
+        'krakenX60' => DCMotor.getKrakenX60(numMotors),
+        'krakenX60FOC' => DCMotor.getKrakenX60FOC(numMotors),
+        'falcon500' => DCMotor.getFalcon500(numMotors),
+        'falcon500FOC' => DCMotor.getFalcon500FOC(numMotors),
+        'vortex' => DCMotor.getNeoVortex(numMotors),
+        'NEO' => DCMotor.getNEO(numMotors),
+        'CIM' => DCMotor.getCIM(numMotors),
+        'miniCIM' => DCMotor.getMiniCIM(numMotors),
+        _ => DCMotor.getKrakenX60(numMotors),
+      };
+      driveMotor = driveMotor.withReduction(
+          widget.prefs.getDouble(PrefsKeys.driveGearing) ??
+              Defaults.driveGearing);
+      RobotConfig config = RobotConfig(
+        massKG:
+            widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
+        moi: widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
+        moduleConfig: ModuleConfig(
+          wheelRadiusMeters:
+              widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+                  Defaults.driveWheelRadius,
+          maxDriveVelocityMPS:
+              widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
+                  Defaults.maxDriveSpeed,
+          driveMotor: driveMotor,
+          driveCurrentLimit:
+              widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
+                  Defaults.driveCurrentLimit,
+          wheelCOF:
+              widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
+        ),
+        moduleLocations: moduleLocations,
+        holonomic: _holonomicMode,
+      );
+
       setState(() {
         _simTraj = PathPlannerTrajectory(
           path: widget.path,
           startingSpeeds:
               ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0),
           startingRotation: startingRotation,
-          robotConfig: RobotConfig(
-            massKG: widget.prefs.getDouble(PrefsKeys.robotMass) ??
-                Defaults.robotMass,
-            moi:
-                widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
-            moduleConfig: ModuleConfig(
-              wheelRadiusMeters:
-                  widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
-                      Defaults.driveWheelRadius,
-              driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
-                  Defaults.driveGearing,
-              maxDriveVelocityRPM:
-                  widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ??
-                      Defaults.maxDriveRPM,
-              driveMotorTorqueCurve: MotorTorqueCurve.fromString(
-                  widget.prefs.getString(PrefsKeys.torqueCurve) ??
-                      Defaults.torqueCurve),
-              wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
-                  Defaults.wheelCOF,
-            ),
-            moduleLocations: moduleLocations,
-            holonomic: _holonomicMode,
-          ),
+          robotConfig: config,
         );
         if (!(_simTraj?.getTotalTimeSeconds().isFinite ?? false)) {
           _simTraj = null;

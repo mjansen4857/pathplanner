@@ -11,7 +11,7 @@ import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/trajectory/auto_simulator.dart';
 import 'package:pathplanner/trajectory/config.dart';
-import 'package:pathplanner/trajectory/motor_torque_curve.dart';
+import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 
@@ -84,11 +84,11 @@ void main() {
     var config = RobotConfig(
       massKG: 70.0,
       moi: 6.8,
-      moduleConfig: const ModuleConfig(
+      moduleConfig: ModuleConfig(
         wheelRadiusMeters: 0.048,
-        driveGearing: 5.12,
-        maxDriveVelocityRPM: 5600,
-        driveMotorTorqueCurve: MotorTorqueCurve.kraken60A,
+        driveMotor: DCMotor.getKrakenX60(1).withReduction(5.12),
+        driveCurrentLimit: 60,
+        maxDriveVelocityMPS: 5.4,
         wheelCOF: 1.2,
       ),
       moduleLocations: const [

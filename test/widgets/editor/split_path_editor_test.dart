@@ -74,6 +74,7 @@ void main() {
           path: path,
           fieldImage: FieldImage.defaultField,
           undoStack: undoStack,
+          simulate: true,
         ),
       ),
     ));

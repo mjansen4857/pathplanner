@@ -1,7 +1,6 @@
 package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.config.ModuleConfig;
-import com.pathplanner.lib.config.MotorTorqueCurve;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
@@ -16,6 +15,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -332,15 +332,7 @@ public class PathfindingCommand extends Command {
           targetSpeeds.omegaRadiansPerSecond);
       PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
 
-      // Convert the motor torque at this state to torque-current
-      double[] torqueCurrentFF = new double[targetState.driveMotorTorque.length];
-      for (int i = 0; i < targetState.driveMotorTorque.length; i++) {
-        torqueCurrentFF[i] =
-            targetState.driveMotorTorque[i]
-                / robotConfig.moduleConfig.driveMotorTorqueCurve.getNmPerAmp();
-      }
-
-      output.accept(targetSpeeds, torqueCurrentFF);
+      output.accept(targetSpeeds, targetState.driveMotorTorqueCurrent);
     }
   }
 
@@ -401,12 +393,7 @@ public class PathfindingCommand extends Command {
                 75,
                 6.8,
                 new ModuleConfig(
-                    0.048,
-                    6.14,
-                    5600,
-                    1.2,
-                    new MotorTorqueCurve(
-                        MotorTorqueCurve.MotorType.krakenX60, MotorTorqueCurve.CurrentLimit.k60A)),
+                    0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0),
                 0.55))
         .andThen(Commands.print("[PathPlanner] PathfindingCommand finished warmup"))
         .ignoringDisable(true);

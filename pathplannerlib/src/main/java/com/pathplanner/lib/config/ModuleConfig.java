@@ -1,26 +1,25 @@
 package com.pathplanner.lib.config;
 
+import edu.wpi.first.math.system.plant.DCMotor;
+
 /** Configuration class describing a robot's drive module */
 public class ModuleConfig {
   /** Wheel radius in meters */
   public final double wheelRadiusMeters;
-  /** The gear ratio between the drive motor and the wheel. Values > 1 indicate a reduction. */
-  public final double driveGearing;
   /** The max RPM that the drive motor can reach while actually driving the robot at full output. */
-  public final double maxDriveVelocityRPM;
+  public final double maxDriveVelocityMPS;
   /** The coefficient of friction between the drive wheel and the carpet. */
   public final double wheelCOF;
-  /** The {@link MotorTorqueCurve} for the drive motor */
-  public final MotorTorqueCurve driveMotorTorqueCurve;
+  /** The DCMotor representing the drive gearbox, including gear reduction */
+  public final DCMotor driveMotor;
+  /** The current limit of the drive motor, in Amps */
+  public final double driveCurrentLimit;
 
-  // Pre-calculated values that can be reused for every trajectory generation
-  /** Conversion factor for converting RPM to MPS */
-  public final double rpmToMps;
   /** Max drive motor velocity in MPS */
-  public final double maxDriveVelocityMPS;
+  public final double maxDriveVelocityRadPerSec;
   /**
    * The amount of motor torque lost while driving. Calculated by getting the torque of the motor at
-   * the motor's max RPM under load.
+   * the motor's max speed under load.
    */
   public final double torqueLoss;
 
@@ -29,28 +28,27 @@ public class ModuleConfig {
    * differential drive train.
    *
    * @param wheelRadiusMeters Radius of the drive wheels, in meters.
-   * @param driveGearing The gear ratio between the drive motor and the wheel. Values > 1 indicate a
-   *     reduction.
-   * @param maxDriveVelocityRPM The max RPM that the drive motor can reach while actually driving
-   *     the robot at full output.
+   * @param maxDriveVelocityMPS The max speed that the drive motor can reach while actually driving
+   *     the robot at full output, in M/S.
    * @param wheelCOF The coefficient of friction between the drive wheel and the carpet. If you are
    *     unsure, just use a placeholder value of 1.0.
-   * @param driveMotorTorqueCurve The {@link MotorTorqueCurve} for the drive motor
+   * @param driveMotor The DCMotor representing the drive motor gearbox, including gear reduction
+   * @param driveCurrentLimit The current limit of the drive motor, in Amps
    */
   public ModuleConfig(
       double wheelRadiusMeters,
-      double driveGearing,
-      double maxDriveVelocityRPM,
+      double maxDriveVelocityMPS,
       double wheelCOF,
-      MotorTorqueCurve driveMotorTorqueCurve) {
+      DCMotor driveMotor,
+      double driveCurrentLimit) {
     this.wheelRadiusMeters = wheelRadiusMeters;
-    this.driveGearing = driveGearing;
-    this.maxDriveVelocityRPM = maxDriveVelocityRPM;
+    this.maxDriveVelocityMPS = maxDriveVelocityMPS;
     this.wheelCOF = wheelCOF;
-    this.driveMotorTorqueCurve = driveMotorTorqueCurve;
+    this.driveMotor = driveMotor;
+    this.driveCurrentLimit = driveCurrentLimit;
 
-    this.rpmToMps = ((1.0 / 60.0) / this.driveGearing) * (2.0 * Math.PI * this.wheelRadiusMeters);
-    this.maxDriveVelocityMPS = this.maxDriveVelocityRPM * this.rpmToMps;
-    this.torqueLoss = this.driveMotorTorqueCurve.get(this.maxDriveVelocityRPM);
+    this.maxDriveVelocityRadPerSec = this.maxDriveVelocityMPS / this.wheelRadiusMeters;
+    double maxSpeedCurrentDraw = this.driveMotor.getCurrent(this.maxDriveVelocityRadPerSec, 12.0);
+    this.torqueLoss = this.driveMotor.getTorque(maxSpeedCurrentDraw);
   }
 }

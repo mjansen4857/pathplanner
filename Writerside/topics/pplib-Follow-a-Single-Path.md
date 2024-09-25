@@ -75,18 +75,16 @@ public class DriveSubsystem extends SubsystemBase {
   public Command followPathCommand(String pathName) {
     PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
 
-    return new FollowPathHolonomic(
+    return new FollowPathCommand(
             path,
             this::getPose, // Robot pose supplier
             this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            this::driveRobotRelative, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-            new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+            this::drive, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+            new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
                     new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-                    new PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
-                    4.5, // Max module speed, in m/s
-                    0.4, // Drive base radius in meters. Distance from robot center to furthest module.
-                    new ReplanningConfig() // Default path replanning config. See the API for the options here
+                    new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
             ),
+            Constants.robotConfig, // The robot configuration
             () -> {
               // Boolean supplier that controls when the path will be mirrored for the red alliance
               // This will flip the path being followed to the red side of the field.
@@ -108,7 +106,8 @@ public class DriveSubsystem extends SubsystemBase {
 <tab title="C++" group-key="cpp">
 
 ```C++
-#include <pathplanner/lib/commands/FollowPathHolonomic.h>
+#include <pathplanner/lib/commands/FollowPathCommand.h>
+#include <pathplanner/lib/controllers/PPHolonomicDriveController.h>
 
 using namespace pathplanner;
 
@@ -116,18 +115,16 @@ using namespace pathplanner;
 frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
     auto path = PathPlannerPath::fromPathFile(pathName);
 
-    return FollowPathHolonomic(
+    return FollowPathCommand(
         path,
         [this](){ return getPose(); }, // Robot pose supplier
         [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-        HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+        [this](frc::ChassisSpeeds speeds, std::vector<units::ampere_t> torqueCurrentFF){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+        PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
             PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-            PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
-            4.5_mps, // Max module speed, in m/s
-            0.4_m, // Drive base radius in meters. Distance from robot center to furthest module.
-            ReplanningConfig() // Default path replanning config. See the API for the options here
+            PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
         ),
+        Constants::robotConfig, // The robot configuration
         []() {
             // Boolean supplier that controls when the path will be mirrored for the red alliance
             // This will flip the path being followed to the red side of the field.
@@ -149,125 +146,23 @@ frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
 
 ```Python
 from pathplannerlib.path import PathPlannerPath
-from pathplannerlib.commands import FollowPathHolonomic
-from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
+from pathplannerlib.commands import FollowPathCommand
+from pathplannerlib.controller import PPHolonomicDriveController
 
 # Assuming this is a method in your drive subsystem
 def followPathCommand(pathName: str):
     path = PathPlannerPath.fromPathFile(pathName)
 
-    return FollowPathHolonomic(
+    return FollowPathCommand(
         path,
         self.getPose, # Robot pose supplier
         self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-        HolonomicPathFollowerConfig( # HolonomicPathFollowerConfig, this should likely live in your Constants class
+        self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+        PPHolonomicDriveController( # PPHolonomicController is the built in path following controller for holonomic drive trains
             PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
-            PIDConstants(5.0, 0.0, 0.0), # Rotation PID constants
-            4.5, # Max module speed, in m/s
-            0.4, # Drive base radius in meters. Distance from robot center to furthest module.
-            ReplanningConfig() # Default path replanning config. See the API for the options here
+            PIDConstants(5.0, 0.0, 0.0) # Rotation PID constants
         ),
-        self.shouldFlipPath, # Supplier to control path flipping based on alliance color
-        self # Reference to this subsystem to set requirements
-    )
-
-def shouldFlipPath():
-    # Boolean supplier that controls when the path will be mirrored for the red alliance
-    # This will flip the path being followed to the red side of the field.
-    # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-    return DriverStation.getAlliance() == DriverStation.Alliance.kRed
-```
-
-</tab>
-</tabs>
-
-### Ramsete (Differential)
-
-<tabs group="pplib-language">
-<tab title="Java" group-key="java">
-
-```Java
-public class DriveSubsystem extends SubsystemBase {
-  // Assuming this is a method in your drive subsystem
-  public Command followPathCommand(String pathName) {
-    PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
-
-    return new FollowPathRamsete(
-            path,
-            this::getPose, // Robot pose supplier
-            this::getCurrentSpeeds, // Current ChassisSpeeds supplier
-            this::drive, // Method that will drive the robot given ChassisSpeeds
-            new ReplanningConfig(), // Default path replanning config. See the API for the options here
-            () -> {
-              // Boolean supplier that controls when the path will be mirrored for the red alliance
-              // This will flip the path being followed to the red side of the field.
-              // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-
-              var alliance = DriverStation.getAlliance();
-              if (alliance.isPresent()) {
-                return alliance.get() == DriverStation.Alliance.Red;
-              }
-              return false;
-            },
-            this // Reference to this subsystem to set requirements
-    );
-  }
-}
-```
-
-</tab>
-<tab title="C++" group-key="cpp">
-
-```C++
-#include <pathplanner/lib/commands/FollowPathRamsete.h>
-
-using namespace pathplanner;
-
-// Assuming this is a method in your drive subsystem
-frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
-    auto path = PathPlannerPath::fromPathFile(pathName);
-
-    return FollowPathRamsete(
-        path,
-        [this](){ return getPose(); }, // Robot pose supplier
-        [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-        ReplanningConfig(), // Default path replanning config. See the API for the options here
-            []() {
-            // Boolean supplier that controls when the path will be mirrored for the red alliance
-            // This will flip the path being followed to the red side of the field.
-            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-    
-            auto alliance = DriverStation::GetAlliance();
-            if (alliance) {
-                return alliance.value() == DriverStation::Alliance::kRed;
-            }
-            return false;
-        },
-        { this } // Reference to this subsystem to set requirements
-    ).ToPtr();
-}
-```
-
-</tab>
-<tab title="Python" group-key="python">
-
-```Python
-from pathplannerlib.path import PathPlannerPath
-from pathplannerlib.commands import FollowPathRamsete
-from pathplannerlib.config import ReplanningConfig, PIDConstants
-
-# Assuming this is a method in your drive subsystem
-def followPathCommand(pathName: str){
-    path = PathPlannerPath.fromPathFile(pathName)
-
-    return FollowPathRamsete(
-        path,
-        self.getPose, # Robot pose supplier
-        self.getCurrentSpeeds, # Current ChassisSpeeds supplier
-        self.drive, # Method that will drive the robot given ChassisSpeeds
-        ReplanningConfig(), # Default path replanning config. See the API for the options here
+        Constants.robotConfig, # The robot configuration
         self.shouldFlipPath, # Supplier to control path flipping based on alliance color
         self # Reference to this subsystem to set requirements
     )
@@ -293,13 +188,13 @@ public class DriveSubsystem extends SubsystemBase {
   public Command followPathCommand(String pathName) {
     PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
 
-    return new FollowPathLTV(
+    return new FollowPathCommand(
             path,
             this::getPose, // Robot pose supplier
-            this::getCurrentSpeeds, // Current ChassisSpeeds supplier
-            this::drive, // Method that will drive the robot given ChassisSpeeds
-            0.02, // Robot control loop period in seconds. Default is 0.02
-            new ReplanningConfig(), // Default path replanning config. See the API for the options here
+            this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            this::drive, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+            new PPLTVController(0.02), // PPLTVController is the built in path following controller for differential drive trains
+            Constants.robotConfig, // The robot configuration
             () -> {
               // Boolean supplier that controls when the path will be mirrored for the red alliance
               // This will flip the path being followed to the red side of the field.
@@ -321,7 +216,8 @@ public class DriveSubsystem extends SubsystemBase {
 <tab title="C++" group-key="cpp">
 
 ```C++
-#include <pathplanner/lib/commands/FollowPathLTV.h>
+#include <pathplanner/lib/commands/FollowPathCommand.h>
+#include <pathplanner/lib/controllers/PPLTVController.h>
 
 using namespace pathplanner;
 
@@ -329,13 +225,13 @@ using namespace pathplanner;
 frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
     auto path = PathPlannerPath::fromPathFile(pathName);
 
-    return FollowPathLTV(
+    return FollowPathCommand(
         path,
         [this](){ return getPose(); }, // Robot pose supplier
         [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-        0.02_s, // Robot control loop period in seconds. Default is 0.02
-        ReplanningConfig(), // Default path replanning config. See the API for the options here
+        [this](frc::ChassisSpeeds speeds, std::vector<units::ampere_t> torqueCurrentFF){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+        PPLTVController(0.02_s), // PPLTVController is the built in path following controller for differential drive trains
+        Constants::robotConfig, // The robot configuration
         []() {
             // Boolean supplier that controls when the path will be mirrored for the red alliance
             // This will flip the path being followed to the red side of the field.
@@ -357,22 +253,20 @@ frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
 
 ```Python
 from pathplannerlib.path import PathPlannerPath
-from pathplannerlib.commands import FollowPathLTV
-from pathplannerlib.config import ReplanningConfig, PIDConstants
+from pathplannerlib.commands import FollowPathCommand
+from pathplannerlib.controller import PPLTVController
 
 # Assuming this is a method in your drive subsystem
-def followPathCommand(pathName: str){
+def followPathCommand(pathName: str):
     path = PathPlannerPath.fromPathFile(pathName)
 
-    return FollowPathLTV(
+    return FollowPathCommand(
         path,
         self.getPose, # Robot pose supplier
-        self.getCurrentSpeeds, # Current ChassisSpeeds supplier
-        self.drive, # Method that will drive the robot given ChassisSpeeds
-        (0.0625, 0.125, 2.0), # qelems/error tolerances
-        (1.0, 2.0), # relems/control effort
-        0.02, # Robot control loop period in seconds. Default is 0.02
-        ReplanningConfig(), # Default path replanning config. See the API for the options here
+        self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+        self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+        PPLTVController(0.02), # PPLTVController is the built in path following controller for differential drive trains
+        Constants.robotConfig, # The robot configuration
         self.shouldFlipPath, # Supplier to control path flipping based on alliance color
         self # Reference to this subsystem to set requirements
     )

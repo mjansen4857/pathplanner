@@ -35,11 +35,12 @@ List<Translation2d> bezierPoints = PathPlannerPath.bezierFromPoses(
 PathPlannerPath path = new PathPlannerPath(
         bezierPoints,
         new PathConstraints(3.0, 3.0, 2 * Math.PI, 4 * Math.PI), // The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
+        null, // The ideal starting state, this is only relevant for pre-planned paths, so can be null for on-the-fly paths.
         new GoalEndState(0.0, Rotation2d.fromDegrees(-90)) // Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
 );
 
 // Prevent the path from being flipped if the coordinates are already correct
-path.preventFlipping =true;
+path.preventFlipping = true;
 ```
 
 </tab>
@@ -65,6 +66,7 @@ std::vector<frc::Translation2d> bezierPoints = PathPlannerPath::bezierFromPoses(
 auto path = std::make_shared<PathPlannerPath>(
     bezierPoints,
     PathConstraints(3.0_mps, 3.0_mps_sq, 360_deg_per_s, 720_deg_per_s_sq), // The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
+    std::nullopt, // The ideal starting state, this is only relevant for pre-planned paths, so can be nullopt for on-the-fly paths.
     GoalEndState(0.0_mps, frc::Rotation2d(-90_deg)) // Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
 );
 
@@ -92,6 +94,7 @@ bezierPoints = PathPlannerPath.bezierFromPoses(
 path = new PathPlannerPath(
     bezierPoints,
     PathConstraints(3.0, 3.0, 2 * math.pi, 4 * math.pi), # The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
+    None, # The ideal starting state, this is only relevant for pre-planned paths, so can be None for on-the-fly paths.
     GoalEndState(0.0, Rotation2d.fromDegrees(-90)) # Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
 )
 

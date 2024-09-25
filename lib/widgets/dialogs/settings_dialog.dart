@@ -43,10 +43,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late num _trackwidth;
   late num _wheelRadius;
   late num _driveGearing;
-  late num _maxDriveRPM;
+  late num _maxDriveSpeed;
   late num _wheelCOF;
   late String _driveMotor;
-  late String _currentLimit;
+  late num _currentLimit;
   late num _defaultMaxVel;
   late num _defaultMaxAccel;
   late num _defaultMaxAngVel;
@@ -75,18 +75,13 @@ class _SettingsDialogState extends State<SettingsDialog> {
         Defaults.driveWheelRadius;
     _driveGearing =
         widget.prefs.getDouble(PrefsKeys.driveGearing) ?? Defaults.driveGearing;
-    _maxDriveRPM =
-        widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM;
+    _maxDriveSpeed = widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
+        Defaults.maxDriveSpeed;
     _wheelCOF = widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF;
-
-    String torqueCurve =
-        widget.prefs.getString(PrefsKeys.torqueCurve) ?? Defaults.torqueCurve;
-    List<String> torqueCurveSplit = torqueCurve.split('_');
-    if (torqueCurveSplit.length != 2) {
-      torqueCurveSplit = const ['KRAKEN', '60A'];
-    }
-    _driveMotor = torqueCurveSplit[0];
-    _currentLimit = torqueCurveSplit[1];
+    _driveMotor =
+        widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor;
+    _currentLimit = widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
+        Defaults.driveCurrentLimit;
 
     _defaultMaxVel = widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
         Defaults.defaultMaxVel;
@@ -285,14 +280,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _maxDriveRPM.round().toString(),
-                          label: 'Max Drive RPM',
+                          initialText: _maxDriveSpeed.toStringAsFixed(2),
+                          label: 'True Max Drive Speed (M/S)',
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
-                                  PrefsKeys.maxDriveRPM, value.toDouble());
+                                  PrefsKeys.maxDriveSpeed, value.toDouble());
                               setState(() {
-                                _maxDriveRPM = value;
+                                _maxDriveSpeed = value;
                               });
                             }
                             widget.onSettingsChanged();
@@ -357,30 +352,30 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                               _driveMotor = newValue;
                                             });
                                             widget.prefs.setString(
-                                                PrefsKeys.torqueCurve,
-                                                '${_driveMotor}_$_currentLimit');
+                                                PrefsKeys.driveMotor,
+                                                _driveMotor);
                                             widget.onSettingsChanged();
                                           }
                                         },
                                         items: const [
                                           DropdownMenuItem<String>(
-                                            value: 'KRAKEN',
+                                            value: 'krakenX60',
                                             child: Text('Kraken X60'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'KRAKENFOC',
+                                            value: 'krakenX60FOC',
                                             child: Text('Kraken X60 FOC'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'FALCON',
+                                            value: 'falcon500',
                                             child: Text('Falcon 500'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'FALCONFOC',
+                                            value: 'falcon500FOC',
                                             child: Text('Falcon 500 FOC'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'VORTEX',
+                                            value: 'vortex',
                                             child: Text('NEO Vortex'),
                                           ),
                                           DropdownMenuItem<String>(
@@ -392,7 +387,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                             child: Text('CIM'),
                                           ),
                                           DropdownMenuItem<String>(
-                                            value: 'MINICIM',
+                                            value: 'miniCIM',
                                             child: Text('MiniCIM'),
                                           ),
                                         ],
@@ -410,63 +405,21 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 4),
-                            const Text('Current Limit:'),
-                            const SizedBox(height: 4),
-                            SizedBox(
-                              height: 48,
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    border:
-                                        Border.all(color: colorScheme.outline),
-                                  ),
-                                  child: ExcludeFocus(
-                                    child: ButtonTheme(
-                                      alignedDropdown: true,
-                                      child: DropdownButton<String>(
-                                        borderRadius: BorderRadius.circular(8),
-                                        value: _currentLimit,
-                                        isExpanded: true,
-                                        underline: Container(),
-                                        menuMaxHeight: 250,
-                                        icon: const Icon(Icons.arrow_drop_down),
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: colorScheme.onSurface),
-                                        onChanged: (String? newValue) {
-                                          if (newValue != null) {
-                                            setState(() {
-                                              _currentLimit = newValue;
-                                            });
-                                            widget.prefs.setString(
-                                                PrefsKeys.torqueCurve,
-                                                '${_driveMotor}_$_currentLimit');
-                                            widget.onSettingsChanged();
-                                          }
-                                        },
-                                        items: const [
-                                          DropdownMenuItem<String>(
-                                            value: '40A',
-                                            child: Text('40A'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: '60A',
-                                            child: Text('60A'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: '80A',
-                                            child: Text('80A'),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                            const SizedBox(height: 26),
+                            NumberTextField(
+                              initialText: _currentLimit.toStringAsFixed(0),
+                              label: 'Drive Current Limit (A)',
+                              onSubmitted: (value) {
+                                if (value != null) {
+                                  widget.prefs.setDouble(
+                                      PrefsKeys.driveCurrentLimit,
+                                      value.roundToDouble());
+                                  setState(() {
+                                    _currentLimit = value.roundToDouble();
+                                  });
+                                }
+                                widget.onSettingsChanged();
+                              },
                             ),
                           ],
                         ),

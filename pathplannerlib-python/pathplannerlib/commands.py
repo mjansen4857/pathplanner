@@ -135,12 +135,7 @@ class FollowPathCommand(Command):
         PPLibTelemetry.setVelocities(currentVel, targetState.linearVelocity, currentSpeeds.omega, targetSpeeds.omega)
         PPLibTelemetry.setPathInaccuracy(self._controller.getPositionalError())
 
-        # Convert the motor torque at this state to torque-current
-        torqueCurrentFF = [
-            t / self._robotConfig.moduleConfig.driveMotorTorqueCurve.getNmPerAmp() for t in targetState.driveMotorTorque
-        ]
-
-        self._output(targetSpeeds, torqueCurrentFF)
+        self._output(targetSpeeds, targetState.driveMotorTorqueCurrent)
 
         self._eventScheduler.execute(currentTime)
 
@@ -351,13 +346,7 @@ class PathfindingCommand(Command):
                                          targetSpeeds.omega)
             PPLibTelemetry.setPathInaccuracy(self._controller.getPositionalError())
 
-            # Convert the motor torque at this state to torque-current
-            torqueCurrentFF = [
-                t / self._robotConfig.moduleConfig.driveMotorTorqueCurve.getNmPerAmp() for t in
-                targetState.driveMotorTorque
-            ]
-
-            self._output(targetSpeeds, torqueCurrentFF)
+            self._output(targetSpeeds, targetState.driveMotorTorqueCurrent)
 
     def isFinished(self) -> bool:
         if self._finish:

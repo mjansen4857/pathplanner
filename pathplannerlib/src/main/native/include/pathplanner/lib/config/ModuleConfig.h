@@ -44,7 +44,9 @@ public:
 			driveCurrentLimit), maxDriveVelocityRadPerSec {
 			maxDriveVelocityMPS() / wheelRadius() }, torqueLoss(
 			driveMotor.Torque(
-					driveMotor.Current(maxDriveVelocityRadPerSec, 12_V))) {
+					units::math::min(
+							driveMotor.Current(maxDriveVelocityRadPerSec, 12_V),
+							driveCurrentLimit))) {
 	}
 };
 }

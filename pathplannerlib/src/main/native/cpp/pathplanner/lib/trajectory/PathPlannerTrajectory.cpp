@@ -90,15 +90,16 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 				units::newton_t forceAtCarpet { wheelForces[m].speed() };
 				units::newton_meter_t wheelTorque = forceAtCarpet
 						* config.moduleConfig.wheelRadius;
+				units::ampere_t torqueCurrent = wheelTorque
+						/ config.moduleConfig.driveMotor.Kt;
 
 				// Negate the torque if the motor is slowing down
 				if (state.moduleStates[m].speed
 						< prevState.moduleStates[m].speed) {
-					wheelTorque *= -1;
+					torqueCurrent *= -1;
 				}
 
-				prevState.driveMotorTorqueCurrent.emplace_back(
-						wheelTorque / config.moduleConfig.driveMotor.Kt);
+				prevState.driveMotorTorqueCurrent.emplace_back(torqueCurrent);
 			}
 
 			if (!unaddedMarkers.empty()) {

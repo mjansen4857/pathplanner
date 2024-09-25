@@ -22,7 +22,8 @@ RobotConfig::RobotConfig(units::kilogram_t mass,
 		4), modulePivotDistance { moduleLocations[0].Norm(),
 		moduleLocations[1].Norm(), moduleLocations[2].Norm(),
 		moduleLocations[3].Norm() }, wheelFrictionForce { moduleConfig.wheelCOF
-		* (mass() * 9.8) } {
+		* ((mass() / numModules) * 9.8) }, maxTorqueFriction(
+		wheelFrictionForce * moduleConfig.wheelRadius) {
 }
 
 RobotConfig::RobotConfig(units::kilogram_t mass,
@@ -38,7 +39,8 @@ RobotConfig::RobotConfig(units::kilogram_t mass,
 		frc::Translation2d(0_m, -trackwidth / 2)), isHolonomic(false), numModules(
 		2), modulePivotDistance { moduleLocations[0].Norm(),
 		moduleLocations[1].Norm() }, wheelFrictionForce { moduleConfig.wheelCOF
-		* (mass() * 9.8) } {
+		* ((mass() / numModules) * 9.8) }, maxTorqueFriction(
+		wheelFrictionForce * moduleConfig.wheelRadius) {
 }
 
 RobotConfig RobotConfig::fromGUISettings() {

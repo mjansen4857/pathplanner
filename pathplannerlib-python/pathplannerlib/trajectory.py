@@ -440,6 +440,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, 12.0),
                               config.moduleConfig.driveCurrentLimit)
             availableTorque = config.moduleConfig.driveMotor.torque(currentDraw) - config.moduleConfig.torqueLoss
+            availableTorque = min(availableTorque, config.maxTorqueFriction)
             forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters
 
             forceVec = Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle)
@@ -480,7 +481,8 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # Find the max velocity that would keep the centripetal force under the friction force
             # Fc = M * v^2 / R
             if math.isfinite(curveRadius):
-                maxSafeVel = math.sqrt((config.wheelFrictionForce * abs(curveRadius)) / config.massKG)
+                maxSafeVel = math.sqrt(
+                    (config.wheelFrictionForce * abs(curveRadius)) / (config.massKG / config.numModules))
                 state.moduleStates[m].speed = min(state.moduleStates[m].speed, maxSafeVel)
 
         # Go over the modules again to make sure they take the same amount of time to reach the next state
@@ -537,6 +539,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, 12.0),
                               config.moduleConfig.driveCurrentLimit)
             availableTorque = config.moduleConfig.driveMotor.torque(currentDraw)
+            availableTorque = min(availableTorque, config.maxTorqueFriction)
             forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters
 
             forceVec = Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle + Rotation2d.fromDegrees(180))

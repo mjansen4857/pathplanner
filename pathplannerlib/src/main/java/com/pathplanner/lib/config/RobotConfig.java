@@ -38,6 +38,8 @@ public class RobotConfig {
   public final double[] modulePivotDistance;
   /** The force of static friction between the robot's drive wheels and the carpet, in Newtons */
   public final double wheelFrictionForce;
+  /** The maximum torque a drive module can apply without slipping the wheels */
+  public final double maxTorqueFriction;
 
   /**
    * Create a robot config object for a HOLONOMIC DRIVE robot
@@ -75,7 +77,8 @@ public class RobotConfig {
     for (int i = 0; i < this.numModules; i++) {
       this.modulePivotDistance[i] = this.moduleLocations[i].getNorm();
     }
-    this.wheelFrictionForce = this.moduleConfig.wheelCOF * (this.massKG * 9.8);
+    this.wheelFrictionForce = this.moduleConfig.wheelCOF * ((this.massKG / numModules) * 9.8);
+    this.maxTorqueFriction = this.wheelFrictionForce * this.moduleConfig.wheelRadiusMeters;
   }
 
   /**
@@ -106,7 +109,8 @@ public class RobotConfig {
     for (int i = 0; i < this.numModules; i++) {
       this.modulePivotDistance[i] = this.moduleLocations[i].getNorm();
     }
-    this.wheelFrictionForce = this.moduleConfig.wheelCOF * (this.massKG * 9.8);
+    this.wheelFrictionForce = this.moduleConfig.wheelCOF * ((this.massKG / numModules) * 9.8);
+    this.maxTorqueFriction = this.wheelFrictionForce * this.moduleConfig.wheelRadiusMeters;
   }
 
   /**

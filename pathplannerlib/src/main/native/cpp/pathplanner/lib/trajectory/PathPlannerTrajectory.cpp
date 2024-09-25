@@ -269,6 +269,8 @@ void PathPlannerTrajectory::forwardAccelPass(
 			units::newton_meter_t availableTorque =
 					config.moduleConfig.driveMotor.Torque(currentDraw)
 							- config.moduleConfig.torqueLoss;
+			availableTorque = units::math::min(availableTorque,
+					config.maxTorqueFriction);
 			units::newton_t forceAtCarpet = availableTorque
 					/ config.moduleConfig.wheelRadius;
 
@@ -334,7 +336,8 @@ void PathPlannerTrajectory::forwardAccelPass(
 			if (GeometryUtil::isFinite(curveRadius)) {
 				units::meters_per_second_t maxSafeVel = units::math::sqrt(
 						(config.wheelFrictionForce
-								* units::math::abs(curveRadius)) / config.mass);
+								* units::math::abs(curveRadius))
+								/ (config.mass / config.numModules));
 				state.moduleStates[m].speed = units::math::min(
 						state.moduleStates[m].speed, maxSafeVel);
 			}
@@ -417,6 +420,8 @@ void PathPlannerTrajectory::reverseAccelPass(
 							12_V), config.moduleConfig.driveCurrentLimit);
 			units::newton_meter_t availableTorque =
 					config.moduleConfig.driveMotor.Torque(currentDraw);
+			availableTorque = units::math::min(availableTorque,
+					config.maxTorqueFriction);
 			units::newton_t forceAtCarpet = availableTorque
 					/ config.moduleConfig.wheelRadius;
 

@@ -273,6 +273,7 @@ public class PathPlannerTrajectory {
                 config.moduleConfig.driveCurrentLimit);
         double availableTorque =
             config.moduleConfig.driveMotor.getTorque(currentDraw) - config.moduleConfig.torqueLoss;
+        availableTorque = Math.min(availableTorque, config.maxTorqueFriction);
         double forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters;
 
         Translation2d forceVec = new Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle);
@@ -324,7 +325,9 @@ public class PathPlannerTrajectory {
         // Fc = M * v^2 / R
         if (Double.isFinite(curveRadius)) {
           double maxSafeVel =
-              Math.sqrt((config.wheelFrictionForce * Math.abs(curveRadius)) / config.massKG);
+              Math.sqrt(
+                  (config.wheelFrictionForce * Math.abs(curveRadius))
+                      / (config.massKG / config.numModules));
           state.moduleStates[m].speedMetersPerSecond =
               Math.min(state.moduleStates[m].speedMetersPerSecond, maxSafeVel);
         }
@@ -404,6 +407,7 @@ public class PathPlannerTrajectory {
                 config.moduleConfig.driveMotor.getCurrent(lastVelRadPerSec, 12.0),
                 config.moduleConfig.driveCurrentLimit);
         double availableTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
+        availableTorque = Math.min(availableTorque, config.maxTorqueFriction);
         double forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters;
 
         Translation2d forceVec =

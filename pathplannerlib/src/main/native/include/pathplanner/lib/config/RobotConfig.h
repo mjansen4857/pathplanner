@@ -3,6 +3,7 @@
 #include <units/mass.h>
 #include <units/length.h>
 #include <units/force.h>
+#include <units/torque.h>
 #include <units/moment_of_inertia.h>
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/SwerveDriveKinematics.h>
@@ -28,6 +29,7 @@ public:
 	size_t numModules;
 	std::vector<units::meter_t> modulePivotDistance;
 	units::newton_t wheelFrictionForce;
+	units::newton_meter_t maxTorqueFriction;
 
 	RobotConfig(units::kilogram_t mass, units::kilogram_square_meter_t MOI,
 			ModuleConfig moduleConfig, units::meter_t trackwidth,

@@ -148,7 +148,10 @@ class PathPlannerTrajectory {
         robotConfig.moduleConfig.driveMotor.getTorque(maxVelCurrent);
 
     num moduleFrictionForce =
-        robotConfig.moduleConfig.wheelCOF * (robotConfig.massKG * 9.8);
+        (robotConfig.moduleConfig.wheelCOF * (robotConfig.massKG * 9.8)) /
+            numModules;
+    num maxTorqueFriction =
+        moduleFrictionForce * robotConfig.moduleConfig.wheelRadiusMeters;
 
     for (int i = 1; i < states.length - 1; i++) {
       // Calculate the linear force vector and torque acting on the whole robot
@@ -167,6 +170,7 @@ class PathPlannerTrajectory {
         num availableTorque =
             robotConfig.moduleConfig.driveMotor.getTorque(currentDraw) -
                 torqueLoss;
+        availableTorque = min(availableTorque, maxTorqueFriction);
         num forceAtCarpet =
             availableTorque / robotConfig.moduleConfig.wheelRadiusMeters;
 
@@ -222,8 +226,8 @@ class PathPlannerTrajectory {
         // Fc = M * v^2 / R
         num maxSafeVel = double.infinity;
         if (curveRadius.isFinite) {
-          maxSafeVel = sqrt(
-              (moduleFrictionForce * curveRadius.abs()) / robotConfig.massKG);
+          maxSafeVel = sqrt((moduleFrictionForce * curveRadius.abs()) /
+              (robotConfig.massKG / numModules));
         }
 
         states[i].moduleStates[m].speedMetersPerSecond =
@@ -314,6 +318,7 @@ class PathPlannerTrajectory {
             robotConfig.moduleConfig.driveCurrentLimit);
         num availableTorque =
             robotConfig.moduleConfig.driveMotor.getTorque(currentDraw);
+        availableTorque = min(availableTorque, maxTorqueFriction);
         num forceAtCarpet =
             availableTorque / robotConfig.moduleConfig.wheelRadiusMeters;
 

@@ -35,7 +35,7 @@ class DCMotor {
             Units.rotationsPerMinuteToRadiansPerSecond(5676), numMotors);
 
   DCMotor.getMiniCIM(int numMotors)
-      : this(12, 1.41, 89, 3, Units.rotationsPerMinuteToRadiansPerSecond(5310),
+      : this(12, 1.41, 89, 3, Units.rotationsPerMinuteToRadiansPerSecond(5840),
             numMotors);
 
   DCMotor.getFalcon500(int numMotors)
@@ -75,5 +75,19 @@ class DCMotor {
         freeCurrentAmps,
         freeSpeedRadPerSec / gearboxReduction,
         1);
+  }
+
+  static DCMotor fromString(String str, int numMotors) {
+    return switch (str) {
+      'krakenX60' => DCMotor.getKrakenX60(numMotors),
+      'krakenX60FOC' => DCMotor.getKrakenX60FOC(numMotors),
+      'falcon500' => DCMotor.getFalcon500(numMotors),
+      'falcon500FOC' => DCMotor.getFalcon500FOC(numMotors),
+      'vortex' => DCMotor.getNeoVortex(numMotors),
+      'NEO' => DCMotor.getNEO(numMotors),
+      'CIM' => DCMotor.getCIM(numMotors),
+      'miniCIM' => DCMotor.getMiniCIM(numMotors),
+      _ => DCMotor.getKrakenX60(numMotors),
+    };
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/dialogs/edit_field_dialog.dart';
 import 'package:pathplanner/widgets/dialogs/import_field_dialog.dart';
@@ -56,6 +57,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late FieldImage _selectedField;
   late Color _teamColor;
   late String _pplibClientHost;
+  late num _optimalCurrentLimit;
 
   @override
   void initState() {
@@ -101,6 +103,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
         Color(widget.prefs.getInt(PrefsKeys.teamColor) ?? Defaults.teamColor);
     _pplibClientHost = widget.prefs.getString(PrefsKeys.ntServerAddress) ??
         Defaults.ntServerAddress;
+
+    _optimalCurrentLimit = _calculateOptimalCurrentLimit();
   }
 
   @override
@@ -171,6 +175,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                   PrefsKeys.robotMass, value.toDouble());
                               setState(() {
                                 _mass = value;
+                                _optimalCurrentLimit =
+                                    _calculateOptimalCurrentLimit();
                               });
                             }
                             widget.onSettingsChanged();
@@ -250,6 +256,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                   PrefsKeys.driveWheelRadius, value.toDouble());
                               setState(() {
                                 _wheelRadius = value;
+                                _optimalCurrentLimit =
+                                    _calculateOptimalCurrentLimit();
                               });
                             }
                             widget.onSettingsChanged();
@@ -267,6 +275,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                   PrefsKeys.driveGearing, value.toDouble());
                               setState(() {
                                 _driveGearing = value;
+                                _optimalCurrentLimit =
+                                    _calculateOptimalCurrentLimit();
                               });
                             }
                             widget.onSettingsChanged();
@@ -305,6 +315,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                   PrefsKeys.wheelCOF, value.toDouble());
                               setState(() {
                                 _wheelCOF = value;
+                                _optimalCurrentLimit =
+                                    _calculateOptimalCurrentLimit();
                               });
                             }
                             widget.onSettingsChanged();
@@ -314,88 +326,123 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     ],
                   ),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 4),
-                            const Text('Drive Motor:'),
-                            const SizedBox(height: 4),
-                            SizedBox(
-                              height: 48,
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    border:
-                                        Border.all(color: colorScheme.outline),
-                                  ),
-                                  child: ExcludeFocus(
-                                    child: ButtonTheme(
-                                      alignedDropdown: true,
-                                      child: DropdownButton<String>(
-                                        borderRadius: BorderRadius.circular(8),
-                                        value: _driveMotor,
-                                        isExpanded: true,
-                                        underline: Container(),
-                                        menuMaxHeight: 250,
-                                        icon: const Icon(Icons.arrow_drop_down),
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: colorScheme.onSurface),
-                                        onChanged: (String? newValue) {
-                                          if (newValue != null) {
-                                            setState(() {
-                                              _driveMotor = newValue;
-                                            });
-                                            widget.prefs.setString(
-                                                PrefsKeys.driveMotor,
-                                                _driveMotor);
-                                            widget.onSettingsChanged();
-                                          }
-                                        },
-                                        items: const [
-                                          DropdownMenuItem<String>(
-                                            value: 'krakenX60',
-                                            child: Text('Kraken X60'),
+                            Stack(
+                              children: [
+                                Column(
+                                  children: [
+                                    const SizedBox(height: 9),
+                                    SizedBox(
+                                      height: 49,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 4),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            border: Border.all(
+                                                color: colorScheme.outline),
                                           ),
-                                          DropdownMenuItem<String>(
-                                            value: 'krakenX60FOC',
-                                            child: Text('Kraken X60 FOC'),
+                                          child: ExcludeFocus(
+                                            child: ButtonTheme(
+                                              alignedDropdown: true,
+                                              child: DropdownButton<String>(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                value: _driveMotor,
+                                                isExpanded: true,
+                                                underline: Container(),
+                                                menuMaxHeight: 250,
+                                                icon: const Icon(
+                                                    Icons.arrow_drop_down),
+                                                style: TextStyle(
+                                                    fontSize: 14,
+                                                    color:
+                                                        colorScheme.onSurface),
+                                                onChanged: (String? newValue) {
+                                                  if (newValue != null) {
+                                                    setState(() {
+                                                      _driveMotor = newValue;
+                                                      _optimalCurrentLimit =
+                                                          _calculateOptimalCurrentLimit();
+                                                    });
+                                                    widget.prefs.setString(
+                                                        PrefsKeys.driveMotor,
+                                                        _driveMotor);
+                                                    widget.onSettingsChanged();
+                                                  }
+                                                },
+                                                items: const [
+                                                  DropdownMenuItem<String>(
+                                                    value: 'krakenX60',
+                                                    child: Text('Kraken X60'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'krakenX60FOC',
+                                                    child:
+                                                        Text('Kraken X60 FOC'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'falcon500',
+                                                    child: Text('Falcon 500'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'falcon500FOC',
+                                                    child:
+                                                        Text('Falcon 500 FOC'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'vortex',
+                                                    child: Text('NEO Vortex'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'NEO',
+                                                    child: Text('NEO'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'CIM',
+                                                    child: Text('CIM'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'miniCIM',
+                                                    child: Text('MiniCIM'),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                          DropdownMenuItem<String>(
-                                            value: 'falcon500',
-                                            child: Text('Falcon 500'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'falcon500FOC',
-                                            child: Text('Falcon 500 FOC'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'vortex',
-                                            child: Text('NEO Vortex'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'NEO',
-                                            child: Text('NEO'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'CIM',
-                                            child: Text('CIM'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'miniCIM',
-                                            child: Text('MiniCIM'),
-                                          ),
-                                        ],
+                                        ),
                                       ),
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 2, top: 12),
+                                  child: Container(
+                                    width: 78,
+                                    height: 3,
+                                    color: colorScheme.surface,
+                                  ),
+                                ),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 8, top: 3),
+                                  child: Text(
+                                    'Drive Motor',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
@@ -403,9 +450,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 26),
+                            const SizedBox(height: 12),
                             NumberTextField(
                               initialText: _currentLimit.toStringAsFixed(0),
                               label: 'Drive Current Limit (A)',
@@ -420,6 +467,15 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                 }
                                 widget.onSettingsChanged();
                               },
+                            ),
+                            Text(
+                              'Max Optimal Limit: ${_optimalCurrentLimit.toStringAsFixed(0)}A',
+                              style: TextStyle(
+                                color: (_optimalCurrentLimit.round() <
+                                        _currentLimit.round())
+                                    ? colorScheme.error
+                                    : colorScheme.onSurface,
+                              ),
                             ),
                           ],
                         ),
@@ -904,5 +960,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
         });
       },
     );
+  }
+
+  num _calculateOptimalCurrentLimit() {
+    int numModules = _holonomicMode ? 4 : 2;
+    DCMotor driveMotor = DCMotor.fromString(_driveMotor, _holonomicMode ? 1 : 2)
+        .withReduction(_driveGearing);
+    num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
+    num maxFrictionTorque = moduleFrictionForce * _wheelRadius;
+    return maxFrictionTorque / driveMotor.kTNMPerAmp;
   }
 }

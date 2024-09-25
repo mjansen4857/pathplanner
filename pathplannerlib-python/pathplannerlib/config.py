@@ -74,6 +74,7 @@ class RobotConfig:
     numModules: int
     modulePivotDistance: List[float]
     wheelFrictionForce: float
+    maxTorqueFriction: float
 
     def __init__(self, massKG: float, MOI: float, moduleConfig: ModuleConfig, trackwidthMeters: float,
                  wheelbaseMeters: float = None):
@@ -118,7 +119,8 @@ class RobotConfig:
 
         self.numModules = len(self.moduleLocations)
         self.modulePivotDistance = [t.norm() for t in self.moduleLocations]
-        self.wheelFrictionForce = self.moduleConfig.wheelCOF * (self.massKG * 9.8)
+        self.wheelFrictionForce = self.moduleConfig.wheelCOF * ((self.massKG / self.numModules) * 9.8)
+        self.maxTorqueFriction = self.wheelFrictionForce * self.moduleConfig.wheelRadiusMeters
 
     @staticmethod
     def fromGUISettings() -> 'RobotConfig':

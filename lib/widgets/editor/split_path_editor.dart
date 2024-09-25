@@ -701,20 +701,11 @@ class _SplitPathEditorState extends State<SplitPathEditor>
             ];
 
       int numMotors = _holonomicMode ? 1 : 2;
-      DCMotor driveMotor = switch (
-          widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor) {
-        'krakenX60' => DCMotor.getKrakenX60(numMotors),
-        'krakenX60FOC' => DCMotor.getKrakenX60FOC(numMotors),
-        'falcon500' => DCMotor.getFalcon500(numMotors),
-        'falcon500FOC' => DCMotor.getFalcon500FOC(numMotors),
-        'vortex' => DCMotor.getNeoVortex(numMotors),
-        'NEO' => DCMotor.getNEO(numMotors),
-        'CIM' => DCMotor.getCIM(numMotors),
-        'miniCIM' => DCMotor.getMiniCIM(numMotors),
-        _ => DCMotor.getKrakenX60(numMotors),
-      };
-      driveMotor = driveMotor.withReduction(
-          widget.prefs.getDouble(PrefsKeys.driveGearing) ??
+      DCMotor driveMotor = DCMotor.fromString(
+              widget.prefs.getString(PrefsKeys.driveMotor) ??
+                  Defaults.driveMotor,
+              numMotors)
+          .withReduction(widget.prefs.getDouble(PrefsKeys.driveGearing) ??
               Defaults.driveGearing);
       RobotConfig config = RobotConfig(
         massKG:

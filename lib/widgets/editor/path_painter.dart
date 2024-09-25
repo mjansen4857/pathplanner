@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/choreo_path.dart';
+import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -405,16 +406,19 @@ class PathPainter extends CustomPainter {
   void _paintRotations(PathPlannerPath path, Canvas canvas, double scale) {
     for (int i = 0; i < path.pathPoints.length - 1; i++) {
       if (path.pathPoints[i].rotationTarget != null) {
+        RotationTarget target = path.pathPoints[i].rotationTarget!;
         Color rotationColor = Colors.grey[700]!;
-        if (selectedRotTarget == i) {
+        if (selectedRotTarget != null &&
+            path.rotationTargets[selectedRotTarget!] == target) {
           rotationColor = Colors.orange;
-        } else if (hoveredRotTarget == i) {
+        } else if (hoveredRotTarget != null &&
+            path.rotationTargets[hoveredRotTarget!] == target) {
           rotationColor = Colors.deepPurpleAccent;
         }
 
         PathPainterUtil.paintRobotOutline(
             path.pathPoints[i].position,
-            path.pathPoints[i].rotationTarget!.rotationDegrees,
+            target.rotationDegrees,
             fieldImage,
             robotSize,
             scale,

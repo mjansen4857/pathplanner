@@ -332,85 +332,117 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 4),
-                            const Text('Drive Motor:'),
-                            const SizedBox(height: 4),
-                            SizedBox(
-                              height: 48,
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    border:
-                                        Border.all(color: colorScheme.outline),
-                                  ),
-                                  child: ExcludeFocus(
-                                    child: ButtonTheme(
-                                      alignedDropdown: true,
-                                      child: DropdownButton<String>(
-                                        borderRadius: BorderRadius.circular(8),
-                                        value: _driveMotor,
-                                        isExpanded: true,
-                                        underline: Container(),
-                                        menuMaxHeight: 250,
-                                        icon: const Icon(Icons.arrow_drop_down),
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: colorScheme.onSurface),
-                                        onChanged: (String? newValue) {
-                                          if (newValue != null) {
-                                            setState(() {
-                                              _driveMotor = newValue;
-                                              _optimalCurrentLimit =
-                                                  _calculateOptimalCurrentLimit();
-                                            });
-                                            widget.prefs.setString(
-                                                PrefsKeys.driveMotor,
-                                                _driveMotor);
-                                            widget.onSettingsChanged();
-                                          }
-                                        },
-                                        items: const [
-                                          DropdownMenuItem<String>(
-                                            value: 'krakenX60',
-                                            child: Text('Kraken X60'),
+                            Stack(
+                              children: [
+                                Column(
+                                  children: [
+                                    const SizedBox(height: 9),
+                                    SizedBox(
+                                      height: 49,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 4),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            border: Border.all(
+                                                color: colorScheme.outline),
                                           ),
-                                          DropdownMenuItem<String>(
-                                            value: 'krakenX60FOC',
-                                            child: Text('Kraken X60 FOC'),
+                                          child: ExcludeFocus(
+                                            child: ButtonTheme(
+                                              alignedDropdown: true,
+                                              child: DropdownButton<String>(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                value: _driveMotor,
+                                                isExpanded: true,
+                                                underline: Container(),
+                                                menuMaxHeight: 250,
+                                                icon: const Icon(
+                                                    Icons.arrow_drop_down),
+                                                style: TextStyle(
+                                                    fontSize: 14,
+                                                    color:
+                                                        colorScheme.onSurface),
+                                                onChanged: (String? newValue) {
+                                                  if (newValue != null) {
+                                                    setState(() {
+                                                      _driveMotor = newValue;
+                                                      _optimalCurrentLimit =
+                                                          _calculateOptimalCurrentLimit();
+                                                    });
+                                                    widget.prefs.setString(
+                                                        PrefsKeys.driveMotor,
+                                                        _driveMotor);
+                                                    widget.onSettingsChanged();
+                                                  }
+                                                },
+                                                items: const [
+                                                  DropdownMenuItem<String>(
+                                                    value: 'krakenX60',
+                                                    child: Text('Kraken X60'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'krakenX60FOC',
+                                                    child:
+                                                        Text('Kraken X60 FOC'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'falcon500',
+                                                    child: Text('Falcon 500'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'falcon500FOC',
+                                                    child:
+                                                        Text('Falcon 500 FOC'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'vortex',
+                                                    child: Text('NEO Vortex'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'NEO',
+                                                    child: Text('NEO'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'CIM',
+                                                    child: Text('CIM'),
+                                                  ),
+                                                  DropdownMenuItem<String>(
+                                                    value: 'miniCIM',
+                                                    child: Text('MiniCIM'),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                          DropdownMenuItem<String>(
-                                            value: 'falcon500',
-                                            child: Text('Falcon 500'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'falcon500FOC',
-                                            child: Text('Falcon 500 FOC'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'vortex',
-                                            child: Text('NEO Vortex'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'NEO',
-                                            child: Text('NEO'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'CIM',
-                                            child: Text('CIM'),
-                                          ),
-                                          DropdownMenuItem<String>(
-                                            value: 'miniCIM',
-                                            child: Text('MiniCIM'),
-                                          ),
-                                        ],
+                                        ),
                                       ),
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 2, top: 12),
+                                  child: Container(
+                                    width: 78,
+                                    height: 3,
+                                    color: colorScheme.surface,
+                                  ),
+                                ),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 8, top: 3),
+                                  child: Text(
+                                    'Drive Motor',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: colorScheme.onSurfaceVariant,
                                     ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
@@ -420,7 +452,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 30),
+                            const SizedBox(height: 12),
                             NumberTextField(
                               initialText: _currentLimit.toStringAsFixed(0),
                               label: 'Drive Current Limit (A)',

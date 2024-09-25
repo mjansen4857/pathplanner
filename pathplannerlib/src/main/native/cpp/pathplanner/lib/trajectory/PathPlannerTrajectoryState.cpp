@@ -24,10 +24,10 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 					t));
 	lerpedState.linearVelocity = GeometryUtil::unitLerp(linearVelocity,
 			endVal.linearVelocity, t);
-	for (size_t m = 0; m < driveMotorTorque.size(); m++) {
-		lerpedState.driveMotorTorque.emplace_back(
-				GeometryUtil::unitLerp(driveMotorTorque[m],
-						endVal.driveMotorTorque[m], t));
+	for (size_t m = 0; m < driveMotorTorqueCurrent.size(); m++) {
+		lerpedState.driveMotorTorqueCurrent.emplace_back(
+				GeometryUtil::unitLerp(driveMotorTorqueCurrent[m],
+						endVal.driveMotorTorqueCurrent[m], t));
 	}
 
 	return lerpedState;
@@ -46,8 +46,8 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 	reversed.pose = frc::Pose2d(pose.Translation(),
 			pose.Rotation() + frc::Rotation2d(180_deg));
 	reversed.linearVelocity = -linearVelocity;
-	for (auto torque : driveMotorTorque) {
-		reversed.driveMotorTorque.emplace_back(-torque);
+	for (auto torqueCurrent : driveMotorTorqueCurrent) {
+		reversed.driveMotorTorqueCurrent.emplace_back(-torqueCurrent);
 	}
 
 	return reversed;
@@ -61,14 +61,20 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::flip() const {
 	mirrored.pose = GeometryUtil::flipFieldPose(pose);
 	mirrored.fieldSpeeds = frc::ChassisSpeeds { -fieldSpeeds.vx, fieldSpeeds.vy,
 			-fieldSpeeds.omega };
-	if (driveMotorTorque.size() == 4) {
-		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[1]);
-		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[0]);
-		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[3]);
-		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[2]);
-	} else if (driveMotorTorque.size() == 2) {
-		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[1]);
-		mirrored.driveMotorTorque.emplace_back(driveMotorTorque[0]);
+	if (driveMotorTorqueCurrent.size() == 4) {
+		mirrored.driveMotorTorqueCurrent.emplace_back(
+				driveMotorTorqueCurrent[1]);
+		mirrored.driveMotorTorqueCurrent.emplace_back(
+				driveMotorTorqueCurrent[0]);
+		mirrored.driveMotorTorqueCurrent.emplace_back(
+				driveMotorTorqueCurrent[3]);
+		mirrored.driveMotorTorqueCurrent.emplace_back(
+				driveMotorTorqueCurrent[2]);
+	} else if (driveMotorTorqueCurrent.size() == 2) {
+		mirrored.driveMotorTorqueCurrent.emplace_back(
+				driveMotorTorqueCurrent[1]);
+		mirrored.driveMotorTorqueCurrent.emplace_back(
+				driveMotorTorqueCurrent[0]);
 	}
 
 	return mirrored;

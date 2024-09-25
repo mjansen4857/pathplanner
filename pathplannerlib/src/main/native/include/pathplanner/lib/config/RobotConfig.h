@@ -37,5 +37,9 @@ public:
 			ModuleConfig moduleConfig, units::meter_t trackwidth);
 
 	static RobotConfig fromGUISettings();
+
+private:
+	static frc::DCMotor getMotorFromSettingsString(std::string motorStr,
+			int numMotors);
 };
 }

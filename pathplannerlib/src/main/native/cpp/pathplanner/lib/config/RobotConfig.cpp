@@ -61,17 +61,46 @@ RobotConfig RobotConfig::fromGUISettings() {
 	units::meter_t trackwidth { json.at("robotTrackwidth").get<double>() };
 	units::meter_t wheelRadius { json.at("driveWheelRadius").get<double>() };
 	double gearing = json.at("driveGearing").get<double>();
-	units::revolutions_per_minute_t maxDriveRPM { json.at("maxDriveRPM").get<
+	units::meters_per_second_t maxDriveSpeed { json.at("maxDriveSpeed").get<
 			double>() };
 	double wheelCOF = json.at("wheelCOF").get<double>();
-	std::string driveMotor = json.at("driveMotor").get<std::string>();
+	std::string driveMotor = json.at("driveMotorType").get<std::string>();
+	units::ampere_t driveCurrentLimit {
+			json.at("driveCurrentLimit").get<double>() };
 
-	ModuleConfig moduleConfig(wheelRadius, gearing, maxDriveRPM, wheelCOF,
-			MotorTorqueCurve::fromSettingsString(driveMotor));
+	int numMotors = isHolonomic ? 1 : 2;
+	frc::DCMotor gearbox = RobotConfig::getMotorFromSettingsString(driveMotor,
+			numMotors).WithReduction(gearing);
+
+	ModuleConfig moduleConfig(wheelRadius, maxDriveSpeed, wheelCOF, gearbox,
+			driveCurrentLimit);
 
 	if (isHolonomic) {
 		return RobotConfig(mass, MOI, moduleConfig, trackwidth, wheelbase);
 	} else {
 		return RobotConfig(mass, MOI, moduleConfig, trackwidth);
+	}
+}
+
+frc::DCMotor RobotConfig::getMotorFromSettingsString(std::string motorStr,
+		int numMotors) {
+	if (motorStr == "krakenX60") {
+		return frc::DCMotor::KrakenX60(numMotors);
+	} else if (motorStr == "krakenX60FOC") {
+		return frc::DCMotor::KrakenX60FOC(numMotors);
+	} else if (motorStr == "falcon500") {
+		return frc::DCMotor::Falcon500(numMotors);
+	} else if (motorStr == "falcon500FOC") {
+		return frc::DCMotor::Falcon500FOC(numMotors);
+	} else if (motorStr == "vortex") {
+		return frc::DCMotor::NeoVortex(numMotors);
+	} else if (motorStr == "NEO") {
+		return frc::DCMotor::NEO(numMotors);
+	} else if (motorStr == "CIM") {
+		return frc::DCMotor::CIM(numMotors);
+	} else if (motorStr == "miniCIM") {
+		return frc::DCMotor::MiniCIM(numMotors);
+	} else {
+		throw std::invalid_argument("Unknown motor type string: " + motorStr);
 	}
 }

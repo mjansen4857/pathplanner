@@ -393,7 +393,6 @@ public class PathPlannerPath {
       choreoPathCache.put(trajectoryName, path);
 
       return path;
-      DCMotor
     } catch (Exception e) {
       throw new RuntimeException(e);
     }

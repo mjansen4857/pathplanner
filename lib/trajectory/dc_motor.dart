@@ -67,16 +67,6 @@ class DCMotor {
     return currentAmps * kTNMPerAmp;
   }
 
-  num getVoltage(num torqueNM, num speedRadPerSec) {
-    return 1.0 / kVRadPerSecPerVolt * speedRadPerSec +
-        1.0 / kTNMPerAmp * rOhms * torqueNM;
-  }
-
-  num getSpeed(num torqueNM, num voltage) {
-    return voltage * kVRadPerSecPerVolt -
-        1.0 / kTNMPerAmp * torqueNM * rOhms * kVRadPerSecPerVolt;
-  }
-
   DCMotor withReduction(num gearboxReduction) {
     return DCMotor(
         nominalVoltageVolts,

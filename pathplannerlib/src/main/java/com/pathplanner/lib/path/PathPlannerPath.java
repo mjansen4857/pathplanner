@@ -570,7 +570,7 @@ public class PathPlannerPath {
     points.get(0).waypointRelativePos = 0.0;
 
     double pos = targetIncrement;
-    while (pos <= numSegments) {
+    while (pos < numSegments) {
       Translation2d position = samplePath(pos);
 
       double distance = points.get(points.size() - 1).position.getDistance(position);

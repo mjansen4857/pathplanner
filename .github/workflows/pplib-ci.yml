@@ -169,7 +169,7 @@ jobs:
           - os: windows-2022
             artifact-name: PPLib-Win64
             os-name: windows
-          - os: macos-13
+          - os: macos-14
             artifact-name: PPLib-macOS
             os-name: macos
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"

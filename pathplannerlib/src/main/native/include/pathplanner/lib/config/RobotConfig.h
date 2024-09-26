@@ -7,7 +7,6 @@
 #include <units/moment_of_inertia.h>
 #include <frc/geometry/Translation2d.h>
 #include <frc/kinematics/SwerveDriveKinematics.h>
-#include <frc/kinematics/DifferentialDriveKinematics.h>
 #include <vector>
 #include "pathplanner/lib/config/ModuleConfig.h"
 #include "pathplanner/lib/trajectory/SwerveModuleTrajectoryState.h"
@@ -24,7 +23,7 @@ public:
 	// Need two different kinematics objects since the class is templated but having
 	// RobotConfig also templated would be pretty bad to work with
 	frc::SwerveDriveKinematics<4> swerveKinematics;
-	frc::DifferentialDriveKinematics diffKinematics;
+	frc::SwerveDriveKinematics<2> diffKinematics;
 	bool isHolonomic;
 
 	size_t numModules;

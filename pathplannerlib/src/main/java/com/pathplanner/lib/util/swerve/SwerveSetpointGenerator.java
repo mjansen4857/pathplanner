@@ -39,7 +39,8 @@ public class SwerveSetpointGenerator {
   }
 
   /**
-   * Generate a new setpoint.
+   * Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
+   * this method. This method will discretize the speeds for you.
    *
    * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
    *     iteration setpoint instead of the actual measured/estimated kinematic state.
@@ -401,7 +402,7 @@ public class SwerveSetpointGenerator {
     }
   }
 
-  protected static double findSteeringMaxS(
+  private static double findSteeringMaxS(
       double x_0,
       double y_0,
       double f_0,
@@ -420,7 +421,7 @@ public class SwerveSetpointGenerator {
     return findRoot(func, x_0, y_0, f_0 - offset, x_1, y_1, f_1 - offset, MAX_STEER_ITERATIONS);
   }
 
-  protected static double findDriveMaxS(
+  private static double findDriveMaxS(
       double x_0, double y_0, double f_0, double x_1, double y_1, double f_1, double max_vel_step) {
     double diff = f_1 - f_0;
     if (Math.abs(diff) <= max_vel_step) {

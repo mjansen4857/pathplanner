@@ -47,14 +47,15 @@ RobotConfig RobotConfig::fromGUISettings() {
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/settings.json";
 
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
+	std::error_code error_code;
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath, error_code);
 
-	if (!fileBuffer) {
+	if (!fileBuffer || error_code) {
 		throw FRC_MakeError(frc::err::Error,
 				"PathPlanner settings file could not be read");
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
+	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
 	bool isHolonomic = json.at("holonomicMode").get<bool>();
 	units::kilogram_t mass { json.at("robotMass").get<double>() };

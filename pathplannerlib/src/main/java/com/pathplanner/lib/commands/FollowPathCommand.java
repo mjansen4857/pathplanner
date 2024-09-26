@@ -83,7 +83,7 @@ public class FollowPathCommand extends Command {
       throw new IllegalArgumentException(
           "Events that are triggered during path following cannot require the drive subsystem");
     }
-    addRequirements(eventReqs);
+    addRequirements(eventReqs.toArray(new Subsystem[0]));
 
     this.path = this.originalPath;
     // Ensure the ideal trajectory is generated
@@ -207,8 +207,8 @@ public class FollowPathCommand extends Command {
         new PathPlannerPath(
             bezierPoints,
             new PathConstraints(4.0, 4.0, 4.0, 4.0),
-            new IdealStartingState(0.0, Rotation2d.kZero),
-            new GoalEndState(0.0, Rotation2d.kCCW_90deg));
+            new IdealStartingState(0.0, new Rotation2d()),
+            new GoalEndState(0.0, Rotation2d.fromDegrees(90)));
 
     return new FollowPathCommand(
             path,

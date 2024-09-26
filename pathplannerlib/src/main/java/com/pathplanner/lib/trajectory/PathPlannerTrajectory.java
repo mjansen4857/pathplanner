@@ -201,7 +201,9 @@ public class PathPlannerTrajectory {
         state.pose =
             new Pose2d(
                 state.pose.getTranslation(),
-                path.isReversed() ? (state.heading.plus(Rotation2d.k180deg)) : state.heading);
+                path.isReversed()
+                    ? (state.heading.plus(Rotation2d.fromDegrees(180)))
+                    : state.heading);
       }
 
       if (i != 0) {
@@ -412,7 +414,7 @@ public class PathPlannerTrajectory {
 
         Translation2d forceVec =
             new Translation2d(
-                forceAtCarpet, state.moduleStates[m].fieldAngle.plus(Rotation2d.k180deg));
+                forceAtCarpet, state.moduleStates[m].fieldAngle.plus(Rotation2d.fromDegrees(180)));
 
         // Add the module force vector to the robot force vector
         linearForceVec = linearForceVec.plus(forceVec);

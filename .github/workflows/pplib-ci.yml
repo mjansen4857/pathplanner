@@ -160,6 +160,8 @@ jobs:
           path: pathplannerlib/build/allOutputs
   
   build-host:
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 13.3
     strategy:
       fail-fast: false
       matrix:
@@ -167,9 +169,9 @@ jobs:
           - os: windows-2022
             artifact-name: PPLib-Win64
             os-name: windows
-          - os: macos-14
-            artifact-name: PPLib-macOS
-            os-name: macos
+          # - os: macos-14
+          #   artifact-name: PPLib-macOS
+          #   os-name: macos
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
     needs: [formatting, test]
     runs-on: ${{ matrix.os }}

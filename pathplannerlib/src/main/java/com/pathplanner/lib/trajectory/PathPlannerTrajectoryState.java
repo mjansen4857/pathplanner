@@ -16,7 +16,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   /** Field-relative chassis speeds at this state */
   public ChassisSpeeds fieldSpeeds = new ChassisSpeeds();
   /** Field-relative robot pose at this state */
-  public Pose2d pose = Pose2d.kZero;
+  public Pose2d pose = new Pose2d();
   /** The linear velocity at this state in m/s */
   public double linearVelocity = 0.0;
   /** The torque current feedforward for each module's drive motor, in Amps. */
@@ -24,11 +24,11 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
 
   // Values used only during generation, these will not be interpolated
   /** The field-relative heading, or direction of travel, at this state */
-  protected Rotation2d heading = Rotation2d.kZero;
+  protected Rotation2d heading = new Rotation2d();
   /** The distance between this state and the previous state */
   protected double deltaPos = 0.0;
   /** The difference in rotation between this state and the previous state */
-  protected Rotation2d deltaRot = Rotation2d.kZero;
+  protected Rotation2d deltaRot = new Rotation2d();
   /**
    * The {@link com.pathplanner.lib.trajectory.SwerveModuleTrajectoryState} states for this state
    */
@@ -85,11 +85,12 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     reversed.timeSeconds = timeSeconds;
     Translation2d reversedSpeeds =
         new Translation2d(fieldSpeeds.vxMetersPerSecond, fieldSpeeds.vyMetersPerSecond)
-            .rotateBy(Rotation2d.k180deg);
+            .rotateBy(Rotation2d.fromDegrees(180));
     reversed.fieldSpeeds =
         new ChassisSpeeds(
             reversedSpeeds.getX(), reversedSpeeds.getY(), fieldSpeeds.omegaRadiansPerSecond);
-    reversed.pose = new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.k180deg));
+    reversed.pose =
+        new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.fromDegrees(180)));
     reversed.linearVelocity = -linearVelocity;
     reversed.driveMotorTorqueCurrent = new double[driveMotorTorqueCurrent.length];
     for (int m = 0; m < driveMotorTorqueCurrent.length; m++) {

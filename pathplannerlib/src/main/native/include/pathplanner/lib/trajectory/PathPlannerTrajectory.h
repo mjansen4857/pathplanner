@@ -187,10 +187,12 @@ private:
 			return std::vector < frc::SwerveModuleState
 					> (states.begin(), states.end());
 		} else {
-			auto states = config.diffKinematics.ToSwerveModuleStates(
+			auto wheelSpeeeds = config.diffKinematics.ToWheelSpeeds(
 					chassisSpeeds);
-			return std::vector < frc::SwerveModuleState
-					> (states.begin(), states.end());
+			return std::vector<frc::SwerveModuleState> {
+					frc::SwerveModuleState { wheelSpeeeds.left,
+							frc::Rotation2d() }, frc::SwerveModuleState {
+							wheelSpeeeds.right, frc::Rotation2d() }, };
 		}
 	}
 
@@ -206,11 +208,9 @@ private:
 									states[3].speed, states[3].angle } };
 			return config.swerveKinematics.ToChassisSpeeds(wpiStates);
 		} else {
-			wpi::array < frc::SwerveModuleState, 2
-					> wpiStates { frc::SwerveModuleState { states[0].speed,
-							states[0].angle }, frc::SwerveModuleState {
-							states[1].speed, states[1].angle } };
-			return config.diffKinematics.ToChassisSpeeds(wpiStates);
+			frc::DifferentialDriveWheelSpeeds speeds { states[0].speed,
+					states[1].speed };
+			return config.diffKinematics.ToChassisSpeeds(speeds);
 		}
 	}
 };

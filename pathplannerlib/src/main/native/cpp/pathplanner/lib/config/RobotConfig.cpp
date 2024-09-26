@@ -17,12 +17,10 @@ RobotConfig::RobotConfig(units::kilogram_t mass,
 		frc::Translation2d(wheelbase / 2, -trackwidth / 2),
 		frc::Translation2d(-wheelbase / 2, trackwidth / 2),
 		frc::Translation2d(-wheelbase / 2, -trackwidth / 2)), diffKinematics(
-		frc::Translation2d(0_m, trackwidth / 2),
-		frc::Translation2d(0_m, -trackwidth / 2)), isHolonomic(true), numModules(
-		4), modulePivotDistance { moduleLocations[0].Norm(),
-		moduleLocations[1].Norm(), moduleLocations[2].Norm(),
-		moduleLocations[3].Norm() }, wheelFrictionForce { moduleConfig.wheelCOF
-		* ((mass() / numModules) * 9.8) }, maxTorqueFriction(
+		trackwidth), isHolonomic(true), numModules(4), modulePivotDistance {
+		moduleLocations[0].Norm(), moduleLocations[1].Norm(),
+		moduleLocations[2].Norm(), moduleLocations[3].Norm() }, wheelFrictionForce {
+		moduleConfig.wheelCOF * ((mass() / numModules) * 9.8) }, maxTorqueFriction(
 		wheelFrictionForce * moduleConfig.wheelRadius) {
 }
 
@@ -35,11 +33,9 @@ RobotConfig::RobotConfig(units::kilogram_t mass,
 		frc::Translation2d(trackwidth / 2, -trackwidth / 2),
 		frc::Translation2d(-trackwidth / 2, trackwidth / 2),
 		frc::Translation2d(-trackwidth / 2, -trackwidth / 2)), diffKinematics(
-		frc::Translation2d(0_m, trackwidth / 2),
-		frc::Translation2d(0_m, -trackwidth / 2)), isHolonomic(false), numModules(
-		2), modulePivotDistance { moduleLocations[0].Norm(),
-		moduleLocations[1].Norm() }, wheelFrictionForce { moduleConfig.wheelCOF
-		* ((mass() / numModules) * 9.8) }, maxTorqueFriction(
+		trackwidth), isHolonomic(false), numModules(2), modulePivotDistance {
+		moduleLocations[0].Norm(), moduleLocations[1].Norm() }, wheelFrictionForce {
+		moduleConfig.wheelCOF * ((mass() / numModules) * 9.8) }, maxTorqueFriction(
 		wheelFrictionForce * moduleConfig.wheelRadius) {
 }
 

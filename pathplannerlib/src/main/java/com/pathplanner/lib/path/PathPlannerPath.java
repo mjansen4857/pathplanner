@@ -269,6 +269,9 @@ public class PathPlannerPath {
     this.goalEndState = updatedPath.goalEndState;
     this.allPoints = updatedPath.allPoints;
     this.reversed = updatedPath.reversed;
+
+    // Clear the ideal trajectory so it gets regenerated
+    this.idealTrajectory = Optional.empty();
   }
 
   /**

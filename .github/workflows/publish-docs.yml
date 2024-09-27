@@ -108,18 +108,15 @@ jobs:
       - name: Generate python docs
         working-directory: ./pathplannerlib-python
         run: |
-          handsdown --external https://github.com/mjansen4857/pathplanner.git -o docsmd -n pathplannerlib --theme=material --create-configs include pathplannerlib
+          handsdown --external https://github.com/mjansen4857/pathplanner.git -o docsmd -n pathplannerlib --source-code-path pathplannerlib-python --theme=material --create-configs include pathplannerlib
           python -m mkdocs build
 
-      - name: Move java/cpp to api dir
+      - name: Move docs to api dir
         run: |
           mkdir _site
           mkdir _site/api
           sudo mv pathplannerlib/build/docs/javadoc _site/api/java
           sudo mv pathplannerlib/build/docs/cpp/html _site/api/cpp
-
-      - name: Move python to api dir
-        run: |
           sudo mv pathplannerlib-python/docs _site/api/python
 
       - name: Download docs artifact

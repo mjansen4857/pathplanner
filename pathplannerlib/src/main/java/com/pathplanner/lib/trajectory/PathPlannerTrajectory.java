@@ -69,7 +69,7 @@ public class PathPlannerTrajectory {
       // Set the initial module velocities
       ChassisSpeeds fieldStartingSpeeds =
           ChassisSpeeds.fromRobotRelativeSpeeds(startingSpeeds, states.get(0).pose.getRotation());
-      var initialStates = config.kinematics.toSwerveModuleStates(fieldStartingSpeeds);
+      var initialStates = config.toSwerveModuleStates(fieldStartingSpeeds);
       for (int m = 0; m < config.numModules; m++) {
         states.get(0).moduleStates[m].speedMetersPerSecond = initialStates[m].speedMetersPerSecond;
       }
@@ -88,7 +88,7 @@ public class PathPlannerTrajectory {
       ChassisSpeeds endFieldSpeeds =
           new ChassisSpeeds(endSpeedTrans.getX(), endSpeedTrans.getY(), 0.0);
       var endStates =
-          config.kinematics.toSwerveModuleStates(
+          config.toSwerveModuleStates(
               ChassisSpeeds.fromFieldRelativeSpeeds(
                   endFieldSpeeds, states.get(states.size() - 1).pose.getRotation()));
       for (int m = 0; m < config.numModules; m++) {
@@ -124,7 +124,7 @@ public class PathPlannerTrajectory {
 
         // Use kinematics to convert chassis forces to wheel forces
         var wheelForces =
-            config.kinematics.toSwerveModuleStates(
+            config.toSwerveModuleStates(
                 new ChassisSpeeds(forceVec.getX(), forceVec.getY(), angTorque));
 
         for (int m = 0; m < config.numModules; m++) {
@@ -306,7 +306,7 @@ public class PathPlannerTrajectory {
       ChassisSpeeds chassisAccel =
           ChassisSpeeds.fromFieldRelativeSpeeds(
               accelVec.getX(), accelVec.getY(), angularAccel, state.pose.getRotation());
-      var accelStates = config.kinematics.toSwerveModuleStates(chassisAccel);
+      var accelStates = config.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < config.numModules; m++) {
         double moduleAcceleration = accelStates[m].speedMetersPerSecond;
 
@@ -370,7 +370,7 @@ public class PathPlannerTrajectory {
       }
 
       // Use the calculated module velocities to calculate the robot speeds
-      ChassisSpeeds desiredSpeeds = config.kinematics.toChassisSpeeds(state.moduleStates);
+      ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(state.moduleStates);
 
       double maxChassisVel = state.constraints.getMaxVelocityMps();
       double maxChassisAngVel = state.constraints.getMaxAngularVelocityRps();
@@ -384,7 +384,7 @@ public class PathPlannerTrajectory {
 
       state.fieldSpeeds =
           ChassisSpeeds.fromRobotRelativeSpeeds(
-              config.kinematics.toChassisSpeeds(state.moduleStates), state.pose.getRotation());
+              config.toChassisSpeeds(state.moduleStates), state.pose.getRotation());
       state.linearVelocity =
           Math.hypot(state.fieldSpeeds.vxMetersPerSecond, state.fieldSpeeds.vyMetersPerSecond);
     }
@@ -443,7 +443,7 @@ public class PathPlannerTrajectory {
           ChassisSpeeds.fromFieldRelativeSpeeds(
               new ChassisSpeeds(accelVec.getX(), accelVec.getY(), angularAccel),
               state.pose.getRotation());
-      var accelStates = config.kinematics.toSwerveModuleStates(chassisAccel);
+      var accelStates = config.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < config.numModules; m++) {
         double moduleAcceleration = accelStates[m].speedMetersPerSecond;
 
@@ -493,7 +493,7 @@ public class PathPlannerTrajectory {
       }
 
       // Use the calculated module velocities to calculate the robot speeds
-      ChassisSpeeds desiredSpeeds = config.kinematics.toChassisSpeeds(state.moduleStates);
+      ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(state.moduleStates);
 
       double maxChassisVel = state.constraints.getMaxVelocityMps();
       double maxChassisAngVel = state.constraints.getMaxAngularVelocityRps();
@@ -511,7 +511,7 @@ public class PathPlannerTrajectory {
 
       state.fieldSpeeds =
           ChassisSpeeds.fromRobotRelativeSpeeds(
-              config.kinematics.toChassisSpeeds(state.moduleStates), state.pose.getRotation());
+              config.toChassisSpeeds(state.moduleStates), state.pose.getRotation());
       state.linearVelocity =
           Math.hypot(state.fieldSpeeds.vxMetersPerSecond, state.fieldSpeeds.vyMetersPerSecond);
     }
@@ -527,7 +527,7 @@ public class PathPlannerTrajectory {
   }
 
   /**
-   * Get all of the pre-generated states in the trajectory
+   * Get all the pre-generated states in the trajectory
    *
    * @return List of all states
    */

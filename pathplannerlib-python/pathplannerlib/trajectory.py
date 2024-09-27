@@ -152,7 +152,7 @@ class PathPlannerTrajectory:
                 # Set the initial module velocities
                 fieldStartingSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(starting_speeds,
                                                                             self._states[0].pose.rotation())
-                initialStates = _toSwerveModuleStates(config, starting_speeds)
+                initialStates = config.toSwerveModuleStates(starting_speeds)
                 for m in range(config.numModules):
                     self._states[0].moduleStates[m].speed = initialStates[m].speed
                 self._states[0].timeSeconds = 0.0
@@ -165,9 +165,9 @@ class PathPlannerTrajectory:
                 # Set the final module velocities
                 endSpeedTrans = Translation2d(path.getGoalEndState().velocity, self._states[-1].heading)
                 endFieldSpeeds = ChassisSpeeds(endSpeedTrans.x, endSpeedTrans.y, 0.0)
-                endStates = _toSwerveModuleStates(config, ChassisSpeeds.fromFieldRelativeSpeeds(endFieldSpeeds,
-                                                                                                self._states[
-                                                                                                    -1].pose.rotation()))
+                endStates = config.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(endFieldSpeeds,
+                                                                                              self._states[
+                                                                                                  -1].pose.rotation()))
                 for m in range(config.numModules):
                     self._states[-1].moduleStates[m].speed = endStates[m].speed
                 self._states[-1].fieldSpeeds = endFieldSpeeds
@@ -195,7 +195,7 @@ class PathPlannerTrajectory:
                     angTorque = angularAccel * config.MOI
 
                     # Use kinematics to convert chassis forces to wheel forces
-                    wheelForces = _toSwerveModuleStates(config, ChassisSpeeds(forceVec.x, forceVec.y, angTorque))
+                    wheelForces = config.toSwerveModuleStates(ChassisSpeeds(forceVec.x, forceVec.y, angTorque))
 
                     for m in range(config.numModules):
                         forceAtCarpet = wheelForces[m].speed
@@ -467,7 +467,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
         chassisAccel = ChassisSpeeds.fromFieldRelativeSpeeds(accelVec.x, accelVec.y, angularAccel,
                                                              state.pose.rotation())
-        accelStates = _toSwerveModuleStates(config, chassisAccel)
+        accelStates = config.toSwerveModuleStates(chassisAccel)
         for m in range(config.numModules):
             moduleAcceleration = accelStates[m].speed
 
@@ -510,7 +510,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
 
         # Use the calculated module velocities to calculate the robot speeds
-        desiredSpeeds = _toChassisSpeeds(config, state.moduleStates)
+        desiredSpeeds = config.toChassisSpeeds(state.moduleStates)
 
         maxChassisVel = state.constraints.maxVelocityMps
         maxChassisAngVel = state.constraints.maxAngularVelocityRps
@@ -518,7 +518,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         _desaturateWheelSpeeds(state.moduleStates, desiredSpeeds, config.moduleConfig.maxDriveVelocityMPS,
                                maxChassisVel, maxChassisAngVel)
 
-        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(_toChassisSpeeds(config, state.moduleStates),
+        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(config.toChassisSpeeds(state.moduleStates),
                                                                   state.pose.rotation())
         state.linearVelocity = math.hypot(state.fieldSpeeds.vx, state.fieldSpeeds.vy)
 
@@ -566,7 +566,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
         chassisAccel = ChassisSpeeds.fromFieldRelativeSpeeds(accelVec.x, accelVec.y, angularAccel,
                                                              state.pose.rotation())
-        accelStates = _toSwerveModuleStates(config, chassisAccel)
+        accelStates = config.toSwerveModuleStates(chassisAccel)
         for m in range(config.numModules):
             moduleAcceleration = accelStates[m].speed
 
@@ -602,7 +602,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
 
         # Use the calculated module velocities to calculate the robot speeds
-        desiredSpeeds = _toChassisSpeeds(config, state.moduleStates)
+        desiredSpeeds = config.toChassisSpeeds(state.moduleStates)
 
         maxChassisVel = state.constraints.maxVelocityMps
         maxChassisAngVel = state.constraints.maxAngularVelocityRps
@@ -613,20 +613,6 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         _desaturateWheelSpeeds(state.moduleStates, desiredSpeeds, config.moduleConfig.maxDriveVelocityMPS,
                                maxChassisVel, maxChassisAngVel)
 
-        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(_toChassisSpeeds(config, state.moduleStates),
+        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(config.toChassisSpeeds(state.moduleStates),
                                                                   state.pose.rotation())
         state.linearVelocity = math.hypot(state.fieldSpeeds.vx, state.fieldSpeeds.vy)
-
-
-def _toSwerveModuleStates(config: RobotConfig, chassisSpeeds: ChassisSpeeds) -> List[SwerveModuleState]:
-    if config.isHolonomic:
-        return config.swerveKinematics.toSwerveModuleStates(chassisSpeeds)
-    else:
-        return config.diffKinematics.toSwerveModuleStates(chassisSpeeds)
-
-
-def _toChassisSpeeds(config: RobotConfig, states: List[SwerveModuleState]) -> ChassisSpeeds:
-    if config.isHolonomic:
-        return config.swerveKinematics.toChassisSpeeds(states)
-    else:
-        return config.diffKinematics.toChassisSpeeds(states)

@@ -1,7 +1,8 @@
 package com.pathplanner.lib.config;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.*;
@@ -23,11 +24,10 @@ public class RobotConfig {
 
   /** Robot-relative locations of each drive module in meters */
   public final Translation2d[] moduleLocations;
-  /**
-   * Swerve kinematics used to convert ChassisSpeeds to/from module states. This can also be used
-   * for differential robots by assuming they just have 2 swerve modules.
-   */
-  public final SwerveDriveKinematics kinematics;
+  /** Swerve kinematics used to convert ChassisSpeeds to/from module states. */
+  public final SwerveDriveKinematics swerveKinematics;
+  /** Differential kinematics used to convert ChassisSpeeds to/from module states. */
+  public final DifferentialDriveKinematics diffKinematics;
   /** Is the robot holonomic? */
   public final boolean isHolonomic;
 
@@ -69,7 +69,8 @@ public class RobotConfig {
           new Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
           new Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
         };
-    this.kinematics = new SwerveDriveKinematics(this.moduleLocations);
+    this.swerveKinematics = new SwerveDriveKinematics(this.moduleLocations);
+    this.diffKinematics = null;
     this.isHolonomic = true;
 
     this.numModules = this.moduleLocations.length;
@@ -101,7 +102,8 @@ public class RobotConfig {
           new Translation2d(0.0, trackwidthMeters / 2.0),
           new Translation2d(0.0, -trackwidthMeters / 2.0),
         };
-    this.kinematics = new SwerveDriveKinematics(moduleLocations);
+    this.swerveKinematics = null;
+    this.diffKinematics = new DifferentialDriveKinematics(trackwidthMeters);
     this.isHolonomic = false;
 
     this.numModules = this.moduleLocations.length;
@@ -111,6 +113,43 @@ public class RobotConfig {
     }
     this.wheelFrictionForce = this.moduleConfig.wheelCOF * ((this.massKG / numModules) * 9.8);
     this.maxTorqueFriction = this.wheelFrictionForce * this.moduleConfig.wheelRadiusMeters;
+  }
+
+  /**
+   * Convert robot-relative chassis speeds to an array of swerve module states. This will use
+   * differential kinematics for diff drive robots, then convert the wheel speeds to module states.
+   *
+   * @param speeds Robot-relative chassis speeds
+   * @return Array of swerve module states
+   */
+  public SwerveModuleState[] toSwerveModuleStates(ChassisSpeeds speeds) {
+    if (isHolonomic) {
+      return swerveKinematics.toSwerveModuleStates(speeds);
+    } else {
+      var wheelSpeeds = diffKinematics.toWheelSpeeds(speeds);
+      return new SwerveModuleState[] {
+        new SwerveModuleState(wheelSpeeds.leftMetersPerSecond, new Rotation2d()),
+        new SwerveModuleState(wheelSpeeds.rightMetersPerSecond, new Rotation2d())
+      };
+    }
+  }
+
+  /**
+   * Convert an array of swerve module states to robot-relative chassis speeds. This will use
+   * differential kinematics for diff drive robots.
+   *
+   * @param states Array of swerve module states
+   * @return Robot-relative chassis speeds
+   */
+  public ChassisSpeeds toChassisSpeeds(SwerveModuleState[] states) {
+    if (isHolonomic) {
+      return swerveKinematics.toChassisSpeeds(states);
+    } else {
+      var wheelSpeeds =
+          new DifferentialDriveWheelSpeeds(
+              states[0].speedMetersPerSecond, states[1].speedMetersPerSecond);
+      return diffKinematics.toChassisSpeeds(wheelSpeeds);
+    }
   }
 
   /**

@@ -65,6 +65,9 @@ void PathPlannerPath::hotReload(const wpi::json &json) {
 	m_goalEndState = updatedPath->m_goalEndState;
 	m_reversed = updatedPath->m_reversed;
 	m_allPoints = updatedPath->m_allPoints;
+
+	// Clear the ideal trajectory so it gets regenerated
+	m_idealTrajectory = std::nullopt;
 }
 
 std::vector<frc::Translation2d> PathPlannerPath::bezierFromPoses(

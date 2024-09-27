@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:file/file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
@@ -197,10 +198,10 @@ class PathPlannerPath {
 
   Map<String, dynamic> toJson() {
     // Make sure rotation targets and event markers are sorted
-    rotationTargets
-        .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
-    eventMarkers
-        .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+    final sortedTargets = List.of(rotationTargets).sorted(
+        (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+    final sortedMarkers = List.of(eventMarkers).sorted(
+        (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
 
     return {
       'version': 1.0,
@@ -208,13 +209,13 @@ class PathPlannerPath {
         for (Waypoint w in waypoints) w.toJson(),
       ],
       'rotationTargets': [
-        for (RotationTarget t in rotationTargets) t.toJson(),
+        for (RotationTarget t in sortedTargets) t.toJson(),
       ],
       'constraintZones': [
         for (ConstraintsZone z in constraintZones) z.toJson(),
       ],
       'eventMarkers': [
-        for (EventMarker m in eventMarkers) m.toJson(),
+        for (EventMarker m in sortedMarkers) m.toJson(),
       ],
       'globalConstraints': globalConstraints.toJson(),
       'goalEndState': goalEndState.toJson(),
@@ -353,9 +354,8 @@ class PathPlannerPath {
 
     pathPoints.clear();
 
-    List<RotationTarget> unaddedTargets = List.from(rotationTargets);
-    unaddedTargets
-        .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+    final unaddedTargets = rotationTargets.sorted(
+        (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
 
     // first point
     pathPoints.add(PathPoint(

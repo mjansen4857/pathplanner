@@ -9,5 +9,10 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
  *
  * @param robotRelativeSpeeds Robot-relative chassis speeds
  * @param moduleStates Array of individual swerve module states
+ * @param torqueCurrentFeedforwards Array of torque-current feedforwards for each module's drive
+ *     motor
  */
-public record SwerveSetpoint(ChassisSpeeds robotRelativeSpeeds, SwerveModuleState[] moduleStates) {}
+public record SwerveSetpoint(
+    ChassisSpeeds robotRelativeSpeeds,
+    SwerveModuleState[] moduleStates,
+    double[] torqueCurrentFeedforwards) {}

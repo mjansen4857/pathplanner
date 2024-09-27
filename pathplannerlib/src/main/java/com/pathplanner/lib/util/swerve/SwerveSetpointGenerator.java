@@ -305,7 +305,31 @@ public class SwerveSetpointGenerator {
             prevSetpoint.robotRelativeSpeeds().vyMetersPerSecond + min_s * dy,
             prevSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond + min_s * dtheta);
     retSpeeds = ChassisSpeeds.discretize(retSpeeds, dt);
+
+    double prevLinearVel =
+        Math.hypot(
+            prevSetpoint.robotRelativeSpeeds().vxMetersPerSecond,
+            prevSetpoint.robotRelativeSpeeds().vyMetersPerSecond);
+    double linearVel = Math.hypot(retSpeeds.vxMetersPerSecond, retSpeeds.vyMetersPerSecond);
+    double linearAccel = (linearVel - prevLinearVel) / dt;
+    Rotation2d heading =
+        new Rotation2d(
+            prevSetpoint.robotRelativeSpeeds().vxMetersPerSecond,
+            prevSetpoint.robotRelativeSpeeds().vyMetersPerSecond);
+    Translation2d forceVec = new Translation2d(linearAccel, heading).times(config.massKG);
+
+    double angularAccel =
+        (retSpeeds.omegaRadiansPerSecond - prevSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond)
+            / dt;
+    double angTorque = angularAccel * config.MOI;
+
+    // Use kinematics to convert chassis forces to wheel forces
+    var wheelForces =
+        config.kinematics.toSwerveModuleStates(
+            new ChassisSpeeds(forceVec.getX(), forceVec.getY(), angTorque));
+
     var retStates = config.kinematics.toSwerveModuleStates(retSpeeds);
+    double[] retFF = new double[config.numModules];
     for (int m = 0; m < config.numModules; m++) {
       final var maybeOverride = overrideSteering.get(m);
       if (maybeOverride.isPresent()) {
@@ -321,8 +345,18 @@ public class SwerveSetpointGenerator {
         retStates[m].angle = retStates[m].angle.rotateBy(Rotation2d.fromDegrees(180));
         retStates[m].speedMetersPerSecond *= -1.0;
       }
+
+      double forceAtCarpet = wheelForces[m].speedMetersPerSecond;
+      double wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters;
+      retFF[m] = wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
+
+      // Negate the torque if the motor should apply it in the negative direction
+      if (retStates[m].speedMetersPerSecond < prevSetpoint.moduleStates()[m].speedMetersPerSecond) {
+        retFF[m] *= -1;
+      }
     }
-    return new SwerveSetpoint(retSpeeds, retStates);
+
+    return new SwerveSetpoint(retSpeeds, retStates, retFF);
   }
 
   /**

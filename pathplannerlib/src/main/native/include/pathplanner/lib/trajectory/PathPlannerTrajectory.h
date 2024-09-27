@@ -178,40 +178,5 @@ private:
 		double t2 = (1.0 - std::cos(t * M_PI)) / 2.0;
 		return GeometryUtil::rotationLerp(start, end, t2);
 	}
-
-	static inline std::vector<frc::SwerveModuleState> toSwerveModuleStates(
-			RobotConfig config, frc::ChassisSpeeds chassisSpeeds) {
-		if (config.isHolonomic) {
-			auto states = config.swerveKinematics.ToSwerveModuleStates(
-					chassisSpeeds);
-			return std::vector < frc::SwerveModuleState
-					> (states.begin(), states.end());
-		} else {
-			auto states = config.diffKinematics.ToSwerveModuleStates(
-					chassisSpeeds);
-			return std::vector < frc::SwerveModuleState
-					> (states.begin(), states.end());
-		}
-	}
-
-	static inline frc::ChassisSpeeds toChassisSpeeds(RobotConfig config,
-			std::vector<SwerveModuleTrajectoryState> states) {
-		if (config.isHolonomic) {
-			wpi::array < frc::SwerveModuleState, 4
-					> wpiStates { frc::SwerveModuleState { states[0].speed,
-							states[0].angle }, frc::SwerveModuleState {
-							states[1].speed, states[1].angle },
-							frc::SwerveModuleState { states[2].speed,
-									states[2].angle }, frc::SwerveModuleState {
-									states[3].speed, states[3].angle } };
-			return config.swerveKinematics.ToChassisSpeeds(wpiStates);
-		} else {
-			wpi::array < frc::SwerveModuleState, 2
-					> wpiStates { frc::SwerveModuleState { states[0].speed,
-							states[0].angle }, frc::SwerveModuleState {
-							states[1].speed, states[1].angle } };
-			return config.diffKinematics.ToChassisSpeeds(wpiStates);
-		}
-	}
 };
 }

@@ -53,11 +53,11 @@ public class SwerveSetpointGenerator {
   public SwerveSetpoint generateSetpoint(
       final SwerveSetpoint prevSetpoint, ChassisSpeeds desiredStateRobotRelative, double dt) {
     SwerveModuleState[] desiredModuleStates =
-        config.kinematics.toSwerveModuleStates(desiredStateRobotRelative);
+        config.toSwerveModuleStates(desiredStateRobotRelative);
     // Make sure desiredState respects velocity limits.
     SwerveDriveKinematics.desaturateWheelSpeeds(
         desiredModuleStates, config.moduleConfig.maxDriveVelocityMPS);
-    desiredStateRobotRelative = config.kinematics.toChassisSpeeds(desiredModuleStates);
+    desiredStateRobotRelative = config.toChassisSpeeds(desiredModuleStates);
 
     // Special case: desiredState is a complete stop. In this case, module angle is arbitrary, so
     // just use the previous angle.
@@ -271,7 +271,7 @@ public class SwerveSetpointGenerator {
     // Use kinematics to convert chassis accelerations to module accelerations
     ChassisSpeeds chassisAccel =
         new ChassisSpeeds(chassisAccelVec.getX(), chassisAccelVec.getY(), chassisAngularAccel);
-    var accelStates = config.kinematics.toSwerveModuleStates(chassisAccel);
+    var accelStates = config.toSwerveModuleStates(chassisAccel);
 
     for (int m = 0; m < config.numModules; m++) {
       if (min_s == 0.0) {
@@ -325,10 +325,9 @@ public class SwerveSetpointGenerator {
 
     // Use kinematics to convert chassis forces to wheel forces
     var wheelForces =
-        config.kinematics.toSwerveModuleStates(
-            new ChassisSpeeds(forceVec.getX(), forceVec.getY(), angTorque));
+        config.toSwerveModuleStates(new ChassisSpeeds(forceVec.getX(), forceVec.getY(), angTorque));
 
-    var retStates = config.kinematics.toSwerveModuleStates(retSpeeds);
+    var retStates = config.toSwerveModuleStates(retSpeeds);
     double[] retFF = new double[config.numModules];
     for (int m = 0; m < config.numModules; m++) {
       final var maybeOverride = overrideSteering.get(m);

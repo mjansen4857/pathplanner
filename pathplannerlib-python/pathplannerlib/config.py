@@ -1,11 +1,9 @@
 from dataclasses import dataclass
-from enum import Enum
 from typing import Union, List
-from .geometry_util import floatLerp
-from wpimath.geometry import Translation2d
-from wpimath.kinematics import SwerveDrive2Kinematics, SwerveDrive4Kinematics
+from wpimath.geometry import Translation2d, Rotation2d
+from wpimath.kinematics import DifferentialDriveKinematics, SwerveDrive4Kinematics, SwerveModuleState, ChassisSpeeds, \
+    DifferentialDriveWheelSpeeds
 from wpimath.system.plant import DCMotor
-import math
 import os
 import json
 from wpilib import getDeployDirectory
@@ -67,8 +65,8 @@ class RobotConfig:
     moduleConfig: ModuleConfig
 
     moduleLocations: List[Translation2d]
-    diffKinematics: SwerveDrive2Kinematics
-    swerveKinematics: SwerveDrive4Kinematics
+    diffKinematics: Union[DifferentialDriveKinematics, None]
+    swerveKinematics: Union[SwerveDrive4Kinematics, None]
     isHolonomic: bool
 
     numModules: int
@@ -96,6 +94,8 @@ class RobotConfig:
                 Translation2d(0.0, trackwidthMeters / 2.0),
                 Translation2d(0.0, -trackwidthMeters / 2.0),
             ]
+            self.swerveKinematics = None
+            self.diffKinematics = DifferentialDriveKinematics(trackwidthMeters)
             self.isHolonomic = False
         else:
             self.moduleLocations = [
@@ -104,23 +104,50 @@ class RobotConfig:
                 Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
                 Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
             ]
+            self.swerveKinematics = SwerveDrive4Kinematics(
+                Translation2d(wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
+                Translation2d(wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
+                Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
+                Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
+            )
+            self.diffKinematics = None
             self.isHolonomic = True
-
-        self.diffKinematics = SwerveDrive2Kinematics(
-            Translation2d(0.0, trackwidthMeters / 2.0),
-            Translation2d(0.0, -trackwidthMeters / 2.0),
-        )
-        self.swerveKinematics = SwerveDrive4Kinematics(
-            Translation2d(wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-            Translation2d(wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-            Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-            Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-        )
 
         self.numModules = len(self.moduleLocations)
         self.modulePivotDistance = [t.norm() for t in self.moduleLocations]
         self.wheelFrictionForce = self.moduleConfig.wheelCOF * ((self.massKG / self.numModules) * 9.8)
         self.maxTorqueFriction = self.wheelFrictionForce * self.moduleConfig.wheelRadiusMeters
+
+    def toSwerveModuleStates(self, speeds: ChassisSpeeds) -> List[SwerveModuleState]:
+        """
+        Convert robot-relative chassis speeds to a list of swerve module states. This will use
+        differential kinematics for diff drive robots, then convert the wheel speeds to module states.
+
+        :param speeds: Robot-relative chassis speeds
+        :return: List of swerve module states
+        """
+        if self.isHolonomic:
+            return self.swerveKinematics.toSwerveModuleStates(speeds)
+        else:
+            wheelSpeeds = self.diffKinematics.toWheelSpeeds(speeds)
+            return [
+                SwerveModuleState(wheelSpeeds.left, Rotation2d()),
+                SwerveModuleState(wheelSpeeds.right, Rotation2d())
+            ]
+
+    def toChassisSpeeds(self, states: List[SwerveModuleState]) -> ChassisSpeeds:
+        """
+        Convert a list of swerve module states to robot-relative chassis speeds. This will use
+        differential kinematics for diff drive robots.
+
+        :param states: List of swerve module states
+        :return: Robot-relative chassis speeds
+        """
+        if self.isHolonomic:
+            return self.swerveKinematics.toChassisSpeeds(states)
+        else:
+            wheelSpeeds = DifferentialDriveWheelSpeeds(states[0].speed, states[1].speed)
+            return self.diffKinematics.toChassisSpeeds(wheelSpeeds)
 
     @staticmethod
     def fromGUISettings() -> 'RobotConfig':

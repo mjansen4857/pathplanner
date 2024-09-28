@@ -87,19 +87,23 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 					units::radians_per_second_t { angTorque } });
 
 			for (size_t m = 0; m < config.numModules; m++) {
+				units::meters_per_second_squared_t accel =
+						(state.moduleStates[m].speed
+								- prevState.moduleStates[m].speed) / dt;
 				units::newton_t forceAtCarpet { wheelForces[m].speed() };
 				units::newton_meter_t wheelTorque = forceAtCarpet
 						* config.moduleConfig.wheelRadius;
 				units::ampere_t torqueCurrent = wheelTorque
 						/ config.moduleConfig.driveMotor.Kt;
 
-				// Negate the torque if the motor is slowing down
-				if (state.moduleStates[m].speed
-						< prevState.moduleStates[m].speed) {
-					torqueCurrent *= -1;
+				// Negate the torque/force if the motor is slowing down
+				if (accel < 0_mps_sq) {
+					prevState.feedforwards.emplace_back(DriveFeedforward {
+							accel, -forceAtCarpet, -torqueCurrent });
+				} else {
+					prevState.feedforwards.emplace_back(DriveFeedforward {
+							accel, forceAtCarpet, torqueCurrent });
 				}
-
-				prevState.driveMotorTorqueCurrent.emplace_back(torqueCurrent);
 			}
 
 			if (!unaddedMarkers.empty()) {

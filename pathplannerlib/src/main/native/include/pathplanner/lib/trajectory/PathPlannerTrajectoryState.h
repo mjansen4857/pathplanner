@@ -3,7 +3,6 @@
 #include <units/velocity.h>
 #include <units/length.h>
 #include <units/time.h>
-#include <units/current.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/geometry/Translation2d.h>
@@ -12,6 +11,7 @@
 #include "pathplanner/lib/trajectory/SwerveModuleTrajectoryState.h"
 #include "pathplanner/lib/path/PathConstraints.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
+#include "pathplanner/lib/util/DriveFeedforward.h"
 
 namespace pathplanner {
 class PathPlannerTrajectoryState {
@@ -20,7 +20,7 @@ public:
 	frc::ChassisSpeeds fieldSpeeds;
 	frc::Pose2d pose;
 	units::meters_per_second_t linearVelocity = 0_mps;
-	std::vector<units::ampere_t> driveMotorTorqueCurrent;
+	std::vector<DriveFeedforward> feedforwards;
 
 	frc::Rotation2d heading;
 	units::meter_t deltaPos = 0_m;

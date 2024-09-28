@@ -31,7 +31,7 @@ std::function<
 void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 		std::function<void(frc::Pose2d)> resetPose,
 		std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-		std::function<void(frc::ChassisSpeeds, std::vector<units::ampere_t>)> output,
+		std::function<void(frc::ChassisSpeeds, std::vector<DriveFeedforward>)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 		frc2::Subsystem *driveSubsystem) {

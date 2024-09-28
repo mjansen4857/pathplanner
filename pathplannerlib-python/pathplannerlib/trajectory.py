@@ -13,6 +13,23 @@ if TYPE_CHECKING:
     from .path import PathPlannerPath, PathConstraints
 
 
+@dataclass(frozen=True)
+class DriveFeedforward:
+    accelerationMPS: float = 0.0
+    forceNewtons: float = 0.0
+    torqueCurrentAmps: float = 0.0
+
+    def interpolate(self, endVal: DriveFeedforward, t: float) -> DriveFeedforward:
+        return DriveFeedforward(
+            floatLerp(self.accelerationMPS, endVal.accelerationMPS, t),
+            floatLerp(self.forceNewtons, endVal.forceNewtons, t),
+            floatLerp(self.torqueCurrentAmps, endVal.torqueCurrentAmps, t)
+        )
+
+    def reverse(self) -> DriveFeedforward:
+        return DriveFeedforward(-self.accelerationMPS, -self.forceNewtons, -self.torqueCurrentAmps)
+
+
 @dataclass
 class SwerveModuleTrajectoryState(SwerveModuleState):
     fieldAngle: Rotation2d = Rotation2d()
@@ -27,7 +44,7 @@ class PathPlannerTrajectoryState:
     fieldSpeeds: ChassisSpeeds = ChassisSpeeds()
     pose: Pose2d = Pose2d()
     linearVelocity: float = 0.0
-    driveMotorTorqueCurrent: List[float] = field(default_factory=list)
+    feedforwards: List[DriveFeedforward] = field(default_factory=list)
 
     heading: Rotation2d = Rotation2d()
     deltaPos: float = 0.0
@@ -59,9 +76,9 @@ class PathPlannerTrajectoryState:
         )
         lerpedState.pose = poseLerp(self.pose, end_val.pose, t)
         lerpedState.linearVelocity = floatLerp(self.linearVelocity, end_val.linearVelocity, t)
-        lerpedState.driveMotorTorqueCurrent = [
-            floatLerp(self.driveMotorTorqueCurrent[m], end_val.driveMotorTorqueCurrent[m], t) for m in
-            range(len(self.driveMotorTorqueCurrent))
+        lerpedState.feedforwards = [
+            self.feedforwards[m].interpolate(end_val.feedforwards[m], t) for m in
+            range(len(self.feedforwards))
         ]
 
         return lerpedState
@@ -79,7 +96,7 @@ class PathPlannerTrajectoryState:
         reversedState.fieldSpeeds = ChassisSpeeds(reversedSpeeds.x, reversedSpeeds.y, self.fieldSpeeds.omega)
         reversedState.pose = Pose2d(self.pose.translation(), self.pose.rotation() + Rotation2d.fromDegrees(180))
         reversedState.linearVelocity = -self.linearVelocity
-        reversedState.driveMotorTorqueCurrent = [-c for c in self.driveMotorTorqueCurrent]
+        reversedState.driveMotorTorqueCurrent = [ff.reverse() for ff in self.feedforwards]
 
         return reversedState
 
@@ -96,17 +113,17 @@ class PathPlannerTrajectoryState:
         mirrored.pose = flipFieldPose(self.pose)
         mirrored.fieldSpeeds = ChassisSpeeds(-self.fieldSpeeds.vx, self.fieldSpeeds.vy,
                                              -self.fieldSpeeds.omega)
-        if len(self.driveMotorTorqueCurrent) == 4:
-            mirrored.driveMotorTorqueCurrent = [
-                self.driveMotorTorqueCurrent[1],
-                self.driveMotorTorqueCurrent[0],
-                self.driveMotorTorqueCurrent[3],
-                self.driveMotorTorqueCurrent[2],
+        if len(self.feedforwards) == 4:
+            mirrored.feedforwards = [
+                self.feedforwards[1],
+                self.feedforwards[0],
+                self.feedforwards[3],
+                self.feedforwards[2],
             ]
-        elif len(self.driveMotorTorqueCurrent) == 2:
-            mirrored.driveMotorTorqueCurrent = [
-                self.driveMotorTorqueCurrent[1],
-                self.driveMotorTorqueCurrent[0],
+        elif len(self.feedforwards) == 2:
+            mirrored.feedforwards = [
+                self.feedforwards[1],
+                self.feedforwards[0],
             ]
 
         return mirrored
@@ -198,15 +215,16 @@ class PathPlannerTrajectory:
                     wheelForces = config.toSwerveModuleStates(ChassisSpeeds(forceVec.x, forceVec.y, angTorque))
 
                     for m in range(config.numModules):
+                        accel = (state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt
                         forceAtCarpet = wheelForces[m].speed
                         wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters
                         torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
 
-                        # Negate the torque if the motor is slowing down
-                        if state.moduleStates[m].speed < prevState.moduleStates[m].speed:
-                            torqueCurrent *= -1
-
-                        prevState.driveMotorTorqueCurrent.append(torqueCurrent)
+                        # Negate the torque/force if the motor is slowing down
+                        if accel < 0:
+                            prevState.feedforwards.append(DriveFeedforward(accel, -forceAtCarpet, -torqueCurrent))
+                        else:
+                            prevState.feedforwards.append(DriveFeedforward(accel, forceAtCarpet, torqueCurrent))
 
                     if len(unaddedMarkers) > 0:
                         m = unaddedMarkers[0]

@@ -1,6 +1,7 @@
 package com.pathplanner.lib.util.swerve;
 
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.util.DriveFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -306,6 +307,8 @@ public class SwerveSetpointGenerator {
             prevSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond + min_s * dtheta);
     retSpeeds = ChassisSpeeds.discretize(retSpeeds, dt);
 
+    DriveFeedforward[] retFF = new DriveFeedforward[config.numModules];
+
     double prevLinearVel =
         Math.hypot(
             prevSetpoint.robotRelativeSpeeds().vxMetersPerSecond,
@@ -328,7 +331,6 @@ public class SwerveSetpointGenerator {
         config.toSwerveModuleStates(new ChassisSpeeds(forceVec.getX(), forceVec.getY(), angTorque));
 
     var retStates = config.toSwerveModuleStates(retSpeeds);
-    double[] retFF = new double[config.numModules];
     for (int m = 0; m < config.numModules; m++) {
       final var maybeOverride = overrideSteering.get(m);
       if (maybeOverride.isPresent()) {
@@ -345,13 +347,18 @@ public class SwerveSetpointGenerator {
         retStates[m].speedMetersPerSecond *= -1.0;
       }
 
+      double accel =
+          (retStates[m].speedMetersPerSecond - prevSetpoint.moduleStates()[m].speedMetersPerSecond)
+              / dt;
       double forceAtCarpet = wheelForces[m].speedMetersPerSecond;
       double wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters;
-      retFF[m] = wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
+      double torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
 
-      // Negate the torque if the motor should apply it in the negative direction
-      if (retStates[m].speedMetersPerSecond < prevSetpoint.moduleStates()[m].speedMetersPerSecond) {
-        retFF[m] *= -1;
+      // Negate the torque/force if the motor should apply it in the negative direction
+      if (accel < 0) {
+        retFF[m] = new DriveFeedforward(accel, -forceAtCarpet, -torqueCurrent);
+      } else {
+        retFF[m] = new DriveFeedforward(accel, forceAtCarpet, torqueCurrent);
       }
     }
 

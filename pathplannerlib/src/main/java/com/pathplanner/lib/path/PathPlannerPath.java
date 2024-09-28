@@ -614,16 +614,30 @@ public class PathPlannerPath {
         }
       }
 
-      // Add a rotation target to the previous point if it is closer to it than
-      // the current point
-      if (!unaddedTargets.isEmpty()) {
-        if (Math.abs(unaddedTargets.get(0).getPosition() - prevWaypointPos)
-            <= Math.abs(unaddedTargets.get(0).getPosition() - pos)) {
-          points.get(points.size() - 1).rotationTarget = unaddedTargets.remove(0);
+      // Add rotation targets
+      RotationTarget target = null;
+      PathPoint prevPoint = points.get(points.size() - 1);
+
+      while (!unaddedTargets.isEmpty()
+          && unaddedTargets.get(0).getPosition() >= prevWaypointPos
+          && unaddedTargets.get(0).getPosition() <= pos) {
+        if (Math.abs(unaddedTargets.get(0).getPosition() - prevWaypointPos) < 0.001) {
+          // Close enough to prev pos
+          prevPoint.rotationTarget = unaddedTargets.remove(0);
+        } else if (Math.abs(unaddedTargets.get(0).getPosition() - pos) < 0.001) {
+          // Close enough to next pos
+          target = unaddedTargets.remove(0);
+        } else {
+          // We should insert a point at the exact position
+          RotationTarget t = unaddedTargets.remove(0);
+          points.add(
+              new PathPoint(
+                  samplePath(t.getPosition()), t, constraintsForWaypointPos(t.getPosition())));
+          points.get(points.size() - 1).waypointRelativePos = t.getPosition();
         }
       }
 
-      points.add(new PathPoint(position, null, constraintsForWaypointPos(pos)));
+      points.add(new PathPoint(position, target, constraintsForWaypointPos(pos)));
       points.get(points.size() - 1).waypointRelativePos = pos;
       pos = Math.min(pos + targetIncrement, numSegments);
     }

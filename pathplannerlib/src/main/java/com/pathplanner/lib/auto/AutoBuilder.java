@@ -5,6 +5,7 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.DriveFeedforward;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -43,11 +44,11 @@ public class AutoBuilder {
    * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
-   * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
-   *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
-   *     BL, BR order. If using a differential drive, they will be in L, R order.
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
    *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
-   *     module states, you will need to negate the torque for modules that have been flipped
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
    * @param controller Path following controller that will be used to follow paths
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
@@ -58,7 +59,7 @@ public class AutoBuilder {
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
-      BiConsumer<ChassisSpeeds, double[]> output,
+      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -138,7 +139,7 @@ public class AutoBuilder {
         poseSupplier,
         resetPose,
         robotRelativeSpeedsSupplier,
-        (speeds, torqueCurrent) -> output.accept(speeds),
+        (speeds, feedforwards) -> output.accept(speeds),
         controller,
         robotConfig,
         shouldFlipPath,

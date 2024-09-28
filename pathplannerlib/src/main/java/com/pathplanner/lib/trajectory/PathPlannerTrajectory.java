@@ -6,6 +6,7 @@ import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
+import com.pathplanner.lib.util.DriveFeedforward;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -128,16 +129,19 @@ public class PathPlannerTrajectory {
                 new ChassisSpeeds(forceVec.getX(), forceVec.getY(), angTorque));
 
         for (int m = 0; m < config.numModules; m++) {
+          double accel =
+              (state.moduleStates[m].speedMetersPerSecond
+                      - prevState.moduleStates[m].speedMetersPerSecond)
+                  / dt;
           double forceAtCarpet = wheelForces[m].speedMetersPerSecond;
           double wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters;
+          double torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
 
-          prevState.driveMotorTorqueCurrent[m] =
-              wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
-
-          // Negate the torque if the motor is slowing down
-          if (state.moduleStates[m].speedMetersPerSecond
-              < prevState.moduleStates[m].speedMetersPerSecond) {
-            prevState.driveMotorTorqueCurrent[m] *= -1;
+          // Negate the torque/force if the motor is slowing down
+          if (accel < 0) {
+            prevState.feedforwards[m] = new DriveFeedforward(accel, -forceAtCarpet, -torqueCurrent);
+          } else {
+            prevState.feedforwards[m] = new DriveFeedforward(accel, forceAtCarpet, torqueCurrent);
           }
         }
 
@@ -213,7 +217,7 @@ public class PathPlannerTrajectory {
       }
 
       state.moduleStates = new SwerveModuleTrajectoryState[config.numModules];
-      state.driveMotorTorqueCurrent = new double[config.numModules];
+      state.feedforwards = new DriveFeedforward[config.numModules];
       for (int m = 0; m < config.numModules; m++) {
         state.moduleStates[m] = new SwerveModuleTrajectoryState();
         state.moduleStates[m].fieldPos =

@@ -8,6 +8,7 @@ import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.events.EventScheduler;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
+import com.pathplanner.lib.util.DriveFeedforward;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -30,7 +31,7 @@ public class FollowPathCommand extends Command {
   private final PathPlannerPath originalPath;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
-  private final BiConsumer<ChassisSpeeds, double[]> output;
+  private final BiConsumer<ChassisSpeeds, DriveFeedforward[]> output;
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
   private final BooleanSupplier shouldFlipPath;
@@ -45,11 +46,11 @@ public class FollowPathCommand extends Command {
    * @param path The path to follow
    * @param poseSupplier Function that supplies the current field-relative pose of the robot
    * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
-   * @param output Output function that accepts robot-relative ChassisSpeeds and torque-current
-   *     feedforwards for each drive motor. If using swerve, these feedforwards will be in FL, FR,
-   *     BL, BR order. If using a differential drive, they will be in L, R order.
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
    *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
-   *     module states, you will need to negate the torque for modules that have been flipped
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
@@ -60,7 +61,7 @@ public class FollowPathCommand extends Command {
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      BiConsumer<ChassisSpeeds, double[]> output,
+      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -169,7 +170,7 @@ public class FollowPathCommand extends Command {
         targetSpeeds.omegaRadiansPerSecond);
     PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
 
-    output.accept(targetSpeeds, targetState.driveMotorTorqueCurrent);
+    output.accept(targetSpeeds, targetState.feedforwards);
 
     eventScheduler.execute(currentTime);
   }
@@ -186,7 +187,11 @@ public class FollowPathCommand extends Command {
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine
     if (!interrupted && path.getGoalEndState().getVelocity() < 0.1) {
-      output.accept(new ChassisSpeeds(), new double[robotConfig.numModules]);
+      var ff = new DriveFeedforward[robotConfig.numModules];
+      for (int m = 0; m < robotConfig.numModules; m++) {
+        ff[m] = new DriveFeedforward(0.0, 0.0, 0.0);
+      }
+      output.accept(new ChassisSpeeds(), ff);
     }
 
     PathPlannerLogging.logActivePath(null);
@@ -214,7 +219,7 @@ public class FollowPathCommand extends Command {
             path,
             Pose2d::new,
             ChassisSpeeds::new,
-            (speeds, torqueCurrent) -> {},
+            (speeds, feedforwards) -> {},
             new PPHolonomicDriveController(
                 new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
             new RobotConfig(

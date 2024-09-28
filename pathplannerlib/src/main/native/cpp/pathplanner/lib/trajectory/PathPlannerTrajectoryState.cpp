@@ -24,10 +24,9 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 					t));
 	lerpedState.linearVelocity = GeometryUtil::unitLerp(linearVelocity,
 			endVal.linearVelocity, t);
-	for (size_t m = 0; m < driveMotorTorqueCurrent.size(); m++) {
-		lerpedState.driveMotorTorqueCurrent.emplace_back(
-				GeometryUtil::unitLerp(driveMotorTorqueCurrent[m],
-						endVal.driveMotorTorqueCurrent[m], t));
+	for (size_t m = 0; m < feedforwards.size(); m++) {
+		lerpedState.feedforwards.emplace_back(
+				feedforwards[m].interpolate(endVal.feedforwards[m], t));
 	}
 
 	return lerpedState;
@@ -46,8 +45,8 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 	reversed.pose = frc::Pose2d(pose.Translation(),
 			pose.Rotation() + frc::Rotation2d(180_deg));
 	reversed.linearVelocity = -linearVelocity;
-	for (auto torqueCurrent : driveMotorTorqueCurrent) {
-		reversed.driveMotorTorqueCurrent.emplace_back(-torqueCurrent);
+	for (auto ff : feedforwards) {
+		reversed.feedforwards.emplace_back(ff.reverse());
 	}
 
 	return reversed;
@@ -61,20 +60,14 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::flip() const {
 	mirrored.pose = GeometryUtil::flipFieldPose(pose);
 	mirrored.fieldSpeeds = frc::ChassisSpeeds { -fieldSpeeds.vx, fieldSpeeds.vy,
 			-fieldSpeeds.omega };
-	if (driveMotorTorqueCurrent.size() == 4) {
-		mirrored.driveMotorTorqueCurrent.emplace_back(
-				driveMotorTorqueCurrent[1]);
-		mirrored.driveMotorTorqueCurrent.emplace_back(
-				driveMotorTorqueCurrent[0]);
-		mirrored.driveMotorTorqueCurrent.emplace_back(
-				driveMotorTorqueCurrent[3]);
-		mirrored.driveMotorTorqueCurrent.emplace_back(
-				driveMotorTorqueCurrent[2]);
-	} else if (driveMotorTorqueCurrent.size() == 2) {
-		mirrored.driveMotorTorqueCurrent.emplace_back(
-				driveMotorTorqueCurrent[1]);
-		mirrored.driveMotorTorqueCurrent.emplace_back(
-				driveMotorTorqueCurrent[0]);
+	if (feedforwards.size() == 4) {
+		mirrored.feedforwards.emplace_back(feedforwards[1]);
+		mirrored.feedforwards.emplace_back(feedforwards[0]);
+		mirrored.feedforwards.emplace_back(feedforwards[3]);
+		mirrored.feedforwards.emplace_back(feedforwards[2]);
+	} else if (feedforwards.size() == 2) {
+		mirrored.feedforwards.emplace_back(feedforwards[1]);
+		mirrored.feedforwards.emplace_back(feedforwards[0]);
 	}
 
 	return mirrored;

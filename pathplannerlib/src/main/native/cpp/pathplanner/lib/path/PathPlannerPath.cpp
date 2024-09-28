@@ -381,18 +381,34 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 			}
 		}
 
-		// Add a rotation target to the previous point if it is closer to it than
-		// the current point
-		if (!unaddedTargets.empty()) {
+		// Add rotation targets
+		std::optional < RotationTarget > target = std::nullopt;
+		PathPoint prevPoint = points[points.size() - 1];
+
+		while (!unaddedTargets.empty()
+				&& unaddedTargets[0].getPosition() >= prevWaypointPos
+				&& unaddedTargets[0].getPosition() <= pos) {
 			if (std::abs(unaddedTargets[0].getPosition() - prevWaypointPos)
-					<= std::abs(unaddedTargets[0].getPosition() - pos)) {
-				points[points.size() - 1].rotationTarget = unaddedTargets[0];
+					< 0.001) {
+				// Close enough to prev pos
+				prevPoint.rotationTarget = unaddedTargets[0];
 				unaddedTargets.erase(unaddedTargets.begin());
+			} else if (std::abs(unaddedTargets[0].getPosition() - pos)
+					< 0.001) {
+				// Close enough to next pos
+				target = unaddedTargets[0];
+				unaddedTargets.erase(unaddedTargets.begin());
+			} else {
+				// We should insert a point at the exact position
+				RotationTarget t = unaddedTargets[0];
+				unaddedTargets.erase(unaddedTargets.begin());
+				points.emplace_back(samplePath(t.getPosition()), t,
+						constraintsForWaypointPos(t.getPosition()));
+				points[points.size() - 1].waypointRelativePos = t.getPosition();
 			}
 		}
 
-		points.emplace_back(position, std::nullopt,
-				constraintsForWaypointPos(pos));
+		points.emplace_back(position, target, constraintsForWaypointPos(pos));
 		points[points.size() - 1].waypointRelativePos = pos;
 		pos = std::min(pos + targetIncrement, static_cast<double>(numSegments));
 	}

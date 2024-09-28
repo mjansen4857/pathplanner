@@ -773,14 +773,25 @@ class PathPlannerPath:
                     pos = pos + (correctIncrement * 0.5)
                     position = self._samplePath(pos)
 
-            # Add a rotation target to the previous point if it is closer to it than
-            # the current point
-            if len(unaddedTargets) > 0:
-                if abs(unaddedTargets[0].waypointRelativePosition - prevWaypointPos) <= abs(
-                        unaddedTargets[0].waypointRelativePosition - pos):
-                    points[-1].rotationTarget = unaddedTargets.pop(0)
+            # Add rotation targets
+            target: Union[RotationTarget, None] = None
+            prevPoint = points[-1]
 
-            points.append(PathPoint(position, None, self._constraintsForWaypointPos(pos)))
+            while len(unaddedTargets) > 0 and prevWaypointPos <= unaddedTargets[0].waypointRelativePosition <= pos:
+                if abs(unaddedTargets[0].waypointRelativePosition - prevWaypointPos) < 0.001:
+                    # Close enough to prev pos
+                    prevPoint.rotationTarget = unaddedTargets.pop(0)
+                elif abs(unaddedTargets[0].waypointRelativePosition - pos) < 0.001:
+                    # Close enough to next pos
+                    target = unaddedTargets.pop(0)
+                else:
+                    # We should insert a point at the exact position
+                    t = unaddedTargets.pop(0)
+                    points.append(PathPoint(self._samplePath(t.waypointRelativePosition), t,
+                                            self._constraintsForWaypointPos(t.waypointRelativePosition)))
+                    points[-1].waypointRelativePos = t.waypointRelativePosition
+
+            points.append(PathPoint(position, target, self._constraintsForWaypointPos(pos)))
             points[-1].waypointRelativePos = pos
             pos = min(pos + targetIncrement, numSegments)
 

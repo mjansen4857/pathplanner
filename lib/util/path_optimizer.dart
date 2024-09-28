@@ -79,7 +79,7 @@ class PathOptimizer {
           return individual;
         });
 
-        // Repeat until convergance or max iterations:
+        // Repeat until max iterations:
         //    a. Select parents from population
         //    b. Crossover and generate new population
         //    c. Perform mutation on population
@@ -156,10 +156,10 @@ class _Individual {
       double prob = Random().nextDouble();
 
       if (prob < 0.3) {
-        // If prob is less than 0.4, insert waypoint (gene) from parent 1
+        // If prob is less than 0.3, insert waypoint (gene) from parent 1
         childWaypoints.add(path.waypoints[i]);
       } else if (prob < 0.6) {
-        // If prob is between 0.4 and 0.8, insert gene from parent 2
+        // If prob is between 0.3 and 0.6, insert gene from parent 2
         childWaypoints.add(parent2.path.waypoints[i]);
       } else {
         // Otherwise, insert mutated gene

@@ -177,6 +177,31 @@ Start Position Slider
 End Position Slider
 : Controls the waypoint relative position of the end of the zone.
 
+### Path Optimization
+
+<img src="path-optimizer.gif" alt="path optimization" border-effect="rounded"/>
+
+The path editor includes a path optimizer tool that uses a genetic algorithm to adjust the shape of the path, minimizing
+the total runtime of the path. The optimizer is not guaranteed to find the true "optimal" path shape, but it can be run
+multiple times if better results are desired.
+
+#### Path Optimizer Tree
+
+<img src="path_optimizer_tree.png" alt="path optimizer tree" border-effect="rounded"/>
+
+Optimized Runtime
+: The total runtime of the current best result of the path optimizer
+
+Optimize Button
+: Run the optimizer for the current path. The progress of the optimizer will be displayed in the progress bar below the
+buttons
+
+Discard Button
+: Discard the result of the optimizer
+
+Accept Button
+: Accept the result of the optimizer and update the current path to match
+
 ### Reversed
 
 This reversal checkbox is only available if holonomic mode is off. If selected, the robot will drive backwards when

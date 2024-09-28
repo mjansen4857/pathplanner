@@ -61,6 +61,7 @@ dependencies:
   scidart: ^0.0.2-dev.12
   dropdown_button2: ^2.3.9
   flex_seed_scheme: ^2.0.0
+  isolate_manager: ^5.4.0
 
 dev_dependencies:
   flutter_test:

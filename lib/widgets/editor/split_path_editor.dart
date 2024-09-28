@@ -512,7 +512,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     undoStack: widget.undoStack,
                     holonomicMode: _holonomicMode,
                     defaultConstraints: _getDefaultConstraints(),
+                    prefs: widget.prefs,
                     onPathChanged: () {
+                      print('wtf');
                       setState(() {
                         widget.path.generateAndSavePath();
                         _simulatePath();
@@ -658,6 +660,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         _selectedMarker = value;
                       });
                     },
+                    onOptimizationUpdate: (result) => setState(() {
+                      _optimizedPath = result;
+                    }),
                   ),
                 ),
               ),
@@ -670,70 +675,6 @@ class _SplitPathEditorState extends State<SplitPathEditor>
             ],
           ),
         ),
-        Align(
-          alignment: Alignment.bottomLeft,
-          child: TextButton(
-            child: const Text('Optimize'),
-            onPressed: () {
-              // TODO: better way to get config
-              num halfWheelbase =
-                  (widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
-                          Defaults.robotWheelbase) /
-                      2;
-              num halfTrackwidth =
-                  (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
-                          Defaults.robotTrackwidth) /
-                      2;
-              List<Translation2d> moduleLocations = _holonomicMode
-                  ? [
-                      Translation2d(x: halfWheelbase, y: halfTrackwidth),
-                      Translation2d(x: halfWheelbase, y: -halfTrackwidth),
-                      Translation2d(x: -halfWheelbase, y: halfTrackwidth),
-                      Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
-                    ]
-                  : [
-                      Translation2d(x: 0, y: halfTrackwidth),
-                      Translation2d(x: 0, y: -halfTrackwidth),
-                    ];
-
-              int numMotors = _holonomicMode ? 1 : 2;
-              DCMotor driveMotor = DCMotor.fromString(
-                      widget.prefs.getString(PrefsKeys.driveMotor) ??
-                          Defaults.driveMotor,
-                      numMotors)
-                  .withReduction(
-                      widget.prefs.getDouble(PrefsKeys.driveGearing) ??
-                          Defaults.driveGearing);
-              RobotConfig config = RobotConfig(
-                massKG: widget.prefs.getDouble(PrefsKeys.robotMass) ??
-                    Defaults.robotMass,
-                moi: widget.prefs.getDouble(PrefsKeys.robotMOI) ??
-                    Defaults.robotMOI,
-                moduleConfig: ModuleConfig(
-                  wheelRadiusMeters:
-                      widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
-                          Defaults.driveWheelRadius,
-                  maxDriveVelocityMPS:
-                      widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
-                          Defaults.maxDriveSpeed,
-                  driveMotor: driveMotor,
-                  driveCurrentLimit:
-                      widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
-                          Defaults.driveCurrentLimit,
-                  wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
-                      Defaults.wheelCOF,
-                ),
-                moduleLocations: moduleLocations,
-                holonomic: _holonomicMode,
-              );
-
-              PathOptimizer.optimizePath(widget.path, config)
-                  .then((p) => setState(() {
-                        _optimizedPath = p;
-                      }));
-            },
-          ),
-        ),
       ],
     );
   }
@@ -741,58 +682,12 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   // marked as async so it can be called from initState
   void _simulatePath() async {
     if (widget.simulate) {
-      num halfWheelbase = (widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
-              Defaults.robotWheelbase) /
-          2;
-      num halfTrackwidth = (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
-              Defaults.robotTrackwidth) /
-          2;
-      List<Translation2d> moduleLocations = _holonomicMode
-          ? [
-              Translation2d(x: halfWheelbase, y: halfTrackwidth),
-              Translation2d(x: halfWheelbase, y: -halfTrackwidth),
-              Translation2d(x: -halfWheelbase, y: halfTrackwidth),
-              Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
-            ]
-          : [
-              Translation2d(x: 0, y: halfTrackwidth),
-              Translation2d(x: 0, y: -halfTrackwidth),
-            ];
-
-      int numMotors = _holonomicMode ? 1 : 2;
-      DCMotor driveMotor = DCMotor.fromString(
-              widget.prefs.getString(PrefsKeys.driveMotor) ??
-                  Defaults.driveMotor,
-              numMotors)
-          .withReduction(widget.prefs.getDouble(PrefsKeys.driveGearing) ??
-              Defaults.driveGearing);
-      RobotConfig config = RobotConfig(
-        massKG:
-            widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
-        moi: widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
-        moduleConfig: ModuleConfig(
-          wheelRadiusMeters:
-              widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
-                  Defaults.driveWheelRadius,
-          maxDriveVelocityMPS:
-              widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
-                  Defaults.maxDriveSpeed,
-          driveMotor: driveMotor,
-          driveCurrentLimit:
-              widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
-                  Defaults.driveCurrentLimit,
-          wheelCOF:
-              widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
-        ),
-        moduleLocations: moduleLocations,
-        holonomic: _holonomicMode,
-      );
-
       setState(() {
         _simTraj = PathPlannerTrajectory(
           path: widget.path,
-          robotConfig: config,
+          robotConfig: RobotConfig.fromPrefs(widget.prefs),
         );
+        print('huh? ${_simTraj?.getTotalTimeSeconds()}');
         if (!(_simTraj?.getTotalTimeSeconds().isFinite ?? false)) {
           _simTraj = null;
         }

@@ -7,8 +7,10 @@ import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart'
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/ideal_starting_state_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/path_optimization_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
 class PathTree extends StatefulWidget {
@@ -22,6 +24,7 @@ class PathTree extends StatefulWidget {
   final ValueChanged<int?>? onMarkerHovered;
   final ValueChanged<int?>? onMarkerSelected;
   final ValueChanged<int>? onWaypointDeleted;
+  final ValueChanged<PathPlannerPath?>? onOptimizationUpdate;
   final VoidCallback? onSideSwapped;
   final VoidCallback? onPathChanged;
   final VoidCallback? onPathChangedNoSim;
@@ -34,6 +37,7 @@ class PathTree extends StatefulWidget {
   final num? pathRuntime;
   final bool holonomicMode;
   final PathConstraints defaultConstraints;
+  final SharedPreferences prefs;
 
   const PathTree({
     super.key,
@@ -45,6 +49,7 @@ class PathTree extends StatefulWidget {
     this.waypointsTreeController,
     this.initiallySelectedWaypoint,
     this.onWaypointDeleted,
+    this.onOptimizationUpdate,
     this.onZoneHovered,
     this.onZoneSelected,
     this.initiallySelectedZone,
@@ -59,6 +64,7 @@ class PathTree extends StatefulWidget {
     this.onPathChangedNoSim,
     required this.holonomicMode,
     required this.defaultConstraints,
+    required this.prefs,
   });
 
   @override
@@ -158,6 +164,13 @@ class _PathTreeState extends State<PathTree> {
                 ),
                 _buildReversedCheckbox(),
                 const Divider(),
+                PathOptimizationTree(
+                  path: widget.path,
+                  onPathChanged: widget.onPathChanged,
+                  onUpdate: widget.onOptimizationUpdate,
+                  undoStack: widget.undoStack,
+                  prefs: widget.prefs,
+                ),
                 const EditorSettingsTree(),
               ],
             ),

@@ -48,6 +48,7 @@ class PathPlannerPath {
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
   bool previewStartingStateExpanded = false;
+  bool pathOptimizationExpanded = false;
   DateTime lastModified = DateTime.now().toUtc();
 
   PathPlannerPath.defaultPath({

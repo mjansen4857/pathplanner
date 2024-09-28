@@ -12,11 +12,8 @@ import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/trajectory/config.dart';
-import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
-import 'package:pathplanner/util/path_optimizer.dart';
 import 'package:pathplanner/util/prefs.dart';
-import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
@@ -503,7 +500,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
-                    pathRuntime: _simTraj?.states.last.timeSeconds,
+                    pathRuntime: _simTraj?.getTotalTimeSeconds(),
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
                     initiallySelectedRotTarget: _selectedRotTarget,
@@ -514,7 +511,6 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     defaultConstraints: _getDefaultConstraints(),
                     prefs: widget.prefs,
                     onPathChanged: () {
-                      print('wtf');
                       setState(() {
                         widget.path.generateAndSavePath();
                         _simulatePath();
@@ -687,7 +683,6 @@ class _SplitPathEditorState extends State<SplitPathEditor>
           path: widget.path,
           robotConfig: RobotConfig.fromPrefs(widget.prefs),
         );
-        print('huh? ${_simTraj?.getTotalTimeSeconds()}');
         if (!(_simTraj?.getTotalTimeSeconds().isFinite ?? false)) {
           _simTraj = null;
         }

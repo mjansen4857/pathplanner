@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/trajectory/config.dart';
-import 'package:pathplanner/trajectory/dc_motor.dart';
-import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/path_optimizer.dart';
-import 'package:pathplanner/util/prefs.dart';
-import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
@@ -91,10 +87,6 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
                                     widget.onUpdate?.call(_currentResult?.path);
                                   }));
 
-                          print(
-                              'test: ${PathPlannerTrajectory(path: result.path, robotConfig: config).getTotalTimeSeconds()}');
-                          print(result.path.rotationTargets.length);
-
                           setState(() {
                             _running = false;
                             _currentResult = result;
@@ -150,19 +142,24 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
                           final points = PathPlannerPath.cloneWaypoints(
                               _currentResult!.path.waypoints);
 
-                          setState(() {
-                            _currentResult = null;
-                          });
-                          widget.onUpdate?.call(_currentResult?.path);
-
                           widget.undoStack.add(Change(
                             PathPlannerPath.cloneWaypoints(
                                 widget.path.waypoints),
                             () {
+                              setState(() {
+                                _currentResult = null;
+                              });
+                              widget.onUpdate?.call(_currentResult?.path);
+
                               widget.path.waypoints = points;
                               widget.onPathChanged?.call();
                             },
                             (oldValue) {
+                              setState(() {
+                                _currentResult = null;
+                              });
+                              widget.onUpdate?.call(_currentResult?.path);
+
                               widget.path.waypoints =
                                   PathPlannerPath.cloneWaypoints(oldValue);
                               widget.onPathChanged?.call();

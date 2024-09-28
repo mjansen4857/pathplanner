@@ -335,12 +335,12 @@ void main() {
 
     num oldVal = path.waypoints[1].getPrevControlLength();
 
-    await widgetTester.enterText(textField, '0.1');
+    await widgetTester.enterText(textField, '0.75');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].getPrevControlLength(), closeTo(0.1, epsilon));
+    expect(path.waypoints[1].getPrevControlLength(), closeTo(0.75, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
@@ -370,12 +370,12 @@ void main() {
 
     num oldVal = path.waypoints[0].getNextControlLength();
 
-    await widgetTester.enterText(textField, '0.1');
+    await widgetTester.enterText(textField, '0.75');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[0].getNextControlLength(), closeTo(0.1, epsilon));
+    expect(path.waypoints[0].getNextControlLength(), closeTo(0.75, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:isolate_manager/isolate_manager.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 
@@ -38,22 +39,23 @@ class PathOptimizer {
 
     _manager ??= IsolateManager.createCustom(_optimizePathWaypoints);
 
+    Log.info('Optimizing path: ${path.name}');
+
     final start = DateTime.now();
     final OptimizationResult result = await _manager!.compute(
       _OptimizerArgs(copy, config),
       callback: (value) {
         OptimizationResult result = value;
-
-        print(
-            'Best time for generation ${result.generation}: ${result.runtime.toStringAsFixed(2)}');
+        Log.info(
+            'Best fit after generation ${result.generation}: ${result.runtime.toStringAsFixed(2)}s');
         onUpdate?.call(result);
 
         return result.generation == generations;
       },
     );
     final runtime = DateTime.now().difference(start);
-    print(
-        'Optimization time: ${(runtime.inMilliseconds / 1000.0).toStringAsFixed(2)}s');
+    Log.info(
+        'Finished ${PathOptimizer.generations} generations in ${(runtime.inMilliseconds / 1000.0).toStringAsFixed(2)}s');
     return result;
   }
 
@@ -100,22 +102,6 @@ class PathOptimizer {
             nextGen.add(parent1.crossover(parent2));
           }
 
-          // await Future.forEach<int>(
-          //   List.generate((populationSize * 0.9).floor(), (idx) => idx),
-          //   (i) async {
-          //     final parent1 =
-          //         population[rand.nextInt((populationSize * 0.5).floor())];
-          //     final parent2 =
-          //         population[rand.nextInt((populationSize * 0.5).floor())];
-
-          //     final offspring = await _shared!
-          //         .compute(crossoverAndCalcFitness, (parent1, parent2));
-          //     nextGen.add(offspring);
-          //   },
-          // );
-
-          population = nextGen;
-
           if (bestFit == null || population.first.fitness < bestFit.runtime) {
             bestFit = OptimizationResult(
                 population.first.path, population.first.fitness, generation);
@@ -124,6 +110,7 @@ class PathOptimizer {
           }
           controller.sendResult(bestFit);
 
+          population = nextGen;
           generation++;
         }
 
@@ -136,12 +123,6 @@ class PathOptimizer {
         }
       },
     );
-  }
-
-  @isolateManagerSharedWorker
-  static _Individual crossoverAndCalcFitness(
-      (_Individual p1, _Individual p2) parents) {
-    return parents.$1.crossover(parents.$2);
   }
 }
 
@@ -163,7 +144,7 @@ class _Individual {
   late final num fitness;
 
   _Individual(this.path, this.config) {
-    path.generatePathPoints;
+    path.generatePathPoints();
     fitness = PathPlannerTrajectory(path: path, robotConfig: config)
         .getTotalTimeSeconds();
   }
@@ -210,14 +191,14 @@ class _Individual {
     if (mutated.prevControl != null) {
       // Mutate by changing prev control length randomly between +/- 0.2 m
       double x = (rand.nextDouble() - 0.5) * 0.2;
-      double prevLength = max(0.05, mutated.getPrevControlLength() + x);
+      double prevLength = max(0.5, mutated.getPrevControlLength() + x);
       mutated.setPrevControlLength(prevLength);
     }
 
     if (mutated.nextControl != null) {
       // Mutate by changing next control length randomly between +/- 0.2 m
       double x = (rand.nextDouble() - 0.5) * 0.2;
-      double nextLength = max(0.05, mutated.getNextControlLength() + x);
+      double nextLength = max(0.5, mutated.getNextControlLength() + x);
       mutated.setNextControlLength(nextLength);
     }
 

@@ -31,6 +31,7 @@ class PathPainter extends CustomPainter {
   final PathPlannerTrajectory? simulatedPath;
   final Color? previewColor;
   final SharedPreferences prefs;
+  final PathPlannerPath? optimizedPath;
 
   late Size robotSize;
   late num robotRadius;
@@ -60,6 +61,7 @@ class PathPainter extends CustomPainter {
     Animation<double>? animation,
     this.previewColor,
     required this.prefs,
+    this.optimizedPath,
   }) : super(repaint: animation) {
     double robotWidth =
         prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
@@ -140,6 +142,10 @@ class PathPainter extends CustomPainter {
       _paintChoreoWaypoint(
           choreoPaths[i].trajectory.states.last, canvas, Colors.red, scale);
       _paintChoreoMarkers(choreoPaths[i], canvas);
+    }
+
+    if (optimizedPath != null) {
+      _paintPathPoints(optimizedPath!, canvas, Colors.deepPurpleAccent, 4.0);
     }
 
     for (int i = 1; i < paths.length; i++) {
@@ -309,11 +315,12 @@ class PathPainter extends CustomPainter {
         color.withOpacity(0.5));
   }
 
-  void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor) {
+  void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor,
+      [double strokeWidth = 2.0]) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
-      ..strokeWidth = 2;
+      ..strokeWidth = strokeWidth;
 
     Path p = Path();
 

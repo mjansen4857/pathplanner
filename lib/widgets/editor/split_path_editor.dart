@@ -14,9 +14,9 @@ import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
+import 'package:pathplanner/util/path_optimizer.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
-import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
@@ -74,6 +74,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   PathPlannerTrajectory? _simTraj;
   bool _paused = false;
   late bool _holonomicMode;
+
+  PathPlannerPath? _optimizedPath;
 
   late Size _robotSize;
   late AnimationController _previewController;
@@ -446,6 +448,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           animation: _previewController.view,
                           previewColor: colorScheme.primary,
                           prefs: widget.prefs,
+                          optimizedPath: _optimizedPath,
                         ),
                       ),
                     ),
@@ -667,6 +670,70 @@ class _SplitPathEditorState extends State<SplitPathEditor>
             ],
           ),
         ),
+        Align(
+          alignment: Alignment.bottomLeft,
+          child: TextButton(
+            child: const Text('Optimize'),
+            onPressed: () {
+              // TODO: better way to get config
+              num halfWheelbase =
+                  (widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
+                          Defaults.robotWheelbase) /
+                      2;
+              num halfTrackwidth =
+                  (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
+                          Defaults.robotTrackwidth) /
+                      2;
+              List<Translation2d> moduleLocations = _holonomicMode
+                  ? [
+                      Translation2d(x: halfWheelbase, y: halfTrackwidth),
+                      Translation2d(x: halfWheelbase, y: -halfTrackwidth),
+                      Translation2d(x: -halfWheelbase, y: halfTrackwidth),
+                      Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
+                    ]
+                  : [
+                      Translation2d(x: 0, y: halfTrackwidth),
+                      Translation2d(x: 0, y: -halfTrackwidth),
+                    ];
+
+              int numMotors = _holonomicMode ? 1 : 2;
+              DCMotor driveMotor = DCMotor.fromString(
+                      widget.prefs.getString(PrefsKeys.driveMotor) ??
+                          Defaults.driveMotor,
+                      numMotors)
+                  .withReduction(
+                      widget.prefs.getDouble(PrefsKeys.driveGearing) ??
+                          Defaults.driveGearing);
+              RobotConfig config = RobotConfig(
+                massKG: widget.prefs.getDouble(PrefsKeys.robotMass) ??
+                    Defaults.robotMass,
+                moi: widget.prefs.getDouble(PrefsKeys.robotMOI) ??
+                    Defaults.robotMOI,
+                moduleConfig: ModuleConfig(
+                  wheelRadiusMeters:
+                      widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+                          Defaults.driveWheelRadius,
+                  maxDriveVelocityMPS:
+                      widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
+                          Defaults.maxDriveSpeed,
+                  driveMotor: driveMotor,
+                  driveCurrentLimit:
+                      widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
+                          Defaults.driveCurrentLimit,
+                  wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
+                      Defaults.wheelCOF,
+                ),
+                moduleLocations: moduleLocations,
+                holonomic: _holonomicMode,
+              );
+
+              PathOptimizer.optimizePath(widget.path, config)
+                  .then((p) => setState(() {
+                        _optimizedPath = p;
+                      }));
+            },
+          ),
+        ),
       ],
     );
   }
@@ -674,14 +741,6 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   // marked as async so it can be called from initState
   void _simulatePath() async {
     if (widget.simulate) {
-      num linearVel = widget.path.idealStartingState.velocity;
-      Rotation2d startingRotation =
-          Rotation2d.fromDegrees(widget.path.idealStartingState.rotation);
-
-      Rotation2d heading = Rotation2d.fromRadians(
-          widget.path.waypoints.first.getHeadingRadians());
-      Translation2d xySpeed = Translation2d.fromAngle(linearVel, heading);
-
       num halfWheelbase = (widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
               Defaults.robotWheelbase) /
           2;
@@ -732,9 +791,6 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       setState(() {
         _simTraj = PathPlannerTrajectory(
           path: widget.path,
-          startingSpeeds:
-              ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0),
-          startingRotation: startingRotation,
           robotConfig: config,
         );
         if (!(_simTraj?.getTotalTimeSeconds().isFinite ?? false)) {

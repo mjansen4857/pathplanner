@@ -17,11 +17,23 @@ class PathPlannerTrajectory {
 
   PathPlannerTrajectory({
     required PathPlannerPath path,
-    required ChassisSpeeds startingSpeeds,
-    required Rotation2d startingRotation,
+    ChassisSpeeds? startingSpeeds,
+    Rotation2d? startingRotation,
     required RobotConfig robotConfig,
   }) : states = [] {
     DateTime startTime = DateTime.now();
+
+    if (startingSpeeds == null) {
+      num linearVel = path.idealStartingState.velocity;
+      Rotation2d heading =
+          Rotation2d.fromRadians(path.waypoints.first.getHeadingRadians());
+      Translation2d xySpeed = Translation2d.fromAngle(linearVel, heading);
+
+      startingSpeeds = ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0);
+    }
+
+    startingRotation ??=
+        Rotation2d.fromDegrees(path.idealStartingState.rotation);
 
     int prevRotationTargetIdx = 0;
     Rotation2d prevRotationTargetRot = startingRotation;

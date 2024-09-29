@@ -126,6 +126,7 @@ class Waypoint {
       anchor: anchorPt,
       prevControl: prev,
       nextControl: next,
+      isLocked: isLocked,
       linkedName: linkedName,
     );
   }

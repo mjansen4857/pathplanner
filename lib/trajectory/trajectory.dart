@@ -9,6 +9,7 @@ import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
+import 'package:pathplanner/util/wpimath/units.dart';
 
 class PathPlannerTrajectory {
   final List<TrajectoryState> states;
@@ -203,7 +204,7 @@ class PathPlannerTrajectory {
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
       num maxAngAccel =
-          GeometryUtil.toRadians(states[i].constraints.maxAngularAcceleration);
+          Units.degreesToRadians(states[i].constraints.maxAngularAcceleration);
       num angularAccel = MathUtil.clamp(
           totalTorque / robotConfig.moi, -maxAngAccel, maxAngAccel);
 
@@ -284,7 +285,7 @@ class PathPlannerTrajectory {
       PathConstraints constraints = states[i].constraints;
       num maxChassisVel = constraints.maxVelocity;
       num maxChassisAngVel =
-          GeometryUtil.toRadians(constraints.maxAngularVelocity);
+          Units.degreesToRadians(constraints.maxAngularVelocity);
 
       desaturateWheelSpeeds(
           states[i].moduleStates,
@@ -351,7 +352,7 @@ class PathPlannerTrajectory {
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
       num maxAngAccel =
-          GeometryUtil.toRadians(states[i].constraints.maxAngularAcceleration);
+          Units.degreesToRadians(states[i].constraints.maxAngularAcceleration);
       num angularAccel = MathUtil.clamp(
           totalTorque / robotConfig.moi, -maxAngAccel, maxAngAccel);
 
@@ -422,7 +423,7 @@ class PathPlannerTrajectory {
       PathConstraints constraints = states[i].constraints;
       num maxChassisVel = constraints.maxVelocity;
       num maxChassisAngVel =
-          GeometryUtil.toRadians(constraints.maxAngularVelocity);
+          Units.degreesToRadians(constraints.maxAngularVelocity);
 
       num currentVel = sqrt(
           pow(states[i].fieldSpeeds.vx, 2) + pow(states[i].fieldSpeeds.vy, 2));

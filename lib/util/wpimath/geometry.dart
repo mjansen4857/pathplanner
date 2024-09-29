@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
+import 'package:pathplanner/util/wpimath/units.dart';
 
 class Pose2d {
   final Translation2d translation;
@@ -159,7 +159,7 @@ class Rotation2d {
 
   Rotation2d.fromRadians(num radians) : this(radians);
 
-  Rotation2d.fromDegrees(num degrees) : this(GeometryUtil.toRadians(degrees));
+  Rotation2d.fromDegrees(num degrees) : this(Units.degreesToRadians(degrees));
 
   Rotation2d.fromRotations(num rotations) : this(rotations * 2 * pi);
 
@@ -190,7 +190,7 @@ class Rotation2d {
 
   num get radians => _value;
 
-  num get degrees => GeometryUtil.toDegrees(_value);
+  num get degrees => Units.radiansToDegrees(_value);
 
   num get rotations => _value / (pi * 2);
 

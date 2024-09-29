@@ -45,16 +45,6 @@ class GeometryUtil {
     );
   }
 
-  // TODO: move to units
-  static num toDegrees(num radians) {
-    return radians * 180 / pi;
-  }
-
-  // TODO: move to units
-  static num toRadians(num degrees) {
-    return degrees * pi / 180;
-  }
-
   static num calculateRadius(
       Translation2d a, Translation2d b, Translation2d c) {
     Translation2d vba = a - b;

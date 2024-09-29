@@ -60,34 +60,6 @@ void main() {
     });
   });
 
-  group('toDegrees', () {
-    test('0 radians = 0 degrees', () {
-      expect(GeometryUtil.toDegrees(0), 0);
-    });
-
-    test('pi radians = 180 degrees', () {
-      expect(GeometryUtil.toDegrees(pi), 180);
-    });
-
-    test('-pi radians = -180 degrees', () {
-      expect(GeometryUtil.toDegrees(-pi), -180);
-    });
-  });
-
-  group('toRadians', () {
-    test('0 radians = 0 degrees', () {
-      expect(GeometryUtil.toRadians(0), 0);
-    });
-
-    test('pi radians = 180 degrees', () {
-      expect(GeometryUtil.toRadians(180), pi);
-    });
-
-    test('-pi radians = -180 degrees', () {
-      expect(GeometryUtil.toRadians(-180), -pi);
-    });
-  });
-
   group('rotationLerp', () {
     test('100 to -100', () {
       expect(

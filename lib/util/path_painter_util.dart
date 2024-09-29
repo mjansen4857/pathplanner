@@ -18,7 +18,7 @@ class PathPainterUtil {
 
       canvas.save();
       canvas.translate(pos.dx, pos.dy);
-      canvas.rotate(-m.rotation.getRadians().toDouble());
+      canvas.rotate(-m.rotation.radians.toDouble());
       canvas.translate(-pos.dx, -pos.dy);
       canvas.drawRRect(
           RRect.fromRectAndRadius(

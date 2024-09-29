@@ -173,22 +173,22 @@ class PathPainter extends CustomPainter {
         List<Pose2d> modPoses = [
           Pose2d(
               state.pose.translation +
-                  Translation2d(x: wheelbase / 2, y: trackwidth / 2)
+                  Translation2d(wheelbase / 2, trackwidth / 2)
                       .rotateBy(rotation),
               state.moduleStates[0].fieldAngle),
           Pose2d(
               state.pose.translation +
-                  Translation2d(x: wheelbase / 2, y: -trackwidth / 2)
+                  Translation2d(wheelbase / 2, -trackwidth / 2)
                       .rotateBy(rotation),
               state.moduleStates[1].fieldAngle),
           Pose2d(
               state.pose.translation +
-                  Translation2d(x: -wheelbase / 2, y: trackwidth / 2)
+                  Translation2d(-wheelbase / 2, trackwidth / 2)
                       .rotateBy(rotation),
               state.moduleStates[2].fieldAngle),
           Pose2d(
               state.pose.translation +
-                  Translation2d(x: -wheelbase / 2, y: -trackwidth / 2)
+                  Translation2d(-wheelbase / 2, -trackwidth / 2)
                       .rotateBy(rotation),
               state.moduleStates[3].fieldAngle),
         ];
@@ -198,7 +198,7 @@ class PathPainter extends CustomPainter {
 
       PathPainterUtil.paintRobotOutline(
           Point(state.pose.translation.x, state.pose.translation.y),
-          rotation.getDegrees(),
+          rotation.degrees,
           fieldImage,
           robotSize,
           scale,
@@ -307,7 +307,7 @@ class PathPainter extends CustomPainter {
     // Draw robot
     PathPainterUtil.paintRobotOutline(
         Point(state.pose.translation.x, state.pose.translation.y),
-        state.pose.rotation.getDegrees(),
+        state.pose.rotation.degrees,
         fieldImage,
         robotSize,
         scale,

@@ -32,8 +32,8 @@ class Pose2d {
       angleRadians = view.getFloat64(16, Endian.little);
     }
 
-    return Pose2d(Translation2d(x: xMeters, y: yMeters),
-        Rotation2d.fromRadians(angleRadians));
+    return Pose2d(
+        Translation2d(xMeters, yMeters), Rotation2d.fromRadians(angleRadians));
   }
 
   Pose2d interpolate(Pose2d endValue, num t) {
@@ -50,64 +50,65 @@ class Pose2d {
   Pose2d clone() {
     return Pose2d(translation.clone(), rotation.clone());
   }
+
+  @override
+  String toString() {
+    return 'Pose2d($translation, $rotation)';
+  }
 }
 
 class Translation2d {
   final num x;
   final num y;
 
-  const Translation2d({
+  const Translation2d([
     this.x = 0.0,
     this.y = 0.0,
-  });
+  ]);
 
   Translation2d.fromAngle(num distance, Rotation2d angle)
-      : x = distance * angle.getCos(),
-        y = distance * angle.getSin();
+      : x = distance * angle.cosine,
+        y = distance * angle.sine;
 
   num getDistance(Translation2d other) {
     return sqrt(pow(other.x - x, 2) + pow(other.y - y, 2));
   }
 
-  num getNorm() {
-    return sqrt(pow(x, 2) + pow(y, 2));
-  }
+  num get norm => sqrt(pow(x, 2) + pow(y, 2));
 
-  Rotation2d getAngle() {
-    return Rotation2d.fromComponents(x, y);
-  }
+  Rotation2d get angle => Rotation2d.fromComponents(x, y);
 
   Translation2d rotateBy(Rotation2d other) {
     return Translation2d(
-      x: x * other.getCos() - y * other.getSin(),
-      y: x * other.getSin() + y * other.getCos(),
+      x * other.cosine - y * other.sine,
+      x * other.sine + y * other.cosine,
     );
   }
 
   Translation2d operator +(Translation2d other) {
-    return Translation2d(x: x + other.x, y: y + other.y);
+    return Translation2d(x + other.x, y + other.y);
   }
 
   Translation2d operator -(Translation2d other) {
-    return Translation2d(x: x - other.x, y: y - other.y);
+    return Translation2d(x - other.x, y - other.y);
   }
 
   Translation2d operator -() {
-    return Translation2d(x: -x, y: -y);
+    return Translation2d(-x, -y);
   }
 
   Translation2d operator *(num scalar) {
-    return Translation2d(x: x * scalar, y: y * scalar);
+    return Translation2d(x * scalar, y * scalar);
   }
 
   Translation2d operator /(num scalar) {
-    return Translation2d(x: x / scalar, y: y / scalar);
+    return Translation2d(x / scalar, y / scalar);
   }
 
   Translation2d interpolate(Translation2d endValue, num t) {
     return Translation2d(
-      x: MathUtil.interpolate(x, endValue.x, t),
-      y: MathUtil.interpolate(y, endValue.y, t),
+      MathUtil.interpolate(x, endValue.x, t),
+      MathUtil.interpolate(y, endValue.y, t),
     );
   }
 
@@ -116,7 +117,7 @@ class Translation2d {
   }
 
   Translation2d clone() {
-    return Translation2d(x: x, y: y);
+    return Translation2d(x, y);
   }
 
   @override
@@ -136,33 +137,31 @@ class Translation2d {
 }
 
 class Rotation2d {
-  late final num _value;
-  late final num _cos;
-  late final num _sin;
+  final num _value;
+  final num _cos;
+  final num _sin;
 
-  Rotation2d({num radians = 0})
+  Rotation2d([num radians = 0])
       : _value = radians,
         _cos = cos(radians),
         _sin = sin(radians);
 
-  Rotation2d.fromComponents(num x, num y) {
+  Rotation2d.fromSinCos(num sin, num cos) : this(atan2(sin, cos));
+
+  factory Rotation2d.fromComponents(num x, num y) {
     num magnitude = sqrt(pow(x, 2) + pow(y, 2));
     if (magnitude > 1e-6) {
-      _sin = y / magnitude;
-      _cos = x / magnitude;
+      return Rotation2d.fromSinCos(y / magnitude, x / magnitude);
     } else {
-      _sin = 0.0;
-      _cos = 1.0;
+      return Rotation2d.fromSinCos(0.0, 1.0);
     }
-    _value = atan2(_sin, _cos);
   }
 
-  Rotation2d.fromRadians(num radians) : this(radians: radians);
+  Rotation2d.fromRadians(num radians) : this(radians);
 
-  Rotation2d.fromDegrees(num degrees)
-      : this(radians: GeometryUtil.toRadians(degrees));
+  Rotation2d.fromDegrees(num degrees) : this(GeometryUtil.toRadians(degrees));
 
-  Rotation2d.fromRotations(num rotations) : this(radians: rotations * 2 * pi);
+  Rotation2d.fromRotations(num rotations) : this(rotations * 2 * pi);
 
   Rotation2d rotateBy(Rotation2d other) {
     return Rotation2d.fromComponents(_cos * other._cos - _sin * other._sin,
@@ -174,7 +173,7 @@ class Rotation2d {
   }
 
   Rotation2d operator -() {
-    return Rotation2d(radians: -_value);
+    return Rotation2d(-_value);
   }
 
   Rotation2d operator -(Rotation2d other) {
@@ -182,36 +181,24 @@ class Rotation2d {
   }
 
   Rotation2d operator *(num scalar) {
-    return Rotation2d(radians: _value * scalar);
+    return Rotation2d(_value * scalar);
   }
 
   Rotation2d operator /(num scalar) {
-    return Rotation2d(radians: _value / scalar);
+    return Rotation2d(_value / scalar);
   }
 
-  num getRadians() {
-    return _value;
-  }
+  num get radians => _value;
 
-  num getDegrees() {
-    return GeometryUtil.toDegrees(_value);
-  }
+  num get degrees => GeometryUtil.toDegrees(_value);
 
-  num getRotations() {
-    return _value / (pi * 2);
-  }
+  num get rotations => _value / (pi * 2);
 
-  num getCos() {
-    return _cos;
-  }
+  num get cosine => _cos;
 
-  num getSin() {
-    return _sin;
-  }
+  num get sine => _sin;
 
-  num getTan() {
-    return _sin / _cos;
-  }
+  num get tangent => _sin / _cos;
 
   Rotation2d interpolate(Rotation2d endValue, num t) {
     return this + ((endValue - this) * MathUtil.clamp(t, 0, 1));
@@ -232,6 +219,6 @@ class Rotation2d {
 
   @override
   String toString() {
-    return 'Rotation2d(Rads: ${_value.toStringAsFixed(2)}, Deg: ${getDegrees().toStringAsFixed(2)})';
+    return 'Rotation2d(Rads: ${radians.toStringAsFixed(2)}, Deg: ${degrees.toStringAsFixed(2)})';
   }
 }

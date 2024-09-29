@@ -45,10 +45,12 @@ class GeometryUtil {
     );
   }
 
+  // TODO: move to units
   static num toDegrees(num radians) {
     return radians * 180 / pi;
   }
 
+  // TODO: move to units
   static num toRadians(num degrees) {
     return degrees * pi / 180;
   }

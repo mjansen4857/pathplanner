@@ -92,10 +92,10 @@ void main() {
         wheelCOF: 1.2,
       ),
       moduleLocations: const [
-        Translation2d(x: 0.25, y: 0.25),
-        Translation2d(x: 0.25, y: -0.25),
-        Translation2d(x: -0.25, y: 0.25),
-        Translation2d(x: -0.25, y: -0.25),
+        Translation2d(0.25, 0.25),
+        Translation2d(0.25, -0.25),
+        Translation2d(-0.25, 0.25),
+        Translation2d(-0.25, -0.25),
       ],
       holonomic: true,
     );

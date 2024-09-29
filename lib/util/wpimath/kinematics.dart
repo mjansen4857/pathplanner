@@ -29,17 +29,17 @@ class ChassisSpeeds {
     return 'ChassisSpeeds(vx: ${vx.toStringAsFixed(2)}, vy: ${vy.toStringAsFixed(2)}, omega: ${omega.toStringAsFixed(2)})';
   }
 
-  static ChassisSpeeds fromFieldRelativeSpeeds(
+  factory ChassisSpeeds.fromFieldRelativeSpeeds(
       ChassisSpeeds speeds, Rotation2d robotAngle) {
     Translation2d rotated =
-        Translation2d(x: speeds.vx, y: speeds.vy).rotateBy(-robotAngle);
+        Translation2d(speeds.vx, speeds.vy).rotateBy(-robotAngle);
     return ChassisSpeeds(vx: rotated.x, vy: rotated.y, omega: speeds.omega);
   }
 
-  static ChassisSpeeds fromRobotRelativeSpeeds(
+  factory ChassisSpeeds.fromRobotRelativeSpeeds(
       ChassisSpeeds speeds, Rotation2d robotAngle) {
     Translation2d rotated =
-        Translation2d(x: speeds.vx, y: speeds.vy).rotateBy(robotAngle);
+        Translation2d(speeds.vx, speeds.vy).rotateBy(robotAngle);
     return ChassisSpeeds(vx: rotated.x, vy: rotated.y, omega: speeds.omega);
   }
 }
@@ -142,11 +142,11 @@ class SwerveDriveKinematics {
     for (int i = 0; i < _numModules; i++) {
       moduleStatesMatrix.setRow([
         moduleStates[i].speedMetersPerSecond.toDouble() *
-            moduleStates[i].angle.getCos()
+            moduleStates[i].angle.cosine
       ], i * 2);
       moduleStatesMatrix.setRow([
         moduleStates[i].speedMetersPerSecond.toDouble() *
-            moduleStates[i].angle.getSin()
+            moduleStates[i].angle.sine
       ], i * 2 + 1);
     }
 

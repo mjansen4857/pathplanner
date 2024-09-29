@@ -31,7 +31,7 @@ class AutoSimulator {
 
       startPose = old.Pose2d(
         position: allStates.last.pose.translation.asPoint(),
-        rotation: allStates.last.pose.rotation.getDegrees(),
+        rotation: allStates.last.pose.rotation.degrees,
       );
       startSpeeds = allStates.last.fieldSpeeds;
     }

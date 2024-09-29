@@ -1,7 +1,6 @@
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
-import 'package:pathplanner/util/pose2d.dart' as old;
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/kinematics.dart';
 
@@ -12,15 +11,16 @@ class AutoSimulator {
 
     List<TrajectoryState> allStates = [];
 
-    old.Pose2d startPose =
-        old.Pose2d(position: paths[0].pathPoints[0].position, rotation: 0);
+    Pose2d startPose = Pose2d(
+        Translation2d.fromPoint(paths[0].pathPoints[0].position),
+        Rotation2d.fromDegrees(paths[0].idealStartingState.rotation));
     ChassisSpeeds startSpeeds = const ChassisSpeeds();
 
     for (PathPlannerPath p in paths) {
       PathPlannerTrajectory simPath = PathPlannerTrajectory(
           path: p,
           startingSpeeds: startSpeeds,
-          startingRotation: Rotation2d.fromDegrees(startPose.rotation),
+          startingRotation: startPose.rotation,
           robotConfig: robotConfig);
 
       num startTime = allStates.isNotEmpty ? allStates.last.timeSeconds : 0;
@@ -29,9 +29,9 @@ class AutoSimulator {
         allStates.add(s);
       }
 
-      startPose = old.Pose2d(
-        position: allStates.last.pose.translation.asPoint(),
-        rotation: allStates.last.pose.rotation.degrees,
+      startPose = Pose2d(
+        allStates.last.pose.translation,
+        allStates.last.pose.rotation,
       );
       startSpeeds = allStates.last.fieldSpeeds;
     }

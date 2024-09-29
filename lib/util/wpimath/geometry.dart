@@ -70,6 +70,9 @@ class Translation2d {
       : x = distance * angle.cosine,
         y = distance * angle.sine;
 
+  // TODO: remove this
+  Translation2d.fromPoint(Point<num> p) : this(p.x, p.y);
+
   num getDistance(Translation2d other) {
     return sqrt(pow(other.x - x, 2) + pow(other.y - y, 2));
   }
@@ -112,6 +115,7 @@ class Translation2d {
     );
   }
 
+  // TODO: remove this
   Point asPoint() {
     return Point(x, y);
   }

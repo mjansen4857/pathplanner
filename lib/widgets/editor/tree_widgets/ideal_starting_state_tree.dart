@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -52,17 +53,13 @@ class IdealStartingStateTree extends StatelessWidget {
               if (holonomicMode)
                 Expanded(
                   child: NumberTextField(
-                    initialText:
-                        path.idealStartingState.rotation.toStringAsFixed(2),
+                    initialText: path.idealStartingState.rotation.degrees
+                        .toStringAsFixed(2),
                     label: 'Rotation (Deg)',
                     onSubmitted: (value) {
                       if (value != null) {
-                        num rot = value % 360;
-                        if (rot > 180) {
-                          rot -= 360;
-                        }
-                        _addChange(
-                            () => path.idealStartingState.rotation = rot);
+                        _addChange(() => path.idealStartingState.rotation =
+                            Rotation2d.fromDegrees(value));
                       }
                     },
                   ),

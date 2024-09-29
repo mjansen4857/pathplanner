@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
@@ -7,6 +5,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -102,14 +101,14 @@ class _WaypointsTreeState extends State<WaypointsTree> {
   Widget _buildWaypointTreeNode(int waypointIdx) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
+    Waypoint waypoint = waypoints[waypointIdx];
+
     String name = 'Waypoint $waypointIdx';
-    if (waypointIdx == 0) {
+    if (waypoint.isStartPoint) {
       name = 'Start Point';
-    } else if (waypointIdx == waypoints.length - 1) {
+    } else if (waypoint.isEndPoint) {
       name = 'End Point';
     }
-
-    Waypoint waypoint = waypoints[waypointIdx];
 
     return TreeCardNode(
       onHoverStart: () => widget.onWaypointHovered?.call(waypointIdx),
@@ -213,7 +212,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText: waypoint.getHeadingDegrees().toStringAsFixed(2),
+                  initialText: waypoint.heading.degrees.toStringAsFixed(2),
                   label: 'Heading (Deg)',
                   arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
@@ -221,8 +220,8 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       Waypoint wRef = waypoints[waypointIdx];
                       widget.undoStack.add(_waypointChange(
                         wRef,
-                        () => wRef.setHeading(value),
-                        (oldVal) => wRef.setHeading(oldVal.getHeadingDegrees()),
+                        () => wRef.setHeading(Rotation2d.fromDegrees(value)),
+                        (oldVal) => wRef.setHeading(oldVal.heading),
                       ));
                     }
                   },
@@ -235,13 +234,13 @@ class _WaypointsTreeState extends State<WaypointsTree> {
           padding: const EdgeInsets.symmetric(horizontal: 6.0),
           child: Row(
             children: [
-              if (waypointIdx != 0)
+              if (!waypoint.isStartPoint)
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: NumberTextField(
                       initialText:
-                          waypoint.getPrevControlLength().toStringAsFixed(2),
+                          waypoint.prevControlLength!.toStringAsFixed(2),
                       label: 'Previous Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null && value >= 0.5) {
@@ -250,22 +249,22 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                             wRef,
                             () => wRef.setPrevControlLength(value),
                             (oldVal) => wRef.setPrevControlLength(
-                                oldVal.getPrevControlLength()),
+                                oldVal.prevControlLength!),
                           ));
                         }
                       },
                     ),
                   ),
                 ),
-              if (waypointIdx != 0 && waypointIdx != waypoints.length - 1)
+              if (!waypoint.isStartPoint && !waypoint.isEndPoint)
                 const SizedBox(width: 8),
-              if (waypointIdx != waypoints.length - 1)
+              if (!waypoint.isEndPoint)
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: NumberTextField(
                       initialText:
-                          waypoint.getNextControlLength().toStringAsFixed(2),
+                          waypoint.nextControlLength!.toStringAsFixed(2),
                       label: 'Next Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null && value >= 0.5) {
@@ -274,7 +273,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                             wRef,
                             () => wRef.setNextControlLength(value),
                             (oldVal) => wRef.setNextControlLength(
-                                oldVal.getNextControlLength()),
+                                oldVal.nextControlLength!),
                           ));
                         }
                       },
@@ -299,8 +298,8 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                         PathPlannerPath.cloneRotationTargets(
                             widget.path.rotationTargets),
                         () {
-                          widget.path.rotationTargets.add(
-                              RotationTarget(waypointRelativePos: waypointIdx));
+                          widget.path.rotationTargets
+                              .add(RotationTarget(waypointIdx, Rotation2d()));
                           widget.onPathChanged?.call();
                         },
                         (oldValue) {
@@ -483,7 +482,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
 
                     if (Waypoint.linked.containsKey(name)) {
                       // Linked waypoint exists, update this waypoint
-                      Point anchor = Waypoint.linked[name]!;
+                      Translation2d anchor = Waypoint.linked[name]!;
 
                       widget.undoStack
                           .add(_waypointChange(waypoints[waypointIdx], () {
@@ -497,9 +496,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                       widget.undoStack
                           .add(_waypointChange(waypoints[waypointIdx], () {
                         waypoints[waypointIdx].linkedName = name;
-                        Point anchor = Point(waypoints[waypointIdx].anchor.x,
-                            waypoints[waypointIdx].anchor.y);
-                        Waypoint.linked[name] = anchor;
+                        Waypoint.linked[name] = waypoints[waypointIdx].anchor;
                       }, (oldVal) {
                         waypoints[waypointIdx] = oldVal.clone();
                         Waypoint.linked.remove(name);

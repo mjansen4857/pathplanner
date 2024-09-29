@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -165,42 +163,40 @@ void main() {
       nextControl: const Translation2d(4.0, 3.7),
     );
 
-    num prevControlLengh = w.prevControlLength!;
-    num nextControlLength = w.nextControlLength!;
+    num? prevControlLengh = w.prevControlLength;
+    num? nextControlLength = w.nextControlLength;
 
     w.setHeading(Rotation2d.fromDegrees(107.5));
 
     expect(w.heading.degrees, closeTo(107.5, epsilon));
-    expect(w.prevControlLength, closeTo(prevControlLengh, epsilon));
-    expect(w.nextControlLength, closeTo(nextControlLength, epsilon));
+    expect(w.prevControlLength, closeTo(prevControlLengh!, epsilon));
+    expect(w.nextControlLength, closeTo(nextControlLength!, epsilon));
 
     w = Waypoint(
       anchor: const Translation2d(2.0, 2.0),
       nextControl: const Translation2d(4.0, 4.0),
     );
 
-    prevControlLengh = w.prevControlLength!;
-    nextControlLength = w.nextControlLength!;
+    nextControlLength = w.nextControlLength;
 
     w.setHeading(Rotation2d.fromDegrees(-32.0));
 
     expect(w.heading.degrees, closeTo(-32.0, epsilon));
-    expect(w.prevControlLength, closeTo(prevControlLengh, epsilon));
-    expect(w.nextControlLength, closeTo(nextControlLength, epsilon));
+    expect(w.prevControlLength, isNull);
+    expect(w.nextControlLength, closeTo(nextControlLength!, epsilon));
 
     w = Waypoint(
       anchor: const Translation2d(2.0, 2.0),
       prevControl: const Translation2d(0.0, 1.0),
     );
 
-    prevControlLengh = w.prevControlLength!;
-    nextControlLength = w.nextControlLength!;
+    prevControlLengh = w.prevControlLength;
 
     w.setHeading(Rotation2d(0.0));
 
     expect(w.heading.degrees, closeTo(0.0, epsilon));
-    expect(w.prevControlLength, closeTo(prevControlLengh, epsilon));
-    expect(w.nextControlLength, closeTo(nextControlLength, epsilon));
+    expect(w.prevControlLength, closeTo(prevControlLengh!, epsilon));
+    expect(w.nextControlLength, isNull);
   });
 
   test('add next control', () {
@@ -288,7 +284,7 @@ void main() {
       expect(w.startDragging(1.0, 1.0, 0.1, 0.1), true);
 
       w.dragUpdate(1.0, 1.1);
-      expect(w.prevControl, const Point(1.0, 1.1));
+      expect(w.prevControl, const Translation2d(1.0, 1.1));
       expect(w.nextControl!.x, closeTo(3.05, epsilon));
       expect(w.nextControl!.y, closeTo(2.95, epsilon));
 
@@ -320,7 +316,7 @@ void main() {
       expect(w.startDragging(3.0, 3.0, 0.1, 0.1), true);
 
       w.dragUpdate(3.0, 3.1);
-      expect(w.nextControl, const Point(3.0, 3.1));
+      expect(w.nextControl, const Translation2d(3.0, 3.1));
       expect(w.prevControl!.x, closeTo(1.05, epsilon));
       expect(w.prevControl!.y, closeTo(0.95, epsilon));
 

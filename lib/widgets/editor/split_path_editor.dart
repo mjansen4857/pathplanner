@@ -14,6 +14,7 @@ import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
@@ -66,8 +67,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   Waypoint? _draggedPoint;
   Waypoint? _dragOldValue;
   int? _draggedRotationIdx;
-  Point<num>? _draggedRotationPos;
-  num? _dragRotationOldValue;
+  Translation2d? _draggedRotationPos;
+  Rotation2d? _dragRotationOldValue;
   PathPlannerTrajectory? _simTraj;
   bool _paused = false;
   late bool _holonomicMode;
@@ -161,7 +162,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   PathPlannerPath.cloneWaypoints(waypoints),
                   () {
                     setState(() {
-                      widget.path.addWaypoint(Point(
+                      widget.path.addWaypoint(Translation2d(
                           _xPixelsToMeters(details.localPosition.dx),
                           _yPixelsToMeters(details.localPosition.dy)));
                       widget.path.generateAndSavePath();
@@ -203,8 +204,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     PathPainterUtil.uiPointSizeToPixels(
                         15, PathPainter.scale, widget.fieldImage));
                 for (int i = 0; i < widget.path.pathPoints.length; i++) {
-                  num rotation;
-                  Point pos;
+                  Rotation2d rotation;
+                  Translation2d pos;
                   if (i == 0) {
                     rotation = widget.path.idealStartingState.rotation;
                     pos = widget.path.pathPoints.first.position;
@@ -219,11 +220,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     continue;
                   }
 
-                  num angleRadians = rotation / 180.0 * pi;
-                  num dotX =
-                      pos.x + (_robotSize.height / 2 * cos(angleRadians));
-                  num dotY =
-                      pos.y + (_robotSize.height / 2 * sin(angleRadians));
+                  num dotX = pos.x + (_robotSize.height / 2 * rotation.cosine);
+                  num dotY = pos.y + (_robotSize.height / 2 * rotation.sine);
                   if (pow(xPos - dotX, 2) + pow(yPos - dotY, 2) <
                       pow(dotRadius, 2)) {
                     if (i == 0) {
@@ -296,7 +294,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     widget.path.generatePathPoints();
                   });
                 } else if (_draggedRotationIdx != null) {
-                  Point pos;
+                  Translation2d pos;
                   if (_draggedRotationIdx == -2) {
                     pos = widget.path.waypoints.first.anchor;
                   } else if (_draggedRotationIdx == -1) {
@@ -307,17 +305,18 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
                   double x = _xPixelsToMeters(details.localPosition.dx);
                   double y = _yPixelsToMeters(details.localPosition.dy);
-                  num rotation = atan2(y - pos.y, x - pos.x);
-                  num rotationDeg = (rotation * 180 / pi);
 
                   setState(() {
                     if (_draggedRotationIdx == -2) {
-                      widget.path.idealStartingState.rotation = rotationDeg;
+                      widget.path.idealStartingState.rotation =
+                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
                     } else if (_draggedRotationIdx == -1) {
-                      widget.path.goalEndState.rotation = rotationDeg;
+                      widget.path.goalEndState.rotation =
+                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
                     } else {
                       widget.path.rotationTargets[_draggedRotationIdx!]
-                          .rotation = rotationDeg;
+                              .rotation =
+                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
                     }
                   });
                 }
@@ -357,7 +356,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   _draggedPoint = null;
                 } else if (_draggedRotationIdx != null) {
                   if (_draggedRotationIdx == -2) {
-                    num endRotation = widget.path.idealStartingState.rotation;
+                    final endRotation = widget.path.idealStartingState.rotation;
                     widget.undoStack.add(Change(
                       _dragRotationOldValue,
                       () {
@@ -376,7 +375,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       },
                     ));
                   } else if (_draggedRotationIdx == -1) {
-                    num endRotation = widget.path.goalEndState.rotation;
+                    final endRotation = widget.path.goalEndState.rotation;
                     widget.undoStack.add(Change(
                       _dragRotationOldValue,
                       () {
@@ -396,7 +395,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     ));
                   } else {
                     int rotationIdx = _draggedRotationIdx!;
-                    num endRotation =
+                    final endRotation =
                         widget.path.rotationTargets[rotationIdx].rotation;
                     widget.undoStack.add(Change(
                       _dragRotationOldValue,
@@ -553,10 +552,10 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                             Waypoint w =
                                 widget.path.waypoints.removeAt(waypointIdx);
 
-                            if (w.isEndPoint()) {
+                            if (w.isEndPoint) {
                               waypoints[widget.path.waypoints.length - 1]
                                   .nextControl = null;
-                            } else if (w.isStartPoint()) {
+                            } else if (w.isStartPoint) {
                               waypoints[0].prevControl = null;
                             }
 

@@ -428,7 +428,9 @@ class TelemetryPainter extends CustomPainter {
       Path path = Path();
       for (int i = 0; i < currentPath!.length - 3; i += 3) {
         Offset offset = PathPainterUtil.pointToPixelOffset(
-            Point(currentPath![i], currentPath![i + 1]), scale, fieldImage);
+            Translation2d(currentPath![i], currentPath![i + 1]),
+            scale,
+            fieldImage);
         if (i == 0) {
           path.moveTo(offset.dx, offset.dy);
         } else {
@@ -440,25 +442,13 @@ class TelemetryPainter extends CustomPainter {
     }
 
     if (targetPose != null) {
-      PathPainterUtil.paintRobotOutline(
-          targetPose!.translation.asPoint(),
-          targetPose!.rotation.degrees,
-          fieldImage,
-          robotSize,
-          scale,
-          canvas,
-          Colors.grey[600]!.withOpacity(0.75));
+      PathPainterUtil.paintRobotOutline(targetPose!, fieldImage, robotSize,
+          scale, canvas, Colors.grey[600]!.withOpacity(0.75));
     }
 
     if (currentPose != null) {
-      PathPainterUtil.paintRobotOutline(
-          currentPose!.translation.asPoint(),
-          currentPose!.rotation.degrees,
-          fieldImage,
-          robotSize,
-          scale,
-          canvas,
-          Colors.grey[400]!);
+      PathPainterUtil.paintRobotOutline(currentPose!, fieldImage, robotSize,
+          scale, canvas, Colors.grey[400]!);
     }
   }
 

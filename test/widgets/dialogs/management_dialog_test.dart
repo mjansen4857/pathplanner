@@ -1,9 +1,8 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/dialogs/management_dialog.dart';
 
 import '../../test_helpers.dart';
@@ -39,8 +38,8 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Point(0, 0);
-    Waypoint.linked['link2'] = const Point(0, 0);
+    Waypoint.linked['link1'] = const Translation2d(0, 0);
+    Waypoint.linked['link2'] = const Translation2d(0, 0);
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -108,7 +107,7 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Point(0, 0);
+    Waypoint.linked['link1'] = const Translation2d(0, 0);
 
     bool removed = false;
 
@@ -206,7 +205,7 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Point(0, 0);
+    Waypoint.linked['link1'] = const Translation2d(0, 0);
 
     bool renamed = false;
 
@@ -311,8 +310,8 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Point(0, 0);
-    Waypoint.linked['link2'] = const Point(0, 0);
+    Waypoint.linked['link1'] = const Translation2d(0, 0);
+    Waypoint.linked['link2'] = const Translation2d(0, 0);
 
     bool renamed = false;
 
@@ -416,7 +415,7 @@ void main() {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Waypoint.linked['link1'] = const Point(0, 0);
+    Waypoint.linked['link1'] = const Translation2d(0, 0);
 
     bool renamed = false;
 

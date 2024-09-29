@@ -7,7 +7,7 @@ void main() {
     RotationTarget t = RotationTarget(1.0, Rotation2d(2.0));
 
     expect(t.waypointRelativePos, 1.0);
-    expect(t.rotation, 2.0);
+    expect(t.rotation.radians, 2.0);
   });
 
   test('toJson/fromJson interoperability', () {

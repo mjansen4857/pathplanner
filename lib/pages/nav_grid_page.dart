@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:function_tree/function_tree.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -295,11 +295,12 @@ class _NavigationPainter extends CustomPainter {
     for (int row = 0; row < grid.length; row++) {
       for (int col = 0; col < grid[row].length; col++) {
         Offset tl = PathPainterUtil.pointToPixelOffset(
-            Point(col * nodeSizeMeters, row * nodeSizeMeters),
+            Translation2d(col * nodeSizeMeters, row * nodeSizeMeters),
             scale,
             fieldImage);
         Offset br = PathPainterUtil.pointToPixelOffset(
-            Point((col + 1) * nodeSizeMeters, (row + 1) * nodeSizeMeters),
+            Translation2d(
+                (col + 1) * nodeSizeMeters, (row + 1) * nodeSizeMeters),
             scale,
             fieldImage);
 

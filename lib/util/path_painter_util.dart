@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -34,22 +32,15 @@ class PathPainterUtil {
     }
   }
 
-  static void paintRobotOutline(
-      Translation2d position,
-      num rotationDegrees,
-      FieldImage fieldImage,
-      Size robotSize,
-      double scale,
-      Canvas canvas,
-      Color color) {
+  static void paintRobotOutline(Pose2d pose, FieldImage fieldImage,
+      Size robotSize, double scale, Canvas canvas, Color color) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = color
       ..strokeWidth = 2;
 
     Offset center =
-        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage);
-    num angle = -rotationDegrees / 180 * pi;
+        PathPainterUtil.pointToPixelOffset(pose.translation, scale, fieldImage);
 
     double width =
         PathPainterUtil.metersToPixels(robotSize.width, scale, fieldImage);
@@ -58,7 +49,7 @@ class PathPainterUtil {
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
-    canvas.rotate(angle.toDouble());
+    canvas.rotate(-pose.rotation.radians.toDouble());
     canvas.translate(-center.dx, -center.dy);
     canvas.drawRRect(
         RRect.fromRectAndRadius(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/math_util.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -80,7 +82,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
               widget.undoStack.add(Change(
                 PathPlannerPath.cloneRotationTargets(rotations),
                 () {
-                  rotations.add(RotationTarget());
+                  rotations.add(RotationTarget(0.5, Rotation2d()));
                   widget.onPathChanged?.call();
                 },
                 (oldValue) {
@@ -163,20 +165,18 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText: rotations[targetIdx].rotation.toStringAsFixed(2),
+                  initialText:
+                      rotations[targetIdx].rotation.degrees.toStringAsFixed(2),
                   label: 'Rotation (Deg)',
                   arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
                     if (value != null) {
-                      num rot = value % 360;
-                      if (rot > 180) {
-                        rot -= 360;
-                      }
-
                       widget.undoStack.add(Change(
                         rotations[targetIdx].clone(),
                         () {
-                          rotations[targetIdx].rotation = rot;
+                          rotations[targetIdx].rotation =
+                              Rotation2d.fromDegrees(
+                                  MathUtil.inputModulus(value, -180, 180));
                           widget.onPathChanged?.call();
                         },
                         (oldValue) {

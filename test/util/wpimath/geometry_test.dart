@@ -32,16 +32,6 @@ void main() {
       expect(result.rotation.degrees, closeTo(45.0, epsilon));
     });
 
-    test('clone', () {
-      var translation = const Translation2d(3.0, 4.0);
-      var rotation = Rotation2d.fromDegrees(45);
-      var pose = Pose2d(translation, rotation);
-      var clone = pose.clone();
-      expect(clone.translation, equals(pose.translation));
-      expect(clone.rotation, equals(pose.rotation));
-      expect(identical(clone, pose), isFalse);
-    });
-
     group('struct decoding', () {
       test('valid data', () {
         List<int> rawBytes = [
@@ -207,20 +197,6 @@ void main() {
       var result = t1.interpolate(t2, 0.5);
       expect(result.x, closeTo(2.0, epsilon));
       expect(result.y, closeTo(3.0, epsilon));
-    });
-
-    test('asPoint', () {
-      var t1 = const Translation2d(1.0, 2.0);
-      var p1 = const Point(1.0, 2.0);
-      expect(t1.asPoint().x, closeTo(p1.x, epsilon));
-      expect(t1.asPoint().y, closeTo(p1.y, epsilon));
-    });
-
-    test('clone', () {
-      var t = const Translation2d(3.0, 4.0);
-      var clone = t.clone();
-      expect(clone, equals(t));
-      expect(identical(clone, t), isFalse);
     });
 
     test('== operator', () {
@@ -390,14 +366,6 @@ void main() {
     expect(a.degrees, closeTo(45.0, epsilon));
     expect(b.degrees, closeTo(-60.0, epsilon));
     expect(c.degrees, closeTo(144.0, epsilon));
-  });
-
-  test('clone', () {
-    Rotation2d a = Rotation2d.fromDegrees(67);
-    Rotation2d b = a.clone();
-
-    expect(a.degrees, closeTo(67.0, epsilon));
-    expect(b.degrees, closeTo(67.0, epsilon));
   });
 
   test('equals/hashcode', () {

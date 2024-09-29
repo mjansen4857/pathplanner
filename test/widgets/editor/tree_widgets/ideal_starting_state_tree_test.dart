@@ -18,7 +18,8 @@ void main() {
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
-    path.idealStartingState = IdealStartingState(velocity: 1.0, rotation: 45);
+    path.idealStartingState =
+        IdealStartingState(velocityMPS: 1.0, rotation: 45);
     path.previewStartingStateExpanded = true;
     pathChanged = false;
   });
@@ -71,11 +72,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.idealStartingState.velocity, 3.0);
+    expect(path.idealStartingState.velocityMPS, 3.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.idealStartingState.velocity, 1.0);
+    expect(path.idealStartingState.velocityMPS, 1.0);
   });
 
   testWidgets('rotation text field', (widgetTester) async {

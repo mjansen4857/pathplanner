@@ -37,7 +37,7 @@ void main() {
     );
     path.goalEndState.rotation = 0;
     path.rotationTargets = [
-      RotationTarget(waypointRelativePos: 0.5, rotationDegrees: 0),
+      RotationTarget(waypointRelativePos: 0.5, rotation: 0),
     ];
     path.eventMarkers = [
       EventMarker(
@@ -317,12 +317,12 @@ void main() {
     await gesture.up();
     await widgetTester.pumpAndSettle();
 
-    expect(path.rotationTargets[0].rotationDegrees, closeTo(90, 1.0));
+    expect(path.rotationTargets[0].rotation, closeTo(90, 1.0));
 
     undoStack.undo();
     await widgetTester.pumpAndSettle();
 
-    expect(path.rotationTargets[0].rotationDegrees, closeTo(0, 0.1));
+    expect(path.rotationTargets[0].rotation, closeTo(0, 0.1));
   });
 
   testWidgets('drag end rotation', (widgetTester) async {

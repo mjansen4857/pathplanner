@@ -1,10 +1,9 @@
-import 'dart:math';
-
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/rotation_target.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 
 class PathPoint {
-  final Point position;
+  final Translation2d position;
   RotationTarget? rotationTarget;
   final PathConstraints constraints;
   num distanceAlongPath = 0.0;

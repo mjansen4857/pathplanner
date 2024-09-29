@@ -12,8 +12,7 @@ class AutoSimulator {
     List<TrajectoryState> allStates = [];
 
     Pose2d startPose = Pose2d(
-        Translation2d.fromPoint(paths[0].pathPoints[0].position),
-        Rotation2d.fromDegrees(paths[0].idealStartingState.rotation));
+        paths[0].pathPoints[0].position, paths[0].idealStartingState.rotation);
     ChassisSpeeds startSpeeds = const ChassisSpeeds();
 
     for (PathPlannerPath p in paths) {

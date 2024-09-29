@@ -1792,13 +1792,14 @@ class _ProjectPageState extends State<ProjectPage> {
 
   PathConstraints _getDefaultConstraints() {
     return PathConstraints(
-      maxVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+      maxVelocityMPS: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
           Defaults.defaultMaxVel,
-      maxAcceleration: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+      maxAccelerationMPSSq: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
           Defaults.defaultMaxAccel,
-      maxAngularVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
-          Defaults.defaultMaxAngVel,
-      maxAngularAcceleration:
+      maxAngularVelocityDeg:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+              Defaults.defaultMaxAngVel,
+      maxAngularAccelerationDeg:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAngAccel,
     );

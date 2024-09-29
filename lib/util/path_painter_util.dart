@@ -13,8 +13,8 @@ class PathPainterUtil {
       ..strokeWidth = 2;
 
     for (Pose2d m in modulePoses) {
-      Offset pos = PathPainterUtil.pointToPixelOffset(
-          m.translation.asPoint(), scale, fieldImage);
+      Offset pos =
+          PathPainterUtil.pointToPixelOffset(m.translation, scale, fieldImage);
 
       canvas.save();
       canvas.translate(pos.dx, pos.dy);
@@ -35,7 +35,7 @@ class PathPainterUtil {
   }
 
   static void paintRobotOutline(
-      Point position,
+      Translation2d position,
       num rotationDegrees,
       FieldImage fieldImage,
       Size robotSize,
@@ -115,7 +115,7 @@ class PathPainterUtil {
   }
 
   static Offset pointToPixelOffset(
-      Point point, double scale, FieldImage fieldImage) {
+      Translation2d point, double scale, FieldImage fieldImage) {
     return Offset(
             (point.x * fieldImage.pixelsPerMeter) + 0,
             fieldImage.defaultSize.height -

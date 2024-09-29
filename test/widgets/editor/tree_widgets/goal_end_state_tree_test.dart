@@ -20,7 +20,7 @@ void main() {
     );
     path.goalEndStateExpanded = true;
     path.goalEndState = GoalEndState(
-      velocity: 1.0,
+      velocityMPS: 1.0,
       rotation: 1.0,
     );
     pathChanged = false;
@@ -74,11 +74,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.goalEndState.velocity, 2.0);
+    expect(path.goalEndState.velocityMPS, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.goalEndState.velocity, 1.0);
+    expect(path.goalEndState.velocityMPS, 1.0);
   });
 
   testWidgets('rotation text field', (widgetTester) async {

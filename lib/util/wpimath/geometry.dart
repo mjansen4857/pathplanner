@@ -47,10 +47,6 @@ class Pose2d {
     }
   }
 
-  Pose2d clone() {
-    return Pose2d(translation.clone(), rotation.clone());
-  }
-
   @override
   String toString() {
     return 'Pose2d($translation, $rotation)';
@@ -70,8 +66,8 @@ class Translation2d {
       : x = distance * angle.cosine,
         y = distance * angle.sine;
 
-  // TODO: remove this
-  Translation2d.fromPoint(Point<num> p) : this(p.x, p.y);
+  Translation2d.fromJson(Map<String, dynamic> json)
+      : this(json['x'] ?? 0, json['y'] ?? 0);
 
   num getDistance(Translation2d other) {
     return sqrt(pow(other.x - x, 2) + pow(other.y - y, 2));
@@ -86,6 +82,13 @@ class Translation2d {
       x * other.cosine - y * other.sine,
       x * other.sine + y * other.cosine,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'x': x,
+      'y': y,
+    };
   }
 
   Translation2d operator +(Translation2d other) {
@@ -115,21 +118,12 @@ class Translation2d {
     );
   }
 
-  // TODO: remove this
-  Point asPoint() {
-    return Point(x, y);
-  }
-
-  Translation2d clone() {
-    return Translation2d(x, y);
-  }
-
   @override
   bool operator ==(Object other) =>
       other is Translation2d &&
       other.runtimeType == runtimeType &&
-      other.x == x &&
-      other.y == y;
+      (other.x - x).abs() < 0.001 &&
+      (other.y - y).abs() < 0.001;
 
   @override
   int get hashCode => Object.hash(x, y);
@@ -206,10 +200,6 @@ class Rotation2d {
 
   Rotation2d interpolate(Rotation2d endValue, num t) {
     return this + ((endValue - this) * MathUtil.clamp(t, 0, 1));
-  }
-
-  Rotation2d clone() {
-    return Rotation2d.fromRadians(_value);
   }
 
   @override

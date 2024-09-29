@@ -163,8 +163,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      rotations[targetIdx].rotationDegrees.toStringAsFixed(2),
+                  initialText: rotations[targetIdx].rotation.toStringAsFixed(2),
                   label: 'Rotation (Deg)',
                   arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
@@ -177,12 +176,11 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                       widget.undoStack.add(Change(
                         rotations[targetIdx].clone(),
                         () {
-                          rotations[targetIdx].rotationDegrees = rot;
+                          rotations[targetIdx].rotation = rot;
                           widget.onPathChanged?.call();
                         },
                         (oldValue) {
-                          rotations[targetIdx].rotationDegrees =
-                              oldValue.rotationDegrees;
+                          rotations[targetIdx].rotation = oldValue.rotation;
                           widget.onPathChanged?.call();
                         },
                       ));

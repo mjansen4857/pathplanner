@@ -212,8 +212,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     rotation = widget.path.goalEndState.rotation;
                     pos = widget.path.pathPoints.last.position;
                   } else if (widget.path.pathPoints[i].rotationTarget != null) {
-                    rotation = widget
-                        .path.pathPoints[i].rotationTarget!.rotationDegrees;
+                    rotation =
+                        widget.path.pathPoints[i].rotationTarget!.rotation;
                     pos = widget.path.pathPoints[i].position;
                   } else {
                     continue;
@@ -317,7 +317,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       widget.path.goalEndState.rotation = rotationDeg;
                     } else {
                       widget.path.rotationTargets[_draggedRotationIdx!]
-                          .rotationDegrees = rotationDeg;
+                          .rotation = rotationDeg;
                     }
                   });
                 }
@@ -396,22 +396,22 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     ));
                   } else {
                     int rotationIdx = _draggedRotationIdx!;
-                    num endRotation = widget
-                        .path.rotationTargets[rotationIdx].rotationDegrees;
+                    num endRotation =
+                        widget.path.rotationTargets[rotationIdx].rotation;
                     widget.undoStack.add(Change(
                       _dragRotationOldValue,
                       () {
                         setState(() {
-                          widget.path.rotationTargets[rotationIdx]
-                              .rotationDegrees = endRotation;
+                          widget.path.rotationTargets[rotationIdx].rotation =
+                              endRotation;
                           widget.path.generateAndSavePath();
                           _simulatePath();
                         });
                       },
                       (oldValue) {
                         setState(() {
-                          widget.path.rotationTargets[rotationIdx]
-                              .rotationDegrees = oldValue!;
+                          widget.path.rotationTargets[rotationIdx].rotation =
+                              oldValue!;
                           widget.path.generateAndSavePath();
                           _simulatePath();
                         });
@@ -754,13 +754,14 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
   PathConstraints _getDefaultConstraints() {
     return PathConstraints(
-      maxVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+      maxVelocityMPS: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
           Defaults.defaultMaxVel,
-      maxAcceleration: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+      maxAccelerationMPSSq: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
           Defaults.defaultMaxAccel,
-      maxAngularVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
-          Defaults.defaultMaxAngVel,
-      maxAngularAcceleration:
+      maxAngularVelocityDeg:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+              Defaults.defaultMaxAngVel,
+      maxAngularAccelerationDeg:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAngAccel,
     );

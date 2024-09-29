@@ -37,13 +37,13 @@ class IdealStartingStateTree extends StatelessWidget {
               Expanded(
                 child: NumberTextField(
                   initialText:
-                      path.idealStartingState.velocity.toStringAsFixed(2),
+                      path.idealStartingState.velocityMPS.toStringAsFixed(2),
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          () => path.idealStartingState.velocity = value);
+                          () => path.idealStartingState.velocityMPS = value);
                     }
                   },
                 ),

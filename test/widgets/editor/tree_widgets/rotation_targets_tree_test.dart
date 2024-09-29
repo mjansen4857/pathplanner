@@ -25,11 +25,11 @@ void main() {
     path.rotationTargets = [
       RotationTarget(
         waypointRelativePos: 0.2,
-        rotationDegrees: 0.0,
+        rotation: 0.0,
       ),
       RotationTarget(
         waypointRelativePos: 0.7,
-        rotationDegrees: 0.0,
+        rotation: 0.0,
       ),
     ];
     path.rotationTargetsExpanded = true;
@@ -192,11 +192,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.rotationTargets[0].rotationDegrees, -160.0);
+    expect(path.rotationTargets[0].rotation, -160.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.rotationTargets[0].rotationDegrees, 0.0);
+    expect(path.rotationTargets[0].rotation, 0.0);
   });
 
   testWidgets('pos slider', (widgetTester) async {

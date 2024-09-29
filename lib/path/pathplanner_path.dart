@@ -18,6 +18,7 @@ import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/util/geometry_util.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
 
 const double targetIncrement = 0.05;
@@ -60,21 +61,21 @@ class PathPlannerPath {
   })  : waypoints = [],
         pathPoints = [],
         globalConstraints = constraints ?? PathConstraints(),
-        goalEndState = GoalEndState(),
+        goalEndState = GoalEndState(0, Rotation2d()),
         constraintZones = [],
         rotationTargets = [],
         eventMarkers = [],
         reversed = false,
-        idealStartingState = IdealStartingState(),
+        idealStartingState = IdealStartingState(0, Rotation2d()),
         useDefaultConstraints = true {
     waypoints.addAll([
       Waypoint(
-        anchor: const Point(2.0, 7.0),
-        nextControl: const Point(3.0, 7.0),
+        anchor: const Translation2d(2.0, 7.0),
+        nextControl: const Translation2d(3.0, 7.0),
       ),
       Waypoint(
-        prevControl: const Point(3.0, 6.0),
-        anchor: const Point(4.0, 6.0),
+        prevControl: const Translation2d(3.0, 6.0),
+        anchor: const Translation2d(4.0, 6.0),
       ),
     ]);
 
@@ -126,9 +127,8 @@ class PathPlannerPath {
           ],
           reversed: json['reversed'] ?? false,
           folder: json['folder'],
-          idealStartingState: json['idealStartingState'] == null
-              ? IdealStartingState()
-              : IdealStartingState.fromJson(json['idealStartingState']),
+          idealStartingState:
+              IdealStartingState.fromJson(json['idealStartingState'] ?? {}),
           useDefaultConstraints: json['useDefaultConstraints'] ?? false,
         );
 
@@ -227,7 +227,7 @@ class PathPlannerPath {
     };
   }
 
-  void addWaypoint(Point anchorPos) {
+  void addWaypoint(Translation2d anchorPos) {
     waypoints[waypoints.length - 1].addNextControl();
     waypoints.add(
       Waypoint(
@@ -245,8 +245,8 @@ class PathPlannerPath {
 
     Waypoint before = waypoints[waypointIdx];
     Waypoint after = waypoints[waypointIdx + 1];
-    Point anchorPos = GeometryUtil.cubicLerp(before.anchor, before.nextControl!,
-        after.prevControl!, after.anchor, 0.5);
+    Translation2d anchorPos = GeometryUtil.cubicLerp(before.anchor,
+        before.nextControl!, after.prevControl!, after.anchor, 0.5);
 
     Waypoint toAdd = Waypoint(
       anchor: anchorPos,
@@ -370,7 +370,7 @@ class PathPlannerPath {
     while (pos < waypoints.length - 1) {
       var position = samplePath(pos);
 
-      num distance = pathPoints.last.position.distanceTo(position);
+      num distance = pathPoints.last.position.getDistance(position);
       if (distance <= 0.01) {
         pos = min(pos + targetIncrement, waypoints.length - 1);
         continue;
@@ -386,7 +386,7 @@ class PathPlannerPath {
 
         position = samplePath(pos);
 
-        if (pathPoints.last.position.distanceTo(position) - targetSpacing >
+        if (pathPoints.last.position.getDistance(position) - targetSpacing >
             targetSpacing * 0.25) {
           // Points are still too far apart. Probably because of weird control
           // point placement. Just cut the correct increment in half and hope for the best
@@ -400,7 +400,7 @@ class PathPlannerPath {
 
         position = samplePath(pos);
 
-        if (pathPoints.last.position.distanceTo(position) - targetSpacing <
+        if (pathPoints.last.position.getDistance(position) - targetSpacing <
             -targetSpacing * 0.25) {
           // Points are still too close. Probably because of weird control
           // point placement. Just cut the correct increment in half and hope for the best
@@ -451,7 +451,7 @@ class PathPlannerPath {
     while (invalid) {
       var position = samplePath(pos);
 
-      num distance = pathPoints.last.position.distanceTo(position);
+      num distance = pathPoints.last.position.getDistance(position);
       if (distance <= 0.01) {
         invalid = false;
         break;
@@ -468,7 +468,7 @@ class PathPlannerPath {
 
         position = samplePath(pos);
 
-        if (pathPoints.last.position.distanceTo(position) - targetSpacing >
+        if (pathPoints.last.position.getDistance(position) - targetSpacing >
             targetSpacing * 0.25) {
           // Points are still too far apart. Probably because of weird control
           // point placement. Just cut the correct increment in half and hope for the best
@@ -498,12 +498,11 @@ class PathPlannerPath {
       pos = waypoints.length - 1;
     }
 
-    pathPoints.last.rotationTarget = RotationTarget(
-        rotationDegrees: goalEndState.rotation,
-        waypointRelativePos: waypoints.length - 1);
+    pathPoints.last.rotationTarget =
+        RotationTarget(waypoints.length - 1, goalEndState.rotation);
 
     for (int i = 1; i < pathPoints.length - 1; i++) {
-      num curveRadius = _calculateRadius(pathPoints[i - 1].position,
+      num curveRadius = GeometryUtil.calculateRadius(pathPoints[i - 1].position,
           pathPoints[i].position, pathPoints[i + 1].position);
 
       if (!curveRadius.isFinite) {
@@ -512,13 +511,13 @@ class PathPlannerPath {
 
       if (curveRadius.abs() < 0.25) {
         // Curve radius is too tight for default spacing, insert 4 more points
-        num before1WaypointPos = GeometryUtil.numLerp(
+        num before1WaypointPos = MathUtil.interpolate(
             pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.33);
-        num before2WaypointPos = GeometryUtil.numLerp(
+        num before2WaypointPos = MathUtil.interpolate(
             pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.67);
-        num after1WaypointPos = GeometryUtil.numLerp(
+        num after1WaypointPos = MathUtil.interpolate(
             pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.33);
-        num after2WaypointPos = GeometryUtil.numLerp(
+        num after2WaypointPos = MathUtil.interpolate(
             pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.67);
 
         PathPoint before1 = PathPoint(
@@ -553,9 +552,9 @@ class PathPlannerPath {
         i += 4;
       } else if (curveRadius.abs() < 0.5) {
         // Curve radius is too tight for default spacing, insert 2 more points
-        num beforeWaypointPos = GeometryUtil.numLerp(
+        num beforeWaypointPos = MathUtil.interpolate(
             pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.5);
-        num afterWaypointPos = GeometryUtil.numLerp(
+        num afterWaypointPos = MathUtil.interpolate(
             pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.5);
 
         PathPoint before = PathPoint(
@@ -582,22 +581,23 @@ class PathPlannerPath {
 
       if (curveRadius.isFinite) {
         pathPoints[i].maxV = min(
-            sqrt(pathPoints[i].constraints.maxAcceleration * curveRadius.abs()),
-            pathPoints[i].constraints.maxVelocity);
+            sqrt(pathPoints[i].constraints.maxAccelerationMPSSq *
+                curveRadius.abs()),
+            pathPoints[i].constraints.maxVelocityMPS);
       } else {
-        pathPoints[i].maxV = pathPoints[i].constraints.maxVelocity;
+        pathPoints[i].maxV = pathPoints[i].constraints.maxVelocityMPS;
       }
 
       if (i > 0) {
         pathPoints[i].distanceAlongPath = pathPoints[i - 1].distanceAlongPath +
-            pathPoints[i].position.distanceTo(pathPoints[i - 1].position);
+            pathPoints[i].position.getDistance(pathPoints[i - 1].position);
       }
     }
 
-    pathPoints.last.maxV = goalEndState.velocity;
+    pathPoints.last.maxV = goalEndState.velocityMPS;
   }
 
-  Point<num> samplePath(num waypointRelativePos) {
+  Translation2d samplePath(num waypointRelativePos) {
     num pos = MathUtil.clamp(waypointRelativePos, 0, waypoints.length - 1);
 
     int i = pos.floor();
@@ -621,30 +621,15 @@ class PathPlannerPath {
     }
 
     if (index == 0) {
-      return _calculateRadius(pathPoints[index].position,
+      return GeometryUtil.calculateRadius(pathPoints[index].position,
           pathPoints[index + 1].position, pathPoints[index + 2].position);
     } else if (index == pathPoints.length - 1) {
-      return _calculateRadius(pathPoints[index - 2].position,
+      return GeometryUtil.calculateRadius(pathPoints[index - 2].position,
           pathPoints[index - 1].position, pathPoints[index].position);
     } else {
-      return _calculateRadius(pathPoints[index - 1].position,
+      return GeometryUtil.calculateRadius(pathPoints[index - 1].position,
           pathPoints[index].position, pathPoints[index + 1].position);
     }
-  }
-
-  num _calculateRadius(Point a, Point b, Point c) {
-    Point vba = a - b;
-    Point vbc = c - b;
-    num crossZ = (vba.x * vbc.y) - (vba.y * vbc.x);
-    num sign = (crossZ < 0) ? 1 : -1;
-
-    num ab = a.distanceTo(b);
-    num bc = b.distanceTo(c);
-    num ac = a.distanceTo(c);
-
-    num p = (ab + bc + ac) / 2;
-    num area = sqrt((p * (p - ab) * (p - bc) * (p - ac)).abs());
-    return sign * (ab * bc * ac) / (4 * area);
   }
 
   PathPlannerPath duplicate(String newName) {
@@ -665,11 +650,9 @@ class PathPlannerPath {
     );
   }
 
-  List<Point> getPathPositions() {
-    return [
-      for (PathPoint p in pathPoints) p.position,
-    ];
-  }
+  List<Translation2d> get pathPositions => [
+        for (PathPoint p in pathPoints) p.position,
+      ];
 
   static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {
     return [

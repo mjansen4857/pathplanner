@@ -425,7 +425,7 @@ class PathPainter extends CustomPainter {
 
         PathPainterUtil.paintRobotOutline(
             path.pathPoints[i].position,
-            target.rotationDegrees,
+            target.rotation,
             fieldImage,
             robotSize,
             scale,

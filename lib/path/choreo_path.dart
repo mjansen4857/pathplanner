@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
@@ -75,10 +74,7 @@ class ChoreoPath {
     return paths;
   }
 
-  List<Point> getPathPositions() {
-    return [
-      for (TrajectoryState s in trajectory.states)
-        Point(s.pose.translation.x, s.pose.translation.y),
-    ];
-  }
+  List<Translation2d> get pathPositions => [
+        for (TrajectoryState s in trajectory.states) s.pose.translation,
+      ];
 }

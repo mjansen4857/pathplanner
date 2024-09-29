@@ -25,22 +25,20 @@ class PathPlannerTrajectory {
     DateTime startTime = DateTime.now();
 
     if (startingSpeeds == null) {
-      num linearVel = path.idealStartingState.velocity;
-      Rotation2d heading =
-          Rotation2d.fromRadians(path.waypoints.first.getHeadingRadians());
+      num linearVel = path.idealStartingState.velocityMPS;
+      Rotation2d heading = path.waypoints.first.heading;
       Translation2d xySpeed = Translation2d.fromAngle(linearVel, heading);
 
       startingSpeeds = ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0);
     }
 
-    startingRotation ??=
-        Rotation2d.fromDegrees(path.idealStartingState.rotation);
+    startingRotation ??= path.idealStartingState.rotation;
 
     int prevRotationTargetIdx = 0;
     Rotation2d prevRotationTargetRot = startingRotation;
     int nextRotationTargetIdx = _getNextRotationTargetIdx(path, 0);
-    Rotation2d nextRotationTargetRot = Rotation2d.fromDegrees(
-        path.pathPoints[nextRotationTargetIdx].rotationTarget!.rotationDegrees);
+    Rotation2d nextRotationTargetRot =
+        path.pathPoints[nextRotationTargetIdx].rotationTarget!.rotation;
 
     int numModules = robotConfig.moduleLocations.length;
 
@@ -51,8 +49,8 @@ class PathPlannerTrajectory {
         prevRotationTargetIdx = nextRotationTargetIdx;
         prevRotationTargetRot = nextRotationTargetRot;
         nextRotationTargetIdx = _getNextRotationTargetIdx(path, i);
-        nextRotationTargetRot = Rotation2d.fromDegrees(path
-            .pathPoints[nextRotationTargetIdx].rotationTarget!.rotationDegrees);
+        nextRotationTargetRot =
+            path.pathPoints[nextRotationTargetIdx].rotationTarget!.rotation;
       }
 
       // Holonomic rotation is interpolated. We use the distance along the path
@@ -203,13 +201,13 @@ class PathPlannerTrajectory {
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      num maxAngAccel =
-          Units.degreesToRadians(states[i].constraints.maxAngularAcceleration);
+      num maxAngAccel = Units.degreesToRadians(
+          states[i].constraints.maxAngularAccelerationDeg);
       num angularAccel = MathUtil.clamp(
           totalTorque / robotConfig.moi, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec / robotConfig.massKG;
-      num maxAccel = states[i].constraints.maxAcceleration;
+      num maxAccel = states[i].constraints.maxAccelerationMPSSq;
       num accel = accelVec.norm;
       if (accel > maxAccel) {
         num pct = maxAccel / accel;
@@ -283,9 +281,9 @@ class PathPlannerTrajectory {
           robotConfig.kinematics.toChassisSpeeds(states[i].moduleStates);
 
       PathConstraints constraints = states[i].constraints;
-      num maxChassisVel = constraints.maxVelocity;
+      num maxChassisVel = constraints.maxVelocityMPS;
       num maxChassisAngVel =
-          Units.degreesToRadians(constraints.maxAngularVelocity);
+          Units.degreesToRadians(constraints.maxAngularVelocityDeg);
 
       desaturateWheelSpeeds(
           states[i].moduleStates,
@@ -301,7 +299,7 @@ class PathPlannerTrajectory {
 
     // Set the final module velocities
     Translation2d endSpeedTrans = Translation2d.fromAngle(
-        path.goalEndState.velocity, states[states.length - 1].heading);
+        path.goalEndState.velocityMPS, states[states.length - 1].heading);
     ChassisSpeeds endSpeeds =
         ChassisSpeeds(vx: endSpeedTrans.x, vy: endSpeedTrans.y, omega: 0.0);
     List<SwerveModuleState> endStates = robotConfig.kinematics
@@ -351,13 +349,13 @@ class PathPlannerTrajectory {
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      num maxAngAccel =
-          Units.degreesToRadians(states[i].constraints.maxAngularAcceleration);
+      num maxAngAccel = Units.degreesToRadians(
+          states[i].constraints.maxAngularAccelerationDeg);
       num angularAccel = MathUtil.clamp(
           totalTorque / robotConfig.moi, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec / robotConfig.massKG;
-      num maxAccel = states[i].constraints.maxAcceleration;
+      num maxAccel = states[i].constraints.maxAccelerationMPSSq;
       num accel = accelVec.norm;
       if (accel > maxAccel) {
         num pct = maxAccel / accel;
@@ -421,9 +419,9 @@ class PathPlannerTrajectory {
           robotConfig.kinematics.toChassisSpeeds(states[i].moduleStates);
 
       PathConstraints constraints = states[i].constraints;
-      num maxChassisVel = constraints.maxVelocity;
+      num maxChassisVel = constraints.maxVelocityMPS;
       num maxChassisAngVel =
-          Units.degreesToRadians(constraints.maxAngularVelocity);
+          Units.degreesToRadians(constraints.maxAngularVelocityDeg);
 
       num currentVel = sqrt(
           pow(states[i].fieldSpeeds.vx, 2) + pow(states[i].fieldSpeeds.vy, 2));

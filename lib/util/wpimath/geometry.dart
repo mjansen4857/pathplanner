@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:pathplanner/util/geometry_util.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
@@ -8,6 +9,32 @@ class Pose2d {
   final Rotation2d rotation;
 
   const Pose2d(this.translation, this.rotation);
+
+  num get x => translation.x;
+  num get y => translation.y;
+
+  factory Pose2d.fromBytes(Uint8List bytes) {
+    final view = ByteData.view(bytes.buffer);
+
+    int length = view.lengthInBytes;
+
+    double xMeters = 0.0;
+    double yMeters = 0.0;
+    double angleRadians = 0.0;
+
+    if (length >= 8) {
+      xMeters = view.getFloat64(0, Endian.little);
+    }
+    if (length >= 16) {
+      yMeters = view.getFloat64(8, Endian.little);
+    }
+    if (length >= 24) {
+      angleRadians = view.getFloat64(16, Endian.little);
+    }
+
+    return Pose2d(Translation2d(x: xMeters, y: yMeters),
+        Rotation2d.fromRadians(angleRadians));
+  }
 
   Pose2d interpolate(Pose2d endValue, num t) {
     if (t < 0) {

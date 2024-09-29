@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -39,6 +40,87 @@ void main() {
       expect(clone.translation, equals(pose.translation));
       expect(clone.rotation, equals(pose.rotation));
       expect(identical(clone, pose), isFalse);
+    });
+
+    group('struct decoding', () {
+      test('valid data', () {
+        List<int> rawBytes = [
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x14,
+          0x40,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x14,
+          0x40,
+          0x18,
+          0x2d,
+          0x44,
+          0x54,
+          0xfb,
+          0x21,
+          0x09,
+          0x40
+        ];
+        Uint8List data = Uint8List.fromList(rawBytes);
+
+        Pose2d pose = Pose2d.fromBytes(data);
+
+        expect(pose.x, closeTo(5.0, epsilon));
+        expect(pose.y, closeTo(5.0, epsilon));
+        expect(pose.rotation.getRadians(), closeTo(pi, epsilon));
+      });
+
+      test('missing bytes', () {
+        List<int> rawBytes = [
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x14,
+          0x40,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x14,
+          0x40,
+          0x18,
+          0x2d,
+          0x44,
+          0x54
+        ];
+        Uint8List data = Uint8List.fromList(rawBytes);
+
+        Pose2d pose = Pose2d.fromBytes(data);
+
+        expect(pose.x, closeTo(5.0, epsilon));
+        expect(pose.y, closeTo(5.0, epsilon));
+        expect(pose.rotation.getRadians(), closeTo(0.0, epsilon));
+      });
+
+      test('no bytes', () {
+        List<int> rawBytes = [];
+        Uint8List data = Uint8List.fromList(rawBytes);
+
+        Pose2d pose = Pose2d.fromBytes(data);
+
+        expect(pose.x, closeTo(0.0, epsilon));
+        expect(pose.y, closeTo(0.0, epsilon));
+        expect(pose.rotation.getRadians(), closeTo(0.0, epsilon));
+      });
     });
   });
 

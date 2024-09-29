@@ -17,6 +17,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /** Trajectory generated for a PathPlanner path */
 public class PathPlannerTrajectory {
@@ -155,6 +156,44 @@ public class PathPlannerTrajectory {
         }
       }
     }
+  }
+
+  /**
+   * Trims the trajectory to include only the states and events between the specified start and end times.
+   *
+   * @param startTime The start time in seconds from which to begin trimming.
+   * @param endTime The end time in seconds at which to stop trimming.
+   * @return A new trajectory containing only the states and events within the specified time range.
+   */
+  public PathPlannerTrajectory trim(double startTime, double endTime) {
+    var subStates = states.stream()
+            .filter(state -> state.timeSeconds >= startTime && state.timeSeconds <= endTime)
+            .collect(Collectors.toList());
+    var subEvents = events.stream()
+            .filter(event -> event.getTimestamp() >= startTime && event.getTimestamp() <= endTime)
+            .collect(Collectors.toList());
+
+    return new PathPlannerTrajectory(subStates, subEvents);
+  }
+
+  /**
+   * Trims the trajectory to include only the states and events from the specified start time to the end of the trajectory.
+   *
+   * @param startTime The start time in seconds from which to begin trimming.
+   * @return A new trajectory containing only the states and events from the specified start time to the end of the trajectory.
+   */
+  public PathPlannerTrajectory trimStart(double startTime) {
+    return trim(startTime, getTotalTimeSeconds());
+  }
+
+  /**
+   * Trims the trajectory to include only the states and events from the beginning of the trajectory to the specified end time.
+   *
+   * @param endTime The end time in seconds at which to stop trimming.
+   * @return A new trajectory containing only the states and events from the beginning of the trajectory to the specified end time.
+   */
+  public PathPlannerTrajectory trimEnd(double endTime) {
+    return trim(0, endTime);
   }
 
   private static void generateStates(

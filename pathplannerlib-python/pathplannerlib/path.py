@@ -19,6 +19,7 @@ import json
 
 targetIncrement: Final[float] = 0.05
 targetSpacing: Final[float] = 0.2
+autoControlDistanceFactor: Final[float] = 1.0 / 3.0
 
 
 @dataclass(frozen=True)
@@ -266,8 +267,72 @@ class PathPoint:
                 and other.maxV == self.maxV)
 
 
+@dataclass(frozen=True)
+class Waypoint:
+    prevControl: Union[Translation2d, None]
+    anchor: Translation2d
+    nextControl: Union[Translation2d, None]
+
+    def flip(self) -> Waypoint:
+        """
+        Flip this waypoint to the other side of the field, maintaining a blue alliance origin
+
+        :return: The flipped waypoint
+        """
+        flippedPrevControl = None if self.prevControl is None else flipFieldPos(self.prevControl)
+        flippedAnchor = flipFieldPos(self.anchor)
+        flippedNextControl = None if self.nextControl is None else flipFieldPos(self.nextControl)
+        return Waypoint(flippedPrevControl, flippedAnchor, flippedNextControl)
+
+    @staticmethod
+    def autoControlPoints(anchor: Translation2d, heading: Rotation2d, prevAnchor: Union[Translation2d, None],
+                          nextAnchor: Union[Translation2d, None]) -> Waypoint:
+        """
+        Create a waypoint with auto calculated control points based on the positions of adjacent waypoints.
+        This is used internally, and you probably shouldn't use this.
+
+        :param anchor: The anchor point of the waypoint to create
+        :param heading: The heading of this waypoint
+        :param prevAnchor: The position of the previous anchor point. This can be None for the start point
+        :param nextAnchor: The position of the next anchor point. This can be None for the end point
+        :return: Waypoint with auto calculated control points
+        """
+        prevControl = None
+        nextControl = None
+
+        if prevAnchor is not None:
+            d = anchor.distance(prevAnchor) * autoControlDistanceFactor
+            prevControl = anchor - Translation2d(d, heading)
+        if nextAnchor is not None:
+            d = anchor.distance(nextAnchor) * autoControlDistanceFactor
+            nextControl = anchor + Translation2d(d, heading)
+
+        return Waypoint(prevControl, anchor, nextControl)
+
+    @staticmethod
+    def fromJson(waypointJson: dict) -> Waypoint:
+        """
+        Create a waypoint from JSON
+
+        :param waypointJson: JSON object representing a waypoint
+        :return: The waypoint created from JSON
+        """
+        anchor = Waypoint._translationFromJson(waypointJson['anchor'])
+        prevControl = None if waypointJson['prevControl'] is None else Waypoint._translationFromJson(
+            waypointJson['prevControl'])
+        nextControl = None if waypointJson['nextControl'] is None else Waypoint._translationFromJson(
+            waypointJson['nextControl'])
+        return Waypoint(prevControl, anchor, nextControl)
+
+    @staticmethod
+    def _translationFromJson(translationJson: dict) -> Translation2d:
+        x = float(translationJson['x'])
+        y = float(translationJson['y'])
+        return Translation2d(x, y)
+
+
 class PathPlannerPath:
-    _bezierPoints: List[Translation2d]
+    _waypoints: List[Waypoint]
     _rotationTargets: List[RotationTarget]
     _constraintZones: List[ConstraintsZone]
     _eventMarkers: List[EventMarker]
@@ -287,14 +352,15 @@ class PathPlannerPath:
 
     preventFlipping: bool = False
 
-    def __init__(self, bezier_points: List[Translation2d], constraints: PathConstraints,
+    def __init__(self, waypoints: List[Waypoint], constraints: PathConstraints,
                  ideal_starting_state: Union[IdealStartingState, None], goal_end_state: GoalEndState,
                  holonomic_rotations: List[RotationTarget] = None, constraint_zones: List[ConstraintsZone] = None,
                  event_markers: List[EventMarker] = None, is_reversed: bool = False):
         """
         Create a new path planner path
 
-        :param bezier_points: List of points representing the cubic Bezier curve of the path
+        :param waypoints: List of waypoints representing the path. For on-the-fly paths, you likely want to use
+            waypointsFromPoses to create these.
         :param constraints: The global constraints of the path
         :param ideal_starting_state: The ideal starting state of the path. Can be None if unknown
         :param goal_end_state: The goal end state of the path
@@ -303,7 +369,7 @@ class PathPlannerPath:
         :param event_markers: List of event markers along the path
         :param is_reversed: Should the robot follow the path reversed (differential drive only)
         """
-        self._bezierPoints = bezier_points
+        self._waypoints = waypoints
         if holonomic_rotations is None:
             self._rotationTargets = []
         else:
@@ -322,7 +388,7 @@ class PathPlannerPath:
         self._idealStartingState = ideal_starting_state
         self._goalEndState = goal_end_state
         self._reversed = is_reversed
-        if len(bezier_points) >= 4 and (len(bezier_points) - 1) % 3 == 0:
+        if len(waypoints) >= 2:
             self._allPoints = self._createPath()
             self._precalcValues()
 
@@ -443,41 +509,38 @@ class PathPlannerPath:
         PathPlannerPath._choreoPathCache.clear()
 
     @staticmethod
-    def bezierFromPoses(poses: List[Pose2d]) -> List[Translation2d]:
+    def waypointsFromPoses(poses: List[Pose2d]) -> List[Waypoint]:
         """
-        Create the bezier points necessary to create a path using a list of poses
+        Create the bezier waypoints necessary to create a path using a list of poses
 
         :param poses: List of poses. Each pose represents one waypoint.
-        :return: Bezier points
+        :return: Bézier curve waypoints
         """
         if len(poses) < 2:
             raise ValueError('Not enough poses')
 
         # First pose
-        bezierPoints = [poses[0].translation(), poses[0].translation() + Translation2d(
-            poses[0].translation().distance(poses[1].translation()) / 3.0,
-            poses[0].rotation())]
+        waypoints = [
+            Waypoint.autoControlPoints(poses[0].translation(), poses[0].rotation(), None, poses[1].translation())]
 
         # Middle poses
         for i in range(1, len(poses) - 1):
-            anchor = poses[i].translation()
-
-            # Prev control
-            bezierPoints.append(anchor + Translation2d(anchor.distance(poses[i - 1].translation()) / 3.0,
-                                                       poses[i].rotation() + Rotation2d.fromDegrees(180)))
-            # Anchor
-            bezierPoints.append(anchor)
-            # Next control
-            bezierPoints.append(
-                anchor + Translation2d(anchor.distance(poses[i + 1].translation()) / 3.0, poses[i].rotation()))
+            waypoints.append(Waypoint.autoControlPoints(
+                poses[i].translation(),
+                poses[i].rotation(),
+                poses[i - 1].translation(),
+                poses[i + 1].translation()
+            ))
 
         # Last pose
-        bezierPoints.append(poses[len(poses) - 1].translation() + Translation2d(
-            poses[len(poses) - 1].translation().distance(poses[len(poses) - 2].translation()) / 3.0,
-            poses[len(poses) - 1].rotation() + Rotation2d.fromDegrees(180)))
-        bezierPoints.append(poses[len(poses) - 1].translation())
+        waypoints.append(Waypoint.autoControlPoints(
+            poses[-1].translation(),
+            poses[-1].rotation(),
+            poses[-2].translation(),
+            None
+        ))
 
-        return bezierPoints
+        return waypoints
 
     def getAllPathPoints(self) -> List[PathPoint]:
         """
@@ -603,8 +666,6 @@ class PathPlannerPath:
             # Flip the ideal trajectory
             flippedTraj = self._idealTrajectory.flip()
 
-        newBezier = [flipFieldPos(pos) for pos in self._bezierPoints]
-
         newRotTargets = [RotationTarget(t.waypointRelativePosition, flipFieldRotation(t.target)) for t in
                          self._rotationTargets]
 
@@ -613,7 +674,7 @@ class PathPlannerPath:
         path = PathPlannerPath.fromPathPoints(newPoints, self._globalConstraints,
                                               GoalEndState(self._goalEndState.velocity,
                                                            flipFieldRotation(self._goalEndState.rotation)))
-        path._bezierPoints = newBezier
+        path._bezierPoints = [w.flip() for w in self._waypoints]
         path._rotationTargets = newRotTargets
         path._constraintZones = self._constraintZones
         path._eventMarkers = self._eventMarkers
@@ -663,6 +724,30 @@ class PathPlannerPath:
 
         return self._idealTrajectory
 
+    def getWaypoints(self) -> List[Waypoint]:
+        """
+        Get the waypoints for this path
+
+        :return: List of this path's waypoints
+        """
+        return self._waypoints
+
+    def getRotationTargets(self) -> List[RotationTarget]:
+        """
+        Get the rotation targets for this path
+
+        :return: List of this path's rotation targets
+        """
+        return self._rotationTargets
+
+    def getConstraintZones(self) -> List[ConstraintsZone]:
+        """
+        Get the constraint zones for this path
+
+        :return: List of this path's constraint zones
+        """
+        return self._constraintZones
+
     def _constraintsForWaypointPos(self, pos: float) -> PathConstraints:
         for z in self._constraintZones:
             if z.minWaypointPos <= pos <= z.maxWaypointPos:
@@ -670,19 +755,23 @@ class PathPlannerPath:
         return self._globalConstraints
 
     def _samplePath(self, waypointRelativePos: float) -> Translation2d:
-        s = min(int(waypointRelativePos), int((len(self._bezierPoints) - 1) / 3) - 1)
-        iOffset = s * 3
-        t = waypointRelativePos - s
+        pos = min(max(waypointRelativePos, 0.0), len(self._waypoints) - 1)
 
-        p1 = self._bezierPoints[iOffset]
-        p2 = self._bezierPoints[iOffset + 1]
-        p3 = self._bezierPoints[iOffset + 2]
-        p4 = self._bezierPoints[iOffset + 3]
+        i = int(pos)
+        if i == len(self._waypoints) - 1:
+            i -= 1
+
+        t = pos - i
+
+        p1 = self._waypoints[i].anchor
+        p2 = self._waypoints[i].nextControl
+        p3 = self._waypoints[i + 1].prevControl
+        p4 = self._waypoints[i + 1].anchor
         return cubicLerp(p1, p2, p3, p4, t)
 
     @staticmethod
     def _fromJson(path_json: dict) -> PathPlannerPath:
-        bezierPoints = PathPlannerPath._bezierPointsFromWaypointsJson(path_json['waypoints'])
+        waypoints = [Waypoint.fromJson(w) for w in path_json['waypoints']]
         globalConstraints = PathConstraints.fromJson(path_json['globalConstraints'])
         goalEndState = GoalEndState.fromJson(path_json['goalEndState'])
         idealStartingState = IdealStartingState.fromJson(path_json['idealStartingState'])
@@ -691,32 +780,9 @@ class PathPlannerPath:
         constraintZones = [ConstraintsZone.fromJson(zoneJson) for zoneJson in path_json['constraintZones']]
         eventMarkers = [EventMarker.fromJson(markerJson) for markerJson in path_json['eventMarkers']]
 
-        return PathPlannerPath(bezierPoints, globalConstraints, idealStartingState, goalEndState, rotationTargets,
+        return PathPlannerPath(waypoints, globalConstraints, idealStartingState, goalEndState, rotationTargets,
                                constraintZones,
                                eventMarkers, isReversed)
-
-    @staticmethod
-    def _bezierPointsFromWaypointsJson(waypoints_json) -> List[Translation2d]:
-        bezierPoints = []
-
-        # First point
-        firstPointJson = waypoints_json[0]
-        bezierPoints.append(PathPlannerPath._pointFromJson(firstPointJson['anchor']))
-        bezierPoints.append(PathPlannerPath._pointFromJson(firstPointJson['nextControl']))
-
-        # Mid points
-        for i in range(1, len(waypoints_json) - 1):
-            point = waypoints_json[i]
-            bezierPoints.append(PathPlannerPath._pointFromJson(point['prevControl']))
-            bezierPoints.append(PathPlannerPath._pointFromJson(point['anchor']))
-            bezierPoints.append(PathPlannerPath._pointFromJson(point['nextControl']))
-
-        # Last point
-        lastPointJson = waypoints_json[len(waypoints_json) - 1]
-        bezierPoints.append(PathPlannerPath._pointFromJson(lastPointJson['prevControl']))
-        bezierPoints.append(PathPlannerPath._pointFromJson(lastPointJson['anchor']))
-
-        return bezierPoints
 
     @staticmethod
     def _pointFromJson(point_json: dict) -> Translation2d:
@@ -726,12 +792,12 @@ class PathPlannerPath:
         return Translation2d(x, y)
 
     def _createPath(self) -> List[PathPoint]:
-        if len(self._bezierPoints) < 4 or (len(self._bezierPoints) - 1) % 3 != 0:
-            raise ValueError('Invalid number of bezier points')
+        if len(self._waypoints) < 2:
+            raise ValueError('A path must have at least 2 waypoints')
 
         unaddedTargets = [r for r in self._rotationTargets]
         points = []
-        numSegments = int((len(self._bezierPoints) - 1) / 3)
+        numSegments = len(self._waypoints) - 1
 
         # Add the first path point
         points.append(PathPoint(self._samplePath(0.0), None, self._constraintsForWaypointPos(0.0)))

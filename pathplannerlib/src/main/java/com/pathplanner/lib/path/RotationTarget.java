@@ -1,5 +1,6 @@
 package com.pathplanner.lib.path;
 
+import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import java.util.Objects;
 import org.json.simple.JSONObject;
@@ -51,15 +52,12 @@ public class RotationTarget {
   }
 
   /**
-   * Transform the position of this target for a given segment number.
+   * Flip a rotation target for the other side of the field, maintaining a blue alliance origin
    *
-   * <p>For example, a target with position 1.5 for the segment 1 will have the position 0.5
-   *
-   * @param segmentIndex The segment index to transform position for
-   * @return The transformed target
+   * @return The flipped rotation target
    */
-  public RotationTarget forSegmentIndex(int segmentIndex) {
-    return new RotationTarget(waypointRelativePosition - segmentIndex, target);
+  public RotationTarget flip() {
+    return new RotationTarget(waypointRelativePosition, GeometryUtil.flipFieldRotation(target));
   }
 
   @Override

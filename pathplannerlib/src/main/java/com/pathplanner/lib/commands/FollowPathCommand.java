@@ -13,7 +13,6 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Timer;
@@ -205,12 +204,12 @@ public class FollowPathCommand extends Command {
    * @return Path following warmup command
    */
   public static Command warmupCommand() {
-    List<Translation2d> bezierPoints =
-        PathPlannerPath.bezierFromPoses(
+    List<Waypoint> waypoints =
+        PathPlannerPath.waypointsFromPoses(
             new Pose2d(0.0, 0.0, new Rotation2d()), new Pose2d(6.0, 6.0, new Rotation2d()));
     PathPlannerPath path =
         new PathPlannerPath(
-            bezierPoints,
+            waypoints,
             new PathConstraints(4.0, 4.0, 4.0, 4.0),
             new IdealStartingState(0.0, new Rotation2d()),
             new GoalEndState(0.0, Rotation2d.fromDegrees(90)));

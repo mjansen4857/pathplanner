@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 
 class Waypoint {
+  static const num minControlLength = 0.25;
   static HashMap<String, Translation2d> linked = HashMap();
 
   Translation2d anchor;
@@ -25,6 +26,14 @@ class Waypoint {
   }) {
     if (linkedName != null) {
       linked[linkedName!] = Translation2d(anchor.x, anchor.y);
+    }
+
+    // Set the lengths to their current length to enforce minimum
+    if (prevControl != null) {
+      setPrevControlLength(prevControlLength!);
+    }
+    if (nextControl != null) {
+      setNextControlLength(nextControlLength!);
     }
   }
 
@@ -112,6 +121,10 @@ class Waypoint {
 
   void setPrevControlLength(num length) {
     if (prevControl != null) {
+      if (!length.isFinite) {
+        length = minControlLength;
+      }
+      length = max(length, minControlLength);
       prevControl = anchor +
           Translation2d.fromAngle(length, (prevControl! - anchor).angle);
     }
@@ -119,6 +132,10 @@ class Waypoint {
 
   void setNextControlLength(num length) {
     if (nextControl != null) {
+      if (!length.isFinite) {
+        length = minControlLength;
+      }
+      length = max(length, minControlLength);
       nextControl = anchor +
           Translation2d.fromAngle(length, (nextControl! - anchor).angle);
     }
@@ -170,9 +187,13 @@ class Waypoint {
         nextControl = Translation2d(x, y);
       }
 
-      prevControl = anchor +
-          Translation2d.fromAngle(
-              prevControlLength!, (anchor - nextControl!).angle);
+      if (prevControl != null) {
+        prevControl = anchor +
+            Translation2d.fromAngle(
+                prevControlLength!, (anchor - nextControl!).angle);
+      }
+      // Set the length to enforce minimum
+      setNextControlLength(nextControlLength!);
     } else if (_isPrevControlDragging) {
       if (isLocked) {
         Translation2d lineEnd = prevControl! + (prevControl! - anchor);
@@ -185,9 +206,13 @@ class Waypoint {
         prevControl = Translation2d(x, y);
       }
 
-      nextControl = anchor +
-          Translation2d.fromAngle(
-              nextControlLength!, (anchor - prevControl!).angle);
+      if (nextControl != null) {
+        nextControl = anchor +
+            Translation2d.fromAngle(
+                nextControlLength!, (anchor - prevControl!).angle);
+      }
+      // Set the length to enforce minimum
+      setPrevControlLength(prevControlLength!);
     }
   }
 

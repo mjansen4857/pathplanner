@@ -584,10 +584,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Defaults.driveWheelRadius);
     widget.prefs.setDouble(PrefsKeys.driveGearing,
         json[PrefsKeys.driveGearing]?.toDouble() ?? Defaults.driveGearing);
-    widget.prefs.setDouble(PrefsKeys.maxDriveRPM,
-        json[PrefsKeys.maxDriveRPM]?.toDouble() ?? Defaults.maxDriveRPM);
-    widget.prefs.setString(PrefsKeys.torqueCurve,
-        json[PrefsKeys.torqueCurve] ?? Defaults.torqueCurve);
+    widget.prefs.setDouble(PrefsKeys.maxDriveSpeed,
+        json[PrefsKeys.maxDriveSpeed]?.toDouble() ?? Defaults.maxDriveSpeed);
+    widget.prefs.setString(PrefsKeys.driveMotor,
+        json[PrefsKeys.driveMotor] ?? Defaults.driveMotor);
+    widget.prefs.setDouble(
+        PrefsKeys.driveCurrentLimit,
+        json[PrefsKeys.driveCurrentLimit]?.toDouble() ??
+            Defaults.driveCurrentLimit);
     widget.prefs.setDouble(PrefsKeys.wheelCOF,
         json[PrefsKeys.wheelCOF]?.toDouble() ?? Defaults.wheelCOF);
   }
@@ -641,10 +645,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Defaults.driveWheelRadius,
       PrefsKeys.driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
           Defaults.driveGearing,
-      PrefsKeys.maxDriveRPM:
-          widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM,
-      PrefsKeys.torqueCurve:
-          widget.prefs.getString(PrefsKeys.torqueCurve) ?? Defaults.torqueCurve,
+      PrefsKeys.maxDriveSpeed:
+          widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
+              Defaults.maxDriveSpeed,
+      PrefsKeys.driveMotor:
+          widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
+      PrefsKeys.driveCurrentLimit:
+          widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
+              Defaults.driveCurrentLimit,
       PrefsKeys.wheelCOF:
           widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
     };
@@ -693,7 +701,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Assure that a navgrid file is present
     File navgridFile = fs.file(join(_pathplannerDir.path, 'navgrid.json'));
     navgridFile.exists().then((value) async {
-      if (!value) {
+      if (!value && mounted) {
         // Load default grid
         String fileContent = await DefaultAssetBundle.of(this.context)
             .loadString('resources/default_navgrid.json');

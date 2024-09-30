@@ -17,11 +17,23 @@ class PathPlannerTrajectory {
 
   PathPlannerTrajectory({
     required PathPlannerPath path,
-    required ChassisSpeeds startingSpeeds,
-    required Rotation2d startingRotation,
+    ChassisSpeeds? startingSpeeds,
+    Rotation2d? startingRotation,
     required RobotConfig robotConfig,
   }) : states = [] {
     DateTime startTime = DateTime.now();
+
+    if (startingSpeeds == null) {
+      num linearVel = path.idealStartingState.velocity;
+      Rotation2d heading =
+          Rotation2d.fromRadians(path.waypoints.first.getHeadingRadians());
+      Translation2d xySpeed = Translation2d.fromAngle(linearVel, heading);
+
+      startingSpeeds = ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0);
+    }
+
+    startingRotation ??=
+        Rotation2d.fromDegrees(path.idealStartingState.rotation);
 
     int prevRotationTargetIdx = 0;
     Rotation2d prevRotationTargetRot = startingRotation;
@@ -140,11 +152,18 @@ class PathPlannerTrajectory {
     states[0].timeSeconds = 0.0;
     states[0].fieldSpeeds = startingSpeeds;
 
-    num torqueLoss = robotConfig.moduleConfig.driveMotorTorqueCurve
-        .get(robotConfig.moduleConfig.maxDriveVelocityRPM);
+    num maxVelCurrent = min(
+        robotConfig.moduleConfig.driveMotor.getCurrent(
+            robotConfig.moduleConfig.maxDriveVelocityRadPerSec, 12.0),
+        robotConfig.moduleConfig.driveCurrentLimit);
+    num torqueLoss =
+        robotConfig.moduleConfig.driveMotor.getTorque(maxVelCurrent);
 
     num moduleFrictionForce =
-        robotConfig.moduleConfig.wheelCOF * (robotConfig.massKG * 9.8);
+        (robotConfig.moduleConfig.wheelCOF * (robotConfig.massKG * 9.8)) /
+            numModules;
+    num maxTorqueFriction =
+        moduleFrictionForce * robotConfig.moduleConfig.wheelRadiusMeters;
 
     for (int i = 1; i < states.length - 1; i++) {
       // Calculate the linear force vector and torque acting on the whole robot
@@ -154,17 +173,19 @@ class PathPlannerTrajectory {
         num lastVel = states[i - 1].moduleStates[m].speedMetersPerSecond;
         // This pass will only be handling acceleration of the robot, meaning that the "torque"
         // acting on the module due to friction and other losses will be fighting the motor
-        num availableTorque = robotConfig.moduleConfig.driveMotorTorqueCurve
-                .get(lastVel / robotConfig.moduleConfig.rpmToMPS) -
-            torqueLoss;
-        num wheelTorque =
-            availableTorque * robotConfig.moduleConfig.driveGearing;
+        num lastVelRadPerSec =
+            lastVel / robotConfig.moduleConfig.wheelRadiusMeters;
+        num currentDraw = min(
+            robotConfig.moduleConfig.driveMotor
+                .getCurrent(lastVelRadPerSec, 12.0),
+            robotConfig.moduleConfig.driveCurrentLimit);
+        num availableTorque =
+            robotConfig.moduleConfig.driveMotor.getTorque(currentDraw) -
+                torqueLoss;
+        availableTorque = min(availableTorque, maxTorqueFriction);
         num forceAtCarpet =
-            wheelTorque / robotConfig.moduleConfig.wheelRadiusMeters;
-        if (!robotConfig.holonomic) {
-          // Two motors per module if differential
-          forceAtCarpet *= 2;
-        }
+            availableTorque / robotConfig.moduleConfig.wheelRadiusMeters;
+
         Translation2d forceVec = Translation2d.fromAngle(
             forceAtCarpet, states[i].moduleStates[m].fieldAngle);
 
@@ -217,8 +238,8 @@ class PathPlannerTrajectory {
         // Fc = M * v^2 / R
         num maxSafeVel = double.infinity;
         if (curveRadius.isFinite) {
-          maxSafeVel = sqrt(
-              (moduleFrictionForce * curveRadius.abs()) / robotConfig.massKG);
+          maxSafeVel = sqrt((moduleFrictionForce * curveRadius.abs()) /
+              (robotConfig.massKG / numModules));
         }
 
         states[i].moduleStates[m].speedMetersPerSecond =
@@ -228,17 +249,22 @@ class PathPlannerTrajectory {
       // Go over the modules again to make sure they take the same amount of time to reach the next
       // state
       num maxDT = 0.0;
+      num realMaxDT = 0.0;
       for (int m = 0; m < numModules; m++) {
         Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
             states[i - 1].moduleStates[m].angle;
-        if (prevRotDelta.getDegrees().abs() >= 45) {
-          continue;
-        }
 
         num modVel = states[i].moduleStates[m].speedMetersPerSecond;
 
         num dt = states[i + 1].moduleStates[m].deltaPos / modVel;
-        maxDT = max(dt, maxDT);
+        realMaxDT = max(dt, realMaxDT);
+
+        if (prevRotDelta.getDegrees().abs() < 60) {
+          maxDT = max(dt, maxDT);
+        }
+      }
+      if (maxDT == 0.0) {
+        maxDT = realMaxDT;
       }
 
       // Recalculate all module velocities with the allowed DT
@@ -296,16 +322,18 @@ class PathPlannerTrajectory {
         num lastVel = states[i + 1].moduleStates[m].speedMetersPerSecond;
         // This pass will only be handling deceleration of the robot, meaning that the "torque"
         // acting on the module due to friction and other losses will not be fighting the motor
-        num availableTorque = robotConfig.moduleConfig.driveMotorTorqueCurve
-            .get(lastVel / robotConfig.moduleConfig.rpmToMPS);
-        num wheelTorque =
-            availableTorque * robotConfig.moduleConfig.driveGearing;
+        num lastVelRadPerSec =
+            lastVel / robotConfig.moduleConfig.wheelRadiusMeters;
+        num currentDraw = min(
+            robotConfig.moduleConfig.driveMotor
+                .getCurrent(lastVelRadPerSec, 12.0),
+            robotConfig.moduleConfig.driveCurrentLimit);
+        num availableTorque =
+            robotConfig.moduleConfig.driveMotor.getTorque(currentDraw);
+        availableTorque = min(availableTorque, maxTorqueFriction);
         num forceAtCarpet =
-            wheelTorque / robotConfig.moduleConfig.wheelRadiusMeters;
-        if (!robotConfig.holonomic) {
-          // Two motors per module if differential
-          forceAtCarpet *= 2;
-        }
+            availableTorque / robotConfig.moduleConfig.wheelRadiusMeters;
+
         Translation2d forceVec = Translation2d.fromAngle(forceAtCarpet,
             states[i].moduleStates[m].fieldAngle + Rotation2d.fromDegrees(180));
 
@@ -359,16 +387,21 @@ class PathPlannerTrajectory {
       // Go over the modules again to make sure they take the same amount of time to reach the next
       // state
       num maxDT = 0.0;
+      num realMaxDT = 0.0;
       for (int m = 0; m < numModules; m++) {
         Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
             states[i - 1].moduleStates[m].angle;
-        if (prevRotDelta.getDegrees().abs() >= 45) {
-          continue;
-        }
         num modVel = states[i].moduleStates[m].speedMetersPerSecond;
 
         num dt = states[i + 1].moduleStates[m].deltaPos / modVel;
-        maxDT = max(dt, maxDT);
+        realMaxDT = max(dt, realMaxDT);
+
+        if (prevRotDelta.getDegrees().abs() < 60) {
+          maxDT = max(dt, maxDT);
+        }
+      }
+      if (maxDT == 0.0) {
+        maxDT = realMaxDT;
       }
 
       // Recalculate all module velocities with the allowed DT
@@ -376,7 +409,6 @@ class PathPlannerTrajectory {
         Rotation2d prevRotDelta = states[i].moduleStates[m].angle -
             states[i - 1].moduleStates[m].angle;
         if (prevRotDelta.getDegrees().abs() >= 60) {
-          // print('v: ${states[i].moduleStates[m].speedMetersPerSecond}');
           continue;
         }
 

@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/choreo_path.dart';
+import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -31,6 +32,7 @@ class PathPainter extends CustomPainter {
   final PathPlannerTrajectory? simulatedPath;
   final Color? previewColor;
   final SharedPreferences prefs;
+  final PathPlannerPath? optimizedPath;
 
   late Size robotSize;
   late num robotRadius;
@@ -61,6 +63,7 @@ class PathPainter extends CustomPainter {
     Animation<double>? animation,
     this.previewColor,
     required this.prefs,
+    this.optimizedPath,
   }) : super(repaint: animation) {
     double robotWidth =
         prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
@@ -144,6 +147,10 @@ class PathPainter extends CustomPainter {
       _paintChoreoWaypoint(
           choreoPaths[i].trajectory.states.last, canvas, Colors.red, scale);
       _paintChoreoMarkers(choreoPaths[i], canvas);
+    }
+
+    if (optimizedPath != null) {
+      _paintPathPoints(optimizedPath!, canvas, Colors.deepPurpleAccent, 4.0);
     }
 
     for (int i = 1; i < paths.length; i++) {
@@ -315,11 +322,12 @@ class PathPainter extends CustomPainter {
         color.withOpacity(0.5));
   }
 
-  void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor) {
+  void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor,
+      [double strokeWidth = 2.0]) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
-      ..strokeWidth = 2; // Default stroke width for path points
+      ..strokeWidth = strokeWidth;
 
     Path p = Path();
 
@@ -416,16 +424,19 @@ class PathPainter extends CustomPainter {
   void _paintRotations(PathPlannerPath path, Canvas canvas, double scale) {
     for (int i = 0; i < path.pathPoints.length - 1; i++) {
       if (path.pathPoints[i].rotationTarget != null) {
+        RotationTarget target = path.pathPoints[i].rotationTarget!;
         Color rotationColor = Colors.grey[700]!;
-        if (selectedRotTarget == i) {
+        if (selectedRotTarget != null &&
+            path.rotationTargets[selectedRotTarget!] == target) {
           rotationColor = Colors.orange;
-        } else if (hoveredRotTarget == i) {
+        } else if (hoveredRotTarget != null &&
+            path.rotationTargets[hoveredRotTarget!] == target) {
           rotationColor = Colors.deepPurpleAccent;
         }
 
         PathPainterUtil.paintRobotOutline(
             path.pathPoints[i].position,
-            path.pathPoints[i].rotationTarget!.rotationDegrees,
+            target.rotationDegrees,
             fieldImage,
             robotSize,
             scale,

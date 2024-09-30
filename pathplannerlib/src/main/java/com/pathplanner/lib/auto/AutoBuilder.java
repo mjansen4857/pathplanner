@@ -5,6 +5,7 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.DriveFeedforward;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -43,7 +44,11 @@ public class AutoBuilder {
    * @param resetPose a consumer for resetting the robot's pose
    * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
    *     speeds
-   * @param robotRelativeOutput a consumer for setting the robot's robot-relative chassis speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
    * @param controller Path following controller that will be used to follow paths
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
@@ -54,7 +59,7 @@ public class AutoBuilder {
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
-      Consumer<ChassisSpeeds> robotRelativeOutput,
+      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -70,7 +75,7 @@ public class AutoBuilder {
                 path,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
-                robotRelativeOutput,
+                output,
                 controller,
                 robotConfig,
                 shouldFlipPath,
@@ -88,7 +93,7 @@ public class AutoBuilder {
                 goalEndVel,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
-                robotRelativeOutput,
+                output,
                 controller,
                 robotConfig,
                 driveRequirements);
@@ -99,12 +104,46 @@ public class AutoBuilder {
                 constraints,
                 poseSupplier,
                 robotRelativeSpeedsSupplier,
-                robotRelativeOutput,
+                output,
                 controller,
                 robotConfig,
                 shouldFlipPath,
                 driveRequirements);
     AutoBuilder.pathfindingConfigured = true;
+  }
+
+  /**
+   * Configures the AutoBuilder for using PathPlanner's built-in commands.
+   *
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param resetPose a consumer for resetting the robot's pose
+   * @param robotRelativeSpeedsSupplier a supplier for the robot's current robot relative chassis
+   *     speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds.
+   * @param controller Path following controller that will be used to follow paths
+   * @param robotConfig The robot configuration
+   * @param shouldFlipPath Supplier that determines if paths should be flipped to the other side of
+   *     the field. This will maintain a global blue alliance origin.
+   * @param driveRequirements the subsystem requirements for the robot's drive train
+   */
+  public static void configure(
+      Supplier<Pose2d> poseSupplier,
+      Consumer<Pose2d> resetPose,
+      Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
+      Consumer<ChassisSpeeds> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      BooleanSupplier shouldFlipPath,
+      Subsystem... driveRequirements) {
+    configure(
+        poseSupplier,
+        resetPose,
+        robotRelativeSpeedsSupplier,
+        (speeds, feedforwards) -> output.accept(speeds),
+        controller,
+        robotConfig,
+        shouldFlipPath,
+        driveRequirements);
   }
 
   /**

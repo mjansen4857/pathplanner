@@ -3,30 +3,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/constraint_zones_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/path_optimization_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/editor/runtime_display.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
 void main() {
   late PathPlannerPath path;
   bool sideSwapped = false;
+  late SharedPreferences prefs;
 
-  setUp(() {
+  setUp(() async {
     path = PathPlannerPath.defaultPath(
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
     path.reversed = false;
     sideSwapped = false;
+    SharedPreferences.setMockInitialValues({
+      PrefsKeys.holonomicMode: true,
+      PrefsKeys.treeOnRight: true,
+    });
+    prefs = await SharedPreferences.getInstance();
   });
 
   testWidgets('has runtime display', (widgetTester) async {
+    // Set up a mock SharedPreferences instance
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: PathTree(
@@ -38,6 +51,7 @@ void main() {
             currentRuntime: 5.0,
             previousRuntime: null,
           ),
+          prefs: prefs, // Add the required prefs parameter
         ),
       ),
     ));
@@ -54,6 +68,7 @@ void main() {
           onSideSwapped: () => sideSwapped = true,
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
         ),
       ),
     ));
@@ -75,6 +90,7 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
         ),
       ),
     ));
@@ -90,6 +106,7 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
         ),
       ),
     ));
@@ -105,6 +122,7 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
         ),
       ),
     ));
@@ -120,6 +138,7 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
         ),
       ),
     ));
@@ -135,6 +154,7 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
         ),
       ),
     ));
@@ -150,11 +170,44 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
         ),
       ),
     ));
 
     expect(find.byType(RotationTargetsTree), findsOneWidget);
+  });
+
+  testWidgets('has optimizer tree', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: PathTree(
+          path: path,
+          undoStack: ChangeStack(),
+          holonomicMode: true,
+          defaultConstraints: PathConstraints(),
+          prefs: prefs,
+        ),
+      ),
+    ));
+
+    expect(find.byType(PathOptimizationTree), findsOneWidget);
+  });
+
+  testWidgets('has optimizer tree', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: PathTree(
+          path: path,
+          undoStack: ChangeStack(),
+          holonomicMode: true,
+          defaultConstraints: PathConstraints(),
+          prefs: prefs,
+        ),
+      ),
+    ));
+
+    expect(find.byType(PathOptimizationTree), findsOneWidget);
   });
 
   testWidgets('Reversed button', (widgetTester) async {
@@ -167,6 +220,7 @@ void main() {
           undoStack: undoStack,
           holonomicMode: false,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
         ),
       ),
     ));

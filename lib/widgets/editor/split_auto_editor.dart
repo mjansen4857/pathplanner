@@ -5,7 +5,7 @@ import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/trajectory/auto_simulator.dart';
 import 'package:pathplanner/trajectory/config.dart';
-import 'package:pathplanner/trajectory/motor_torque_curve.dart';
+import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -255,32 +255,39 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
               Translation2d(x: 0, y: -halfTrackwidth),
             ];
 
+      int numMotors = _holonomicMode ? 1 : 2;
+      DCMotor driveMotor = DCMotor.fromString(
+              widget.prefs.getString(PrefsKeys.driveMotor) ??
+                  Defaults.driveMotor,
+              numMotors)
+          .withReduction(widget.prefs.getDouble(PrefsKeys.driveGearing) ??
+              Defaults.driveGearing);
+      RobotConfig config = RobotConfig(
+        massKG:
+            widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
+        moi: widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
+        moduleConfig: ModuleConfig(
+          wheelRadiusMeters:
+              widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
+                  Defaults.driveWheelRadius,
+          maxDriveVelocityMPS:
+              widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
+                  Defaults.maxDriveSpeed,
+          driveMotor: driveMotor,
+          driveCurrentLimit:
+              widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
+                  Defaults.driveCurrentLimit,
+          wheelCOF:
+              widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
+        ),
+        moduleLocations: moduleLocations,
+        holonomic: _holonomicMode,
+      );
+
       try {
         simPath = AutoSimulator.simulateAuto(
           widget.autoPaths,
-          RobotConfig(
-            massKG: widget.prefs.getDouble(PrefsKeys.robotMass) ??
-                Defaults.robotMass,
-            moi:
-                widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
-            moduleConfig: ModuleConfig(
-              wheelRadiusMeters:
-                  widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
-                      Defaults.driveWheelRadius,
-              driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
-                  Defaults.driveGearing,
-              maxDriveVelocityRPM:
-                  widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ??
-                      Defaults.maxDriveRPM,
-              driveMotorTorqueCurve: MotorTorqueCurve.fromString(
-                  widget.prefs.getString(PrefsKeys.torqueCurve) ??
-                      Defaults.torqueCurve),
-              wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
-                  Defaults.wheelCOF,
-            ),
-            moduleLocations: moduleLocations,
-            holonomic: _holonomicMode,
-          ),
+          config,
         );
         if (!(simPath?.getTotalTimeSeconds().isFinite ?? false)) {
           simPath = null;
@@ -312,7 +319,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Failed to generate trajectory for ${widget.auto.name}. Try adjusting the path shape or the positions of rotation targets.',
+            'Failed to generate trajectory for ${widget.auto.name}. Please open an issue on the pathplanner github and include the failing path file.',
             style: TextStyle(
                 color: Theme.of(context).colorScheme.onErrorContainer),
           ),

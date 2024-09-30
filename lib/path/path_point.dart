@@ -7,14 +7,14 @@ class PathPoint {
   final Point position;
   RotationTarget? rotationTarget;
   final PathConstraints constraints;
-  final num distanceAlongPath;
+  num distanceAlongPath = 0.0;
   num maxV = double.infinity;
-  num waypointPos = 0.0;
+  final num waypointPos;
 
   PathPoint({
     required this.position,
     required this.rotationTarget,
     required this.constraints,
-    required this.distanceAlongPath,
+    required this.waypointPos,
   });
 }

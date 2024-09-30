@@ -24,6 +24,10 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 					t));
 	lerpedState.linearVelocity = GeometryUtil::unitLerp(linearVelocity,
 			endVal.linearVelocity, t);
+	for (size_t m = 0; m < feedforwards.size(); m++) {
+		lerpedState.feedforwards.emplace_back(
+				feedforwards[m].interpolate(endVal.feedforwards[m], t));
+	}
 
 	return lerpedState;
 }
@@ -41,6 +45,30 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 	reversed.pose = frc::Pose2d(pose.Translation(),
 			pose.Rotation() + frc::Rotation2d(180_deg));
 	reversed.linearVelocity = -linearVelocity;
+	for (auto ff : feedforwards) {
+		reversed.feedforwards.emplace_back(ff.reverse());
+	}
 
 	return reversed;
+}
+
+PathPlannerTrajectoryState PathPlannerTrajectoryState::flip() const {
+	PathPlannerTrajectoryState mirrored;
+
+	mirrored.time = time;
+	mirrored.linearVelocity = linearVelocity;
+	mirrored.pose = GeometryUtil::flipFieldPose(pose);
+	mirrored.fieldSpeeds = frc::ChassisSpeeds { -fieldSpeeds.vx, fieldSpeeds.vy,
+			-fieldSpeeds.omega };
+	if (feedforwards.size() == 4) {
+		mirrored.feedforwards.emplace_back(feedforwards[1]);
+		mirrored.feedforwards.emplace_back(feedforwards[0]);
+		mirrored.feedforwards.emplace_back(feedforwards[3]);
+		mirrored.feedforwards.emplace_back(feedforwards[2]);
+	} else if (feedforwards.size() == 2) {
+		mirrored.feedforwards.emplace_back(feedforwards[1]);
+		mirrored.feedforwards.emplace_back(feedforwards[0]);
+	}
+
+	return mirrored;
 }

@@ -40,6 +40,11 @@ constexpr UnitType unitLerp(UnitType const startVal, UnitType const endVal,
 	return startVal + (endVal - startVal) * t;
 }
 
+constexpr double doubleLerp(const double startVal, const double endVal,
+		const double t) {
+	return startVal + (endVal - startVal) * t;
+}
+
 constexpr frc::Rotation2d rotationLerp(frc::Rotation2d const startVal,
 		frc::Rotation2d const endVal, double const t) {
 	return startVal + ((endVal - startVal) * t);

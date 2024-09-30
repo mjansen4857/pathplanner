@@ -7,7 +7,7 @@
 #include "pathplanner/lib/path/IdealStartingState.h"
 #include "pathplanner/lib/path/GoalEndState.h"
 #include "pathplanner/lib/path/PathPoint.h"
-#include "pathplanner/lib/path/PathSegment.h"
+#include "pathplanner/lib/path/Waypoint.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/config/RobotConfig.h"
 #include <vector>
@@ -16,6 +16,7 @@
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <wpi/json.h>
 #include <string>
+#include <unordered_map>
 #include <units/length.h>
 #include <memory>
 #include <initializer_list>
@@ -28,7 +29,8 @@ public:
 	/**
 	 * Create a new path planner path
 	 *
-	 * @param bezierPoints List of points representing the cubic Bezier curve of the path
+	 * @param waypoints List of waypoints representing the path. For on-the-fly paths, you likely want
+	 *     to use waypointsFromPoses to create these.
 	 * @param holonomicRotations List of rotation targets along the path
 	 * @param constraintZones List of constraint zones along the path
 	 * @param eventMarkers List of event markers along the path
@@ -37,7 +39,7 @@ public:
 	 * @param goalEndState The goal end state of the path
 	 * @param reversed Should the robot follow the path reversed (differential drive only)
 	 */
-	PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
+	PathPlannerPath(std::vector<Waypoint> waypoints,
 			std::vector<RotationTarget> rotationTargets,
 			std::vector<ConstraintsZone> constraintZones,
 			std::vector<EventMarker> eventMarkers,
@@ -49,19 +51,18 @@ public:
 	 * Simplified constructor to create a path with no rotation targets, constraint zones, or event
 	 * markers.
 	 *
-	 * <p>You likely want to use bezierFromPoses to create the bezier points.
-	 *
-	 * @param bezierPoints List of points representing the cubic Bezier curve of the path
+	 * @param waypoints List of waypoints representing the path. For on-the-fly paths, you likely want
+	 *     to use waypointsFromPoses to create these.
 	 * @param constraints The global constraints of the path
 	 * @param idealStartingState The ideal starting state of the path. Can be nullopt if unknown
 	 * @param goalEndState The goal end state of the path
 	 * @param reversed Should the robot follow the path reversed (differential drive only)
 	 */
-	PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
+	PathPlannerPath(std::vector<Waypoint> waypoints,
 			PathConstraints constraints,
 			std::optional<IdealStartingState> idealStartingState,
 			GoalEndState goalEndState, bool reversed = false) : PathPlannerPath(
-			bezierPoints, std::vector<RotationTarget>(),
+			waypoints, std::vector<RotationTarget>(),
 			std::vector<ConstraintsZone>(), std::vector<EventMarker>(),
 			constraints, idealStartingState, goalEndState, reversed) {
 	}
@@ -74,13 +75,25 @@ public:
 	void hotReload(const wpi::json &json);
 
 	/**
-	 * Create the bezier points necessary to create a path using a list of poses
+	 * Create the bezier waypoints necessary to create a path using a list of poses
 	 *
 	 * @param poses List of poses. Each pose represents one waypoint.
-	 * @return Bezier points
+	 * @return Bezier curve waypoints
 	 */
-	static std::vector<frc::Translation2d> bezierFromPoses(
+	static std::vector<Waypoint> waypointsFromPoses(
 			std::vector<frc::Pose2d> poses);
+
+	/**
+	 * Create the bezier waypoints necessary to create a path using a list of poses
+	 *
+	 * @param poses List of poses. Each pose represents one waypoint.
+	 * @return Bezier curve waypoints
+	 */
+	[[deprecated("Renamed to waypointsFromPoses")]]
+	static inline std::vector<Waypoint> bezierFromPoses(
+			std::vector<frc::Pose2d> poses) {
+		return waypointsFromPoses(poses);
+	}
 
 	/**
 	 * Load a path from a path file in storage
@@ -175,6 +188,30 @@ public:
 	}
 
 	/**
+	 * Get the waypoints for this path
+	 * @return vector of this path's waypoints
+	 */
+	constexpr std::vector<Waypoint>& getWaypoints() {
+		return m_waypoints;
+	}
+
+	/**
+	 * Get the rotation targets for this path
+	 * @return vector of this path's rotation targets
+	 */
+	constexpr std::vector<RotationTarget>& getRotationTargets() {
+		return m_rotationTargets;
+	}
+
+	/**
+	 * Get the constraint zones for this path
+	 * @return vector of this path's constraint zones
+	 */
+	constexpr std::vector<ConstraintsZone>& getConstraintZones() {
+		return m_constraintZones;
+	}
+
+	/**
 	 * Get the global constraints for this path
 	 *
 	 * @return Global constraints that apply to this path
@@ -260,49 +297,48 @@ public:
 		return poses;
 	}
 
+	/** Clear the cache of previously loaded paths. */
+	static inline void clearPathCache() {
+		PathPlannerPath::getPathCache().clear();
+		PathPlannerPath::getChoreoPathCache().clear();
+	}
+
 private:
 	std::vector<PathPoint> createPath();
 
 	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);
 
-	static std::vector<frc::Translation2d> bezierPointsFromWaypointsJson(
-			const wpi::json &json);
-
-	static frc::Translation2d pointFromJson(const wpi::json &json);
+	static inline std::vector<Waypoint> waypointsFromJson(
+			const wpi::json &json) {
+		std::vector < Waypoint > waypoints;
+		for (wpi::json::const_reference waypointJson : json.at("waypoints")) {
+			waypoints.emplace_back(Waypoint::fromJson(waypointJson));
+		}
+		return waypoints;
+	}
 
 	void precalcValues();
 
 	static units::meter_t getCurveRadiusAtPoint(size_t index,
 			std::vector<PathPoint> &points);
 
-	/**
-	 * Map a given percentage/waypoint relative position over 2 segments
-	 *
-	 * @param pct The percent to map
-	 * @param seg1Pct The percentage of the 2 segments made up by the first segment
-	 * @return The waypoint relative position over the 2 segments
-	 */
-	static inline double mapPct(double pct, double seg1Pct) {
-		double mappedPct;
-		if (pct <= seg1Pct) {
-			// Map to segment 1
-			mappedPct = pct / seg1Pct;
-		} else {
-			// Map to segment 2
-			mappedPct = 1.0 + ((pct - seg1Pct) / (1.0 - seg1Pct));
+	inline PathConstraints constraintsForWaypointPos(double pos) const {
+		for (auto z : m_constraintZones) {
+			if (pos >= z.getMinWaypointRelativePos()
+					&& pos <= z.getMaxWaypointRelativePos()) {
+				return z.getConstraints();
+			}
 		}
-
-		return mappedPct;
+		return m_globalConstraints;
 	}
 
-	static inline units::meter_t positionDelta(const frc::Translation2d &a,
-			const frc::Translation2d &b) {
-		frc::Translation2d delta = a - b;
+	frc::Translation2d samplePath(double waypointRelativePos) const;
 
-		return units::math::abs(delta.X()) + units::math::abs(delta.Y());
-	}
+	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& getPathCache();
 
-	std::vector<frc::Translation2d> m_bezierPoints;
+	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& getChoreoPathCache();
+
+	std::vector<Waypoint> m_waypoints;
 	std::vector<RotationTarget> m_rotationTargets;
 	std::vector<ConstraintsZone> m_constraintZones;
 	std::vector<EventMarker> m_eventMarkers;
@@ -316,5 +352,8 @@ private:
 	std::optional<PathPlannerTrajectory> m_idealTrajectory = std::nullopt;
 
 	static int m_instances;
+
+	static constexpr double targetIncrement = 0.05;
+	static constexpr units::meter_t targetSpacing = 0.2_m;
 };
 }

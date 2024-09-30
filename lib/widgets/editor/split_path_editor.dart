@@ -12,11 +12,8 @@ import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/trajectory/config.dart';
-import 'package:pathplanner/trajectory/motor_torque_curve.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/prefs.dart';
-import 'package:pathplanner/util/wpimath/geometry.dart';
-import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/runtime_display.dart';
@@ -75,6 +72,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   PathPlannerTrajectory? _simTraj;
   bool _paused = false;
   late bool _holonomicMode;
+
+  PathPlannerPath? _optimizedPath;
 
   late Size _robotSize;
   late AnimationController _previewController;
@@ -450,6 +449,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           animation: _previewController.view,
                           previewColor: colorScheme.primary,
                           prefs: widget.prefs,
+                          optimizedPath: _optimizedPath,
                         ),
                       ),
                     ),
@@ -504,6 +504,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
+                    pathRuntime: _simTraj?.getTotalTimeSeconds(),
                     runtimeDisplay: _runtimeDisplay,
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
@@ -513,6 +514,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     undoStack: widget.undoStack,
                     holonomicMode: _holonomicMode,
                     defaultConstraints: _getDefaultConstraints(),
+                    prefs: widget.prefs,
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();
@@ -659,6 +661,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         _selectedMarker = value;
                       });
                     },
+                    onOptimizationUpdate: (result) => setState(() {
+                      _optimizedPath = result;
+                    }),
                   ),
                 ),
               ),
@@ -678,61 +683,10 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   // marked as async so it can be called from initState
   void _simulatePath() async {
     if (widget.simulate) {
-      num linearVel = widget.path.idealStartingState.velocity;
-      Rotation2d startingRotation =
-          Rotation2d.fromDegrees(widget.path.idealStartingState.rotation);
-
-      Rotation2d heading = Rotation2d.fromRadians(
-          widget.path.waypoints.first.getHeadingRadians());
-      Translation2d xySpeed = Translation2d.fromAngle(linearVel, heading);
-
-      num halfWheelbase = (widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
-              Defaults.robotWheelbase) /
-          2;
-      num halfTrackwidth = (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
-              Defaults.robotTrackwidth) /
-          2;
-      List<Translation2d> moduleLocations = _holonomicMode
-          ? [
-              Translation2d(x: halfWheelbase, y: halfTrackwidth),
-              Translation2d(x: halfWheelbase, y: -halfTrackwidth),
-              Translation2d(x: -halfWheelbase, y: halfTrackwidth),
-              Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
-            ]
-          : [
-              Translation2d(x: 0, y: halfTrackwidth),
-              Translation2d(x: 0, y: -halfTrackwidth),
-            ];
-
       setState(() {
         _simTraj = PathPlannerTrajectory(
           path: widget.path,
-          startingSpeeds:
-              ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0),
-          startingRotation: startingRotation,
-          robotConfig: RobotConfig(
-            massKG: widget.prefs.getDouble(PrefsKeys.robotMass) ??
-                Defaults.robotMass,
-            moi:
-                widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
-            moduleConfig: ModuleConfig(
-              wheelRadiusMeters:
-                  widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
-                      Defaults.driveWheelRadius,
-              driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
-                  Defaults.driveGearing,
-              maxDriveVelocityRPM:
-                  widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ??
-                      Defaults.maxDriveRPM,
-              driveMotorTorqueCurve: MotorTorqueCurve.fromString(
-                  widget.prefs.getString(PrefsKeys.torqueCurve) ??
-                      Defaults.torqueCurve),
-              wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
-                  Defaults.wheelCOF,
-            ),
-            moduleLocations: moduleLocations,
-            holonomic: _holonomicMode,
-          ),
+          robotConfig: RobotConfig.fromPrefs(widget.prefs),
         );
         if (!(_simTraj?.getTotalTimeSeconds().isFinite ?? false)) {
           _simTraj = null;
@@ -761,7 +715,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets',
+              'Failed to generate trajectory. Please open an issue on the pathplanner github and include this path file',
               style: TextStyle(
                   color: Theme.of(context).colorScheme.onErrorContainer),
             ),

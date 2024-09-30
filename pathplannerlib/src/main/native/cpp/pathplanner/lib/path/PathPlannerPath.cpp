@@ -2,6 +2,8 @@
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
+#include "pathplanner/lib/events/Event.h"
+#include "pathplanner/lib/events/ScheduleCommandEvent.h"
 #include <frc/Filesystem.h>
 #include <frc/MathUtil.h>
 #include <wpi/MemoryBuffer.h>
@@ -14,17 +16,17 @@ using namespace pathplanner;
 
 int PathPlannerPath::m_instances = 0;
 
-PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
+PathPlannerPath::PathPlannerPath(std::vector<Waypoint> waypoints,
 		std::vector<RotationTarget> rotationTargets,
 		std::vector<ConstraintsZone> constraintZones,
 		std::vector<EventMarker> eventMarkers,
 		PathConstraints globalConstraints,
 		std::optional<IdealStartingState> idealStartingState,
-		GoalEndState goalEndState, bool reversed) : m_bezierPoints(
-		bezierPoints), m_rotationTargets(rotationTargets), m_constraintZones(
-		constraintZones), m_eventMarkers(eventMarkers), m_globalConstraints(
-		globalConstraints), m_idealStartingState(idealStartingState), m_goalEndState(
-		goalEndState), m_reversed(reversed), m_isChoreoPath(false) {
+		GoalEndState goalEndState, bool reversed) : m_waypoints(waypoints), m_rotationTargets(
+		rotationTargets), m_constraintZones(constraintZones), m_eventMarkers(
+		eventMarkers), m_globalConstraints(globalConstraints), m_idealStartingState(
+		idealStartingState), m_goalEndState(goalEndState), m_reversed(reversed), m_isChoreoPath(
+		false) {
 	std::sort(m_rotationTargets.begin(), m_rotationTargets.end(),
 			[](auto &left, auto &right) {
 				return left.getPosition() < right.getPosition();
@@ -35,7 +37,7 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 						< right.getWaypointRelativePos();
 			});
 
-	createPath();
+	m_allPoints = createPath();
 
 	precalcValues();
 
@@ -44,7 +46,7 @@ PathPlannerPath::PathPlannerPath(std::vector<frc::Translation2d> bezierPoints,
 }
 
 PathPlannerPath::PathPlannerPath(PathConstraints constraints,
-		GoalEndState goalEndState) : m_bezierPoints(), m_rotationTargets(), m_constraintZones(), m_eventMarkers(), m_globalConstraints(
+		GoalEndState goalEndState) : m_waypoints(), m_rotationTargets(), m_constraintZones(), m_eventMarkers(), m_globalConstraints(
 		constraints), m_idealStartingState(std::nullopt), m_goalEndState(
 		goalEndState), m_reversed(false), m_isChoreoPath(false) {
 	m_instances++;
@@ -54,7 +56,7 @@ PathPlannerPath::PathPlannerPath(PathConstraints constraints,
 void PathPlannerPath::hotReload(const wpi::json &json) {
 	auto updatedPath = PathPlannerPath::fromJson(json);
 
-	m_bezierPoints = updatedPath->m_bezierPoints;
+	m_waypoints = updatedPath->m_waypoints;
 	m_rotationTargets = updatedPath->m_rotationTargets;
 	m_constraintZones = updatedPath->m_constraintZones;
 	m_eventMarkers = updatedPath->m_eventMarkers;
@@ -63,92 +65,85 @@ void PathPlannerPath::hotReload(const wpi::json &json) {
 	m_goalEndState = updatedPath->m_goalEndState;
 	m_reversed = updatedPath->m_reversed;
 	m_allPoints = updatedPath->m_allPoints;
+
+	// Clear the ideal trajectory so it gets regenerated
+	m_idealTrajectory = std::nullopt;
 }
 
-std::vector<frc::Translation2d> PathPlannerPath::bezierFromPoses(
+std::vector<Waypoint> PathPlannerPath::waypointsFromPoses(
 		std::vector<frc::Pose2d> poses) {
 	if (poses.size() < 2) {
 		throw FRC_MakeError(frc::err::InvalidParameter,
-				"Not enough poses provided to bezierFromPoses");
+				"Not enough poses provided to waypointsFromPoses");
 	}
 
-	std::vector < frc::Translation2d > bezierPoints;
+	std::vector < Waypoint > waypoints;
 
 	// First pose
-	bezierPoints.emplace_back(poses[0].Translation());
-	bezierPoints.emplace_back(
-			poses[0].Translation()
-					+ frc::Translation2d(
-							poses[0].Translation().Distance(
-									poses[1].Translation()) / 3.0,
-							poses[0].Rotation()));
+	waypoints.emplace_back(
+			Waypoint::autoControlPoints(poses[0].Translation(),
+					poses[0].Rotation(), std::nullopt, poses[1].Translation()));
 
 	// Middle poses
 	for (size_t i = 1; i < poses.size() - 1; i++) {
-		frc::Translation2d anchor = poses[i].Translation();
-
-		// Prev control
-		bezierPoints.emplace_back(
-				anchor
-						+ frc::Translation2d(
-								anchor.Distance(poses[i - 1].Translation())
-										/ 3.0,
-								poses[i].Rotation()
-										+ frc::Rotation2d(180_deg)));
-		// Anchor
-		bezierPoints.emplace_back(anchor);
-		// Next control
-		bezierPoints.emplace_back(
-				anchor
-						+ frc::Translation2d(
-								anchor.Distance(poses[i + 1].Translation())
-										/ 3.0, poses[i].Rotation()));
+		waypoints.emplace_back(
+				Waypoint::autoControlPoints(poses[i].Translation(),
+						poses[i].Rotation(), poses[i - 1].Translation(),
+						poses[i + 1].Translation()));
 	}
 
 	// Last pose
-	bezierPoints.emplace_back(
-			poses[poses.size() - 1].Translation()
-					+ frc::Translation2d(
-							poses[poses.size() - 1].Translation().Distance(
-									poses[poses.size() - 2].Translation())
-									/ 3.0,
-							poses[poses.size() - 1].Rotation()
-									+ frc::Rotation2d(180_deg)));
-	bezierPoints.emplace_back(poses[poses.size() - 1].Translation());
+	waypoints.emplace_back(
+			Waypoint::autoControlPoints(poses[poses.size() - 1].Translation(),
+					poses[poses.size() - 1].Rotation(),
+					poses[poses.size() - 2].Translation(), std::nullopt));
 
-	return bezierPoints;
+	return waypoints;
 }
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 		std::string pathName) {
+	if (PathPlannerPath::getPathCache().contains(pathName)) {
+		return PathPlannerPath::getPathCache()[pathName];
+	}
+
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/paths/" + pathName + ".path";
 
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
+	std::error_code error_code;
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath, error_code);
 
-	if (!fileBuffer) {
+	if (!fileBuffer || error_code) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
+	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
 	std::shared_ptr < PathPlannerPath > path = PathPlannerPath::fromJson(json);
 	PPLibTelemetry::registerHotReloadPath(pathName, path);
+
+	PathPlannerPath::getPathCache().emplace(pathName, path);
+
 	return path;
 }
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 		std::string trajectoryName) {
+	if (PathPlannerPath::getChoreoPathCache().contains(trajectoryName)) {
+		return PathPlannerPath::getChoreoPathCache()[trajectoryName];
+	}
+
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/choreo/" + trajectoryName + ".traj";
 
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
+	std::error_code error_code;
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath, error_code);
 
-	if (!fileBuffer) {
+	if (!fileBuffer || error_code) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
+	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
 	std::vector < PathPlannerTrajectoryState > trajStates;
 	for (wpi::json::const_reference s : json.at("samples")) {
@@ -192,8 +187,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 	path->m_allPoints = pathPoints;
 	path->m_isChoreoPath = true;
 
-	std::vector < std::pair<units::second_t, std::shared_ptr<frc2::Command>>
-			> eventCommands;
+	std::vector < std::shared_ptr < Event >> events;
 	if (json.contains("eventMarkers")) {
 		for (wpi::json::const_reference m : json.at("eventMarkers")) {
 			units::second_t timestamp { m.at("timestamp").get<double>() };
@@ -202,25 +196,27 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 					CommandUtil::commandFromJson(m.at("command"), false));
 
 			path->m_eventMarkers.emplace_back(eventMarker);
-			eventCommands.emplace_back(timestamp, eventMarker.getCommand());
+			events.emplace_back(
+					std::make_shared < ScheduleCommandEvent
+							> (timestamp, eventMarker.getCommand()));
 		}
 	}
 
-	std::sort(eventCommands.begin(), eventCommands.end(),
-			[](auto &left, auto &right) {
-				return left.first < right.first;
-			});
+	std::sort(events.begin(), events.end(), [](auto left, auto right) {
+		return left->getTimestamp() < right->getTimestamp();
+	});
 
-	path->m_idealTrajectory = PathPlannerTrajectory(trajStates, eventCommands);
+	path->m_idealTrajectory = PathPlannerTrajectory(trajStates, events);
+
+	PathPlannerPath::getChoreoPathCache().emplace(trajectoryName, path);
 
 	return path;
 }
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
 		const wpi::json &json) {
-	std::vector < frc::Translation2d > bezierPoints =
-			PathPlannerPath::bezierPointsFromWaypointsJson(
-					json.at("waypoints"));
+	std::vector < Waypoint > waypoints = PathPlannerPath::waypointsFromJson(
+			json.at("waypoints"));
 	PathConstraints globalConstraints = PathConstraints::fromJson(
 			json.at("globalConstraints"));
 	GoalEndState goalEndState = GoalEndState::fromJson(json.at("goalEndState"));
@@ -244,46 +240,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
 	}
 
 	return std::make_shared < PathPlannerPath
-			> (bezierPoints, rotationTargets, constraintZones, eventMarkers, globalConstraints, idealStartingState, goalEndState, reversed);
-}
-
-std::vector<frc::Translation2d> PathPlannerPath::bezierPointsFromWaypointsJson(
-		const wpi::json &json) {
-	std::vector < frc::Translation2d > bezierPoints;
-
-	// First point
-	wpi::json::const_reference firstPoint = json[0];
-	bezierPoints.push_back(
-			PathPlannerPath::pointFromJson(firstPoint.at("anchor")));
-	bezierPoints.push_back(
-			PathPlannerPath::pointFromJson(firstPoint.at("nextControl")));
-
-	// Mid points
-	for (size_t i = 1; i < json.size() - 1; i++) {
-		wpi::json::const_reference point = json[i];
-		bezierPoints.push_back(
-				PathPlannerPath::pointFromJson(point.at("prevControl")));
-		bezierPoints.push_back(
-				PathPlannerPath::pointFromJson(point.at("anchor")));
-		bezierPoints.push_back(
-				PathPlannerPath::pointFromJson(point.at("nextControl")));
-	}
-
-	// Last point
-	wpi::json::const_reference lastPoint = json[json.size() - 1];
-	bezierPoints.push_back(
-			PathPlannerPath::pointFromJson(lastPoint.at("prevControl")));
-	bezierPoints.push_back(
-			PathPlannerPath::pointFromJson(lastPoint.at("anchor")));
-
-	return bezierPoints;
-}
-
-frc::Translation2d PathPlannerPath::pointFromJson(const wpi::json &json) {
-	auto x = units::meter_t(json.at("x").get<double>());
-	auto y = units::meter_t(json.at("y").get<double>());
-
-	return frc::Translation2d(x, y);
+			> (waypoints, rotationTargets, constraintZones, eventMarkers, globalConstraints, idealStartingState, goalEndState, reversed);
 }
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathPoints(
@@ -299,39 +256,217 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathPoints(
 }
 
 std::vector<PathPoint> PathPlannerPath::createPath() {
-	if (m_bezierPoints.size() < 4 || (m_bezierPoints.size() - 1) % 3 != 0) {
-		throw std::runtime_error("Invalid number of bezier points");
+	if (m_waypoints.size() < 2) {
+		throw std::runtime_error("A path must have at least 2 waypoints");
 	}
 
-	size_t numSegments = (m_bezierPoints.size() - 1) / 3;
-
+	std::vector < RotationTarget > unaddedTargets;
+	unaddedTargets.insert(unaddedTargets.begin(), m_rotationTargets.begin(),
+			m_rotationTargets.end());
 	std::vector < PathPoint > points;
+	size_t numSegments = m_waypoints.size() - 1;
 
-	for (size_t s = 0; s < numSegments; s++) {
-		size_t iOffset = s * 3;
-		frc::Translation2d p1 = m_bezierPoints[iOffset];
-		frc::Translation2d p2 = m_bezierPoints[iOffset + 1];
-		frc::Translation2d p3 = m_bezierPoints[iOffset + 2];
-		frc::Translation2d p4 = m_bezierPoints[iOffset + 3];
-		PathSegment segment(p1, p2, p3, p4);
+	// Add the first path point
+	points.emplace_back(samplePath(0.0), std::nullopt,
+			constraintsForWaypointPos(0.0));
+	points[0].waypointRelativePos = 0.0;
 
-		segment.generatePathPoints(points, s, m_constraintZones,
-				m_rotationTargets, m_globalConstraints);
+	double pos = targetIncrement;
+
+	while (pos < numSegments) {
+		frc::Translation2d position = samplePath(pos);
+
+		units::meter_t distance = points[points.size() - 1].position.Distance(
+				position);
+		if (distance <= 0.01_m) {
+			pos = std::min(pos + targetIncrement,
+					static_cast<double>(numSegments));
+		}
+
+		double prevWaypointPos = pos - targetIncrement;
+
+		units::meter_t delta = distance - targetSpacing;
+		if (delta > targetSpacing * 0.25) {
+			// Points are too far apart, increment t by correct amount
+			double correctIncrement = (targetSpacing * targetIncrement)
+					/ distance;
+			pos = pos - targetIncrement + correctIncrement;
+
+			position = samplePath(pos);
+
+			if (points[points.size() - 1].position.Distance(position)
+					- targetSpacing > targetSpacing * 0.25) {
+				// Points are still too far apart. Probably because of weird control
+				// point placement. Just cut the correct increment in half and hope for the best
+				pos = pos - (correctIncrement * 0.5);
+				position = samplePath(pos);
+			}
+		} else if (delta < -targetSpacing * 0.25) {
+			// Points are too close, increment waypoint relative pos by correct amount
+			double correctIncrement = (targetSpacing * targetIncrement)
+					/ distance;
+			pos = pos - targetIncrement + correctIncrement;
+
+			position = samplePath(pos);
+
+			if (points[points.size() - 1].position.Distance(position)
+					- targetSpacing < -targetSpacing * 0.25) {
+				// Points are still too close. Probably because of weird control
+				// point placement. Just cut the correct increment in half and hope for the best
+				pos = pos + (correctIncrement * 0.5);
+				position = samplePath(pos);
+			}
+		}
+
+		// Add rotation targets
+		std::optional < RotationTarget > target = std::nullopt;
+		PathPoint prevPoint = points[points.size() - 1];
+
+		while (!unaddedTargets.empty()
+				&& unaddedTargets[0].getPosition() >= prevWaypointPos
+				&& unaddedTargets[0].getPosition() <= pos) {
+			if (std::abs(unaddedTargets[0].getPosition() - prevWaypointPos)
+					< 0.001) {
+				// Close enough to prev pos
+				prevPoint.rotationTarget = unaddedTargets[0];
+				unaddedTargets.erase(unaddedTargets.begin());
+			} else if (std::abs(unaddedTargets[0].getPosition() - pos)
+					< 0.001) {
+				// Close enough to next pos
+				target = unaddedTargets[0];
+				unaddedTargets.erase(unaddedTargets.begin());
+			} else {
+				// We should insert a point at the exact position
+				RotationTarget t = unaddedTargets[0];
+				unaddedTargets.erase(unaddedTargets.begin());
+				points.emplace_back(samplePath(t.getPosition()), t,
+						constraintsForWaypointPos(t.getPosition()));
+				points[points.size() - 1].waypointRelativePos = t.getPosition();
+			}
+		}
+
+		points.emplace_back(position, target, constraintsForWaypointPos(pos));
+		points[points.size() - 1].waypointRelativePos = pos;
+		pos = std::min(pos + targetIncrement, static_cast<double>(numSegments));
 	}
 
-	// Add the final path point
-	PathConstraints endConstraints = m_globalConstraints;
-	for (const ConstraintsZone &z : m_constraintZones) {
-		if (numSegments >= z.getMinWaypointRelativePos()
-				&& numSegments <= z.getMaxWaypointRelativePos()) {
-			endConstraints = z.getConstraints();
+	// Keep trying to add the end point until its close enough to the prev point
+	double trueIncrement = numSegments - (pos - targetIncrement);
+	pos = numSegments;
+	bool invalid = true;
+	while (invalid) {
+		frc::Translation2d position = samplePath(pos);
+
+		units::meter_t distance = points[points.size() - 1].position.Distance(
+				position);
+		if (distance <= 0.01_m) {
+			invalid = false;
 			break;
 		}
+
+		double prevPos = pos - trueIncrement;
+
+		units::meter_t delta = distance - targetSpacing;
+		if (delta > targetSpacing * 0.25) {
+			// Points are too far apart, increment waypoint relative pos by correct amount
+			double correctIncrement = (targetSpacing * trueIncrement)
+					/ distance;
+			pos = pos - trueIncrement + correctIncrement;
+			trueIncrement = correctIncrement;
+
+			position = samplePath(pos);
+
+			if (points[points.size() - 1].position.Distance(position)
+					- targetSpacing > targetSpacing * 0.25) {
+				// Points are still too far apart. Probably because of weird control
+				// point placement. Just cut the correct increment in half and hope for the best
+				pos = pos - (correctIncrement * 0.5);
+				trueIncrement = correctIncrement * 0.5;
+				position = samplePath(pos);
+			}
+		} else {
+			invalid = false;
+		}
+
+		// Add a rotation target to the previous point if it is closer to it than
+		// the current point
+		if (!unaddedTargets.empty()) {
+			if (std::abs(unaddedTargets[0].getPosition() - prevPos)
+					<= std::abs(unaddedTargets[0].getPosition() - pos)) {
+				points[points.size() - 1].rotationTarget = unaddedTargets[0];
+				unaddedTargets.erase(unaddedTargets.begin());
+			}
+		}
+
+		points.emplace_back(position, std::nullopt,
+				constraintsForWaypointPos(pos));
+		points[points.size() - 1].waypointRelativePos = pos;
+		pos = numSegments;
 	}
-	points.emplace_back(m_bezierPoints[m_bezierPoints.size() - 1],
-			RotationTarget(numSegments, m_goalEndState.getRotation()),
-			endConstraints);
-	points[points.size() - 1].waypointRelativePos = numSegments;
+
+	for (size_t i = 1; i < points.size() - 1; i++) {
+		units::meter_t curveRadius = GeometryUtil::calculateRadius(
+				points[i - 1].position, points[i].position,
+				points[i + 1].position);
+
+		if (!GeometryUtil::isFinite(curveRadius)) {
+			continue;
+		}
+
+		if (units::math::abs(curveRadius) < 0.25_m) {
+			// Curve radius is too tight for default spacing, insert 4 more points
+			double before1WaypointPos = GeometryUtil::doubleLerp(
+					points[i - 1].waypointRelativePos,
+					points[i].waypointRelativePos, 0.33);
+			double before2WaypointPos = GeometryUtil::doubleLerp(
+					points[i - 1].waypointRelativePos,
+					points[i].waypointRelativePos, 0.67);
+			double after1WaypointPos = GeometryUtil::doubleLerp(
+					points[i].waypointRelativePos,
+					points[i + 1].waypointRelativePos, 0.33);
+			double after2WaypointPos = GeometryUtil::doubleLerp(
+					points[i].waypointRelativePos,
+					points[i + 1].waypointRelativePos, 0.67);
+
+			PathPoint before1(samplePath(before1WaypointPos), std::nullopt,
+					points[i].constraints);
+			before1.waypointRelativePos = before1WaypointPos;
+			PathPoint before2(samplePath(before2WaypointPos), std::nullopt,
+					points[i].constraints);
+			before2.waypointRelativePos = before2WaypointPos;
+			PathPoint after1(samplePath(after1WaypointPos), std::nullopt,
+					points[i].constraints);
+			after1.waypointRelativePos = after1WaypointPos;
+			PathPoint after2(samplePath(after2WaypointPos), std::nullopt,
+					points[i].constraints);
+			after2.waypointRelativePos = after2WaypointPos;
+
+			points.insert(points.begin() + i, before2);
+			points.insert(points.begin() + i, before1);
+			points.insert(points.begin() + (i + 3), after2);
+			points.insert(points.begin() + (i + 3), after1);
+			i += 4;
+		} else if (units::math::abs(curveRadius) < 0.5_m) {
+			// Curve radius is too tight for default spacing, insert 2 more points
+			double beforeWaypointPos = GeometryUtil::doubleLerp(
+					points[i - 1].waypointRelativePos,
+					points[i].waypointRelativePos, 0.5);
+			double afterWaypointPos = GeometryUtil::doubleLerp(
+					points[i].waypointRelativePos,
+					points[i + 1].waypointRelativePos, 0.5);
+
+			PathPoint before(samplePath(beforeWaypointPos), std::nullopt,
+					points[i].constraints);
+			before.waypointRelativePos = beforeWaypointPos;
+			PathPoint after(samplePath(afterWaypointPos), std::nullopt,
+					points[i].constraints);
+			after.waypointRelativePos = afterWaypointPos;
+
+			points.insert(points.begin() + i, before);
+			points.insert(points.begin() + (i + 2), after);
+			i += 2;
+		}
+	}
 
 	return points;
 }
@@ -427,24 +562,12 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	std::optional < PathPlannerTrajectory > flippedTraj = std::nullopt;
 	if (m_idealTrajectory.has_value()) {
 		// Flip the ideal trajectory
-		std::vector < PathPlannerTrajectoryState > mirroredStates;
-		for (auto state : m_idealTrajectory.value().getStates()) {
-			PathPlannerTrajectoryState mirrored;
-
-			mirrored.time = state.time;
-			mirrored.linearVelocity = state.linearVelocity;
-			mirrored.pose = GeometryUtil::flipFieldPose(state.pose);
-			mirrored.fieldSpeeds = frc::ChassisSpeeds { -state.fieldSpeeds.vx,
-					state.fieldSpeeds.vy, -state.fieldSpeeds.omega };
-			mirroredStates.emplace_back(mirrored);
-		}
-		flippedTraj = PathPlannerTrajectory(mirroredStates,
-				m_idealTrajectory.value().getEventCommands());
+		flippedTraj = m_idealTrajectory.value().flip();
 	}
 
-	std::vector < frc::Translation2d > newBezier;
-	for (auto p : m_bezierPoints) {
-		newBezier.emplace_back(GeometryUtil::flipFieldPosition(p));
+	std::vector < Waypoint > newWaypoints;
+	for (auto w : m_waypoints) {
+		newWaypoints.emplace_back(w.flip());
 	}
 
 	std::vector < RotationTarget > newRotTargets;
@@ -471,7 +594,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 
 	auto path = PathPlannerPath::fromPathPoints(newPoints, m_globalConstraints,
 			newEndState);
-	path->m_bezierPoints = newBezier;
+	path->m_waypoints = newWaypoints;
 	path->m_rotationTargets = newRotTargets;
 	path->m_constraintZones = m_constraintZones;
 	path->m_eventMarkers = m_eventMarkers;
@@ -482,4 +605,34 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	path->preventFlipping = preventFlipping;
 
 	return path;
+}
+
+frc::Translation2d PathPlannerPath::samplePath(
+		double waypointRelativePos) const {
+	double pos = std::clamp(waypointRelativePos, 0.0, m_waypoints.size() - 1.0);
+
+	size_t i = static_cast<size_t>(waypointRelativePos);
+	if (i == m_waypoints.size() - 1) {
+		i--;
+	}
+
+	double t = pos - i;
+
+	auto p1 = m_waypoints[i].anchor;
+	auto p2 = m_waypoints[i].nextControl.value();
+	auto p3 = m_waypoints[i + 1].prevControl.value();
+	auto p4 = m_waypoints[i + 1].anchor;
+	return GeometryUtil::cubicLerp(p1, p2, p3, p4, t);
+}
+
+std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& PathPlannerPath::getPathCache() {
+	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>> *pathCache =
+			new std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>();
+	return *pathCache;
+}
+
+std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& PathPlannerPath::getChoreoPathCache() {
+	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>> *choreoPathCache =
+			new std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>();
+	return *choreoPathCache;
 }

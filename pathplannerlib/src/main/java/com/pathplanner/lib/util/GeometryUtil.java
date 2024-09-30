@@ -40,30 +40,6 @@ public class GeometryUtil {
   }
 
   /**
-   * Interpolate between two doubles
-   *
-   * @param startVal Start value
-   * @param endVal End value
-   * @param t Interpolation factor (0.0-1.0)
-   * @return Interpolated value
-   */
-  public static double doubleLerp(double startVal, double endVal, double t) {
-    return startVal + (endVal - startVal) * t;
-  }
-
-  /**
-   * Linear interpolation between Translation2ds
-   *
-   * @param a Position 1
-   * @param b Position 2
-   * @param t Interpolation factor (0.0-1.0)
-   * @return Interpolated value
-   */
-  public static Translation2d translationLerp(Translation2d a, Translation2d b, double t) {
-    return a.plus((b.minus(a)).times(t));
-  }
-
-  /**
    * Quadratic interpolation between Translation2ds
    *
    * @param a Position 1
@@ -74,9 +50,9 @@ public class GeometryUtil {
    */
   public static Translation2d quadraticLerp(
       Translation2d a, Translation2d b, Translation2d c, double t) {
-    Translation2d p0 = translationLerp(a, b, t);
-    Translation2d p1 = translationLerp(b, c, t);
-    return translationLerp(p0, p1, t);
+    Translation2d p0 = a.interpolate(b, t);
+    Translation2d p1 = b.interpolate(c, t);
+    return p0.interpolate(p1, t);
   }
 
   /**
@@ -93,7 +69,7 @@ public class GeometryUtil {
       Translation2d a, Translation2d b, Translation2d c, Translation2d d, double t) {
     Translation2d p0 = quadraticLerp(a, b, c, t);
     Translation2d p1 = quadraticLerp(b, c, d, t);
-    return translationLerp(p0, p1, t);
+    return p0.interpolate(p1, t);
   }
 
   /**

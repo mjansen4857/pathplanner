@@ -22,13 +22,13 @@ class GoalEndStateTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TreeCardNode(
-      title: Row(
+      title: Wrap(
+        alignment: WrapAlignment.spaceBetween,
         children: [
-          const Text('Final State'),
-          Expanded(child: Container()),
+          Text('Final State'),
           InfoCard(
               value:
-                  '${path.goalEndState.rotation.toStringAsFixed(2)}° with ${path.goalEndState.velocity.toStringAsFixed(2)} M/S'),
+                  '${path.goalEndState.rotation.toStringAsFixed(2)}° ending with ${path.goalEndState.velocity.toStringAsFixed(2)} M/S'),
         ],
       ),
       leading: const Icon(Icons.flag_circle_rounded),

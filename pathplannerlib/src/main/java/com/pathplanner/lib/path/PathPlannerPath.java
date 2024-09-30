@@ -2,6 +2,8 @@ package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.events.Event;
+import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.GeometryUtil;
@@ -9,7 +11,6 @@ import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -27,9 +28,15 @@ import org.json.simple.parser.JSONParser;
 
 /** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {
+  private static final double targetIncrement = 0.05;
+  private static final double targetSpacing = 0.2;
+
   private static int instances = 0;
 
-  private List<Translation2d> bezierPoints;
+  private static final Map<String, PathPlannerPath> pathCache = new HashMap<>();
+  private static final Map<String, PathPlannerPath> choreoPathCache = new HashMap<>();
+
+  private List<Waypoint> waypoints;
   private List<RotationTarget> rotationTargets;
   private List<ConstraintsZone> constraintZones;
   private List<EventMarker> eventMarkers;
@@ -51,7 +58,8 @@ public class PathPlannerPath {
   /**
    * Create a new path planner path
    *
-   * @param bezierPoints List of points representing the cubic Bezier curve of the path
+   * @param waypoints List of waypoints representing the path. For on-the-fly paths, you likely want
+   *     to use waypointsFromPoses to create these.
    * @param holonomicRotations List of rotation targets along the path
    * @param constraintZones List of constraint zones along the path
    * @param eventMarkers List of event markers along the path
@@ -61,7 +69,7 @@ public class PathPlannerPath {
    * @param reversed Should the robot follow the path reversed (differential drive only)
    */
   public PathPlannerPath(
-      List<Translation2d> bezierPoints,
+      List<Waypoint> waypoints,
       List<RotationTarget> holonomicRotations,
       List<ConstraintsZone> constraintZones,
       List<EventMarker> eventMarkers,
@@ -69,7 +77,7 @@ public class PathPlannerPath {
       IdealStartingState idealStartingState,
       GoalEndState goalEndState,
       boolean reversed) {
-    this.bezierPoints = bezierPoints;
+    this.waypoints = waypoints;
     this.rotationTargets =
         holonomicRotations.stream()
             .sorted(Comparator.comparingDouble(RotationTarget::getPosition))
@@ -95,22 +103,23 @@ public class PathPlannerPath {
    * Simplified constructor to create a path with no rotation targets, constraint zones, or event
    * markers.
    *
-   * <p>You likely want to use bezierFromPoses to create the bezier points.
+   * <p>You likely want to use bezierFromPoses to create the waypoints.
    *
-   * @param bezierPoints List of points representing the cubic Bezier curve of the path
+   * @param waypoints List of waypoints representing the path. For on-the-fly paths, you likely want
+   *     to use waypointsFromPoses to create these.
    * @param constraints The global constraints of the path
    * @param idealStartingState The ideal starting state of the path. Can be null if unknown
    * @param goalEndState The goal end state of the path
    * @param reversed Should the robot follow the path reversed (differential drive only)
    */
   public PathPlannerPath(
-      List<Translation2d> bezierPoints,
+      List<Waypoint> waypoints,
       PathConstraints constraints,
       IdealStartingState idealStartingState,
       GoalEndState goalEndState,
       boolean reversed) {
     this(
-        bezierPoints,
+        waypoints,
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
@@ -124,23 +133,22 @@ public class PathPlannerPath {
    * Simplified constructor to create a path with no rotation targets, constraint zones, or event
    * markers.
    *
-   * <p>You likely want to use bezierFromPoses to create the bezier points.
-   *
-   * @param bezierPoints List of points representing the cubic Bezier curve of the path
+   * @param waypoints List of waypoints representing the path. For on-the-fly paths, you likely want
+   *     to use waypointsFromPoses to create these.
    * @param constraints The global constraints of the path
    * @param idealStartingState The ideal starting state of the path. Can be null if unknown
    * @param goalEndState The goal end state of the path
    */
   public PathPlannerPath(
-      List<Translation2d> bezierPoints,
+      List<Waypoint> waypoints,
       PathConstraints constraints,
       IdealStartingState idealStartingState,
       GoalEndState goalEndState) {
-    this(bezierPoints, constraints, idealStartingState, goalEndState, false);
+    this(waypoints, constraints, idealStartingState, goalEndState, false);
   }
 
   private PathPlannerPath() {
-    this.bezierPoints = new ArrayList<>();
+    this.waypoints = new ArrayList<>();
     this.rotationTargets = new ArrayList<>();
     this.constraintZones = new ArrayList<>();
     this.eventMarkers = new ArrayList<>();
@@ -174,75 +182,79 @@ public class PathPlannerPath {
   }
 
   /**
-   * Create the bezier points necessary to create a path using a list of poses
+   * Create the bezier waypoints necessary to create a path using a list of poses
    *
    * @param poses List of poses. Each pose represents one waypoint.
-   * @return Bezier points
+   * @return Bezier curve waypoints
+   * @deprecated Renamed to waypointsFromPoses
    */
-  public static List<Translation2d> bezierFromPoses(List<Pose2d> poses) {
+  @Deprecated(forRemoval = true)
+  public static List<Waypoint> bezierFromPoses(List<Pose2d> poses) {
+    return waypointsFromPoses(poses);
+  }
+
+  /**
+   * Create the bezier waypoints necessary to create a path using a list of poses
+   *
+   * @param poses List of poses. Each pose represents one waypoint.
+   * @return Bezier curve waypoints
+   * @deprecated Renamed to waypointsFromPoses
+   */
+  @Deprecated(forRemoval = true)
+  public static List<Waypoint> bezierFromPoses(Pose2d... poses) {
+    return waypointsFromPoses(Arrays.asList(poses));
+  }
+
+  /**
+   * Create the bezier waypoints necessary to create a path using a list of poses
+   *
+   * @param poses List of poses. Each pose represents one waypoint.
+   * @return Bezier curve waypoints
+   */
+  public static List<Waypoint> waypointsFromPoses(Pose2d... poses) {
+    return waypointsFromPoses(Arrays.asList(poses));
+  }
+
+  /**
+   * Create the bezier waypoints necessary to create a path using a list of poses
+   *
+   * @param poses List of poses. Each pose represents one waypoint.
+   * @return Bezier curve waypoints
+   */
+  public static List<Waypoint> waypointsFromPoses(List<Pose2d> poses) {
     if (poses.size() < 2) {
       throw new IllegalArgumentException("Not enough poses");
     }
 
-    List<Translation2d> bezierPoints = new ArrayList<>();
+    List<Waypoint> waypoints = new ArrayList<>();
 
     // First pose
-    bezierPoints.add(poses.get(0).getTranslation());
-    bezierPoints.add(
-        poses
-            .get(0)
-            .getTranslation()
-            .plus(
-                new Translation2d(
-                    poses.get(0).getTranslation().getDistance(poses.get(1).getTranslation()) / 3.0,
-                    poses.get(0).getRotation())));
+    waypoints.add(
+        Waypoint.autoControlPoints(
+            poses.get(0).getTranslation(),
+            poses.get(0).getRotation(),
+            null,
+            poses.get(1).getTranslation()));
 
     // Middle poses
     for (int i = 1; i < poses.size() - 1; i++) {
-      Translation2d anchor = poses.get(i).getTranslation();
-
-      // Prev control
-      bezierPoints.add(
-          anchor.plus(
-              new Translation2d(
-                  anchor.getDistance(poses.get(i - 1).getTranslation()) / 3.0,
-                  poses.get(i).getRotation().plus(Rotation2d.fromDegrees(180)))));
-      // Anchor
-      bezierPoints.add(anchor);
-      // Next control
-      bezierPoints.add(
-          anchor.plus(
-              new Translation2d(
-                  anchor.getDistance(poses.get(i + 1).getTranslation()) / 3.0,
-                  poses.get(i).getRotation())));
+      waypoints.add(
+          Waypoint.autoControlPoints(
+              poses.get(i).getTranslation(),
+              poses.get(i).getRotation(),
+              poses.get(i - 1).getTranslation(),
+              poses.get(i + 1).getTranslation()));
     }
 
     // Last pose
-    bezierPoints.add(
-        poses
-            .get(poses.size() - 1)
-            .getTranslation()
-            .plus(
-                new Translation2d(
-                    poses
-                            .get(poses.size() - 1)
-                            .getTranslation()
-                            .getDistance(poses.get(poses.size() - 2).getTranslation())
-                        / 3.0,
-                    poses.get(poses.size() - 1).getRotation().plus(Rotation2d.fromDegrees(180)))));
-    bezierPoints.add(poses.get(poses.size() - 1).getTranslation());
+    waypoints.add(
+        Waypoint.autoControlPoints(
+            poses.get(poses.size() - 1).getTranslation(),
+            poses.get(poses.size() - 1).getRotation(),
+            poses.get(poses.size() - 2).getTranslation(),
+            null));
 
-    return bezierPoints;
-  }
-
-  /**
-   * Create the bezier points necessary to create a path using a list of poses
-   *
-   * @param poses List of poses. Each pose represents one waypoint.
-   * @return Bezier points
-   */
-  public static List<Translation2d> bezierFromPoses(Pose2d... poses) {
-    return bezierFromPoses(Arrays.asList(poses));
+    return waypoints;
   }
 
   /**
@@ -253,7 +265,7 @@ public class PathPlannerPath {
   public void hotReload(JSONObject pathJson) {
     PathPlannerPath updatedPath = PathPlannerPath.fromJson(pathJson);
 
-    this.bezierPoints = updatedPath.bezierPoints;
+    this.waypoints = updatedPath.waypoints;
     this.rotationTargets = updatedPath.rotationTargets;
     this.constraintZones = updatedPath.constraintZones;
     this.eventMarkers = updatedPath.eventMarkers;
@@ -262,6 +274,9 @@ public class PathPlannerPath {
     this.goalEndState = updatedPath.goalEndState;
     this.allPoints = updatedPath.allPoints;
     this.reversed = updatedPath.reversed;
+
+    // Clear the ideal trajectory so it gets regenerated
+    this.idealTrajectory = Optional.empty();
   }
 
   /**
@@ -271,6 +286,10 @@ public class PathPlannerPath {
    * @return PathPlannerPath created from the given file name
    */
   public static PathPlannerPath fromPathFile(String pathName) {
+    if (pathCache.containsKey(pathName)) {
+      return pathCache.get(pathName);
+    }
+
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(
@@ -287,6 +306,7 @@ public class PathPlannerPath {
 
       PathPlannerPath path = PathPlannerPath.fromJson(json);
       PPLibTelemetry.registerHotReloadPath(pathName, path);
+      pathCache.put(pathName, path);
       return path;
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -301,6 +321,10 @@ public class PathPlannerPath {
    * @return PathPlannerPath created from the given Choreo trajectory file
    */
   public static PathPlannerPath fromChoreoTrajectory(String trajectoryName) {
+    if (choreoPathCache.containsKey(trajectoryName)) {
+      return choreoPathCache.get(trajectoryName);
+    }
+
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(
@@ -355,7 +379,7 @@ public class PathPlannerPath {
       path.allPoints = pathPoints;
       path.isChoreoPath = true;
 
-      List<Pair<Double, Command>> eventCommands = new ArrayList<>();
+      List<Event> events = new ArrayList<>();
       if (json.containsKey("eventMarkers")) {
         for (var m : (JSONArray) json.get("eventMarkers")) {
           JSONObject marker = (JSONObject) m;
@@ -366,12 +390,14 @@ public class PathPlannerPath {
           EventMarker eventMarker = new EventMarker(timestamp, cmd);
 
           path.eventMarkers.add(eventMarker);
-          eventCommands.add(Pair.of(timestamp, cmd));
+          events.add(new ScheduleCommandEvent(timestamp, cmd));
         }
       }
 
-      eventCommands.sort(Comparator.comparing(Pair::getFirst));
-      path.idealTrajectory = Optional.of(new PathPlannerTrajectory(trajStates, eventCommands));
+      events.sort(Comparator.comparing(Event::getTimestamp));
+      path.idealTrajectory = Optional.of(new PathPlannerTrajectory(trajStates, events));
+
+      choreoPathCache.put(trajectoryName, path);
 
       return path;
     } catch (Exception e) {
@@ -379,9 +405,14 @@ public class PathPlannerPath {
     }
   }
 
+  /** Clear the cache of previously loaded paths. */
+  public static void clearCache() {
+    pathCache.clear();
+    choreoPathCache.clear();
+  }
+
   private static PathPlannerPath fromJson(JSONObject pathJson) {
-    List<Translation2d> bezierPoints =
-        bezierPointsFromWaypointsJson((JSONArray) pathJson.get("waypoints"));
+    List<Waypoint> waypoints = waypointsFromJson((JSONArray) pathJson.get("waypoints"));
     PathConstraints globalConstraints =
         PathConstraints.fromJson((JSONObject) pathJson.get("globalConstraints"));
     IdealStartingState idealStartingState =
@@ -405,7 +436,7 @@ public class PathPlannerPath {
     }
 
     return new PathPlannerPath(
-        bezierPoints,
+        waypoints,
         rotationTargets,
         constraintZones,
         eventMarkers,
@@ -415,35 +446,13 @@ public class PathPlannerPath {
         reversed);
   }
 
-  private static List<Translation2d> bezierPointsFromWaypointsJson(JSONArray waypointsJson) {
-    List<Translation2d> bezierPoints = new ArrayList<>();
-
-    // First point
-    JSONObject firstPoint = (JSONObject) waypointsJson.get(0);
-    bezierPoints.add(pointFromJson((JSONObject) firstPoint.get("anchor")));
-    bezierPoints.add(pointFromJson((JSONObject) firstPoint.get("nextControl")));
-
-    // Mid points
-    for (int i = 1; i < waypointsJson.size() - 1; i++) {
-      JSONObject point = (JSONObject) waypointsJson.get(i);
-      bezierPoints.add(pointFromJson((JSONObject) point.get("prevControl")));
-      bezierPoints.add(pointFromJson((JSONObject) point.get("anchor")));
-      bezierPoints.add(pointFromJson((JSONObject) point.get("nextControl")));
+  private static List<Waypoint> waypointsFromJson(JSONArray waypointsJson) {
+    List<Waypoint> waypoints = new ArrayList<>();
+    for (var o : waypointsJson) {
+      JSONObject point = (JSONObject) o;
+      waypoints.add(Waypoint.fromJson(point));
     }
-
-    // Last point
-    JSONObject lastPoint = (JSONObject) waypointsJson.get(waypointsJson.size() - 1);
-    bezierPoints.add(pointFromJson((JSONObject) lastPoint.get("prevControl")));
-    bezierPoints.add(pointFromJson((JSONObject) lastPoint.get("anchor")));
-
-    return bezierPoints;
-  }
-
-  private static Translation2d pointFromJson(JSONObject pointJson) {
-    double x = ((Number) pointJson.get("x")).doubleValue();
-    double y = ((Number) pointJson.get("y")).doubleValue();
-
-    return new Translation2d(x, y);
+    return waypoints;
   }
 
   /**
@@ -511,40 +520,228 @@ public class PathPlannerPath {
     return globalConstraints;
   }
 
-  private List<PathPoint> createPath() {
-    if (bezierPoints.size() < 4 || (bezierPoints.size() - 1) % 3 != 0) {
-      throw new IllegalArgumentException("Invalid number of bezier points");
-    }
-
-    int numSegments = (bezierPoints.size() - 1) / 3;
-
-    List<PathPoint> points = new ArrayList<>();
-
-    for (int s = 0; s < numSegments; s++) {
-      int iOffset = s * 3;
-      Translation2d p1 = bezierPoints.get(iOffset);
-      Translation2d p2 = bezierPoints.get(iOffset + 1);
-      Translation2d p3 = bezierPoints.get(iOffset + 2);
-      Translation2d p4 = bezierPoints.get(iOffset + 3);
-      PathSegment segment = new PathSegment(p1, p2, p3, p4);
-
-      segment.generatePathPoints(points, s, constraintZones, rotationTargets, globalConstraints);
-    }
-
-    // Add the final path point
-    PathConstraints endConstraints = globalConstraints;
+  private PathConstraints constraintsForWaypointPos(double pos) {
     for (ConstraintsZone z : constraintZones) {
-      if (numSegments >= z.getMinWaypointPos() && numSegments <= z.getMaxWaypointPos()) {
-        endConstraints = z.getConstraints();
-        break;
+      if (pos >= z.getMinWaypointPos() && pos <= z.getMaxWaypointPos()) {
+        return z.getConstraints();
       }
     }
-    points.add(
-        new PathPoint(
-            bezierPoints.get(bezierPoints.size() - 1),
-            new RotationTarget(numSegments, goalEndState.getRotation()),
-            endConstraints));
-    points.get(points.size() - 1).waypointRelativePos = numSegments;
+    return globalConstraints;
+  }
+
+  private Translation2d samplePath(double waypointRelativePos) {
+    double pos = MathUtil.clamp(waypointRelativePos, 0.0, waypoints.size() - 1.0);
+
+    int i = (int) Math.floor(pos);
+    if (i == waypoints.size() - 1) {
+      i--;
+    }
+
+    double t = pos - i;
+
+    Translation2d p1 = waypoints.get(i).anchor;
+    Translation2d p2 = waypoints.get(i).nextControl;
+    Translation2d p3 = waypoints.get(i + 1).prevControl;
+    Translation2d p4 = waypoints.get(i + 1).anchor;
+    return GeometryUtil.cubicLerp(p1, p2, p3, p4, t);
+  }
+
+  private List<PathPoint> createPath() {
+    if (waypoints.size() < 2) {
+      throw new IllegalArgumentException("A path must have at least 2 waypoints");
+    }
+
+    List<RotationTarget> unaddedTargets = new ArrayList<>(rotationTargets);
+    List<PathPoint> points = new ArrayList<>();
+    int numSegments = waypoints.size() - 1;
+
+    // Add the first path point
+    points.add(new PathPoint(samplePath(0.0), null, constraintsForWaypointPos(0.0)));
+    points.get(0).waypointRelativePos = 0.0;
+
+    double pos = targetIncrement;
+    while (pos < numSegments) {
+      Translation2d position = samplePath(pos);
+
+      double distance = points.get(points.size() - 1).position.getDistance(position);
+      if (distance <= 0.01) {
+        pos = Math.min(pos + targetIncrement, numSegments);
+      }
+
+      double prevWaypointPos = pos - targetIncrement;
+
+      double delta = distance - targetSpacing;
+      if (delta > targetSpacing * 0.25) {
+        // Points are too far apart, increment pos by correct amount
+        double correctIncrement = (targetSpacing * targetIncrement) / distance;
+        pos = pos - targetIncrement + correctIncrement;
+
+        position = samplePath(pos);
+
+        if (points.get(points.size() - 1).position.getDistance(position) - targetSpacing
+            > targetSpacing * 0.25) {
+          // Points are still too far apart. Probably because of weird control
+          // point placement. Just cut the correct increment in half and hope for the best
+          pos = pos - (correctIncrement * 0.5);
+          position = samplePath(pos);
+        }
+      } else if (delta < -targetSpacing * 0.25) {
+        // Points are too close, increment waypoint relative pos by correct amount
+        double correctIncrement = (targetSpacing * targetIncrement) / distance;
+        pos = pos - targetIncrement + correctIncrement;
+
+        position = samplePath(pos);
+
+        if (points.get(points.size() - 1).position.getDistance(position) - targetSpacing
+            < -targetSpacing * 0.25) {
+          // Points are still too close. Probably because of weird control
+          // point placement. Just cut the correct increment in half and hope for the best
+          pos = pos + (correctIncrement * 0.5);
+          position = samplePath(pos);
+        }
+      }
+
+      // Add rotation targets
+      RotationTarget target = null;
+      PathPoint prevPoint = points.get(points.size() - 1);
+
+      while (!unaddedTargets.isEmpty()
+          && unaddedTargets.get(0).getPosition() >= prevWaypointPos
+          && unaddedTargets.get(0).getPosition() <= pos) {
+        if (Math.abs(unaddedTargets.get(0).getPosition() - prevWaypointPos) < 0.001) {
+          // Close enough to prev pos
+          prevPoint.rotationTarget = unaddedTargets.remove(0);
+        } else if (Math.abs(unaddedTargets.get(0).getPosition() - pos) < 0.001) {
+          // Close enough to next pos
+          target = unaddedTargets.remove(0);
+        } else {
+          // We should insert a point at the exact position
+          RotationTarget t = unaddedTargets.remove(0);
+          points.add(
+              new PathPoint(
+                  samplePath(t.getPosition()), t, constraintsForWaypointPos(t.getPosition())));
+          points.get(points.size() - 1).waypointRelativePos = t.getPosition();
+        }
+      }
+
+      points.add(new PathPoint(position, target, constraintsForWaypointPos(pos)));
+      points.get(points.size() - 1).waypointRelativePos = pos;
+      pos = Math.min(pos + targetIncrement, numSegments);
+    }
+
+    // Keep trying to add the end point until its close enough to the prev point
+    double trueIncrement = numSegments - (pos - targetIncrement);
+    pos = numSegments;
+    boolean invalid = true;
+    while (invalid) {
+      Translation2d position = samplePath(pos);
+
+      double distance = points.get(points.size() - 1).position.getDistance(position);
+      if (distance <= 0.01) {
+        invalid = false;
+        break;
+      }
+
+      double prevPos = pos - trueIncrement;
+
+      double delta = distance - targetSpacing;
+      if (delta > targetSpacing * 0.25) {
+        // Points are too far apart, increment waypoint relative pos by correct amount
+        double correctIncrement = (targetSpacing * trueIncrement) / distance;
+        pos = pos - trueIncrement + correctIncrement;
+        trueIncrement = correctIncrement;
+
+        position = samplePath(pos);
+
+        if (points.get(points.size() - 1).position.getDistance(position) - targetSpacing
+            > targetSpacing * 0.25) {
+          // Points are still too far apart. Probably because of weird control
+          // point placement. Just cut the correct increment in half and hope for the best
+          pos = pos - (correctIncrement * 0.5);
+          trueIncrement = correctIncrement * 0.5;
+          position = samplePath(pos);
+        }
+      } else {
+        invalid = false;
+      }
+
+      // Add a rotation target to the previous point if it is closer to it than
+      // the current point
+      if (!unaddedTargets.isEmpty()) {
+        if (Math.abs(unaddedTargets.get(0).getPosition() - prevPos)
+            <= Math.abs(unaddedTargets.get(0).getPosition() - pos)) {
+          points.get(points.size() - 1).rotationTarget = unaddedTargets.remove(0);
+        }
+      }
+
+      points.add(new PathPoint(position, null, constraintsForWaypointPos(pos)));
+      points.get(points.size() - 1).waypointRelativePos = pos;
+      pos = numSegments;
+    }
+
+    for (int i = 1; i < points.size() - 1; i++) {
+      double curveRadius =
+          GeometryUtil.calculateRadius(
+              points.get(i - 1).position, points.get(i).position, points.get(i + 1).position);
+
+      if (!Double.isFinite(curveRadius)) {
+        continue;
+      }
+
+      if (Math.abs(curveRadius) < 0.25) {
+        // Curve radius is too tight for default spacing, insert 4 more points
+        double before1WaypointPos =
+            MathUtil.interpolate(
+                points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.33);
+        double before2WaypointPos =
+            MathUtil.interpolate(
+                points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.67);
+        double after1WaypointPos =
+            MathUtil.interpolate(
+                points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.33);
+        double after2WaypointPos =
+            MathUtil.interpolate(
+                points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.67);
+
+        PathPoint before1 =
+            new PathPoint(samplePath(before1WaypointPos), null, points.get(i).constraints);
+        before1.waypointRelativePos = before1WaypointPos;
+        PathPoint before2 =
+            new PathPoint(samplePath(before2WaypointPos), null, points.get(i).constraints);
+        before2.waypointRelativePos = before2WaypointPos;
+        PathPoint after1 =
+            new PathPoint(samplePath(after1WaypointPos), null, points.get(i).constraints);
+        after1.waypointRelativePos = after1WaypointPos;
+        PathPoint after2 =
+            new PathPoint(samplePath(after2WaypointPos), null, points.get(i).constraints);
+        after2.waypointRelativePos = after2WaypointPos;
+
+        points.add(i, before2);
+        points.add(i, before1);
+        points.add(i + 3, after2);
+        points.add(i + 3, after1);
+        i += 4;
+      } else if (Math.abs(curveRadius) < 0.5) {
+        // Curve radius is too tight for default spacing, insert 2 more points
+        double beforeWaypointPos =
+            MathUtil.interpolate(
+                points.get(i - 1).waypointRelativePos, points.get(i).waypointRelativePos, 0.5);
+        double afterWaypointPos =
+            MathUtil.interpolate(
+                points.get(i).waypointRelativePos, points.get(i + 1).waypointRelativePos, 0.5);
+
+        PathPoint before =
+            new PathPoint(samplePath(beforeWaypointPos), null, points.get(i).constraints);
+        before.waypointRelativePos = beforeWaypointPos;
+        PathPoint after =
+            new PathPoint(samplePath(afterWaypointPos), null, points.get(i).constraints);
+        after.waypointRelativePos = afterWaypointPos;
+
+        points.add(i, before);
+        points.add(i + 2, after);
+        i += 2;
+      }
+    }
 
     return points;
   }
@@ -578,6 +775,33 @@ public class PathPlannerPath {
           new RotationTarget(-1, goalEndState.getRotation());
       allPoints.get(allPoints.size() - 1).maxV = goalEndState.getVelocity();
     }
+  }
+
+  /**
+   * Get the waypoints for this path
+   *
+   * @return List of this path's waypoints
+   */
+  public List<Waypoint> getWaypoints() {
+    return waypoints;
+  }
+
+  /**
+   * Get the rotation targets for this path
+   *
+   * @return List of this path's rotation targets
+   */
+  public List<RotationTarget> getRotationTargets() {
+    return rotationTargets;
+  }
+
+  /**
+   * Get the constraint zones for this path
+   *
+   * @return List of this path's constraint zones
+   */
+  public List<ConstraintsZone> getConstraintZones() {
+    return constraintZones;
   }
 
   /**
@@ -711,43 +935,14 @@ public class PathPlannerPath {
     Optional<PathPlannerTrajectory> flippedTraj = Optional.empty();
     if (idealTrajectory.isPresent()) {
       // Flip the ideal trajectory
-      List<PathPlannerTrajectoryState> mirroredStates = new ArrayList<>();
-      PathPlannerTrajectory traj = idealTrajectory.get();
-      for (var state : traj.getStates()) {
-        var mirrored = new PathPlannerTrajectoryState();
-
-        mirrored.timeSeconds = state.timeSeconds;
-        mirrored.linearVelocity = state.linearVelocity;
-        mirrored.pose = GeometryUtil.flipFieldPose(state.pose);
-        mirrored.fieldSpeeds =
-            new ChassisSpeeds(
-                -state.fieldSpeeds.vxMetersPerSecond,
-                state.fieldSpeeds.vyMetersPerSecond,
-                -state.fieldSpeeds.omegaRadiansPerSecond);
-        mirroredStates.add(mirrored);
-      }
-      flippedTraj = Optional.of(new PathPlannerTrajectory(mirroredStates, traj.getEventCommands()));
-    }
-
-    List<Translation2d> flippedBezier = new ArrayList<>(bezierPoints.size());
-    for (Translation2d t : bezierPoints) {
-      flippedBezier.add(GeometryUtil.flipFieldPosition(t));
-    }
-
-    List<RotationTarget> flippedTargets = new ArrayList<>(rotationTargets.size());
-    for (RotationTarget t : rotationTargets) {
-      flippedTargets.add(
-          new RotationTarget(t.getPosition(), GeometryUtil.flipFieldRotation(t.getTarget())));
-    }
-
-    List<PathPoint> flippedPoints = new ArrayList<>(allPoints.size());
-    for (PathPoint p : allPoints) {
-      flippedPoints.add(p.flip());
+      flippedTraj = Optional.of(idealTrajectory.get().flip());
     }
 
     PathPlannerPath path = new PathPlannerPath();
-    path.bezierPoints = flippedBezier;
-    path.rotationTargets = flippedTargets;
+    path.waypoints = waypoints.stream().map(Waypoint::flip).toList();
+    ;
+    path.rotationTargets = rotationTargets.stream().map(RotationTarget::flip).toList();
+    ;
     path.constraintZones = constraintZones;
     path.eventMarkers = eventMarkers;
     path.globalConstraints = globalConstraints;
@@ -762,7 +957,8 @@ public class PathPlannerPath {
     path.goalEndState =
         new GoalEndState(
             goalEndState.getVelocity(), GeometryUtil.flipFieldRotation(goalEndState.getRotation()));
-    path.allPoints = flippedPoints;
+    path.allPoints = allPoints.stream().map(PathPoint::flip).toList();
+    ;
     path.reversed = reversed;
     path.isChoreoPath = isChoreoPath;
     path.idealTrajectory = flippedTraj;
@@ -783,38 +979,12 @@ public class PathPlannerPath {
         .collect(Collectors.toList());
   }
 
-  /**
-   * Map a given percentage/waypoint relative position over 2 segments
-   *
-   * @param pct The percent to map
-   * @param seg1Pct The percentage of the 2 segments made up by the first segment
-   * @return The waypoint relative position over the 2 segments
-   */
-  private static double mapPct(double pct, double seg1Pct) {
-    double mappedPct;
-    if (pct <= seg1Pct) {
-      // Map to segment 1
-      mappedPct = pct / seg1Pct;
-    } else {
-      // Map to segment 2
-      mappedPct = 1 + ((pct - seg1Pct) / (1.0 - seg1Pct));
-    }
-
-    return mappedPct;
-  }
-
-  private static double positionDelta(Translation2d a, Translation2d b) {
-    Translation2d delta = a.minus(b);
-
-    return Math.abs(delta.getX()) + Math.abs(delta.getY());
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PathPlannerPath that = (PathPlannerPath) o;
-    return Objects.equals(bezierPoints, that.bezierPoints)
+    return Objects.equals(waypoints, that.waypoints)
         && Objects.equals(rotationTargets, that.rotationTargets)
         && Objects.equals(constraintZones, that.constraintZones)
         && Objects.equals(eventMarkers, that.eventMarkers)
@@ -825,11 +995,6 @@ public class PathPlannerPath {
   @Override
   public int hashCode() {
     return Objects.hash(
-        bezierPoints,
-        rotationTargets,
-        constraintZones,
-        eventMarkers,
-        globalConstraints,
-        goalEndState);
+        waypoints, rotationTargets, constraintZones, eventMarkers, globalConstraints, goalEndState);
   }
 }

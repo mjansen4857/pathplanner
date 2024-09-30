@@ -72,11 +72,16 @@ void main() {
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.defaultField,
-          undoStack: undoStack,
+        body: SizedBox(
+          width: 1280,
+          height: 720,
+          child: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.defaultField,
+            undoStack: undoStack,
+            simulate: true,
+          ),
         ),
       ),
     ));

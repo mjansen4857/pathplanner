@@ -6,8 +6,11 @@ import 'package:pathplanner/widgets/editor/tree_widgets/editor_settings_tree.dar
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/ideal_starting_state_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/path_optimization_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
 class PathTree extends StatefulWidget {
@@ -21,6 +24,7 @@ class PathTree extends StatefulWidget {
   final ValueChanged<int?>? onMarkerHovered;
   final ValueChanged<int?>? onMarkerSelected;
   final ValueChanged<int>? onWaypointDeleted;
+  final ValueChanged<PathPlannerPath?>? onOptimizationUpdate;
   final VoidCallback? onSideSwapped;
   final VoidCallback? onPathChanged;
   final VoidCallback? onPathChangedNoSim;
@@ -30,9 +34,12 @@ class PathTree extends StatefulWidget {
   final int? initiallySelectedRotTarget;
   final int? initiallySelectedMarker;
   final ChangeStack undoStack;
-  final Widget? runtimeDisplay;
+  final num? pathRuntime;
   final bool holonomicMode;
   final PathConstraints defaultConstraints;
+  final SharedPreferences prefs;
+
+  final Widget? runtimeDisplay;
 
   const PathTree({
     super.key,
@@ -44,6 +51,7 @@ class PathTree extends StatefulWidget {
     this.waypointsTreeController,
     this.initiallySelectedWaypoint,
     this.onWaypointDeleted,
+    this.onOptimizationUpdate,
     this.onZoneHovered,
     this.onZoneSelected,
     this.initiallySelectedZone,
@@ -55,9 +63,11 @@ class PathTree extends StatefulWidget {
     this.initiallySelectedMarker,
     required this.undoStack,
     this.runtimeDisplay,
+    this.pathRuntime,
     this.onPathChangedNoSim,
     required this.holonomicMode,
     required this.defaultConstraints,
+    required this.prefs,
   });
 
   @override
@@ -65,11 +75,6 @@ class PathTree extends StatefulWidget {
 }
 
 class _PathTreeState extends State<PathTree> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -84,10 +89,14 @@ class _PathTreeState extends State<PathTree> {
                 _buildEventMarkersTree(),
                 if (widget.holonomicMode) _buildRotationTargetsTree(),
                 const Divider(),
+                _buildIdealStartingStateTree(),
                 _buildGoalEndStateTree(),
+                const Divider(),
                 _buildGlobalConstraintsTree(),
                 _buildConstraintZonesTree(),
+                if (!widget.holonomicMode) _buildReversedCheckbox(),
                 const Divider(),
+                _buildPathOptimizationTree(),
                 const EditorSettingsTree(),
               ],
             ),
@@ -173,6 +182,15 @@ class _PathTreeState extends State<PathTree> {
     );
   }
 
+  Widget _buildIdealStartingStateTree() {
+    return IdealStartingStateTree(
+      path: widget.path,
+      undoStack: widget.undoStack,
+      holonomicMode: widget.holonomicMode,
+      onPathChanged: widget.onPathChanged,
+    );
+  }
+
   Widget _buildGoalEndStateTree() {
     return GoalEndStateTree(
       path: widget.path,
@@ -254,6 +272,52 @@ class _PathTreeState extends State<PathTree> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildReversedCheckbox() {
+    return Card(
+      elevation: 1.0,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
+        child: Row(
+          children: [
+            Checkbox(
+              value: widget.path.reversed,
+              onChanged: (value) {
+                bool reversed = value ?? false;
+
+                widget.undoStack.add(Change(
+                  widget.path.reversed,
+                  () {
+                    widget.path.reversed = reversed;
+                    widget.onPathChanged?.call();
+                  },
+                  (oldValue) {
+                    widget.path.reversed = oldValue;
+                    widget.onPathChanged?.call();
+                  },
+                ));
+              },
+            ),
+            const SizedBox(width: 4),
+            const Text(
+              'Reversed',
+              style: TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPathOptimizationTree() {
+    return PathOptimizationTree(
+      path: widget.path,
+      onPathChanged: widget.onPathChanged,
+      onUpdate: widget.onOptimizationUpdate,
+      undoStack: widget.undoStack,
+      prefs: widget.prefs,
     );
   }
 }

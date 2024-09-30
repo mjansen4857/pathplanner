@@ -23,21 +23,16 @@ A few important considerations to note before attempting to use these commands:
   path in the background. In some rare cases, the robot could start moving in one direction, then switch to the other
   direction when AD* figures out that direction is more optimal.
 
-Compared to the normal path following commands, pathfinding commands have a couple of additional optional parameters:
+Compared to the normal path following commands, pathfinding commands have additional optional parameters:
 
 Goal end velocity
 : The velocity the robot should be moving at when reaching the goal position. If pathfinding to a predefined path, this
 will be automatically set based on the max velocity of that path
 
-Rotation delay distance
-: This parameter controls the distance that the robot should move before attempting to rotate to the goal rotation while
-pathfinding. This is useful in cases where you are pathfinding out of a cramped area, avoiding possible collisions from
-rotation
-
 > **Note**
 >
-> The following examples will only show the holonomic command variants. But, the Ramsete and LTV variants are very
-> similar and will have similar config to their normal path following command versions.
+> The following examples will only show the holonomic command variants. But, the LTV variant is very
+> similar and will have similar config to the normal path following command version.
 >
 {style="note"}
 
@@ -150,112 +145,6 @@ pathfindingCommand = AutoBuilder.pathfindToPose(
 </tab>
 </tabs>
 
-<u>**Manually**</u>
-
-<tabs group="pplib-language">
-<tab title="Java" group-key="java">
-
-```Java
-// Since we are using a holonomic drivetrain, the rotation component of this pose
-// represents the goal holonomic rotation
-Pose2d targetPose = new Pose2d(10, 5, Rotation2d.fromDegrees(180));
-
-// Create the constraints to use while pathfinding
-PathConstraints constraints = new PathConstraints(
-        3.0, 4.0,
-        Units.degreesToRadians(540), Units.degreesToRadians(720));
-
-// See the "Follow a single path" example for more info on what gets passed here
-Command pathfindingCommand = new PathfindHolonomic(
-        targetPose,
-        constraints,
-        0.0, // Goal end velocity in m/s. Optional
-        swerveSubsystem::getPose,
-        swerveSubsystem::getRobotRelativeSpeeds,
-        swerveSubsystem::driveRobotRelative,
-        Constants.Swerve.pathFollowingConfig, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
-        0.0, // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate. Optional
-        swerveSubsystem // Reference to drive subsystem to set requirements
-);
-```
-
-</tab>
-<tab title="C++" group-key="cpp">
-
-```C++
-#include <pathplanner/lib/commands/PathfindHolonomic.h>
-
-using namespace pathplanner;
-
-// Since we are using a holonomic drivetrain, the rotation component of this pose
-// represents the goal holonomic rotation
-frc::Pose2d targetPose = frc::Pose2d(10_m, 5_m, frc::Rotation2d(180_deg));
-
-// Create the constraints to use while pathfinding
-PathConstraints constraints = PathConstraints(
-    3.0_mps, 4.0_mps_sq, 
-    540_deg_per_s, 720_deg_per_s);
-
-// See the "Follow a single path" example for more info on what gets passed here
-// Assuming this is somewhere in the drive subsystem, so using "this"
-frc2::CommandPtr pathfindingCommand = PathfindHolonomic(
-    targetPose,
-    constraints,
-    0.0_mps, // Goal end velocity in m/s. Optional
-    [this](){ return getPose(); },
-    [this](){ return getRobotRelativeSpeeds(); },
-    [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
-    Constants::Swerve::pathFollowingConfig, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
-    this, // Pointer to drive subsystem to set requirements
-    0.0_m // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate. Optional
-);
-```
-
-</tab>
-<tab title="Python" group-key="python">
-
-```Python
-from pathplannerlib.path import PathConstraints
-from pathplannerlib.commands import PathfindHolonomic
-from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
-from wpimath.geometry import Pose2d, Rotation2d
-from wpimath.units import degreesToRadians
-
-# Since we are using a holonomic drivetrain, the rotation component of this pose
-# represents the goal holonomic rotation
-targetPose = Pose2d(10, 5, Rotation2d.fromDegrees(180))
-
-# Create the constraints to use while pathfinding
-constraints = PathConstraints(
-    3.0, 4.0, 
-    degreesToRadians(540), degreesToRadians(720)
-)
-
-# See the "Follow a single path" example for more info on what gets passed here
-# Assuming this is somewhere in the drive subsystem, so using "self"
-pathfindingCommand = PathfindHolonomic(
-    constraints,
-    self.getPose,
-    self.getCurrentSpeeds,
-    self.driveRobotRelative,
-    HolonomicPathFollowerConfig( # HolonomicPathFollowerConfig, this should likely live in your Constants class
-          PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
-          PIDConstants(5.0, 0.0, 0.0), # Rotation PID constants
-          4.5, # Max module speed, in m/s
-          0.4, # Drive base radius in meters. Distance from robot center to furthest module.
-          ReplanningConfig() # Default path replanning config. See the API for the options here
-    ),
-    lambda: False, # Don't flip paths when pathfinding to a pose
-    self, # Reference to this subsystem to set requirements
-    rotation_delay_distance=0.0, # Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-    target_pose=targetPose,
-    goal_end_vel=0.0 # Goal end velocity in meters/sec
-)
-```
-
-</tab>
-</tabs>
-
 ## Pathfind Then Follow Path
 
 ![](pathfind-then-follow-path.gif)
@@ -280,9 +169,7 @@ PathConstraints constraints = new PathConstraints(
 // Since AutoBuilder is configured, we can use it to build pathfinding commands
 Command pathfindingCommand = AutoBuilder.pathfindThenFollowPath(
         path,
-        constraints,
-        3.0 // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-);
+        constraints);
 ```
 
 </tab>
@@ -332,133 +219,6 @@ pathfindingCommand = AutoBuilder.pathfindThenFollowPath(
     constraints,
     rotation_delay_distance=3.0 # Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
 )
-```
-
-</tab>
-</tabs>
-
-<u>**Manually**</u>
-
-<tabs group="pplib-language">
-<tab title="Java" group-key="java">
-
-```Java
-// Load the path we want to pathfind to and follow
-PathPlannerPath path = PathPlannerPath.fromPathFile("Example Human Player Pickup");
-
-// Create the constraints to use while pathfinding
-PathConstraints constraints = new PathConstraints(
-        3.0, 4.0,
-        Units.degreesToRadians(540), Units.degreesToRadians(720));
-
-// See the "Follow a single path" example for more info on what gets passed here
-Command pathfindingCommand = new PathfindThenFollowPathHolonomic(
-        path,
-        constraints,
-        swerveSubsystem::getPose,
-        swerveSubsystem::getRobotRelativeSpeeds,
-        swerveSubsystem::driveRobotRelative,
-        Constants.Swerve.pathFollowingConfig, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
-        3.0, // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate. Optional
-        () -> {
-          // Boolean supplier that controls when the path will be mirrored for the red alliance
-          // This will flip the path being followed to the red side of the field.
-          // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-
-          var alliance = DriverStation.getAlliance();
-          if (alliance.isPresent()) {
-            return alliance.get() == DriverStation.Alliance.Red;
-          }
-          return false;
-        },
-        swerveSubsystem // Reference to drive subsystem to set requirements
-);
-```
-
-</tab>
-<tab title="C++" group-key="cpp">
-
-```C++
-#include <pathplanner/lib/commands/PathfindThenFollowPath.h>
-
-using namespace pathplanner;
-
-// Load the path we want to pathfind to and follow
-auto path = PathPlannerPath::fromPathFile("Example Human Player Pickup");
-
-// Create the constraints to use while pathfinding
-PathConstraints constraints = PathConstraints(
-    3.0_mps, 4.0_mps_sq, 
-    540_deg_per_s, 720_deg_per_s);
-
-// See the "Follow a single path" example for more info on what gets passed here
-// Assuming this is somewhere in the drive subsystem, so using "this"
-frc2::CommandPtr pathfindingCommand = PathfindThenFollowPathHolonomic(
-    path,
-    constraints,
-    [this](){ return getPose(); },
-    [this](){ return getRobotRelativeSpeeds(); },
-    [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
-    Constants::Swerve::pathFollowingConfig, // HolonomicPathFollwerConfig, see the API or "Follow a single path" example for more info
-    []() {
-        // Boolean supplier that controls when the path will be mirrored for the red alliance
-        // This will flip the path being followed to the red side of the field.
-        // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-
-        auto alliance = DriverStation::GetAlliance();
-        if (alliance) {
-            return alliance.value() == DriverStation::Alliance::kRed;
-        }
-        return false;
-    },
-    this, // Reference to drive subsystem to set requirements
-    3.0_m, // Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate. Optional
-);
-```
-
-</tab>
-<tab title="Python" group-key="python">
-
-```Python
-from pathplannerlib.commands import PathfindThenFollowPathHolonomic
-from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
-from pathplannerlib.path import PathPlannerPath PathConstraints
-from wpimath.units import degreesToRadians
-
-# Load the path we want to pathfind to and follow
-path = PathPlannerPath.fromPathFile('Example Human Player Pickup');
-
-# Create the constraints to use while pathfinding. The constraints defined in the path will only be used for the path.
-constraints = PathConstraints(
-    3.0, 4.0, 
-    degreesToRadians(540), degreesToRadians(720)
-)
-
-# See the "Follow a single path" example for more info on what gets passed here
-# Assuming this is somewhere in the drive subsystem, so using "self"
-pathfindingCommand = PathfindThenFollowPathHolonomic(
-    path,
-    constraints,
-    self.getPose,
-    self.getCurrentSpeeds,
-    self.driveRobotRelative,
-    HolonomicPathFollowerConfig( # HolonomicPathFollowerConfig, this should likely live in your Constants class
-          PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
-          PIDConstants(5.0, 0.0, 0.0), # Rotation PID constants
-          4.5, # Max module speed, in m/s
-          0.4, # Drive base radius in meters. Distance from robot center to furthest module.
-          ReplanningConfig() # Default path replanning config. See the API for the options here
-    ),
-    self.shouldFlipPath, # Supplier to control path flipping based on alliance color
-    self, # Reference to this subsystem to set requirements
-    rotation_delay_distance=3.0 # Rotation delay distance in meters. This is how far the robot should travel before attempting to rotate.
-)
-
-def shouldFlipPath():
-    # Boolean supplier that controls when the path will be mirrored for the red alliance
-    # This will flip the path being followed to the red side of the field.
-    # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-    return DriverStation.getAlliance() == DriverStation.Alliance.kRed
 ```
 
 </tab>

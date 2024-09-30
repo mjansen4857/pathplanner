@@ -28,8 +28,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:watcher/watcher.dart';
 
-// NEW CODE
-
 class ProjectPage extends StatefulWidget {
   final SharedPreferences prefs;
   final FieldImage fieldImage;
@@ -248,6 +246,10 @@ class _ProjectPageState extends State<ProjectPage> {
   Widget build(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
+    // Update _pathSortValue from shared preferences
+    _pathSortValue = widget.prefs.getString(PrefsKeys.pathSortOption) ??
+        Defaults.pathSortOption;
+
     if (_loading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -435,8 +437,9 @@ class _ProjectPageState extends State<ProjectPage> {
                 _buildOptionsRow(
                   sortValue: _pathSortValue,
                   viewValue: _pathsCompact,
-                  onSortChanged: (value) {
-                    widget.prefs.setString(PrefsKeys.pathSortOption, value);
+                  onSortChanged: (value) async {
+                    await widget.prefs
+                        .setString(PrefsKeys.pathSortOption, value);
                     setState(() {
                       _pathSortValue = value;
                       _sortPaths(_pathSortValue);
@@ -1773,7 +1776,12 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   void _sortPaths(String sortOption) {
-    switch (sortOption) {
+    // Get the latest sort option from shared preferences
+    String latestSortOption =
+        widget.prefs.getString(PrefsKeys.pathSortOption) ??
+            Defaults.pathSortOption;
+
+    switch (latestSortOption) {
       case 'recent':
         _paths.sort((a, b) => b.lastModified.compareTo(a.lastModified));
         _pathFolders.sort((a, b) => a.compareTo(b));

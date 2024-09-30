@@ -1,27 +1,27 @@
 package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.config.ModuleConfig;
-import com.pathplanner.lib.config.MotorTorqueCurve;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.controllers.PathFollowingController;
+import com.pathplanner.lib.events.EventScheduler;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
+import com.pathplanner.lib.util.DriveFeedforward;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /** Base command for following a path */
@@ -30,14 +30,11 @@ public class FollowPathCommand extends Command {
   private final PathPlannerPath originalPath;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
-  private final Consumer<ChassisSpeeds> output;
+  private final BiConsumer<ChassisSpeeds, DriveFeedforward[]> output;
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
   private final BooleanSupplier shouldFlipPath;
-
-  // For event markers
-  private final Map<Command, Boolean> currentEventCommands = new HashMap<>();
-  private final List<Pair<Double, Command>> untriggeredEvents = new ArrayList<>();
+  private final EventScheduler eventScheduler;
 
   private PathPlannerPath path;
   private PathPlannerTrajectory trajectory;
@@ -48,8 +45,11 @@ public class FollowPathCommand extends Command {
    * @param path The path to follow
    * @param poseSupplier Function that supplies the current field-relative pose of the robot
    * @param speedsSupplier Function that supplies the current robot-relative chassis speeds
-   * @param outputRobotRelative Function that will apply the robot-relative output speeds of this
-   *     command
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Should the path be flipped to the other side of the field? This will
@@ -60,7 +60,7 @@ public class FollowPathCommand extends Command {
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      Consumer<ChassisSpeeds> outputRobotRelative,
+      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -68,24 +68,22 @@ public class FollowPathCommand extends Command {
     this.originalPath = path;
     this.poseSupplier = poseSupplier;
     this.speedsSupplier = speedsSupplier;
-    this.output = outputRobotRelative;
+    this.output = output;
     this.controller = controller;
     this.robotConfig = robotConfig;
     this.shouldFlipPath = shouldFlipPath;
+    this.eventScheduler = new EventScheduler();
 
     Set<Subsystem> driveRequirements = Set.of(requirements);
     addRequirements(requirements);
 
-    for (EventMarker marker : this.originalPath.getEventMarkers()) {
-      var reqs = marker.getCommand().getRequirements();
-
-      if (!Collections.disjoint(driveRequirements, reqs)) {
-        throw new IllegalArgumentException(
-            "Events that are triggered during path following cannot require the drive subsystem");
-      }
-
-      addRequirements(reqs.toArray(new Subsystem[0]));
+    // Add all event scheduler requirements to this command's requirements
+    var eventReqs = EventScheduler.getSchedulerRequirements(this.originalPath);
+    if (!Collections.disjoint(driveRequirements, eventReqs)) {
+      throw new IllegalArgumentException(
+          "Events that are triggered during path following cannot require the drive subsystem");
     }
+    addRequirements(eventReqs.toArray(new Subsystem[0]));
 
     this.path = this.originalPath;
     // Ensure the ideal trajectory is generated
@@ -136,10 +134,7 @@ public class FollowPathCommand extends Command {
     PathPlannerLogging.logActivePath(path);
     PPLibTelemetry.setCurrentPath(path);
 
-    // Initialize marker stuff
-    currentEventCommands.clear();
-    untriggeredEvents.clear();
-    untriggeredEvents.addAll(trajectory.getEventCommands());
+    eventScheduler.initialize(trajectory);
 
     timer.reset();
     timer.start();
@@ -174,41 +169,9 @@ public class FollowPathCommand extends Command {
         targetSpeeds.omegaRadiansPerSecond);
     PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
 
-    output.accept(targetSpeeds);
+    output.accept(targetSpeeds, targetState.feedforwards);
 
-    if (!untriggeredEvents.isEmpty() && timer.hasElapsed(untriggeredEvents.get(0).getFirst())) {
-      // Time to trigger this event command
-      Pair<Double, Command> event = untriggeredEvents.remove(0);
-
-      for (var runningCommand : currentEventCommands.entrySet()) {
-        if (!runningCommand.getValue()) {
-          continue;
-        }
-
-        if (!Collections.disjoint(
-            runningCommand.getKey().getRequirements(), event.getSecond().getRequirements())) {
-          runningCommand.getKey().end(true);
-          runningCommand.setValue(false);
-        }
-      }
-
-      event.getSecond().initialize();
-      currentEventCommands.put(event.getSecond(), true);
-    }
-
-    // Run event marker commands
-    for (Map.Entry<Command, Boolean> runningCommand : currentEventCommands.entrySet()) {
-      if (!runningCommand.getValue()) {
-        continue;
-      }
-
-      runningCommand.getKey().execute();
-
-      if (runningCommand.getKey().isFinished()) {
-        runningCommand.getKey().end(false);
-        runningCommand.setValue(false);
-      }
-    }
+    eventScheduler.execute(currentTime);
   }
 
   @Override
@@ -223,17 +186,16 @@ public class FollowPathCommand extends Command {
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine
     if (!interrupted && path.getGoalEndState().getVelocity() < 0.1) {
-      output.accept(new ChassisSpeeds());
+      var ff = new DriveFeedforward[robotConfig.numModules];
+      for (int m = 0; m < robotConfig.numModules; m++) {
+        ff[m] = new DriveFeedforward(0.0, 0.0, 0.0);
+      }
+      output.accept(new ChassisSpeeds(), ff);
     }
 
     PathPlannerLogging.logActivePath(null);
 
-    // End markers
-    for (Map.Entry<Command, Boolean> runningCommand : currentEventCommands.entrySet()) {
-      if (runningCommand.getValue()) {
-        runningCommand.getKey().end(true);
-      }
-    }
+    eventScheduler.end();
   }
 
   /**
@@ -242,33 +204,28 @@ public class FollowPathCommand extends Command {
    * @return Path following warmup command
    */
   public static Command warmupCommand() {
-    List<Translation2d> bezierPoints =
-        PathPlannerPath.bezierFromPoses(
+    List<Waypoint> waypoints =
+        PathPlannerPath.waypointsFromPoses(
             new Pose2d(0.0, 0.0, new Rotation2d()), new Pose2d(6.0, 6.0, new Rotation2d()));
     PathPlannerPath path =
         new PathPlannerPath(
-            bezierPoints,
+            waypoints,
             new PathConstraints(4.0, 4.0, 4.0, 4.0),
-            new IdealStartingState(0.0, Rotation2d.kZero),
-            new GoalEndState(0.0, Rotation2d.kCCW_90deg));
+            new IdealStartingState(0.0, new Rotation2d()),
+            new GoalEndState(0.0, Rotation2d.fromDegrees(90)));
 
     return new FollowPathCommand(
             path,
             Pose2d::new,
             ChassisSpeeds::new,
-            (speeds) -> {},
+            (speeds, feedforwards) -> {},
             new PPHolonomicDriveController(
                 new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
             new RobotConfig(
                 75,
                 6.8,
                 new ModuleConfig(
-                    0.048,
-                    6.14,
-                    5600,
-                    1.2,
-                    new MotorTorqueCurve(
-                        MotorTorqueCurve.MotorType.krakenX60, MotorTorqueCurve.CurrentLimit.k60A)),
+                    0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0),
                 0.55),
             () -> true)
         .andThen(Commands.print("[PathPlanner] FollowPathCommand finished warmup"))

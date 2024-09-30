@@ -1,7 +1,9 @@
 package com.pathplanner.lib.config;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.*;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.*;
 import org.json.simple.JSONObject;
@@ -22,11 +24,10 @@ public class RobotConfig {
 
   /** Robot-relative locations of each drive module in meters */
   public final Translation2d[] moduleLocations;
-  /**
-   * Swerve kinematics used to convert ChassisSpeeds to/from module states. This can also be used
-   * for differential robots by assuming they just have 2 swerve modules.
-   */
-  public final SwerveDriveKinematics kinematics;
+  /** Swerve kinematics used to convert ChassisSpeeds to/from module states. */
+  public final SwerveDriveKinematics swerveKinematics;
+  /** Differential kinematics used to convert ChassisSpeeds to/from module states. */
+  public final DifferentialDriveKinematics diffKinematics;
   /** Is the robot holonomic? */
   public final boolean isHolonomic;
 
@@ -37,6 +38,8 @@ public class RobotConfig {
   public final double[] modulePivotDistance;
   /** The force of static friction between the robot's drive wheels and the carpet, in Newtons */
   public final double wheelFrictionForce;
+  /** The maximum torque a drive module can apply without slipping the wheels */
+  public final double maxTorqueFriction;
 
   /**
    * Create a robot config object for a HOLONOMIC DRIVE robot
@@ -66,7 +69,8 @@ public class RobotConfig {
           new Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
           new Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
         };
-    this.kinematics = new SwerveDriveKinematics(this.moduleLocations);
+    this.swerveKinematics = new SwerveDriveKinematics(this.moduleLocations);
+    this.diffKinematics = null;
     this.isHolonomic = true;
 
     this.numModules = this.moduleLocations.length;
@@ -74,7 +78,8 @@ public class RobotConfig {
     for (int i = 0; i < this.numModules; i++) {
       this.modulePivotDistance[i] = this.moduleLocations[i].getNorm();
     }
-    this.wheelFrictionForce = this.moduleConfig.wheelCOF * (this.massKG * 9.8);
+    this.wheelFrictionForce = this.moduleConfig.wheelCOF * ((this.massKG / numModules) * 9.8);
+    this.maxTorqueFriction = this.wheelFrictionForce * this.moduleConfig.wheelRadiusMeters;
   }
 
   /**
@@ -97,7 +102,8 @@ public class RobotConfig {
           new Translation2d(0.0, trackwidthMeters / 2.0),
           new Translation2d(0.0, -trackwidthMeters / 2.0),
         };
-    this.kinematics = new SwerveDriveKinematics(moduleLocations);
+    this.swerveKinematics = null;
+    this.diffKinematics = new DifferentialDriveKinematics(trackwidthMeters);
     this.isHolonomic = false;
 
     this.numModules = this.moduleLocations.length;
@@ -105,7 +111,45 @@ public class RobotConfig {
     for (int i = 0; i < this.numModules; i++) {
       this.modulePivotDistance[i] = this.moduleLocations[i].getNorm();
     }
-    this.wheelFrictionForce = this.moduleConfig.wheelCOF * (this.massKG * 9.8);
+    this.wheelFrictionForce = this.moduleConfig.wheelCOF * ((this.massKG / numModules) * 9.8);
+    this.maxTorqueFriction = this.wheelFrictionForce * this.moduleConfig.wheelRadiusMeters;
+  }
+
+  /**
+   * Convert robot-relative chassis speeds to an array of swerve module states. This will use
+   * differential kinematics for diff drive robots, then convert the wheel speeds to module states.
+   *
+   * @param speeds Robot-relative chassis speeds
+   * @return Array of swerve module states
+   */
+  public SwerveModuleState[] toSwerveModuleStates(ChassisSpeeds speeds) {
+    if (isHolonomic) {
+      return swerveKinematics.toSwerveModuleStates(speeds);
+    } else {
+      var wheelSpeeds = diffKinematics.toWheelSpeeds(speeds);
+      return new SwerveModuleState[] {
+        new SwerveModuleState(wheelSpeeds.leftMetersPerSecond, new Rotation2d()),
+        new SwerveModuleState(wheelSpeeds.rightMetersPerSecond, new Rotation2d())
+      };
+    }
+  }
+
+  /**
+   * Convert an array of swerve module states to robot-relative chassis speeds. This will use
+   * differential kinematics for diff drive robots.
+   *
+   * @param states Array of swerve module states
+   * @return Robot-relative chassis speeds
+   */
+  public ChassisSpeeds toChassisSpeeds(SwerveModuleState[] states) {
+    if (isHolonomic) {
+      return swerveKinematics.toChassisSpeeds(states);
+    } else {
+      var wheelSpeeds =
+          new DifferentialDriveWheelSpeeds(
+              states[0].speedMetersPerSecond, states[1].speedMetersPerSecond);
+      return diffKinematics.toChassisSpeeds(wheelSpeeds);
+    }
   }
 
   /**
@@ -137,17 +181,28 @@ public class RobotConfig {
     double trackwidth = (double) json.get("robotTrackwidth");
     double wheelRadius = (double) json.get("driveWheelRadius");
     double gearing = (double) json.get("driveGearing");
-    double maxDriveRPM = (double) json.get("maxDriveRPM");
+    double maxDriveSpeed = (double) json.get("maxDriveSpeed");
     double wheelCOF = (double) json.get("wheelCOF");
-    String driveMotor = (String) json.get("driveMotor");
+    String driveMotor = (String) json.get("driveMotorType");
+    double driveCurrentLimit = (double) json.get("driveCurrentLimit");
+
+    int numMotors = isHolonomic ? 1 : 2;
+    DCMotor gearbox =
+        switch (driveMotor) {
+          case "krakenX60" -> DCMotor.getKrakenX60(numMotors);
+          case "krakenX60FOC" -> DCMotor.getKrakenX60Foc(numMotors);
+          case "falcon500" -> DCMotor.getFalcon500(numMotors);
+          case "falcon500FOC" -> DCMotor.getFalcon500Foc(numMotors);
+          case "vortex" -> DCMotor.getNeoVortex(numMotors);
+          case "NEO" -> DCMotor.getNEO(numMotors);
+          case "CIM" -> DCMotor.getCIM(numMotors);
+          case "miniCIM" -> DCMotor.getMiniCIM(numMotors);
+          default -> throw new IllegalArgumentException("Invalid motor type: " + driveMotor);
+        };
+    gearbox = gearbox.withReduction(gearing);
 
     ModuleConfig moduleConfig =
-        new ModuleConfig(
-            wheelRadius,
-            gearing,
-            maxDriveRPM,
-            wheelCOF,
-            MotorTorqueCurve.fromSettingsString(driveMotor));
+        new ModuleConfig(wheelRadius, maxDriveSpeed, wheelCOF, gearbox, driveCurrentLimit);
 
     if (isHolonomic) {
       return new RobotConfig(massKG, MOI, moduleConfig, trackwidth, wheelbase);

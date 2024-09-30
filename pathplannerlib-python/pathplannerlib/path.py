@@ -8,9 +8,10 @@ from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command
-from .geometry_util import cubicLerp, calculateRadius, flipFieldPose, flipFieldPos, flipFieldRotation
+from .geometry_util import cubicLerp, calculateRadius, flipFieldPos, flipFieldRotation, floatLerp
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
+from .events import ScheduleCommandEvent
 from wpilib import getDeployDirectory
 from hal import report, tResourceType
 import os
@@ -18,6 +19,7 @@ import json
 
 targetIncrement: Final[float] = 0.05
 targetSpacing: Final[float] = 0.2
+autoControlDistanceFactor: Final[float] = 1.0 / 3.0
 
 
 @dataclass(frozen=True)
@@ -266,113 +268,71 @@ class PathPoint:
 
 
 @dataclass(frozen=True)
-class PathSegment:
-    p1: Translation2d
-    p2: Translation2d
-    p3: Translation2d
-    p4: Translation2d
+class Waypoint:
+    prevControl: Union[Translation2d, None]
+    anchor: Translation2d
+    nextControl: Union[Translation2d, None]
 
-    def generatePathPoints(self, points: List[PathPoint], segmentIdx: int, constraintZones: List[ConstraintsZone],
-                           sortedTargets: List[RotationTarget], globalConstraints: Union[PathConstraints, None]):
+    def flip(self) -> Waypoint:
         """
-        Generate path points along this segment and insert them into the given list of path points
+        Flip this waypoint to the other side of the field, maintaining a blue alliance origin
 
-        :param points: The list to insert the generated points into
-        :param segmentIdx: The index of this segment within the whole path being generated
-        :param constraintZones: All constraint zones along the path
-        :param sortedTargets: All rotation targets along the path, sorted by waypoint relative position
-        :param globalConstraints: The global constraints to apply to a path point if it is not covered by a constraints zone
+        :return: The flipped waypoint
         """
-        unaddedTargets = [r for r in sortedTargets if segmentIdx <= r.waypointRelativePosition < segmentIdx + 1.0]
-
-        t = 0.0
-
-        if len(points) == 0:
-            # First path point
-            points.append(PathPoint(self.sample(t), None,
-                                    PathSegment._constraintsForWaypointPos(segmentIdx, constraintZones,
-                                                                           globalConstraints)))
-            points[-1].waypointRelativePos = segmentIdx
-
-            t += targetIncrement
-
-        while t <= 1.0:
-            position = self.sample(t)
-
-            distance = points[-1].position.distance(position)
-            if distance <= 0.01:
-                if t < 1.0:
-                    t = min(t + targetIncrement, 1.0)
-                    continue
-                else:
-                    break
-
-            prevWaypointPos = (segmentIdx + t) - targetIncrement
-
-            delta = distance - targetSpacing
-            if delta > targetSpacing * 0.25:
-                # Points are too far apart, increment t by correct amount
-                correctIncrement = (targetSpacing * targetIncrement) / distance
-                t = t - targetIncrement + correctIncrement
-
-                position = self.sample(t)
-
-                if points[-1].position.distance(position) - targetSpacing > targetSpacing * 0.25:
-                    # Points are still too far apart.Probably because of weird control
-                    # point placement.Just cut the correct increment in half and hope for the best
-                    t = t - (correctIncrement * 0.5)
-                    position = self.sample(t)
-            elif delta < -targetSpacing * 0.25 and t < 1.0:
-                # Points are too close, increment waypoint relative pos by correct amount
-                correctIncrement = (targetSpacing * targetIncrement) / distance
-                t = t - targetIncrement + correctIncrement
-
-                position = self.sample(t)
-
-                if points[-1].position.distance(position) - targetSpacing < -targetSpacing * 0.25:
-                    # Points are still too close. Probably because of weird control
-                    # point placement. Just cut the correct increment in half and hope for the best
-                    t = t + (correctIncrement * 0.5)
-                    position = self.sample(t)
-
-            # Add a rotation target to the previous point if it is closer to it than
-            # the current point
-            if len(unaddedTargets) > 0:
-                if abs(unaddedTargets[0].waypointRelativePosition - prevWaypointPos) <= abs(
-                        unaddedTargets[0].waypointRelativePosition - (segmentIdx + t)):
-                    points[-1].rotationTarget = unaddedTargets.pop(0)
-
-            # We don't actually want to add the last point if it is valid. The last point of this segment
-            # will be the first of the next
-            if t < 1.0:
-                points.append(PathPoint(position, None,
-                                        PathSegment._constraintsForWaypointPos(segmentIdx, constraintZones,
-                                                                               globalConstraints)))
-                points[-1].waypointRelativePos = segmentIdx + t
-                t = min(t + targetIncrement, 1.0)
-            else:
-                break
-
-    def sample(self, t: float) -> Translation2d:
-        """
-        Sample a point along this segment
-
-        :param t: Interpolation factor, essentially the percentage along the segment
-        :return: Point along the segment at the given t value
-        """
-        return cubicLerp(self.p1, self.p2, self.p3, self.p4, min(max(t, 0.0), 1.0))
+        flippedPrevControl = None if self.prevControl is None else flipFieldPos(self.prevControl)
+        flippedAnchor = flipFieldPos(self.anchor)
+        flippedNextControl = None if self.nextControl is None else flipFieldPos(self.nextControl)
+        return Waypoint(flippedPrevControl, flippedAnchor, flippedNextControl)
 
     @staticmethod
-    def _constraintsForWaypointPos(pos: float, constraintZones: List[ConstraintsZone],
-                                   globalConstraints: Union[PathConstraints, None]) -> PathConstraints:
-        for z in constraintZones:
-            if z.minWaypointPos <= pos <= z.maxWaypointPos:
-                return z.constraints
-        return globalConstraints
+    def autoControlPoints(anchor: Translation2d, heading: Rotation2d, prevAnchor: Union[Translation2d, None],
+                          nextAnchor: Union[Translation2d, None]) -> Waypoint:
+        """
+        Create a waypoint with auto calculated control points based on the positions of adjacent waypoints.
+        This is used internally, and you probably shouldn't use this.
+
+        :param anchor: The anchor point of the waypoint to create
+        :param heading: The heading of this waypoint
+        :param prevAnchor: The position of the previous anchor point. This can be None for the start point
+        :param nextAnchor: The position of the next anchor point. This can be None for the end point
+        :return: Waypoint with auto calculated control points
+        """
+        prevControl = None
+        nextControl = None
+
+        if prevAnchor is not None:
+            d = anchor.distance(prevAnchor) * autoControlDistanceFactor
+            prevControl = anchor - Translation2d(d, heading)
+        if nextAnchor is not None:
+            d = anchor.distance(nextAnchor) * autoControlDistanceFactor
+            nextControl = anchor + Translation2d(d, heading)
+
+        return Waypoint(prevControl, anchor, nextControl)
+
+    @staticmethod
+    def fromJson(waypointJson: dict) -> Waypoint:
+        """
+        Create a waypoint from JSON
+
+        :param waypointJson: JSON object representing a waypoint
+        :return: The waypoint created from JSON
+        """
+        anchor = Waypoint._translationFromJson(waypointJson['anchor'])
+        prevControl = None if waypointJson['prevControl'] is None else Waypoint._translationFromJson(
+            waypointJson['prevControl'])
+        nextControl = None if waypointJson['nextControl'] is None else Waypoint._translationFromJson(
+            waypointJson['nextControl'])
+        return Waypoint(prevControl, anchor, nextControl)
+
+    @staticmethod
+    def _translationFromJson(translationJson: dict) -> Translation2d:
+        x = float(translationJson['x'])
+        y = float(translationJson['y'])
+        return Translation2d(x, y)
 
 
 class PathPlannerPath:
-    _bezierPoints: List[Translation2d]
+    _waypoints: List[Waypoint]
     _rotationTargets: List[RotationTarget]
     _constraintZones: List[ConstraintsZone]
     _eventMarkers: List[EventMarker]
@@ -387,16 +347,20 @@ class PathPlannerPath:
 
     _instances: int = 0
 
+    _pathCache: dict[str, PathPlannerPath] = {}
+    _choreoPathCache: dict[str, PathPlannerPath] = {}
+
     preventFlipping: bool = False
 
-    def __init__(self, bezier_points: List[Translation2d], constraints: PathConstraints,
+    def __init__(self, waypoints: List[Waypoint], constraints: PathConstraints,
                  ideal_starting_state: Union[IdealStartingState, None], goal_end_state: GoalEndState,
                  holonomic_rotations: List[RotationTarget] = None, constraint_zones: List[ConstraintsZone] = None,
                  event_markers: List[EventMarker] = None, is_reversed: bool = False):
         """
         Create a new path planner path
 
-        :param bezier_points: List of points representing the cubic Bezier curve of the path
+        :param waypoints: List of waypoints representing the path. For on-the-fly paths, you likely want to use
+            waypointsFromPoses to create these.
         :param constraints: The global constraints of the path
         :param ideal_starting_state: The ideal starting state of the path. Can be None if unknown
         :param goal_end_state: The goal end state of the path
@@ -405,7 +369,7 @@ class PathPlannerPath:
         :param event_markers: List of event markers along the path
         :param is_reversed: Should the robot follow the path reversed (differential drive only)
         """
-        self._bezierPoints = bezier_points
+        self._waypoints = waypoints
         if holonomic_rotations is None:
             self._rotationTargets = []
         else:
@@ -424,7 +388,7 @@ class PathPlannerPath:
         self._idealStartingState = ideal_starting_state
         self._goalEndState = goal_end_state
         self._reversed = is_reversed
-        if len(bezier_points) >= 4 and (len(bezier_points) - 1) % 3 == 0:
+        if len(waypoints) >= 2:
             self._allPoints = self._createPath()
             self._precalcValues()
 
@@ -456,11 +420,16 @@ class PathPlannerPath:
         :param path_name: The name of the path to load
         :return: PathPlannerPath created from the given file name
         """
+        if path_name in PathPlannerPath._pathCache:
+            return PathPlannerPath._pathCache[path_name]
+
         filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'paths', path_name + '.path')
 
         with open(filePath, 'r') as f:
             pathJson = json.loads(f.read())
-            return PathPlannerPath._fromJson(pathJson)
+            path = PathPlannerPath._fromJson(pathJson)
+            PathPlannerPath._pathCache[path_name] = path
+            return path
 
     @staticmethod
     def fromChoreoTrajectory(trajectory_name: str) -> PathPlannerPath:
@@ -470,6 +439,9 @@ class PathPlannerPath:
         :param trajectory_name: The name of the Choreo trajectory to load. This should be just the name of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
         :return: PathPlannerPath created from the given Choreo trajectory file
         """
+        if trajectory_name in PathPlannerPath._choreoPathCache:
+            return PathPlannerPath._choreoPathCache[trajectory_name]
+
         filePath = os.path.join(getDeployDirectory(), 'choreo', trajectory_name + '.traj')
 
         with open(filePath, 'r') as f:
@@ -506,7 +478,7 @@ class PathPlannerPath:
             path._allPoints = pathPoints
             path._isChoreoPath = True
 
-            eventCommands = []
+            events = []
             if 'eventMarkers' in trajJson:
                 from .auto import CommandUtil
                 for m in trajJson['eventMarkers']:
@@ -516,51 +488,59 @@ class PathPlannerPath:
                     eventMarker = EventMarker(timestamp, cmd)
 
                     path._eventMarkers.append(eventMarker)
-                    eventCommands.append((timestamp, cmd))
+                    events.append(ScheduleCommandEvent(timestamp, cmd))
 
-            eventCommands.sort(key=lambda a: a[0])
+            events.sort(key=lambda a: a.getTimestamp())
 
             path._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=trajStates,
-                                                          event_commands=eventCommands)
+                                                          events=events)
+
+            PathPlannerPath._choreoPathCache[trajectory_name] = path
 
             return path
 
     @staticmethod
-    def bezierFromPoses(poses: List[Pose2d]) -> List[Translation2d]:
+    def clearPathCache():
         """
-        Create the bezier points necessary to create a path using a list of poses
+        Clear the cache of previously loaded paths.
+        :return:
+        """
+        PathPlannerPath._pathCache.clear()
+        PathPlannerPath._choreoPathCache.clear()
+
+    @staticmethod
+    def waypointsFromPoses(poses: List[Pose2d]) -> List[Waypoint]:
+        """
+        Create the bezier waypoints necessary to create a path using a list of poses
 
         :param poses: List of poses. Each pose represents one waypoint.
-        :return: Bezier points
+        :return: Bézier curve waypoints
         """
         if len(poses) < 2:
             raise ValueError('Not enough poses')
 
         # First pose
-        bezierPoints = [poses[0].translation(), poses[0].translation() + Translation2d(
-            poses[0].translation().distance(poses[1].translation()) / 3.0,
-            poses[0].rotation())]
+        waypoints = [
+            Waypoint.autoControlPoints(poses[0].translation(), poses[0].rotation(), None, poses[1].translation())]
 
         # Middle poses
         for i in range(1, len(poses) - 1):
-            anchor = poses[i].translation()
-
-            # Prev control
-            bezierPoints.append(anchor + Translation2d(anchor.distance(poses[i - 1].translation()) / 3.0,
-                                                       poses[i].rotation() + Rotation2d.fromDegrees(180)))
-            # Anchor
-            bezierPoints.append(anchor)
-            # Next control
-            bezierPoints.append(
-                anchor + Translation2d(anchor.distance(poses[i + 1].translation()) / 3.0, poses[i].rotation()))
+            waypoints.append(Waypoint.autoControlPoints(
+                poses[i].translation(),
+                poses[i].rotation(),
+                poses[i - 1].translation(),
+                poses[i + 1].translation()
+            ))
 
         # Last pose
-        bezierPoints.append(poses[len(poses) - 1].translation() + Translation2d(
-            poses[len(poses) - 1].translation().distance(poses[len(poses) - 2].translation()) / 3.0,
-            poses[len(poses) - 1].rotation() + Rotation2d.fromDegrees(180)))
-        bezierPoints.append(poses[len(poses) - 1].translation())
+        waypoints.append(Waypoint.autoControlPoints(
+            poses[-1].translation(),
+            poses[-1].rotation(),
+            poses[-2].translation(),
+            None
+        ))
 
-        return bezierPoints
+        return waypoints
 
     def getAllPathPoints(self) -> List[PathPoint]:
         """
@@ -684,21 +664,7 @@ class PathPlannerPath:
         flippedTraj = None
         if self._idealTrajectory is not None:
             # Flip the ideal trajectory
-            mirroredStates = []
-            for state in self._idealTrajectory.getStates():
-                mirrored = PathPlannerTrajectoryState()
-
-                mirrored.timeSeconds = state.timeSeconds
-                mirrored.linearVelocity = state.linearVelocity
-                mirrored.pose = flipFieldPose(state.pose)
-                mirrored.fieldSpeeds = ChassisSpeeds(-state.fieldSpeeds.vx, state.fieldSpeeds.vy,
-                                                     -state.fieldSpeeds.omega)
-
-                mirroredStates.append(mirrored)
-            flippedTraj = PathPlannerTrajectory(None, None, None, None, states=mirroredStates,
-                                                event_commands=self._idealTrajectory.getEventCommands())
-
-        newBezier = [flipFieldPos(pos) for pos in self._bezierPoints]
+            flippedTraj = self._idealTrajectory.flip()
 
         newRotTargets = [RotationTarget(t.waypointRelativePosition, flipFieldRotation(t.target)) for t in
                          self._rotationTargets]
@@ -708,7 +674,7 @@ class PathPlannerPath:
         path = PathPlannerPath.fromPathPoints(newPoints, self._globalConstraints,
                                               GoalEndState(self._goalEndState.velocity,
                                                            flipFieldRotation(self._goalEndState.rotation)))
-        path._bezierPoints = newBezier
+        path._bezierPoints = [w.flip() for w in self._waypoints]
         path._rotationTargets = newRotTargets
         path._constraintZones = self._constraintZones
         path._eventMarkers = self._eventMarkers
@@ -758,25 +724,54 @@ class PathPlannerPath:
 
         return self._idealTrajectory
 
-    @staticmethod
-    def _mapPct(pct: float, seg1_pct: float) -> float:
-        if pct <= seg1_pct:
-            # Map to segment 1
-            mappedPct = pct / seg1_pct
-        else:
-            # Map to segment 2
-            mappedPct = 1 + ((pct - seg1_pct) / (1.0 - seg1_pct))
+    def getWaypoints(self) -> List[Waypoint]:
+        """
+        Get the waypoints for this path
 
-        return mappedPct
+        :return: List of this path's waypoints
+        """
+        return self._waypoints
 
-    @staticmethod
-    def _positionDelta(a: Translation2d, b: Translation2d) -> float:
-        delta = a - b
-        return math.fabs(delta.X()) + math.fabs(delta.Y())
+    def getRotationTargets(self) -> List[RotationTarget]:
+        """
+        Get the rotation targets for this path
+
+        :return: List of this path's rotation targets
+        """
+        return self._rotationTargets
+
+    def getConstraintZones(self) -> List[ConstraintsZone]:
+        """
+        Get the constraint zones for this path
+
+        :return: List of this path's constraint zones
+        """
+        return self._constraintZones
+
+    def _constraintsForWaypointPos(self, pos: float) -> PathConstraints:
+        for z in self._constraintZones:
+            if z.minWaypointPos <= pos <= z.maxWaypointPos:
+                return z.constraints
+        return self._globalConstraints
+
+    def _samplePath(self, waypointRelativePos: float) -> Translation2d:
+        pos = min(max(waypointRelativePos, 0.0), len(self._waypoints) - 1)
+
+        i = int(pos)
+        if i == len(self._waypoints) - 1:
+            i -= 1
+
+        t = pos - i
+
+        p1 = self._waypoints[i].anchor
+        p2 = self._waypoints[i].nextControl
+        p3 = self._waypoints[i + 1].prevControl
+        p4 = self._waypoints[i + 1].anchor
+        return cubicLerp(p1, p2, p3, p4, t)
 
     @staticmethod
     def _fromJson(path_json: dict) -> PathPlannerPath:
-        bezierPoints = PathPlannerPath._bezierPointsFromWaypointsJson(path_json['waypoints'])
+        waypoints = [Waypoint.fromJson(w) for w in path_json['waypoints']]
         globalConstraints = PathConstraints.fromJson(path_json['globalConstraints'])
         goalEndState = GoalEndState.fromJson(path_json['goalEndState'])
         idealStartingState = IdealStartingState.fromJson(path_json['idealStartingState'])
@@ -785,32 +780,9 @@ class PathPlannerPath:
         constraintZones = [ConstraintsZone.fromJson(zoneJson) for zoneJson in path_json['constraintZones']]
         eventMarkers = [EventMarker.fromJson(markerJson) for markerJson in path_json['eventMarkers']]
 
-        return PathPlannerPath(bezierPoints, globalConstraints, idealStartingState, goalEndState, rotationTargets,
+        return PathPlannerPath(waypoints, globalConstraints, idealStartingState, goalEndState, rotationTargets,
                                constraintZones,
                                eventMarkers, isReversed)
-
-    @staticmethod
-    def _bezierPointsFromWaypointsJson(waypoints_json) -> List[Translation2d]:
-        bezierPoints = []
-
-        # First point
-        firstPointJson = waypoints_json[0]
-        bezierPoints.append(PathPlannerPath._pointFromJson(firstPointJson['anchor']))
-        bezierPoints.append(PathPlannerPath._pointFromJson(firstPointJson['nextControl']))
-
-        # Mid points
-        for i in range(1, len(waypoints_json) - 1):
-            point = waypoints_json[i]
-            bezierPoints.append(PathPlannerPath._pointFromJson(point['prevControl']))
-            bezierPoints.append(PathPlannerPath._pointFromJson(point['anchor']))
-            bezierPoints.append(PathPlannerPath._pointFromJson(point['nextControl']))
-
-        # Last point
-        lastPointJson = waypoints_json[len(waypoints_json) - 1]
-        bezierPoints.append(PathPlannerPath._pointFromJson(lastPointJson['prevControl']))
-        bezierPoints.append(PathPlannerPath._pointFromJson(lastPointJson['anchor']))
-
-        return bezierPoints
 
     @staticmethod
     def _pointFromJson(point_json: dict) -> Translation2d:
@@ -820,33 +792,164 @@ class PathPlannerPath:
         return Translation2d(x, y)
 
     def _createPath(self) -> List[PathPoint]:
-        if len(self._bezierPoints) < 4 or (len(self._bezierPoints) - 1) % 3 != 0:
-            raise ValueError('Invalid number of bezier points')
+        if len(self._waypoints) < 2:
+            raise ValueError('A path must have at least 2 waypoints')
 
-        numSegments = int((len(self._bezierPoints) - 1) / 3)
-
+        unaddedTargets = [r for r in self._rotationTargets]
         points = []
+        numSegments = len(self._waypoints) - 1
 
-        for s in range(numSegments):
-            iOffset = s * 3
-            p1 = self._bezierPoints[iOffset]
-            p2 = self._bezierPoints[iOffset + 1]
-            p3 = self._bezierPoints[iOffset + 2]
-            p4 = self._bezierPoints[iOffset + 3]
-            segment = PathSegment(p1, p2, p3, p4)
+        # Add the first path point
+        points.append(PathPoint(self._samplePath(0.0), None, self._constraintsForWaypointPos(0.0)))
+        points[-1].waypointRelativePos = 0.0
 
-            segment.generatePathPoints(points, s, self._constraintZones, self._rotationTargets, self._globalConstraints)
+        pos = targetIncrement
+        while pos < numSegments:
+            position = self._samplePath(pos)
 
-        # Add the final path point
-        endConstraints = self._globalConstraints
-        for z in self._constraintZones:
-            if z.minWaypointPos <= numSegments <= z.maxWaypointPos:
-                endConstraints = z
+            distance = points[-1].position.distance(position)
+            if distance <= 0.01:
+                pos = min(pos + targetIncrement, numSegments)
+
+            prevWaypointPos = pos - targetIncrement
+
+            delta = distance - targetSpacing
+            if delta > targetSpacing * 0.25:
+                # Points are too far apart, increment t by correct amount
+                correctIncrement = (targetSpacing * targetIncrement) / distance
+                pos = pos - targetIncrement + correctIncrement
+
+                position = self._samplePath(pos)
+
+                if points[-1].position.distance(position) - targetSpacing > targetSpacing * 0.25:
+                    # Points are still too far apart.Probably because of weird control
+                    # point placement.Just cut the correct increment in half and hope for the best
+                    pos = pos - (correctIncrement * 0.5)
+                    position = self._samplePath(pos)
+            elif delta < -targetSpacing * 0.25:
+                # Points are too close, increment waypoint relative pos by correct amount
+                correctIncrement = (targetSpacing * targetIncrement) / distance
+                pos = pos - targetIncrement + correctIncrement
+
+                position = self._samplePath(pos)
+
+                if points[-1].position.distance(position) - targetSpacing < -targetSpacing * 0.25:
+                    # Points are still too close. Probably because of weird control
+                    # point placement. Just cut the correct increment in half and hope for the best
+                    pos = pos + (correctIncrement * 0.5)
+                    position = self._samplePath(pos)
+
+            # Add rotation targets
+            target: Union[RotationTarget, None] = None
+            prevPoint = points[-1]
+
+            while len(unaddedTargets) > 0 and prevWaypointPos <= unaddedTargets[0].waypointRelativePosition <= pos:
+                if abs(unaddedTargets[0].waypointRelativePosition - prevWaypointPos) < 0.001:
+                    # Close enough to prev pos
+                    prevPoint.rotationTarget = unaddedTargets.pop(0)
+                elif abs(unaddedTargets[0].waypointRelativePosition - pos) < 0.001:
+                    # Close enough to next pos
+                    target = unaddedTargets.pop(0)
+                else:
+                    # We should insert a point at the exact position
+                    t = unaddedTargets.pop(0)
+                    points.append(PathPoint(self._samplePath(t.waypointRelativePosition), t,
+                                            self._constraintsForWaypointPos(t.waypointRelativePosition)))
+                    points[-1].waypointRelativePos = t.waypointRelativePosition
+
+            points.append(PathPoint(position, target, self._constraintsForWaypointPos(pos)))
+            points[-1].waypointRelativePos = pos
+            pos = min(pos + targetIncrement, numSegments)
+
+        # Keep trying to add the end point until its close enough to the prev point
+        trueIncrement = numSegments - (pos - targetIncrement)
+        pos = numSegments
+        invalid = True
+        while invalid:
+            position = self._samplePath(pos)
+
+            distance = points[-1].position.distance(position)
+            if distance <= 0.01:
+                invalid = False
                 break
 
-        points.append(
-            PathPoint(self._bezierPoints[-1], RotationTarget(numSegments, self._goalEndState.rotation), endConstraints))
-        points[-1].waypointRelativePos = numSegments
+            prevPos = pos - trueIncrement
+
+            delta = distance - targetSpacing
+            if delta > targetSpacing * 0.25:
+                # Points are too far apart, increment t by correct amount
+                correctIncrement = (targetSpacing * targetIncrement) / distance
+                pos = pos - targetIncrement + correctIncrement
+                trueIncrement = correctIncrement
+
+                position = self._samplePath(pos)
+
+                if points[-1].position.distance(position) - targetSpacing > targetSpacing * 0.25:
+                    # Points are still too far apart.Probably because of weird control
+                    # point placement.Just cut the correct increment in half and hope for the best
+                    pos = pos - (correctIncrement * 0.5)
+                    trueIncrement = correctIncrement * 0.5
+                    position = self._samplePath(pos)
+                else:
+                    invalid = False
+
+            # Add a rotation target to the previous point if it is closer to it than
+            # the current point
+            if len(unaddedTargets) > 0:
+                if abs(unaddedTargets[0].waypointRelativePosition - prevPos) <= abs(
+                        unaddedTargets[0].waypointRelativePosition - pos):
+                    points[-1].rotationTarget = unaddedTargets.pop(0)
+
+            points.append(PathPoint(position, None, self._constraintsForWaypointPos(pos)))
+            points[-1].waypointRelativePos = pos
+            pos = numSegments
+
+        for i in range(1, len(points) - 1):
+            curveRadius = calculateRadius(points[i - 1].position, points[i].position, points[i + 1].position)
+
+            if not math.isfinite(curveRadius):
+                continue
+
+            if abs(curveRadius) < 0.25:
+                # Curve radius is too tight for default spacing, insert 4 more points
+                before1WaypointPos = floatLerp(points[i - 1].waypointRelativePos, points[i].waypointRelativePos, 0.33)
+                before2WaypointPos = floatLerp(points[i - 1].waypointRelativePos, points[i].waypointRelativePos, 0.67)
+                after1WaypointPos = floatLerp(points[i].waypointRelativePos, points[i + 1].waypointRelativePos, 0.33)
+                after2WaypointPos = floatLerp(points[i].waypointRelativePos, points[i + 1].waypointRelativePos, 0.67)
+
+                before1 = PathPoint(self._samplePath(before1WaypointPos), None,
+                                    self._constraintsForWaypointPos(before1WaypointPos))
+                before1.waypointRelativePos = before1WaypointPos
+                before2 = PathPoint(self._samplePath(before2WaypointPos), None,
+                                    self._constraintsForWaypointPos(before2WaypointPos))
+                before2.waypointRelativePos = before2WaypointPos
+                after1 = PathPoint(self._samplePath(after1WaypointPos), None,
+                                   self._constraintsForWaypointPos(after1WaypointPos))
+                after1.waypointRelativePos = after1WaypointPos
+                after2 = PathPoint(self._samplePath(after2WaypointPos), None,
+                                   self._constraintsForWaypointPos(after2WaypointPos))
+                after2.waypointRelativePos = after2WaypointPos
+
+                points.insert(i, before2)
+                points.insert(i, before1)
+                points.insert(i + 3, after2)
+                points.insert(i + 3, after1)
+                i += 4
+            elif abs(curveRadius) < 0.5:
+                # Curve radius is too tight for default spacing, insert 2 more points
+                beforeWaypointPos = floatLerp(points[i - 1].waypointRelativePos, points[i].waypointRelativePos, 0.5)
+                afterWaypointPos = floatLerp(points[i].waypointRelativePos, points[i + 1].waypointRelativePos, 0.5)
+
+                before = PathPoint(self._samplePath(beforeWaypointPos), None,
+                                   self._constraintsForWaypointPos(beforeWaypointPos))
+                before.waypointRelativePos = beforeWaypointPos
+                after = PathPoint(self._samplePath(afterWaypointPos), None,
+                                  self._constraintsForWaypointPos(afterWaypointPos))
+                after.waypointRelativePos = afterWaypointPos
+
+                points.insert(i, before)
+                points.insert(i + 2, after)
+                i += 2
 
         return points
 

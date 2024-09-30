@@ -15,6 +15,8 @@ from commands2.subsystem import Subsystem
 from .config import RobotConfig
 from hal import report, tResourceType
 
+from .trajectory import DriveFeedforward
+
 
 class NamedCommands:
     _namedCommands: dict = {}
@@ -160,7 +162,7 @@ class AutoBuilder:
     @staticmethod
     def configure(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
                   robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
-                  robot_relative_output: Callable[[ChassisSpeeds], None],
+                  output: Callable[[ChassisSpeeds, List[DriveFeedforward]], None],
                   controller: PathFollowingController,
                   robot_config: RobotConfig,
                   should_flip_path: Callable[[], bool],
@@ -171,7 +173,11 @@ class AutoBuilder:
         :param pose_supplier: a supplier for the robot's current pose
         :param reset_pose: a consumer for resetting the robot's pose
         :param robot_relative_speeds_supplier: a supplier for the robot's current robot relative chassis speeds
-        :param robot_relative_output: a consumer for setting the robot's robot-relative chassis speeds
+        :param output: Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+            each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+            using a differential drive, they will be in L, R order.
+            <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+            module states, you will need to reverse the feedforwards for modules that have been flipped
         :param controller Path following controller that will be used to follow paths
         :param robot_config The robot configuration
         :param should_flip_path: Supplier that determines if paths should be flipped to the other side of the field. This will maintain a global blue alliance origin.
@@ -184,7 +190,7 @@ class AutoBuilder:
             path,
             pose_supplier,
             robot_relative_speeds_supplier,
-            robot_relative_output,
+            output,
             controller,
             robot_config,
             should_flip_path,
@@ -201,7 +207,7 @@ class AutoBuilder:
                 constraints,
                 pose_supplier,
                 robot_relative_speeds_supplier,
-                robot_relative_output,
+                output,
                 controller,
                 robot_config,
                 lambda: False,
@@ -215,7 +221,7 @@ class AutoBuilder:
                 constraints,
                 pose_supplier,
                 robot_relative_speeds_supplier,
-                robot_relative_output,
+                output,
                 controller,
                 robot_config,
                 should_flip_path,

@@ -4,12 +4,13 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.DriveFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /** Command group that will pathfind to the start of a path, then follow that path */
@@ -21,7 +22,11 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
    * @param pathfindingConstraints the path constraints for pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
-   * @param robotRelativeOutput a consumer for the output speeds (robot relative)
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
    * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
@@ -33,7 +38,7 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
       PathConstraints pathfindingConstraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
-      Consumer<ChassisSpeeds> robotRelativeOutput,
+      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -44,7 +49,7 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
             pathfindingConstraints,
             poseSupplier,
             currentRobotRelativeSpeeds,
-            robotRelativeOutput,
+            output,
             controller,
             robotConfig,
             shouldFlipPath,
@@ -53,7 +58,7 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
             goalPath,
             poseSupplier,
             currentRobotRelativeSpeeds,
-            robotRelativeOutput,
+            output,
             controller,
             robotConfig,
             shouldFlipPath,

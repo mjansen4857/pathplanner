@@ -1,5 +1,7 @@
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/path/PathPlannerPath.h"
+#include "pathplanner/lib/events/ScheduleCommandEvent.h"
+#include <memory>
 #include <units/force.h>
 #include <units/torque.h>
 
@@ -12,7 +14,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 	if (path->isChoreoPath()) {
 		PathPlannerTrajectory traj = path->getIdealTrajectory(config).value();
 		m_states = traj.m_states;
-		m_eventCommands = traj.m_eventCommands;
+		m_events = traj.m_events;
 	} else {
 		// Create all states
 		generateStates(m_states, path, startingRotation, config);
@@ -21,7 +23,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		frc::ChassisSpeeds fieldStartingSpeeds =
 				frc::ChassisSpeeds::FromRobotRelativeSpeeds(startingSpeeds,
 						m_states[0].pose.Rotation());
-		auto initialStates = toSwerveModuleStates(config, fieldStartingSpeeds);
+		auto initialStates = config.toSwerveModuleStates(fieldStartingSpeeds);
 		for (size_t m = 0; m < config.numModules; m++) {
 			m_states[0].moduleStates[m].speed = initialStates[m].speed;
 		}
@@ -40,7 +42,7 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		frc::ChassisSpeeds endFieldSpeeds { units::meters_per_second_t {
 				endSpeedTrans.X()() }, units::meters_per_second_t {
 				endSpeedTrans.Y()() }, 0_rad_per_s };
-		auto endStates = toSwerveModuleStates(config,
+		auto endStates = config.toSwerveModuleStates(
 				frc::ChassisSpeeds::FromFieldRelativeSpeeds(endFieldSpeeds,
 						m_states[m_states.size() - 1].pose.Rotation()));
 		for (size_t m = 0; m < config.numModules; m++) {
@@ -58,22 +60,63 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 				> unaddedMarkers(path->getEventMarkers().begin(),
 						path->getEventMarkers().end());
 
-		// Loop back over and calculate time
+		// Loop back over and calculate time and module torque
 		for (size_t i = 1; i < m_states.size(); i++) {
-			units::meters_per_second_t v0 = m_states[i - 1].linearVelocity;
-			units::meters_per_second_t v = m_states[i].linearVelocity;
-			units::second_t dt = (2 * m_states[i].deltaPos) / (v + v0);
-			m_states[i].time = m_states[i - 1].time + dt;
+			PathPlannerTrajectoryState &prevState = m_states[i - 1];
+			PathPlannerTrajectoryState &state = m_states[i];
+
+			units::meters_per_second_t v0 = prevState.linearVelocity;
+			units::meters_per_second_t v = state.linearVelocity;
+			units::second_t dt = (2 * state.deltaPos) / (v + v0);
+			state.time = prevState.time + dt;
+
+			units::meters_per_second_squared_t linearAccel =
+					(state.linearVelocity - prevState.linearVelocity) / dt;
+			frc::Translation2d forceVec = frc::Translation2d(units::meter_t {
+					linearAccel() }, prevState.heading) * config.mass();
+
+			units::radians_per_second_squared_t angularAccel =
+					(state.fieldSpeeds.omega - prevState.fieldSpeeds.omega)
+							/ dt;
+			double angTorque = angularAccel() * config.MOI();
+
+			// Use kinematics to convert chassis forces to wheel forces
+			auto wheelForces = config.toSwerveModuleStates(frc::ChassisSpeeds {
+					units::meters_per_second_t { forceVec.X()() },
+					units::meters_per_second_t { forceVec.Y()() },
+					units::radians_per_second_t { angTorque } });
+
+			for (size_t m = 0; m < config.numModules; m++) {
+				units::meters_per_second_squared_t accel =
+						(state.moduleStates[m].speed
+								- prevState.moduleStates[m].speed) / dt;
+				units::newton_t forceAtCarpet { wheelForces[m].speed() };
+				units::newton_meter_t wheelTorque = forceAtCarpet
+						* config.moduleConfig.wheelRadius;
+				units::ampere_t torqueCurrent = wheelTorque
+						/ config.moduleConfig.driveMotor.Kt;
+
+				// Negate the torque/force if the motor is slowing down
+				if (accel < 0_mps_sq) {
+					prevState.feedforwards.emplace_back(DriveFeedforward {
+							accel, -forceAtCarpet, -torqueCurrent });
+				} else {
+					prevState.feedforwards.emplace_back(DriveFeedforward {
+							accel, forceAtCarpet, torqueCurrent });
+				}
+			}
 
 			if (!unaddedMarkers.empty()) {
-				double prevPos = m_states[i - 1].waypointRelativePos;
-				double pos = m_states[i].waypointRelativePos;
-
 				EventMarker next = unaddedMarkers[0];
-				if (std::abs(next.getWaypointRelativePos() - prevPos)
-						<= std::abs(next.getWaypointRelativePos() - pos)) {
-					m_eventCommands.emplace_back(m_states[i - 1].time,
-							next.getCommand());
+				if (std::abs(
+						next.getWaypointRelativePos()
+								- prevState.waypointRelativePos)
+						<= std::abs(
+								next.getWaypointRelativePos()
+										- state.waypointRelativePos)) {
+					m_events.emplace_back(
+							std::make_shared < ScheduleCommandEvent
+									> (prevState.time, next.getCommand()));
 					unaddedMarkers.erase(unaddedMarkers.begin());
 				}
 			}
@@ -222,18 +265,18 @@ void PathPlannerTrajectory::forwardAccelPass(
 			units::meters_per_second_t lastVel = prevState.moduleStates[m].speed;
 			// This pass will only be handling acceleration of the robot, meaning that the "torque"
 			// acting on the module due to friction and other losses will be fighting the motor
+			units::radians_per_second_t lastVelRadPerSec { lastVel()
+					/ config.moduleConfig.wheelRadius() };
+			units::ampere_t currentDraw = units::math::min(
+					config.moduleConfig.driveMotor.Current(lastVelRadPerSec,
+							12_V), config.moduleConfig.driveCurrentLimit);
 			units::newton_meter_t availableTorque =
-					config.moduleConfig.driveMotorTorqueCurve[lastVel
-							/ config.moduleConfig.rpmToMps]
+					config.moduleConfig.driveMotor.Torque(currentDraw)
 							- config.moduleConfig.torqueLoss;
-			units::newton_meter_t wheelTorque = availableTorque
-					* config.moduleConfig.driveGearing;
-			units::newton_t forceAtCarpet = wheelTorque
+			availableTorque = units::math::min(availableTorque,
+					config.maxTorqueFriction);
+			units::newton_t forceAtCarpet = availableTorque
 					/ config.moduleConfig.wheelRadius;
-			if (!config.isHolonomic) {
-				// Two motors per module if differential
-				forceAtCarpet *= 2;
-			}
 
 			frc::Translation2d forceVec(units::meter_t { forceAtCarpet() },
 					state.moduleStates[m].fieldAngle);
@@ -273,7 +316,7 @@ void PathPlannerTrajectory::forwardAccelPass(
 						units::meters_per_second_t { accelVec.Y()() },
 						units::radians_per_second_t { angularAccel() },
 						state.pose.Rotation());
-		auto accelStates = toSwerveModuleStates(config, chassisAccel);
+		auto accelStates = config.toSwerveModuleStates(chassisAccel);
 		for (size_t m = 0; m < config.numModules; m++) {
 			units::meters_per_second_squared_t moduleAcceleration {
 					accelStates[m].speed() };
@@ -297,7 +340,8 @@ void PathPlannerTrajectory::forwardAccelPass(
 			if (GeometryUtil::isFinite(curveRadius)) {
 				units::meters_per_second_t maxSafeVel = units::math::sqrt(
 						(config.wheelFrictionForce
-								* units::math::abs(curveRadius)) / config.mass);
+								* units::math::abs(curveRadius))
+								/ (config.mass / config.numModules));
 				state.moduleStates[m].speed = units::math::min(
 						state.moduleStates[m].speed, maxSafeVel);
 			}
@@ -306,26 +350,31 @@ void PathPlannerTrajectory::forwardAccelPass(
 		// Go over the modules again to make sure they take the same amount of time to reach the next
 		// state
 		units::second_t maxDT = 0_s;
+		units::second_t realMaxDT = 0_s;
 		for (size_t m = 0; m < config.numModules; m++) {
 			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
 					- prevState.moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
-				continue;
-			}
-
 			units::meters_per_second_t modVel = state.moduleStates[m].speed;
 			units::second_t dt = nextState.moduleStates[m].deltaPos / modVel;
 
 			if (GeometryUtil::isFinite(dt)) {
-				maxDT = units::math::max(dt, maxDT);
+				realMaxDT = units::math::max(dt, realMaxDT);
+
+				if (units::math::abs(prevRotDelta.Degrees()) < 60_deg) {
+					maxDT = units::math::max(dt, maxDT);
+				}
 			}
+		}
+
+		if (maxDT == 0_s) {
+			maxDT = realMaxDT;
 		}
 
 		// Recalculate all module velocities with the allowed DT
 		for (size_t m = 0; m < config.numModules; m++) {
 			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
 					- prevState.moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
+			if (units::math::abs(prevRotDelta.Degrees()) >= 60_deg) {
 				continue;
 			}
 
@@ -334,7 +383,7 @@ void PathPlannerTrajectory::forwardAccelPass(
 		}
 
 		// Use the calculated module velocities to calculate the robot speeds
-		frc::ChassisSpeeds desiredSpeeds = toChassisSpeeds(config,
+		frc::ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(
 				state.moduleStates);
 
 		units::meters_per_second_t maxChassisVel =
@@ -347,7 +396,7 @@ void PathPlannerTrajectory::forwardAccelPass(
 				maxChassisAngVel);
 
 		state.fieldSpeeds = frc::ChassisSpeeds::FromRobotRelativeSpeeds(
-				toChassisSpeeds(config, state.moduleStates),
+				config.toChassisSpeeds(state.moduleStates),
 				state.pose.Rotation());
 		state.linearVelocity = units::math::hypot(state.fieldSpeeds.vx,
 				state.fieldSpeeds.vy);
@@ -368,17 +417,17 @@ void PathPlannerTrajectory::reverseAccelPass(
 			units::meters_per_second_t lastVel = nextState.moduleStates[m].speed;
 			// This pass will only be handling deceleration of the robot, meaning that the "torque"
 			// acting on the module due to friction and other losses will not be fighting the motor
+			units::radians_per_second_t lastVelRadPerSec { lastVel()
+					/ config.moduleConfig.wheelRadius() };
+			units::ampere_t currentDraw = units::math::min(
+					config.moduleConfig.driveMotor.Current(lastVelRadPerSec,
+							12_V), config.moduleConfig.driveCurrentLimit);
 			units::newton_meter_t availableTorque =
-					config.moduleConfig.driveMotorTorqueCurve[lastVel
-							/ config.moduleConfig.rpmToMps];
-			units::newton_meter_t wheelTorque = availableTorque
-					* config.moduleConfig.driveGearing;
-			units::newton_t forceAtCarpet = wheelTorque
+					config.moduleConfig.driveMotor.Torque(currentDraw);
+			availableTorque = units::math::min(availableTorque,
+					config.maxTorqueFriction);
+			units::newton_t forceAtCarpet = availableTorque
 					/ config.moduleConfig.wheelRadius;
-			if (!config.isHolonomic) {
-				// Two motors per module if differential
-				forceAtCarpet *= 2;
-			}
 
 			frc::Translation2d forceVec(units::meter_t { forceAtCarpet() },
 					state.moduleStates[m].fieldAngle
@@ -419,7 +468,7 @@ void PathPlannerTrajectory::reverseAccelPass(
 						units::meters_per_second_t { accelVec.Y()() },
 						units::radians_per_second_t { angularAccel() },
 						state.pose.Rotation());
-		auto accelStates = toSwerveModuleStates(config, chassisAccel);
+		auto accelStates = config.toSwerveModuleStates(chassisAccel);
 		for (size_t m = 0; m < config.numModules; m++) {
 			units::meters_per_second_squared_t moduleAcceleration {
 					accelStates[m].speed() };
@@ -440,26 +489,31 @@ void PathPlannerTrajectory::reverseAccelPass(
 		// Go over the modules again to make sure they take the same amount of time to reach the next
 		// state
 		units::second_t maxDT = 0_s;
+		units::second_t realMaxDT = 0_s;
 		for (size_t m = 0; m < config.numModules; m++) {
 			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
 					- states[i - 1].moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
-				continue;
-			}
-
 			units::meters_per_second_t modVel = state.moduleStates[m].speed;
 			units::second_t dt = nextState.moduleStates[m].deltaPos / modVel;
 
 			if (GeometryUtil::isFinite(dt)) {
-				maxDT = units::math::max(dt, maxDT);
+				realMaxDT = units::math::max(dt, realMaxDT);
+
+				if (units::math::abs(prevRotDelta.Degrees()) < 60_deg) {
+					maxDT = units::math::max(dt, maxDT);
+				}
 			}
+		}
+
+		if (maxDT == 0_s) {
+			maxDT = realMaxDT;
 		}
 
 		// Recalculate all module velocities with the allowed DT
 		for (size_t m = 0; m < config.numModules; m++) {
 			frc::Rotation2d prevRotDelta = state.moduleStates[m].angle
 					- states[i - 1].moduleStates[m].angle;
-			if (units::math::abs(prevRotDelta.Degrees()) >= 45_deg) {
+			if (units::math::abs(prevRotDelta.Degrees()) >= 60_deg) {
 				continue;
 			}
 
@@ -468,7 +522,7 @@ void PathPlannerTrajectory::reverseAccelPass(
 		}
 
 		// Use the calculated module velocities to calculate the robot speeds
-		frc::ChassisSpeeds desiredSpeeds = toChassisSpeeds(config,
+		frc::ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(
 				state.moduleStates);
 
 		units::meters_per_second_t maxChassisVel =
@@ -485,7 +539,7 @@ void PathPlannerTrajectory::reverseAccelPass(
 				maxChassisAngVel);
 
 		state.fieldSpeeds = frc::ChassisSpeeds::FromRobotRelativeSpeeds(
-				toChassisSpeeds(config, state.moduleStates),
+				config.toChassisSpeeds(state.moduleStates),
 				state.pose.Rotation());
 		state.linearVelocity = units::math::hypot(state.fieldSpeeds.vx,
 				state.fieldSpeeds.vy);

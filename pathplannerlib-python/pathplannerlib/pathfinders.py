@@ -2,17 +2,15 @@ from __future__ import annotations
 
 from typing import List, Tuple, Dict, Set, Union
 from dataclasses import dataclass
-from wpimath.geometry import Translation2d
+from wpimath.geometry import Translation2d, Pose2d
 import time
 
-from .path import PathConstraints, GoalEndState, PathPlannerPath, PathPoint
+from .path import PathConstraints, GoalEndState, PathPlannerPath, Waypoint
 import math
 from threading import Thread, RLock
 import os
 from wpilib import getDeployDirectory
 import json
-from ntcore import StringPublisher, DoubleArrayPublisher, DoubleArraySubscriber, NetworkTableInstance, PubSubOptions, \
-    EventFlags
 
 
 class Pathfinder:
@@ -119,7 +117,7 @@ class LocalADStar(Pathfinder):
     _pathLock: RLock = RLock()
     _requestLock: RLock = RLock()
 
-    _currentBezierPoints: List[Translation2d] = []
+    _currentWaypoints: List[Waypoint] = []
     _currentPathFull: List[GridPosition] = []
 
     def __init__(self):
@@ -189,15 +187,15 @@ class LocalADStar(Pathfinder):
         :return: The PathPlannerPath created from the points calculated by the pathfinder
         """
         self._pathLock.acquire()
-        bezierPoints = [p for p in self._currentBezierPoints]
+        waypoints = [w for w in self._currentWaypoints]
         self._pathLock.release()
 
         self._newPathAvailable = False
 
-        if len(bezierPoints) < 4 or (len(bezierPoints) - 1) % 3 != 0:
+        if len(waypoints) < 2:
             return None
 
-        return PathPlannerPath(bezierPoints, constraints, None, goal_end_state)
+        return PathPlannerPath(waypoints, constraints, None, goal_end_state)
 
     def setStartPosition(self, start_position: Translation2d) -> None:
         """
@@ -320,11 +318,11 @@ class LocalADStar(Pathfinder):
             self._computeOrImprovePath(s_start, s_goal, obstacles)
 
             pathPositions = self._extractPath(s_start, s_goal, obstacles)
-            bezierPoints = self._createBezierPoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
+            waypoints = self._createWaypoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
 
             self._pathLock.acquire()
             self._currentPathFull = pathPositions
-            self._currentBezierPoints = bezierPoints
+            self._currentWaypoints = waypoints
             self._pathLock.release()
 
             self._newPathAvailable = False
@@ -339,11 +337,11 @@ class LocalADStar(Pathfinder):
                 self._computeOrImprovePath(s_start, s_goal, obstacles)
 
                 pathPositions = self._extractPath(s_start, s_goal, obstacles)
-                bezierPoints = self._createBezierPoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
+                waypoints = self._createWaypoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
 
                 self._pathLock.acquire()
                 self._currentPathFull = pathPositions
-                self._currentBezierPoints = bezierPoints
+                self._currentWaypoints = waypoints
                 self._pathLock.release()
 
                 self._newPathAvailable = True
@@ -375,8 +373,8 @@ class LocalADStar(Pathfinder):
 
         return path
 
-    def _createBezierPoints(self, path: List[GridPosition], real_start_pos: Translation2d,
-                          real_goal_pos: Translation2d, obstacles: Set[GridPosition]) -> List[Translation2d]:
+    def _createWaypoints(self, path: List[GridPosition], real_start_pos: Translation2d,
+                         real_goal_pos: Translation2d, obstacles: Set[GridPosition]) -> List[Waypoint]:
         if len(path) == 0:
             return []
 
@@ -392,37 +390,29 @@ class LocalADStar(Pathfinder):
         fieldPosPath[0] = real_start_pos
         fieldPosPath[-1] = real_goal_pos
 
-        bezierPoints = [fieldPosPath[0],
-                        ((fieldPosPath[1] - fieldPosPath[0]) * LocalADStar._SMOOTHING_CONTROL_PCT) + fieldPosPath[0]]
+        if len(fieldPosPath) < 2:
+            return []
+
+        pathPoses = [Pose2d(fieldPosPath[0], (fieldPosPath[1] - fieldPosPath[0]).angle())]
         for i in range(1, len(fieldPosPath) - 1):
             last = fieldPosPath[i - 1]
             current = fieldPosPath[i]
             next = fieldPosPath[i + 1]
 
             anchor1 = ((current - last) * LocalADStar._SMOOTHING_ANCHOR_PCT) + last
+            heading1 = (current - last).angle()
             anchor2 = ((current - next) * LocalADStar._SMOOTHING_ANCHOR_PCT) + next
+            heading2 = (anchor2 - next).angle()
 
-            controlDist = anchor1.distance(anchor2) * LocalADStar._SMOOTHING_CONTROL_PCT
+            pathPoses.append(Pose2d(anchor1, heading1))
+            pathPoses.append(Pose2d(anchor2, heading2))
 
-            prevControl1 = ((last - anchor1) * LocalADStar._SMOOTHING_CONTROL_PCT) + anchor1
-            nextControl1 = Translation2d(controlDist, (anchor1 - prevControl1).angle()) + anchor1
+        pathPoses.append(Pose2d(
+            fieldPosPath[-1],
+            (fieldPosPath[-2] - fieldPosPath[-1]).angle()
+        ))
 
-            prevControl2 = Translation2d(controlDist, (anchor2 - next).angle()) + anchor2
-            nextControl2 = ((next - anchor2) * LocalADStar._SMOOTHING_CONTROL_PCT) + anchor2
-
-            bezierPoints.append(prevControl1)
-            bezierPoints.append(anchor1)
-            bezierPoints.append(nextControl1)
-
-            bezierPoints.append(prevControl2)
-            bezierPoints.append(anchor2)
-            bezierPoints.append(nextControl2)
-
-        bezierPoints.append(
-            ((fieldPosPath[-2] - fieldPosPath[-1]) * LocalADStar._SMOOTHING_CONTROL_PCT) + fieldPosPath[-1])
-        bezierPoints.append(fieldPosPath[-1])
-
-        return bezierPoints
+        return PathPlannerPath.waypointsFromPoses(pathPoses)
 
     def _findClosestNonObstacle(self, pos: GridPosition, obstacles: Set[GridPosition]) -> Union[GridPosition, None]:
         if pos not in obstacles:

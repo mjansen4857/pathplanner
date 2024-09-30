@@ -778,6 +778,33 @@ public class PathPlannerPath {
   }
 
   /**
+   * Get the waypoints for this path
+   *
+   * @return List of this path's waypoints
+   */
+  public List<Waypoint> getWaypoints() {
+    return waypoints;
+  }
+
+  /**
+   * Get the rotation targets for this path
+   *
+   * @return List of this path's rotation targets
+   */
+  public List<RotationTarget> getRotationTargets() {
+    return rotationTargets;
+  }
+
+  /**
+   * Get the constraint zones for this path
+   *
+   * @return List of this path's constraint zones
+   */
+  public List<ConstraintsZone> getConstraintZones() {
+    return constraintZones;
+  }
+
+  /**
    * Get all the path points in this path
    *
    * @return Path points in the path

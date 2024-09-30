@@ -724,6 +724,30 @@ class PathPlannerPath:
 
         return self._idealTrajectory
 
+    def getWaypoints(self) -> List[Waypoint]:
+        """
+        Get the waypoints for this path
+
+        :return: List of this path's waypoints
+        """
+        return self._waypoints
+
+    def getRotationTargets(self) -> List[RotationTarget]:
+        """
+        Get the rotation targets for this path
+
+        :return: List of this path's rotation targets
+        """
+        return self._rotationTargets
+
+    def getConstraintZones(self) -> List[ConstraintsZone]:
+        """
+        Get the constraint zones for this path
+
+        :return: List of this path's constraint zones
+        """
+        return self._constraintZones
+
     def _constraintsForWaypointPos(self, pos: float) -> PathConstraints:
         for z in self._constraintZones:
             if z.minWaypointPos <= pos <= z.maxWaypointPos:

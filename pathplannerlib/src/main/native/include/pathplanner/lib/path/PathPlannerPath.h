@@ -188,6 +188,30 @@ public:
 	}
 
 	/**
+	 * Get the waypoints for this path
+	 * @return vector of this path's waypoints
+	 */
+	constexpr std::vector<Waypoint>& getWaypoints() {
+		return m_waypoints;
+	}
+
+	/**
+	 * Get the rotation targets for this path
+	 * @return vector of this path's rotation targets
+	 */
+	constexpr std::vector<RotationTarget>& getRotationTargets() {
+		return m_rotationTargets;
+	}
+
+	/**
+	 * Get the constraint zones for this path
+	 * @return vector of this path's constraint zones
+	 */
+	constexpr std::vector<ConstraintsZone>& getConstraintZones() {
+		return m_constraintZones;
+	}
+
+	/**
 	 * Get the global constraints for this path
 	 *
 	 * @return Global constraints that apply to this path

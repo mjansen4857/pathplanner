@@ -13,6 +13,7 @@ import 'package:pathplanner/path/ideal_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/split_path_editor.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
@@ -60,6 +61,8 @@ void main() {
       PrefsKeys.treeOnRight: true,
       PrefsKeys.robotWidth: 1.0,
       PrefsKeys.robotLength: 1.0,
+      PrefsKeys.showRobotDetails: true,
+      PrefsKeys.showGrid: true,
     });
     prefs = await SharedPreferences.getInstance();
   });
@@ -69,12 +72,16 @@ void main() {
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: SplitPathEditor(
-          prefs: prefs,
-          path: path,
-          fieldImage: FieldImage.defaultField,
-          undoStack: undoStack,
-          simulate: true,
+        body: SizedBox(
+          width: 1280,
+          height: 720,
+          child: SplitPathEditor(
+            prefs: prefs,
+            path: path,
+            fieldImage: FieldImage.defaultField,
+            undoStack: undoStack,
+            simulate: true,
+          ),
         ),
       ),
     ));
@@ -537,7 +544,7 @@ void main() {
 
     final targetCard = find.descendant(
         of: find.byType(TreeCardNode),
-        matching: find.widgetWithText(TreeCardNode, 'Rotation Target at 0.50'));
+        matching: find.widgetWithText(TreeCardNode, 'Rotation Target 1'));
 
     await gesture.moveTo(widgetTester.getCenter(targetCard));
     await widgetTester.pump();
@@ -548,7 +555,36 @@ void main() {
     await widgetTester.tap(targetCard);
     await widgetTester.pumpAndSettle();
 
-    // nothing to test here, just covering the hover/select code
+    // Verify that the rotation target is selected
+    expect(find.byType(NumberTextField), findsNWidgets(2));
+    expect(find.text('Rotation (Deg)'), findsOneWidget);
+    expect(find.text('Position'), findsOneWidget);
+
+    // Verify that at least one slider is present
+    expect(find.byType(Slider), findsAtLeastNWidgets(1));
+
+    // Find the specific slider for the rotation target
+    final rotationTargetSlider = find.descendant(
+      of: find.ancestor(
+        of: targetCard,
+        matching: find.byType(TreeCardNode),
+      ),
+      matching: find.byType(Slider),
+    );
+    expect(rotationTargetSlider, findsOneWidget);
+
+    // Verify that the InfoCard is present with the correct information
+    final infoCard = find.descendant(
+      of: targetCard,
+      matching: find.byType(InfoCard),
+    );
+    expect(infoCard, findsOneWidget);
+
+    final infoCardText = find.descendant(
+      of: infoCard,
+      matching: find.textContaining('° at'),
+    );
+    expect(infoCardText, findsOneWidget);
   });
 
   testWidgets('hover/select event marker', (widgetTester) async {

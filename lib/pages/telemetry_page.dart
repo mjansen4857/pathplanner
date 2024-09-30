@@ -115,18 +115,55 @@ class _TelemetryPageState extends State<TelemetryPage> {
     });
   }
 
+  Widget _buildConnectionTip(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle_outline, size: 20, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Text(text, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_connected) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Attempting to connect to robot...'),
+            const CircularProgressIndicator()
+                .animate(onPlay: (controller) => controller.repeat())
+                .rotate(duration: 1.5.seconds, curve: Curves.easeInOut),
+            const SizedBox(height: 24),
+            const Text(
+              'Attempting to connect to robot...',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Please ensure that:',
+              style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 8),
+            _buildConnectionTip('The robot is powered on'),
+            _buildConnectionTip('You are connected to the correct network'),
+            _buildConnectionTip('The robot code is running'),
+            const SizedBox(height: 16),
+            Text(
+              'Current Server Address: ${widget.telemetry.getServerAddress()}',
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 24),
           ],
-        ),
+        ).animate().fadeIn(duration: 500.ms, curve: Curves.easeInOut),
       );
     }
 
@@ -280,23 +317,20 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 duration: const Duration(milliseconds: 0),
               ),
             ),
-            Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Text(
-                  title,
-                  style: const TextStyle(fontSize: 18),
-                ),
+            Positioned(
+              top: 10,
+              left: 12,
+              child: Text(
+                title,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
             if (legend != null)
-              Align(
-                alignment: Alignment.bottomLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: legend,
-                ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: legend,
               ),
           ],
         ),
@@ -318,16 +352,45 @@ class _TelemetryPageState extends State<TelemetryPage> {
         show: true,
         drawVerticalLine: true,
         drawHorizontalLine: true,
-        verticalInterval: 1,
-        horizontalInterval: horizontalInterval,
+        getDrawingVerticalLine: (value) => FlLine(
+          color: Colors.grey.withOpacity(0.1),
+          strokeWidth: 0.5,
+        ),
+        getDrawingHorizontalLine: (value) => FlLine(
+          color: Colors.grey.withOpacity(0.1),
+          strokeWidth: 0.5,
+        ),
       ),
-      lineTouchData: const LineTouchData(enabled: false),
+      lineTouchData: LineTouchData(
+        enabled: true,
+        touchTooltipData: LineTouchTooltipData(
+          getTooltipItems: (touchedSpots) {
+            return touchedSpots.map((LineBarSpot touchedSpot) {
+              final textStyle = TextStyle(
+                color: touchedSpot.bar.gradient?.colors.first ??
+                    touchedSpot.bar.color ??
+                    Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              );
+              return LineTooltipItem(
+                '${touchedSpot.x.toStringAsFixed(2)}, ${touchedSpot.y.toStringAsFixed(2)}',
+                textStyle,
+              );
+            }).toList();
+          },
+          getTooltipColor: (LineBarSpot touchedSpot) {
+            return Colors.black.withOpacity(0.5);
+          },
+        ),
+      ),
       titlesData: const FlTitlesData(
-        show: false,
+        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
-      borderData: FlBorderData(
-        show: false,
-      ),
+      borderData: FlBorderData(show: false),
       minX: 0,
       maxX: 5,
       minY: minY,
@@ -336,64 +399,89 @@ class _TelemetryPageState extends State<TelemetryPage> {
         for (int i = 0; i < spots.length; i++)
           LineChartBarData(
             spots: spots[i],
-            shadow: const Shadow(offset: Offset(0, 5), blurRadius: 5),
             isCurved: true,
             gradient: lineGradients[i],
-            barWidth: 5,
+            barWidth: 3,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                colors: [
+                  lineGradients[i].colors.first.withOpacity(0.3),
+                  lineGradients[i].colors.last.withOpacity(0.0),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
           ),
+        // Add moving average line
+        LineChartBarData(
+          spots: _calculateMovingAverage(spots.first, 5),
+          isCurved: true,
+          color: Colors.white.withOpacity(0.5),
+          barWidth: 2,
+          isStrokeCapRound: true,
+          dotData: const FlDotData(show: false),
+          belowBarData: BarAreaData(show: false),
+        ),
       ],
     );
   }
 
+  List<FlSpot> _calculateMovingAverage(List<FlSpot> data, int period) {
+    if (data.length < period) {
+      return data;
+    }
+
+    List<FlSpot> movingAverages = [];
+    for (int i = period - 1; i < data.length; i++) {
+      double sum = 0;
+      for (int j = 0; j < period; j++) {
+        sum += data[i - j].y;
+      }
+      movingAverages.add(FlSpot(data[i].x, sum / period));
+    }
+    return movingAverages;
+  }
+
   Widget _buildLegend(Color actualColor, Color commandedColor) {
     return Container(
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.black.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(4),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: actualColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Text('Actual'),
-              ],
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: commandedColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                const Text('Commanded'),
-              ],
-            ),
-          ],
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildLegendItem('Actual', actualColor),
+          const SizedBox(width: 8),
+          _buildLegendItem('Commanded', commandedColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
         ),
-      ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 12),
+        ),
+      ],
     );
   }
 }
@@ -441,24 +529,26 @@ class TelemetryPainter extends CustomPainter {
 
     if (targetPose != null) {
       PathPainterUtil.paintRobotOutline(
-          targetPose!.position,
-          targetPose!.rotation,
-          fieldImage,
-          robotSize,
-          scale,
-          canvas,
-          Colors.grey[600]!.withOpacity(0.75));
+        targetPose!.position,
+        targetPose!.rotation,
+        fieldImage,
+        robotSize,
+        scale,
+        canvas,
+        Colors.grey[600]!.withOpacity(0.75),
+      );
     }
 
     if (currentPose != null) {
       PathPainterUtil.paintRobotOutline(
-          currentPose!.position,
-          currentPose!.rotation,
-          fieldImage,
-          robotSize,
-          scale,
-          canvas,
-          Colors.grey[400]!);
+        currentPose!.position,
+        currentPose!.rotation,
+        fieldImage,
+        robotSize,
+        scale,
+        canvas,
+        Colors.grey[400]!,
+      );
     }
   }
 

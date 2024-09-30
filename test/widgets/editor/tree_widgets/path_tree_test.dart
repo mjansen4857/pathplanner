@@ -12,6 +12,7 @@ import 'package:pathplanner/widgets/editor/tree_widgets/path_optimization_tree.d
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
+import 'package:pathplanner/widgets/editor/runtime_display.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
@@ -34,7 +35,11 @@ void main() {
     prefs = await SharedPreferences.getInstance();
   });
 
-  testWidgets('has simulated driving time', (widgetTester) async {
+  testWidgets('has runtime display', (widgetTester) async {
+    // Set up a mock SharedPreferences instance
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: PathTree(
@@ -42,12 +47,16 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
-          prefs: prefs,
+          runtimeDisplay: const RuntimeDisplay(
+            currentRuntime: 5.0,
+            previousRuntime: null,
+          ),
+          prefs: prefs, // Add the required prefs parameter
         ),
       ),
     ));
 
-    expect(find.textContaining('Simulated Driving Time'), findsOneWidget);
+    expect(find.byType(RuntimeDisplay), findsOneWidget);
   });
 
   testWidgets('swap side button', (widgetTester) async {
@@ -185,7 +194,23 @@ void main() {
     expect(find.byType(PathOptimizationTree), findsOneWidget);
   });
 
-  testWidgets('Reversed checkbox', (widgetTester) async {
+  testWidgets('has optimizer tree', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: PathTree(
+          path: path,
+          undoStack: ChangeStack(),
+          holonomicMode: true,
+          defaultConstraints: PathConstraints(),
+          prefs: prefs,
+        ),
+      ),
+    ));
+
+    expect(find.byType(PathOptimizationTree), findsOneWidget);
+  });
+
+  testWidgets('Reversed button', (widgetTester) async {
     final ChangeStack undoStack = ChangeStack();
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -200,11 +225,11 @@ void main() {
       ),
     ));
 
-    final check = find.byType(Checkbox);
+    final reversedButton = find.byTooltip('Reverse Path');
 
-    expect(check, findsOneWidget);
+    expect(reversedButton, findsOneWidget);
 
-    await widgetTester.tap(check);
+    await widgetTester.tap(reversedButton);
     await widgetTester.pump();
     expect(path.reversed, true);
 

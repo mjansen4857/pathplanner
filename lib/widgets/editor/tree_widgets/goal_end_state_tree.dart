@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -21,7 +22,16 @@ class GoalEndStateTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TreeCardNode(
-      title: const Text('Goal End State'),
+      title: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        children: [
+          Text('Final State'),
+          InfoCard(
+              value:
+                  '${path.goalEndState.rotation.toStringAsFixed(2)}° ending with ${path.goalEndState.velocity.toStringAsFixed(2)} M/S'),
+        ],
+      ),
+      leading: const Icon(Icons.flag_circle_rounded),
       initiallyExpanded: path.goalEndStateExpanded,
       onExpansionChanged: (value) {
         if (value != null) {
@@ -35,6 +45,9 @@ class GoalEndStateTree extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
+                  child: Tooltip(
+                message:
+                    'The allowed velocity of the robot at end of the path.',
                 child: NumberTextField(
                   initialText: path.goalEndState.velocity.toStringAsFixed(2),
                   label: 'Velocity (M/S)',
@@ -45,7 +58,7 @@ class GoalEndStateTree extends StatelessWidget {
                     }
                   },
                 ),
-              ),
+              )),
               if (holonomicMode) const SizedBox(width: 8),
               if (holonomicMode)
                 Expanded(

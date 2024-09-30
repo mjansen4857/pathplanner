@@ -102,21 +102,20 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                   widget.fieldImage.getWidget(),
                   Positioned.fill(
                     child: CustomPaint(
-                      painter: PathPainter(
-                        paths: widget.autoPaths,
-                        choreoPaths: widget.autoChoreoPaths,
-                        simple: true,
-                        hideOtherPathsOnHover:
-                            widget.prefs.getBool(PrefsKeys.hidePathsOnHover) ??
+                        painter: PathPainter(
+                            colorScheme: colorScheme,
+                            paths: widget.autoPaths,
+                            choreoPaths: widget.autoChoreoPaths,
+                            simple: true,
+                            hideOtherPathsOnHover: widget.prefs
+                                    .getBool(PrefsKeys.hidePathsOnHover) ??
                                 Defaults.hidePathsOnHover,
-                        hoveredPath: _hoveredPath,
-                        fieldImage: widget.fieldImage,
-                        simulatedPath: _simPath,
-                        animation: _previewController.view,
-                        previewColor: colorScheme.primary,
-                        prefs: widget.prefs,
-                      ),
-                    ),
+                            hoveredPath: _hoveredPath,
+                            fieldImage: widget.fieldImage,
+                            simulatedPath: _simPath,
+                            animation: _previewController.view,
+                            previewColor: colorScheme.primary,
+                            prefs: widget.prefs)),
                   ),
                 ],
               ),
@@ -316,10 +315,28 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
       // Trajectory failed to generate. Notify the user
       Log.warning(
           'Failed to generate trajectory for auto: ${widget.auto.name}');
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text(
-            'Failed to generate trajectory. Please open an issue on the pathplanner github and include the failing path file.'),
-      ));
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to generate trajectory for ${widget.auto.name}. Please open an issue on the pathplanner github and include the failing path file.',
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onErrorContainer),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.errorContainer,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          action: SnackBarAction(
+            label: 'Dismiss',
+            textColor: Theme.of(context).colorScheme.onErrorContainer,
+            onPressed: () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+            },
+          ),
+        ),
+      );
     }
   }
 }

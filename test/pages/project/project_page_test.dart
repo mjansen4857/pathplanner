@@ -218,6 +218,56 @@ void main() {
     expect(find.widgetWithText(ProjectItemCard, 'auto2'), findsNothing);
   });
 
+  testWidgets('add new path', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final addButton = find.byTooltip('Add new path');
+    expect(addButton, findsOneWidget);
+    await widgetTester.tap(addButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('New Path'), findsOneWidget);
+  });
+
+  testWidgets('add new auto', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final addButton = find.byTooltip('Add new auto');
+    expect(addButton, findsOneWidget);
+    await widgetTester.tap(addButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('New Auto'), findsOneWidget);
+  });
+
   testWidgets('add new path button', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
@@ -304,6 +354,42 @@ void main() {
 
     await widgetTester.tap(find.text('New Choreo Auto'));
     await widgetTester.pumpAndSettle();
+  });
+
+  testWidgets('add new auto button', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final addButton = find.byTooltip('Add new auto');
+
+    expect(addButton, findsOneWidget);
+
+    await widgetTester.tap(addButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.byType(ProjectItemCard), findsNWidgets(2));
+    expect(find.widgetWithText(ProjectItemCard, 'New Auto'), findsOneWidget);
+
+    await widgetTester.tap(addButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.byType(ProjectItemCard), findsNWidgets(3));
+    expect(
+        find.widgetWithText(ProjectItemCard, 'New New Auto'), findsOneWidget);
   });
 
   testWidgets('add new auto button', (widgetTester) async {
@@ -1038,9 +1124,7 @@ void main() {
 
   testWidgets('add path folder', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
-
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
-
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ProjectPage(
@@ -1056,20 +1140,26 @@ void main() {
     ));
     await widgetTester.pumpAndSettle();
 
-    expect(find.byTooltip('Add new path folder'), findsOneWidget);
+    // Find the specific 'Add new folder' button for paths
+    final addFolderButton = find
+        .byWidgetPredicate((widget) =>
+            widget is IconButton &&
+            widget.tooltip == 'Add new folder' &&
+            widget.icon is Icon &&
+            (widget.icon as Icon).icon == Icons.create_new_folder_outlined)
+        .first;
 
-    await widgetTester.tap(find.byTooltip('Add new path folder'));
-    await widgetTester.pump();
+    expect(addFolderButton, findsOneWidget);
+    await widgetTester.tap(addFolderButton);
+    await widgetTester.pumpAndSettle();
 
-    expect(find.widgetWithText(DragTarget<PathPlannerPath>, 'New Folder'),
-        findsOneWidget);
+    // Check if the new folder is added
+    expect(find.text('New Folder'), findsOneWidget);
   });
 
   testWidgets('add auto folder', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
-
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
-
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ProjectPage(
@@ -1085,13 +1175,21 @@ void main() {
     ));
     await widgetTester.pumpAndSettle();
 
-    expect(find.byTooltip('Add new auto folder'), findsOneWidget);
+    // Find the specific 'Add new folder' button for autos
+    final addAutoFolderButton = find
+        .byWidgetPredicate((widget) =>
+            widget is IconButton &&
+            widget.tooltip == 'Add new folder' &&
+            widget.icon is Icon &&
+            (widget.icon as Icon).icon == Icons.create_new_folder_outlined)
+        .last; // Assuming the auto folder button is the second (last) one
 
-    await widgetTester.tap(find.byTooltip('Add new auto folder'));
-    await widgetTester.pump();
+    expect(addAutoFolderButton, findsOneWidget);
+    await widgetTester.tap(addAutoFolderButton);
+    await widgetTester.pumpAndSettle();
 
-    expect(find.widgetWithText(DragTarget<PathPlannerAuto>, 'New Folder'),
-        findsOneWidget);
+    // Check if the new folder is added
+    expect(find.text('New Folder'), findsOneWidget);
   });
 
   testWidgets('delete path folder', (widgetTester) async {
@@ -1668,5 +1766,99 @@ void main() {
 
     await widgetTester.tap(confirmBtn);
     await widgetTester.pumpAndSettle();
+  });
+
+  testWidgets('search bar filters paths and autos', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await fs.directory(join(deployPath, 'paths')).create(recursive: true);
+    await fs.directory(join(deployPath, 'autos')).create(recursive: true);
+
+    PathPlannerPath path1 = PathPlannerPath.defaultPath(
+      pathDir: join(deployPath, 'paths'),
+      fs: fs,
+      name: 'Test Path 1',
+    );
+    PathPlannerPath path2 = PathPlannerPath.defaultPath(
+      pathDir: join(deployPath, 'paths'),
+      fs: fs,
+      name: 'Another Path',
+    );
+
+    PathPlannerAuto auto1 = PathPlannerAuto.defaultAuto(
+      autoDir: join(deployPath, 'autos'),
+      fs: fs,
+      name: 'Test Auto 1',
+    );
+    PathPlannerAuto auto2 = PathPlannerAuto.defaultAuto(
+      autoDir: join(deployPath, 'autos'),
+      fs: fs,
+      name: 'Another Auto',
+    );
+
+    await fs
+        .file(join(deployPath, 'paths', 'Test Path 1.path'))
+        .writeAsString(jsonEncode(path1.toJson()));
+    await fs
+        .file(join(deployPath, 'paths', 'Another Path.path'))
+        .writeAsString(jsonEncode(path2.toJson()));
+    await fs
+        .file(join(deployPath, 'autos', 'Test Auto 1.auto'))
+        .writeAsString(jsonEncode(auto1.toJson()));
+    await fs
+        .file(join(deployPath, 'autos', 'Another Auto.auto'))
+        .writeAsString(jsonEncode(auto2.toJson()));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+
+    await widgetTester.pumpAndSettle();
+
+    // Verify all items are initially visible
+    expect(find.text('Test Path 1'), findsOneWidget);
+    expect(find.text('Another Path'), findsOneWidget);
+    expect(find.text('Test Auto 1'), findsOneWidget);
+    expect(find.text('Another Auto'), findsOneWidget);
+
+    // Find and interact with the path search bar
+    final pathSearchBar = find.widgetWithText(TextField, 'Search for paths...');
+    await widgetTester.enterText(pathSearchBar, 'Test');
+    await widgetTester.pumpAndSettle(const Duration(milliseconds: 300));
+
+    // Verify path filtering
+    expect(find.text('Test Path 1'), findsOneWidget);
+    expect(find.text('Another Path'), findsNothing);
+
+    // Clear path search
+    await widgetTester.enterText(pathSearchBar, '');
+    await widgetTester.pumpAndSettle(const Duration(milliseconds: 300));
+
+    // Find and interact with the auto search bar
+    final autoSearchBar = find.widgetWithText(TextField, 'Search for autos...');
+    await widgetTester.enterText(autoSearchBar, 'Another');
+    await widgetTester.pumpAndSettle(const Duration(milliseconds: 300));
+
+    // Verify auto filtering
+    expect(find.text('Test Auto 1'), findsNothing);
+    expect(find.text('Another Auto'), findsOneWidget);
+
+    // Test case-insensitivity
+    await widgetTester.enterText(autoSearchBar, 'auto');
+    await widgetTester.pumpAndSettle(const Duration(milliseconds: 300));
+
+    // Verify case-insensitive filtering
+    expect(find.text('Test Auto 1'), findsOneWidget);
+    expect(find.text('Another Auto'), findsOneWidget);
   });
 }

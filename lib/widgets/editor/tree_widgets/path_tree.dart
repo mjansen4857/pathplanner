@@ -38,7 +38,6 @@ class PathTree extends StatefulWidget {
   final bool holonomicMode;
   final PathConstraints defaultConstraints;
   final SharedPreferences prefs;
-
   final Widget? runtimeDisplay;
 
   const PathTree({
@@ -112,7 +111,7 @@ class _PathTreeState extends State<PathTree> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: Container()),
+          // const SizedBox(width: 16),
           if (!widget.holonomicMode) ...[
             _buildReversedButton(),
             const SizedBox(width: 8),
@@ -123,10 +122,10 @@ class _PathTreeState extends State<PathTree> {
                 value: widget.path.reversed ? 'RVD' : 'FWD',
               ),
             ),
+            const SizedBox(width: 16),
           ],
-          const SizedBox(width: 16),
           if (widget.runtimeDisplay != null) widget.runtimeDisplay!,
-          const SizedBox(width: 16),
+          Expanded(child: Container()),
           Tooltip(
             message: 'Move to Other Side',
             waitDuration: const Duration(seconds: 1),
@@ -276,8 +275,12 @@ class _PathTreeState extends State<PathTree> {
   }
 
   Widget _buildReversedCheckbox() {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       elevation: 1.0,
+      color: colorScheme.surface,
+      surfaceTintColor: colorScheme.surfaceTint,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 12.0),
         child: Row(

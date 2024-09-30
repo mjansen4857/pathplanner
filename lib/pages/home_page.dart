@@ -684,7 +684,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Assure that a navgrid file is present
     File navgridFile = fs.file(join(_pathplannerDir.path, 'navgrid.json'));
     navgridFile.exists().then((value) async {
-      if (!value) {
+      if (!value && mounted) {
         // Load default grid
         String fileContent = await DefaultAssetBundle.of(this.context)
             .loadString('resources/default_navgrid.json');

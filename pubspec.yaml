@@ -63,7 +63,7 @@ dev_dependencies:
     sdk: flutter
   full_coverage: ^1.0.0
   msix: ^3.16.8
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
   mockito: ^5.4.4
   build_runner: ^2.4.12
   cider: ^0.2.8

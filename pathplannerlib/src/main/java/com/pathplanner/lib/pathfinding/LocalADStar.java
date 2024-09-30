@@ -408,6 +408,10 @@ public class LocalADStar implements Pathfinder {
       fieldPosPath.add(gridPosToTranslation2d(pos));
     }
 
+    if (fieldPosPath.size() < 2) {
+      return new ArrayList<>();
+    }
+
     // Replace start and end positions with their real positions
     fieldPosPath.set(0, realStartPos);
     fieldPosPath.set(fieldPosPath.size() - 1, realGoalPos);

@@ -92,10 +92,10 @@ public class Waypoint {
     Translation2d prevControl = null;
     Translation2d nextControl = null;
 
-    if (waypointJson.containsKey("prevControl")) {
+    if (waypointJson.get("prevControl") != null) {
       prevControl = translationFromJson((JSONObject) waypointJson.get("prevControl"));
     }
-    if (waypointJson.containsKey("nextControl")) {
+    if (waypointJson.get("nextControl") != null) {
       nextControl = translationFromJson((JSONObject) waypointJson.get("nextControl"));
     }
 

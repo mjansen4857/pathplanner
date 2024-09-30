@@ -238,7 +238,6 @@ public class PathPlannerPath {
 
     // Middle poses
     for (int i = 1; i < poses.size() - 1; i++) {
-      Translation2d anchor = poses.get(i).getTranslation();
       waypoints.add(
           Waypoint.autoControlPoints(
               poses.get(i).getTranslation(),
@@ -454,13 +453,6 @@ public class PathPlannerPath {
       waypoints.add(Waypoint.fromJson(point));
     }
     return waypoints;
-  }
-
-  private static Translation2d pointFromJson(JSONObject pointJson) {
-    double x = ((Number) pointJson.get("x")).doubleValue();
-    double y = ((Number) pointJson.get("y")).doubleValue();
-
-    return new Translation2d(x, y);
   }
 
   /**

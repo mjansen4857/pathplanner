@@ -5,7 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import org.json.simple.JSONObject;
 
-/** Class used to describe a waypoint for a Bézier curve based path */
+/** Class used to describe a waypoint for a Bezier curve based path */
 public class Waypoint {
   private static final double AUTO_CONTROL_DISTANCE_FACTOR = 1.0 / 3.0;
 

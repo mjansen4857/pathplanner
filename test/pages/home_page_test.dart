@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/pages/home_page.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
-import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file/memory.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';

@@ -218,6 +218,56 @@ void main() {
     expect(find.widgetWithText(ProjectItemCard, 'auto2'), findsNothing);
   });
 
+  testWidgets('add new path', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final addButton = find.byTooltip('Add new path');
+    expect(addButton, findsOneWidget);
+    await widgetTester.tap(addButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('New Path'), findsOneWidget);
+  });
+
+  testWidgets('add new auto', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ProjectPage(
+          prefs: prefs,
+          fieldImage: FieldImage.defaultField,
+          pathplannerDirectory: fs.directory(deployPath),
+          choreoDirectory: fs.directory(join(deployPath, 'choreo')),
+          fs: fs,
+          undoStack: ChangeStack(),
+          shortcuts: false,
+        ),
+      ),
+    ));
+    await widgetTester.pumpAndSettle();
+
+    final addButton = find.byTooltip('Add new auto');
+    expect(addButton, findsOneWidget);
+    await widgetTester.tap(addButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('New Auto'), findsOneWidget);
+  });
+
   testWidgets('add new path button', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
@@ -1074,9 +1124,7 @@ void main() {
 
   testWidgets('add path folder', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
-
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
-
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ProjectPage(
@@ -1102,7 +1150,6 @@ void main() {
         .first;
 
     expect(addFolderButton, findsOneWidget);
-
     await widgetTester.tap(addFolderButton);
     await widgetTester.pumpAndSettle();
 
@@ -1112,9 +1159,7 @@ void main() {
 
   testWidgets('add auto folder', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
-
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
-
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ProjectPage(
@@ -1140,7 +1185,6 @@ void main() {
         .last; // Assuming the auto folder button is the second (last) one
 
     expect(addAutoFolderButton, findsOneWidget);
-
     await widgetTester.tap(addAutoFolderButton);
     await widgetTester.pumpAndSettle();
 

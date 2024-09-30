@@ -297,4 +297,47 @@ void main() {
 
     expect(path.rotationTargets.length, 2);
   });
+
+  testWidgets('position text field input', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChangedNoSim: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+          initiallySelectedTarget: 0,
+        ),
+      ),
+    ));
+
+    var numberTextField =
+        find.byType(NumberTextField).last; // Get the position text field
+    expect(numberTextField, findsOneWidget);
+
+    // Verify initial value
+    expect(path.rotationTargets[0].waypointRelativePos, 0.2);
+
+    // Simulate entering text
+    await widgetTester.enterText(numberTextField, '0.5');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    // Verify that the path changed and the new value is correct
+    expect(pathChanged, true);
+    expect(path.rotationTargets[0].waypointRelativePos, 0.5);
+
+    // Reset pathChanged flag
+    pathChanged = false;
+
+    // Simulate entering another value
+    await widgetTester.enterText(numberTextField, '0.7');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    // Verify that the path changed again and the new value is correct
+    expect(pathChanged, true);
+    expect(path.rotationTargets[0].waypointRelativePos, 0.7);
+  });
 }

@@ -8,6 +8,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
+import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:undo/undo.dart';
 
@@ -306,5 +307,44 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.eventMarkers.length, 2);
+  });
+
+  testWidgets('position text field input', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EventMarkersTree(
+          path: path,
+          onPathChangedNoSim: () => pathChanged = true,
+          onMarkerHovered: (value) => hoveredMarker = value,
+          onMarkerSelected: (value) => selectedMarker = value,
+          undoStack: undoStack,
+          initiallySelectedMarker: 0,
+        ),
+      ),
+    ));
+
+    var numberTextField = find.byType(NumberTextField);
+    expect(numberTextField, findsOneWidget);
+
+    // Verify initial value
+    expect(path.eventMarkers[0].waypointRelativePos, 0.2);
+
+    // Simulate entering text
+    await widgetTester.enterText(numberTextField, '0.5');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    // Verify that the path changed and the new value is correct
+    expect(pathChanged, true);
+    expect(path.eventMarkers[0].waypointRelativePos, 0.5);
+
+    // Simulate entering another value
+    await widgetTester.enterText(numberTextField, '0.7');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    // Verify that the path changed again and the new value is correct
+    expect(pathChanged, true);
+    expect(path.eventMarkers[0].waypointRelativePos, 0.7);
   });
 }

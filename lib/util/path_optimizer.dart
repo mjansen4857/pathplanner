@@ -191,14 +191,14 @@ class _Individual {
     if (mutated.prevControl != null) {
       // Mutate by changing prev control length randomly between +/- 0.2 m
       double x = (rand.nextDouble() - 0.5) * 0.2;
-      double prevLength = max(0.5, mutated.getPrevControlLength() + x);
+      double prevLength = mutated.getPrevControlLength() + x;
       mutated.setPrevControlLength(prevLength);
     }
 
     if (mutated.nextControl != null) {
       // Mutate by changing next control length randomly between +/- 0.2 m
       double x = (rand.nextDouble() - 0.5) * 0.2;
-      double nextLength = max(0.5, mutated.getNextControlLength() + x);
+      double nextLength = mutated.getNextControlLength() + x;
       mutated.setNextControlLength(nextLength);
     }
 

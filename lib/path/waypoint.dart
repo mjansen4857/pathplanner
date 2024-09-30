@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:math';
 
 class Waypoint {
+  static const num minControlLength = 0.25;
   static HashMap<String, Point> linked = HashMap();
 
   Point anchor;
@@ -23,6 +24,14 @@ class Waypoint {
   }) {
     if (linkedName != null) {
       linked[linkedName!] = Point(anchor.x, anchor.y);
+    }
+
+    // Set the lengths to their current length to enforce minimum
+    if (prevControl != null) {
+      setPrevControlLength(getPrevControlLength());
+    }
+    if (nextControl != null) {
+      setNextControlLength(getNextControlLength());
     }
   }
 
@@ -190,7 +199,11 @@ class Waypoint {
       var mag = dir.magnitude;
       dir = Point(dir.x / mag, dir.y / mag);
 
-      var control = Point(dir.x * length, dir.y * length);
+      if (!length.isFinite) {
+        length = minControlLength;
+      }
+      final l = max(length, minControlLength);
+      var control = Point(dir.x * l, dir.y * l);
       prevControl = Point(anchor.x + control.x, anchor.y + control.y);
     }
   }
@@ -201,7 +214,11 @@ class Waypoint {
       var mag = dir.magnitude;
       dir = Point(dir.x / mag, dir.y / mag);
 
-      var control = Point(dir.x * length, dir.y * length);
+      if (!length.isFinite) {
+        length = minControlLength;
+      }
+      final l = max(length, minControlLength);
+      var control = Point(dir.x * l, dir.y * l);
       nextControl = Point(anchor.x + control.x, anchor.y + control.y);
     }
   }
@@ -252,6 +269,8 @@ class Waypoint {
       }
 
       _updatePrevControlFromNext();
+      // Set the length to enforce minimum
+      setNextControlLength(getNextControlLength());
     } else if (_isPrevControlDragging) {
       if (isLocked) {
         Point lineEnd = prevControl! + (prevControl! - anchor);
@@ -264,6 +283,8 @@ class Waypoint {
       }
 
       _updateNextControlFromPrev();
+      // Set the length to enforce minimum
+      setPrevControlLength(getPrevControlLength());
     }
   }
 

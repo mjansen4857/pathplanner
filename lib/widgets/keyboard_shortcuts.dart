@@ -2,12 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:tuple/tuple.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 List<_KeyBoardShortcuts> _keyBoardShortcuts = [];
-List<Tuple2<Set<LogicalKeyboardKey>, Function(BuildContext context)>>
-    _newGlobal = [];
 
 enum BasicShortCuts {
   creation,
@@ -16,21 +13,6 @@ enum BasicShortCuts {
   save,
   undo,
   redo,
-}
-
-void initShortCuts({
-  Set<Set<LogicalKeyboardKey>>? keysToPress,
-  Set<Function(BuildContext context)>? onKeysPressed,
-}) async {
-  if (keysToPress != null &&
-      onKeysPressed != null &&
-      keysToPress.length == onKeysPressed.length) {
-    _newGlobal = [];
-    for (var i = 0; i < keysToPress.length; i++) {
-      _newGlobal
-          .add(Tuple2(keysToPress.elementAt(i), onKeysPressed.elementAt(i)));
-    }
-  }
 }
 
 bool _isPressed(

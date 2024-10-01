@@ -233,6 +233,9 @@ class PathPlannerTrajectory:
                             self._events.append(ScheduleCommandEvent(prevState.timeSeconds, m.command))
                             unaddedMarkers.pop(0)
 
+                # Create feedforwards for the end state
+                self._states[-1].feedforwards = [DriveFeedforward(0, 0, 0)] * config.numModules
+
     def getEvents(self) -> List[Event]:
         """
         Get all the events to run while following this trajectory

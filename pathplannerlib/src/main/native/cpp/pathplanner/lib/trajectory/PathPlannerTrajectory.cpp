@@ -120,6 +120,12 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 					unaddedMarkers.erase(unaddedMarkers.begin());
 				}
 			}
+
+			// Create feedforwards for the end state
+			for (size_t m = 0; m < config.numModules; m++) {
+				m_states[m_states.size() - 1].feedforwards.emplace_back(
+						DriveFeedforward { 0_mps_sq, 0_N, 0_A });
+			}
 		}
 	}
 }

@@ -31,7 +31,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
   bool _connected = false;
   final List<List<num>> _velData = [];
   final List<num> _inaccuracyData = [];
-  List<num>? _currentPath;
+  List<Pose2d>? _currentPath;
   Pose2d? _currentPose;
   Pose2d? _targetPose;
   late final Size _robotSize;
@@ -79,14 +79,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     widget.telemetry.currentPoseStream().listen((pose) {
       if (mounted) {
         setState(() {
-          if (pose == null) {
-            _currentPose = null;
-          } else {
-            _currentPose = Pose2d(
-              Translation2d(pose[0], pose[1]),
-              Rotation2d(pose[2]),
-            );
-          }
+          _currentPose = pose;
         });
       }
     });
@@ -94,14 +87,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     widget.telemetry.targetPoseStream().listen((pose) {
       if (mounted) {
         setState(() {
-          if (pose == null) {
-            _targetPose = null;
-          } else {
-            _targetPose = Pose2d(
-              Translation2d(pose[0], pose[1]),
-              Rotation2d(pose[2]),
-            );
-          }
+          _targetPose = pose;
         });
       }
     });
@@ -491,7 +477,7 @@ class TelemetryPainter extends CustomPainter {
   final Size robotSize;
   final Pose2d? currentPose;
   final Pose2d? targetPose;
-  final List<num>? currentPath;
+  final List<Pose2d>? currentPath;
 
   static double scale = 1;
 
@@ -514,11 +500,9 @@ class TelemetryPainter extends CustomPainter {
         ..strokeWidth = 2;
 
       Path path = Path();
-      for (int i = 0; i < currentPath!.length - 3; i += 3) {
+      for (int i = 0; i < currentPath!.length; i++) {
         Offset offset = PathPainterUtil.pointToPixelOffset(
-            Translation2d(currentPath![i], currentPath![i + 1]),
-            scale,
-            fieldImage);
+            currentPath![i].translation, scale, fieldImage);
         if (i == 0) {
           path.moveTo(offset.dx, offset.dy);
         } else {

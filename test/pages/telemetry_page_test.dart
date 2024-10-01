@@ -7,6 +7,7 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:pathplanner/pages/telemetry_page.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -65,9 +66,9 @@ void main() {
     final connectionStatusController = StreamController<bool>();
     final velocitiesController = StreamController<List<num>>();
     final inaccuracyController = StreamController<num>();
-    final currentPoseController = StreamController<List<num>>();
-    final targetPoseController = StreamController<List<num>>();
-    final currentPathController = StreamController<List<num>>();
+    final currentPoseController = StreamController<Pose2d?>();
+    final targetPoseController = StreamController<Pose2d?>();
+    final currentPathController = StreamController<List<Pose2d>?>();
 
     when(telemetry.getServerAddress()).thenReturn('localhost:5811');
     when(telemetry.connectionStatusStream())
@@ -100,9 +101,14 @@ void main() {
     // Add some data to the streams
     velocitiesController.add([1.0, 2.0, 0.5, 1.5]);
     inaccuracyController.add(0.25);
-    currentPoseController.add([2.1, 2.1, 20]);
-    targetPoseController.add([2, 2, 0]);
-    currentPathController.add([1, 5, 2, 4, 3, 5]);
+    currentPoseController
+        .add(Pose2d(Translation2d(2.1, 2.1), Rotation2d.fromDegrees(20)));
+    targetPoseController.add(Pose2d(Translation2d(2, 2), Rotation2d()));
+    currentPathController.add([
+      Pose2d(Translation2d(1, 5), Rotation2d()),
+      Pose2d(Translation2d(2, 4), Rotation2d()),
+      Pose2d(Translation2d(3, 5), Rotation2d())
+    ]);
 
     // Allow time for the streams to emit some values
     await widgetTester.pump(const Duration(milliseconds: 100));
@@ -133,9 +139,9 @@ void main() {
     final connectionStatusController = StreamController<bool>.broadcast();
     final velocitiesController = StreamController<List<num>>();
     final inaccuracyController = StreamController<num>();
-    final currentPoseController = StreamController<List<num>?>();
-    final targetPoseController = StreamController<List<num>?>();
-    final currentPathController = StreamController<List<num>?>();
+    final currentPoseController = StreamController<Pose2d?>();
+    final targetPoseController = StreamController<Pose2d?>();
+    final currentPathController = StreamController<List<Pose2d>?>();
 
     when(telemetry.connectionStatusStream())
         .thenAnswer((_) => connectionStatusController.stream);
@@ -205,9 +211,9 @@ void main() {
     final connectionStatusController = StreamController<bool>.broadcast();
     final velocitiesController = StreamController<List<num>>();
     final inaccuracyController = StreamController<num>.broadcast();
-    final currentPoseController = StreamController<List<num>?>();
-    final targetPoseController = StreamController<List<num>?>();
-    final currentPathController = StreamController<List<num>?>();
+    final currentPoseController = StreamController<Pose2d?>();
+    final targetPoseController = StreamController<Pose2d?>();
+    final currentPathController = StreamController<List<Pose2d>?>();
 
     when(telemetry.connectionStatusStream())
         .thenAnswer((_) => connectionStatusController.stream);

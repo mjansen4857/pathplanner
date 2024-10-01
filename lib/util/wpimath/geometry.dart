@@ -16,24 +16,20 @@ class Pose2d {
   factory Pose2d.fromBytes(Uint8List bytes) {
     final view = ByteData.view(bytes.buffer);
 
-    int length = view.lengthInBytes;
-
-    double xMeters = 0.0;
-    double yMeters = 0.0;
-    double angleRadians = 0.0;
-
-    if (length >= 8) {
-      xMeters = view.getFloat64(0, Endian.little);
-    }
-    if (length >= 16) {
-      yMeters = view.getFloat64(8, Endian.little);
-    }
-    if (length >= 24) {
-      angleRadians = view.getFloat64(16, Endian.little);
-    }
+    double xMeters = view.getFloat64(0, Endian.little);
+    double yMeters = view.getFloat64(8, Endian.little);
+    double angleRadians = view.getFloat64(16, Endian.little);
 
     return Pose2d(
         Translation2d(xMeters, yMeters), Rotation2d.fromRadians(angleRadians));
+  }
+
+  static List<Pose2d> listFromBytes(Uint8List bytes) {
+    List<Pose2d> poses = [];
+    for (int i = 0; i < bytes.length; i += 24) {
+      poses.add(Pose2d.fromBytes(bytes.sublist(i, i + 24)));
+    }
+    return poses;
   }
 
   Pose2d interpolate(Pose2d endValue, num t) {

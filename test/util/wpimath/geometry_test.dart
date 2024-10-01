@@ -33,7 +33,7 @@ void main() {
     });
 
     group('struct decoding', () {
-      test('valid data', () {
+      test('single pose', () {
         List<int> rawBytes = [
           0x00,
           0x00,
@@ -69,7 +69,7 @@ void main() {
         expect(pose.rotation.radians, closeTo(pi, epsilon));
       });
 
-      test('missing bytes', () {
+      test('list of poses', () {
         List<int> rawBytes = [
           0x00,
           0x00,
@@ -90,26 +90,48 @@ void main() {
           0x18,
           0x2d,
           0x44,
-          0x54
+          0x54,
+          0xfb,
+          0x21,
+          0x09,
+          0x40,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x14,
+          0x40,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x00,
+          0x14,
+          0x40,
+          0x18,
+          0x2d,
+          0x44,
+          0x54,
+          0xfb,
+          0x21,
+          0x09,
+          0x40
         ];
         Uint8List data = Uint8List.fromList(rawBytes);
 
-        Pose2d pose = Pose2d.fromBytes(data);
+        final poses = Pose2d.listFromBytes(data);
 
-        expect(pose.x, closeTo(5.0, epsilon));
-        expect(pose.y, closeTo(5.0, epsilon));
-        expect(pose.rotation.radians, closeTo(0.0, epsilon));
-      });
+        expect(poses.length, 2);
 
-      test('no bytes', () {
-        List<int> rawBytes = [];
-        Uint8List data = Uint8List.fromList(rawBytes);
-
-        Pose2d pose = Pose2d.fromBytes(data);
-
-        expect(pose.x, closeTo(0.0, epsilon));
-        expect(pose.y, closeTo(0.0, epsilon));
-        expect(pose.rotation.radians, closeTo(0.0, epsilon));
+        expect(poses[0].x, closeTo(5.0, epsilon));
+        expect(poses[0].y, closeTo(5.0, epsilon));
+        expect(poses[0].rotation.radians, closeTo(pi, epsilon));
+        expect(poses[1].x, closeTo(5.0, epsilon));
+        expect(poses[1].y, closeTo(5.0, epsilon));
+        expect(poses[1].rotation.radians, closeTo(pi, epsilon));
       });
     });
   });

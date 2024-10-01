@@ -72,7 +72,7 @@ RobotConfig RobotConfig::fromGUISettings() {
 			numMotors).WithReduction(gearing);
 
 	ModuleConfig moduleConfig(wheelRadius, maxDriveSpeed, wheelCOF, gearbox,
-			driveCurrentLimit);
+			driveCurrentLimit, numMotors);
 
 	if (isHolonomic) {
 		return RobotConfig(mass, MOI, moduleConfig, trackwidth, wheelbase);

@@ -35,13 +35,14 @@ public:
 	 *     unsure, just use a placeholder value of 1.0.
 	 * @param driveMotor The DCMotor representing the drive motor gearbox, including gear reduction
 	 * @param driveCurrentLimit The current limit of the drive motor, in Amps
+	 * @param numMotors The number of motors per module. For swerve, this is 1. For differential, this is usually 2.
 	 */
 	ModuleConfig(units::meter_t wheelRadius,
 			units::meters_per_second_t maxDriveVelocityMPS, double wheelCOF,
-			frc::DCMotor driveMotor, units::ampere_t driveCurrentLimit) : wheelRadius(
-			wheelRadius), maxDriveVelocityMPS(maxDriveVelocityMPS), wheelCOF(
-			wheelCOF), driveMotor(driveMotor), driveCurrentLimit(
-			driveCurrentLimit), maxDriveVelocityRadPerSec {
+			frc::DCMotor driveMotor, units::ampere_t driveCurrentLimit,
+			int numMotors) : wheelRadius(wheelRadius), maxDriveVelocityMPS(
+			maxDriveVelocityMPS), wheelCOF(wheelCOF), driveMotor(driveMotor), driveCurrentLimit(
+			driveCurrentLimit * numMotors), maxDriveVelocityRadPerSec {
 			maxDriveVelocityMPS() / wheelRadius() }, torqueLoss(
 			driveMotor.Torque(
 					units::math::min(

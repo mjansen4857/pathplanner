@@ -34,18 +34,21 @@ public class ModuleConfig {
    *     unsure, just use a placeholder value of 1.0.
    * @param driveMotor The DCMotor representing the drive motor gearbox, including gear reduction
    * @param driveCurrentLimit The current limit of the drive motor, in Amps
+   * @param numMotors The number of motors per module. For swerve, this is 1. For differential, this
+   *     is usually 2.
    */
   public ModuleConfig(
       double wheelRadiusMeters,
       double maxDriveVelocityMPS,
       double wheelCOF,
       DCMotor driveMotor,
-      double driveCurrentLimit) {
+      double driveCurrentLimit,
+      int numMotors) {
     this.wheelRadiusMeters = wheelRadiusMeters;
     this.maxDriveVelocityMPS = maxDriveVelocityMPS;
     this.wheelCOF = wheelCOF;
     this.driveMotor = driveMotor;
-    this.driveCurrentLimit = driveCurrentLimit;
+    this.driveCurrentLimit = driveCurrentLimit * numMotors;
 
     this.maxDriveVelocityRadPerSec = this.maxDriveVelocityMPS / this.wheelRadiusMeters;
     double maxSpeedCurrentDraw = this.driveMotor.getCurrent(this.maxDriveVelocityRadPerSec, 12.0);

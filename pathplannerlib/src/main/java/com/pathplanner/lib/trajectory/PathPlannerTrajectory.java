@@ -154,6 +154,11 @@ public class PathPlannerTrajectory {
           }
         }
       }
+
+      // Create feedforwards for the end state
+      for (int m = 0; m < config.numModules; m++) {
+        states.get(states.size() - 1).feedforwards[m] = new DriveFeedforward(0, 0, 0);
+      }
     }
   }
 

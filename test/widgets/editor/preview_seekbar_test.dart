@@ -102,7 +102,7 @@ void main() {
 
     // Find the restart button by its tooltip
     final Finder restartButton = find.byWidgetPredicate(
-      (Widget widget) => widget is IconButton && widget.tooltip == 'Reset',
+      (Widget widget) => widget is IconButton && widget.tooltip == 'Restart',
     );
 
     expect(restartButton, findsOneWidget);

@@ -16,8 +16,12 @@ class ResetOdomTree extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Card(
       elevation: 1.0,
+      color: colorScheme.surface,
+      surfaceTintColor: colorScheme.surfaceTint,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Tooltip(

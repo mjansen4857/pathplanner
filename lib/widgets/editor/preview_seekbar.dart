@@ -71,7 +71,7 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
                   },
                   icon: const Icon(Icons.replay),
                   visualDensity: VisualDensity.compact,
-                  tooltip: 'Reset',
+                  tooltip: 'Restart',
                 ),
                 Expanded(
                   child: AnimatedBuilder(

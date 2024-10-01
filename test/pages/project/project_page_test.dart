@@ -1832,7 +1832,7 @@ void main() {
     expect(find.text('Another Auto'), findsOneWidget);
 
     // Find and interact with the path search bar
-    final pathSearchBar = find.widgetWithText(TextField, 'Search for paths...');
+    final pathSearchBar = find.widgetWithText(TextField, 'Search for Paths...');
     await widgetTester.enterText(pathSearchBar, 'Test');
     await widgetTester.pumpAndSettle(const Duration(milliseconds: 300));
 
@@ -1845,7 +1845,7 @@ void main() {
     await widgetTester.pumpAndSettle(const Duration(milliseconds: 300));
 
     // Find and interact with the auto search bar
-    final autoSearchBar = find.widgetWithText(TextField, 'Search for autos...');
+    final autoSearchBar = find.widgetWithText(TextField, 'Search for Autos...');
     await widgetTester.enterText(autoSearchBar, 'Another');
     await widgetTester.pumpAndSettle(const Duration(milliseconds: 300));
 

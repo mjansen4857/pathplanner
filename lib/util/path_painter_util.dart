@@ -79,6 +79,8 @@ class PathPainterUtil {
     canvas.drawCircle(frontMiddle,
         PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
 
+    canvas.restore();
+
     if (showDetails) {
       String angleText = '${rotationDegrees.toStringAsFixed(1)}°';
       String coordText =
@@ -137,8 +139,6 @@ class PathPainterUtil {
 
       canvas.restore();
     }
-
-    canvas.restore();
   }
 
   static void paintMarker(

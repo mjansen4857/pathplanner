@@ -1704,10 +1704,13 @@ class _ProjectPageState extends State<ProjectPage> {
     return TextField(
       controller: controller,
       decoration: InputDecoration(
-        hintText: 'Search for ${isPathsView ? "paths..." : "autos..."}',
-        prefixIcon: const Icon(Icons.search_rounded),
+        hintText: 'Search for ${isPathsView ? "Paths..." : "Autos..."}',
+        prefixIcon: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: const Icon(Icons.search_rounded),
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
         contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
       ),

@@ -1,8 +1,7 @@
 package com.pathplanner.lib.trajectory;
 
 import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.events.Event;
-import com.pathplanner.lib.events.ScheduleCommandEvent;
+import com.pathplanner.lib.events.*;
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
@@ -14,9 +13,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /** Trajectory generated for a PathPlanner path */
 public class PathPlannerTrajectory {
@@ -102,7 +99,25 @@ public class PathPlannerTrajectory {
       // Reverse pass
       reverseAccelPass(states, config);
 
-      List<EventMarker> unaddedMarkers = new ArrayList<>(path.getEventMarkers());
+      Queue<Event> unaddedEvents =
+          new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestamp));
+      for (EventMarker marker : path.getEventMarkers()) {
+        unaddedEvents.add(
+            new ScheduleCommandEvent(marker.getWaypointRelativePos(), marker.getCommand()));
+        if (marker.getEndWaypointRelativePos() >= 0.0) {
+          // This marker is zoned
+          unaddedEvents.add(
+              new CancelCommandEvent(marker.getEndWaypointRelativePos(), marker.getCommand()));
+          unaddedEvents.add(
+              new ActivateTriggerEvent(marker.getWaypointRelativePos(), marker.getTriggerName()));
+          unaddedEvents.add(
+              new DeactivateTriggerEvent(
+                  marker.getEndWaypointRelativePos(), marker.getTriggerName()));
+        } else {
+          unaddedEvents.add(
+              new OneShotTriggerEvent(marker.getWaypointRelativePos(), marker.getTriggerName()));
+        }
+      }
 
       // Loop back over and calculate time and module torque
       for (int i = 1; i < states.size(); i++) {
@@ -145,14 +160,26 @@ public class PathPlannerTrajectory {
           }
         }
 
-        if (!unaddedMarkers.isEmpty()) {
-          EventMarker next = unaddedMarkers.get(0);
-          if (Math.abs(next.getWaypointRelativePos() - prevState.waypointRelativePos)
-              <= Math.abs(next.getWaypointRelativePos() - state.waypointRelativePos)) {
-            events.add(new ScheduleCommandEvent(prevState.timeSeconds, next.getCommand()));
-            unaddedMarkers.remove(0);
-          }
+        // Un-added events have their timestamp set to a waypoint relative position
+        // When adding the event to this trajectory, set its timestamp properly
+        while (!unaddedEvents.isEmpty()
+            && Math.abs(unaddedEvents.element().getTimestamp() - prevState.waypointRelativePos)
+                <= Math.abs(unaddedEvents.element().getTimestamp() - state.waypointRelativePos)) {
+          events.add(unaddedEvents.poll());
+          events.get(events.size() - 1).setTimestamp(prevState.timeSeconds);
         }
+      }
+
+      while (!unaddedEvents.isEmpty()) {
+        // There are events that need to be added to the last state
+        Event next = unaddedEvents.poll();
+        next.setTimestamp(states.get(states.size() - 1).timeSeconds);
+        events.add(next);
+      }
+
+      // Create feedforwards for the end state
+      for (int m = 0; m < config.numModules; m++) {
+        states.get(states.size() - 1).feedforwards[m] = new DriveFeedforward(0, 0, 0);
       }
     }
   }

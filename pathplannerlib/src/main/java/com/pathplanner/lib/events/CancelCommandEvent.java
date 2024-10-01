@@ -2,24 +2,24 @@ package com.pathplanner.lib.events;
 
 import edu.wpi.first.wpilibj2.command.Command;
 
-/** Event that will schedule a command within the EventScheduler */
-public class ScheduleCommandEvent extends Event {
+/** Event that will cancel a command within the EventScheduler */
+public class CancelCommandEvent extends Event {
   private final Command command;
 
   /**
-   * Create an event to schedule a command
+   * Create an event to cancel a command
    *
    * @param timestamp The trajectory timestamp for this event
-   * @param command The command to schedule
+   * @param command The command to cancel
    */
-  public ScheduleCommandEvent(double timestamp, Command command) {
+  public CancelCommandEvent(double timestamp, Command command) {
     super(timestamp);
     this.command = command;
   }
 
   @Override
   public void handleEvent(EventScheduler eventScheduler) {
-    eventScheduler.scheduleCommand(command);
+    eventScheduler.cancelCommand(command);
   }
 
   /**
@@ -30,6 +30,6 @@ public class ScheduleCommandEvent extends Event {
    */
   @Override
   public void cancelEvent(EventScheduler eventScheduler) {
-    // Do nothing
+    // Do nothing, the event scheduler will already cancel all commands
   }
 }

@@ -3,6 +3,7 @@ package com.pathplanner.lib.path;
 import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.events.Event;
+import com.pathplanner.lib.events.OneShotTriggerEvent;
 import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
@@ -385,16 +386,14 @@ public class PathPlannerPath {
           JSONObject marker = (JSONObject) m;
 
           double timestamp = ((Number) marker.get("timestamp")).doubleValue();
+          String name = (String) marker.get("name");
           Command cmd = CommandUtil.commandFromJson((JSONObject) marker.get("command"), false);
 
-          EventMarker eventMarker = new EventMarker(timestamp, cmd);
-
-          path.eventMarkers.add(eventMarker);
           events.add(new ScheduleCommandEvent(timestamp, cmd));
+          events.add(new OneShotTriggerEvent(timestamp, name));
         }
       }
 
-      events.sort(Comparator.comparing(Event::getTimestamp));
       path.idealTrajectory = Optional.of(new PathPlannerTrajectory(trajStates, events));
 
       choreoPathCache.put(trajectoryName, path);

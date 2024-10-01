@@ -1,4 +1,4 @@
-from ntcore import DoubleArrayPublisher, DoublePublisher, NetworkTableInstance
+from ntcore import DoubleArrayPublisher, DoublePublisher, NetworkTableInstance, StructPublisher, StructArrayPublisher
 from wpimath.geometry import Pose2d
 from .path import PathPlannerPath
 
@@ -7,12 +7,12 @@ class PPLibTelemetry:
     _velPub: DoubleArrayPublisher = NetworkTableInstance.getDefault().getDoubleArrayTopic('/PathPlanner/vel').publish()
     _inaccuracyPub: DoublePublisher = NetworkTableInstance.getDefault().getDoubleTopic(
         '/PathPlanner/inaccuracy').publish()
-    _posePub: DoubleArrayPublisher = NetworkTableInstance.getDefault().getDoubleArrayTopic(
-        '/PathPlanner/currentPose').publish()
-    _pathPub: DoubleArrayPublisher = NetworkTableInstance.getDefault().getDoubleArrayTopic(
-        '/PathPlanner/activePath').publish()
-    _targetPosePub: DoubleArrayPublisher = NetworkTableInstance.getDefault().getDoubleArrayTopic(
-        '/PathPlanner/targetPose').publish()
+    _posePub: StructPublisher = NetworkTableInstance.getDefault().getStructTopic(
+        '/PathPlanner/currentPose', Pose2d.WPIStruct).publish()
+    _pathPub: StructArrayPublisher = NetworkTableInstance.getDefault().getStructArrayTopic(
+        '/PathPlanner/activePath', Pose2d.WPIStruct).publish()
+    _targetPosePub: StructPublisher = NetworkTableInstance.getDefault().getStructTopic(
+        '/PathPlanner/targetPose', Pose2d.WPIStruct).publish()
 
     @staticmethod
     def setVelocities(actual_vel: float, commanded_vel: float, actual_ang_vel: float, commanded_ang_vel: float) -> None:
@@ -24,17 +24,12 @@ class PPLibTelemetry:
 
     @staticmethod
     def setCurrentPose(pose: Pose2d) -> None:
-        PPLibTelemetry._posePub.set([pose.X(), pose.Y(), pose.rotation().radians()])
+        PPLibTelemetry._posePub.set(pose)
 
     @staticmethod
     def setTargetPose(pose: Pose2d) -> None:
-        PPLibTelemetry._targetPosePub.set([pose.X(), pose.Y(), pose.rotation().radians()])
+        PPLibTelemetry._targetPosePub.set(pose)
 
     @staticmethod
     def setCurrentPath(path: PathPlannerPath) -> None:
-        arr = []
-
-        for p in path.getAllPathPoints():
-            arr.extend([p.position.X(), p.position.Y(), 0.0])
-
-        PPLibTelemetry._pathPub.set(arr)
+        PPLibTelemetry._pathPub.set(path.getPathPoses())

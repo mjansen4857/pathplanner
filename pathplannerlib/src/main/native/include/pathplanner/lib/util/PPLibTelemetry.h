@@ -3,6 +3,8 @@
 #include <networktables/NetworkTableInstance.h>
 #include <networktables/DoubleArrayTopic.h>
 #include <networktables/DoubleTopic.h>
+#include <networktables/StructTopic.h>
+#include <networktables/StructArrayTopic.h>
 #include <networktables/NetworkTableListener.h>
 #include <string>
 #include <unordered_map>
@@ -37,16 +39,16 @@ public:
 	}
 
 	static inline void setCurrentPose(frc::Pose2d pose) {
-		m_posePub.Set(
-				std::span<const double>( { pose.X()(), pose.Y()(),
-						pose.Rotation().Radians()() }));
+		m_posePub.Set(pose);
 	}
 
-	static void setCurrentPath(std::shared_ptr<PathPlannerPath> path);
+	static inline void setCurrentPath(std::shared_ptr<PathPlannerPath> path) {
+		auto poses = path->getPathPoses();
+		m_pathPub.Set(std::span { poses.data(), poses.size() });
+	}
 
 	static inline void setTargetPose(frc::Pose2d targetPose) {
-		m_targetPosePub.Set(std::span<const double>( { targetPose.X()(),
-				targetPose.Y()(), targetPose.Rotation().Radians()() }));
+		m_targetPosePub.Set(targetPose);
 	}
 
 	static void registerHotReloadPath(std::string pathName,
@@ -61,9 +63,9 @@ private:
 
 	static nt::DoubleArrayPublisher m_velPub;
 	static nt::DoublePublisher m_inaccuracyPub;
-	static nt::DoubleArrayPublisher m_posePub;
-	static nt::DoubleArrayPublisher m_pathPub;
-	static nt::DoubleArrayPublisher m_targetPosePub;
+	static nt::StructPublisher<frc::Pose2d> m_posePub;
+	static nt::StructArrayPublisher<frc::Pose2d> m_pathPub;
+	static nt::StructPublisher<frc::Pose2d> m_targetPosePub;
 
 	static std::unordered_map<std::string,
 			std::vector<std::shared_ptr<PathPlannerPath>>> m_hotReloadPaths;

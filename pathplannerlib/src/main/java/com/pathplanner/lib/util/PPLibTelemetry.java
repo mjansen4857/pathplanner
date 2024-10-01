@@ -2,9 +2,7 @@ package com.pathplanner.lib.util;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.PathPoint;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -24,12 +22,18 @@ public class PPLibTelemetry {
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/vel").publish();
   private static final DoublePublisher inaccuracyPub =
       NetworkTableInstance.getDefault().getDoubleTopic("/PathPlanner/inaccuracy").publish();
-  private static final DoubleArrayPublisher posePub =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/currentPose").publish();
-  private static final DoubleArrayPublisher pathPub =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/activePath").publish();
-  private static final DoubleArrayPublisher targetPosePub =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/targetPose").publish();
+  private static final StructPublisher<Pose2d> posePub =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("/PathPlanner/currentPose", Pose2d.struct)
+          .publish();
+  private static final StructArrayPublisher<Pose2d> pathPub =
+      NetworkTableInstance.getDefault()
+          .getStructArrayTopic("/PathPlanner/activePath", Pose2d.struct)
+          .publish();
+  private static final StructPublisher<Pose2d> targetPosePub =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("/PathPlanner/targetPose", Pose2d.struct)
+          .publish();
 
   private static final Map<String, List<PathPlannerPath>> hotReloadPaths = new HashMap<>();
   private static final Map<String, List<PathPlannerAuto>> hotReloadAutos = new HashMap<>();
@@ -69,7 +73,7 @@ public class PPLibTelemetry {
    * @param pose Current robot pose
    */
   public static void setCurrentPose(Pose2d pose) {
-    posePub.set(new double[] {pose.getX(), pose.getY(), pose.getRotation().getRadians()});
+    posePub.set(pose);
   }
 
   /**
@@ -78,19 +82,8 @@ public class PPLibTelemetry {
    * @param path The current path
    */
   public static void setCurrentPath(PathPlannerPath path) {
-    double[] arr = new double[path.numPoints() * 3];
-
-    int ndx = 0;
-    for (PathPoint p : path.getAllPathPoints()) {
-      Translation2d pos = p.position;
-      arr[ndx] = pos.getX();
-      arr[ndx + 1] = pos.getY();
-      // Just add 0 as a heading since it's not needed for displaying a path
-      arr[ndx + 2] = 0.0;
-      ndx += 3;
-    }
-
-    pathPub.set(arr);
+    // Use poses for simplicity
+    pathPub.set(path.getPathPoses().toArray(new Pose2d[0]));
   }
 
   /**
@@ -99,8 +92,7 @@ public class PPLibTelemetry {
    * @param targetPose Target robot pose
    */
   public static void setTargetPose(Pose2d targetPose) {
-    targetPosePub.set(
-        new double[] {targetPose.getX(), targetPose.getY(), targetPose.getRotation().getRadians()});
+    targetPosePub.set(targetPose);
   }
 
   /**

@@ -401,7 +401,7 @@ public class PathfindingCommand extends Command {
                 75,
                 6.8,
                 new ModuleConfig(
-                    0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0),
+                    0.048, 5.0, 1.2, DCMotor.getKrakenX60(1).withReduction(6.14), 60.0, 1),
                 0.55))
         .andThen(Commands.print("[PathPlanner] PathfindingCommand finished warmup"))
         .ignoringDisable(true);

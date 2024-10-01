@@ -40,15 +40,19 @@ void main() {
     // Tree initially collapsed, expect to find nothing
     expect(find.byType(NumberTextField), findsNothing);
 
+    // Find and tap the GoalEndStateTree widget
     await widgetTester.tap(find.byType(GoalEndStateTree));
     await widgetTester.pumpAndSettle();
 
     expect(path.goalEndStateExpanded, true);
+    expect(find.byType(NumberTextField), findsWidgets);
 
-    await widgetTester.tap(find.text(
-        'Goal End State')); // Use text so it doesn't tap middle of expanded card
+    // Tap the title to collapse
+    await widgetTester.tap(find.text('Final State'));
     await widgetTester.pumpAndSettle();
+
     expect(path.goalEndStateExpanded, false);
+    expect(find.byType(NumberTextField), findsNothing);
   });
 
   testWidgets('vel text field', (widgetTester) async {

@@ -36,6 +36,8 @@ class PrefsKeys {
   static const String driveCurrentLimit = 'driveCurrentLimit';
   static const String wheelCOF = 'wheelCOF';
   static const String showStates = 'showStates';
+  static const String showRobotDetails = 'showRobotDetails';
+  static const String showGrid = 'showGrid';
 }
 
 class Defaults {
@@ -73,4 +75,6 @@ class Defaults {
   static const double driveCurrentLimit = 60.0;
   static const double wheelCOF = 1.2;
   static const bool showStates = false;
+  static const bool showRobotDetails = false;
+  static const bool showGrid = false;
 }

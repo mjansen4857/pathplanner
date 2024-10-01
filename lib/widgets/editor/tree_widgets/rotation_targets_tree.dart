@@ -4,6 +4,7 @@ import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
+import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -56,28 +57,12 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Rotation Targets'),
-      trailing: ItemCount(count: widget.path.rotationTargets.length),
-      initiallyExpanded: widget.path.rotationTargetsExpanded,
-      onExpansionChanged: (value) {
-        if (value != null) {
-          widget.path.rotationTargetsExpanded = value;
-          if (value == false) {
-            _selectedTarget = null;
-            widget.onTargetSelected?.call(null);
-          }
-        }
-      },
-      elevation: 1.0,
-      children: [
-        for (int i = 0; i < rotations.length; i++) _buildRotationCard(i),
-        const SizedBox(height: 12),
-        Center(
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.add),
-            style: ElevatedButton.styleFrom(
-              elevation: 4.0,
-            ),
-            label: const Text('Add New Rotation Target'),
+      leading: const Icon(Icons.rotate_90_degrees_cw_rounded),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.add, size: 20),
             onPressed: () {
               widget.undoStack.add(Change(
                 PathPlannerPath.cloneRotationTargets(rotations),
@@ -95,8 +80,25 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                 },
               ));
             },
+            tooltip: 'Add New Rotation Target',
           ),
-        ),
+          const SizedBox(width: 8),
+          ItemCount(count: widget.path.rotationTargets.length),
+        ],
+      ),
+      initiallyExpanded: widget.path.rotationTargetsExpanded,
+      onExpansionChanged: (value) {
+        if (value != null) {
+          widget.path.rotationTargetsExpanded = value;
+          if (value == false) {
+            _selectedTarget = null;
+            widget.onTargetSelected?.call(null);
+          }
+        }
+      },
+      elevation: 1.0,
+      children: [
+        for (int i = 0; i < rotations.length; i++) _buildRotationCard(i),
       ],
     );
   }
@@ -105,6 +107,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return TreeCardNode(
+      leading: const Icon(Icons.rotate_right_rounded),
       controller: _controllers[targetIdx],
       onHoverStart: () => widget.onTargetHovered?.call(targetIdx),
       onHoverEnd: () => widget.onTargetHovered?.call(null),
@@ -124,9 +127,15 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
       },
       title: Row(
         children: [
-          Text(
-              'Rotation Target at ${rotations[targetIdx].waypointRelativePos.toStringAsFixed(2)}'),
-          Expanded(child: Container()),
+          Expanded(
+            child: Text('Rotation Target ${targetIdx + 1}'),
+          ),
+          const SizedBox(width: 8),
+          InfoCard(
+            value:
+                '${rotations[targetIdx].rotation.degrees.toStringAsFixed(2)}° at ${rotations[targetIdx].waypointRelativePos.toStringAsFixed(2)}',
+          ),
+          const SizedBox(width: 8),
           Tooltip(
             message: 'Delete Target',
             waitDuration: const Duration(seconds: 1),
@@ -168,7 +177,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                   initialText:
                       rotations[targetIdx].rotation.degrees.toStringAsFixed(2),
                   label: 'Rotation (Deg)',
-                  arrowKeyIncrement: 1.0,
+                  arrowKeyIncrement: 45,
                   onSubmitted: (value) {
                     if (value != null) {
                       widget.undoStack.add(Change(
@@ -184,6 +193,27 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                           widget.onPathChanged?.call();
                         },
                       ));
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 100,
+                child: NumberTextField(
+                  initialText: rotations[targetIdx]
+                      .waypointRelativePos
+                      .toStringAsFixed(2),
+                  label: 'Position',
+                  arrowKeyIncrement: 0.1,
+                  onSubmitted: (value) {
+                    if (value != null &&
+                        value >= 0.0 &&
+                        value <= (waypoints.length - 1.0)) {
+                      setState(() {
+                        rotations[targetIdx].waypointRelativePos = value;
+                        widget.onPathChangedNoSim?.call();
+                      });
                     }
                   },
                 ),
@@ -215,8 +245,10 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             ));
           },
           onChanged: (value) {
-            rotations[targetIdx].waypointRelativePos = value;
-            widget.onPathChangedNoSim?.call();
+            setState(() {
+              rotations[targetIdx].waypointRelativePos = value;
+              widget.onPathChangedNoSim?.call();
+            });
           },
         ),
       ],

@@ -17,7 +17,6 @@ import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/util/prefs.dart';
-import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
@@ -237,8 +236,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _key,
       appBar: CustomAppBar(
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: const Icon(Icons.menu),
+              tooltip: 'Menu',
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            );
+          },
+        ),
         titleWidget: Text(
           _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
@@ -256,171 +263,181 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Stack(
       children: [
-        NavigationDrawer(
-          selectedIndex: _selectedPage,
-          onDestinationSelected: (idx) {
-            setState(() {
-              _selectedPage = idx;
-              _pageController.animateToPage(_selectedPage,
-                  duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeInOut);
-            });
-          },
-          backgroundColor: colorScheme.surface,
-          surfaceTintColor: colorScheme.surfaceTint,
-          children: [
-            DrawerHeader(
-              child: Stack(
-                children: [
-                  Align(
-                    alignment: FractionalOffset.bottomLeft,
-                    child: Text(
-                      'v${widget.appVersion}',
-                      style: TextStyle(color: colorScheme.onSurface),
-                    ),
-                  ),
-                  Align(
-                    alignment: FractionalOffset.bottomRight,
-                    child: StreamBuilder(
-                        stream: widget.telemetry.connectionStatusStream(),
-                        builder: (context, snapshot) {
-                          return ConditionalWidget(
-                            condition: snapshot.data ?? false,
-                            trueChild: const Tooltip(
-                              message: 'Connected to Robot',
-                              child: Icon(
-                                Icons.lan,
-                                size: 20,
-                                color: Colors.green,
-                              ),
-                            ),
-                            falseChild: const Tooltip(
-                              message: 'Not Connected to Robot',
-                              child: Icon(
-                                Icons.lan_outlined,
-                                size: 20,
-                                color: Colors.red,
-                              ),
-                            ),
-                          );
-                        }),
-                  ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Container(),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            basename(_projectDir!.path),
-                            style: const TextStyle(
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            foregroundColor: colorScheme.onPrimaryContainer,
-                            backgroundColor: colorScheme.primaryContainer,
-                          ),
-                          onPressed: () {
-                            _openProjectDialog(context);
-                          },
-                          child: const Text('Switch Project'),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: Container(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+        SizedBox(
+          width: 260,
+          child: NavigationDrawer(
+            selectedIndex: _selectedPage,
+            onDestinationSelected: _handleDestinationSelected,
+            backgroundColor: colorScheme.surface,
+            surfaceTintColor: colorScheme.surfaceTint,
+            children: [
+              _buildDrawerHeader(colorScheme),
+              ..._buildNavigationDestinations(),
+            ],
+          ),
+        ),
+        _buildBottomButtons(colorScheme),
+      ],
+    );
+  }
+
+  Widget _buildDrawerHeader(ColorScheme colorScheme) {
+    return DrawerHeader(
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Text(
+                basename(_projectDir!.path),
+                style: const TextStyle(fontSize: 20),
               ),
             ),
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.folder_outlined),
-              label: Text('Project Browser'),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'v${widget.appVersion}',
+                style: TextStyle(color: colorScheme.onSurface),
+              ),
+              IconButton(
+                icon: const Icon(Icons.open_in_new_rounded, size: 20),
+                tooltip: 'Open Project',
+                onPressed: () => _openProjectDialog(this.context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildNavigationDestinations() {
+    return [
+      const NavigationDrawerDestination(
+        icon: Icon(Icons.folder_rounded),
+        label: Text('Project Browser'),
+      ),
+      const SizedBox(height: 5),
+      NavigationDrawerDestination(
+        icon: Icon(
+          _getConnectedIcon(widget.telemetry.isConnected),
+          color: _getConnectedIconColor(widget.telemetry.isConnected),
+        ),
+        label: const Text('Telemetry'),
+      ),
+      const SizedBox(height: 5),
+      const NavigationDrawerDestination(
+        icon: Icon(Icons.grid_on_rounded),
+        label: Text('Navigation Grid'),
+      ),
+    ];
+  }
+
+  Widget _buildBottomButtons(ColorScheme colorScheme) {
+    return Align(
+      alignment: Alignment.bottomLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12.0, left: 8.0),
+        child: Row(
+          children: [
+            _buildButton(
+              onPressed: () => launchUrl(Uri.parse('https://pathplanner.dev')),
+              icon: const Icon(Icons.description),
+              label: 'Docs',
+              backgroundColor: colorScheme.primaryContainer,
+              foregroundColor: colorScheme.onPrimaryContainer,
             ),
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.bar_chart),
-              label: Text('Telemetry'),
-            ),
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.grid_on),
-              label: Text('Navigation Grid'),
+            const SizedBox(width: 6),
+            _buildButton(
+              onPressed: () {
+                Navigator.pop(this.context);
+                _showSettingsDialog();
+              },
+              icon: const Icon(Icons.settings),
+              label: 'Settings',
+              backgroundColor: colorScheme.surfaceContainer,
+              foregroundColor: colorScheme.onSurface,
+              surfaceTintColor: colorScheme.surfaceTint,
             ),
           ],
         ),
-        Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 12.0, left: 8.0),
-            child: Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    launchUrl(Uri.parse('https://pathplanner.dev'));
-                  },
-                  icon: const Icon(Icons.description),
-                  label: const Text('Docs'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primaryContainer,
-                    foregroundColor: colorScheme.onPrimaryContainer,
-                    elevation: 4.0,
-                    fixedSize: const Size(141, 56),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return SettingsDialog(
-                          prefs: widget.prefs,
-                          onTeamColorChanged: widget.onTeamColorChanged,
-                          fieldImages: _fieldImages,
-                          selectedField: _fieldImage ?? FieldImage.defaultField,
-                          onFieldSelected: (FieldImage image) {
-                            setState(() {
-                              _fieldImage = image;
-                              if (!_fieldImages.contains(image)) {
-                                _fieldImages.add(image);
-                              }
-                              widget.prefs
-                                  .setString(PrefsKeys.fieldImage, image.name);
-                            });
-                          },
-                          onSettingsChanged: _onProjectSettingsChanged,
-                        );
-                      },
-                    );
-                  },
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Settings'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.surfaceContainer,
-                    foregroundColor: colorScheme.onSurface,
-                    surfaceTintColor: colorScheme.surfaceTint,
-                    elevation: 4.0,
-                    fixedSize: const Size(141, 56),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+      ),
     );
+  }
+
+  Widget _buildButton({
+    required VoidCallback onPressed,
+    required Widget icon,
+    required String label,
+    required Color backgroundColor,
+    required Color foregroundColor,
+    Color? surfaceTintColor,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: icon,
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: ElevatedButton.styleFrom(
+        fixedSize: const Size(120, 50),
+        backgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
+        surfaceTintColor: surfaceTintColor,
+        elevation: 4.0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+
+  void _handleDestinationSelected(int index) {
+    setState(() {
+      _selectedPage = index;
+      _pageController.animateToPage(
+        _selectedPage,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+      );
+    });
+    Navigator.pop(this.context);
+  }
+
+  IconData _getConnectedIcon(bool isConnected) {
+    return isConnected ? Icons.lan : Icons.lan_outlined;
+  }
+
+  Color _getConnectedIconColor(bool isConnected) {
+    return isConnected ? Colors.green : Colors.red;
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: this.context,
+      barrierDismissible: true, // Allow dismissing by tapping outside
+      builder: (BuildContext context) {
+        return Theme(
+          data: Theme.of(context), // Use the current theme
+          child: SettingsDialog(
+            prefs: widget.prefs,
+            onTeamColorChanged: widget.onTeamColorChanged,
+            fieldImages: _fieldImages,
+            selectedField: _fieldImage ?? FieldImage.defaultField,
+            onFieldSelected: (FieldImage image) {
+              setState(() {
+                _fieldImage = image;
+                if (!_fieldImages.contains(image)) {
+                  _fieldImages.add(image);
+                }
+                widget.prefs.setString(PrefsKeys.fieldImage, image.name);
+              });
+            },
+            onSettingsChanged: _onProjectSettingsChanged,
+          ),
+        );
+      },
+    ).then((_) {
+      // Ensure the app rebuilds correctly after dialog is closed
+      setState(() {});
+    });
   }
 
   Widget _buildBody(BuildContext context) {

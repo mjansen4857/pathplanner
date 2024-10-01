@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -22,7 +23,16 @@ class IdealStartingStateTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TreeCardNode(
-      title: const Text('Ideal Starting State'),
+      title: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        children: [
+          Text('Starting State'),
+          InfoCard(
+              value:
+                  '${path.idealStartingState.rotation.degrees.toStringAsFixed(2)}° starting with ${path.idealStartingState.velocityMPS.toStringAsFixed(2)} M/S'),
+        ],
+      ),
+      leading: const Icon(Icons.start_rounded),
       initiallyExpanded: path.previewStartingStateExpanded,
       onExpansionChanged: (value) {
         if (value != null) {

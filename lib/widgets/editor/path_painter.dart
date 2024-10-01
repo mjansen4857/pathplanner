@@ -14,6 +14,7 @@ import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PathPainter extends CustomPainter {
+  final ColorScheme colorScheme;
   final List<PathPlannerPath> paths;
   final List<ChoreoPath> choreoPaths;
   final FieldImage fieldImage;
@@ -43,6 +44,7 @@ class PathPainter extends CustomPainter {
   static double scale = 1;
 
   PathPainter({
+    required this.colorScheme,
     required this.paths,
     this.choreoPaths = const [],
     required this.fieldImage,
@@ -90,6 +92,9 @@ class PathPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     scale = size.width / fieldImage.defaultSize.width;
 
+    _paintGrid(
+        canvas, size, prefs.getBool(PrefsKeys.showGrid) ?? Defaults.showGrid);
+
     for (int i = 0; i < paths.length; i++) {
       if (hideOtherPathsOnHover &&
           hoveredPath != null &&
@@ -135,7 +140,7 @@ class PathPainter extends CustomPainter {
           choreoPaths[i].trajectory,
           canvas,
           (hoveredPath == choreoPaths[i].name)
-              ? Colors.orange
+              ? colorScheme.primary
               : Colors.grey[300]!);
       _paintChoreoWaypoint(
           choreoPaths[i].trajectory.states.first, canvas, Colors.green, scale);
@@ -202,7 +207,9 @@ class PathPainter extends CustomPainter {
           robotSize,
           scale,
           canvas,
-          previewColor ?? Colors.grey);
+          previewColor ?? Colors.grey,
+          showDetails: prefs.getBool(PrefsKeys.showRobotDetails) ??
+              Defaults.showRobotDetails);
     }
   }
 
@@ -322,7 +329,8 @@ class PathPainter extends CustomPainter {
 
     if (selectedZone != null) {
       paint.color = Colors.orange;
-      paint.strokeWidth = 4;
+      paint.strokeWidth =
+          6; // Thicker stroke width for selected constraint zone
       p.reset();
 
       num startPos = path.constraintZones[selectedZone!].minWaypointRelativePos;
@@ -344,7 +352,7 @@ class PathPainter extends CustomPainter {
 
     if (hoveredZone != null && selectedZone != hoveredZone) {
       paint.color = Colors.deepPurpleAccent;
-      paint.strokeWidth = 4;
+      paint.strokeWidth = 6; // Thicker stroke width for hovered constraint zone
       p.reset();
 
       num startPos = path.constraintZones[hoveredZone!].minWaypointRelativePos;
@@ -370,6 +378,7 @@ class PathPainter extends CustomPainter {
       var position = path.samplePath(path.eventMarkers[i].waypointRelativePos);
 
       Color markerColor = Colors.grey[700]!;
+      Color markerStrokeColor = Colors.black;
       if (selectedMarker == i) {
         markerColor = Colors.orange;
       } else if (hoveredMarker == i) {
@@ -379,7 +388,8 @@ class PathPainter extends CustomPainter {
       Offset markerPos =
           PathPainterUtil.pointToPixelOffset(position, scale, fieldImage);
 
-      PathPainterUtil.paintMarker(canvas, markerPos, markerColor);
+      PathPainterUtil.paintMarker(
+          canvas, markerPos, markerColor, markerStrokeColor);
     }
   }
 
@@ -389,7 +399,8 @@ class PathPainter extends CustomPainter {
       Offset markerPos = PathPainterUtil.pointToPixelOffset(
           s.pose.translation, scale, fieldImage);
 
-      PathPainterUtil.paintMarker(canvas, markerPos, Colors.grey[700]!);
+      PathPainterUtil.paintMarker(
+          canvas, markerPos, Colors.grey[700]!, Colors.black);
     }
   }
 
@@ -623,6 +634,24 @@ class PathPainter extends CustomPainter {
             PathPainterUtil.uiPointSizeToPixels(20, scale, fieldImage),
             paint);
       }
+    }
+  }
+
+  void _paintGrid(Canvas canvas, Size size, bool showGrid) {
+    if (!showGrid) return;
+
+    final paint = Paint()
+      ..color = Colors.grey.withOpacity(0.2) // More transparent
+      ..strokeWidth = 1;
+
+    double gridSpacing = PathPainterUtil.metersToPixels(0.5, scale, fieldImage);
+
+    for (double x = 0; x <= size.width; x += gridSpacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+
+    for (double y = 0; y <= size.height; y += gridSpacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
 }

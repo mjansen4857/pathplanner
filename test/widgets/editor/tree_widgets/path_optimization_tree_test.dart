@@ -24,7 +24,7 @@ void main() {
   });
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
-    path.waypointsExpanded = false;
+    path.pathOptimizationExpanded = false;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: PathOptimizationTree(
@@ -35,25 +35,20 @@ void main() {
       ),
     ));
 
-    // Tree initially collapsed, expect to find nothing
-    expect(
-        find.descendant(
-            of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
-        findsNothing);
+    expect(find.byType(TreeCardNode), findsOneWidget);
+    expect(find.text('Path Optimizer'), findsOneWidget);
+    expect(find.byIcon(Icons.query_stats), findsOneWidget);
 
-    await widgetTester.tap(find.byType(PathOptimizationTree));
+    await widgetTester.tap(find.byType(TreeCardNode));
     await widgetTester.pumpAndSettle();
     expect(path.pathOptimizationExpanded, true);
 
-    await widgetTester.tap(find.text(
-        'Path Optimizer')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.tap(find.text('Path Optimizer'));
     await widgetTester.pumpAndSettle();
     expect(path.pathOptimizationExpanded, false);
   });
 
-  testWidgets('widget builds', (widgetTester) async {
-    // Basic test to make sure the widget builds. Can't really
-    // test the buttons since we can't wait for the isolate from this test
+  testWidgets('widget builds and displays correctly', (widgetTester) async {
     path.pathOptimizationExpanded = true;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -66,11 +61,15 @@ void main() {
     ));
     await widgetTester.pumpAndSettle();
 
-    // For some reason flutter thinks elevated button w/ icon is not an elevated button
-    expect(find.text('Optimize'), findsOne);
-    expect(find.text('Discard'), findsOne);
-    expect(find.text('Accept'), findsOne);
-
-    expect(find.byType(LinearProgressIndicator), findsOne);
+    expect(find.text('Path Optimizer'), findsOneWidget);
+    expect(find.byIcon(Icons.query_stats), findsOneWidget);
+    expect(find.text('Optimized Runtime: 0.00s'), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+    expect(find.text('Optimize'), findsOneWidget);
+    expect(find.byIcon(Icons.close), findsOneWidget);
+    expect(find.text('Discard'), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsOneWidget);
+    expect(find.text('Accept'), findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
   });
 }

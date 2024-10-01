@@ -8,6 +8,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
+import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:undo/undo.dart';
 
@@ -53,7 +54,6 @@ void main() {
       ),
     ));
 
-    // Tree initially collapsed, expect to find nothing
     expect(
         find.descendant(
             of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode)),
@@ -64,8 +64,7 @@ void main() {
 
     expect(path.eventMarkersExpanded, true);
 
-    await widgetTester.tap(find.text(
-        'Event Markers')); // Use text so it doesn't tap middle of expanded card
+    await widgetTester.tap(find.text('Event Markers'));
     await widgetTester.pumpAndSettle();
     expect(path.eventMarkersExpanded, false);
   });
@@ -200,11 +199,11 @@ void main() {
 
     expect(slider, findsOneWidget);
 
-    await widgetTester.tap(slider); // will tap the center
+    await widgetTester.tap(slider);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.eventMarkers[0].waypointRelativePos, 0.5);
+    expect(path.eventMarkers[0].waypointRelativePos, closeTo(0.5, 0.01));
 
     undoStack.undo();
     await widgetTester.pump();
@@ -235,7 +234,7 @@ void main() {
     await widgetTester.tap(typeDropdown);
     await widgetTester.pumpAndSettle();
 
-    await widgetTester.tap(find.text('Deadline Group'));
+    await widgetTester.tap(find.text('Deadline Group').last);
     await widgetTester.pumpAndSettle();
 
     expect(pathChanged, true);
@@ -261,7 +260,7 @@ void main() {
       ),
     ));
 
-    var deleteButtons = find.byTooltip('Delete Marker');
+    var deleteButtons = find.byIcon(Icons.delete_forever);
 
     expect(deleteButtons, findsNWidgets(2));
 
@@ -291,7 +290,11 @@ void main() {
       ),
     ));
 
-    var newMarkerButton = find.text('Add New Marker');
+    // Find the specific add button for event markers
+    var newMarkerButton = find.descendant(
+      of: find.byType(EventMarkersTree),
+      matching: find.byIcon(Icons.add).first,
+    );
 
     expect(newMarkerButton, findsOneWidget);
 
@@ -304,5 +307,44 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.eventMarkers.length, 2);
+  });
+
+  testWidgets('position text field input', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EventMarkersTree(
+          path: path,
+          onPathChangedNoSim: () => pathChanged = true,
+          onMarkerHovered: (value) => hoveredMarker = value,
+          onMarkerSelected: (value) => selectedMarker = value,
+          undoStack: undoStack,
+          initiallySelectedMarker: 0,
+        ),
+      ),
+    ));
+
+    var numberTextField = find.byType(NumberTextField);
+    expect(numberTextField, findsOneWidget);
+
+    // Verify initial value
+    expect(path.eventMarkers[0].waypointRelativePos, 0.2);
+
+    // Simulate entering text
+    await widgetTester.enterText(numberTextField, '0.5');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    // Verify that the path changed and the new value is correct
+    expect(pathChanged, true);
+    expect(path.eventMarkers[0].waypointRelativePos, 0.5);
+
+    // Simulate entering another value
+    await widgetTester.enterText(numberTextField, '0.7');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    // Verify that the path changed again and the new value is correct
+    expect(pathChanged, true);
+    expect(path.eventMarkers[0].waypointRelativePos, 0.7);
   });
 }

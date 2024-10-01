@@ -130,7 +130,7 @@ class CommandGroupWidget extends StatelessWidget {
                   visualDensity: const VisualDensity(
                       horizontal: VisualDensity.minimumDensity,
                       vertical: VisualDensity.minimumDensity),
-                  icon: Icon(Icons.close, color: colorScheme.error),
+                  icon: Icon(Icons.delete, color: colorScheme.error),
                 ),
               ),
             ),

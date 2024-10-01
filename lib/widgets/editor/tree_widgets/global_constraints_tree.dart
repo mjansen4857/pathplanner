@@ -23,6 +23,7 @@ class GlobalConstraintsTree extends StatelessWidget {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Global Constraints'),
+      leading: const Icon(Icons.escalator_rounded),
       initiallyExpanded: path.globalConstraintsExpanded,
       onExpansionChanged: (value) {
         if (value != null) {
@@ -135,7 +136,7 @@ class GlobalConstraintsTree extends StatelessWidget {
               const SizedBox(width: 4),
               const Text(
                 'Use Default Constraints',
-                style: TextStyle(fontSize: 18),
+                style: TextStyle(fontSize: 15),
               ),
             ],
           ),

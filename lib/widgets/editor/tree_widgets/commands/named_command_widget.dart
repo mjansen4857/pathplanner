@@ -171,15 +171,15 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Visibility(
               visible: widget.command.name == null,
-              child: const Tooltip(
+              child: Tooltip(
                 message: 'Missing command name',
                 child: Icon(
                   Icons.warning_amber_rounded,
-                  color: Colors.yellow,
-                  size: 32,
+                  color: Colors.orange[300]!,
+                  size: 24,
                 ),
               ),
             ),
@@ -194,7 +194,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                 visualDensity: const VisualDensity(
                     horizontal: VisualDensity.minimumDensity,
                     vertical: VisualDensity.minimumDensity),
-                icon: Icon(Icons.close, color: colorScheme.error),
+                icon: Icon(Icons.delete, color: colorScheme.error),
               ),
             ),
           ],

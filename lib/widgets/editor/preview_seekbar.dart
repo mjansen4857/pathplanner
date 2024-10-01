@@ -28,9 +28,12 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
         child: Card(
           color: colorScheme.surface,
           surfaceTintColor: colorScheme.surfaceTint,
-          elevation: 2.0,
+          elevation: 4.0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: SizedBox(
-            height: 32,
+            height: 40,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
@@ -47,43 +50,64 @@ class _PreviewSeekbarState extends State<PreviewSeekbar> {
                       }
                     });
                   },
-                  icon: widget.previewController.isAnimating
-                      ? const Icon(Icons.pause)
-                      : const Icon(Icons.play_arrow),
+                  icon: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: widget.previewController.isAnimating
+                        ? const Icon(Icons.pause)
+                        : const Icon(Icons.play_arrow),
+                  ),
                   visualDensity: VisualDensity.compact,
+                  tooltip:
+                      widget.previewController.isAnimating ? 'Pause' : 'Play',
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      widget.previewController.reset();
+                      widget.previewController
+                          .repeat(); // Start playing again after reset
+                      widget.onPauseStateChanged?.call(false);
+                    });
+                  },
+                  icon: const Icon(Icons.replay),
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Restart',
                 ),
                 Expanded(
                   child: AnimatedBuilder(
-                      animation: widget.previewController.view,
-                      builder: (context, _) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            sliderTheme: const SliderThemeData(
-                              showValueIndicator: ShowValueIndicator.always,
+                    animation: widget.previewController.view,
+                    builder: (context, _) {
+                      return Theme(
+                        data: Theme.of(context).copyWith(
+                          sliderTheme: const SliderThemeData(
+                            showValueIndicator: ShowValueIndicator.always,
+                            thumbShape: RoundSliderThumbShape(
+                              enabledThumbRadius: 8,
+                            ),
+                            overlayShape: RoundSliderOverlayShape(
+                              overlayRadius: 16,
                             ),
                           ),
-                          child: Slider(
-                            value: widget.previewController.view.value,
-                            label: (widget.previewController.view.value *
-                                    widget.totalPathTime)
-                                .toStringAsFixed(2),
-                            focusNode: FocusNode(
-                              skipTraversal: true,
-                              canRequestFocus: false,
-                            ),
-                            onChanged: (value) {
-                              if (widget.previewController.isAnimating) {
-                                setState(() {
-                                  widget.previewController.stop();
-                                });
-                                widget.onPauseStateChanged?.call(true);
-                              }
+                        ),
+                        child: Slider(
+                          value: widget.previewController.value,
+                          label: (widget.previewController.value *
+                                  widget.totalPathTime)
+                              .toStringAsFixed(2),
+                          onChanged: (value) {
+                            if (widget.previewController.isAnimating) {
+                              setState(() {
+                                widget.previewController.stop();
+                              });
+                              widget.onPauseStateChanged?.call(true);
+                            }
 
-                              widget.previewController.value = value;
-                            },
-                          ),
-                        );
-                      }),
+                            widget.previewController.value = value;
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),

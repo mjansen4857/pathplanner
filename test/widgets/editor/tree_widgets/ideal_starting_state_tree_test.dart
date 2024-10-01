@@ -47,7 +47,7 @@ void main() {
     expect(find.byType(NumberTextField), findsWidgets);
 
     await widgetTester.tap(find.text(
-        'Ideal Starting State')); // Use text so it doesn't tap middle of expanded card
+        'Starting State')); // Use text so it doesn't tap middle of expanded card
     await widgetTester.pumpAndSettle();
     expect(find.byType(NumberTextField), findsNothing);
   });

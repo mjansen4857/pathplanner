@@ -512,7 +512,8 @@ void main() {
       ),
     ));
 
-    var newZoneButton = find.text('Add New Zone');
+    // Find the add new zone button by its tooltip
+    var newZoneButton = find.byTooltip('Add New Constraint Zone');
 
     expect(newZoneButton, findsOneWidget);
 

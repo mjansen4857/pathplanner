@@ -155,7 +155,7 @@ class _ManagementDialogState extends State<ManagementDialog> {
                                 ));
                       },
                       icon: Icon(
-                        Icons.close_rounded,
+                        Icons.delete_forever_rounded,
                         color: colorScheme.error,
                       ),
                     ),
@@ -224,7 +224,7 @@ class _ManagementDialogState extends State<ManagementDialog> {
                                 ));
                       },
                       icon: Icon(
-                        Icons.close_rounded,
+                        Icons.delete_forever_rounded,
                         color: colorScheme.error,
                       ),
                     ),

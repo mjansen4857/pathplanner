@@ -6,37 +6,61 @@ void main() {
   late AnimationController controller;
 
   setUp(() {
-    controller = AnimationController(vsync: const TestVSync());
-    controller.duration = const Duration(milliseconds: 1000);
+    controller = AnimationController(
+      vsync: const TestVSync(),
+      duration: const Duration(seconds: 1),
+    );
   });
 
-  testWidgets('play/pause button', (widgetTester) async {
-    await widgetTester.pumpWidget(
+  tearDown(() {
+    controller.dispose();
+  });
+
+  testWidgets('play/pause button', (WidgetTester tester) async {
+    final AnimationController controller = AnimationController(
+      vsync: const TestVSync(),
+      duration: const Duration(seconds: 1),
+    );
+
+    await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: PreviewSeekbar(
             previewController: controller,
-            totalPathTime: 1.0,
+            totalPathTime: 10,
           ),
         ),
       ),
     );
 
-    expect(controller.isAnimating, false);
+    // Find the play/pause button by its tooltip
+    final Finder playPauseButton = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is IconButton &&
+          (widget.tooltip == 'Play' || widget.tooltip == 'Pause'),
+    );
 
-    final iconButton = find.byType(IconButton);
+    expect(playPauseButton, findsOneWidget);
 
-    expect(iconButton, findsOneWidget);
+    // Initially, the button should show the play icon
+    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+    expect(find.byIcon(Icons.pause), findsNothing);
 
-    await widgetTester.tap(iconButton);
-    await widgetTester.pump();
+    // Tap the play button
+    await tester.tap(playPauseButton);
+    await tester.pump();
 
-    expect(controller.isAnimating, true);
+    // Now it should show the pause icon
+    expect(find.byIcon(Icons.pause), findsOneWidget);
+    expect(find.byIcon(Icons.play_arrow), findsNothing);
 
-    await widgetTester.tap(iconButton);
-    await widgetTester.pump();
+    // Tap the pause button
+    await tester.tap(playPauseButton);
+    await tester.pump();
 
-    expect(controller.isAnimating, false);
+    // It should show the play icon again
+    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+    expect(find.byIcon(Icons.pause), findsNothing);
   });
 
   testWidgets('seek slider', (widgetTester) async {
@@ -62,5 +86,47 @@ void main() {
 
     expect(controller.isAnimating, false);
     expect(controller.view.value, closeTo(0.5, 0.01));
+  });
+
+  testWidgets('restart button', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PreviewSeekbar(
+            previewController: controller,
+            totalPathTime: 10,
+          ),
+        ),
+      ),
+    );
+
+    // Find the restart button by its tooltip
+    final Finder restartButton = find.byWidgetPredicate(
+      (Widget widget) => widget is IconButton && widget.tooltip == 'Restart',
+    );
+
+    expect(restartButton, findsOneWidget);
+
+    // Verify the restart icon
+    expect(find.byIcon(Icons.replay), findsOneWidget);
+
+    // Set the controller to a non-zero value
+    controller.value = 0.5;
+
+    // Tap the restart button
+    await tester.tap(restartButton);
+    await tester.pump();
+
+    // Verify that the controller has been reset
+    expect(controller.value, 0.0);
+
+    // Pump a frame to allow animations to start
+    await tester.pump();
+
+    // Verify that the controller is animating
+    expect(controller.isAnimating, true);
+
+    // Stop the animation to prevent it from running after the test
+    controller.stop();
   });
 }

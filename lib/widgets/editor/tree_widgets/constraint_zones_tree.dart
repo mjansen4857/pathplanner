@@ -55,32 +55,12 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Constraint Zones'),
-      trailing: ItemCount(count: widget.path.constraintZones.length),
-      initiallyExpanded: widget.path.constraintZonesExpanded,
-      onExpansionChanged: (value) {
-        if (value != null) {
-          widget.path.constraintZonesExpanded = value;
-          if (value == false) {
-            _selectedZone = null;
-            widget.onZoneSelected?.call(null);
-          }
-        }
-      },
-      elevation: 1.0,
-      children: [
-        const Center(
-          child: Text('Zones at the top of the list have higher priority'),
-        ),
-        const SizedBox(height: 6),
-        for (int i = 0; i < constraintZones.length; i++) _buildZoneCard(i),
-        const SizedBox(height: 12),
-        Center(
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.add),
-            style: ElevatedButton.styleFrom(
-              elevation: 4.0,
-            ),
-            label: const Text('Add New Zone'),
+      leading: const Icon(Icons.speed_rounded),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.add, size: 20),
             onPressed: () {
               widget.undoStack.add(Change(
                 PathPlannerPath.cloneConstraintZones(constraintZones),
@@ -100,8 +80,29 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                 },
               ));
             },
+            tooltip: 'Add New Constraint Zone',
           ),
+          const SizedBox(width: 8),
+          ItemCount(count: widget.path.constraintZones.length),
+        ],
+      ),
+      initiallyExpanded: widget.path.constraintZonesExpanded,
+      onExpansionChanged: (value) {
+        if (value != null) {
+          widget.path.constraintZonesExpanded = value;
+          if (value == false) {
+            _selectedZone = null;
+            widget.onZoneSelected?.call(null);
+          }
+        }
+      },
+      elevation: 1.0,
+      children: [
+        const Center(
+          child: Text('Zones at the top of the list have higher priority'),
         ),
+        const SizedBox(height: 6),
+        for (int i = 0; i < constraintZones.length; i++) _buildZoneCard(i),
       ],
     );
   }

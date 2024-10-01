@@ -248,7 +248,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
         titleWidget: Text(
           _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
         ),
       ),
       drawer: _projectDir == null ? null : _buildDrawer(context),

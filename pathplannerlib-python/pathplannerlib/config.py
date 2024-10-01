@@ -37,7 +37,7 @@ class ModuleConfig:
     torqueLoss: float
 
     def __init__(self, wheelRadiusMeters: float, maxDriveVelocityMPS: float, wheelCOF: float,
-                 driveMotor: DCMotor, driveCurrentLimit: float):
+                 driveMotor: DCMotor, driveCurrentLimit: float, numMotors: int):
         """
         Configuration of a robot drive module. This can either be a swerve module,
         or one side of a differential drive train.
@@ -47,12 +47,13 @@ class ModuleConfig:
         :param wheelCOF: The coefficient of friction between the drive wheel and the carpet. If you are unsure, just use a placeholder value of 1.0.
         :param driveMotor: The DCMotor representing the drive motor gearbox, including gear reduction
         :param driveCurrentLimit: The current limit of the drive motor, in Amps
+        :param numMotors: The number of motors per module. For swerve, this is 1. For differential, this is usually 2.
         """
         self.wheelRadiusMeters = wheelRadiusMeters
         self.maxDriveVelocityMPS = maxDriveVelocityMPS
         self.wheelCOF = wheelCOF
         self.driveMotor = driveMotor
-        self.driveCurrentLimit = driveCurrentLimit
+        self.driveCurrentLimit = driveCurrentLimit * numMotors
 
         self.maxDriveVelocityRadPerSec = self.maxDriveVelocityMPS / self.wheelRadiusMeters
         maxSpeedCurrentDraw = self.driveMotor.current(self.maxDriveVelocityRadPerSec, 12.0)
@@ -200,7 +201,8 @@ class RobotConfig:
                 maxDriveSpeed,
                 wheelCOF,
                 gearbox,
-                driveCurrentLimit
+                driveCurrentLimit,
+                numMotors
             )
 
             if isHolonomic:

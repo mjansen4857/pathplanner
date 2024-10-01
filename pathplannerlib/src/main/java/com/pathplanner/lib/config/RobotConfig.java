@@ -202,7 +202,8 @@ public class RobotConfig {
     gearbox = gearbox.withReduction(gearing);
 
     ModuleConfig moduleConfig =
-        new ModuleConfig(wheelRadius, maxDriveSpeed, wheelCOF, gearbox, driveCurrentLimit);
+        new ModuleConfig(
+            wheelRadius, maxDriveSpeed, wheelCOF, gearbox, driveCurrentLimit, numMotors);
 
     if (isHolonomic) {
       return new RobotConfig(massKG, MOI, moduleConfig, trackwidth, wheelbase);

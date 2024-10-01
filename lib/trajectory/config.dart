@@ -20,10 +20,11 @@ class RobotConfig {
     required this.holonomic,
   }) : kinematics = SwerveDriveKinematics(moduleLocations);
 
-  static RobotConfig fromPrefs(SharedPreferences prefs) {
-    ModuleConfig moduleConfig = ModuleConfig.fromPrefs(prefs);
+  factory RobotConfig.fromPrefs(SharedPreferences prefs) {
     bool holonomicMode =
         prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
+    int numMotors = holonomicMode ? 1 : 2;
+    ModuleConfig moduleConfig = ModuleConfig.fromPrefs(prefs, numMotors);
     num halfWheelbase =
         (prefs.getDouble(PrefsKeys.robotWheelbase) ?? Defaults.robotWheelbase) /
             2;
@@ -67,7 +68,7 @@ class ModuleConfig {
     required this.wheelCOF,
   });
 
-  ModuleConfig.fromPrefs(SharedPreferences prefs)
+  ModuleConfig.fromPrefs(SharedPreferences prefs, int numMotors)
       : this(
           wheelRadiusMeters: prefs.getDouble(PrefsKeys.driveWheelRadius) ??
               Defaults.driveWheelRadius,
@@ -75,14 +76,12 @@ class ModuleConfig {
               Defaults.maxDriveSpeed,
           driveMotor: DCMotor.fromString(
                   prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
-                  (prefs.getBool(PrefsKeys.holonomicMode) ??
-                          Defaults.holonomicMode)
-                      ? 1
-                      : 2)
+                  numMotors)
               .withReduction(prefs.getDouble(PrefsKeys.driveGearing) ??
                   Defaults.driveGearing),
-          driveCurrentLimit: prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
-              Defaults.driveCurrentLimit,
+          driveCurrentLimit: (prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
+                  Defaults.driveCurrentLimit) *
+              numMotors,
           wheelCOF: prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
         );
 

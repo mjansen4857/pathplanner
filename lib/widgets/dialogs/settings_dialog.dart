@@ -640,6 +640,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                   .setBool(PrefsKeys.holonomicMode, value);
                               setState(() {
                                 _holonomicMode = value;
+                                _optimalCurrentLimit =
+                                    _calculateOptimalCurrentLimit();
                               });
                               widget.onSettingsChanged();
                             },
@@ -963,11 +965,12 @@ class _SettingsDialogState extends State<SettingsDialog> {
   }
 
   num _calculateOptimalCurrentLimit() {
-    int numModules = _holonomicMode ? 4 : 2;
-    DCMotor driveMotor = DCMotor.fromString(_driveMotor, _holonomicMode ? 1 : 2)
-        .withReduction(_driveGearing);
-    num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
-    num maxFrictionTorque = moduleFrictionForce * _wheelRadius;
-    return maxFrictionTorque / driveMotor.kTNMPerAmp;
+    final int numModules = _holonomicMode ? 4 : 2;
+    final int numMotors = _holonomicMode ? 1 : 2;
+    final DCMotor driveMotor =
+        DCMotor.fromString(_driveMotor, numMotors).withReduction(_driveGearing);
+    final num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
+    final num maxFrictionTorque = moduleFrictionForce * _wheelRadius;
+    return (maxFrictionTorque / driveMotor.kTNMPerAmp) / numMotors;
   }
 }

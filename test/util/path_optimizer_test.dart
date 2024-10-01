@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:file/memory.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
@@ -51,11 +49,7 @@ void main() {
         PathPlannerTrajectory(path: unoptimized, robotConfig: config)
             .getTotalTimeSeconds();
 
-    final fieldSize = const Size(16.54, 8.21);
-    final robotSize = const Size(0.9, 0.9);
-
-    final result = await PathOptimizer.optimizePath(
-        unoptimized, config, fieldSize, robotSize);
+    final result = await PathOptimizer.optimizePath(unoptimized, config);
     expect(result.runtime, isNonNegative);
     expect(result.runtime, isNotNaN);
     expect(result.runtime, lessThan(originalTime));

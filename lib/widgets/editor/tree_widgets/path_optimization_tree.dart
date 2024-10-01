@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/util/path_optimizer.dart';
-import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
@@ -13,7 +12,6 @@ class PathOptimizationTree extends StatefulWidget {
   final ValueChanged<PathPlannerPath?>? onUpdate;
   final ChangeStack undoStack;
   final SharedPreferences prefs;
-  final Size fieldSizeMeters;
 
   const PathOptimizationTree({
     super.key,
@@ -22,7 +20,6 @@ class PathOptimizationTree extends StatefulWidget {
     this.onUpdate,
     required this.undoStack,
     required this.prefs,
-    required this.fieldSizeMeters,
   });
 
   @override
@@ -32,19 +29,6 @@ class PathOptimizationTree extends StatefulWidget {
 class _PathOptimizationTreeState extends State<PathOptimizationTree> {
   OptimizationResult? _currentResult;
   bool _running = false;
-
-  late final Size _robotSize;
-
-  @override
-  void initState() {
-    super.initState();
-
-    var width =
-        widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
-    var length =
-        widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
-    _robotSize = Size(width, length);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,8 +123,6 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
     final result = await PathOptimizer.optimizePath(
       widget.path,
       config,
-      widget.fieldSizeMeters,
-      _robotSize,
       onUpdate: (result) => setState(() {
         _currentResult = result;
         widget.onUpdate?.call(_currentResult?.path);

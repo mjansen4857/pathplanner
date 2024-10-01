@@ -39,7 +39,6 @@ class PathTree extends StatefulWidget {
   final PathConstraints defaultConstraints;
   final SharedPreferences prefs;
   final Widget? runtimeDisplay;
-  final Size fieldSizeMeters;
 
   const PathTree({
     super.key,
@@ -68,7 +67,6 @@ class PathTree extends StatefulWidget {
     required this.holonomicMode,
     required this.defaultConstraints,
     required this.prefs,
-    required this.fieldSizeMeters,
   });
 
   @override
@@ -323,7 +321,6 @@ class _PathTreeState extends State<PathTree> {
       onUpdate: widget.onOptimizationUpdate,
       undoStack: widget.undoStack,
       prefs: widget.prefs,
-      fieldSizeMeters: widget.fieldSizeMeters,
     );
   }
 }

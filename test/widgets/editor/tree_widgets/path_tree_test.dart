@@ -36,6 +36,10 @@ void main() {
   });
 
   testWidgets('has runtime display', (widgetTester) async {
+    // Set up a mock SharedPreferences instance
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: PathTree(
@@ -47,8 +51,7 @@ void main() {
             currentRuntime: 5.0,
             previousRuntime: null,
           ),
-          prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
+          prefs: prefs, // Add the required prefs parameter
         ),
       ),
     ));
@@ -66,7 +69,6 @@ void main() {
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -89,7 +91,6 @@ void main() {
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -106,7 +107,6 @@ void main() {
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -123,7 +123,6 @@ void main() {
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -140,7 +139,6 @@ void main() {
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -157,7 +155,6 @@ void main() {
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -174,7 +171,6 @@ void main() {
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -191,7 +187,6 @@ void main() {
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -208,7 +203,6 @@ void main() {
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -227,7 +221,6 @@ void main() {
           holonomicMode: false,
           defaultConstraints: PathConstraints(),
           prefs: prefs,
-          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));

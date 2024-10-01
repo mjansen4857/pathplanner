@@ -514,7 +514,6 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     holonomicMode: _holonomicMode,
                     defaultConstraints: _getDefaultConstraints(),
                     prefs: widget.prefs,
-                    fieldSizeMeters: widget.fieldImage.getFieldSizeMeters(),
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();

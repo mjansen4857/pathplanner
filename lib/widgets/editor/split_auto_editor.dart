@@ -245,14 +245,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
           2;
       List<Translation2d> moduleLocations = _holonomicMode
           ? [
-              Translation2d(x: halfWheelbase, y: halfTrackwidth),
-              Translation2d(x: halfWheelbase, y: -halfTrackwidth),
-              Translation2d(x: -halfWheelbase, y: halfTrackwidth),
-              Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
+              Translation2d(halfWheelbase, halfTrackwidth),
+              Translation2d(halfWheelbase, -halfTrackwidth),
+              Translation2d(-halfWheelbase, halfTrackwidth),
+              Translation2d(-halfWheelbase, -halfTrackwidth),
             ]
           : [
-              Translation2d(x: 0, y: halfTrackwidth),
-              Translation2d(x: 0, y: -halfTrackwidth),
+              Translation2d(0, halfTrackwidth),
+              Translation2d(0, -halfTrackwidth),
             ];
 
       int numMotors = _holonomicMode ? 1 : 2;

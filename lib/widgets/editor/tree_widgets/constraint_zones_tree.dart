@@ -235,7 +235,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                 child: NumberTextField(
                   initialText: constraintZones[zoneIdx]
                       .constraints
-                      .maxVelocity
+                      .maxVelocityMPS
                       .toStringAsFixed(2),
                   label: 'Max Velocity (M/S)',
                   onSubmitted: (value) {
@@ -244,7 +244,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
-                              .maxVelocity = value);
+                              .maxVelocityMPS = value);
                     }
                   },
                 ),
@@ -254,7 +254,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                 child: NumberTextField(
                   initialText: constraintZones[zoneIdx]
                       .constraints
-                      .maxAcceleration
+                      .maxAccelerationMPSSq
                       .toStringAsFixed(2),
                   label: 'Max Acceleration (M/S²)',
                   onSubmitted: (value) {
@@ -263,7 +263,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
-                              .maxAcceleration = value);
+                              .maxAccelerationMPSSq = value);
                     }
                   },
                 ),
@@ -280,7 +280,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                 child: NumberTextField(
                   initialText: constraintZones[zoneIdx]
                       .constraints
-                      .maxAngularVelocity
+                      .maxAngularVelocityDeg
                       .toStringAsFixed(2),
                   label: 'Max Angular Velocity (Deg/S)',
                   arrowKeyIncrement: 1.0,
@@ -290,7 +290,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
-                              .maxAngularVelocity = value);
+                              .maxAngularVelocityDeg = value);
                     }
                   },
                 ),
@@ -300,7 +300,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                 child: NumberTextField(
                   initialText: constraintZones[zoneIdx]
                       .constraints
-                      .maxAngularAcceleration
+                      .maxAngularAccelerationDeg
                       .toStringAsFixed(2),
                   label: 'Max Angular Acceleration (Deg/S²)',
                   arrowKeyIncrement: 1.0,
@@ -310,7 +310,7 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
-                              .maxAngularAcceleration = value);
+                              .maxAngularAccelerationDeg = value);
                     }
                   },
                 ),

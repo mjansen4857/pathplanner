@@ -1,11 +1,10 @@
-import 'dart:math';
-
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -88,7 +87,7 @@ void main() {
   });
 
   testWidgets('waypoint card titles', (widgetTester) async {
-    path.addWaypoint(const Point(7.0, 4.0));
+    path.addWaypoint(const Translation2d(7.0, 4.0));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -294,22 +293,22 @@ void main() {
       ),
     ));
 
-    var textField = find.widgetWithText(NumberTextField, 'Heading (Deg)');
+    final textField = find.widgetWithText(NumberTextField, 'Heading (Deg)');
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.waypoints[1].getHeadingDegrees();
+    final oldVal = path.waypoints[1].heading;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].getHeadingDegrees(), closeTo(0.1, epsilon));
+    expect(path.waypoints[1].heading.degrees, closeTo(0.1, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[1].getHeadingDegrees(), closeTo(oldVal, epsilon));
+    expect(path.waypoints[1].heading.degrees, closeTo(oldVal.degrees, epsilon));
   });
 
   testWidgets('Prev length text field', (widgetTester) async {
@@ -333,18 +332,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.waypoints[1].getPrevControlLength();
+    num oldVal = path.waypoints[1].prevControlLength!;
 
     await widgetTester.enterText(textField, '0.75');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].getPrevControlLength(), closeTo(0.75, epsilon));
+    expect(path.waypoints[1].prevControlLength, closeTo(0.75, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[1].getPrevControlLength(), closeTo(oldVal, epsilon));
+    expect(path.waypoints[1].prevControlLength, closeTo(oldVal, epsilon));
   });
 
   testWidgets('Next length text field', (widgetTester) async {
@@ -368,18 +367,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.waypoints[0].getNextControlLength();
+    num oldVal = path.waypoints[0].nextControlLength!;
 
     await widgetTester.enterText(textField, '0.75');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[0].getNextControlLength(), closeTo(0.75, epsilon));
+    expect(path.waypoints[0].nextControlLength, closeTo(0.75, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[0].getNextControlLength(), closeTo(oldVal, epsilon));
+    expect(path.waypoints[0].nextControlLength, closeTo(oldVal, epsilon));
   });
 
   testWidgets('Insert waypoint button', (widgetTester) async {
@@ -456,8 +455,8 @@ void main() {
   });
 
   testWidgets('linked waypoint', (widgetTester) async {
-    Waypoint.linked['existing link'] = const Point(0, 0);
-    Waypoint.linked['new link'] = const Point(0, 0);
+    Waypoint.linked['existing link'] = const Translation2d(0, 0);
+    Waypoint.linked['new link'] = const Translation2d(0, 0);
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -588,7 +587,7 @@ void main() {
   });
 
   testWidgets('Delete waypoint button', (widgetTester) async {
-    path.addWaypoint(const Point(7.0, 4.0));
+    path.addWaypoint(const Translation2d(7.0, 4.0));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

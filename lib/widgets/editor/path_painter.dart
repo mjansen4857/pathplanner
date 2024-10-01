@@ -155,10 +155,10 @@ class PathPainter extends CustomPainter {
 
     for (int i = 1; i < paths.length; i++) {
       // Paint warnings between rbeaks in paths
-      Point<num> prevPathEnd = paths[i - 1].pathPoints.last.position;
-      Point<num> pathStart = paths[i].pathPoints.first.position;
+      Translation2d prevPathEnd = paths[i - 1].pathPoints.last.position;
+      Translation2d pathStart = paths[i].pathPoints.first.position;
 
-      if (prevPathEnd.distanceTo(pathStart) >= 0.25) {
+      if (prevPathEnd.getDistance(pathStart) >= 0.25) {
         _paintBreakWarning(prevPathEnd, pathStart, canvas, scale);
       }
     }
@@ -178,22 +178,22 @@ class PathPainter extends CustomPainter {
         List<Pose2d> modPoses = [
           Pose2d(
               state.pose.translation +
-                  Translation2d(x: wheelbase / 2, y: trackwidth / 2)
+                  Translation2d(wheelbase / 2, trackwidth / 2)
                       .rotateBy(rotation),
               state.moduleStates[0].fieldAngle),
           Pose2d(
               state.pose.translation +
-                  Translation2d(x: wheelbase / 2, y: -trackwidth / 2)
+                  Translation2d(wheelbase / 2, -trackwidth / 2)
                       .rotateBy(rotation),
               state.moduleStates[1].fieldAngle),
           Pose2d(
               state.pose.translation +
-                  Translation2d(x: -wheelbase / 2, y: trackwidth / 2)
+                  Translation2d(-wheelbase / 2, trackwidth / 2)
                       .rotateBy(rotation),
               state.moduleStates[2].fieldAngle),
           Pose2d(
               state.pose.translation +
-                  Translation2d(x: -wheelbase / 2, y: -trackwidth / 2)
+                  Translation2d(-wheelbase / 2, -trackwidth / 2)
                       .rotateBy(rotation),
               state.moduleStates[3].fieldAngle),
         ];
@@ -202,8 +202,7 @@ class PathPainter extends CustomPainter {
       }
 
       PathPainterUtil.paintRobotOutline(
-          Point(state.pose.translation.x, state.pose.translation.y),
-          rotation.getDegrees(),
+          Pose2d(state.pose.translation, rotation),
           fieldImage,
           robotSize,
           scale,
@@ -251,7 +250,7 @@ class PathPainter extends CustomPainter {
             Colors.yellow, Colors.green, (normalizedVel - 0.67) / 0.33)!;
       }
       Offset pos = PathPainterUtil.pointToPixelOffset(
-          Point(s.pose.translation.x, s.pose.translation.y), scale, fieldImage);
+          s.pose.translation, scale, fieldImage);
       canvas.drawCircle(pos, 3.0, paint);
     }
   }
@@ -266,18 +265,12 @@ class PathPainter extends CustomPainter {
     Path p = Path();
 
     Offset start = PathPainterUtil.pointToPixelOffset(
-        Point(traj.states.first.pose.translation.x,
-            traj.states.first.pose.translation.y),
-        scale,
-        fieldImage);
+        traj.states.first.pose.translation, scale, fieldImage);
     p.moveTo(start.dx, start.dy);
 
     for (int i = 1; i < traj.states.length; i++) {
       Offset pos = PathPainterUtil.pointToPixelOffset(
-          Point(traj.states[i].pose.translation.x,
-              traj.states[i].pose.translation.y),
-          scale,
-          fieldImage);
+          traj.states[i].pose.translation, scale, fieldImage);
 
       p.lineTo(pos.dx, pos.dy);
     }
@@ -296,30 +289,20 @@ class PathPainter extends CustomPainter {
     paint.style = PaintingStyle.fill;
     canvas.drawCircle(
         PathPainterUtil.pointToPixelOffset(
-            Point(state.pose.translation.x, state.pose.translation.y),
-            scale,
-            fieldImage),
+            state.pose.translation, scale, fieldImage),
         PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
         paint);
     paint.style = PaintingStyle.stroke;
     paint.color = Colors.black;
     canvas.drawCircle(
         PathPainterUtil.pointToPixelOffset(
-            Point(state.pose.translation.x, state.pose.translation.y),
-            scale,
-            fieldImage),
+            state.pose.translation, scale, fieldImage),
         PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
         paint);
 
     // Draw robot
-    PathPainterUtil.paintRobotOutline(
-        Point(state.pose.translation.x, state.pose.translation.y),
-        state.pose.rotation.getDegrees(),
-        fieldImage,
-        robotSize,
-        scale,
-        canvas,
-        color.withOpacity(0.5));
+    PathPainterUtil.paintRobotOutline(state.pose, fieldImage, robotSize, scale,
+        canvas, color.withOpacity(0.5));
   }
 
   void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor,
@@ -414,7 +397,7 @@ class PathPainter extends CustomPainter {
     for (num timestamp in path.eventMarkerTimes) {
       TrajectoryState s = path.trajectory.sample(timestamp);
       Offset markerPos = PathPainterUtil.pointToPixelOffset(
-          Point(s.pose.translation.x, s.pose.translation.y), scale, fieldImage);
+          s.pose.translation, scale, fieldImage);
 
       PathPainterUtil.paintMarker(
           canvas, markerPos, Colors.grey[700]!, Colors.black);
@@ -435,8 +418,7 @@ class PathPainter extends CustomPainter {
         }
 
         PathPainterUtil.paintRobotOutline(
-            path.pathPoints[i].position,
-            target.rotationDegrees,
+            Pose2d(path.pathPoints[i].position, target.rotation),
             fieldImage,
             robotSize,
             scale,
@@ -446,8 +428,7 @@ class PathPainter extends CustomPainter {
     }
 
     PathPainterUtil.paintRobotOutline(
-        path.waypoints.first.anchor,
-        path.idealStartingState.rotation,
+        Pose2d(path.waypoints.first.anchor, path.idealStartingState.rotation),
         fieldImage,
         robotSize,
         scale,
@@ -455,8 +436,8 @@ class PathPainter extends CustomPainter {
         Colors.green.withOpacity(0.5));
 
     PathPainterUtil.paintRobotOutline(
-        path.waypoints[path.waypoints.length - 1].anchor,
-        path.goalEndState.rotation,
+        Pose2d(path.waypoints[path.waypoints.length - 1].anchor,
+            path.goalEndState.rotation),
         fieldImage,
         robotSize,
         scale,
@@ -464,7 +445,7 @@ class PathPainter extends CustomPainter {
         Colors.red.withOpacity(0.5));
   }
 
-  void _paintBreakWarning(Point<num> prevPathEnd, Point<num> pathStart,
+  void _paintBreakWarning(Translation2d prevPathEnd, Translation2d pathStart,
       Canvas canvas, double scale) {
     var paint = Paint()
       ..style = PaintingStyle.stroke

@@ -204,18 +204,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.constraintZones[0].constraints.maxVelocity;
+    num oldVal = path.constraintZones[0].constraints.maxVelocityMPS;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].constraints.maxVelocity, 0.1);
+    expect(path.constraintZones[0].constraints.maxVelocityMPS, 0.1);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones[0].constraints.maxVelocity, oldVal);
+    expect(path.constraintZones[0].constraints.maxVelocityMPS, oldVal);
   });
 
   testWidgets('Max accel text field', (widgetTester) async {
@@ -237,18 +237,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.constraintZones[0].constraints.maxAcceleration;
+    num oldVal = path.constraintZones[0].constraints.maxAccelerationMPSSq;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].constraints.maxAcceleration, 0.1);
+    expect(path.constraintZones[0].constraints.maxAccelerationMPSSq, 0.1);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones[0].constraints.maxAcceleration, oldVal);
+    expect(path.constraintZones[0].constraints.maxAccelerationMPSSq, oldVal);
   });
 
   testWidgets('Max ang vel text field', (widgetTester) async {
@@ -270,18 +270,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.constraintZones[0].constraints.maxAngularVelocity;
+    num oldVal = path.constraintZones[0].constraints.maxAngularVelocityDeg;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].constraints.maxAngularVelocity, 0.1);
+    expect(path.constraintZones[0].constraints.maxAngularVelocityDeg, 0.1);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones[0].constraints.maxAngularVelocity, oldVal);
+    expect(path.constraintZones[0].constraints.maxAngularVelocityDeg, oldVal);
   });
 
   testWidgets('Max ang accel text field', (widgetTester) async {
@@ -303,18 +303,19 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.constraintZones[0].constraints.maxAngularAcceleration;
+    num oldVal = path.constraintZones[0].constraints.maxAngularAccelerationDeg;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].constraints.maxAngularAcceleration, 0.1);
+    expect(path.constraintZones[0].constraints.maxAngularAccelerationDeg, 0.1);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones[0].constraints.maxAngularAcceleration, oldVal);
+    expect(
+        path.constraintZones[0].constraints.maxAngularAccelerationDeg, oldVal);
   });
 
   testWidgets('min pos slider', (widgetTester) async {

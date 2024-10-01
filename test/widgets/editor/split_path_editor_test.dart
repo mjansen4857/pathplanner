@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +11,7 @@ import 'package:pathplanner/path/ideal_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/split_path_editor.dart';
@@ -36,9 +35,9 @@ void main() {
       pathDir: '/paths',
       fs: fs,
     );
-    path.goalEndState.rotation = 0;
+    path.goalEndState.rotation = Rotation2d();
     path.rotationTargets = [
-      RotationTarget(waypointRelativePos: 0.5, rotationDegrees: 0),
+      RotationTarget(0.5, Rotation2d()),
     ];
     path.eventMarkers = [
       EventMarker(
@@ -218,7 +217,7 @@ void main() {
     ));
 
     var tapLocation = PathPainterUtil.pointToPixelOffset(
-            const Point(1.0, 1.0), PathPainter.scale, fieldImage) +
+            const Translation2d(1.0, 1.0), PathPainter.scale, fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(-2.0, 23.0); // Some weird buffer going on
 
@@ -302,11 +301,13 @@ void main() {
       ),
     ));
 
-    Point targetPos = path.pathPoints
+    Translation2d targetPos = path.pathPoints
         .firstWhere((p) => p.rotationTarget == path.rotationTargets[0])
         .position;
     var dragLocation = PathPainterUtil.pointToPixelOffset(
-            targetPos + const Point(0.5, 0.0), PathPainter.scale, fieldImage) +
+            targetPos + const Translation2d(0.5, 0.0),
+            PathPainter.scale,
+            fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(2.0, 28.0); // Some weird buffer going on
     var halfMeterPixels =
@@ -324,12 +325,12 @@ void main() {
     await gesture.up();
     await widgetTester.pumpAndSettle();
 
-    expect(path.rotationTargets[0].rotationDegrees, closeTo(90, 1.0));
+    expect(path.rotationTargets[0].rotation.degrees, closeTo(90, 1.0));
 
     undoStack.undo();
     await widgetTester.pumpAndSettle();
 
-    expect(path.rotationTargets[0].rotationDegrees, closeTo(0, 0.1));
+    expect(path.rotationTargets[0].rotation.degrees, closeTo(0, 0.1));
   });
 
   testWidgets('drag end rotation', (widgetTester) async {
@@ -348,9 +349,11 @@ void main() {
       ),
     ));
 
-    Point targetPos = path.waypoints.last.anchor;
+    Translation2d targetPos = path.waypoints.last.anchor;
     var dragLocation = PathPainterUtil.pointToPixelOffset(
-            targetPos + const Point(0.5, 0.0), PathPainter.scale, fieldImage) +
+            targetPos + const Translation2d(0.5, 0.0),
+            PathPainter.scale,
+            fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(2.0, 28.0); // Some weird buffer going on
     var halfMeterPixels =
@@ -368,18 +371,18 @@ void main() {
     await gesture.up();
     await widgetTester.pumpAndSettle();
 
-    expect(path.goalEndState.rotation, closeTo(90, 1.0));
+    expect(path.goalEndState.rotation.degrees, closeTo(90, 1.0));
 
     undoStack.undo();
     await widgetTester.pumpAndSettle();
 
-    expect(path.goalEndState.rotation, closeTo(0, 0.1));
+    expect(path.goalEndState.rotation.degrees, closeTo(0, 0.1));
   });
 
   testWidgets('drag ideal starting state rotation', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    path.idealStartingState = IdealStartingState();
+    path.idealStartingState = IdealStartingState(0.0, Rotation2d());
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -393,9 +396,11 @@ void main() {
       ),
     ));
 
-    Point targetPos = path.waypoints.first.anchor;
+    Translation2d targetPos = path.waypoints.first.anchor;
     var dragLocation = PathPainterUtil.pointToPixelOffset(
-            targetPos + const Point(0.5, 0.0), PathPainter.scale, fieldImage) +
+            targetPos + const Translation2d(0.5, 0.0),
+            PathPainter.scale,
+            fieldImage) +
         const Offset(48, 48) + // Add 48 for padding
         const Offset(2.0, 28.0); // Some weird buffer going on
     var halfMeterPixels =
@@ -413,19 +418,19 @@ void main() {
     await gesture.up();
     await widgetTester.pumpAndSettle();
 
-    expect(path.idealStartingState.rotation, closeTo(90, 1.0));
+    expect(path.idealStartingState.rotation.degrees, closeTo(90, 1.0));
 
     undoStack.undo();
     await widgetTester.pumpAndSettle();
 
-    expect(path.idealStartingState.rotation, closeTo(0, 0.1));
+    expect(path.idealStartingState.rotation.degrees, closeTo(0, 0.1));
   });
 
   testWidgets('delete waypoint', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.waypointsExpanded = true;
-    path.addWaypoint(const Point(7.0, 4.0));
+    path.addWaypoint(const Translation2d(7.0, 4.0));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -460,7 +465,7 @@ void main() {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.waypointsExpanded = true;
-    path.addWaypoint(const Point(7.0, 4.0));
+    path.addWaypoint(const Translation2d(7.0, 4.0));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

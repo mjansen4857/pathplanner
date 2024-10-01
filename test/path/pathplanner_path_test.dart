@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:file/file.dart';
@@ -17,6 +16,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/ideal_starting_state.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 
 const num epsilon = 0.01;
 
@@ -40,30 +40,31 @@ void main() {
         fs: fs,
         waypoints: [
           Waypoint(
-            anchor: const Point(1.0, 1.0),
-            nextControl: const Point(2.0, 2.0),
+            anchor: const Translation2d(1.0, 1.0),
+            nextControl: const Translation2d(2.0, 2.0),
           ),
           Waypoint(
-            anchor: const Point(4.0, 1.0),
-            prevControl: const Point(3.0, 2.0),
+            anchor: const Translation2d(4.0, 1.0),
+            prevControl: const Translation2d(3.0, 2.0),
           ),
         ],
-        globalConstraints: PathConstraints(maxVelocity: 1.1),
-        goalEndState: GoalEndState(velocity: 0.5),
+        globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
+        goalEndState: GoalEndState(0.5, Rotation2d()),
         constraintZones:
             List.generate(3, (index) => ConstraintsZone.defaultZone()),
-        rotationTargets: List.generate(4, (index) => RotationTarget()),
+        rotationTargets:
+            List.generate(4, (index) => RotationTarget(0.0, Rotation2d())),
         eventMarkers: List.generate(5, (index) => EventMarker.defaultMarker()),
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(),
+        idealStartingState: IdealStartingState(0.0, Rotation2d()),
         useDefaultConstraints: false,
       );
 
       expect(path.name, 'test');
       expect(path.waypoints.length, 2);
-      expect(path.globalConstraints.maxVelocity, 1.1);
-      expect(path.goalEndState.velocity, 0.5);
+      expect(path.globalConstraints.maxVelocityMPS, 1.1);
+      expect(path.goalEndState.velocityMPS, 0.5);
       expect(path.constraintZones.length, 3);
       expect(path.rotationTargets.length, 4);
       expect(path.eventMarkers.length, 5);
@@ -79,22 +80,22 @@ void main() {
         fs: fs,
         waypoints: [
           Waypoint(
-            anchor: const Point(1.0, 1.0),
-            nextControl: const Point(2.0, 2.0),
+            anchor: const Translation2d(1.0, 1.0),
+            nextControl: const Translation2d(2.0, 2.0),
           ),
           Waypoint(
-            anchor: const Point(4.0, 1.0),
-            prevControl: const Point(3.0, 2.0),
+            anchor: const Translation2d(4.0, 1.0),
+            prevControl: const Translation2d(3.0, 2.0),
           ),
         ],
-        globalConstraints: PathConstraints(maxVelocity: 1.1),
-        goalEndState: GoalEndState(velocity: 0.5),
+        globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
+        goalEndState: GoalEndState(0.5, Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
-        rotationTargets: [RotationTarget()],
+        rotationTargets: [RotationTarget(0.0, Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(rotation: 10, velocity: 1),
+        idealStartingState: IdealStartingState(1.0, Rotation2d.fromDegrees(10)),
         useDefaultConstraints: false,
       );
 
@@ -114,22 +115,22 @@ void main() {
         fs: fs,
         waypoints: [
           Waypoint(
-            anchor: const Point(1.0, 1.0),
-            nextControl: const Point(2.0, 2.0),
+            anchor: const Translation2d(1.0, 1.0),
+            nextControl: const Translation2d(2.0, 2.0),
           ),
           Waypoint(
-            anchor: const Point(4.0, 1.0),
-            prevControl: const Point(3.0, 2.0),
+            anchor: const Translation2d(4.0, 1.0),
+            prevControl: const Translation2d(3.0, 2.0),
           ),
         ],
-        globalConstraints: PathConstraints(maxVelocity: 1.1),
-        goalEndState: GoalEndState(velocity: 0.5),
+        globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
+        goalEndState: GoalEndState(0.5, Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
-        rotationTargets: [RotationTarget()],
+        rotationTargets: [RotationTarget(0.0, Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(),
+        idealStartingState: IdealStartingState(0.0, Rotation2d()),
         useDefaultConstraints: false,
       );
       PathPlannerPath cloned = path.duplicate('test');
@@ -150,22 +151,22 @@ void main() {
         fs: fs,
         waypoints: [
           Waypoint(
-            anchor: const Point(1.0, 1.0),
-            nextControl: const Point(2.0, 2.0),
+            anchor: const Translation2d(1.0, 1.0),
+            nextControl: const Translation2d(2.0, 2.0),
           ),
           Waypoint(
-            anchor: const Point(4.0, 1.0),
-            prevControl: const Point(3.0, 2.0),
+            anchor: const Translation2d(4.0, 1.0),
+            prevControl: const Translation2d(3.0, 2.0),
           ),
         ],
-        globalConstraints: PathConstraints(maxVelocity: 1.1),
-        goalEndState: GoalEndState(velocity: 0.5),
+        globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
+        goalEndState: GoalEndState(0.5, Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
-        rotationTargets: [RotationTarget()],
+        rotationTargets: [RotationTarget(0.0, Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(),
+        idealStartingState: IdealStartingState(0.0, Rotation2d()),
         useDefaultConstraints: false,
       );
       PathPlannerPath path2 = PathPlannerPath(
@@ -174,22 +175,22 @@ void main() {
         fs: fs,
         waypoints: [
           Waypoint(
-            anchor: const Point(1.0, 1.0),
-            nextControl: const Point(2.0, 2.0),
+            anchor: const Translation2d(1.0, 1.0),
+            nextControl: const Translation2d(2.0, 2.0),
           ),
           Waypoint(
-            anchor: const Point(4.0, 1.0),
-            prevControl: const Point(3.0, 2.0),
+            anchor: const Translation2d(4.0, 1.0),
+            prevControl: const Translation2d(3.0, 2.0),
           ),
         ],
-        globalConstraints: PathConstraints(maxVelocity: 1.1),
-        goalEndState: GoalEndState(velocity: 0.5),
+        globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
+        goalEndState: GoalEndState(0.5, Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
-        rotationTargets: [RotationTarget()],
+        rotationTargets: [RotationTarget(0.0, Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(),
+        idealStartingState: IdealStartingState(0.0, Rotation2d()),
         useDefaultConstraints: false,
       );
       PathPlannerPath path3 = PathPlannerPath(
@@ -198,22 +199,22 @@ void main() {
         fs: fs,
         waypoints: [
           Waypoint(
-            anchor: const Point(1.0, 1.5),
-            nextControl: const Point(2.0, 2.0),
+            anchor: const Translation2d(1.0, 1.5),
+            nextControl: const Translation2d(2.0, 2.0),
           ),
           Waypoint(
-            anchor: const Point(4.0, 1.0),
-            prevControl: const Point(3.0, 2.1),
+            anchor: const Translation2d(4.0, 1.0),
+            prevControl: const Translation2d(3.0, 2.1),
           ),
         ],
-        globalConstraints: PathConstraints(maxVelocity: 1.0),
-        goalEndState: GoalEndState(velocity: 0.2),
+        globalConstraints: PathConstraints(maxVelocityMPS: 1.0),
+        goalEndState: GoalEndState(0.2, Rotation2d()),
         constraintZones: [],
         rotationTargets: [],
         eventMarkers: [],
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(),
+        idealStartingState: IdealStartingState(0.0, Rotation2d()),
         useDefaultConstraints: false,
       );
 
@@ -234,29 +235,29 @@ void main() {
       fs: fs,
       waypoints: [
         Waypoint(
-          anchor: const Point(1.0, 1.0),
-          nextControl: const Point(2.0, 2.0),
+          anchor: const Translation2d(1.0, 1.0),
+          nextControl: const Translation2d(2.0, 2.0),
         ),
         Waypoint(
-          anchor: const Point(4.0, 1.0),
-          prevControl: const Point(3.0, 2.0),
+          anchor: const Translation2d(4.0, 1.0),
+          prevControl: const Translation2d(3.0, 2.0),
         ),
       ],
-      globalConstraints: PathConstraints(maxVelocity: 1.1),
-      goalEndState: GoalEndState(velocity: 0.5),
+      globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
+      goalEndState: GoalEndState(0.5, Rotation2d()),
       constraintZones: [ConstraintsZone.defaultZone()],
-      rotationTargets: [RotationTarget()],
+      rotationTargets: [RotationTarget(0.0, Rotation2d())],
       eventMarkers: [EventMarker.defaultMarker()],
       reversed: false,
       folder: null,
-      idealStartingState: IdealStartingState(),
+      idealStartingState: IdealStartingState(0.0, Rotation2d()),
       useDefaultConstraints: false,
     );
 
-    path.addWaypoint(const Point(6.0, 1.0));
+    path.addWaypoint(const Translation2d(6.0, 1.0));
 
     expect(path.waypoints.length, 3);
-    expect(path.waypoints.last.anchor, const Point(6.0, 1.0));
+    expect(path.waypoints.last.anchor, const Translation2d(6.0, 1.0));
     expect(path.waypoints.last.prevControl, isNotNull);
     expect(path.waypoints.last.prevControl!.x, closeTo(5.5, epsilon));
     expect(path.waypoints.last.prevControl!.y, closeTo(0.5, epsilon));
@@ -272,16 +273,16 @@ void main() {
       fs: fs,
       waypoints: [
         Waypoint(
-          anchor: const Point(1.0, 1.0),
-          nextControl: const Point(2.0, 2.0),
+          anchor: const Translation2d(1.0, 1.0),
+          nextControl: const Translation2d(2.0, 2.0),
         ),
         Waypoint(
-          anchor: const Point(4.0, 1.0),
-          prevControl: const Point(3.0, 2.0),
+          anchor: const Translation2d(4.0, 1.0),
+          prevControl: const Translation2d(3.0, 2.0),
         ),
       ],
-      globalConstraints: PathConstraints(maxVelocity: 1.1),
-      goalEndState: GoalEndState(velocity: 0.5),
+      globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
+      goalEndState: GoalEndState(0.5, Rotation2d()),
       constraintZones: [
         ConstraintsZone(
           minWaypointRelativePos: 0.2,
@@ -289,7 +290,7 @@ void main() {
           constraints: PathConstraints(),
         ),
       ],
-      rotationTargets: [RotationTarget(waypointRelativePos: 0.6)],
+      rotationTargets: [RotationTarget(0.6, Rotation2d())],
       eventMarkers: [
         EventMarker(
           waypointRelativePos: 0.5,
@@ -299,7 +300,7 @@ void main() {
       ],
       reversed: false,
       folder: null,
-      idealStartingState: IdealStartingState(),
+      idealStartingState: IdealStartingState(0.0, Rotation2d()),
       useDefaultConstraints: false,
     );
 
@@ -308,9 +309,9 @@ void main() {
 
     path.insertWaypointAfter(0);
     expect(path.waypoints.length, 3);
-    expect(path.waypoints[1].anchor, const Point(2.5, 1.75));
-    expect(path.waypoints[1].prevControl, const Point(2.25, 1.875));
-    expect(path.waypoints[1].nextControl, const Point(2.75, 1.625));
+    expect(path.waypoints[1].anchor, const Translation2d(2.5, 1.75));
+    expect(path.waypoints[1].prevControl, const Translation2d(2.25, 1.875));
+    expect(path.waypoints[1].nextControl, const Translation2d(2.75, 1.625));
     expect(path.constraintZones[0].minWaypointRelativePos, 0.4);
     expect(path.constraintZones[0].maxWaypointRelativePos, 0.8);
     expect(path.rotationTargets[0].waypointRelativePos, 1.2);

@@ -13,12 +13,12 @@ class PathPainterUtil {
       ..strokeWidth = 2;
 
     for (Pose2d m in modulePoses) {
-      Offset pos = PathPainterUtil.pointToPixelOffset(
-          m.translation.asPoint(), scale, fieldImage);
+      Offset pos =
+          PathPainterUtil.pointToPixelOffset(m.translation, scale, fieldImage);
 
       canvas.save();
       canvas.translate(pos.dx, pos.dy);
-      canvas.rotate(-m.rotation.getRadians().toDouble());
+      canvas.rotate(-m.rotation.radians.toDouble());
       canvas.translate(-pos.dx, -pos.dy);
       canvas.drawRRect(
           RRect.fromRectAndRadius(
@@ -34,14 +34,8 @@ class PathPainterUtil {
     }
   }
 
-  static void paintRobotOutline(
-      Point position,
-      num rotationDegrees,
-      FieldImage fieldImage,
-      Size robotSize,
-      double scale,
-      Canvas canvas,
-      Color color,
+  static void paintRobotOutline(Pose2d pose, FieldImage fieldImage,
+      Size robotSize, double scale, Canvas canvas, Color color,
       {bool showDetails = false}) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
@@ -49,8 +43,7 @@ class PathPainterUtil {
       ..strokeWidth = 2;
 
     Offset center =
-        PathPainterUtil.pointToPixelOffset(position, scale, fieldImage);
-    num angle = -rotationDegrees / 180 * pi;
+        PathPainterUtil.pointToPixelOffset(pose.translation, scale, fieldImage);
 
     double width =
         PathPainterUtil.metersToPixels(robotSize.width, scale, fieldImage);
@@ -59,7 +52,7 @@ class PathPainterUtil {
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
-    canvas.rotate(angle.toDouble());
+    canvas.rotate(-pose.rotation.radians.toDouble());
     canvas.translate(-center.dx, -center.dy);
     canvas.drawRRect(
         RRect.fromRectAndRadius(
@@ -82,9 +75,9 @@ class PathPainterUtil {
     canvas.restore();
 
     if (showDetails) {
-      String angleText = '${rotationDegrees.toStringAsFixed(1)}°';
+      String angleText = '${pose.rotation.degrees.toStringAsFixed(1)}°';
       String coordText =
-          '(${position.x.toStringAsFixed(2)}, ${position.y.toStringAsFixed(2)})';
+          '(${pose.x.toStringAsFixed(2)}, ${pose.y.toStringAsFixed(2)})';
       String displayText = '$angleText\n$coordText';
 
       double textSize = min(width, length) * 0.175;
@@ -182,7 +175,7 @@ class PathPainterUtil {
   }
 
   static Offset pointToPixelOffset(
-      Point point, double scale, FieldImage fieldImage) {
+      Translation2d point, double scale, FieldImage fieldImage) {
     return Offset(
             (point.x * fieldImage.pixelsPerMeter) + 0,
             fieldImage.defaultSize.height -

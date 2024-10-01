@@ -35,7 +35,7 @@ void main() {
       fs: fs,
     );
     testPath.rotationTargets = [
-      RotationTarget(waypointRelativePos: 0.5, rotationDegrees: 45),
+      RotationTarget(0.5, Rotation2d.fromDegrees(45)),
     ];
     testPath.eventMarkers = [
       EventMarker(

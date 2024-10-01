@@ -32,14 +32,14 @@ class RobotConfig {
         2;
     List<Translation2d> moduleLocations = holonomicMode
         ? [
-            Translation2d(x: halfWheelbase, y: halfTrackwidth),
-            Translation2d(x: halfWheelbase, y: -halfTrackwidth),
-            Translation2d(x: -halfWheelbase, y: halfTrackwidth),
-            Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
+            Translation2d(halfWheelbase, halfTrackwidth),
+            Translation2d(halfWheelbase, -halfTrackwidth),
+            Translation2d(-halfWheelbase, halfTrackwidth),
+            Translation2d(-halfWheelbase, -halfTrackwidth),
           ]
         : [
-            Translation2d(x: 0, y: halfTrackwidth),
-            Translation2d(x: 0, y: -halfTrackwidth),
+            Translation2d(0, halfTrackwidth),
+            Translation2d(0, -halfTrackwidth),
           ];
 
     return RobotConfig(

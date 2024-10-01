@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:file/memory.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
@@ -21,16 +19,16 @@ void main() {
       name: '',
       waypoints: [
         Waypoint(
-          anchor: const Point(1, 1),
-          nextControl: const Point(3, 1),
+          anchor: const Translation2d(1, 1),
+          nextControl: const Translation2d(3, 1),
         ),
         Waypoint(
-          prevControl: const Point(4, 3),
-          anchor: const Point(6, 3),
+          prevControl: const Translation2d(4, 3),
+          anchor: const Translation2d(6, 3),
         ),
       ],
       globalConstraints: PathConstraints(),
-      goalEndState: GoalEndState(),
+      goalEndState: GoalEndState(0.0, Rotation2d()),
       constraintZones: [
         ConstraintsZone(
             constraints: PathConstraints(),
@@ -38,14 +36,14 @@ void main() {
             maxWaypointRelativePos: 0.4),
       ],
       rotationTargets: [
-        RotationTarget(waypointRelativePos: 0.5, rotationDegrees: 45),
+        RotationTarget(0.5, Rotation2d.fromDegrees(45)),
       ],
       eventMarkers: [],
       pathDir: '',
       fs: MemoryFileSystem(),
       reversed: false,
       folder: null,
-      idealStartingState: IdealStartingState(),
+      idealStartingState: IdealStartingState(0.0, Rotation2d()),
       useDefaultConstraints: false,
     );
 
@@ -53,16 +51,16 @@ void main() {
       name: '',
       waypoints: [
         Waypoint(
-          anchor: const Point(7, 3),
-          nextControl: const Point(9, 3),
+          anchor: const Translation2d(7, 3),
+          nextControl: const Translation2d(9, 3),
         ),
         Waypoint(
-          prevControl: const Point(10, 5),
-          anchor: const Point(12, 5),
+          prevControl: const Translation2d(10, 5),
+          anchor: const Translation2d(12, 5),
         ),
       ],
       globalConstraints: PathConstraints(),
-      goalEndState: GoalEndState(),
+      goalEndState: GoalEndState(0.0, Rotation2d()),
       constraintZones: [
         ConstraintsZone(
             constraints: PathConstraints(),
@@ -70,14 +68,14 @@ void main() {
             maxWaypointRelativePos: 0.4),
       ],
       rotationTargets: [
-        RotationTarget(waypointRelativePos: 0.5, rotationDegrees: 45),
+        RotationTarget(0.5, Rotation2d.fromDegrees(45)),
       ],
       eventMarkers: [],
       pathDir: '',
       fs: MemoryFileSystem(),
       reversed: false,
       folder: null,
-      idealStartingState: IdealStartingState(),
+      idealStartingState: IdealStartingState(0.0, Rotation2d()),
       useDefaultConstraints: false,
     );
 
@@ -92,10 +90,10 @@ void main() {
         wheelCOF: 1.2,
       ),
       moduleLocations: const [
-        Translation2d(x: 0.25, y: 0.25),
-        Translation2d(x: 0.25, y: -0.25),
-        Translation2d(x: -0.25, y: 0.25),
-        Translation2d(x: -0.25, y: -0.25),
+        Translation2d(0.25, 0.25),
+        Translation2d(0.25, -0.25),
+        Translation2d(-0.25, 0.25),
+        Translation2d(-0.25, -0.25),
       ],
       holonomic: true,
     );

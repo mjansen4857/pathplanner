@@ -8,6 +8,7 @@ import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 
 class PathOptimizer {
   static const int populationSize = 50;
@@ -186,19 +187,19 @@ class _Individual {
 
     // Mutate by changing the heading randomly between +/- 10 deg
     double theta = (rand.nextDouble() - 0.5) * 10.0;
-    mutated.setHeading(mutated.getHeadingDegrees() + theta);
+    mutated.setHeading(mutated.heading + Rotation2d.fromDegrees(theta));
 
     if (mutated.prevControl != null) {
       // Mutate by changing prev control length randomly between +/- 0.2 m
       double x = (rand.nextDouble() - 0.5) * 0.2;
-      double prevLength = mutated.getPrevControlLength() + x;
+      double prevLength = mutated.prevControlLength! + x;
       mutated.setPrevControlLength(prevLength);
     }
 
     if (mutated.nextControl != null) {
       // Mutate by changing next control length randomly between +/- 0.2 m
       double x = (rand.nextDouble() - 0.5) * 0.2;
-      double nextLength = mutated.getNextControlLength() + x;
+      double nextLength = mutated.nextControlLength! + x;
       mutated.setNextControlLength(nextLength);
     }
 

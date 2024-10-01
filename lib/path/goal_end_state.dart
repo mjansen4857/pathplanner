@@ -1,34 +1,33 @@
-class GoalEndState {
-  num velocity;
-  num rotation;
+import 'package:pathplanner/util/wpimath/geometry.dart';
 
-  GoalEndState({
-    this.velocity = 0,
-    this.rotation = 0,
-  });
+class GoalEndState {
+  num velocityMPS;
+  Rotation2d rotation;
+
+  GoalEndState(this.velocityMPS, this.rotation);
 
   GoalEndState.fromJson(Map<String, dynamic> json)
-      : velocity = json['velocity'] ?? 0,
-        rotation = json['rotation'] ?? 0;
+      : velocityMPS = json['velocity'] ?? 0,
+        rotation = Rotation2d.fromDegrees(json['rotation'] ?? 0);
 
   Map<String, dynamic> toJson() {
     return {
-      'velocity': velocity,
-      'rotation': rotation,
+      'velocity': velocityMPS,
+      'rotation': rotation.degrees,
     };
   }
 
   GoalEndState clone() {
-    return GoalEndState(velocity: velocity, rotation: rotation);
+    return GoalEndState(velocityMPS, rotation);
   }
 
   @override
   bool operator ==(Object other) =>
       other is GoalEndState &&
       other.runtimeType == runtimeType &&
-      other.velocity == velocity &&
+      other.velocityMPS == velocityMPS &&
       other.rotation == rotation;
 
   @override
-  int get hashCode => Object.hash(velocity, rotation);
+  int get hashCode => Object.hash(velocityMPS, rotation);
 }

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:file/memory.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
@@ -10,6 +8,7 @@ import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/path_optimizer.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -24,16 +23,16 @@ void main() {
       name: 'unoptimized',
       waypoints: [
         Waypoint(
-          anchor: const Point(1.0, 1.0),
-          nextControl: const Point(3.0, 1.0),
+          anchor: const Translation2d(1.0, 1.0),
+          nextControl: const Translation2d(3.0, 1.0),
         ),
         Waypoint(
-          prevControl: const Point(5.0, 3.0),
-          anchor: const Point(7.0, 3.0),
+          prevControl: const Translation2d(5.0, 3.0),
+          anchor: const Translation2d(7.0, 3.0),
         ),
       ],
       globalConstraints: PathConstraints(),
-      goalEndState: GoalEndState(),
+      goalEndState: GoalEndState(0.0, Rotation2d()),
       constraintZones: [],
       rotationTargets: [],
       eventMarkers: [],
@@ -41,7 +40,7 @@ void main() {
       fs: MemoryFileSystem(),
       reversed: false,
       folder: null,
-      idealStartingState: IdealStartingState(),
+      idealStartingState: IdealStartingState(0.0, Rotation2d()),
       useDefaultConstraints: false,
     );
 

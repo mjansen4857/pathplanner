@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -23,14 +24,8 @@ void main() {
       fs: MemoryFileSystem(),
     );
     path.rotationTargets = [
-      RotationTarget(
-        waypointRelativePos: 0.2,
-        rotationDegrees: 0.0,
-      ),
-      RotationTarget(
-        waypointRelativePos: 0.7,
-        rotationDegrees: 0.0,
-      ),
+      RotationTarget(0.2, Rotation2d()),
+      RotationTarget(0.7, Rotation2d()),
     ];
     path.rotationTargetsExpanded = true;
     pathChanged = false;
@@ -191,11 +186,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.rotationTargets[0].rotationDegrees, -160.0);
+    expect(path.rotationTargets[0].rotation.degrees, -160.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.rotationTargets[0].rotationDegrees, 0.0);
+    expect(path.rotationTargets[0].rotation.degrees, 0.0);
   });
 
   testWidgets('pos slider', (widgetTester) async {

@@ -30,7 +30,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ).getPathPositions(),
+            ).pathPositions,
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
@@ -68,7 +68,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ).getPathPositions(),
+            ).pathPositions,
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
@@ -101,7 +101,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ).getPathPositions(),
+            ).pathPositions,
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
@@ -136,7 +136,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ).getPathPositions(),
+            ).pathPositions,
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
@@ -177,7 +177,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ).getPathPositions(),
+            ).pathPositions,
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,
@@ -218,7 +218,7 @@ void main() {
             PathPlannerPath.defaultPath(
               pathDir: '/paths',
               fs: MemoryFileSystem(),
-            ).getPathPositions(),
+            ).pathPositions,
           ],
           onOpened: () => opened = true,
           onDuplicated: () => duplicated = true,

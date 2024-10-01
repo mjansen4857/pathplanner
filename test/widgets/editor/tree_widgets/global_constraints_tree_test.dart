@@ -21,10 +21,10 @@ void main() {
     path.useDefaultConstraints = false;
     path.globalConstraintsExpanded = true;
     path.globalConstraints = PathConstraints(
-      maxVelocity: 1.0,
-      maxAcceleration: 1.0,
-      maxAngularVelocity: 1.0,
-      maxAngularAcceleration: 1.0,
+      maxVelocityMPS: 1.0,
+      maxAccelerationMPSSq: 1.0,
+      maxAngularVelocityDeg: 1.0,
+      maxAngularAccelerationDeg: 1.0,
     );
     pathChanged = false;
   });
@@ -78,11 +78,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxVelocity, 2.0);
+    expect(path.globalConstraints.maxVelocityMPS, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.globalConstraints.maxVelocity, 1.0);
+    expect(path.globalConstraints.maxVelocityMPS, 1.0);
   });
 
   testWidgets('max accel text field', (widgetTester) async {
@@ -107,11 +107,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxAcceleration, 2.0);
+    expect(path.globalConstraints.maxAccelerationMPSSq, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.globalConstraints.maxAcceleration, 1.0);
+    expect(path.globalConstraints.maxAccelerationMPSSq, 1.0);
   });
 
   testWidgets('max ang vel text field', (widgetTester) async {
@@ -136,11 +136,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxAngularVelocity, 2.0);
+    expect(path.globalConstraints.maxAngularVelocityDeg, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.globalConstraints.maxAngularVelocity, 1.0);
+    expect(path.globalConstraints.maxAngularVelocityDeg, 1.0);
   });
 
   testWidgets('max ang accel text field', (widgetTester) async {
@@ -165,11 +165,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxAngularAcceleration, 2.0);
+    expect(path.globalConstraints.maxAngularAccelerationDeg, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.globalConstraints.maxAngularAcceleration, 1.0);
+    expect(path.globalConstraints.maxAngularAccelerationDeg, 1.0);
   });
 
   testWidgets('use defaults checkbox', (widgetTester) async {
@@ -199,10 +199,10 @@ void main() {
     expect(
         path.globalConstraints,
         PathConstraints(
-          maxVelocity: 1.0,
-          maxAcceleration: 1.0,
-          maxAngularVelocity: 1.0,
-          maxAngularAcceleration: 1.0,
+          maxVelocityMPS: 1.0,
+          maxAccelerationMPSSq: 1.0,
+          maxAngularVelocityDeg: 1.0,
+          maxAngularAccelerationDeg: 1.0,
         ));
   });
 }

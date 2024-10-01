@@ -28,7 +28,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: MiniPathsPreview(
-          paths: [path.getPathPositions(), path2.getPathPositions()],
+          paths: [path.pathPositions, path2.pathPositions],
           fieldImage: fieldImage,
         ),
       ),
@@ -44,7 +44,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: MiniPathsPreview(
-          paths: [path.getPathPositions(), path2.getPathPositions()],
+          paths: [path.pathPositions, path2.pathPositions],
           fieldImage: fieldImage,
         ),
       ),

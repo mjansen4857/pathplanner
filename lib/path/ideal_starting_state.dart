@@ -1,36 +1,33 @@
-class IdealStartingState {
-  num rotation;
-  num velocity;
+import 'package:pathplanner/util/wpimath/geometry.dart';
 
-  IdealStartingState({this.rotation = 0, this.velocity = 0});
+class IdealStartingState {
+  num velocityMPS;
+  Rotation2d rotation;
+
+  IdealStartingState(this.velocityMPS, this.rotation);
 
   IdealStartingState.fromJson(Map<String, dynamic> json)
-      : this(
-          rotation: json['rotation'],
-          velocity: json['velocity'],
-        );
+      : velocityMPS = json['velocity'] ?? 0,
+        rotation = Rotation2d.fromDegrees(json['rotation'] ?? 0);
 
   Map<String, dynamic> toJson() {
     return {
-      'rotation': rotation,
-      'velocity': velocity,
+      'velocity': velocityMPS,
+      'rotation': rotation.degrees,
     };
   }
 
   IdealStartingState clone() {
-    return IdealStartingState(
-      rotation: rotation,
-      velocity: velocity,
-    );
+    return IdealStartingState(velocityMPS, rotation);
   }
 
   @override
   bool operator ==(Object other) =>
       other is IdealStartingState &&
       other.runtimeType == runtimeType &&
-      other.velocity == velocity &&
+      other.velocityMPS == velocityMPS &&
       other.rotation == rotation;
 
   @override
-  int get hashCode => Object.hash(velocity, rotation);
+  int get hashCode => Object.hash(velocityMPS, rotation);
 }

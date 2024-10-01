@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
-import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -83,8 +83,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
             _currentPose = null;
           } else {
             _currentPose = Pose2d(
-              position: Point(pose[0], pose[1]),
-              rotation: pose[2] * (180.0 / pi),
+              Translation2d(pose[0], pose[1]),
+              Rotation2d(pose[2]),
             );
           }
         });
@@ -98,8 +98,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
             _targetPose = null;
           } else {
             _targetPose = Pose2d(
-              position: Point(pose[0], pose[1]),
-              rotation: pose[2] * (180.0 / pi),
+              Translation2d(pose[0], pose[1]),
+              Rotation2d(pose[2]),
             );
           }
         });
@@ -516,7 +516,9 @@ class TelemetryPainter extends CustomPainter {
       Path path = Path();
       for (int i = 0; i < currentPath!.length - 3; i += 3) {
         Offset offset = PathPainterUtil.pointToPixelOffset(
-            Point(currentPath![i], currentPath![i + 1]), scale, fieldImage);
+            Translation2d(currentPath![i], currentPath![i + 1]),
+            scale,
+            fieldImage);
         if (i == 0) {
           path.moveTo(offset.dx, offset.dy);
         } else {
@@ -528,27 +530,13 @@ class TelemetryPainter extends CustomPainter {
     }
 
     if (targetPose != null) {
-      PathPainterUtil.paintRobotOutline(
-        targetPose!.position,
-        targetPose!.rotation,
-        fieldImage,
-        robotSize,
-        scale,
-        canvas,
-        Colors.grey[600]!.withOpacity(0.75),
-      );
+      PathPainterUtil.paintRobotOutline(targetPose!, fieldImage, robotSize,
+          scale, canvas, Colors.grey[600]!.withOpacity(0.75));
     }
 
     if (currentPose != null) {
-      PathPainterUtil.paintRobotOutline(
-        currentPose!.position,
-        currentPose!.rotation,
-        fieldImage,
-        robotSize,
-        scale,
-        canvas,
-        Colors.grey[400]!,
-      );
+      PathPainterUtil.paintRobotOutline(currentPose!, fieldImage, robotSize,
+          scale, canvas, Colors.grey[400]!);
     }
   }
 

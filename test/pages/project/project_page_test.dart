@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
 import 'package:file/memory.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +17,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
 import 'package:pathplanner/widgets/editor/split_path_editor.dart';
@@ -1588,7 +1588,7 @@ void main() {
     await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
     Command.named.add('test1');
-    Waypoint.linked['link1'] = const Point(0, 0);
+    Waypoint.linked['link1'] = const Translation2d(0, 0);
 
     PathPlannerPath path = PathPlannerPath.defaultPath(
       pathDir: join(deployPath, 'paths'),
@@ -1720,7 +1720,7 @@ void main() {
     await fs.directory(join(deployPath, 'paths')).create(recursive: true);
     await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
-    Waypoint.linked['link1'] = const Point(0, 0);
+    Waypoint.linked['link1'] = const Translation2d(0, 0);
 
     PathPlannerPath path = PathPlannerPath.defaultPath(
       pathDir: join(deployPath, 'paths'),

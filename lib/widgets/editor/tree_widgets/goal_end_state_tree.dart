@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/math_util.dart';
 import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -28,7 +30,7 @@ class GoalEndStateTree extends StatelessWidget {
           Text('Final State'),
           InfoCard(
               value:
-                  '${path.goalEndState.rotation.toStringAsFixed(2)}° ending with ${path.goalEndState.velocity.toStringAsFixed(2)} M/S'),
+                  '${path.goalEndState.rotation.degrees.toStringAsFixed(2)}° ending with ${path.goalEndState.velocityMPS.toStringAsFixed(2)} M/S'),
         ],
       ),
       leading: const Icon(Icons.flag_circle_rounded),
@@ -49,12 +51,12 @@ class GoalEndStateTree extends StatelessWidget {
                 message:
                     'The allowed velocity of the robot at end of the path.',
                 child: NumberTextField(
-                  initialText: path.goalEndState.velocity.toStringAsFixed(2),
+                  initialText: path.goalEndState.velocityMPS.toStringAsFixed(2),
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
                   onSubmitted: (value) {
                     if (value != null && value >= 0) {
-                      _addChange(() => path.goalEndState.velocity = value);
+                      _addChange(() => path.goalEndState.velocityMPS = value);
                     }
                   },
                 ),
@@ -63,15 +65,14 @@ class GoalEndStateTree extends StatelessWidget {
               if (holonomicMode)
                 Expanded(
                   child: NumberTextField(
-                    initialText: path.goalEndState.rotation.toStringAsFixed(2),
+                    initialText:
+                        path.goalEndState.rotation.degrees.toStringAsFixed(2),
                     label: 'Rotation (Deg)',
                     onSubmitted: (value) {
                       if (value != null) {
-                        num rot = value % 360;
-                        if (rot > 180) {
-                          rot -= 360;
-                        }
-                        _addChange(() => path.goalEndState.rotation = rot);
+                        _addChange(() => path.goalEndState.rotation =
+                            Rotation2d.fromDegrees(
+                                MathUtil.inputModulus(value, -180, 180)));
                       }
                     },
                   ),

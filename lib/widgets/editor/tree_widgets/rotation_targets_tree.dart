@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/math_util.dart';
 import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
@@ -65,7 +67,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
               widget.undoStack.add(Change(
                 PathPlannerPath.cloneRotationTargets(rotations),
                 () {
-                  rotations.add(RotationTarget());
+                  rotations.add(RotationTarget(0.5, Rotation2d()));
                   widget.onPathChanged?.call();
                 },
                 (oldValue) {
@@ -131,7 +133,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
           const SizedBox(width: 8),
           InfoCard(
             value:
-                '${rotations[targetIdx].rotationDegrees.toStringAsFixed(2)}° at ${rotations[targetIdx].waypointRelativePos.toStringAsFixed(2)}',
+                '${rotations[targetIdx].rotation.degrees.toStringAsFixed(2)}° at ${rotations[targetIdx].waypointRelativePos.toStringAsFixed(2)}',
           ),
           const SizedBox(width: 8),
           Tooltip(
@@ -173,25 +175,21 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
               Expanded(
                 child: NumberTextField(
                   initialText:
-                      rotations[targetIdx].rotationDegrees.toStringAsFixed(2),
+                      rotations[targetIdx].rotation.degrees.toStringAsFixed(2),
                   label: 'Rotation (Deg)',
                   arrowKeyIncrement: 45,
                   onSubmitted: (value) {
                     if (value != null) {
-                      num rot = value % 360;
-                      if (rot > 180) {
-                        rot -= 360;
-                      }
-
                       widget.undoStack.add(Change(
                         rotations[targetIdx].clone(),
                         () {
-                          rotations[targetIdx].rotationDegrees = rot;
+                          rotations[targetIdx].rotation =
+                              Rotation2d.fromDegrees(
+                                  MathUtil.inputModulus(value, -180, 180));
                           widget.onPathChanged?.call();
                         },
                         (oldValue) {
-                          rotations[targetIdx].rotationDegrees =
-                              oldValue.rotationDegrees;
+                          rotations[targetIdx].rotation = oldValue.rotation;
                           widget.onPathChanged?.call();
                         },
                       ));

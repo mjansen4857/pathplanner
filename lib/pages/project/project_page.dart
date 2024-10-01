@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +19,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/dialogs/management_dialog.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -348,7 +348,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   },
                   onLinkedRenamed: (String oldName, String newName) {
                     setState(() {
-                      Point? pos = Waypoint.linked.remove(oldName);
+                      Translation2d? pos = Waypoint.linked.remove(oldName);
 
                       if (pos != null) {
                         Waypoint.linked[newName] = pos;
@@ -879,7 +879,7 @@ class _ProjectPageState extends State<ProjectPage> {
       name: _paths[i].name,
       compact: _pathsCompact,
       fieldImage: widget.fieldImage,
-      paths: [_paths[i].getPathPositions()],
+      paths: [_paths[i].pathPositions],
       warningMessage: _paths[i].hasEmptyNamedCommand()
           ? 'Contains a NamedCommand that does not have a command selected'
           : null,
@@ -936,7 +936,7 @@ class _ProjectPageState extends State<ProjectPage> {
                       var anchor = Waypoint.linked[w.linkedName];
 
                       if (anchor != null &&
-                          anchor.distanceTo(w.anchor) >= 0.01) {
+                          anchor.getDistance(w.anchor) >= 0.01) {
                         w.move(anchor.x, anchor.y);
                         changed = true;
                       }
@@ -985,7 +985,7 @@ class _ProjectPageState extends State<ProjectPage> {
       compact: _pathsCompact,
       fieldImage: widget.fieldImage,
       showOptions: false,
-      paths: [_choreoPaths[i].getPathPositions()],
+      paths: [_choreoPaths[i].pathPositions],
       choreoItem: true,
       onOpened: () async {
         await Navigator.push(
@@ -1381,12 +1381,12 @@ class _ProjectPageState extends State<ProjectPage> {
           ? [
               for (ChoreoPath path
                   in _getChoreoPathsFromNames(_autos[i].getAllPathNames()))
-                path.getPathPositions(),
+                path.pathPositions,
             ]
           : [
               for (PathPlannerPath path
                   in _getPathsFromNames(_autos[i].getAllPathNames()))
-                path.getPathPositions(),
+                path.pathPositions,
             ],
       onDuplicated: () {
         List<String> autoNames = [];
@@ -1840,13 +1840,14 @@ class _ProjectPageState extends State<ProjectPage> {
 
   PathConstraints _getDefaultConstraints() {
     return PathConstraints(
-      maxVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+      maxVelocityMPS: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
           Defaults.defaultMaxVel,
-      maxAcceleration: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+      maxAccelerationMPSSq: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
           Defaults.defaultMaxAccel,
-      maxAngularVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
-          Defaults.defaultMaxAngVel,
-      maxAngularAcceleration:
+      maxAngularVelocityDeg:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+              Defaults.defaultMaxAngVel,
+      maxAngularAccelerationDeg:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAngAccel,
     );

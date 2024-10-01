@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -28,7 +29,7 @@ class IdealStartingStateTree extends StatelessWidget {
           Text('Starting State'),
           InfoCard(
               value:
-                  '${path.idealStartingState.rotation.toStringAsFixed(2)}° starting with ${path.idealStartingState.velocity.toStringAsFixed(2)} M/S'),
+                  '${path.idealStartingState.rotation.degrees.toStringAsFixed(2)}° starting with ${path.idealStartingState.velocityMPS.toStringAsFixed(2)} M/S'),
         ],
       ),
       leading: const Icon(Icons.start_rounded),
@@ -47,13 +48,13 @@ class IdealStartingStateTree extends StatelessWidget {
               Expanded(
                 child: NumberTextField(
                   initialText:
-                      path.idealStartingState.velocity.toStringAsFixed(2),
+                      path.idealStartingState.velocityMPS.toStringAsFixed(2),
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          () => path.idealStartingState.velocity = value);
+                          () => path.idealStartingState.velocityMPS = value);
                     }
                   },
                 ),
@@ -62,17 +63,13 @@ class IdealStartingStateTree extends StatelessWidget {
               if (holonomicMode)
                 Expanded(
                   child: NumberTextField(
-                    initialText:
-                        path.idealStartingState.rotation.toStringAsFixed(2),
+                    initialText: path.idealStartingState.rotation.degrees
+                        .toStringAsFixed(2),
                     label: 'Rotation (Deg)',
                     onSubmitted: (value) {
                       if (value != null) {
-                        num rot = value % 360;
-                        if (rot > 180) {
-                          rot -= 360;
-                        }
-                        _addChange(
-                            () => path.idealStartingState.rotation = rot);
+                        _addChange(() => path.idealStartingState.rotation =
+                            Rotation2d.fromDegrees(value));
                       }
                     },
                   ),

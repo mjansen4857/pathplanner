@@ -1,8 +1,10 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:file/memory.dart';
 import 'package:flutter/foundation.dart';
 import 'package:isolate_manager/isolate_manager.dart';
+import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
@@ -16,8 +18,8 @@ class PathOptimizer {
 
   static IsolateManager? _manager;
 
-  static Future<OptimizationResult> optimizePath(
-      PathPlannerPath path, RobotConfig config,
+  static Future<OptimizationResult> optimizePath(PathPlannerPath path,
+      RobotConfig config, Size fieldSizeMeters, Size robotSizeMeters,
       {ValueChanged<OptimizationResult>? onUpdate}) async {
     // Create a new path in the memory file system so it can't edit any original paths or files
     PathPlannerPath copy = PathPlannerPath(
@@ -44,7 +46,7 @@ class PathOptimizer {
 
     final start = DateTime.now();
     final OptimizationResult result = await _manager!.compute(
-      _OptimizerArgs(copy, config),
+      _OptimizerArgs(copy, config, fieldSizeMeters, robotSizeMeters),
       callback: (value) {
         OptimizationResult result = value;
         Log.info(
@@ -67,6 +69,25 @@ class PathOptimizer {
       onEvent: (controller, args) async {
         var rand = Random();
 
+        // Check if any of the waypoints would cause the robot to go outside
+        // of the field. If not, make sure all optimization results are
+        // inside of the field perimiter to be considered valid.
+        bool preventFieldExit = true;
+        final num robotRadius = sqrt(pow(args.robotSizeMeters.width / 2.0, 2) +
+            pow(args.robotSizeMeters.height / 2.0, 2));
+        final minPos = Translation2d(robotRadius, robotRadius);
+        final maxPos = Translation2d(args.fieldSizeMeters.width - robotRadius,
+            args.fieldSizeMeters.height - robotRadius);
+        for (Waypoint w in args.path.waypoints) {
+          if (w.anchor.x < minPos.x ||
+              w.anchor.y < minPos.y ||
+              w.anchor.x > maxPos.x ||
+              w.anchor.y > maxPos.y) {
+            preventFieldExit = false;
+            break;
+          }
+        }
+
         // Generate an initial population
         List<_Individual> population = List.generate(populationSize, (index) {
           List<Waypoint> mutatedPoints = [];
@@ -76,7 +97,8 @@ class PathOptimizer {
             mutatedPoints.add(_Individual.mutate(p.waypoints[i]));
           }
           p.waypoints = mutatedPoints;
-          _Individual individual = _Individual(p, args.config);
+          _Individual individual =
+              _Individual(p, args.config, minPos, maxPos, preventFieldExit);
           return individual;
         });
 
@@ -143,11 +165,34 @@ class _Individual {
   final PathPlannerPath path;
   final RobotConfig config;
   late final num fitness;
+  final Translation2d minPos;
+  final Translation2d maxPos;
+  final bool preventFieldExit;
 
-  _Individual(this.path, this.config) {
+  _Individual(
+      this.path, this.config, this.minPos, this.maxPos, this.preventFieldExit) {
     path.generatePathPoints();
-    fitness = PathPlannerTrajectory(path: path, robotConfig: config)
-        .getTotalTimeSeconds();
+
+    bool shouldGenerate = true;
+
+    if (preventFieldExit) {
+      // Check all path points for a potential field exit
+      for (PathPoint p in path.pathPoints) {
+        if (p.position.x < minPos.x ||
+            p.position.y < minPos.y ||
+            p.position.x > maxPos.x ||
+            p.position.y > maxPos.y) {
+          fitness = double.infinity;
+          shouldGenerate = false;
+          break;
+        }
+      }
+    }
+
+    if (shouldGenerate) {
+      fitness = PathPlannerTrajectory(path: path, robotConfig: config)
+          .getTotalTimeSeconds();
+    }
   }
 
   /// Produce a new offspring from 2 parents
@@ -170,7 +215,7 @@ class _Individual {
 
     PathPlannerPath offspringPath = path.duplicate(path.name);
     offspringPath.waypoints = childWaypoints;
-    return _Individual(offspringPath, config);
+    return _Individual(offspringPath, config, minPos, maxPos, preventFieldExit);
   }
 
   void calculateFitness(RobotConfig config) {
@@ -210,6 +255,9 @@ class _Individual {
 class _OptimizerArgs {
   final PathPlannerPath path;
   final RobotConfig config;
+  final Size fieldSizeMeters;
+  final Size robotSizeMeters;
 
-  const _OptimizerArgs(this.path, this.config);
+  const _OptimizerArgs(
+      this.path, this.config, this.fieldSizeMeters, this.robotSizeMeters);
 }

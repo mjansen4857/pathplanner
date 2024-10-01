@@ -31,6 +31,7 @@ void main() {
           path: path,
           undoStack: undoStack,
           prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -56,6 +57,7 @@ void main() {
           path: path,
           undoStack: undoStack,
           prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));

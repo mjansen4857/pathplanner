@@ -26,7 +26,7 @@ class IdealStartingStateTree extends StatelessWidget {
       title: Wrap(
         alignment: WrapAlignment.spaceBetween,
         children: [
-          Text('Starting State'),
+          const Text('Starting State'),
           InfoCard(
               value:
                   '${path.idealStartingState.rotation.degrees.toStringAsFixed(2)}° starting with ${path.idealStartingState.velocityMPS.toStringAsFixed(2)} M/S'),

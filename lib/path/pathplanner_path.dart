@@ -52,6 +52,24 @@ class PathPlannerPath {
   bool pathOptimizationExpanded = false;
   DateTime lastModified = DateTime.now().toUtc();
 
+  PathPlannerPath({
+    required this.name,
+    required this.waypoints,
+    required this.globalConstraints,
+    required this.goalEndState,
+    required this.constraintZones,
+    required this.rotationTargets,
+    required this.eventMarkers,
+    required this.pathDir,
+    required this.fs,
+    required this.reversed,
+    required this.folder,
+    required this.idealStartingState,
+    required this.useDefaultConstraints,
+  }) : pathPoints = [] {
+    generatePathPoints();
+  }
+
   PathPlannerPath.defaultPath({
     required this.pathDir,
     required this.fs,
@@ -79,24 +97,6 @@ class PathPlannerPath {
       ),
     ]);
 
-    generatePathPoints();
-  }
-
-  PathPlannerPath({
-    required this.name,
-    required this.waypoints,
-    required this.globalConstraints,
-    required this.goalEndState,
-    required this.constraintZones,
-    required this.rotationTargets,
-    required this.eventMarkers,
-    required this.pathDir,
-    required this.fs,
-    required this.reversed,
-    required this.folder,
-    required this.idealStartingState,
-    required this.useDefaultConstraints,
-  }) : pathPoints = [] {
     generatePathPoints();
   }
 

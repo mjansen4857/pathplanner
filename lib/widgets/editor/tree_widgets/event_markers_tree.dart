@@ -188,14 +188,18 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
                   widget.undoStack.add(Change(
                     markers[markerIdx].endWaypointRelativePos,
                     () {
-                      markers[markerIdx].endWaypointRelativePos =
-                          (value ?? false)
-                              ? markers[markerIdx].waypointRelativePos
-                              : null;
+                      setState(() {
+                        markers[markerIdx].endWaypointRelativePos =
+                            (value ?? false)
+                                ? markers[markerIdx].waypointRelativePos
+                                : null;
+                      });
                       widget.onPathChangedNoSim?.call();
                     },
                     (oldValue) {
-                      markers[markerIdx].endWaypointRelativePos = oldValue;
+                      setState(() {
+                        markers[markerIdx].endWaypointRelativePos = oldValue;
+                      });
                       widget.onPathChangedNoSim?.call();
                     },
                   ));

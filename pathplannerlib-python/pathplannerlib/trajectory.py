@@ -128,6 +128,28 @@ class PathPlannerTrajectoryState:
 
         return mirrored
 
+    def copyWithTime(self, time: float) -> PathPlannerTrajectoryState:
+        """
+        Copy this state and change the timestamp
+
+        :param time: The new time to use
+        :return: Copied state with the given time
+        """
+        copy = PathPlannerTrajectoryState()
+        copy.timeSeconds = time
+        copy.fieldSpeeds = self.fieldSpeeds
+        copy.pose = self.pose
+        copy.linearVelocity = self.linearVelocity
+        copy.feedforwards = self.feedforwards
+        copy.heading = self.heading
+        copy.deltaPos = self.deltaPos
+        copy.deltaRot = self.deltaRot
+        copy.moduleStates = self.moduleStates
+        copy.constraints = self.constraints
+        copy.waypointRelativePos = self.waypointRelativePos
+
+        return copy
+
 
 class PathPlannerTrajectory:
     _states: List[PathPlannerTrajectoryState]
@@ -241,7 +263,7 @@ class PathPlannerTrajectory:
                     # When adding the event to this trajectory, set its timestamp properly
                     while len(unaddedEvents) > 0 and abs(
                             unaddedEvents[0].getTimestamp() - prevState.waypointRelativePos) <= abs(
-                            unaddedEvents[0].getTimestamp() - state.waypointRelativePos):
+                        unaddedEvents[0].getTimestamp() - state.waypointRelativePos):
                         events.append(unaddedEvents.pop(0))
                         events[-1].setTimestamp(prevState.timeSeconds)
 

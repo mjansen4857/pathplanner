@@ -442,62 +442,114 @@ class PathPlannerPath:
             return path
 
     @staticmethod
-    def fromChoreoTrajectory(trajectory_name: str) -> PathPlannerPath:
+    def fromChoreoTrajectory(trajectory_name: str, splitIndex: int = None) -> PathPlannerPath:
         """
         Load a Choreo trajectory as a PathPlannerPath
 
         :param trajectory_name: The name of the Choreo trajectory to load. This should be just the name of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
+        :param splitIndex: The index of the split to use
         :return: PathPlannerPath created from the given Choreo trajectory file
         """
+        if splitIndex is not None:
+            cacheName = trajectory_name + '.' + str(splitIndex)
+
+            if cacheName in PathPlannerPath._choreoPathCache:
+                return PathPlannerPath._choreoPathCache[cacheName]
+
+            # Path is not in the cache, load the main trajectory to load all splits
+            PathPlannerPath._loadChoreoTrajectoryIntoCache(trajectory_name)
+
+            return PathPlannerPath._choreoPathCache[cacheName]
+
         if trajectory_name in PathPlannerPath._choreoPathCache:
             return PathPlannerPath._choreoPathCache[trajectory_name]
 
+        dotIdx = trajectory_name.rfind('.')
+        splitIdx = -1
+        if dotIdx != -1:
+            splitStr = trajectory_name[dotIdx + 1:]
+            splitIdx = int(splitStr) if splitStr.isdecimal() else -1
+
+        if splitIdx != -1:
+            # The traj name includes a split index
+            PathPlannerPath._loadChoreoTrajectoryIntoCache(trajectory_name[:dotIdx])
+        else:
+            # The traj name does not include a split index
+            PathPlannerPath._loadChoreoTrajectoryIntoCache(trajectory_name)
+
+        return PathPlannerPath._choreoPathCache[trajectory_name]
+
+    @staticmethod
+    def _loadChoreoTrajectoryIntoCache(trajectory_name: str) -> None:
         filePath = os.path.join(getDeployDirectory(), 'choreo', trajectory_name + '.traj')
 
         with open(filePath, 'r') as f:
-            trajJson = json.loads(f.read())
+            trajJson = json.loads(f.read())['trajectory']
 
-            trajStates = []
+            fullTrajStates = []
             for s in trajJson['samples']:
                 state = PathPlannerTrajectoryState()
 
-                time = float(s['timestamp'])
+                time = float(s['t'])
                 xPos = float(s['x'])
                 yPos = float(s['y'])
                 rotationRad = float(s['heading'])
-                xVel = float(s['velocityX'])
-                yVel = float(s['velocityY'])
-                angularVelRps = float(s['angularVelocity'])
+                xVel = float(s['vx'])
+                yVel = float(s['vy'])
+                angularVelRps = float(s['omega'])
 
                 state.timeSeconds = time
                 state.linearVelocity = math.hypot(xVel, yVel)
                 state.pose = Pose2d(xPos, yPos, rotationRad)
                 state.fieldSpeeds = ChassisSpeeds(xVel, yVel, angularVelRps)
 
-                trajStates.append(state)
+                fullTrajStates.append(state)
 
-            path = PathPlannerPath([], PathConstraints(
+            # Add the full path to the cache
+            fullPath = PathPlannerPath([], PathConstraints(
                 float('inf'),
                 float('inf'),
                 float('inf'),
                 float('inf')
-            ), None, GoalEndState(trajStates[-1].linearVelocity, trajStates[-1].pose.rotation()))
+            ), None, GoalEndState(fullTrajStates[-1].linearVelocity, fullTrajStates[-1].pose.rotation()))
+            fullPathPoints = [PathPoint(state.pose.translation()) for state in fullTrajStates]
+            fullPath._allPoints = fullPathPoints
+            fullPath._isChoreoPath = True
+            fullEvents = []
+            fullPath._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=fullTrajStates,
+                                                              events=fullEvents)
+            PathPlannerPath._choreoPathCache[trajectory_name] = fullPath
 
-            pathPoints = [PathPoint(state.pose.translation()) for state in trajStates]
+            splits = trajJson['splits']
+            for i in range(-1, len(splits)):
+                name = trajectory_name + '.' + str(i + 1)
+                states = []
 
-            path._allPoints = pathPoints
-            path._isChoreoPath = True
+                splitStartIdx = 0
+                if i != -1:
+                    splitStartIdx = int(splits[i])
 
-            events = []
+                splitEndIdx = len(fullTrajStates)
+                if i < len(splits) - 1:
+                    splitEndIdx = int(splits[i + 1])
 
-            events.sort(key=lambda a: a.getTimestamp())
+                startTime = fullTrajStates[splitStartIdx].timeSeconds
+                for s in range(splitStartIdx, splitEndIdx):
+                    states.append(fullTrajStates[s].copyWithTime(fullTrajStates[s].timeSeconds - startTime))
 
-            path._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=trajStates,
-                                                          events=events)
-
-            PathPlannerPath._choreoPathCache[trajectory_name] = path
-
-            return path
+                path = PathPlannerPath([], PathConstraints(
+                    float('inf'),
+                    float('inf'),
+                    float('inf'),
+                    float('inf')
+                ), None, GoalEndState(states[-1].linearVelocity, states[-1].pose.rotation()))
+                pathPoints = [PathPoint(state.pose.translation()) for state in states]
+                path._allPoints = pathPoints
+                path._isChoreoPath = True
+                events = []
+                path._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=states,
+                                                              events=events)
+                PathPlannerPath._choreoPathCache[name] = path
 
     @staticmethod
     def clearPathCache():

@@ -347,28 +347,49 @@ public class PathPlannerPath {
         fullTrajStates.add(state);
       }
 
+      // Add the full path to the cache
+      PathPlannerPath fullPath = new PathPlannerPath();
+      fullPath.globalConstraints =
+          new PathConstraints(
+              Double.POSITIVE_INFINITY,
+              Double.POSITIVE_INFINITY,
+              Double.POSITIVE_INFINITY,
+              Double.POSITIVE_INFINITY);
+      fullPath.goalEndState =
+          new GoalEndState(
+              fullTrajStates.get(fullTrajStates.size() - 1).linearVelocity,
+              fullTrajStates.get(fullTrajStates.size() - 1).pose.getRotation());
+
+      List<PathPoint> fullPathPoints = new ArrayList<>();
+      for (var state : fullTrajStates) {
+        fullPathPoints.add(new PathPoint(state.pose.getTranslation()));
+      }
+
+      fullPath.allPoints = fullPathPoints;
+      fullPath.isChoreoPath = true;
+      fullPath.idealTrajectory =
+          Optional.of(new PathPlannerTrajectory(fullTrajStates, Collections.emptyList()));
+      choreoPathCache.put(trajectoryName, fullPath);
+
       JSONArray splits = (JSONArray) trajJson.get("splits");
       for (int i = -1; i < splits.size(); i++) {
-        String name;
-        List<PathPlannerTrajectoryState> states;
-        if (i == -1) {
-          name = trajectoryName;
-          states = fullTrajStates;
-        } else {
-          name = trajectoryName + "." + i;
-          states = new ArrayList<>();
+        String name = trajectoryName + "." + (i + 1);
+        List<PathPlannerTrajectoryState> states = new ArrayList<>();
 
-          int splitStartIdx = ((Number) splits.get(i)).intValue();
-          int splitEndIdx = fullTrajStates.size();
-          if (i < splits.size() - 1) {
-            splitEndIdx = ((Number) splits.get(i + 1)).intValue();
-          }
+        int splitStartIdx = 0;
+        if (i != -1) {
+          splitStartIdx = ((Number) splits.get(i)).intValue();
+        }
 
-          double startTime = fullTrajStates.get(splitStartIdx).timeSeconds;
-          for (int s = splitStartIdx; s < splitEndIdx; s++) {
-            states.add(
-                fullTrajStates.get(s).copyWithTime(fullTrajStates.get(s).timeSeconds - startTime));
-          }
+        int splitEndIdx = fullTrajStates.size();
+        if (i < splits.size() - 1) {
+          splitEndIdx = ((Number) splits.get(i + 1)).intValue();
+        }
+
+        double startTime = fullTrajStates.get(splitStartIdx).timeSeconds;
+        for (int s = splitStartIdx; s < splitEndIdx; s++) {
+          states.add(
+              fullTrajStates.get(s).copyWithTime(fullTrajStates.get(s).timeSeconds - startTime));
         }
 
         PathPlannerPath path = new PathPlannerPath();

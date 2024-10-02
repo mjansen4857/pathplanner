@@ -129,7 +129,7 @@ public:
 	 *
 	 * @return The name of the trigger
 	 */
-	constexpr std::string getTriggerName() {
+	constexpr const std::string& getTriggerName() {
 		return m_triggerName;
 	}
 

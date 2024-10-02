@@ -131,4 +131,27 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
 
     return mirrored;
   }
+
+  /**
+   * Copy this state and change the timestamp
+   *
+   * @param time The new time to use
+   * @return Copied state with the given time
+   */
+  public PathPlannerTrajectoryState copyWithTime(double time) {
+    PathPlannerTrajectoryState copy = new PathPlannerTrajectoryState();
+    copy.timeSeconds = time;
+    copy.fieldSpeeds = fieldSpeeds;
+    copy.pose = pose;
+    copy.linearVelocity = linearVelocity;
+    copy.feedforwards = feedforwards;
+    copy.heading = heading;
+    copy.deltaPos = deltaPos;
+    copy.deltaRot = deltaRot;
+    copy.moduleStates = moduleStates;
+    copy.constraints = constraints;
+    copy.waypointRelativePos = waypointRelativePos;
+
+    return copy;
+  }
 }

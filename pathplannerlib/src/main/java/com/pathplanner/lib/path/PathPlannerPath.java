@@ -3,6 +3,7 @@ package com.pathplanner.lib.path;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
+import com.pathplanner.lib.util.DriveFeedforward;
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -309,18 +310,7 @@ public class PathPlannerPath {
     }
   }
 
-  /**
-   * Load a Choreo trajectory as a PathPlannerPath
-   *
-   * @param trajectoryName The name of the Choreo trajectory to load. This should be just the name
-   *     of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
-   * @return PathPlannerPath created from the given Choreo trajectory file
-   */
-  public static PathPlannerPath fromChoreoTrajectory(String trajectoryName) {
-    if (choreoPathCache.containsKey(trajectoryName)) {
-      return choreoPathCache.get(trajectoryName);
-    }
-
+  private static void loadChoreoTrajectoryIntoCache(String trajectoryName) {
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(
@@ -333,57 +323,133 @@ public class PathPlannerPath {
 
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+      JSONObject trajJson = (JSONObject) json.get("trajectory");
 
-      List<PathPlannerTrajectoryState> trajStates = new ArrayList<>();
-      for (var s : (JSONArray) json.get("samples")) {
+      List<PathPlannerTrajectoryState> fullTrajStates = new ArrayList<>();
+      for (var s : (JSONArray) trajJson.get("samples")) {
         JSONObject sample = (JSONObject) s;
         var state = new PathPlannerTrajectoryState();
 
-        double time = ((Number) sample.get("timestamp")).doubleValue();
+        double time = ((Number) sample.get("t")).doubleValue();
         double xPos = ((Number) sample.get("x")).doubleValue();
         double yPos = ((Number) sample.get("y")).doubleValue();
         double rotationRad = ((Number) sample.get("heading")).doubleValue();
-        double xVel = ((Number) sample.get("velocityX")).doubleValue();
-        double yVel = ((Number) sample.get("velocityY")).doubleValue();
-        double angularVelRps = ((Number) sample.get("angularVelocity")).doubleValue();
+        double xVel = ((Number) sample.get("vx")).doubleValue();
+        double yVel = ((Number) sample.get("vy")).doubleValue();
+        double angularVelRps = ((Number) sample.get("omega")).doubleValue();
 
         state.timeSeconds = time;
         state.linearVelocity = Math.hypot(xVel, yVel);
         state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
         state.fieldSpeeds = new ChassisSpeeds(xVel, yVel, angularVelRps);
+        state.feedforwards = new DriveFeedforward[0];
 
-        trajStates.add(state);
+        fullTrajStates.add(state);
       }
 
-      PathPlannerPath path = new PathPlannerPath();
-      path.globalConstraints =
-          new PathConstraints(
-              Double.POSITIVE_INFINITY,
-              Double.POSITIVE_INFINITY,
-              Double.POSITIVE_INFINITY,
-              Double.POSITIVE_INFINITY);
-      path.goalEndState =
-          new GoalEndState(
-              trajStates.get(trajStates.size() - 1).linearVelocity,
-              trajStates.get(trajStates.size() - 1).pose.getRotation());
+      JSONArray splits = (JSONArray) trajJson.get("splits");
+      for (int i = -1; i < splits.size(); i++) {
+        String name;
+        List<PathPlannerTrajectoryState> states;
+        if (i == -1) {
+          name = trajectoryName;
+          states = fullTrajStates;
+        } else {
+          name = trajectoryName + "." + i;
+          states = new ArrayList<>();
 
-      List<PathPoint> pathPoints = new ArrayList<>();
-      for (var state : trajStates) {
-        pathPoints.add(new PathPoint(state.pose.getTranslation()));
+          int splitStartIdx = ((Number) splits.get(i)).intValue();
+          int splitEndIdx = fullTrajStates.size();
+          if (i < splits.size() - 1) {
+            splitEndIdx = ((Number) splits.get(i + 1)).intValue();
+          }
+
+          double startTime = fullTrajStates.get(splitStartIdx).timeSeconds;
+          for (int s = splitStartIdx; s < splitEndIdx; s++) {
+            states.add(
+                fullTrajStates.get(s).copyWithTime(fullTrajStates.get(s).timeSeconds - startTime));
+          }
+        }
+
+        PathPlannerPath path = new PathPlannerPath();
+        path.globalConstraints =
+            new PathConstraints(
+                Double.POSITIVE_INFINITY,
+                Double.POSITIVE_INFINITY,
+                Double.POSITIVE_INFINITY,
+                Double.POSITIVE_INFINITY);
+        path.goalEndState =
+            new GoalEndState(
+                states.get(states.size() - 1).linearVelocity,
+                states.get(states.size() - 1).pose.getRotation());
+
+        List<PathPoint> pathPoints = new ArrayList<>();
+        for (var state : states) {
+          pathPoints.add(new PathPoint(state.pose.getTranslation()));
+        }
+
+        path.allPoints = pathPoints;
+        path.isChoreoPath = true;
+        path.idealTrajectory =
+            Optional.of(new PathPlannerTrajectory(states, Collections.emptyList()));
+        choreoPathCache.put(name, path);
       }
-
-      path.allPoints = pathPoints;
-      path.isChoreoPath = true;
-
-      path.idealTrajectory =
-          Optional.of(new PathPlannerTrajectory(trajStates, Collections.emptyList()));
-
-      choreoPathCache.put(trajectoryName, path);
-
-      return path;
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Load a Choreo trajectory as a PathPlannerPath
+   *
+   * @param trajectoryName The name of the Choreo trajectory to load. This should be just the name
+   *     of the trajectory.
+   * @param splitIndex The index of the split to use
+   * @return PathPlannerPath created from the given Choreo trajectory and split index
+   */
+  public static PathPlannerPath fromChoreoTrajectory(String trajectoryName, int splitIndex) {
+    String cacheName = trajectoryName + "." + splitIndex;
+
+    if (choreoPathCache.containsKey(cacheName)) {
+      return choreoPathCache.get(cacheName);
+    }
+
+    // Path is not in the cache, load the main trajectory to load all splits
+    loadChoreoTrajectoryIntoCache(trajectoryName);
+
+    return choreoPathCache.get(cacheName);
+  }
+
+  /**
+   * Load a Choreo trajectory as a PathPlannerPath
+   *
+   * @param trajectoryName The name of the Choreo trajectory to load. This should be just the name
+   *     of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
+   * @return PathPlannerPath created from the given Choreo trajectory
+   */
+  public static PathPlannerPath fromChoreoTrajectory(String trajectoryName) {
+    if (choreoPathCache.containsKey(trajectoryName)) {
+      return choreoPathCache.get(trajectoryName);
+    }
+
+    int dotIdx = trajectoryName.lastIndexOf('.');
+    int splitIdx = -1;
+    if (dotIdx != -1) {
+      try {
+        splitIdx = Integer.parseInt(trajectoryName.substring(dotIdx + 1));
+      } catch (NumberFormatException ignored) {
+      }
+    }
+
+    if (splitIdx != -1) {
+      // The traj name includes a split index
+      loadChoreoTrajectoryIntoCache(trajectoryName.substring(0, dotIdx));
+    } else {
+      // The traj name does not include a split index
+      loadChoreoTrajectoryIntoCache(trajectoryName);
+    }
+
+    return choreoPathCache.get(trajectoryName);
   }
 
   /** Clear the cache of previously loaded paths. */

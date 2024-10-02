@@ -175,7 +175,7 @@ public class EventScheduler {
    * @param name The name of the condition
    * @param value The value of the condition
    */
-  protected void setCondition(String name, boolean value) {
+  protected static void setCondition(String name, boolean value) {
     eventConditions.put(name, value);
   }
 }

@@ -22,7 +22,7 @@ public class ActivateTriggerEvent extends Event {
    */
   @Override
   public void handleEvent(EventScheduler eventScheduler) {
-    eventScheduler.setCondition(name, true);
+    EventScheduler.setCondition(name, true);
   }
 
   /**

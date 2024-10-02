@@ -29,10 +29,10 @@ public class OneShotTriggerEvent extends Event {
     // in its entirety, since the EventScheduler could cancel this command before it finishes
     CommandScheduler.getInstance()
         .schedule(
-            Commands.runOnce(() -> eventScheduler.setCondition(name, true))
+            Commands.runOnce(() -> EventScheduler.setCondition(name, true))
                 .andThen(
                     Commands.waitSeconds(0), // Wait for 0 seconds to delay until next loop
-                    Commands.runOnce(() -> eventScheduler.setCondition(name, false))));
+                    Commands.runOnce(() -> EventScheduler.setCondition(name, false))));
   }
 
   /**

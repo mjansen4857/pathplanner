@@ -22,7 +22,7 @@ public class DeactivateTriggerEvent extends Event {
    */
   @Override
   public void handleEvent(EventScheduler eventScheduler) {
-    eventScheduler.setCondition(name, false);
+    EventScheduler.setCondition(name, false);
   }
 
   /**
@@ -34,6 +34,6 @@ public class DeactivateTriggerEvent extends Event {
   @Override
   public void cancelEvent(EventScheduler eventScheduler) {
     // Ensure the condition gets set to false
-    eventScheduler.setCondition(name, false);
+    EventScheduler.setCondition(name, false);
   }
 }

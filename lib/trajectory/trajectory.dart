@@ -575,7 +575,7 @@ class TrajectoryState {
 
   TrajectoryState();
 
-  TrajectoryState.pregen(this.timeSeconds, this.pose);
+  TrajectoryState.pregen(this.timeSeconds, this.fieldSpeeds, this.pose);
 
   TrajectoryState copyWithTime(num time) {
     TrajectoryState s = TrajectoryState();

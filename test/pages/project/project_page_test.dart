@@ -311,20 +311,38 @@ void main() {
     await fs
         .file(join(deployPath, 'choreo', 'test.traj'))
         .writeAsString(jsonEncode({
-          'samples': [
-            {
-              'timestamp': 0.0,
-              'x': 0.0,
-              'y': 0.0,
-              'heading': 0.0,
-            },
-            {
-              'timestamp': 1.0,
-              'x': 1.0,
-              'y': 1.0,
-              'heading': 0.0,
-            },
-          ],
+          'trajectory': {
+            'samples': [
+              {
+                't': 0.0,
+                'x': 0.0,
+                'y': 0.0,
+                'heading': 0.0,
+                'vx': 0.0,
+                'vy': 0.0,
+                'omega': 0.0,
+              },
+              {
+                't': 0.5,
+                'x': 0.0,
+                'y': 0.0,
+                'heading': 0.0,
+                'vx': 0.0,
+                'vy': 0.0,
+                'omega': 0.0,
+              },
+              {
+                't': 1.0,
+                'x': 0.0,
+                'y': 0.0,
+                'heading': 0.0,
+                'vx': 0.0,
+                'vy': 0.0,
+                'omega': 0.0,
+              },
+            ],
+            'splits': [1],
+          },
         }));
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -1270,25 +1288,38 @@ void main() {
     await fs
         .file(join(deployPath, 'choreo', 'test.traj'))
         .writeAsString(jsonEncode({
-          'samples': [
-            {
-              'timestamp': 0.0,
-              'x': 0.0,
-              'y': 0.0,
-              'heading': 0.0,
-            },
-            {
-              'timestamp': 1.0,
-              'x': 1.0,
-              'y': 1.0,
-              'heading': 0.0,
-            },
-          ],
-          'eventMarkers': [
-            {
-              'timestamp': 0.5,
-            },
-          ],
+          'trajectory': {
+            'samples': [
+              {
+                't': 0.0,
+                'x': 0.0,
+                'y': 0.0,
+                'heading': 0.0,
+                'vx': 0.0,
+                'vy': 0.0,
+                'omega': 0.0,
+              },
+              {
+                't': 0.5,
+                'x': 0.0,
+                'y': 0.0,
+                'heading': 0.0,
+                'vx': 0.0,
+                'vy': 0.0,
+                'omega': 0.0,
+              },
+              {
+                't': 1.0,
+                'x': 0.0,
+                'y': 0.0,
+                'heading': 0.0,
+                'vx': 0.0,
+                'vy': 0.0,
+                'omega': 0.0,
+              },
+            ],
+            'splits': [1],
+          },
         }));
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));

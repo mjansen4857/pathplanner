@@ -7,6 +7,7 @@ import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/renamable_title.dart';
@@ -30,10 +31,10 @@ void main() {
     testChoreoPath = ChoreoPath(
       name: 'test',
       trajectory: PathPlannerTrajectory.fromStates([
-        TrajectoryState.pregen(
-            0.0, Pose2d(const Translation2d(), Rotation2d())),
-        TrajectoryState.pregen(
-            1.0, Pose2d(const Translation2d(), Rotation2d())),
+        TrajectoryState.pregen(0.0, const ChassisSpeeds(),
+            Pose2d(const Translation2d(), Rotation2d())),
+        TrajectoryState.pregen(1.0, const ChassisSpeeds(),
+            Pose2d(const Translation2d(), Rotation2d())),
       ]),
       fs: fs,
       choreoDir: '/choreo',

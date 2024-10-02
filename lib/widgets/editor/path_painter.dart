@@ -154,9 +154,21 @@ class PathPainter extends CustomPainter {
     }
 
     for (int i = 1; i < paths.length; i++) {
-      // Paint warnings between rbeaks in paths
+      // Paint warnings between breaks in paths
       Translation2d prevPathEnd = paths[i - 1].pathPoints.last.position;
       Translation2d pathStart = paths[i].pathPoints.first.position;
+
+      if (prevPathEnd.getDistance(pathStart) >= 0.25) {
+        _paintBreakWarning(prevPathEnd, pathStart, canvas, scale);
+      }
+    }
+
+    for (int i = 1; i < choreoPaths.length; i++) {
+      // Paint warnings between breaks in paths
+      Translation2d prevPathEnd =
+          choreoPaths[i - 1].trajectory.states.last.pose.translation;
+      Translation2d pathStart =
+          choreoPaths[i].trajectory.states.first.pose.translation;
 
       if (prevPathEnd.getDistance(pathStart) >= 0.25) {
         _paintBreakWarning(prevPathEnd, pathStart, canvas, scale);

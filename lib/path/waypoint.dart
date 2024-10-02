@@ -100,6 +100,23 @@ class Waypoint {
     );
   }
 
+  Waypoint reverse() {
+    Translation2d anchorPt = Translation2d(16.54 - anchor.x, anchor.y);
+    Translation2d? prev = prevControl == null
+        ? null
+        : Translation2d(16.54 - prevControl!.x, prevControl!.y);
+    Translation2d? next = nextControl == null
+        ? null
+        : Translation2d(16.54 - nextControl!.x, nextControl!.y);
+
+    return Waypoint(
+      anchor: anchorPt,
+      prevControl: prev,
+      nextControl: next,
+      linkedName: linkedName,
+    );
+  }
+
   void setHeading(Rotation2d heading) {
     if (prevControl != null) {
       prevControl =

@@ -894,7 +894,22 @@ class _ProjectPageState extends State<ProjectPage> {
         }
 
         setState(() {
-          _paths.add(_paths[i].duplicate(pathName));
+          _paths.add(_paths[i].reverse(pathName));
+          _sortPaths(_pathSortValue);
+        });
+      },
+      onReversed: () {
+        List<String> pathNames = [];
+        for (PathPlannerPath path in _paths) {
+          pathNames.add(path.name);
+        }
+        String pathName = 'Reverse of ${_paths[i].name}';
+        while (pathNames.contains(pathName)) {
+          pathName = 'Reverse of $pathName';
+        }
+
+        setState(() {
+          _paths.add(_paths[i].reverse(pathName));
           _sortPaths(_pathSortValue);
         });
       },

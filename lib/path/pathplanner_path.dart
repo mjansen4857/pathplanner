@@ -633,7 +633,8 @@ class PathPlannerPath {
   }
 
   PathPlannerPath duplicate(String newName) {
-    return PathPlannerPath(
+    Stopwatch s = Stopwatch()..start();
+    final result = PathPlannerPath(
       name: newName,
       waypoints: cloneWaypoints(waypoints),
       globalConstraints: globalConstraints.clone(),
@@ -648,6 +649,47 @@ class PathPlannerPath {
       idealStartingState: idealStartingState.clone(),
       useDefaultConstraints: useDefaultConstraints,
     );
+    try {
+      File pathFile = fs.file(join(pathDir, '$newName.path'));
+      const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+      pathFile.writeAsString(encoder.convert(result));
+      lastModified = DateTime.now().toUtc();
+      Log.debug(
+          'Reversed and Saved "$name.path" in ${s.elapsedMilliseconds}ms');
+    } catch (ex, stack) {
+      Log.error('Failed to save path', ex, stack);
+    }
+    return result;
+  }
+
+  PathPlannerPath reverse(String newName) {
+    Stopwatch s = Stopwatch()..start();
+    final result = PathPlannerPath(
+      name: newName,
+      waypoints: reverseWaypoints(waypoints),
+      globalConstraints: globalConstraints.clone(),
+      goalEndState: goalEndState.reverse(),
+      constraintZones: cloneConstraintZones(constraintZones),
+      rotationTargets: cloneRotationTargets(rotationTargets),
+      eventMarkers: cloneEventMarkers(eventMarkers),
+      pathDir: pathDir,
+      fs: fs,
+      reversed: reversed,
+      folder: folder,
+      idealStartingState: idealStartingState.reverse(),
+      useDefaultConstraints: useDefaultConstraints,
+    );
+    try {
+      File pathFile = fs.file(join(pathDir, '$newName.path'));
+      const JsonEncoder encoder = JsonEncoder.withIndent('  ');
+      pathFile.writeAsString(encoder.convert(result));
+      lastModified = DateTime.now().toUtc();
+      Log.debug(
+          'Reversed and Saved "$name.path" in ${s.elapsedMilliseconds}ms');
+    } catch (ex, stack) {
+      Log.error('Failed to save path', ex, stack);
+    }
+    return result;
   }
 
   List<Translation2d> get pathPositions => [
@@ -657,6 +699,12 @@ class PathPlannerPath {
   static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {
     return [
       for (Waypoint waypoint in waypoints) waypoint.clone(),
+    ];
+  }
+
+  static List<Waypoint> reverseWaypoints(List<Waypoint> waypoints) {
+    return [
+      for (Waypoint waypoint in waypoints) waypoint.reverse(),
     ];
   }
 

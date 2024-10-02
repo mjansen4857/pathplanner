@@ -13,6 +13,7 @@ class ProjectItemCard extends StatefulWidget {
   final List<List<Translation2d>> paths;
   final VoidCallback onOpened;
   final VoidCallback? onDuplicated;
+  final VoidCallback? onReversed;
   final VoidCallback? onDeleted;
   final ValueChanged<String>? onRenamed;
   final bool compact;
@@ -27,6 +28,7 @@ class ProjectItemCard extends StatefulWidget {
     required this.paths,
     required this.onOpened,
     this.onDuplicated,
+    this.onReversed,
     this.onDeleted,
     this.onRenamed,
     this.compact = false,
@@ -80,6 +82,8 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                             onSelected: (value) {
                               if (value == 'duplicate') {
                                 widget.onDuplicated?.call();
+                              } else if (value == 'reverse') {
+                                widget.onReversed?.call();
                               } else if (value == 'delete') {
                                 _showDeleteDialog();
                               }
@@ -93,6 +97,16 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                                       Icon(Icons.copy),
                                       SizedBox(width: 12),
                                       Text('Duplicate'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'reverse',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.compare_arrows),
+                                      SizedBox(width: 12),
+                                      Text('Reverse'),
                                     ],
                                   ),
                                 ),

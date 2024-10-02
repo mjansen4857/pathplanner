@@ -21,6 +21,11 @@ class GoalEndState {
     return GoalEndState(velocityMPS, rotation);
   }
 
+  GoalEndState reverse() {
+    return GoalEndState(
+        velocityMPS, rotation.rotateBy(Rotation2d.fromDegrees(180)));
+  }
+
   @override
   bool operator ==(Object other) =>
       other is GoalEndState &&

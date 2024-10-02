@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       if (projectDir == null || !fs.directory(projectDir).existsSync()) {
         projectDir = await Navigator.push(
-          _key.currentContext!,
+          this.context,
           PageRouteBuilder(
             pageBuilder: (context, anim1, anim2) => WelcomePage(
               appVersion: widget.appVersion,

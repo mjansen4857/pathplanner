@@ -56,5 +56,13 @@ public:
 	 * @return This trajectory state flipped to the other side of the field
 	 */
 	PathPlannerTrajectoryState flip() const;
+
+	/**
+	 * Copy this state and change the timestamp
+	 *
+	 * @param time The new time to use
+	 * @return Copied state with the given time
+	 */
+	PathPlannerTrajectoryState copyWithTime(units::second_t time) const;
 };
 }

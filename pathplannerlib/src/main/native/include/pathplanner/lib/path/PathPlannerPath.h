@@ -114,6 +114,27 @@ public:
 			std::string trajectoryName);
 
 	/**
+	 * Load a Choreo trajectory as a PathPlannerPath
+	 *
+	 * @param trajectoryName The name of the Choreo trajectory to load. This should be just the name
+	 *     of the trajectory.
+	 * @param splitIndex The index of the split to use
+	 * @return PathPlannerPath created from the given Choreo trajectory and split index
+	 */
+	static inline std::shared_ptr<PathPlannerPath> fromChoreoTrajectory(
+			std::string trajectoryName, size_t splitIndex) {
+		std::string cacheName = trajectoryName + "."
+				+ std::to_string(splitIndex);
+		if (getChoreoPathCache().contains(cacheName)) {
+			return getChoreoPathCache()[cacheName];
+		}
+
+		// Path is not in the cache, load the main trajectory to load all splits
+		loadChoreoTrajectoryIntoCache(trajectoryName);
+		return getChoreoPathCache()[cacheName];
+	}
+
+	/**
 	 * Get the differential pose for the start point of this path
 	 *
 	 * @return Pose at the path's starting point
@@ -316,6 +337,8 @@ private:
 		}
 		return waypoints;
 	}
+
+	static void loadChoreoTrajectoryIntoCache(std::string trajectoryName);
 
 	void precalcValues();
 

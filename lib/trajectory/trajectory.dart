@@ -14,8 +14,6 @@ import 'package:pathplanner/util/wpimath/units.dart';
 class PathPlannerTrajectory {
   final List<TrajectoryState> states;
 
-  PathPlannerTrajectory.fromStates(this.states);
-
   PathPlannerTrajectory({
     required PathPlannerPath path,
     ChassisSpeeds? startingSpeeds,
@@ -456,6 +454,8 @@ class PathPlannerTrajectory {
     Log.debug(
         'Generated trajectory for ${path.name} in ${(genTime.inMicroseconds / 1000).toStringAsFixed(1)}ms');
   }
+
+  PathPlannerTrajectory.fromStates(this.states);
 
   TrajectoryState sample(num time) {
     if (time <= getInitialState().timeSeconds) return getInitialState();

@@ -1705,9 +1705,9 @@ class _ProjectPageState extends State<ProjectPage> {
       controller: controller,
       decoration: InputDecoration(
         hintText: 'Search for ${isPathsView ? "Paths..." : "Autos..."}',
-        prefixIcon: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: const Icon(Icons.search_rounded),
+        prefixIcon: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
+          child: Icon(Icons.search_rounded),
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(24),

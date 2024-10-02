@@ -14,8 +14,7 @@ import 'package:pathplanner/util/prefs.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:window_manager/window_manager.dart';
-
-import 'pages/home_page.dart';
+import 'package:pathplanner/pages/home_page.dart';
 
 void main() async {
   runZonedGuarded(

@@ -1,5 +1,7 @@
-from typing import List, TYPE_CHECKING, override
-from commands2 import Command, Subsystem
+from typing import List, TYPE_CHECKING, override, Callable
+from commands2 import Command, Subsystem, CommandScheduler, cmd
+from commands2.button import Trigger
+from wpilib.event import EventLoop
 
 if TYPE_CHECKING:
     from .trajectory import PathPlannerTrajectory
@@ -20,7 +22,13 @@ class Event:
     def getTimestamp(self) -> float:
         return self._timestamp
 
+    def setTimestamp(self, timestamp: float):
+        self._timestamp = timestamp
+
     def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        raise NotImplementedError
+
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         raise NotImplementedError
 
 
@@ -41,10 +49,119 @@ class ScheduleCommandEvent(Event):
     def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
         eventScheduler.scheduleCommand(self._command)
 
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        # Do nothing
+        pass
+
+
+class CancelCommandEvent(Event):
+    _command: Command
+
+    def __init__(self, timestamp: float, command: Command):
+        """
+        Create an event to cancel a command
+
+        :param timestamp: The trajectory timestamp for this event
+        :param command: The command to cancel
+        """
+        super().__init__(timestamp)
+        self._command = command
+
+    @override
+    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        eventScheduler.cancelCommand(self._command)
+
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        # Do nothing
+        pass
+
+
+class ActivateTriggerEvent(Event):
+    _name: str
+
+    def __init__(self, timestamp: float, name: str):
+        """
+        Create an event to schedule a command
+
+        :param timestamp: The trajectory timestamp for this event
+        :param name: The name of the trigger to control
+        """
+        super().__init__(timestamp)
+        self._name = name
+
+    @override
+    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        eventScheduler.setCondition(self._name, True)
+
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        # Do nothing
+        pass
+
+
+class DeactivateTriggerEvent(Event):
+    _name: str
+
+    def __init__(self, timestamp: float, name: str):
+        """
+        Create an event to schedule a command
+
+        :param timestamp: The trajectory timestamp for this event
+        :param name: The name of the trigger to control
+        """
+        super().__init__(timestamp)
+        self._name = name
+
+    @override
+    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        eventScheduler.setCondition(self._name, False)
+
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        # Ensure the condition gets set to false
+        eventScheduler.setCondition(self._name, False)
+
+
+class OneShotTriggerEvent(Event):
+    _name: str
+
+    def __init__(self, timestamp: float, name: str):
+        """
+        Create an event for activating a trigger, then deactivating it the next loop
+
+        :param timestamp: The trajectory timestamp for this event
+        :param name: The name of the trigger to control
+        """
+        super().__init__(timestamp)
+        self._name = name
+
+    @override
+    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        # We schedule this command with the main command scheduler so that it is guaranteed to be run
+        # in its entirety, since the EventScheduler could cancel this command before it finishes
+        CommandScheduler.getInstance().schedule(
+            cmd.sequence(
+                cmd.runOnce(lambda: EventScheduler.setCondition(self._name, True)),
+                cmd.waitSeconds(0),  # Wait for 0 seconds to delay until next loop
+                cmd.runOnce(lambda: EventScheduler.setCondition(self._name, False))
+            )
+        )
+        eventScheduler.setCondition(self._name, False)
+
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        # Do nothing
+        pass
+
 
 class EventScheduler:
     _eventCommands: dict
     _upcomingEvents: List[Event]
+
+    _eventLoop: EventLoop = EventLoop()
+    _eventConditions: dict[str, bool] = {}
 
     def __init__(self):
         """
@@ -86,6 +203,8 @@ class EventScheduler:
                 command.end(False)
                 self._eventCommands[command] = False
 
+        EventScheduler._eventLoop.poll()
+
     def end(self) -> None:
         """
         End commands currently being run by this scheduler. This should be called from the end method of
@@ -95,6 +214,10 @@ class EventScheduler:
         for command in self._eventCommands:
             if self._eventCommands[command]:
                 command.end(True)
+
+        # Cancel any unhandled events
+        for event in self._upcomingEvents:
+            event.cancelEvent(self)
 
         self._eventCommands.clear()
         self._upcomingEvents.clear()
@@ -113,6 +236,22 @@ class EventScheduler:
             allReqs.update(m.command.getRequirements())
 
         return allReqs
+
+    @staticmethod
+    def getEventLoop() -> EventLoop:
+        return EventScheduler._eventLoop
+
+    @staticmethod
+    def setCondition(name: str, value: bool) -> None:
+        EventScheduler._eventConditions[name] = value
+
+    @staticmethod
+    def pollCondition(name: str) -> Callable[[], bool]:
+        # Ensure there is a condition in the map for this name
+        if name not in EventScheduler._eventConditions:
+            EventScheduler.setCondition(name, False)
+
+        return lambda: EventScheduler._eventConditions[name]
 
     def scheduleCommand(self, command: Command) -> None:
         """
@@ -145,3 +284,8 @@ class EventScheduler:
 
         command.end(True)
         self._eventCommands[command] = False
+
+
+class EventTrigger(Trigger):
+    def __init__(self, name: str):
+        super().__init__(EventScheduler.getEventLoop(), EventScheduler.pollCondition(name))

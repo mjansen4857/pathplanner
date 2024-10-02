@@ -6,7 +6,7 @@ from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
 from .geometry_util import floatLerp, rotationLerp, poseLerp, calculateRadius, flipFieldPose
 from .config import RobotConfig
-from .events import Event, ScheduleCommandEvent
+from .events import *
 from typing import List, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -190,7 +190,18 @@ class PathPlannerTrajectory:
                 self._states[-1].fieldSpeeds = endFieldSpeeds
                 self._states[-1].linearVelocity = path.getGoalEndState().velocity
 
-                unaddedMarkers = [m for m in path.getEventMarkers()]
+                unaddedEvents: list[Event] = []
+                for marker in path.getEventMarkers():
+                    unaddedEvents.append(ScheduleCommandEvent(marker.waypointRelativePos, marker.command))
+
+                    if marker.endWaypointRelativePos >= 0.0:
+                        # This marker is zoned
+                        unaddedEvents.append(CancelCommandEvent(marker.endWaypointRelativePos, marker.command))
+                        unaddedEvents.append(ActivateTriggerEvent(marker.waypointRelativePos, marker.triggerName))
+                        unaddedEvents.append(DeactivateTriggerEvent(marker.endWaypointRelativePos, marker.triggerName))
+                    else:
+                        unaddedEvents.append(OneShotTriggerEvent(marker.waypointRelativePos, marker.triggerName))
+                unaddedEvents.sort(key=lambda e: e.getTimestamp())
 
                 # Reverse pass
                 _reverseAccelPass(self._states, config)
@@ -226,12 +237,18 @@ class PathPlannerTrajectory:
                         else:
                             prevState.feedforwards.append(DriveFeedforward(accel, forceAtCarpet, torqueCurrent))
 
-                    if len(unaddedMarkers) > 0:
-                        m = unaddedMarkers[0]
-                        if abs(m.waypointRelativePos - prevState.waypointRelativePos) <= abs(
-                                m.waypointRelativePos - state.waypointRelativePos):
-                            self._events.append(ScheduleCommandEvent(prevState.timeSeconds, m.command))
-                            unaddedMarkers.pop(0)
+                    # Un-added events have their timestamp set to a waypoint relative position
+                    # When adding the event to this trajectory, set its timestamp properly
+                    while len(unaddedEvents) > 0 and abs(
+                            unaddedEvents[0].getTimestamp() - prevState.waypointRelativePos) <= abs(
+                            unaddedEvents[0].getTimestamp() - state.waypointRelativePos):
+                        events.append(unaddedEvents.pop(0))
+                        events[-1].setTimestamp(prevState.timeSeconds)
+
+                while len(unaddedEvents) != 0:
+                    # There are events that need to be added to the last state
+                    events.append(unaddedEvents.pop(0))
+                    events[-1].setTimestamp(self._states[-1].timeSeconds)
 
                 # Create feedforwards for the end state
                 self._states[-1].feedforwards = [DriveFeedforward(0, 0, 0)] * config.numModules

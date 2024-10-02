@@ -69,7 +69,7 @@ class DCMotor {
         1);
   }
 
-  static DCMotor fromString(String str, int numMotors) {
+  factory DCMotor.fromString(String str, int numMotors) {
     return switch (str) {
       'krakenX60' => DCMotor.getKrakenX60(numMotors),
       'krakenX60FOC' => DCMotor.getKrakenX60FOC(numMotors),

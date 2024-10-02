@@ -21,6 +21,7 @@
         <toc-element topic="pplib-Getting-Started.md"/>
         <toc-element topic="pplib-Build-an-Auto.md"/>
         <toc-element topic="pplib-Named-Commands.md"/>
+        <toc-element topic="pplib-Event-Triggers.md"/>
         <toc-element topic="pplib-Follow-a-Single-Path.md"/>
         <toc-element topic="pplib-Create-a-Path-On-the-fly.md"/>
         <toc-element topic="pplib-Path-Groups.md"/>

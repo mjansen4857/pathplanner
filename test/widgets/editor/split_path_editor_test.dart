@@ -42,6 +42,7 @@ void main() {
     path.eventMarkers = [
       EventMarker(
         waypointRelativePos: 0.5,
+        endWaypointRelativePos: 0.8,
         command: SequentialCommandGroup(commands: []),
         name: 'm',
       ),

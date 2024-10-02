@@ -22,8 +22,19 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    avoid_print: true
-    prefer_single_quotes: true
+    - avoid_print
+    - prefer_single_quotes
+    - always_use_package_imports
+    - annotate_overrides
+    - avoid_field_initializers_in_const_classes
+    - avoid_init_to_null
+    - avoid_slow_async_io
+    - prefer_const_constructors
+    - prefer_const_constructors_in_immutables
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - prefer_constructors_over_static_methods
+    - sort_unnamed_constructors_first
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

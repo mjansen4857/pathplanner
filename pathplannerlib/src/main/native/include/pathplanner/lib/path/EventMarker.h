@@ -13,22 +13,79 @@ public:
 	/**
 	 * Create a new event marker
 	 *
+	 * @param triggerName The name of the trigger this event marker will control
 	 * @param waypointRelativePos The waypoint relative position of the marker
+	 *  @param endWaypointRelativePos The end waypoint relative position of the event's zone. A value
+	 *     of -1.0 indicates that this event is not zoned.
 	 * @param command The command that should be triggered at this marker
 	 */
-	EventMarker(double waypointRelativePos, frc2::CommandPtr &&command) : m_pos(
-			waypointRelativePos), m_command(std::move(command).Unwrap()) {
+	EventMarker(std::string triggerName, double waypointRelativePos,
+			double endWaypointRelativePos, frc2::CommandPtr &&command) : m_triggerName(
+			triggerName), m_pos(waypointRelativePos), m_endWaypointRelativePos(
+			endWaypointRelativePos), m_command(std::move(command).Unwrap()) {
 	}
 
 	/**
 	 * Create a new event marker
 	 *
+	 * @param triggerName The name of the trigger this event marker will control
+	 * @param waypointRelativePos The waypoint relative position of the marker
+	 *  @param endWaypointRelativePos The end waypoint relative position of the event's zone. A value
+	 *     of -1.0 indicates that this event is not zoned.
+	 */
+	EventMarker(std::string triggerName, double waypointRelativePos,
+			double endWaypointRelativePos) : EventMarker(triggerName,
+			waypointRelativePos, endWaypointRelativePos, frc2::cmd::None()) {
+	}
+
+	/**
+	 * Create a new event marker
+	 *
+	 * @param triggerName The name of the trigger this event marker will control
 	 * @param waypointRelativePos The waypoint relative position of the marker
 	 * @param command The command that should be triggered at this marker
 	 */
-	EventMarker(double waypointRelativePos,
-			std::shared_ptr<frc2::Command> command) : m_pos(
-			waypointRelativePos), m_command(command) {
+	EventMarker(std::string triggerName, double waypointRelativePos,
+			frc2::CommandPtr &&command) : EventMarker(triggerName,
+			waypointRelativePos, -1.0, std::move(command)) {
+	}
+
+	/**
+	 * Create a new event marker
+	 *
+	 * @param triggerName The name of the trigger this event marker will control
+	 * @param waypointRelativePos The waypoint relative position of the marker
+	 */
+	EventMarker(std::string triggerName, double waypointRelativePos) : EventMarker(
+			triggerName, waypointRelativePos, -1.0, frc2::cmd::None()) {
+	}
+
+	/**
+	 * Create a new event marker
+	 *
+	 * @param triggerName The name of the trigger this event marker will control
+	 * @param waypointRelativePos The waypoint relative position of the marker
+	 *  @param endWaypointRelativePos The end waypoint relative position of the event's zone. A value
+	 *     of -1.0 indicates that this event is not zoned.
+	 * @param command The command that should be triggered at this marker
+	 */
+	EventMarker(std::string triggerName, double waypointRelativePos,
+			double endWaypointRelativePos,
+			std::shared_ptr<frc2::Command> command) : m_triggerName(
+			triggerName), m_pos(waypointRelativePos), m_endWaypointRelativePos(
+			endWaypointRelativePos), m_command(command) {
+	}
+
+	/**
+	 * Create a new event marker
+	 *
+	 * @param triggerName The name of the trigger this event marker will control
+	 * @param waypointRelativePos The waypoint relative position of the marker
+	 * @param command The command that should be triggered at this marker
+	 */
+	EventMarker(std::string triggerName, double waypointRelativePos,
+			std::shared_ptr<frc2::Command> command) : EventMarker(triggerName,
+			waypointRelativePos, -1.0, command) {
 	}
 
 	/**
@@ -57,8 +114,29 @@ public:
 		return m_pos;
 	}
 
+	/**
+	 * Get the waypoint relative position of the end of this event's zone. A value of -1.0 indicates
+	 * this marker is not zoned.
+	 *
+	 * @return The end position of the zone, -1.0 if not zoned
+	 */
+	constexpr double getEndWaypointRelativePos() const {
+		return m_endWaypointRelativePos;
+	}
+
+	/**
+	 * Get the name of the trigger this marker will control
+	 *
+	 * @return The name of the trigger
+	 */
+	constexpr const std::string& getTriggerName() {
+		return m_triggerName;
+	}
+
 private:
+	std::string m_triggerName;
 	double m_pos;
+	double m_endWaypointRelativePos;
 	std::shared_ptr<frc2::Command> m_command;
 };
 }

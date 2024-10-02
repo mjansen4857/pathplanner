@@ -329,8 +329,7 @@ class PathPainter extends CustomPainter {
 
     if (selectedZone != null) {
       paint.color = Colors.orange;
-      paint.strokeWidth =
-          6; // Thicker stroke width for selected constraint zone
+      paint.strokeWidth = 6;
       p.reset();
 
       num startPos = path.constraintZones[selectedZone!].minWaypointRelativePos;
@@ -352,11 +351,57 @@ class PathPainter extends CustomPainter {
 
     if (hoveredZone != null && selectedZone != hoveredZone) {
       paint.color = Colors.deepPurpleAccent;
-      paint.strokeWidth = 6; // Thicker stroke width for hovered constraint zone
+      paint.strokeWidth = 6;
       p.reset();
 
       num startPos = path.constraintZones[hoveredZone!].minWaypointRelativePos;
       num endPos = path.constraintZones[hoveredZone!].maxWaypointRelativePos;
+
+      Offset start = PathPainterUtil.pointToPixelOffset(
+          path.samplePath(startPos), scale, fieldImage);
+      p.moveTo(start.dx, start.dy);
+
+      for (num t = startPos + 0.05; t <= endPos; t += 0.05) {
+        Offset pos = PathPainterUtil.pointToPixelOffset(
+            path.samplePath(t), scale, fieldImage);
+
+        p.lineTo(pos.dx, pos.dy);
+      }
+
+      canvas.drawPath(p, paint);
+    }
+
+    if (selectedMarker != null && path.eventMarkers[selectedMarker!].isZoned) {
+      paint.color = Colors.orange;
+      paint.strokeWidth = 6;
+      p.reset();
+
+      num startPos = path.eventMarkers[selectedMarker!].waypointRelativePos;
+      num endPos = path.eventMarkers[selectedMarker!].endWaypointRelativePos!;
+
+      Offset start = PathPainterUtil.pointToPixelOffset(
+          path.samplePath(startPos), scale, fieldImage);
+      p.moveTo(start.dx, start.dy);
+
+      for (num t = startPos + 0.05; t <= endPos; t += 0.05) {
+        Offset pos = PathPainterUtil.pointToPixelOffset(
+            path.samplePath(t), scale, fieldImage);
+
+        p.lineTo(pos.dx, pos.dy);
+      }
+
+      canvas.drawPath(p, paint);
+    }
+
+    if (hoveredMarker != null &&
+        hoveredMarker != selectedMarker &&
+        path.eventMarkers[hoveredMarker!].isZoned) {
+      paint.color = Colors.deepPurpleAccent;
+      paint.strokeWidth = 6;
+      p.reset();
+
+      num startPos = path.eventMarkers[hoveredMarker!].waypointRelativePos;
+      num endPos = path.eventMarkers[hoveredMarker!].endWaypointRelativePos!;
 
       Offset start = PathPainterUtil.pointToPixelOffset(
           path.samplePath(startPos), scale, fieldImage);

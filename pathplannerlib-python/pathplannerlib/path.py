@@ -7,11 +7,10 @@ from wpimath.geometry import Rotation2d, Translation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
-from commands2 import Command
+from commands2 import Command, cmd
 from .geometry_util import cubicLerp, calculateRadius, flipFieldPos, flipFieldRotation, floatLerp
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
-from .events import ScheduleCommandEvent
 from wpilib import getDeployDirectory
 from hal import report, tResourceType
 import os
@@ -205,28 +204,39 @@ class RotationTarget:
                 and other.target == self.target)
 
 
-@dataclass
+@dataclass(frozen=True)
 class EventMarker:
     """
     Position along the path that will trigger a command when reached
 
     Args:
+        triggerName (str): The name of the trigger this event marker will control
         waypointRelativePos (float): The waypoint relative position of the marker
+        endWaypointRelativePos (float): The end waypoint relative position of the event's zone.
+            A value of -1.0 indicates that this event is not zoned.
         command (Command): The command that should be triggered at this marker
     """
+    triggerName: str
     waypointRelativePos: float
-    command: Command
+    endWaypointRelativePos: float = -1.0
+    command: Command = cmd.none()
 
     @staticmethod
     def fromJson(json_dict: dict) -> EventMarker:
+        name = str(json_dict['name'])
         pos = float(json_dict['waypointRelativePos'])
+        endPos = -1.0
+        if 'endWaypointRelativePos' in json_dict and json_dict['endWaypointRelativePos'] is not None:
+            endPos = float(json_dict['endWaypointRelativePos'])
         from .auto import CommandUtil
         command = CommandUtil.commandFromJson(json_dict['command'], False)
-        return EventMarker(pos, command)
+        return EventMarker(name, pos, endPos, command)
 
     def __eq__(self, other):
         return (isinstance(other, EventMarker)
+                and other.triggerName == self.triggerName
                 and other.waypointRelativePos == self.waypointRelativePos
+                and other.endWaypointRelativePos == self.endWaypointRelativePos
                 and other.command == self.command)
 
 
@@ -479,16 +489,6 @@ class PathPlannerPath:
             path._isChoreoPath = True
 
             events = []
-            if 'eventMarkers' in trajJson:
-                from .auto import CommandUtil
-                for m in trajJson['eventMarkers']:
-                    timestamp = float(m['timestamp'])
-                    cmd = CommandUtil.commandFromJson(m['command'], False)
-
-                    eventMarker = EventMarker(timestamp, cmd)
-
-                    path._eventMarkers.append(eventMarker)
-                    events.append(ScheduleCommandEvent(timestamp, cmd))
 
             events.sort(key=lambda a: a.getTimestamp())
 

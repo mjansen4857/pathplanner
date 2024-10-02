@@ -138,14 +138,25 @@ marker has a command group associated with it that can be used to build more com
 commands, wait commands, and nested command groups. Please note that when the robot reaches the end of a path, all
 commands triggered via event markers are commanded to end. If you'd like a command to activate when the robot reaches
 the end of a path, you may want to either experiment with Autos, or place that command at the start of the next path.
-Event markers can be edited via the event markers tree.
+
+Event markers also have the option to be used as triggers, which allow for binding commands to the start/end of an event
+zone, combine multiple triggers together, using other conditions, etc.
 
 #### Event Markers Tree
 
 <img src="event_markers_tree.png" alt="event markers tree" border-effect="rounded"/>
 
-Position Slider
-: Controls the event marker's waypoint relative position along the path.
+Zoned Event Checkbox
+: Indicates whether this event marker should be zoned. Zoned events will have a start and end position that controls
+when their associated command gets scheduled/canceled, and when their associated trigger goes true/false. If an event is
+not zoned, its command will not be canceled unless it is still running at the end of a path, while its trigger will go
+true for one loop.
+
+Start Position Slider
+: Controls the event marker's starting waypoint relative position along the path.
+
+End Position Slider
+: Controls the event marker's ending waypoint relative position along the path. Only available for zoned events.
 
 Command Tree
 : Defines the command that will be run when reaching the event marker.

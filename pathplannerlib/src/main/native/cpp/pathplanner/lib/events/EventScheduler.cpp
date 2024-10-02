@@ -22,6 +22,27 @@ void EventScheduler::execute(units::second_t time) {
 			entry.second = false;
 		}
 	}
+
+	getEventLoop()->Poll();
+}
+
+void EventScheduler::end() {
+	// Cancel all currently running commands
+	for (auto entry : m_eventCommands) {
+		if (!entry.second) {
+			continue;
+		}
+
+		entry.first->End(true);
+	}
+
+	// Cancel any unhandled events
+	for (auto e : m_upcomingEvents) {
+		e->cancelEvent(this);
+	}
+
+	m_eventCommands.clear();
+	m_upcomingEvents.clear();
 }
 
 void EventScheduler::scheduleCommand(std::shared_ptr<frc2::Command> command) {
@@ -51,4 +72,15 @@ void EventScheduler::cancelCommand(std::shared_ptr<frc2::Command> command) {
 			entry.second = false;
 		}
 	}
+}
+
+frc::EventLoop* EventScheduler::getEventLoop() {
+	static frc::EventLoop *eventLoop = new frc::EventLoop();
+	return eventLoop;
+}
+
+std::unordered_map<std::string, bool>& EventScheduler::getEventConditions() {
+	static std::unordered_map<std::string, bool> *eventConditions =
+			new std::unordered_map<std::string, bool>();
+	return *eventConditions;
 }

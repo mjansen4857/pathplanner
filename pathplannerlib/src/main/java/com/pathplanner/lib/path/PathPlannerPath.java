@@ -1,9 +1,6 @@
 package com.pathplanner.lib.path;
 
-import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.events.Event;
-import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.GeometryUtil;
@@ -16,7 +13,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj2.command.Command;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -379,23 +375,8 @@ public class PathPlannerPath {
       path.allPoints = pathPoints;
       path.isChoreoPath = true;
 
-      List<Event> events = new ArrayList<>();
-      if (json.containsKey("eventMarkers")) {
-        for (var m : (JSONArray) json.get("eventMarkers")) {
-          JSONObject marker = (JSONObject) m;
-
-          double timestamp = ((Number) marker.get("timestamp")).doubleValue();
-          Command cmd = CommandUtil.commandFromJson((JSONObject) marker.get("command"), false);
-
-          EventMarker eventMarker = new EventMarker(timestamp, cmd);
-
-          path.eventMarkers.add(eventMarker);
-          events.add(new ScheduleCommandEvent(timestamp, cmd));
-        }
-      }
-
-      events.sort(Comparator.comparing(Event::getTimestamp));
-      path.idealTrajectory = Optional.of(new PathPlannerTrajectory(trajStates, events));
+      path.idealTrajectory =
+          Optional.of(new PathPlannerTrajectory(trajStates, Collections.emptyList()));
 
       choreoPathCache.put(trajectoryName, path);
 

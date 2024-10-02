@@ -32,8 +32,7 @@ public:
 						frc2::cmd::RunOnce([this, eventScheduler]() {
 							eventScheduler->setCondition(m_name, false);
 						})
-				)
-		);
+				).IgnoringDisable(true));
 	}
 
 	inline void cancelEvent(EventScheduler *eventScheduler) override {

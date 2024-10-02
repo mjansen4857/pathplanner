@@ -206,7 +206,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
   // Marked as async so it can run from initState
   void _simulateAuto() async {
-    if (widget.autoPaths.isEmpty) {
+    if (widget.autoPaths.isEmpty && widget.autoChoreoPaths.isEmpty) {
       setState(() {
         _simPath = null;
       });

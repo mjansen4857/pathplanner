@@ -126,12 +126,8 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 	return path;
 }
 
-std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
+void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 		std::string trajectoryName) {
-	if (PathPlannerPath::getChoreoPathCache().contains(trajectoryName)) {
-		return PathPlannerPath::getChoreoPathCache()[trajectoryName];
-	}
-
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/choreo/" + trajectoryName + ".traj";
 
@@ -143,19 +139,19 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 	}
 
 	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+	auto trajJson = json.at("trajectory");
 
-	std::vector < PathPlannerTrajectoryState > trajStates;
-	for (wpi::json::const_reference s : json.at("samples")) {
+	std::vector < PathPlannerTrajectoryState > fullTrajStates;
+	for (wpi::json::const_reference s : trajJson.at("samples")) {
 		PathPlannerTrajectoryState state;
 
-		units::second_t time { s.at("timestamp").get<double>() };
+		units::second_t time { s.at("t").get<double>() };
 		units::meter_t xPos { s.at("x").get<double>() };
 		units::meter_t yPos { s.at("y").get<double>() };
 		units::radian_t rotationRad { s.at("heading").get<double>() };
-		units::meters_per_second_t xVel { s.at("velocityX").get<double>() };
-		units::meters_per_second_t yVel { s.at("velocityY").get<double>() };
-		units::radians_per_second_t angularVelRps { s.at("angularVelocity").get<
-				double>() };
+		units::meters_per_second_t xVel { s.at("vx").get<double>() };
+		units::meters_per_second_t yVel { s.at("vy").get<double>() };
+		units::radians_per_second_t angularVelRps { s.at("omega").get<double>() };
 
 		state.time = time;
 		state.linearVelocity = units::math::hypot(xVel, yVel);
@@ -163,10 +159,11 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 				frc::Rotation2d(rotationRad));
 		state.fieldSpeeds = frc::ChassisSpeeds { xVel, yVel, angularVelRps };
 
-		trajStates.emplace_back(state);
+		fullTrajStates.emplace_back(state);
 	}
 
-	auto path = std::make_shared < PathPlannerPath
+	// Add the full path to the cache
+	auto fullPath = std::make_shared < PathPlannerPath
 			> (PathConstraints(
 					units::meters_per_second_t {
 							std::numeric_limits<double>::infinity() },
@@ -175,28 +172,70 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 							std::numeric_limits<double>::infinity() },
 					units::radians_per_second_squared_t { std::numeric_limits<
 							double>::infinity() }), GoalEndState(
-					trajStates[trajStates.size() - 1].linearVelocity,
-					trajStates[trajStates.size() - 1].pose.Rotation()));
+					fullTrajStates[fullTrajStates.size() - 1].linearVelocity,
+					fullTrajStates[fullTrajStates.size() - 1].pose.Rotation()));
 
-	std::vector < PathPoint > pathPoints;
-	for (auto state : trajStates) {
-		pathPoints.emplace_back(state.pose.Translation());
+	std::vector < PathPoint > fullPathPoints;
+	for (auto state : fullTrajStates) {
+		fullPathPoints.emplace_back(state.pose.Translation());
 	}
 
-	path->m_allPoints = pathPoints;
-	path->m_isChoreoPath = true;
+	fullPath->m_allPoints = fullPathPoints;
+	fullPath->m_isChoreoPath = true;
+	std::vector < std::shared_ptr < Event >> fullEvents;
+	fullPath->m_idealTrajectory = PathPlannerTrajectory(fullTrajStates,
+			fullEvents);
+	PathPlannerPath::getChoreoPathCache().emplace(trajectoryName, fullPath);
 
-	std::vector < std::shared_ptr < Event >> events;
+	auto splits = trajJson.at("splits");
+	if (splits.is_array()) {
+		int splitsSize = static_cast<int>(splits.size());
+		for (int i = -1; i < splitsSize; i++) {
+			std::string name = trajectoryName + "." + std::to_string(i + 1);
+			std::vector < PathPlannerTrajectoryState > states;
 
-	std::sort(events.begin(), events.end(), [](auto left, auto right) {
-		return left->getTimestamp() < right->getTimestamp();
-	});
+			size_t splitStartIdx = 0;
+			if (i != -1) {
+				splitStartIdx = splits[i].get<size_t>();
+			}
 
-	path->m_idealTrajectory = PathPlannerTrajectory(trajStates, events);
+			size_t splitEndIdx = fullTrajStates.size();
+			if (i < splitsSize) {
+				splitEndIdx = splits[i + 1].get<size_t>();
+			}
 
-	PathPlannerPath::getChoreoPathCache().emplace(trajectoryName, path);
+			auto startTime = fullTrajStates[splitStartIdx].time;
+			for (size_t s = splitStartIdx; s < splitEndIdx; s++) {
+				states.emplace_back(
+						fullTrajStates[s].copyWithTime(
+								fullTrajStates[s].time - startTime));
+			}
 
-	return path;
+			auto path =
+					std::make_shared < PathPlannerPath
+							> (PathConstraints(units::meters_per_second_t {
+									std::numeric_limits<double>::infinity() },
+									units::meters_per_second_squared_t {
+											std::numeric_limits<double>::infinity() },
+									units::radians_per_second_t {
+											std::numeric_limits<double>::infinity() },
+									units::radians_per_second_squared_t {
+											std::numeric_limits<double>::infinity() }), GoalEndState(
+									states[states.size() - 1].linearVelocity,
+									states[states.size() - 1].pose.Rotation()));
+
+			std::vector < PathPoint > pathPoints;
+			for (auto state : states) {
+				pathPoints.emplace_back(state.pose.Translation());
+			}
+
+			path->m_allPoints = pathPoints;
+			path->m_isChoreoPath = true;
+			std::vector < std::shared_ptr < Event >> events;
+			path->m_idealTrajectory = PathPlannerTrajectory(states, events);
+			PathPlannerPath::getChoreoPathCache().emplace(name, path);
+		}
+	}
 }
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
@@ -621,4 +660,28 @@ std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& PathPlannerPa
 	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>> *choreoPathCache =
 			new std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>();
 	return *choreoPathCache;
+}
+
+std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
+		std::string trajectoryName) {
+	if (PathPlannerPath::getChoreoPathCache().contains(trajectoryName)) {
+		return PathPlannerPath::getChoreoPathCache()[trajectoryName];
+	}
+
+	size_t dotIdx = trajectoryName.find_last_of('.');
+	size_t splitIdx = std::string::npos;
+	if (dotIdx != std::string::npos) {
+		std::stringstream sstream(trajectoryName.substr(dotIdx + 1));
+		sstream >> splitIdx;
+	}
+
+	if (splitIdx != std::string::npos) {
+		// The traj name includes a split index
+		loadChoreoTrajectoryIntoCache(trajectoryName.substr(0, dotIdx));
+	} else {
+		// The traj name does not include a split index
+		loadChoreoTrajectoryIntoCache(trajectoryName);
+	}
+
+	return getChoreoPathCache()[trajectoryName];
 }

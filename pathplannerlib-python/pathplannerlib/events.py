@@ -146,7 +146,7 @@ class OneShotTriggerEvent(Event):
                 cmd.runOnce(lambda: EventScheduler.setCondition(self._name, True)),
                 cmd.waitSeconds(0),  # Wait for 0 seconds to delay until next loop
                 cmd.runOnce(lambda: EventScheduler.setCondition(self._name, False))
-            )
+            ).ignoringDisable(True)
         )
         eventScheduler.setCondition(self._name, False)
 

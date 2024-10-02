@@ -173,7 +173,10 @@ class CommandGroupWidget extends StatelessWidget {
                         command: command.commands[index] as PathCommand,
                         allPathNames: allPathNames ?? [],
                         onUpdated: onUpdated,
-                        onRemoved: () => _removeCommand(index),
+                        onRemoved: () {
+                          onPathCommandHovered?.call(null);
+                          _removeCommand(index);
+                        },
                         undoStack: undoStack,
                         onDuplicateCommand: () => _duplicateCommand(index),
                       ),

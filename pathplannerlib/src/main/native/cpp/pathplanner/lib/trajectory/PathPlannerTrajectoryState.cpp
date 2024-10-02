@@ -72,3 +72,21 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::flip() const {
 
 	return mirrored;
 }
+
+PathPlannerTrajectoryState PathPlannerTrajectoryState::copyWithTime(
+		units::second_t time) const {
+	PathPlannerTrajectoryState copy;
+	copy.time = time;
+	copy.fieldSpeeds = fieldSpeeds;
+	copy.pose = pose;
+	copy.linearVelocity = linearVelocity;
+	copy.feedforwards = feedforwards;
+	copy.heading = heading;
+	copy.deltaPos = deltaPos;
+	copy.deltaRot = deltaRot;
+	copy.moduleStates = moduleStates;
+	copy.constraints = constraints;
+	copy.waypointRelativePos = waypointRelativePos;
+
+	return copy;
+}

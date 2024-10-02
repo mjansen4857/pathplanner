@@ -12,6 +12,7 @@ import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
@@ -81,10 +82,10 @@ void main() {
             ChoreoPath(
               name: 'test',
               trajectory: PathPlannerTrajectory.fromStates([
-                TrajectoryState.pregen(
-                    0.0, Pose2d(const Translation2d(), Rotation2d())),
-                TrajectoryState.pregen(
-                    1.0, Pose2d(const Translation2d(), Rotation2d())),
+                TrajectoryState.pregen(0.0, const ChassisSpeeds(),
+                    Pose2d(const Translation2d(), Rotation2d())),
+                TrajectoryState.pregen(1.0, const ChassisSpeeds(),
+                    Pose2d(const Translation2d(), Rotation2d())),
               ]),
               fs: fs,
               choreoDir: '/choreo',

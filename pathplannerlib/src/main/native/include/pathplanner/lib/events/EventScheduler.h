@@ -5,6 +5,9 @@
 #include <memory>
 #include <frc2/command/Command.h>
 #include <wpi/SmallSet.h>
+#include <frc/event/EventLoop.h>
+#include <unordered_map>
+#include <functional>
 #include "pathplanner/lib/events/Event.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/path/PathPlannerPath.h"
@@ -38,21 +41,10 @@ public:
 	void execute(units::second_t time);
 
 	/**
-	 * End commands currently being run by this scheduler. This should be called from the end method
-	 * of the command running this scheduler.
+	 * End commands currently/events currently being handled by this scheduler. This should be called
+	 * from the end method of the command running this scheduler.
 	 */
-	inline void end() {
-		// Cancel all currently running commands
-		for (auto entry : m_eventCommands) {
-			if (!entry.second) {
-				continue;
-			}
-
-			entry.first->End(true);
-		}
-		m_eventCommands.clear();
-		m_upcomingEvents.clear();
-	}
+	void end();
 
 	/**
 	 * Get the event requirements for the given path
@@ -84,6 +76,31 @@ public:
 	 * @param command The command to cancel
 	 */
 	void cancelCommand(std::shared_ptr<frc2::Command> command);
+
+	static frc::EventLoop* getEventLoop();
+
+	static std::unordered_map<std::string, bool>& getEventConditions();
+
+	static inline void setCondition(std::string name, bool value) {
+		getEventConditions()[name] = value;
+	}
+
+	/**
+	 * Create a boolean supplier that will poll a condition. This is used to create EventTriggers
+	 *
+	 * @param name The name of the event
+	 * @return A boolean supplier to poll the event's condition
+	 */
+	static inline std::function<bool()> pollCondition(std::string name) {
+		// Ensure there is a condition in the map for this name
+		if (!getEventConditions().contains(name)) {
+			getEventConditions().emplace(name, false);
+		}
+
+		return [name]() {
+			return getEventConditions()[name];
+		};
+	}
 
 private:
 	std::vector<std::pair<std::shared_ptr<frc2::Command>, bool>> m_eventCommands;

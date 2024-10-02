@@ -6,21 +6,21 @@
 #include <frc2/command/Command.h>
 
 namespace pathplanner {
-class ScheduleCommandEvent: public Event {
+class CancelCommandEvent: public Event {
 public:
 	/**
-	 * Create an event to schedule a command
+	 * Create an event to cancel a command
 	 *
 	 * @param timestamp The trajectory timestamp for this event
-	 * @param command The command to schedule
+	 * @param command The command to cancel
 	 */
-	ScheduleCommandEvent(units::second_t timestamp,
+	CancelCommandEvent(units::second_t timestamp,
 			std::shared_ptr<frc2::Command> command) : Event(timestamp), m_command(
 			command) {
 	}
 
 	inline void handleEvent(EventScheduler *eventScheduler) override {
-		eventScheduler->scheduleCommand(m_command);
+		eventScheduler->cancelCommand(m_command);
 	}
 
 	inline void cancelEvent(EventScheduler *eventScheduler) override {

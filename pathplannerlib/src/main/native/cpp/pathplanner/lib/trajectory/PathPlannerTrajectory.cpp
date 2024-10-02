@@ -1,6 +1,10 @@
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/events/ScheduleCommandEvent.h"
+#include "pathplanner/lib/events/CancelCommandEvent.h"
+#include "pathplanner/lib/events/ActivateTriggerEvent.h"
+#include "pathplanner/lib/events/DeactivateTriggerEvent.h"
+#include "pathplanner/lib/events/OneShotTriggerEvent.h"
 #include <memory>
 #include <units/force.h>
 #include <units/torque.h>
@@ -56,9 +60,37 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		// Reverse pass
 		reverseAccelPass(m_states, config);
 
-		std::vector < EventMarker
-				> unaddedMarkers(path->getEventMarkers().begin(),
-						path->getEventMarkers().end());
+		std::vector < std::shared_ptr < Event >> unaddedEvents;
+		for (EventMarker marker : path->getEventMarkers()) {
+			unaddedEvents.emplace_back(
+					std::make_shared < ScheduleCommandEvent
+							> (units::second_t { marker.getWaypointRelativePos() }, marker.getCommand()));
+
+			if (marker.getEndWaypointRelativePos() >= 0.0) {
+				// This marker is zoned
+				unaddedEvents.emplace_back(
+						std::make_shared < CancelCommandEvent
+								> (units::second_t {
+										marker.getEndWaypointRelativePos() }, marker.getCommand()));
+				unaddedEvents.emplace_back(
+						std::make_shared < ActivateTriggerEvent
+								> (units::second_t {
+										marker.getWaypointRelativePos() }, marker.getTriggerName()));
+				unaddedEvents.emplace_back(
+						std::make_shared < DeactivateTriggerEvent
+								> (units::second_t {
+										marker.getEndWaypointRelativePos() }, marker.getTriggerName()));
+			} else {
+				unaddedEvents.emplace_back(
+						std::make_shared < OneShotTriggerEvent
+								> (units::second_t {
+										marker.getWaypointRelativePos() }, marker.getTriggerName()));
+			}
+		}
+		std::sort(unaddedEvents.begin(), unaddedEvents.end(),
+				[](auto left, auto right) {
+					return left->getTimestamp() < right->getTimestamp();
+				});
 
 		// Loop back over and calculate time and module torque
 		for (size_t i = 1; i < m_states.size(); i++) {
@@ -106,26 +138,33 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 				}
 			}
 
-			if (!unaddedMarkers.empty()) {
-				EventMarker next = unaddedMarkers[0];
-				if (std::abs(
-						next.getWaypointRelativePos()
-								- prevState.waypointRelativePos)
-						<= std::abs(
-								next.getWaypointRelativePos()
-										- state.waypointRelativePos)) {
-					m_events.emplace_back(
-							std::make_shared < ScheduleCommandEvent
-									> (prevState.time, next.getCommand()));
-					unaddedMarkers.erase(unaddedMarkers.begin());
-				}
+			// Un-added events have their timestamp set to a waypoint relative position
+			// When adding the event to this trajectory, set its timestamp properly
+			while (!unaddedEvents.empty()
+					&& std::abs(
+							unaddedEvents[0]->getTimestamp()()
+									- prevState.waypointRelativePos)
+							<= std::abs(
+									unaddedEvents[0]->getTimestamp()()
+											- state.waypointRelativePos)) {
+				unaddedEvents[0]->setTimestamp(prevState.time);
+				m_events.emplace_back(unaddedEvents[0]);
+				unaddedEvents.erase(unaddedEvents.begin());
 			}
 
-			// Create feedforwards for the end state
-			for (size_t m = 0; m < config.numModules; m++) {
-				m_states[m_states.size() - 1].feedforwards.emplace_back(
-						DriveFeedforward { 0_mps_sq, 0_N, 0_A });
-			}
+		}
+
+		while (!unaddedEvents.empty()) {
+			// There are events that need to be added to the last state
+			unaddedEvents[0]->setTimestamp(m_states[m_states.size() - 1].time);
+			m_events.emplace_back(unaddedEvents[0]);
+			unaddedEvents.erase(unaddedEvents.begin());
+		}
+
+		// Create feedforwards for the end state
+		for (size_t m = 0; m < config.numModules; m++) {
+			m_states[m_states.size() - 1].feedforwards.emplace_back(
+					DriveFeedforward { 0_mps_sq, 0_N, 0_A });
 		}
 	}
 }

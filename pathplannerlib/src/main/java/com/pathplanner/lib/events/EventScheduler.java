@@ -16,9 +16,7 @@ import java.util.function.BooleanSupplier;
  * that will be run during the path being followed.
  */
 public class EventScheduler {
-  /** The event loop used to poll NamedTriggers */
   private static final EventLoop eventLoop = new EventLoop();
-
   private static final HashMap<String, Boolean> eventConditions = new HashMap<>();
 
   private final Map<Command, Boolean> eventCommands;

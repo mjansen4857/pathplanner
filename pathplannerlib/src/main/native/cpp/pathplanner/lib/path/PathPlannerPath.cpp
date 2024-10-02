@@ -4,6 +4,7 @@
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include "pathplanner/lib/events/Event.h"
 #include "pathplanner/lib/events/ScheduleCommandEvent.h"
+#include "pathplanner/lib/events/OneShotTriggerEvent.h"
 #include <frc/Filesystem.h>
 #include <frc/MathUtil.h>
 #include <wpi/MemoryBuffer.h>
@@ -191,14 +192,17 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromChoreoTrajectory(
 	if (json.contains("eventMarkers")) {
 		for (wpi::json::const_reference m : json.at("eventMarkers")) {
 			units::second_t timestamp { m.at("timestamp").get<double>() };
+			std::string name = m.at("name").get<std::string>();
 
-			EventMarker eventMarker = EventMarker(timestamp(),
-					CommandUtil::commandFromJson(m.at("command"), false));
+			std::shared_ptr < frc2::Command
+					> command(
+							CommandUtil::commandFromJson(m.at("command"), false).Unwrap());
 
-			path->m_eventMarkers.emplace_back(eventMarker);
 			events.emplace_back(
 					std::make_shared < ScheduleCommandEvent
-							> (timestamp, eventMarker.getCommand()));
+							> (timestamp, command));
+			events.emplace_back(
+					std::make_shared < OneShotTriggerEvent > (timestamp, name));
 		}
 	}
 

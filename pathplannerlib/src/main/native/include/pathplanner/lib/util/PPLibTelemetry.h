@@ -34,10 +34,6 @@ public:
 				actualAngVel(), commandedAngVel() }));
 	}
 
-	static inline void setPathInaccuracy(units::meter_t inaccuracy) {
-		m_inaccuracyPub.Set(inaccuracy());
-	}
-
 	static inline void setCurrentPose(frc::Pose2d pose) {
 		m_posePub.Set(pose);
 	}
@@ -62,7 +58,6 @@ private:
 	static bool m_compMode;
 
 	static nt::DoubleArrayPublisher m_velPub;
-	static nt::DoublePublisher m_inaccuracyPub;
 	static nt::StructPublisher<frc::Pose2d> m_posePub;
 	static nt::StructArrayPublisher<frc::Pose2d> m_pathPub;
 	static nt::StructPublisher<frc::Pose2d> m_targetPosePub;

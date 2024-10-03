@@ -167,7 +167,6 @@ public class FollowPathCommand extends Command {
         targetState.linearVelocity,
         currentSpeeds.omegaRadiansPerSecond,
         targetSpeeds.omegaRadiansPerSecond);
-    PPLibTelemetry.setPathInaccuracy(controller.getPositionalError());
 
     output.accept(targetSpeeds, targetState.feedforwards);
 

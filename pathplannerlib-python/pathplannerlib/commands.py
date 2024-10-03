@@ -134,7 +134,6 @@ class FollowPathCommand(Command):
         PathPlannerLogging.logTargetPose(targetState.pose)
 
         PPLibTelemetry.setVelocities(currentVel, targetState.linearVelocity, currentSpeeds.omega, targetSpeeds.omega)
-        PPLibTelemetry.setPathInaccuracy(self._controller.getPositionalError())
 
         self._output(targetSpeeds, targetState.feedforwards)
 
@@ -346,7 +345,6 @@ class PathfindingCommand(Command):
 
             PPLibTelemetry.setVelocities(currentVel, targetState.linearVelocity, currentSpeeds.omega,
                                          targetSpeeds.omega)
-            PPLibTelemetry.setPathInaccuracy(self._controller.getPositionalError())
 
             self._output(targetSpeeds, targetState.feedforwards)
 

@@ -197,7 +197,6 @@ void PathfindingCommand::Execute() {
 
 		PPLibTelemetry::setVelocities(currentVel, targetState.linearVelocity,
 				currentSpeeds.omega, targetSpeeds.omega);
-		PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());
 
 		m_output(targetSpeeds, targetState.feedforwards);
 	}

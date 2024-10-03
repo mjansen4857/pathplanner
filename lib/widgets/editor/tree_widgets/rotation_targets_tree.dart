@@ -174,8 +174,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      rotations[targetIdx].rotation.degrees.toStringAsFixed(2),
+                  initialValue: rotations[targetIdx].rotation.degrees,
                   label: 'Rotation (Deg)',
                   arrowKeyIncrement: 45,
                   onSubmitted: (value) {
@@ -201,15 +200,13 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
               SizedBox(
                 width: 100,
                 child: NumberTextField(
-                  initialText: rotations[targetIdx]
-                      .waypointRelativePos
-                      .toStringAsFixed(2),
+                  initialValue: rotations[targetIdx].waypointRelativePos,
                   label: 'Position',
                   arrowKeyIncrement: 0.1,
+                  minValue: 0.0,
+                  maxValue: (waypoints.length - 1.0),
                   onSubmitted: (value) {
-                    if (value != null &&
-                        value >= 0.0 &&
-                        value <= (waypoints.length - 1.0)) {
+                    if (value != null) {
                       setState(() {
                         rotations[targetIdx].waypointRelativePos = value;
                         widget.onPathChangedNoSim?.call();

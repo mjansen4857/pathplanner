@@ -129,7 +129,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _width.toStringAsFixed(3),
+                          initialValue: _width,
+                          minValue: 0.0,
                           label: 'Bumper Width (M)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -146,7 +147,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _length.toStringAsFixed(3),
+                          initialValue: _length,
+                          minValue: 0.0,
                           label: 'Bumper Length (M)',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -167,8 +169,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _mass.toStringAsFixed(3),
+                          initialValue: _mass,
                           label: 'Robot Mass (KG)',
+                          minValue: 0.0,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -186,8 +189,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _moi.toStringAsFixed(3),
+                          initialValue: _moi,
                           label: 'Robot MOI (KG*M²)',
+                          minValue: 0.0,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -207,9 +211,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _wheelbase.toStringAsFixed(3),
+                          initialValue: _wheelbase,
                           label: 'Wheelbase (M)',
                           enabled: _holonomicMode,
+                          minValue: 0.0,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -225,8 +230,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _trackwidth.toStringAsFixed(3),
+                          initialValue: _trackwidth,
                           label: 'Trackwidth (M)',
+                          minValue: 0.0,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -248,8 +254,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _wheelRadius.toStringAsFixed(3),
+                          initialValue: _wheelRadius,
                           label: 'Wheel Radius (M)',
+                          minValue: 0.0,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -267,8 +274,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _driveGearing.toStringAsFixed(3),
+                          initialValue: _driveGearing,
                           label: 'Drive Gearing',
+                          minValue: 1.0,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -290,8 +298,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _maxDriveSpeed.toStringAsFixed(2),
+                          initialValue: _maxDriveSpeed,
                           label: 'True Max Drive Speed (M/S)',
+                          minValue: 0.0,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -307,7 +316,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _wheelCOF.toStringAsFixed(2),
+                          initialValue: _wheelCOF,
+                          minValue: 0.0,
                           label: 'Wheel COF',
                           onSubmitted: (value) {
                             if (value != null) {
@@ -454,8 +464,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           children: [
                             const SizedBox(height: 12),
                             NumberTextField(
-                              initialText: _currentLimit.toStringAsFixed(0),
+                              initialValue: _currentLimit,
                               label: 'Drive Current Limit (A)',
+                              minValue: 0.0,
+                              precision: 0,
                               onSubmitted: (value) {
                                 if (value != null) {
                                   widget.prefs.setDouble(
@@ -497,8 +509,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     children: [
                       Expanded(
                         child: NumberTextField(
-                          initialText: _defaultMaxVel.toStringAsFixed(2),
+                          initialValue: _defaultMaxVel,
                           label: 'Max Velocity (M/S)',
+                          minValue: 0.1,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -514,8 +527,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: NumberTextField(
-                          initialText: _defaultMaxAccel.toStringAsFixed(2),
+                          initialValue: _defaultMaxAccel,
                           label: 'Max Acceleration (M/S²)',
+                          minValue: 0.1,
                           onSubmitted: (value) {
                             if (value != null) {
                               widget.prefs.setDouble(
@@ -537,8 +551,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         children: [
                           Expanded(
                             child: NumberTextField(
-                              initialText: _defaultMaxAngVel.toStringAsFixed(2),
+                              initialValue: _defaultMaxAngVel,
                               label: 'Max Angular Velocity (Deg/S)',
+                              minValue: 0.1,
                               onSubmitted: (value) {
                                 if (value != null) {
                                   widget.prefs.setDouble(
@@ -555,9 +570,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: NumberTextField(
-                              initialText:
-                                  _defaultMaxAngAccel.toStringAsFixed(2),
+                              initialValue: _defaultMaxAngAccel,
                               label: 'Max Angular Accel (Deg/S²)',
+                              minValue: 0.1,
                               onSubmitted: (value) {
                                 if (value != null) {
                                   widget.prefs.setDouble(

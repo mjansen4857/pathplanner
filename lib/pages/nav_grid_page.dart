@@ -168,9 +168,10 @@ class _NavGridPageState extends State<NavGridPage> {
                   children: [
                     Expanded(
                         child: NumberTextField(
-                      initialText: _grid.nodeSizeMeters.toStringAsFixed(2),
+                      initialValue: _grid.nodeSizeMeters,
                       label: 'Node Size (M)',
                       arrowKeyIncrement: 0.05,
+                      minValue: 0.01,
                       controller: nodeSizeController,
                     )),
                   ],
@@ -182,17 +183,17 @@ class _NavGridPageState extends State<NavGridPage> {
                   children: [
                     Expanded(
                         child: NumberTextField(
-                      initialText: _grid.fieldSize.width.toStringAsFixed(2),
+                      initialValue: _grid.fieldSize.width,
                       label: 'Field Length (M)',
-                      arrowKeyIncrement: 0.01,
+                      minValue: 0.01,
                       controller: fieldLengthController,
                     )),
                     const SizedBox(width: 8),
                     Expanded(
                         child: NumberTextField(
-                      initialText: _grid.fieldSize.height.toStringAsFixed(2),
+                      initialValue: _grid.fieldSize.height,
                       label: 'Field Width (M)',
-                      arrowKeyIncrement: 0.01,
+                      minValue: 0.01,
                       controller: fieldWidthController,
                     )),
                   ],

@@ -51,11 +51,12 @@ class GoalEndStateTree extends StatelessWidget {
                 message:
                     'The allowed velocity of the robot at end of the path.',
                 child: NumberTextField(
-                  initialText: path.goalEndState.velocityMPS.toStringAsFixed(2),
+                  initialValue: path.goalEndState.velocityMPS,
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
+                  minValue: 0.0,
                   onSubmitted: (value) {
-                    if (value != null && value >= 0) {
+                    if (value != null) {
                       _addChange(() => path.goalEndState.velocityMPS = value);
                     }
                   },
@@ -65,8 +66,7 @@ class GoalEndStateTree extends StatelessWidget {
               if (holonomicMode)
                 Expanded(
                   child: NumberTextField(
-                    initialText:
-                        path.goalEndState.rotation.degrees.toStringAsFixed(2),
+                    initialValue: path.goalEndState.rotation.degrees,
                     label: 'Rotation (Deg)',
                     onSubmitted: (value) {
                       if (value != null) {

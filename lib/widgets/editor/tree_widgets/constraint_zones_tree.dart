@@ -233,13 +233,12 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText: constraintZones[zoneIdx]
-                      .constraints
-                      .maxVelocityMPS
-                      .toStringAsFixed(2),
+                  initialValue:
+                      constraintZones[zoneIdx].constraints.maxVelocityMPS,
                   label: 'Max Velocity (M/S)',
+                  minValue: 0.1,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
+                    if (value != null) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]
@@ -252,13 +251,12 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText: constraintZones[zoneIdx]
-                      .constraints
-                      .maxAccelerationMPSSq
-                      .toStringAsFixed(2),
+                  initialValue:
+                      constraintZones[zoneIdx].constraints.maxAccelerationMPSSq,
                   label: 'Max Acceleration (M/S²)',
+                  minValue: 0.1,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
+                    if (value != null) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]
@@ -278,14 +276,14 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText: constraintZones[zoneIdx]
+                  initialValue: constraintZones[zoneIdx]
                       .constraints
-                      .maxAngularVelocityDeg
-                      .toStringAsFixed(2),
+                      .maxAngularVelocityDeg,
                   label: 'Max Angular Velocity (Deg/S)',
                   arrowKeyIncrement: 1.0,
+                  minValue: 0.1,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
+                    if (value != null) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]
@@ -298,14 +296,14 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText: constraintZones[zoneIdx]
+                  initialValue: constraintZones[zoneIdx]
                       .constraints
-                      .maxAngularAccelerationDeg
-                      .toStringAsFixed(2),
+                      .maxAngularAccelerationDeg,
                   label: 'Max Angular Acceleration (Deg/S²)',
                   arrowKeyIncrement: 1.0,
+                  minValue: 0.1,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
+                    if (value != null) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]

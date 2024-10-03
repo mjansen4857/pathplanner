@@ -20,7 +20,7 @@ class WaitCommandWidget extends StatelessWidget {
     this.onDuplicateCommand,
   });
 
-  void _updateWaitTime(double newValue) {
+  void _updateWaitTime(num newValue) {
     if (newValue >= 0) {
       undoStack.add(Change(
         command.waitTime,
@@ -45,12 +45,12 @@ class WaitCommandWidget extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: NumberTextField(
-            initialText: command.waitTime.toStringAsFixed(2),
+            initialValue: command.waitTime,
             label: 'Wait Time (S)',
+            minValue: 0.0,
             onSubmitted: (value) {
-              double? parsedValue = double.tryParse(value.toString());
-              if (parsedValue != null && parsedValue >= 0) {
-                _updateWaitTime(parsedValue);
+              if (value != null) {
+                _updateWaitTime(value);
               }
             },
             arrowKeyIncrement: 0.1,

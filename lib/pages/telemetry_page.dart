@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
@@ -30,11 +31,15 @@ class TelemetryPage extends StatefulWidget {
 class _TelemetryPageState extends State<TelemetryPage> {
   bool _connected = false;
   final List<List<num>> _velData = [];
-  final List<num> _inaccuracyData = [];
+  final Queue<num> _xyErrorData = Queue();
+  final Queue<num> _thetaErrorData = Queue();
   List<Pose2d>? _currentPath;
   Pose2d? _currentPose;
   Pose2d? _targetPose;
   late final Size _robotSize;
+
+  bool _gotCurrentPose = false;
+  bool _gotTargetPose = false;
 
   @override
   void initState() {
@@ -65,22 +70,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
       }
     });
 
-    widget.telemetry.inaccuracyStream().listen((inaccuracy) {
-      if (mounted) {
-        setState(() {
-          _inaccuracyData.add(inaccuracy);
-          if (_inaccuracyData.length > 150) {
-            _inaccuracyData.removeAt(0);
-          }
-        });
-      }
-    });
-
     widget.telemetry.currentPoseStream().listen((pose) {
       if (mounted) {
         setState(() {
           _currentPose = pose;
+          _gotCurrentPose = _currentPose != null;
         });
+        _calcError();
       }
     });
 
@@ -88,7 +84,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
       if (mounted) {
         setState(() {
           _targetPose = pose;
+          _gotTargetPose = _targetPose != null;
         });
+        _calcError();
       }
     });
 
@@ -99,6 +97,30 @@ class _TelemetryPageState extends State<TelemetryPage> {
         });
       }
     });
+  }
+
+  void _calcError() {
+    if (_gotCurrentPose && _gotTargetPose) {
+      setState(() {
+        num xyError =
+            _currentPose!.translation.getDistance(_targetPose!.translation);
+        num thetaError =
+            (_currentPose!.rotation - _targetPose!.rotation).radians;
+
+        _xyErrorData.add(xyError);
+        if (_xyErrorData.length > 150) {
+          _xyErrorData.removeFirst();
+        }
+
+        _thetaErrorData.add(thetaError.abs());
+        if (_thetaErrorData.length > 150) {
+          _thetaErrorData.removeFirst();
+        }
+
+        _gotCurrentPose = false;
+        _gotTargetPose = false;
+      });
+    }
   }
 
   Widget _buildConnectionTip(String text) {
@@ -256,14 +278,34 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 ),
               ),
               _buildGraph(
-                title: 'Path Inaccuracy',
+                title: 'Path Following Error',
+                legend: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildLegendItem('XY Error', Colors.red),
+                      const SizedBox(width: 8),
+                      _buildLegendItem('Theta Error', Colors.cyan),
+                    ],
+                  ),
+                ),
                 data: _buildData(
                   maxY: 1.0,
                   horizontalInterval: 0.25,
                   spots: [
                     [
-                      for (int i = 0; i < _inaccuracyData.length; i++)
-                        FlSpot(i * 0.033, _inaccuracyData[i].toDouble()),
+                      for (int i = 0; i < _xyErrorData.length; i++)
+                        FlSpot(i * 0.033, _xyErrorData.elementAt(i).toDouble()),
+                    ],
+                    [
+                      for (int i = 0; i < _thetaErrorData.length; i++)
+                        FlSpot(
+                            i * 0.033, _thetaErrorData.elementAt(i).toDouble()),
                     ],
                   ],
                   lineGradients: const [
@@ -271,6 +313,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
                       colors: [
                         Colors.red,
                         Colors.redAccent,
+                      ],
+                    ),
+                    LinearGradient(
+                      colors: [
+                        Colors.cyan,
+                        Colors.cyanAccent,
                       ],
                     ),
                   ],
@@ -330,6 +378,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
     required double maxY,
     double minY = 0,
     double? horizontalInterval,
+    double curveSmoothness = 0.35,
   }) {
     assert(spots.length == lineGradients.length);
 
@@ -360,7 +409,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 fontSize: 14,
               );
               return LineTooltipItem(
-                '${touchedSpot.x.toStringAsFixed(2)}, ${touchedSpot.y.toStringAsFixed(2)}',
+                touchedSpot.y.toStringAsFixed(2),
                 textStyle,
               );
             }).toList();
@@ -386,6 +435,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
           LineChartBarData(
             spots: spots[i],
             isCurved: true,
+            curveSmoothness: curveSmoothness,
             gradient: lineGradients[i],
             barWidth: 3,
             isStrokeCapRound: true,
@@ -402,34 +452,8 @@ class _TelemetryPageState extends State<TelemetryPage> {
               ),
             ),
           ),
-        // Add moving average line
-        LineChartBarData(
-          spots: _calculateMovingAverage(spots.first, 5),
-          isCurved: true,
-          color: Colors.white.withOpacity(0.5),
-          barWidth: 2,
-          isStrokeCapRound: true,
-          dotData: const FlDotData(show: false),
-          belowBarData: BarAreaData(show: false),
-        ),
       ],
     );
-  }
-
-  List<FlSpot> _calculateMovingAverage(List<FlSpot> data, int period) {
-    if (data.length < period) {
-      return data;
-    }
-
-    List<FlSpot> movingAverages = [];
-    for (int i = period - 1; i < data.length; i++) {
-      double sum = 0;
-      for (int j = 0; j < period; j++) {
-        sum += data[i - j].y;
-      }
-      movingAverages.add(FlSpot(data[i].x, sum / period));
-    }
-    return movingAverages;
   }
 
   Widget _buildLegend(Color actualColor, Color commandedColor) {

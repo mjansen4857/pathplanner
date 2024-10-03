@@ -14,6 +14,7 @@ import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/ideal_starting_state.dart';
+import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
@@ -52,6 +53,7 @@ void main() {
         goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones:
             List.generate(3, (index) => ConstraintsZone.defaultZone()),
+        pointTowardsZones: List.generate(2, (index) => PointTowardsZone()),
         rotationTargets: List.generate(
             4, (index) => RotationTarget(0.0, const Rotation2d())),
         eventMarkers: List.generate(5, (index) => EventMarker.defaultMarker()),
@@ -91,6 +93,7 @@ void main() {
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
         goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
+        pointTowardsZones: [PointTowardsZone()],
         rotationTargets: [RotationTarget(0.0, const Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
@@ -126,6 +129,7 @@ void main() {
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
         goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
+        pointTowardsZones: [PointTowardsZone()],
         rotationTargets: [RotationTarget(0.0, const Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
@@ -162,6 +166,7 @@ void main() {
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
         goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
+        pointTowardsZones: [PointTowardsZone()],
         rotationTargets: [RotationTarget(0.0, const Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
@@ -186,6 +191,7 @@ void main() {
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
         goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
+        pointTowardsZones: [PointTowardsZone()],
         rotationTargets: [RotationTarget(0.0, const Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
@@ -210,6 +216,7 @@ void main() {
         globalConstraints: PathConstraints(maxVelocityMPS: 1.0),
         goalEndState: GoalEndState(0.2, const Rotation2d()),
         constraintZones: [],
+        pointTowardsZones: [],
         rotationTargets: [],
         eventMarkers: [],
         reversed: false,
@@ -246,6 +253,7 @@ void main() {
       globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
       goalEndState: GoalEndState(0.5, const Rotation2d()),
       constraintZones: [ConstraintsZone.defaultZone()],
+      pointTowardsZones: [PointTowardsZone()],
       rotationTargets: [RotationTarget(0.0, const Rotation2d())],
       eventMarkers: [EventMarker.defaultMarker()],
       reversed: false,
@@ -290,6 +298,12 @@ void main() {
           constraints: PathConstraints(),
         ),
       ],
+      pointTowardsZones: [
+        PointTowardsZone(
+          minWaypointRelativePos: 0.25,
+          maxWaypointRelativePos: 0.75,
+        )
+      ],
       rotationTargets: [RotationTarget(0.6, const Rotation2d())],
       eventMarkers: [
         EventMarker(
@@ -314,6 +328,8 @@ void main() {
     expect(path.waypoints[1].nextControl, const Translation2d(2.75, 1.625));
     expect(path.constraintZones[0].minWaypointRelativePos, 0.4);
     expect(path.constraintZones[0].maxWaypointRelativePos, 0.8);
+    expect(path.pointTowardsZones[0].minWaypointRelativePos, 0.5);
+    expect(path.pointTowardsZones[0].maxWaypointRelativePos, 1.5);
     expect(path.rotationTargets[0].waypointRelativePos, 1.2);
     expect(path.eventMarkers[0].waypointRelativePos, 1.0);
 

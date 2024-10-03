@@ -36,6 +36,7 @@ void main() {
       globalConstraints: PathConstraints(),
       goalEndState: GoalEndState(0.0, const Rotation2d()),
       constraintZones: [],
+      pointTowardsZones: [],
       rotationTargets: [],
       eventMarkers: [],
       pathDir: '',

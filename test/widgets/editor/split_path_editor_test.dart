@@ -8,6 +8,7 @@ import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/ideal_starting_state.dart';
+import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -53,6 +54,11 @@ void main() {
         minWaypointRelativePos: 0.2,
         maxWaypointRelativePos: 0.8,
         name: 'z',
+      ),
+    ];
+    path.pointTowardsZones = [
+      PointTowardsZone(
+        name: 'pz',
       ),
     ];
     undoStack = ChangeStack();
@@ -514,6 +520,43 @@ void main() {
     final zoneCard = find.descendant(
         of: find.byType(TreeCardNode),
         matching: find.widgetWithText(TreeCardNode, 'z'));
+
+    await gesture.moveTo(widgetTester.getCenter(zoneCard));
+    await widgetTester.pumpAndSettle();
+
+    await gesture.moveTo(Offset.infinite);
+    await widgetTester.pumpAndSettle();
+
+    await widgetTester.tap(zoneCard);
+    await widgetTester.pumpAndSettle();
+
+    // nothing to test here, just covering the hover/select code
+  });
+
+  testWidgets('hover/select point towards zone', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    path.pointTowardsZonesExpanded = true;
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SplitPathEditor(
+          prefs: prefs,
+          path: path,
+          fieldImage: FieldImage.defaultField,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    final gesture =
+        await widgetTester.createGesture(kind: PointerDeviceKind.mouse);
+    await gesture.addPointer(location: Offset.zero);
+    addTearDown(gesture.removePointer);
+
+    final zoneCard = find.descendant(
+        of: find.byType(TreeCardNode),
+        matching: find.widgetWithText(TreeCardNode, 'pz'));
 
     await gesture.moveTo(widgetTester.getCenter(zoneCard));
     await widgetTester.pumpAndSettle();

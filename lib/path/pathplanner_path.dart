@@ -14,6 +14,7 @@ import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/ideal_starting_state.dart';
+import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
@@ -31,6 +32,7 @@ class PathPlannerPath {
   PathConstraints globalConstraints;
   GoalEndState goalEndState;
   List<ConstraintsZone> constraintZones;
+  List<PointTowardsZone> pointTowardsZones;
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
   bool reversed;
@@ -48,6 +50,7 @@ class PathPlannerPath {
   bool rotationTargetsExpanded = false;
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
+  bool pointTowardsZonesExpanded = false;
   bool previewStartingStateExpanded = false;
   bool pathOptimizationExpanded = false;
   DateTime lastModified = DateTime.now().toUtc();
@@ -58,6 +61,7 @@ class PathPlannerPath {
     required this.globalConstraints,
     required this.goalEndState,
     required this.constraintZones,
+    required this.pointTowardsZones,
     required this.rotationTargets,
     required this.eventMarkers,
     required this.pathDir,
@@ -81,6 +85,7 @@ class PathPlannerPath {
         globalConstraints = constraints ?? PathConstraints(),
         goalEndState = GoalEndState(0, const Rotation2d()),
         constraintZones = [],
+        pointTowardsZones = [],
         rotationTargets = [],
         eventMarkers = [],
         reversed = false,
@@ -107,22 +112,26 @@ class PathPlannerPath {
           fs: fs,
           name: name,
           waypoints: [
-            for (var waypointJson in json['waypoints'])
+            for (final waypointJson in json['waypoints'])
               Waypoint.fromJson(waypointJson),
           ],
           globalConstraints:
               PathConstraints.fromJson(json['globalConstraints'] ?? {}),
           goalEndState: GoalEndState.fromJson(json['goalEndState'] ?? {}),
           constraintZones: [
-            for (var zoneJson in json['constraintZones'] ?? [])
+            for (final zoneJson in json['constraintZones'] ?? [])
               ConstraintsZone.fromJson(zoneJson),
           ],
+          pointTowardsZones: [
+            for (final zoneJson in json['pointTowardsZones'] ?? [])
+              PointTowardsZone.fromJson(zoneJson),
+          ],
           rotationTargets: [
-            for (var targetJson in json['rotationTargets'] ?? [])
+            for (final targetJson in json['rotationTargets'] ?? [])
               RotationTarget.fromJson(targetJson),
           ],
           eventMarkers: [
-            for (var markerJson in json['eventMarkers'] ?? [])
+            for (final markerJson in json['eventMarkers'] ?? [])
               EventMarker.fromJson(markerJson),
           ],
           reversed: json['reversed'] ?? false,
@@ -207,16 +216,19 @@ class PathPlannerPath {
     return {
       'version': 1.0,
       'waypoints': [
-        for (Waypoint w in waypoints) w.toJson(),
+        for (final w in waypoints) w.toJson(),
       ],
       'rotationTargets': [
-        for (RotationTarget t in sortedTargets) t.toJson(),
+        for (final t in sortedTargets) t.toJson(),
       ],
       'constraintZones': [
-        for (ConstraintsZone z in constraintZones) z.toJson(),
+        for (final z in constraintZones) z.toJson(),
+      ],
+      'pointTowardsZones': [
+        for (final z in pointTowardsZones) z.toJson(),
       ],
       'eventMarkers': [
-        for (EventMarker m in sortedMarkers) m.toJson(),
+        for (final m in sortedMarkers) m.toJson(),
       ],
       'globalConstraints': globalConstraints.toJson(),
       'goalEndState': goalEndState.toJson(),
@@ -267,6 +279,13 @@ class PathPlannerPath {
     }
 
     for (ConstraintsZone z in constraintZones) {
+      z.minWaypointRelativePos = _adjustInsertedWaypointRelativePos(
+          z.minWaypointRelativePos, waypointIdx + 1);
+      z.maxWaypointRelativePos = _adjustInsertedWaypointRelativePos(
+          z.maxWaypointRelativePos, waypointIdx + 1);
+    }
+
+    for (PointTowardsZone z in pointTowardsZones) {
       z.minWaypointRelativePos = _adjustInsertedWaypointRelativePos(
           z.minWaypointRelativePos, waypointIdx + 1);
       z.maxWaypointRelativePos = _adjustInsertedWaypointRelativePos(
@@ -639,6 +658,7 @@ class PathPlannerPath {
       globalConstraints: globalConstraints.clone(),
       goalEndState: goalEndState.clone(),
       constraintZones: cloneConstraintZones(constraintZones),
+      pointTowardsZones: clonePointTowardsZones(pointTowardsZones),
       rotationTargets: cloneRotationTargets(rotationTargets),
       eventMarkers: cloneEventMarkers(eventMarkers),
       pathDir: pathDir,
@@ -651,32 +671,39 @@ class PathPlannerPath {
   }
 
   List<Translation2d> get pathPositions => [
-        for (PathPoint p in pathPoints) p.position,
+        for (final p in pathPoints) p.position,
       ];
 
   static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {
     return [
-      for (Waypoint waypoint in waypoints) waypoint.clone(),
+      for (final waypoint in waypoints) waypoint.clone(),
     ];
   }
 
   static List<ConstraintsZone> cloneConstraintZones(
       List<ConstraintsZone> zones) {
     return [
-      for (ConstraintsZone zone in zones) zone.clone(),
+      for (final zone in zones) zone.clone(),
+    ];
+  }
+
+  static List<PointTowardsZone> clonePointTowardsZones(
+      List<PointTowardsZone> zones) {
+    return [
+      for (final zone in zones) zone.clone(),
     ];
   }
 
   static List<RotationTarget> cloneRotationTargets(
       List<RotationTarget> targets) {
     return [
-      for (RotationTarget target in targets) target.clone(),
+      for (final target in targets) target.clone(),
     ];
   }
 
   static List<EventMarker> cloneEventMarkers(List<EventMarker> markers) {
     return [
-      for (EventMarker marker in markers) marker.clone(),
+      for (final marker in markers) marker.clone(),
     ];
   }
 
@@ -690,6 +717,7 @@ class PathPlannerPath {
       other.reversed == reversed &&
       listEquals(other.waypoints, waypoints) &&
       listEquals(other.constraintZones, constraintZones) &&
+      listEquals(other.pointTowardsZones, pointTowardsZones) &&
       listEquals(other.eventMarkers, eventMarkers) &&
       listEquals(other.rotationTargets, rotationTargets);
 

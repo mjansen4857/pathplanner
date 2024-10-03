@@ -5,6 +5,7 @@ import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/ideal_starting_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/trajectory/auto_simulator.dart';
@@ -35,6 +36,7 @@ void main() {
             minWaypointRelativePos: 0.2,
             maxWaypointRelativePos: 0.4),
       ],
+      pointTowardsZones: [PointTowardsZone()],
       rotationTargets: [
         RotationTarget(0.5, Rotation2d.fromDegrees(45)),
       ],
@@ -67,6 +69,7 @@ void main() {
             minWaypointRelativePos: 0.2,
             maxWaypointRelativePos: 0.4),
       ],
+      pointTowardsZones: [PointTowardsZone()],
       rotationTargets: [
         RotationTarget(0.5, Rotation2d.fromDegrees(45)),
       ],

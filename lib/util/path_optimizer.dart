@@ -31,6 +31,8 @@ class PathOptimizer {
           PathPlannerPath.cloneConstraintZones(path.constraintZones),
       rotationTargets:
           PathPlannerPath.cloneRotationTargets(path.rotationTargets),
+      pointTowardsZones:
+          PathPlannerPath.clonePointTowardsZones(path.pointTowardsZones),
       eventMarkers: [], // Markers don't matter. Save some memory
       pathDir: '',
       fs: MemoryFileSystem(),

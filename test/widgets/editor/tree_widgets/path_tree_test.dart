@@ -10,6 +10,7 @@ import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_optimization_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/point_towards_zones_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/editor/runtime_display.dart';
@@ -180,6 +181,23 @@ void main() {
     ));
 
     expect(find.byType(RotationTargetsTree), findsOneWidget);
+  });
+
+  testWidgets('has point zones tree', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: PathTree(
+          path: path,
+          undoStack: ChangeStack(),
+          holonomicMode: true,
+          defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
+        ),
+      ),
+    ));
+
+    expect(find.byType(PointTowardsZonesTree), findsOneWidget);
   });
 
   testWidgets('has optimizer tree', (widgetTester) async {

@@ -17,15 +17,16 @@ int PathPlannerPath::m_instances = 0;
 
 PathPlannerPath::PathPlannerPath(std::vector<Waypoint> waypoints,
 		std::vector<RotationTarget> rotationTargets,
+		std::vector<PointTowardsZone> pointTowardsZones,
 		std::vector<ConstraintsZone> constraintZones,
 		std::vector<EventMarker> eventMarkers,
 		PathConstraints globalConstraints,
 		std::optional<IdealStartingState> idealStartingState,
 		GoalEndState goalEndState, bool reversed) : m_waypoints(waypoints), m_rotationTargets(
-		rotationTargets), m_constraintZones(constraintZones), m_eventMarkers(
-		eventMarkers), m_globalConstraints(globalConstraints), m_idealStartingState(
-		idealStartingState), m_goalEndState(goalEndState), m_reversed(reversed), m_isChoreoPath(
-		false) {
+		rotationTargets), m_pointTowardsZones(pointTowardsZones), m_constraintZones(
+		constraintZones), m_eventMarkers(eventMarkers), m_globalConstraints(
+		globalConstraints), m_idealStartingState(idealStartingState), m_goalEndState(
+		goalEndState), m_reversed(reversed), m_isChoreoPath(false) {
 	std::sort(m_rotationTargets.begin(), m_rotationTargets.end(),
 			[](auto &left, auto &right) {
 				return left.getPosition() < right.getPosition();
@@ -45,7 +46,7 @@ PathPlannerPath::PathPlannerPath(std::vector<Waypoint> waypoints,
 }
 
 PathPlannerPath::PathPlannerPath(PathConstraints constraints,
-		GoalEndState goalEndState) : m_waypoints(), m_rotationTargets(), m_constraintZones(), m_eventMarkers(), m_globalConstraints(
+		GoalEndState goalEndState) : m_waypoints(), m_rotationTargets(), m_pointTowardsZones(), m_constraintZones(), m_eventMarkers(), m_globalConstraints(
 		constraints), m_idealStartingState(std::nullopt), m_goalEndState(
 		goalEndState), m_reversed(false), m_isChoreoPath(false) {
 	m_instances++;
@@ -57,6 +58,7 @@ void PathPlannerPath::hotReload(const wpi::json &json) {
 
 	m_waypoints = updatedPath->m_waypoints;
 	m_rotationTargets = updatedPath->m_rotationTargets;
+	m_pointTowardsZones = updatedPath->m_pointTowardsZones;
 	m_constraintZones = updatedPath->m_constraintZones;
 	m_eventMarkers = updatedPath->m_eventMarkers;
 	m_globalConstraints = updatedPath->m_globalConstraints;
@@ -249,23 +251,31 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromJson(
 			json.at("idealStartingState"));
 	bool reversed = json.at("reversed").get<bool>();
 	std::vector < RotationTarget > rotationTargets;
+	std::vector < PointTowardsZone > pointTowardsZones;
 	std::vector < ConstraintsZone > constraintZones;
 	std::vector < EventMarker > eventMarkers;
 
 	for (wpi::json::const_reference rotJson : json.at("rotationTargets")) {
-		rotationTargets.push_back(RotationTarget::fromJson(rotJson));
+		rotationTargets.emplace_back(RotationTarget::fromJson(rotJson));
+	}
+
+	if (json.contains("pointTowardsZones")) {
+		for (wpi::json::const_reference zoneJson : json.at("pointTowardsZones")) {
+			pointTowardsZones.emplace_back(
+					PointTowardsZone::fromJson(zoneJson));
+		}
 	}
 
 	for (wpi::json::const_reference zoneJson : json.at("constraintZones")) {
-		constraintZones.push_back(ConstraintsZone::fromJson(zoneJson));
+		constraintZones.emplace_back(ConstraintsZone::fromJson(zoneJson));
 	}
 
 	for (wpi::json::const_reference markerJson : json.at("eventMarkers")) {
-		eventMarkers.push_back(EventMarker::fromJson(markerJson));
+		eventMarkers.emplace_back(EventMarker::fromJson(markerJson));
 	}
 
 	return std::make_shared < PathPlannerPath
-			> (waypoints, rotationTargets, constraintZones, eventMarkers, globalConstraints, idealStartingState, goalEndState, reversed);
+			> (waypoints, rotationTargets, pointTowardsZones, constraintZones, eventMarkers, globalConstraints, idealStartingState, goalEndState, reversed);
 }
 
 std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathPoints(
@@ -430,6 +440,17 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 	}
 
 	for (size_t i = 1; i < points.size() - 1; i++) {
+		// Set the rotation target for point towards zones
+		auto pointZone = pointZoneForWaypointPos(points[i].waypointRelativePos);
+		if (pointZone.has_value()) {
+			PointTowardsZone zone = pointZone.value();
+			frc::Rotation2d angleToTarget = (zone.getTargetPosition()
+					- points[i].position).Angle();
+			frc::Rotation2d rotation = angleToTarget + zone.getRotationOffset();
+			points[i].rotationTarget = RotationTarget(
+					points[i].waypointRelativePos, rotation);
+		}
+
 		units::meter_t curveRadius = GeometryUtil::calculateRadius(
 				points[i - 1].position, points[i].position,
 				points[i + 1].position);
@@ -601,6 +622,11 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 				GeometryUtil::flipFieldRotation(t.getTarget()));
 	}
 
+	std::vector < PointTowardsZone > newPointZones;
+	for (auto z : m_pointTowardsZones) {
+		newPointZones.emplace_back(z.flip());
+	}
+
 	std::vector < PathPoint > newPoints;
 	for (auto p : m_allPoints) {
 		newPoints.emplace_back(p.flip());
@@ -621,6 +647,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 			newEndState);
 	path->m_waypoints = newWaypoints;
 	path->m_rotationTargets = newRotTargets;
+	path->m_pointTowardsZones = newPointZones;
 	path->m_constraintZones = m_constraintZones;
 	path->m_eventMarkers = m_eventMarkers;
 	path->m_idealStartingState = newStartState;

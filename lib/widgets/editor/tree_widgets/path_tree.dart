@@ -8,6 +8,7 @@ import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/ideal_starting_state_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_optimization_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/point_towards_zones_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +20,8 @@ class PathTree extends StatefulWidget {
   final ValueChanged<int?>? onWaypointSelected;
   final ValueChanged<int?>? onZoneHovered;
   final ValueChanged<int?>? onZoneSelected;
+  final ValueChanged<int?>? onPointZoneHovered;
+  final ValueChanged<int?>? onPointZoneSelected;
   final ValueChanged<int?>? onRotTargetHovered;
   final ValueChanged<int?>? onRotTargetSelected;
   final ValueChanged<int?>? onMarkerHovered;
@@ -31,6 +34,7 @@ class PathTree extends StatefulWidget {
   final WaypointsTreeController? waypointsTreeController;
   final int? initiallySelectedWaypoint;
   final int? initiallySelectedZone;
+  final int? initiallySelectedPointZone;
   final int? initiallySelectedRotTarget;
   final int? initiallySelectedMarker;
   final ChangeStack undoStack;
@@ -55,6 +59,9 @@ class PathTree extends StatefulWidget {
     this.onZoneHovered,
     this.onZoneSelected,
     this.initiallySelectedZone,
+    this.onPointZoneHovered,
+    this.onPointZoneSelected,
+    this.initiallySelectedPointZone,
     this.onRotTargetHovered,
     this.onRotTargetSelected,
     this.initiallySelectedRotTarget,
@@ -88,7 +95,10 @@ class _PathTreeState extends State<PathTree> {
               children: [
                 _buildWaypointsTree(),
                 _buildEventMarkersTree(),
-                if (widget.holonomicMode) _buildRotationTargetsTree(),
+                if (widget.holonomicMode) ...[
+                  _buildRotationTargetsTree(),
+                  _buildPointZonesTree(),
+                ],
                 const Divider(),
                 _buildIdealStartingStateTree(),
                 _buildGoalEndStateTree(),
@@ -210,6 +220,19 @@ class _PathTreeState extends State<PathTree> {
       onTargetHovered: widget.onRotTargetHovered,
       onTargetSelected: widget.onRotTargetSelected,
       initiallySelectedTarget: widget.initiallySelectedRotTarget,
+      undoStack: widget.undoStack,
+    );
+  }
+
+  Widget _buildPointZonesTree() {
+    return PointTowardsZonesTree(
+      key: ValueKey('pointZones${widget.path.pointTowardsZones.length}'),
+      path: widget.path,
+      onPathChanged: widget.onPathChanged,
+      onPathChangedNoSim: widget.onPathChangedNoSim,
+      onZoneHovered: widget.onPointZoneHovered,
+      onZoneSelected: widget.onPointZoneSelected,
+      initiallySelectedZone: widget.initiallySelectedPointZone,
       undoStack: widget.undoStack,
     );
   }

@@ -7,6 +7,7 @@ import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
@@ -62,6 +63,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   int? _selectedZone;
   int? _hoveredRotTarget;
   int? _selectedRotTarget;
+  int? _hoveredPointZone;
+  int? _selectedPointZone;
   int? _hoveredMarker;
   int? _selectedMarker;
   late bool _treeOnRight;
@@ -440,6 +443,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           selectedWaypoint: _selectedWaypoint,
                           hoveredZone: _hoveredZone,
                           selectedZone: _selectedZone,
+                          hoveredPointZone: _hoveredPointZone,
+                          selectedPointZone: _selectedPointZone,
                           hoveredRotTarget: _hoveredRotTarget,
                           selectedRotTarget: _selectedRotTarget,
                           hoveredMarker: _hoveredMarker,
@@ -508,6 +513,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
                     initiallySelectedRotTarget: _selectedRotTarget,
+                    initiallySelectedPointZone: _selectedPointZone,
                     initiallySelectedMarker: _selectedMarker,
                     waypointsTreeController: _waypointsTreeController,
                     undoStack: widget.undoStack,
@@ -548,6 +554,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                               widget.path.eventMarkers),
                           PathPlannerPath.cloneRotationTargets(
                               widget.path.rotationTargets),
+                          PathPlannerPath.clonePointTowardsZones(
+                              widget.path.pointTowardsZones),
                         ],
                         () {
                           setState(() {
@@ -567,6 +575,16 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
                             for (ConstraintsZone zone
                                 in widget.path.constraintZones) {
+                              zone.minWaypointRelativePos =
+                                  _adjustDeletedWaypointRelativePos(
+                                      zone.minWaypointRelativePos, waypointIdx);
+                              zone.maxWaypointRelativePos =
+                                  _adjustDeletedWaypointRelativePos(
+                                      zone.maxWaypointRelativePos, waypointIdx);
+                            }
+
+                            for (PointTowardsZone zone
+                                in widget.path.pointTowardsZones) {
                               zone.minWaypointRelativePos =
                                   _adjustDeletedWaypointRelativePos(
                                       zone.minWaypointRelativePos, waypointIdx);
@@ -610,6 +628,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                             widget.path.rotationTargets =
                                 PathPlannerPath.cloneRotationTargets(
                                     oldValue[3] as List<RotationTarget>);
+                            widget.path.pointTowardsZones =
+                                PathPlannerPath.clonePointTowardsZones(
+                                    oldValue[4] as List<PointTowardsZone>);
                             widget.path.generateAndSavePath();
                             _simulatePath();
                           });
@@ -639,6 +660,16 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     onZoneSelected: (value) {
                       setState(() {
                         _selectedZone = value;
+                      });
+                    },
+                    onPointZoneHovered: (value) {
+                      setState(() {
+                        _hoveredPointZone = value;
+                      });
+                    },
+                    onPointZoneSelected: (value) {
+                      setState(() {
+                        _selectedPointZone = value;
                       });
                     },
                     onRotTargetHovered: (value) {

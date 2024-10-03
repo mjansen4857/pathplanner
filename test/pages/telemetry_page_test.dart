@@ -104,11 +104,11 @@ void main() {
     velocitiesController.add([1.0, 2.0, 0.5, 1.5]);
     currentPoseController
         .add(Pose2d(const Translation2d(2.1, 2.1), Rotation2d.fromDegrees(20)));
-    targetPoseController.add(Pose2d(const Translation2d(2, 2), Rotation2d()));
+    targetPoseController.add(const Pose2d(Translation2d(2, 2), Rotation2d()));
     currentPathController.add([
-      Pose2d(const Translation2d(1, 5), Rotation2d()),
-      Pose2d(const Translation2d(2, 4), Rotation2d()),
-      Pose2d(const Translation2d(3, 5), Rotation2d())
+      const Pose2d(Translation2d(1, 5), Rotation2d()),
+      const Pose2d(Translation2d(2, 4), Rotation2d()),
+      const Pose2d(Translation2d(3, 5), Rotation2d())
     ]);
 
     // Allow time for the streams to emit some values

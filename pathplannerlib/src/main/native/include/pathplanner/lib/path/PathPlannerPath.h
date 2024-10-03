@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pathplanner/lib/path/RotationTarget.h"
+#include "pathplanner/lib/path/PointTowardsZone.h"
 #include "pathplanner/lib/path/ConstraintsZone.h"
 #include "pathplanner/lib/path/EventMarker.h"
 #include "pathplanner/lib/path/PathConstraints.h"
@@ -32,6 +33,7 @@ public:
 	 * @param waypoints List of waypoints representing the path. For on-the-fly paths, you likely want
 	 *     to use waypointsFromPoses to create these.
 	 * @param holonomicRotations List of rotation targets along the path
+	 * @param pointTowardsZones List of point towards zones along the path
 	 * @param constraintZones List of constraint zones along the path
 	 * @param eventMarkers List of event markers along the path
 	 * @param globalConstraints The global constraints of the path
@@ -41,6 +43,7 @@ public:
 	 */
 	PathPlannerPath(std::vector<Waypoint> waypoints,
 			std::vector<RotationTarget> rotationTargets,
+			std::vector<PointTowardsZone> pointTowardsZones,
 			std::vector<ConstraintsZone> constraintZones,
 			std::vector<EventMarker> eventMarkers,
 			PathConstraints globalConstraints,
@@ -63,8 +66,9 @@ public:
 			std::optional<IdealStartingState> idealStartingState,
 			GoalEndState goalEndState, bool reversed = false) : PathPlannerPath(
 			waypoints, std::vector<RotationTarget>(),
-			std::vector<ConstraintsZone>(), std::vector<EventMarker>(),
-			constraints, idealStartingState, goalEndState, reversed) {
+			std::vector<PointTowardsZone>(), std::vector<ConstraintsZone>(),
+			std::vector<EventMarker>(), constraints, idealStartingState,
+			goalEndState, reversed) {
 	}
 
 	/**
@@ -225,6 +229,15 @@ public:
 	}
 
 	/**
+	 * Get the point towards zones for this path
+	 *
+	 * @return vector of this path's point towards zones
+	 */
+	constexpr std::vector<PointTowardsZone>& getPointTowardsZones() {
+		return m_pointTowardsZones;
+	}
+
+	/**
 	 * Get the constraint zones for this path
 	 * @return vector of this path's constraint zones
 	 */
@@ -355,6 +368,17 @@ private:
 		return m_globalConstraints;
 	}
 
+	inline std::optional<PointTowardsZone> pointZoneForWaypointPos(
+			double pos) const {
+		for (auto z : m_pointTowardsZones) {
+			if (pos >= z.getMinWaypointRelativePos()
+					&& pos <= z.getMaxWaypointRelativePos()) {
+				return z;
+			}
+		}
+		return std::nullopt;
+	}
+
 	frc::Translation2d samplePath(double waypointRelativePos) const;
 
 	static std::unordered_map<std::string, std::shared_ptr<PathPlannerPath>>& getPathCache();
@@ -363,6 +387,7 @@ private:
 
 	std::vector<Waypoint> m_waypoints;
 	std::vector<RotationTarget> m_rotationTargets;
+	std::vector<PointTowardsZone> m_pointTowardsZones;
 	std::vector<ConstraintsZone> m_constraintZones;
 	std::vector<EventMarker> m_eventMarkers;
 	PathConstraints m_globalConstraints;

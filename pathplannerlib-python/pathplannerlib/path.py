@@ -130,37 +130,6 @@ class ConstraintsZone:
 
         return ConstraintsZone(minPos, maxPos, constraints)
 
-    def isWithinZone(self, t: float) -> bool:
-        """
-        Get if a given waypoint relative position is within this zone
-
-        :param t: Waypoint relative position
-        :return: True if given position is within this zone
-        """
-        return self.minWaypointPos <= t <= self.maxWaypointPos
-
-    def overlapsRange(self, min_pos: float, max_pos: float) -> bool:
-        """
-        Get if this zone overlaps a given range
-
-        :param min_pos: The minimum waypoint relative position of the range
-        :param max_pos: The maximum waypoint relative position of the range
-        :return: True if any part of this zone is within the given range
-        """
-        return max(min_pos, self.minWaypointPos) <= min(max_pos, self.maxWaypointPos)
-
-    def forSegmentIndex(self, segment_index: int) -> ConstraintsZone:
-        """
-        Transform the positions of this zone for a given segment number.
-
-        For example, a zone from [1.5, 2.0] for the segment 1 will have the positions [0.5, 1.0]
-
-        :param segment_index: The segment index to transform positions for
-        :return: The transformed zone
-        """
-        return ConstraintsZone(self.minWaypointPos - segment_index, self.maxWaypointPos - segment_index,
-                               self.constraints)
-
     def __eq__(self, other):
         return (isinstance(other, ConstraintsZone)
                 and other.minWaypointPos == self.minWaypointPos
@@ -187,21 +156,52 @@ class RotationTarget:
 
         return RotationTarget(pos, Rotation2d.fromDegrees(deg))
 
-    def forSegmentIndex(self, segment_index: int) -> RotationTarget:
-        """
-        Transform the position of this target for a given segment number.
-
-        For example, a target with position 1.5 for the segment 1 will have the position 0.5
-
-        :param segment_index: The segment index to transform position for
-        :return: The transformed target
-        """
-        return RotationTarget(self.waypointRelativePosition - segment_index, self.target)
-
     def __eq__(self, other):
         return (isinstance(other, RotationTarget)
                 and other.waypointRelativePosition == self.waypointRelativePosition
                 and other.target == self.target)
+
+
+@dataclass(frozen=True)
+class PointTowardsZone:
+    """
+    A zone on a path that will force the robot to point towards a position on the field
+
+    Args:
+        targetPosition  (Translation2d): The target field position in meters
+        minWaypointRelativePos (float): Starting position of the zone
+        maxWaypointRelativePos (float): End position of the zone
+        rotationOffset (Rotation2d): A rotation offset to add on top of the angle to the target position. For
+            example, if you want the robot to point away from the target position, use a rotation offset of 180 degrees
+    """
+    targetPosition: Translation2d
+    minWaypointRelativePos: float
+    maxWaypointRelativePos: float
+    rotationOffset: Rotation2d = Rotation2d()
+
+    @staticmethod
+    def fromJson(json_dict: dict) -> PointTowardsZone:
+        targetPos = PointTowardsZone._translationFromJson(json_dict['fieldPosition'])
+        minPos = float(json_dict['minWaypointRelativePos'])
+        maxPos = float(json_dict['minWaypointRelativePos'])
+        deg = float(json_dict['rotationOffset'])
+
+        return PointTowardsZone(targetPos, minPos, maxPos, Rotation2d.fromDegrees(deg))
+
+    @staticmethod
+    def _translationFromJson(translationJson: dict) -> Translation2d:
+        x = float(translationJson['x'])
+        y = float(translationJson['y'])
+        return Translation2d(x, y)
+
+    def flip(self) -> PointTowardsZone:
+        """
+        Flip this point towards zone to the other side of the field, maintaining a blue alliance origin
+
+        :return: The flipped zone
+        """
+        return PointTowardsZone(flipFieldPos(self.targetPosition), self.minWaypointRelativePos,
+                                self.maxWaypointRelativePos, self.rotationOffset)
 
 
 @dataclass(frozen=True)
@@ -344,6 +344,7 @@ class Waypoint:
 class PathPlannerPath:
     _waypoints: List[Waypoint]
     _rotationTargets: List[RotationTarget]
+    _pointTowardsZones: List[PointTowardsZone]
     _constraintZones: List[ConstraintsZone]
     _eventMarkers: List[EventMarker]
     _globalConstraints: PathConstraints
@@ -364,8 +365,9 @@ class PathPlannerPath:
 
     def __init__(self, waypoints: List[Waypoint], constraints: PathConstraints,
                  ideal_starting_state: Union[IdealStartingState, None], goal_end_state: GoalEndState,
-                 holonomic_rotations: List[RotationTarget] = None, constraint_zones: List[ConstraintsZone] = None,
-                 event_markers: List[EventMarker] = None, is_reversed: bool = False):
+                 holonomic_rotations: List[RotationTarget] = None, point_towards_zones: List[PointTowardsZone] = None,
+                 constraint_zones: List[ConstraintsZone] = None, event_markers: List[EventMarker] = None,
+                 is_reversed: bool = False):
         """
         Create a new path planner path
 
@@ -385,6 +387,10 @@ class PathPlannerPath:
         else:
             self._rotationTargets = holonomic_rotations
             self._rotationTargets.sort(key=lambda x: x.waypointRelativePosition)
+        if point_towards_zones is None:
+            self.point_towards_zones = []
+        else:
+            self.point_towards_zones = point_towards_zones
         if constraint_zones is None:
             self._constraintZones = []
         else:
@@ -720,6 +726,7 @@ class PathPlannerPath:
 
         newRotTargets = [RotationTarget(t.waypointRelativePosition, flipFieldRotation(t.target)) for t in
                          self._rotationTargets]
+        newPointZones = [z.flip() for z in self.point_towards_zones]
 
         newPoints = [p.flip() for p in self._allPoints]
 
@@ -728,6 +735,7 @@ class PathPlannerPath:
                                                            flipFieldRotation(self._goalEndState.rotation)))
         path._bezierPoints = [w.flip() for w in self._waypoints]
         path._rotationTargets = newRotTargets
+        path._pointTowardsZones = newPointZones
         path._constraintZones = self._constraintZones
         path._eventMarkers = self._eventMarkers
         if self._idealStartingState is not None:
@@ -792,6 +800,14 @@ class PathPlannerPath:
         """
         return self._rotationTargets
 
+    def getPointTowardsZones(self) -> List[PointTowardsZone]:
+        """
+        Get the point towards zones for this path
+
+        :return: List of this path's point towards zones
+        """
+        return self._pointTowardsZones
+
     def getConstraintZones(self) -> List[ConstraintsZone]:
         """
         Get the constraint zones for this path
@@ -805,6 +821,12 @@ class PathPlannerPath:
             if z.minWaypointPos <= pos <= z.maxWaypointPos:
                 return z.constraints
         return self._globalConstraints
+
+    def _pointZoneForWaypointPos(self, pos: float) -> Union[PointTowardsZone, None]:
+        for z in self._pointTowardsZones:
+            if z.minWaypointRelativePos <= pos <= z.maxWaypointRelativePos:
+                return z
+        return None
 
     def _samplePath(self, waypointRelativePos: float) -> Translation2d:
         pos = min(max(waypointRelativePos, 0.0), len(self._waypoints) - 1)
@@ -829,12 +851,13 @@ class PathPlannerPath:
         idealStartingState = IdealStartingState.fromJson(path_json['idealStartingState'])
         isReversed = bool(path_json['reversed'])
         rotationTargets = [RotationTarget.fromJson(rotJson) for rotJson in path_json['rotationTargets']]
+        pointTowardsZones = [PointTowardsZone.fromJson(zoneJson) for zoneJson in
+                             path_json['pointTowardsZones']] if 'pointTowardsZones' in path_json else []
         constraintZones = [ConstraintsZone.fromJson(zoneJson) for zoneJson in path_json['constraintZones']]
         eventMarkers = [EventMarker.fromJson(markerJson) for markerJson in path_json['eventMarkers']]
 
         return PathPlannerPath(waypoints, globalConstraints, idealStartingState, goalEndState, rotationTargets,
-                               constraintZones,
-                               eventMarkers, isReversed)
+                               pointTowardsZones, constraintZones, eventMarkers, isReversed)
 
     @staticmethod
     def _pointFromJson(point_json: dict) -> Translation2d:
@@ -957,6 +980,13 @@ class PathPlannerPath:
             pos = numSegments
 
         for i in range(1, len(points) - 1):
+            # Set the rotation target for point towards zones
+            pointZone = self._pointZoneForWaypointPos(points[i].waypointRelativePos)
+            if pointZone is not None:
+                angleToTarget = (pointZone.targetPosition - points[i].position).angle()
+                rotation = angleToTarget + pointZone.rotationOffset
+                points[i].rotationTarget = RotationTarget(points[i].waypointRelativePos, rotation)
+
             curveRadius = calculateRadius(points[i - 1].position, points[i].position, points[i + 1].position)
 
             if not math.isfinite(curveRadius):

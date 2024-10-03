@@ -32,9 +32,9 @@ void main() {
       name: 'test',
       trajectory: PathPlannerTrajectory.fromStates([
         TrajectoryState.pregen(0.0, const ChassisSpeeds(),
-            Pose2d(const Translation2d(), Rotation2d())),
+            const Pose2d(Translation2d(), Rotation2d())),
         TrajectoryState.pregen(1.0, const ChassisSpeeds(),
-            Pose2d(const Translation2d(), Rotation2d())),
+            const Pose2d(Translation2d(), Rotation2d())),
       ]),
       fs: fs,
       choreoDir: '/choreo',

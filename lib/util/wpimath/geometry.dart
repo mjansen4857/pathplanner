@@ -132,13 +132,8 @@ class Translation2d {
 
 class Rotation2d {
   final num _value;
-  final num _cos;
-  final num _sin;
 
-  Rotation2d([num radians = 0])
-      : _value = radians,
-        _cos = cos(radians),
-        _sin = sin(radians);
+  const Rotation2d([this._value = 0]);
 
   Rotation2d.fromSinCos(num sin, num cos) : this(atan2(sin, cos));
 
@@ -158,8 +153,13 @@ class Rotation2d {
   Rotation2d.fromRotations(num rotations) : this(rotations * 2 * pi);
 
   Rotation2d rotateBy(Rotation2d other) {
-    return Rotation2d.fromComponents(_cos * other._cos - _sin * other._sin,
-        _cos * other._sin + _sin * other._cos);
+    num c = cosine;
+    num s = sine;
+    num otherC = other.cosine;
+    num otherS = other.sine;
+
+    return Rotation2d.fromComponents(
+        c * otherC - s * otherS, c * otherS + s * otherC);
   }
 
   Rotation2d operator +(Rotation2d other) {
@@ -188,11 +188,11 @@ class Rotation2d {
 
   num get rotations => _value / (pi * 2);
 
-  num get cosine => _cos;
+  num get cosine => cos(_value);
 
-  num get sine => _sin;
+  num get sine => sin(_value);
 
-  num get tangent => _sin / _cos;
+  num get tangent => sine / cosine;
 
   Rotation2d interpolate(Rotation2d endValue, num t) {
     return this + ((endValue - this) * MathUtil.clamp(t, 0, 1));
@@ -202,7 +202,7 @@ class Rotation2d {
   bool operator ==(Object other) =>
       other is Rotation2d &&
       other.runtimeType == runtimeType &&
-      sqrt(pow(_cos - other._cos, 2) + pow(_sin - other._sin, 2)) < 1e-9;
+      sqrt(pow(cosine - other.cosine, 2) + pow(sine - other.sine, 2)) < 1e-9;
 
   @override
   int get hashCode => _value.hashCode;

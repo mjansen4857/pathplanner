@@ -3,12 +3,14 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 class RotationTarget {
   num waypointRelativePos;
   Rotation2d rotation;
+  final bool displayInEditor;
 
-  RotationTarget(this.waypointRelativePos, this.rotation);
+  RotationTarget(this.waypointRelativePos, this.rotation,
+      [this.displayInEditor = true]);
 
   RotationTarget.fromJson(Map<String, dynamic> json)
-      : waypointRelativePos = json['waypointRelativePos'] ?? 0.5,
-        rotation = Rotation2d.fromDegrees(json['rotationDegrees'] ?? 0);
+      : this(json['waypointRelativePos'] ?? 0.5,
+            Rotation2d.fromDegrees(json['rotationDegrees'] ?? 0));
 
   Map<String, dynamic> toJson() {
     return {
@@ -18,7 +20,7 @@ class RotationTarget {
   }
 
   RotationTarget clone() {
-    return RotationTarget(waypointRelativePos, rotation);
+    return RotationTarget(waypointRelativePos, rotation, displayInEditor);
   }
 
   @override
@@ -30,4 +32,9 @@ class RotationTarget {
 
   @override
   int get hashCode => Object.hash(waypointRelativePos, rotation);
+
+  @override
+  String toString() {
+    return 'RotationTarget($waypointRelativePos, $rotation)';
+  }
 }

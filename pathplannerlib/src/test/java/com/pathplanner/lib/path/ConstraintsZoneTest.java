@@ -19,24 +19,6 @@ public class ConstraintsZoneTest {
   }
 
   @Test
-  public void testWithinZone() {
-    ConstraintsZone zone = new ConstraintsZone(1.25, 1.8, new PathConstraints(1, 2, 3, 4));
-
-    assertTrue(zone.isWithinZone(1.5));
-    assertFalse(zone.isWithinZone(2.0));
-    assertFalse(zone.isWithinZone(1.0));
-  }
-
-  @Test
-  public void testOverlapsRange() {
-    ConstraintsZone zone = new ConstraintsZone(1.25, 1.8, new PathConstraints(1, 2, 3, 4));
-
-    assertTrue(zone.overlapsRange(1.0, 2.0));
-    assertFalse(zone.overlapsRange(0.0, 1.0));
-    assertFalse(zone.overlapsRange(2.0, 3.0));
-  }
-
-  @Test
   public void testFromJson() {
     JSONObject json = new JSONObject();
     JSONObject constraintsJson = new JSONObject();

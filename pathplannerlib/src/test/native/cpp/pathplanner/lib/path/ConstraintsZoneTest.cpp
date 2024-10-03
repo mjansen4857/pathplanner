@@ -11,22 +11,6 @@ TEST(ConstraintsZoneTest, TestGetters) {
 	EXPECT_EQ(PathConstraints(1_mps, 2_mps_sq, 3_rad_per_s, 4_rad_per_s_sq), zone.getConstraints());
 }
 
-TEST(ConstraintsZoneTest, TestWithinZone) {
-	ConstraintsZone zone(1.25, 1.8, PathConstraints(1_mps, 2_mps_sq, 3_rad_per_s, 4_rad_per_s_sq));
-
-	EXPECT_TRUE(zone.isWithinZone(1.5));
-	EXPECT_FALSE(zone.isWithinZone(2.0));
-	EXPECT_FALSE(zone.isWithinZone(1.0));
-}
-
-TEST(ConstraintsZoneTest, TestOverlapsRange) {
-	ConstraintsZone zone(1.25, 1.8, PathConstraints(1_mps, 2_mps_sq, 3_rad_per_s, 4_rad_per_s_sq));
-
-	EXPECT_TRUE(zone.overlapsRange(1.0, 2.0));
-	EXPECT_FALSE(zone.overlapsRange(0.0, 1.0));
-	EXPECT_FALSE(zone.overlapsRange(2.0, 3.0));
-}
-
 TEST(ConstraintsZoneTest, TestFromJson) {
 	wpi::json json;
 	wpi::json constraintsJson;

@@ -54,40 +54,6 @@ public:
 		return m_constraints;
 	}
 
-	/**
-	 * Get if a given waypoint relative position is within this zone
-	 *
-	 * @param t Waypoint relative position
-	 * @return True if given position is within this zone
-	 */
-	constexpr bool isWithinZone(double t) const {
-		return t >= m_minPos && t <= m_maxPos;
-	}
-
-	/**
-	 * Get if this zone overlaps a given range
-	 *
-	 * @param minPos The minimum waypoint relative position of the range
-	 * @param maxPos The maximum waypoint relative position of the range
-	 * @return True if any part of this zone is within the given range
-	 */
-	constexpr bool overlapsRange(double minPos, double maxPos) const {
-		return std::max(minPos, m_minPos) <= std::min(maxPos, m_maxPos);
-	}
-
-	/**
-	 * Transform the positions of this zone for a given segment number.
-	 *
-	 * <p>For example, a zone from [1.5, 2.0] for the segment 1 will have the positions [0.5, 1.0]
-	 *
-	 * @param segmentIndex The segment index to transform positions for
-	 * @return The transformed zone
-	 */
-	constexpr ConstraintsZone forSegmentIndex(int segmentIndex) const {
-		return ConstraintsZone(m_minPos - segmentIndex, m_maxPos - segmentIndex,
-				m_constraints);
-	}
-
 	inline bool operator==(const ConstraintsZone &other) const {
 		return std::abs(m_minPos - other.m_minPos) < 1E-9
 				&& std::abs(m_maxPos - other.m_maxPos) < 1E-9

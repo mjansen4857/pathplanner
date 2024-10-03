@@ -80,7 +80,12 @@ public class EventMarker {
     if (markerJson.get("endWaypointRelativePos") != null) {
       endPos = ((Number) markerJson.get("endWaypointRelativePos")).doubleValue();
     }
-    Command cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"), false);
+    Command cmd = Commands.none();
+    try {
+      cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"), false);
+    } catch (Exception ignored) {
+      // Path files won't be loaded from event markers
+    }
     return new EventMarker(name, pos, endPos, cmd);
   }
 

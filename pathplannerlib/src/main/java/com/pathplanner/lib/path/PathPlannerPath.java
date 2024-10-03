@@ -14,14 +14,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Filesystem;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /** A PathPlanner path. NOTE: This is not a trajectory and isn't directly followed. */
 public class PathPlannerPath {
@@ -281,8 +280,11 @@ public class PathPlannerPath {
    *
    * @param pathName The name of the path to load
    * @return PathPlannerPath created from the given file name
+   * @throws IOException if the file cannot be read
+   * @throws FileNotFoundException if the file cannot be found
+   * @throws ParseException If the JSON cannot be parsed
    */
-  public static PathPlannerPath fromPathFile(String pathName) {
+  public static PathPlannerPath fromPathFile(String pathName) throws IOException, ParseException {
     if (pathCache.containsKey(pathName)) {
       return pathCache.get(pathName);
     }
@@ -305,12 +307,11 @@ public class PathPlannerPath {
       PPLibTelemetry.registerHotReloadPath(pathName, path);
       pathCache.put(pathName, path);
       return path;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 
-  private static void loadChoreoTrajectoryIntoCache(String trajectoryName) {
+  private static void loadChoreoTrajectoryIntoCache(String trajectoryName)
+      throws IOException, ParseException {
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(
@@ -415,8 +416,6 @@ public class PathPlannerPath {
             Optional.of(new PathPlannerTrajectory(states, Collections.emptyList()));
         choreoPathCache.put(name, path);
       }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 
@@ -427,8 +426,12 @@ public class PathPlannerPath {
    *     of the trajectory.
    * @param splitIndex The index of the split to use
    * @return PathPlannerPath created from the given Choreo trajectory and split index
+   * @throws IOException if the file cannot be read
+   * @throws FileNotFoundException if the file cannot be found
+   * @throws ParseException If the JSON cannot be parsed
    */
-  public static PathPlannerPath fromChoreoTrajectory(String trajectoryName, int splitIndex) {
+  public static PathPlannerPath fromChoreoTrajectory(String trajectoryName, int splitIndex)
+      throws IOException, ParseException {
     String cacheName = trajectoryName + "." + splitIndex;
 
     if (choreoPathCache.containsKey(cacheName)) {
@@ -447,8 +450,12 @@ public class PathPlannerPath {
    * @param trajectoryName The name of the Choreo trajectory to load. This should be just the name
    *     of the trajectory. The trajectories must be located in the "deploy/choreo" directory.
    * @return PathPlannerPath created from the given Choreo trajectory
+   * @throws IOException if the file cannot be read
+   * @throws FileNotFoundException if the file cannot be found
+   * @throws ParseException If the JSON cannot be parsed
    */
-  public static PathPlannerPath fromChoreoTrajectory(String trajectoryName) {
+  public static PathPlannerPath fromChoreoTrajectory(String trajectoryName)
+      throws IOException, ParseException {
     if (choreoPathCache.containsKey(trajectoryName)) {
       return choreoPathCache.get(trajectoryName);
     }

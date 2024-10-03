@@ -1,24 +1,25 @@
 package com.pathplanner.lib.commands;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.AutoBuilderException;
 import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /** A command that loads and runs an autonomous routine built using PathPlanner. */
 public class PathPlannerAuto extends Command {
@@ -31,12 +32,12 @@ public class PathPlannerAuto extends Command {
    * Constructs a new PathPlannerAuto command.
    *
    * @param autoName the name of the autonomous routine to load and run
-   * @throws RuntimeException if AutoBuilder is not configured before attempting to load the
+   * @throws AutoBuilderException if AutoBuilder is not configured before attempting to load the
    *     autonomous routine
    */
   public PathPlannerAuto(String autoName) {
     if (!AutoBuilder.isConfigured()) {
-      throw new RuntimeException(
+      throw new AutoBuilderException(
           "AutoBuilder was not configured before attempting to load a PathPlannerAuto from file");
     }
 
@@ -54,8 +55,16 @@ public class PathPlannerAuto extends Command {
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
       initFromJson(json);
-    } catch (Exception e) {
-      throw new RuntimeException(String.format("Error building auto: %s", autoName), e);
+    } catch (FileNotFoundException e) {
+      DriverStation.reportError(e.getMessage(), e.getStackTrace());
+    } catch (IOException e) {
+      DriverStation.reportError(
+          "Failed to read file required by auto: " + autoName, e.getStackTrace());
+    } catch (ParseException e) {
+      DriverStation.reportError(
+          "Failed to parse JSON in file required by auto: " + autoName, e.getStackTrace());
+    } finally {
+      autoCommand = Commands.none();
     }
 
     addRequirements(autoCommand.getRequirements().toArray(new Subsystem[0]));
@@ -81,8 +90,11 @@ public class PathPlannerAuto extends Command {
    *
    * @param autoName Name of the auto to get the path group from
    * @return List of paths in the auto
+   * @throws IOException if attempting to load a file that does not exist or cannot be read
+   * @throws ParseException If JSON within file cannot be parsed
    */
-  public static List<PathPlannerPath> getPathGroupFromAutoFile(String autoName) {
+  public static List<PathPlannerPath> getPathGroupFromAutoFile(String autoName)
+      throws IOException, ParseException {
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(
@@ -98,8 +110,6 @@ public class PathPlannerAuto extends Command {
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
       boolean choreoAuto = json.get("choreoAuto") != null && (boolean) json.get("choreoAuto");
       return pathsFromCommandJson((JSONObject) json.get("command"), choreoAuto);
-    } catch (Exception e) {
-      throw new RuntimeException(e.getMessage());
     }
   }
 
@@ -110,10 +120,14 @@ public class PathPlannerAuto extends Command {
    * @param autoJson the JSON object representing the updated autonomous routine
    */
   public void hotReload(JSONObject autoJson) {
-    initFromJson(autoJson);
+    try {
+      initFromJson(autoJson);
+    } catch (Exception e) {
+      DriverStation.reportError("Failed to load path during hot reload", e.getStackTrace());
+    }
   }
 
-  private void initFromJson(JSONObject autoJson) {
+  private void initFromJson(JSONObject autoJson) throws IOException, ParseException {
     boolean choreoAuto = autoJson.get("choreoAuto") != null && (boolean) autoJson.get("choreoAuto");
     JSONObject commandJson = (JSONObject) autoJson.get("command");
     Command cmd = CommandUtil.commandFromJson(commandJson, choreoAuto);
@@ -160,7 +174,7 @@ public class PathPlannerAuto extends Command {
   }
 
   private static List<PathPlannerPath> pathsFromCommandJson(
-      JSONObject commandJson, boolean choreoPaths) {
+      JSONObject commandJson, boolean choreoPaths) throws IOException, ParseException {
     List<PathPlannerPath> paths = new ArrayList<>();
 
     String type = (String) commandJson.get("type");

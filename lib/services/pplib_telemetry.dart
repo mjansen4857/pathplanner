@@ -9,7 +9,6 @@ import 'package:pathplanner/util/wpimath/geometry.dart';
 class PPLibTelemetry {
   late NT4Client _client;
   late NT4Subscription _velSub;
-  late NT4Subscription _inaccuracySub;
   late NT4Subscription _currentPoseSub;
   late NT4Subscription _activePathSub;
   late NT4Subscription _targetPoseSub;
@@ -27,8 +26,6 @@ class PPLibTelemetry {
     );
 
     _velSub = _client.subscribePeriodic('/PathPlanner/vel', 0.033);
-    _inaccuracySub =
-        _client.subscribePeriodic('/PathPlanner/inaccuracy', 0.033);
     _currentPoseSub =
         _client.subscribePeriodic('/PathPlanner/currentPose', 0.033);
     _activePathSub = _client.subscribeAllSamples('/PathPlanner/activePath');
@@ -74,12 +71,6 @@ class PPLibTelemetry {
   Stream<List<num>> velocitiesStream() {
     return _velSub.stream().map((vels) =>
         (vels as List?)?.map((e) => e as num).toList() ?? [0, 0, 0, 0]);
-  }
-
-  Stream<num> inaccuracyStream() {
-    return _inaccuracySub
-        .stream()
-        .map((inaccuracy) => (inaccuracy as num?) ?? 0);
   }
 
   Stream<Pose2d?> currentPoseStream() {

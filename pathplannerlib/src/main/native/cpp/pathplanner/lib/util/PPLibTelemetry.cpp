@@ -12,9 +12,6 @@ bool PPLibTelemetry::m_compMode = false;
 nt::DoubleArrayPublisher PPLibTelemetry::m_velPub =
 		nt::NetworkTableInstance::GetDefault().GetDoubleArrayTopic(
 				"/PathPlanner/vel").Publish();
-nt::DoublePublisher PPLibTelemetry::m_inaccuracyPub =
-		nt::NetworkTableInstance::GetDefault().GetDoubleTopic(
-				"/PathPlanner/inaccuracy").Publish();
 nt::StructPublisher<frc::Pose2d> PPLibTelemetry::m_posePub =
 		nt::NetworkTableInstance::GetDefault().GetStructTopic < frc::Pose2d
 				> ("/PathPlanner/currentPose").Publish();

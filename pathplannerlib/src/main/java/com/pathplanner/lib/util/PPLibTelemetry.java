@@ -20,8 +20,6 @@ public class PPLibTelemetry {
 
   private static final DoubleArrayPublisher velPub =
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/vel").publish();
-  private static final DoublePublisher inaccuracyPub =
-      NetworkTableInstance.getDefault().getDoubleTopic("/PathPlanner/inaccuracy").publish();
   private static final StructPublisher<Pose2d> posePub =
       NetworkTableInstance.getDefault()
           .getStructTopic("/PathPlanner/currentPose", Pose2d.struct)
@@ -56,15 +54,6 @@ public class PPLibTelemetry {
   public static void setVelocities(
       double actualVel, double commandedVel, double actualAngVel, double commandedAngVel) {
     velPub.set(new double[] {actualVel, commandedVel, actualAngVel, commandedAngVel});
-  }
-
-  /**
-   * Set the path following inaccuracy
-   *
-   * @param inaccuracy Inaccuracy in meters
-   */
-  public static void setPathInaccuracy(double inaccuracy) {
-    inaccuracyPub.set(inaccuracy);
   }
 
   /**

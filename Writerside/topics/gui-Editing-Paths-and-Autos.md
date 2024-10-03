@@ -188,6 +188,30 @@ Start Position Slider
 End Position Slider
 : Controls the waypoint relative position of the end of the zone.
 
+### Point Towards Zones
+
+"Point Towards" Zones are used to create a zone along a path where the robot should aim at a position on the field.
+
+#### Point Towards Zones Tree
+
+<img src="point_towards_zones_tree.png" alt="point towards zones tree" border-effect="rounded"/>
+
+Field Position X
+: The X coordinate of the target field position, in meters.
+
+Field Position Y
+: The Y coordinate of the target field position, in meters.
+
+Rotation Offset
+: An additional rotation to add to the angle to target when in the zone, in degrees. Can be used to have the robot point
+away from the target position, for example.
+
+Start Position Slider
+: Controls the waypoint relative position of the start of the zone.
+
+End Position Slider
+: Controls the waypoint relative position of the end of the zone.
+
 ### Path Optimization
 
 <img src="path-optimizer.gif" alt="path optimization" border-effect="rounded"/>

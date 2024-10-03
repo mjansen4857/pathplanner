@@ -79,12 +79,12 @@ class PathPlannerPath {
   })  : waypoints = [],
         pathPoints = [],
         globalConstraints = constraints ?? PathConstraints(),
-        goalEndState = GoalEndState(0, Rotation2d()),
+        goalEndState = GoalEndState(0, const Rotation2d()),
         constraintZones = [],
         rotationTargets = [],
         eventMarkers = [],
         reversed = false,
-        idealStartingState = IdealStartingState(0, Rotation2d()),
+        idealStartingState = IdealStartingState(0, const Rotation2d()),
         useDefaultConstraints = true {
     waypoints.addAll([
       Waypoint(

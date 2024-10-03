@@ -67,7 +67,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
               widget.undoStack.add(Change(
                 PathPlannerPath.cloneRotationTargets(rotations),
                 () {
-                  rotations.add(RotationTarget(0.5, Rotation2d()));
+                  rotations.add(RotationTarget(0.5, const Rotation2d()));
                   widget.onPathChanged?.call();
                 },
                 (oldValue) {

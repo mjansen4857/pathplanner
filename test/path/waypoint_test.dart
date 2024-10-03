@@ -192,7 +192,7 @@ void main() {
 
     prevControlLengh = w.prevControlLength;
 
-    w.setHeading(Rotation2d(0.0));
+    w.setHeading(const Rotation2d(0.0));
 
     expect(w.heading.degrees, closeTo(0.0, epsilon));
     expect(w.prevControlLength, closeTo(prevControlLengh!, epsilon));

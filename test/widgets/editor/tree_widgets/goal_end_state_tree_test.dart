@@ -20,7 +20,7 @@ void main() {
       fs: MemoryFileSystem(),
     );
     path.goalEndStateExpanded = true;
-    path.goalEndState = GoalEndState(1.0, Rotation2d(1.0));
+    path.goalEndState = GoalEndState(1.0, const Rotation2d(1.0));
     pathChanged = false;
   });
 

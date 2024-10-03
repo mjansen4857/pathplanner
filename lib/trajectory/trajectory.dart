@@ -564,10 +564,10 @@ class PathPlannerTrajectory {
 class TrajectoryState {
   num timeSeconds = 0.0;
   ChassisSpeeds fieldSpeeds = const ChassisSpeeds();
-  Pose2d pose = Pose2d(const Translation2d(), Rotation2d());
-  Rotation2d heading = Rotation2d();
+  Pose2d pose = const Pose2d(Translation2d(), Rotation2d());
+  Rotation2d heading = const Rotation2d();
   num deltaPos = 0.0;
-  Rotation2d deltaRot = Rotation2d();
+  Rotation2d deltaRot = const Rotation2d();
 
   List<SwerveModuleTrajState> moduleStates = [];
 
@@ -623,7 +623,7 @@ class TrajectoryState {
 }
 
 class SwerveModuleTrajState extends SwerveModuleState {
-  Rotation2d fieldAngle = Rotation2d();
+  Rotation2d fieldAngle = const Rotation2d();
   Translation2d fieldPos = const Translation2d();
 
   num deltaPos = 0.0;

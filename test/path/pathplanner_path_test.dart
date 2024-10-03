@@ -49,15 +49,15 @@ void main() {
           ),
         ],
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
-        goalEndState: GoalEndState(0.5, Rotation2d()),
+        goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones:
             List.generate(3, (index) => ConstraintsZone.defaultZone()),
-        rotationTargets:
-            List.generate(4, (index) => RotationTarget(0.0, Rotation2d())),
+        rotationTargets: List.generate(
+            4, (index) => RotationTarget(0.0, const Rotation2d())),
         eventMarkers: List.generate(5, (index) => EventMarker.defaultMarker()),
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(0.0, Rotation2d()),
+        idealStartingState: IdealStartingState(0.0, const Rotation2d()),
         useDefaultConstraints: false,
       );
 
@@ -89,9 +89,9 @@ void main() {
           ),
         ],
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
-        goalEndState: GoalEndState(0.5, Rotation2d()),
+        goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
-        rotationTargets: [RotationTarget(0.0, Rotation2d())],
+        rotationTargets: [RotationTarget(0.0, const Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
@@ -124,13 +124,13 @@ void main() {
           ),
         ],
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
-        goalEndState: GoalEndState(0.5, Rotation2d()),
+        goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
-        rotationTargets: [RotationTarget(0.0, Rotation2d())],
+        rotationTargets: [RotationTarget(0.0, const Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(0.0, Rotation2d()),
+        idealStartingState: IdealStartingState(0.0, const Rotation2d()),
         useDefaultConstraints: false,
       );
       PathPlannerPath cloned = path.duplicate('test');
@@ -160,13 +160,13 @@ void main() {
           ),
         ],
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
-        goalEndState: GoalEndState(0.5, Rotation2d()),
+        goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
-        rotationTargets: [RotationTarget(0.0, Rotation2d())],
+        rotationTargets: [RotationTarget(0.0, const Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(0.0, Rotation2d()),
+        idealStartingState: IdealStartingState(0.0, const Rotation2d()),
         useDefaultConstraints: false,
       );
       PathPlannerPath path2 = PathPlannerPath(
@@ -184,13 +184,13 @@ void main() {
           ),
         ],
         globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
-        goalEndState: GoalEndState(0.5, Rotation2d()),
+        goalEndState: GoalEndState(0.5, const Rotation2d()),
         constraintZones: [ConstraintsZone.defaultZone()],
-        rotationTargets: [RotationTarget(0.0, Rotation2d())],
+        rotationTargets: [RotationTarget(0.0, const Rotation2d())],
         eventMarkers: [EventMarker.defaultMarker()],
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(0.0, Rotation2d()),
+        idealStartingState: IdealStartingState(0.0, const Rotation2d()),
         useDefaultConstraints: false,
       );
       PathPlannerPath path3 = PathPlannerPath(
@@ -208,13 +208,13 @@ void main() {
           ),
         ],
         globalConstraints: PathConstraints(maxVelocityMPS: 1.0),
-        goalEndState: GoalEndState(0.2, Rotation2d()),
+        goalEndState: GoalEndState(0.2, const Rotation2d()),
         constraintZones: [],
         rotationTargets: [],
         eventMarkers: [],
         reversed: false,
         folder: null,
-        idealStartingState: IdealStartingState(0.0, Rotation2d()),
+        idealStartingState: IdealStartingState(0.0, const Rotation2d()),
         useDefaultConstraints: false,
       );
 
@@ -244,13 +244,13 @@ void main() {
         ),
       ],
       globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
-      goalEndState: GoalEndState(0.5, Rotation2d()),
+      goalEndState: GoalEndState(0.5, const Rotation2d()),
       constraintZones: [ConstraintsZone.defaultZone()],
-      rotationTargets: [RotationTarget(0.0, Rotation2d())],
+      rotationTargets: [RotationTarget(0.0, const Rotation2d())],
       eventMarkers: [EventMarker.defaultMarker()],
       reversed: false,
       folder: null,
-      idealStartingState: IdealStartingState(0.0, Rotation2d()),
+      idealStartingState: IdealStartingState(0.0, const Rotation2d()),
       useDefaultConstraints: false,
     );
 
@@ -282,7 +282,7 @@ void main() {
         ),
       ],
       globalConstraints: PathConstraints(maxVelocityMPS: 1.1),
-      goalEndState: GoalEndState(0.5, Rotation2d()),
+      goalEndState: GoalEndState(0.5, const Rotation2d()),
       constraintZones: [
         ConstraintsZone(
           minWaypointRelativePos: 0.2,
@@ -290,7 +290,7 @@ void main() {
           constraints: PathConstraints(),
         ),
       ],
-      rotationTargets: [RotationTarget(0.6, Rotation2d())],
+      rotationTargets: [RotationTarget(0.6, const Rotation2d())],
       eventMarkers: [
         EventMarker(
           waypointRelativePos: 0.5,
@@ -300,7 +300,7 @@ void main() {
       ],
       reversed: false,
       folder: null,
-      idealStartingState: IdealStartingState(0.0, Rotation2d()),
+      idealStartingState: IdealStartingState(0.0, const Rotation2d()),
       useDefaultConstraints: false,
     );
 

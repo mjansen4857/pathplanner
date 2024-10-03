@@ -321,8 +321,8 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                         PathPlannerPath.cloneRotationTargets(
                             widget.path.rotationTargets),
                         () {
-                          widget.path.rotationTargets
-                              .add(RotationTarget(waypointIdx, Rotation2d()));
+                          widget.path.rotationTargets.add(
+                              RotationTarget(waypointIdx, const Rotation2d()));
                           widget.onPathChanged?.call();
                         },
                         (oldValue) {

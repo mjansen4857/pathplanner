@@ -46,7 +46,7 @@ class ChassisSpeeds {
 
 class SwerveModuleState {
   num speedMetersPerSecond = 0.0;
-  Rotation2d angle = Rotation2d();
+  Rotation2d angle = const Rotation2d();
 }
 
 class SwerveDriveKinematics {
@@ -61,7 +61,7 @@ class SwerveDriveKinematics {
   SwerveDriveKinematics(List<Translation2d> modules) {
     _numModules = modules.length;
     _modules = List.of(modules);
-    _moduleHeadings = List.generate(_numModules, (i) => Rotation2d());
+    _moduleHeadings = List.generate(_numModules, (i) => const Rotation2d());
     _inverseKinematics = Matrix.zero(_numModules * 2, 3);
     _forwardKinematics = Matrix.zero(3, _numModules * 2);
 

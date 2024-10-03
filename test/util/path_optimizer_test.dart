@@ -34,7 +34,7 @@ void main() {
         ),
       ],
       globalConstraints: PathConstraints(),
-      goalEndState: GoalEndState(0.0, Rotation2d()),
+      goalEndState: GoalEndState(0.0, const Rotation2d()),
       constraintZones: [],
       rotationTargets: [],
       eventMarkers: [],
@@ -42,7 +42,7 @@ void main() {
       fs: MemoryFileSystem(),
       reversed: false,
       folder: null,
-      idealStartingState: IdealStartingState(0.0, Rotation2d()),
+      idealStartingState: IdealStartingState(0.0, const Rotation2d()),
       useDefaultConstraints: false,
     );
 

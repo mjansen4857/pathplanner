@@ -35,9 +35,9 @@ void main() {
       pathDir: '/paths',
       fs: fs,
     );
-    path.goalEndState.rotation = Rotation2d();
+    path.goalEndState.rotation = const Rotation2d();
     path.rotationTargets = [
-      RotationTarget(0.5, Rotation2d()),
+      RotationTarget(0.5, const Rotation2d()),
     ];
     path.eventMarkers = [
       EventMarker(
@@ -383,7 +383,7 @@ void main() {
   testWidgets('drag ideal starting state rotation', (widgetTester) async {
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    path.idealStartingState = IdealStartingState(0.0, Rotation2d());
+    path.idealStartingState = IdealStartingState(0.0, const Rotation2d());
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
     await widgetTester.pumpWidget(MaterialApp(

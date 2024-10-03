@@ -24,8 +24,8 @@ void main() {
       fs: MemoryFileSystem(),
     );
     path.rotationTargets = [
-      RotationTarget(0.2, Rotation2d()),
-      RotationTarget(0.7, Rotation2d()),
+      RotationTarget(0.2, const Rotation2d()),
+      RotationTarget(0.7, const Rotation2d()),
     ];
     path.rotationTargetsExpanded = true;
     pathChanged = false;

@@ -203,7 +203,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText: waypoint.anchor.x.toStringAsFixed(2),
+                  initialValue: waypoint.anchor.x,
                   label: 'X Position (M)',
                   onSubmitted: (value) {
                     if (value != null) {
@@ -220,7 +220,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText: waypoint.anchor.y.toStringAsFixed(2),
+                  initialValue: waypoint.anchor.y,
                   label: 'Y Position (M)',
                   onSubmitted: (value) {
                     if (value != null) {
@@ -237,7 +237,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText: waypoint.heading.degrees.toStringAsFixed(2),
+                  initialValue: waypoint.heading.degrees,
                   label: 'Heading (Deg)',
                   arrowKeyIncrement: 1.0,
                   onSubmitted: (value) {
@@ -264,8 +264,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: NumberTextField(
-                      initialText:
-                          waypoint.prevControlLength!.toStringAsFixed(2),
+                      initialValue: waypoint.prevControlLength!,
                       label: 'Previous Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null) {
@@ -288,8 +287,7 @@ class _WaypointsTreeState extends State<WaypointsTree> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 12.0),
                     child: NumberTextField(
-                      initialText:
-                          waypoint.nextControlLength!.toStringAsFixed(2),
+                      initialValue: waypoint.nextControlLength!,
                       label: 'Next Control Length (M)',
                       onSubmitted: (value) {
                         if (value != null) {

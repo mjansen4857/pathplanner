@@ -303,7 +303,7 @@ void main() {
         find.widgetWithText(NumberTextField, 'True Max Drive Speed (M/S)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('5.40')),
+    expect(find.descendant(of: textField, matching: find.text('5.400')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '1.0');
@@ -333,7 +333,7 @@ void main() {
     final textField = find.widgetWithText(NumberTextField, 'Wheel COF');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('1.20')),
+    expect(find.descendant(of: textField, matching: find.text('1.200')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '1.0');
@@ -432,7 +432,7 @@ void main() {
         find.widgetWithText(NumberTextField, 'Max Velocity (M/S)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('1.00')),
+    expect(find.descendant(of: textField, matching: find.text('1.000')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '1.1');
@@ -463,7 +463,7 @@ void main() {
         find.widgetWithText(NumberTextField, 'Max Acceleration (M/S²)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('2.00')),
+    expect(find.descendant(of: textField, matching: find.text('2.000')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '2.2');
@@ -494,7 +494,7 @@ void main() {
         find.widgetWithText(NumberTextField, 'Max Angular Velocity (Deg/S)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('3.00')),
+    expect(find.descendant(of: textField, matching: find.text('3.000')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '3.3');
@@ -525,7 +525,7 @@ void main() {
         find.widgetWithText(NumberTextField, 'Max Angular Accel (Deg/S²)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('4.00')),
+    expect(find.descendant(of: textField, matching: find.text('4.000')),
         findsOneWidget);
 
     await widgetTester.enterText(textField, '4.4');

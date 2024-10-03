@@ -357,13 +357,23 @@ class PathPlannerPath {
   }
 
   PathConstraints _constraintsForPos(num waypointPos) {
-    for (ConstraintsZone z in constraintZones) {
+    for (final z in constraintZones) {
       if (waypointPos >= z.minWaypointRelativePos &&
           waypointPos <= z.maxWaypointRelativePos) {
         return z.constraints;
       }
     }
     return globalConstraints;
+  }
+
+  PointTowardsZone? _pointZoneForPos(num waypointPos) {
+    for (final z in pointTowardsZones) {
+      if (waypointPos >= z.minWaypointRelativePos &&
+          waypointPos <= z.maxWaypointRelativePos) {
+        return z;
+      }
+    }
+    return null;
   }
 
   void generatePathPoints() {
@@ -517,6 +527,9 @@ class PathPlannerPath {
       pos = waypoints.length - 1;
     }
 
+    // Force start/end rotation targets to start/end state rotation
+    pathPoints.first.rotationTarget =
+        RotationTarget(0, idealStartingState.rotation);
     pathPoints.last.rotationTarget =
         RotationTarget(waypoints.length - 1, goalEndState.rotation);
 
@@ -610,6 +623,18 @@ class PathPlannerPath {
       if (i > 0) {
         pathPoints[i].distanceAlongPath = pathPoints[i - 1].distanceAlongPath +
             pathPoints[i].position.getDistance(pathPoints[i - 1].position);
+      }
+
+      if (i != 0 && i != pathPoints.length - 1) {
+        // Set the rotation target for point towards zones
+        final zone = _pointZoneForPos(pathPoints[i].waypointPos);
+        if (zone != null) {
+          final angleToTarget =
+              (zone.fieldPosition - pathPoints[i].position).angle;
+          final rotation = angleToTarget + zone.rotationOffset;
+          pathPoints[i].rotationTarget =
+              RotationTarget(pathPoints[i].waypointPos, rotation, false);
+        }
       }
     }
 

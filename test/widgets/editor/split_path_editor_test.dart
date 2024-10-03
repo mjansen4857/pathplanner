@@ -291,6 +291,7 @@ void main() {
   });
 
   testWidgets('drag rotation target', (widgetTester) async {
+    path.pointTowardsZones = [];
     path.generatePathPoints();
 
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));

@@ -577,7 +577,8 @@ class PathPainter extends CustomPainter {
 
   void _paintRotations(PathPlannerPath path, Canvas canvas, double scale) {
     for (int i = 0; i < path.pathPoints.length - 1; i++) {
-      if (path.pathPoints[i].rotationTarget != null) {
+      if (path.pathPoints[i].rotationTarget != null &&
+          path.pathPoints[i].rotationTarget!.displayInEditor) {
         RotationTarget target = path.pathPoints[i].rotationTarget!;
         Color rotationColor = Colors.grey[700]!;
         if (selectedRotTarget != null &&

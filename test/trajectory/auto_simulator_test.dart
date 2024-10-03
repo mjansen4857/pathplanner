@@ -107,14 +107,14 @@ void main() {
 
     sim = AutoSimulator.simulateAuto([test], config);
     expect(sim, isNotNull);
-    expect(sim!.states.last.timeSeconds, closeTo(2.87, 0.05));
+    expect(sim!.states.last.timeSeconds, closeTo(3.82, 0.05));
 
     sim = AutoSimulator.simulateAuto([test2], config);
     expect(sim, isNotNull);
-    expect(sim!.states.last.timeSeconds, closeTo(2.87, 0.05));
+    expect(sim!.states.last.timeSeconds, closeTo(4.43, 0.05));
 
     sim = AutoSimulator.simulateAuto([test, test2], config);
     expect(sim, isNotNull);
-    expect(sim!.states.last.timeSeconds, closeTo(5.78, 0.05));
+    expect(sim!.states.last.timeSeconds, closeTo(8.25, 0.05));
   });
 }

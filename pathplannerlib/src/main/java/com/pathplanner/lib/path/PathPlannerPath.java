@@ -34,6 +34,7 @@ public class PathPlannerPath {
 
   private List<Waypoint> waypoints;
   private List<RotationTarget> rotationTargets;
+  private List<PointTowardsZone> pointTowardsZones;
   private List<ConstraintsZone> constraintZones;
   private List<EventMarker> eventMarkers;
   private PathConstraints globalConstraints;
@@ -57,6 +58,7 @@ public class PathPlannerPath {
    * @param waypoints List of waypoints representing the path. For on-the-fly paths, you likely want
    *     to use waypointsFromPoses to create these.
    * @param holonomicRotations List of rotation targets along the path
+   * @param pointTowardsZones List of point towards zones along the path
    * @param constraintZones List of constraint zones along the path
    * @param eventMarkers List of event markers along the path
    * @param globalConstraints The global constraints of the path
@@ -67,6 +69,7 @@ public class PathPlannerPath {
   public PathPlannerPath(
       List<Waypoint> waypoints,
       List<RotationTarget> holonomicRotations,
+      List<PointTowardsZone> pointTowardsZones,
       List<ConstraintsZone> constraintZones,
       List<EventMarker> eventMarkers,
       PathConstraints globalConstraints,
@@ -78,6 +81,7 @@ public class PathPlannerPath {
         holonomicRotations.stream()
             .sorted(Comparator.comparingDouble(RotationTarget::getPosition))
             .toList();
+    this.pointTowardsZones = pointTowardsZones;
     this.constraintZones = constraintZones;
     this.eventMarkers =
         eventMarkers.stream()
@@ -119,6 +123,7 @@ public class PathPlannerPath {
         Collections.emptyList(),
         Collections.emptyList(),
         Collections.emptyList(),
+        Collections.emptyList(),
         constraints,
         idealStartingState,
         goalEndState,
@@ -146,6 +151,7 @@ public class PathPlannerPath {
   private PathPlannerPath() {
     this.waypoints = new ArrayList<>();
     this.rotationTargets = new ArrayList<>();
+    this.pointTowardsZones = new ArrayList<>();
     this.constraintZones = new ArrayList<>();
     this.eventMarkers = new ArrayList<>();
     this.globalConstraints = null;
@@ -263,6 +269,7 @@ public class PathPlannerPath {
 
     this.waypoints = updatedPath.waypoints;
     this.rotationTargets = updatedPath.rotationTargets;
+    this.pointTowardsZones = updatedPath.pointTowardsZones;
     this.constraintZones = updatedPath.constraintZones;
     this.eventMarkers = updatedPath.eventMarkers;
     this.globalConstraints = updatedPath.globalConstraints;
@@ -495,11 +502,18 @@ public class PathPlannerPath {
     GoalEndState goalEndState = GoalEndState.fromJson((JSONObject) pathJson.get("goalEndState"));
     boolean reversed = (boolean) pathJson.get("reversed");
     List<RotationTarget> rotationTargets = new ArrayList<>();
+    List<PointTowardsZone> pointTowardsZones = new ArrayList<>();
     List<ConstraintsZone> constraintZones = new ArrayList<>();
     List<EventMarker> eventMarkers = new ArrayList<>();
 
     for (var rotJson : (JSONArray) pathJson.get("rotationTargets")) {
       rotationTargets.add(RotationTarget.fromJson((JSONObject) rotJson));
+    }
+
+    if (pathJson.containsKey("pointTowardsZones")) {
+      for (var zoneJson : (JSONArray) pathJson.get("pointTowardsZones")) {
+        pointTowardsZones.add(PointTowardsZone.fromJson((JSONObject) zoneJson));
+      }
     }
 
     for (var zoneJson : (JSONArray) pathJson.get("constraintZones")) {
@@ -513,6 +527,7 @@ public class PathPlannerPath {
     return new PathPlannerPath(
         waypoints,
         rotationTargets,
+        pointTowardsZones,
         constraintZones,
         eventMarkers,
         globalConstraints,
@@ -602,6 +617,15 @@ public class PathPlannerPath {
       }
     }
     return globalConstraints;
+  }
+
+  private PointTowardsZone pointZoneForWaypointPos(double pos) {
+    for (PointTowardsZone z : pointTowardsZones) {
+      if (pos >= z.getMinWaypointRelativePos() && pos <= z.getMaxWaypointRelativePos()) {
+        return z;
+      }
+    }
+    return null;
   }
 
   private Translation2d samplePath(double waypointRelativePos) {
@@ -755,6 +779,16 @@ public class PathPlannerPath {
     }
 
     for (int i = 1; i < points.size() - 1; i++) {
+      // Set the rotation target for point towards zones
+      var pointZone = pointZoneForWaypointPos(points.get(i).waypointRelativePos);
+      if (pointZone != null) {
+        Rotation2d angleToTarget =
+            pointZone.getTargetPosition().minus(points.get(i).position).getAngle();
+        Rotation2d rotation = angleToTarget.plus(pointZone.getRotationOffset());
+        points.get(i).rotationTarget =
+            new RotationTarget(points.get(i).waypointRelativePos, rotation);
+      }
+
       double curveRadius =
           GeometryUtil.calculateRadius(
               points.get(i - 1).position, points.get(i).position, points.get(i + 1).position);
@@ -868,6 +902,15 @@ public class PathPlannerPath {
    */
   public List<RotationTarget> getRotationTargets() {
     return rotationTargets;
+  }
+
+  /**
+   * Get the point towards zones for this path
+   *
+   * @return List of this path's point towards zones
+   */
+  public List<PointTowardsZone> getPointTowardsZones() {
+    return pointTowardsZones;
   }
 
   /**
@@ -1015,9 +1058,8 @@ public class PathPlannerPath {
 
     PathPlannerPath path = new PathPlannerPath();
     path.waypoints = waypoints.stream().map(Waypoint::flip).toList();
-    ;
     path.rotationTargets = rotationTargets.stream().map(RotationTarget::flip).toList();
-    ;
+    path.pointTowardsZones = pointTowardsZones.stream().map(PointTowardsZone::flip).toList();
     path.constraintZones = constraintZones;
     path.eventMarkers = eventMarkers;
     path.globalConstraints = globalConstraints;
@@ -1061,6 +1103,7 @@ public class PathPlannerPath {
     PathPlannerPath that = (PathPlannerPath) o;
     return Objects.equals(waypoints, that.waypoints)
         && Objects.equals(rotationTargets, that.rotationTargets)
+        && Objects.equals(pointTowardsZones, that.pointTowardsZones)
         && Objects.equals(constraintZones, that.constraintZones)
         && Objects.equals(eventMarkers, that.eventMarkers)
         && Objects.equals(globalConstraints, that.globalConstraints)
@@ -1070,6 +1113,12 @@ public class PathPlannerPath {
   @Override
   public int hashCode() {
     return Objects.hash(
-        waypoints, rotationTargets, constraintZones, eventMarkers, globalConstraints, goalEndState);
+        waypoints,
+        rotationTargets,
+        pointTowardsZones,
+        constraintZones,
+        eventMarkers,
+        globalConstraints,
+        goalEndState);
   }
 }

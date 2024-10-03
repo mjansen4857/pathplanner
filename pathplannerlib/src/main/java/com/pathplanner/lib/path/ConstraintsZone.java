@@ -65,40 +65,6 @@ public class ConstraintsZone {
     return constraints;
   }
 
-  /**
-   * Get if a given waypoint relative position is within this zone
-   *
-   * @param t Waypoint relative position
-   * @return True if given position is within this zone
-   */
-  public boolean isWithinZone(double t) {
-    return t >= minWaypointPos && t <= maxWaypointPos;
-  }
-
-  /**
-   * Get if this zone overlaps a given range
-   *
-   * @param minPos The minimum waypoint relative position of the range
-   * @param maxPos The maximum waypoint relative position of the range
-   * @return True if any part of this zone is within the given range
-   */
-  public boolean overlapsRange(double minPos, double maxPos) {
-    return Math.max(minPos, minWaypointPos) <= Math.min(maxPos, maxWaypointPos);
-  }
-
-  /**
-   * Transform the positions of this zone for a given segment number.
-   *
-   * <p>For example, a zone from [1.5, 2.0] for the segment 1 will have the positions [0.5, 1.0]
-   *
-   * @param segmentIndex The segment index to transform positions for
-   * @return The transformed zone
-   */
-  public ConstraintsZone forSegmentIndex(int segmentIndex) {
-    return new ConstraintsZone(
-        minWaypointPos - segmentIndex, maxWaypointPos - segmentIndex, constraints);
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

@@ -29,7 +29,7 @@
         <toc-element topic="pplib-Swerve-Setpoint-Generator.md"/>
         <toc-element topic="pplib-Pathfinding.md"/>
         <toc-element topic="pplib-Choreo-Interop.md"/>
-        <toc-element topic="pplib-Override-Target-Rotation.md"/>
+        <toc-element topic="pplib-Override-Feedback.md"/>
     </toc-element>
 
     <toc-element toc-title="PPLib Java API" href="https://pathplanner.dev/api/java"/>

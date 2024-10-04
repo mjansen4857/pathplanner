@@ -54,6 +54,9 @@ class PPHolonomicDriveController(PathFollowingController):
     _isEnabled: bool = True
 
     _rotationTargetOverride: Union[Callable[[], Union[Rotation2d, None]], None] = None
+    _xFeedbackOverride: Union[Callable[[], float], None] = None
+    _yFeedbackOverride: Union[Callable[[], float], None] = None
+    _rotationFeedbackOverride: Union[Callable[[], float], None] = None
 
     def __init__(self, translation_constants: PIDConstants, rotation_constants: PIDConstants, period: float = 0.02):
         """
@@ -117,6 +120,13 @@ class PPHolonomicDriveController(PathFollowingController):
         )
         rotationFF = target_state.fieldSpeeds.omega
 
+        if PPHolonomicDriveController._xFeedbackOverride is not None:
+            xFeedback = PPHolonomicDriveController._xFeedbackOverride()
+        if PPHolonomicDriveController._yFeedbackOverride is not None:
+            yFeedback = PPHolonomicDriveController._yFeedbackOverride()
+        if PPHolonomicDriveController._rotationFeedbackOverride is not None:
+            rotationFeedback = PPHolonomicDriveController._rotationFeedbackOverride()
+
         return ChassisSpeeds.fromFieldRelativeSpeeds(xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback,
                                                      current_pose.rotation())
 
@@ -152,11 +162,87 @@ class PPHolonomicDriveController(PathFollowingController):
         """
         Set a supplier that will be used to override the rotation target when path following.
 
-        This function should return an empty optional to use the rotation targets in the path
+        Use overrideRotationFeedback instead, with the output of your own PID controller
 
         :param rotation_target_override: Supplier to override rotation targets
         """
         PPHolonomicDriveController._rotationTargetOverride = rotation_target_override
+
+    @staticmethod
+    def overrideXFeedback(xFeedbackOverride: Callable[[], float]) -> None:
+        """
+        Begin overriding the X axis feedback.
+
+        :param xFeedbackOverride: Callable that returns the desired FIELD-RELATIVE X feedback in meters/sec
+        """
+        PPHolonomicDriveController._xFeedbackOverride = xFeedbackOverride
+
+    @staticmethod
+    def clearXFeedbackOverride() -> None:
+        """
+        Stop overriding the X axis feedback, and return to calculating it based on path following error.
+        """
+        PPHolonomicDriveController._xFeedbackOverride = None
+
+    @staticmethod
+    def overrideYFeedback(yFeedbackOverride: Callable[[], float]) -> None:
+        """
+        Begin overriding the Y axis feedback.
+
+        :param yFeedbackOverride: Callable that returns the desired FIELD-RELATIVE Y feedback in meters/sec
+        """
+        PPHolonomicDriveController._yFeedbackOverride = yFeedbackOverride
+
+    @staticmethod
+    def clearYFeedbackOverride() -> None:
+        """
+        Stop overriding the Y axis feedback, and return to calculating it based on path following error.
+        """
+        PPHolonomicDriveController._yFeedbackOverride = None
+
+    @staticmethod
+    def overrideXYFeedback(xFeedbackOverride: Callable[[], float], yFeedbackOverride: Callable[[], float]) -> None:
+        """
+        Begin overriding the X and Y axis feedback.
+
+        :param xFeedbackOverride: Callable that returns the desired FIELD-RELATIVE X feedback in meters/sec
+        :param yFeedbackOverride: Callable that returns the desired FIELD-RELATIVE Y feedback in meters/sec
+        """
+        PPHolonomicDriveController._xFeedbackOverride = xFeedbackOverride
+        PPHolonomicDriveController._yFeedbackOverride = yFeedbackOverride
+
+    @staticmethod
+    def clearXYFeedbackOverride() -> None:
+        """
+        Stop overriding the X and Y axis feedback, and return to calculating it based on path following error.
+        """
+        PPHolonomicDriveController._xFeedbackOverride = None
+        PPHolonomicDriveController._yFeedbackOverride = None
+
+    @staticmethod
+    def overrideRotationFeedback(rotationFeedbackOverride: Callable[[], float]) -> None:
+        """
+        Begin overriding the rotation feedback.
+
+        :param rotationFeedbackOverride: Callable that returns the desired rotation feedback in radians/sec
+        """
+        PPHolonomicDriveController._rotationFeedbackOverride = rotationFeedbackOverride
+
+    @staticmethod
+    def clearRotationFeedbackOverride() -> None:
+        """
+        Stop overriding the rotation feedback, and return to calculating it based on path following error.
+        """
+        PPHolonomicDriveController._rotationFeedbackOverride = None
+
+    @staticmethod
+    def clearFeedbackOverrides() -> None:
+        """
+        Clear all feedback overrides and return to purely using path following error for feedback
+        """
+        PPHolonomicDriveController._xFeedbackOverride = None
+        PPHolonomicDriveController._yFeedbackOverride = None
+        PPHolonomicDriveController._rotationFeedbackOverride = None
 
 
 class PPLTVController(PathFollowingController, LTVUnicycleController):

@@ -4,7 +4,7 @@
 #include <frc/geometry/Rotation2d.h>
 #include <wpi/json.h>
 #include <optional>
-#include "pathplanner/lib/util/GeometryUtil.h"
+#include "pathplanner/lib/util/FlippingUtil.h"
 
 namespace pathplanner {
 
@@ -34,23 +34,7 @@ public:
 	 *
 	 * @return The flipped waypoint
 	 */
-	constexpr Waypoint flip() const {
-		std::optional < frc::Translation2d > flippedPrevControl = std::nullopt;
-		frc::Translation2d flippedAnchor = GeometryUtil::flipFieldPosition(
-				anchor);
-		std::optional < frc::Translation2d > flippedNextControl = std::nullopt;
-
-		if (prevControl.has_value()) {
-			flippedPrevControl = GeometryUtil::flipFieldPosition(
-					prevControl.value());
-		}
-		if (nextControl.has_value()) {
-			flippedNextControl = GeometryUtil::flipFieldPosition(
-					nextControl.value());
-		}
-
-		return Waypoint(flippedPrevControl, flippedAnchor, flippedNextControl);
-	}
+	Waypoint flip() const;
 
 	/**
 	 * Create a waypoint with auto calculated control points based on the positions of adjacent

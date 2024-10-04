@@ -7,7 +7,7 @@
 #include <units/velocity.h>
 #include "pathplanner/lib/path/PathConstraints.h"
 #include "pathplanner/lib/path/RotationTarget.h"
-#include "pathplanner/lib/util/GeometryUtil.h"
+#include "pathplanner/lib/util/FlippingUtil.h"
 
 namespace pathplanner {
 class PathPoint {
@@ -29,14 +29,14 @@ public:
 	constexpr PathPoint(frc::Translation2d pos) : position(pos) {
 	}
 
-	constexpr PathPoint flip() const {
-		PathPoint flipped(GeometryUtil::flipFieldPosition(position));
+	inline PathPoint flip() const {
+		PathPoint flipped(FlippingUtil::flipFieldPosition(position));
 		flipped.distanceAlongPath = distanceAlongPath;
 		flipped.maxV = maxV;
 		if (rotationTarget.has_value()) {
 			flipped.rotationTarget = RotationTarget(
 					rotationTarget.value().getPosition(),
-					GeometryUtil::flipFieldRotation(
+					FlippingUtil::flipFieldRotation(
 							rotationTarget.value().getTarget()));
 		}
 		flipped.constraints = constraints;

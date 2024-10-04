@@ -1,6 +1,7 @@
 #include "pathplanner/lib/commands/PathfindingCommand.h"
 #include "pathplanner/lib/pathfinding/Pathfinding.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
+#include "pathplanner/lib/util/FlippingUtil.h"
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
 #include <vector>
@@ -88,7 +89,7 @@ void PathfindingCommand::Initialize() {
 		m_originalTargetPose = frc::Pose2d(m_targetPath->getPoint(0).position,
 				m_originalTargetPose.Rotation());
 		if (m_shouldFlipPath()) {
-			m_targetPose = GeometryUtil::flipFieldPose(m_originalTargetPose);
+			m_targetPose = FlippingUtil::flipFieldPose(m_originalTargetPose);
 			m_goalEndState = GoalEndState(m_goalEndState.getVelocity(),
 					m_targetPose.Rotation());
 		}

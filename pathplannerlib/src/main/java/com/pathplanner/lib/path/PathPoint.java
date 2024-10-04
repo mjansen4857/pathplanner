@@ -64,9 +64,7 @@ public class PathPoint {
     flipped.distanceAlongPath = distanceAlongPath;
     flipped.maxV = maxV;
     if (rotationTarget != null) {
-      flipped.rotationTarget =
-          new RotationTarget(
-              rotationTarget.position(), FlippingUtil.flipFieldRotation(rotationTarget.rotation()));
+      flipped.rotationTarget = rotationTarget.flip();
     }
     flipped.constraints = constraints;
     flipped.waypointRelativePos = waypointRelativePos;

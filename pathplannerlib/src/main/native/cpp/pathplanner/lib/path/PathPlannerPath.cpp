@@ -3,6 +3,7 @@
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include "pathplanner/lib/events/Event.h"
+#include "pathplanner/lib/util/FlippingUtil.h"
 #include <frc/Filesystem.h>
 #include <frc/MathUtil.h>
 #include <wpi/MemoryBuffer.h>
@@ -619,7 +620,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	std::vector < RotationTarget > newRotTargets;
 	for (auto t : m_rotationTargets) {
 		newRotTargets.emplace_back(t.getPosition(),
-				GeometryUtil::flipFieldRotation(t.getTarget()));
+				FlippingUtil::flipFieldRotation(t.getTarget()));
 	}
 
 	std::vector < PointTowardsZone > newPointZones;
@@ -633,13 +634,13 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	}
 
 	GoalEndState newEndState = GoalEndState(m_goalEndState.getVelocity(),
-			GeometryUtil::flipFieldRotation(m_goalEndState.getRotation()));
+			FlippingUtil::flipFieldRotation(m_goalEndState.getRotation()));
 
 	std::optional < IdealStartingState > newStartState = std::nullopt;
 	if (m_idealStartingState.has_value()) {
 		newStartState = IdealStartingState(
 				m_idealStartingState.value().getVelocity(),
-				GeometryUtil::flipFieldRotation(
+				FlippingUtil::flipFieldRotation(
 						m_idealStartingState.value().getRotation()));
 	}
 

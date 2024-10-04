@@ -6,6 +6,7 @@ import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.*;
+import org.ejml.simple.SimpleMatrix;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -24,12 +25,12 @@ public class RobotConfig {
 
   /** Robot-relative locations of each drive module in meters */
   public final Translation2d[] moduleLocations;
-  /** Swerve kinematics used to convert ChassisSpeeds to/from module states. */
-  public final SwerveDriveKinematics swerveKinematics;
-  /** Differential kinematics used to convert ChassisSpeeds to/from module states. */
-  public final DifferentialDriveKinematics diffKinematics;
   /** Is the robot holonomic? */
   public final boolean isHolonomic;
+
+  private final SwerveDriveKinematics swerveKinematics;
+  private final DifferentialDriveKinematics diffKinematics;
+  private final SimpleMatrix forceKinematics;
 
   // Pre-calculated values that can be reused for every trajectory generation
   /** Number of drive modules */
@@ -80,6 +81,15 @@ public class RobotConfig {
     }
     this.wheelFrictionForce = this.moduleConfig.wheelCOF * ((this.massKG / numModules) * 9.8);
     this.maxTorqueFriction = this.wheelFrictionForce * this.moduleConfig.wheelRadiusMeters;
+
+    this.forceKinematics = new SimpleMatrix(this.numModules * 2, 3);
+    for (int i = 0; i < this.numModules; i++) {
+      Translation2d modPosReciprocal =
+          new Translation2d(
+              1.0 / this.moduleLocations[i].getNorm(), this.moduleLocations[i].getAngle());
+      this.forceKinematics.setRow(i * 2, 0, /* Start Data */ 1, 0, -modPosReciprocal.getY());
+      this.forceKinematics.setRow(i * 2 + 1, 0, /* Start Data */ 0, 1, modPosReciprocal.getX());
+    }
   }
 
   /**
@@ -113,6 +123,15 @@ public class RobotConfig {
     }
     this.wheelFrictionForce = this.moduleConfig.wheelCOF * ((this.massKG / numModules) * 9.8);
     this.maxTorqueFriction = this.wheelFrictionForce * this.moduleConfig.wheelRadiusMeters;
+
+    this.forceKinematics = new SimpleMatrix(this.numModules * 2, 3);
+    for (int i = 0; i < this.numModules; i++) {
+      Translation2d modPosReciprocal =
+          new Translation2d(
+              1.0 / this.moduleLocations[i].getNorm(), this.moduleLocations[i].getAngle());
+      this.forceKinematics.setRow(i * 2, 0, /* Start Data */ 1, 0, -modPosReciprocal.getY());
+      this.forceKinematics.setRow(i * 2 + 1, 0, /* Start Data */ 0, 1, modPosReciprocal.getX());
+    }
   }
 
   /**
@@ -150,6 +169,36 @@ public class RobotConfig {
               states[0].speedMetersPerSecond, states[1].speedMetersPerSecond);
       return diffKinematics.toChassisSpeeds(wheelSpeeds);
     }
+  }
+
+  /**
+   * Convert chassis forces (passed as ChassisSpeeds) to individual wheel force vectors
+   *
+   * @param chassisForces The linear X/Y force and torque acting on the whole robot
+   * @return Array of individual wheel force vectors
+   */
+  public Translation2d[] chassisForcesToWheelForceVectors(ChassisSpeeds chassisForces) {
+    var chassisForceVector = new SimpleMatrix(3, 1);
+    chassisForceVector.setColumn(
+        0,
+        0,
+        chassisForces.vxMetersPerSecond,
+        chassisForces.vyMetersPerSecond,
+        chassisForces.omegaRadiansPerSecond);
+
+    // Divide the chassis force vector by numModules since force is additive. All module forces will
+    // add up to the chassis force
+    var moduleForceMatrix = forceKinematics.mult(chassisForceVector.divide(numModules));
+
+    Translation2d[] forceVectors = new Translation2d[numModules];
+    for (int m = 0; m < numModules; m++) {
+      double x = moduleForceMatrix.get(m * 2, 0);
+      double y = moduleForceMatrix.get(m * 2 + 1, 0);
+
+      forceVectors[m] = new Translation2d(x, y);
+    }
+
+    return forceVectors;
   }
 
   /**

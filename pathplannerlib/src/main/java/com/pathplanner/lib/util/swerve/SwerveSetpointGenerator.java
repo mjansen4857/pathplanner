@@ -309,34 +309,35 @@ public class SwerveSetpointGenerator {
 
     DriveFeedforward[] retFF = new DriveFeedforward[config.numModules];
 
-    double prevLinearVel =
-        Math.hypot(
-            prevSetpoint.robotRelativeSpeeds().vxMetersPerSecond,
-            prevSetpoint.robotRelativeSpeeds().vyMetersPerSecond);
-    double linearVel = Math.hypot(retSpeeds.vxMetersPerSecond, retSpeeds.vyMetersPerSecond);
-    double linearAccel = (linearVel - prevLinearVel) / dt;
-    Rotation2d heading =
-        new Rotation2d(
-            prevSetpoint.robotRelativeSpeeds().vxMetersPerSecond,
-            prevSetpoint.robotRelativeSpeeds().vyMetersPerSecond);
-    Translation2d forceVec = new Translation2d(linearAccel, heading).times(config.massKG);
+    double prevVelX = prevSetpoint.robotRelativeSpeeds().vxMetersPerSecond;
+    double prevVelY = prevSetpoint.robotRelativeSpeeds().vyMetersPerSecond;
+    double chassisAccelX = (retSpeeds.vxMetersPerSecond - prevVelX) / dt;
+    double chassisAccelY = (retSpeeds.vyMetersPerSecond - prevVelY) / dt;
+    double chassisForceX = chassisAccelX * config.massKG;
+    double chassisForceY = chassisAccelY * config.massKG;
 
     double angularAccel =
         (retSpeeds.omegaRadiansPerSecond - prevSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond)
             / dt;
     double angTorque = angularAccel * config.MOI;
+    ChassisSpeeds chassisForces = new ChassisSpeeds(chassisForceX, chassisForceY, angTorque);
 
-    // Use kinematics to convert chassis forces to wheel forces
-    var wheelForces =
-        config.toSwerveModuleStates(new ChassisSpeeds(forceVec.getX(), forceVec.getY(), angTorque));
+    Translation2d[] wheelForces = config.chassisForcesToWheelForceVectors(chassisForces);
 
     var retStates = config.toSwerveModuleStates(retSpeeds);
     for (int m = 0; m < config.numModules; m++) {
+      double appliedForce =
+          wheelForces[m].getNorm() * wheelForces[m].getAngle().minus(retStates[m].angle).getCos();
+      double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
+      double torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
+
       final var maybeOverride = overrideSteering.get(m);
       if (maybeOverride.isPresent()) {
         var override = maybeOverride.get();
         if (flipHeading(retStates[m].angle.unaryMinus().rotateBy(override))) {
           retStates[m].speedMetersPerSecond *= -1.0;
+          appliedForce *= -1.0;
+          torqueCurrent *= -1.0;
         }
         retStates[m].angle = override;
       }
@@ -345,21 +346,15 @@ public class SwerveSetpointGenerator {
       if (flipHeading(deltaRotation)) {
         retStates[m].angle = retStates[m].angle.rotateBy(Rotation2d.fromDegrees(180));
         retStates[m].speedMetersPerSecond *= -1.0;
+        appliedForce *= -1.0;
+        torqueCurrent *= -1.0;
       }
 
       double accel =
           (retStates[m].speedMetersPerSecond - prevSetpoint.moduleStates()[m].speedMetersPerSecond)
               / dt;
-      double forceAtCarpet = wheelForces[m].speedMetersPerSecond;
-      double wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters;
-      double torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
 
-      // Negate the torque/force if the motor should apply it in the negative direction
-      if (accel < 0) {
-        retFF[m] = new DriveFeedforward(accel, -forceAtCarpet, -torqueCurrent);
-      } else {
-        retFF[m] = new DriveFeedforward(accel, forceAtCarpet, torqueCurrent);
-      }
+      retFF[m] = new DriveFeedforward(accel, appliedForce, torqueCurrent);
     }
 
     return new SwerveSetpoint(retSpeeds, retStates, retFF);

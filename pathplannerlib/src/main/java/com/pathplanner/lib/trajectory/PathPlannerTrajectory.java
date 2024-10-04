@@ -129,35 +129,37 @@ public class PathPlannerTrajectory {
         double dt = (2 * state.deltaPos) / (v + v0);
         state.timeSeconds = prevState.timeSeconds + dt;
 
-        double linearAccel = (state.linearVelocity - prevState.linearVelocity) / dt;
-        Translation2d forceVec =
-            new Translation2d(linearAccel, prevState.heading).times(config.massKG);
+        ChassisSpeeds prevRobotSpeeds =
+            ChassisSpeeds.fromFieldRelativeSpeeds(
+                prevState.fieldSpeeds, prevState.pose.getRotation());
+        ChassisSpeeds robotSpeeds =
+            ChassisSpeeds.fromFieldRelativeSpeeds(state.fieldSpeeds, state.pose.getRotation());
+        double chassisAccelX =
+            (robotSpeeds.vxMetersPerSecond - prevRobotSpeeds.vxMetersPerSecond) / dt;
+        double chassisAccelY =
+            (robotSpeeds.vyMetersPerSecond - prevRobotSpeeds.vyMetersPerSecond) / dt;
+        double chassisForceX = chassisAccelX * config.massKG;
+        double chassisForceY = chassisAccelY * config.massKG;
 
         double angularAccel =
-            (state.fieldSpeeds.omegaRadiansPerSecond - prevState.fieldSpeeds.omegaRadiansPerSecond)
-                / dt;
+            (robotSpeeds.omegaRadiansPerSecond - prevRobotSpeeds.omegaRadiansPerSecond) / dt;
         double angTorque = angularAccel * config.MOI;
+        ChassisSpeeds chassisForces = new ChassisSpeeds(chassisForceX, chassisForceY, angTorque);
 
-        // Use kinematics to convert chassis forces to wheel forces
-        var wheelForces =
-            config.toSwerveModuleStates(
-                new ChassisSpeeds(forceVec.getX(), forceVec.getY(), angTorque));
+        Translation2d[] wheelForces = config.chassisForcesToWheelForceVectors(chassisForces);
 
         for (int m = 0; m < config.numModules; m++) {
           double accel =
               (state.moduleStates[m].speedMetersPerSecond
                       - prevState.moduleStates[m].speedMetersPerSecond)
                   / dt;
-          double forceAtCarpet = wheelForces[m].speedMetersPerSecond;
-          double wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters;
+          double appliedForce =
+              wheelForces[m].getNorm()
+                  * wheelForces[m].getAngle().minus(state.moduleStates[m].angle).getCos();
+          double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
           double torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
 
-          // Negate the torque/force if the motor is slowing down
-          if (accel < 0) {
-            prevState.feedforwards[m] = new DriveFeedforward(accel, -forceAtCarpet, -torqueCurrent);
-          } else {
-            prevState.feedforwards[m] = new DriveFeedforward(accel, forceAtCarpet, torqueCurrent);
-          }
+          prevState.feedforwards[m] = new DriveFeedforward(accel, appliedForce, torqueCurrent);
         }
 
         // Un-added events have their timestamp set to a waypoint relative position

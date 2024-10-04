@@ -24,9 +24,10 @@ RobotConfig::RobotConfig(units::kilogram_t mass,
 		frc::Translation2d(-wheelbase / 2, -trackwidth / 2)), diffKinematics(
 		trackwidth) {
 	for (size_t i = 0; i < numModules; i++) {
-		swerveForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-1.0
-				/ moduleLocations[i].Y()).value(), 0, 1, (1.0
-				/ moduleLocations[i].X()).value();
+		frc::Translation2d modPosReciprocal = frc::Translation2d(
+				units::meter_t { 1.0 / moduleLocations[i].Norm()() },
+				moduleLocations[i].Angle());
+		swerveForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-modPosReciprocal.Y()).value(), 0, 1, (modPosReciprocal.X()).value();
 	}
 	// No need to set up diff force kinematics, it will not be used
 }
@@ -46,9 +47,10 @@ RobotConfig::RobotConfig(units::kilogram_t mass,
 		frc::Translation2d(-trackwidth / 2, -trackwidth / 2)), diffKinematics(
 		trackwidth) {
 	for (size_t i = 0; i < numModules; i++) {
-		diffForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-1.0
-				/ moduleLocations[i].Y()).value(), 0, 1, (1.0
-				/ moduleLocations[i].X()).value();
+		frc::Translation2d modPosReciprocal = frc::Translation2d(
+				units::meter_t { 1.0 / moduleLocations[i].Norm()() },
+				moduleLocations[i].Angle());
+		diffForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-modPosReciprocal.Y()).value(), 0, 1, (modPosReciprocal.X()).value();
 	}
 	// No need to set up swerve force kinematics, it will not be used
 }
@@ -156,7 +158,7 @@ std::vector<frc::Translation2d> RobotConfig::chassisForcesToWheelForceVectors(
 
 	if (isHolonomic) {
 		frc::Matrixd < 4 * 2, 1 > moduleForceMatrix = swerveForceKinematics
-				* chassisForceVector;
+				* (chassisForceVector / numModules);
 		for (size_t i = 0; i < numModules; i++) {
 			units::meter_t x { moduleForceMatrix(i * 2, 0) };
 			units::meter_t y { moduleForceMatrix(i * 2 + 1, 0) };
@@ -165,7 +167,7 @@ std::vector<frc::Translation2d> RobotConfig::chassisForcesToWheelForceVectors(
 		}
 	} else {
 		frc::Matrixd < 2 * 2, 1 > moduleForceMatrix = diffForceKinematics
-				* chassisForceVector;
+				* (chassisForceVector / numModules);
 		for (size_t i = 0; i < numModules; i++) {
 			units::meter_t x { moduleForceMatrix(i * 2, 0) };
 			units::meter_t y { moduleForceMatrix(i * 2 + 1, 0) };

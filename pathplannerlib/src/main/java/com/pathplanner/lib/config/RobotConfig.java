@@ -84,10 +84,11 @@ public class RobotConfig {
 
     this.forceKinematics = new SimpleMatrix(this.numModules * 2, 3);
     for (int i = 0; i < this.numModules; i++) {
-      this.forceKinematics.setRow(
-          i * 2, 0, /* Start Data */ 1, 0, -1.0 / this.moduleLocations[i].getY());
-      this.forceKinematics.setRow(
-          i * 2 + 1, 0, /* Start Data */ 0, 1, 1.0 / this.moduleLocations[i].getX());
+      Translation2d modPosReciprocal =
+          new Translation2d(
+              1.0 / this.moduleLocations[i].getNorm(), this.moduleLocations[i].getAngle());
+      this.forceKinematics.setRow(i * 2, 0, /* Start Data */ 1, 0, -modPosReciprocal.getY());
+      this.forceKinematics.setRow(i * 2 + 1, 0, /* Start Data */ 0, 1, modPosReciprocal.getX());
     }
   }
 
@@ -125,10 +126,11 @@ public class RobotConfig {
 
     this.forceKinematics = new SimpleMatrix(this.numModules * 2, 3);
     for (int i = 0; i < this.numModules; i++) {
-      this.forceKinematics.setRow(
-          i * 2, 0, /* Start Data */ 1, 0, -1.0 / this.moduleLocations[i].getY());
-      this.forceKinematics.setRow(
-          i * 2 + 1, 0, /* Start Data */ 0, 1, 1.0 / this.moduleLocations[i].getX());
+      Translation2d modPosReciprocal =
+          new Translation2d(
+              1.0 / this.moduleLocations[i].getNorm(), this.moduleLocations[i].getAngle());
+      this.forceKinematics.setRow(i * 2, 0, /* Start Data */ 1, 0, -modPosReciprocal.getY());
+      this.forceKinematics.setRow(i * 2 + 1, 0, /* Start Data */ 0, 1, modPosReciprocal.getX());
     }
   }
 
@@ -184,7 +186,9 @@ public class RobotConfig {
         chassisForces.vyMetersPerSecond,
         chassisForces.omegaRadiansPerSecond);
 
-    var moduleForceMatrix = forceKinematics.mult(chassisForceVector);
+    // Divide the chassis force vector by numModules since force is additive. All module forces will
+    // add up to the chassis force
+    var moduleForceMatrix = forceKinematics.mult(chassisForceVector.divide(numModules));
 
     Translation2d[] forceVectors = new Translation2d[numModules];
     for (int m = 0; m < numModules; m++) {
@@ -193,6 +197,7 @@ public class RobotConfig {
 
       forceVectors[m] = new Translation2d(x, y);
     }
+
     return forceVectors;
   }
 

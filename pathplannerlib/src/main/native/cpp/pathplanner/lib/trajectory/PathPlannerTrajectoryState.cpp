@@ -1,4 +1,5 @@
 #include "pathplanner/lib/trajectory/PathPlannerTrajectoryState.h"
+#include "pathplanner/lib/util/FlippingUtil.h"
 
 using namespace pathplanner;
 
@@ -53,24 +54,15 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 }
 
 PathPlannerTrajectoryState PathPlannerTrajectoryState::flip() const {
-	PathPlannerTrajectoryState mirrored;
+	PathPlannerTrajectoryState flipped;
 
-	mirrored.time = time;
-	mirrored.linearVelocity = linearVelocity;
-	mirrored.pose = GeometryUtil::flipFieldPose(pose);
-	mirrored.fieldSpeeds = frc::ChassisSpeeds { -fieldSpeeds.vx, fieldSpeeds.vy,
-			-fieldSpeeds.omega };
-	if (feedforwards.size() == 4) {
-		mirrored.feedforwards.emplace_back(feedforwards[1]);
-		mirrored.feedforwards.emplace_back(feedforwards[0]);
-		mirrored.feedforwards.emplace_back(feedforwards[3]);
-		mirrored.feedforwards.emplace_back(feedforwards[2]);
-	} else if (feedforwards.size() == 2) {
-		mirrored.feedforwards.emplace_back(feedforwards[1]);
-		mirrored.feedforwards.emplace_back(feedforwards[0]);
-	}
+	flipped.time = time;
+	flipped.linearVelocity = linearVelocity;
+	flipped.pose = FlippingUtil::flipFieldPose(pose);
+	flipped.fieldSpeeds = FlippingUtil::flipFieldSpeeds(fieldSpeeds);
+	flipped.feedforwards = FlippingUtil::flipFeedforwards(feedforwards);
 
-	return mirrored;
+	return flipped;
 }
 
 PathPlannerTrajectoryState PathPlannerTrajectoryState::copyWithTime(

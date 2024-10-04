@@ -3,6 +3,7 @@
 #include "pathplanner/lib/commands/PathfindingCommand.h"
 #include "pathplanner/lib/commands/PathfindThenFollowPath.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
+#include "pathplanner/lib/util/FlippingUtil.h"
 #include <stdexcept>
 #include <frc2/command/Commands.h>
 #include <frc/Filesystem.h>
@@ -113,7 +114,7 @@ frc2::CommandPtr AutoBuilder::resetOdom(frc::Pose2d bluePose) {
 
 	return frc2::cmd::RunOnce([bluePose]() {
 		if (m_shouldFlipPath()) {
-			m_resetPose(GeometryUtil::flipFieldPose(bluePose));
+			m_resetPose(FlippingUtil::flipFieldPose(bluePose));
 		} else {
 			m_resetPose(bluePose);
 		}

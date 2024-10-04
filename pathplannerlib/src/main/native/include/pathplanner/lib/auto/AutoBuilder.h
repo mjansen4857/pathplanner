@@ -19,6 +19,7 @@
 #include "pathplanner/lib/config/RobotConfig.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
 #include "pathplanner/lib/util/DriveFeedforward.h"
+#include "pathplanner/lib/util/FlippingUtil.h"
 
 namespace pathplanner {
 class AutoBuilder {
@@ -165,7 +166,7 @@ public:
 			PathConstraints constraints, units::meters_per_second_t goalEndVel =
 					0_mps) {
 		return frc2::cmd::Either(
-				pathfindToPose(GeometryUtil::flipFieldPose(pose), constraints,
+				pathfindToPose(FlippingUtil::flipFieldPose(pose), constraints,
 						goalEndVel),
 				pathfindToPose(pose, constraints, goalEndVel), m_shouldFlipPath);
 	}

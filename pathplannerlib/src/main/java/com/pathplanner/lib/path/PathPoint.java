@@ -1,6 +1,6 @@
 package com.pathplanner.lib.path;
 
-import com.pathplanner.lib.util.GeometryUtil;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Translation2d;
 import java.util.Objects;
 
@@ -60,13 +60,11 @@ public class PathPoint {
    * @return The flipped point
    */
   public PathPoint flip() {
-    PathPoint flipped = new PathPoint(GeometryUtil.flipFieldPosition(position));
+    PathPoint flipped = new PathPoint(FlippingUtil.flipFieldPosition(position));
     flipped.distanceAlongPath = distanceAlongPath;
     flipped.maxV = maxV;
     if (rotationTarget != null) {
-      flipped.rotationTarget =
-          new RotationTarget(
-              rotationTarget.position(), GeometryUtil.flipFieldRotation(rotationTarget.rotation()));
+      flipped.rotationTarget = rotationTarget.flip();
     }
     flipped.constraints = constraints;
     flipped.waypointRelativePos = waypointRelativePos;

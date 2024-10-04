@@ -36,3 +36,20 @@ Waypoint Waypoint::fromJson(const wpi::json &waypointJson) {
 
 	return Waypoint(prevControl, anchor, nextControl);
 }
+
+Waypoint Waypoint::flip() const {
+	std::optional < frc::Translation2d > flippedPrevControl = std::nullopt;
+	frc::Translation2d flippedAnchor = FlippingUtil::flipFieldPosition(anchor);
+	std::optional < frc::Translation2d > flippedNextControl = std::nullopt;
+
+	if (prevControl.has_value()) {
+		flippedPrevControl = FlippingUtil::flipFieldPosition(
+				prevControl.value());
+	}
+	if (nextControl.has_value()) {
+		flippedNextControl = FlippingUtil::flipFieldPosition(
+				nextControl.value());
+	}
+
+	return Waypoint(flippedPrevControl, flippedAnchor, flippedNextControl);
+}

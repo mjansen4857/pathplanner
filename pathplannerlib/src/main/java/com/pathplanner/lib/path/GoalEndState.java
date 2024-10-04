@@ -1,6 +1,6 @@
 package com.pathplanner.lib.path;
 
-import com.pathplanner.lib.util.GeometryUtil;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.json.simple.JSONObject;
 
@@ -29,6 +29,6 @@ public record GoalEndState(double velocity, Rotation2d rotation) {
    * @return The flipped end state
    */
   public GoalEndState flip() {
-    return new GoalEndState(velocity, GeometryUtil.flipFieldRotation(rotation));
+    return new GoalEndState(velocity, FlippingUtil.flipFieldRotation(rotation));
   }
 }

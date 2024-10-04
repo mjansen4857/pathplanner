@@ -2,7 +2,7 @@ package com.pathplanner.lib.trajectory;
 
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.DriveFeedforward;
-import com.pathplanner.lib.util.GeometryUtil;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -107,29 +107,15 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
    * @return This trajectory state flipped to the other side of the field
    */
   public PathPlannerTrajectoryState flip() {
-    var mirrored = new PathPlannerTrajectoryState();
+    var flipped = new PathPlannerTrajectoryState();
 
-    mirrored.timeSeconds = timeSeconds;
-    mirrored.linearVelocity = linearVelocity;
-    mirrored.pose = GeometryUtil.flipFieldPose(pose);
-    mirrored.fieldSpeeds =
-        new ChassisSpeeds(
-            -fieldSpeeds.vxMetersPerSecond,
-            fieldSpeeds.vyMetersPerSecond,
-            -fieldSpeeds.omegaRadiansPerSecond);
-    if (feedforwards.length == 4) {
-      mirrored.feedforwards =
-          new DriveFeedforward[] {
-            feedforwards[1], feedforwards[0], feedforwards[3], feedforwards[2],
-          };
-    } else if (feedforwards.length == 2) {
-      mirrored.feedforwards =
-          new DriveFeedforward[] {
-            feedforwards[1], feedforwards[0],
-          };
-    }
+    flipped.timeSeconds = timeSeconds;
+    flipped.linearVelocity = linearVelocity;
+    flipped.pose = FlippingUtil.flipFieldPose(pose);
+    flipped.fieldSpeeds = FlippingUtil.flipFieldSpeeds(fieldSpeeds);
+    flipped.feedforwards = FlippingUtil.flipFeedforwards(feedforwards);
 
-    return mirrored;
+    return flipped;
   }
 
   /**

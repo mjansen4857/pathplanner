@@ -1,6 +1,6 @@
 package com.pathplanner.lib.path;
 
-import com.pathplanner.lib.util.GeometryUtil;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import org.json.simple.JSONObject;
@@ -22,14 +22,14 @@ public record Waypoint(Translation2d prevControl, Translation2d anchor, Translat
    */
   public Waypoint flip() {
     Translation2d flippedPrevControl = null;
-    Translation2d flippedAnchor = GeometryUtil.flipFieldPosition(anchor);
+    Translation2d flippedAnchor = FlippingUtil.flipFieldPosition(anchor);
     Translation2d flippedNextControl = null;
 
     if (prevControl != null) {
-      flippedPrevControl = GeometryUtil.flipFieldPosition(prevControl);
+      flippedPrevControl = FlippingUtil.flipFieldPosition(prevControl);
     }
     if (nextControl != null) {
-      flippedNextControl = GeometryUtil.flipFieldPosition(nextControl);
+      flippedNextControl = FlippingUtil.flipFieldPosition(nextControl);
     }
 
     return new Waypoint(flippedPrevControl, flippedAnchor, flippedNextControl);

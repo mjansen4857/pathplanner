@@ -43,18 +43,6 @@ public:
 		return m_target;
 	}
 
-	/**
-	 * Transform the position of this target for a given segment number.
-	 *
-	 * <p>For example, a target with position 1.5 for the segment 1 will have the position 0.5
-	 *
-	 * @param segmentIndex The segment index to transform position for
-	 * @return The transformed target
-	 */
-	constexpr RotationTarget forSegmentIndex(int segmentIndex) const {
-		return RotationTarget(m_position - segmentIndex, m_target);
-	}
-
 	inline bool operator==(const RotationTarget &other) const {
 		return std::abs(m_position - other.m_position) < 1E-9
 				&& m_target == other.m_target;

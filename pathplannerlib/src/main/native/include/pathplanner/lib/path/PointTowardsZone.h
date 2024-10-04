@@ -3,7 +3,7 @@
 #include <wpi/json.h>
 #include <frc/geometry/Translation2d.h>
 #include <frc/geometry/Rotation2d.h>
-#include "pathplanner/lib/util/GeometryUtil.h"
+#include "pathplanner/lib/util/FlippingUtil.h"
 
 namespace pathplanner {
 class PointTowardsZone {
@@ -91,7 +91,7 @@ public:
 	}
 
 	inline PointTowardsZone flip() const {
-		return PointTowardsZone(GeometryUtil::flipFieldPosition(m_targetPos),
+		return PointTowardsZone(FlippingUtil::flipFieldPosition(m_targetPos),
 				m_rotationOffset, m_minPos, m_maxPos);
 	}
 

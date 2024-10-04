@@ -61,65 +61,75 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
       },
       elevation: 1.0,
       children: [
+        Center(
+          child: Text(
+            'Optimized Runtime: ${(_currentResult?.runtime ?? 0.0).toStringAsFixed(2)}s',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Optimize'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primaryContainer,
+                  foregroundColor: colorScheme.onPrimaryContainer,
+                  elevation: 4.0,
+                  minimumSize: const Size(0, 56),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: _running ? null : _runOptimization,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.close),
+                label: const Text('Discard'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.errorContainer,
+                  foregroundColor: colorScheme.onErrorContainer,
+                  elevation: 4.0,
+                  minimumSize: const Size(0, 56),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: (_running || _currentResult == null)
+                    ? null
+                    : _discardOptimization,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.check),
+                label: const Text('Accept'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[700],
+                  foregroundColor: colorScheme.onSecondaryContainer,
+                  elevation: 4.0,
+                  minimumSize: const Size(0, 56),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                onPressed: (_running || _currentResult == null)
+                    ? null
+                    : _acceptOptimization,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        const SizedBox(height: 16),
         Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Optimized Runtime: ${(_currentResult?.runtime ?? 0.0).toStringAsFixed(2)}s',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.play_arrow),
-                      label: const Text('Optimize'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primaryContainer,
-                        foregroundColor: colorScheme.onPrimaryContainer,
-                      ),
-                      onPressed: _running ? null : _runOptimization,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.close),
-                      label: const Text('Discard'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.errorContainer,
-                        foregroundColor: colorScheme.onErrorContainer,
-                      ),
-                      onPressed: (_running || _currentResult == null)
-                          ? null
-                          : _discardOptimization,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.check),
-                      label: const Text('Accept'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[700],
-                        foregroundColor: colorScheme.onSecondaryContainer,
-                      ),
-                      onPressed: (_running || _currentResult == null)
-                          ? null
-                          : _acceptOptimization,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              LinearProgressIndicator(
-                value: (_currentResult?.generation ?? 0) /
-                    PathOptimizer.generations,
-              ),
-            ],
+          padding: const EdgeInsets.only(right: 8.0),
+          child: LinearProgressIndicator(
+            value:
+                (_currentResult?.generation ?? 0) / PathOptimizer.generations,
           ),
         ),
       ],

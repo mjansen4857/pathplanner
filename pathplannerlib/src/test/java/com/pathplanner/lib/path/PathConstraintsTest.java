@@ -13,10 +13,10 @@ public class PathConstraintsTest {
   public void testGetters() {
     PathConstraints constraints = new PathConstraints(1.0, 2.0, 3.0, 4.0);
 
-    assertEquals(1.0, constraints.getMaxVelocityMps(), DELTA);
-    assertEquals(2.0, constraints.getMaxAccelerationMpsSq(), DELTA);
-    assertEquals(3.0, constraints.getMaxAngularVelocityRps(), DELTA);
-    assertEquals(4.0, constraints.getMaxAngularAccelerationRpsSq(), DELTA);
+    assertEquals(1.0, constraints.maxVelocityMps(), DELTA);
+    assertEquals(2.0, constraints.maxAccelerationMps(), DELTA);
+    assertEquals(3.0, constraints.maxAngularVelocityRps(), DELTA);
+    assertEquals(4.0, constraints.maxAngularAccelerationRpsSq(), DELTA);
   }
 
   @Test

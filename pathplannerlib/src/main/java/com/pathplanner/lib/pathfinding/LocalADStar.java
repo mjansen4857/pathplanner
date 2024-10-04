@@ -694,39 +694,13 @@ public class LocalADStar implements Pathfinder {
         (pos.x * nodeSize) + (nodeSize / 2.0), (pos.y * nodeSize) + (nodeSize / 2.0));
   }
 
-  /** Represents a node in the pathfinding grid */
-  public static class GridPosition implements Comparable<GridPosition> {
-    /** X index in the grid */
-    public final int x;
-    /** Y index in the grid */
-    public final int y;
-
-    /**
-     * Create a node within the pathfinding grid
-     *
-     * @param x X index in the grid
-     * @param y Y index in the grid
-     */
-    public GridPosition(int x, int y) {
-      this.x = x;
-      this.y = y;
-    }
-
-    @Override
-    public int hashCode() {
-      return x * 1000 + y;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj instanceof GridPosition) {
-        var other = (GridPosition) obj;
-        return x == other.x && y == other.y;
-      } else {
-        return false;
-      }
-    }
-
+  /**
+   * Represents a node in the pathfinding grid
+   *
+   * @param x X index in the grid
+   * @param y Y index in the grid
+   */
+  public record GridPosition(int x, int y) implements Comparable<GridPosition> {
     @Override
     public int compareTo(GridPosition o) {
       if (x == o.x) {
@@ -734,11 +708,6 @@ public class LocalADStar implements Pathfinder {
       } else {
         return Integer.compare(x, o.x);
       }
-    }
-
-    @Override
-    public String toString() {
-      return "(" + x + ", " + y + ")";
     }
   }
 }

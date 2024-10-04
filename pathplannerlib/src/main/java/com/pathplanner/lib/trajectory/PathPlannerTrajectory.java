@@ -82,7 +82,7 @@ public class PathPlannerTrajectory {
       // Set the final module velocities
       Translation2d endSpeedTrans =
           new Translation2d(
-              path.getGoalEndState().getVelocity(), states.get(states.size() - 1).heading);
+              path.getGoalEndState().velocity(), states.get(states.size() - 1).heading);
       ChassisSpeeds endFieldSpeeds =
           new ChassisSpeeds(endSpeedTrans.getX(), endSpeedTrans.getY(), 0.0);
       var endStates =
@@ -94,7 +94,7 @@ public class PathPlannerTrajectory {
             endStates[m].speedMetersPerSecond;
       }
       states.get(states.size() - 1).fieldSpeeds = endFieldSpeeds;
-      states.get(states.size() - 1).linearVelocity = path.getGoalEndState().getVelocity();
+      states.get(states.size() - 1).linearVelocity = path.getGoalEndState().velocity();
 
       // Reverse pass
       reverseAccelPass(states, config);
@@ -102,20 +102,14 @@ public class PathPlannerTrajectory {
       Queue<Event> unaddedEvents =
           new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestamp));
       for (EventMarker marker : path.getEventMarkers()) {
-        unaddedEvents.add(
-            new ScheduleCommandEvent(marker.getWaypointRelativePos(), marker.getCommand()));
-        if (marker.getEndWaypointRelativePos() >= 0.0) {
+        unaddedEvents.add(new ScheduleCommandEvent(marker.position(), marker.command()));
+        if (marker.endPosition() >= 0.0) {
           // This marker is zoned
-          unaddedEvents.add(
-              new CancelCommandEvent(marker.getEndWaypointRelativePos(), marker.getCommand()));
-          unaddedEvents.add(
-              new ActivateTriggerEvent(marker.getWaypointRelativePos(), marker.getTriggerName()));
-          unaddedEvents.add(
-              new DeactivateTriggerEvent(
-                  marker.getEndWaypointRelativePos(), marker.getTriggerName()));
+          unaddedEvents.add(new CancelCommandEvent(marker.endPosition(), marker.command()));
+          unaddedEvents.add(new ActivateTriggerEvent(marker.position(), marker.triggerName()));
+          unaddedEvents.add(new DeactivateTriggerEvent(marker.endPosition(), marker.triggerName()));
         } else {
-          unaddedEvents.add(
-              new OneShotTriggerEvent(marker.getWaypointRelativePos(), marker.getTriggerName()));
+          unaddedEvents.add(new OneShotTriggerEvent(marker.position(), marker.triggerName()));
         }
       }
 
@@ -195,7 +189,7 @@ public class PathPlannerTrajectory {
     Rotation2d prevRotationTargetRot = startingRotation;
     int nextRotationTargetIdx = getNextRotationTargetIdx(path, 0);
     Rotation2d nextRotationTargetRot =
-        path.getPoint(nextRotationTargetIdx).rotationTarget.getTarget();
+        path.getPoint(nextRotationTargetIdx).rotationTarget.rotation();
 
     for (int i = 0; i < path.numPoints(); i++) {
       PathPoint p = path.getPoint(i);
@@ -204,7 +198,7 @@ public class PathPlannerTrajectory {
         prevRotationTargetIdx = nextRotationTargetIdx;
         prevRotationTargetRot = nextRotationTargetRot;
         nextRotationTargetIdx = getNextRotationTargetIdx(path, i);
-        nextRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.getTarget();
+        nextRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.rotation();
       }
 
       // Holonomic rotation is interpolated. We use the distance along the path
@@ -326,11 +320,11 @@ public class PathPlannerTrajectory {
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      double maxAngAccel = state.constraints.getMaxAngularAccelerationRpsSq();
+      double maxAngAccel = state.constraints.maxAngularAccelerationRpsSq();
       double angularAccel = MathUtil.clamp(totalTorque / config.MOI, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec.div(config.massKG);
-      double maxAccel = state.constraints.getMaxAccelerationMpsSq();
+      double maxAccel = state.constraints.maxAccelerationMps();
       double accel = accelVec.getNorm();
       if (accel > maxAccel) {
         accelVec = accelVec.times(maxAccel / accel);
@@ -405,8 +399,8 @@ public class PathPlannerTrajectory {
       // Use the calculated module velocities to calculate the robot speeds
       ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(state.moduleStates);
 
-      double maxChassisVel = state.constraints.getMaxVelocityMps();
-      double maxChassisAngVel = state.constraints.getMaxAngularVelocityRps();
+      double maxChassisVel = state.constraints.maxVelocityMps();
+      double maxChassisAngVel = state.constraints.maxAngularVelocityRps();
 
       desaturateWheelSpeeds(
           state.moduleStates,
@@ -462,11 +456,11 @@ public class PathPlannerTrajectory {
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      double maxAngAccel = state.constraints.getMaxAngularAccelerationRpsSq();
+      double maxAngAccel = state.constraints.maxAngularAccelerationRpsSq();
       double angularAccel = MathUtil.clamp(totalTorque / config.MOI, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec.div(config.massKG);
-      double maxAccel = state.constraints.getMaxAccelerationMpsSq();
+      double maxAccel = state.constraints.maxAccelerationMps();
       double accel = accelVec.getNorm();
       if (accel > maxAccel) {
         accelVec = accelVec.times(maxAccel / accel);
@@ -528,8 +522,8 @@ public class PathPlannerTrajectory {
       // Use the calculated module velocities to calculate the robot speeds
       ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(state.moduleStates);
 
-      double maxChassisVel = state.constraints.getMaxVelocityMps();
-      double maxChassisAngVel = state.constraints.getMaxAngularVelocityRps();
+      double maxChassisVel = state.constraints.maxVelocityMps();
+      double maxChassisAngVel = state.constraints.maxAngularVelocityRps();
 
       maxChassisVel = Math.min(maxChassisVel, state.linearVelocity);
       maxChassisAngVel =

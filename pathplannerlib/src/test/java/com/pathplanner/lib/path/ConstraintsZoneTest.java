@@ -13,9 +13,9 @@ public class ConstraintsZoneTest {
   public void testGetters() {
     ConstraintsZone zone = new ConstraintsZone(1.25, 1.8, new PathConstraints(1, 2, 3, 4));
 
-    assertEquals(1.25, zone.getMinWaypointPos(), DELTA);
-    assertEquals(1.8, zone.getMaxWaypointPos(), DELTA);
-    assertEquals(new PathConstraints(1, 2, 3, 4), zone.getConstraints());
+    assertEquals(1.25, zone.minPosition(), DELTA);
+    assertEquals(1.8, zone.maxPosition(), DELTA);
+    assertEquals(new PathConstraints(1, 2, 3, 4), zone.constraints());
   }
 
   @Test

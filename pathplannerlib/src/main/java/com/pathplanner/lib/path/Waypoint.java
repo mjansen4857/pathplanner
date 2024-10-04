@@ -5,29 +5,15 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import org.json.simple.JSONObject;
 
-/** Class used to describe a waypoint for a Bezier curve based path */
-public class Waypoint {
+/**
+ * Class used to describe a waypoint for a Bezier curve based path
+ *
+ * @param prevControl Previous control point
+ * @param anchor Anchor point
+ * @param nextControl Next control point
+ */
+public record Waypoint(Translation2d prevControl, Translation2d anchor, Translation2d nextControl) {
   private static final double AUTO_CONTROL_DISTANCE_FACTOR = 1.0 / 3.0;
-
-  /** Previous control point */
-  public final Translation2d prevControl;
-  /** Anchor point */
-  public final Translation2d anchor;
-  /** Next control point */
-  public final Translation2d nextControl;
-
-  /**
-   * Create a waypoint from its anchor point and control points
-   *
-   * @param prevControl The previous control point position
-   * @param anchor The anchor position
-   * @param nextControl The next control point position
-   */
-  public Waypoint(Translation2d prevControl, Translation2d anchor, Translation2d nextControl) {
-    this.prevControl = prevControl;
-    this.anchor = anchor;
-    this.nextControl = nextControl;
-  }
 
   /**
    * Flip this waypoint to the other side of the field, maintaining a blue alliance origin
@@ -60,7 +46,7 @@ public class Waypoint {
    * @param nextAnchor The position of the next anchor point. This can be null for the end point
    * @return Waypoint with auto calculated control points
    */
-  public static Waypoint autoControlPoints(
+  static Waypoint autoControlPoints(
       Translation2d anchor,
       Rotation2d heading,
       Translation2d prevAnchor,
@@ -87,7 +73,7 @@ public class Waypoint {
    * @param waypointJson JSON object representing a waypoint
    * @return The waypoint created from JSON
    */
-  public static Waypoint fromJson(JSONObject waypointJson) {
+  static Waypoint fromJson(JSONObject waypointJson) {
     Translation2d anchor = translationFromJson((JSONObject) waypointJson.get("anchor"));
     Translation2d prevControl = null;
     Translation2d nextControl = null;

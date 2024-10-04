@@ -81,7 +81,7 @@ public class PathfindingCommand extends Command {
     Pathfinding.ensureInitialized();
 
     Rotation2d targetRotation = new Rotation2d();
-    double goalEndVel = targetPath.getGlobalConstraints().getMaxVelocityMps();
+    double goalEndVel = targetPath.getGlobalConstraints().maxVelocityMps();
     if (targetPath.isChoreoPath()) {
       // Can get() here without issue since all choreo trajectories have ideal trajectories
       PathPlannerTrajectory choreoTraj = targetPath.getIdealTrajectory(robotConfig).orElseThrow();
@@ -90,7 +90,7 @@ public class PathfindingCommand extends Command {
     } else {
       for (PathPoint p : targetPath.getAllPathPoints()) {
         if (p.rotationTarget != null) {
-          targetRotation = p.rotationTarget.getTarget();
+          targetRotation = p.rotationTarget.rotation();
           break;
         }
       }
@@ -215,7 +215,7 @@ public class PathfindingCommand extends Command {
           new Pose2d(this.targetPath.getPoint(0).position, originalTargetPose.getRotation());
       if (shouldFlipPath.getAsBoolean()) {
         targetPose = GeometryUtil.flipFieldPose(this.originalTargetPose);
-        goalEndState = new GoalEndState(goalEndState.getVelocity(), targetPose.getRotation());
+        goalEndState = new GoalEndState(goalEndState.velocity(), targetPose.getRotation());
       }
     }
 
@@ -351,8 +351,7 @@ public class PathfindingCommand extends Command {
 
       double currentVel =
           Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-      double stoppingDistance =
-          Math.pow(currentVel, 2) / (2 * constraints.getMaxAccelerationMpsSq());
+      double stoppingDistance = Math.pow(currentVel, 2) / (2 * constraints.maxAccelerationMps());
 
       return currentPose.getTranslation().getDistance(targetPose.getTranslation())
           <= stoppingDistance;
@@ -371,7 +370,7 @@ public class PathfindingCommand extends Command {
 
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine
-    if (!interrupted && goalEndState.getVelocity() < 0.1) {
+    if (!interrupted && goalEndState.velocity() < 0.1) {
       var ff = new DriveFeedforward[robotConfig.numModules];
       for (int m = 0; m < robotConfig.numModules; m++) {
         ff[m] = new DriveFeedforward(0.0, 0.0, 0.0);

@@ -3,68 +3,50 @@ package com.pathplanner.lib.path;
 import com.pathplanner.lib.auto.CommandUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import java.util.Objects;
 import org.json.simple.JSONObject;
 
-/** Position along the path that will trigger a command when reached */
-public class EventMarker {
-  private final String triggerName;
-  private final double waypointRelativePos;
-  private final double endWaypointRelativePos;
-  private final Command command;
-
+/**
+ * Position along the path that will trigger a command when reached
+ *
+ * @param triggerName The name of the trigger this event marker will control
+ * @param position The waypoint relative position of the marker
+ * @param endPosition The end waypoint relative position of the event's zone. A value of -1.0
+ *     indicates that this event is not zoned.
+ * @param command The command that should be run at this marker
+ */
+public record EventMarker(
+    String triggerName, double position, double endPosition, Command command) {
   /**
    * Create a new event marker
    *
    * @param triggerName The name of the trigger this event marker will control
-   * @param waypointRelativePos The waypoint relative position of the marker
-   * @param endWaypointRelativePos The end waypoint relative position of the event's zone. A value
-   *     of -1.0 indicates that this event is not zoned.
+   * @param position The waypoint relative position of the marker
    * @param command The command that should be triggered at this marker
    */
-  public EventMarker(
-      String triggerName,
-      double waypointRelativePos,
-      double endWaypointRelativePos,
-      Command command) {
-    this.triggerName = triggerName;
-    this.waypointRelativePos = waypointRelativePos;
-    this.endWaypointRelativePos = endWaypointRelativePos;
-    this.command = command;
+  public EventMarker(String triggerName, double position, Command command) {
+    this(triggerName, position, -1.0, command);
   }
 
   /**
    * Create a new event marker
    *
    * @param triggerName The name of the trigger this event marker will control
-   * @param waypointRelativePos The waypoint relative position of the marker
-   * @param command The command that should be triggered at this marker
+   * @param position The waypoint relative position of the marker
+   * @param endPosition The end waypoint relative position of the event's zone. A value of -1.0
+   *     indicates that this event is not zoned.
    */
-  public EventMarker(String triggerName, double waypointRelativePos, Command command) {
-    this(triggerName, waypointRelativePos, -1.0, command);
+  public EventMarker(String triggerName, double position, double endPosition) {
+    this(triggerName, position, endPosition, Commands.none());
   }
 
   /**
    * Create a new event marker
    *
    * @param triggerName The name of the trigger this event marker will control
-   * @param waypointRelativePos The waypoint relative position of the marker
-   * @param endWaypointRelativePos The end waypoint relative position of the event's zone. A value
-   *     of -1.0 indicates that this event is not zoned.
+   * @param position The waypoint relative position of the marker
    */
-  public EventMarker(
-      String triggerName, double waypointRelativePos, double endWaypointRelativePos) {
-    this(triggerName, waypointRelativePos, endWaypointRelativePos, Commands.none());
-  }
-
-  /**
-   * Create a new event marker
-   *
-   * @param triggerName The name of the trigger this event marker will control
-   * @param waypointRelativePos The waypoint relative position of the marker
-   */
-  public EventMarker(String triggerName, double waypointRelativePos) {
-    this(triggerName, waypointRelativePos, Commands.none());
+  public EventMarker(String triggerName, double position) {
+    this(triggerName, position, Commands.none());
   }
 
   /**
@@ -87,58 +69,5 @@ public class EventMarker {
       // Path files won't be loaded from event markers
     }
     return new EventMarker(name, pos, endPos, cmd);
-  }
-
-  /**
-   * Get the command associated with this marker
-   *
-   * @return Command for this marker
-   */
-  public Command getCommand() {
-    return command;
-  }
-
-  /**
-   * Get the waypoint relative position of this marker
-   *
-   * @return Waypoint relative position of this marker
-   */
-  public double getWaypointRelativePos() {
-    return waypointRelativePos;
-  }
-
-  /**
-   * Get the waypoint relative position of the end of this event's zone. A value of -1.0 indicates
-   * this marker is not zoned.
-   *
-   * @return The end position of the zone, -1.0 if not zoned
-   */
-  public double getEndWaypointRelativePos() {
-    return endWaypointRelativePos;
-  }
-
-  /**
-   * Get the name of the trigger this marker will control
-   *
-   * @return The name of the trigger
-   */
-  public String getTriggerName() {
-    return triggerName;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    EventMarker that = (EventMarker) o;
-    return Math.abs(that.waypointRelativePos - waypointRelativePos) < 1E-3
-        && Math.abs(that.endWaypointRelativePos - endWaypointRelativePos) < 1E-3
-        && Objects.equals(triggerName, that.triggerName)
-        && Objects.equals(command, that.command);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(triggerName, waypointRelativePos, endWaypointRelativePos, command);
   }
 }

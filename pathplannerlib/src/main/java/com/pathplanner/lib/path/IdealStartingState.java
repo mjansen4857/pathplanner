@@ -1,25 +1,16 @@
 package com.pathplanner.lib.path;
 
+import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
-import java.util.Objects;
 import org.json.simple.JSONObject;
 
-/** Describes the ideal starting state of the robot when finishing a path */
-public class IdealStartingState {
-  private final double velocity;
-  private final Rotation2d rotation;
-
-  /**
-   * Create a new ideal starting state
-   *
-   * @param velocity The ideal starting velocity (M/S)
-   * @param rotation The ideal starting rotation
-   */
-  public IdealStartingState(double velocity, Rotation2d rotation) {
-    this.velocity = velocity;
-    this.rotation = rotation;
-  }
-
+/**
+ * Describes the ideal starting state of the robot when finishing a path
+ *
+ * @param velocity The ideal starting velocity (M/S)
+ * @param rotation The ideal starting rotation
+ */
+public record IdealStartingState(double velocity, Rotation2d rotation) {
   /**
    * Create an ideal starting state from json
    *
@@ -33,38 +24,12 @@ public class IdealStartingState {
   }
 
   /**
-   * Get the ideal starting velocity
+   * Flip the ideal starting state for the other side of the field, maintaining a blue alliance
+   * origin
    *
-   * @return Ideal starting velocity (M/S)
+   * @return The flipped starting state
    */
-  public double getVelocity() {
-    return velocity;
-  }
-
-  /**
-   * Get the ideal starting rotation
-   *
-   * @return Ideal starting rotation
-   */
-  public Rotation2d getRotation() {
-    return rotation;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    IdealStartingState that = (IdealStartingState) o;
-    return Math.abs(that.velocity - velocity) < 1E-3 && Objects.equals(rotation, that.rotation);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(velocity, rotation);
-  }
-
-  @Override
-  public String toString() {
-    return "IdealStartingState{" + "velocity=" + velocity + ", rotation=" + rotation + "}";
+  public IdealStartingState flip() {
+    return new IdealStartingState(velocity, GeometryUtil.flipFieldRotation(rotation));
   }
 }

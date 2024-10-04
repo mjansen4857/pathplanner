@@ -66,7 +66,7 @@ class FlippingUtil:
             return ChassisSpeeds(-fieldSpeeds.vx, -fieldSpeeds.vy, fieldSpeeds.omega)
 
     @staticmethod
-    def flipFeedforwards(feedforwards: List[DriveFeedforward]) -> List[DriveFeedforward]:
+    def flipFeedforwards(feedforwards: List['DriveFeedforward']) -> List['DriveFeedforward']:
         """
         Flip a list of drive feedforwards for the other side of the field.
         Only does anything if mirrored symmetry is used

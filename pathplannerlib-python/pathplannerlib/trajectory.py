@@ -238,26 +238,10 @@ class PathPlannerTrajectory:
                     dt = (2 * state.deltaPos) / (v + v0)
                     state.timeSeconds = prevState.timeSeconds + dt
 
-                    linearAccel = (state.linearVelocity - prevState.linearVelocity) / dt
-                    forceVec = Translation2d(linearAccel, prevState.heading) * config.massKG
-
-                    angularAccel = (state.fieldSpeeds.omega - prevState.fieldSpeeds.omega) / dt
-                    angTorque = angularAccel * config.MOI
-
-                    # Use kinematics to convert chassis forces to wheel forces
-                    wheelForces = config.toSwerveModuleStates(ChassisSpeeds(forceVec.x, forceVec.y, angTorque))
-
                     for m in range(config.numModules):
                         accel = (state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt
-                        forceAtCarpet = wheelForces[m].speed
-                        wheelTorque = forceAtCarpet * config.moduleConfig.wheelRadiusMeters
-                        torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
-
-                        # Negate the torque/force if the motor is slowing down
-                        if accel < 0:
-                            prevState.feedforwards.append(DriveFeedforward(accel, -forceAtCarpet, -torqueCurrent))
-                        else:
-                            prevState.feedforwards.append(DriveFeedforward(accel, forceAtCarpet, torqueCurrent))
+                        # Does not currently support force calculations
+                        prevState.feedforwards.append(DriveFeedforward(accel, 0.0, 0.0))
 
                     # Un-added events have their timestamp set to a waypoint relative position
                     # When adding the event to this trajectory, set its timestamp properly

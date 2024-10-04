@@ -66,8 +66,7 @@ public class PathPoint {
     if (rotationTarget != null) {
       flipped.rotationTarget =
           new RotationTarget(
-              rotationTarget.getPosition(),
-              GeometryUtil.flipFieldRotation(rotationTarget.getTarget()));
+              rotationTarget.position(), GeometryUtil.flipFieldRotation(rotationTarget.rotation()));
     }
     flipped.constraints = constraints;
     flipped.waypointRelativePos = waypointRelativePos;

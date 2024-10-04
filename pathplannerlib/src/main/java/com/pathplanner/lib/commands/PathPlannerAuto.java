@@ -138,7 +138,7 @@ public class PathPlannerAuto extends Command {
         this.startingPose =
             new Pose2d(
                 pathsInAuto.get(0).getPoint(0).position,
-                pathsInAuto.get(0).getIdealStartingState().getRotation());
+                pathsInAuto.get(0).getIdealStartingState().rotation());
       } else {
         this.startingPose = pathsInAuto.get(0).getStartingDifferentialPose();
       }

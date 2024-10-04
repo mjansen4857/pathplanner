@@ -7,7 +7,7 @@ import edu.wpi.first.math.interpolation.Interpolatable;
  * Collection of different feedforward values for a drive motor/module
  *
  * @param accelerationMPS Linear acceleration at the wheel in meters per second
- * @param forceNewtons Linear force at the wheel in newtons
+ * @param forceNewtons Linear force applied by the motor at the wheel in newtons
  * @param torqueCurrentAmps Torque-current of the motor in amps
  */
 public record DriveFeedforward(

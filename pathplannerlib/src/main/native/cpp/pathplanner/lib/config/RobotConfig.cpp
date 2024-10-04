@@ -12,31 +12,45 @@ RobotConfig::RobotConfig(units::kilogram_t mass,
 		MOI), moduleConfig(moduleConfig), moduleLocations { frc::Translation2d(
 		wheelbase / 2, trackwidth / 2), frc::Translation2d(wheelbase / 2,
 		-trackwidth / 2), frc::Translation2d(-wheelbase / 2, trackwidth / 2),
-		frc::Translation2d(-wheelbase / 2, -trackwidth / 2) }, swerveKinematics(
+		frc::Translation2d(-wheelbase / 2, -trackwidth / 2) }, isHolonomic(
+		true), numModules(4), modulePivotDistance { moduleLocations[0].Norm(),
+		moduleLocations[1].Norm(), moduleLocations[2].Norm(),
+		moduleLocations[3].Norm() }, wheelFrictionForce { moduleConfig.wheelCOF
+		* ((mass() / numModules) * 9.8) }, maxTorqueFriction(
+		wheelFrictionForce * moduleConfig.wheelRadius), swerveKinematics(
 		frc::Translation2d(wheelbase / 2, trackwidth / 2),
 		frc::Translation2d(wheelbase / 2, -trackwidth / 2),
 		frc::Translation2d(-wheelbase / 2, trackwidth / 2),
 		frc::Translation2d(-wheelbase / 2, -trackwidth / 2)), diffKinematics(
-		trackwidth), isHolonomic(true), numModules(4), modulePivotDistance {
-		moduleLocations[0].Norm(), moduleLocations[1].Norm(),
-		moduleLocations[2].Norm(), moduleLocations[3].Norm() }, wheelFrictionForce {
-		moduleConfig.wheelCOF * ((mass() / numModules) * 9.8) }, maxTorqueFriction(
-		wheelFrictionForce * moduleConfig.wheelRadius) {
+		trackwidth) {
+	for (size_t i = 0; i < numModules; i++) {
+		swerveForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-1.0
+				/ moduleLocations[i].Y()).value(), 0, 1, (1.0
+				/ moduleLocations[i].X()).value();
+	}
+	// No need to set up diff force kinematics, it will not be used
 }
 
 RobotConfig::RobotConfig(units::kilogram_t mass,
 		units::kilogram_square_meter_t MOI, ModuleConfig moduleConfig,
 		units::meter_t trackwidth) : mass(mass), MOI(MOI), moduleConfig(
 		moduleConfig), moduleLocations { frc::Translation2d(0_m,
-		trackwidth / 2), frc::Translation2d(0_m, -trackwidth / 2) }, swerveKinematics(
+		trackwidth / 2), frc::Translation2d(0_m, -trackwidth / 2) }, isHolonomic(
+		false), numModules(2), modulePivotDistance { moduleLocations[0].Norm(),
+		moduleLocations[1].Norm() }, wheelFrictionForce { moduleConfig.wheelCOF
+		* ((mass() / numModules) * 9.8) }, maxTorqueFriction(
+		wheelFrictionForce * moduleConfig.wheelRadius), swerveKinematics(
 		frc::Translation2d(trackwidth / 2, trackwidth / 2),
 		frc::Translation2d(trackwidth / 2, -trackwidth / 2),
 		frc::Translation2d(-trackwidth / 2, trackwidth / 2),
 		frc::Translation2d(-trackwidth / 2, -trackwidth / 2)), diffKinematics(
-		trackwidth), isHolonomic(false), numModules(2), modulePivotDistance {
-		moduleLocations[0].Norm(), moduleLocations[1].Norm() }, wheelFrictionForce {
-		moduleConfig.wheelCOF * ((mass() / numModules) * 9.8) }, maxTorqueFriction(
-		wheelFrictionForce * moduleConfig.wheelRadius) {
+		trackwidth) {
+	for (size_t i = 0; i < numModules; i++) {
+		diffForceKinematics.template block<2, 3>(i * 2, 0) << 1, 0, (-1.0
+				/ moduleLocations[i].Y()).value(), 0, 1, (1.0
+				/ moduleLocations[i].X()).value();
+	}
+	// No need to set up swerve force kinematics, it will not be used
 }
 
 RobotConfig RobotConfig::fromGUISettings() {
@@ -102,4 +116,63 @@ frc::DCMotor RobotConfig::getMotorFromSettingsString(std::string motorStr,
 	} else {
 		throw std::invalid_argument("Unknown motor type string: " + motorStr);
 	}
+}
+
+std::vector<frc::SwerveModuleState> RobotConfig::toSwerveModuleStates(
+		frc::ChassisSpeeds speeds) const {
+	if (isHolonomic) {
+		auto states = swerveKinematics.ToSwerveModuleStates(speeds);
+		return std::vector < frc::SwerveModuleState
+				> (states.begin(), states.end());
+	} else {
+		auto wheelSpeeds = diffKinematics.ToWheelSpeeds(speeds);
+		return std::vector<frc::SwerveModuleState> { frc::SwerveModuleState {
+				wheelSpeeds.left, frc::Rotation2d() }, frc::SwerveModuleState {
+				wheelSpeeds.right, frc::Rotation2d() } };
+	}
+}
+
+frc::ChassisSpeeds RobotConfig::toChassisSpeeds(
+		std::vector<SwerveModuleTrajectoryState> states) const {
+	if (isHolonomic) {
+		wpi::array < frc::SwerveModuleState, 4 > wpiStates {
+				frc::SwerveModuleState { states[0].speed, states[0].angle },
+				frc::SwerveModuleState { states[1].speed, states[1].angle },
+				frc::SwerveModuleState { states[2].speed, states[2].angle },
+				frc::SwerveModuleState { states[3].speed, states[3].angle } };
+		return swerveKinematics.ToChassisSpeeds(wpiStates);
+	} else {
+		frc::DifferentialDriveWheelSpeeds wheelSpeeds { states[0].speed,
+				states[1].speed };
+		return diffKinematics.ToChassisSpeeds(wheelSpeeds);
+	}
+}
+
+std::vector<frc::Translation2d> RobotConfig::chassisForcesToWheelForceVectors(
+		frc::ChassisSpeeds chassisForces) const {
+	Eigen::Vector3d chassisForceVector { chassisForces.vx.value(),
+			chassisForces.vy.value(), chassisForces.omega.value() };
+	std::vector < frc::Translation2d > forceVectors;
+
+	if (isHolonomic) {
+		frc::Matrixd < 4 * 2, 1 > moduleForceMatrix = swerveForceKinematics
+				* chassisForceVector;
+		for (size_t i = 0; i < numModules; i++) {
+			units::meter_t x { moduleForceMatrix(i * 2, 0) };
+			units::meter_t y { moduleForceMatrix(i * 2 + 1, 0) };
+
+			forceVectors.emplace_back(x, y);
+		}
+	} else {
+		frc::Matrixd < 2 * 2, 1 > moduleForceMatrix = diffForceKinematics
+				* chassisForceVector;
+		for (size_t i = 0; i < numModules; i++) {
+			units::meter_t x { moduleForceMatrix(i * 2, 0) };
+			units::meter_t y { moduleForceMatrix(i * 2 + 1, 0) };
+
+			forceVectors.emplace_back(x, y);
+		}
+	}
+
+	return forceVectors;
 }

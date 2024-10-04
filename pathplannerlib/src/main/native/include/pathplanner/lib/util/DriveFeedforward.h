@@ -13,7 +13,7 @@ struct DriveFeedforward {
 	units::meters_per_second_squared_t acceleration = 0_mps_sq;
 
 	/**
-	 * Linear force at the wheel in newtons
+	 * Linear force applied by the motor at the wheel in newtons
 	 */
 	units::newton_t force = 0_N;
 

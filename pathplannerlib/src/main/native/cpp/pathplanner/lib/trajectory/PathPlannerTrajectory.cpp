@@ -102,40 +102,44 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 			units::second_t dt = (2 * state.deltaPos) / (v + v0);
 			state.time = prevState.time + dt;
 
-			units::meters_per_second_squared_t linearAccel =
-					(state.linearVelocity - prevState.linearVelocity) / dt;
-			frc::Translation2d forceVec = frc::Translation2d(units::meter_t {
-					linearAccel() }, prevState.heading) * config.mass();
+			frc::ChassisSpeeds prevRobotSpeeds =
+					frc::ChassisSpeeds::FromFieldRelativeSpeeds(
+							prevState.fieldSpeeds, prevState.pose.Rotation());
+			frc::ChassisSpeeds robotSpeeds =
+					frc::ChassisSpeeds::FromFieldRelativeSpeeds(
+							state.fieldSpeeds, state.pose.Rotation());
 
-			units::radians_per_second_squared_t angularAccel =
-					(state.fieldSpeeds.omega - prevState.fieldSpeeds.omega)
-							/ dt;
-			double angTorque = angularAccel() * config.MOI();
+			auto chassisAccelX = (robotSpeeds.vx - prevRobotSpeeds.vx) / dt;
+			auto chassisAccelY = (robotSpeeds.vy - prevRobotSpeeds.vy) / dt;
+			auto chassisForceX = chassisAccelX * config.mass;
+			auto chassisForceY = chassisAccelY * config.mass;
 
-			// Use kinematics to convert chassis forces to wheel forces
-			auto wheelForces = config.toSwerveModuleStates(frc::ChassisSpeeds {
-					units::meters_per_second_t { forceVec.X()() },
-					units::meters_per_second_t { forceVec.Y()() },
-					units::radians_per_second_t { angTorque } });
+			auto angularAccel = (robotSpeeds.omega - prevRobotSpeeds.omega)
+					/ dt;
+			auto angTorque = angularAccel * config.MOI;
+			frc::ChassisSpeeds chassisForces { units::meters_per_second_t {
+					chassisForceX() }, units::meters_per_second_t {
+					chassisForceY() },
+					units::radians_per_second_t { angTorque() }, };
+
+			auto wheelForces = config.chassisForcesToWheelForceVectors(
+					chassisForces);
 
 			for (size_t m = 0; m < config.numModules; m++) {
 				units::meters_per_second_squared_t accel =
 						(state.moduleStates[m].speed
 								- prevState.moduleStates[m].speed) / dt;
-				units::newton_t forceAtCarpet { wheelForces[m].speed() };
-				units::newton_meter_t wheelTorque = forceAtCarpet
+				units::newton_t appliedForce {
+						wheelForces[m].Norm()()
+								* (wheelForces[m].Angle()
+										- state.moduleStates[m].angle).Cos() };
+				units::newton_meter_t wheelTorque = appliedForce
 						* config.moduleConfig.wheelRadius;
 				units::ampere_t torqueCurrent = wheelTorque
 						/ config.moduleConfig.driveMotor.Kt;
 
-				// Negate the torque/force if the motor is slowing down
-				if (accel < 0_mps_sq) {
-					prevState.feedforwards.emplace_back(DriveFeedforward {
-							accel, -forceAtCarpet, -torqueCurrent });
-				} else {
-					prevState.feedforwards.emplace_back(DriveFeedforward {
-							accel, forceAtCarpet, torqueCurrent });
-				}
+				prevState.feedforwards.emplace_back(DriveFeedforward { accel,
+						appliedForce, torqueCurrent });
 			}
 
 			// Un-added events have their timestamp set to a waypoint relative position

@@ -184,12 +184,12 @@ public class RobotConfig {
         chassisForces.vyMetersPerSecond,
         chassisForces.omegaRadiansPerSecond);
 
-    var moduleStatesMatrix = forceKinematics.mult(chassisForceVector);
+    var moduleForceMatrix = forceKinematics.mult(chassisForceVector);
 
     Translation2d[] forceVectors = new Translation2d[numModules];
     for (int m = 0; m < numModules; m++) {
-      double x = moduleStatesMatrix.get(m * 2, 0);
-      double y = moduleStatesMatrix.get(m * 2 + 1, 0);
+      double x = moduleForceMatrix.get(m * 2, 0);
+      double y = moduleForceMatrix.get(m * 2 + 1, 0);
 
       forceVectors[m] = new Translation2d(x, y);
     }

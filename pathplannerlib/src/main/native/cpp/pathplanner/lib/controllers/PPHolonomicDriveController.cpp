@@ -3,6 +3,9 @@
 using namespace pathplanner;
 
 std::function<std::optional<frc::Rotation2d>()> PPHolonomicDriveController::rotationTargetOverride;
+std::function<units::meters_per_second_t()> PPHolonomicDriveController::xFeedbackOverride;
+std::function<units::meters_per_second_t()> PPHolonomicDriveController::yFeedbackOverride;
+std::function<units::radians_per_second_t()> PPHolonomicDriveController::rotationFeedbackOverride;
 
 PPHolonomicDriveController::PPHolonomicDriveController(
 		PIDConstants translationConstants, PIDConstants rotationConstants,
@@ -51,6 +54,16 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 			m_rotationController.Calculate(currentPose.Rotation().Radians()(),
 					targetRotation.Radians()()) };
 	units::radians_per_second_t rotationFF = referenceState.fieldSpeeds.omega;
+
+	if (xFeedbackOverride) {
+		xFeedback = xFeedbackOverride();
+	}
+	if (yFeedbackOverride) {
+		yFeedback = yFeedbackOverride();
+	}
+	if (rotationFeedbackOverride) {
+		rotationFeedback = rotationFeedbackOverride();
+	}
 
 	return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF + xFeedback,
 			yFF + yFeedback, rotationFF + rotationFeedback,

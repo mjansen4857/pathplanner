@@ -3,7 +3,7 @@ from .path import PathPlannerPath, GoalEndState, PathConstraints
 from .trajectory import PathPlannerTrajectory, DriveFeedforward
 from .telemetry import PPLibTelemetry
 from .logging import PathPlannerLogging
-from .geometry_util import floatLerp, flipFieldPose
+from .util import floatLerp, FlippingUtil
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpilib import Timer
@@ -259,7 +259,7 @@ class PathfindingCommand(Command):
             self._originalTargetPose = Pose2d(self._targetPath.getPoint(0).position,
                                               self._originalTargetPose.rotation())
             if self._shouldFlipPath():
-                self._targetPose = flipFieldPose(self._originalTargetPose)
+                self._targetPose = FlippingUtil.flipFieldPose(self._originalTargetPose)
                 self._goalEndState = GoalEndState(self._goalEndState.velocity, self._targetPose.rotation())
 
         if currentPose.translation().distance(self._targetPose.translation()) < 0.5:

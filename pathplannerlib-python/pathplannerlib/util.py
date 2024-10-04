@@ -1,35 +1,85 @@
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
+from wpimath.kinematics import ChassisSpeeds
+from enum import Enum
 import math
+from typing import List, TYPE_CHECKING
 
-FIELD_LENGTH = 16.54
-
-
-def flipFieldPos(pos: Translation2d) -> Translation2d:
-    """
-    Flip a field position to the other side of the field, maintaining a blue alliance origin
-
-    :param pos: The position to flip
-    :return: The flipped position
-    """
-    return Translation2d(FIELD_LENGTH - pos.X(), pos.Y())
+if TYPE_CHECKING:
+    from .trajectory import DriveFeedforward
 
 
-def flipFieldRotation(rotation: Rotation2d) -> Rotation2d:
-    """
-    Flip a field rotation to the other side of the field, maintaining a blue alliance origin
-    :param rotation: The rotation to flip
-    :return: The flipped rotation
-    """
-    return Rotation2d.fromDegrees(180) - rotation
+class FieldSymmetry(Enum):
+    kRotational = 1
+    kMirrored = 2
 
 
-def flipFieldPose(pose: Pose2d) -> Pose2d:
-    """
-    Flip a field pose to the other side of the field, maintaining a blue alliance origin
-    :param pose: The pose to flip
-    :return: The flipped pose
-    """
-    return Pose2d(flipFieldPos(pose.translation()), flipFieldRotation(pose.rotation()))
+class FlippingUtil:
+    symmetryType: FieldSymmetry = FieldSymmetry.kMirrored
+    fieldSizeX: float = 16.54175
+    fieldSizeY: float = 8.211
+
+    @staticmethod
+    def flipFieldPosition(pos: Translation2d) -> Translation2d:
+        """
+        Flip a field position to the other side of the field, maintaining a blue alliance origin
+
+        :param pos: The position to flip
+        :return: The flipped position
+        """
+        if FlippingUtil.symmetryType == FieldSymmetry.kMirrored:
+            return Translation2d(FlippingUtil.fieldSizeX - pos.X(), pos.Y())
+        else:
+            return Translation2d(FlippingUtil.fieldSizeX - pos.X(), FlippingUtil.fieldSizeY - pos.Y())
+
+    @staticmethod
+    def flipFieldRotation(rotation: Rotation2d) -> Rotation2d:
+        """
+        Flip a field rotation to the other side of the field, maintaining a blue alliance origin
+
+        :param rotation: The rotation to flip
+        :return: The flipped rotation
+        """
+        return Rotation2d(math.pi) - rotation
+
+    @staticmethod
+    def flipFieldPose(pose: Pose2d) -> Pose2d:
+        """
+        Flip a field pose to the other side of the field, maintaining a blue alliance origin
+
+        :param pose: The pose to flip
+        :return: The flipped pose
+        """
+        return Pose2d(FlippingUtil.flipFieldPosition(pose.translation()),
+                      FlippingUtil.flipFieldRotation(pose.rotation()))
+
+    @staticmethod
+    def flipFieldSpeeds(fieldSpeeds: ChassisSpeeds) -> ChassisSpeeds:
+        """
+        Flip field relative chassis speeds for the other side of the field, maintaining a blue alliance origin
+
+        :param fieldSpeeds: Field relative chassis speeds
+        :return: Flipped speeds
+        """
+        if FlippingUtil.symmetryType == FieldSymmetry.kMirrored:
+            return ChassisSpeeds(-fieldSpeeds.vx, fieldSpeeds.vy, -fieldSpeeds.omega)
+        else:
+            return ChassisSpeeds(-fieldSpeeds.vx, -fieldSpeeds.vy, fieldSpeeds.omega)
+
+    @staticmethod
+    def flipFeedforwards(feedforwards: List[DriveFeedforward]) -> List[DriveFeedforward]:
+        """
+        Flip a list of drive feedforwards for the other side of the field.
+        Only does anything if mirrored symmetry is used
+
+        :param feedforwards: List of drive feedforwards
+        :return: The flipped feedforwards
+        """
+        if FlippingUtil.symmetryType == FieldSymmetry.kMirrored:
+            if len(feedforwards) == 4:
+                return [feedforwards[1], feedforwards[0], feedforwards[3], feedforwards[2]]
+            elif len(feedforwards) == 2:
+                return [feedforwards[1], feedforwards[0]]
+        return feedforwards
 
 
 def floatLerp(start_val: float, end_val: float, t: float) -> float:

@@ -8,7 +8,7 @@ from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command, cmd
-from .geometry_util import cubicLerp, calculateRadius, flipFieldPos, flipFieldRotation, floatLerp
+from .util import cubicLerp, calculateRadius, floatLerp, FlippingUtil
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
 from wpilib import getDeployDirectory
@@ -200,7 +200,7 @@ class PointTowardsZone:
 
         :return: The flipped zone
         """
-        return PointTowardsZone(flipFieldPos(self.targetPosition), self.minWaypointRelativePos,
+        return PointTowardsZone(FlippingUtil.flipFieldPosition(self.targetPosition), self.minWaypointRelativePos,
                                 self.maxWaypointRelativePos, self.rotationOffset)
 
 
@@ -258,12 +258,12 @@ class PathPoint:
     waypointRelativePos: float = 0.0
 
     def flip(self) -> PathPoint:
-        flipped = PathPoint(flipFieldPos(self.position))
+        flipped = PathPoint(FlippingUtil.flipFieldPosition(self.position))
         flipped.distanceAlongPath = self.distanceAlongPath
         flipped.maxV = self.maxV
         if self.rotationTarget is not None:
             flipped.rotationTarget = RotationTarget(self.rotationTarget.waypointRelativePosition,
-                                                    flipFieldRotation(self.rotationTarget.target))
+                                                    FlippingUtil.flipFieldRotation(self.rotationTarget.target))
         flipped.constraints = self.constraints
         flipped.waypointRelativePos = self.waypointRelativePos
         return flipped
@@ -289,9 +289,9 @@ class Waypoint:
 
         :return: The flipped waypoint
         """
-        flippedPrevControl = None if self.prevControl is None else flipFieldPos(self.prevControl)
-        flippedAnchor = flipFieldPos(self.anchor)
-        flippedNextControl = None if self.nextControl is None else flipFieldPos(self.nextControl)
+        flippedPrevControl = None if self.prevControl is None else FlippingUtil.flipFieldPosition(self.prevControl)
+        flippedAnchor = FlippingUtil.flipFieldPosition(self.anchor)
+        flippedNextControl = None if self.nextControl is None else FlippingUtil.flipFieldPosition(self.nextControl)
         return Waypoint(flippedPrevControl, flippedAnchor, flippedNextControl)
 
     @staticmethod
@@ -724,7 +724,7 @@ class PathPlannerPath:
             # Flip the ideal trajectory
             flippedTraj = self._idealTrajectory.flip()
 
-        newRotTargets = [RotationTarget(t.waypointRelativePosition, flipFieldRotation(t.target)) for t in
+        newRotTargets = [RotationTarget(t.waypointRelativePosition, FlippingUtil.flipFieldRotation(t.target)) for t in
                          self._rotationTargets]
         newPointZones = [z.flip() for z in self.point_towards_zones]
 
@@ -732,7 +732,7 @@ class PathPlannerPath:
 
         path = PathPlannerPath.fromPathPoints(newPoints, self._globalConstraints,
                                               GoalEndState(self._goalEndState.velocity,
-                                                           flipFieldRotation(self._goalEndState.rotation)))
+                                                           FlippingUtil.flipFieldRotation(self._goalEndState.rotation)))
         path._bezierPoints = [w.flip() for w in self._waypoints]
         path._rotationTargets = newRotTargets
         path._pointTowardsZones = newPointZones
@@ -740,7 +740,8 @@ class PathPlannerPath:
         path._eventMarkers = self._eventMarkers
         if self._idealStartingState is not None:
             path._idealStartingState = IdealStartingState(self._idealStartingState.velocity,
-                                                          flipFieldRotation(self._idealStartingState.rotation))
+                                                          FlippingUtil.flipFieldRotation(
+                                                              self._idealStartingState.rotation))
         path._reversed = self._reversed
         path._isChoreoPath = self._isChoreoPath
         path._idealTrajectory = flippedTraj

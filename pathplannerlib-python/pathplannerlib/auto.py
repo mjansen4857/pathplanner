@@ -5,7 +5,7 @@ from typing import Callable, List
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from .commands import FollowPathCommand, PathfindingCommand, PathfindThenFollowPath
-from .geometry_util import flipFieldPose
+from .util import FlippingUtil
 from .controller import PathFollowingController
 import os
 from wpilib import getDeployDirectory, reportError, reportWarning, SendableChooser
@@ -322,7 +322,7 @@ class AutoBuilder:
         :return: A command to pathfind to a given pose
         """
         return cmd.either(
-            AutoBuilder.pathfindToPose(flipFieldPose(pose), constraints, goal_end_vel),
+            AutoBuilder.pathfindToPose(FlippingUtil.flipFieldPose(pose), constraints, goal_end_vel),
             AutoBuilder.pathfindToPose(pose, constraints, goal_end_vel),
             AutoBuilder._shouldFlipPath
         )
@@ -350,7 +350,7 @@ class AutoBuilder:
         :return: Command to reset the robot's odometry
         """
         return cmd.runOnce(lambda: AutoBuilder._resetPose(
-            flipFieldPose(bluePose) if AutoBuilder._shouldFlipPath() else bluePose))
+            FlippingUtil.flipFieldPose(bluePose) if AutoBuilder._shouldFlipPath() else bluePose))
 
     @staticmethod
     def buildAuto(auto_name: str) -> Command:

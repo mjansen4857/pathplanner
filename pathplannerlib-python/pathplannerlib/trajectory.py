@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
-from .geometry_util import floatLerp, rotationLerp, poseLerp, calculateRadius, flipFieldPose
+from .util import floatLerp, rotationLerp, poseLerp, calculateRadius, FlippingUtil
 from .config import RobotConfig
 from .events import *
 from typing import List, Union, TYPE_CHECKING
@@ -106,27 +106,15 @@ class PathPlannerTrajectoryState:
 
         :return: This trajectory state flipped to the other side of the field
         """
-        mirrored = PathPlannerTrajectoryState()
+        flipped = PathPlannerTrajectoryState()
 
-        mirrored.timeSeconds = self.timeSeconds
-        mirrored.linearVelocity = self.linearVelocity
-        mirrored.pose = flipFieldPose(self.pose)
-        mirrored.fieldSpeeds = ChassisSpeeds(-self.fieldSpeeds.vx, self.fieldSpeeds.vy,
-                                             -self.fieldSpeeds.omega)
-        if len(self.feedforwards) == 4:
-            mirrored.feedforwards = [
-                self.feedforwards[1],
-                self.feedforwards[0],
-                self.feedforwards[3],
-                self.feedforwards[2],
-            ]
-        elif len(self.feedforwards) == 2:
-            mirrored.feedforwards = [
-                self.feedforwards[1],
-                self.feedforwards[0],
-            ]
+        flipped.timeSeconds = self.timeSeconds
+        flipped.linearVelocity = self.linearVelocity
+        flipped.pose = FlippingUtil.flipFieldPose(self.pose)
+        flipped.fieldSpeeds = FlippingUtil.flipFieldSpeeds(self.fieldSpeeds)
+        flipped.feedforwards = FlippingUtil.flipFeedforwards(self.feedforwards)
 
-        return mirrored
+        return flipped
 
     def copyWithTime(self, time: float) -> PathPlannerTrajectoryState:
         """

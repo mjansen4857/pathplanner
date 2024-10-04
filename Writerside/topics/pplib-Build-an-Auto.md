@@ -59,7 +59,7 @@ public class DriveSubsystem extends SubsystemBase {
             this::getPose, // Robot pose supplier
             this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
             this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            this::driveRobotRelative, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+            (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
             new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
                     new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
                     new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
@@ -108,7 +108,7 @@ SwerveSubsystem::SwerveSubsystem(){
         [this](){ return getPose(); }, // Robot pose supplier
         [this](frc::Pose2d pose){ resetPose(pose); }, // Method to reset odometry (will be called if your auto has a starting pose)
         [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+        [this](auto speeds, auto feedforwards){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
         PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
             PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
             PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
@@ -153,7 +153,7 @@ class SwerveSubsystem(Subsystem):
             self.getPose, # Robot pose supplier
             self.resetPose, # Method to reset odometry (will be called if your auto has a starting pose)
             self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+            lambda speeds, feedforwards: self.driveRobotRelative(speeds), # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also outputs individual module feedforwards
             PPHolonomicDriveController( # PPHolonomicController is the built in path following controller for holonomic drive trains
                 PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
                 PIDConstants(5.0, 0.0, 0.0) # Rotation PID constants
@@ -199,7 +199,7 @@ public class DriveSubsystem extends SubsystemBase {
             this::getPose, // Robot pose supplier
             this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
             this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            this::driveRobotRelative, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+            (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
             new PPLTVController(0.02), // PPLTVController is the built in path following controller for differential drive trains
             config, // The robot configuration
             () -> {
@@ -245,7 +245,7 @@ DriveSubsystem::DriveSubsystem(){
         [this](){ return getPose(); }, // Robot pose supplier
         [this](frc::Pose2d pose){ resetPose(pose); }, // Method to reset odometry (will be called if your auto has a starting pose)
         [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
+        [this](auto speeds, auto feedforwards){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
         PPLTVController(0.02_s), // PPLTVController is the built in path following controller for differential drive trains
         config, // The robot configuration
         []() {
@@ -287,7 +287,7 @@ class DriveSubsystem(Subsystem):
             self.getPose, # Robot pose supplier
             self.resetPose, # Method to reset odometry (will be called if your auto has a starting pose)
             self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+            lambda speeds, feedforwards: self.driveRobotRelative(speeds), # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also outputs individual module feedforwards
             PPLTVController(0.02), # PPLTVController is the built in path following controller for differential drive trains
             config, # The robot configuration
             self.shouldFlipPath, # Supplier to control path flipping based on alliance color
@@ -327,6 +327,9 @@ public class RobotContainer {
   // ...
 
   public Command getAutonomousCommand() {
+    // This method loads the auto when it is called, however, it is recommended
+    // to first load your paths/autos when code starts, then return the
+    // pre-loaded auto/path
     return new PathPlannerAuto("Example Auto");
   }
 }
@@ -341,6 +344,9 @@ public class RobotContainer {
 using namespace pathplanner;
 
 frc2::CommandPtr RobotContainer::getAutonomousCommand(){
+    // This method loads the auto when it is called, however, it is recommended
+    // to first load your paths/autos when code starts, then return the
+    // pre-loaded auto/path
     return PathPlannerAuto("Example Auto").ToPtr();
 }
 ```
@@ -353,6 +359,9 @@ from pathplannerlib.auto import PathPlannerAuto
 
 class RobotContainer:
     def getAutonomousCommand():
+        # This method loads the auto when it is called, however, it is recommended
+        # to first load your paths/autos when code starts, then return the
+        # pre-loaded auto/path
         return PathPlannerAuto('Example Auto')
 
 ```
@@ -369,8 +378,7 @@ every auto in the project.
 >
 > This method will load all autos in the deploy directory. Since the deploy process does not automatically clear the
 > deploy directory, old auto files that have since been deleted from the project could remain on the RIO, therefore
-> being
-> added to the auto chooser.
+> being added to the auto chooser.
 >
 > To remove old options, the deploy directory will need to be cleared manually via SSH, WinSCP, reimaging the RIO, etc.
 >
@@ -465,7 +473,7 @@ class RobotContainer:
 
 > **Note**
 >
-> This feature is only available in the Java version of PathPlannerLib
+> This feature is only available in the Java and C++ versions of PathPlannerLib
 >
 {style="note"}
 

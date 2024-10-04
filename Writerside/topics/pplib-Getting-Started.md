@@ -8,16 +8,39 @@
 PathPlannerLib can be added to your robot code project using the "Install New Libraries (online)" feature in VSCode
 using the following JSON file URL:
 
+> **Note**
+>
+> The main PathPlannerLib json file will not be updated for beta versions. To use the beta, you will need to use the
+> beta json file below. Once PathPlannerLib is fully released after kickoff, you will need to switch back to the main
+> vendor json file.
+>
+{style="note"}
+
 <br/>
 
 ```text
 https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib.json
 ```
 
+**Beta Version**
+
+To install the beta version of PathPlannerLib, use the following vendor json file
+
+```text
+https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib-beta.json
+```
+
 **Legacy Versions**
 
 The following legacy PathPlannerLib json files can be used to install the last release from previous years for
 compatibility with old robot code projects.
+
+<br/>
+
+<u>2024:</u>
+```text
+https://3015rangerrobotics.github.io/pathplannerlib/PathplannerLib2024.json
+```
 
 <br/>
 
@@ -42,6 +65,14 @@ The Python version is compatible with RobotPy and available to install from PyPI
 
 ```text
 pip install robotpy-pathplannerlib
+```
+
+**Beta Version**
+
+<br/>
+
+```text
+pip install robotpy-pathplannerlib --pre
 ```
 
 </tab>

@@ -292,3 +292,9 @@ Show Trajectory States
 : When enabled, individual trajectory states will be drawn on top of the path to visualize the spacing between states,
 as well as the robot velocity at each state. The robot velocity is indicated by the color of the state, which will
 transition between red and green, which represent 0 m/s and the maximum speed along the path.
+
+Show Robot Details
+: Display the position and rotation of the path following preview robot in the editor.
+
+Show Grid
+: Display a 0.5 X 0.5 meter grid in the editor

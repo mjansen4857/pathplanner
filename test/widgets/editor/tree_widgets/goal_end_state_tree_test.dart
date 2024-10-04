@@ -48,7 +48,7 @@ void main() {
     expect(find.byType(NumberTextField), findsWidgets);
 
     // Tap the title to collapse
-    await widgetTester.tap(find.text('Final State'));
+    await widgetTester.tap(find.text('Goal End State'));
     await widgetTester.pumpAndSettle();
 
     expect(path.goalEndStateExpanded, false);

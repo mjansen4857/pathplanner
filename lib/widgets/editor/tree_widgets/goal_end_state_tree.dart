@@ -27,7 +27,7 @@ class GoalEndStateTree extends StatelessWidget {
       title: Wrap(
         alignment: WrapAlignment.spaceBetween,
         children: [
-          const Text('Final State'),
+          const Text('Goal End State'),
           InfoCard(
               value:
                   '${path.goalEndState.rotation.degrees.toStringAsFixed(2)}° ending with ${path.goalEndState.velocityMPS.toStringAsFixed(2)} M/S'),

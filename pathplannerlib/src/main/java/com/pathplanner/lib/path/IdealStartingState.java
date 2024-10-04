@@ -1,6 +1,6 @@
 package com.pathplanner.lib.path;
 
-import com.pathplanner.lib.util.GeometryUtil;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import org.json.simple.JSONObject;
 
@@ -30,6 +30,6 @@ public record IdealStartingState(double velocity, Rotation2d rotation) {
    * @return The flipped starting state
    */
   public IdealStartingState flip() {
-    return new IdealStartingState(velocity, GeometryUtil.flipFieldRotation(rotation));
+    return new IdealStartingState(velocity, FlippingUtil.flipFieldRotation(rotation));
   }
 }

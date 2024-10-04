@@ -1,6 +1,6 @@
 package com.pathplanner.lib.path;
 
-import com.pathplanner.lib.util.GeometryUtil;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import org.json.simple.JSONObject;
@@ -61,6 +61,6 @@ public record PointTowardsZone(
    */
   public PointTowardsZone flip() {
     return new PointTowardsZone(
-        GeometryUtil.flipFieldPosition(targetPosition), rotationOffset, minPosition, maxPosition);
+        FlippingUtil.flipFieldPosition(targetPosition), rotationOffset, minPosition, maxPosition);
   }
 }

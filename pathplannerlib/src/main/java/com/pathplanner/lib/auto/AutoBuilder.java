@@ -6,7 +6,7 @@ import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.DriveFeedforward;
-import com.pathplanner.lib.util.GeometryUtil;
+import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -274,7 +274,7 @@ public class AutoBuilder {
   public static Command pathfindToPoseFlipped(
       Pose2d pose, PathConstraints constraints, double goalEndVelocity) {
     return Commands.either(
-        pathfindToPose(GeometryUtil.flipFieldPose(pose), constraints, goalEndVelocity),
+        pathfindToPose(FlippingUtil.flipFieldPose(pose), constraints, goalEndVelocity),
         pathfindToPose(pose, constraints, goalEndVelocity),
         shouldFlipPath);
   }
@@ -451,7 +451,7 @@ public class AutoBuilder {
         () -> {
           boolean flip = shouldFlipPath.getAsBoolean();
           if (flip) {
-            resetPose.accept(GeometryUtil.flipFieldPose(bluePose));
+            resetPose.accept(FlippingUtil.flipFieldPose(bluePose));
           } else {
             resetPose.accept(bluePose);
           }

@@ -240,13 +240,13 @@ class PathPlannerTrajectory:
                     while len(unaddedEvents) > 0 and abs(
                             unaddedEvents[0].getTimestamp() - prevState.waypointRelativePos) <= abs(
                         unaddedEvents[0].getTimestamp() - state.waypointRelativePos):
-                        events.append(unaddedEvents.pop(0))
-                        events[-1].setTimestamp(prevState.timeSeconds)
+                        self._events.append(unaddedEvents.pop(0))
+                        self._events[-1].setTimestamp(prevState.timeSeconds)
 
                 while len(unaddedEvents) != 0:
                     # There are events that need to be added to the last state
-                    events.append(unaddedEvents.pop(0))
-                    events[-1].setTimestamp(self._states[-1].timeSeconds)
+                    self._events.append(unaddedEvents.pop(0))
+                    self._events[-1].setTimestamp(self._states[-1].timeSeconds)
 
                 # Create feedforwards for the end state
                 self._states[-1].feedforwards = [DriveFeedforward(0, 0, 0)] * config.numModules

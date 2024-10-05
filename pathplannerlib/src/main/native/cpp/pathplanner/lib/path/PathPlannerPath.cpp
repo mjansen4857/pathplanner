@@ -317,6 +317,7 @@ std::vector<PathPoint> PathPlannerPath::createPath() {
 		if (distance <= 0.01_m) {
 			pos = std::min(pos + targetIncrement,
 					static_cast<double>(numSegments));
+			continue;
 		}
 
 		double prevWaypointPos = pos - targetIncrement;

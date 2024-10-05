@@ -15,23 +15,26 @@ if TYPE_CHECKING:
 
 @dataclass
 class SwerveModuleTrajectoryState(SwerveModuleState):
-    fieldAngle: Rotation2d = Rotation2d()
-    fieldPos: Translation2d = Translation2d()
+    fieldAngle: Rotation2d = field(default_factory=Rotation2d)
+    fieldPos: Translation2d = field(default_factory=Translation2d)
 
     deltaPos: float = 0.0
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
 class PathPlannerTrajectoryState:
     timeSeconds: float = 0.0
     fieldSpeeds: ChassisSpeeds = ChassisSpeeds()
-    pose: Pose2d = Pose2d()
+    pose: Pose2d = field(default_factory=Pose2d)
     linearVelocity: float = 0.0
     feedforwards: List[DriveFeedforward] = field(default_factory=list)
 
-    heading: Rotation2d = Rotation2d()
+    heading: Rotation2d = field(default_factory=Rotation2d)
     deltaPos: float = 0.0
-    deltaRot: Rotation2d = Rotation2d()
+    deltaRot: Rotation2d = field(default_factory=Rotation2d)
     moduleStates: List[SwerveModuleTrajectoryState] = field(default_factory=list)
     constraints: PathConstraints = None
     waypointRelativePos: float = 0.0
@@ -226,7 +229,7 @@ class PathPlannerTrajectory:
                     for m in range(config.numModules):
                         accel = (state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt
                         appliedForce = wheelForces[m].norm() * (
-                                    wheelForces[m].angle() - state.moduleStates[m].angle).cos()
+                                wheelForces[m].angle() - state.moduleStates[m].angle).cos()
                         wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters
                         torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
 
@@ -237,13 +240,13 @@ class PathPlannerTrajectory:
                     while len(unaddedEvents) > 0 and abs(
                             unaddedEvents[0].getTimestamp() - prevState.waypointRelativePos) <= abs(
                         unaddedEvents[0].getTimestamp() - state.waypointRelativePos):
-                        events.append(unaddedEvents.pop(0))
-                        events[-1].setTimestamp(prevState.timeSeconds)
+                        self._events.append(unaddedEvents.pop(0))
+                        self._events[-1].setTimestamp(prevState.timeSeconds)
 
                 while len(unaddedEvents) != 0:
                     # There are events that need to be added to the last state
-                    events.append(unaddedEvents.pop(0))
-                    events[-1].setTimestamp(self._states[-1].timeSeconds)
+                    self._events.append(unaddedEvents.pop(0))
+                    self._events[-1].setTimestamp(self._states[-1].timeSeconds)
 
                 # Create feedforwards for the end state
                 self._states[-1].feedforwards = [DriveFeedforward(0, 0, 0)] * config.numModules
@@ -490,7 +493,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         # Even though kinematics is usually used for velocities, it can still
         # convert chassis accelerations to module accelerations
         maxAngAccel = state.constraints.maxAngularAccelerationRpsSq
-        angularAccel = max(min(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
+        angularAccel = min(max(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
 
         accelVec = linearForceVec / config.massKG
         maxAccel = state.constraints.maxAccelerationMpsSq
@@ -589,7 +592,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         # Even though kinematics is usually used for velocities, it can still
         # convert chassis accelerations to module accelerations
         maxAngAccel = state.constraints.maxAngularAccelerationRpsSq
-        angularAccel = max(min(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
+        angularAccel = min(max(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
 
         accelVec = linearForceVec / config.massKG
         maxAccel = state.constraints.maxAccelerationMpsSq
@@ -607,7 +610,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # vf^2 = v0^2 + 2ad
             maxVel = math.sqrt(abs(math.pow(nextState.moduleStates[m].speed, 2) + (
                     2 * moduleAcceleration * nextState.moduleStates[m].deltaPos)))
-            state.moduleStates[m].speed = min(maxVel, nextState.moduleStates[m].speed)
+            state.moduleStates[m].speed = min(maxVel, state.moduleStates[m].speed)
 
         # Go over the modules again to make sure they take the same amount of time to reach the next state
         maxDT = 0.0

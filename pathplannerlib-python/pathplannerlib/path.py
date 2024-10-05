@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Final, List, Union
 from wpimath.geometry import Rotation2d, Translation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
@@ -177,13 +177,13 @@ class PointTowardsZone:
     targetPosition: Translation2d
     minWaypointRelativePos: float
     maxWaypointRelativePos: float
-    rotationOffset: Rotation2d = Rotation2d()
+    rotationOffset: Rotation2d = field(default_factory=Rotation2d)
 
     @staticmethod
     def fromJson(json_dict: dict) -> PointTowardsZone:
         targetPos = PointTowardsZone._translationFromJson(json_dict['fieldPosition'])
         minPos = float(json_dict['minWaypointRelativePos'])
-        maxPos = float(json_dict['minWaypointRelativePos'])
+        maxPos = float(json_dict['maxWaypointRelativePos'])
         deg = float(json_dict['rotationOffset'])
 
         return PointTowardsZone(targetPos, minPos, maxPos, Rotation2d.fromDegrees(deg))
@@ -388,9 +388,9 @@ class PathPlannerPath:
             self._rotationTargets = holonomic_rotations
             self._rotationTargets.sort(key=lambda x: x.waypointRelativePosition)
         if point_towards_zones is None:
-            self.point_towards_zones = []
+            self._pointTowardsZones = []
         else:
-            self.point_towards_zones = point_towards_zones
+            self._pointTowardsZones = point_towards_zones
         if constraint_zones is None:
             self._constraintZones = []
         else:
@@ -399,7 +399,7 @@ class PathPlannerPath:
             self._eventMarkers = []
         else:
             self._eventMarkers = event_markers
-            self._eventMarkers.sort(key=lambda x: x.waypointRelativePosition)
+            self._eventMarkers.sort(key=lambda x: x.waypointRelativePos)
         self._globalConstraints = constraints
         self._idealStartingState = ideal_starting_state
         self._goalEndState = goal_end_state

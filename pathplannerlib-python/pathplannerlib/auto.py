@@ -201,7 +201,7 @@ class AutoBuilder:
         AutoBuilder._isHolonomic = robot_config.isHolonomic
 
         AutoBuilder._pathfindToPoseCommandBuilder = \
-            lambda pose, constraints, goal_end_vel, rotation_delay_distance: PathfindingCommand(
+            lambda pose, constraints, goal_end_vel: PathfindingCommand(
                 constraints,
                 pose_supplier,
                 robot_relative_speeds_supplier,
@@ -214,7 +214,7 @@ class AutoBuilder:
                 goal_end_vel=goal_end_vel
             )
         AutoBuilder._pathfindThenFollowPathCommandBuilder = \
-            lambda path, constraints, rotation_delay_distance: PathfindThenFollowPath(
+            lambda path, constraints: PathfindThenFollowPath(
                 path,
                 constraints,
                 pose_supplier,

@@ -167,7 +167,7 @@ class EventScheduler:
         self._eventCommands = {}
         self._upcomingEvents = []
 
-    def initialize(self, trajectory: PathPlannerTrajectory) -> None:
+    def initialize(self, trajectory: 'PathPlannerTrajectory') -> None:
         """
         Initialize the EventScheduler for the given trajectory. This should be called from the initialize
         method of the command running this scheduler.
@@ -194,7 +194,7 @@ class EventScheduler:
             if not self._eventCommands[command]:
                 continue
 
-            command.execute(self)
+            command.execute()
 
             if command.isFinished():
                 command.end(False)
@@ -220,7 +220,7 @@ class EventScheduler:
         self._upcomingEvents.clear()
 
     @staticmethod
-    def getSchedulerRequirements(path: PathPlannerPath) -> set[Subsystem]:
+    def getSchedulerRequirements(path: 'PathPlannerPath') -> set[Subsystem]:
         """
         Get the event requirements for the given path
 

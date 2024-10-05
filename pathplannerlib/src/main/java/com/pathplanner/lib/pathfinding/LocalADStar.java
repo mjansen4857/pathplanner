@@ -427,7 +427,7 @@ public class LocalADStar implements Pathfinder {
       Translation2d anchor1 = current.minus(last).times(SMOOTHING_ANCHOR_PCT).plus(last);
       Rotation2d heading1 = current.minus(last).getAngle();
       Translation2d anchor2 = current.minus(next).times(SMOOTHING_ANCHOR_PCT).plus(next);
-      Rotation2d heading2 = anchor2.minus(next).getAngle();
+      Rotation2d heading2 = next.minus(anchor2).getAngle();
 
       pathPoses.add(new Pose2d(anchor1, heading1));
       pathPoses.add(new Pose2d(anchor2, heading2));
@@ -436,8 +436,8 @@ public class LocalADStar implements Pathfinder {
         new Pose2d(
             fieldPosPath.get(fieldPosPath.size() - 1),
             fieldPosPath
-                .get(fieldPosPath.size() - 2)
-                .minus(fieldPosPath.get(fieldPosPath.size() - 1))
+                .get(fieldPosPath.size() - 1)
+                .minus(fieldPosPath.get(fieldPosPath.size() - 2))
                 .getAngle()));
 
     return PathPlannerPath.waypointsFromPoses(pathPoses);

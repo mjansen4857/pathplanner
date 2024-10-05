@@ -20,6 +20,9 @@ class SwerveModuleTrajectoryState(SwerveModuleState):
 
     deltaPos: float = 0.0
 
+    def __init__(self):
+        super().__init__()
+
 
 @dataclass
 class PathPlannerTrajectoryState:
@@ -226,7 +229,7 @@ class PathPlannerTrajectory:
                     for m in range(config.numModules):
                         accel = (state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt
                         appliedForce = wheelForces[m].norm() * (
-                                    wheelForces[m].angle() - state.moduleStates[m].angle).cos()
+                                wheelForces[m].angle() - state.moduleStates[m].angle).cos()
                         wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters
                         torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
 

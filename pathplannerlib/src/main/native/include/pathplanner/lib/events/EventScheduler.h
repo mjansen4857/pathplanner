@@ -28,8 +28,9 @@ public:
 	inline void initialize(PathPlannerTrajectory trajectory) {
 		m_eventCommands.clear();
 		m_upcomingEvents.clear();
-		m_upcomingEvents.insert(m_upcomingEvents.end(),
-				trajectory.getEvents().begin(), trajectory.getEvents().end());
+		auto events = trajectory.getEvents();
+		m_upcomingEvents.insert(m_upcomingEvents.end(), events.begin(),
+				events.end());
 	}
 
 	/**

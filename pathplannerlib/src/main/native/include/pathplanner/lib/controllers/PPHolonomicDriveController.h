@@ -25,16 +25,10 @@ public:
 	 *
 	 * @param translationConstants PID constants for the translation PID controllers
 	 * @param rotationConstants PID constants for the rotation controller
-	 * @param maxModuleSpeed The max speed of a drive module in meters/sec
-	 * @param driveBaseRadius The radius of the drive base in meters. For swerve drive, this is the
-	 *     distance from the center of the robot to the furthest module. For mecanum, this is the
-	 *     drive base width / 2
 	 * @param period Period of the control loop in seconds
 	 */
 	PPHolonomicDriveController(PIDConstants translationConstants,
-			PIDConstants rotationConstants,
-			units::meters_per_second_t maxModuleSpeed,
-			units::meter_t driveBaseRadius, units::second_t period = 0.02_s);
+			PIDConstants rotationConstants, units::second_t period = 0.02_s);
 
 	/**
 	 * Enables and disables the controller for troubleshooting. When calculate() is called on a

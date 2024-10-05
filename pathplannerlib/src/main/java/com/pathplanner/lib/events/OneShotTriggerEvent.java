@@ -24,11 +24,6 @@ public class OneShotTriggerEvent extends Event {
             .ignoringDisable(true);
   }
 
-  /**
-   * Handle this event
-   *
-   * @param eventScheduler Reference to the EventScheduler handling this event
-   */
   @Override
   public void handleEvent(EventScheduler eventScheduler) {
     EventScheduler.setCondition(name, true);
@@ -37,14 +32,13 @@ public class OneShotTriggerEvent extends Event {
     CommandScheduler.getInstance().schedule(resetCommand);
   }
 
-  /**
-   * Cancel this event. This will be called if a path following command ends before this event gets
-   * handled.
-   *
-   * @param eventScheduler Reference to the EventScheduler handling this event
-   */
   @Override
   public void cancelEvent(EventScheduler eventScheduler) {
     // Do nothing
+  }
+
+  @Override
+  public Event copyWithTimestamp(double timestamp) {
+    return new OneShotTriggerEvent(timestamp, name);
   }
 }

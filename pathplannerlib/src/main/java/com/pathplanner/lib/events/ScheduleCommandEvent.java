@@ -22,14 +22,13 @@ public class ScheduleCommandEvent extends Event {
     eventScheduler.scheduleCommand(command);
   }
 
-  /**
-   * Cancel this event. This will be called if a path following command ends before this event gets
-   * handled.
-   *
-   * @param eventScheduler Reference to the EventScheduler handling this event
-   */
   @Override
   public void cancelEvent(EventScheduler eventScheduler) {
     // Do nothing
+  }
+
+  @Override
+  public Event copyWithTimestamp(double timestamp) {
+    return new ScheduleCommandEvent(timestamp, command);
   }
 }

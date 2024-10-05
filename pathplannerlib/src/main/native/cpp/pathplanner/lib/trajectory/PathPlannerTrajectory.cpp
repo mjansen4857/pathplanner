@@ -302,7 +302,7 @@ void PathPlannerTrajectory::generateStates(
 void PathPlannerTrajectory::forwardAccelPass(
 		std::vector<PathPlannerTrajectoryState> &states,
 		const RobotConfig &config) {
-	for (size_t i = 1; i < states.size(); i++) {
+	for (size_t i = 1; i < states.size() - 1; i++) {
 		PathPlannerTrajectoryState &prevState = states[i - 1];
 		PathPlannerTrajectoryState &state = states[i];
 		PathPlannerTrajectoryState &nextState = states[i + 1];

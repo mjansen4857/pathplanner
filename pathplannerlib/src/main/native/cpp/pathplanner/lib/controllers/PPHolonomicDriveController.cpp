@@ -9,11 +9,10 @@ std::function<units::radians_per_second_t()> PPHolonomicDriveController::rotatio
 
 PPHolonomicDriveController::PPHolonomicDriveController(
 		PIDConstants translationConstants, PIDConstants rotationConstants,
-		units::meters_per_second_t maxModuleSpeed,
-		units::meter_t driveBaseRadius, units::second_t period) : m_xController(
+		units::second_t period) : m_xController(translationConstants.kP,
+		translationConstants.kI, translationConstants.kD, period), m_yController(
 		translationConstants.kP, translationConstants.kI,
-		translationConstants.kD, period), m_yController(translationConstants.kP,
-		translationConstants.kI, translationConstants.kD, period), m_rotationController(
+		translationConstants.kD, period), m_rotationController(
 		rotationConstants.kP, rotationConstants.kI, rotationConstants.kD,
 		period) {
 	m_xController.SetIntegratorRange(-translationConstants.iZone,

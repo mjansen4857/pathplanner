@@ -663,6 +663,7 @@ public class PathPlannerPath {
       double distance = points.get(points.size() - 1).position.getDistance(position);
       if (distance <= 0.01) {
         pos = Math.min(pos + targetIncrement, numSegments);
+        continue;
       }
 
       double prevWaypointPos = pos - targetIncrement;

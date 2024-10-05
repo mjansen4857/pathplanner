@@ -389,14 +389,14 @@ std::vector<Waypoint> LocalADStar::createWaypoints(
 		frc::Rotation2d heading1 = (current - last).Angle();
 		frc::Translation2d anchor2 = ((current - next) * SMOOTHING_ANCHOR_PCT)
 				+ next;
-		frc::Rotation2d heading2 = (anchor2 - next).Angle();
+		frc::Rotation2d heading2 = (next - anchor2).Angle();
 
 		pathPoses.emplace_back(anchor1, heading1);
 		pathPoses.emplace_back(anchor2, heading2);
 	}
 	pathPoses.emplace_back(fieldPosPath[fieldPosPath.size() - 1],
-			(fieldPosPath[fieldPosPath.size() - 2]
-					- fieldPosPath[fieldPosPath.size() - 1]).Angle());
+			(fieldPosPath[fieldPosPath.size() - 1]
+					- fieldPosPath[fieldPosPath.size() - 2]).Angle());
 
 	return PathPlannerPath::waypointsFromPoses(pathPoses);
 }

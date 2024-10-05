@@ -886,6 +886,7 @@ class PathPlannerPath:
             distance = points[-1].position.distance(position)
             if distance <= 0.01:
                 pos = min(pos + targetIncrement, numSegments)
+                continue
 
             prevWaypointPos = pos - targetIncrement
 

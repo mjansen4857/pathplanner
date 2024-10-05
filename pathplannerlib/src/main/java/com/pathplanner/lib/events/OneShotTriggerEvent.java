@@ -1,11 +1,13 @@
 package com.pathplanner.lib.events;
 
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 
 /** Event that will activate a trigger, then deactivate it the next loop */
 public class OneShotTriggerEvent extends Event {
   private final String name;
+  private final Command resetCommand;
 
   /**
    * Create an event for activating a trigger, then deactivating it the next loop
@@ -16,6 +18,10 @@ public class OneShotTriggerEvent extends Event {
   public OneShotTriggerEvent(double timestamp, String name) {
     super(timestamp);
     this.name = name;
+    this.resetCommand =
+        Commands.waitSeconds(0)
+            .andThen(Commands.runOnce(() -> EventScheduler.setCondition(name, false)))
+            .ignoringDisable(true);
   }
 
   /**
@@ -25,15 +31,10 @@ public class OneShotTriggerEvent extends Event {
    */
   @Override
   public void handleEvent(EventScheduler eventScheduler) {
+    EventScheduler.setCondition(name, true);
     // We schedule this command with the main command scheduler so that it is guaranteed to be run
     // in its entirety, since the EventScheduler could cancel this command before it finishes
-    CommandScheduler.getInstance()
-        .schedule(
-            Commands.sequence(
-                    Commands.runOnce(() -> EventScheduler.setCondition(name, true)),
-                    Commands.waitSeconds(0), // Wait for 0 seconds to delay until next loop
-                    Commands.runOnce(() -> EventScheduler.setCondition(name, false)))
-                .ignoringDisable(true));
+    CommandScheduler.getInstance().schedule(resetCommand);
   }
 
   /**

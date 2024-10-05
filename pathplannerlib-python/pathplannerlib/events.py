@@ -126,6 +126,7 @@ class DeactivateTriggerEvent(Event):
 
 class OneShotTriggerEvent(Event):
     _name: str
+    _resetCommand: Command
 
     def __init__(self, timestamp: float, name: str):
         """
@@ -136,19 +137,15 @@ class OneShotTriggerEvent(Event):
         """
         super().__init__(timestamp)
         self._name = name
+        self._resetCommand = cmd.waitSeconds(0).andThen(
+            cmd.runOnce(lambda: EventScheduler.setCondition(self._name, False))).ignoringDisable(True)
 
     @override
     def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        EventScheduler.setCondition(self._name, True)
         # We schedule this command with the main command scheduler so that it is guaranteed to be run
         # in its entirety, since the EventScheduler could cancel this command before it finishes
-        CommandScheduler.getInstance().schedule(
-            cmd.sequence(
-                cmd.runOnce(lambda: EventScheduler.setCondition(self._name, True)),
-                cmd.waitSeconds(0),  # Wait for 0 seconds to delay until next loop
-                cmd.runOnce(lambda: EventScheduler.setCondition(self._name, False))
-            ).ignoringDisable(True)
-        )
-        eventScheduler.setCondition(self._name, False)
+        CommandScheduler.getInstance().schedule(self._resetCommand)
 
     @override
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:

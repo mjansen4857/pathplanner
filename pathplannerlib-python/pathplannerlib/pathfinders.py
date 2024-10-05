@@ -402,14 +402,14 @@ class LocalADStar(Pathfinder):
             anchor1 = ((current - last) * LocalADStar._SMOOTHING_ANCHOR_PCT) + last
             heading1 = (current - last).angle()
             anchor2 = ((current - next) * LocalADStar._SMOOTHING_ANCHOR_PCT) + next
-            heading2 = (anchor2 - next).angle()
+            heading2 = (next - anchor2).angle()
 
             pathPoses.append(Pose2d(anchor1, heading1))
             pathPoses.append(Pose2d(anchor2, heading2))
 
         pathPoses.append(Pose2d(
             fieldPosPath[-1],
-            (fieldPosPath[-2] - fieldPosPath[-1]).angle()
+            (fieldPosPath[-1] - fieldPosPath[-2]).angle()
         ))
 
         return PathPlannerPath.waypointsFromPoses(pathPoses)

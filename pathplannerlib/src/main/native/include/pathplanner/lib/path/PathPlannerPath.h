@@ -343,10 +343,10 @@ private:
 	static std::shared_ptr<PathPlannerPath> fromJson(const wpi::json &json);
 
 	static inline std::vector<Waypoint> waypointsFromJson(
-			const wpi::json &json) {
+			const wpi::json &waypointsJson) {
 		std::vector < Waypoint > waypoints;
-		for (wpi::json::const_reference waypointJson : json.at("waypoints")) {
-			waypoints.emplace_back(Waypoint::fromJson(waypointJson));
+		for (wpi::json::const_reference waypoint : waypointsJson) {
+			waypoints.emplace_back(Waypoint::fromJson(waypoint));
 		}
 		return waypoints;
 	}

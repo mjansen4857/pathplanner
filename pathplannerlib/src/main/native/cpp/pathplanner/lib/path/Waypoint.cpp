@@ -14,7 +14,7 @@ Waypoint Waypoint::autoControlPoints(frc::Translation2d anchor,
 		prevControl = anchor - frc::Translation2d(d, heading);
 	}
 	if (nextAnchor.has_value()) {
-		auto d = anchor.Distance(nextControl.value())
+		auto d = anchor.Distance(nextAnchor.value())
 				* AUTO_CONTROL_DISTANCE_FACTOR;
 		nextControl = anchor + frc::Translation2d(d, heading);
 	}

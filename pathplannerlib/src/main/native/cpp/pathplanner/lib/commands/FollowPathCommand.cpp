@@ -88,7 +88,7 @@ void FollowPathCommand::Initialize() {
 void FollowPathCommand::Execute() {
 	units::second_t currentTime = m_timer.Get();
 	PathPlannerTrajectoryState targetState = m_trajectory.sample(currentTime);
-	if (m_controller->isHolonomic()) {
+	if (!m_controller->isHolonomic() && m_path->isReversed()) {
 		targetState = targetState.reverse();
 	}
 

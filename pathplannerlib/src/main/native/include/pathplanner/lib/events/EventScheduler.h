@@ -28,8 +28,9 @@ public:
 	inline void initialize(PathPlannerTrajectory trajectory) {
 		m_eventCommands.clear();
 		m_upcomingEvents.clear();
-		m_upcomingEvents.insert(m_upcomingEvents.end(),
-				trajectory.getEvents().begin(), trajectory.getEvents().end());
+		auto events = trajectory.getEvents();
+		m_upcomingEvents.insert(m_upcomingEvents.end(), events.begin(),
+				events.end());
 	}
 
 	/**
@@ -56,8 +57,8 @@ public:
 			std::shared_ptr<PathPlannerPath> path) {
 		wpi::SmallSet<frc2::Subsystem*, 4> allReqs;
 		for (auto m : path->getEventMarkers()) {
-			allReqs.insert(m.getCommand()->GetRequirements().begin(),
-					m.getCommand()->GetRequirements().end());
+			auto markerReqs = m.getCommand()->GetRequirements();
+			allReqs.insert(markerReqs.begin(), markerReqs.end());
 		}
 		return allReqs;
 	}

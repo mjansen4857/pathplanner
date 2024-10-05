@@ -18,12 +18,12 @@ public:
 	}
 
 	inline void handleEvent(EventScheduler *eventScheduler) override {
-		eventScheduler->setCondition(m_name, false);
+		EventScheduler::setCondition(m_name, false);
 	}
 
 	inline void cancelEvent(EventScheduler *eventScheduler) override {
 		// Ensure the condition gets set to false
-		eventScheduler->setCondition(m_name, false);
+		EventScheduler::setCondition(m_name, false);
 	}
 
 private:

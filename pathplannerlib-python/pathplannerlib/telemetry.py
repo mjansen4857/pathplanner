@@ -6,11 +6,11 @@ from .path import PathPlannerPath
 class PPLibTelemetry:
     _velPub: DoubleArrayPublisher = NetworkTableInstance.getDefault().getDoubleArrayTopic('/PathPlanner/vel').publish()
     _posePub: StructPublisher = NetworkTableInstance.getDefault().getStructTopic(
-        '/PathPlanner/currentPose', Pose2d.WPIStruct).publish()
+        '/PathPlanner/currentPose', Pose2d).publish()
     _pathPub: StructArrayPublisher = NetworkTableInstance.getDefault().getStructArrayTopic(
-        '/PathPlanner/activePath', Pose2d.WPIStruct).publish()
+        '/PathPlanner/activePath', Pose2d).publish()
     _targetPosePub: StructPublisher = NetworkTableInstance.getDefault().getStructTopic(
-        '/PathPlanner/targetPose', Pose2d.WPIStruct).publish()
+        '/PathPlanner/targetPose', Pose2d).publish()
 
     @staticmethod
     def setVelocities(actual_vel: float, commanded_vel: float, actual_ang_vel: float, commanded_ang_vel: float) -> None:

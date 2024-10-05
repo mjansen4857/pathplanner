@@ -7,6 +7,8 @@ from wpimath.system.plant import DCMotor
 import os
 import json
 from wpilib import getDeployDirectory
+import numpy as np
+from numpy.typing import NDArray
 
 
 @dataclass
@@ -75,6 +77,7 @@ class RobotConfig:
 
     _swerveKinematics: Union[SwerveDrive4Kinematics, None]
     _diffKinematics: Union[DifferentialDriveKinematics, None]
+    _forceKinematics: NDArray
 
     def __init__(self, massKG: float, MOI: float, moduleConfig: ModuleConfig, trackwidthMeters: float,
                  wheelbaseMeters: float = None):
@@ -120,6 +123,12 @@ class RobotConfig:
         self.wheelFrictionForce = self.moduleConfig.wheelCOF * ((self.massKG / self.numModules) * 9.8)
         self.maxTorqueFriction = self.wheelFrictionForce * self.moduleConfig.wheelRadiusMeters
 
+        self._forceKinematics = np.zeros((self.numModules * 2, 3))
+        for i in range(self.numModules):
+            modPosReciprocal = Translation2d(1.0 / self.moduleLocations[i].norm(), self.moduleLocations[i].angle())
+            self._forceKinematics[i * 2] = [1.0, 0.0, -modPosReciprocal.Y()]
+            self._forceKinematics[i * 2 + 1] = [0.0, 1.0, modPosReciprocal.X()]
+
     def toSwerveModuleStates(self, speeds: ChassisSpeeds) -> List[SwerveModuleState]:
         """
         Convert robot-relative chassis speeds to a list of swerve module states. This will use
@@ -150,6 +159,28 @@ class RobotConfig:
         else:
             wheelSpeeds = DifferentialDriveWheelSpeeds(states[0].speed, states[1].speed)
             return self._diffKinematics.toChassisSpeeds(wheelSpeeds)
+
+    def chassisForcesToWheelForceVectors(self, chassisForces: ChassisSpeeds) -> List[Translation2d]:
+        """
+        Convert chassis forces (passed as ChassisSpeeds) to individual wheel force vectors
+
+        :param chassisForces: The linear X/Y force and torque acting on the whole robot
+        :return: List of individual wheel force vectors
+        """
+        chassisForceVector = np.array([chassisForces.vx, chassisForces.vy, chassisForces.omega]).reshape((3, 1))
+
+        # Divide the chassis force vector by numModules since force is additive. All module forces will
+        # add up to the chassis force
+        moduleForceMatrix = np.matmul(self._forceKinematics, (chassisForceVector / self.numModules))
+
+        forceVectors = []
+        for m in range(self.numModules):
+            x = moduleForceMatrix[m * 2][0]
+            y = moduleForceMatrix[m * 2 + 1][0]
+
+            forceVectors.append(Translation2d(x, y))
+
+        return forceVectors
 
     @staticmethod
     def fromGUISettings() -> 'RobotConfig':

@@ -1,16 +1,32 @@
+from dataclasses import dataclass
+
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from enum import Enum
 import math
-from typing import List, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .trajectory import DriveFeedforward
+from typing import List
 
 
 class FieldSymmetry(Enum):
     kRotational = 1
     kMirrored = 2
+
+
+@dataclass(frozen=True)
+class DriveFeedforward:
+    accelerationMPS: float = 0.0
+    forceNewtons: float = 0.0
+    torqueCurrentAmps: float = 0.0
+
+    def interpolate(self, endVal: 'DriveFeedforward', t: float) -> 'DriveFeedforward':
+        return DriveFeedforward(
+            floatLerp(self.accelerationMPS, endVal.accelerationMPS, t),
+            floatLerp(self.forceNewtons, endVal.forceNewtons, t),
+            floatLerp(self.torqueCurrentAmps, endVal.torqueCurrentAmps, t)
+        )
+
+    def reverse(self) -> 'DriveFeedforward':
+        return DriveFeedforward(-self.accelerationMPS, -self.forceNewtons, -self.torqueCurrentAmps)
 
 
 class FlippingUtil:
@@ -66,7 +82,7 @@ class FlippingUtil:
             return ChassisSpeeds(-fieldSpeeds.vx, -fieldSpeeds.vy, fieldSpeeds.omega)
 
     @staticmethod
-    def flipFeedforwards(feedforwards: List['DriveFeedforward']) -> List['DriveFeedforward']:
+    def flipFeedforwards(feedforwards: List[DriveFeedforward]) -> List[DriveFeedforward]:
         """
         Flip a list of drive feedforwards for the other side of the field.
         Only does anything if mirrored symmetry is used

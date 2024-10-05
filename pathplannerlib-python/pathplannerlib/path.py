@@ -388,9 +388,9 @@ class PathPlannerPath:
             self._rotationTargets = holonomic_rotations
             self._rotationTargets.sort(key=lambda x: x.waypointRelativePosition)
         if point_towards_zones is None:
-            self.point_towards_zones = []
+            self._pointTowardsZones = []
         else:
-            self.point_towards_zones = point_towards_zones
+            self._pointTowardsZones = point_towards_zones
         if constraint_zones is None:
             self._constraintZones = []
         else:
@@ -399,7 +399,7 @@ class PathPlannerPath:
             self._eventMarkers = []
         else:
             self._eventMarkers = event_markers
-            self._eventMarkers.sort(key=lambda x: x.waypointRelativePosition)
+            self._eventMarkers.sort(key=lambda x: x.waypointRelativePos)
         self._globalConstraints = constraints
         self._idealStartingState = ideal_starting_state
         self._goalEndState = goal_end_state

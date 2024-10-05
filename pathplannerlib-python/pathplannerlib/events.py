@@ -194,7 +194,7 @@ class EventScheduler:
             if not self._eventCommands[command]:
                 continue
 
-            command.execute(self)
+            command.execute()
 
             if command.isFinished():
                 command.end(False)

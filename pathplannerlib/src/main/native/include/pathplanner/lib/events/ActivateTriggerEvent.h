@@ -25,6 +25,11 @@ public:
 		// Do nothing
 	}
 
+	inline std::shared_ptr<Event> copyWithTimestamp(units::second_t timestamp)
+			override {
+		return std::make_shared < ActivateTriggerEvent > (timestamp, m_name);
+	}
+
 private:
 	std::string m_name;
 };

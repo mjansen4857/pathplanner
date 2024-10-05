@@ -27,6 +27,11 @@ public:
 		// Do nothing
 	}
 
+	inline std::shared_ptr<Event> copyWithTimestamp(units::second_t timestamp)
+			override {
+		return std::make_shared < ScheduleCommandEvent > (timestamp, m_command);
+	}
+
 private:
 	std::shared_ptr<frc2::Command> m_command;
 };

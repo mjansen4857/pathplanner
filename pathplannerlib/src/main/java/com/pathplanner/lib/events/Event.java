@@ -45,4 +45,12 @@ public abstract class Event {
    * @param eventScheduler Reference to the EventScheduler handling this event
    */
   public abstract void cancelEvent(EventScheduler eventScheduler);
+
+  /**
+   * Copy this event with a different timestamp
+   *
+   * @param timestamp The new timestamp
+   * @return Copied event with new time
+   */
+  public abstract Event copyWithTimestamp(double timestamp);
 }

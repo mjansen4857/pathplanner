@@ -3,6 +3,8 @@
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include "pathplanner/lib/events/Event.h"
+#include "pathplanner/lib/events/OneShotTriggerEvent.h"
+#include "pathplanner/lib/events/ScheduleCommandEvent.h"
 #include "pathplanner/lib/util/FlippingUtil.h"
 #include <frc/Filesystem.h>
 #include <frc/MathUtil.h>
@@ -165,6 +167,50 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 		fullTrajStates.emplace_back(state);
 	}
 
+	std::vector < std::shared_ptr < Event >> fullEvents;
+	// Events from pplibCommands
+	for (wpi::json::const_reference m : json.at("pplibCommands")) {
+		auto dataJson = m.at("data");
+		auto offsetJson = dataJson.at("offset");
+		auto eventJson = m.at("event");
+
+		std::string name = dataJson.at("name").get<std::string>();
+		units::second_t targetTimestamp { dataJson.at("targetTimestamp").get<
+				double>() };
+		units::second_t offset { offsetJson.at("val").get<double>() };
+		units::second_t timestamp = targetTimestamp + offset;
+		auto eventCommand = std::shared_ptr < frc2::Command
+				> (CommandUtil::commandFromJson(eventJson, true).Unwrap());
+
+		fullEvents.emplace_back(
+				std::make_shared < OneShotTriggerEvent > (timestamp, name));
+		fullEvents.emplace_back(
+				std::make_shared < ScheduleCommandEvent
+						> (timestamp, eventCommand));
+	}
+
+	// Events from choreolib events
+	for (wpi::json::const_reference m : json.at("events")) {
+		auto dataJson = m.at("data");
+		auto offsetJson = dataJson.at("offset");
+		auto eventJson = m.at("event");
+		auto eventDataJson = eventJson.at("data");
+
+		std::string event = eventDataJson.at("event").get<std::string>();
+		units::second_t targetTimestamp { dataJson.at("targetTimestamp").get<
+				double>() };
+		units::second_t offset { offsetJson.at("val").get<double>() };
+		units::second_t timestamp = targetTimestamp + offset;
+
+		fullEvents.emplace_back(
+				std::make_shared < OneShotTriggerEvent > (timestamp, event));
+	}
+
+	std::sort(fullEvents.begin(), fullEvents.end(),
+			[](auto &left, auto &right) {
+				return left->getTimestamp() < right->getTimestamp();
+			});
+
 	// Add the full path to the cache
 	auto fullPath = std::make_shared < PathPlannerPath
 			> (PathConstraints(
@@ -185,7 +231,6 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 
 	fullPath->m_allPoints = fullPathPoints;
 	fullPath->m_isChoreoPath = true;
-	std::vector < std::shared_ptr < Event >> fullEvents;
 	fullPath->m_idealTrajectory = PathPlannerTrajectory(fullTrajStates,
 			fullEvents);
 	PathPlannerPath::getChoreoPathCache().emplace(trajectoryName, fullPath);
@@ -208,10 +253,21 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 			}
 
 			auto startTime = fullTrajStates[splitStartIdx].time;
+			auto endTime = fullTrajStates[splitEndIdx - 1].time;
 			for (size_t s = splitStartIdx; s < splitEndIdx; s++) {
 				states.emplace_back(
 						fullTrajStates[s].copyWithTime(
 								fullTrajStates[s].time - startTime));
+			}
+
+			std::vector < std::shared_ptr < Event >> events;
+			for (auto originalEvent : fullEvents) {
+				if (originalEvent->getTimestamp() >= startTime
+						&& originalEvent->getTimestamp() < endTime) {
+					events.emplace_back(
+							originalEvent->copyWithTimestamp(
+									originalEvent->getTimestamp() - startTime));
+				}
 			}
 
 			auto path =
@@ -234,7 +290,6 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 
 			path->m_allPoints = pathPoints;
 			path->m_isChoreoPath = true;
-			std::vector < std::shared_ptr < Event >> events;
 			path->m_idealTrajectory = PathPlannerTrajectory(states, events);
 			PathPlannerPath::getChoreoPathCache().emplace(name, path);
 		}

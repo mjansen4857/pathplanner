@@ -1,6 +1,10 @@
 package com.pathplanner.lib.path;
 
+import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.events.Event;
+import com.pathplanner.lib.events.OneShotTriggerEvent;
+import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.DriveFeedforward;
@@ -14,6 +18,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj2.command.Command;
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -353,6 +358,42 @@ public class PathPlannerPath {
         fullTrajStates.add(state);
       }
 
+      List<Event> fullEvents = new ArrayList<>();
+      // Events from pplibCommands
+      for (var m : (JSONArray) json.get("pplibCommands")) {
+        JSONObject markerJson = (JSONObject) m;
+        JSONObject dataJson = (JSONObject) markerJson.get("data");
+        JSONObject offsetJson = (JSONObject) dataJson.get("offset");
+        JSONObject eventJson = (JSONObject) markerJson.get("event");
+
+        String name = (String) dataJson.get("name");
+        double targetTimestamp = ((Number) dataJson.get("targetTimestamp")).doubleValue();
+        double offset = ((Number) offsetJson.get("val")).doubleValue();
+        double timestamp = targetTimestamp + offset;
+        Command eventCommand = CommandUtil.commandFromJson(eventJson, true);
+
+        fullEvents.add(new OneShotTriggerEvent(timestamp, name));
+        fullEvents.add(new ScheduleCommandEvent(timestamp, eventCommand));
+      }
+
+      // Events from choreolib events
+      for (var m : (JSONArray) json.get("events")) {
+        JSONObject markerJson = (JSONObject) m;
+        JSONObject dataJson = (JSONObject) markerJson.get("data");
+        JSONObject offsetJson = (JSONObject) dataJson.get("offset");
+        JSONObject eventJson = (JSONObject) markerJson.get("event");
+        JSONObject eventDataJson = (JSONObject) eventJson.get("data");
+
+        String event = (String) eventDataJson.get("event");
+        double targetTimestamp = ((Number) dataJson.get("targetTimestamp")).doubleValue();
+        double offset = ((Number) offsetJson.get("val")).doubleValue();
+        double timestamp = targetTimestamp + offset;
+
+        fullEvents.add(new OneShotTriggerEvent(timestamp, event));
+      }
+
+      fullEvents.sort(Comparator.comparingDouble(Event::getTimestamp));
+
       // Add the full path to the cache
       PathPlannerPath fullPath = new PathPlannerPath();
       fullPath.globalConstraints =
@@ -373,8 +414,7 @@ public class PathPlannerPath {
 
       fullPath.allPoints = fullPathPoints;
       fullPath.isChoreoPath = true;
-      fullPath.idealTrajectory =
-          Optional.of(new PathPlannerTrajectory(fullTrajStates, Collections.emptyList()));
+      fullPath.idealTrajectory = Optional.of(new PathPlannerTrajectory(fullTrajStates, fullEvents));
       choreoPathCache.put(trajectoryName, fullPath);
 
       JSONArray splits = (JSONArray) trajJson.get("splits");
@@ -393,9 +433,18 @@ public class PathPlannerPath {
         }
 
         double startTime = fullTrajStates.get(splitStartIdx).timeSeconds;
+        double endTime = fullTrajStates.get(splitEndIdx - 1).timeSeconds;
         for (int s = splitStartIdx; s < splitEndIdx; s++) {
           states.add(
               fullTrajStates.get(s).copyWithTime(fullTrajStates.get(s).timeSeconds - startTime));
+        }
+
+        List<Event> events = new ArrayList<>();
+        for (Event originalEvent : fullEvents) {
+          if (originalEvent.getTimestamp() >= startTime
+              && originalEvent.getTimestamp() <= endTime) {
+            events.add(originalEvent.copyWithTimestamp(originalEvent.getTimestamp() - startTime));
+          }
         }
 
         PathPlannerPath path = new PathPlannerPath();
@@ -417,8 +466,7 @@ public class PathPlannerPath {
 
         path.allPoints = pathPoints;
         path.isChoreoPath = true;
-        path.idealTrajectory =
-            Optional.of(new PathPlannerTrajectory(states, Collections.emptyList()));
+        path.idealTrajectory = Optional.of(new PathPlannerTrajectory(states, events));
         choreoPathCache.put(name, path);
       }
     }

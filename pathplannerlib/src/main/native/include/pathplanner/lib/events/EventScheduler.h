@@ -56,8 +56,8 @@ public:
 			std::shared_ptr<PathPlannerPath> path) {
 		wpi::SmallSet<frc2::Subsystem*, 4> allReqs;
 		for (auto m : path->getEventMarkers()) {
-			allReqs.insert(m.getCommand()->GetRequirements().begin(),
-					m.getCommand()->GetRequirements().end());
+			auto markerReqs = m.getCommand()->GetRequirements();
+			allReqs.insert(markerReqs.begin(), markerReqs.end());
 		}
 		return allReqs;
 	}

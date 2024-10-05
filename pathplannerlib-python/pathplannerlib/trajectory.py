@@ -610,7 +610,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # vf^2 = v0^2 + 2ad
             maxVel = math.sqrt(abs(math.pow(nextState.moduleStates[m].speed, 2) + (
                     2 * moduleAcceleration * nextState.moduleStates[m].deltaPos)))
-            state.moduleStates[m].speed = min(maxVel, nextState.moduleStates[m].speed)
+            state.moduleStates[m].speed = min(maxVel, state.moduleStates[m].speed)
 
         # Go over the modules again to make sure they take the same amount of time to reach the next state
         maxDT = 0.0

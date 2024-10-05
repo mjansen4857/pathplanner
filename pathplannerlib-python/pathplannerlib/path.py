@@ -8,6 +8,9 @@ from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
 from commands2 import Command, cmd
+
+from .auto import CommandUtil
+from .events import OneShotTriggerEvent, ScheduleCommandEvent, Event
 from .util import cubicLerp, calculateRadius, floatLerp, FlippingUtil
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
@@ -490,7 +493,8 @@ class PathPlannerPath:
         filePath = os.path.join(getDeployDirectory(), 'choreo', trajectory_name + '.traj')
 
         with open(filePath, 'r') as f:
-            trajJson = json.loads(f.read())['trajectory']
+            fJson = json.loads(f.read())
+            trajJson = fJson['trajectory']
 
             fullTrajStates = []
             for s in trajJson['samples']:
@@ -511,6 +515,38 @@ class PathPlannerPath:
 
                 fullTrajStates.append(state)
 
+            fullEvents: List[Event] = []
+            # Events from pplibCommands
+            for m in fJson['pplibCommands']:
+                dataJson = m['data']
+                offsetJson = dataJson['offset']
+                eventJson = m['event']
+
+                name = str(dataJson['name'])
+                targetTimestamp = float(dataJson['targetTimestamp'])
+                offset = float(offsetJson['val'])
+                timestamp = targetTimestamp + offset
+                eventCommand = CommandUtil.commandFromJson(eventJson, True)
+
+                fullEvents.append(OneShotTriggerEvent(timestamp, name))
+                fullEvents.append(ScheduleCommandEvent(timestamp, eventCommand))
+
+            # Events from choreolib events
+            for m in fJson['events']:
+                dataJson = m['data']
+                offsetJson = dataJson['offset']
+                eventJson = m['event']
+                eventDataJson = eventJson['data']
+
+                event = str(eventDataJson['event'])
+                targetTimestamp = float(dataJson['targetTimestamp'])
+                offset = float(offsetJson['val'])
+                timestamp = targetTimestamp + offset
+
+                fullEvents.append(OneShotTriggerEvent(timestamp, event))
+
+            fullEvents.sort(key=lambda e: e.getTimestamp())
+
             # Add the full path to the cache
             fullPath = PathPlannerPath([], PathConstraints(
                 float('inf'),
@@ -521,7 +557,6 @@ class PathPlannerPath:
             fullPathPoints = [PathPoint(state.pose.translation()) for state in fullTrajStates]
             fullPath._allPoints = fullPathPoints
             fullPath._isChoreoPath = True
-            fullEvents = []
             fullPath._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=fullTrajStates,
                                                               events=fullEvents)
             PathPlannerPath._choreoPathCache[trajectory_name] = fullPath
@@ -540,8 +575,14 @@ class PathPlannerPath:
                     splitEndIdx = int(splits[i + 1])
 
                 startTime = fullTrajStates[splitStartIdx].timeSeconds
+                endTime = fullTrajStates[splitEndIdx - 1].timeSeconds
                 for s in range(splitStartIdx, splitEndIdx):
                     states.append(fullTrajStates[s].copyWithTime(fullTrajStates[s].timeSeconds - startTime))
+
+                events: List[Event] = []
+                for originalEvent in fullEvents:
+                    if startTime <= originalEvent.getTimestamp() < endTime:
+                        events.append(originalEvent.copyWithTime(originalEvent.getTimestamp() - startTime))
 
                 path = PathPlannerPath([], PathConstraints(
                     float('inf'),
@@ -552,7 +593,6 @@ class PathPlannerPath:
                 pathPoints = [PathPoint(state.pose.translation()) for state in states]
                 path._allPoints = pathPoints
                 path._isChoreoPath = True
-                events = []
                 path._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=states,
                                                               events=events)
                 PathPlannerPath._choreoPathCache[name] = path

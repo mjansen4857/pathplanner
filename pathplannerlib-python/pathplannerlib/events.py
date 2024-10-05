@@ -31,6 +31,9 @@ class Event:
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         raise NotImplementedError
 
+    def copyWithTime(self, timestamp: float) -> 'Event':
+        raise NotImplementedError
+
 
 class ScheduleCommandEvent(Event):
     _command: Command
@@ -53,6 +56,10 @@ class ScheduleCommandEvent(Event):
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         # Do nothing
         pass
+
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return ScheduleCommandEvent(timestamp, self._command)
 
 
 class CancelCommandEvent(Event):
@@ -77,6 +84,10 @@ class CancelCommandEvent(Event):
         # Do nothing
         pass
 
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return CancelCommandEvent(timestamp, self._command)
+
 
 class ActivateTriggerEvent(Event):
     _name: str
@@ -100,6 +111,10 @@ class ActivateTriggerEvent(Event):
         # Do nothing
         pass
 
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return ActivateTriggerEvent(timestamp, self._name)
+
 
 class DeactivateTriggerEvent(Event):
     _name: str
@@ -122,6 +137,10 @@ class DeactivateTriggerEvent(Event):
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         # Ensure the condition gets set to false
         eventScheduler.setCondition(self._name, False)
+
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return DeactivateTriggerEvent(timestamp, self._name)
 
 
 class OneShotTriggerEvent(Event):
@@ -151,6 +170,10 @@ class OneShotTriggerEvent(Event):
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         # Do nothing
         pass
+
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return OneShotTriggerEvent(timestamp, self._name)
 
 
 class EventScheduler:

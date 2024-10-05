@@ -359,7 +359,7 @@ public class PathPlannerPath {
       }
 
       List<Event> fullEvents = new ArrayList<>();
-      // Events from pplib_commands
+      // Events from pplibCommands
       for (var m : (JSONArray) json.get("pplibCommands")) {
         JSONObject markerJson = (JSONObject) m;
         JSONObject dataJson = (JSONObject) markerJson.get("data");

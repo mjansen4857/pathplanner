@@ -26,6 +26,11 @@ public:
 		EventScheduler::setCondition(m_name, false);
 	}
 
+	inline std::shared_ptr<Event> copyWithTimestamp(units::second_t timestamp)
+			override {
+		return std::make_shared < DeactivateTriggerEvent > (timestamp, m_name);
+	}
+
 private:
 	std::string m_name;
 };

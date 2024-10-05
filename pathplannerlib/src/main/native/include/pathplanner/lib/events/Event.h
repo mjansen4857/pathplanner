@@ -1,6 +1,7 @@
 #pragma once
 
 #include <units/time.h>
+#include <memory>
 
 namespace pathplanner {
 
@@ -51,6 +52,15 @@ public:
 	 * @param eventScheduler Reference to the EventScheduler handling this event
 	 */
 	virtual void cancelEvent(EventScheduler *eventScheduler) = 0;
+
+	/**
+	 * Copy this event with a different timestamp
+	 *
+	 * @param timestamp The new timestamp
+	 * @return Copied event with new time
+	 */
+	virtual std::shared_ptr<Event> copyWithTimestamp(
+			units::second_t timestamp) = 0;
 
 private:
 	units::second_t m_timestamp;

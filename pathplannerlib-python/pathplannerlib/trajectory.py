@@ -4,30 +4,13 @@ import math
 from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
-from .util import floatLerp, rotationLerp, poseLerp, calculateRadius, FlippingUtil
+from .util import floatLerp, rotationLerp, poseLerp, calculateRadius, FlippingUtil, DriveFeedforward
 from .config import RobotConfig
 from .events import *
 from typing import List, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .path import PathPlannerPath, PathConstraints
-
-
-@dataclass(frozen=True)
-class DriveFeedforward:
-    accelerationMPS: float = 0.0
-    forceNewtons: float = 0.0
-    torqueCurrentAmps: float = 0.0
-
-    def interpolate(self, endVal: DriveFeedforward, t: float) -> DriveFeedforward:
-        return DriveFeedforward(
-            floatLerp(self.accelerationMPS, endVal.accelerationMPS, t),
-            floatLerp(self.forceNewtons, endVal.forceNewtons, t),
-            floatLerp(self.torqueCurrentAmps, endVal.torqueCurrentAmps, t)
-        )
-
-    def reverse(self) -> DriveFeedforward:
-        return DriveFeedforward(-self.accelerationMPS, -self.forceNewtons, -self.torqueCurrentAmps)
 
 
 @dataclass

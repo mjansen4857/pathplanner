@@ -1,9 +1,9 @@
 from .controller import *
 from .path import PathPlannerPath, GoalEndState, PathConstraints
-from .trajectory import PathPlannerTrajectory, DriveFeedforward
+from .trajectory import PathPlannerTrajectory
 from .telemetry import PPLibTelemetry
 from .logging import PathPlannerLogging
-from .util import floatLerp, FlippingUtil
+from .util import floatLerp, FlippingUtil, DriveFeedforward
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpilib import Timer

@@ -5,7 +5,7 @@ from typing import Callable, List
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from .commands import FollowPathCommand, PathfindingCommand, PathfindThenFollowPath
-from .util import FlippingUtil
+from .util import FlippingUtil, DriveFeedforward
 from .controller import PathFollowingController
 import os
 from wpilib import getDeployDirectory, reportError, reportWarning, SendableChooser
@@ -14,8 +14,6 @@ from commands2.command import Command
 from commands2.subsystem import Subsystem
 from .config import RobotConfig
 from hal import report, tResourceType
-
-from .trajectory import DriveFeedforward
 
 
 class NamedCommands:

@@ -183,7 +183,7 @@ class PointTowardsZone:
     def fromJson(json_dict: dict) -> PointTowardsZone:
         targetPos = PointTowardsZone._translationFromJson(json_dict['fieldPosition'])
         minPos = float(json_dict['minWaypointRelativePos'])
-        maxPos = float(json_dict['minWaypointRelativePos'])
+        maxPos = float(json_dict['maxWaypointRelativePos'])
         deg = float(json_dict['rotationOffset'])
 
         return PointTowardsZone(targetPos, minPos, maxPos, Rotation2d.fromDegrees(deg))

@@ -69,7 +69,6 @@ public:
 
 private:
 	const double SMOOTHING_ANCHOR_PCT = 0.8;
-	const double SMOOTHING_CONTROL_PCT = 0.33;
 	const double EPS = 2.5;
 
 	double fieldLength;

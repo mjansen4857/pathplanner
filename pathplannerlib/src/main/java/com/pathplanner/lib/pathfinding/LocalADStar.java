@@ -24,7 +24,6 @@ import org.json.simple.parser.JSONParser;
  */
 public class LocalADStar implements Pathfinder {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;
-  private static final double SMOOTHING_CONTROL_PCT = 0.33;
   private static final double EPS = 2.5;
 
   private double fieldLength = 16.54;

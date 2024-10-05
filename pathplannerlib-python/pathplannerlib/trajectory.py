@@ -493,7 +493,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         # Even though kinematics is usually used for velocities, it can still
         # convert chassis accelerations to module accelerations
         maxAngAccel = state.constraints.maxAngularAccelerationRpsSq
-        angularAccel = max(min(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
+        angularAccel = min(max(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
 
         accelVec = linearForceVec / config.massKG
         maxAccel = state.constraints.maxAccelerationMpsSq
@@ -592,7 +592,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         # Even though kinematics is usually used for velocities, it can still
         # convert chassis accelerations to module accelerations
         maxAngAccel = state.constraints.maxAngularAccelerationRpsSq
-        angularAccel = max(min(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
+        angularAccel = min(max(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
 
         accelVec = linearForceVec / config.massKG
         maxAccel = state.constraints.maxAccelerationMpsSq

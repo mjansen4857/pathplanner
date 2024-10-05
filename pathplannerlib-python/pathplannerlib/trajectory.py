@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class SwerveModuleTrajectoryState(SwerveModuleState):
-    fieldAngle: Rotation2d = Rotation2d()
-    fieldPos: Translation2d = Translation2d()
+    fieldAngle: Rotation2d = field(default_factory=Rotation2d)
+    fieldPos: Translation2d = field(default_factory=Translation2d)
 
     deltaPos: float = 0.0
 
@@ -25,13 +25,13 @@ class SwerveModuleTrajectoryState(SwerveModuleState):
 class PathPlannerTrajectoryState:
     timeSeconds: float = 0.0
     fieldSpeeds: ChassisSpeeds = ChassisSpeeds()
-    pose: Pose2d = Pose2d()
+    pose: Pose2d = field(default_factory=Pose2d)
     linearVelocity: float = 0.0
     feedforwards: List[DriveFeedforward] = field(default_factory=list)
 
-    heading: Rotation2d = Rotation2d()
+    heading: Rotation2d = field(default_factory=Rotation2d)
     deltaPos: float = 0.0
-    deltaRot: Rotation2d = Rotation2d()
+    deltaRot: Rotation2d = field(default_factory=Rotation2d)
     moduleStates: List[SwerveModuleTrajectoryState] = field(default_factory=list)
     constraints: PathConstraints = None
     waypointRelativePos: float = 0.0

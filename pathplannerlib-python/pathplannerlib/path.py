@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Final, List, Union
 from wpimath.geometry import Rotation2d, Translation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
@@ -177,7 +177,7 @@ class PointTowardsZone:
     targetPosition: Translation2d
     minWaypointRelativePos: float
     maxWaypointRelativePos: float
-    rotationOffset: Rotation2d = Rotation2d()
+    rotationOffset: Rotation2d = field(default_factory=Rotation2d)
 
     @staticmethod
     def fromJson(json_dict: dict) -> PointTowardsZone:

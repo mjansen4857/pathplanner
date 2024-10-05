@@ -18,7 +18,7 @@ public:
 	}
 
 	inline void handleEvent(EventScheduler *eventScheduler) override {
-		eventScheduler->setCondition(m_name, true);
+		EventScheduler::setCondition(m_name, true);
 	}
 
 	inline void cancelEvent(EventScheduler *eventScheduler) override {

@@ -16,23 +16,19 @@ public:
 	 * @param name The name of the trigger to control
 	 */
 	OneShotTriggerEvent(units::second_t timestamp, std::string name) : Event(
-			timestamp), m_name(name) {
+			timestamp), m_name(name), m_resetCommand(
+			frc2::cmd::Wait(0_s).AndThen(frc2::cmd::RunOnce([this]() {
+				EventScheduler::setCondition(m_name, false);
+			}
+			)
+			).IgnoringDisable(true)) {
 	}
 
 	inline void handleEvent(EventScheduler *eventScheduler) override {
+		EventScheduler::setCondition(m_name, true);
 		// We schedule this command with the main command scheduler so that it is guaranteed to be run
 		// in its entirety, since the EventScheduler could cancel this command before it finishes
-		eventScheduler->setCondition(m_name, true);
-		frc2::CommandScheduler::GetInstance().Schedule(
-				frc2::cmd::Sequence(
-						frc2::cmd::RunOnce([this, eventScheduler]() {
-							eventScheduler->setCondition(m_name, true);
-						}),
-						frc2::cmd::Wait(0_s),
-						frc2::cmd::RunOnce([this, eventScheduler]() {
-							eventScheduler->setCondition(m_name, false);
-						})
-				).IgnoringDisable(true));
+		frc2::CommandScheduler::GetInstance().Schedule(m_resetCommand);
 	}
 
 	inline void cancelEvent(EventScheduler *eventScheduler) override {
@@ -41,5 +37,6 @@ public:
 
 private:
 	std::string m_name;
+	frc2::CommandPtr m_resetCommand;
 };
 }

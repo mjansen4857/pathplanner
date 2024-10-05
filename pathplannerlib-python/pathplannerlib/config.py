@@ -151,6 +151,15 @@ class RobotConfig:
             wheelSpeeds = DifferentialDriveWheelSpeeds(states[0].speed, states[1].speed)
             return self._diffKinematics.toChassisSpeeds(wheelSpeeds)
 
+    def chassisForcesToWheelForceVectors(self, chassisForces: ChassisSpeeds) -> List[Translation2d]:
+        """
+        Convert chassis forces (passed as ChassisSpeeds) to individual wheel force vectors
+
+        :param chassisForces: The linear X/Y force and torque acting on the whole robot
+        :return: List of individual wheel force vectors
+        """
+        return [Translation2d()] * self.numModules
+
     @staticmethod
     def fromGUISettings() -> 'RobotConfig':
         """

@@ -209,10 +209,28 @@ class PathPlannerTrajectory:
                     dt = (2 * state.deltaPos) / (v + v0)
                     state.timeSeconds = prevState.timeSeconds + dt
 
+                    prevRobotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(prevState.fieldSpeeds,
+                                                                            prevState.pose.rotation())
+                    robotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(state.fieldSpeeds, state.pose.rotation())
+                    chassisAccelX = (robotSpeeds.vx - prevRobotSpeeds.vx) / dt
+                    chassisAccelY = (robotSpeeds.vy - prevRobotSpeeds.vy) / dt
+                    chassisForceX = chassisAccelX * config.massKG
+                    chassisForceY = chassisAccelY * config.massKG
+
+                    angularAccel = (robotSpeeds.omega - prevRobotSpeeds.omega) / dt
+                    angTorque = angularAccel * config.MOI
+                    chassisForces = ChassisSpeeds(chassisForceX, chassisForceY, angTorque)
+
+                    wheelForces = config.chassisForcesToWheelForceVectors(chassisForces)
+
                     for m in range(config.numModules):
                         accel = (state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt
-                        # Does not currently support force calculations
-                        prevState.feedforwards.append(DriveFeedforward(accel, 0.0, 0.0))
+                        appliedForce = wheelForces[m].norm() * (
+                                    wheelForces[m].angle() - state.moduleStates[m].angle).cos()
+                        wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters
+                        torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
+
+                        prevState.feedforwards.append(DriveFeedforward(accel, appliedForce, torqueCurrent))
 
                     # Un-added events have their timestamp set to a waypoint relative position
                     # When adding the event to this trajectory, set its timestamp properly

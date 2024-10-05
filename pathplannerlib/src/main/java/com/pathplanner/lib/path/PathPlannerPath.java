@@ -360,14 +360,14 @@ public class PathPlannerPath {
 
       List<Event> fullEvents = new ArrayList<>();
       // Events from pplib_commands
-      for (var m : (JSONArray) trajJson.get("pplib_commands")) {
+      for (var m : (JSONArray) json.get("pplibCommands")) {
         JSONObject markerJson = (JSONObject) m;
         JSONObject dataJson = (JSONObject) markerJson.get("data");
         JSONObject offsetJson = (JSONObject) dataJson.get("offset");
         JSONObject eventJson = (JSONObject) markerJson.get("event");
 
         String name = (String) dataJson.get("name");
-        double targetTimestamp = ((Number) dataJson.get("target_timestamp")).doubleValue();
+        double targetTimestamp = ((Number) dataJson.get("targetTimestamp")).doubleValue();
         double offset = ((Number) offsetJson.get("val")).doubleValue();
         double timestamp = targetTimestamp + offset;
         Command eventCommand = CommandUtil.commandFromJson(eventJson, true);
@@ -377,13 +377,15 @@ public class PathPlannerPath {
       }
 
       // Events from choreolib events
-      for (var m : (JSONArray) trajJson.get("events")) {
+      for (var m : (JSONArray) json.get("events")) {
         JSONObject markerJson = (JSONObject) m;
         JSONObject dataJson = (JSONObject) markerJson.get("data");
         JSONObject offsetJson = (JSONObject) dataJson.get("offset");
+        JSONObject eventJson = (JSONObject) markerJson.get("event");
+        JSONObject eventDataJson = (JSONObject) eventJson.get("data");
 
-        String event = (String) markerJson.get("event");
-        double targetTimestamp = ((Number) dataJson.get("target_timestamp")).doubleValue();
+        String event = (String) eventDataJson.get("event");
+        double targetTimestamp = ((Number) dataJson.get("targetTimestamp")).doubleValue();
         double offset = ((Number) offsetJson.get("val")).doubleValue();
         double timestamp = targetTimestamp + offset;
 

@@ -237,14 +237,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        leading: Builder(
-          builder: (BuildContext context) {
-            return IconButton(
-              icon: const Icon(Icons.menu),
-              tooltip: 'Menu',
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            );
-          },
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          tooltip: 'Menu',
+          onPressed: () => Scaffold.of(context).openDrawer(),
         ),
         titleWidget: Text(
           _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),

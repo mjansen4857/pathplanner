@@ -87,7 +87,7 @@ jobs:
             build-option: "windows"
             artifact-path: "build/windows/x64/runner/Release"
             artifact-name: PathPlanner-Windows
-          - os: macos-14
+          - os: macos-15
             build-option: "macos"
             artifact-path: "build/macos/Build/Products/Release/PathPlanner-macOS.zip"
             artifact-name: PathPlanner-macOS

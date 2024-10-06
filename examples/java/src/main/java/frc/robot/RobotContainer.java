@@ -9,6 +9,7 @@ import java.util.List;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.events.EventTrigger;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -44,6 +45,9 @@ public class RobotContainer {
     NamedCommands.registerCommand("marker1", Commands.print("Passed marker 1"));
     NamedCommands.registerCommand("marker2", Commands.print("Passed marker 2"));
     NamedCommands.registerCommand("print hello", Commands.print("hello"));
+
+    // Use event markers as triggers
+    new EventTrigger("Example Marker").onTrue(Commands.print("Passed an event marker"));
 
     // Configure the trigger bindings
     configureBindings();

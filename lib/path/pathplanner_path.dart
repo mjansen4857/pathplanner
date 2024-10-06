@@ -527,9 +527,7 @@ class PathPlannerPath {
       pos = waypoints.length - 1;
     }
 
-    // Force start/end rotation targets to start/end state rotation
-    pathPoints.first.rotationTarget =
-        RotationTarget(0, idealStartingState.rotation);
+    // Force end rotation target to end state rotation
     pathPoints.last.rotationTarget =
         RotationTarget(waypoints.length - 1, goalEndState.rotation);
 

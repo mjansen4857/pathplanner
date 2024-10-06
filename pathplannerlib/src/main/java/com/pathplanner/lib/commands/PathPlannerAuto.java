@@ -57,13 +57,14 @@ public class PathPlannerAuto extends Command {
       initFromJson(json);
     } catch (FileNotFoundException e) {
       DriverStation.reportError(e.getMessage(), e.getStackTrace());
+      autoCommand = Commands.none();
     } catch (IOException e) {
       DriverStation.reportError(
           "Failed to read file required by auto: " + autoName, e.getStackTrace());
+      autoCommand = Commands.none();
     } catch (ParseException e) {
       DriverStation.reportError(
           "Failed to parse JSON in file required by auto: " + autoName, e.getStackTrace());
-    } finally {
       autoCommand = Commands.none();
     }
 

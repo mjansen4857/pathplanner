@@ -263,18 +263,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Stack(
       children: [
-        SizedBox(
-          width: 260,
-          child: NavigationDrawer(
-            selectedIndex: _selectedPage,
-            onDestinationSelected: _handleDestinationSelected,
-            backgroundColor: colorScheme.surface,
-            surfaceTintColor: colorScheme.surfaceTint,
-            children: [
-              _buildDrawerHeader(colorScheme),
-              ..._buildNavigationDestinations(),
-            ],
-          ),
+        NavigationDrawer(
+          selectedIndex: _selectedPage,
+          onDestinationSelected: _handleDestinationSelected,
+          backgroundColor: colorScheme.surface,
+          surfaceTintColor: colorScheme.surfaceTint,
+          children: [
+            _buildDrawerHeader(colorScheme),
+            ..._buildNavigationDestinations(),
+          ],
         ),
         _buildBottomButtons(colorScheme),
       ],
@@ -379,7 +376,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       icon: icon,
       label: Text(label, style: const TextStyle(fontSize: 12)),
       style: ElevatedButton.styleFrom(
-        fixedSize: const Size(120, 50),
+        fixedSize: const Size(141, 50),
         backgroundColor: backgroundColor,
         foregroundColor: foregroundColor,
         surfaceTintColor: surfaceTintColor,

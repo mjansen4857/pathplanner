@@ -7,6 +7,7 @@
 #include <pathplanner/lib/path/PathPlannerPath.h>
 #include <pathplanner/lib/commands/PathPlannerAuto.h>
 #include <pathplanner/lib/auto/NamedCommands.h>
+#include <pathplanner/lib/events/EventTrigger.h>
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <frc2/command/Commands.h>
 
@@ -17,6 +18,9 @@ RobotContainer::RobotContainer() {
   NamedCommands::registerCommand("marker1", frc2::cmd::Print("Passed marker 1"));
   NamedCommands::registerCommand("marker2", frc2::cmd::Print("Passed marker 2"));
   NamedCommands::registerCommand("print hello", frc2::cmd::Print("hello"));
+
+  // Use an event marker as a trigger
+  EventTrigger("Example Marker").OnTrue(frc2::cmd::Print("passed an event marker"));
 
   // Configure the button bindings
   ConfigureBindings();

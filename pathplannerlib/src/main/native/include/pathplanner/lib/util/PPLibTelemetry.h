@@ -30,21 +30,29 @@ public:
 			units::meters_per_second_t commandedVel,
 			units::degrees_per_second_t actualAngVel,
 			units::degrees_per_second_t commandedAngVel) {
-		m_velPub.Set(std::span<const double>( { actualVel(), commandedVel(),
-				actualAngVel(), commandedAngVel() }));
+		if (!m_compMode) {
+			m_velPub.Set(std::span<const double>( { actualVel(), commandedVel(),
+					actualAngVel(), commandedAngVel() }));
+		}
 	}
 
 	static inline void setCurrentPose(frc::Pose2d pose) {
-		m_posePub.Set(pose);
+		if (!m_compMode) {
+			m_posePub.Set(pose);
+		}
 	}
 
 	static inline void setCurrentPath(std::shared_ptr<PathPlannerPath> path) {
-		auto poses = path->getPathPoses();
-		m_pathPub.Set(std::span { poses.data(), poses.size() });
+		if (!m_compMode) {
+			auto poses = path->getPathPoses();
+			m_pathPub.Set(std::span { poses.data(), poses.size() });
+		}
 	}
 
 	static inline void setTargetPose(frc::Pose2d targetPose) {
-		m_targetPosePub.Set(targetPose);
+		if (!m_compMode) {
+			m_targetPosePub.Set(targetPose);
+		}
 	}
 
 	static void registerHotReloadPath(std::string pathName,

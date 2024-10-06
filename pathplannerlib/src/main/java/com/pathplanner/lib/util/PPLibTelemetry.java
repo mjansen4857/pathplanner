@@ -53,7 +53,9 @@ public class PPLibTelemetry {
    */
   public static void setVelocities(
       double actualVel, double commandedVel, double actualAngVel, double commandedAngVel) {
-    velPub.set(new double[] {actualVel, commandedVel, actualAngVel, commandedAngVel});
+    if (!compMode) {
+      velPub.set(new double[] {actualVel, commandedVel, actualAngVel, commandedAngVel});
+    }
   }
 
   /**
@@ -62,7 +64,9 @@ public class PPLibTelemetry {
    * @param pose Current robot pose
    */
   public static void setCurrentPose(Pose2d pose) {
-    posePub.set(pose);
+    if (!compMode) {
+      posePub.set(pose);
+    }
   }
 
   /**
@@ -71,8 +75,10 @@ public class PPLibTelemetry {
    * @param path The current path
    */
   public static void setCurrentPath(PathPlannerPath path) {
-    // Use poses for simplicity
-    pathPub.set(path.getPathPoses().toArray(new Pose2d[0]));
+    if (!compMode) {
+      // Use poses for simplicity
+      pathPub.set(path.getPathPoses().toArray(new Pose2d[0]));
+    }
   }
 
   /**
@@ -81,7 +87,9 @@ public class PPLibTelemetry {
    * @param targetPose Target robot pose
    */
   public static void setTargetPose(Pose2d targetPose) {
-    targetPosePub.set(targetPose);
+    if (!compMode) {
+      targetPosePub.set(targetPose);
+    }
   }
 
   /**
@@ -176,7 +184,6 @@ public class PPLibTelemetry {
   }
 
   private static void handleAutoHotReloadEvent(NetworkTableEvent event) {
-    System.out.println("hot reload auto");
     if (!compMode) {
       if (DriverStation.isEnabled()) {
         DriverStation.reportWarning("Ignoring auto hot reload, robot is enabled", false);

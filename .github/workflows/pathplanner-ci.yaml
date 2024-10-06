@@ -164,10 +164,9 @@ jobs:
       - name: Create macOS DMG
         if: ${{ matrix.build-option == 'macos' }}
         uses: L-Super/create-dmg-actions@v1
-        working-directory: build/macos/Build/Products/Release
         with:
-          dmg_name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
-          src_dir: 'PathPlanner.app'
+          dmg_name: build/macos/Build/Products/Release/${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
+          src_dir: build/macos/Build/Products/Release/PathPlanner.app
       
       - name: Upload macOS DMG artifact
         if: ${{ matrix.build-option == 'macos' }}

@@ -149,7 +149,7 @@ jobs:
           cp windows/redist/vcruntime140.dll build/windows/x64/runner/Release
           cp windows/redist/vcruntime140_1.dll build/windows/x64/runner/Release
       
-      - name: Zip release
+      - name: Zip release (macOS)
         if: ${{ matrix.build-option == 'macos' }}
         run: |
           cd build/macos/Build/Products/Release
@@ -160,6 +160,21 @@ jobs:
         with:
           name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}
+      
+      - name: Create macOS DMG
+        if: ${{ matrix.build-option == 'macos' }}
+        uses: L-Super/create-dmg-actions@v1
+        working-directory: build/macos/Build/Products/Release
+        with:
+          dmg_name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
+          src_dir: 'PathPlanner.app'
+      
+      - name: Upload macOS DMG artifact
+        if: ${{ matrix.build-option == 'macos' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}.dmg
+          path: build/macos/Build/Products/Release/${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}.dmg
       
       - name: Create MSIX
         if: ${{ matrix.build-option == 'windows' }}

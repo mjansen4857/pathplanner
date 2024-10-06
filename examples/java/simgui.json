@@ -25,16 +25,15 @@
           "length": 0.8999999761581421,
           "width": 0.8999999761581421
         },
-        "bottom": 544,
-        "builtin": "2024 Crescendo",
-        "height": 8.013679504394531,
-        "left": 46,
+        "bottom": 1476,
+        "height": 8.210550308227539,
+        "left": 150,
         "path": {
           "arrows": false,
           "style": "Line"
         },
-        "right": 1088,
-        "top": 36,
+        "right": 2961,
+        "top": 79,
         "width": 16.541748046875,
         "window": {
           "visible": true

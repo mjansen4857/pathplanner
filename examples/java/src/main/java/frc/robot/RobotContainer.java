@@ -12,6 +12,7 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -71,8 +72,7 @@ public class RobotContainer {
         4.0, 4.0, 
         Units.degreesToRadians(360), Units.degreesToRadians(540)
       ), 
-      0, 
-      2.0
+      0
     ));
     SmartDashboard.putData("Pathfind to Scoring Pos", AutoBuilder.pathfindToPose(
       new Pose2d(2.15, 3.0, Rotation2d.fromDegrees(180)), 
@@ -80,7 +80,6 @@ public class RobotContainer {
         4.0, 4.0, 
         Units.degreesToRadians(360), Units.degreesToRadians(540)
       ), 
-      0, 
       0
     ));
 
@@ -93,13 +92,14 @@ public class RobotContainer {
       Pose2d startPos = new Pose2d(currentPose.getTranslation(), new Rotation2d());
       Pose2d endPos = new Pose2d(currentPose.getTranslation().plus(new Translation2d(2.0, 0.0)), new Rotation2d());
 
-      List<Translation2d> bezierPoints = PathPlannerPath.bezierFromPoses(startPos, endPos);
+      List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(startPos, endPos);
       PathPlannerPath path = new PathPlannerPath(
-        bezierPoints, 
+        waypoints, 
         new PathConstraints(
           4.0, 4.0, 
           Units.degreesToRadians(360), Units.degreesToRadians(540)
-        ),  
+        ),
+        null, // Ideal starting state can be null for on-the-fly paths
         new GoalEndState(0.0, currentPose.getRotation())
       );
 

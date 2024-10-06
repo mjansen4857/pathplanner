@@ -137,12 +137,12 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
   }
 
   void _runOptimization() async {
-    RobotConfig config = RobotConfig.fromPrefs(widget.prefs);
-
     setState(() {
       _running = true;
       _currentResult = null;
     });
+
+    RobotConfig config = RobotConfig.fromPrefs(widget.prefs);
 
     widget.onUpdate?.call(_currentResult?.path);
 
@@ -151,18 +151,24 @@ class _PathOptimizationTreeState extends State<PathOptimizationTree> {
       config,
       widget.fieldSizeMeters,
       _robotSize,
-      onUpdate: (result) => setState(() {
-        _currentResult = result;
-        widget.onUpdate?.call(_currentResult?.path);
-      }),
+      onUpdate: (result) {
+        if (mounted) {
+          setState(() {
+            _currentResult = result;
+            widget.onUpdate?.call(_currentResult?.path);
+          });
+        }
+      },
     );
 
-    setState(() {
-      _running = false;
-      _currentResult = result;
-    });
+    if (mounted) {
+      setState(() {
+        _running = false;
+        _currentResult = result;
+      });
 
-    widget.onUpdate?.call(_currentResult?.path);
+      widget.onUpdate?.call(_currentResult?.path);
+    }
   }
 
   void _discardOptimization() {

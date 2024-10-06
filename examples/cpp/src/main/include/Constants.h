@@ -6,7 +6,7 @@
 
 #include <frc/geometry/Translation2d.h>
 #include <units/velocity.h>
-#include <pathplanner/lib/util/HolonomicPathFollowerConfig.h>
+#include <pathplanner/lib/config/PIDConstants.h>
 
 /**
  * The Constants header provides a convenient place for teams to hold robot-wide
@@ -20,19 +20,12 @@
 
 namespace SwerveConstants {
 
-inline constexpr frc::Translation2d flOffset = frc::Translation2d(0.4_m, 0.4_m);
-inline constexpr frc::Translation2d frOffset = frc::Translation2d(0.4_m, -0.4_m);
-inline constexpr frc::Translation2d blOffset = frc::Translation2d(-0.4_m, 0.4_m);
-inline constexpr frc::Translation2d brOffset = frc::Translation2d(-0.4_m, -0.4_m);
+inline constexpr frc::Translation2d flOffset = frc::Translation2d(0.273_m, 0.273_m);
+inline constexpr frc::Translation2d frOffset = frc::Translation2d(0.273_m, -0.273_m);
+inline constexpr frc::Translation2d blOffset = frc::Translation2d(-0.273_m, 0.273_m);
+inline constexpr frc::Translation2d brOffset = frc::Translation2d(-0.273_m, -0.273_m);
 
-inline constexpr units::meters_per_second_t maxModuleSpeed = 4.5_mps;
-
-inline constexpr pathplanner::HolonomicPathFollowerConfig pathFollowerConfig = pathplanner::HolonomicPathFollowerConfig(
-    pathplanner::PIDConstants(5.0, 0.0, 0.0), // Translation constants 
-    pathplanner::PIDConstants(5.0, 0.0, 0.0), // Rotation constants 
-    maxModuleSpeed,
-    0.57_m, // Drive base radius (distance from center to furthest module) 
-    pathplanner::ReplanningConfig()
-);
+inline constexpr pathplanner::PIDConstants translationConstants(5.0, 0.0, 0.0);
+inline constexpr pathplanner::PIDConstants rotationConstants(5.0, 0.0, 0.0);
 
 }  // namespace SwerveConstants

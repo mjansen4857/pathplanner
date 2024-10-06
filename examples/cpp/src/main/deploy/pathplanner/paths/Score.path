@@ -3,41 +3,41 @@
   "waypoints": [
     {
       "anchor": {
-        "x": 6.678477614558091,
-        "y": 4.58891221896934
+        "x": 7.726886294559709,
+        "y": 0.8077125277685265
       },
       "prevControl": null,
       "nextControl": {
-        "x": 5.789375872132782,
-        "y": 4.631933271022177
+        "x": 7.168830366283274,
+        "y": 1.8503959727060781
       },
       "isLocked": false,
       "linkedName": "game piece 1"
     },
     {
       "anchor": {
-        "x": 3.394537307858158,
-        "y": 4.76099642718069
+        "x": 6.052718509730401,
+        "y": 4.156048097427144
       },
       "prevControl": {
-        "x": 4.312319751652028,
-        "y": 4.804017479233528
+        "x": 6.971451995967114,
+        "y": 4.145839947580069
       },
       "nextControl": {
-        "x": 2.8432719593933977,
-        "y": 4.735155863971404
+        "x": 4.731007100654631,
+        "y": 4.170733779750208
       },
       "isLocked": false,
       "linkedName": null
     },
     {
       "anchor": {
-        "x": 1.903140836693123,
-        "y": 3.800192931333985
+        "x": 2.0728986001800274,
+        "y": 2.834336688351374
       },
       "prevControl": {
-        "x": 2.4624145133800113,
-        "y": 4.560231517600782
+        "x": 2.8659254456254897,
+        "y": 1.8797673373522068
       },
       "nextControl": null,
       "isLocked": false,
@@ -46,10 +46,23 @@
   ],
   "rotationTargets": [],
   "constraintZones": [],
+  "pointTowardsZones": [
+    {
+      "fieldPosition": {
+        "x": 0.4,
+        "y": 5.5
+      },
+      "rotationOffset": 0.0,
+      "minWaypointRelativePos": 1.0,
+      "maxWaypointRelativePos": 1.95,
+      "name": "Point At Speaker"
+    }
+  ],
   "eventMarkers": [
     {
       "name": "Example Marker",
       "waypointRelativePos": 0.8,
+      "endWaypointRelativePos": null,
       "command": {
         "type": "sequential",
         "data": {
@@ -73,11 +86,13 @@
   },
   "goalEndState": {
     "velocity": 0,
-    "rotation": 180.0,
-    "rotateFast": false
+    "rotation": 122.06194368281355
   },
   "reversed": false,
   "folder": null,
-  "previewStartingState": null,
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 0.0
+  },
   "useDefaultConstraints": false
 }

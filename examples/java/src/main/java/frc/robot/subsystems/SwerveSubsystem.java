@@ -5,6 +5,8 @@
 package frc.robot.subsystems;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.util.PathPlannerLogging;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -24,9 +26,9 @@ import frc.robot.Constants;
  * Basic simulation of a swerve subsystem with the methods needed by PathPlanner
  */
 public class SwerveSubsystem extends SubsystemBase {
-  private SimSwerveModule[] modules;
-  private SwerveDriveKinematics kinematics;
-  private SwerveDriveOdometry odometry;
+  private final SimSwerveModule[] modules;
+  private final SwerveDriveKinematics kinematics;
+  private final SwerveDriveOdometry odometry;
 
   private SimGyro gyro;
   
@@ -48,26 +50,36 @@ public class SwerveSubsystem extends SubsystemBase {
     );
     odometry = new SwerveDriveOdometry(kinematics, gyro.getRotation2d(), getPositions());
 
-    // Configure AutoBuilder
-    AutoBuilder.configureHolonomic(
-      this::getPose, 
-      this::resetPose, 
-      this::getSpeeds, 
-      this::driveRobotRelative, 
-      Constants.Swerve.pathFollowerConfig,
-      () -> {
-          // Boolean supplier that controls when the path will be mirrored for the red alliance
-          // This will flip the path being followed to the red side of the field.
-          // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    try{
+      RobotConfig config = RobotConfig.fromGUISettings();
 
-          var alliance = DriverStation.getAlliance();
-          if (alliance.isPresent()) {
-              return alliance.get() == DriverStation.Alliance.Red;
-          }
-          return false;
-      },
-      this
-    );
+      // Configure AutoBuilder
+      AutoBuilder.configure(
+        this::getPose, 
+        this::resetPose, 
+        this::getSpeeds, 
+        this::driveRobotRelative, 
+        new PPHolonomicDriveController(
+          Constants.Swerve.translationConstants,
+          Constants.Swerve.rotationConstants
+        ),
+        config,
+        () -> {
+            // Boolean supplier that controls when the path will be mirrored for the red alliance
+            // This will flip the path being followed to the red side of the field.
+            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+
+            var alliance = DriverStation.getAlliance();
+            if (alliance.isPresent()) {
+                return alliance.get() == DriverStation.Alliance.Red;
+            }
+            return false;
+        },
+        this
+      );
+    }catch(Exception e){
+      DriverStation.reportError("Failed to load PathPlanner config and configure AutoBuilder", e.getStackTrace());
+    }
 
     // Set up custom logging to add the current path to a field 2d widget
     PathPlannerLogging.setLogActivePathCallback((poses) -> field.getObject("path").setPoses(poses));
@@ -90,6 +102,7 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public void resetPose(Pose2d pose) {
+    System.out.println(pose);
     odometry.resetPosition(gyro.getRotation2d(), getPositions(), pose);
   }
 

@@ -9,9 +9,11 @@ import java.util.List;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.events.EventTrigger;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.path.Waypoint;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -44,6 +46,9 @@ public class RobotContainer {
     NamedCommands.registerCommand("marker2", Commands.print("Passed marker 2"));
     NamedCommands.registerCommand("print hello", Commands.print("hello"));
 
+    // Use event markers as triggers
+    new EventTrigger("Example Marker").onTrue(Commands.print("Passed an event marker"));
+
     // Configure the trigger bindings
     configureBindings();
 
@@ -71,8 +76,7 @@ public class RobotContainer {
         4.0, 4.0, 
         Units.degreesToRadians(360), Units.degreesToRadians(540)
       ), 
-      0, 
-      2.0
+      0
     ));
     SmartDashboard.putData("Pathfind to Scoring Pos", AutoBuilder.pathfindToPose(
       new Pose2d(2.15, 3.0, Rotation2d.fromDegrees(180)), 
@@ -80,7 +84,6 @@ public class RobotContainer {
         4.0, 4.0, 
         Units.degreesToRadians(360), Units.degreesToRadians(540)
       ), 
-      0, 
       0
     ));
 
@@ -93,13 +96,14 @@ public class RobotContainer {
       Pose2d startPos = new Pose2d(currentPose.getTranslation(), new Rotation2d());
       Pose2d endPos = new Pose2d(currentPose.getTranslation().plus(new Translation2d(2.0, 0.0)), new Rotation2d());
 
-      List<Translation2d> bezierPoints = PathPlannerPath.bezierFromPoses(startPos, endPos);
+      List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(startPos, endPos);
       PathPlannerPath path = new PathPlannerPath(
-        bezierPoints, 
+        waypoints, 
         new PathConstraints(
           4.0, 4.0, 
           Units.degreesToRadians(360), Units.degreesToRadians(540)
-        ),  
+        ),
+        null, // Ideal starting state can be null for on-the-fly paths
         new GoalEndState(0.0, currentPose.getRotation())
       );
 

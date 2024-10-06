@@ -15,6 +15,8 @@
 #include <frc/smartdashboard/Field2d.h>
 #include <units/time.h>
 #include <units/angular_velocity.h>
+#include <optional>
+#include <pathplanner/lib/config/RobotConfig.h>
 #include "Constants.h"
 
 class SwerveSubsystem : public frc2::SubsystemBase {
@@ -108,4 +110,6 @@ class SwerveSubsystem : public frc2::SubsystemBase {
     frc::SwerveDriveOdometry<4> odometry;
 
     frc::Field2d field;
+
+    std::optional<pathplanner::RobotConfig> robotConfig;
 };

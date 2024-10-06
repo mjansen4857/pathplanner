@@ -102,6 +102,7 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public void resetPose(Pose2d pose) {
+    System.out.println(pose);
     odometry.resetPosition(gyro.getRotation2d(), getPositions(), pose);
   }
 

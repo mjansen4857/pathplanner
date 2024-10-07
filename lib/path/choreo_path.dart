@@ -58,15 +58,22 @@ class ChoreoPath {
       for (FileSystemEntity e in files) {
         if (e.path.endsWith('.traj')) {
           final file = fs.file(e.path);
+          String pathName = basenameWithoutExtension(e.path);
           String jsonStr = await file.readAsString();
 
           try {
             Map<String, dynamic> json = jsonDecode(jsonStr);
-            String pathName = basenameWithoutExtension(e.path);
 
             // Add the full path
             ChoreoPath path =
                 ChoreoPath.fromTrajJson(json, pathName, choreoDir, fs);
+
+            if (path.trajectory.states.isEmpty) {
+              Log.error(
+                  'Failed to load choreo path: $pathName. Path has no trajectory states');
+              continue;
+            }
+
             paths.add(path);
 
             // Add each split
@@ -116,7 +123,7 @@ class ChoreoPath {
               paths.add(splitPath);
             }
           } catch (ex, stack) {
-            Log.error('Failed to load choreo path', ex, stack);
+            Log.error('Failed to load choreo path: $pathName', ex, stack);
           }
         }
       }

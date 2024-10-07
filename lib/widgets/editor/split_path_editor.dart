@@ -736,9 +736,19 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       }
 
       if (_simTraj != null) {
-        _previewController.duration = Duration(
-            milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
-        _previewController.repeat();
+        if (!_paused) {
+          _previewController.duration = Duration(
+              milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
+          _previewController.repeat();
+        } else if (_previewController.duration != null) {
+          double prevTime = _previewController.value *
+              (_previewController.duration!.inMilliseconds / 1000.0);
+          _previewController.duration = Duration(
+              milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
+          double newPos = prevTime / _simTraj!.states.last.timeSeconds;
+          _previewController.forward(from: newPos);
+          _previewController.stop();
+        }
       } else {
         // Trajectory failed to generate. Notify the user
         Log.warning(

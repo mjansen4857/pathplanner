@@ -5,9 +5,7 @@ import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/trajectory/auto_simulator.dart';
 import 'package:pathplanner/trajectory/config.dart';
-import 'package:pathplanner/trajectory/dc_motor.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
-import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
@@ -52,7 +50,6 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   bool _paused = false;
 
   late AnimationController _previewController;
-  late bool _holonomicMode;
 
   @override
   void initState() {
@@ -62,8 +59,6 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
 
     _treeOnRight =
         widget.prefs.getBool(PrefsKeys.treeOnRight) ?? Defaults.treeOnRight;
-    _holonomicMode =
-        widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
 
     double treeWeight = widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
@@ -237,52 +232,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
         simPath = PathPlannerTrajectory.fromStates(allStates);
       }
     } else {
-      num halfWheelbase = (widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
-              Defaults.robotWheelbase) /
-          2;
-      num halfTrackwidth = (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
-              Defaults.robotTrackwidth) /
-          2;
-      List<Translation2d> moduleLocations = _holonomicMode
-          ? [
-              Translation2d(halfWheelbase, halfTrackwidth),
-              Translation2d(halfWheelbase, -halfTrackwidth),
-              Translation2d(-halfWheelbase, halfTrackwidth),
-              Translation2d(-halfWheelbase, -halfTrackwidth),
-            ]
-          : [
-              Translation2d(0, halfTrackwidth),
-              Translation2d(0, -halfTrackwidth),
-            ];
-
-      int numMotors = _holonomicMode ? 1 : 2;
-      DCMotor driveMotor = DCMotor.fromString(
-              widget.prefs.getString(PrefsKeys.driveMotor) ??
-                  Defaults.driveMotor,
-              numMotors)
-          .withReduction(widget.prefs.getDouble(PrefsKeys.driveGearing) ??
-              Defaults.driveGearing);
-      RobotConfig config = RobotConfig(
-        massKG:
-            widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
-        moi: widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
-        moduleConfig: ModuleConfig(
-          wheelRadiusMeters:
-              widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
-                  Defaults.driveWheelRadius,
-          maxDriveVelocityMPS:
-              widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
-                  Defaults.maxDriveSpeed,
-          driveMotor: driveMotor,
-          driveCurrentLimit:
-              widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
-                  Defaults.driveCurrentLimit,
-          wheelCOF:
-              widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
-        ),
-        moduleLocations: moduleLocations,
-        holonomic: _holonomicMode,
-      );
+      RobotConfig config = RobotConfig.fromPrefs(widget.prefs);
 
       try {
         simPath = AutoSimulator.simulateAuto(
@@ -310,6 +260,14 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
         _previewController.duration = Duration(
             milliseconds: (simPath.states.last.timeSeconds * 1000).toInt());
         _previewController.repeat();
+      } else {
+        double prevTime = _previewController.value *
+            (_previewController.duration!.inMilliseconds / 1000.0);
+        _previewController.duration = Duration(
+            milliseconds: (simPath.states.last.timeSeconds * 1000).toInt());
+        double newPos = prevTime / simPath.states.last.timeSeconds;
+        _previewController.forward(from: newPos);
+        _previewController.stop();
       }
     } else {
       // Trajectory failed to generate. Notify the user

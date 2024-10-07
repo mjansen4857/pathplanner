@@ -172,8 +172,22 @@ jobs:
         if: ${{ matrix.build-option == 'macos' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}.dmg
+          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-dmg
           path: build/macos/Build/Products/Release/${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}.dmg
+      
+      - name: Create windows installer
+        if: ${{ matrix.build-option == 'windows' }}
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
+        with:
+          path: windows/installer.iss
+          options: /O+ /F"${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-setup"
+      
+      - name: Upload windows installer artifact
+        if: ${{ matrix.build-option == 'windows' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-setup
+          path: build/windows/x64/installer/${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-setup.exe
       
       - name: Create MSIX
         if: ${{ matrix.build-option == 'windows' }}
@@ -183,5 +197,5 @@ jobs:
         if: ${{ matrix.build-option == 'windows' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact-name }}-MSIX-v${{ env.VERSION_NAME }}
+          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-msix
           path: ${{ matrix.artifact-path }}/pathplanner.msix

@@ -38,6 +38,8 @@
 
         <secondary>
             <title>Advanced features</title>
+            <a href="pplib-Triggers.md"
+               summary="Bind commands to triggers tied to a variety of events">Triggers</a>
             <a href="pplib-Swerve-Setpoint-Generator.md"
                summary="Generate swerve setpoints that respect individual module kinematic, torque, and friction limits">Swerve
                 Setpoint Generator</a>

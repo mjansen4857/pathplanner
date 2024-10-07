@@ -193,10 +193,13 @@ class PathPlannerTrajectory:
                     if marker.endWaypointRelativePos >= 0.0:
                         # This marker is zoned
                         unaddedEvents.append(CancelCommandEvent(marker.endWaypointRelativePos, marker.command))
-                        unaddedEvents.append(ActivateTriggerEvent(marker.waypointRelativePos, marker.triggerName))
-                        unaddedEvents.append(DeactivateTriggerEvent(marker.endWaypointRelativePos, marker.triggerName))
+                        unaddedEvents.append(TriggerEvent(marker.waypointRelativePos, marker.triggerName, True))
+                        unaddedEvents.append(TriggerEvent(marker.endWaypointRelativePos, marker.triggerName, False))
                     else:
                         unaddedEvents.append(OneShotTriggerEvent(marker.waypointRelativePos, marker.triggerName))
+                for zone in path.getPointTowardsZones():
+                    unaddedEvents.append(PointTowardsZoneEvent(zone.minWaypointRelativePos, zone.name, True))
+                    unaddedEvents.append(PointTowardsZoneEvent(zone.maxWaypointRelativePos, zone.name, False))
                 unaddedEvents.sort(key=lambda e: e.getTimestamp())
 
                 # Reverse pass

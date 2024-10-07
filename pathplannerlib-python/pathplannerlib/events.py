@@ -35,153 +35,11 @@ class Event:
         raise NotImplementedError
 
 
-class ScheduleCommandEvent(Event):
-    _command: Command
-
-    def __init__(self, timestamp: float, command: Command):
-        """
-        Create an event to schedule a command
-
-        :param timestamp: The trajectory timestamp for this event
-        :param command: The command to schedule
-        """
-        super().__init__(timestamp)
-        self._command = command
-
-    @override
-    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
-        eventScheduler.scheduleCommand(self._command)
-
-    @override
-    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
-        # Do nothing
-        pass
-
-    @override
-    def copyWithTime(self, timestamp: float) -> Event:
-        return ScheduleCommandEvent(timestamp, self._command)
-
-
-class CancelCommandEvent(Event):
-    _command: Command
-
-    def __init__(self, timestamp: float, command: Command):
-        """
-        Create an event to cancel a command
-
-        :param timestamp: The trajectory timestamp for this event
-        :param command: The command to cancel
-        """
-        super().__init__(timestamp)
-        self._command = command
-
-    @override
-    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
-        eventScheduler.cancelCommand(self._command)
-
-    @override
-    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
-        # Do nothing
-        pass
-
-    @override
-    def copyWithTime(self, timestamp: float) -> Event:
-        return CancelCommandEvent(timestamp, self._command)
-
-
-class ActivateTriggerEvent(Event):
-    _name: str
-
-    def __init__(self, timestamp: float, name: str):
-        """
-        Create an event to schedule a command
-
-        :param timestamp: The trajectory timestamp for this event
-        :param name: The name of the trigger to control
-        """
-        super().__init__(timestamp)
-        self._name = name
-
-    @override
-    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
-        eventScheduler.setCondition(self._name, True)
-
-    @override
-    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
-        # Do nothing
-        pass
-
-    @override
-    def copyWithTime(self, timestamp: float) -> Event:
-        return ActivateTriggerEvent(timestamp, self._name)
-
-
-class DeactivateTriggerEvent(Event):
-    _name: str
-
-    def __init__(self, timestamp: float, name: str):
-        """
-        Create an event to schedule a command
-
-        :param timestamp: The trajectory timestamp for this event
-        :param name: The name of the trigger to control
-        """
-        super().__init__(timestamp)
-        self._name = name
-
-    @override
-    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
-        eventScheduler.setCondition(self._name, False)
-
-    @override
-    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
-        # Ensure the condition gets set to false
-        eventScheduler.setCondition(self._name, False)
-
-    @override
-    def copyWithTime(self, timestamp: float) -> Event:
-        return DeactivateTriggerEvent(timestamp, self._name)
-
-
-class OneShotTriggerEvent(Event):
-    _name: str
-    _resetCommand: Command
-
-    def __init__(self, timestamp: float, name: str):
-        """
-        Create an event for activating a trigger, then deactivating it the next loop
-
-        :param timestamp: The trajectory timestamp for this event
-        :param name: The name of the trigger to control
-        """
-        super().__init__(timestamp)
-        self._name = name
-        self._resetCommand = cmd.waitSeconds(0).andThen(
-            cmd.runOnce(lambda: EventScheduler.setCondition(self._name, False))).ignoringDisable(True)
-
-    @override
-    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
-        EventScheduler.setCondition(self._name, True)
-        # We schedule this command with the main command scheduler so that it is guaranteed to be run
-        # in its entirety, since the EventScheduler could cancel this command before it finishes
-        CommandScheduler.getInstance().schedule(self._resetCommand)
-
-    @override
-    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
-        # Do nothing
-        pass
-
-    @override
-    def copyWithTime(self, timestamp: float) -> Event:
-        return OneShotTriggerEvent(timestamp, self._name)
-
-
 class EventScheduler:
     _eventCommands: dict
     _upcomingEvents: List[Event]
 
     _eventLoop: EventLoop = EventLoop()
-    _eventConditions: dict[str, bool] = {}
 
     def __init__(self):
         """
@@ -261,18 +119,6 @@ class EventScheduler:
     def getEventLoop() -> EventLoop:
         return EventScheduler._eventLoop
 
-    @staticmethod
-    def setCondition(name: str, value: bool) -> None:
-        EventScheduler._eventConditions[name] = value
-
-    @staticmethod
-    def pollCondition(name: str) -> Callable[[], bool]:
-        # Ensure there is a condition in the map for this name
-        if name not in EventScheduler._eventConditions:
-            EventScheduler.setCondition(name, False)
-
-        return lambda: EventScheduler._eventConditions[name]
-
     def scheduleCommand(self, command: Command) -> None:
         """
         Schedule a command on this scheduler. This will cancel other commands that share requirements
@@ -307,5 +153,187 @@ class EventScheduler:
 
 
 class EventTrigger(Trigger):
-    def __init__(self, name: str):
-        super().__init__(EventScheduler.getEventLoop(), EventScheduler.pollCondition(name))
+    _eventConditions: dict[str, bool] = {}
+
+    def __init__(self, name: str, eventLoop: EventLoop = None):
+        super().__init__(eventLoop if eventLoop is not None else EventScheduler.getEventLoop(),
+                         EventTrigger.pollCondition(name))
+
+    @staticmethod
+    def setCondition(name: str, value: bool) -> None:
+        EventTrigger._eventConditions[name] = value
+
+    @staticmethod
+    def pollCondition(name: str) -> Callable[[], bool]:
+        # Ensure there is a condition in the map for this name
+        if name not in EventTrigger._eventConditions:
+            EventTrigger.setCondition(name, False)
+
+        return lambda: EventTrigger._eventConditions[name]
+
+
+class PointTowardsZoneTrigger(Trigger):
+    _zoneConditions: dict[str, bool] = {}
+
+    def __init__(self, name: str, eventLoop: EventLoop = None):
+        super().__init__(eventLoop if eventLoop is not None else EventScheduler.getEventLoop(),
+                         PointTowardsZoneTrigger.pollCondition(name))
+
+    @staticmethod
+    def setWithinZone(name: str, withinZone: bool) -> None:
+        PointTowardsZoneTrigger._zoneConditions[name] = withinZone
+
+    @staticmethod
+    def pollCondition(name: str) -> Callable[[], bool]:
+        # Ensure there is a condition in the map for this name
+        if name not in PointTowardsZoneTrigger._zoneConditions:
+            PointTowardsZoneTrigger.setWithinZone(name, False)
+
+        return lambda: PointTowardsZoneTrigger._zoneConditions[name]
+
+
+class ScheduleCommandEvent(Event):
+    _command: Command
+
+    def __init__(self, timestamp: float, command: Command):
+        """
+        Create an event to schedule a command
+
+        :param timestamp: The trajectory timestamp for this event
+        :param command: The command to schedule
+        """
+        super().__init__(timestamp)
+        self._command = command
+
+    @override
+    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        eventScheduler.scheduleCommand(self._command)
+
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        # Do nothing
+        pass
+
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return ScheduleCommandEvent(timestamp, self._command)
+
+
+class CancelCommandEvent(Event):
+    _command: Command
+
+    def __init__(self, timestamp: float, command: Command):
+        """
+        Create an event to cancel a command
+
+        :param timestamp: The trajectory timestamp for this event
+        :param command: The command to cancel
+        """
+        super().__init__(timestamp)
+        self._command = command
+
+    @override
+    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        eventScheduler.cancelCommand(self._command)
+
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        # Do nothing
+        pass
+
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return CancelCommandEvent(timestamp, self._command)
+
+
+class TriggerEvent(Event):
+    _name: str
+    _active: bool
+
+    def __init__(self, timestamp: float, name: str, active: bool):
+        """
+        Create an event to control an event trigger
+
+        :param timestamp: The trajectory timestamp for this event
+        :param name: The name of the trigger to control
+        :param active: Should the trigger be activated by this event
+        """
+        super().__init__(timestamp)
+        self._name = name
+        self._active = active
+
+    @override
+    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        EventTrigger.setCondition(self._name, self._active)
+
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        if not self._active:
+            EventTrigger.setCondition(self._name, False)
+
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return TriggerEvent(timestamp, self._name, self._active)
+
+
+class PointTowardsZoneEvent(Event):
+    _name: str
+    _active: bool
+
+    def __init__(self, timestamp: float, name: str, active: bool):
+        """
+        Create an event to control a point towards zone trigger
+
+        :param timestamp: The trajectory timestamp for this event
+        :param name: The name of the zone
+        :param active: Should the trigger be activated by this event
+        """
+        super().__init__(timestamp)
+        self._name = name
+        self._active = active
+
+    @override
+    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        PointTowardsZoneTrigger.setWithinZone(self._name, self._active)
+
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        if not self._active:
+            PointTowardsZoneTrigger.setWithinZone(self._name, False)
+
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return PointTowardsZoneEvent(timestamp, self._name, self._active)
+
+
+class OneShotTriggerEvent(Event):
+    _name: str
+    _resetCommand: Command
+
+    def __init__(self, timestamp: float, name: str):
+        """
+        Create an event for activating a trigger, then deactivating it the next loop
+
+        :param timestamp: The trajectory timestamp for this event
+        :param name: The name of the trigger to control
+        """
+        super().__init__(timestamp)
+        self._name = name
+        self._resetCommand = cmd.waitSeconds(0).andThen(
+            cmd.runOnce(lambda: EventTrigger.setCondition(self._name, False))).ignoringDisable(True)
+
+    @override
+    def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
+        EventTrigger.setCondition(self._name, True)
+        # We schedule this command with the main command scheduler so that it is guaranteed to be run
+        # in its entirety, since the EventScheduler could cancel this command before it finishes
+        CommandScheduler.getInstance().schedule(self._resetCommand)
+
+    @override
+    def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
+        # Do nothing
+        pass
+
+    @override
+    def copyWithTime(self, timestamp: float) -> Event:
+        return OneShotTriggerEvent(timestamp, self._name)

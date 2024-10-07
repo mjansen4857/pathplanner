@@ -169,41 +169,46 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 
 	std::vector < std::shared_ptr < Event >> fullEvents;
 	// Events from pplibCommands
-	for (wpi::json::const_reference m : json.at("pplibCommands")) {
-		auto dataJson = m.at("data");
-		auto offsetJson = dataJson.at("offset");
-		auto eventJson = m.at("event");
+	if (json.contains("pplibCommands")) {
+		for (wpi::json::const_reference m : json.at("pplibCommands")) {
+			auto dataJson = m.at("data");
+			auto offsetJson = dataJson.at("offset");
+			auto eventJson = m.at("event");
 
-		std::string name = dataJson.at("name").get<std::string>();
-		units::second_t targetTimestamp { dataJson.at("targetTimestamp").get<
-				double>() };
-		units::second_t offset { offsetJson.at("val").get<double>() };
-		units::second_t timestamp = targetTimestamp + offset;
-		auto eventCommand = std::shared_ptr < frc2::Command
-				> (CommandUtil::commandFromJson(eventJson, true).Unwrap());
+			std::string name = dataJson.at("name").get<std::string>();
+			units::second_t targetTimestamp {
+					dataJson.at("targetTimestamp").get<double>() };
+			units::second_t offset { offsetJson.at("val").get<double>() };
+			units::second_t timestamp = targetTimestamp + offset;
+			auto eventCommand = std::shared_ptr < frc2::Command
+					> (CommandUtil::commandFromJson(eventJson, true).Unwrap());
 
-		fullEvents.emplace_back(
-				std::make_shared < OneShotTriggerEvent > (timestamp, name));
-		fullEvents.emplace_back(
-				std::make_shared < ScheduleCommandEvent
-						> (timestamp, eventCommand));
+			fullEvents.emplace_back(
+					std::make_shared < OneShotTriggerEvent > (timestamp, name));
+			fullEvents.emplace_back(
+					std::make_shared < ScheduleCommandEvent
+							> (timestamp, eventCommand));
+		}
 	}
 
 	// Events from choreolib events
-	for (wpi::json::const_reference m : json.at("events")) {
-		auto dataJson = m.at("data");
-		auto offsetJson = dataJson.at("offset");
-		auto eventJson = m.at("event");
-		auto eventDataJson = eventJson.at("data");
+	if (json.contains("events")) {
+		for (wpi::json::const_reference m : json.at("events")) {
+			auto dataJson = m.at("data");
+			auto offsetJson = dataJson.at("offset");
+			auto eventJson = m.at("event");
+			auto eventDataJson = eventJson.at("data");
 
-		std::string event = eventDataJson.at("event").get<std::string>();
-		units::second_t targetTimestamp { dataJson.at("targetTimestamp").get<
-				double>() };
-		units::second_t offset { offsetJson.at("val").get<double>() };
-		units::second_t timestamp = targetTimestamp + offset;
+			std::string event = eventDataJson.at("event").get<std::string>();
+			units::second_t targetTimestamp {
+					dataJson.at("targetTimestamp").get<double>() };
+			units::second_t offset { offsetJson.at("val").get<double>() };
+			units::second_t timestamp = targetTimestamp + offset;
 
-		fullEvents.emplace_back(
-				std::make_shared < OneShotTriggerEvent > (timestamp, event));
+			fullEvents.emplace_back(
+					std::make_shared < OneShotTriggerEvent
+							> (timestamp, event));
+		}
 	}
 
 	std::sort(fullEvents.begin(), fullEvents.end(),

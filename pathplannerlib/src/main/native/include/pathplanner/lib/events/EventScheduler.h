@@ -6,7 +6,6 @@
 #include <frc2/command/Command.h>
 #include <wpi/SmallSet.h>
 #include <frc/event/EventLoop.h>
-#include <unordered_map>
 #include <functional>
 #include "pathplanner/lib/events/Event.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
@@ -78,29 +77,9 @@ public:
 	 */
 	void cancelCommand(std::shared_ptr<frc2::Command> command);
 
-	static frc::EventLoop* getEventLoop();
-
-	static std::unordered_map<std::string, bool>& getEventConditions();
-
-	static inline void setCondition(std::string name, bool value) {
-		getEventConditions()[name] = value;
-	}
-
-	/**
-	 * Create a boolean supplier that will poll a condition. This is used to create EventTriggers
-	 *
-	 * @param name The name of the event
-	 * @return A boolean supplier to poll the event's condition
-	 */
-	static inline std::function<bool()> pollCondition(std::string name) {
-		// Ensure there is a condition in the map for this name
-		if (!getEventConditions().contains(name)) {
-			getEventConditions().emplace(name, false);
-		}
-
-		return [name]() {
-			return getEventConditions()[name];
-		};
+	static inline frc::EventLoop* getEventLoop() {
+		static frc::EventLoop *eventLoop = new frc::EventLoop();
+		return eventLoop;
 	}
 
 private:

@@ -3,7 +3,9 @@
 #include <wpi/json.h>
 #include <frc/geometry/Translation2d.h>
 #include <frc/geometry/Rotation2d.h>
+#include <string>
 #include "pathplanner/lib/util/FlippingUtil.h"
+#include "pathplanner/lib/util/JSONUtil.h"
 
 namespace pathplanner {
 class PointTowardsZone {
@@ -11,6 +13,7 @@ public:
 	/**
 	 * Create a new point towards zone
 	 *
+	 * @param name The name of this zone. Used for point towards zone triggers
 	 * @param targetPosition The target field position in meters
 	 * @param rotationOffset A rotation offset to add on top of the angle to the target position. For
 	 *     example, if you want the robot to point away from the target position, use a rotation
@@ -18,23 +21,24 @@ public:
 	 * @param minWaypointRelativePos Starting position of the zone
 	 * @param maxWaypointRelativePos End position of the zone
 	 */
-	PointTowardsZone(frc::Translation2d targetPosition,
+	PointTowardsZone(std::string name, frc::Translation2d targetPosition,
 			frc::Rotation2d rotationOffset, double minWaypointRelativePos,
-			double maxWaypointRelativePos) : m_targetPos(targetPosition), m_rotationOffset(
-			rotationOffset), m_minPos(minWaypointRelativePos), m_maxPos(
-			maxWaypointRelativePos) {
+			double maxWaypointRelativePos) : m_name(name), m_targetPos(
+			targetPosition), m_rotationOffset(rotationOffset), m_minPos(
+			minWaypointRelativePos), m_maxPos(maxWaypointRelativePos) {
 	}
 
 	/**
 	 * Create a new point towards zone
 	 *
+	 * @param name The name of this zone. Used for point towards zone triggers
 	 * @param targetPosition The target field position in meters
 	 * @param minWaypointRelativePos Starting position of the zone
 	 * @param maxWaypointRelativePos End position of the zone
 	 */
-	PointTowardsZone(frc::Translation2d targetPosition,
+	PointTowardsZone(std::string name, frc::Translation2d targetPosition,
 			double minWaypointRelativePos, double maxWaypointRelativePos) : PointTowardsZone(
-			targetPosition, frc::Rotation2d(), minWaypointRelativePos,
+			name, targetPosition, frc::Rotation2d(), minWaypointRelativePos,
 			maxWaypointRelativePos) {
 	}
 
@@ -45,13 +49,18 @@ public:
 	 * @return The point towards zone defined by the given json object
 	 */
 	static inline PointTowardsZone fromJson(const wpi::json &json) {
-		frc::Translation2d targetPos = translationFromJson(
+		std::string name = json.at("name").get<std::string>();
+		frc::Translation2d targetPos = JSONUtil::translation2dFromJson(
 				json.at("fieldPosition"));
 		frc::Rotation2d rotationOffset = frc::Rotation2d(
 				units::degree_t { json.at("rotationOffset").get<double>() });
 		double minPos = json.at("minWaypointRelativePos").get<double>();
 		double maxPos = json.at("maxWaypointRelativePos").get<double>();
-		return PointTowardsZone(targetPos, rotationOffset, minPos, maxPos);
+		return PointTowardsZone(name, targetPos, rotationOffset, minPos, maxPos);
+	}
+
+	constexpr const std::string& getName() {
+		return m_name;
 	}
 
 	/**
@@ -91,28 +100,24 @@ public:
 	}
 
 	inline PointTowardsZone flip() const {
-		return PointTowardsZone(FlippingUtil::flipFieldPosition(m_targetPos),
-				m_rotationOffset, m_minPos, m_maxPos);
+		return PointTowardsZone(m_name,
+				FlippingUtil::flipFieldPosition(m_targetPos), m_rotationOffset,
+				m_minPos, m_maxPos);
 	}
 
 	inline bool operator==(const PointTowardsZone &other) const {
-		return std::abs(m_minPos - other.m_minPos) < 1E-9
+		return m_name == other.m_name
+				&& std::abs(m_minPos - other.m_minPos) < 1E-9
 				&& std::abs(m_maxPos - other.m_maxPos) < 1E-9
 				&& m_targetPos == other.m_targetPos
 				&& m_rotationOffset == other.m_rotationOffset;
 	}
 
 private:
+	std::string m_name;
 	frc::Translation2d m_targetPos;
 	frc::Rotation2d m_rotationOffset;
 	double m_minPos;
 	double m_maxPos;
-
-	inline static frc::Translation2d translationFromJson(
-			const wpi::json &json) {
-		auto x = units::meter_t { json.at("x").get<double>() };
-		auto y = units::meter_t { json.at("y").get<double>() };
-		return frc::Translation2d(x, y);
-	}
 };
 }

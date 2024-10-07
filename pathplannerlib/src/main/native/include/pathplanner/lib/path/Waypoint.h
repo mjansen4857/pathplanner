@@ -58,13 +58,5 @@ public:
 	 * @return The waypoint created from JSON
 	 */
 	static Waypoint fromJson(const wpi::json &waypointJson);
-
-private:
-	inline static frc::Translation2d translationFromJson(
-			const wpi::json &json) {
-		auto x = units::meter_t { json.at("x").get<double>() };
-		auto y = units::meter_t { json.at("y").get<double>() };
-		return frc::Translation2d(x, y);
-	}
 };
 }

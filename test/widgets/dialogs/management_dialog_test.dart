@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pathplanner/commands/command.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/dialogs/management_dialog.dart';
@@ -9,15 +9,15 @@ import '../../test_helpers.dart';
 
 void main() {
   tearDown(() {
-    Command.named.clear();
+    ProjectPage.events.clear();
   });
 
-  testWidgets('shows named commands', (widgetTester) async {
+  testWidgets('shows events', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Command.named.add('test1');
-    Command.named.add('test2');
+    ProjectPage.events.add('test1');
+    ProjectPage.events.add('test2');
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -59,11 +59,11 @@ void main() {
     expect(find.text('link2'), findsOneWidget);
   });
 
-  testWidgets('remove command', (widgetTester) async {
+  testWidgets('remove event', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Command.named.add('test1');
+    ProjectPage.events.add('test1');
 
     bool removed = false;
 
@@ -84,8 +84,8 @@ void main() {
 
     expect(cmdTile, findsOneWidget);
 
-    final removeBtn = find.descendant(
-        of: cmdTile, matching: find.byTooltip('Remove named command'));
+    final removeBtn =
+        find.descendant(of: cmdTile, matching: find.byTooltip('Remove event'));
 
     expect(removeBtn, findsOneWidget);
 
@@ -100,7 +100,7 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(removed, true);
-    expect(Command.named.contains('test1'), false);
+    expect(ProjectPage.events.contains('test1'), false);
   });
 
   testWidgets('remove linked', (widgetTester) async {
@@ -149,11 +149,11 @@ void main() {
     expect(removed, true);
   });
 
-  testWidgets('rename command', (widgetTester) async {
+  testWidgets('rename event', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Command.named.add('test1');
+    ProjectPage.events.add('test1');
 
     bool renamed = false;
 
@@ -174,8 +174,8 @@ void main() {
 
     expect(cmdTile, findsOneWidget);
 
-    final renameBtn = find.descendant(
-        of: cmdTile, matching: find.byTooltip('Rename named command'));
+    final renameBtn =
+        find.descendant(of: cmdTile, matching: find.byTooltip('Rename event'));
 
     expect(renameBtn, findsOneWidget);
 
@@ -197,8 +197,8 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(renamed, true);
-    expect(Command.named.contains('test1'), false);
-    expect(Command.named.contains('test1renamed'), true);
+    expect(ProjectPage.events.contains('test1'), false);
+    expect(ProjectPage.events.contains('test1renamed'), true);
   });
 
   testWidgets('rename linked', (widgetTester) async {
@@ -254,12 +254,12 @@ void main() {
     expect(renamed, true);
   });
 
-  testWidgets('rename command invalid', (widgetTester) async {
+  testWidgets('rename event invalid', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Command.named.add('test1');
-    Command.named.add('test2');
+    ProjectPage.events.add('test1');
+    ProjectPage.events.add('test2');
 
     bool renamed = false;
 
@@ -280,8 +280,8 @@ void main() {
 
     expect(cmdTile, findsOneWidget);
 
-    final renameBtn = find.descendant(
-        of: cmdTile, matching: find.byTooltip('Rename named command'));
+    final renameBtn =
+        find.descendant(of: cmdTile, matching: find.byTooltip('Rename event'));
 
     expect(renameBtn, findsOneWidget);
 
@@ -303,7 +303,7 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(renamed, false);
-    expect(Command.named.contains('test1'), true);
+    expect(ProjectPage.events.contains('test1'), true);
   });
 
   testWidgets('rename linked invalid', (widgetTester) async {
@@ -360,11 +360,11 @@ void main() {
     expect(renamed, false);
   });
 
-  testWidgets('rename command no change', (widgetTester) async {
+  testWidgets('rename event no change', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
-    Command.named.add('test1');
+    ProjectPage.events.add('test1');
 
     bool renamed = false;
 
@@ -385,8 +385,8 @@ void main() {
 
     expect(cmdTile, findsOneWidget);
 
-    final renameBtn = find.descendant(
-        of: cmdTile, matching: find.byTooltip('Rename named command'));
+    final renameBtn =
+        find.descendant(of: cmdTile, matching: find.byTooltip('Rename event'));
 
     expect(renameBtn, findsOneWidget);
 
@@ -408,7 +408,7 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(renamed, false);
-    expect(Command.named.contains('test1'), true);
+    expect(ProjectPage.events.contains('test1'), true);
   });
 
   testWidgets('rename linked no change', (widgetTester) async {

@@ -1,14 +1,16 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
-import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:undo/undo.dart';
 
 void main() {
@@ -38,6 +40,36 @@ void main() {
     pathChanged = false;
     hoveredMarker = null;
     selectedMarker = null;
+
+    ProjectPage.events.add('0');
+    ProjectPage.events.add('1');
+  });
+
+  testWidgets('name dropdown', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EventMarkersTree(
+          path: path,
+          onPathChangedNoSim: () => pathChanged = true,
+          onMarkerHovered: (value) => hoveredMarker = value,
+          onMarkerSelected: (value) => selectedMarker = value,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    final dropdown = find.widgetWithText(DropdownButton2<String>, '0');
+
+    expect(dropdown, findsOneWidget);
+
+    await widgetTester.tap(dropdown);
+    await widgetTester.pumpAndSettle();
+
+    expect(find.text('0'), findsWidgets);
+    expect(find.text('1'), findsWidgets);
+
+    // flutter is dumb and won't actually select from a dropdown when you tap
+    // it in a test so this test ends here i guess
   });
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
@@ -88,35 +120,6 @@ void main() {
         findsNWidgets(2));
   });
 
-  testWidgets('Marker card titles', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: EventMarkersTree(
-          path: path,
-          onPathChangedNoSim: () => pathChanged = true,
-          onMarkerHovered: (value) => hoveredMarker = value,
-          onMarkerSelected: (value) => selectedMarker = value,
-          undoStack: undoStack,
-        ),
-      ),
-    ));
-
-    expect(find.widgetWithText(RenamableTitle, '0'), findsOneWidget);
-    expect(find.widgetWithText(RenamableTitle, '1'), findsOneWidget);
-
-    await widgetTester.enterText(
-        find.widgetWithText(RenamableTitle, '0'), 'marker');
-    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
-    await widgetTester.pump();
-
-    expect(pathChanged, true);
-    expect(path.eventMarkers[0].name, 'marker');
-
-    undoStack.undo();
-    await widgetTester.pump();
-    expect(path.eventMarkers[0].name, '0');
-  });
-
   testWidgets('Marker card hover', (widgetTester) async {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -162,21 +165,21 @@ void main() {
       ),
     ));
 
-    var markerCards = find.descendant(
-        of: find.byType(TreeCardNode), matching: find.byType(TreeCardNode));
+    var markerCardTapSpots = find.descendant(
+        of: find.byType(TreeCardNode), matching: find.byType(InfoCard));
 
     expect(find.byType(Slider), findsNothing);
 
-    await widgetTester.tap(markerCards.at(0));
+    await widgetTester.tap(markerCardTapSpots.at(0));
     await widgetTester.pumpAndSettle();
     expect(selectedMarker, 0);
     expect(find.byType(Slider), findsWidgets);
 
-    await widgetTester.tap(markerCards.at(1));
+    await widgetTester.tap(markerCardTapSpots.at(1));
     await widgetTester.pump();
     expect(selectedMarker, 1);
 
-    await widgetTester.tap(markerCards.at(1));
+    await widgetTester.tap(markerCardTapSpots.at(1));
     await widgetTester.pumpAndSettle();
     expect(selectedMarker, isNull);
   });

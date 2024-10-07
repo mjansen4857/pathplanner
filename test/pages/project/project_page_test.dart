@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
-import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/path_command.dart';
@@ -1534,14 +1533,14 @@ void main() {
     expect(find.textContaining('Unable to Rename'), findsOneWidget);
   });
 
-  testWidgets('named command rename', (widgetTester) async {
+  testWidgets('event rename', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await fs.directory(join(deployPath, 'paths')).create(recursive: true);
     await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
-    Command.named.add('test1');
+    ProjectPage.events.add('test1');
 
     PathPlannerPath path = PathPlannerPath.defaultPath(
       pathDir: join(deployPath, 'paths'),
@@ -1549,6 +1548,7 @@ void main() {
     );
     path.eventMarkers.add(
       EventMarker(
+        name: 'test1',
         command: SequentialCommandGroup(
           commands: [
             ParallelCommandGroup(
@@ -1593,7 +1593,7 @@ void main() {
 
     final renameBtn = find.descendant(
         of: find.widgetWithText(ListTile, 'test1'),
-        matching: find.byTooltip('Rename named command'));
+        matching: find.byTooltip('Rename event'));
     expect(renameBtn, findsOneWidget);
 
     await widgetTester.tap(renameBtn);
@@ -1618,7 +1618,7 @@ void main() {
     await fs.directory(join(deployPath, 'paths')).create(recursive: true);
     await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
-    Command.named.add('test1');
+    ProjectPage.events.add('test1');
     Waypoint.linked['link1'] = const Translation2d(0, 0);
 
     PathPlannerPath path = PathPlannerPath.defaultPath(
@@ -1673,14 +1673,14 @@ void main() {
     await widgetTester.pumpAndSettle();
   });
 
-  testWidgets('named command remove', (widgetTester) async {
+  testWidgets('event remove', (widgetTester) async {
     FlutterError.onError = ignoreOverflowErrors;
     await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await fs.directory(join(deployPath, 'paths')).create(recursive: true);
     await fs.directory(join(deployPath, 'autos')).create(recursive: true);
 
-    Command.named.add('test1');
+    ProjectPage.events.add('test1');
 
     PathPlannerPath path = PathPlannerPath.defaultPath(
       pathDir: join(deployPath, 'paths'),
@@ -1688,6 +1688,7 @@ void main() {
     );
     path.eventMarkers.add(
       EventMarker(
+        name: 'test1',
         command: SequentialCommandGroup(
           commands: [
             ParallelCommandGroup(
@@ -1732,7 +1733,7 @@ void main() {
 
     final removeBtn = find.descendant(
         of: find.widgetWithText(ListTile, 'test1'),
-        matching: find.byTooltip('Remove named command'));
+        matching: find.byTooltip('Remove event'));
     expect(removeBtn, findsOneWidget);
 
     await widgetTester.tap(removeBtn);

@@ -59,7 +59,7 @@ class ModuleConfig:
 
         self.maxDriveVelocityRadPerSec = self.maxDriveVelocityMPS / self.wheelRadiusMeters
         maxSpeedCurrentDraw = self.driveMotor.current(self.maxDriveVelocityRadPerSec, 12.0)
-        self.torqueLoss = self.driveMotor.torque(min(maxSpeedCurrentDraw, self.driveCurrentLimit))
+        self.torqueLoss = max(self.driveMotor.torque(min(maxSpeedCurrentDraw, self.driveCurrentLimit)), 0.0)
 
 
 class RobotConfig:

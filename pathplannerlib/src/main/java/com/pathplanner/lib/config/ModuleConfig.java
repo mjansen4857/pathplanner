@@ -53,6 +53,7 @@ public class ModuleConfig {
     this.maxDriveVelocityRadPerSec = this.maxDriveVelocityMPS / this.wheelRadiusMeters;
     double maxSpeedCurrentDraw = this.driveMotor.getCurrent(this.maxDriveVelocityRadPerSec, 12.0);
     this.torqueLoss =
-        this.driveMotor.getTorque(Math.min(maxSpeedCurrentDraw, this.driveCurrentLimit));
+        Math.max(
+            this.driveMotor.getTorque(Math.min(maxSpeedCurrentDraw, this.driveCurrentLimit)), 0.0);
   }
 }

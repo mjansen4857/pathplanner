@@ -149,7 +149,7 @@ jobs:
           cp windows/redist/vcruntime140.dll build/windows/x64/runner/Release
           cp windows/redist/vcruntime140_1.dll build/windows/x64/runner/Release
       
-      - name: Zip release
+      - name: Zip release (macOS)
         if: ${{ matrix.build-option == 'macos' }}
         run: |
           cd build/macos/Build/Products/Release
@@ -161,6 +161,34 @@ jobs:
           name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
           path: ${{ matrix.artifact-path }}
       
+      - name: Create macOS DMG
+        if: ${{ matrix.build-option == 'macos' }}
+        uses: L-Super/create-dmg-actions@v1
+        with:
+          dmg_name: build/macos/Build/Products/Release/${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}
+          src_dir: build/macos/Build/Products/Release/PathPlanner.app
+      
+      - name: Upload macOS DMG artifact
+        if: ${{ matrix.build-option == 'macos' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-dmg
+          path: build/macos/Build/Products/Release/${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}.dmg
+      
+      - name: Create windows installer
+        if: ${{ matrix.build-option == 'windows' }}
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
+        with:
+          path: windows_installer.iss
+          options: /O+ /F"${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-setup"
+      
+      - name: Upload windows installer artifact
+        if: ${{ matrix.build-option == 'windows' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-setup
+          path: build/windows/x64/installer/${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-setup.exe
+      
       - name: Create MSIX
         if: ${{ matrix.build-option == 'windows' }}
         run: flutter pub run msix:create --store
@@ -169,5 +197,5 @@ jobs:
         if: ${{ matrix.build-option == 'windows' }}
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact-name }}-MSIX-v${{ env.VERSION_NAME }}
+          name: ${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-msix
           path: ${{ matrix.artifact-path }}/pathplanner.msix

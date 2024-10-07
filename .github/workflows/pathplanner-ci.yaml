@@ -179,7 +179,7 @@ jobs:
         if: ${{ matrix.build-option == 'windows' }}
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.5
         with:
-          path: windows/installer.iss
+          path: windows_installer.iss
           options: /O+ /F"${{ matrix.artifact-name }}-v${{ env.VERSION_NAME }}-setup"
       
       - name: Upload windows installer artifact

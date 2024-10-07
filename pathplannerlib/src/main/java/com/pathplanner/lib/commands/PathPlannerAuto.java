@@ -3,6 +3,8 @@ package com.pathplanner.lib.commands;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.AutoBuilderException;
 import com.pathplanner.lib.auto.CommandUtil;
+import com.pathplanner.lib.events.EventTrigger;
+import com.pathplanner.lib.events.PointTowardsZoneTrigger;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -10,12 +12,17 @@ import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BooleanSupplier;
+
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -27,6 +34,10 @@ public class PathPlannerAuto extends Command {
 
   private Command autoCommand;
   private Pose2d startingPose;
+
+  private final EventLoop autoLoop;
+  private final Timer timer;
+  private boolean isRunning = false;
 
   /**
    * Constructs a new PathPlannerAuto command.
@@ -72,6 +83,9 @@ public class PathPlannerAuto extends Command {
     setName(autoName);
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
 
+    this.autoLoop = new EventLoop();
+    this.timer = new Timer();
+
     instances++;
     HAL.report(tResourceType.kResourceType_PathPlannerAuto, instances);
   }
@@ -87,6 +101,64 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
+   * Create a trigger that is high when this auto is running, and low when it is not running
+   * @return isRunning trigger
+   */
+  public Trigger isRunning() {
+    return new Trigger(autoLoop, () -> isRunning);
+  }
+
+  public Trigger timeElapsed(double time) {
+    return new Trigger(autoLoop, () -> timer.hasElapsed(time));
+  }
+
+  public Trigger timeRange(double startTime, double endTime) {
+    return new Trigger(autoLoop, () -> timer.get() >= startTime && timer.get() <= endTime);
+  }
+
+  public Trigger event(String eventName){
+    return new EventTrigger(autoLoop, eventName);
+  }
+
+  public Trigger pointTowardsZone(String zoneName){
+    return new PointTowardsZoneTrigger(autoLoop, zoneName);
+  }
+
+  public Trigger condition(BooleanSupplier condition) {
+    return new Trigger(autoLoop, condition);
+  }
+
+  @Override
+  public void initialize() {
+    autoCommand.initialize();
+    timer.restart();
+
+    isRunning = true;
+    autoLoop.poll();
+  }
+
+  @Override
+  public void execute() {
+    autoCommand.execute();
+
+    autoLoop.poll();
+  }
+
+  @Override
+  public boolean isFinished() {
+    return autoCommand.isFinished();
+  }
+
+  @Override
+  public void end(boolean interrupted) {
+    autoCommand.end(interrupted);
+    timer.stop();
+
+    isRunning = false;
+    autoLoop.poll();
+  }
+
+  /**
    * Get a list of every path in the given auto (depth first)
    *
    * @param autoName Name of the auto to get the path group from
@@ -95,12 +167,12 @@ public class PathPlannerAuto extends Command {
    * @throws ParseException If JSON within file cannot be parsed
    */
   public static List<PathPlannerPath> getPathGroupFromAutoFile(String autoName)
-      throws IOException, ParseException {
+          throws IOException, ParseException {
     try (BufferedReader br =
-        new BufferedReader(
-            new FileReader(
-                new File(
-                    Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
+                 new BufferedReader(
+                         new FileReader(
+                                 new File(
+                                         Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
       StringBuilder fileContentBuilder = new StringBuilder();
       String line;
       while ((line = br.readLine()) != null) {
@@ -137,9 +209,9 @@ public class PathPlannerAuto extends Command {
     if (!pathsInAuto.isEmpty()) {
       if (AutoBuilder.isHolonomic()) {
         this.startingPose =
-            new Pose2d(
-                pathsInAuto.get(0).getPoint(0).position,
-                pathsInAuto.get(0).getIdealStartingState().rotation());
+                new Pose2d(
+                        pathsInAuto.get(0).getPoint(0).position,
+                        pathsInAuto.get(0).getIdealStartingState().rotation());
       } else {
         this.startingPose = pathsInAuto.get(0).getStartingDifferentialPose();
       }
@@ -152,26 +224,6 @@ public class PathPlannerAuto extends Command {
     } else {
       this.autoCommand = cmd;
     }
-  }
-
-  @Override
-  public void initialize() {
-    autoCommand.initialize();
-  }
-
-  @Override
-  public void execute() {
-    autoCommand.execute();
-  }
-
-  @Override
-  public boolean isFinished() {
-    return autoCommand.isFinished();
-  }
-
-  @Override
-  public void end(boolean interrupted) {
-    autoCommand.end(interrupted);
   }
 
   private static List<PathPlannerPath> pathsFromCommandJson(

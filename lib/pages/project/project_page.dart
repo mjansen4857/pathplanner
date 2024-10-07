@@ -29,6 +29,8 @@ import 'package:undo/undo.dart';
 import 'package:watcher/watcher.dart';
 
 class ProjectPage extends StatefulWidget {
+  static Set<String> events = {};
+
   final SharedPreferences prefs;
   final FieldImage fieldImage;
   final Directory pathplannerDirectory;
@@ -307,18 +309,21 @@ class _ProjectPageState extends State<ProjectPage> {
             padding: const EdgeInsets.all(16.0),
             child: FloatingActionButton(
               clipBehavior: Clip.antiAlias,
-              tooltip: 'Manage Named Commands & Linked Waypoints',
+              tooltip: 'Manage Events & Linked Waypoints',
               backgroundColor: colorScheme.surface,
               foregroundColor: colorScheme.onSurface,
               onPressed: () => showDialog(
                 context: context,
                 builder: (BuildContext context) => ManagementDialog(
-                  onCommandRenamed: (String oldName, String newName) {
+                  onEventRenamed: (String oldName, String newName) {
                     setState(() {
                       for (PathPlannerPath path in _paths) {
                         for (EventMarker m in path.eventMarkers) {
                           _replaceNamedCommand(
                               oldName, newName, m.command.commands);
+                          if (m.name == oldName) {
+                            m.name = newName;
+                          }
                         }
                         path.generateAndSavePath();
                       }
@@ -330,11 +335,14 @@ class _ProjectPageState extends State<ProjectPage> {
                       }
                     });
                   },
-                  onCommandDeleted: (String name) {
+                  onEventDeleted: (String name) {
                     setState(() {
                       for (PathPlannerPath path in _paths) {
                         for (EventMarker m in path.eventMarkers) {
                           _replaceNamedCommand(name, null, m.command.commands);
+                          if (m.name == name) {
+                            m.name = '';
+                          }
                         }
                         path.generateAndSavePath();
                       }

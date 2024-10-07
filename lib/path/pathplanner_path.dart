@@ -8,6 +8,7 @@ import 'package:path/path.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
@@ -317,17 +318,17 @@ class PathPlannerPath {
     return pos;
   }
 
-  void _addNamedCommandsToSet(Command command) {
+  void _addNamedCommandsToEvents(Command command) {
     if (command is NamedCommand) {
       if (command.name != null) {
-        Command.named.add(command.name!);
+        ProjectPage.events.add(command.name!);
         return;
       }
     }
 
     if (command is CommandGroup) {
       for (Command cmd in command.commands) {
-        _addNamedCommandsToSet(cmd);
+        _addNamedCommandsToEvents(cmd);
       }
     }
   }
@@ -377,9 +378,10 @@ class PathPlannerPath {
   }
 
   void generatePathPoints() {
-    // Add all command names in this path to the available names
+    // Add all event names in this path to the available names
     for (EventMarker m in eventMarkers) {
-      _addNamedCommandsToSet(m.command);
+      ProjectPage.events.add(m.name);
+      _addNamedCommandsToEvents(m.command);
     }
 
     pathPoints.clear();

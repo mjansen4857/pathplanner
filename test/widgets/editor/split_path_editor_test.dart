@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_constraints.dart';
@@ -71,6 +72,7 @@ void main() {
       PrefsKeys.showGrid: true,
     });
     prefs = await SharedPreferences.getInstance();
+    ProjectPage.events.add('m');
   });
 
   testWidgets('has painter and tree', (widgetTester) async {

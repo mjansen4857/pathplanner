@@ -1,4 +1,5 @@
 #include "pathplanner/lib/path/Waypoint.h"
+#include "pathplanner/lib/util/JSONUtil.h"
 
 using namespace pathplanner;
 
@@ -23,15 +24,17 @@ Waypoint Waypoint::autoControlPoints(frc::Translation2d anchor,
 }
 
 Waypoint Waypoint::fromJson(const wpi::json &waypointJson) {
-	auto anchor = translationFromJson(waypointJson.at("anchor"));
+	auto anchor = JSONUtil::translation2dFromJson(waypointJson.at("anchor"));
 	std::optional < frc::Translation2d > prevControl = std::nullopt;
 	std::optional < frc::Translation2d > nextControl = std::nullopt;
 
 	if (!waypointJson.at("prevControl").is_null()) {
-		prevControl = translationFromJson(waypointJson.at("prevControl"));
+		prevControl = JSONUtil::translation2dFromJson(
+				waypointJson.at("prevControl"));
 	}
 	if (!waypointJson.at("nextControl").is_null()) {
-		nextControl = translationFromJson(waypointJson.at("nextControl"));
+		nextControl = JSONUtil::translation2dFromJson(
+				waypointJson.at("nextControl"));
 	}
 
 	return Waypoint(prevControl, anchor, nextControl);

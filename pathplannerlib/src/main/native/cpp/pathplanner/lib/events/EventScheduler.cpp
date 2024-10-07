@@ -73,14 +73,3 @@ void EventScheduler::cancelCommand(std::shared_ptr<frc2::Command> command) {
 		}
 	}
 }
-
-frc::EventLoop* EventScheduler::getEventLoop() {
-	static frc::EventLoop *eventLoop = new frc::EventLoop();
-	return eventLoop;
-}
-
-std::unordered_map<std::string, bool>& EventScheduler::getEventConditions() {
-	static std::unordered_map<std::string, bool> *eventConditions =
-			new std::unordered_map<std::string, bool>();
-	return *eventConditions;
-}

@@ -1,18 +1,21 @@
 package com.pathplanner.lib.events;
 
-/** Event for activating a trigger */
-public class ActivateTriggerEvent extends Event {
+/** Event for setting the value of an event trigger */
+public class TriggerEvent extends Event {
   private final String name;
+  private final boolean active;
 
   /**
    * Create an event for changing the value of a named trigger
    *
    * @param timestamp The trajectory timestamp of this event
    * @param name The name of the trigger to control
+   * @param active Should the trigger be activated by this event
    */
-  public ActivateTriggerEvent(double timestamp, String name) {
+  public TriggerEvent(double timestamp, String name, boolean active) {
     super(timestamp);
     this.name = name;
+    this.active = active;
   }
 
   /**
@@ -22,16 +25,19 @@ public class ActivateTriggerEvent extends Event {
    */
   @Override
   public void handleEvent(EventScheduler eventScheduler) {
-    EventScheduler.setCondition(name, true);
+    EventTrigger.setCondition(name, active);
   }
 
   @Override
   public void cancelEvent(EventScheduler eventScheduler) {
-    // Do nothing
+    if (!active) {
+      // Ensure this event's condition gets set to false
+      EventTrigger.setCondition(name, false);
+    }
   }
 
   @Override
   public Event copyWithTimestamp(double timestamp) {
-    return new ActivateTriggerEvent(timestamp, name);
+    return new TriggerEvent(timestamp, name, active);
   }
 }

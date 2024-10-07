@@ -2,8 +2,8 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/events/ScheduleCommandEvent.h"
 #include "pathplanner/lib/events/CancelCommandEvent.h"
-#include "pathplanner/lib/events/ActivateTriggerEvent.h"
-#include "pathplanner/lib/events/DeactivateTriggerEvent.h"
+#include "pathplanner/lib/events/TriggerEvent.h"
+#include "pathplanner/lib/events/PointTowardsZoneEvent.h"
 #include "pathplanner/lib/events/OneShotTriggerEvent.h"
 #include <memory>
 #include <units/force.h>
@@ -73,19 +73,29 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 								> (units::second_t {
 										marker.getEndWaypointRelativePos() }, marker.getCommand()));
 				unaddedEvents.emplace_back(
-						std::make_shared < ActivateTriggerEvent
+						std::make_shared < TriggerEvent
 								> (units::second_t {
-										marker.getWaypointRelativePos() }, marker.getTriggerName()));
+										marker.getWaypointRelativePos() }, marker.getTriggerName(), true));
 				unaddedEvents.emplace_back(
-						std::make_shared < DeactivateTriggerEvent
+						std::make_shared < TriggerEvent
 								> (units::second_t {
-										marker.getEndWaypointRelativePos() }, marker.getTriggerName()));
+										marker.getEndWaypointRelativePos() }, marker.getTriggerName(), false));
 			} else {
 				unaddedEvents.emplace_back(
 						std::make_shared < OneShotTriggerEvent
 								> (units::second_t {
 										marker.getWaypointRelativePos() }, marker.getTriggerName()));
 			}
+		}
+		for (PointTowardsZone zone : path->getPointTowardsZones()) {
+			unaddedEvents.emplace_back(
+					std::make_shared < PointTowardsZoneEvent
+							> (units::second_t {
+									zone.getMinWaypointRelativePos() }, zone.getName(), true));
+			unaddedEvents.emplace_back(
+					std::make_shared < PointTowardsZoneEvent
+							> (units::second_t {
+									zone.getMaxWaypointRelativePos() }, zone.getName(), false));
 		}
 		std::sort(unaddedEvents.begin(), unaddedEvents.end(),
 				[](auto left, auto right) {

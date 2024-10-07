@@ -11,7 +11,7 @@ from commands2 import Command, cmd
 
 from .auto import CommandUtil
 from .events import OneShotTriggerEvent, ScheduleCommandEvent, Event
-from .util import cubicLerp, calculateRadius, floatLerp, FlippingUtil
+from .util import cubicLerp, calculateRadius, floatLerp, FlippingUtil, translation2dFromJson
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
 from wpilib import getDeployDirectory
@@ -171,12 +171,14 @@ class PointTowardsZone:
     A zone on a path that will force the robot to point towards a position on the field
 
     Args:
+        name (str): The name of this zone. Used for point towards zone triggers
         targetPosition  (Translation2d): The target field position in meters
         minWaypointRelativePos (float): Starting position of the zone
         maxWaypointRelativePos (float): End position of the zone
         rotationOffset (Rotation2d): A rotation offset to add on top of the angle to the target position. For
             example, if you want the robot to point away from the target position, use a rotation offset of 180 degrees
     """
+    name: str
     targetPosition: Translation2d
     minWaypointRelativePos: float
     maxWaypointRelativePos: float
@@ -184,18 +186,13 @@ class PointTowardsZone:
 
     @staticmethod
     def fromJson(json_dict: dict) -> PointTowardsZone:
-        targetPos = PointTowardsZone._translationFromJson(json_dict['fieldPosition'])
+        name = str(json_dict['name'])
+        targetPos = translation2dFromJson(json_dict['fieldPosition'])
         minPos = float(json_dict['minWaypointRelativePos'])
         maxPos = float(json_dict['maxWaypointRelativePos'])
         deg = float(json_dict['rotationOffset'])
 
-        return PointTowardsZone(targetPos, minPos, maxPos, Rotation2d.fromDegrees(deg))
-
-    @staticmethod
-    def _translationFromJson(translationJson: dict) -> Translation2d:
-        x = float(translationJson['x'])
-        y = float(translationJson['y'])
-        return Translation2d(x, y)
+        return PointTowardsZone(name, targetPos, minPos, maxPos, Rotation2d.fromDegrees(deg))
 
     def flip(self) -> PointTowardsZone:
         """
@@ -203,7 +200,8 @@ class PointTowardsZone:
 
         :return: The flipped zone
         """
-        return PointTowardsZone(FlippingUtil.flipFieldPosition(self.targetPosition), self.minWaypointRelativePos,
+        return PointTowardsZone(self.name, FlippingUtil.flipFieldPosition(self.targetPosition),
+                                self.minWaypointRelativePos,
                                 self.maxWaypointRelativePos, self.rotationOffset)
 
 
@@ -330,18 +328,12 @@ class Waypoint:
         :param waypointJson: JSON object representing a waypoint
         :return: The waypoint created from JSON
         """
-        anchor = Waypoint._translationFromJson(waypointJson['anchor'])
-        prevControl = None if waypointJson['prevControl'] is None else Waypoint._translationFromJson(
+        anchor = translation2dFromJson(waypointJson['anchor'])
+        prevControl = None if waypointJson['prevControl'] is None else translation2dFromJson(
             waypointJson['prevControl'])
-        nextControl = None if waypointJson['nextControl'] is None else Waypoint._translationFromJson(
+        nextControl = None if waypointJson['nextControl'] is None else translation2dFromJson(
             waypointJson['nextControl'])
         return Waypoint(prevControl, anchor, nextControl)
-
-    @staticmethod
-    def _translationFromJson(translationJson: dict) -> Translation2d:
-        x = float(translationJson['x'])
-        y = float(translationJson['y'])
-        return Translation2d(x, y)
 
 
 class PathPlannerPath:
@@ -517,33 +509,35 @@ class PathPlannerPath:
 
             fullEvents: List[Event] = []
             # Events from pplibCommands
-            for m in fJson['pplibCommands']:
-                dataJson = m['data']
-                offsetJson = dataJson['offset']
-                eventJson = m['event']
+            if 'pplibCommands' in fJson:
+                for m in fJson['pplibCommands']:
+                    dataJson = m['data']
+                    offsetJson = dataJson['offset']
+                    eventJson = m['event']
 
-                name = str(dataJson['name'])
-                targetTimestamp = float(dataJson['targetTimestamp'])
-                offset = float(offsetJson['val'])
-                timestamp = targetTimestamp + offset
-                eventCommand = CommandUtil.commandFromJson(eventJson, True)
+                    name = str(dataJson['name'])
+                    targetTimestamp = float(dataJson['targetTimestamp'])
+                    offset = float(offsetJson['val'])
+                    timestamp = targetTimestamp + offset
+                    eventCommand = CommandUtil.commandFromJson(eventJson, True)
 
-                fullEvents.append(OneShotTriggerEvent(timestamp, name))
-                fullEvents.append(ScheduleCommandEvent(timestamp, eventCommand))
+                    fullEvents.append(OneShotTriggerEvent(timestamp, name))
+                    fullEvents.append(ScheduleCommandEvent(timestamp, eventCommand))
 
             # Events from choreolib events
-            for m in fJson['events']:
-                dataJson = m['data']
-                offsetJson = dataJson['offset']
-                eventJson = m['event']
-                eventDataJson = eventJson['data']
+            if 'events' in fJson:
+                for m in fJson['events']:
+                    dataJson = m['data']
+                    offsetJson = dataJson['offset']
+                    eventJson = m['event']
+                    eventDataJson = eventJson['data']
 
-                event = str(eventDataJson['event'])
-                targetTimestamp = float(dataJson['targetTimestamp'])
-                offset = float(offsetJson['val'])
-                timestamp = targetTimestamp + offset
+                    event = str(eventDataJson['event'])
+                    targetTimestamp = float(dataJson['targetTimestamp'])
+                    offset = float(offsetJson['val'])
+                    timestamp = targetTimestamp + offset
 
-                fullEvents.append(OneShotTriggerEvent(timestamp, event))
+                    fullEvents.append(OneShotTriggerEvent(timestamp, event))
 
             fullEvents.sort(key=lambda e: e.getTimestamp())
 

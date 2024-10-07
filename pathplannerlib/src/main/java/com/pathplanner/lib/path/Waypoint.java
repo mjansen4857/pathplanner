@@ -1,6 +1,7 @@
 package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.util.FlippingUtil;
+import com.pathplanner.lib.util.JSONUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import org.json.simple.JSONObject;
@@ -74,24 +75,17 @@ public record Waypoint(Translation2d prevControl, Translation2d anchor, Translat
    * @return The waypoint created from JSON
    */
   static Waypoint fromJson(JSONObject waypointJson) {
-    Translation2d anchor = translationFromJson((JSONObject) waypointJson.get("anchor"));
+    Translation2d anchor = JSONUtil.translation2dFromJson((JSONObject) waypointJson.get("anchor"));
     Translation2d prevControl = null;
     Translation2d nextControl = null;
 
     if (waypointJson.get("prevControl") != null) {
-      prevControl = translationFromJson((JSONObject) waypointJson.get("prevControl"));
+      prevControl = JSONUtil.translation2dFromJson((JSONObject) waypointJson.get("prevControl"));
     }
     if (waypointJson.get("nextControl") != null) {
-      nextControl = translationFromJson((JSONObject) waypointJson.get("nextControl"));
+      nextControl = JSONUtil.translation2dFromJson((JSONObject) waypointJson.get("nextControl"));
     }
 
     return new Waypoint(prevControl, anchor, nextControl);
-  }
-
-  private static Translation2d translationFromJson(JSONObject translationJson) {
-    double x = ((Number) translationJson.get("x")).doubleValue();
-    double y = ((Number) translationJson.get("y")).doubleValue();
-
-    return new Translation2d(x, y);
   }
 }

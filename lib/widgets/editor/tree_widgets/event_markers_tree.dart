@@ -1,6 +1,8 @@
+import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -8,7 +10,6 @@ import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
-import 'package:pathplanner/widgets/renamable_title.dart';
 import 'package:undo/undo.dart';
 
 class EventMarkersTree extends StatefulWidget {
@@ -34,6 +35,9 @@ class EventMarkersTree extends StatefulWidget {
 }
 
 class _EventMarkersTreeState extends State<EventMarkersTree> {
+  final TextEditingController _controller = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+
   List<EventMarker> get markers => widget.path.eventMarkers;
   List<Waypoint> get waypoints => widget.path.waypoints;
 
@@ -50,6 +54,13 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
 
     _controllers =
         List.generate(markers.length, (index) => ExpansionTileController());
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
   }
 
   @override
@@ -126,27 +137,141 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
       },
       title: Row(
         children: [
-          RenamableTitle(
-            title: markers[markerIdx].name,
-            onRename: (value) {
-              widget.undoStack.add(Change(
-                markers[markerIdx].name,
-                () {
-                  markers[markerIdx].name = value;
-                  widget.onPathChangedNoSim?.call();
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton2<String>(
+                hint: const Text('Event Name'),
+                value: markers[markerIdx].name.isEmpty
+                    ? null
+                    : markers[markerIdx].name,
+                items: ProjectPage.events.isEmpty
+                    ? [
+                        // Workaround to prevent menu from disabling itself with empty items list
+                        DropdownMenuItem(
+                          value: '',
+                          enabled: false,
+                          child: Text(
+                            '',
+                            style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ]
+                    : [
+                        for (String event in ProjectPage.events)
+                          if (event.isNotEmpty)
+                            DropdownMenuItem(
+                              value: event,
+                              child: Text(
+                                event,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.normal,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                      ],
+                buttonStyleData: ButtonStyleData(
+                  padding: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  height: 42,
+                ),
+                dropdownStyleData: DropdownStyleData(
+                  maxHeight: 300,
+                  isOverButton: true,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                menuItemStyleData: const MenuItemStyleData(),
+                dropdownSearchData: DropdownSearchData(
+                  searchController: _controller,
+                  searchInnerWidgetHeight: 42,
+                  searchInnerWidget: Container(
+                    height: 46,
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                    child: TextFormField(
+                      focusNode: _focusNode,
+                      autofocus: true,
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        hintText: 'Search or add new...',
+                        hintStyle: const TextStyle(fontSize: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      onFieldSubmitted: (value) {
+                        Navigator.of(context).pop();
+
+                        if (value.isNotEmpty) {
+                          widget.undoStack.add(Change(
+                            markers[markerIdx].name,
+                            () {
+                              markers[markerIdx].name = value;
+                              ProjectPage.events.add(value);
+                              widget.onPathChangedNoSim?.call();
+                            },
+                            (oldValue) {
+                              markers[markerIdx].name = oldValue;
+                              widget.onPathChangedNoSim?.call();
+                            },
+                          ));
+                        }
+                      },
+                    ),
+                  ),
+                  searchMatchFn: (item, searchValue) {
+                    return item.value
+                        .toString()
+                        .toLowerCase()
+                        .startsWith(searchValue.toLowerCase());
+                  },
+                ),
+                onMenuStateChange: (isOpen) {
+                  if (!isOpen) {
+                    _controller.clear();
+                  } else {
+                    // Request focus after a delay to wait for the menu to open
+                    Future.delayed(const Duration(milliseconds: 50))
+                        .then((_) => _focusNode.requestFocus());
+                  }
                 },
-                (oldValue) {
-                  markers[markerIdx].name = oldValue;
-                  widget.onPathChangedNoSim?.call();
+                onChanged: (value) {
+                  if (value != null && value.isNotEmpty) {
+                    widget.undoStack.add(Change(
+                      markers[markerIdx].name,
+                      () {
+                        markers[markerIdx].name = value;
+                        widget.onPathChangedNoSim?.call();
+                      },
+                      (oldValue) {
+                        markers[markerIdx].name = oldValue;
+                        widget.onPathChangedNoSim?.call();
+                      },
+                    ));
+                  }
                 },
-              ));
-            },
+              ),
+            ),
           ),
-          Expanded(child: Container()),
           const SizedBox(width: 12),
           InfoCard(
-              value:
-                  'Positioned at ${markers[markerIdx].waypointRelativePos.toStringAsFixed(2)}'),
+              value: markers[markerIdx].endWaypointRelativePos == null
+                  ? markers[markerIdx].waypointRelativePos.toStringAsFixed(2)
+                  : '${markers[markerIdx].waypointRelativePos.toStringAsFixed(2)}-${markers[markerIdx].endWaypointRelativePos!.toStringAsFixed(2)}'),
           Tooltip(
             message: 'Delete Marker',
             waitDuration: const Duration(seconds: 1),

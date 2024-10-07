@@ -8,7 +8,7 @@ class EventMarker {
   CommandGroup command;
 
   EventMarker({
-    this.name = 'Event Marker',
+    this.name = '',
     this.waypointRelativePos = 0,
     this.endWaypointRelativePos,
     required this.command,

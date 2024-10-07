@@ -6,6 +6,7 @@ import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/services/log.dart';
 
 class PathPlannerAuto {
@@ -31,7 +32,7 @@ class PathPlannerAuto {
     required this.folder,
     required this.choreoAuto,
   }) {
-    _addNamedCommandsToSet(sequence.commands);
+    _addNamedCommandsToEvents(sequence.commands);
   }
 
   PathPlannerAuto.defaultAuto({
@@ -154,17 +155,17 @@ class PathPlannerAuto {
     }
   }
 
-  void _addNamedCommandsToSet(List<Command> commands) {
+  void _addNamedCommandsToEvents(List<Command> commands) {
     for (Command cmd in commands) {
       if (cmd is NamedCommand) {
         if (cmd.name != null) {
-          Command.named.add(cmd.name!);
+          ProjectPage.events.add(cmd.name!);
           continue;
         }
       }
 
       if (cmd is CommandGroup) {
-        _addNamedCommandsToSet(cmd.commands);
+        _addNamedCommandsToEvents(cmd.commands);
       }
     }
   }

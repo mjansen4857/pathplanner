@@ -6,8 +6,6 @@ import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 
 abstract class Command {
-  static Set<String> named = {};
-
   final String type;
 
   const Command({

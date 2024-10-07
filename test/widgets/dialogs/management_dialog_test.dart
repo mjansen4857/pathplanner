@@ -22,8 +22,8 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {},
-          onCommandDeleted: (p0) {},
+          onEventRenamed: (p0, p1) {},
+          onEventDeleted: (p0) {},
           onLinkedRenamed: (p0, p1) {},
           onLinkedDeleted: (p0) {},
         ),
@@ -44,8 +44,8 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {},
-          onCommandDeleted: (p0) {},
+          onEventRenamed: (p0, p1) {},
+          onEventDeleted: (p0) {},
           onLinkedRenamed: (p0, p1) {},
           onLinkedDeleted: (p0) {},
         ),
@@ -70,8 +70,8 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {},
-          onCommandDeleted: (p0) {
+          onEventRenamed: (p0, p1) {},
+          onEventDeleted: (p0) {
             removed = true;
           },
           onLinkedRenamed: (p0, p1) {},
@@ -114,8 +114,8 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {},
-          onCommandDeleted: (p0) {},
+          onEventRenamed: (p0, p1) {},
+          onEventDeleted: (p0) {},
           onLinkedRenamed: (p0, p1) {},
           onLinkedDeleted: (p0) {
             removed = true;
@@ -160,10 +160,10 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {
+          onEventRenamed: (p0, p1) {
             renamed = true;
           },
-          onCommandDeleted: (p0) {},
+          onEventDeleted: (p0) {},
           onLinkedRenamed: (p0, p1) {},
           onLinkedDeleted: (p0) {},
         ),
@@ -212,8 +212,8 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {},
-          onCommandDeleted: (p0) {},
+          onEventRenamed: (p0, p1) {},
+          onEventDeleted: (p0) {},
           onLinkedRenamed: (p0, p1) {
             renamed = true;
           },
@@ -266,10 +266,10 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {
+          onEventRenamed: (p0, p1) {
             renamed = true;
           },
-          onCommandDeleted: (p0) {},
+          onEventDeleted: (p0) {},
           onLinkedRenamed: (p0, p1) {},
           onLinkedDeleted: (p0) {},
         ),
@@ -318,8 +318,8 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {},
-          onCommandDeleted: (p0) {},
+          onEventRenamed: (p0, p1) {},
+          onEventDeleted: (p0) {},
           onLinkedRenamed: (p0, p1) {
             renamed = true;
           },
@@ -371,10 +371,10 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {
+          onEventRenamed: (p0, p1) {
             renamed = true;
           },
-          onCommandDeleted: (p0) {},
+          onEventDeleted: (p0) {},
           onLinkedRenamed: (p0, p1) {},
           onLinkedDeleted: (p0) {},
         ),
@@ -422,8 +422,8 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: ManagementDialog(
-          onCommandRenamed: (p0, p1) {},
-          onCommandDeleted: (p0) {},
+          onEventRenamed: (p0, p1) {},
+          onEventDeleted: (p0) {},
           onLinkedRenamed: (p0, p1) {
             renamed = true;
           },

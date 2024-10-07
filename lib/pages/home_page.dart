@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/pages/nav_grid_page.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/pages/telemetry_page.dart';
@@ -700,9 +699,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     });
 
-    // Clear named commands
+    // Clear event names
     if (projectDir != _projectDir?.path) {
-      Command.named.clear();
+      ProjectPage.events.clear();
     }
 
     setState(() {

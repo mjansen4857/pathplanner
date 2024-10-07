@@ -44,10 +44,12 @@ public:
 			maxDriveVelocityMPS), wheelCOF(wheelCOF), driveMotor(driveMotor), driveCurrentLimit(
 			driveCurrentLimit * numMotors), maxDriveVelocityRadPerSec {
 			maxDriveVelocityMPS() / wheelRadius() }, torqueLoss(
-			driveMotor.Torque(
-					units::math::min(
-							driveMotor.Current(maxDriveVelocityRadPerSec, 12_V),
-							driveCurrentLimit))) {
+			units::math::max(
+					driveMotor.Torque(
+							units::math::min(
+									driveMotor.Current(
+											maxDriveVelocityRadPerSec, 12_V),
+									driveCurrentLimit)), 0_Nm)) {
 	}
 };
 }

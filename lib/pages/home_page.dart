@@ -236,6 +236,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _key,
       appBar: CustomAppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu),

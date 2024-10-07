@@ -5,6 +5,7 @@ import com.pathplanner.lib.events.*;
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
+import com.pathplanner.lib.path.PointTowardsZone;
 import com.pathplanner.lib.util.DriveFeedforward;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.MathUtil;
@@ -106,11 +107,15 @@ public class PathPlannerTrajectory {
         if (marker.endPosition() >= 0.0) {
           // This marker is zoned
           unaddedEvents.add(new CancelCommandEvent(marker.endPosition(), marker.command()));
-          unaddedEvents.add(new ActivateTriggerEvent(marker.position(), marker.triggerName()));
-          unaddedEvents.add(new DeactivateTriggerEvent(marker.endPosition(), marker.triggerName()));
+          unaddedEvents.add(new TriggerEvent(marker.position(), marker.triggerName(), true));
+          unaddedEvents.add(new TriggerEvent(marker.endPosition(), marker.triggerName(), false));
         } else {
           unaddedEvents.add(new OneShotTriggerEvent(marker.position(), marker.triggerName()));
         }
+      }
+      for (PointTowardsZone zone : path.getPointTowardsZones()) {
+        unaddedEvents.add(new PointTowardsZoneEvent(zone.minPosition(), zone.name(), true));
+        unaddedEvents.add(new PointTowardsZoneEvent(zone.maxPosition(), zone.name(), false));
       }
 
       // Loop back over and calculate time and module torque

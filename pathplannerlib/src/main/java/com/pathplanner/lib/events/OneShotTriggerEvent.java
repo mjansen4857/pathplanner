@@ -20,13 +20,13 @@ public class OneShotTriggerEvent extends Event {
     this.name = name;
     this.resetCommand =
         Commands.waitSeconds(0)
-            .andThen(Commands.runOnce(() -> EventScheduler.setCondition(name, false)))
+            .andThen(Commands.runOnce(() -> EventTrigger.setCondition(name, false)))
             .ignoringDisable(true);
   }
 
   @Override
   public void handleEvent(EventScheduler eventScheduler) {
-    EventScheduler.setCondition(name, true);
+    EventTrigger.setCondition(name, true);
     // We schedule this command with the main command scheduler so that it is guaranteed to be run
     // in its entirety, since the EventScheduler could cancel this command before it finishes
     CommandScheduler.getInstance().schedule(resetCommand);

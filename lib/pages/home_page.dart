@@ -238,11 +238,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return Scaffold(
       key: _key,
       appBar: CustomAppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          tooltip: 'Menu',
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
         titleWidget: Text(
           _projectDir == null ? 'PathPlanner' : basename(_projectDir!.path),
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),

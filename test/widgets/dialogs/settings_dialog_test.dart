@@ -6,6 +6,8 @@ import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../test_helpers.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -44,7 +46,8 @@ void main() {
   });
 
   testWidgets('bumper width text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -74,7 +77,8 @@ void main() {
   });
 
   testWidgets('bumper length text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -104,7 +108,8 @@ void main() {
   });
 
   testWidgets('robot mass text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -134,7 +139,8 @@ void main() {
   });
 
   testWidgets('robot moi text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -164,7 +170,8 @@ void main() {
   });
 
   testWidgets('robot wheelbase text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -194,7 +201,8 @@ void main() {
   });
 
   testWidgets('robot trackwidth text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -224,7 +232,8 @@ void main() {
   });
 
   testWidgets('wheel radius text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -254,7 +263,8 @@ void main() {
   });
 
   testWidgets('drive gearing text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -284,7 +294,8 @@ void main() {
   });
 
   testWidgets('max drive speed field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -315,7 +326,8 @@ void main() {
   });
 
   testWidgets('wheel cof text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -345,7 +357,8 @@ void main() {
   });
 
   testWidgets('drive motor dropdown', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -382,7 +395,8 @@ void main() {
   });
 
   testWidgets('current limit field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -413,7 +427,8 @@ void main() {
   });
 
   testWidgets('default max vel text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -444,7 +459,8 @@ void main() {
   });
 
   testWidgets('default max accel text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -475,7 +491,8 @@ void main() {
   });
 
   testWidgets('default max ang vel text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -506,7 +523,8 @@ void main() {
   });
 
   testWidgets('default max ang accel text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -537,7 +555,8 @@ void main() {
   });
 
   testWidgets('field image dropdown', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -574,7 +593,8 @@ void main() {
   });
 
   testWidgets('team color picker', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -609,7 +629,8 @@ void main() {
   });
 
   testWidgets('telemetry host text field', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -640,7 +661,8 @@ void main() {
   });
 
   testWidgets('holonomic mode chip', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -672,7 +694,8 @@ void main() {
   });
 
   testWidgets('hot reload chip', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

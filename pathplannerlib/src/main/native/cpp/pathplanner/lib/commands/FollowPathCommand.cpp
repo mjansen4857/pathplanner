@@ -1,6 +1,7 @@
 #include "pathplanner/lib/commands/FollowPathCommand.h"
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
+#include "pathplanner/lib/commands/PathPlannerAuto.h"
 
 using namespace pathplanner;
 
@@ -37,6 +38,8 @@ FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 }
 
 void FollowPathCommand::Initialize() {
+	PathPlannerAuto::currentPathName = m_originalPath->name;
+
 	if (m_shouldFlipPath() && !m_originalPath->preventFlipping) {
 		m_path = m_originalPath->flipPath();
 	} else {
@@ -122,6 +125,7 @@ bool FollowPathCommand::IsFinished() {
 
 void FollowPathCommand::End(bool interrupted) {
 	m_timer.Stop();
+	PathPlannerAuto::currentPathName = "";
 
 	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
 	// the command to smoothly transition into some auto-alignment routine

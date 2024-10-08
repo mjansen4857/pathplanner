@@ -4,6 +4,7 @@
 #include "pathplanner/lib/commands/PathfindThenFollowPath.h"
 #include "pathplanner/lib/auto/CommandUtil.h"
 #include "pathplanner/lib/util/FlippingUtil.h"
+#include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include <stdexcept>
 #include <frc2/command/Commands.h>
 #include <frc/Filesystem.h>
@@ -14,6 +15,7 @@ using namespace pathplanner;
 
 bool AutoBuilder::m_configured = false;
 std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> AutoBuilder::m_pathFollowingCommandBuilder;
+std::function<frc::Pose2d()> AutoBuilder::m_poseSupplier;
 std::function<void(frc::Pose2d)> AutoBuilder::m_resetPose;
 std::function<bool()> AutoBuilder::m_shouldFlipPath;
 bool AutoBuilder::m_isHolonomic = false;
@@ -49,6 +51,7 @@ void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 				robotRelativeSpeedsSupplier, output, controller, robotConfig,
 				shouldFlipPath, { driveSubsystem }).ToPtr();
 	};
+	AutoBuilder::m_poseSupplier = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 	AutoBuilder::m_shouldFlipPath = shouldFlipPath;
@@ -74,7 +77,7 @@ void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 	AutoBuilder::m_pathfindingConfigured = true;
 }
 
-void AutoBuilder::configureCustom(
+void AutoBuilder::configureCustom(std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
 		std::function<void(frc::Pose2d)> resetPose, bool isHolonomic,
 		std::function<bool()> shouldFlipPose) {
@@ -84,6 +87,7 @@ void AutoBuilder::configureCustom(
 	}
 
 	AutoBuilder::m_pathFollowingCommandBuilder = pathFollowingCommandBuilder;
+	AutoBuilder::m_poseSupplier = poseSupplier;
 	AutoBuilder::m_resetPose = resetPose;
 	AutoBuilder::m_configured = true;
 	AutoBuilder::m_shouldFlipPath = shouldFlipPose;

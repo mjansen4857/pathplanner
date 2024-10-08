@@ -239,9 +239,9 @@ public class PathPlannerAuto extends Command {
    * positions will not be automatically flipped
    *
    * @param boundingBoxMin The minimum position of the bounding box for the target field area. The X
-   *     & Y coordinates of this position should be less than the max position.
+   *     and Y coordinates of this position should be less than the max position.
    * @param boundingBoxMax The maximum position of the bounding box for the target field area. The X
-   *     & Y coordinates of this position should be greater than the min position.
+   *     and Y coordinates of this position should be greater than the min position.
    * @return inFieldArea trigger
    */
   public Trigger inFieldArea(Translation2d boundingBoxMin, Translation2d boundingBoxMax) {
@@ -266,11 +266,11 @@ public class PathPlannerAuto extends Command {
    * positions will be automatically flipped
    *
    * @param blueBoundingBoxMin The minimum position of the bounding box for the target field area if
-   *     on the blue alliance. The X & Y coordinates of this position should be less than the max
+   *     on the blue alliance. The X and Y coordinates of this position should be less than the max
    *     position.
    * @param blueBoundingBoxMax The maximum position of the bounding box for the target field area if
-   *     on the blue alliance. The X & Y coordinates of this position should be greater than the min
-   *     position.
+   *     on the blue alliance. The X and Y coordinates of this position should be greater than the
+   *     min position.
    * @return inFieldAreaAutoFlipped trigger
    */
   public Trigger inFieldAreaAutoFlipped(

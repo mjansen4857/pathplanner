@@ -5,9 +5,11 @@
 #include <frc/Filesystem.h>
 #include <wpi/MemoryBuffer.h>
 #include <hal/FRCUsageReporting.h>
+#include <stdexcept>
 
 using namespace pathplanner;
 
+std::string PathPlannerAuto::currentPathName = "";
 int PathPlannerAuto::m_instances = 0;
 
 PathPlannerAuto::PathPlannerAuto(std::string autoName) {
@@ -32,8 +34,88 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 	AddRequirements(m_autoCommand->GetRequirements());
 	SetName(autoName);
 
+	m_autoLoop = std::make_unique<frc::EventLoop>();
+
 	m_instances++;
 	HAL_Report(HALUsageReporting::kResourceType_PathPlannerAuto, m_instances);
+}
+
+PathPlannerAuto::PathPlannerAuto(frc2::CommandPtr &&autoCommand,
+		frc::Pose2d startingPose) : m_autoCommand(
+		std::move(autoCommand).Unwrap()), m_startingPose(startingPose) {
+	AddRequirements(m_autoCommand->GetRequirements());
+
+	m_autoLoop = std::make_unique<frc::EventLoop>();
+
+	m_instances++;
+	HAL_Report(HALUsageReporting::kResourceType_PathPlannerAuto, m_instances);
+}
+
+frc2::Trigger PathPlannerAuto::nearFieldPositionAutoFlipped(
+		frc::Translation2d blueFieldPosition, units::meter_t tolerance) {
+	frc::Translation2d redFieldPosition = FlippingUtil::flipFieldPosition(
+			blueFieldPosition);
+
+	return condition(
+			[this, blueFieldPosition, redFieldPosition, tolerance]() {
+				if (AutoBuilder::shouldFlip()) {
+					return AutoBuilder::getCurrentPose().Translation().Distance(
+							redFieldPosition) <= tolerance;
+				} else {
+					return AutoBuilder::getCurrentPose().Translation().Distance(
+							blueFieldPosition) <= tolerance;
+				}
+			});
+}
+
+frc2::Trigger PathPlannerAuto::inFieldArea(frc::Translation2d boundingBoxMin,
+		frc::Translation2d boundingBoxMax) {
+	if (boundingBoxMin.X() >= boundingBoxMax.X()
+			|| boundingBoxMin.Y() >= boundingBoxMax.Y()) {
+		throw std::invalid_argument(
+				"Minimum bounding box position must have X and Y coordinates less than the maximum bounding box position");
+	}
+
+	return condition(
+			[boundingBoxMin, boundingBoxMax]() {
+				frc::Pose2d currentPose = AutoBuilder::getCurrentPose();
+				return currentPose.X() >= boundingBoxMin.X()
+						&& currentPose.Y() >= boundingBoxMin.Y()
+						&& currentPose.X() <= boundingBoxMax.X()
+						&& currentPose.Y() <= boundingBoxMax.Y();
+			});
+}
+
+frc2::Trigger PathPlannerAuto::inFieldAreaAutoFlipped(
+		frc::Translation2d blueBoundingBoxMin,
+		frc::Translation2d blueBoundingBoxMax) {
+	if (blueBoundingBoxMin.X() >= blueBoundingBoxMax.X()
+			|| blueBoundingBoxMin.Y() >= blueBoundingBoxMax.Y()) {
+		throw std::invalid_argument(
+				"Minimum bounding box position must have X and Y coordinates less than the maximum bounding box position");
+	}
+
+	frc::Translation2d redBoundingBoxMin = FlippingUtil::flipFieldPosition(
+			blueBoundingBoxMin);
+	frc::Translation2d redBoundingBoxMax = FlippingUtil::flipFieldPosition(
+			blueBoundingBoxMax);
+
+	return condition(
+			[blueBoundingBoxMin, blueBoundingBoxMax, redBoundingBoxMin,
+					redBoundingBoxMax]() {
+				frc::Pose2d currentPose = AutoBuilder::getCurrentPose();
+				if (AutoBuilder::shouldFlip()) {
+					return currentPose.X() >= blueBoundingBoxMin.X()
+							&& currentPose.Y() >= blueBoundingBoxMin.Y()
+							&& currentPose.X() <= blueBoundingBoxMax.X()
+							&& currentPose.Y() <= blueBoundingBoxMax.Y();
+				} else {
+					return currentPose.X() >= redBoundingBoxMin.X()
+							&& currentPose.Y() >= redBoundingBoxMin.Y()
+							&& currentPose.X() <= redBoundingBoxMax.X()
+							&& currentPose.Y() <= redBoundingBoxMax.Y();
+				}
+			});
 }
 
 std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromAutoFile(

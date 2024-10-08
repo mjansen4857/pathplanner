@@ -3,19 +3,22 @@ class PathConstraints {
   num maxAccelerationMPSSq;
   num maxAngularVelocityDeg;
   num maxAngularAccelerationDeg;
+  bool unlimited;
 
   PathConstraints({
     this.maxVelocityMPS = 3,
     this.maxAccelerationMPSSq = 3,
     this.maxAngularVelocityDeg = 540,
     this.maxAngularAccelerationDeg = 720,
+    this.unlimited = false,
   });
 
   PathConstraints.fromJson(Map<String, dynamic> json)
       : maxVelocityMPS = json['maxVelocity'] ?? 3,
         maxAccelerationMPSSq = json['maxAcceleration'] ?? 3,
         maxAngularVelocityDeg = json['maxAngularVelocity'] ?? 540,
-        maxAngularAccelerationDeg = json['maxAngularAcceleration'] ?? 720;
+        maxAngularAccelerationDeg = json['maxAngularAcceleration'] ?? 720,
+        unlimited = json['unlimited'] ?? false;
 
   PathConstraints clone() {
     return PathConstraints(
@@ -23,6 +26,7 @@ class PathConstraints {
       maxAccelerationMPSSq: maxAccelerationMPSSq,
       maxAngularVelocityDeg: maxAngularVelocityDeg,
       maxAngularAccelerationDeg: maxAngularAccelerationDeg,
+      unlimited: unlimited,
     );
   }
 
@@ -32,6 +36,7 @@ class PathConstraints {
       'maxAcceleration': maxAccelerationMPSSq,
       'maxAngularVelocity': maxAngularVelocityDeg,
       'maxAngularAcceleration': maxAngularAccelerationDeg,
+      'unlimited': unlimited,
     };
   }
 
@@ -42,9 +47,10 @@ class PathConstraints {
       other.maxVelocityMPS == maxVelocityMPS &&
       other.maxAccelerationMPSSq == maxAccelerationMPSSq &&
       other.maxAngularVelocityDeg == maxAngularVelocityDeg &&
-      other.maxAngularAccelerationDeg == other.maxAngularAccelerationDeg;
+      other.maxAngularAccelerationDeg == other.maxAngularAccelerationDeg &&
+      other.unlimited == unlimited;
 
   @override
   int get hashCode => Object.hash(maxVelocityMPS, maxAccelerationMPSSq,
-      maxAngularVelocityDeg, maxAngularAccelerationDeg);
+      maxAngularVelocityDeg, maxAngularAccelerationDeg, unlimited);
 }

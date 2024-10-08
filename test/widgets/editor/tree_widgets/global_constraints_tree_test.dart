@@ -25,11 +25,14 @@ void main() {
       maxAccelerationMPSSq: 1.0,
       maxAngularVelocityDeg: 1.0,
       maxAngularAccelerationDeg: 1.0,
+      unlimited: false,
     );
     pathChanged = false;
   });
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     path.globalConstraintsExpanded = false;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -57,6 +60,8 @@ void main() {
   });
 
   testWidgets('max vel text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -86,6 +91,8 @@ void main() {
   });
 
   testWidgets('max accel text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -115,6 +122,8 @@ void main() {
   });
 
   testWidgets('max ang vel text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -144,6 +153,8 @@ void main() {
   });
 
   testWidgets('max ang accel text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -173,6 +184,8 @@ void main() {
   });
 
   testWidgets('use defaults checkbox', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -186,9 +199,9 @@ void main() {
 
     final check = find.byType(Checkbox);
 
-    expect(check, findsOneWidget);
+    expect(check, findsNWidgets(2));
 
-    await widgetTester.tap(check);
+    await widgetTester.tap(check.first);
     await widgetTester.pump();
 
     expect(pathChanged, true);
@@ -204,5 +217,34 @@ void main() {
           maxAngularVelocityDeg: 1.0,
           maxAngularAccelerationDeg: 1.0,
         ));
+  });
+
+  testWidgets('unlimited checkbox', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GlobalConstraintsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+          defaultConstraints: PathConstraints(),
+        ),
+      ),
+    ));
+
+    final check = find.byType(Checkbox);
+
+    expect(check, findsNWidgets(2));
+
+    await widgetTester.tap(check.last);
+    await widgetTester.pump();
+
+    expect(pathChanged, true);
+    expect(path.globalConstraints.unlimited, isTrue);
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.unlimited, isFalse);
   });
 }

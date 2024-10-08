@@ -34,11 +34,13 @@ class PathConstraints:
         maxAccelerationMpsSq (float): Max linear acceleration (M/S^2)
         maxAngularVelocityRps (float): Max angular velocity (Rad/S)
         maxAngularAccelerationRpsSq (float): Max angular acceleration (Rad/S^2)
+        unlimited (bool): Should the constraints be unlimited
     """
     maxVelocityMps: float
     maxAccelerationMpsSq: float
     maxAngularVelocityRps: float
     maxAngularAccelerationRpsSq: float
+    unlimited: bool = False
 
     @staticmethod
     def fromJson(json_dict: dict) -> PathConstraints:
@@ -46,19 +48,32 @@ class PathConstraints:
         maxAccel = float(json_dict['maxAcceleration'])
         maxAngularVel = float(json_dict['maxAngularVelocity'])
         maxAngularAccel = float(json_dict['maxAngularAcceleration'])
+        unlimited = bool(json_dict['unlimited']) if 'unlimited' in json_dict else False
 
         return PathConstraints(
             maxVel,
             maxAccel,
             units.degreesToRadians(maxAngularVel),
-            units.degreesToRadians(maxAngularAccel))
+            units.degreesToRadians(maxAngularAccel),
+            unlimited)
+
+    @staticmethod
+    def unlimitedConstraints() -> PathConstraints:
+        return PathConstraints(
+            float('inf'),
+            float('inf'),
+            float('inf'),
+            float('inf'),
+            True
+        )
 
     def __eq__(self, other):
         return (isinstance(other, PathConstraints)
                 and other.maxVelocityMps == self.maxVelocityMps
                 and other.maxAccelerationMpsSq == self.maxAccelerationMpsSq
                 and other.maxAngularVelocityRps == self.maxAngularVelocityRps
-                and other.maxAngularAccelerationRpsSq == self.maxAngularAccelerationRpsSq)
+                and other.maxAngularAccelerationRpsSq == self.maxAngularAccelerationRpsSq
+                and other.unlimited == self.unlimited)
 
 
 @dataclass(frozen=True)
@@ -543,12 +558,9 @@ class PathPlannerPath:
             fullEvents.sort(key=lambda e: e.getTimestamp())
 
             # Add the full path to the cache
-            fullPath = PathPlannerPath([], PathConstraints(
-                float('inf'),
-                float('inf'),
-                float('inf'),
-                float('inf')
-            ), None, GoalEndState(fullTrajStates[-1].linearVelocity, fullTrajStates[-1].pose.rotation()))
+            fullPath = PathPlannerPath([], PathConstraints.unlimitedConstraints(), None,
+                                       GoalEndState(fullTrajStates[-1].linearVelocity,
+                                                    fullTrajStates[-1].pose.rotation()))
             fullPathPoints = [PathPoint(state.pose.translation()) for state in fullTrajStates]
             fullPath._allPoints = fullPathPoints
             fullPath._isChoreoPath = True
@@ -580,12 +592,8 @@ class PathPlannerPath:
                     if startTime <= originalEvent.getTimestamp() < endTime:
                         events.append(originalEvent.copyWithTime(originalEvent.getTimestamp() - startTime))
 
-                path = PathPlannerPath([], PathConstraints(
-                    float('inf'),
-                    float('inf'),
-                    float('inf'),
-                    float('inf')
-                ), None, GoalEndState(states[-1].linearVelocity, states[-1].pose.rotation()))
+                path = PathPlannerPath([], PathConstraints.unlimitedConstraints(), None,
+                                       GoalEndState(states[-1].linearVelocity, states[-1].pose.rotation()))
                 pathPoints = [PathPoint(state.pose.translation()) for state in states]
                 path._allPoints = pathPoints
                 path._isChoreoPath = True
@@ -661,18 +669,6 @@ class PathPlannerPath:
         :return: The point at the given index
         """
         return self._allPoints[index]
-
-    def getConstraintsForPoint(self, idx: int) -> PathConstraints:
-        """
-        Get the constraints for a point along the path
-
-        :param idx: Index of the point to get constraints for
-        :return: The constraints that should apply to the point
-        """
-        if self.getPoint(idx).constraints is None:
-            return self.getPoint(idx).constraints
-
-        return self._globalConstraints
 
     def getGlobalConstraints(self) -> PathConstraints:
         """
@@ -859,6 +855,11 @@ class PathPlannerPath:
         for z in self._constraintZones:
             if z.minWaypointPos <= pos <= z.maxWaypointPos:
                 return z.constraints
+
+        # Check if constraints should be unlimited
+        if self._globalConstraints.unlimited:
+            return PathConstraints.unlimitedConstraints()
+
         return self._globalConstraints
 
     def _pointZoneForWaypointPos(self, pos: float) -> Union[PointTowardsZone, None]:
@@ -1079,8 +1080,6 @@ class PathPlannerPath:
         if self.numPoints() > 0:
             for i in range(self.numPoints()):
                 point = self.getPoint(i)
-                if point.constraints is None:
-                    point.constraints = self._globalConstraints
                 curveRadius = self._getCurveRadiusAtPoint(i)
 
                 if math.isfinite(curveRadius):

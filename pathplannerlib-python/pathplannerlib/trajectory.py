@@ -422,7 +422,7 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
         robotPose = Pose2d(p.position, holonomicRot)
         state = PathPlannerTrajectoryState()
         state.pose = robotPose
-        state.constraints = path.getConstraintsForPoint(i)
+        state.constraints = p.constraints
         state.waypointRelativePos = p.waypointRelativePos
 
         # Calculate robot heading

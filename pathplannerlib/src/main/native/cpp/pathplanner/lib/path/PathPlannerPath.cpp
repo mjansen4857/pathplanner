@@ -9,7 +9,6 @@
 #include <frc/Filesystem.h>
 #include <frc/MathUtil.h>
 #include <wpi/MemoryBuffer.h>
-#include <limits>
 #include <optional>
 #include <utility>
 #include <hal/FRCUsageReporting.h>
@@ -219,14 +218,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 
 	// Add the full path to the cache
 	auto fullPath = std::make_shared < PathPlannerPath
-			> (PathConstraints(
-					units::meters_per_second_t {
-							std::numeric_limits<double>::infinity() },
-					units::meters_per_second_squared_t { std::numeric_limits<
-							double>::infinity() }, units::radians_per_second_t {
-							std::numeric_limits<double>::infinity() },
-					units::radians_per_second_squared_t { std::numeric_limits<
-							double>::infinity() }), GoalEndState(
+			> (PathConstraints::unlimitedConstraints(), GoalEndState(
 					fullTrajStates[fullTrajStates.size() - 1].linearVelocity,
 					fullTrajStates[fullTrajStates.size() - 1].pose.Rotation()));
 
@@ -277,18 +269,10 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 				}
 			}
 
-			auto path =
-					std::make_shared < PathPlannerPath
-							> (PathConstraints(units::meters_per_second_t {
-									std::numeric_limits<double>::infinity() },
-									units::meters_per_second_squared_t {
-											std::numeric_limits<double>::infinity() },
-									units::radians_per_second_t {
-											std::numeric_limits<double>::infinity() },
-									units::radians_per_second_squared_t {
-											std::numeric_limits<double>::infinity() }), GoalEndState(
-									states[states.size() - 1].linearVelocity,
-									states[states.size() - 1].pose.Rotation()));
+			auto path = std::make_shared < PathPlannerPath
+					> (PathConstraints::unlimitedConstraints(), GoalEndState(
+							states[states.size() - 1].linearVelocity,
+							states[states.size() - 1].pose.Rotation()));
 
 			std::vector < PathPoint > pathPoints;
 			for (auto state : states) {
@@ -621,9 +605,6 @@ void PathPlannerPath::precalcValues() {
 		for (size_t i = 0; i < m_allPoints.size(); i++) {
 			PathConstraints constraints = m_allPoints[i].constraints.value_or(
 					m_globalConstraints);
-			if (!m_allPoints[i].constraints) {
-				m_allPoints[i].constraints = m_globalConstraints;
-			}
 			units::meter_t curveRadius = units::math::abs(
 					getCurveRadiusAtPoint(i, m_allPoints));
 

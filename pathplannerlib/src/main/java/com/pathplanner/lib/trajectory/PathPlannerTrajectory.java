@@ -219,7 +219,7 @@ public class PathPlannerTrajectory {
       Pose2d robotPose = new Pose2d(p.position, holonomicRot);
       var state = new PathPlannerTrajectoryState();
       state.pose = robotPose;
-      state.constraints = path.getConstraintsForPoint(i);
+      state.constraints = p.constraints;
       state.waypointRelativePos = p.waypointRelativePos;
 
       // Calculate robot heading

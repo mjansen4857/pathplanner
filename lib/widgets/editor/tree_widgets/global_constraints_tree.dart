@@ -40,7 +40,8 @@ class GlobalConstraintsTree extends StatelessWidget {
                 child: NumberTextField(
                   initialValue: path.globalConstraints.maxVelocityMPS,
                   label: 'Max Velocity (M/S)',
-                  enabled: !path.useDefaultConstraints,
+                  enabled: !path.useDefaultConstraints &&
+                      !path.globalConstraints.unlimited,
                   minValue: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
@@ -55,7 +56,8 @@ class GlobalConstraintsTree extends StatelessWidget {
                 child: NumberTextField(
                   initialValue: path.globalConstraints.maxAccelerationMPSSq,
                   label: 'Max Acceleration (M/S²)',
-                  enabled: !path.useDefaultConstraints,
+                  enabled: !path.useDefaultConstraints &&
+                      !path.globalConstraints.unlimited,
                   minValue: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
@@ -78,7 +80,8 @@ class GlobalConstraintsTree extends StatelessWidget {
                   initialValue: path.globalConstraints.maxAngularVelocityDeg,
                   label: 'Max Angular Velocity (Deg/S)',
                   arrowKeyIncrement: 1.0,
-                  enabled: !path.useDefaultConstraints,
+                  enabled: !path.useDefaultConstraints &&
+                      !path.globalConstraints.unlimited,
                   minValue: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
@@ -95,7 +98,8 @@ class GlobalConstraintsTree extends StatelessWidget {
                       path.globalConstraints.maxAngularAccelerationDeg,
                   label: 'Max Angular Acceleration (Deg/S²)',
                   arrowKeyIncrement: 1.0,
-                  enabled: !path.useDefaultConstraints,
+                  enabled: !path.useDefaultConstraints &&
+                      !path.globalConstraints.unlimited,
                   minValue: 0.1,
                   onSubmitted: (value) {
                     if (value != null) {
@@ -113,31 +117,67 @@ class GlobalConstraintsTree extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6.0),
           child: Row(
             children: [
-              Checkbox(
-                value: path.useDefaultConstraints,
-                onChanged: (value) {
-                  undoStack.add(Change(
-                    (
-                      path.useDefaultConstraints,
-                      path.globalConstraints.clone()
+              Expanded(
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: path.useDefaultConstraints,
+                      onChanged: path.globalConstraints.unlimited
+                          ? null
+                          : (value) {
+                              undoStack.add(Change(
+                                (
+                                  path.useDefaultConstraints,
+                                  path.globalConstraints.clone()
+                                ),
+                                () {
+                                  path.useDefaultConstraints = value ?? false;
+                                  path.globalConstraints =
+                                      defaultConstraints.clone();
+                                  onPathChanged?.call();
+                                },
+                                (oldValue) {
+                                  path.useDefaultConstraints = oldValue.$1;
+                                  path.globalConstraints = oldValue.$2.clone();
+                                  onPathChanged?.call();
+                                },
+                              ));
+                            },
                     ),
-                    () {
-                      path.useDefaultConstraints = value ?? false;
-                      path.globalConstraints = defaultConstraints.clone();
-                      onPathChanged?.call();
-                    },
-                    (oldValue) {
-                      path.useDefaultConstraints = oldValue.$1;
-                      path.globalConstraints = oldValue.$2.clone();
-                      onPathChanged?.call();
-                    },
-                  ));
-                },
+                    const SizedBox(width: 4),
+                    const Text(
+                      'Use Default Constraints',
+                      style: TextStyle(fontSize: 15),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(width: 4),
-              const Text(
-                'Use Default Constraints',
-                style: TextStyle(fontSize: 15),
+              Expanded(
+                child: Row(
+                  children: [
+                    Checkbox(
+                      value: path.globalConstraints.unlimited,
+                      onChanged: (value) {
+                        undoStack.add(Change(
+                          path.globalConstraints.unlimited,
+                          () {
+                            path.globalConstraints.unlimited = value ?? false;
+                            onPathChanged?.call();
+                          },
+                          (oldValue) {
+                            path.globalConstraints.unlimited = oldValue;
+                            onPathChanged?.call();
+                          },
+                        ));
+                      },
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      'Unlimited',
+                      style: TextStyle(fontSize: 15),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

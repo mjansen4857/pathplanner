@@ -147,16 +147,6 @@ public:
 	frc::Pose2d getStartingDifferentialPose();
 
 	/**
-	 * Get the constraints for a point along the path
-	 *
-	 * @param idx Index of the point to get constraints for
-	 * @return The constraints that should apply to the point
-	 */
-	inline PathConstraints getConstraintsForPoint(size_t idx) {
-		return getPoint(idx).constraints.value_or(m_globalConstraints);
-	}
-
-	/**
 	 * Create a path planner path from pre-generated path points. This is used internally, and you
 	 * likely should not use this
 	 */
@@ -366,6 +356,12 @@ private:
 				return z.getConstraints();
 			}
 		}
+
+		// Check if constraints should be unlimited
+		if (m_globalConstraints.isUnlimited()) {
+			return PathConstraints::unlimitedConstraints();
+		}
+
 		return m_globalConstraints;
 	}
 

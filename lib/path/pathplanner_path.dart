@@ -364,6 +364,18 @@ class PathPlannerPath {
         return z.constraints;
       }
     }
+
+    // Check if the constraints should be unlimited
+    if (globalConstraints.unlimited) {
+      return PathConstraints(
+        maxVelocityMPS: double.infinity,
+        maxAccelerationMPSSq: double.infinity,
+        maxAngularVelocityDeg: double.infinity,
+        maxAngularAccelerationDeg: double.infinity,
+        unlimited: true,
+      );
+    }
+
     return globalConstraints;
   }
 

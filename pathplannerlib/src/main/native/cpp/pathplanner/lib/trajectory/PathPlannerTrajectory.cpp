@@ -247,7 +247,8 @@ void PathPlannerTrajectory::generateStates(
 		frc::Pose2d robotPose(p.position, holonomicRot);
 		PathPlannerTrajectoryState state;
 		state.pose = robotPose;
-		state.constraints = path->getConstraintsForPoint(i);
+		state.constraints = p.constraints.value_or(
+				path->getGlobalConstraints());
 		state.waypointRelativePos = p.waypointRelativePos;
 
 		// Calculate robot heading

@@ -23,6 +23,8 @@ class CommandGroupWidget extends StatelessWidget {
   final ValueChanged<String?>? onPathCommandHovered;
   final ChangeStack undoStack;
   final VoidCallback? onDuplicateCommand;
+  final bool showEditPathButton;
+  final Function(String?)? onEditPathPressed;
 
   const CommandGroupWidget({
     super.key,
@@ -36,6 +38,8 @@ class CommandGroupWidget extends StatelessWidget {
     this.onPathCommandHovered,
     required this.undoStack,
     this.onDuplicateCommand,
+    this.showEditPathButton = true,
+    this.onEditPathPressed,
   });
 
   @override
@@ -179,6 +183,8 @@ class CommandGroupWidget extends StatelessWidget {
                         },
                         undoStack: undoStack,
                         onDuplicateCommand: () => _duplicateCommand(index),
+                        showEditButton: showEditPathButton,
+                        onEditPathPressed: onEditPathPressed,
                       ),
                     ),
                   ],
@@ -259,6 +265,8 @@ class CommandGroupWidget extends StatelessWidget {
         onRemoved: () => _removeCommand(cmdIndex),
         allPathNames: allPathNames,
         onPathCommandHovered: onPathCommandHovered,
+        showEditPathButton: showEditPathButton,
+        onEditPathPressed: onEditPathPressed,
         onGroupTypeChanged: (value) {
           undoStack.add(Change(
             command.commands[cmdIndex].type,

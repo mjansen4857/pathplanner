@@ -13,6 +13,7 @@ class AutoTree extends StatefulWidget {
   final VoidCallback? onAutoChanged;
   final ChangeStack undoStack;
   final num? autoRuntime;
+  final Function(String?)? onEditPathPressed;
 
   const AutoTree({
     super.key,
@@ -23,6 +24,7 @@ class AutoTree extends StatefulWidget {
     this.onAutoChanged,
     required this.undoStack,
     this.autoRuntime,
+    this.onEditPathPressed,
   });
 
   @override
@@ -74,6 +76,8 @@ class _AutoTreeState extends State<AutoTree> {
                       removable: false,
                       onUpdated: widget.onAutoChanged,
                       undoStack: widget.undoStack,
+                      showEditPathButton: !widget.auto.choreoAuto,
+                      onEditPathPressed: widget.onEditPathPressed,
                     ),
                   ),
                 ),

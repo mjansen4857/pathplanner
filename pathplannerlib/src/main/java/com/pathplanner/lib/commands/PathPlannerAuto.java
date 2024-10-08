@@ -95,6 +95,34 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
+   * Create a PathPlannerAuto from a custom command
+   *
+   * @param autoCommand The command this auto should run
+   * @param startingPose The starting pose of the auto. Only used for the getStartingPose method
+   */
+  public PathPlannerAuto(Command autoCommand, Pose2d startingPose) {
+    this.autoCommand = autoCommand;
+    this.startingPose = startingPose;
+
+    addRequirements(autoCommand.getRequirements().toArray(new Subsystem[0]));
+
+    this.autoLoop = new EventLoop();
+    this.timer = new Timer();
+
+    instances++;
+    HAL.report(tResourceType.kResourceType_PathPlannerAuto, instances);
+  }
+
+  /**
+   * Create a PathPlannerAuto from a custom command
+   *
+   * @param autoCommand The command this auto should run
+   */
+  public PathPlannerAuto(Command autoCommand) {
+    this(autoCommand, new Pose2d());
+  }
+
+  /**
    * Get the starting pose of this auto, relative to a blue alliance origin. If there are no paths
    * in this auto, the starting pose will be null.
    *

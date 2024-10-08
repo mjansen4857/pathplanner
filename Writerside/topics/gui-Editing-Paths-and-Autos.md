@@ -81,6 +81,9 @@ Max Angular Acceleration
 Use Default Constraints
 : Ties these constraints to the default constraints in the settings menu.
 
+Unlimited
+: Use unlimited constraints for this path. If unlimited, the robot will move as fast as the torque output will allow.
+
 ### Ideal Starting State
 
 The ideal starting state defines the state the robot should be at when starting the path. This will be used to

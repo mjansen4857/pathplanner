@@ -55,6 +55,10 @@ other configuration options.
 These values will be used as the default global constraints when creating new paths. Updating these values will also
 update the constraints of any paths set to use the defaults.
 
+The default constraints do not support being unlimited, as a conscious decision should be made per-path to have
+unlimited constraints. Running a path as fast as possible is not only dangerous, but can lead to the path following
+controller falling behind.
+
 Max Velocity
 : Max linear velocity in meters per second.
 

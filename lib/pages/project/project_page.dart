@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:collection/collection.dart';
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:multi_split_view/multi_split_view.dart';
@@ -919,55 +920,8 @@ class _ProjectPageState extends State<ProjectPage> {
           }
         }
       },
-      onRenamed: (value) => _renamePath(i, value, context),
-      onOpened: () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PathEditorPage(
-              prefs: widget.prefs,
-              path: _paths[i],
-              fieldImage: widget.fieldImage,
-              undoStack: widget.undoStack,
-              onRenamed: (value) => _renamePath(i, value, context),
-              shortcuts: widget.shortcuts,
-              telemetry: widget.telemetry,
-              hotReload: widget.hotReload,
-              simulatePath: widget.simulatePath,
-              onPathChanged: () {
-                // Make sure all paths with linked waypoints are updated
-                for (PathPlannerPath p in _paths) {
-                  bool changed = false;
-
-                  for (Waypoint w in p.waypoints) {
-                    if (w.linkedName != null) {
-                      var anchor = Waypoint.linked[w.linkedName];
-
-                      if (anchor != null &&
-                          anchor.getDistance(w.anchor) >= 0.01) {
-                        w.move(anchor.x, anchor.y);
-                        changed = true;
-                      }
-                    }
-                  }
-
-                  if (changed) {
-                    p.generateAndSavePath();
-
-                    if (widget.hotReload) {
-                      widget.telemetry?.hotReloadPath(p);
-                    }
-                  }
-                }
-              },
-            ),
-          ),
-        );
-
-        setState(() {
-          _sortPaths(_pathSortValue);
-        });
-      },
+      onRenamed: (value) => _renamePath(_paths[i], value, context),
+      onOpened: () => _openPath(_paths[i]),
     );
 
     return LayoutBuilder(builder: (context, constraints) {
@@ -1029,10 +983,58 @@ class _ProjectPageState extends State<ProjectPage> {
     });
   }
 
-  void _renamePath(int pathIdx, String newName, BuildContext context) {
+  void _openPath(PathPlannerPath path) async {
+    await Navigator.push(
+      this.context,
+      MaterialPageRoute(
+        builder: (context) => PathEditorPage(
+          prefs: widget.prefs,
+          path: path,
+          fieldImage: widget.fieldImage,
+          undoStack: widget.undoStack,
+          onRenamed: (value) => _renamePath(path, value, context),
+          shortcuts: widget.shortcuts,
+          telemetry: widget.telemetry,
+          hotReload: widget.hotReload,
+          simulatePath: widget.simulatePath,
+          onPathChanged: () {
+            // Make sure all paths with linked waypoints are updated
+            for (PathPlannerPath p in _paths) {
+              bool changed = false;
+
+              for (Waypoint w in p.waypoints) {
+                if (w.linkedName != null) {
+                  var anchor = Waypoint.linked[w.linkedName];
+
+                  if (anchor != null && anchor.getDistance(w.anchor) >= 0.01) {
+                    w.move(anchor.x, anchor.y);
+                    changed = true;
+                  }
+                }
+              }
+
+              if (changed) {
+                p.generateAndSavePath();
+
+                if (widget.hotReload) {
+                  widget.telemetry?.hotReloadPath(p);
+                }
+              }
+            }
+          },
+        ),
+      ),
+    );
+
+    setState(() {
+      _sortPaths(_pathSortValue);
+    });
+  }
+
+  void _renamePath(PathPlannerPath path, String newName, BuildContext context) {
     List<String> pathNames = [];
-    for (PathPlannerPath path in _paths) {
-      pathNames.add(path.name);
+    for (PathPlannerPath p in _paths) {
+      pathNames.add(p.name);
     }
 
     if (pathNames.contains(newName)) {
@@ -1051,9 +1053,9 @@ class _ProjectPageState extends State<ProjectPage> {
             );
           });
     } else {
-      String oldName = _paths[pathIdx].name;
+      String oldName = path.name;
       setState(() {
-        _paths[pathIdx].renamePath(newName);
+        path.renamePath(newName);
         for (PathPlannerAuto auto in _autos) {
           auto.updatePathName(oldName, newName);
         }
@@ -1419,7 +1421,7 @@ class _ProjectPageState extends State<ProjectPage> {
       },
       onRenamed: (value) => _renameAuto(i, value, context),
       onOpened: () async {
-        await Navigator.push(
+        String? pathNameToOpen = await Navigator.push<String?>(
           context,
           MaterialPageRoute(
             builder: (context) => AutoEditorPage(
@@ -1439,10 +1441,17 @@ class _ProjectPageState extends State<ProjectPage> {
             ),
           ),
         );
-
         setState(() {
           _sortAutos(_autoSortValue);
         });
+
+        if (pathNameToOpen != null) {
+          final pathToOpen =
+              _paths.firstWhereOrNull((p) => p.name == pathNameToOpen);
+          if (pathToOpen != null) {
+            _openPath(pathToOpen);
+          }
+        }
       },
       warningMessage: warningMessage,
     );

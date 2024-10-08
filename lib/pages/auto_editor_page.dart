@@ -80,6 +80,10 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
           widget.telemetry?.hotReloadAuto(widget.auto);
         }
       },
+      onEditPathPressed: (pathName) {
+        widget.undoStack.clearHistory();
+        Navigator.of(context).pop(pathName);
+      },
     );
 
     return Scaffold(

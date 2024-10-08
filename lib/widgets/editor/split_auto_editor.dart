@@ -24,6 +24,7 @@ class SplitAutoEditor extends StatefulWidget {
   final VoidCallback? onAutoChanged;
   final FieldImage fieldImage;
   final ChangeStack undoStack;
+  final Function(String?)? onEditPathPressed;
 
   const SplitAutoEditor({
     required this.prefs,
@@ -34,6 +35,7 @@ class SplitAutoEditor extends StatefulWidget {
     required this.fieldImage,
     required this.undoStack,
     this.onAutoChanged,
+    this.onEditPathPressed,
     super.key,
   });
 
@@ -183,6 +185,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                       _controller.areas = _controller.areas.reversed.toList();
                     }),
                     undoStack: widget.undoStack,
+                    onEditPathPressed: widget.onEditPathPressed,
                   ),
                 ),
               ),

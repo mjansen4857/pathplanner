@@ -6,10 +6,12 @@ import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.events.EventTrigger;
 import com.pathplanner.lib.events.PointTowardsZoneTrigger;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.FlippingUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Timer;
@@ -17,12 +19,11 @@ import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
-
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -30,6 +31,9 @@ import org.json.simple.parser.ParseException;
 
 /** A command that loads and runs an autonomous routine built using PathPlanner. */
 public class PathPlannerAuto extends Command {
+  /** The currently running path name. Used to handle activePath triggers */
+  public static String currentPathName = "";
+
   private static int instances = 0;
 
   private Command autoCommand;
@@ -102,28 +106,180 @@ public class PathPlannerAuto extends Command {
 
   /**
    * Create a trigger that is high when this auto is running, and low when it is not running
+   *
    * @return isRunning trigger
    */
   public Trigger isRunning() {
-    return new Trigger(autoLoop, () -> isRunning);
+    return condition(() -> isRunning);
   }
 
+  /**
+   * Trigger that is high when the given time has elapsed
+   *
+   * @param time The amount of time this auto should run before the trigger is activated
+   * @return timeElapsed trigger
+   */
   public Trigger timeElapsed(double time) {
-    return new Trigger(autoLoop, () -> timer.hasElapsed(time));
+    return condition(() -> timer.hasElapsed(time));
   }
 
+  /**
+   * Trigger that is high when within a range of time since the start of this auto
+   *
+   * @param startTime The starting time of the range
+   * @param endTime The ending time of the range
+   * @return timeRange trigger
+   */
   public Trigger timeRange(double startTime, double endTime) {
-    return new Trigger(autoLoop, () -> timer.get() >= startTime && timer.get() <= endTime);
+    return condition(() -> timer.get() >= startTime && timer.get() <= endTime);
   }
 
-  public Trigger event(String eventName){
+  /**
+   * Create an EventTrigger that will be polled by this auto instead of globally across all path
+   * following commands
+   *
+   * @param eventName The event name that controls this trigger
+   * @return EventTrigger for this auto
+   */
+  public Trigger event(String eventName) {
     return new EventTrigger(autoLoop, eventName);
   }
 
-  public Trigger pointTowardsZone(String zoneName){
+  /**
+   * Create a PointTowardsZoneTrigger that will be polled by this auto instead of globally across
+   * all path following commands
+   *
+   * @param zoneName The point towards zone name that controls this trigger
+   * @return PointTowardsZoneTrigger for this auto
+   */
+  public Trigger pointTowardsZone(String zoneName) {
     return new PointTowardsZoneTrigger(autoLoop, zoneName);
   }
 
+  /**
+   * Create a trigger that is high when a certain path is being followed
+   *
+   * @param pathName The name of the path to check for
+   * @return activePath trigger
+   */
+  public Trigger activePath(String pathName) {
+    return condition(() -> pathName.equals(currentPathName));
+  }
+
+  /**
+   * Create a trigger that is high when near a given field position. This field position is not
+   * automatically flipped
+   *
+   * @param fieldPosition The target field position
+   * @param toleranceMeters The position tolerance, in meters. The trigger will be high when within
+   *     this distance from the target position
+   * @return nearFieldPosition trigger
+   */
+  public Trigger nearFieldPosition(Translation2d fieldPosition, double toleranceMeters) {
+    return condition(
+        () ->
+            AutoBuilder.getCurrentPose().getTranslation().getDistance(fieldPosition)
+                <= toleranceMeters);
+  }
+
+  /**
+   * Create a trigger that is high when near a given field position. This field position will be
+   * automatically flipped
+   *
+   * @param blueFieldPosition The target field position if on the blue alliance
+   * @param toleranceMeters The position tolerance, in meters. The trigger will be high when within
+   *     this distance from the target position
+   * @return nearFieldPositionAutoFlipped trigger
+   */
+  public Trigger nearFieldPositionAutoFlipped(
+      Translation2d blueFieldPosition, double toleranceMeters) {
+    Translation2d redFieldPosition = FlippingUtil.flipFieldPosition(blueFieldPosition);
+    return condition(
+        () -> {
+          if (AutoBuilder.shouldFlip()) {
+            return AutoBuilder.getCurrentPose().getTranslation().getDistance(redFieldPosition)
+                <= toleranceMeters;
+          } else {
+            return AutoBuilder.getCurrentPose().getTranslation().getDistance(blueFieldPosition)
+                <= toleranceMeters;
+          }
+        });
+  }
+
+  /**
+   * Create a trigger that will be high when the robot is within a given area on the field. These
+   * positions will not be automatically flipped
+   *
+   * @param boundingBoxMin The minimum position of the bounding box for the target field area. The X
+   *     & Y coordinates of this position should be less than the max position.
+   * @param boundingBoxMax The maximum position of the bounding box for the target field area. The X
+   *     & Y coordinates of this position should be greater than the min position.
+   * @return inFieldArea trigger
+   */
+  public Trigger inFieldArea(Translation2d boundingBoxMin, Translation2d boundingBoxMax) {
+    if (boundingBoxMin.getX() >= boundingBoxMax.getX()
+        || boundingBoxMin.getY() >= boundingBoxMax.getY()) {
+      throw new IllegalArgumentException(
+          "Minimum bounding box position must have X and Y coordinates less than the maximum bounding box position");
+    }
+
+    return condition(
+        () -> {
+          Pose2d currentPose = AutoBuilder.getCurrentPose();
+          return currentPose.getX() >= boundingBoxMin.getX()
+              && currentPose.getY() >= boundingBoxMin.getY()
+              && currentPose.getX() <= boundingBoxMax.getX()
+              && currentPose.getY() <= boundingBoxMax.getY();
+        });
+  }
+
+  /**
+   * Create a trigger that will be high when the robot is within a given area on the field. These
+   * positions will be automatically flipped
+   *
+   * @param blueBoundingBoxMin The minimum position of the bounding box for the target field area if
+   *     on the blue alliance. The X & Y coordinates of this position should be less than the max
+   *     position.
+   * @param blueBoundingBoxMax The maximum position of the bounding box for the target field area if
+   *     on the blue alliance. The X & Y coordinates of this position should be greater than the min
+   *     position.
+   * @return inFieldAreaAutoFlipped trigger
+   */
+  public Trigger inFieldAreaAutoFlipped(
+      Translation2d blueBoundingBoxMin, Translation2d blueBoundingBoxMax) {
+    if (blueBoundingBoxMin.getX() >= blueBoundingBoxMax.getX()
+        || blueBoundingBoxMin.getY() >= blueBoundingBoxMax.getY()) {
+      throw new IllegalArgumentException(
+          "Minimum bounding box position must have X and Y coordinates less than the maximum bounding box position");
+    }
+
+    Translation2d redBoundingBoxMin = FlippingUtil.flipFieldPosition(blueBoundingBoxMin);
+    Translation2d redBoundingBoxMax = FlippingUtil.flipFieldPosition(blueBoundingBoxMax);
+
+    return condition(
+        () -> {
+          Pose2d currentPose = AutoBuilder.getCurrentPose();
+          if (AutoBuilder.shouldFlip()) {
+            return currentPose.getX() >= blueBoundingBoxMin.getX()
+                && currentPose.getY() >= blueBoundingBoxMin.getY()
+                && currentPose.getX() <= blueBoundingBoxMax.getX()
+                && currentPose.getY() <= blueBoundingBoxMax.getY();
+          } else {
+            return currentPose.getX() >= redBoundingBoxMin.getX()
+                && currentPose.getY() >= redBoundingBoxMin.getY()
+                && currentPose.getX() <= redBoundingBoxMax.getX()
+                && currentPose.getY() <= redBoundingBoxMax.getY();
+          }
+        });
+  }
+
+  /**
+   * Create a trigger with a custom condition. This will be polled by this auto's event loop so that
+   * its condition is only polled when this auto is running.
+   *
+   * @param condition The condition represented by this trigger
+   * @return Custom condition trigger
+   */
   public Trigger condition(BooleanSupplier condition) {
     return new Trigger(autoLoop, condition);
   }
@@ -167,12 +323,12 @@ public class PathPlannerAuto extends Command {
    * @throws ParseException If JSON within file cannot be parsed
    */
   public static List<PathPlannerPath> getPathGroupFromAutoFile(String autoName)
-          throws IOException, ParseException {
+      throws IOException, ParseException {
     try (BufferedReader br =
-                 new BufferedReader(
-                         new FileReader(
-                                 new File(
-                                         Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
+        new BufferedReader(
+            new FileReader(
+                new File(
+                    Filesystem.getDeployDirectory(), "pathplanner/autos/" + autoName + ".auto")))) {
       StringBuilder fileContentBuilder = new StringBuilder();
       String line;
       while ((line = br.readLine()) != null) {
@@ -209,9 +365,9 @@ public class PathPlannerAuto extends Command {
     if (!pathsInAuto.isEmpty()) {
       if (AutoBuilder.isHolonomic()) {
         this.startingPose =
-                new Pose2d(
-                        pathsInAuto.get(0).getPoint(0).position,
-                        pathsInAuto.get(0).getIdealStartingState().rotation());
+            new Pose2d(
+                pathsInAuto.get(0).getPoint(0).position,
+                pathsInAuto.get(0).getIdealStartingState().rotation());
       } else {
         this.startingPose = pathsInAuto.get(0).getStartingDifferentialPose();
       }

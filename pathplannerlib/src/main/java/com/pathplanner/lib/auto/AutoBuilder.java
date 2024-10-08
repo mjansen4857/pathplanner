@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 public class AutoBuilder {
   private static boolean configured = false;
 
+  private static Supplier<Pose2d> poseSupplier;
   private static Function<PathPlannerPath, Command> pathFollowingCommandBuilder;
   private static Consumer<Pose2d> resetPose;
   private static BooleanSupplier shouldFlipPath;
@@ -80,6 +81,7 @@ public class AutoBuilder {
                 robotConfig,
                 shouldFlipPath,
                 driveRequirements);
+    AutoBuilder.poseSupplier = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
     AutoBuilder.shouldFlipPath = shouldFlipPath;
@@ -152,6 +154,7 @@ public class AutoBuilder {
    * will not have the path flipped for them, and event markers will not be triggered automatically.
    *
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
+   * @param poseSupplier a supplier for the robot's current pose
    * @param resetPose a consumer for resetting the robot's pose
    * @param shouldFlipPose Supplier that determines if the starting pose should be flipped to the
    *     other side of the field. This will maintain a global blue alliance origin. NOTE: paths will
@@ -161,6 +164,7 @@ public class AutoBuilder {
    */
   public static void configureCustom(
       Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
+      Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       BooleanSupplier shouldFlipPose,
       boolean isHolonomic) {
@@ -170,6 +174,7 @@ public class AutoBuilder {
     }
 
     AutoBuilder.pathFollowingCommandBuilder = pathFollowingCommandBuilder;
+    AutoBuilder.poseSupplier = poseSupplier;
     AutoBuilder.resetPose = resetPose;
     AutoBuilder.configured = true;
     AutoBuilder.shouldFlipPath = shouldFlipPose;
@@ -184,14 +189,16 @@ public class AutoBuilder {
    * will not have the path flipped for them, and event markers will not be triggered automatically.
    *
    * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
+   * @param poseSupplier a supplier for the robot's current pose
    * @param resetPose a consumer for resetting the robot's pose
    * @param isHolonomic Does the robot have a holonomic drivetrain
    */
   public static void configureCustom(
       Function<PathPlannerPath, Command> pathFollowingCommandBuilder,
+      Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       boolean isHolonomic) {
-    configureCustom(pathFollowingCommandBuilder, resetPose, () -> false, isHolonomic);
+    configureCustom(pathFollowingCommandBuilder, poseSupplier, resetPose, () -> false, isHolonomic);
   }
 
   /**
@@ -210,6 +217,24 @@ public class AutoBuilder {
    */
   public static boolean isPathfindingConfigured() {
     return pathfindingConfigured;
+  }
+
+  /**
+   * Get the current robot pose
+   *
+   * @return Current robot pose
+   */
+  public static Pose2d getCurrentPose() {
+    return poseSupplier.get();
+  }
+
+  /**
+   * Get if a path or field position should currently be flipped
+   *
+   * @return True if path/positions should be flipped
+   */
+  public static boolean shouldFlip() {
+    return shouldFlipPath.getAsBoolean();
   }
 
   /**

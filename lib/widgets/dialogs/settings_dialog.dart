@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -57,7 +58,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late FieldImage _selectedField;
   late Color _teamColor;
   late String _pplibClientHost;
+
   late num _optimalCurrentLimit;
+  late num _maxAccel;
 
   @override
   void initState() {
@@ -105,6 +108,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         Defaults.ntServerAddress;
 
     _optimalCurrentLimit = _calculateOptimalCurrentLimit();
+    _maxAccel = _calculateMaxAccel();
   }
 
   @override
@@ -180,6 +184,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                 _mass = value;
                                 _optimalCurrentLimit =
                                     _calculateOptimalCurrentLimit();
+                                _maxAccel = _calculateMaxAccel();
                               });
                             }
                             widget.onSettingsChanged();
@@ -265,6 +270,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                 _wheelRadius = value;
                                 _optimalCurrentLimit =
                                     _calculateOptimalCurrentLimit();
+                                _maxAccel = _calculateMaxAccel();
                               });
                             }
                             widget.onSettingsChanged();
@@ -285,6 +291,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                 _driveGearing = value;
                                 _optimalCurrentLimit =
                                     _calculateOptimalCurrentLimit();
+                                _maxAccel = _calculateMaxAccel();
                               });
                             }
                             widget.onSettingsChanged();
@@ -307,6 +314,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                   PrefsKeys.maxDriveSpeed, value.toDouble());
                               setState(() {
                                 _maxDriveSpeed = value;
+                                _optimalCurrentLimit =
+                                    _calculateOptimalCurrentLimit();
+                                _maxAccel = _calculateMaxAccel();
                               });
                             }
                             widget.onSettingsChanged();
@@ -327,6 +337,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                 _wheelCOF = value;
                                 _optimalCurrentLimit =
                                     _calculateOptimalCurrentLimit();
+                                _maxAccel = _calculateMaxAccel();
                               });
                             }
                             widget.onSettingsChanged();
@@ -381,6 +392,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                                       _driveMotor = newValue;
                                                       _optimalCurrentLimit =
                                                           _calculateOptimalCurrentLimit();
+                                                      _maxAccel =
+                                                          _calculateMaxAccel();
                                                     });
                                                     widget.prefs.setString(
                                                         PrefsKeys.driveMotor,
@@ -430,6 +443,54 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                         ),
                                       ),
                                     ),
+                                    Tooltip(
+                                      richMessage: WidgetSpan(
+                                        alignment:
+                                            PlaceholderAlignment.baseline,
+                                        baseline: TextBaseline.alphabetic,
+                                        child: Container(
+                                          constraints: const BoxConstraints(
+                                              maxWidth: 250),
+                                          child: Text(
+                                            'The real max acceleration of the robot, calculated from the above values. If this is too slow, ensure that your True Max Drive Speed is correct. This should be the actual measured max speed of the robot under load.',
+                                            style: TextStyle(
+                                              color:
+                                                  colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            colorScheme.surfaceContainerHighest,
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(4)),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          const Icon(
+                                            Icons.help_outline,
+                                            size: 16.0,
+                                            color: Colors.grey,
+                                          ),
+                                          const SizedBox(width: 2),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 2),
+                                            child: Text(
+                                              'Max Accel: ${_maxAccel.toStringAsFixed(1)}M/S²',
+                                              style: TextStyle(
+                                                color: (_maxAccel < 3)
+                                                    ? colorScheme.error
+                                                    : colorScheme.onSurface,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 Padding(
@@ -475,18 +536,55 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                       value.roundToDouble());
                                   setState(() {
                                     _currentLimit = value.roundToDouble();
+                                    _maxAccel = _calculateMaxAccel();
                                   });
                                 }
                                 widget.onSettingsChanged();
                               },
                             ),
-                            Text(
-                              'Max Optimal Limit: ${_optimalCurrentLimit.toStringAsFixed(0)}A',
-                              style: TextStyle(
-                                color: (_optimalCurrentLimit.round() <
-                                        _currentLimit.round())
-                                    ? colorScheme.error
-                                    : colorScheme.onSurface,
+                            const SizedBox(height: 4),
+                            Tooltip(
+                              richMessage: WidgetSpan(
+                                alignment: PlaceholderAlignment.baseline,
+                                baseline: TextBaseline.alphabetic,
+                                child: Container(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 250),
+                                  child: Text(
+                                    'The maximum current limit that would still prevent the wheels from slipping under maximum acceleration.',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHighest,
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(4)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.help_outline,
+                                    size: 16.0,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 2),
+                                    child: Text(
+                                      'Max Optimal Limit: ${_optimalCurrentLimit.toStringAsFixed(0)}A',
+                                      style: TextStyle(
+                                        color: (_optimalCurrentLimit.round() <
+                                                _currentLimit.round())
+                                            ? colorScheme.error
+                                            : colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -657,6 +755,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                 _holonomicMode = value;
                                 _optimalCurrentLimit =
                                     _calculateOptimalCurrentLimit();
+                                _maxAccel = _calculateMaxAccel();
                               });
                               widget.onSettingsChanged();
                             },
@@ -984,8 +1083,36 @@ class _SettingsDialogState extends State<SettingsDialog> {
     final int numMotors = _holonomicMode ? 1 : 2;
     final DCMotor driveMotor =
         DCMotor.fromString(_driveMotor, numMotors).withReduction(_driveGearing);
+    final maxVelCurrent = min(
+        driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
+        _currentLimit * numMotors);
+    final torqueLoss = max(driveMotor.getTorque(maxVelCurrent), 0.0);
     final num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
     final num maxFrictionTorque = moduleFrictionForce * _wheelRadius;
-    return (maxFrictionTorque / driveMotor.kTNMPerAmp) / numMotors;
+    return ((maxFrictionTorque + torqueLoss) / driveMotor.kTNMPerAmp) /
+        numMotors;
+  }
+
+  num _calculateMaxAccel() {
+    final int numModules = _holonomicMode ? 4 : 2;
+    final int numMotors = _holonomicMode ? 1 : 2;
+    final DCMotor driveMotor =
+        DCMotor.fromString(_driveMotor, numMotors).withReduction(_driveGearing);
+
+    final maxVelCurrent = min(
+        driveMotor.getCurrent(_maxDriveSpeed / _wheelRadius, 12.0),
+        _currentLimit * numMotors);
+    final torqueLoss = max(driveMotor.getTorque(maxVelCurrent), 0.0);
+    final num moduleFrictionForce = (_wheelCOF * (_mass * 9.8)) / numModules;
+    final maxCurrent =
+        min(driveMotor.getCurrent(0.0, 12.0), (_currentLimit * numMotors));
+    final maxTorque = ((maxCurrent * driveMotor.kTNMPerAmp) - torqueLoss);
+    final maxForce = min(maxTorque / _wheelRadius, moduleFrictionForce);
+
+    if (maxForce > 0) {
+      return (maxForce * numModules) / _mass;
+    } else {
+      return 0.0;
+    }
   }
 }

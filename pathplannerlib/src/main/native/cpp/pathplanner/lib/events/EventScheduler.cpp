@@ -48,15 +48,17 @@ void EventScheduler::end() {
 void EventScheduler::scheduleCommand(std::shared_ptr<frc2::Command> command) {
 	// Check for commands that should be cancelled by this command
 	auto commandReqs = command->GetRequirements();
-	for (auto entry : m_eventCommands) {
-		if (!entry.second) {
-			continue;
-		}
+	if (!commandReqs.empty()) {
+		for (auto entry : m_eventCommands) {
+			if (!entry.second) {
+				continue;
+			}
 
-		auto otherReqs = entry.first->GetRequirements();
-		for (auto &&requirement : otherReqs) {
-			if (commandReqs.find(requirement) != commandReqs.end()) {
-				cancelCommand(command);
+			auto otherReqs = entry.first->GetRequirements();
+			for (auto requirement : otherReqs) {
+				if (commandReqs.find(requirement) != commandReqs.end()) {
+					cancelCommand(command);
+				}
 			}
 		}
 	}

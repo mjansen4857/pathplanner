@@ -1,17 +1,20 @@
 from commands2.functionalcommand import FunctionalCommand
 import commands2.cmd as cmd
+from wpilib.event import EventLoop
 from .path import PathPlannerPath, PathConstraints
 from typing import Callable, List
-from wpimath.geometry import Pose2d
+from wpimath.geometry import Pose2d, Translation2d
 from wpimath.kinematics import ChassisSpeeds
 from .commands import FollowPathCommand, PathfindingCommand, PathfindThenFollowPath
 from .util import FlippingUtil, DriveFeedforward
 from .controller import PathFollowingController
+from .events import EventTrigger, PointTowardsZoneTrigger
 import os
-from wpilib import getDeployDirectory, reportError, reportWarning, SendableChooser
+from wpilib import getDeployDirectory, reportError, reportWarning, SendableChooser, Timer
 import json
 from commands2.command import Command
 from commands2.subsystem import Subsystem
+from commands2.button import Trigger
 from .config import RobotConfig
 from hal import report, tResourceType
 
@@ -142,6 +145,268 @@ class CommandUtil:
     def _deadlineGroupFromData(data_json: dict, load_choreo_paths: bool) -> Command:
         commands = [CommandUtil.commandFromJson(cmd_json, load_choreo_paths) for cmd_json in data_json['commands']]
         return cmd.deadline(*commands)
+
+
+class PathPlannerAuto(Command):
+    _autoCommand: Command
+    _startingPose: Pose2d
+
+    _autoLoop: EventLoop
+    _timer: Timer
+    _isRunning: bool = False
+
+    _instances: int = 0
+
+    def __init__(self, auto_name: str):
+        """
+        Constructs a new PathPlannerAuto command.
+
+        :param auto_name: the name of the autonomous routine to load and run
+        """
+        super().__init__()
+
+        if not AutoBuilder.isConfigured():
+            raise RuntimeError('AutoBuilder was not configured before attempting to load a PathPlannerAuto from file')
+
+        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
+
+        with open(filePath, 'r') as f:
+            auto_json = json.loads(f.read())
+            self._initFromJson(auto_json)
+
+        self.addRequirements(*self._autoCommand.getRequirements())
+        self.setName(auto_name)
+
+        self._autoLoop = EventLoop()
+        self.timer = Timer()
+
+        PathPlannerAuto._instances += 1
+        report(tResourceType.kResourceType_PathPlannerAuto.value, PathPlannerAuto._instances)
+
+    def _initFromJson(self, auto_json: dict):
+        commandJson = auto_json['command']
+        choreoAuto = 'choreoAuto' in auto_json and bool(auto_json['choreoAuto'])
+        command = CommandUtil.commandFromJson(commandJson, choreoAuto)
+        resetOdom = 'resetOdom' in auto_json and bool(auto_json['resetOdom'])
+        pathsInAuto = PathPlannerAuto._pathsFromCommandJson(commandJson, choreoAuto)
+        if len(pathsInAuto) > 0:
+            if AutoBuilder.isHolonomic():
+                self._startingPose = Pose2d(pathsInAuto[0].getPoint(0).position,
+                                            pathsInAuto[0].getIdealStartingState().rotation)
+            else:
+                self._startingPose = pathsInAuto[0].getStartingDifferentialPose()
+        else:
+            self._startingPose = Pose2d()
+
+        if resetOdom:
+            self._autoCommand = cmd.sequence(AutoBuilder.resetOdom(self._startingPose), command)
+        else:
+            self._autoCommand = command
+
+    @staticmethod
+    def _pathsFromCommandJson(command_json: dict, choreo_paths: bool) -> List[PathPlannerPath]:
+        paths = []
+
+        cmdType = str(command_json['type'])
+        data = command_json['data']
+
+        if cmdType == 'path':
+            pathName = str(data['pathName'])
+            if choreo_paths:
+                paths.append(PathPlannerPath.fromChoreoTrajectory(pathName))
+            else:
+                paths.append(PathPlannerPath.fromPathFile(pathName))
+        elif cmdType == 'sequential' or cmdType == 'parallel' or cmdType == 'race' or cmdType == 'deadline':
+            for cmdJson in data['commands']:
+                paths.extend(PathPlannerAuto._pathsFromCommandJson(cmdJson, choreo_paths))
+        return paths
+
+    @staticmethod
+    def getPathGroupFromAutoFile(auto_name: str) -> List[PathPlannerPath]:
+        """
+        Get a list of every path in the given auto (depth first)
+
+        :param auto_name: Name of the auto to get the path group from
+        :return: List of paths in the auto
+        """
+        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
+
+        with open(filePath, 'r') as f:
+            auto_json = json.loads(f.read())
+            choreoAuto = 'choreoAuto' in auto_json and bool(auto_json['choreoAuto'])
+
+            return PathPlannerAuto._pathsFromCommandJson(auto_json['command'], choreoAuto)
+
+    def initialize(self):
+        self._autoCommand.initialize()
+        self.timer.restart()
+
+        self._isRunning = True
+        self._autoLoop.poll()
+
+    def execute(self):
+        self._autoCommand.execute()
+
+        self._autoLoop.poll()
+
+    def isFinished(self) -> bool:
+        return self._autoCommand.isFinished()
+
+    def end(self, interrupted: bool):
+        self._autoCommand.end(interrupted)
+        self.timer.stop()
+
+        self._isRunning = False
+        self._autoLoop.poll()
+
+    def condition(self, condition: Callable[[], bool]) -> Trigger:
+        """
+        Create a trigger with a custom condition. This will be polled by this auto's event loop so that
+        its condition is only polled when this auto is running.
+
+        :param condition: The condition represented by this trigger
+        :return: Custom condition trigger
+        """
+        return Trigger(self._autoLoop, condition)
+
+    def isRunning(self) -> Trigger:
+        """
+        Create a trigger that is high when this auto is running, and low when it is not running
+
+        :return: isRunning trigger
+        """
+        return self.condition(lambda: self._isRunning)
+
+    def timeElapsed(self, time: float) -> Trigger:
+        """
+        Trigger that is high when the given time has elapsed
+
+        :param time: The amount of time this auto should run before the trigger is activated
+        :return: timeElapsed trigger
+        """
+        return self.condition(lambda: self.timer.timeElapsed(time))
+
+    def timeRange(self, startTime: float, endTime: float) -> Trigger:
+        """
+        Trigger that is high when within a range of time since the start of this auto
+
+        :param startTime: The starting time of the range
+        :param endTime: The ending time of the range
+        :return: timeRange trigger
+        """
+        return self.condition(lambda: startTime <= self.timer.get() <= endTime)
+
+    def event(self, eventName: str) -> Trigger:
+        """
+        Create an EventTrigger that will be polled by this auto instead of globally across all path
+        following commands
+
+        :param eventName: The event name that controls this trigger
+        :return: EventTrigger for this auto
+        """
+        return EventTrigger(eventName, self._autoLoop)
+
+    def pointTowardsZone(self, zoneName: str) -> Trigger:
+        """
+        Create a PointTowardsZoneTrigger that will be polled by this auto instead of globally across
+        all path following commands
+
+        :param zoneName: The point towards zone name that controls this trigger
+        :return: PointTowardsZoneTrigger for this auto
+        """
+        return PointTowardsZoneTrigger(zoneName, self._autoLoop)
+
+    def activePath(self, pathName: str) -> Trigger:
+        """
+        Create a trigger that is high when a certain path is being followed
+
+        :param pathName: The name of the path to check for
+        :return: activePath trigger
+        """
+        return self.condition(lambda: pathName == FollowPathCommand.currentPathName)
+
+    def nearFieldPosition(self, fieldPosition: Translation2d, toleranceMeters: float) -> Trigger:
+        """
+        Create a trigger that is high when near a given field position. This field position is not
+        automatically flipped
+
+        :param fieldPosition: The target field position
+        :param toleranceMeters: The position tolerance, in meters. The trigger will be high when within this distance \
+            from the target position
+        :return: nearFieldPosition trigger
+        """
+        return self.condition(
+            lambda: AutoBuilder.getCurrentPose().translation().distance(fieldPosition) <= toleranceMeters)
+
+    def nearFieldPositionAutoFlipped(self, blueFieldPosition: Translation2d, toleranceMeters: float) -> Trigger:
+        """
+        Create a trigger that is high when near a given field position. This field position will be
+        automatically flipped
+
+        :param blueFieldPosition: The target field position if on the blue alliance
+        :param toleranceMeters: The position tolerance, in meters. The trigger will be high when within
+            this distance from the target position
+        :return: nearFieldPositionAutoFlipped trigger
+        """
+        redFieldPosition = FlippingUtil.flipFieldPosition(blueFieldPosition)
+
+        def nearFieldPosFlippedCondition() -> bool:
+            if AutoBuilder.shouldFlip():
+                return AutoBuilder.getCurrentPose().translation().distance(redFieldPosition) <= toleranceMeters
+            else:
+                return AutoBuilder.getCurrentPose().translation().distance(blueFieldPosition) <= toleranceMeters
+
+        return self.condition(nearFieldPosFlippedCondition)
+
+    def inFieldArea(self, boundingBoxMin: Translation2d, boundingBoxMax: Translation2d) -> Trigger:
+        """
+        Create a trigger that will be high when the robot is within a given area on the field. These
+        positions will not be automatically flipped
+
+        :param boundingBoxMin: The minimum position of the bounding box for the target field area. The X
+            and Y coordinates of this position should be less than the max position.
+        :param boundingBoxMax: The maximum position of the bounding box for the target field area. The X
+            and Y coordinates of this position should be greater than the min position.
+        :return: inFieldArea trigger
+        """
+        if boundingBoxMin.x >= boundingBoxMax.x or boundingBoxMin.y >= boundingBoxMax.y:
+            raise ValueError(
+                'Minimum bounding box position must have X and Y coordinates less than the maximum bounding box position')
+
+        def inFieldAreaCondition() -> bool:
+            currentPose = AutoBuilder.getCurrentPose()
+            return boundingBoxMin.x >= currentPose.x <= boundingBoxMax.x and boundingBoxMin.y >= currentPose.y <= boundingBoxMax.y
+
+        return self.condition(inFieldAreaCondition)
+
+    def inFieldAreaAutoFlipped(self, blueBoundingBoxMin: Translation2d, blueBoundingBoxMax: Translation2d) -> Trigger:
+        """
+        Create a trigger that will be high when the robot is within a given area on the field. These
+        positions will be automatically flipped
+
+        :param blueBoundingBoxMin: The minimum position of the bounding box for the target field area if
+             on the blue alliance. The X and Y coordinates of this position should be less than the max
+             position.
+        :param blueBoundingBoxMax: The maximum position of the bounding box for the target field area if
+            on the blue alliance. The X & Y coordinates of this position should be greater than the min
+            position.
+        :return: inFieldAreaAutoFlipped trigger
+        """
+        if blueBoundingBoxMin.x >= blueBoundingBoxMax.x or blueBoundingBoxMin.y >= blueBoundingBoxMax.y:
+            raise ValueError(
+                'Minimum bounding box position must have X and Y coordinates less than the maximum bounding box position')
+
+        redBoundingBoxMin = FlippingUtil.flipFieldPosition(blueBoundingBoxMin)
+        redBoundingBoxMax = FlippingUtil.flipFieldPosition(blueBoundingBoxMax)
+
+        def inFieldAreaFlippedCondition() -> bool:
+            currentPose = AutoBuilder.getCurrentPose()
+            if AutoBuilder.shouldFlip():
+                return redBoundingBoxMin.x >= currentPose.x <= redBoundingBoxMax.x and redBoundingBoxMin.y >= currentPose.y <= redBoundingBoxMax.y
+            else:
+                return blueBoundingBoxMin.x >= currentPose.x <= blueBoundingBoxMax.x and blueBoundingBoxMin.y >= currentPose.y <= blueBoundingBoxMax.y
+
+        return self.condition(inFieldAreaFlippedCondition)
 
 
 class AutoBuilder:
@@ -279,6 +544,24 @@ class AutoBuilder:
         return AutoBuilder._isHolonomic
 
     @staticmethod
+    def getCurrentPose() -> Pose2d:
+        """
+        Get the current robot pose
+
+        :return: Current robot pose
+        """
+        return AutoBuilder._getPose()
+
+    @staticmethod
+    def shouldFlip() -> bool:
+        """
+        Get if a path or field position should currently be flipped
+
+        :return: True if path/positions should be flipped
+        """
+        return AutoBuilder._shouldFlipPath()
+
+    @staticmethod
     def followPath(path: PathPlannerPath) -> Command:
         """
         Builds a command to follow a path with event markers.
@@ -386,99 +669,3 @@ class AutoBuilder:
         if not default_auto_added:
             chooser.setDefaultOption("None", cmd.none())
         return chooser
-
-
-class PathPlannerAuto(Command):
-    _autoCommand: Command
-    _startingPose: Pose2d
-
-    _instances: int = 0
-
-    def __init__(self, auto_name: str):
-        """
-        Constructs a new PathPlannerAuto command.
-
-        :param auto_name: the name of the autonomous routine to load and run
-        """
-        super().__init__()
-
-        if not AutoBuilder.isConfigured():
-            raise RuntimeError('AutoBuilder was not configured before attempting to load a PathPlannerAuto from file')
-
-        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
-
-        with open(filePath, 'r') as f:
-            auto_json = json.loads(f.read())
-            self._initFromJson(auto_json)
-
-        self.addRequirements(*self._autoCommand.getRequirements())
-        self.setName(auto_name)
-
-        PathPlannerAuto._instances += 1
-        report(tResourceType.kResourceType_PathPlannerAuto.value, PathPlannerAuto._instances)
-
-    def _initFromJson(self, auto_json: dict):
-        commandJson = auto_json['command']
-        choreoAuto = 'choreoAuto' in auto_json and bool(auto_json['choreoAuto'])
-        command = CommandUtil.commandFromJson(commandJson, choreoAuto)
-        resetOdom = 'resetOdom' in auto_json and bool(auto_json['resetOdom'])
-        pathsInAuto = PathPlannerAuto._pathsFromCommandJson(commandJson, choreoAuto)
-        if len(pathsInAuto) > 0:
-            if AutoBuilder.isHolonomic():
-                self._startingPose = Pose2d(pathsInAuto[0].getPoint(0).position,
-                                            pathsInAuto[0].getIdealStartingState().rotation)
-            else:
-                self._startingPose = pathsInAuto[0].getStartingDifferentialPose()
-        else:
-            self._startingPose = Pose2d()
-
-        if resetOdom:
-            self._autoCommand = cmd.sequence(AutoBuilder.resetOdom(self._startingPose), command)
-        else:
-            self._autoCommand = command
-
-    @staticmethod
-    def _pathsFromCommandJson(command_json: dict, choreo_paths: bool) -> List[PathPlannerPath]:
-        paths = []
-
-        cmdType = str(command_json['type'])
-        data = command_json['data']
-
-        if cmdType == 'path':
-            pathName = str(data['pathName'])
-            if choreo_paths:
-                paths.append(PathPlannerPath.fromChoreoTrajectory(pathName))
-            else:
-                paths.append(PathPlannerPath.fromPathFile(pathName))
-        elif cmdType == 'sequential' or cmdType == 'parallel' or cmdType == 'race' or cmdType == 'deadline':
-            for cmdJson in data['commands']:
-                paths.extend(PathPlannerAuto._pathsFromCommandJson(cmdJson, choreo_paths))
-        return paths
-
-    @staticmethod
-    def getPathGroupFromAutoFile(auto_name: str) -> List[PathPlannerPath]:
-        """
-        Get a list of every path in the given auto (depth first)
-
-        :param auto_name: Name of the auto to get the path group from
-        :return: List of paths in the auto
-        """
-        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'autos', auto_name + '.auto')
-
-        with open(filePath, 'r') as f:
-            auto_json = json.loads(f.read())
-            choreoAuto = 'choreoAuto' in auto_json and bool(auto_json['choreoAuto'])
-
-            return PathPlannerAuto._pathsFromCommandJson(auto_json['command'], choreoAuto)
-
-    def initialize(self):
-        self._autoCommand.initialize()
-
-    def execute(self):
-        self._autoCommand.execute()
-
-    def isFinished(self) -> bool:
-        return self._autoCommand.isFinished()
-
-    def end(self, interrupted: bool):
-        self._autoCommand.end(interrupted)

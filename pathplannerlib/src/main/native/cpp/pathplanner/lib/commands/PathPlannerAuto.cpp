@@ -168,10 +168,16 @@ void PathPlannerAuto::initFromJson(const wpi::json &json) {
 
 void PathPlannerAuto::Initialize() {
 	m_autoCommand->Initialize();
+	m_timer.Restart();
+
+	m_isRunning = true;
+	m_autoLoop->Poll();
 }
 
 void PathPlannerAuto::Execute() {
 	m_autoCommand->Execute();
+
+	m_autoLoop->Poll();
 }
 
 bool PathPlannerAuto::IsFinished() {
@@ -180,6 +186,10 @@ bool PathPlannerAuto::IsFinished() {
 
 void PathPlannerAuto::End(bool interrupted) {
 	m_autoCommand->End(interrupted);
+	m_timer.Stop();
+
+	m_isRunning = false;
+	m_autoLoop->Poll();
 }
 
 std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::pathsFromCommandJson(

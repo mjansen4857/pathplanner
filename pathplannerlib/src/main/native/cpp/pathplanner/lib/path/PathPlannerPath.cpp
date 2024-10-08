@@ -720,6 +720,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	path->m_isChoreoPath = m_isChoreoPath;
 	path->m_idealTrajectory = flippedTraj;
 	path->preventFlipping = preventFlipping;
+	path->name = name;
 
 	return path;
 }

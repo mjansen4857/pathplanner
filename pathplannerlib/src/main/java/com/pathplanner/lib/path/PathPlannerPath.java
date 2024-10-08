@@ -1126,11 +1126,11 @@ public class PathPlannerPath {
     }
     path.goalEndState = goalEndState.flip();
     path.allPoints = allPoints.stream().map(PathPoint::flip).toList();
-    ;
     path.reversed = reversed;
     path.isChoreoPath = isChoreoPath;
     path.idealTrajectory = flippedTraj;
     path.preventFlipping = preventFlipping;
+    path.name = name;
 
     return path;
   }

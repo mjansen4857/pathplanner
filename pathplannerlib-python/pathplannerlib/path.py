@@ -357,6 +357,7 @@ class PathPlannerPath:
     _choreoPathCache: dict[str, PathPlannerPath] = {}
 
     preventFlipping: bool = False
+    name: str = ''
 
     def __init__(self, waypoints: List[Waypoint], constraints: PathConstraints,
                  ideal_starting_state: Union[IdealStartingState, None], goal_end_state: GoalEndState,
@@ -553,6 +554,7 @@ class PathPlannerPath:
             fullPath._isChoreoPath = True
             fullPath._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=fullTrajStates,
                                                               events=fullEvents)
+            fullPath.name = trajectory_name
             PathPlannerPath._choreoPathCache[trajectory_name] = fullPath
 
             splits = trajJson['splits']
@@ -589,6 +591,7 @@ class PathPlannerPath:
                 path._isChoreoPath = True
                 path._idealTrajectory = PathPlannerTrajectory(None, None, None, None, states=states,
                                                               events=events)
+                path.name = name
                 PathPlannerPath._choreoPathCache[name] = path
 
     @staticmethod
@@ -760,7 +763,7 @@ class PathPlannerPath:
 
         newRotTargets = [RotationTarget(t.waypointRelativePosition, FlippingUtil.flipFieldRotation(t.target)) for t in
                          self._rotationTargets]
-        newPointZones = [z.flip() for z in self.point_towards_zones]
+        newPointZones = [z.flip() for z in self._pointTowardsZones]
 
         newPoints = [p.flip() for p in self._allPoints]
 
@@ -780,6 +783,7 @@ class PathPlannerPath:
         path._isChoreoPath = self._isChoreoPath
         path._idealTrajectory = flippedTraj
         path.preventFlipping = self.preventFlipping
+        path.name = self.name
 
         return path
 

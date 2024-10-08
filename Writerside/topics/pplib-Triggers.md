@@ -146,3 +146,105 @@ class RobotContainer:
 
 </tab>
 </tabs>
+
+## PathPlannerAuto Triggers
+
+The PathPlannerAuto command includes a variety of methods to create triggers that are polled by the auto they were
+created with. This means that each trigger will only be polled if its associated auto is actually running. Furthermore,
+this allows for customization of EventTriggers and PointTowardsZoneTriggers on a per-auto basis.
+
+<tabs group="pplib-language">
+<tab title="Java" group-key="java">
+
+```Java
+public class RobotContainer() {
+    public RobotContainer() {
+        // Subsystem initialization
+        swerve = new Swerve();
+        exampleSubsystem = new ExampleSubsystem();
+        
+        autoCommand = new PathPlannerAuto("Example Auto");
+        // PathPlannerAuto can also be created with a custom command
+        // autoCommand = new PathPlannerAuto(new CustomAutoCommand());
+
+        // Bind to different auto triggers
+        autoCommand.isRunning().onTrue(Commands.print("Example Auto started"));
+        autoCommand.timeElapsed(5).onTrue(Commands.print("5 seconds passed"));
+        autoCommand.timeRange(6, 8).whileTrue(Commands.print("between 6 and 8 seconds"));
+        autoCommand.event("Example Event Marker").onTrue(Commands.print("passed example event marker"));
+        autoCommand.pointTowardsZone("Speaker").onTrue(Commands.print("aiming at speaker"));
+        autoCommand.activePath("Example Path").onTrue(Commands.print("started following Example Path"));
+        autoCommand.nearFieldPosition(new Translation2d(2, 2), 0.5).whileTrue(Commands.print("within 0.5m of (2, 2)"));
+        autoCommand.inFieldArea(new Translation2d(2, 2), new Translation2d(4, 4)).whileTrue(Commands.print("in area of (2, 2) - (4, 4)"));
+        
+        // Do all other initialization
+        configureButtonBindings();
+
+        // ...
+    }
+}
+```
+
+</tab>
+<tab title="C++" group-key="cpp">
+
+```C++
+#include <pathplanner/lib/commands/PathPlannerAuto.h>
+
+using namespace pathplanner;
+
+RobotContainer::RobotContainer() : m_swerve(), m_exampleSubsystem() {
+    m_autoCommand = PathPlannerAuto("Example Auto");
+    // PathPlannerAuto can also be created with a custom command
+    // m_autoCommand = PathPlannerAuto(CustomAutoCommand());
+
+    // Bind to different auto triggers
+    m_autoCommand.isRunning().OnTrue(frc2::cmd::Print("Example Auto started"));
+    m_autoCommand.timeElapsed(5).OnTrue(frc2::cmd::Print("5 seconds passed"));
+    m_autoCommand.timeRange(6, 8).WhileTrue(frc2::cmd::Print("between 6 and 8 seconds"));
+    m_autoCommand.event("Example Event Marker").OnTrue(frc2::cmd::Print("passed example event marker"));
+    m_autoCommand.pointTowardsZone("Speaker").OnTrue(frc2::cmd::Print("aiming at speaker"));
+    m_autoCommand.activePath("Example Path").OnTrue(frc2::cmd::Print("started following Example Path"));
+    m_autoCommand.nearFieldPosition(Translation2d(2, 2), 0.5).WhileTrue(frc2::cmd::Print("within 0.5m of (2, 2)"));
+    m_autoCommand.inFieldArea(Translation2d(2, 2), Translation2d(4, 4)).WhileTrue(frc2::cmd::Print("in area of (2, 2) - (4, 4)"));
+    
+    // Do all other initialization
+    configureButtonBindings();
+    
+    // ...
+}
+```
+
+</tab>
+<tab title="Python" group-key="python">
+
+```Python
+from pathplannerlib.auto import PathPlannerAuto
+import commands2.cmd as cmd
+
+class RobotContainer:
+    def __init__(self):
+        # Subsystem initialization
+        self.swerve = Swerve()
+        self.exampleSubsystem = ExampleSubsystem()
+
+        self.autoCommand = PathPlannerAuto("Example Auto")
+
+        // Bind to different auto triggers
+        self.autoCommand.isRunning().onTrue(cmd.print_("Example Auto started"));
+        self.autoCommand.timeElapsed(5).onTrue(cmd.print_("5 seconds passed"));
+        self.autoCommand.timeRange(6, 8).whileTrue(cmd.print_("between 6 and 8 seconds"));
+        self.autoCommand.event("Example Event Marker").onTrue(cmd.print_("passed example event marker"));
+        self.autoCommand.pointTowardsZone("Speaker").onTrue(cmd.print_("aiming at speaker"));
+        self.autoCommand.activePath("Example Path").onTrue(cmd.print_("started following Example Path"));
+        self.autoCommand.nearFieldPosition(Translation2d(2, 2), 0.5).whileTrue(cmd.print_("within 0.5m of (2, 2)"));
+        self.autoCommand.inFieldArea(Translation2d(2, 2), Translation2d(4, 4)).whileTrue(cmd.print_("in area of (2, 2) - (4, 4)"));
+        
+        # Do all other initialization
+        self.configureButtonBindings()
+    
+        # ...
+```
+
+</tab>
+</tabs>

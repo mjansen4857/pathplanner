@@ -404,12 +404,7 @@ public class PathPlannerPath {
 
       // Add the full path to the cache
       PathPlannerPath fullPath = new PathPlannerPath();
-      fullPath.globalConstraints =
-          new PathConstraints(
-              Double.POSITIVE_INFINITY,
-              Double.POSITIVE_INFINITY,
-              Double.POSITIVE_INFINITY,
-              Double.POSITIVE_INFINITY);
+      fullPath.globalConstraints = PathConstraints.unlimitedConstraints();
       fullPath.goalEndState =
           new GoalEndState(
               fullTrajStates.get(fullTrajStates.size() - 1).linearVelocity,
@@ -457,12 +452,7 @@ public class PathPlannerPath {
         }
 
         PathPlannerPath path = new PathPlannerPath();
-        path.globalConstraints =
-            new PathConstraints(
-                Double.POSITIVE_INFINITY,
-                Double.POSITIVE_INFINITY,
-                Double.POSITIVE_INFINITY,
-                Double.POSITIVE_INFINITY);
+        path.globalConstraints = PathConstraints.unlimitedConstraints();
         path.goalEndState =
             new GoalEndState(
                 states.get(states.size() - 1).linearVelocity,
@@ -652,26 +642,18 @@ public class PathPlannerPath {
     return new Pose2d(startPos, heading);
   }
 
-  /**
-   * Get the constraints for a point along the path
-   *
-   * @param idx Index of the point to get constraints for
-   * @return The constraints that should apply to the point
-   */
-  public PathConstraints getConstraintsForPoint(int idx) {
-    if (getPoint(idx).constraints != null) {
-      return getPoint(idx).constraints;
-    }
-
-    return globalConstraints;
-  }
-
   private PathConstraints constraintsForWaypointPos(double pos) {
     for (ConstraintsZone z : constraintZones) {
       if (pos >= z.minPosition() && pos <= z.maxPosition()) {
         return z.constraints();
       }
     }
+
+    // Check if constraints should be unlimited
+    if (globalConstraints.unlimited()) {
+      return PathConstraints.unlimitedConstraints();
+    }
+
     return globalConstraints;
   }
 
@@ -915,9 +897,6 @@ public class PathPlannerPath {
     if (numPoints() > 0) {
       for (int i = 0; i < allPoints.size(); i++) {
         PathPoint point = allPoints.get(i);
-        if (point.constraints == null) {
-          point.constraints = globalConstraints;
-        }
         double curveRadius = getCurveRadiusAtPoint(i, allPoints);
 
         if (Double.isFinite(curveRadius)) {

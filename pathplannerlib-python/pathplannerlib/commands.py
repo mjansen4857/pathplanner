@@ -31,6 +31,8 @@ class FollowPathCommand(Command):
     _path: PathPlannerPath = None
     _trajectory: PathPlannerTrajectory = None
 
+    currentPathName: str = ''
+
     def __init__(self, path: PathPlannerPath, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds],
                  output: Callable[[ChassisSpeeds, List[DriveFeedforward]], None],
@@ -79,6 +81,7 @@ class FollowPathCommand(Command):
             self._trajectory = idealTrajectory
 
     def initialize(self):
+        FollowPathCommand.currentPathName = self._originalPath.name
         if self._shouldFlipPath() and not self._originalPath.preventFlipping:
             self._path = self._originalPath.flipPath()
         else:
@@ -144,6 +147,7 @@ class FollowPathCommand(Command):
 
     def end(self, interrupted: bool):
         self._timer.stop()
+        FollowPathCommand.currentPathName = ''
 
         # Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
         # the command to smoothly transition into some auto-alignment routine

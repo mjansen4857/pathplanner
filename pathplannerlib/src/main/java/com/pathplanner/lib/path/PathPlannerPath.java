@@ -37,6 +37,9 @@ public class PathPlannerPath {
   private static final Map<String, PathPlannerPath> pathCache = new HashMap<>();
   private static final Map<String, PathPlannerPath> choreoPathCache = new HashMap<>();
 
+  /** Name of the path. Optional for using current path triggers on PathPlannerAuto */
+  public String name = "";
+
   private List<Waypoint> waypoints;
   private List<RotationTarget> rotationTargets;
   private List<PointTowardsZone> pointTowardsZones;
@@ -314,6 +317,7 @@ public class PathPlannerPath {
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
 
       PathPlannerPath path = PathPlannerPath.fromJson(json);
+      path.name = pathName;
       PPLibTelemetry.registerHotReloadPath(pathName, path);
       pathCache.put(pathName, path);
       return path;
@@ -419,6 +423,7 @@ public class PathPlannerPath {
       fullPath.allPoints = fullPathPoints;
       fullPath.isChoreoPath = true;
       fullPath.idealTrajectory = Optional.of(new PathPlannerTrajectory(fullTrajStates, fullEvents));
+      fullPath.name = trajectoryName;
       choreoPathCache.put(trajectoryName, fullPath);
 
       JSONArray splits = (JSONArray) trajJson.get("splits");
@@ -471,6 +476,7 @@ public class PathPlannerPath {
         path.allPoints = pathPoints;
         path.isChoreoPath = true;
         path.idealTrajectory = Optional.of(new PathPlannerTrajectory(states, events));
+        path.name = name;
         choreoPathCache.put(name, path);
       }
     }
@@ -1120,11 +1126,11 @@ public class PathPlannerPath {
     }
     path.goalEndState = goalEndState.flip();
     path.allPoints = allPoints.stream().map(PathPoint::flip).toList();
-    ;
     path.reversed = reversed;
     path.isChoreoPath = isChoreoPath;
     path.idealTrajectory = flippedTraj;
     path.preventFlipping = preventFlipping;
+    path.name = name;
 
     return path;
   }

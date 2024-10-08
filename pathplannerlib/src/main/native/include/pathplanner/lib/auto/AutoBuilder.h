@@ -15,13 +15,15 @@
 #include <wpi/array.h>
 #include <string>
 #include "pathplanner/lib/path/PathPlannerPath.h"
-#include "pathplanner/lib/commands/PathPlannerAuto.h"
 #include "pathplanner/lib/config/RobotConfig.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
 #include "pathplanner/lib/util/DriveFeedforward.h"
 #include "pathplanner/lib/util/FlippingUtil.h"
 
 namespace pathplanner {
+
+class PathPlannerAuto;
+
 class AutoBuilder {
 public:
 	/**
@@ -81,6 +83,7 @@ public:
 	 * commands is not supported if using a custom command builder. Custom path following commands
 	 * will not have the path flipped for them, and event markers will not be triggered automatically.
 	 *
+	 * @param poseSupplier a function that returns the robot's current pose
 	 * @param pathFollowingCommandBuilder a function that builds a command to follow a given path
 	 * @param resetPose a function for resetting the robot's pose
 	 * @param isHolonomic Does the robot have a holonomic drivetrain
@@ -89,7 +92,7 @@ public:
 	 *     not be flipped when configured with a custom path following command. Flipping the paths
 	 *     must be handled in your command.
 	 */
-	static void configureCustom(
+	static void configureCustom(std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
 			std::function<void(frc::Pose2d)> resetPose, bool isHolonomic,
 			std::function<bool()> shouldFlipPose = []() {
@@ -112,6 +115,24 @@ public:
 	 */
 	static inline bool isHolonomic() {
 		return m_isHolonomic;
+	}
+
+	/**
+	 * Get the current robot pose
+	 *
+	 * @return Current robot pose
+	 */
+	static inline frc::Pose2d getCurrentPose() {
+		return m_poseSupplier();
+	}
+
+	/**
+	 * Get if a path or field position should currently be flipped
+	 *
+	 * @return True if path/positions should be flipped
+	 */
+	static inline bool shouldFlip() {
+		return m_shouldFlipPath();
 	}
 
 	/**
@@ -229,6 +250,7 @@ public:
 private:
 	static bool m_configured;
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
+	static std::function<frc::Pose2d()> m_poseSupplier;
 	static std::function<void(frc::Pose2d)> m_resetPose;
 	static std::function<bool()> m_shouldFlipPath;
 	static bool m_isHolonomic;

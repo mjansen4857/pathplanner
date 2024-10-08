@@ -94,6 +94,8 @@ public class FollowPathCommand extends Command {
 
   @Override
   public void initialize() {
+    PathPlannerAuto.currentPathName = originalPath.name;
+
     if (shouldFlipPath.getAsBoolean() && !originalPath.preventFlipping) {
       path = originalPath.flipPath();
     } else {
@@ -180,6 +182,7 @@ public class FollowPathCommand extends Command {
   @Override
   public void end(boolean interrupted) {
     timer.stop();
+    PathPlannerAuto.currentPathName = "";
 
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine

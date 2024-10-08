@@ -124,6 +124,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
 	std::shared_ptr < PathPlannerPath > path = PathPlannerPath::fromJson(json);
+	path->name = pathName;
 	PPLibTelemetry::registerHotReloadPath(pathName, path);
 
 	PathPlannerPath::getPathCache().emplace(pathName, path);
@@ -238,6 +239,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 	fullPath->m_isChoreoPath = true;
 	fullPath->m_idealTrajectory = PathPlannerTrajectory(fullTrajStates,
 			fullEvents);
+	fullPath->name = trajectoryName;
 	PathPlannerPath::getChoreoPathCache().emplace(trajectoryName, fullPath);
 
 	auto splits = trajJson.at("splits");
@@ -296,6 +298,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 			path->m_allPoints = pathPoints;
 			path->m_isChoreoPath = true;
 			path->m_idealTrajectory = PathPlannerTrajectory(states, events);
+			path->name = name;
 			PathPlannerPath::getChoreoPathCache().emplace(name, path);
 		}
 	}
@@ -717,6 +720,7 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::flipPath() {
 	path->m_isChoreoPath = m_isChoreoPath;
 	path->m_idealTrajectory = flippedTraj;
 	path->preventFlipping = preventFlipping;
+	path->name = name;
 
 	return path;
 }

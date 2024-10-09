@@ -104,7 +104,7 @@ void main() {
 
       Map<String, dynamic> json = path.toJson();
       PathPlannerPath fromJson =
-          PathPlannerPath.fromJsonV1(json, path.name, '/paths', fs);
+          PathPlannerPath.fromJson(json, path.name, '/paths', fs);
 
       expect(fromJson, path);
     });

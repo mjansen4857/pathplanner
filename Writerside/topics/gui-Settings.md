@@ -4,7 +4,7 @@ The settings menu can be accessed via the [Navigation Menu](gui-Navigation-Menu.
 
 <img src="settings.png" alt="settings" border-effect="rounded"/>
 
-## Robot Config
+## Robot Config & Module Config
 
 Bumper Width
 : The width of the robot, including bumpers, in meters. Used for visualization.
@@ -12,43 +12,7 @@ Bumper Width
 Bumper Length
 : The length of the robot, including bumpers, in meters. Used for visualization.
 
-Robot Mass
-: The mass of the robot, including bumpers and battery, in Kilograms.
-
-Robot MOI
-: The Moment of Inertia, or MOI, of the robot, including battery and bumpers. This can be calculated via CAD software,
-or calculated by applying a constant torque to all drive motors and measuring the angular acceleration of the robot.
-
-Wheelbase
-: The distance between the front and back of the drivebase, in meters. Only relevant in holonomic mode.
-
-Trackwidth
-: The distance between the left and right sides of the drivebase, in meters.
-
-## Module Config
-
-Wheel Radius
-: The radius of the drive wheels, in meters.
-
-Drive Gearing
-: The gear reduction from the motors to the wheels.
-
-True Max Drive Speed
-: The true maximum speed of the robot/drive module while driving under load, in meters/second.
-
-Wheel COF
-: The coefficient of friction between the drive wheels and the carpet. Some wheels will have their COF listed on their
-store page. The COF of friction can also be calculated by measuring how much force is required to pull the robot (
-causing the wheels to slide) across the carpet. You can also tune this number until the wheels no longer slip while
-accelerating or turning in corners.
-
-Drive Motor
-: The type of motor used to drive the wheels of the robot.
-
-Drive Current Limit
-: The supply current limit applied to the drive motor controllers, in Amps. Below this field, the Max Optimal Limit is
-displayed, which is the maximum usable current limit that prevents the wheels from slipping. This is calculated based on
-other configuration options.
+See [](Robot-Config.md) for Robot/Module Configuration options and how to find them.
 
 ## Default Constraints
 

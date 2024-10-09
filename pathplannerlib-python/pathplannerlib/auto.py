@@ -172,6 +172,15 @@ class PathPlannerAuto(Command):
 
         with open(filePath, 'r') as f:
             auto_json = json.loads(f.read())
+
+            version = str(auto_json['version'])
+            versions = version.split('.')
+
+            if versions[0] != '2025':
+                raise RuntimeError("Incompatible file version for '" + auto_name
+                                   + ".auto'. Actual: '" + version
+                                   + "' Expected: '2025.X'")
+
             self._initFromJson(auto_json)
 
         self.addRequirements(*self._autoCommand.getRequirements())

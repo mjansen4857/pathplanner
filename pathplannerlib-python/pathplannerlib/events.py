@@ -111,7 +111,8 @@ class EventScheduler:
         allReqs = set()
 
         for m in path.getEventMarkers():
-            allReqs.update(m.command.getRequirements())
+            if m.command is not None:
+                allReqs.update(m.command.getRequirements())
 
         return allReqs
 

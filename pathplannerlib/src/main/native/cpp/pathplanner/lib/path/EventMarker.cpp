@@ -11,6 +11,11 @@ EventMarker EventMarker::fromJson(const wpi::json &json) {
 			&& !json.at("endWaypointRelativePos").is_null()) {
 		endPos = json.at("endWaypointRelativePos").get<double>();
 	}
-	return EventMarker(name, pos, endPos,
-			CommandUtil::commandFromJson(json.at("command"), false));
+
+	if (!json.at("command").is_null()) {
+		return EventMarker(name, pos, endPos,
+				CommandUtil::commandFromJson(json.at("command"), false));
+	}
+
+	return EventMarker(name, pos, endPos, frc2::cmd::None());
 }

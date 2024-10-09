@@ -103,10 +103,14 @@ public class PathPlannerTrajectory {
       Queue<Event> unaddedEvents =
           new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestamp));
       for (EventMarker marker : path.getEventMarkers()) {
-        unaddedEvents.add(new ScheduleCommandEvent(marker.position(), marker.command()));
+        if (marker.command() != null) {
+          unaddedEvents.add(new ScheduleCommandEvent(marker.position(), marker.command()));
+        }
         if (marker.endPosition() >= 0.0) {
           // This marker is zoned
-          unaddedEvents.add(new CancelCommandEvent(marker.endPosition(), marker.command()));
+          if (marker.command() != null) {
+            unaddedEvents.add(new CancelCommandEvent(marker.endPosition(), marker.command()));
+          }
           unaddedEvents.add(new TriggerEvent(marker.position(), marker.triggerName(), true));
           unaddedEvents.add(new TriggerEvent(marker.endPosition(), marker.triggerName(), false));
         } else {

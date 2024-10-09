@@ -4,10 +4,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/widgets/editor/info_card.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
@@ -36,7 +38,7 @@ void main() {
           waypointRelativePos: 0.2,
           endWaypointRelativePos: 0.8,
           name: '0'),
-      EventMarker.defaultMarker()..name = '1',
+      EventMarker(name: '1'),
     ];
     pathChanged = false;
     hoveredMarker = null;
@@ -284,6 +286,47 @@ void main() {
         path.eventMarkers[0].waypointRelativePos);
   });
 
+  testWidgets('add command button', (widgetTester) async {
+    path.eventMarkers = [
+      EventMarker(),
+    ];
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EventMarkersTree(
+          path: path,
+          onPathChangedNoSim: () => pathChanged = true,
+          onMarkerHovered: (value) => hoveredMarker = value,
+          onMarkerSelected: (value) => selectedMarker = value,
+          undoStack: undoStack,
+          initiallySelectedMarker: 0,
+        ),
+      ),
+    ));
+
+    final button = find.byType(AddCommandButton);
+
+    expect(button, findsOne);
+
+    await widgetTester.tap(button);
+    await widgetTester.pumpAndSettle();
+
+    final named = find.text('Named Command');
+
+    expect(named, findsOne);
+
+    await widgetTester.tap(named);
+    await widgetTester.pumpAndSettle();
+
+    expect(path.eventMarkers.first.command, isNotNull);
+    expect(path.eventMarkers.first.command, isInstanceOf<NamedCommand>());
+
+    undoStack.undo();
+    await widgetTester.pumpAndSettle();
+
+    expect(path.eventMarkers.first.command, isNull);
+  });
+
   testWidgets('change command group type', (widgetTester) async {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -311,12 +354,47 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(pathChanged, true);
-    expect(path.eventMarkers[0].command.type, 'deadline');
+    expect(path.eventMarkers[0].command, isInstanceOf<DeadlineCommandGroup>());
 
     undoStack.undo();
     await widgetTester.pump();
 
-    expect(path.eventMarkers[0].command.type, 'sequential');
+    expect(
+        path.eventMarkers[0].command, isInstanceOf<SequentialCommandGroup>());
+  });
+
+  testWidgets('remove command', (widgetTester) async {
+    path.eventMarkers = [
+      EventMarker(
+        command: NamedCommand(),
+      ),
+    ];
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EventMarkersTree(
+          path: path,
+          onPathChangedNoSim: () => pathChanged = true,
+          onMarkerHovered: (value) => hoveredMarker = value,
+          onMarkerSelected: (value) => selectedMarker = value,
+          undoStack: undoStack,
+          initiallySelectedMarker: 0,
+        ),
+      ),
+    ));
+
+    final removeButton = find.byTooltip('Remove Command');
+    expect(removeButton, findsOneWidget);
+
+    await widgetTester.tap(removeButton);
+    await widgetTester.pumpAndSettle();
+
+    expect(path.eventMarkers[0].command, isNull);
+
+    undoStack.undo();
+    await widgetTester.pumpAndSettle();
+
+    expect(path.eventMarkers[0].command, isInstanceOf<NamedCommand>());
   });
 
   testWidgets('Delete marker button', (widgetTester) async {

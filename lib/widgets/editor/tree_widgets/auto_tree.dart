@@ -73,7 +73,6 @@ class _AutoTreeState extends State<AutoTree> {
                       command: widget.auto.sequence,
                       allPathNames: widget.allPathNames,
                       onPathCommandHovered: widget.onPathHovered,
-                      removable: false,
                       onUpdated: widget.onAutoChanged,
                       undoStack: widget.undoStack,
                       showEditPathButton: !widget.auto.choreoAuto,

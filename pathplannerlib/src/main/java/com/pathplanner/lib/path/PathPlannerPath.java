@@ -369,16 +369,18 @@ public class PathPlannerPath {
           JSONObject markerJson = (JSONObject) m;
           JSONObject dataJson = (JSONObject) markerJson.get("data");
           JSONObject offsetJson = (JSONObject) dataJson.get("offset");
-          JSONObject eventJson = (JSONObject) markerJson.get("event");
 
           String name = (String) dataJson.get("name");
           double targetTimestamp = ((Number) dataJson.get("targetTimestamp")).doubleValue();
           double offset = ((Number) offsetJson.get("val")).doubleValue();
           double timestamp = targetTimestamp + offset;
-          Command eventCommand = CommandUtil.commandFromJson(eventJson, true);
+          if (markerJson.get("event") != null) {
+            Command eventCommand =
+                CommandUtil.commandFromJson((JSONObject) markerJson.get("event"), true);
+            fullEvents.add(new ScheduleCommandEvent(timestamp, eventCommand));
+          }
 
           fullEvents.add(new OneShotTriggerEvent(timestamp, name));
-          fullEvents.add(new ScheduleCommandEvent(timestamp, eventCommand));
         }
       }
 
@@ -388,15 +390,13 @@ public class PathPlannerPath {
           JSONObject markerJson = (JSONObject) m;
           JSONObject dataJson = (JSONObject) markerJson.get("data");
           JSONObject offsetJson = (JSONObject) dataJson.get("offset");
-          JSONObject eventJson = (JSONObject) markerJson.get("event");
-          JSONObject eventDataJson = (JSONObject) eventJson.get("data");
 
-          String event = (String) eventDataJson.get("event");
+          String name = (String) dataJson.get("name");
           double targetTimestamp = ((Number) dataJson.get("targetTimestamp")).doubleValue();
           double offset = ((Number) offsetJson.get("val")).doubleValue();
           double timestamp = targetTimestamp + offset;
 
-          fullEvents.add(new OneShotTriggerEvent(timestamp, event));
+          fullEvents.add(new OneShotTriggerEvent(timestamp, name));
         }
       }
 

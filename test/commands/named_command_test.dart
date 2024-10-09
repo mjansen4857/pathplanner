@@ -19,7 +19,7 @@ void main() {
     NamedCommand cmd = NamedCommand(name: 'test');
 
     Map<String, dynamic> json = cmd.toJson();
-    Command fromJson = Command.fromJson(json);
+    Command fromJson = Command.fromJson(json)!;
 
     expect(fromJson, cmd);
   });

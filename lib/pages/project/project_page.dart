@@ -320,8 +320,9 @@ class _ProjectPageState extends State<ProjectPage> {
                     setState(() {
                       for (PathPlannerPath path in _paths) {
                         for (EventMarker m in path.eventMarkers) {
-                          _replaceNamedCommand(
-                              oldName, newName, m.command.commands);
+                          if (m.command != null) {
+                            _replaceNamedCommand(oldName, newName, m.command!);
+                          }
                           if (m.name == oldName) {
                             m.name = newName;
                           }
@@ -330,8 +331,9 @@ class _ProjectPageState extends State<ProjectPage> {
                       }
 
                       for (PathPlannerAuto auto in _autos) {
-                        _replaceNamedCommand(
-                            oldName, newName, auto.sequence.commands);
+                        for (Command cmd in auto.sequence.commands) {
+                          _replaceNamedCommand(oldName, newName, cmd);
+                        }
                         auto.saveFile();
                       }
                     });
@@ -340,7 +342,9 @@ class _ProjectPageState extends State<ProjectPage> {
                     setState(() {
                       for (PathPlannerPath path in _paths) {
                         for (EventMarker m in path.eventMarkers) {
-                          _replaceNamedCommand(name, null, m.command.commands);
+                          if (m.command != null) {
+                            _replaceNamedCommand(name, null, m.command!);
+                          }
                           if (m.name == name) {
                             m.name = '';
                           }
@@ -349,8 +353,9 @@ class _ProjectPageState extends State<ProjectPage> {
                       }
 
                       for (PathPlannerAuto auto in _autos) {
-                        _replaceNamedCommand(
-                            name, null, auto.sequence.commands);
+                        for (Command cmd in auto.sequence.commands) {
+                          _replaceNamedCommand(name, null, cmd);
+                        }
                         auto.saveFile();
                       }
                     });
@@ -418,12 +423,12 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   void _replaceNamedCommand(
-      String originalName, String? newName, List<Command> commands) {
-    for (Command cmd in commands) {
-      if (cmd is NamedCommand && cmd.name == originalName) {
-        cmd.name = newName;
-      } else if (cmd is CommandGroup) {
-        _replaceNamedCommand(originalName, newName, cmd.commands);
+      String originalName, String? newName, Command command) {
+    if (command is NamedCommand && command.name == originalName) {
+      command.name = newName;
+    } else if (command is CommandGroup) {
+      for (Command cmd in command.commands) {
+        _replaceNamedCommand(originalName, newName, cmd);
       }
     }
   }

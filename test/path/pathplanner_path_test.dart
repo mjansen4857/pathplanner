@@ -56,7 +56,7 @@ void main() {
         pointTowardsZones: List.generate(2, (index) => PointTowardsZone()),
         rotationTargets: List.generate(
             4, (index) => RotationTarget(0.0, const Rotation2d())),
-        eventMarkers: List.generate(5, (index) => EventMarker.defaultMarker()),
+        eventMarkers: List.generate(5, (index) => EventMarker()),
         reversed: false,
         folder: null,
         idealStartingState: IdealStartingState(0.0, const Rotation2d()),
@@ -95,7 +95,7 @@ void main() {
         constraintZones: [ConstraintsZone.defaultZone()],
         pointTowardsZones: [PointTowardsZone()],
         rotationTargets: [RotationTarget(0.0, const Rotation2d())],
-        eventMarkers: [EventMarker.defaultMarker()],
+        eventMarkers: [EventMarker()],
         reversed: false,
         folder: null,
         idealStartingState: IdealStartingState(1.0, Rotation2d.fromDegrees(10)),
@@ -131,7 +131,7 @@ void main() {
         constraintZones: [ConstraintsZone.defaultZone()],
         pointTowardsZones: [PointTowardsZone()],
         rotationTargets: [RotationTarget(0.0, const Rotation2d())],
-        eventMarkers: [EventMarker.defaultMarker()],
+        eventMarkers: [EventMarker()],
         reversed: false,
         folder: null,
         idealStartingState: IdealStartingState(0.0, const Rotation2d()),
@@ -168,7 +168,7 @@ void main() {
         constraintZones: [ConstraintsZone.defaultZone()],
         pointTowardsZones: [PointTowardsZone()],
         rotationTargets: [RotationTarget(0.0, const Rotation2d())],
-        eventMarkers: [EventMarker.defaultMarker()],
+        eventMarkers: [EventMarker()],
         reversed: false,
         folder: null,
         idealStartingState: IdealStartingState(0.0, const Rotation2d()),
@@ -193,7 +193,7 @@ void main() {
         constraintZones: [ConstraintsZone.defaultZone()],
         pointTowardsZones: [PointTowardsZone()],
         rotationTargets: [RotationTarget(0.0, const Rotation2d())],
-        eventMarkers: [EventMarker.defaultMarker()],
+        eventMarkers: [EventMarker()],
         reversed: false,
         folder: null,
         idealStartingState: IdealStartingState(0.0, const Rotation2d()),
@@ -255,7 +255,7 @@ void main() {
       constraintZones: [ConstraintsZone.defaultZone()],
       pointTowardsZones: [PointTowardsZone()],
       rotationTargets: [RotationTarget(0.0, const Rotation2d())],
-      eventMarkers: [EventMarker.defaultMarker()],
+      eventMarkers: [EventMarker()],
       reversed: false,
       folder: null,
       idealStartingState: IdealStartingState(0.0, const Rotation2d()),
@@ -381,7 +381,7 @@ void main() {
           name: 'test1', pathDir: pathDir.path, fs: fs);
       PathPlannerPath path2 = PathPlannerPath.defaultPath(
           name: 'test2', pathDir: pathDir.path, fs: fs);
-      path2.eventMarkers.add(EventMarker.defaultMarker());
+      path2.eventMarkers.add(EventMarker());
 
       fs
           .file(join(pathDir.path, 'test1.path'))

@@ -2,7 +2,6 @@ package com.pathplanner.lib.path;
 
 import com.pathplanner.lib.auto.CommandUtil;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import org.json.simple.JSONObject;
 
 /**
@@ -12,7 +11,7 @@ import org.json.simple.JSONObject;
  * @param position The waypoint relative position of the marker
  * @param endPosition The end waypoint relative position of the event's zone. A value of -1.0
  *     indicates that this event is not zoned.
- * @param command The command that should be run at this marker
+ * @param command The command that should be run at this marker. Can be null to not run a command.
  */
 public record EventMarker(
     String triggerName, double position, double endPosition, Command command) {
@@ -36,7 +35,7 @@ public record EventMarker(
    *     indicates that this event is not zoned.
    */
   public EventMarker(String triggerName, double position, double endPosition) {
-    this(triggerName, position, endPosition, Commands.none());
+    this(triggerName, position, endPosition, null);
   }
 
   /**
@@ -46,7 +45,7 @@ public record EventMarker(
    * @param position The waypoint relative position of the marker
    */
   public EventMarker(String triggerName, double position) {
-    this(triggerName, position, Commands.none());
+    this(triggerName, position, null);
   }
 
   /**
@@ -62,11 +61,13 @@ public record EventMarker(
     if (markerJson.get("endWaypointRelativePos") != null) {
       endPos = ((Number) markerJson.get("endWaypointRelativePos")).doubleValue();
     }
-    Command cmd = Commands.none();
-    try {
-      cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"), false);
-    } catch (Exception ignored) {
-      // Path files won't be loaded from event markers
+    Command cmd = null;
+    if (markerJson.get("command") != null) {
+      try {
+        cmd = CommandUtil.commandFromJson((JSONObject) markerJson.get("command"), false);
+      } catch (Exception ignored) {
+        // Path files won't be loaded from event markers
+      }
     }
     return new EventMarker(name, pos, endPos, cmd);
   }

@@ -2,13 +2,16 @@ import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
 import 'package:pathplanner/widgets/editor/info_card.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -79,7 +82,7 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
               widget.undoStack.add(Change(
                 PathPlannerPath.cloneEventMarkers(markers),
                 () {
-                  markers.add(EventMarker.defaultMarker());
+                  markers.add(EventMarker());
                   widget.onPathChangedNoSim?.call();
                 },
                 (oldValue) {
@@ -478,41 +481,97 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
           const SizedBox(height: 12),
         ],
         const Divider(),
-        _buildCommandCard(markerIdx),
+        if (markers[markerIdx].command != null) _buildCommandCard(markerIdx),
+        if (markers[markerIdx].command == null)
+          Center(
+            child: AddCommandButton(
+              allowPathCommand: false,
+              allowWaitCommand: false,
+              onTypeChosen: (value) {
+                widget.undoStack.add(Change(
+                  null,
+                  () {
+                    markers[markerIdx].command = Command.fromType(value);
+                    widget.onPathChangedNoSim?.call();
+                  },
+                  (oldValue) {
+                    markers[markerIdx].command = null;
+                    widget.onPathChangedNoSim?.call();
+                  },
+                ));
+              },
+            ),
+          ),
       ],
     );
   }
 
   Widget _buildCommandCard(int markerIdx) {
-    CommandGroup command = markers[markerIdx].command;
-    return Card(
-      elevation: 1.0,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: CommandGroupWidget(
-          command: command,
-          removable: false,
-          undoStack: widget.undoStack,
-          onUpdated: widget.onPathChangedNoSim,
-          onGroupTypeChanged: (value) {
-            widget.undoStack.add(Change(
-              command.type,
-              () {
-                List<Command> cmds = command.commands;
-                markers[markerIdx].command =
-                    Command.fromType(value, commands: cmds) as CommandGroup;
-                widget.onPathChangedNoSim?.call();
-              },
-              (oldValue) {
-                List<Command> cmds = command.commands;
-                markers[markerIdx].command =
-                    Command.fromType(oldValue, commands: cmds) as CommandGroup;
-                widget.onPathChangedNoSim?.call();
-              },
-            ));
-          },
+    assert(markers[markerIdx].command != null);
+
+    Command command = markers[markerIdx].command!;
+
+    if (command is NamedCommand) {
+      return Card(
+        elevation: 1.0,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: NamedCommandWidget(
+            command: command,
+            undoStack: widget.undoStack,
+            onUpdated: widget.onPathChangedNoSim,
+            onRemoved: () => _addRemoveCommandChange(markerIdx),
+          ),
         ),
-      ),
-    );
+      );
+    } else if (command is CommandGroup) {
+      return Card(
+        elevation: 1.0,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: CommandGroupWidget(
+            command: command,
+            undoStack: widget.undoStack,
+            onUpdated: widget.onPathChangedNoSim,
+            onRemoved: () => _addRemoveCommandChange(markerIdx),
+            onGroupTypeChanged: (value) {
+              widget.undoStack.add(Change(
+                command.type,
+                () {
+                  List<Command> cmds = command.commands;
+                  markers[markerIdx].command =
+                      Command.fromType(value, commands: cmds) as CommandGroup;
+                  widget.onPathChangedNoSim?.call();
+                },
+                (oldValue) {
+                  List<Command> cmds = command.commands;
+                  markers[markerIdx].command =
+                      Command.fromType(oldValue, commands: cmds)
+                          as CommandGroup;
+                  widget.onPathChangedNoSim?.call();
+                },
+              ));
+            },
+          ),
+        ),
+      );
+    }
+
+    // Shouldn't get here
+    return Container();
+  }
+
+  void _addRemoveCommandChange(int markerIdx) {
+    widget.undoStack.add(Change(
+      markers[markerIdx].command?.clone(),
+      () {
+        markers[markerIdx].command = null;
+        widget.onPathChangedNoSim?.call();
+      },
+      (oldValue) {
+        markers[markerIdx].command = oldValue?.clone();
+        widget.onPathChangedNoSim?.call();
+      },
+    ));
   }
 }

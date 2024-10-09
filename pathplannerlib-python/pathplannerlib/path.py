@@ -230,12 +230,12 @@ class EventMarker:
         waypointRelativePos (float): The waypoint relative position of the marker
         endWaypointRelativePos (float): The end waypoint relative position of the event's zone.
             A value of -1.0 indicates that this event is not zoned.
-        command (Command): The command that should be triggered at this marker
+        command (Command): The command that should be triggered at this marker. Can be None
     """
     triggerName: str
     waypointRelativePos: float
     endWaypointRelativePos: float = -1.0
-    command: Command = cmd.none()
+    command: Union[Command, None] = None
 
     @staticmethod
     def fromJson(json_dict: dict) -> EventMarker:
@@ -244,8 +244,11 @@ class EventMarker:
         endPos = -1.0
         if 'endWaypointRelativePos' in json_dict and json_dict['endWaypointRelativePos'] is not None:
             endPos = float(json_dict['endWaypointRelativePos'])
-        from .auto import CommandUtil
-        command = CommandUtil.commandFromJson(json_dict['command'], False)
+
+        command = None
+        if json_dict['command'] is not None:
+            from .auto import CommandUtil
+            command = CommandUtil.commandFromJson(json_dict['command'], False)
         return EventMarker(name, pos, endPos, command)
 
     def __eq__(self, other):
@@ -529,31 +532,30 @@ class PathPlannerPath:
                 for m in fJson['pplibCommands']:
                     dataJson = m['data']
                     offsetJson = dataJson['offset']
-                    eventJson = m['event']
 
                     name = str(dataJson['name'])
                     targetTimestamp = float(dataJson['targetTimestamp'])
                     offset = float(offsetJson['val'])
                     timestamp = targetTimestamp + offset
-                    eventCommand = CommandUtil.commandFromJson(eventJson, True)
+
+                    if m['event'] is not None:
+                        eventCommand = CommandUtil.commandFromJson(m['event'], True)
+                        fullEvents.append(ScheduleCommandEvent(timestamp, eventCommand))
 
                     fullEvents.append(OneShotTriggerEvent(timestamp, name))
-                    fullEvents.append(ScheduleCommandEvent(timestamp, eventCommand))
 
             # Events from choreolib events
             if 'events' in fJson:
                 for m in fJson['events']:
                     dataJson = m['data']
                     offsetJson = dataJson['offset']
-                    eventJson = m['event']
-                    eventDataJson = eventJson['data']
 
-                    event = str(eventDataJson['event'])
+                    name = str(dataJson['name'])
                     targetTimestamp = float(dataJson['targetTimestamp'])
                     offset = float(offsetJson['val'])
                     timestamp = targetTimestamp + offset
 
-                    fullEvents.append(OneShotTriggerEvent(timestamp, event))
+                    fullEvents.append(OneShotTriggerEvent(timestamp, name))
 
             fullEvents.sort(key=lambda e: e.getTimestamp())
 

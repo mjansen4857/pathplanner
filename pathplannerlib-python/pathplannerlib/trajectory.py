@@ -188,11 +188,13 @@ class PathPlannerTrajectory:
 
                 unaddedEvents: list[Event] = []
                 for marker in path.getEventMarkers():
-                    unaddedEvents.append(ScheduleCommandEvent(marker.waypointRelativePos, marker.command))
+                    if marker.command is not None:
+                        unaddedEvents.append(ScheduleCommandEvent(marker.waypointRelativePos, marker.command))
 
                     if marker.endWaypointRelativePos >= 0.0:
                         # This marker is zoned
-                        unaddedEvents.append(CancelCommandEvent(marker.endWaypointRelativePos, marker.command))
+                        if marker.command is not None:
+                            unaddedEvents.append(CancelCommandEvent(marker.endWaypointRelativePos, marker.command))
                         unaddedEvents.append(TriggerEvent(marker.waypointRelativePos, marker.triggerName, True))
                         unaddedEvents.append(TriggerEvent(marker.endWaypointRelativePos, marker.triggerName, False))
                     else:

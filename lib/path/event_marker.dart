@@ -1,29 +1,26 @@
 import 'package:pathplanner/commands/command.dart';
-import 'package:pathplanner/commands/command_groups.dart';
 
 class EventMarker {
   String name;
   num waypointRelativePos;
   num? endWaypointRelativePos;
-  CommandGroup command;
+  Command? command;
 
   EventMarker({
     this.name = '',
     this.waypointRelativePos = 0,
     this.endWaypointRelativePos,
-    required this.command,
+    this.command,
   });
-
-  EventMarker.defaultMarker()
-      : this(command: ParallelCommandGroup(commands: []));
 
   EventMarker.fromJson(Map<String, dynamic> json)
       : this(
             name: json['name'],
             waypointRelativePos: json['waypointRelativePos'],
             endWaypointRelativePos: json['endWaypointRelativePos'],
-            command: Command.fromJson(json['command'] ??
-                ParallelCommandGroup(commands: []).toJson()) as CommandGroup);
+            command: json['command'] != null
+                ? Command.fromJson(json['command'])
+                : null);
 
   bool get isZoned => endWaypointRelativePos != null;
 
@@ -32,7 +29,7 @@ class EventMarker {
       'name': name,
       'waypointRelativePos': waypointRelativePos,
       'endWaypointRelativePos': endWaypointRelativePos,
-      'command': command.toJson(),
+      'command': command?.toJson(),
     };
   }
 
@@ -41,7 +38,7 @@ class EventMarker {
       name: name,
       waypointRelativePos: waypointRelativePos,
       endWaypointRelativePos: endWaypointRelativePos,
-      command: command.clone() as CommandGroup,
+      command: command?.clone(),
     );
   }
 

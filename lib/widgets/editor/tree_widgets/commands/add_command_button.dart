@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class AddCommandButton extends StatelessWidget {
   final ValueChanged<String> onTypeChosen;
   final bool allowPathCommand;
+  final bool allowWaitCommand;
 
   const AddCommandButton({
     super.key,
     required this.onTypeChosen,
     required this.allowPathCommand,
+    this.allowWaitCommand = true,
   });
 
   @override
@@ -40,10 +42,11 @@ class AddCommandButton extends StatelessWidget {
         value: 'named',
         child: Text('Named Command'),
       ),
-      const PopupMenuItem(
-        value: 'wait',
-        child: Text('Wait Command'),
-      ),
+      if (allowWaitCommand)
+        const PopupMenuItem(
+          value: 'wait',
+          child: Text('Wait Command'),
+        ),
       const PopupMenuItem(
         value: 'sequential',
         child: Text('Sequential Command Group'),

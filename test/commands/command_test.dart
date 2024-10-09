@@ -3,13 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
-import 'package:pathplanner/commands/none_command.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 
 void main() {
   test('fromType', () {
-    expect(Command.fromType('asdf'), isInstanceOf<NoneCommand>());
+    expect(Command.fromType('asdf'), isNull);
     expect(Command.fromType('wait'), isInstanceOf<WaitCommand>());
     expect(Command.fromType('named'), isInstanceOf<NamedCommand>());
     expect(Command.fromType('path'), isInstanceOf<PathCommand>());

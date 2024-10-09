@@ -18,7 +18,6 @@ class CommandGroupWidget extends StatelessWidget {
   final VoidCallback? onRemoved;
   final ValueChanged<String>? onGroupTypeChanged;
   final double subCommandElevation;
-  final bool removable;
   final List<String>? allPathNames;
   final ValueChanged<String?>? onPathCommandHovered;
   final ChangeStack undoStack;
@@ -33,7 +32,6 @@ class CommandGroupWidget extends StatelessWidget {
     this.onGroupTypeChanged,
     this.onRemoved,
     this.subCommandElevation = 4.0,
-    this.removable = true,
     this.allPathNames,
     this.onPathCommandHovered,
     required this.undoStack,
@@ -109,8 +107,11 @@ class CommandGroupWidget extends StatelessWidget {
                 undoStack.add(Change(
                   CommandGroup.cloneCommandsList(command.commands),
                   () {
-                    command.commands.add(Command.fromType(value));
-                    onUpdated?.call();
+                    final cmd = Command.fromType(value);
+                    if (cmd != null) {
+                      command.commands.add(cmd);
+                      onUpdated?.call();
+                    }
                   },
                   (oldValue) {
                     command.commands = CommandGroup.cloneCommandsList(oldValue);
@@ -120,12 +121,12 @@ class CommandGroupWidget extends StatelessWidget {
               },
             ),
             Visibility(
-                visible: removable,
+                visible: onDuplicateCommand != null,
                 child: DuplicateCommandButton(
                   onPressed: onDuplicateCommand,
                 )),
             Visibility(
-              visible: removable,
+              visible: onRemoved != null,
               child: Tooltip(
                 message: 'Remove Command',
                 waitDuration: const Duration(seconds: 1),
@@ -273,16 +274,20 @@ class CommandGroupWidget extends StatelessWidget {
             () {
               List<Command> cmds =
                   (command.commands[cmdIndex] as CommandGroup).commands;
-              command.commands[cmdIndex] =
-                  Command.fromType(value, commands: cmds);
-              onUpdated?.call();
+              final cmd = Command.fromType(value, commands: cmds);
+              if (cmd != null) {
+                command.commands[cmdIndex] = cmd;
+                onUpdated?.call();
+              }
             },
             (oldValue) {
               List<Command> cmds =
                   (command.commands[cmdIndex] as CommandGroup).commands;
-              command.commands[cmdIndex] =
-                  Command.fromType(oldValue, commands: cmds);
-              onUpdated?.call();
+              final cmd = Command.fromType(oldValue, commands: cmds);
+              if (cmd != null) {
+                command.commands[cmdIndex] = cmd;
+                onUpdated?.call();
+              }
             },
           ));
         },

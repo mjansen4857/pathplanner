@@ -8,7 +8,7 @@ void main() {
     EventMarker m = EventMarker(
       name: 'test',
       waypointRelativePos: 1.0,
-      command: ParallelCommandGroup(commands: []),
+      command: null,
     );
 
     Map<String, dynamic> json = m.toJson();
@@ -18,7 +18,7 @@ void main() {
   });
 
   test('Proper cloning', () {
-    EventMarker m = EventMarker.defaultMarker();
+    EventMarker m = EventMarker();
     EventMarker cloned = m.clone();
 
     expect(cloned, m);
@@ -27,7 +27,7 @@ void main() {
 
     expect(m, isNot(cloned));
 
-    cloned.command.commands.add(WaitCommand());
+    cloned.command = WaitCommand();
 
     expect(m.command, isNot(cloned.command));
   });

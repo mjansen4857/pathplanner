@@ -19,7 +19,7 @@ void main() {
     PathCommand cmd = PathCommand(pathName: 'test');
 
     Map<String, dynamic> json = cmd.toJson();
-    Command fromJson = Command.fromJson(json);
+    Command fromJson = Command.fromJson(json)!;
 
     expect(fromJson, cmd);
   });

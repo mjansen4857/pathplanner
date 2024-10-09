@@ -162,7 +162,6 @@ void main() {
           undoStack: undoStack,
           onGroupTypeChanged: (value) => groupType = value,
           onPathCommandHovered: (value) => hoveredPathCommand = value,
-          removable: false,
           onUpdated: () => updated = true,
           allPathNames: const ['path1', 'path2'],
         ),

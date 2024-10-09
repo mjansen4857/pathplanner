@@ -335,7 +335,11 @@ class PathPlannerPath {
 
   bool hasEmptyNamedCommand() {
     for (EventMarker m in eventMarkers) {
-      bool hasEmpty = _hasEmptyNamedCommand(m.command.commands);
+      if (m.command == null) {
+        continue;
+      }
+
+      bool hasEmpty = _hasEmptyNamedCommand(m.command!);
       if (hasEmpty) {
         return true;
       }
@@ -343,17 +347,17 @@ class PathPlannerPath {
     return false;
   }
 
-  bool _hasEmptyNamedCommand(List<Command> commands) {
-    for (Command cmd in commands) {
-      if (cmd is NamedCommand && cmd.name == null) {
-        return true;
-      } else if (cmd is CommandGroup) {
-        bool hasEmpty = _hasEmptyNamedCommand(cmd.commands);
-        if (hasEmpty) {
+  bool _hasEmptyNamedCommand(Command command) {
+    if (command is NamedCommand && command.name == null) {
+      return true;
+    } else if (command is CommandGroup) {
+      for (final cmd in command.commands) {
+        if (_hasEmptyNamedCommand(cmd)) {
           return true;
         }
       }
     }
+
     return false;
   }
 
@@ -393,7 +397,9 @@ class PathPlannerPath {
     // Add all event names in this path to the available names
     for (EventMarker m in eventMarkers) {
       ProjectPage.events.add(m.name);
-      _addNamedCommandsToEvents(m.command);
+      if (m.command != null) {
+        _addNamedCommandsToEvents(m.command!);
+      }
     }
 
     pathPoints.clear();

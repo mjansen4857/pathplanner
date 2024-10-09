@@ -184,8 +184,11 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                 ),
               ),
             ),
-            DuplicateCommandButton(
-              onPressed: widget.onDuplicateCommand,
+            Visibility(
+              visible: widget.onDuplicateCommand != null,
+              child: DuplicateCommandButton(
+                onPressed: widget.onDuplicateCommand,
+              ),
             ),
             Tooltip(
               message: 'Remove Command',

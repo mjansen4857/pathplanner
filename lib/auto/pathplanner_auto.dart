@@ -9,6 +9,8 @@ import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/services/log.dart';
 
+const String fileVersion = '2025.0';
+
 class PathPlannerAuto {
   String name;
   SequentialCommandGroup sequence;
@@ -56,7 +58,7 @@ class PathPlannerAuto {
     );
   }
 
-  PathPlannerAuto.fromJsonV1(
+  PathPlannerAuto.fromJson(
       Map<String, dynamic> json, String name, String autosDir, FileSystem fs)
       : this(
           autoDir: autosDir,
@@ -71,7 +73,7 @@ class PathPlannerAuto {
 
   Map<String, dynamic> toJson() {
     return {
-      'version': 1.0,
+      'version': fileVersion,
       'command': sequence.toJson(),
       'resetOdom': resetOdom,
       'folder': folder,
@@ -92,15 +94,15 @@ class PathPlannerAuto {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String autoName = basenameWithoutExtension(e.path);
 
-          if (json['version'] == 1.0) {
-            PathPlannerAuto auto =
-                PathPlannerAuto.fromJsonV1(json, autoName, autosDir, fs);
-            auto.lastModified = (await file.lastModified()).toUtc();
+          PathPlannerAuto auto =
+              PathPlannerAuto.fromJson(json, autoName, autosDir, fs);
+          auto.lastModified = (await file.lastModified()).toUtc();
 
-            autos.add(auto);
-          } else {
-            Log.error('Unknown auto version');
+          if (json['version'] != fileVersion) {
+            auto.saveFile();
           }
+
+          autos.add(auto);
         } catch (ex, stack) {
           Log.error('Failed to load auto', ex, stack);
         }

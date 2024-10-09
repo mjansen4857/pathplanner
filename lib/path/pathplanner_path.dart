@@ -145,10 +145,10 @@ class PathPlannerPath {
 
   void generateAndSavePath() {
     generatePathPoints();
-    savePath();
+    saveFile();
   }
 
-  void savePath() {
+  void saveFile() {
     try {
       File pathFile = fs.file(join(pathDir, '$name.path'));
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
@@ -176,9 +176,8 @@ class PathPlannerPath {
               PathPlannerPath.fromJson(json, pathName, pathsDir, fs);
           path.lastModified = (await file.lastModified()).toUtc();
 
-          String? version = (json['version'])?.toString();
-          if (version != fileVersion) {
-            path.savePath();
+          if (json['version'] != fileVersion) {
+            path.saveFile();
           }
 
           paths.add(path);

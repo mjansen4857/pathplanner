@@ -70,7 +70,7 @@ void main() {
 
       Map<String, dynamic> json = auto.toJson();
       PathPlannerAuto fromJson =
-          PathPlannerAuto.fromJsonV1(json, auto.name, '/autos', fs);
+          PathPlannerAuto.fromJson(json, auto.name, '/autos', fs);
 
       expect(fromJson, auto);
     });

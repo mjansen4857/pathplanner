@@ -70,10 +70,7 @@ public record PathConstraints(
         ((Number) constraintsJson.get("maxAngularVelocity")).doubleValue(); // Degrees
     double maxAngularAccel =
         ((Number) constraintsJson.get("maxAngularAcceleration")).doubleValue(); // Degrees
-    boolean unlimited = false;
-    if (constraintsJson.containsKey("unlimited")) {
-      unlimited = ((boolean) constraintsJson.get("unlimited"));
-    }
+    boolean unlimited = ((boolean) constraintsJson.get("unlimited"));
 
     return new PathConstraints(
         maxVel,

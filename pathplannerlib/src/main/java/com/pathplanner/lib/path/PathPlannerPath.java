@@ -8,6 +8,7 @@ import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import com.pathplanner.lib.util.DriveFeedforward;
+import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -296,8 +297,10 @@ public class PathPlannerPath {
    * @throws IOException if the file cannot be read
    * @throws FileNotFoundException if the file cannot be found
    * @throws ParseException If the JSON cannot be parsed
+   * @throws FileVersionException If the file version does not match the expected version
    */
-  public static PathPlannerPath fromPathFile(String pathName) throws IOException, ParseException {
+  public static PathPlannerPath fromPathFile(String pathName)
+      throws IOException, ParseException, FileVersionException {
     if (pathCache.containsKey(pathName)) {
       return pathCache.get(pathName);
     }
@@ -316,6 +319,13 @@ public class PathPlannerPath {
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
 
+      String version = json.get("version").toString();
+      String[] versions = version.split("\\.");
+
+      if (!versions[0].equals("2025")) {
+        throw new FileVersionException(version, "2025.X", pathName + ".path");
+      }
+
       PathPlannerPath path = PathPlannerPath.fromJson(json);
       path.name = pathName;
       PPLibTelemetry.registerHotReloadPath(pathName, path);
@@ -325,7 +335,7 @@ public class PathPlannerPath {
   }
 
   private static void loadChoreoTrajectoryIntoCache(String trajectoryName)
-      throws IOException, ParseException {
+      throws IOException, ParseException, FileVersionException {
     try (BufferedReader br =
         new BufferedReader(
             new FileReader(
@@ -338,6 +348,14 @@ public class PathPlannerPath {
 
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+      String version = json.get("version").toString();
+      String[] versions = version.split("\\.");
+
+      if (versions.length < 2 || !versions[0].equals("v2025") || !versions[1].equals("0")) {
+        throw new FileVersionException(version, "v2025.0.X", trajectoryName + ".traj");
+      }
+
       JSONObject trajJson = (JSONObject) json.get("trajectory");
 
       List<PathPlannerTrajectoryState> fullTrajStates = new ArrayList<>();
@@ -482,9 +500,10 @@ public class PathPlannerPath {
    * @throws IOException if the file cannot be read
    * @throws FileNotFoundException if the file cannot be found
    * @throws ParseException If the JSON cannot be parsed
+   * @throws FileVersionException If the file version does not match the expected version
    */
   public static PathPlannerPath fromChoreoTrajectory(String trajectoryName, int splitIndex)
-      throws IOException, ParseException {
+      throws IOException, ParseException, FileVersionException {
     String cacheName = trajectoryName + "." + splitIndex;
 
     if (choreoPathCache.containsKey(cacheName)) {
@@ -506,9 +525,10 @@ public class PathPlannerPath {
    * @throws IOException if the file cannot be read
    * @throws FileNotFoundException if the file cannot be found
    * @throws ParseException If the JSON cannot be parsed
+   * @throws FileVersionException If the file version does not match the expected version
    */
   public static PathPlannerPath fromChoreoTrajectory(String trajectoryName)
-      throws IOException, ParseException {
+      throws IOException, ParseException, FileVersionException {
     if (choreoPathCache.containsKey(trajectoryName)) {
       return choreoPathCache.get(trajectoryName);
     }
@@ -556,10 +576,8 @@ public class PathPlannerPath {
       rotationTargets.add(RotationTarget.fromJson((JSONObject) rotJson));
     }
 
-    if (pathJson.containsKey("pointTowardsZones")) {
-      for (var zoneJson : (JSONArray) pathJson.get("pointTowardsZones")) {
-        pointTowardsZones.add(PointTowardsZone.fromJson((JSONObject) zoneJson));
-      }
+    for (var zoneJson : (JSONArray) pathJson.get("pointTowardsZones")) {
+      pointTowardsZones.add(PointTowardsZone.fromJson((JSONObject) zoneJson));
     }
 
     for (var zoneJson : (JSONArray) pathJson.get("constraintZones")) {

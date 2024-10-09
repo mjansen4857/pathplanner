@@ -29,6 +29,19 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 	}
 
 	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+
+	std::string version = "1.0";
+	if (json.at("version").is_string()) {
+		version = json.at("version").get<std::string>();
+	}
+
+	if (version != "2025.0") {
+		throw std::runtime_error(
+				"Incompatible file version for '" + autoName
+						+ ".auto'. Actual: '" + version
+						+ "' Expected: '2025.0'");
+	}
+
 	initFromJson(json);
 
 	AddRequirements(m_autoCommand->GetRequirements());

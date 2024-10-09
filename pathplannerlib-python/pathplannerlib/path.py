@@ -48,7 +48,7 @@ class PathConstraints:
         maxAccel = float(json_dict['maxAcceleration'])
         maxAngularVel = float(json_dict['maxAngularVelocity'])
         maxAngularAccel = float(json_dict['maxAngularAcceleration'])
-        unlimited = bool(json_dict['unlimited']) if 'unlimited' in json_dict else False
+        unlimited = bool(json_dict['unlimited'])
 
         return PathConstraints(
             maxVel,
@@ -457,6 +457,15 @@ class PathPlannerPath:
 
         with open(filePath, 'r') as f:
             pathJson = json.loads(f.read())
+
+            version = str(pathJson['version'])
+            versions = version.split('.')
+
+            if versions[0] != '2025':
+                raise RuntimeError("Incompatible file version for '" + path_name
+                                   + ".path'. Actual: '" + version
+                                   + "' Expected: '2025.X'")
+
             path = PathPlannerPath._fromJson(pathJson)
             PathPlannerPath._pathCache[path_name] = path
             return path
@@ -505,6 +514,15 @@ class PathPlannerPath:
 
         with open(filePath, 'r') as f:
             fJson = json.loads(f.read())
+
+            version = str(fJson['version'])
+            versions = version.split('.')
+
+            if len(versions) < 2 or versions[0] != 'v2025' or versions[1] != '0':
+                raise RuntimeError("Incompatible file version for '" + trajectory_name
+                                   + ".traj'. Actual: '" + version
+                                   + "' Expected: 'v2025.0.X'")
+
             trajJson = fJson['trajectory']
 
             fullTrajStates = []

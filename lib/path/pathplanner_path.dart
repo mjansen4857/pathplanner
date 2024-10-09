@@ -25,6 +25,7 @@ import 'package:pathplanner/util/wpimath/math_util.dart';
 
 const double targetIncrement = 0.05;
 const double targetSpacing = 0.2;
+const String fileVersion = '2025.0';
 
 class PathPlannerPath {
   String name;
@@ -106,7 +107,7 @@ class PathPlannerPath {
     generatePathPoints();
   }
 
-  PathPlannerPath.fromJsonV1(
+  PathPlannerPath.fromJson(
       Map<String, dynamic> json, String name, String pathsDir, FileSystem fs)
       : this(
           pathDir: pathsDir,
@@ -143,19 +144,18 @@ class PathPlannerPath {
         );
 
   void generateAndSavePath() {
-    Stopwatch s = Stopwatch()..start();
-
     generatePathPoints();
+    saveFile();
+  }
 
+  void saveFile() {
     try {
       File pathFile = fs.file(join(pathDir, '$name.path'));
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       pathFile.writeAsString(encoder.convert(this));
       lastModified = DateTime.now().toUtc();
-      Log.debug(
-          'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
     } catch (ex, stack) {
-      Log.error('Failed to save path', ex, stack);
+      Log.error('Failed to save path: $name', ex, stack);
     }
   }
 
@@ -172,15 +172,15 @@ class PathPlannerPath {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String pathName = basenameWithoutExtension(e.path);
 
-          if (json['version'] == 1.0) {
-            PathPlannerPath path =
-                PathPlannerPath.fromJsonV1(json, pathName, pathsDir, fs);
-            path.lastModified = (await file.lastModified()).toUtc();
+          PathPlannerPath path =
+              PathPlannerPath.fromJson(json, pathName, pathsDir, fs);
+          path.lastModified = (await file.lastModified()).toUtc();
 
-            paths.add(path);
-          } else {
-            Log.error('Unknown path version');
+          if (json['version'] != fileVersion) {
+            path.saveFile();
           }
+
+          paths.add(path);
         } catch (ex, stack) {
           Log.error('Failed to load path', ex, stack);
         }
@@ -215,7 +215,7 @@ class PathPlannerPath {
         (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
 
     return {
-      'version': 1.0,
+      'version': fileVersion,
       'waypoints': [
         for (final w in waypoints) w.toJson(),
       ],

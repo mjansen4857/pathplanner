@@ -580,10 +580,8 @@ public class PathPlannerPath {
       rotationTargets.add(RotationTarget.fromJson((JSONObject) rotJson));
     }
 
-    if (pathJson.containsKey("pointTowardsZones")) {
-      for (var zoneJson : (JSONArray) pathJson.get("pointTowardsZones")) {
-        pointTowardsZones.add(PointTowardsZone.fromJson((JSONObject) zoneJson));
-      }
+    for (var zoneJson : (JSONArray) pathJson.get("pointTowardsZones")) {
+      pointTowardsZones.add(PointTowardsZone.fromJson((JSONObject) zoneJson));
     }
 
     for (var zoneJson : (JSONArray) pathJson.get("constraintZones")) {

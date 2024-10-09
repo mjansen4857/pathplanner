@@ -293,8 +293,8 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                 value: zones[zoneIdx].minWaypointRelativePos.toDouble(),
                 secondaryTrackValue:
                     zones[zoneIdx].maxWaypointRelativePos.toDouble(),
-                min: 0.25,
-                max: waypoints.length - 1.25,
+                min: 0.0,
+                max: waypoints.length - 1.0,
                 label: zones[zoneIdx].minWaypointRelativePos.toStringAsFixed(2),
                 onChangeStart: (value) {
                   _sliderChangeStart = value;
@@ -329,7 +329,7 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                 onSubmitted: (value) {
                   if (value != null) {
                     final maxVal = zones[zoneIdx].maxWaypointRelativePos;
-                    final val = MathUtil.clamp(value, 0.25, maxVal);
+                    final val = MathUtil.clamp(value, 0.0, maxVal);
                     widget.undoStack.add(Change(
                       zones[zoneIdx].minWaypointRelativePos,
                       () {
@@ -354,8 +354,8 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
             Expanded(
               child: Slider(
                 value: zones[zoneIdx].maxWaypointRelativePos.toDouble(),
-                min: 0.25,
-                max: waypoints.length - 1.25,
+                min: 0.0,
+                max: waypoints.length - 1.0,
                 label: zones[zoneIdx].maxWaypointRelativePos.toStringAsFixed(2),
                 onChangeStart: (value) {
                   _sliderChangeStart = value;
@@ -391,7 +391,7 @@ class _PointTowardsZonesTreeState extends State<PointTowardsZonesTree> {
                   if (value != null) {
                     final minVal = zones[zoneIdx].minWaypointRelativePos;
                     final val =
-                        MathUtil.clamp(value, minVal, waypoints.length - 1.25);
+                        MathUtil.clamp(value, minVal, waypoints.length - 1.0);
                     widget.undoStack.add(Change(
                       zones[zoneIdx].maxWaypointRelativePos,
                       () {

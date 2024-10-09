@@ -526,4 +526,84 @@ void main() {
     await widgetTester.pump();
     expect(path.constraintZones.length, 2);
   });
+
+  testWidgets('start pos text field', (widgetTester) async {
+    path.constraintZones = [
+      ConstraintsZone(
+        constraints: PathConstraints(),
+        minWaypointRelativePos: 0.25,
+        maxWaypointRelativePos: 0.75,
+      ),
+    ];
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ConstraintZonesTree(
+          path: path,
+          initiallySelectedZone: 0,
+          onPathChanged: () => pathChanged = true,
+          onZoneHovered: (value) => hoveredZone = value,
+          onZoneSelected: (value) => selectedZone = value,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'Start Pos');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '0.4');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    expect(pathChanged, true);
+    expect(
+        path.constraintZones.first.minWaypointRelativePos, closeTo(0.4, 0.001));
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.constraintZones.first.minWaypointRelativePos,
+        closeTo(0.25, 0.001));
+  });
+
+  testWidgets('end pos text field', (widgetTester) async {
+    path.constraintZones = [
+      ConstraintsZone(
+        constraints: PathConstraints(),
+        minWaypointRelativePos: 0.25,
+        maxWaypointRelativePos: 0.75,
+      ),
+    ];
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ConstraintZonesTree(
+          path: path,
+          initiallySelectedZone: 0,
+          onPathChanged: () => pathChanged = true,
+          onZoneHovered: (value) => hoveredZone = value,
+          onZoneSelected: (value) => selectedZone = value,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'End Pos');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '0.6');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    expect(pathChanged, true);
+    expect(
+        path.constraintZones.first.maxWaypointRelativePos, closeTo(0.6, 0.001));
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.constraintZones.first.maxWaypointRelativePos,
+        closeTo(0.75, 0.001));
+  });
 }

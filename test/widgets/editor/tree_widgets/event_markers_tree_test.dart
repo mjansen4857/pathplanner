@@ -11,6 +11,7 @@ import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
+import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
 void main() {
@@ -379,5 +380,82 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.eventMarkers.length, 2);
+  });
+
+  testWidgets('start pos text field', (widgetTester) async {
+    path.eventMarkers = [
+      EventMarker(
+        command: SequentialCommandGroup(commands: []),
+        waypointRelativePos: 0.25,
+        endWaypointRelativePos: 0.75,
+      ),
+    ];
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EventMarkersTree(
+          path: path,
+          onPathChangedNoSim: () => pathChanged = true,
+          onMarkerHovered: (value) => hoveredMarker = value,
+          onMarkerSelected: (value) => selectedMarker = value,
+          undoStack: undoStack,
+          initiallySelectedMarker: 0,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'Start Pos');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '0.1');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    expect(pathChanged, true);
+    expect(path.eventMarkers.first.waypointRelativePos, closeTo(0.1, 0.001));
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.eventMarkers.first.waypointRelativePos, closeTo(0.25, 0.001));
+  });
+
+  testWidgets('end pos text field', (widgetTester) async {
+    path.eventMarkers = [
+      EventMarker(
+        command: SequentialCommandGroup(commands: []),
+        waypointRelativePos: 0.25,
+        endWaypointRelativePos: 0.75,
+      ),
+    ];
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: EventMarkersTree(
+          path: path,
+          onPathChangedNoSim: () => pathChanged = true,
+          onMarkerHovered: (value) => hoveredMarker = value,
+          onMarkerSelected: (value) => selectedMarker = value,
+          undoStack: undoStack,
+          initiallySelectedMarker: 0,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'End Pos');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '0.9');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    expect(pathChanged, true);
+    expect(path.eventMarkers.first.endWaypointRelativePos, closeTo(0.9, 0.001));
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(
+        path.eventMarkers.first.endWaypointRelativePos, closeTo(0.75, 0.001));
   });
 }

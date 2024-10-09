@@ -6,10 +6,12 @@ import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/wpimath/math_util.dart';
 import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/command_group_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
+import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
 
 class EventMarkersTree extends StatefulWidget {
@@ -338,73 +340,140 @@ class _EventMarkersTreeState extends State<EventMarkersTree> {
             ],
           ),
         ),
-        Slider(
-          value: markers[markerIdx].waypointRelativePos.toDouble(),
-          secondaryTrackValue:
-              markers[markerIdx].endWaypointRelativePos?.toDouble(),
-          min: 0.0,
-          max: waypoints.length - 1.0,
-          divisions: (waypoints.length - 1) * 20,
-          label: markers[markerIdx].waypointRelativePos.toStringAsFixed(2),
-          onChangeStart: (value) {
-            _sliderChangeStart = value;
-          },
-          onChangeEnd: (value) {
-            widget.undoStack.add(Change(
-              _sliderChangeStart,
-              () {
-                markers[markerIdx].waypointRelativePos = value;
-                widget.onPathChangedNoSim?.call();
-              },
-              (oldValue) {
-                markers[markerIdx].waypointRelativePos = oldValue;
-                widget.onPathChangedNoSim?.call();
-              },
-            ));
-          },
-          onChanged: (value) {
-            if (!markers[markerIdx].isZoned ||
-                value <= markers[markerIdx].endWaypointRelativePos!) {
-              setState(() {
-                markers[markerIdx].waypointRelativePos = value;
-                widget.onPathChangedNoSim?.call();
-              });
-            }
-          },
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                value: markers[markerIdx].waypointRelativePos.toDouble(),
+                secondaryTrackValue:
+                    markers[markerIdx].endWaypointRelativePos?.toDouble(),
+                min: 0.0,
+                max: waypoints.length - 1.0,
+                label:
+                    markers[markerIdx].waypointRelativePos.toStringAsFixed(2),
+                onChangeStart: (value) {
+                  _sliderChangeStart = value;
+                },
+                onChangeEnd: (value) {
+                  widget.undoStack.add(Change(
+                    _sliderChangeStart,
+                    () {
+                      markers[markerIdx].waypointRelativePos = value;
+                      widget.onPathChangedNoSim?.call();
+                    },
+                    (oldValue) {
+                      markers[markerIdx].waypointRelativePos = oldValue;
+                      widget.onPathChangedNoSim?.call();
+                    },
+                  ));
+                },
+                onChanged: (value) {
+                  if (!markers[markerIdx].isZoned ||
+                      value <= markers[markerIdx].endWaypointRelativePos!) {
+                    setState(() {
+                      markers[markerIdx].waypointRelativePos = value;
+                      widget.onPathChangedNoSim?.call();
+                    });
+                  }
+                },
+              ),
+            ),
+            SizedBox(
+              width: 75,
+              child: NumberTextField(
+                initialValue: markers[markerIdx].waypointRelativePos,
+                precision: 2,
+                label: markers[markerIdx].isZoned ? 'Start Pos' : 'Position',
+                onSubmitted: (value) {
+                  if (value != null) {
+                    final maxVal = markers[markerIdx].isZoned
+                        ? markers[markerIdx].endWaypointRelativePos!
+                        : (waypoints.length - 1);
+                    final val = MathUtil.clamp(value, 0.0, maxVal);
+                    widget.undoStack.add(Change(
+                      markers[markerIdx].waypointRelativePos,
+                      () {
+                        markers[markerIdx].waypointRelativePos = val;
+                        widget.onPathChangedNoSim?.call();
+                      },
+                      (oldValue) {
+                        markers[markerIdx].waypointRelativePos = oldValue;
+                        widget.onPathChangedNoSim?.call();
+                      },
+                    ));
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         if (markers[markerIdx].isZoned) ...[
-          Slider(
-            value: markers[markerIdx].endWaypointRelativePos!.toDouble(),
-            min: 0.0,
-            max: waypoints.length - 1.0,
-            divisions: (waypoints.length - 1) * 20,
-            label:
-                markers[markerIdx].endWaypointRelativePos!.toStringAsFixed(2),
-            onChangeStart: (value) {
-              _sliderChangeStart = value;
-            },
-            onChangeEnd: (value) {
-              widget.undoStack.add(Change(
-                _sliderChangeStart,
-                () {
-                  markers[markerIdx].endWaypointRelativePos = value;
-                  widget.onPathChangedNoSim?.call();
-                },
-                (oldValue) {
-                  markers[markerIdx].endWaypointRelativePos = oldValue;
-                  widget.onPathChangedNoSim?.call();
-                },
-              ));
-            },
-            onChanged: (value) {
-              if (value >= markers[markerIdx].waypointRelativePos) {
-                setState(() {
-                  markers[markerIdx].endWaypointRelativePos = value;
-                  widget.onPathChangedNoSim?.call();
-                });
-              }
-            },
+          Row(
+            children: [
+              Expanded(
+                child: Slider(
+                  value: markers[markerIdx].endWaypointRelativePos!.toDouble(),
+                  min: 0.0,
+                  max: waypoints.length - 1.0,
+                  label: markers[markerIdx]
+                      .endWaypointRelativePos!
+                      .toStringAsFixed(2),
+                  onChangeStart: (value) {
+                    _sliderChangeStart = value;
+                  },
+                  onChangeEnd: (value) {
+                    widget.undoStack.add(Change(
+                      _sliderChangeStart,
+                      () {
+                        markers[markerIdx].endWaypointRelativePos = value;
+                        widget.onPathChangedNoSim?.call();
+                      },
+                      (oldValue) {
+                        markers[markerIdx].endWaypointRelativePos = oldValue;
+                        widget.onPathChangedNoSim?.call();
+                      },
+                    ));
+                  },
+                  onChanged: (value) {
+                    if (value >= markers[markerIdx].waypointRelativePos) {
+                      setState(() {
+                        markers[markerIdx].endWaypointRelativePos = value;
+                        widget.onPathChangedNoSim?.call();
+                      });
+                    }
+                  },
+                ),
+              ),
+              SizedBox(
+                width: 75,
+                child: NumberTextField(
+                  initialValue: markers[markerIdx].endWaypointRelativePos!,
+                  precision: 2,
+                  label: 'End Pos',
+                  onSubmitted: (value) {
+                    if (value != null) {
+                      final minVal = markers[markerIdx].waypointRelativePos;
+                      final val =
+                          MathUtil.clamp(value, minVal, waypoints.length - 1);
+                      widget.undoStack.add(Change(
+                        markers[markerIdx].endWaypointRelativePos,
+                        () {
+                          markers[markerIdx].endWaypointRelativePos = val;
+                          widget.onPathChangedNoSim?.call();
+                        },
+                        (oldValue) {
+                          markers[markerIdx].endWaypointRelativePos = oldValue;
+                          widget.onPathChangedNoSim?.call();
+                        },
+                      ));
+                    }
+                  },
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
           ),
           const SizedBox(height: 12),
         ],

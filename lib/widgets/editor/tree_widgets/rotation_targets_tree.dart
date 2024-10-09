@@ -205,6 +205,7 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
                   arrowKeyIncrement: 0.1,
                   minValue: 0.0,
                   maxValue: (waypoints.length - 1.0),
+                  precision: 2,
                   onSubmitted: (value) {
                     if (value != null) {
                       setState(() {
@@ -223,7 +224,6 @@ class _RotationTargetsTreeState extends State<RotationTargetsTree> {
           value: rotations[targetIdx].waypointRelativePos.toDouble(),
           min: 0.0,
           max: waypoints.length - 1.0,
-          divisions: (waypoints.length - 1) * 20,
           label: rotations[targetIdx].waypointRelativePos.toStringAsFixed(2),
           onChangeStart: (value) {
             _sliderChangeStart = value;

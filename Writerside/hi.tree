@@ -7,6 +7,7 @@
                   start-page="Home.md">
 
     <toc-element topic="Home.md"/>
+    <toc-element topic="Robot-Config.md"/>
     <toc-element topic="PathPlanner-GUI.topic">
         <toc-element topic="gui-Getting-Started.md"/>
         <toc-element topic="gui-Editing-Paths-and-Autos.md"/>

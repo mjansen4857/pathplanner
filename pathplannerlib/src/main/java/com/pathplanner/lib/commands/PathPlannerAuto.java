@@ -6,6 +6,7 @@ import com.pathplanner.lib.auto.CommandUtil;
 import com.pathplanner.lib.events.EventTrigger;
 import com.pathplanner.lib.events.PointTowardsZoneTrigger;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.FlippingUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
@@ -31,6 +32,8 @@ import org.json.simple.parser.ParseException;
 
 /** A command that loads and runs an autonomous routine built using PathPlanner. */
 public class PathPlannerAuto extends Command {
+  private static final String fileVersionMajor = "2025";
+
   /** The currently running path name. Used to handle activePath triggers */
   public static String currentPathName = "";
 
@@ -69,6 +72,14 @@ public class PathPlannerAuto extends Command {
 
       String fileContent = fileContentBuilder.toString();
       JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
+
+      String version = json.get("version").toString();
+      String[] versions = version.split("\\.");
+
+      if (!versions[0].equals(fileVersionMajor)) {
+        throw new FileVersionException(version, fileVersionMajor + ".X", autoName + ".auto");
+      }
+
       initFromJson(json);
     } catch (FileNotFoundException e) {
       DriverStation.reportError(e.getMessage(), e.getStackTrace());
@@ -80,6 +91,10 @@ public class PathPlannerAuto extends Command {
     } catch (ParseException e) {
       DriverStation.reportError(
           "Failed to parse JSON in file required by auto: " + autoName, e.getStackTrace());
+      autoCommand = Commands.none();
+    } catch (FileVersionException e) {
+      DriverStation.reportError(
+          "Failed to load auto: " + autoName + ". " + e.getMessage(), e.getStackTrace());
       autoCommand = Commands.none();
     }
 
@@ -384,7 +399,8 @@ public class PathPlannerAuto extends Command {
     }
   }
 
-  private void initFromJson(JSONObject autoJson) throws IOException, ParseException {
+  private void initFromJson(JSONObject autoJson)
+      throws IOException, ParseException, FileVersionException {
     boolean choreoAuto = autoJson.get("choreoAuto") != null && (boolean) autoJson.get("choreoAuto");
     JSONObject commandJson = (JSONObject) autoJson.get("command");
     Command cmd = CommandUtil.commandFromJson(commandJson, choreoAuto);

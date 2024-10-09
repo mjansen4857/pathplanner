@@ -100,7 +100,9 @@ public class EventScheduler {
     Set<Subsystem> allReqs = new HashSet<>();
 
     for (EventMarker m : path.getEventMarkers()) {
-      allReqs.addAll(m.command().getRequirements());
+      if (m.command() != null) {
+        allReqs.addAll(m.command().getRequirements());
+      }
     }
 
     return allReqs;

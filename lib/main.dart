@@ -11,70 +11,106 @@ import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/widgets/error_popup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:pathplanner/pages/home_page.dart';
 
 void main() async {
-  runZonedGuarded(
-    () async {
-      WidgetsFlutterBinding.ensureInitialized();
-      await Log.init();
-      await windowManager.ensureInitialized();
-      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+  final zone = Zone.current.fork(
+    specification: ZoneSpecification(handleUncaughtError: (Zone self,
+        ZoneDelegate parent,
+        Zone zone,
+        Object error,
+        StackTrace stackTrace) async {
+      zone.run(() async {
+        Log.error('Uncaught Error', error, stackTrace);
 
-      FlutterError.onError = (FlutterErrorDetails details) {
-        FlutterError.presentError(details);
-        Log.error('Flutter Error', details.exception, details.stack);
-      };
+        await windowManager.hide();
 
-      Animate.restartOnHotReload = true;
+        WindowOptions windowOptions = const WindowOptions(
+          size: Size(400, 280),
+          minimumSize: Size(400, 280),
+          maximumSize: Size(400, 280),
+          center: true,
+          title: 'PathPlanner Error',
+          titleBarStyle: TitleBarStyle.normal,
+        );
 
-      WindowOptions windowOptions = WindowOptions(
-        size: const Size(1280, 720),
-        minimumSize: const Size(640, 360),
-        center: true,
-        title: 'PathPlanner',
-        titleBarStyle:
-            Platform.isMacOS ? TitleBarStyle.normal : TitleBarStyle.hidden,
-      );
+        windowManager.waitUntilReadyToShow(windowOptions, () async {
+          await windowManager.setSize(const Size(400, 280));
+          await windowManager.show();
+          await windowManager.focus();
+        });
 
-      windowManager.waitUntilReadyToShow(windowOptions, () async {
-        await windowManager.show();
-        await windowManager.focus();
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+
+        runApp(ErrorPopup(
+          prefs: prefs,
+          error: error,
+          stackTrace: stackTrace,
+        ));
       });
-
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-
-      // Ensure saved host is an IP
-      try {
-        String? hostIP = prefs.getString(PrefsKeys.ntServerAddress);
-        if (hostIP != null) {
-          Uri.parseIPv4Address(hostIP);
-        }
-      } catch (_) {
-        // Not a valid IP, reset to default
-        prefs.setString(PrefsKeys.ntServerAddress, Defaults.ntServerAddress);
-      }
-
-      PPLibTelemetry telemetry = PPLibTelemetry(
-          serverBaseAddress: prefs.getString(PrefsKeys.ntServerAddress) ??
-              Defaults.ntServerAddress);
-
-      runApp(PathPlanner(
-        appVersion: packageInfo.version,
-        prefs: prefs,
-        undoStack: ChangeStack(),
-        telemetry: telemetry,
-        updateChecker: UpdateChecker(),
-      ));
-    },
-    (Object error, StackTrace stack) {
-      Log.error('Dart Error', error, stack);
-      exit(1);
-    },
+    }),
   );
+
+  zone.run(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await Log.init();
+    await windowManager.ensureInitialized();
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      Log.error('Flutter Error', details.exception, details.stack);
+    };
+
+    Animate.restartOnHotReload = true;
+
+    await windowManager.hide();
+    await windowManager.setMinimumSize(const Size(640, 360));
+    await windowManager.setSize(const Size(1280, 720));
+
+    WindowOptions windowOptions = WindowOptions(
+      size: const Size(1280, 720),
+      minimumSize: const Size(640, 360),
+      center: true,
+      title: 'PathPlanner',
+      titleBarStyle:
+          Platform.isMacOS ? TitleBarStyle.normal : TitleBarStyle.hidden,
+    );
+
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Ensure saved host is an IP
+    try {
+      String? hostIP = prefs.getString(PrefsKeys.ntServerAddress);
+      if (hostIP != null) {
+        Uri.parseIPv4Address(hostIP);
+      }
+    } catch (_) {
+      // Not a valid IP, reset to default
+      prefs.setString(PrefsKeys.ntServerAddress, Defaults.ntServerAddress);
+    }
+
+    PPLibTelemetry telemetry = PPLibTelemetry(
+        serverBaseAddress: prefs.getString(PrefsKeys.ntServerAddress) ??
+            Defaults.ntServerAddress);
+
+    runApp(PathPlanner(
+      appVersion: packageInfo.version,
+      prefs: prefs,
+      undoStack: ChangeStack(),
+      telemetry: telemetry,
+      updateChecker: UpdateChecker(),
+    ));
+  });
 }
 
 class PathPlanner extends StatefulWidget {

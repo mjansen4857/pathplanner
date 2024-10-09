@@ -26,6 +26,7 @@ public class PathConstraintsTest {
     json.put("maxAcceleration", 2.0);
     json.put("maxAngularVelocity", 90.0);
     json.put("maxAngularAcceleration", 180.0);
+    json.put("unlimited", false);
 
     PathConstraints fromJson = PathConstraints.fromJson(json);
 

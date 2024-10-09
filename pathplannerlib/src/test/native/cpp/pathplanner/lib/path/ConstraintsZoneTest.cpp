@@ -18,6 +18,7 @@ TEST(ConstraintsZoneTest, TestFromJson) {
 	constraintsJson.emplace("maxAcceleration", 2.0);
 	constraintsJson.emplace("maxAngularVelocity", 90.0);
 	constraintsJson.emplace("maxAngularAcceleration", 180.0);
+	constraintsJson.emplace("unlimited", false);
 	json.emplace("minWaypointRelativePos", 1.5);
 	json.emplace("maxWaypointRelativePos", 2.5);
 	json.emplace("constraints", constraintsJson);

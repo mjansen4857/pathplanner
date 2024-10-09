@@ -122,6 +122,18 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 
 	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
 
+	std::string version = "1.0";
+	if (json.at("version").is_string()) {
+		version = json.at("version").get<std::string>();
+	}
+
+	if (version != "2025.0") {
+		throw std::runtime_error(
+				"Incompatible file version for '" + pathName
+						+ ".path'. Actual: '" + version
+						+ "' Expected: '2025.0'");
+	}
+
 	std::shared_ptr < PathPlannerPath > path = PathPlannerPath::fromJson(json);
 	path->name = pathName;
 	PPLibTelemetry::registerHotReloadPath(pathName, path);
@@ -144,6 +156,19 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 	}
 
 	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+
+	std::string version = "1.0";
+	if (json.at("version").is_string()) {
+		version = json.at("version").get<std::string>();
+	}
+
+	if (version != "v2025.0.0") {
+		throw std::runtime_error(
+				"Incompatible file version for '" + trajectoryName
+						+ ".traj'. Actual: '" + version
+						+ "' Expected: 'v2025.0.0'");
+	}
+
 	auto trajJson = json.at("trajectory");
 
 	std::vector < PathPlannerTrajectoryState > fullTrajStates;

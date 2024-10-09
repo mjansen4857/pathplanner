@@ -26,6 +26,7 @@ public class ConstraintsZoneTest {
     constraintsJson.put("maxAcceleration", 2.0);
     constraintsJson.put("maxAngularVelocity", 90.0);
     constraintsJson.put("maxAngularAcceleration", 180.0);
+    constraintsJson.put("unlimited", false);
     json.put("minWaypointRelativePos", 1.5);
     json.put("maxWaypointRelativePos", 2.5);
     json.put("constraints", constraintsJson);

@@ -32,8 +32,6 @@ import org.json.simple.parser.ParseException;
 
 /** A command that loads and runs an autonomous routine built using PathPlanner. */
 public class PathPlannerAuto extends Command {
-  private static final String fileVersionMajor = "2025";
-
   /** The currently running path name. Used to handle activePath triggers */
   public static String currentPathName = "";
 
@@ -76,8 +74,8 @@ public class PathPlannerAuto extends Command {
       String version = json.get("version").toString();
       String[] versions = version.split("\\.");
 
-      if (!versions[0].equals(fileVersionMajor)) {
-        throw new FileVersionException(version, fileVersionMajor + ".X", autoName + ".auto");
+      if (!versions[0].equals("2025")) {
+        throw new FileVersionException(version, "2025.X", autoName + ".auto");
       }
 
       initFromJson(json);

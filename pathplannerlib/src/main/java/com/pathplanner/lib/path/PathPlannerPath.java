@@ -32,7 +32,6 @@ import org.json.simple.parser.ParseException;
 public class PathPlannerPath {
   private static final double targetIncrement = 0.05;
   private static final double targetSpacing = 0.2;
-  private static final String fileVersionMajor = "2025";
 
   private static int instances = 0;
 
@@ -323,8 +322,8 @@ public class PathPlannerPath {
       String version = json.get("version").toString();
       String[] versions = version.split("\\.");
 
-      if (!versions[0].equals(fileVersionMajor)) {
-        throw new FileVersionException(version, fileVersionMajor + ".X", pathName + ".path");
+      if (!versions[0].equals("2025")) {
+        throw new FileVersionException(version, "2025.X", pathName + ".path");
       }
 
       PathPlannerPath path = PathPlannerPath.fromJson(json);
@@ -353,11 +352,8 @@ public class PathPlannerPath {
       String version = json.get("version").toString();
       String[] versions = version.split("\\.");
 
-      if (versions.length < 2
-          || !versions[0].equals("v" + fileVersionMajor)
-          || !versions[1].equals("0")) {
-        throw new FileVersionException(
-            version, "v" + fileVersionMajor + ".0.X", trajectoryName + ".traj");
+      if (versions.length < 2 || !versions[0].equals("v2025") || !versions[1].equals("0")) {
+        throw new FileVersionException(version, "v2025.0.X", trajectoryName + ".traj");
       }
 
       JSONObject trajJson = (JSONObject) json.get("trajectory");

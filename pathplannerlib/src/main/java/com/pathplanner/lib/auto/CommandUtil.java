@@ -53,8 +53,15 @@ public class CommandUtil {
   }
 
   private static Command waitCommandFromData(JSONObject dataJson) {
-    double waitTime = ((Number) dataJson.get("waitTime")).doubleValue();
-    return Commands.waitSeconds(waitTime);
+    try {
+      double waitTime = ((Number) dataJson.get("waitTime")).doubleValue();
+      return Commands.waitSeconds(waitTime);
+    } catch (Exception ignored) {
+      // Failed to load wait time as a number. This is probably a choreo expression
+      JSONObject waitTimeJson = (JSONObject) dataJson.get("waitTime");
+      double waitTime = ((Number) waitTimeJson.get("val")).doubleValue();
+      return Commands.waitSeconds(waitTime);
+    }
   }
 
   private static Command namedCommandFromData(JSONObject dataJson) {

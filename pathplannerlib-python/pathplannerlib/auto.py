@@ -109,8 +109,12 @@ class CommandUtil:
 
     @staticmethod
     def _waitCommandFromData(data_json: dict) -> Command:
-        waitTime = float(data_json['waitTime'])
-        return cmd.waitSeconds(waitTime)
+        waitJson = data_json['waitTime']
+        if waitJson is dict:
+            # Choreo expression
+            return cmd.waitSeconds(float(waitJson['val']))
+        else:
+            return cmd.waitSeconds(float(waitJson))
 
     @staticmethod
     def _namedCommandFromData(data_json: dict) -> Command:

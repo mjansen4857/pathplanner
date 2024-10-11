@@ -193,50 +193,33 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 	}
 
 	std::vector < std::shared_ptr < Event >> fullEvents;
-	// Events from pplibCommands
-	if (json.contains("pplibCommands")) {
-		for (wpi::json::const_reference m : json.at("pplibCommands")) {
-			auto dataJson = m.at("data");
-			auto offsetJson = dataJson.at("offset");
+	if (json.contains("events")) {
+		for (wpi::json::const_reference markerJson : json.at("events")) {
+			std::string name = markerJson.at("name").get<std::string>();
 
-			std::string name = dataJson.at("name").get<std::string>();
-			units::second_t targetTimestamp {
-					dataJson.at("targetTimestamp").get<double>() };
-			units::second_t offset { offsetJson.at("val").get<double>() };
-			units::second_t timestamp = targetTimestamp + offset;
+			auto fromJson = markerJson.at("from");
+			auto fromOffsetJson = markerJson.at("offset");
+
+			units::second_t fromTargetTimestamp {
+					fromJson.at("targetTimestamp").get<double>() };
+			units::second_t fromOffset { fromOffsetJson.at("val").get<double>() };
+			units::second_t fromTimestamp = fromTargetTimestamp + fromOffset;
+
+			fullEvents.emplace_back(
+					std::make_shared < OneShotTriggerEvent
+							> (fromTimestamp, name));
 
 			frc2::CommandPtr eventCommand = frc2::cmd::None();
-			if (!m.at("event").is_null()) {
-				eventCommand = CommandUtil::commandFromJson(m.at("event"),
-						true);
+			if (!markerJson.at("event").is_null()) {
+				eventCommand = CommandUtil::commandFromJson(
+						markerJson.at("event"), true);
 			}
-
-			fullEvents.emplace_back(
-					std::make_shared < OneShotTriggerEvent > (timestamp, name));
 			fullEvents.emplace_back(
 					std::make_shared < ScheduleCommandEvent
-							> (timestamp, std::shared_ptr < frc2::Command
+							> (fromTimestamp, std::shared_ptr < frc2::Command
 									> (std::move(eventCommand).Unwrap())));
 		}
 	}
-
-	// Events from choreolib events
-	if (json.contains("events")) {
-		for (wpi::json::const_reference m : json.at("events")) {
-			auto dataJson = m.at("data");
-			auto offsetJson = dataJson.at("offset");
-
-			std::string name = dataJson.at("name").get<std::string>();
-			units::second_t targetTimestamp {
-					dataJson.at("targetTimestamp").get<double>() };
-			units::second_t offset { offsetJson.at("val").get<double>() };
-			units::second_t timestamp = targetTimestamp + offset;
-
-			fullEvents.emplace_back(
-					std::make_shared < OneShotTriggerEvent > (timestamp, name));
-		}
-	}
-
 	std::sort(fullEvents.begin(), fullEvents.end(),
 			[](auto &left, auto &right) {
 				return left->getTimestamp() < right->getTimestamp();

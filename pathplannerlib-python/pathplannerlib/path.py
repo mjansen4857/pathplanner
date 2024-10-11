@@ -545,36 +545,21 @@ class PathPlannerPath:
                 fullTrajStates.append(state)
 
             fullEvents: List[Event] = []
-            # Events from pplibCommands
-            if 'pplibCommands' in fJson:
-                for m in fJson['pplibCommands']:
-                    dataJson = m['data']
-                    offsetJson = dataJson['offset']
-
-                    name = str(dataJson['name'])
-                    targetTimestamp = float(dataJson['targetTimestamp'])
-                    offset = float(offsetJson['val'])
-                    timestamp = targetTimestamp + offset
-
-                    if m['event'] is not None:
-                        eventCommand = CommandUtil.commandFromJson(m['event'], True)
-                        fullEvents.append(ScheduleCommandEvent(timestamp, eventCommand))
-
-                    fullEvents.append(OneShotTriggerEvent(timestamp, name))
-
-            # Events from choreolib events
             if 'events' in fJson:
-                for m in fJson['events']:
-                    dataJson = m['data']
-                    offsetJson = dataJson['offset']
+                for markerJson in fJson['events']:
+                    name = str(markerJson['name'])
 
-                    name = str(dataJson['name'])
-                    targetTimestamp = float(dataJson['targetTimestamp'])
-                    offset = float(offsetJson['val'])
-                    timestamp = targetTimestamp + offset
+                    fromJson = markerJson['from']
+                    fromOffsetJson = fromJson['offset']
+                    fromTargetTimestamp = float(fromJson['targetTimestamp'])
+                    fromOffset = float(fromOffsetJson['val'])
+                    fromTimestamp = fromTargetTimestamp + fromOffset
 
-                    fullEvents.append(OneShotTriggerEvent(timestamp, name))
+                    fullEvents.append(OneShotTriggerEvent(fromTimestamp, name))
 
+                    if markerJson['event'] is not None:
+                        eventCommand = CommandUtil.commandFromJson(markerJson['event'], True)
+                        fullEvents.append(ScheduleCommandEvent(fromTimestamp, eventCommand))
             fullEvents.sort(key=lambda e: e.getTimestamp())
 
             # Add the full path to the cache

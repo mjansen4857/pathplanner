@@ -376,6 +376,7 @@ class PathPlannerPath {
         maxAccelerationMPSSq: double.infinity,
         maxAngularVelocityDeg: double.infinity,
         maxAngularAccelerationDeg: double.infinity,
+        nominalVoltage: globalConstraints.nominalVoltage,
         unlimited: true,
       );
     }

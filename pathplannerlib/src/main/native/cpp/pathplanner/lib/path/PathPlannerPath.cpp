@@ -227,7 +227,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 
 	// Add the full path to the cache
 	auto fullPath = std::make_shared < PathPlannerPath
-			> (PathConstraints::unlimitedConstraints(), GoalEndState(
+			> (PathConstraints::unlimitedConstraints(12_V), GoalEndState(
 					fullTrajStates[fullTrajStates.size() - 1].linearVelocity,
 					fullTrajStates[fullTrajStates.size() - 1].pose.Rotation()));
 
@@ -278,10 +278,11 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 				}
 			}
 
-			auto path = std::make_shared < PathPlannerPath
-					> (PathConstraints::unlimitedConstraints(), GoalEndState(
-							states[states.size() - 1].linearVelocity,
-							states[states.size() - 1].pose.Rotation()));
+			auto path =
+					std::make_shared < PathPlannerPath
+							> (PathConstraints::unlimitedConstraints(12_V), GoalEndState(
+									states[states.size() - 1].linearVelocity,
+									states[states.size() - 1].pose.Rotation()));
 
 			std::vector < PathPoint > pathPoints;
 			for (auto state : states) {

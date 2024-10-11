@@ -307,7 +307,8 @@ public class PathPlannerTrajectory {
         double lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters;
         double currentDraw =
             Math.min(
-                config.moduleConfig.driveMotor.getCurrent(lastVelRadPerSec, 12.0),
+                config.moduleConfig.driveMotor.getCurrent(
+                    lastVelRadPerSec, state.constraints.nominalVoltage()),
                 config.moduleConfig.driveCurrentLimit);
         double availableTorque =
             config.moduleConfig.driveMotor.getTorque(currentDraw) - config.moduleConfig.torqueLoss;
@@ -442,7 +443,8 @@ public class PathPlannerTrajectory {
         double lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters;
         double currentDraw =
             Math.min(
-                config.moduleConfig.driveMotor.getCurrent(lastVelRadPerSec, 12.0),
+                config.moduleConfig.driveMotor.getCurrent(
+                    lastVelRadPerSec, state.constraints.nominalVoltage()),
                 config.moduleConfig.driveCurrentLimit);
         double availableTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
         availableTorque = Math.min(availableTorque, config.maxTorqueFriction);

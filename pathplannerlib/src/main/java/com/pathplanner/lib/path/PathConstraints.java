@@ -10,6 +10,7 @@ import org.json.simple.JSONObject;
  * @param maxAccelerationMps Max linear acceleration (M/S^2)
  * @param maxAngularVelocityRps Max angular velocity (Rad/S)
  * @param maxAngularAccelerationRpsSq Max angular acceleration (Rad/S^2)
+ * @param nominalVoltage The nominal battery voltage (Volts)
  * @param unlimited Should the constraints be unlimited
  */
 public record PathConstraints(
@@ -17,14 +18,31 @@ public record PathConstraints(
     double maxAccelerationMps,
     double maxAngularVelocityRps,
     double maxAngularAccelerationRpsSq,
+    double nominalVoltage,
     boolean unlimited) {
-  private static final PathConstraints kUnlimited =
-      new PathConstraints(
-          Double.POSITIVE_INFINITY,
-          Double.POSITIVE_INFINITY,
-          Double.POSITIVE_INFINITY,
-          Double.POSITIVE_INFINITY,
-          true);
+  /**
+   * Kinematic path following constraints
+   *
+   * @param maxVelocityMps Max linear velocity (M/S)
+   * @param maxAccelerationMps Max linear acceleration (M/S^2)
+   * @param maxAngularVelocityRps Max angular velocity (Rad/S)
+   * @param maxAngularAccelerationRpsSq Max angular acceleration (Rad/S^2)
+   * @param nominalVoltage The nominal battery voltage (Volts)
+   */
+  public PathConstraints(
+      double maxVelocityMps,
+      double maxAccelerationMps,
+      double maxAngularVelocityRps,
+      double maxAngularAccelerationRpsSq,
+      double nominalVoltage) {
+    this(
+        maxVelocityMps,
+        maxAccelerationMps,
+        maxAngularVelocityRps,
+        maxAngularAccelerationRpsSq,
+        nominalVoltage,
+        false);
+  }
 
   /**
    * Kinematic path following constraints
@@ -44,16 +62,24 @@ public record PathConstraints(
         maxAccelerationMps,
         maxAngularVelocityRps,
         maxAngularAccelerationRpsSq,
+        12.0,
         false);
   }
 
   /**
    * Get unlimited PathConstraints
    *
+   * @param nominalVoltage The nominal battery voltage (Volts)
    * @return Unlimited constraints
    */
-  public static PathConstraints unlimitedConstraints() {
-    return kUnlimited;
+  public static PathConstraints unlimitedConstraints(double nominalVoltage) {
+    return new PathConstraints(
+        Double.POSITIVE_INFINITY,
+        Double.POSITIVE_INFINITY,
+        Double.POSITIVE_INFINITY,
+        Double.POSITIVE_INFINITY,
+        nominalVoltage,
+        true);
   }
 
   /**
@@ -70,6 +96,7 @@ public record PathConstraints(
         ((Number) constraintsJson.get("maxAngularVelocity")).doubleValue(); // Degrees
     double maxAngularAccel =
         ((Number) constraintsJson.get("maxAngularAcceleration")).doubleValue(); // Degrees
+    double nominalVoltage = ((Number) constraintsJson.get("nominalVoltage")).doubleValue();
     boolean unlimited = ((boolean) constraintsJson.get("unlimited"));
 
     return new PathConstraints(
@@ -77,6 +104,7 @@ public record PathConstraints(
         maxAccel,
         Units.degreesToRadians(maxAngularVel),
         Units.degreesToRadians(maxAngularAccel),
+        nominalVoltage,
         unlimited);
   }
 }

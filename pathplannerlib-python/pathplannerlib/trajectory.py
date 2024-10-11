@@ -478,7 +478,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # This pass will only be handling acceleration of the robot, meaning that the "torque"
             # acting on the module due to friction and other losses will be fighting the motor
             lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters
-            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, 12.0),
+            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, state.constraints.nominalVoltage),
                               config.moduleConfig.driveCurrentLimit)
             availableTorque = config.moduleConfig.driveMotor.torque(currentDraw) - config.moduleConfig.torqueLoss
             availableTorque = min(availableTorque, config.maxTorqueFriction)
@@ -577,7 +577,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # This pass will only be handling deceleration of the robot, meaning that the "torque"
             # acting on the module due to friction and other losses will not be fighting the motor
             lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters
-            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, 12.0),
+            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, state.constraints.nominalVoltage),
                               config.moduleConfig.driveCurrentLimit)
             availableTorque = config.moduleConfig.driveMotor.torque(currentDraw)
             availableTorque = min(availableTorque, config.maxTorqueFriction)

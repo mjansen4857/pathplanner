@@ -265,7 +265,9 @@ class _ProjectPageState extends State<ProjectPage> {
 
       for (PathPlannerPath path in _paths) {
         if (path.useDefaultConstraints) {
-          path.globalConstraints = defaultConstraints.clone();
+          PathConstraints cloned = defaultConstraints.clone();
+          cloned.unlimited = path.globalConstraints.unlimited;
+          path.globalConstraints = cloned;
           path.generateAndSavePath();
         }
       }
@@ -1872,6 +1874,8 @@ class _ProjectPageState extends State<ProjectPage> {
       maxAngularAccelerationDeg:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAngAccel,
+      nominalVoltage: widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
+          Defaults.defaultNominalVoltage,
     );
   }
 }

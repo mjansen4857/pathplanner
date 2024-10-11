@@ -38,6 +38,7 @@ void main() {
       PrefsKeys.defaultMaxAccel: 2.0,
       PrefsKeys.defaultMaxAngVel: 3.0,
       PrefsKeys.defaultMaxAngAccel: 4.0,
+      PrefsKeys.defaultNominalVoltage: 12.0,
     });
     prefs = await SharedPreferences.getInstance();
     settingsChanged = false;
@@ -552,6 +553,38 @@ void main() {
 
     expect(settingsChanged, true);
     expect(prefs.getDouble(PrefsKeys.defaultMaxAngAccel), 4.4);
+  });
+
+  testWidgets('default voltage text field', (widgetTester) async {
+    FlutterError.onError = ignoreOverflowErrors;
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SettingsDialog(
+          onSettingsChanged: () => settingsChanged = true,
+          onFieldSelected: (value) => selectedField = value,
+          fieldImages: FieldImage.offialFields(),
+          selectedField: FieldImage.official(OfficialField.chargedUp),
+          prefs: prefs,
+          onTeamColorChanged: (value) => teamColor = value,
+        ),
+      ),
+    ));
+
+    final textField =
+        find.widgetWithText(NumberTextField, 'Nominal Voltage (Volts)');
+
+    expect(textField, findsOneWidget);
+    expect(find.descendant(of: textField, matching: find.text('12.000')),
+        findsOneWidget);
+
+    await widgetTester.enterText(textField, '10.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(settingsChanged, true);
+    expect(prefs.getDouble(PrefsKeys.defaultNominalVoltage), 10.0);
   });
 
   testWidgets('field image dropdown', (widgetTester) async {

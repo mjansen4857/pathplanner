@@ -118,31 +118,54 @@ class GlobalConstraintsTree extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
+                child: NumberTextField(
+                  initialValue: path.globalConstraints.nominalVoltage,
+                  label: 'Nominal Voltage (Volts)',
+                  minValue: 6.0,
+                  maxValue: 13.0,
+                  arrowKeyIncrement: 0.1,
+                  enabled: !path.useDefaultConstraints,
+                  onSubmitted: (value) {
+                    if (value != null) {
+                      _addChange(
+                          () => path.globalConstraints.nominalVoltage = value);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+          child: Row(
+            children: [
+              Expanded(
                 child: Row(
                   children: [
                     Checkbox(
                       value: path.useDefaultConstraints,
-                      onChanged: path.globalConstraints.unlimited
-                          ? null
-                          : (value) {
-                              undoStack.add(Change(
-                                (
-                                  path.useDefaultConstraints,
-                                  path.globalConstraints.clone()
-                                ),
-                                () {
-                                  path.useDefaultConstraints = value ?? false;
-                                  path.globalConstraints =
-                                      defaultConstraints.clone();
-                                  onPathChanged?.call();
-                                },
-                                (oldValue) {
-                                  path.useDefaultConstraints = oldValue.$1;
-                                  path.globalConstraints = oldValue.$2.clone();
-                                  onPathChanged?.call();
-                                },
-                              ));
-                            },
+                      onChanged: (value) {
+                        undoStack.add(Change(
+                          (
+                            path.useDefaultConstraints,
+                            path.globalConstraints.clone()
+                          ),
+                          () {
+                            path.useDefaultConstraints = value ?? false;
+                            PathConstraints cloned = defaultConstraints.clone();
+                            cloned.unlimited = path.globalConstraints.unlimited;
+                            path.globalConstraints = cloned;
+                            onPathChanged?.call();
+                          },
+                          (oldValue) {
+                            path.useDefaultConstraints = oldValue.$1;
+                            path.globalConstraints = oldValue.$2.clone();
+                            onPathChanged?.call();
+                          },
+                        ));
+                      },
                     ),
                     const SizedBox(width: 4),
                     const Text(

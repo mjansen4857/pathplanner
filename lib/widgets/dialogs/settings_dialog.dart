@@ -703,6 +703,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                               label: 'Nominal Voltage (Volts)',
                               minValue: 6.0,
                               maxValue: 13.0,
+                              arrowKeyIncrement: 0.1,
                               onSubmitted: (value) {
                                 if (value != null) {
                                   widget.prefs.setDouble(

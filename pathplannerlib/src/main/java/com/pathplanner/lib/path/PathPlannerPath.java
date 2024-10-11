@@ -381,43 +381,24 @@ public class PathPlannerPath {
       }
 
       List<Event> fullEvents = new ArrayList<>();
-      // Events from pplibCommands
-      if (json.containsKey("pplibCommands")) {
-        for (var m : (JSONArray) json.get("pplibCommands")) {
-          JSONObject markerJson = (JSONObject) m;
-          JSONObject dataJson = (JSONObject) markerJson.get("data");
-          JSONObject offsetJson = (JSONObject) dataJson.get("offset");
+      for (var m : (JSONArray) json.get("events")) {
+        JSONObject markerJson = (JSONObject) m;
+        String name = (String) markerJson.get("name");
 
-          String name = (String) dataJson.get("name");
-          double targetTimestamp = ((Number) dataJson.get("targetTimestamp")).doubleValue();
-          double offset = ((Number) offsetJson.get("val")).doubleValue();
-          double timestamp = targetTimestamp + offset;
-          if (markerJson.get("event") != null) {
-            Command eventCommand =
-                CommandUtil.commandFromJson((JSONObject) markerJson.get("event"), true);
-            fullEvents.add(new ScheduleCommandEvent(timestamp, eventCommand));
-          }
+        JSONObject fromJson = (JSONObject) markerJson.get("from");
+        JSONObject fromOffsetJson = (JSONObject) fromJson.get("offset");
+        double fromTargetTimestamp = ((Number) fromJson.get("targetTimestamp")).doubleValue();
+        double fromOffset = ((Number) fromOffsetJson.get("val")).doubleValue();
+        double fromTimestamp = fromTargetTimestamp + fromOffset;
 
-          fullEvents.add(new OneShotTriggerEvent(timestamp, name));
+        fullEvents.add(new OneShotTriggerEvent(fromTimestamp, name));
+
+        if (markerJson.get("event") != null) {
+          Command eventCommand =
+              CommandUtil.commandFromJson((JSONObject) markerJson.get("event"), true);
+          fullEvents.add(new ScheduleCommandEvent(fromTimestamp, eventCommand));
         }
       }
-
-      // Events from choreolib events
-      if (json.containsKey("events")) {
-        for (var m : (JSONArray) json.get("events")) {
-          JSONObject markerJson = (JSONObject) m;
-          JSONObject dataJson = (JSONObject) markerJson.get("data");
-          JSONObject offsetJson = (JSONObject) dataJson.get("offset");
-
-          String name = (String) dataJson.get("name");
-          double targetTimestamp = ((Number) dataJson.get("targetTimestamp")).doubleValue();
-          double offset = ((Number) offsetJson.get("val")).doubleValue();
-          double timestamp = targetTimestamp + offset;
-
-          fullEvents.add(new OneShotTriggerEvent(timestamp, name));
-        }
-      }
-
       fullEvents.sort(Comparator.comparingDouble(Event::getTimestamp));
 
       // Add the full path to the cache

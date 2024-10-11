@@ -73,10 +73,10 @@ Max Acceleration
 : The maximum acceleration of the robot in meters/sec^2.
 
 Max Angular Velocity
-: The maximum angular velocity of the robot in degrees/sec. This is only available when holonomic mode is on.
+: The maximum angular velocity of the robot in degrees/sec.
 
 Max Angular Acceleration
-: The maximum angular acceleration of the robot in degrees/sec^2. This is only available when holonomic mode is on.
+: The maximum angular acceleration of the robot in degrees/sec^2.
 
 Nominal Voltage
 : The nominal battery voltage during the path in volts. This is effectively a max velocity and max angular velocity

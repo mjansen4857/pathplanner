@@ -25,6 +25,7 @@ void main() {
       maxAccelerationMPSSq: 1.0,
       maxAngularVelocityDeg: 1.0,
       maxAngularAccelerationDeg: 1.0,
+      nominalVoltage: 12.0,
       unlimited: false,
     );
     pathChanged = false;
@@ -181,6 +182,37 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.globalConstraints.maxAngularAccelerationDeg, 1.0);
+  });
+
+  testWidgets('nominal voltage text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GlobalConstraintsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+          defaultConstraints: PathConstraints(),
+        ),
+      ),
+    ));
+
+    final textField =
+        find.widgetWithText(NumberTextField, 'Nominal Voltage (Volts)');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '10.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(pathChanged, true);
+    expect(path.globalConstraints.nominalVoltage, 10.0);
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.nominalVoltage, 12.0);
   });
 
   testWidgets('use defaults checkbox', (widgetTester) async {

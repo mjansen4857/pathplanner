@@ -34,12 +34,14 @@ class PathConstraints:
         maxAccelerationMpsSq (float): Max linear acceleration (M/S^2)
         maxAngularVelocityRps (float): Max angular velocity (Rad/S)
         maxAngularAccelerationRpsSq (float): Max angular acceleration (Rad/S^2)
+        nominalVoltage (float): Nominal battery voltage (Volts)
         unlimited (bool): Should the constraints be unlimited
     """
     maxVelocityMps: float
     maxAccelerationMpsSq: float
     maxAngularVelocityRps: float
     maxAngularAccelerationRpsSq: float
+    nominalVoltage: float = 12.0
     unlimited: bool = False
 
     @staticmethod
@@ -48,6 +50,7 @@ class PathConstraints:
         maxAccel = float(json_dict['maxAcceleration'])
         maxAngularVel = float(json_dict['maxAngularVelocity'])
         maxAngularAccel = float(json_dict['maxAngularAcceleration'])
+        nominalVoltage = float(json_dict['nominalVoltage'])
         unlimited = bool(json_dict['unlimited'])
 
         return PathConstraints(
@@ -55,15 +58,17 @@ class PathConstraints:
             maxAccel,
             units.degreesToRadians(maxAngularVel),
             units.degreesToRadians(maxAngularAccel),
+            nominalVoltage,
             unlimited)
 
     @staticmethod
-    def unlimitedConstraints() -> PathConstraints:
+    def unlimitedConstraints(nominalVoltage: float) -> PathConstraints:
         return PathConstraints(
             float('inf'),
             float('inf'),
             float('inf'),
             float('inf'),
+            nominalVoltage,
             True
         )
 
@@ -73,6 +78,7 @@ class PathConstraints:
                 and other.maxAccelerationMpsSq == self.maxAccelerationMpsSq
                 and other.maxAngularVelocityRps == self.maxAngularVelocityRps
                 and other.maxAngularAccelerationRpsSq == self.maxAngularAccelerationRpsSq
+                and other.nominalVoltage == self.nominalVoltage
                 and other.unlimited == self.unlimited)
 
 
@@ -563,7 +569,7 @@ class PathPlannerPath:
             fullEvents.sort(key=lambda e: e.getTimestamp())
 
             # Add the full path to the cache
-            fullPath = PathPlannerPath([], PathConstraints.unlimitedConstraints(), None,
+            fullPath = PathPlannerPath([], PathConstraints.unlimitedConstraints(12.0), None,
                                        GoalEndState(fullTrajStates[-1].linearVelocity,
                                                     fullTrajStates[-1].pose.rotation()))
             fullPathPoints = [PathPoint(state.pose.translation()) for state in fullTrajStates]
@@ -597,7 +603,7 @@ class PathPlannerPath:
                     if startTime <= originalEvent.getTimestamp() < endTime:
                         events.append(originalEvent.copyWithTime(originalEvent.getTimestamp() - startTime))
 
-                path = PathPlannerPath([], PathConstraints.unlimitedConstraints(), None,
+                path = PathPlannerPath([], PathConstraints.unlimitedConstraints(12.0), None,
                                        GoalEndState(states[-1].linearVelocity, states[-1].pose.rotation()))
                 pathPoints = [PathPoint(state.pose.translation()) for state in states]
                 path._allPoints = pathPoints
@@ -863,7 +869,7 @@ class PathPlannerPath:
 
         # Check if constraints should be unlimited
         if self._globalConstraints.unlimited:
-            return PathConstraints.unlimitedConstraints()
+            return PathConstraints.unlimitedConstraints(self._globalConstraints.nominalVoltage)
 
         return self._globalConstraints
 

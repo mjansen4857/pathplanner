@@ -24,6 +24,7 @@ class PrefsKeys {
   static const String defaultMaxAccel = 'defaultMaxAccel';
   static const String defaultMaxAngVel = 'defaultMaxAngVel';
   static const String defaultMaxAngAccel = 'defaultMaxAngAccel';
+  static const String defaultNominalVoltage = 'defaultNominalVoltage';
   static const String seen2024Warning = 'seen2024Warning';
   static const String robotMass = 'robotMass';
   static const String robotMOI = 'robotMOI';
@@ -64,6 +65,7 @@ class Defaults {
   static const double defaultMaxAccel = 3.0;
   static const double defaultMaxAngVel = 540.0;
   static const double defaultMaxAngAccel = 720.0;
+  static const double defaultNominalVoltage = 12.0;
   static const double robotMass = 74.088;
   static const double robotMOI = 6.883;
   static const double robotWheelbase = 0.546;

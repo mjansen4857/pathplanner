@@ -173,8 +173,8 @@ class PathPlannerTrajectory {
         num lastVelRadPerSec =
             lastVel / robotConfig.moduleConfig.wheelRadiusMeters;
         num currentDraw = min(
-            robotConfig.moduleConfig.driveMotor
-                .getCurrent(lastVelRadPerSec, 12.0),
+            robotConfig.moduleConfig.driveMotor.getCurrent(
+                lastVelRadPerSec, states[i].constraints.nominalVoltage),
             robotConfig.moduleConfig.driveCurrentLimit);
         num availableTorque =
             robotConfig.moduleConfig.driveMotor.getTorque(currentDraw) -
@@ -322,8 +322,8 @@ class PathPlannerTrajectory {
         num lastVelRadPerSec =
             lastVel / robotConfig.moduleConfig.wheelRadiusMeters;
         num currentDraw = min(
-            robotConfig.moduleConfig.driveMotor
-                .getCurrent(lastVelRadPerSec, 12.0),
+            robotConfig.moduleConfig.driveMotor.getCurrent(
+                lastVelRadPerSec, states[i].constraints.nominalVoltage),
             robotConfig.moduleConfig.driveCurrentLimit);
         num availableTorque =
             robotConfig.moduleConfig.driveMotor.getTorque(currentDraw);

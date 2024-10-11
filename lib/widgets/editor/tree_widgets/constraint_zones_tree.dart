@@ -320,6 +320,33 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
           ),
         ),
         const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: NumberTextField(
+                  initialValue:
+                      constraintZones[zoneIdx].constraints.nominalVoltage,
+                  label: 'Nominal Voltage (Volts)',
+                  minValue: 6.0,
+                  maxValue: 13.0,
+                  arrowKeyIncrement: 0.1,
+                  onSubmitted: (value) {
+                    if (value != null) {
+                      _addConstraintsChange(
+                          zoneIdx,
+                          () => constraintZones[zoneIdx]
+                              .constraints
+                              .nominalVoltage = value);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         Row(
           children: [
             Expanded(

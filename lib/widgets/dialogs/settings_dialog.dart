@@ -53,6 +53,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
   late num _defaultMaxAccel;
   late num _defaultMaxAngVel;
   late num _defaultMaxAngAccel;
+  late num _defaultNominalVoltage;
   late bool _holonomicMode;
   late bool _hotReload;
   late FieldImage _selectedField;
@@ -97,6 +98,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
     _defaultMaxAngAccel =
         widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
             Defaults.defaultMaxAngAccel;
+    _defaultNominalVoltage =
+        widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
+            Defaults.defaultNominalVoltage;
     _holonomicMode =
         widget.prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
     _hotReload = widget.prefs.getBool(PrefsKeys.hotReloadEnabled) ??
@@ -689,6 +693,35 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: NumberTextField(
+                              initialValue: _defaultNominalVoltage,
+                              label: 'Nominal Voltage (Volts)',
+                              minValue: 6.0,
+                              maxValue: 13.0,
+                              arrowKeyIncrement: 0.1,
+                              onSubmitted: (value) {
+                                if (value != null) {
+                                  widget.prefs.setDouble(
+                                      PrefsKeys.defaultNominalVoltage,
+                                      value.toDouble());
+                                  setState(() {
+                                    _defaultNominalVoltage = value;
+                                  });
+                                }
+                                widget.onSettingsChanged();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,7 +731,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       Expanded(child: _buildTeamColorPicker(context)),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 2),
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,9 +765,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
                     ],
                   ),
+                  const SizedBox(height: 6),
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,

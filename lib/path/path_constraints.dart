@@ -3,6 +3,7 @@ class PathConstraints {
   num maxAccelerationMPSSq;
   num maxAngularVelocityDeg;
   num maxAngularAccelerationDeg;
+  num nominalVoltage;
   bool unlimited;
 
   PathConstraints({
@@ -10,6 +11,7 @@ class PathConstraints {
     this.maxAccelerationMPSSq = 3,
     this.maxAngularVelocityDeg = 540,
     this.maxAngularAccelerationDeg = 720,
+    this.nominalVoltage = 12.0,
     this.unlimited = false,
   });
 
@@ -18,6 +20,7 @@ class PathConstraints {
         maxAccelerationMPSSq = json['maxAcceleration'] ?? 3,
         maxAngularVelocityDeg = json['maxAngularVelocity'] ?? 540,
         maxAngularAccelerationDeg = json['maxAngularAcceleration'] ?? 720,
+        nominalVoltage = json['nominalVoltage'] ?? 12.0,
         unlimited = json['unlimited'] ?? false;
 
   PathConstraints clone() {
@@ -26,6 +29,7 @@ class PathConstraints {
       maxAccelerationMPSSq: maxAccelerationMPSSq,
       maxAngularVelocityDeg: maxAngularVelocityDeg,
       maxAngularAccelerationDeg: maxAngularAccelerationDeg,
+      nominalVoltage: nominalVoltage,
       unlimited: unlimited,
     );
   }
@@ -36,6 +40,7 @@ class PathConstraints {
       'maxAcceleration': maxAccelerationMPSSq,
       'maxAngularVelocity': maxAngularVelocityDeg,
       'maxAngularAcceleration': maxAngularAccelerationDeg,
+      'nominalVoltage': nominalVoltage,
       'unlimited': unlimited,
     };
   }
@@ -47,10 +52,16 @@ class PathConstraints {
       other.maxVelocityMPS == maxVelocityMPS &&
       other.maxAccelerationMPSSq == maxAccelerationMPSSq &&
       other.maxAngularVelocityDeg == maxAngularVelocityDeg &&
-      other.maxAngularAccelerationDeg == other.maxAngularAccelerationDeg &&
+      other.maxAngularAccelerationDeg == maxAngularAccelerationDeg &&
+      other.nominalVoltage == nominalVoltage &&
       other.unlimited == unlimited;
 
   @override
-  int get hashCode => Object.hash(maxVelocityMPS, maxAccelerationMPSSq,
-      maxAngularVelocityDeg, maxAngularAccelerationDeg, unlimited);
+  int get hashCode => Object.hash(
+      maxVelocityMPS,
+      maxAccelerationMPSSq,
+      maxAngularVelocityDeg,
+      maxAngularAccelerationDeg,
+      nominalVoltage,
+      unlimited);
 }

@@ -403,7 +403,7 @@ public class PathPlannerPath {
 
       // Add the full path to the cache
       PathPlannerPath fullPath = new PathPlannerPath();
-      fullPath.globalConstraints = PathConstraints.unlimitedConstraints();
+      fullPath.globalConstraints = PathConstraints.unlimitedConstraints(12.0);
       fullPath.goalEndState =
           new GoalEndState(
               fullTrajStates.get(fullTrajStates.size() - 1).linearVelocity,
@@ -451,7 +451,7 @@ public class PathPlannerPath {
         }
 
         PathPlannerPath path = new PathPlannerPath();
-        path.globalConstraints = PathConstraints.unlimitedConstraints();
+        path.globalConstraints = PathConstraints.unlimitedConstraints(12.0);
         path.goalEndState =
             new GoalEndState(
                 states.get(states.size() - 1).linearVelocity,
@@ -650,7 +650,7 @@ public class PathPlannerPath {
 
     // Check if constraints should be unlimited
     if (globalConstraints.unlimited()) {
-      return PathConstraints.unlimitedConstraints();
+      return PathConstraints.unlimitedConstraints(globalConstraints.nominalVoltage());
     }
 
     return globalConstraints;

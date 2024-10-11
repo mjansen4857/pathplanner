@@ -359,7 +359,8 @@ private:
 
 		// Check if constraints should be unlimited
 		if (m_globalConstraints.isUnlimited()) {
-			return PathConstraints::unlimitedConstraints();
+			return PathConstraints::unlimitedConstraints(
+					m_globalConstraints.getNominalVoltage());
 		}
 
 		return m_globalConstraints;

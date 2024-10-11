@@ -329,7 +329,8 @@ void PathPlannerTrajectory::forwardAccelPass(
 					/ config.moduleConfig.wheelRadius() };
 			units::ampere_t currentDraw = units::math::min(
 					config.moduleConfig.driveMotor.Current(lastVelRadPerSec,
-							12_V), config.moduleConfig.driveCurrentLimit);
+							state.constraints.getNominalVoltage()),
+					config.moduleConfig.driveCurrentLimit);
 			units::newton_meter_t availableTorque =
 					config.moduleConfig.driveMotor.Torque(currentDraw)
 							- config.moduleConfig.torqueLoss;
@@ -481,7 +482,8 @@ void PathPlannerTrajectory::reverseAccelPass(
 					/ config.moduleConfig.wheelRadius() };
 			units::ampere_t currentDraw = units::math::min(
 					config.moduleConfig.driveMotor.Current(lastVelRadPerSec,
-							12_V), config.moduleConfig.driveCurrentLimit);
+							state.constraints.getNominalVoltage()),
+					config.moduleConfig.driveCurrentLimit);
 			units::newton_meter_t availableTorque =
 					config.moduleConfig.driveMotor.Torque(currentDraw);
 			availableTorque = units::math::min(availableTorque,

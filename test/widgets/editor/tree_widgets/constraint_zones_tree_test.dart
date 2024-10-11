@@ -318,6 +318,39 @@ void main() {
         path.constraintZones[0].constraints.maxAngularAccelerationDeg, oldVal);
   });
 
+  testWidgets('nominal voltage text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ConstraintZonesTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onZoneHovered: (value) => hoveredZone = value,
+          onZoneSelected: (value) => selectedZone = value,
+          undoStack: undoStack,
+          initiallySelectedZone: 0,
+        ),
+      ),
+    ));
+
+    var textField =
+        find.widgetWithText(NumberTextField, 'Nominal Voltage (Volts)');
+
+    expect(textField, findsOneWidget);
+
+    num oldVal = path.constraintZones[0].constraints.nominalVoltage;
+
+    await widgetTester.enterText(textField, '10.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(pathChanged, true);
+    expect(path.constraintZones[0].constraints.nominalVoltage, 10.0);
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.constraintZones[0].constraints.nominalVoltage, oldVal);
+  });
+
   testWidgets('min pos slider', (widgetTester) async {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

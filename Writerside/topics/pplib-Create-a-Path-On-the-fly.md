@@ -32,10 +32,13 @@ List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(
         new Pose2d(5.0, 3.0, Rotation2d.fromDegrees(90))
 );
 
+PathConstraints constraints = new PathConstraints(3.0, 3.0, 2 * Math.PI, 4 * Math.PI); // The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
+// PathConstraints constraints = PathConstraints.unlimitedConstraints(12.0); // You can also use unlimited constraints, only limited by motor torque and nominal battery voltage
+
 // Create the path using the waypoints created above
 PathPlannerPath path = new PathPlannerPath(
         waypoints,
-        new PathConstraints(3.0, 3.0, 2 * Math.PI, 4 * Math.PI), // The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
+        constraints,
         null, // The ideal starting state, this is only relevant for pre-planned paths, so can be null for on-the-fly paths.
         new GoalEndState(0.0, Rotation2d.fromDegrees(-90)) // Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
 );
@@ -62,11 +65,14 @@ std::vector<frc::Pose2d> poses{
 };
 std::vector<Waypoint> waypoints = PathPlannerPath::waypointsFromPoses(poses);
 
+PathConstraints constraints(3.0_mps, 3.0_mps_sq, 360_deg_per_s, 720_deg_per_s_sq); // The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
+// PathConstraints constraints = PathConstraints::unlimitedConstraints(12_V); // You can also use unlimited constraints, only limited by motor torque and nominal battery voltage
+
 // Create the path using the waypoints created above
 // We make a shared pointer here since the path following commands require a shared pointer
 auto path = std::make_shared<PathPlannerPath>(
     waypoints,
-    PathConstraints(3.0_mps, 3.0_mps_sq, 360_deg_per_s, 720_deg_per_s_sq), // The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
+    constraints,
     std::nullopt, // The ideal starting state, this is only relevant for pre-planned paths, so can be nullopt for on-the-fly paths.
     GoalEndState(0.0_mps, frc::Rotation2d(-90_deg)) // Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
 );
@@ -91,10 +97,13 @@ waypoints = PathPlannerPath.waypointsFromPoses(
     Pose2d(5.0, 3.0, Rotation2d.fromDegrees(90))
 )
 
+constraints = PathConstraints(3.0, 3.0, 2 * math.pi, 4 * math.pi) # The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
+# constraints = PathConstraints.unlimitedConstraints(12.0) # You can also use unlimited constraints, only limited by motor torque and nominal battery voltage
+
 # Create the path using the waypoints created above
 path = new PathPlannerPath(
     waypoints,
-    PathConstraints(3.0, 3.0, 2 * math.pi, 4 * math.pi), # The constraints for this path. If using a differential drivetrain, the angular constraints have no effect.
+    constraints,
     None, # The ideal starting state, this is only relevant for pre-planned paths, so can be None for on-the-fly paths.
     GoalEndState(0.0, Rotation2d.fromDegrees(-90)) # Goal end state. You can set a holonomic rotation here. If using a differential drivetrain, the rotation will have no effect.
 )

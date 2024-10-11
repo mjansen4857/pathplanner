@@ -78,6 +78,11 @@ Max Angular Velocity
 Max Angular Acceleration
 : The maximum angular acceleration of the robot in degrees/sec^2. This is only available when holonomic mode is on.
 
+Nominal Voltage
+: The nominal battery voltage during the path in volts. This is effectively a max velocity and max angular velocity
+constraint that can be used to properly limit those speeds when you expect the battery voltage to sag during auto due to
+other systems running such as a shooter or intake. This constraint is still used for unlimited constraints.
+
 Use Default Constraints
 : Ties these constraints to the default constraints in the settings menu.
 
@@ -183,7 +188,7 @@ used. Constraint zones can be edited via the constraint zones tree.
 <img src="constraint_zones_tree.png" alt="constraint zones tree" border-effect="rounded"/>
 
 Constraints
-: Identical configuration as global constraints.
+: Identical configuration as global constraints. Minus the ability to use defaults or unlimited constraints.
 
 Start Position Slider
 : Controls the waypoint relative position of the start of the zone.

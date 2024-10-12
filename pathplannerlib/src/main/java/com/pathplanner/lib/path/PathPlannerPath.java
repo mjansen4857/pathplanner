@@ -404,6 +404,12 @@ public class PathPlannerPath {
       // Add the full path to the cache
       PathPlannerPath fullPath = new PathPlannerPath();
       fullPath.globalConstraints = PathConstraints.unlimitedConstraints(12.0);
+      fullPath.idealStartingState =
+          new IdealStartingState(
+              Math.hypot(
+                  fullTrajStates.get(0).fieldSpeeds.vxMetersPerSecond,
+                  fullTrajStates.get(0).fieldSpeeds.vyMetersPerSecond),
+              fullTrajStates.get(0).pose.getRotation());
       fullPath.goalEndState =
           new GoalEndState(
               fullTrajStates.get(fullTrajStates.size() - 1).linearVelocity,
@@ -458,6 +464,12 @@ public class PathPlannerPath {
 
         PathPlannerPath path = new PathPlannerPath();
         path.globalConstraints = PathConstraints.unlimitedConstraints(12.0);
+        path.idealStartingState =
+            new IdealStartingState(
+                Math.hypot(
+                    states.get(0).fieldSpeeds.vxMetersPerSecond,
+                    states.get(0).fieldSpeeds.vyMetersPerSecond),
+                states.get(0).pose.getRotation());
         path.goalEndState =
             new GoalEndState(
                 states.get(states.size() - 1).linearVelocity,

@@ -572,6 +572,10 @@ class PathPlannerPath:
             fullPath = PathPlannerPath([], PathConstraints.unlimitedConstraints(12.0), None,
                                        GoalEndState(fullTrajStates[-1].linearVelocity,
                                                     fullTrajStates[-1].pose.rotation()))
+            fullPath._idealStartingState = IdealStartingState(
+                math.hypot(fullTrajStates[0].fieldSpeeds.vx, fullTrajStates[0].fieldSpeeds.vy),
+                fullTrajStates[0].pose.rotation()
+            )
             fullPathPoints = [PathPoint(state.pose.translation()) for state in fullTrajStates]
             fullPath._allPoints = fullPathPoints
             fullPath._isChoreoPath = True
@@ -607,6 +611,10 @@ class PathPlannerPath:
 
                 path = PathPlannerPath([], PathConstraints.unlimitedConstraints(12.0), None,
                                        GoalEndState(states[-1].linearVelocity, states[-1].pose.rotation()))
+                path._idealStartingState = IdealStartingState(
+                    math.hypot(states[0].fieldSpeeds.vx, states[0].fieldSpeeds.vy),
+                    states[0].pose.rotation()
+                )
                 pathPoints = [PathPoint(state.pose.translation()) for state in states]
                 path._allPoints = pathPoints
                 path._isChoreoPath = True

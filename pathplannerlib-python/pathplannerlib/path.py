@@ -580,18 +580,20 @@ class PathPlannerPath:
             fullPath.name = trajectory_name
             PathPlannerPath._choreoPathCache[trajectory_name] = fullPath
 
-            splits = trajJson['splits']
-            for i in range(-1, len(splits)):
-                name = trajectory_name + '.' + str(i + 1)
+            splitsJson = trajJson['splits']
+            splits = [int(s) for s in splitsJson]
+            if len(splits) == 0 or int(splits[0]) != 0:
+                splits.insert(0, 0)
+
+            for i in range(len(splits)):
+                name = trajectory_name + '.' + str(i)
                 states = []
 
-                splitStartIdx = 0
-                if i != -1:
-                    splitStartIdx = int(splits[i])
+                splitStartIdx = splits[i]
 
                 splitEndIdx = len(fullTrajStates)
                 if i < len(splits) - 1:
-                    splitEndIdx = int(splits[i + 1])
+                    splitEndIdx = splits[i + 1]
 
                 startTime = fullTrajStates[splitStartIdx].timeSeconds
                 endTime = fullTrajStates[splitEndIdx - 1].timeSeconds

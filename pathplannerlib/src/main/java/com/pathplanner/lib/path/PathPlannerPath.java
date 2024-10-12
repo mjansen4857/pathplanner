@@ -420,19 +420,25 @@ public class PathPlannerPath {
       fullPath.name = trajectoryName;
       choreoPathCache.put(trajectoryName, fullPath);
 
-      JSONArray splits = (JSONArray) trajJson.get("splits");
-      for (int i = -1; i < splits.size(); i++) {
-        String name = trajectoryName + "." + (i + 1);
+      JSONArray splitsJson = (JSONArray) trajJson.get("splits");
+      List<Integer> splits = new ArrayList<>();
+      for (Object o : splitsJson) {
+        splits.add(((Number) o).intValue());
+      }
+
+      if (splits.isEmpty() || splits.get(0) != 0) {
+        splits.add(0, 0);
+      }
+
+      for (int i = 0; i < splits.size(); i++) {
+        String name = trajectoryName + "." + i;
         List<PathPlannerTrajectoryState> states = new ArrayList<>();
 
-        int splitStartIdx = 0;
-        if (i != -1) {
-          splitStartIdx = ((Number) splits.get(i)).intValue();
-        }
+        int splitStartIdx = splits.get(i);
 
         int splitEndIdx = fullTrajStates.size();
         if (i < splits.size() - 1) {
-          splitEndIdx = ((Number) splits.get(i + 1)).intValue();
+          splitEndIdx = splits.get(i + 1);
         }
 
         double startTime = fullTrajStates.get(splitStartIdx).timeSeconds;

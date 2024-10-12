@@ -243,58 +243,63 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 	fullPath->name = trajectoryName;
 	PathPlannerPath::getChoreoPathCache().emplace(trajectoryName, fullPath);
 
-	auto splits = trajJson.at("splits");
-	if (splits.is_array()) {
-		int splitsSize = static_cast<int>(splits.size());
-		for (int i = -1; i < splitsSize; i++) {
-			std::string name = trajectoryName + "." + std::to_string(i + 1);
-			std::vector < PathPlannerTrajectoryState > states;
+	auto splitsJson = trajJson.at("splits");
+	std::vector < size_t > splits;
 
-			size_t splitStartIdx = 0;
-			if (i != -1) {
-				splitStartIdx = splits[i].get<size_t>();
-			}
-
-			size_t splitEndIdx = fullTrajStates.size();
-			if (i < splitsSize) {
-				splitEndIdx = splits[i + 1].get<size_t>();
-			}
-
-			auto startTime = fullTrajStates[splitStartIdx].time;
-			auto endTime = fullTrajStates[splitEndIdx - 1].time;
-			for (size_t s = splitStartIdx; s < splitEndIdx; s++) {
-				states.emplace_back(
-						fullTrajStates[s].copyWithTime(
-								fullTrajStates[s].time - startTime));
-			}
-
-			std::vector < std::shared_ptr < Event >> events;
-			for (auto originalEvent : fullEvents) {
-				if (originalEvent->getTimestamp() >= startTime
-						&& originalEvent->getTimestamp() < endTime) {
-					events.emplace_back(
-							originalEvent->copyWithTimestamp(
-									originalEvent->getTimestamp() - startTime));
-				}
-			}
-
-			auto path =
-					std::make_shared < PathPlannerPath
-							> (PathConstraints::unlimitedConstraints(12_V), GoalEndState(
-									states[states.size() - 1].linearVelocity,
-									states[states.size() - 1].pose.Rotation()));
-
-			std::vector < PathPoint > pathPoints;
-			for (auto state : states) {
-				pathPoints.emplace_back(state.pose.Translation());
-			}
-
-			path->m_allPoints = pathPoints;
-			path->m_isChoreoPath = true;
-			path->m_idealTrajectory = PathPlannerTrajectory(states, events);
-			path->name = name;
-			PathPlannerPath::getChoreoPathCache().emplace(name, path);
+	if (splitsJson.is_array()) {
+		for (auto split : splitsJson) {
+			splits.emplace_back(split.get<size_t>());
 		}
+	}
+
+	if (splits.empty() || splits[0] != 0) {
+		splits.insert(splits.begin(), 0);
+	}
+
+	for (size_t i = 0; i < splits.size(); i++) {
+		std::string name = trajectoryName + "." + std::to_string(i);
+		std::vector < PathPlannerTrajectoryState > states;
+
+		size_t splitStartIdx = splits[i];
+
+		size_t splitEndIdx = fullTrajStates.size();
+		if (i < splits.size()) {
+			splitEndIdx = splits[i + 1];
+		}
+
+		auto startTime = fullTrajStates[splitStartIdx].time;
+		auto endTime = fullTrajStates[splitEndIdx - 1].time;
+		for (size_t s = splitStartIdx; s < splitEndIdx; s++) {
+			states.emplace_back(
+					fullTrajStates[s].copyWithTime(
+							fullTrajStates[s].time - startTime));
+		}
+
+		std::vector < std::shared_ptr < Event >> events;
+		for (auto originalEvent : fullEvents) {
+			if (originalEvent->getTimestamp() >= startTime
+					&& originalEvent->getTimestamp() < endTime) {
+				events.emplace_back(
+						originalEvent->copyWithTimestamp(
+								originalEvent->getTimestamp() - startTime));
+			}
+		}
+
+		auto path = std::make_shared < PathPlannerPath
+				> (PathConstraints::unlimitedConstraints(12_V), GoalEndState(
+						states[states.size() - 1].linearVelocity,
+						states[states.size() - 1].pose.Rotation()));
+
+		std::vector < PathPoint > pathPoints;
+		for (auto state : states) {
+			pathPoints.emplace_back(state.pose.Translation());
+		}
+
+		path->m_allPoints = pathPoints;
+		path->m_isChoreoPath = true;
+		path->m_idealTrajectory = PathPlannerTrajectory(states, events);
+		path->name = name;
+		PathPlannerPath::getChoreoPathCache().emplace(name, path);
 	}
 }
 

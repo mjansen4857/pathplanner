@@ -81,22 +81,12 @@ class ChoreoPath {
                 .map((e) => (e as num).toInt())
                 .toList();
 
-            if (splits.isNotEmpty) {
-              // First split
-              final splitTraj = PathPlannerTrajectory.fromStates(
-                  path.trajectory.states.sublist(0, splits[0]));
-              final splitPath = ChoreoPath(
-                name: '$pathName.0',
-                trajectory: splitTraj,
-                fs: fs,
-                choreoDir: choreoDir,
-                eventMarkerTimes: [],
-              );
-              paths.add(splitPath);
+            if (splits.isEmpty || splits.first != 0) {
+              splits.insert(0, 0);
             }
 
             for (int i = 0; i < splits.length; i++) {
-              String name = '$pathName.${i + 1}';
+              String name = '$pathName.$i';
 
               int startIdx = splits[i];
               int endIdx;

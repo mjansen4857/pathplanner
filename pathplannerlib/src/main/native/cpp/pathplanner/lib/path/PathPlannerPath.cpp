@@ -230,6 +230,10 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 			> (PathConstraints::unlimitedConstraints(12_V), GoalEndState(
 					fullTrajStates[fullTrajStates.size() - 1].linearVelocity,
 					fullTrajStates[fullTrajStates.size() - 1].pose.Rotation()));
+	fullPath->m_idealStartingState = IdealStartingState(
+			units::math::hypot(fullTrajStates[0].fieldSpeeds.vx,
+					fullTrajStates[0].fieldSpeeds.vy),
+			fullTrajStates[0].pose.Rotation());
 
 	std::vector < PathPoint > fullPathPoints;
 	for (auto state : fullTrajStates) {
@@ -289,6 +293,9 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 				> (PathConstraints::unlimitedConstraints(12_V), GoalEndState(
 						states[states.size() - 1].linearVelocity,
 						states[states.size() - 1].pose.Rotation()));
+		path->m_idealStartingState = IdealStartingState(
+				units::math::hypot(states[0].fieldSpeeds.vx,
+						states[0].fieldSpeeds.vy), states[0].pose.Rotation());
 
 		std::vector < PathPoint > pathPoints;
 		for (auto state : states) {

@@ -158,8 +158,27 @@ void AutoBuilder::regenerateSendableReferences() {
 }
 
 frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
-		std::string defaultAutoName,
-		std::function<bool(const PathPlannerAuto* const, std::filesystem::path)> filter) {
+		std::string defaultAutoName) {
+	return buildAutoChooserFilterPath(
+			[](const PathPlannerAuto &autoCommand,
+					std::filesystem::path autoPath) {
+				return true;
+			},defaultAutoName);
+}
+
+frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooserFilter(
+		std::function<bool(const PathPlannerAuto&)> filter,
+		std::string defaultAutoName) {
+	return buildAutoChooserFilterPath(
+			[&filter](const PathPlannerAuto &autoCommand,
+					std::filesystem::path autoPath) {
+				return filter(autoCommand);
+			},defaultAutoName);
+}
+
+frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooserFilterPath(
+		std::function<bool(const PathPlannerAuto&, std::filesystem::path)> filter,
+		std::string defaultAutoName) {
 	if (!m_configured) {
 		throw std::runtime_error(
 				"AutoBuilder was not configured before attempting to build an auto chooser");
@@ -180,8 +199,7 @@ frc::SendableChooser<frc2::Command*> AutoBuilder::buildAutoChooser(
 		if (defaultAutoName == autoName) {
 			sendableChooser.SetDefaultOption(autoName, entry.second.get());
 			defaultSelected = true;
-		} else if (filter(
-				dynamic_cast<const PathPlannerAuto* const >(entry.second.get()),
+		} else if (filter(*static_cast<PathPlannerAuto*>(entry.second.get()),
 				entry.first)) {
 			sendableChooser.AddOption(autoName, entry.second.get());
 		}

@@ -207,41 +207,68 @@ public:
 	/**
 	 * Modifies the existing references that buildAutoChooser returns in SendableChooser to the most recent in the pathplanner/auto deploy directory
 	 * 
+	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on every call
 	 * Adds new auto paths from the pathplanner/auto deploy directory however doesn't remove autos already previously loaded
 	 */
 
 	static void regenerateSendableReferences();
 
 	/**
-	 * Create and populate a sendable chooser with all PathPlannerAutos in the project in pathplanner/auto deploy directory (recurively)
+	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
+	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
 	 *
 	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
 	 *     empty string, or if an auto with the given name does not exist, the default option will be
-	 *     frc2::cmd::None(), defaultAutoName doesn't get filter out and always is in final sendable chooser
-	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
-	 * 		while returning false prevents it from being added. 
-	 * 		First param: autoCommand, pointer to PathPlannerAuto command which was generated
-	 * 		Second param: autoPath, path to the autoCommand relative to pathplanner/auto deploy directory with extension ".auto"
+	 *     frc2::cmd::None()
 	 * @return SendableChooser populated with all autos
 	 */
 	static frc::SendableChooser<frc2::Command*> buildAutoChooser(
-			std::string defaultAutoName = "",
-			std::function<
-					bool(const PathPlannerAuto* const, std::filesystem::path)> filter =
-					[](const PathPlannerAuto *const autoCommand,
-							std::filesystem::path autoPath) {
-						return true;
-					});
+			std::string defaultAutoName = "");
 
 	/**
-	 * Get a vector of all auto names in the pathplanner/auto deploy directory (recurively)
+	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
+	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
+	 * Filters certain PathPlannerAuto bases on their properties
+	 *
+	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
+	 * 		while returning false prevents it from being added. 
+	 * 		autoCommand, const reference to PathPlannerAuto command which was generated
+	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
+	 *     empty string, or if an auto with the given name does not exist, the default option will be
+	 *     frc2::cmd::None(), defaultAutoName doesn't get filter out and always is in final sendable chooser (if found)
+	 * @return SendableChooser populated with all autos
+	 */
+	static frc::SendableChooser<frc2::Command*> buildAutoChooserFilter(
+			std::function<bool(const PathPlannerAuto&)> filter,
+			std::string defaultAutoName = "");
+
+	/**
+	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
+	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
+	 * Filters certain PathPlannerAuto bases on their properties and their filepath
+	 *
+	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
+	 * 		while returning false prevents it from being added. 
+	 * 		autoCommand, const reference to PathPlannerAuto command which was generated
+	 * 		autoPath, path to the autoCommand relative to pathplanner/auto deploy directory with extension ".auto"
+	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
+	 *     empty string, or if an auto with the given name does not exist, the default option will be
+	 *     frc2::cmd::None(), defaultAutoName doesn't get filter out and always is in final sendable chooser (if found)
+	 * @return SendableChooser populated with all autos
+	 */
+	static frc::SendableChooser<frc2::Command*> buildAutoChooserFilterPath(
+			std::function<bool(const PathPlannerAuto&, std::filesystem::path)> filter,
+			std::string defaultAutoName = "");
+
+	/**
+	 * Get a vector of all auto names in the pathplanner/auto deploy directory (recursively)
 	 *
 	 * @return Vector of strings containing all auto names
 	 */
 	static std::vector<std::string> getAllAutoNames();
 
 	/**
-	 * Get a vector of all auto paths in the pathplanner/auto deploy directory (recurively)
+	 * Get a vector of all auto paths in the pathplanner/auto deploy directory (recursively)
 	 * 
 	 * @return Vector of paths relative to autos deploy directory
 	 */

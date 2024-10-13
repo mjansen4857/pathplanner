@@ -540,33 +540,29 @@ RobotContainer::RobotContainer() {
   // Build an auto chooser. This will use frc2::cmd::None() as the default option.
   // As an example, this will only show autos that start with "comp" while at
   // competition as defined by the programmer
-  autoChooser = AutoBuilder::buildAutoChooser(
-    "", // If empty it will choose frc2::cmd::None()
-    [&isCompetition](const PathPlannerAuto *const autoCommand,
-            std::filesystem::path autoPath)
+  autoChooser = AutoBuilder::buildAutoChooserFilter(
+    [&isCompetition](const PathPlannerAuto& autoCommand)
     {
-      return isCompetition ? autoCommand->GetName().starts_with("comp") : true;
+      return isCompetition ? autoCommand.GetName().starts_with("comp") : true;
     }
   );
 
   // Another option that allows you to specify the default auto by its name
   /*
-  autoChooser = AutoBuilder::buildAutoChooser(
-    "autoDefault", // If filled it will choosen always, regardless of filter
-    [&isCompetition](const PathPlannerAuto *const autoCommand,
-            std::filesystem::path autoP)
+  autoChooser = AutoBuilder::buildAutoChooserFilter(
+    [&isCompetition](const PathPlannerAuto& autoCommand)
     {
-      return isCompetition ? autoCommand->GetName().starts_with("comp") : true;
-    }
+      return isCompetition ? autoCommand.GetName().starts_with("comp") : true;
+    },
+    "autoDefault", // If filled it will choosen always, regardless of filter
   ); 
   */
 
-  // Another option allows you to filter out current directories relative to pathplanner/auto deploy directory
+  // Another option allows you to filter out current directories relative to deploy/pathplanner/auto directory
   // Allows only autos in directory deploy/pathplanner/autos/comp
   /*
-  autoChooser = AutoBuilder::buildAutoChooser(
-    "",
-    [&isCompetition](const PathPlannerAuto *const autoCommand,
+  autoChooser = AutoBuilder::buildAutoChooserFilterPathFilterPath(
+    [&isCompetition](const PathPlannerAuto&  autoCommand,
             std::filesystem::path autoPath)
     {
       return isCompetition ? autoPath.compare("comp") > 0 : true;

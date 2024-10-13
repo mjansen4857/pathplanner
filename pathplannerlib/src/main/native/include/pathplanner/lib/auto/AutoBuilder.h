@@ -207,15 +207,15 @@ public:
 	/**
 	 * Modifies the existing references that buildAutoChooser returns in SendableChooser to the most recent in the pathplanner/auto deploy directory
 	 * 
-	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recurively) on every call
+	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on every call
 	 * Adds new auto paths from the pathplanner/auto deploy directory however doesn't remove autos already previously loaded
 	 */
 
 	static void regenerateSendableReferences();
 
 	/**
-	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recurively)
-	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recurively) on first call
+	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
+	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
 	 *
 	 * @param defaultAutoName The name of the auto that should be the default option. If this is an
 	 *     empty string, or if an auto with the given name does not exist, the default option will be
@@ -226,8 +226,8 @@ public:
 			std::string defaultAutoName = "");
 
 	/**
-	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recurively)
-	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recurively) on first call
+	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
+	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
 	 * Filters certain PathPlannerAuto bases on their properties
 	 *
 	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
@@ -243,8 +243,8 @@ public:
 			std::string defaultAutoName = "");
 
 	/**
-	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recurively)
-	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recurively) on first call
+	 * Populate a sendable chooser with all loaded PathPlannerAutos in the project in pathplanner/auto deploy directory (recursively)
+	 * Loads PathPlannerAutos from deploy/pathplanner/auto directory (recursively) on first call
 	 * Filters certain PathPlannerAuto bases on their properties and their filepath
 	 *
 	 * @param filter Function which filters the auto commands out, returning true allows the command to be uploaded to sendable chooser 
@@ -261,14 +261,14 @@ public:
 			std::string defaultAutoName = "");
 
 	/**
-	 * Get a vector of all auto names in the pathplanner/auto deploy directory (recurively)
+	 * Get a vector of all auto names in the pathplanner/auto deploy directory (recursively)
 	 *
 	 * @return Vector of strings containing all auto names
 	 */
 	static std::vector<std::string> getAllAutoNames();
 
 	/**
-	 * Get a vector of all auto paths in the pathplanner/auto deploy directory (recurively)
+	 * Get a vector of all auto paths in the pathplanner/auto deploy directory (recursively)
 	 * 
 	 * @return Vector of paths relative to autos deploy directory
 	 */

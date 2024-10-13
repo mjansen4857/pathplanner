@@ -558,7 +558,7 @@ RobotContainer::RobotContainer() {
   ); 
   */
 
-  // Another option allows you to filter out current directories relative to pathplanner/auto deploy directory
+  // Another option allows you to filter out current directories relative to deploy/pathplanner/auto directory
   // Allows only autos in directory deploy/pathplanner/autos/comp
   /*
   autoChooser = AutoBuilder::buildAutoChooserFilterPathFilterPath(

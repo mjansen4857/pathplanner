@@ -21,6 +21,11 @@ class IdealStartingState {
     return IdealStartingState(velocityMPS, rotation);
   }
 
+  IdealStartingState reverse() {
+    return IdealStartingState(
+        velocityMPS, rotation.rotateBy(Rotation2d.fromDegrees(180)));
+  }
+
   @override
   bool operator ==(Object other) =>
       other is IdealStartingState &&

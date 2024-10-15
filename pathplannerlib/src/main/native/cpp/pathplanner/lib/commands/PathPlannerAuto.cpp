@@ -21,14 +21,13 @@ PathPlannerAuto::PathPlannerAuto(std::string autoName) {
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/autos/" + autoName + ".auto";
 
-	std::error_code error_code;
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath, error_code);
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
 
-	if (!fileBuffer || error_code) {
+	if (!fileBuffer) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
 
 	std::string version = "1.0";
 	if (json.at("version").is_string()) {
@@ -136,14 +135,13 @@ std::vector<std::shared_ptr<PathPlannerPath>> PathPlannerAuto::getPathGroupFromA
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/autos/" + autoName + ".auto";
 
-	std::error_code error_code;
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath, error_code);
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
 
-	if (!fileBuffer || error_code) {
+	if (!fileBuffer) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
 	bool choreoAuto = json.contains("choreoAuto")
 			&& json.at("choreoAuto").get<bool>();
 

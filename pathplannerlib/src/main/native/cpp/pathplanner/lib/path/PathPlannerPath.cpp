@@ -113,14 +113,13 @@ std::shared_ptr<PathPlannerPath> PathPlannerPath::fromPathFile(
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/paths/" + pathName + ".path";
 
-	std::error_code error_code;
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath, error_code);
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
 
-	if (!fileBuffer || error_code) {
+	if (!fileBuffer) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
 
 	std::string version = "1.0";
 	if (json.at("version").is_string()) {
@@ -148,14 +147,13 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/choreo/" + trajectoryName + ".traj";
 
-	std::error_code error_code;
-	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath, error_code);
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
 
-	if (!fileBuffer || error_code) {
+	if (!fileBuffer) {
 		throw std::runtime_error("Cannot open file: " + filePath);
 	}
 
-	wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+	wpi::json json = wpi::json::parse(fileBuffer.value()->GetCharBuffer());
 
 	std::string version = "1.0";
 	if (json.at("version").is_string()) {

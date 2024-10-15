@@ -7,9 +7,9 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 /** Extension of a SwerveModuleState to include its field-relative position and angle */
 public class SwerveModuleTrajectoryState extends SwerveModuleState {
   /** Field relative angle of the swerve module */
-  protected Rotation2d fieldAngle = new Rotation2d();
+  protected Rotation2d fieldAngle = Rotation2d.kZero;
   /** Position of this module on the field */
-  protected Translation2d fieldPos = new Translation2d();
+  protected Translation2d fieldPos = Translation2d.kZero;
   /** Difference in module position between this state and the previous state */
   protected double deltaPos = 0.0;
 }

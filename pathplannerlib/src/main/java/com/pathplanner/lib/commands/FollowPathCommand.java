@@ -83,7 +83,7 @@ public class FollowPathCommand extends Command {
       throw new IllegalArgumentException(
           "Events that are triggered during path following cannot require the drive subsystem");
     }
-    addRequirements(eventReqs.toArray(new Subsystem[0]));
+    addRequirements(eventReqs);
 
     this.path = this.originalPath;
     // Ensure the ideal trajectory is generated
@@ -207,17 +207,17 @@ public class FollowPathCommand extends Command {
   public static Command warmupCommand() {
     List<Waypoint> waypoints =
         PathPlannerPath.waypointsFromPoses(
-            new Pose2d(0.0, 0.0, new Rotation2d()), new Pose2d(6.0, 6.0, new Rotation2d()));
+            new Pose2d(0.0, 0.0, Rotation2d.kZero), new Pose2d(6.0, 6.0, Rotation2d.kZero));
     PathPlannerPath path =
         new PathPlannerPath(
             waypoints,
             new PathConstraints(4.0, 4.0, 4.0, 4.0),
-            new IdealStartingState(0.0, new Rotation2d()),
-            new GoalEndState(0.0, Rotation2d.fromDegrees(90)));
+            new IdealStartingState(0.0, Rotation2d.kZero),
+            new GoalEndState(0.0, Rotation2d.kCW_90deg));
 
     return new FollowPathCommand(
             path,
-            Pose2d::new,
+            () -> Pose2d.kZero,
             ChassisSpeeds::new,
             (speeds, feedforwards) -> {},
             new PPHolonomicDriveController(

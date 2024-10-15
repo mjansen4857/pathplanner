@@ -80,7 +80,7 @@ public class PathfindingCommand extends Command {
 
     Pathfinding.ensureInitialized();
 
-    Rotation2d targetRotation = new Rotation2d();
+    Rotation2d targetRotation = Rotation2d.kZero;
     double goalEndVel = targetPath.getGlobalConstraints().maxVelocityMps();
     if (targetPath.isChoreoPath()) {
       // Can get() here without issue since all choreo trajectories have ideal trajectories
@@ -388,9 +388,9 @@ public class PathfindingCommand extends Command {
    */
   public static Command warmupCommand() {
     return new PathfindingCommand(
-            new Pose2d(15.0, 4.0, Rotation2d.fromDegrees(180)),
+            new Pose2d(15.0, 4.0, Rotation2d.k180deg),
             new PathConstraints(4, 3, 4, 4),
-            () -> new Pose2d(1.5, 4, new Rotation2d()),
+            () -> new Pose2d(1.5, 4, Rotation2d.kZero),
             ChassisSpeeds::new,
             (speeds, feedforwards) -> {},
             new PPHolonomicDriveController(

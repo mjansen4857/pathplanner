@@ -160,7 +160,7 @@ public class PathPlannerTrajectory {
               wheelForces[m].getNorm()
                   * wheelForces[m].getAngle().minus(state.moduleStates[m].angle).getCos();
           double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
-          double torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
+          double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);
 
           prevState.feedforwards[m] = new DriveFeedforward(accel, appliedForce, torqueCurrent);
         }
@@ -237,9 +237,7 @@ public class PathPlannerTrajectory {
         state.pose =
             new Pose2d(
                 state.pose.getTranslation(),
-                path.isReversed()
-                    ? (state.heading.plus(Rotation2d.fromDegrees(180)))
-                    : state.heading);
+                path.isReversed() ? (state.heading.plus(Rotation2d.k180deg)) : state.heading);
       }
 
       if (i != 0) {
@@ -298,7 +296,7 @@ public class PathPlannerTrajectory {
       var nextState = states.get(i + 1);
 
       // Calculate the linear force vector and torque acting on the whole robot
-      Translation2d linearForceVec = new Translation2d();
+      Translation2d linearForceVec = Translation2d.kZero;
       double totalTorque = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         double lastVel = prevState.moduleStates[m].speedMetersPerSecond;
@@ -434,7 +432,7 @@ public class PathPlannerTrajectory {
       var nextState = states.get(i + 1);
 
       // Calculate the linear force vector and torque acting on the whole robot
-      Translation2d linearForceVec = new Translation2d();
+      Translation2d linearForceVec = Translation2d.kZero;
       double totalTorque = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         double lastVel = nextState.moduleStates[m].speedMetersPerSecond;
@@ -452,7 +450,7 @@ public class PathPlannerTrajectory {
 
         Translation2d forceVec =
             new Translation2d(
-                forceAtCarpet, state.moduleStates[m].fieldAngle.plus(Rotation2d.fromDegrees(180)));
+                forceAtCarpet, state.moduleStates[m].fieldAngle.plus(Rotation2d.k180deg));
 
         // Add the module force vector to the robot force vector
         linearForceVec = linearForceVec.plus(forceVec);

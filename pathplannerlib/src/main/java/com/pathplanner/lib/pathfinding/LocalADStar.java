@@ -67,9 +67,9 @@ public class LocalADStar implements Pathfinder {
     planningThread = new Thread(this::runThread);
 
     requestStart = new GridPosition(0, 0);
-    requestRealStartPos = new Translation2d(0, 0);
+    requestRealStartPos = Translation2d.kZero;
     requestGoal = new GridPosition(0, 0);
-    requestRealGoalPos = new Translation2d(0, 0);
+    requestRealGoalPos = Translation2d.kZero;
 
     staticObstacles.clear();
     dynamicObstacles.clear();

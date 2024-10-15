@@ -69,7 +69,7 @@ frc2::Trigger PathPlannerAuto::nearFieldPositionAutoFlipped(
 			blueFieldPosition);
 
 	return condition(
-			[this, blueFieldPosition, redFieldPosition, tolerance]() {
+			[blueFieldPosition, redFieldPosition, tolerance]() {
 				if (AutoBuilder::shouldFlip()) {
 					return AutoBuilder::getCurrentPose().Translation().Distance(
 							redFieldPosition) <= tolerance;

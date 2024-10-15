@@ -1,16 +1,29 @@
 package com.pathplanner.lib.path;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.LinearVelocity;
 import org.json.simple.JSONObject;
 
 /**
  * Describes the ideal starting state of the robot when finishing a path
  *
- * @param velocity The ideal starting velocity (M/S)
+ * @param velocityMPS The ideal starting velocity (M/S)
  * @param rotation The ideal starting rotation
  */
-public record IdealStartingState(double velocity, Rotation2d rotation) {
+public record IdealStartingState(double velocityMPS, Rotation2d rotation) {
+  /**
+   * Describes the ideal starting state of the robot when finishing a path
+   *
+   * @param velocity The ideal starting velocity
+   * @param rotation The ideal starting rotation
+   */
+  public IdealStartingState(LinearVelocity velocity, Rotation2d rotation) {
+    this(velocity.in(MetersPerSecond), rotation);
+  }
+
   /**
    * Create an ideal starting state from json
    *
@@ -30,6 +43,15 @@ public record IdealStartingState(double velocity, Rotation2d rotation) {
    * @return The flipped starting state
    */
   public IdealStartingState flip() {
-    return new IdealStartingState(velocity, FlippingUtil.flipFieldRotation(rotation));
+    return new IdealStartingState(velocityMPS, FlippingUtil.flipFieldRotation(rotation));
+  }
+
+  /**
+   * Get the starting linear velocity
+   *
+   * @return Starting linear velocity
+   */
+  public LinearVelocity velocity() {
+    return MetersPerSecond.of(velocityMPS);
   }
 }

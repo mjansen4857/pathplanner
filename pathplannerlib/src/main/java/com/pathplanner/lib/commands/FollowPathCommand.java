@@ -111,7 +111,8 @@ public class FollowPathCommand extends Command {
 
     if (path.getIdealStartingState() != null) {
       // Check if we match the ideal starting state
-      boolean idealVelocity = Math.abs(linearVel - path.getIdealStartingState().velocity()) <= 0.25;
+      boolean idealVelocity =
+          Math.abs(linearVel - path.getIdealStartingState().velocityMPS()) <= 0.25;
       boolean idealRotation =
           !robotConfig.isHolonomic
               || Math.abs(
@@ -186,7 +187,7 @@ public class FollowPathCommand extends Command {
 
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine
-    if (!interrupted && path.getGoalEndState().velocity() < 0.1) {
+    if (!interrupted && path.getGoalEndState().velocityMPS() < 0.1) {
       var ff = new DriveFeedforward[robotConfig.numModules];
       for (int m = 0; m < robotConfig.numModules; m++) {
         ff[m] = new DriveFeedforward(0.0, 0.0, 0.0);

@@ -132,16 +132,6 @@ public class PPHolonomicDriveController implements PathFollowingController {
   }
 
   /**
-   * Get the current positional error between the robot's actual and target positions
-   *
-   * @return Positional error, in meters
-   */
-  @Override
-  public double getPositionalError() {
-    return translationError.getNorm();
-  }
-
-  /**
    * Is this controller for holonomic drivetrains? Used to handle some differences in functionality
    * in the path following command.
    *

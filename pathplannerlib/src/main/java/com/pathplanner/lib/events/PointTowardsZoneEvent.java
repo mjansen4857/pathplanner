@@ -1,5 +1,9 @@
 package com.pathplanner.lib.events;
 
+import static edu.wpi.first.units.Units.Seconds;
+
+import edu.wpi.first.units.measure.Time;
+
 /** Event for setting the value of a point towards zone trigger */
 public class PointTowardsZoneEvent extends Event {
   private final String name;
@@ -16,6 +20,17 @@ public class PointTowardsZoneEvent extends Event {
     super(timestamp);
     this.name = name;
     this.active = active;
+  }
+
+  /**
+   * Create an event for changing the value of a point towards zone trigger
+   *
+   * @param timestamp The trajectory timestamp of this event
+   * @param name The name of the point towards zone trigger to control
+   * @param active Should the trigger be activated by this event
+   */
+  public PointTowardsZoneEvent(Time timestamp, String name, boolean active) {
+    this(timestamp.in(Seconds), name, active);
   }
 
   /**
@@ -37,7 +52,7 @@ public class PointTowardsZoneEvent extends Event {
   }
 
   @Override
-  public Event copyWithTimestamp(double timestamp) {
-    return new PointTowardsZoneEvent(timestamp, name, active);
+  public Event copyWithTimestamp(double timestampSeconds) {
+    return new PointTowardsZoneEvent(timestampSeconds, name, active);
   }
 }

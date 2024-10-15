@@ -1,5 +1,8 @@
 package com.pathplanner.lib.events;
 
+import static edu.wpi.first.units.Units.Seconds;
+
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -24,6 +27,16 @@ public class OneShotTriggerEvent extends Event {
             .ignoringDisable(true);
   }
 
+  /**
+   * Create an event for activating a trigger, then deactivating it the next loop
+   *
+   * @param timestamp The trajectory timestamp of this event
+   * @param name The name of the trigger to control
+   */
+  public OneShotTriggerEvent(Time timestamp, String name) {
+    this(timestamp.in(Seconds), name);
+  }
+
   @Override
   public void handleEvent(EventScheduler eventScheduler) {
     EventTrigger.setCondition(name, true);
@@ -38,7 +51,7 @@ public class OneShotTriggerEvent extends Event {
   }
 
   @Override
-  public Event copyWithTimestamp(double timestamp) {
-    return new OneShotTriggerEvent(timestamp, name);
+  public Event copyWithTimestamp(double timestampSeconds) {
+    return new OneShotTriggerEvent(timestampSeconds, name);
   }
 }

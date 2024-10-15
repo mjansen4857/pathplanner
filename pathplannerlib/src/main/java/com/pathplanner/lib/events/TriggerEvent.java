@@ -1,5 +1,9 @@
 package com.pathplanner.lib.events;
 
+import static edu.wpi.first.units.Units.Seconds;
+
+import edu.wpi.first.units.measure.Time;
+
 /** Event for setting the value of an event trigger */
 public class TriggerEvent extends Event {
   private final String name;
@@ -16,6 +20,17 @@ public class TriggerEvent extends Event {
     super(timestamp);
     this.name = name;
     this.active = active;
+  }
+
+  /**
+   * Create an event for changing the value of a named trigger
+   *
+   * @param timestamp The trajectory timestamp of this event
+   * @param name The name of the trigger to control
+   * @param active Should the trigger be activated by this event
+   */
+  public TriggerEvent(Time timestamp, String name, boolean active) {
+    this(timestamp.in(Seconds), name, active);
   }
 
   /**
@@ -37,7 +52,7 @@ public class TriggerEvent extends Event {
   }
 
   @Override
-  public Event copyWithTimestamp(double timestamp) {
-    return new TriggerEvent(timestamp, name, active);
+  public Event copyWithTimestamp(double timestampSeconds) {
+    return new TriggerEvent(timestampSeconds, name, active);
   }
 }

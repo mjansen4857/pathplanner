@@ -1,16 +1,29 @@
 package com.pathplanner.lib.path;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.units.measure.LinearVelocity;
 import org.json.simple.JSONObject;
 
 /**
  * Describes the goal end state of the robot when finishing a path
  *
- * @param velocity The goal end velocity (M/S)
+ * @param velocityMPS The goal end velocity (M/S)
  * @param rotation The goal rotation
  */
-public record GoalEndState(double velocity, Rotation2d rotation) {
+public record GoalEndState(double velocityMPS, Rotation2d rotation) {
+  /**
+   * Describes the goal end state of the robot when finishing a path
+   *
+   * @param velocity The goal end velocity
+   * @param rotation The goal rotation
+   */
+  public GoalEndState(LinearVelocity velocity, Rotation2d rotation) {
+    this(velocity.in(MetersPerSecond), rotation);
+  }
+
   /**
    * Create a goal end state from json
    *
@@ -29,6 +42,15 @@ public record GoalEndState(double velocity, Rotation2d rotation) {
    * @return The flipped end state
    */
   public GoalEndState flip() {
-    return new GoalEndState(velocity, FlippingUtil.flipFieldRotation(rotation));
+    return new GoalEndState(velocityMPS, FlippingUtil.flipFieldRotation(rotation));
+  }
+
+  /**
+   * Get the end linear velocity
+   *
+   * @return End linear velocity
+   */
+  public LinearVelocity velocity() {
+    return MetersPerSecond.of(velocityMPS);
   }
 }

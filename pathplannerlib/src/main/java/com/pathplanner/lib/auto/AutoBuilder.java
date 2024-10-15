@@ -1,5 +1,7 @@
 package com.pathplanner.lib.auto;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import com.pathplanner.lib.commands.*;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
@@ -9,6 +11,7 @@ import com.pathplanner.lib.util.DriveFeedforward;
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -275,6 +278,20 @@ public class AutoBuilder {
 
   /**
    * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
+   * rotation and rotation delay distance will have no effect.
+   *
+   * @param pose The pose to pathfind to
+   * @param constraints The constraints to use while pathfinding
+   * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
+   * @return A command to pathfind to a given pose
+   */
+  public static Command pathfindToPose(
+      Pose2d pose, PathConstraints constraints, LinearVelocity goalEndVelocity) {
+    return pathfindToPose(pose, constraints, goalEndVelocity.in(MetersPerSecond));
+  }
+
+  /**
+   * Build a command to pathfind to a given pose. If not using a holonomic drivetrain, the pose
    * rotation will have no effect.
    *
    * @param pose The pose to pathfind to
@@ -302,6 +319,22 @@ public class AutoBuilder {
         pathfindToPose(FlippingUtil.flipFieldPose(pose), constraints, goalEndVelocity),
         pathfindToPose(pose, constraints, goalEndVelocity),
         shouldFlipPath);
+  }
+
+  /**
+   * Build a command to pathfind to a given pose that will be flipped based on the value of the path
+   * flipping supplier when this command is run. If not using a holonomic drivetrain, the pose
+   * rotation and rotation delay distance will have no effect.
+   *
+   * @param pose The pose to pathfind to. This will be flipped if the path flipping supplier returns
+   *     true
+   * @param constraints The constraints to use while pathfinding
+   * @param goalEndVelocity The goal end velocity of the robot when reaching the target pose
+   * @return A command to pathfind to a given pose
+   */
+  public static Command pathfindToPoseFlipped(
+      Pose2d pose, PathConstraints constraints, LinearVelocity goalEndVelocity) {
+    return pathfindToPoseFlipped(pose, constraints, goalEndVelocity.in(MetersPerSecond));
   }
 
   /**

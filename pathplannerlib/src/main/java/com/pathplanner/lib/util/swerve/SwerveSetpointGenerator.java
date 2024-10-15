@@ -1,5 +1,7 @@
 package com.pathplanner.lib.util.swerve;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.util.DriveFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -7,6 +9,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.RobotController;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +40,16 @@ public class SwerveSetpointGenerator {
   public SwerveSetpointGenerator(RobotConfig config, double maxSteerVelocityRadsPerSec) {
     this.config = config;
     this.maxSteerVelocityRadsPerSec = maxSteerVelocityRadsPerSec;
+  }
+
+  /**
+   * Create a new swerve setpoint generator
+   *
+   * @param config The robot configuration
+   * @param maxSteerVelocity The maximum rotation velocity of a swerve module
+   */
+  public SwerveSetpointGenerator(RobotConfig config, AngularVelocity maxSteerVelocity) {
+    this(config, maxSteerVelocity.in(RadiansPerSecond));
   }
 
   /**

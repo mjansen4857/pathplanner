@@ -1,5 +1,9 @@
 package com.pathplanner.lib.events;
 
+import static edu.wpi.first.units.Units.Seconds;
+
+import edu.wpi.first.units.measure.Time;
+
 /** Base class for an event to be handled while path following */
 public abstract class Event {
   private double timestamp;
@@ -7,10 +11,19 @@ public abstract class Event {
   /**
    * Create a new event
    *
+   * @param timestampSeconds The trajectory timestamp this event should be handled at
+   */
+  public Event(double timestampSeconds) {
+    this.timestamp = timestampSeconds;
+  }
+
+  /**
+   * Create a new event
+   *
    * @param timestamp The trajectory timestamp this event should be handled at
    */
-  public Event(double timestamp) {
-    this.timestamp = timestamp;
+  public Event(Time timestamp) {
+    this(timestamp.in(Seconds));
   }
 
   /**
@@ -18,8 +31,26 @@ public abstract class Event {
    *
    * @return Trajectory timestamp, in seconds
    */
-  public double getTimestamp() {
+  public double getTimestampSeconds() {
     return timestamp;
+  }
+
+  /**
+   * Get the trajectory timestamp for this event
+   *
+   * @return Trajectory timestamp
+   */
+  public Time getTimestamp() {
+    return Seconds.of(timestamp);
+  }
+
+  /**
+   * Set the trajectory timestamp of this event
+   *
+   * @param timestampSeconds Timestamp of this event along the trajectory
+   */
+  public void setTimestamp(double timestampSeconds) {
+    this.timestamp = timestampSeconds;
   }
 
   /**
@@ -27,8 +58,8 @@ public abstract class Event {
    *
    * @param timestamp Timestamp of this event along the trajectory
    */
-  public void setTimestamp(double timestamp) {
-    this.timestamp = timestamp;
+  public void setTimestamp(Time timestamp) {
+    setTimestamp(timestamp.in(Seconds));
   }
 
   /**
@@ -49,8 +80,18 @@ public abstract class Event {
   /**
    * Copy this event with a different timestamp
    *
+   * @param timestampSeconds The new timestamp
+   * @return Copied event with new time
+   */
+  public abstract Event copyWithTimestamp(double timestampSeconds);
+
+  /**
+   * Copy this event with a different timestamp
+   *
    * @param timestamp The new timestamp
    * @return Copied event with new time
    */
-  public abstract Event copyWithTimestamp(double timestamp);
+  public Event copyWithTimestamp(Time timestamp) {
+    return copyWithTimestamp(timestamp.in(Seconds));
+  }
 }

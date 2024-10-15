@@ -1,5 +1,7 @@
 package com.pathplanner.lib.trajectory;
 
+import static edu.wpi.first.units.Units.Seconds;
+
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.events.*;
 import com.pathplanner.lib.path.EventMarker;
@@ -14,6 +16,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.measure.Time;
 import java.util.*;
 
 /** Trajectory generated for a PathPlanner path */
@@ -83,7 +86,7 @@ public class PathPlannerTrajectory {
       // Set the final module velocities
       Translation2d endSpeedTrans =
           new Translation2d(
-              path.getGoalEndState().velocity(), states.get(states.size() - 1).heading);
+              path.getGoalEndState().velocityMPS(), states.get(states.size() - 1).heading);
       ChassisSpeeds endFieldSpeeds =
           new ChassisSpeeds(endSpeedTrans.getX(), endSpeedTrans.getY(), 0.0);
       var endStates =
@@ -95,13 +98,13 @@ public class PathPlannerTrajectory {
             endStates[m].speedMetersPerSecond;
       }
       states.get(states.size() - 1).fieldSpeeds = endFieldSpeeds;
-      states.get(states.size() - 1).linearVelocity = path.getGoalEndState().velocity();
+      states.get(states.size() - 1).linearVelocity = path.getGoalEndState().velocityMPS();
 
       // Reverse pass
       reverseAccelPass(states, config);
 
       Queue<Event> unaddedEvents =
-          new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestamp));
+          new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestampSeconds));
       for (EventMarker marker : path.getEventMarkers()) {
         if (marker.command() != null) {
           unaddedEvents.add(new ScheduleCommandEvent(marker.position(), marker.command()));
@@ -168,8 +171,10 @@ public class PathPlannerTrajectory {
         // Un-added events have their timestamp set to a waypoint relative position
         // When adding the event to this trajectory, set its timestamp properly
         while (!unaddedEvents.isEmpty()
-            && Math.abs(unaddedEvents.element().getTimestamp() - prevState.waypointRelativePos)
-                <= Math.abs(unaddedEvents.element().getTimestamp() - state.waypointRelativePos)) {
+            && Math.abs(
+                    unaddedEvents.element().getTimestampSeconds() - prevState.waypointRelativePos)
+                <= Math.abs(
+                    unaddedEvents.element().getTimestampSeconds() - state.waypointRelativePos)) {
           events.add(unaddedEvents.poll());
           events.get(events.size() - 1).setTimestamp(prevState.timeSeconds);
         }
@@ -306,7 +311,7 @@ public class PathPlannerTrajectory {
         double currentDraw =
             Math.min(
                 config.moduleConfig.driveMotor.getCurrent(
-                    lastVelRadPerSec, state.constraints.nominalVoltage()),
+                    lastVelRadPerSec, state.constraints.nominalVoltageVolts()),
                 config.moduleConfig.driveCurrentLimit);
         double availableTorque =
             config.moduleConfig.driveMotor.getTorque(currentDraw) - config.moduleConfig.torqueLoss;
@@ -328,11 +333,11 @@ public class PathPlannerTrajectory {
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      double maxAngAccel = state.constraints.maxAngularAccelerationRpsSq();
+      double maxAngAccel = state.constraints.maxAngularAccelerationRadPerSecSq();
       double angularAccel = MathUtil.clamp(totalTorque / config.MOI, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec.div(config.massKG);
-      double maxAccel = state.constraints.maxAccelerationMps();
+      double maxAccel = state.constraints.maxAccelerationMPSSq();
       double accel = accelVec.getNorm();
       if (accel > maxAccel) {
         accelVec = accelVec.times(maxAccel / accel);
@@ -407,8 +412,8 @@ public class PathPlannerTrajectory {
       // Use the calculated module velocities to calculate the robot speeds
       ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(state.moduleStates);
 
-      double maxChassisVel = state.constraints.maxVelocityMps();
-      double maxChassisAngVel = state.constraints.maxAngularVelocityRps();
+      double maxChassisVel = state.constraints.maxVelocityMPS();
+      double maxChassisAngVel = state.constraints.maxAngularVelocityRadPerSec();
 
       desaturateWheelSpeeds(
           state.moduleStates,
@@ -442,7 +447,7 @@ public class PathPlannerTrajectory {
         double currentDraw =
             Math.min(
                 config.moduleConfig.driveMotor.getCurrent(
-                    lastVelRadPerSec, state.constraints.nominalVoltage()),
+                    lastVelRadPerSec, state.constraints.nominalVoltageVolts()),
                 config.moduleConfig.driveCurrentLimit);
         double availableTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
         availableTorque = Math.min(availableTorque, config.maxTorqueFriction);
@@ -465,11 +470,11 @@ public class PathPlannerTrajectory {
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      double maxAngAccel = state.constraints.maxAngularAccelerationRpsSq();
+      double maxAngAccel = state.constraints.maxAngularAccelerationRadPerSecSq();
       double angularAccel = MathUtil.clamp(totalTorque / config.MOI, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec.div(config.massKG);
-      double maxAccel = state.constraints.maxAccelerationMps();
+      double maxAccel = state.constraints.maxAccelerationMPSSq();
       double accel = accelVec.getNorm();
       if (accel > maxAccel) {
         accelVec = accelVec.times(maxAccel / accel);
@@ -531,8 +536,8 @@ public class PathPlannerTrajectory {
       // Use the calculated module velocities to calculate the robot speeds
       ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(state.moduleStates);
 
-      double maxChassisVel = state.constraints.maxVelocityMps();
-      double maxChassisAngVel = state.constraints.maxAngularVelocityRps();
+      double maxChassisVel = state.constraints.maxVelocityMPS();
+      double maxChassisAngVel = state.constraints.maxAngularVelocityRadPerSec();
 
       maxChassisVel = Math.min(maxChassisVel, state.linearVelocity);
       maxChassisAngVel =
@@ -609,6 +614,15 @@ public class PathPlannerTrajectory {
   }
 
   /**
+   * Get the total run time of the trajectory
+   *
+   * @return Total run time
+   */
+  public Time getTotalTime() {
+    return Seconds.of(getTotalTimeSeconds());
+  }
+
+  /**
    * Get the initial robot pose at the start of the trajectory
    *
    * @return Pose of the robot at the initial state
@@ -648,6 +662,16 @@ public class PathPlannerTrajectory {
 
     return prevSample.interpolate(
         sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
+  }
+
+  /**
+   * Get the target state at the given point in time along the trajectory
+   *
+   * @param time The time to sample the trajectory at
+   * @return The target state
+   */
+  public PathPlannerTrajectoryState sample(Time time) {
+    return sample(time.in(Seconds));
   }
 
   /**

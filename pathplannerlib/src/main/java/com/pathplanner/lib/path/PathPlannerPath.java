@@ -399,7 +399,7 @@ public class PathPlannerPath {
           fullEvents.add(new ScheduleCommandEvent(fromTimestamp, eventCommand));
         }
       }
-      fullEvents.sort(Comparator.comparingDouble(Event::getTimestamp));
+      fullEvents.sort(Comparator.comparingDouble(Event::getTimestampSeconds));
 
       // Add the full path to the cache
       PathPlannerPath fullPath = new PathPlannerPath();
@@ -456,9 +456,10 @@ public class PathPlannerPath {
 
         List<Event> events = new ArrayList<>();
         for (Event originalEvent : fullEvents) {
-          if (originalEvent.getTimestamp() >= startTime
-              && originalEvent.getTimestamp() <= endTime) {
-            events.add(originalEvent.copyWithTimestamp(originalEvent.getTimestamp() - startTime));
+          if (originalEvent.getTimestampSeconds() >= startTime
+              && originalEvent.getTimestampSeconds() <= endTime) {
+            events.add(
+                originalEvent.copyWithTimestamp(originalEvent.getTimestampSeconds() - startTime));
           }
         }
 
@@ -621,7 +622,7 @@ public class PathPlannerPath {
     if (idealTrajectory.isEmpty() && idealStartingState != null) {
       // The ideal starting state is known, generate the ideal trajectory
       Rotation2d heading = getInitialHeading();
-      Translation2d fieldSpeeds = new Translation2d(idealStartingState.velocity(), heading);
+      Translation2d fieldSpeeds = new Translation2d(idealStartingState.velocityMPS(), heading);
       ChassisSpeeds startingSpeeds =
           ChassisSpeeds.fromFieldRelativeSpeeds(
               fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0, idealStartingState.rotation());
@@ -668,7 +669,7 @@ public class PathPlannerPath {
 
     // Check if constraints should be unlimited
     if (globalConstraints.unlimited()) {
-      return PathConstraints.unlimitedConstraints(globalConstraints.nominalVoltage());
+      return PathConstraints.unlimitedConstraints(globalConstraints.nominalVoltageVolts());
     }
 
     return globalConstraints;
@@ -919,10 +920,10 @@ public class PathPlannerPath {
         if (Double.isFinite(curveRadius)) {
           point.maxV =
               Math.min(
-                  Math.sqrt(point.constraints.maxAccelerationMps() * Math.abs(curveRadius)),
-                  point.constraints.maxVelocityMps());
+                  Math.sqrt(point.constraints.maxAccelerationMPSSq() * Math.abs(curveRadius)),
+                  point.constraints.maxVelocityMPS());
         } else {
-          point.maxV = point.constraints.maxVelocityMps();
+          point.maxV = point.constraints.maxVelocityMPS();
         }
 
         if (i != 0) {
@@ -934,7 +935,7 @@ public class PathPlannerPath {
 
       allPoints.get(allPoints.size() - 1).rotationTarget =
           new RotationTarget(-1, goalEndState.rotation());
-      allPoints.get(allPoints.size() - 1).maxV = goalEndState.velocity();
+      allPoints.get(allPoints.size() - 1).maxV = goalEndState.velocityMPS();
     }
   }
 

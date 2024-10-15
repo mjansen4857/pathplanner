@@ -1,9 +1,14 @@
 package com.pathplanner.lib.config;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.*;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.*;
 import org.ejml.simple.SimpleMatrix;
@@ -93,6 +98,29 @@ public class RobotConfig {
   }
 
   /**
+   * Create a robot config object for a HOLONOMIC DRIVE robot
+   *
+   * @param mass The mass of the robot, including bumpers and battery
+   * @param MOI The moment of inertia of the robot
+   * @param moduleConfig The drive module config
+   * @param trackwidthMeters The distance between the left and right side of the drivetrain
+   * @param wheelbaseMeters The distance between the front and back side of the drivetrain
+   */
+  public RobotConfig(
+      Mass mass,
+      MomentOfInertia MOI,
+      ModuleConfig moduleConfig,
+      Distance trackwidthMeters,
+      Distance wheelbaseMeters) {
+    this(
+        mass.in(Kilograms),
+        MOI.in(KilogramSquareMeters),
+        moduleConfig,
+        trackwidthMeters.in(Meters),
+        wheelbaseMeters.in(Meters));
+  }
+
+  /**
    * Create a robot config object for a DIFFERENTIAL DRIVE robot
    *
    * @param massKG The mass of the robot, including bumpers and battery, in KG
@@ -132,6 +160,23 @@ public class RobotConfig {
       this.forceKinematics.setRow(i * 2, 0, /* Start Data */ 1, 0, -modPosReciprocal.getY());
       this.forceKinematics.setRow(i * 2 + 1, 0, /* Start Data */ 0, 1, modPosReciprocal.getX());
     }
+  }
+
+  /**
+   * Create a robot config object for a DIFFERENTIAL DRIVE robot
+   *
+   * @param mass The mass of the robot, including bumpers and battery
+   * @param MOI The moment of inertia of the robot
+   * @param moduleConfig The drive module config
+   * @param trackwidthMeters The distance between the left and right side of the drivetrain
+   */
+  public RobotConfig(
+      Mass mass, MomentOfInertia MOI, ModuleConfig moduleConfig, Distance trackwidthMeters) {
+    this(
+        mass.in(Kilograms),
+        MOI.in(KilogramSquareMeters),
+        moduleConfig,
+        trackwidthMeters.in(Meters));
   }
 
   /**

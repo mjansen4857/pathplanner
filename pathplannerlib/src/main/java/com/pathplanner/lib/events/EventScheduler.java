@@ -23,7 +23,8 @@ public class EventScheduler {
   /** Create a new EventScheduler */
   public EventScheduler() {
     this.eventCommands = new HashMap<>();
-    this.upcomingEvents = new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestamp));
+    this.upcomingEvents =
+        new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestampSeconds));
   }
 
   /**
@@ -47,7 +48,7 @@ public class EventScheduler {
    */
   public void execute(double time) {
     // Check for events that should be handled this loop
-    while (!upcomingEvents.isEmpty() && time >= upcomingEvents.peek().getTimestamp()) {
+    while (!upcomingEvents.isEmpty() && time >= upcomingEvents.peek().getTimestampSeconds()) {
       upcomingEvents.poll().handleEvent(this);
     }
 

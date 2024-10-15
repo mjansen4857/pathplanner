@@ -101,16 +101,6 @@ public class PPLTVController extends LTVUnicycleController implements PathFollow
   }
 
   /**
-   * Get the current positional error between the robot's actual and target positions
-   *
-   * @return Positional error, in meters
-   */
-  @Override
-  public double getPositionalError() {
-    return lastError;
-  }
-
-  /**
    * Is this controller for holonomic drivetrains? Used to handle some differences in functionality
    * in the path following command.
    *

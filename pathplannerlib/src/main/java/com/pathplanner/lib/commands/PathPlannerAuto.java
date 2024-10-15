@@ -1,5 +1,8 @@
 package com.pathplanner.lib.commands;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Seconds;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.AutoBuilderException;
 import com.pathplanner.lib.auto.CommandUtil;
@@ -13,6 +16,8 @@ import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.Time;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Timer;
@@ -164,6 +169,16 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
+   * Trigger that is high when the given time has elapsed
+   *
+   * @param time The amount of time this auto should run before the trigger is activated
+   * @return timeElapsed trigger
+   */
+  public Trigger timeElapsed(Time time) {
+    return timeElapsed(time.in(Seconds));
+  }
+
+  /**
    * Trigger that is high when within a range of time since the start of this auto
    *
    * @param startTime The starting time of the range
@@ -172,6 +187,17 @@ public class PathPlannerAuto extends Command {
    */
   public Trigger timeRange(double startTime, double endTime) {
     return condition(() -> timer.get() >= startTime && timer.get() <= endTime);
+  }
+
+  /**
+   * Trigger that is high when within a range of time since the start of this auto
+   *
+   * @param startTime The starting time of the range
+   * @param endTime The ending time of the range
+   * @return timeRange trigger
+   */
+  public Trigger timeRange(Time startTime, Time endTime) {
+    return timeRange(startTime.in(Seconds), endTime.in(Seconds));
   }
 
   /**
@@ -223,6 +249,19 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
+   * Create a trigger that is high when near a given field position. This field position is not
+   * automatically flipped
+   *
+   * @param fieldPosition The target field position
+   * @param tolerance The position tolerance. The trigger will be high when within this distance
+   *     from the target position
+   * @return nearFieldPosition trigger
+   */
+  public Trigger nearFieldPosition(Translation2d fieldPosition, Distance tolerance) {
+    return nearFieldPosition(fieldPosition, tolerance.in(Meters));
+  }
+
+  /**
    * Create a trigger that is high when near a given field position. This field position will be
    * automatically flipped
    *
@@ -244,6 +283,19 @@ public class PathPlannerAuto extends Command {
                 <= toleranceMeters;
           }
         });
+  }
+
+  /**
+   * Create a trigger that is high when near a given field position. This field position will be
+   * automatically flipped
+   *
+   * @param blueFieldPosition The target field position if on the blue alliance
+   * @param tolerance The position tolerance. The trigger will be high when within this distance
+   *     from the target position
+   * @return nearFieldPositionAutoFlipped trigger
+   */
+  public Trigger nearFieldPositionAutoFlipped(Translation2d blueFieldPosition, Distance tolerance) {
+    return nearFieldPositionAutoFlipped(blueFieldPosition, tolerance.in(Meters));
   }
 
   /**

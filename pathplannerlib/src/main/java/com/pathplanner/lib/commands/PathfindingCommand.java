@@ -1,5 +1,7 @@
 package com.pathplanner.lib.commands;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
@@ -16,6 +18,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -81,7 +84,7 @@ public class PathfindingCommand extends Command {
     Pathfinding.ensureInitialized();
 
     Rotation2d targetRotation = Rotation2d.kZero;
-    double goalEndVel = targetPath.getGlobalConstraints().maxVelocityMps();
+    double goalEndVel = targetPath.getGlobalConstraints().maxVelocityMPS();
     if (targetPath.isChoreoPath()) {
       // Can get() here without issue since all choreo trajectories have ideal trajectories
       PathPlannerTrajectory choreoTraj = targetPath.getIdealTrajectory(robotConfig).orElseThrow();
@@ -168,6 +171,46 @@ public class PathfindingCommand extends Command {
    * @param targetPose the pose to pathfind to, the rotation component is only relevant for
    *     holonomic drive trains
    * @param constraints the path constraints to use while pathfinding
+   * @param goalEndVel The goal end velocity when reaching the target pose
+   * @param poseSupplier a supplier for the robot's current pose
+   * @param speedsSupplier a supplier for the robot's current robot relative speeds
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
+   * @param controller Path following controller that will be used to follow the path
+   * @param robotConfig The robot configuration
+   * @param requirements the subsystems required by this command
+   */
+  public PathfindingCommand(
+      Pose2d targetPose,
+      PathConstraints constraints,
+      LinearVelocity goalEndVel,
+      Supplier<Pose2d> poseSupplier,
+      Supplier<ChassisSpeeds> speedsSupplier,
+      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
+      PathFollowingController controller,
+      RobotConfig robotConfig,
+      Subsystem... requirements) {
+    this(
+        targetPose,
+        constraints,
+        goalEndVel.in(MetersPerSecond),
+        poseSupplier,
+        speedsSupplier,
+        output,
+        controller,
+        robotConfig,
+        requirements);
+  }
+
+  /**
+   * Constructs a new base pathfinding command that will generate a path towards the given pose.
+   *
+   * @param targetPose the pose to pathfind to, the rotation component is only relevant for
+   *     holonomic drive trains
+   * @param constraints the path constraints to use while pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param speedsSupplier a supplier for the robot's current robot relative speeds
    * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
@@ -215,7 +258,7 @@ public class PathfindingCommand extends Command {
           new Pose2d(this.targetPath.getPoint(0).position, originalTargetPose.getRotation());
       if (shouldFlipPath.getAsBoolean()) {
         targetPose = FlippingUtil.flipFieldPose(this.originalTargetPose);
-        goalEndState = new GoalEndState(goalEndState.velocity(), targetPose.getRotation());
+        goalEndState = new GoalEndState(goalEndState.velocityMPS(), targetPose.getRotation());
       }
     }
 
@@ -351,7 +394,7 @@ public class PathfindingCommand extends Command {
 
       double currentVel =
           Math.hypot(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond);
-      double stoppingDistance = Math.pow(currentVel, 2) / (2 * constraints.maxAccelerationMps());
+      double stoppingDistance = Math.pow(currentVel, 2) / (2 * constraints.maxAccelerationMPSSq());
 
       return currentPose.getTranslation().getDistance(targetPose.getTranslation())
           <= stoppingDistance;
@@ -370,7 +413,7 @@ public class PathfindingCommand extends Command {
 
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine
-    if (!interrupted && goalEndState.velocity() < 0.1) {
+    if (!interrupted && goalEndState.velocityMPS() < 0.1) {
       var ff = new DriveFeedforward[robotConfig.numModules];
       for (int m = 0; m < robotConfig.numModules; m++) {
         ff[m] = new DriveFeedforward(0.0, 0.0, 0.0);

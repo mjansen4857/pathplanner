@@ -1139,7 +1139,7 @@ public class PathPlannerPath {
    */
   public List<Pose2d> getPathPoses() {
     return allPoints.stream()
-        .map(p -> new Pose2d(p.position, new Rotation2d()))
+        .map(p -> new Pose2d(p.position, Rotation2d.kZero))
         .collect(Collectors.toList());
   }
 

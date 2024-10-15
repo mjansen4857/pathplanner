@@ -36,7 +36,7 @@ public record PointTowardsZone(
       Translation2d targetPosition,
       double minWaypointRelativePos,
       double maxWaypointRelativePos) {
-    this(name, targetPosition, new Rotation2d(), minWaypointRelativePos, maxWaypointRelativePos);
+    this(name, targetPosition, Rotation2d.kZero, minWaypointRelativePos, maxWaypointRelativePos);
   }
 
   /**

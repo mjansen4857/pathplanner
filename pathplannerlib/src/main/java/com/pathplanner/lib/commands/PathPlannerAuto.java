@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.io.*;
 import java.util.ArrayList;
@@ -96,7 +95,7 @@ public class PathPlannerAuto extends Command {
       autoCommand = Commands.none();
     }
 
-    addRequirements(autoCommand.getRequirements().toArray(new Subsystem[0]));
+    addRequirements(autoCommand.getRequirements());
     setName(autoName);
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
 
@@ -117,7 +116,7 @@ public class PathPlannerAuto extends Command {
     this.autoCommand = autoCommand;
     this.startingPose = startingPose;
 
-    addRequirements(autoCommand.getRequirements().toArray(new Subsystem[0]));
+    addRequirements(autoCommand.getRequirements());
 
     this.autoLoop = new EventLoop();
     this.timer = new Timer();
@@ -132,7 +131,7 @@ public class PathPlannerAuto extends Command {
    * @param autoCommand The command this auto should run
    */
   public PathPlannerAuto(Command autoCommand) {
-    this(autoCommand, new Pose2d());
+    this(autoCommand, Pose2d.kZero);
   }
 
   /**

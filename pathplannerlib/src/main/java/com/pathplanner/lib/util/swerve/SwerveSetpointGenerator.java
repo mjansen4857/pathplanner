@@ -88,7 +88,7 @@ public class SwerveSetpointGenerator {
               * prevSetpoint.moduleStates()[m].speedMetersPerSecond;
       prev_heading[m] = prevSetpoint.moduleStates()[m].angle;
       if (prevSetpoint.moduleStates()[m].speedMetersPerSecond < 0.0) {
-        prev_heading[m] = prev_heading[m].rotateBy(Rotation2d.fromDegrees(180));
+        prev_heading[m] = prev_heading[m].rotateBy(Rotation2d.k180deg);
       }
       desired_vx[m] =
           desiredModuleStates[m].angle.getCos() * desiredModuleStates[m].speedMetersPerSecond;
@@ -96,7 +96,7 @@ public class SwerveSetpointGenerator {
           desiredModuleStates[m].angle.getSin() * desiredModuleStates[m].speedMetersPerSecond;
       desired_heading[m] = desiredModuleStates[m].angle;
       if (desiredModuleStates[m].speedMetersPerSecond < 0.0) {
-        desired_heading[m] = desired_heading[m].rotateBy(Rotation2d.fromDegrees(180));
+        desired_heading[m] = desired_heading[m].rotateBy(Rotation2d.k180deg);
       }
       if (all_modules_should_flip) {
         double required_rotation_rad =
@@ -163,7 +163,7 @@ public class SwerveSetpointGenerator {
                 .unaryMinus()
                 .rotateBy(desiredModuleStates[m].angle);
         if (flipHeading(necessaryRotation)) {
-          necessaryRotation = necessaryRotation.rotateBy(new Rotation2d(Math.PI));
+          necessaryRotation = necessaryRotation.rotateBy(Rotation2d.kPi);
         }
 
         // getRadians() bounds to +/- Pi.
@@ -227,9 +227,8 @@ public class SwerveSetpointGenerator {
       double moduleTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
 
       double prevSpeed = prevSetpoint.moduleStates()[m].speedMetersPerSecond;
-      var optimizedState =
-          SwerveModuleState.optimize(desiredModuleStates[m], prevSetpoint.moduleStates()[m].angle);
-      double desiredSpeed = optimizedState.speedMetersPerSecond;
+      desiredModuleStates[m].optimize(prevSetpoint.moduleStates()[m].angle);
+      double desiredSpeed = desiredModuleStates[m].speedMetersPerSecond;
 
       int forceSign;
       Rotation2d forceAngle = prevSetpoint.moduleStates()[m].angle;
@@ -240,14 +239,14 @@ public class SwerveSetpointGenerator {
         moduleTorque -= config.moduleConfig.torqueLoss;
         forceSign = 1; // Force will be applied in direction of module
         if (prevSpeed < 0) {
-          forceAngle = forceAngle.plus(Rotation2d.fromDegrees(180));
+          forceAngle = forceAngle.plus(Rotation2d.k180deg);
         }
       } else {
         // Torque loss will be helping the motor
         moduleTorque += config.moduleConfig.torqueLoss;
         forceSign = -1; // Force will be applied in opposite direction of module
         if (prevSpeed > 0) {
-          forceAngle = forceAngle.plus(Rotation2d.fromDegrees(180));
+          forceAngle = forceAngle.plus(Rotation2d.k180deg);
         }
       }
 
@@ -329,7 +328,7 @@ public class SwerveSetpointGenerator {
       double appliedForce =
           wheelForces[m].getNorm() * wheelForces[m].getAngle().minus(retStates[m].angle).getCos();
       double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
-      double torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.KtNMPerAmp;
+      double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);
 
       final var maybeOverride = overrideSteering.get(m);
       if (maybeOverride.isPresent()) {
@@ -344,7 +343,7 @@ public class SwerveSetpointGenerator {
       final var deltaRotation =
           prevSetpoint.moduleStates()[m].angle.unaryMinus().rotateBy(retStates[m].angle);
       if (flipHeading(deltaRotation)) {
-        retStates[m].angle = retStates[m].angle.rotateBy(Rotation2d.fromDegrees(180));
+        retStates[m].angle = retStates[m].angle.rotateBy(Rotation2d.k180deg);
         retStates[m].speedMetersPerSecond *= -1.0;
         appliedForce *= -1.0;
         torqueCurrent *= -1.0;

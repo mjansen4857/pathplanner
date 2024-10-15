@@ -145,8 +145,8 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 										- state.moduleStates[m].angle).Cos() };
 				units::newton_meter_t wheelTorque = appliedForce
 						* config.moduleConfig.wheelRadius;
-				units::ampere_t torqueCurrent = wheelTorque
-						/ config.moduleConfig.driveMotor.Kt;
+				units::ampere_t torqueCurrent =
+						config.moduleConfig.driveMotor.Current(wheelTorque);
 
 				prevState.feedforwards.emplace_back(DriveFeedforward { accel,
 						appliedForce, torqueCurrent });

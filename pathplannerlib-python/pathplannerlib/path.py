@@ -7,9 +7,8 @@ from wpimath.geometry import Rotation2d, Translation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
 import wpimath.units as units
 from wpimath import inputModulus
-from commands2 import Command, cmd
+from commands2 import Command
 
-from .auto import CommandUtil
 from .events import OneShotTriggerEvent, ScheduleCommandEvent, Event
 from .util import cubicLerp, calculateRadius, floatLerp, FlippingUtil, translation2dFromJson
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
@@ -564,6 +563,7 @@ class PathPlannerPath:
                     fullEvents.append(OneShotTriggerEvent(fromTimestamp, name))
 
                     if markerJson['event'] is not None:
+                        from .auto import CommandUtil
                         eventCommand = CommandUtil.commandFromJson(markerJson['event'], True)
                         fullEvents.append(ScheduleCommandEvent(fromTimestamp, eventCommand))
             fullEvents.sort(key=lambda e: e.getTimestamp())

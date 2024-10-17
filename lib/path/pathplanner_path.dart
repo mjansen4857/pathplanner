@@ -397,7 +397,9 @@ class PathPlannerPath {
   void generatePathPoints() {
     // Add all event names in this path to the available names
     for (EventMarker m in eventMarkers) {
-      ProjectPage.events.add(m.name);
+      if (m.name.isNotEmpty) {
+        ProjectPage.events.add(m.name);
+      }
       if (m.command != null) {
         _addNamedCommandsToEvents(m.command!);
       }

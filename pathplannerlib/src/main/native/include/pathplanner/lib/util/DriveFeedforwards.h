@@ -23,7 +23,7 @@ public:
 	 * @param numModules Number of drive modules
 	 * @return Zero feedforwards
 	 */
-	static constexpr DriveFeedforwards zeros(const size_t numModules) {
+	static inline DriveFeedforwards zeros(const size_t numModules) {
 		return DriveFeedforwards { std::vector
 				< units::meters_per_second_squared_t > (numModules, 0_mps_sq),
 				std::vector < units::newton_t > (numModules, 0_N), std::vector
@@ -32,7 +32,7 @@ public:
 						< units::newton_t > (numModules, 0_N) };
 	}
 
-	constexpr DriveFeedforwards interpolate(const DriveFeedforwards &endVal,
+	inline DriveFeedforwards interpolate(const DriveFeedforwards &endVal,
 			const double t) const {
 		return DriveFeedforwards { interpolateVector(accelerations,
 				endVal.accelerations, t), interpolateVector(linearForces,
@@ -49,7 +49,7 @@ public:
 	 *
 	 * @return Reversed feedforwards
 	 */
-	constexpr DriveFeedforwards reverse() const {
+	inline DriveFeedforwards reverse() const {
 		if (accelerations.size() != 2) {
 			throw std::runtime_error(
 					"Feedforwards should only be reversed for differential drive trains");

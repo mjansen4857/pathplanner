@@ -186,6 +186,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 		state.pose = frc::Pose2d(frc::Translation2d(xPos, yPos),
 				frc::Rotation2d(rotationRad));
 		state.fieldSpeeds = frc::ChassisSpeeds { xVel, yVel, angularVelRps };
+		state.feedforwards = DriveFeedforwards::zeros(4);
 
 		fullTrajStates.emplace_back(state);
 	}

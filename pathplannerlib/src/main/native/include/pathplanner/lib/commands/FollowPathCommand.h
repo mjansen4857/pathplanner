@@ -19,7 +19,7 @@
 #include "pathplanner/lib/util/PathPlannerLogging.h"
 #include "pathplanner/lib/util/PPLibTelemetry.h"
 #include "pathplanner/lib/events/EventScheduler.h"
-#include "pathplanner/lib/util/DriveFeedforward.h"
+#include "pathplanner/lib/util/DriveFeedforwards.h"
 
 namespace pathplanner {
 class FollowPathCommand: public frc2::CommandHelper<frc2::Command,
@@ -45,8 +45,7 @@ public:
 	FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<
-					void(frc::ChassisSpeeds, std::vector<DriveFeedforward>)> output,
+			std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements);
@@ -64,7 +63,7 @@ private:
 	std::shared_ptr<PathPlannerPath> m_originalPath;
 	std::function<frc::Pose2d()> m_poseSupplier;
 	std::function<frc::ChassisSpeeds()> m_speedsSupplier;
-	std::function<void(frc::ChassisSpeeds, std::vector<DriveFeedforward>)> m_output;
+	std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> m_output;
 	std::shared_ptr<PathFollowingController> m_controller;
 	RobotConfig m_robotConfig;
 	std::function<bool()> m_shouldFlipPath;

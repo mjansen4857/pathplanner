@@ -101,6 +101,8 @@
     "xlocmon": "cpp",
     "xlocnum": "cpp",
     "xloctime": "cpp",
-    "xtree": "cpp"
+    "xtree": "cpp",
+    "expected": "cpp",
+    "source_location": "cpp"
   }
 }

@@ -8,7 +8,7 @@ using namespace pathplanner;
 FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds, std::vector<DriveFeedforward>)> output,
+		std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 		frc2::Requirements requirements) : m_originalPath(path), m_poseSupplier(
@@ -130,11 +130,8 @@ void FollowPathCommand::End(bool interrupted) {
 	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
 	// the command to smoothly transition into some auto-alignment routine
 	if (!interrupted && m_path->getGoalEndState().getVelocity() < 0.1_mps) {
-		std::vector < DriveFeedforward > ff;
-		for (size_t m = 0; m < m_robotConfig.numModules; m++) {
-			ff.emplace_back(DriveFeedforward { });
-		}
-		m_output(frc::ChassisSpeeds(), ff);
+		m_output(frc::ChassisSpeeds(),
+				DriveFeedforwards::zeros(m_robotConfig.numModules));
 	}
 
 	PathPlannerLogging::logActivePath(nullptr);

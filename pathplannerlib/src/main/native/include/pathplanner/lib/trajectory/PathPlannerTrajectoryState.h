@@ -11,7 +11,7 @@
 #include "pathplanner/lib/trajectory/SwerveModuleTrajectoryState.h"
 #include "pathplanner/lib/path/PathConstraints.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
-#include "pathplanner/lib/util/DriveFeedforward.h"
+#include "pathplanner/lib/util/DriveFeedforwards.h"
 
 namespace pathplanner {
 class PathPlannerTrajectoryState {
@@ -20,7 +20,7 @@ public:
 	frc::ChassisSpeeds fieldSpeeds;
 	frc::Pose2d pose;
 	units::meters_per_second_t linearVelocity = 0_mps;
-	std::vector<DriveFeedforward> feedforwards;
+	DriveFeedforwards feedforwards;
 
 	frc::Rotation2d heading;
 	units::meter_t deltaPos = 0_m;

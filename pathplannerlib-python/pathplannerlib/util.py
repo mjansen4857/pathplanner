@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds
@@ -19,20 +19,71 @@ class FieldSymmetry(Enum):
 
 
 @dataclass(frozen=True)
-class DriveFeedforward:
-    accelerationMPS: float = 0.0
-    forceNewtons: float = 0.0
-    torqueCurrentAmps: float = 0.0
+class DriveFeedforwards:
+    accelerationsMPS: List[float] = field(default_factory=list)
+    forcesNewtons: List[float] = field(default_factory=list)
+    torqueCurrentsAmps: List[float] = field(default_factory=list)
+    robotRelativeForcesXNewtons: List[float] = field(default_factory=list)
+    robotRelativeForcesYNewtons: List[float] = field(default_factory=list)
 
-    def interpolate(self, endVal: 'DriveFeedforward', t: float) -> 'DriveFeedforward':
-        return DriveFeedforward(
-            floatLerp(self.accelerationMPS, endVal.accelerationMPS, t),
-            floatLerp(self.forceNewtons, endVal.forceNewtons, t),
-            floatLerp(self.torqueCurrentAmps, endVal.torqueCurrentAmps, t)
+    @staticmethod
+    def zeros(numModules: int) -> 'DriveFeedforwards':
+        """
+        Create drive feedforwards consisting of all zeros
+
+        :param numModules: Number of drive modules
+        :return: Zero feedforwards
+        """
+        return DriveFeedforwards(
+            [0.0] * numModules,
+            [0.0] * numModules,
+            [0.0] * numModules,
+            [0.0] * numModules,
+            [0.0] * numModules
         )
 
-    def reverse(self) -> 'DriveFeedforward':
-        return DriveFeedforward(-self.accelerationMPS, -self.forceNewtons, -self.torqueCurrentAmps)
+    def interpolate(self, endVal: 'DriveFeedforwards', t: float) -> 'DriveFeedforwards':
+        return DriveFeedforwards(
+            DriveFeedforwards._interpolateList(self.accelerationsMPS, endVal.accelerationsMPS, t),
+            DriveFeedforwards._interpolateList(self.forcesNewtons, endVal.forcesNewtons, t),
+            DriveFeedforwards._interpolateList(self.torqueCurrentsAmps, endVal.torqueCurrentsAmps, t),
+            DriveFeedforwards._interpolateList(self.robotRelativeForcesXNewtons, endVal.robotRelativeForcesXNewtons, t),
+            DriveFeedforwards._interpolateList(self.robotRelativeForcesYNewtons, endVal.robotRelativeForcesYNewtons, t)
+        )
+
+    def reverse(self) -> 'DriveFeedforwards':
+        """
+        Reverse the feedforwards for driving backwards. This should only be used for differential drive robots.
+
+        :return: Reversed feedforwards
+        """
+        if len(self.accelerationsMPS) != 2:
+            raise RuntimeError('Feedforwards should only be reversed for differential drive trains')
+        return DriveFeedforwards(
+            [-self.accelerationsMPS[1], -self.accelerationsMPS[0]],
+            [-self.forcesNewtons[1], -self.forcesNewtons[0]],
+            [-self.torqueCurrentsAmps[1], -self.torqueCurrentsAmps[0]],
+            [-self.robotRelativeForcesXNewtons[1], -self.robotRelativeForcesXNewtons[0]],
+            [-self.robotRelativeForcesYNewtons[1], -self.robotRelativeForcesYNewtons[0]]
+        )
+
+    def flip(self) -> 'DriveFeedforwards':
+        """
+        Flip the feedforwards for the other side of the field. Only does anything if mirrored symmetry is used
+
+        :return: Flipped feedforwards
+        """
+        return DriveFeedforwards(
+            FlippingUtil.flipFeedforwards(self.accelerationsMPS),
+            FlippingUtil.flipFeedforwards(self.forcesNewtons),
+            FlippingUtil.flipFeedforwards(self.torqueCurrentsAmps),
+            FlippingUtil.flipFeedforwards(self.robotRelativeForcesXNewtons),
+            FlippingUtil.flipFeedforwards(self.robotRelativeForcesYNewtons)
+        )
+
+    @staticmethod
+    def _interpolateList(a: List[float], b: List[float], t: float) -> List[float]:
+        return [floatLerp(a[i], b[i], t) for i in range(len(a))]
 
 
 class FlippingUtil:
@@ -88,7 +139,7 @@ class FlippingUtil:
             return ChassisSpeeds(-fieldSpeeds.vx, -fieldSpeeds.vy, fieldSpeeds.omega)
 
     @staticmethod
-    def flipFeedforwards(feedforwards: List[DriveFeedforward]) -> List[DriveFeedforward]:
+    def flipFeedforwards(feedforwards: List[float]) -> List[float]:
         """
         Flip a list of drive feedforwards for the other side of the field.
         Only does anything if mirrored symmetry is used

@@ -134,11 +134,12 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 
 			auto wheelForces = config.chassisForcesToWheelForceVectors(
 					chassisForces);
-
+			std::vector < units::meters_per_second_squared_t > accelFF;
+			std::vector < units::newton_t > linearForceFF;
+			std::vector < units::ampere_t > torqueCurrentFF;
+			std::vector < units::newton_t > forceXFF;
+			std::vector < units::newton_t > forceYFF;
 			for (size_t m = 0; m < config.numModules; m++) {
-				units::meters_per_second_squared_t accel =
-						(state.moduleStates[m].speed
-								- prevState.moduleStates[m].speed) / dt;
 				units::newton_t appliedForce {
 						wheelForces[m].Norm()()
 								* (wheelForces[m].Angle()
@@ -148,9 +149,16 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 				units::ampere_t torqueCurrent =
 						config.moduleConfig.driveMotor.Current(wheelTorque);
 
-				prevState.feedforwards.emplace_back(DriveFeedforward { accel,
-						appliedForce, torqueCurrent });
+				accelFF.emplace_back(
+						(state.moduleStates[m].speed
+								- prevState.moduleStates[m].speed) / dt);
+				linearForceFF.emplace_back(appliedForce);
+				torqueCurrentFF.emplace_back(torqueCurrent);
+				forceXFF.emplace_back(units::newton_t { wheelForces[m].X()() });
+				forceYFF.emplace_back(units::newton_t { wheelForces[m].Y()() });
 			}
+			prevState.feedforwards = DriveFeedforwards { accelFF, linearForceFF,
+					torqueCurrentFF, forceXFF, forceYFF };
 
 			// Un-added events have their timestamp set to a waypoint relative position
 			// When adding the event to this trajectory, set its timestamp properly
@@ -176,10 +184,8 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 		}
 
 		// Create feedforwards for the end state
-		for (size_t m = 0; m < config.numModules; m++) {
-			m_states[m_states.size() - 1].feedforwards.emplace_back(
-					DriveFeedforward { 0_mps_sq, 0_N, 0_A });
-		}
+		m_states[m_states.size() - 1].feedforwards = DriveFeedforwards::zeros(
+				config.numModules);
 	}
 }
 

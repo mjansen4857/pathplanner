@@ -7,7 +7,7 @@ import com.pathplanner.lib.events.OneShotTriggerEvent;
 import com.pathplanner.lib.events.ScheduleCommandEvent;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
-import com.pathplanner.lib.util.DriveFeedforward;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.GeometryUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
@@ -375,7 +375,7 @@ public class PathPlannerPath {
         state.linearVelocity = Math.hypot(xVel, yVel);
         state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
         state.fieldSpeeds = new ChassisSpeeds(xVel, yVel, angularVelRps);
-        state.feedforwards = new DriveFeedforward[0];
+        state.feedforwards = DriveFeedforwards.zeros(4);
 
         fullTrajStates.add(state);
       }

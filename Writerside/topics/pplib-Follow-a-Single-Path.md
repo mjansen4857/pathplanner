@@ -85,7 +85,7 @@ public class DriveSubsystem extends SubsystemBase {
                 path,
                 this::getPose, // Robot pose supplier
                 this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                this::drive, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+                this::drive, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND feedforwards
                 new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
                         new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
                         new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
@@ -129,7 +129,7 @@ frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
         path,
         [this](){ return getPose(); }, // Robot pose supplier
         [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds, std::vector<units::ampere_t> torqueCurrentFF){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+        [this](frc::ChassisSpeeds speeds, DriveFeedforwards feedforwards){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND feedforwards
         PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
             PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
             PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
@@ -167,7 +167,7 @@ def followPathCommand(pathName: str):
         path,
         self.getPose, # Robot pose supplier
         self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+        self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND feedforwards
         PPHolonomicDriveController( # PPHolonomicController is the built in path following controller for holonomic drive trains
             PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
             PIDConstants(5.0, 0.0, 0.0) # Rotation PID constants
@@ -203,7 +203,7 @@ public class DriveSubsystem extends SubsystemBase {
                 path,
                 this::getPose, // Robot pose supplier
                 this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-                this::drive, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+                this::drive, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND feedforwards
                 new PPLTVController(0.02), // PPLTVController is the built in path following controller for differential drive trains
                 Constants.robotConfig, // The robot configuration
                 () -> {
@@ -244,7 +244,7 @@ frc2::CommandPtr  DriveSubsystem::followPathCommand(std::string pathName){
         path,
         [this](){ return getPose(); }, // Robot pose supplier
         [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds, std::vector<units::ampere_t> torqueCurrentFF){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+        [this](frc::ChassisSpeeds speeds, DriveFeedforwards feedforwards){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND feedforwards
         PPLTVController(0.02_s), // PPLTVController is the built in path following controller for differential drive trains
         Constants::robotConfig, // The robot configuration
         []() {
@@ -279,7 +279,7 @@ def followPathCommand(pathName: str):
         path,
         self.getPose, # Robot pose supplier
         self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND torque current feedforwards
+        self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds, AND feedforwards
         PPLTVController(0.02), # PPLTVController is the built in path following controller for differential drive trains
         Constants.robotConfig, # The robot configuration
         self.shouldFlipPath, # Supplier to control path flipping based on alliance color

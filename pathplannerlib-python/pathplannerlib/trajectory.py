@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
-from .util import floatLerp, rotationLerp, poseLerp, calculateRadius, FlippingUtil, DriveFeedforward
+from .util import floatLerp, rotationLerp, poseLerp, calculateRadius, FlippingUtil, DriveFeedforwards
 from .config import RobotConfig
 from .events import *
 from typing import List, Union, TYPE_CHECKING
@@ -30,7 +30,7 @@ class PathPlannerTrajectoryState:
     fieldSpeeds: ChassisSpeeds = ChassisSpeeds()
     pose: Pose2d = field(default_factory=Pose2d)
     linearVelocity: float = 0.0
-    feedforwards: List[DriveFeedforward] = field(default_factory=list)
+    feedforwards: DriveFeedforwards = None
 
     heading: Rotation2d = field(default_factory=Rotation2d)
     deltaPos: float = 0.0
@@ -62,10 +62,7 @@ class PathPlannerTrajectoryState:
         )
         lerpedState.pose = poseLerp(self.pose, end_val.pose, t)
         lerpedState.linearVelocity = floatLerp(self.linearVelocity, end_val.linearVelocity, t)
-        lerpedState.feedforwards = [
-            self.feedforwards[m].interpolate(end_val.feedforwards[m], t) for m in
-            range(len(self.feedforwards))
-        ]
+        lerpedState.feedforwards = self.feedforwards.interpolate(end_val.feedforwards, t)
 
         return lerpedState
 
@@ -82,7 +79,7 @@ class PathPlannerTrajectoryState:
         reversedState.fieldSpeeds = ChassisSpeeds(reversedSpeeds.x, reversedSpeeds.y, self.fieldSpeeds.omega)
         reversedState.pose = Pose2d(self.pose.translation(), self.pose.rotation() + Rotation2d.fromDegrees(180))
         reversedState.linearVelocity = -self.linearVelocity
-        reversedState.driveMotorTorqueCurrent = [ff.reverse() for ff in self.feedforwards]
+        reversedState.feedforwards = self.feedforwards.reverse()
 
         return reversedState
 
@@ -98,7 +95,7 @@ class PathPlannerTrajectoryState:
         flipped.linearVelocity = self.linearVelocity
         flipped.pose = FlippingUtil.flipFieldPose(self.pose)
         flipped.fieldSpeeds = FlippingUtil.flipFieldSpeeds(self.fieldSpeeds)
-        flipped.feedforwards = FlippingUtil.flipFeedforwards(self.feedforwards)
+        flipped.feedforwards = self.feedforwards.flip()
 
         return flipped
 
@@ -230,15 +227,23 @@ class PathPlannerTrajectory:
                     chassisForces = ChassisSpeeds(chassisForceX, chassisForceY, angTorque)
 
                     wheelForces = config.chassisForcesToWheelForceVectors(chassisForces)
-
+                    accelFF = []
+                    linearForceFF = []
+                    torqueCurrentFF = []
+                    forceXFF = []
+                    forceYFF = []
                     for m in range(config.numModules):
-                        accel = (state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt
                         appliedForce = wheelForces[m].norm() * (
                                 wheelForces[m].angle() - state.moduleStates[m].angle).cos()
                         wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters
                         torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
 
-                        prevState.feedforwards.append(DriveFeedforward(accel, appliedForce, torqueCurrent))
+                        accelFF.append((state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt)
+                        linearForceFF.append(appliedForce)
+                        torqueCurrentFF.append(torqueCurrent)
+                        forceXFF.append(wheelForces[m].x)
+                        forceYFF.append(wheelForces[m].y)
+                    prevState.feedforwards = DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF, forceYFF)
 
                     # Un-added events have their timestamp set to a waypoint relative position
                     # When adding the event to this trajectory, set its timestamp properly
@@ -254,7 +259,7 @@ class PathPlannerTrajectory:
                     self._events[-1].setTimestamp(self._states[-1].timeSeconds)
 
                 # Create feedforwards for the end state
-                self._states[-1].feedforwards = [DriveFeedforward(0, 0, 0)] * config.numModules
+                self._states[-1].feedforwards = DriveFeedforwards.zeros(config.numModules)
 
     def getEvents(self) -> List[Event]:
         """

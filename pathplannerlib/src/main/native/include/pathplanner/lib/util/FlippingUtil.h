@@ -5,7 +5,6 @@
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <vector>
-#include "pathplanner/lib/util/DriveFeedforward.h"
 
 namespace pathplanner {
 class FlippingUtil {
@@ -83,23 +82,20 @@ public:
 		}
 	}
 
-	static inline std::vector<DriveFeedforward> flipFeedforwards(
-			const std::vector<DriveFeedforward> &feedforwards) {
+	template<class UnitType, class = std::enable_if_t<
+			units::traits::is_unit_t<UnitType>::value>>
+	static inline std::vector<UnitType> flipFeedforwards(
+			const std::vector<UnitType> &feedforwards) {
 		switch (symmetryType) {
 		case kRotational:
 			return feedforwards;
 		case kMirrored:
 		default:
 			if (feedforwards.size() == 4) {
-				std::vector < DriveFeedforward > flipped;
-				flipped.emplace_back(feedforwards[1]);
-				flipped.emplace_back(feedforwards[0]);
-				flipped.emplace_back(feedforwards[3]);
-				flipped.emplace_back(feedforwards[2]);
+				return std::vector<UnitType> { feedforwards[1], feedforwards[0],
+						feedforwards[3], feedforwards[2] };
 			} else if (feedforwards.size() == 2) {
-				std::vector < DriveFeedforward > flipped;
-				flipped.emplace_back(feedforwards[1]);
-				flipped.emplace_back(feedforwards[0]);
+				return std::vector<UnitType> { feedforwards[1], feedforwards[0] };
 			}
 			return feedforwards; // idk
 		}

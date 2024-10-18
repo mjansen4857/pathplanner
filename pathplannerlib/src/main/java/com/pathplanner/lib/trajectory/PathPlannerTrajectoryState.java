@@ -1,7 +1,7 @@
 package com.pathplanner.lib.trajectory;
 
 import com.pathplanner.lib.path.PathConstraints;
-import com.pathplanner.lib.util.DriveFeedforward;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -22,7 +22,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
   public double linearVelocity = 0.0;
 
   /** The feedforwards for each module */
-  public DriveFeedforward[] feedforwards;
+  public DriveFeedforwards feedforwards;
 
   // Values used only during generation, these will not be interpolated
   /** The field-relative heading, or direction of travel, at this state */
@@ -67,10 +67,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
                 fieldSpeeds.omegaRadiansPerSecond, endVal.fieldSpeeds.omegaRadiansPerSecond, t));
     lerpedState.pose = pose.interpolate(endVal.pose, t);
     lerpedState.linearVelocity = MathUtil.interpolate(linearVelocity, endVal.linearVelocity, t);
-    lerpedState.feedforwards = new DriveFeedforward[feedforwards.length];
-    for (int m = 0; m < feedforwards.length; m++) {
-      lerpedState.feedforwards[m] = feedforwards[m].interpolate(endVal.feedforwards[m], t);
-    }
+    lerpedState.feedforwards = feedforwards.interpolate(endVal.feedforwards, t);
 
     return lerpedState;
   }
@@ -93,10 +90,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     reversed.pose =
         new Pose2d(pose.getTranslation(), pose.getRotation().plus(Rotation2d.fromDegrees(180)));
     reversed.linearVelocity = -linearVelocity;
-    reversed.feedforwards = new DriveFeedforward[feedforwards.length];
-    for (int m = 0; m < feedforwards.length; m++) {
-      reversed.feedforwards[m] = feedforwards[m].reverse();
-    }
+    reversed.feedforwards = feedforwards.reverse();
 
     return reversed;
   }
@@ -113,7 +107,7 @@ public class PathPlannerTrajectoryState implements Interpolatable<PathPlannerTra
     flipped.linearVelocity = linearVelocity;
     flipped.pose = FlippingUtil.flipFieldPose(pose);
     flipped.fieldSpeeds = FlippingUtil.flipFieldSpeeds(fieldSpeeds);
-    flipped.feedforwards = FlippingUtil.flipFeedforwards(feedforwards);
+    flipped.feedforwards = feedforwards.flip();
 
     return flipped;
   }

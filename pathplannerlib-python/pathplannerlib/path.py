@@ -10,7 +10,7 @@ from wpimath import inputModulus
 from commands2 import Command
 
 from .events import OneShotTriggerEvent, ScheduleCommandEvent, Event
-from .util import cubicLerp, calculateRadius, floatLerp, FlippingUtil, translation2dFromJson
+from .util import cubicLerp, calculateRadius, floatLerp, FlippingUtil, translation2dFromJson, DriveFeedforwards
 from .trajectory import PathPlannerTrajectory, PathPlannerTrajectoryState
 from .config import RobotConfig
 from wpilib import getDeployDirectory
@@ -546,6 +546,7 @@ class PathPlannerPath:
                 state.linearVelocity = math.hypot(xVel, yVel)
                 state.pose = Pose2d(xPos, yPos, rotationRad)
                 state.fieldSpeeds = ChassisSpeeds(xVel, yVel, angularVelRps)
+                state.feedforwards = DriveFeedforwards.zeros(4)
 
                 fullTrajStates.append(state)
 

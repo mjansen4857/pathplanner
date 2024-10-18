@@ -17,7 +17,7 @@
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/config/RobotConfig.h"
 #include "pathplanner/lib/controllers/PathFollowingController.h"
-#include "pathplanner/lib/util/DriveFeedforward.h"
+#include "pathplanner/lib/util/DriveFeedforwards.h"
 #include "pathplanner/lib/util/FlippingUtil.h"
 
 namespace pathplanner {
@@ -46,8 +46,7 @@ public:
 	static void configure(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(frc::Pose2d)> resetPose,
 			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-			std::function<
-					void(frc::ChassisSpeeds, std::vector<DriveFeedforward>)> output,
+			std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Subsystem *driveSubsystem);

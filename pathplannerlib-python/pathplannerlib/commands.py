@@ -3,7 +3,7 @@ from .path import PathPlannerPath, GoalEndState, PathConstraints
 from .trajectory import PathPlannerTrajectory
 from .telemetry import PPLibTelemetry
 from .logging import PathPlannerLogging
-from .util import floatLerp, FlippingUtil, DriveFeedforward
+from .util import floatLerp, FlippingUtil, DriveFeedforwards
 from wpimath.geometry import Pose2d
 from wpimath.kinematics import ChassisSpeeds
 from wpilib import Timer
@@ -19,7 +19,7 @@ class FollowPathCommand(Command):
     _originalPath: PathPlannerPath
     _poseSupplier: Callable[[], Pose2d]
     _speedsSupplier: Callable[[], ChassisSpeeds]
-    _output: Callable[[ChassisSpeeds, List[DriveFeedforward]], None]
+    _output: Callable[[ChassisSpeeds, DriveFeedforwards], None]
     _controller: PathFollowingController
     _robotConfig: RobotConfig
     _shouldFlipPath: Callable[[], bool]
@@ -35,7 +35,7 @@ class FollowPathCommand(Command):
 
     def __init__(self, path: PathPlannerPath, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds],
-                 output: Callable[[ChassisSpeeds, List[DriveFeedforward]], None],
+                 output: Callable[[ChassisSpeeds, DriveFeedforwards], None],
                  controller: PathFollowingController, robot_config: RobotConfig,
                  should_flip_path: Callable[[], bool], *requirements: Subsystem):
         """
@@ -152,7 +152,7 @@ class FollowPathCommand(Command):
         # Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
         # the command to smoothly transition into some auto-alignment routine
         if not interrupted and self._path.getGoalEndState().velocity < 0.1:
-            self._output(ChassisSpeeds(), [DriveFeedforward()] * self._robotConfig.numModules)
+            self._output(ChassisSpeeds(), DriveFeedforwards.zeros(self._robotConfig.numModules))
 
         PathPlannerLogging.logActivePath(None)
 
@@ -168,7 +168,7 @@ class PathfindingCommand(Command):
     _constraints: PathConstraints
     _poseSupplier: Callable[[], Pose2d]
     _speedsSupplier: Callable[[], ChassisSpeeds]
-    _output: Callable[[ChassisSpeeds, List[DriveFeedforward]], None]
+    _output: Callable[[ChassisSpeeds, DriveFeedforwards], None]
     _controller: PathFollowingController
     _robotConfig: RobotConfig
     _shouldFlipPath: Callable[[], bool]
@@ -184,7 +184,7 @@ class PathfindingCommand(Command):
 
     def __init__(self, constraints: PathConstraints, pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds],
-                 output: Callable[[ChassisSpeeds, List[DriveFeedforward]], None],
+                 output: Callable[[ChassisSpeeds, DriveFeedforwards], None],
                  controller: PathFollowingController, robot_config: RobotConfig,
                  should_flip_path: Callable[[], bool], *requirements: Subsystem,
                  target_path: PathPlannerPath = None, target_pose: Pose2d = None,
@@ -267,7 +267,7 @@ class PathfindingCommand(Command):
                 self._goalEndState = GoalEndState(self._goalEndState.velocity, self._targetPose.rotation())
 
         if currentPose.translation().distance(self._targetPose.translation()) < 0.5:
-            self._output(ChassisSpeeds(), [DriveFeedforward()] * self._robotConfig.numModules)
+            self._output(ChassisSpeeds(), DriveFeedforwards.zeros(self._robotConfig.numModules))
             self._finish = True
         else:
             Pathfinding.setStartPosition(currentPose.translation())
@@ -376,7 +376,7 @@ class PathfindingCommand(Command):
         # Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
         # the command to smoothly transition into some auto-alignment routine
         if not interrupted and self._goalEndState.velocity < 0.1:
-            self._output(ChassisSpeeds(), [DriveFeedforward()] * self._robotConfig.numModules)
+            self._output(ChassisSpeeds(), DriveFeedforwards.zeros(self._robotConfig.numModules))
 
         PathPlannerLogging.logActivePath(None)
 
@@ -385,7 +385,7 @@ class PathfindThenFollowPath(SequentialCommandGroup):
     def __init__(self, goal_path: PathPlannerPath, pathfinding_constraints: PathConstraints,
                  pose_supplier: Callable[[], Pose2d],
                  speeds_supplier: Callable[[], ChassisSpeeds],
-                 output: Callable[[ChassisSpeeds, List[DriveFeedforward]], None],
+                 output: Callable[[ChassisSpeeds, DriveFeedforwards], None],
                  controller: PathFollowingController, robot_config: RobotConfig,
                  should_flip_path: Callable[[], bool], *requirements: Subsystem):
         """

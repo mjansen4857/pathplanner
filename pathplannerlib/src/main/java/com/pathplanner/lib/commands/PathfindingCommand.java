@@ -39,7 +39,7 @@ public class PathfindingCommand extends Command {
   private final PathConstraints constraints;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
-  private final BiConsumer<ChassisSpeeds, DriveFeedforward[]> output;
+  private final BiConsumer<ChassisSpeeds, DriveFeedforwards> output;
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
   private final BooleanSupplier shouldFlipPath;
@@ -74,7 +74,7 @@ public class PathfindingCommand extends Command {
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -140,7 +140,7 @@ public class PathfindingCommand extends Command {
       double goalEndVel,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       Subsystem... requirements) {
@@ -189,7 +189,7 @@ public class PathfindingCommand extends Command {
       LinearVelocity goalEndVel,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       Subsystem... requirements) {
@@ -227,7 +227,7 @@ public class PathfindingCommand extends Command {
       PathConstraints constraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       Subsystem... requirements) {
@@ -263,11 +263,7 @@ public class PathfindingCommand extends Command {
     }
 
     if (currentPose.getTranslation().getDistance(targetPose.getTranslation()) < 0.5) {
-      var ff = new DriveFeedforward[robotConfig.numModules];
-      for (int m = 0; m < robotConfig.numModules; m++) {
-        ff[m] = new DriveFeedforward(0.0, 0.0, 0.0);
-      }
-      output.accept(new ChassisSpeeds(), ff);
+      output.accept(new ChassisSpeeds(), DriveFeedforwards.zeros(robotConfig.numModules));
       finish = true;
     } else {
       Pathfinding.setStartPosition(currentPose.getTranslation());
@@ -414,11 +410,7 @@ public class PathfindingCommand extends Command {
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine
     if (!interrupted && goalEndState.velocityMPS() < 0.1) {
-      var ff = new DriveFeedforward[robotConfig.numModules];
-      for (int m = 0; m < robotConfig.numModules; m++) {
-        ff[m] = new DriveFeedforward(0.0, 0.0, 0.0);
-      }
-      output.accept(new ChassisSpeeds(), ff);
+      output.accept(new ChassisSpeeds(), DriveFeedforwards.zeros(robotConfig.numModules));
     }
 
     PathPlannerLogging.logActivePath(null);

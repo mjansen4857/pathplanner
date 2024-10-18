@@ -6,7 +6,7 @@ from typing import Callable, List
 from wpimath.geometry import Pose2d, Translation2d
 from wpimath.kinematics import ChassisSpeeds
 from .commands import FollowPathCommand, PathfindingCommand, PathfindThenFollowPath
-from .util import FlippingUtil, DriveFeedforward
+from .util import FlippingUtil, DriveFeedforwards
 from .controller import PathFollowingController
 from .events import EventTrigger, PointTowardsZoneTrigger
 import os
@@ -438,7 +438,7 @@ class AutoBuilder:
     @staticmethod
     def configure(pose_supplier: Callable[[], Pose2d], reset_pose: Callable[[Pose2d], None],
                   robot_relative_speeds_supplier: Callable[[], ChassisSpeeds],
-                  output: Callable[[ChassisSpeeds, List[DriveFeedforward]], None],
+                  output: Callable[[ChassisSpeeds, DriveFeedforwards], None],
                   controller: PathFollowingController,
                   robot_config: RobotConfig,
                   should_flip_path: Callable[[], bool],

@@ -49,7 +49,7 @@ public class SwerveSubsystem extends Subsystem {
         // Initialize the previous setpoint to the robot's current speeds & module states
         ChassisSpeeds currentSpeeds = getCurrentSpeeds(); // Method to get current robot-relative chassis speeds
         SwerveModuleState[] currentStates = getCurrentModuleStates(); // Method to get the current swerve module states
-        previousSetpoint = new SwerveSetpoint(currentSpeeds, currentStates);
+        previousSetpoint = new SwerveSetpoint(currentSpeeds, currentStates, DriveFeedforwards.zeros(config.numModules));
     }
     
     /**

@@ -88,15 +88,13 @@ public class FlippingUtil {
    * @param feedforwards Array of drive feedforwards
    * @return The flipped feedforwards
    */
-  public static DriveFeedforward[] flipFeedforwards(DriveFeedforward[] feedforwards) {
+  public static double[] flipFeedforwards(double[] feedforwards) {
     return switch (symmetryType) {
       case kMirrored -> {
         if (feedforwards.length == 4) {
-          yield new DriveFeedforward[] {
-            feedforwards[1], feedforwards[0], feedforwards[3], feedforwards[2]
-          };
+          yield new double[] {feedforwards[1], feedforwards[0], feedforwards[3], feedforwards[2]};
         } else if (feedforwards.length == 2) {
-          yield new DriveFeedforward[] {feedforwards[1], feedforwards[0]};
+          yield new double[] {feedforwards[1], feedforwards[0]};
         }
         yield feedforwards; // idk
       }

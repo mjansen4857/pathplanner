@@ -7,7 +7,7 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.util.DriveFeedforward;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -63,7 +63,7 @@ public class AutoBuilder {
       Supplier<Pose2d> poseSupplier,
       Consumer<Pose2d> resetPose,
       Supplier<ChassisSpeeds> robotRelativeSpeedsSupplier,
-      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,

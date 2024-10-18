@@ -8,7 +8,7 @@ import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
 import com.pathplanner.lib.path.PointTowardsZone;
-import com.pathplanner.lib.util.DriveFeedforward;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -153,20 +153,29 @@ public class PathPlannerTrajectory {
         ChassisSpeeds chassisForces = new ChassisSpeeds(chassisForceX, chassisForceY, angTorque);
 
         Translation2d[] wheelForces = config.chassisForcesToWheelForceVectors(chassisForces);
-
+        double[] accelFF = new double[config.numModules];
+        double[] linearForceFF = new double[config.numModules];
+        double[] torqueCurrentFF = new double[config.numModules];
+        double[] forceXFF = new double[config.numModules];
+        double[] forceYFF = new double[config.numModules];
         for (int m = 0; m < config.numModules; m++) {
-          double accel =
-              (state.moduleStates[m].speedMetersPerSecond
-                      - prevState.moduleStates[m].speedMetersPerSecond)
-                  / dt;
           double appliedForce =
               wheelForces[m].getNorm()
                   * wheelForces[m].getAngle().minus(state.moduleStates[m].angle).getCos();
           double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
           double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);
 
-          prevState.feedforwards[m] = new DriveFeedforward(accel, appliedForce, torqueCurrent);
+          accelFF[m] =
+              (state.moduleStates[m].speedMetersPerSecond
+                      - prevState.moduleStates[m].speedMetersPerSecond)
+                  / dt;
+          linearForceFF[m] = appliedForce;
+          torqueCurrentFF[m] = torqueCurrent;
+          forceXFF[m] = wheelForces[m].getX();
+          forceYFF[m] = wheelForces[m].getY();
         }
+        prevState.feedforwards =
+            new DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF, forceYFF);
 
         // Un-added events have their timestamp set to a waypoint relative position
         // When adding the event to this trajectory, set its timestamp properly
@@ -188,9 +197,7 @@ public class PathPlannerTrajectory {
       }
 
       // Create feedforwards for the end state
-      for (int m = 0; m < config.numModules; m++) {
-        states.get(states.size() - 1).feedforwards[m] = new DriveFeedforward(0, 0, 0);
-      }
+      states.get(states.size() - 1).feedforwards = DriveFeedforwards.zeros(config.numModules);
     }
   }
 
@@ -252,7 +259,6 @@ public class PathPlannerTrajectory {
       }
 
       state.moduleStates = new SwerveModuleTrajectoryState[config.numModules];
-      state.feedforwards = new DriveFeedforward[config.numModules];
       for (int m = 0; m < config.numModules; m++) {
         state.moduleStates[m] = new SwerveModuleTrajectoryState();
         state.moduleStates[m].fieldPos =

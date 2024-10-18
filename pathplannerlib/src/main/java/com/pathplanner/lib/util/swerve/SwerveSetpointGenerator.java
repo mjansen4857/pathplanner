@@ -3,7 +3,7 @@ package com.pathplanner.lib.util.swerve;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.util.DriveFeedforward;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -319,8 +319,6 @@ public class SwerveSetpointGenerator {
             prevSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond + min_s * dtheta);
     retSpeeds = ChassisSpeeds.discretize(retSpeeds, dt);
 
-    DriveFeedforward[] retFF = new DriveFeedforward[config.numModules];
-
     double prevVelX = prevSetpoint.robotRelativeSpeeds().vxMetersPerSecond;
     double prevVelY = prevSetpoint.robotRelativeSpeeds().vyMetersPerSecond;
     double chassisAccelX = (retSpeeds.vxMetersPerSecond - prevVelX) / dt;
@@ -337,6 +335,11 @@ public class SwerveSetpointGenerator {
     Translation2d[] wheelForces = config.chassisForcesToWheelForceVectors(chassisForces);
 
     var retStates = config.toSwerveModuleStates(retSpeeds);
+    double[] accelFF = new double[config.numModules];
+    double[] linearForceFF = new double[config.numModules];
+    double[] torqueCurrentFF = new double[config.numModules];
+    double[] forceXFF = new double[config.numModules];
+    double[] forceYFF = new double[config.numModules];
     for (int m = 0; m < config.numModules; m++) {
       double appliedForce =
           wheelForces[m].getNorm() * wheelForces[m].getAngle().minus(retStates[m].angle).getCos();
@@ -362,14 +365,19 @@ public class SwerveSetpointGenerator {
         torqueCurrent *= -1.0;
       }
 
-      double accel =
+      accelFF[m] =
           (retStates[m].speedMetersPerSecond - prevSetpoint.moduleStates()[m].speedMetersPerSecond)
               / dt;
-
-      retFF[m] = new DriveFeedforward(accel, appliedForce, torqueCurrent);
+      linearForceFF[m] = appliedForce;
+      torqueCurrentFF[m] = torqueCurrent;
+      forceXFF[m] = wheelForces[m].getX();
+      forceYFF[m] = wheelForces[m].getY();
     }
 
-    return new SwerveSetpoint(retSpeeds, retStates, retFF);
+    return new SwerveSetpoint(
+        retSpeeds,
+        retStates,
+        new DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF, forceYFF));
   }
 
   /**

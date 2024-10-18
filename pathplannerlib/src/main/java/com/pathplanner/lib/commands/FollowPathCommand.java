@@ -8,7 +8,7 @@ import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.events.EventScheduler;
 import com.pathplanner.lib.path.*;
 import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
-import com.pathplanner.lib.util.DriveFeedforward;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.PPLibTelemetry;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -30,7 +30,7 @@ public class FollowPathCommand extends Command {
   private final PathPlannerPath originalPath;
   private final Supplier<Pose2d> poseSupplier;
   private final Supplier<ChassisSpeeds> speedsSupplier;
-  private final BiConsumer<ChassisSpeeds, DriveFeedforward[]> output;
+  private final BiConsumer<ChassisSpeeds, DriveFeedforwards> output;
   private final PathFollowingController controller;
   private final RobotConfig robotConfig;
   private final BooleanSupplier shouldFlipPath;
@@ -60,7 +60,7 @@ public class FollowPathCommand extends Command {
       PathPlannerPath path,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> speedsSupplier,
-      BiConsumer<ChassisSpeeds, DriveFeedforward[]> output,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
       BooleanSupplier shouldFlipPath,
@@ -188,11 +188,7 @@ public class FollowPathCommand extends Command {
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine
     if (!interrupted && path.getGoalEndState().velocityMPS() < 0.1) {
-      var ff = new DriveFeedforward[robotConfig.numModules];
-      for (int m = 0; m < robotConfig.numModules; m++) {
-        ff[m] = new DriveFeedforward(0.0, 0.0, 0.0);
-      }
-      output.accept(new ChassisSpeeds(), ff);
+      output.accept(new ChassisSpeeds(), DriveFeedforwards.zeros(robotConfig.numModules));
     }
 
     PathPlannerLogging.logActivePath(null);

@@ -266,7 +266,7 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 		size_t splitStartIdx = splits[i];
 
 		size_t splitEndIdx = fullTrajStates.size();
-		if (i < splits.size()) {
+		if (i < splits.size() - 1) {
 			splitEndIdx = splits[i + 1];
 		}
 

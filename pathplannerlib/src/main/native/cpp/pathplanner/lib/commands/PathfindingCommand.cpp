@@ -15,7 +15,7 @@ PathfindingCommand::PathfindingCommand(
 		std::shared_ptr<PathPlannerPath> targetPath,
 		PathConstraints constraints, std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> output,
+		std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 		frc2::Requirements requirements) : m_targetPath(targetPath), m_targetPose(), m_goalEndState(
@@ -59,7 +59,7 @@ PathfindingCommand::PathfindingCommand(frc::Pose2d targetPose,
 		PathConstraints constraints, units::meters_per_second_t goalEndVel,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> output,
+		std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, frc2::Requirements requirements) : m_targetPath(), m_targetPose(
 		targetPose), m_originalTargetPose(targetPose), m_goalEndState(
@@ -168,8 +168,8 @@ void PathfindingCommand::Execute() {
 				m_timeOffset = 0.02_s;
 			}
 
-			PathPlannerLogging::logActivePath (m_currentPath);
-			PPLibTelemetry::setCurrentPath(m_currentPath);
+			PathPlannerLogging::logActivePath(m_currentPath.get());
+			PPLibTelemetry::setCurrentPath (m_currentPath);
 
 			m_timer.Reset();
 			m_timer.Start();

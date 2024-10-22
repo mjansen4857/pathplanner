@@ -20,9 +20,9 @@ SwerveSubsystem::SwerveSubsystem() : flModule(), frModule(), blModule(), brModul
     // Configure AutoBuilder
     AutoBuilder::configure(
         [this]() {return this->getPose();},
-        [this](frc::Pose2d pose) {this->resetPose(pose);},
+        [this](const frc::Pose2d& pose) {this->resetPose(pose);},
         [this]() {return this->getSpeeds();},
-        [this](frc::ChassisSpeeds robotRelativeSpeeds) {this->driveRobotRelative(robotRelativeSpeeds);},
+        [this](const frc::ChassisSpeeds& robotRelativeSpeeds) {this->driveRobotRelative(robotRelativeSpeeds);},
         std::make_shared<PPHolonomicDriveController>(
             SwerveConstants::translationConstants,
             SwerveConstants::rotationConstants
@@ -43,7 +43,7 @@ SwerveSubsystem::SwerveSubsystem() : flModule(), frModule(), blModule(), brModul
     );
 
     // Set up custom logging to add the current path to a field 2d widget
-    PathPlannerLogging::setLogActivePathCallback([this](auto poses) {
+    PathPlannerLogging::setLogActivePathCallback([this](const auto& poses) {
         this->field.GetObject("path")->SetPoses(poses);
     });
 

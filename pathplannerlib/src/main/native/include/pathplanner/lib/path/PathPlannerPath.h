@@ -314,7 +314,7 @@ public:
 	 *
 	 * @return List of poses for each point in this path
 	 */
-	inline std::vector<frc::Pose2d> getPathPoses() {
+	inline std::vector<frc::Pose2d> getPathPoses() const {
 		std::vector < frc::Pose2d > poses;
 		for (const PathPoint &point : m_allPoints) {
 			poses.emplace_back(point.position, frc::Rotation2d());

@@ -16,7 +16,7 @@ using namespace pathplanner;
 bool AutoBuilder::m_configured = false;
 std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> AutoBuilder::m_pathFollowingCommandBuilder;
 std::function<frc::Pose2d()> AutoBuilder::m_poseSupplier;
-std::function<void(frc::Pose2d)> AutoBuilder::m_resetPose;
+std::function<void(const frc::Pose2d&)> AutoBuilder::m_resetPose;
 std::function<bool()> AutoBuilder::m_shouldFlipPath;
 bool AutoBuilder::m_isHolonomic = false;
 
@@ -32,9 +32,9 @@ std::function<
 		frc2::CommandPtr(std::shared_ptr<PathPlannerPath>, PathConstraints)> AutoBuilder::m_pathfindThenFollowPathCommandBuilder;
 
 void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
-		std::function<void(frc::Pose2d)> resetPose,
+		std::function<void(const frc::Pose2d&)> resetPose,
 		std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-		std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> output,
+		std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
 		std::shared_ptr<PathFollowingController> controller,
 		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 		frc2::Subsystem *driveSubsystem) {
@@ -79,7 +79,7 @@ void AutoBuilder::configure(std::function<frc::Pose2d()> poseSupplier,
 
 void AutoBuilder::configureCustom(std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
-		std::function<void(frc::Pose2d)> resetPose, bool isHolonomic,
+		std::function<void(const frc::Pose2d&)> resetPose, bool isHolonomic,
 		std::function<bool()> shouldFlipPose) {
 	if (m_configured) {
 		FRC_ReportError(frc::err::Error,

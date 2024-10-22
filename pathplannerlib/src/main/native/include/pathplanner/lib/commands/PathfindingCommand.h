@@ -45,7 +45,8 @@ public:
 			PathConstraints constraints,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> output,
+			std::function<
+					void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements);
@@ -72,7 +73,8 @@ public:
 			units::meters_per_second_t goalEndVel,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> speedsSupplier,
-			std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> output,
+			std::function<
+					void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, frc2::Requirements requirements);
 
@@ -93,7 +95,7 @@ private:
 	PathConstraints m_constraints;
 	std::function<frc::Pose2d()> m_poseSupplier;
 	std::function<frc::ChassisSpeeds()> m_speedsSupplier;
-	std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> m_output;
+	std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> m_output;
 	std::shared_ptr<PathFollowingController> m_controller;
 	RobotConfig m_robotConfig;
 	std::function<bool()> m_shouldFlipPath;

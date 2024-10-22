@@ -27,7 +27,7 @@ class SwerveModuleTrajectoryState(SwerveModuleState):
 @dataclass
 class PathPlannerTrajectoryState:
     timeSeconds: float = 0.0
-    fieldSpeeds: ChassisSpeeds = ChassisSpeeds()
+    fieldSpeeds: ChassisSpeeds = field(default_factory=ChassisSpeeds)
     pose: Pose2d = field(default_factory=Pose2d)
     linearVelocity: float = 0.0
     feedforwards: DriveFeedforwards = None

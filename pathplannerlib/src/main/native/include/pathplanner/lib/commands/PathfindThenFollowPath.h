@@ -29,7 +29,8 @@ public:
 			PathConstraints pathfindingConstraints,
 			std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc::ChassisSpeeds()> currentRobotRelativeSpeeds,
-			std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
+			std::function<
+					void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Requirements requirements) {

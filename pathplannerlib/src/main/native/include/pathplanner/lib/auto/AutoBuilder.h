@@ -46,7 +46,8 @@ public:
 	static void configure(std::function<frc::Pose2d()> poseSupplier,
 			std::function<void(const frc::Pose2d&)> resetPose,
 			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-			std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
+			std::function<
+					void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Subsystem *driveSubsystem);
@@ -74,7 +75,8 @@ public:
 		configure(poseSupplier, resetPose, robotRelativeSpeedsSupplier,
 				[output](auto &&speeds, auto &&feedforwards) {
 					output(speeds);
-				}, std::move(controller), std::move(robotConfig), shouldFlipPath, driveSubsystem);
+				}, std::move(controller), std::move(robotConfig),
+				shouldFlipPath, driveSubsystem);
 	}
 
 	/**

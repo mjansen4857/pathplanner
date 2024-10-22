@@ -79,8 +79,8 @@ void FollowPathCommand::Initialize() {
 				currentPose.Rotation(), m_robotConfig);
 	}
 
-	PathPlannerLogging::logActivePath (m_path.get());
-	PPLibTelemetry::setCurrentPath(m_path);
+	PathPlannerLogging::logActivePath(m_path.get());
+	PPLibTelemetry::setCurrentPath (m_path);
 
 	m_eventScheduler.initialize(m_trajectory);
 

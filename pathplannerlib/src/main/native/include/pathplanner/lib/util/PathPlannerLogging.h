@@ -25,19 +25,19 @@ public:
 		m_logActivePath = logActivePath;
 	}
 
-	static inline void logCurrentPose(const frc::Pose2d& pose) {
+	static inline void logCurrentPose(const frc::Pose2d &pose) {
 		if (m_logCurrentPose) {
 			m_logCurrentPose(pose);
 		}
 	}
 
-	static inline void logTargetPose(const frc::Pose2d& targetPose) {
+	static inline void logTargetPose(const frc::Pose2d &targetPose) {
 		if (m_logTargetPose) {
 			m_logTargetPose(targetPose);
 		}
 	}
 
-	static void logActivePath(const PathPlannerPath* path) {
+	static void logActivePath(const PathPlannerPath *path) {
 		if (m_logActivePath) {
 			std::vector < frc::Pose2d > poses;
 

@@ -168,8 +168,8 @@ void PathfindingCommand::Execute() {
 				m_timeOffset = 0.02_s;
 			}
 
-			PathPlannerLogging::logActivePath (m_currentPath.get());
-			PPLibTelemetry::setCurrentPath(m_currentPath);
+			PathPlannerLogging::logActivePath(m_currentPath.get());
+			PPLibTelemetry::setCurrentPath (m_currentPath);
 
 			m_timer.Reset();
 			m_timer.Start();

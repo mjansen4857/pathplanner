@@ -44,9 +44,9 @@ public:
 	 * @param driveSubsystem a pointer to the subsystem for the robot's drive
 	 */
 	static void configure(std::function<frc::Pose2d()> poseSupplier,
-			std::function<void(frc::Pose2d)> resetPose,
+			std::function<void(const frc::Pose2d&)> resetPose,
 			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-			std::function<void(frc::ChassisSpeeds, DriveFeedforwards)> output,
+			std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Subsystem *driveSubsystem);
@@ -65,16 +65,16 @@ public:
 	 * @param driveSubsystem a pointer to the subsystem for the robot's drive
 	 */
 	static inline void configure(std::function<frc::Pose2d()> poseSupplier,
-			std::function<void(frc::Pose2d)> resetPose,
+			std::function<void(const frc::Pose2d&)> resetPose,
 			std::function<frc::ChassisSpeeds()> robotRelativeSpeedsSupplier,
-			std::function<void(frc::ChassisSpeeds)> output,
+			std::function<void(const frc::ChassisSpeeds&)> output,
 			std::shared_ptr<PathFollowingController> controller,
 			RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
 			frc2::Subsystem *driveSubsystem) {
 		configure(poseSupplier, resetPose, robotRelativeSpeedsSupplier,
-				[output](auto speeds, auto feedforwards) {
+				[output](auto &&speeds, auto &&feedforwards) {
 					output(speeds);
-				}, controller, robotConfig, shouldFlipPath, driveSubsystem);
+				}, std::move(controller), std::move(robotConfig), shouldFlipPath, driveSubsystem);
 	}
 
 	/**
@@ -93,7 +93,7 @@ public:
 	 */
 	static void configureCustom(std::function<frc::Pose2d()> poseSupplier,
 			std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> pathFollowingCommandBuilder,
-			std::function<void(frc::Pose2d)> resetPose, bool isHolonomic,
+			std::function<void(const frc::Pose2d&)> resetPose, bool isHolonomic,
 			std::function<bool()> shouldFlipPose = []() {
 				return false;
 			});
@@ -277,7 +277,7 @@ private:
 	static bool m_configured;
 	static std::function<frc2::CommandPtr(std::shared_ptr<PathPlannerPath>)> m_pathFollowingCommandBuilder;
 	static std::function<frc::Pose2d()> m_poseSupplier;
-	static std::function<void(frc::Pose2d)> m_resetPose;
+	static std::function<void(const frc::Pose2d&)> m_resetPose;
 	static std::function<bool()> m_shouldFlipPath;
 	static bool m_isHolonomic;
 

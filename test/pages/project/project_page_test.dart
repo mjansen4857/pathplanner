@@ -475,7 +475,7 @@ void main() {
     await widgetTester.tap(find.text('Duplicate'));
     await widgetTester.pumpAndSettle();
 
-    expect(find.widgetWithText(ProjectItemCard, 'Copy of Example Path'),
+    expect(find.widgetWithText(ProjectItemCard, 'Example Path (1)'),
         findsOneWidget);
 
     await widgetTester.tap(menuButton);
@@ -484,7 +484,7 @@ void main() {
     await widgetTester.tap(find.text('Duplicate'));
     await widgetTester.pumpAndSettle();
 
-    expect(find.widgetWithText(ProjectItemCard, 'Copy of Copy of Example Path'),
+    expect(find.widgetWithText(ProjectItemCard, 'Example Path (2)'),
         findsOneWidget);
   });
 
@@ -539,7 +539,7 @@ void main() {
     await widgetTester.pumpAndSettle();
 
     expect(
-        find.widgetWithText(ProjectItemCard, 'Copy of auto1'), findsOneWidget);
+        find.widgetWithText(ProjectItemCard, 'auto1 (1)'), findsOneWidget);
 
     await widgetTester.tap(menuButton);
     await widgetTester.pumpAndSettle();
@@ -547,7 +547,7 @@ void main() {
     await widgetTester.tap(find.text('Duplicate'));
     await widgetTester.pumpAndSettle();
 
-    expect(find.widgetWithText(ProjectItemCard, 'Copy of Copy of auto1'),
+    expect(find.widgetWithText(ProjectItemCard, 'auto1 (2)'),
         findsOneWidget);
   });
 

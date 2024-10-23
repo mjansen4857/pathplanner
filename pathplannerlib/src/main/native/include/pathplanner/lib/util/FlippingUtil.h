@@ -83,6 +83,13 @@ public:
 		}
 	}
 
+	/**
+	 * Flip an array of drive feedforwards for the other side of the field. Only does anything if
+	 * mirrored symmetry is used
+	 *
+	 * @param feedforwards Array of drive feedforwards
+	 * @return The flipped feedforwards
+	 */
 	template<class UnitType, class = std::enable_if_t<
 			units::traits::is_unit_t<UnitType>::value>>
 	static inline std::vector<UnitType> flipFeedforwards(
@@ -99,6 +106,45 @@ public:
 				return std::vector<UnitType> { feedforwards[1], feedforwards[0] };
 			}
 			return feedforwards; // idk
+		}
+	}
+
+	/**
+	 * Flip an array of drive feedforward X components for the other side of the field. Only does
+	 * anything if mirrored symmetry is used
+	 *
+	 * @param feedforwardXs Array of drive feedforward X components
+	 * @return The flipped feedforward X components
+	 */
+	template<class UnitType, class = std::enable_if_t<
+			units::traits::is_unit_t<UnitType>::value>>
+	static inline std::vector<UnitType> flipFeedforwardXs(
+			const std::vector<UnitType> &feedforwardXs) {
+		return flipFeedforwards(feedforwardXs);
+	}
+
+	/**
+	 * Flip an array of drive feedforward Y components for the other side of the field. Only does
+	 * anything if mirrored symmetry is used
+	 *
+	 * @param feedforwardYs Array of drive feedforward Y components
+	 * @return The flipped feedforward Y components
+	 */
+	template<class UnitType, class = std::enable_if_t<
+			units::traits::is_unit_t<UnitType>::value>>
+	static inline std::vector<UnitType> flipFeedforwardYs(
+			const std::vector<UnitType> &feedforwardYs) {
+		auto flippedFeedforwardYs = flipFeedforwards(feedforwardYs);
+		switch (symmetryType) {
+		case kRotational:
+			return flippedFeedforwardYs;
+		case kMirrored:
+		default:
+			// Y directions also need to be inverted
+			for (auto &feedforwardY : flippedFeedforwardYs) {
+				feedforwardY *= -1;
+			}
+			return flippedFeedforwardYs;
 		}
 	}
 };

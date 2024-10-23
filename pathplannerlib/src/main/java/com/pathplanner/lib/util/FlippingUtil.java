@@ -102,4 +102,36 @@ public class FlippingUtil {
       case kRotational -> feedforwards;
     };
   }
+
+  /**
+   * Flip an array of drive feedforward X components for the other side of the field. Only does
+   * anything if mirrored symmetry is used
+   *
+   * @param feedforwardXs Array of drive feedforward X components
+   * @return The flipped feedforward X components
+   */
+  public static double[] flipFeedforwardXs(double[] feedforwardXs) {
+    return flipFeedforwards(feedforwardXs);
+  }
+
+  /**
+   * Flip an array of drive feedforward Y components for the other side of the field. Only does
+   * anything if mirrored symmetry is used
+   *
+   * @param feedforwardYs Array of drive feedforward Y components
+   * @return The flipped feedforward Y components
+   */
+  public static double[] flipFeedforwardYs(double[] feedforwardYs) {
+    var flippedFeedforwardYs = flipFeedforwards(feedforwardYs);
+    return switch (symmetryType) {
+      case kMirrored -> {
+        // Y directions also need to be inverted
+        for (int i = 0; i < flippedFeedforwardYs.length; ++i) {
+          flippedFeedforwardYs[i] *= -1;
+        }
+        yield flippedFeedforwardYs;
+      }
+      case kRotational -> flippedFeedforwardYs;
+    };
+  }
 }

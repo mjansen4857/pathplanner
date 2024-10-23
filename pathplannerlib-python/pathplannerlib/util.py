@@ -77,8 +77,8 @@ class DriveFeedforwards:
             FlippingUtil.flipFeedforwards(self.accelerationsMPS),
             FlippingUtil.flipFeedforwards(self.forcesNewtons),
             FlippingUtil.flipFeedforwards(self.torqueCurrentsAmps),
-            FlippingUtil.flipFeedforwards(self.robotRelativeForcesXNewtons),
-            FlippingUtil.flipFeedforwards(self.robotRelativeForcesYNewtons)
+            FlippingUtil.flipFeedforwardXs(self.robotRelativeForcesXNewtons),
+            FlippingUtil.flipFeedforwardYs(self.robotRelativeForcesYNewtons)
         )
 
     @staticmethod
@@ -112,7 +112,10 @@ class FlippingUtil:
         :param rotation: The rotation to flip
         :return: The flipped rotation
         """
-        return Rotation2d(math.pi) - rotation
+        if FlippingUtil.symmetryType == FieldSymmetry.kMirrored:
+            return Rotation2d(math.pi) - rotation
+        else:
+            return rotation - Rotation2d(math.pi)
 
     @staticmethod
     def flipFieldPose(pose: Pose2d) -> Pose2d:
@@ -153,6 +156,31 @@ class FlippingUtil:
             elif len(feedforwards) == 2:
                 return [feedforwards[1], feedforwards[0]]
         return feedforwards
+
+    @classmethod
+    def flipFeedforwardXs(clazz, feedforwardXs: List[float]) -> List[float]:
+        """
+        Flip a list of drive feedforward X components for the other side of
+        the field. Only does anything if mirrored symmetry is used
+
+        :param feedforwardXs: List of drive feedforward X components
+        :return: The flipped feedforward X components
+        """
+        return clazz.flipFeedforwards(feedforwardXs)
+
+    @classmethod
+    def flipFeedforwardYs(clazz, feedforwardYs: List[float]) -> List[float]:
+        """
+        Flip a list of drive feedforward Y components for the other side of
+        the field. Only does anything if mirrored symmetry is used
+
+        :param feedforwardYs: List of drive feedforward Y components
+        :return: The flipped feedforward Y components
+        """
+        flippedFeedforwardYs = clazz.flipFeedforwards(feedforwardYs)
+        if FlippingUtil.symmetryType == FieldSymmetry.kMirrored:
+            return [-feedforward for feedforward in flippedFeedforwardYs]
+        return flippedFeedforwardYs
 
 
 def floatLerp(start_val: float, end_val: float, t: float) -> float:

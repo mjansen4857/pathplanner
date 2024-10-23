@@ -157,8 +157,8 @@ class FlippingUtil:
                 return [feedforwards[1], feedforwards[0]]
         return feedforwards
 
-    @classmethod
-    def flipFeedforwardXs(clazz, feedforwardXs: List[float]) -> List[float]:
+    @staticmethod
+    def flipFeedforwardXs(feedforwardXs: List[float]) -> List[float]:
         """
         Flip a list of drive feedforward X components for the other side of
         the field. Only does anything if mirrored symmetry is used
@@ -166,10 +166,10 @@ class FlippingUtil:
         :param feedforwardXs: List of drive feedforward X components
         :return: The flipped feedforward X components
         """
-        return clazz.flipFeedforwards(feedforwardXs)
+        return FlippingUtil.flipFeedforwards(feedforwardXs)
 
-    @classmethod
-    def flipFeedforwardYs(clazz, feedforwardYs: List[float]) -> List[float]:
+    @staticmethod
+    def flipFeedforwardYs(feedforwardYs: List[float]) -> List[float]:
         """
         Flip a list of drive feedforward Y components for the other side of
         the field. Only does anything if mirrored symmetry is used
@@ -177,7 +177,7 @@ class FlippingUtil:
         :param feedforwardYs: List of drive feedforward Y components
         :return: The flipped feedforward Y components
         """
-        flippedFeedforwardYs = clazz.flipFeedforwards(feedforwardYs)
+        flippedFeedforwardYs = FlippingUtil.flipFeedforwards(feedforwardYs)
         if FlippingUtil.symmetryType == FieldSymmetry.kMirrored:
             return [-feedforward for feedforward in flippedFeedforwardYs]
         return flippedFeedforwardYs

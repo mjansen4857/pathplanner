@@ -342,7 +342,9 @@ public class SwerveSetpointGenerator {
     double[] forceYFF = new double[config.numModules];
     for (int m = 0; m < config.numModules; m++) {
       double appliedForce =
-          wheelForces[m].getNorm() * wheelForces[m].getAngle().minus(retStates[m].angle).getCos();
+        wheelForces[m].getNorm() > 1e-6
+            ? wheelForces[m].getNorm() * wheelForces[m].getAngle().minus(retStates[m].angle).getCos()
+            : 0.0;
       double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
       double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);
 

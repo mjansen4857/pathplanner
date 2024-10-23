@@ -44,8 +44,9 @@ public:
 	static inline frc::Rotation2d flipFieldRotation(
 			const frc::Rotation2d &rotation) {
 		switch (symmetryType) {
-		case kMirrored:
 		case kRotational:
+			return rotation - frc::Rotation2d(180_deg);
+		case kMirrored:
 		default:
 			return frc::Rotation2d(180_deg) - rotation;
 		}

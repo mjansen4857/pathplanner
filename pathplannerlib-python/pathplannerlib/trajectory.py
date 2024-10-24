@@ -233,8 +233,9 @@ class PathPlannerTrajectory:
                     forceXFF = []
                     forceYFF = []
                     for m in range(config.numModules):
-                        appliedForce = wheelForces[m].norm() * (
-                                wheelForces[m].angle() - state.moduleStates[m].angle).cos()
+                        wheelForceDist = wheelForces[m].norm()
+                        appliedForce = 0.0 if wheelForceDist <= 1e-6 else wheelForceDist * (
+                            wheelForces[m].angle() - state.moduleStates[m].angle).cos()
                         wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters
                         torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
 

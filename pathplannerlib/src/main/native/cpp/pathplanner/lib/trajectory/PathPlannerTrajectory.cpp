@@ -140,10 +140,13 @@ PathPlannerTrajectory::PathPlannerTrajectory(
 			std::vector < units::newton_t > forceXFF;
 			std::vector < units::newton_t > forceYFF;
 			for (size_t m = 0; m < config.numModules; m++) {
-				units::newton_t appliedForce {
-						wheelForces[m].Norm()()
-								* (wheelForces[m].Angle()
-										- state.moduleStates[m].angle).Cos() };
+				units::meter_t wheelForceDist = wheelForces[m].Norm();
+				units::newton_t appliedForce { 0.0 };
+				if (wheelForceDist() > 1e-6) {
+					appliedForce = units::newton_t { wheelForceDist()
+							* (wheelForces[m].Angle()
+									- state.moduleStates[m].angle).Cos() };
+				}
 				units::newton_meter_t wheelTorque = appliedForce
 						* config.moduleConfig.wheelRadius;
 				units::ampere_t torqueCurrent =

@@ -159,9 +159,12 @@ public class PathPlannerTrajectory {
         double[] forceXFF = new double[config.numModules];
         double[] forceYFF = new double[config.numModules];
         for (int m = 0; m < config.numModules; m++) {
+          double wheelForceDist = wheelForces[m].getNorm();
           double appliedForce =
-              wheelForces[m].getNorm()
-                  * wheelForces[m].getAngle().minus(state.moduleStates[m].angle).getCos();
+              wheelForceDist > 1e-6
+                  ? wheelForceDist
+                      * wheelForces[m].getAngle().minus(state.moduleStates[m].angle).getCos()
+                  : 0.0;
           double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
           double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);
 

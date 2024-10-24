@@ -24,10 +24,8 @@ import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
-import 'package:pathplanner/widgets/trajectory_render.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
-import 'package:widgets_to_image/widgets_to_image.dart';
 
 class SplitPathEditor extends StatefulWidget {
   final SharedPreferences prefs;

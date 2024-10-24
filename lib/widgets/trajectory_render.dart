@@ -25,8 +25,8 @@ class TrajectoryRender extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 800,
-      height: 400,
+      width: fieldImage.defaultSize.width / 4,
+      height: fieldImage.defaultSize.height / 4,
       child: Center(
         child: Stack(
           children: [

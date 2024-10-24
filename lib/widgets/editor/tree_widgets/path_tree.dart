@@ -44,6 +44,7 @@ class PathTree extends StatefulWidget {
   final SharedPreferences prefs;
   final Widget? runtimeDisplay;
   final Size fieldSizeMeters;
+  final VoidCallback? onRenderPath;
 
   const PathTree({
     super.key,
@@ -76,6 +77,7 @@ class PathTree extends StatefulWidget {
     required this.defaultConstraints,
     required this.prefs,
     required this.fieldSizeMeters,
+    this.onRenderPath,
   });
 
   @override
@@ -109,6 +111,10 @@ class _PathTreeState extends State<PathTree> {
                 const Divider(),
                 _buildPathOptimizationTree(),
                 const EditorSettingsTree(),
+                ElevatedButton(
+                  onPressed: widget.onRenderPath,
+                  child: const Text('Test'),
+                ),
               ],
             ),
           ),

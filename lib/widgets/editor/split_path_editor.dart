@@ -16,6 +16,7 @@ import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/widgets/dialogs/trajectory_render_dialog.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/runtime_display.dart';
@@ -23,8 +24,10 @@ import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
+import 'package:pathplanner/widgets/trajectory_render.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
+import 'package:widgets_to_image/widgets_to_image.dart';
 
 class SplitPathEditor extends StatefulWidget {
   final SharedPreferences prefs;
@@ -521,6 +524,19 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     defaultConstraints: _getDefaultConstraints(),
                     prefs: widget.prefs,
                     fieldSizeMeters: widget.fieldImage.getFieldSizeMeters(),
+                    onRenderPath: () async {
+                      if (_simTraj != null) {
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return TrajectoryRenderDialog(
+                                fieldImage: widget.fieldImage,
+                                prefs: widget.prefs,
+                                trajectory: _simTraj!,
+                              );
+                            });
+                      }
+                    },
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();

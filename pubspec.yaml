@@ -57,6 +57,8 @@ dependencies:
   dropdown_button2: ^2.3.9
   flex_seed_scheme: ^3.4.1
   isolate_manager: ^5.4.0
+  widgets_to_image: ^1.0.0
+  image: ^4.3.0
 
 dev_dependencies:
   flutter_test:

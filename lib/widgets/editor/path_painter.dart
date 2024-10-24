@@ -147,7 +147,7 @@ class PathPainter extends CustomPainter {
           choreoPaths[i].trajectory,
           canvas,
           (hoveredPath == choreoPaths[i].name)
-              ? colorScheme.primary
+              ? Colors.orange
               : Colors.grey[300]!);
       _paintChoreoWaypoint(
           choreoPaths[i].trajectory.states.first, canvas, Colors.green, scale);

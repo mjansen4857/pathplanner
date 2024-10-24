@@ -115,8 +115,8 @@ public record DriveFeedforwards(
         FlippingUtil.flipFeedforwards(accelerationsMPSSq),
         FlippingUtil.flipFeedforwards(linearForcesNewtons),
         FlippingUtil.flipFeedforwards(torqueCurrentsAmps),
-        FlippingUtil.flipFeedforwards(robotRelativeForcesXNewtons),
-        FlippingUtil.flipFeedforwards(robotRelativeForcesYNewtons));
+        FlippingUtil.flipFeedforwardXs(robotRelativeForcesXNewtons),
+        FlippingUtil.flipFeedforwardYs(robotRelativeForcesYNewtons));
   }
 
   /**

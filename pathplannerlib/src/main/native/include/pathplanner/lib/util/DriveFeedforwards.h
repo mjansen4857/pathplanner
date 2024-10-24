@@ -76,8 +76,8 @@ public:
 		return DriveFeedforwards { FlippingUtil::flipFeedforwards(
 				accelerations), FlippingUtil::flipFeedforwards(linearForces),
 				FlippingUtil::flipFeedforwards(torqueCurrents),
-				FlippingUtil::flipFeedforwards(robotRelativeForcesX),
-				FlippingUtil::flipFeedforwards(robotRelativeForcesY) };
+				FlippingUtil::flipFeedforwardXs(robotRelativeForcesX),
+				FlippingUtil::flipFeedforwardYs(robotRelativeForcesY) };
 	}
 
 private:

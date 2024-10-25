@@ -47,7 +47,7 @@ void main() {
   });
 
   testWidgets('shows editor', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: AutoEditorPage(
@@ -67,7 +67,7 @@ void main() {
   });
 
   testWidgets('rename', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: AutoEditorPage(
@@ -95,7 +95,7 @@ void main() {
   });
 
   testWidgets('back button', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: AutoEditorPage(

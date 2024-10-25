@@ -44,7 +44,7 @@ void main() {
   });
 
   testWidgets('has painter and tree', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -69,7 +69,7 @@ void main() {
   });
 
   testWidgets('swap tree side', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -98,7 +98,7 @@ void main() {
   });
 
   testWidgets('change tree size', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

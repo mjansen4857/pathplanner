@@ -68,11 +68,11 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
     _controller.areas = [
       Area(
         weight: _treeOnRight ? (1.0 - treeWeight) : treeWeight,
-        minimalWeight: 0.3,
+        minimalWeight: 0.4,
       ),
       Area(
         weight: _treeOnRight ? treeWeight : (1.0 - treeWeight),
-        minimalWeight: 0.3,
+        minimalWeight: 0.4,
       ),
     ];
 

@@ -50,7 +50,7 @@ class _AutoTreeState extends State<AutoTree> {
               ),
               Expanded(child: Container()),
               Tooltip(
-                message: 'Export Path to Image',
+                message: 'Export Auto to Image',
                 waitDuration: const Duration(milliseconds: 500),
                 child: IconButton(
                   onPressed: widget.onRenderAuto,

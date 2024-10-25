@@ -76,7 +76,7 @@ void main() {
   });
 
   testWidgets('has painter and tree', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -106,7 +106,7 @@ void main() {
   });
 
   testWidgets('swap tree side', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -135,7 +135,7 @@ void main() {
   });
 
   testWidgets('change tree size', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -170,7 +170,7 @@ void main() {
   });
 
   testWidgets('select/deselect waypoint', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.waypointsExpanded = true;
     prefs.setBool(PrefsKeys.holonomicMode, false);
@@ -210,7 +210,7 @@ void main() {
   });
 
   testWidgets('double click to add waypoint', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
@@ -246,7 +246,7 @@ void main() {
   });
 
   testWidgets('drag waypoint', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
@@ -296,7 +296,7 @@ void main() {
     path.pointTowardsZones = [];
     path.generatePathPoints();
 
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
@@ -344,7 +344,7 @@ void main() {
   });
 
   testWidgets('drag end rotation', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
 
@@ -390,7 +390,7 @@ void main() {
   });
 
   testWidgets('drag ideal starting state rotation', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.idealStartingState = IdealStartingState(0.0, const Rotation2d());
     final fieldImage = FieldImage.official(OfficialField.chargedUp);
@@ -437,7 +437,7 @@ void main() {
   });
 
   testWidgets('delete waypoint', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.waypointsExpanded = true;
     path.addWaypoint(const Translation2d(7.0, 4.0));
@@ -472,7 +472,7 @@ void main() {
   });
 
   testWidgets('hover waypoint', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.waypointsExpanded = true;
     path.addWaypoint(const Translation2d(7.0, 4.0));
@@ -500,7 +500,7 @@ void main() {
   });
 
   testWidgets('hover/select constraints zone', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.constraintZonesExpanded = true;
 
@@ -537,7 +537,7 @@ void main() {
   });
 
   testWidgets('hover/select point towards zone', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.pointTowardsZonesExpanded = true;
 
@@ -574,7 +574,7 @@ void main() {
   });
 
   testWidgets('hover/select rotation target', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.rotationTargetsExpanded = true;
 
@@ -640,7 +640,7 @@ void main() {
   });
 
   testWidgets('hover/select event marker', (widgetTester) async {
-    await widgetTester.binding.setSurfaceSize(const Size(1400, 800));
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
 
     path.eventMarkersExpanded = true;
 

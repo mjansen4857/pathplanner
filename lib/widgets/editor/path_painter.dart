@@ -159,7 +159,7 @@ class PathPainter extends CustomPainter {
     }
 
     if (optimizedPath != null) {
-      _paintPathPoints(optimizedPath!, canvas, Colors.deepPurpleAccent, 4.0);
+      _paintPathPoints(optimizedPath!, canvas, Colors.deepPurpleAccent, 12.0);
     }
 
     for (int i = 1; i < paths.length; i++) {
@@ -282,7 +282,7 @@ class PathPainter extends CustomPainter {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
-      ..strokeWidth = 2;
+      ..strokeWidth = PathPainterUtil.uiPointSizeToPixels(6, scale, fieldImage);
 
     Path p = Path();
 
@@ -304,7 +304,7 @@ class PathPainter extends CustomPainter {
       TrajectoryState state, Canvas canvas, Color color, double scale) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
+      ..strokeWidth = PathPainterUtil.uiPointSizeToPixels(6, scale, fieldImage)
       ..color = color;
 
     // draw anchor point
@@ -328,11 +328,12 @@ class PathPainter extends CustomPainter {
   }
 
   void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor,
-      [double strokeWidth = 2.0]) {
+      [double strokeWidth = 6.0]) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
-      ..strokeWidth = strokeWidth;
+      ..strokeWidth =
+          PathPainterUtil.uiPointSizeToPixels(strokeWidth, scale, fieldImage);
 
     Path p = Path();
 
@@ -351,7 +352,8 @@ class PathPainter extends CustomPainter {
 
     if (selectedZone != null) {
       paint.color = Colors.orange;
-      paint.strokeWidth = 6;
+      paint.strokeWidth =
+          PathPainterUtil.uiPointSizeToPixels(18, scale, fieldImage);
       p.reset();
 
       num startPos = path.constraintZones[selectedZone!].minWaypointRelativePos;
@@ -376,7 +378,8 @@ class PathPainter extends CustomPainter {
 
     if (hoveredZone != null && selectedZone != hoveredZone) {
       paint.color = Colors.deepPurpleAccent;
-      paint.strokeWidth = 6;
+      paint.strokeWidth =
+          PathPainterUtil.uiPointSizeToPixels(18, scale, fieldImage);
       p.reset();
 
       num startPos = path.constraintZones[hoveredZone!].minWaypointRelativePos;
@@ -401,7 +404,8 @@ class PathPainter extends CustomPainter {
 
     if (selectedPointZone != null) {
       paint.color = Colors.orange;
-      paint.strokeWidth = 6;
+      paint.strokeWidth =
+          PathPainterUtil.uiPointSizeToPixels(18, scale, fieldImage);
       p.reset();
 
       num startPos =
@@ -429,7 +433,8 @@ class PathPainter extends CustomPainter {
 
     if (hoveredPointZone != null && selectedPointZone != hoveredPointZone) {
       paint.color = Colors.deepPurpleAccent;
-      paint.strokeWidth = 6;
+      paint.strokeWidth =
+          PathPainterUtil.uiPointSizeToPixels(18, scale, fieldImage);
       p.reset();
 
       num startPos =
@@ -457,7 +462,8 @@ class PathPainter extends CustomPainter {
 
     if (selectedMarker != null && path.eventMarkers[selectedMarker!].isZoned) {
       paint.color = Colors.orange;
-      paint.strokeWidth = 6;
+      paint.strokeWidth =
+          PathPainterUtil.uiPointSizeToPixels(18, scale, fieldImage);
       p.reset();
 
       num startPos = path.eventMarkers[selectedMarker!].waypointRelativePos;
@@ -484,7 +490,8 @@ class PathPainter extends CustomPainter {
         hoveredMarker != selectedMarker &&
         path.eventMarkers[hoveredMarker!].isZoned) {
       paint.color = Colors.deepPurpleAccent;
-      paint.strokeWidth = 6;
+      paint.strokeWidth =
+          PathPainterUtil.uiPointSizeToPixels(18, scale, fieldImage);
       p.reset();
 
       num startPos = path.eventMarkers[hoveredMarker!].waypointRelativePos;
@@ -545,7 +552,8 @@ class PathPainter extends CustomPainter {
       final paint = Paint()
         ..style = PaintingStyle.fill
         ..color = Colors.orange
-        ..strokeWidth = 3;
+        ..strokeWidth =
+            PathPainterUtil.uiPointSizeToPixels(9, scale, fieldImage);
 
       PointTowardsZone z = path.pointTowardsZones[selectedPointZone!];
       final location = PathPainterUtil.pointToPixelOffset(
@@ -563,7 +571,8 @@ class PathPainter extends CustomPainter {
       final paint = Paint()
         ..style = PaintingStyle.fill
         ..color = Colors.deepPurpleAccent
-        ..strokeWidth = 3;
+        ..strokeWidth =
+            PathPainterUtil.uiPointSizeToPixels(9, scale, fieldImage);
 
       PointTowardsZone z = path.pointTowardsZones[hoveredPointZone!];
       final location = PathPainterUtil.pointToPixelOffset(
@@ -628,7 +637,7 @@ class PathPainter extends CustomPainter {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = Colors.yellow[800]!
-      ..strokeWidth = 3;
+      ..strokeWidth = PathPainterUtil.uiPointSizeToPixels(9, scale, fieldImage);
 
     final p1 =
         PathPainterUtil.pointToPixelOffset(prevPathEnd, scale, fieldImage);
@@ -690,7 +699,8 @@ class PathPainter extends CustomPainter {
       var paint = Paint()
         ..style = PaintingStyle.stroke
         ..color = colorScheme.surfaceContainerHighest
-        ..strokeWidth = 2;
+        ..strokeWidth =
+            PathPainterUtil.uiPointSizeToPixels(6, scale, fieldImage);
 
       canvas.drawCircle(
           PathPainterUtil.pointToPixelOffset(
@@ -705,7 +715,7 @@ class PathPainter extends CustomPainter {
       PathPlannerPath path, Canvas canvas, double scale, int waypointIdx) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
+      ..strokeWidth = PathPainterUtil.uiPointSizeToPixels(6, scale, fieldImage);
 
     if (waypointIdx == selectedWaypoint) {
       paint.color = Colors.orange;
@@ -820,7 +830,7 @@ class PathPainter extends CustomPainter {
 
     final paint = Paint()
       ..color = colorScheme.secondary.withOpacity(0.2) // More transparent
-      ..strokeWidth = 1;
+      ..strokeWidth = PathPainterUtil.uiPointSizeToPixels(3, scale, fieldImage);
 
     double gridSpacing = PathPainterUtil.metersToPixels(0.5, scale, fieldImage);
 

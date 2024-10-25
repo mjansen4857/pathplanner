@@ -13,6 +13,7 @@ class TrajectoryRender extends StatelessWidget {
   final SharedPreferences prefs;
   final PathPlannerTrajectory trajectory;
   final num? sampleTime;
+  final num scale;
 
   const TrajectoryRender({
     super.key,
@@ -20,13 +21,14 @@ class TrajectoryRender extends StatelessWidget {
     required this.prefs,
     required this.trajectory,
     required this.sampleTime,
+    this.scale = 1.0,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: fieldImage.defaultSize.width / 4,
-      height: fieldImage.defaultSize.height / 4,
+      width: fieldImage.defaultSize.width * scale,
+      height: fieldImage.defaultSize.height * scale,
       child: Center(
         child: Stack(
           children: [
@@ -183,7 +185,7 @@ class TrajectoryPainter extends CustomPainter {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
-      ..strokeWidth = 2;
+      ..strokeWidth = PathPainterUtil.uiPointSizeToPixels(4, scale, fieldImage);
 
     Path p = Path();
 

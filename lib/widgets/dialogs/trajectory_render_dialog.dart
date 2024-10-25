@@ -84,6 +84,7 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
                       prefs: widget.prefs,
                       trajectory: widget.trajectory,
                       sampleTime: _renderGif ? _sampleTime : null,
+                      scale: 0.25,
                     ),
                   ),
                 ),
@@ -108,73 +109,85 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
             falseChild: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(
-                      value: true,
-                      label: Text('Dark'),
-                    ),
-                    ButtonSegment(
-                      value: false,
-                      label: Text('Light'),
-                    ),
-                  ],
-                  selected: {_darkMode},
-                  onSelectionChanged: (selection) {
-                    setState(() {
-                      _darkMode = selection.first;
-                      _theme = ThemeData(
-                        useMaterial3: true,
-                        colorSchemeSeed: _teamColor,
-                        brightness:
-                            _darkMode ? Brightness.dark : Brightness.light,
-                      );
-                    });
-                  },
+                Tooltip(
+                  message: 'Dark or light background?',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: true,
+                        label: Text('Dark'),
+                      ),
+                      ButtonSegment(
+                        value: false,
+                        label: Text('Light'),
+                      ),
+                    ],
+                    selected: {_darkMode},
+                    onSelectionChanged: (selection) {
+                      setState(() {
+                        _darkMode = selection.first;
+                        _theme = ThemeData(
+                          useMaterial3: true,
+                          colorSchemeSeed: _teamColor,
+                          brightness:
+                              _darkMode ? Brightness.dark : Brightness.light,
+                        );
+                      });
+                    },
+                  ),
                 ),
                 const SizedBox(width: 8),
-                SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(
-                      value: true,
-                      label: Text('Solid'),
-                    ),
-                    ButtonSegment(
-                      value: false,
-                      label: Text('Transparent'),
-                    ),
-                  ],
-                  selected: {_solidBackground},
-                  onSelectionChanged: _renderGif
-                      ? null
-                      : (selection) {
-                          setState(() {
-                            _solidBackground = selection.first;
-                          });
-                        },
+                Tooltip(
+                  message: 'Solid or transparent background?',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: true,
+                        label: Text('Solid'),
+                      ),
+                      ButtonSegment(
+                        value: false,
+                        label: Text('Transparent'),
+                      ),
+                    ],
+                    selected: {_solidBackground},
+                    onSelectionChanged: _renderGif
+                        ? null
+                        : (selection) {
+                            setState(() {
+                              _solidBackground = selection.first;
+                            });
+                          },
+                  ),
                 ),
                 const SizedBox(width: 8),
-                SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(
-                      value: false,
-                      label: Text('PNG'),
-                    ),
-                    ButtonSegment(
-                      value: true,
-                      label: Text('GIF'),
-                    ),
-                  ],
-                  selected: {_renderGif},
-                  onSelectionChanged: (selection) {
-                    setState(() {
-                      _renderGif = selection.first;
-                      if (_renderGif) {
-                        _solidBackground = true;
-                        _sampleTime = 0.0;
-                      }
-                    });
-                  },
+                Tooltip(
+                  message: 'Export image as PNG or GIF?',
+                  waitDuration: const Duration(milliseconds: 500),
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: false,
+                        label: Text('PNG'),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text('GIF'),
+                      ),
+                    ],
+                    selected: {_renderGif},
+                    onSelectionChanged: (selection) {
+                      setState(() {
+                        _renderGif = selection.first;
+                        if (_renderGif) {
+                          _solidBackground = true;
+                          _sampleTime = 0.0;
+                        }
+                      });
+                    },
+                  ),
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton.icon(

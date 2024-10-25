@@ -46,7 +46,7 @@ class PathPainterUtil {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = color
-      ..strokeWidth = 2;
+      ..strokeWidth = PathPainterUtil.uiPointSizeToPixels(6, scale, fieldImage);
 
     Offset center =
         PathPainterUtil.pointToPixelOffset(pose.translation, scale, fieldImage);
@@ -63,7 +63,8 @@ class PathPainterUtil {
     canvas.drawRRect(
         RRect.fromRectAndRadius(
             Rect.fromCenter(center: center, width: length, height: width),
-            const Radius.circular(5)),
+            Radius.circular(
+                PathPainterUtil.uiPointSizeToPixels(16, scale, fieldImage))),
         paint);
 
     Offset frontMiddle = center + Offset(length / 2, 0);
@@ -73,7 +74,8 @@ class PathPainterUtil {
     canvas.drawCircle(frontMiddle,
         PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
     paint.style = PaintingStyle.stroke;
-    paint.strokeWidth = 1;
+    paint.strokeWidth =
+        PathPainterUtil.uiPointSizeToPixels(3, scale, fieldImage);
     paint.color = outlineColor;
     canvas.drawCircle(frontMiddle,
         PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);

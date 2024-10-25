@@ -125,35 +125,42 @@ class _PathTreeState extends State<PathTree> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          if (!widget.holonomicMode) ...[
-            _buildReversedButton(),
-            const SizedBox(width: 8),
-            Tooltip(
-              message:
-                  'Moving ${widget.path.reversed ? 'Reversed' : 'Forward'}',
-              child: _buildInfoCard(
-                value: widget.path.reversed ? 'RVD' : 'FWD',
-              ),
-            ),
-            const SizedBox(width: 16),
-          ],
-          if (widget.runtimeDisplay != null) widget.runtimeDisplay!,
-          Expanded(child: Container()),
-          Tooltip(
-            message: 'Export Path to Image',
-            waitDuration: const Duration(milliseconds: 500),
-            child: IconButton(
-              onPressed: widget.onRenderPath,
-              icon: const Icon(Icons.ios_share),
-            ),
+          Row(
+            children: [
+              if (!widget.holonomicMode) ...[
+                _buildReversedButton(),
+                const SizedBox(width: 8),
+                Tooltip(
+                  message:
+                      'Moving ${widget.path.reversed ? 'Reversed' : 'Forward'}',
+                  child: _buildInfoCard(
+                    value: widget.path.reversed ? 'RVD' : 'FWD',
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ],
+              if (widget.runtimeDisplay != null) widget.runtimeDisplay!,
+            ],
           ),
-          Tooltip(
-            message: 'Move to Other Side',
-            waitDuration: const Duration(milliseconds: 500),
-            child: IconButton(
-              onPressed: widget.onSideSwapped,
-              icon: const Icon(Icons.swap_horiz),
-            ),
+          Row(
+            children: [
+              Tooltip(
+                message: 'Export Path to Image',
+                waitDuration: const Duration(milliseconds: 500),
+                child: IconButton(
+                  onPressed: widget.onRenderPath,
+                  icon: const Icon(Icons.ios_share),
+                ),
+              ),
+              Tooltip(
+                message: 'Move to Other Side',
+                waitDuration: const Duration(milliseconds: 500),
+                child: IconButton(
+                  onPressed: widget.onSideSwapped,
+                  icon: const Icon(Icons.swap_horiz),
+                ),
+              ),
+            ],
           ),
         ],
       ),

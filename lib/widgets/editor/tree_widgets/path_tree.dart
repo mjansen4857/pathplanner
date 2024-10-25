@@ -44,6 +44,7 @@ class PathTree extends StatefulWidget {
   final SharedPreferences prefs;
   final Widget? runtimeDisplay;
   final Size fieldSizeMeters;
+  final VoidCallback? onRenderPath;
 
   const PathTree({
     super.key,
@@ -76,6 +77,7 @@ class PathTree extends StatefulWidget {
     required this.defaultConstraints,
     required this.prefs,
     required this.fieldSizeMeters,
+    this.onRenderPath,
   });
 
   @override
@@ -123,28 +125,42 @@ class _PathTreeState extends State<PathTree> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // const SizedBox(width: 16),
-          if (!widget.holonomicMode) ...[
-            _buildReversedButton(),
-            const SizedBox(width: 8),
-            Tooltip(
-              message:
-                  'Moving ${widget.path.reversed ? 'Reversed' : 'Forward'}',
-              child: _buildInfoCard(
-                value: widget.path.reversed ? 'RVD' : 'FWD',
+          Row(
+            children: [
+              if (!widget.holonomicMode) ...[
+                _buildReversedButton(),
+                const SizedBox(width: 8),
+                Tooltip(
+                  message:
+                      'Moving ${widget.path.reversed ? 'Reversed' : 'Forward'}',
+                  child: _buildInfoCard(
+                    value: widget.path.reversed ? 'RVD' : 'FWD',
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ],
+              if (widget.runtimeDisplay != null) widget.runtimeDisplay!,
+            ],
+          ),
+          Row(
+            children: [
+              Tooltip(
+                message: 'Export Path to Image',
+                waitDuration: const Duration(milliseconds: 500),
+                child: IconButton(
+                  onPressed: widget.onRenderPath,
+                  icon: const Icon(Icons.ios_share),
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-          ],
-          if (widget.runtimeDisplay != null) widget.runtimeDisplay!,
-          Expanded(child: Container()),
-          Tooltip(
-            message: 'Move to Other Side',
-            waitDuration: const Duration(seconds: 1),
-            child: IconButton(
-              onPressed: widget.onSideSwapped,
-              icon: const Icon(Icons.swap_horiz),
-            ),
+              Tooltip(
+                message: 'Move to Other Side',
+                waitDuration: const Duration(milliseconds: 500),
+                child: IconButton(
+                  onPressed: widget.onSideSwapped,
+                  icon: const Icon(Icons.swap_horiz),
+                ),
+              ),
+            ],
           ),
         ],
       ),

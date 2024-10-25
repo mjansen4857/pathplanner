@@ -16,6 +16,7 @@ import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/widgets/dialogs/trajectory_render_dialog.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/runtime_display.dart';
@@ -451,7 +452,6 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           selectedMarker: _selectedMarker,
                           simulatedPath: _simTraj,
                           animation: _previewController.view,
-                          previewColor: colorScheme.primary,
                           prefs: widget.prefs,
                           optimizedPath: _optimizedPath,
                         ),
@@ -521,6 +521,19 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     defaultConstraints: _getDefaultConstraints(),
                     prefs: widget.prefs,
                     fieldSizeMeters: widget.fieldImage.getFieldSizeMeters(),
+                    onRenderPath: () {
+                      if (_simTraj != null) {
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return TrajectoryRenderDialog(
+                                fieldImage: widget.fieldImage,
+                                prefs: widget.prefs,
+                                trajectory: _simTraj!,
+                              );
+                            });
+                      }
+                    },
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();

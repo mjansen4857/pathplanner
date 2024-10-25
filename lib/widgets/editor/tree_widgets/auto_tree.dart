@@ -14,6 +14,7 @@ class AutoTree extends StatefulWidget {
   final ChangeStack undoStack;
   final num? autoRuntime;
   final Function(String?)? onEditPathPressed;
+  final VoidCallback? onRenderAuto;
 
   const AutoTree({
     super.key,
@@ -25,6 +26,7 @@ class AutoTree extends StatefulWidget {
     required this.undoStack,
     this.autoRuntime,
     this.onEditPathPressed,
+    this.onRenderAuto,
   });
 
   @override
@@ -41,19 +43,34 @@ class _AutoTreeState extends State<AutoTree> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Simulated Driving Time: ~${(widget.autoRuntime ?? 0).toStringAsFixed(2)}s',
-                style: const TextStyle(fontSize: 18),
-              ),
-              Expanded(child: Container()),
-              Tooltip(
-                message: 'Move to Other Side',
-                waitDuration: const Duration(seconds: 1),
-                child: IconButton(
-                  onPressed: widget.onSideSwapped,
-                  icon: const Icon(Icons.swap_horiz),
+              Flexible(
+                child: Text(
+                  'Simulated Driving Time: ~${(widget.autoRuntime ?? 0).toStringAsFixed(2)}s',
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 18),
                 ),
+              ),
+              Row(
+                children: [
+                  Tooltip(
+                    message: 'Export Auto to Image',
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: IconButton(
+                      onPressed: widget.onRenderAuto,
+                      icon: const Icon(Icons.ios_share),
+                    ),
+                  ),
+                  Tooltip(
+                    message: 'Move to Other Side',
+                    waitDuration: const Duration(seconds: 1),
+                    child: IconButton(
+                      onPressed: widget.onSideSwapped,
+                      icon: const Icon(Icons.swap_horiz),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

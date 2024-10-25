@@ -197,19 +197,19 @@ void main() {
 
     await widgetTester.dragFrom(
         widgetTester.getCenter(find.byType(SplitAutoEditor)),
-        const Offset(-200, 0));
+        const Offset(-100, 0));
 
     await widgetTester.pump(const Duration(seconds: 1));
 
-    expect(prefs.getDouble(PrefsKeys.editorTreeWeight), closeTo(0.65, 0.01));
+    expect(prefs.getDouble(PrefsKeys.editorTreeWeight), closeTo(0.58, 0.01));
 
     await widgetTester.tap(find.byTooltip('Move to Other Side'));
     await widgetTester.pump();
 
     await widgetTester.dragFrom(
         widgetTester.getCenter(find.byType(SplitAutoEditor)) +
-            const Offset(200, 0),
-        const Offset(-200, 0));
+            const Offset(100, 0),
+        const Offset(-100, 0));
 
     await widgetTester.pump(const Duration(seconds: 1));
 

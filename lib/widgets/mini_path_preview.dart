@@ -47,6 +47,7 @@ class PathPreviewPainter extends StatelessWidget {
       painter: _Painter(
         paths: paths,
         fieldImage: fieldImage,
+        colorScheme: Theme.of(context).colorScheme,
       ),
     );
   }
@@ -55,10 +56,12 @@ class PathPreviewPainter extends StatelessWidget {
 class _Painter extends CustomPainter {
   final List<List<Translation2d>> paths;
   final FieldImage fieldImage;
+  final ColorScheme colorScheme;
 
   const _Painter({
     required this.paths,
     required this.fieldImage,
+    required this.colorScheme,
   });
 
   @override
@@ -67,7 +70,7 @@ class _Painter extends CustomPainter {
 
     for (List<Translation2d> path in paths) {
       if (path.isNotEmpty) {
-        _paintPathPoints(canvas, scale, Colors.grey[300]!, path);
+        _paintPathPoints(canvas, scale, colorScheme.secondary, path);
         _paintWaypoint(canvas, scale, path.first, Colors.green);
         _paintWaypoint(canvas, scale, path.last, Colors.red);
       }

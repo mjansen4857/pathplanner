@@ -102,23 +102,23 @@ class TrajectoryPainter extends CustomPainter {
     if (sampleTime == null) {
       // Paint start and end
       PathPainterUtil.paintRobotOutline(
-        Pose2d(trajectory.states.first.pose.translation,
-            trajectory.states.first.pose.rotation),
-        fieldImage,
-        robotSize,
-        scale,
-        canvas,
-        Colors.green[700]!,
-      );
+          Pose2d(trajectory.states.first.pose.translation,
+              trajectory.states.first.pose.rotation),
+          fieldImage,
+          robotSize,
+          scale,
+          canvas,
+          Colors.green[700]!,
+          colorScheme.surfaceContainer);
       PathPainterUtil.paintRobotOutline(
-        Pose2d(trajectory.states.last.pose.translation,
-            trajectory.states.last.pose.rotation),
-        fieldImage,
-        robotSize,
-        scale,
-        canvas,
-        Colors.red[700]!,
-      );
+          Pose2d(trajectory.states.last.pose.translation,
+              trajectory.states.last.pose.rotation),
+          fieldImage,
+          robotSize,
+          scale,
+          canvas,
+          Colors.red[700]!,
+          colorScheme.surfaceContainer);
     } else {
       TrajectoryState state = trajectory.sample(sampleTime!);
       Rotation2d rotation = state.pose.rotation;
@@ -160,15 +160,15 @@ class TrajectoryPainter extends CustomPainter {
       }
 
       PathPainterUtil.paintRobotOutline(
-        Pose2d(state.pose.translation, rotation),
-        fieldImage,
-        robotSize,
-        scale,
-        canvas,
-        colorScheme.brightness == Brightness.dark
-            ? colorScheme.primary
-            : colorScheme.secondary,
-      );
+          Pose2d(state.pose.translation, rotation),
+          fieldImage,
+          robotSize,
+          scale,
+          canvas,
+          colorScheme.brightness == Brightness.dark
+              ? colorScheme.primary
+              : colorScheme.secondary,
+          colorScheme.surfaceContainer);
     }
   }
 

@@ -8,6 +8,7 @@ import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/widgets/dialogs/trajectory_render_dialog.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/auto_tree.dart';
@@ -48,7 +49,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   final MultiSplitViewController _controller = MultiSplitViewController();
   String? _hoveredPath;
   late bool _treeOnRight;
-  PathPlannerTrajectory? _simPath;
+  PathPlannerTrajectory? _simTraj;
   bool _paused = false;
 
   late AnimationController _previewController;
@@ -109,9 +110,8 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                                 Defaults.hidePathsOnHover,
                             hoveredPath: _hoveredPath,
                             fieldImage: widget.fieldImage,
-                            simulatedPath: _simPath,
+                            simulatedPath: _simTraj,
                             animation: _previewController.view,
-                            previewColor: colorScheme.primary,
                             prefs: widget.prefs)),
                   ),
                 ],
@@ -141,7 +141,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
-                  totalPathTime: _simPath?.states.last.timeSeconds ?? 1.0,
+                  totalPathTime: _simTraj?.states.last.timeSeconds ?? 1.0,
                 ),
               Card(
                 margin: const EdgeInsets.all(0),
@@ -164,8 +164,21 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: AutoTree(
                     auto: widget.auto,
-                    autoRuntime: _simPath?.states.last.timeSeconds,
+                    autoRuntime: _simTraj?.states.last.timeSeconds,
                     allPathNames: widget.allPathNames,
+                    onRenderAuto: () {
+                      if (_simTraj != null) {
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return TrajectoryRenderDialog(
+                                fieldImage: widget.fieldImage,
+                                prefs: widget.prefs,
+                                trajectory: _simTraj!,
+                              );
+                            });
+                      }
+                    },
                     onPathHovered: (value) {
                       setState(() {
                         _hoveredPath = value;
@@ -193,7 +206,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
                 PreviewSeekbar(
                   previewController: _previewController,
                   onPauseStateChanged: (value) => _paused = value,
-                  totalPathTime: _simPath?.states.last.timeSeconds ?? 1.0,
+                  totalPathTime: _simTraj?.states.last.timeSeconds ?? 1.0,
                 ),
             ],
           ),
@@ -206,7 +219,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
   void _simulateAuto() async {
     if (widget.autoPaths.isEmpty && widget.autoChoreoPaths.isEmpty) {
       setState(() {
-        _simPath = null;
+        _simTraj = null;
       });
 
       _previewController.stop();
@@ -254,7 +267,7 @@ class _SplitAutoEditorState extends State<SplitAutoEditor>
         simPath.states.last.timeSeconds.isFinite &&
         !simPath.states.last.timeSeconds.isNaN) {
       setState(() {
-        _simPath = simPath;
+        _simTraj = simPath;
       });
 
       if (!_paused) {

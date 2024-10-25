@@ -111,10 +111,6 @@ class _PathTreeState extends State<PathTree> {
                 const Divider(),
                 _buildPathOptimizationTree(),
                 const EditorSettingsTree(),
-                ElevatedButton(
-                  onPressed: widget.onRenderPath,
-                  child: const Text('Test'),
-                ),
               ],
             ),
           ),
@@ -129,7 +125,6 @@ class _PathTreeState extends State<PathTree> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // const SizedBox(width: 16),
           if (!widget.holonomicMode) ...[
             _buildReversedButton(),
             const SizedBox(width: 8),
@@ -145,8 +140,16 @@ class _PathTreeState extends State<PathTree> {
           if (widget.runtimeDisplay != null) widget.runtimeDisplay!,
           Expanded(child: Container()),
           Tooltip(
+            message: 'Export Path to Image',
+            waitDuration: const Duration(milliseconds: 500),
+            child: IconButton(
+              onPressed: widget.onRenderPath,
+              icon: const Icon(Icons.ios_share),
+            ),
+          ),
+          Tooltip(
             message: 'Move to Other Side',
-            waitDuration: const Duration(seconds: 1),
+            waitDuration: const Duration(milliseconds: 500),
             child: IconButton(
               onPressed: widget.onSideSwapped,
               icon: const Icon(Icons.swap_horiz),

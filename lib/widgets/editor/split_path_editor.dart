@@ -452,7 +452,6 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           selectedMarker: _selectedMarker,
                           simulatedPath: _simTraj,
                           animation: _previewController.view,
-                          previewColor: colorScheme.primary,
                           prefs: widget.prefs,
                           optimizedPath: _optimizedPath,
                         ),
@@ -522,7 +521,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     defaultConstraints: _getDefaultConstraints(),
                     prefs: widget.prefs,
                     fieldSizeMeters: widget.fieldImage.getFieldSizeMeters(),
-                    onRenderPath: () async {
+                    onRenderPath: () {
                       if (_simTraj != null) {
                         showDialog(
                             context: context,

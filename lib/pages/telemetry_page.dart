@@ -198,6 +198,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                             currentPose: _currentPose,
                             targetPose: _targetPose,
                             currentPath: _currentPath,
+                            colorScheme: Theme.of(context).colorScheme,
                           ),
                         ),
                       ),
@@ -502,6 +503,7 @@ class TelemetryPainter extends CustomPainter {
   final Pose2d? currentPose;
   final Pose2d? targetPose;
   final List<Pose2d>? currentPath;
+  final ColorScheme colorScheme;
 
   static double scale = 1;
 
@@ -511,6 +513,7 @@ class TelemetryPainter extends CustomPainter {
     this.currentPose,
     this.targetPose,
     this.currentPath,
+    required this.colorScheme,
   });
 
   @override
@@ -519,7 +522,7 @@ class TelemetryPainter extends CustomPainter {
 
     if (currentPath != null) {
       Paint p = Paint()
-        ..color = Colors.grey[700]!
+        ..color = colorScheme.secondary
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
 
@@ -538,13 +541,19 @@ class TelemetryPainter extends CustomPainter {
     }
 
     if (targetPose != null) {
-      PathPainterUtil.paintRobotOutline(targetPose!, fieldImage, robotSize,
-          scale, canvas, Colors.grey[600]!.withOpacity(0.75));
+      PathPainterUtil.paintRobotOutline(
+          targetPose!,
+          fieldImage,
+          robotSize,
+          scale,
+          canvas,
+          Colors.grey[600]!.withOpacity(0.75),
+          colorScheme.surfaceContainer);
     }
 
     if (currentPose != null) {
       PathPainterUtil.paintRobotOutline(currentPose!, fieldImage, robotSize,
-          scale, canvas, Colors.grey[400]!);
+          scale, canvas, colorScheme.primary, colorScheme.surfaceContainer);
     }
   }
 

@@ -8,6 +8,7 @@ class ChoreoPathTree extends StatefulWidget {
   final VoidCallback? onSideSwapped;
   final ChangeStack undoStack;
   final num? pathRuntime;
+  final VoidCallback? onRenderPath;
 
   const ChoreoPathTree({
     super.key,
@@ -15,6 +16,7 @@ class ChoreoPathTree extends StatefulWidget {
     this.onSideSwapped,
     required this.undoStack,
     this.pathRuntime,
+    this.onRenderPath,
   });
 
   @override
@@ -35,6 +37,14 @@ class _ChoreoPathTreeState extends State<ChoreoPathTree> {
                 style: const TextStyle(fontSize: 18),
               ),
               Expanded(child: Container()),
+              Tooltip(
+                message: 'Export Path to Image',
+                waitDuration: const Duration(milliseconds: 500),
+                child: IconButton(
+                  onPressed: widget.onRenderPath,
+                  icon: const Icon(Icons.ios_share),
+                ),
+              ),
               Tooltip(
                 message: 'Move to Other Side',
                 waitDuration: const Duration(seconds: 1),

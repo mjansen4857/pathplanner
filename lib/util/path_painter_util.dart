@@ -34,8 +34,14 @@ class PathPainterUtil {
     }
   }
 
-  static void paintRobotOutline(Pose2d pose, FieldImage fieldImage,
-      Size robotSize, double scale, Canvas canvas, Color color,
+  static void paintRobotOutline(
+      Pose2d pose,
+      FieldImage fieldImage,
+      Size robotSize,
+      double scale,
+      Canvas canvas,
+      Color color,
+      Color outlineColor,
       {bool showDetails = false}) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
@@ -68,7 +74,7 @@ class PathPainterUtil {
         PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
     paint.style = PaintingStyle.stroke;
     paint.strokeWidth = 1;
-    paint.color = Colors.black;
+    paint.color = outlineColor;
     canvas.drawCircle(frontMiddle,
         PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
 

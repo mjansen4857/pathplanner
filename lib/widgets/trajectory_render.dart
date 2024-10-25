@@ -92,7 +92,12 @@ class TrajectoryPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     scale = size.width / fieldImage.defaultSize.width;
 
-    _paintTrajectory(trajectory, canvas, colorScheme.onSurface);
+    _paintTrajectory(
+        trajectory,
+        canvas,
+        colorScheme.brightness == Brightness.dark
+            ? colorScheme.secondary
+            : colorScheme.primary);
 
     if (sampleTime == null) {
       // Paint start and end
@@ -145,7 +150,13 @@ class TrajectoryPainter extends CustomPainter {
               state.moduleStates[3].fieldAngle),
         ];
         PathPainterUtil.paintRobotModules(
-            modPoses, fieldImage, scale, canvas, colorScheme.primary);
+            modPoses,
+            fieldImage,
+            scale,
+            canvas,
+            colorScheme.brightness == Brightness.dark
+                ? colorScheme.primary
+                : colorScheme.secondary);
       }
 
       PathPainterUtil.paintRobotOutline(
@@ -154,7 +165,9 @@ class TrajectoryPainter extends CustomPainter {
         robotSize,
         scale,
         canvas,
-        colorScheme.primary,
+        colorScheme.brightness == Brightness.dark
+            ? colorScheme.primary
+            : colorScheme.secondary,
       );
     }
   }

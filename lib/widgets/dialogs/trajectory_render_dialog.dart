@@ -179,7 +179,7 @@ class _TrajectoryRenderDialogState extends State<TrajectoryRenderDialog> {
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.save),
-                  label: const Text('Render'),
+                  label: const Text('Save'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primaryContainer,
                     foregroundColor: colorScheme.onPrimaryContainer,

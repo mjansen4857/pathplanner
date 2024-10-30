@@ -437,11 +437,6 @@ frc2::Command* RobotContainer::getAutonomousCommand() {
   // Returns a frc2::Command* that is freed at program termination
   return autoChooser.GetSelected();
 }
-
-frc2::CommandPtr RobotContainer::getAutonomousCommand() {
-  // Returns a copy that is freed after reference is lost
-  return frc2::CommandPtr(std::make_unique<frc2::Command>(*autoChooser.GetSelected()));
-}
 ```
 
 </tab>
@@ -576,11 +571,6 @@ RobotContainer::RobotContainer() {
 frc2::Command* RobotContainer::getAutonomousCommand() {
   // Returns a frc2::Command* that is freed at program termination
   return autoChooser.GetSelected();
-}
-
-frc2::CommandPtr RobotContainer::getAutonomousCommand() {
-  // Returns a copy that is freed after reference is lost
-  return frc2::CommandPtr(std::make_unique<frc2::Command>(*autoChooser.GetSelected()));
 }
 ```
 

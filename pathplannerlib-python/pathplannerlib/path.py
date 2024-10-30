@@ -542,11 +542,34 @@ class PathPlannerPath:
                 yVel = float(s['vy'])
                 angularVelRps = float(s['omega'])
 
+                fx = s['fx']
+                fy = s['fy']
+                forcesX = []
+                forcesY = []
+                for i in range(len(fx)):
+                    forcesX.append(float(fx[i]))
+                    forcesY.append(float(fy[i]))
+
                 state.timeSeconds = time
                 state.linearVelocity = math.hypot(xVel, yVel)
                 state.pose = Pose2d(xPos, yPos, rotationRad)
                 state.fieldSpeeds = ChassisSpeeds(xVel, yVel, angularVelRps)
-                state.feedforwards = DriveFeedforwards.zeros(4)
+
+                # The module forces are field relative, rotate them to be robot relative
+                for i in range(len(forcesX)):
+                    rotated = Translation2d(forcesX[i], forcesY[i]).rotateBy(-state.pose.rotation())
+                    forcesX[i] = rotated.x
+                    forcesY[i] = rotated.y
+
+                # All other feedforwards besides X and Y components will be zeros because they cannot be
+                # calculated without RobotConfig
+                state.feedforwards = DriveFeedforwards(
+                    [0.0] * len(forcesX),
+                    [0.0] * len(forcesX),
+                    [0.0] * len(forcesX),
+                    forcesX,
+                    forcesY
+                )
 
                 fullTrajStates.append(state)
 

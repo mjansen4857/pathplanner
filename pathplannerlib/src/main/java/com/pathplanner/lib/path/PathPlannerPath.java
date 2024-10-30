@@ -371,11 +371,38 @@ public class PathPlannerPath {
         double yVel = ((Number) sample.get("vy")).doubleValue();
         double angularVelRps = ((Number) sample.get("omega")).doubleValue();
 
+        JSONArray fx = (JSONArray) sample.get("fx");
+        JSONArray fy = (JSONArray) sample.get("fy");
+        double[] forcesX = new double[fx.size()];
+        double[] forcesY = new double[fy.size()];
+        for (int i = 0; i < fx.size(); i++) {
+          forcesX[i] = ((Number) fx.get(i)).doubleValue();
+          forcesY[i] = ((Number) fy.get(i)).doubleValue();
+        }
+
         state.timeSeconds = time;
         state.linearVelocity = Math.hypot(xVel, yVel);
         state.pose = new Pose2d(new Translation2d(xPos, yPos), new Rotation2d(rotationRad));
         state.fieldSpeeds = new ChassisSpeeds(xVel, yVel, angularVelRps);
-        state.feedforwards = DriveFeedforwards.zeros(4);
+
+        // The module forces are field relative, rotate them to be robot relative
+        for (int i = 0; i < forcesX.length; i++) {
+          Translation2d rotated =
+              new Translation2d(forcesX[i], forcesY[i])
+                  .rotateBy(state.pose.getRotation().unaryMinus());
+          forcesX[i] = rotated.getX();
+          forcesY[i] = rotated.getY();
+        }
+
+        // All other feedforwards besides X and Y components will be zeros because they cannot be
+        // calculated without RobotConfig
+        state.feedforwards =
+            new DriveFeedforwards(
+                new double[forcesX.length],
+                new double[forcesX.length],
+                new double[forcesX.length],
+                forcesX,
+                forcesY);
 
         fullTrajStates.add(state);
       }

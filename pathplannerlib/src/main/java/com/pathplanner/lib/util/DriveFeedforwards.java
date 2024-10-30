@@ -13,6 +13,9 @@ import java.util.Arrays;
  * Collection of different feedforward values for each drive module. If using swerve, these values
  * will all be in FL, FR, BL, BR order. If using a differential drive, these will be in L, R order.
  *
+ * <p>NOTE: If using Choreo paths, all feedforwards but the X and Y component arrays will be filled
+ * with zeros.
+ *
  * @param accelerationsMPSSq Linear acceleration at the wheels in meters per second
  * @param linearForcesNewtons Linear force applied by the motors at the wheels in newtons
  * @param torqueCurrentsAmps Torque-current of the drive motors in amps
@@ -34,6 +37,9 @@ public record DriveFeedforwards(
    * Collection of different feedforward values for each drive module. If using swerve, these values
    * will all be in FL, FR, BL, BR order. If using a differential drive, these will be in L, R
    * order.
+   *
+   * <p>NOTE: If using Choreo paths, all feedforwards but the X and Y component arrays will be
+   * filled with zeros.
    *
    * @param accelerations Linear acceleration at the wheels
    * @param linearForces Linear force applied by the motors at the wheels

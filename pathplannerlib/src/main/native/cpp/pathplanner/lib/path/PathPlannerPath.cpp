@@ -181,12 +181,39 @@ void PathPlannerPath::loadChoreoTrajectoryIntoCache(
 		units::meters_per_second_t yVel { s.at("vy").get<double>() };
 		units::radians_per_second_t angularVelRps { s.at("omega").get<double>() };
 
+		auto fx = s.at("fx");
+		auto fy = s.at("fy");
+
+		std::vector < units::newton_t > forcesX;
+		std::vector < units::newton_t > forcesY;
+		for (size_t i = 0; i < fx.size(); i++) {
+			forcesX.emplace_back(fx[i].get<double>());
+			forcesY.emplace_back(fy[i].get<double>());
+		}
+
 		state.time = time;
 		state.linearVelocity = units::math::hypot(xVel, yVel);
 		state.pose = frc::Pose2d(frc::Translation2d(xPos, yPos),
 				frc::Rotation2d(rotationRad));
 		state.fieldSpeeds = frc::ChassisSpeeds { xVel, yVel, angularVelRps };
-		state.feedforwards = DriveFeedforwards::zeros(4);
+
+		// The module forces are field relative, rotate them to be robot relative
+		for (size_t i = 0; i < forcesX.size(); i++) {
+			frc::Translation2d rotated = frc::Translation2d(units::meter_t {
+					forcesX[i]() }, units::meter_t { forcesY[i]() }).RotateBy(
+					-state.pose.Rotation());
+			forcesX[i] = units::newton_t { rotated.X()() };
+			forcesY[i] = units::newton_t { rotated.Y()() };
+		}
+
+		// All other feedforwards besides X and Y components will be zeros because they cannot be
+		// calculated without RobotConfig
+		state.feedforwards = DriveFeedforwards(
+				std::vector < units::meters_per_second_squared_t
+						> (forcesX.size(), 0_mps_sq),
+				std::vector < units::newton_t > (forcesX.size(), 0_N),
+				std::vector < units::ampere_t > (forcesX.size(), 0_A), forcesX,
+				forcesY);
 
 		fullTrajStates.emplace_back(state);
 	}

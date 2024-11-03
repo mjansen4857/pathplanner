@@ -147,6 +147,14 @@ public:
 	frc::Pose2d getStartingDifferentialPose();
 
 	/**
+	 * Get the holonomic pose for the start point of this path. If the path does not have an ideal
+	 * starting state, this will return nullopt.
+	 *
+	 * @return The ideal starting pose if an ideal starting state is present, nullopt otherwise
+	 */
+	std::optional<frc::Pose2d> getStartingHolonomicPose();
+
+	/**
 	 * Create a path planner path from pre-generated path points. This is used internally, and you
 	 * likely should not use this
 	 */

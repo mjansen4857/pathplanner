@@ -769,6 +769,21 @@ class PathPlannerPath:
 
         return Pose2d(startPos, heading)
 
+    def getStartingHolonomicPose(self) -> Union[Pose2d, None]:
+        """
+        Get the holonomic pose for the start point of this path. If the path does not have an ideal
+        starting state, this will return None.
+
+        :return: The ideal starting pose if an ideal starting state is present, None otherwise
+        """
+        if self._idealStartingState is None:
+            return None
+
+        startPos = self.getPoint(0).position
+        rotation = self._idealStartingState.rotation
+
+        return Pose2d(startPos, rotation)
+
     def isChoreoPath(self) -> bool:
         """
         Check if this path is loaded from a Choreo trajectory

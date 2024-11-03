@@ -671,7 +671,7 @@ public class PathPlannerPath {
   }
 
   /**
-   * Get the differential pose for the start point of this path
+   * Get the differential pose for the start point of this path.
    *
    * @return Pose at the path's starting point
    */
@@ -685,6 +685,23 @@ public class PathPlannerPath {
     }
 
     return new Pose2d(startPos, heading);
+  }
+
+  /**
+   * Get the holonomic pose for the start point of this path. If the path does not have an ideal
+   * starting state, this will return an empty optional.
+   *
+   * @return The ideal starting pose if an ideal starting state is present, empty optional otherwise
+   */
+  public Optional<Pose2d> getStartingHolonomicPose() {
+    if (idealStartingState == null) {
+      return Optional.empty();
+    }
+
+    Translation2d startPos = getPoint(0).position;
+    Rotation2d rotation = idealStartingState.rotation();
+
+    return Optional.of(new Pose2d(startPos, rotation));
   }
 
   private PathConstraints constraintsForWaypointPos(double pos) {

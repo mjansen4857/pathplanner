@@ -442,6 +442,7 @@ public class AutoBuilder {
       chooser.setDefaultOption("None", Commands.none());
     } else {
       chooser.setDefaultOption(defaultOption.getName(), defaultOption);
+      chooser.addOption("None", Commands.none());
     }
 
     optionsModifier

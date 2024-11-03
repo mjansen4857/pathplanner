@@ -681,4 +681,6 @@ class AutoBuilder:
                 chooser.addOption(auto, AutoBuilder.buildAuto(auto))
         if not default_auto_added:
             chooser.setDefaultOption("None", cmd.none())
+        else:
+            chooser.addOption("None", cmd.none())
         return chooser

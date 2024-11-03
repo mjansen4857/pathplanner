@@ -627,6 +627,17 @@ frc::Pose2d PathPlannerPath::getStartingDifferentialPose() {
 	return frc::Pose2d(startPos, heading);
 }
 
+std::optional<frc::Pose2d> PathPlannerPath::getStartingHolonomicPose() {
+	if (!m_idealStartingState.has_value()) {
+		return std::nullopt;
+	}
+
+	frc::Translation2d startPos = getPoint(0).position;
+	frc::Rotation2d rotation = m_idealStartingState.value().getRotation();
+
+	return frc::Pose2d(startPos, rotation);
+}
+
 std::optional<PathPlannerTrajectory> PathPlannerPath::getIdealTrajectory(
 		RobotConfig robotConfig) {
 	if (!m_idealTrajectory.has_value() && m_idealStartingState.has_value()) {

@@ -37,6 +37,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Pose2d? _currentPose;
   Pose2d? _targetPose;
   late final Size _robotSize;
+  late bool _useSim;
 
   bool _gotCurrentPose = false;
   bool _gotTargetPose = false;
@@ -50,6 +51,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
     var length =
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
     _robotSize = Size(width, length);
+
+    _useSim = widget.prefs.getBool(PrefsKeys.telemetryUseSim) ??
+        Defaults.telemetryUseSim;
 
     widget.telemetry.connectionStatusStream().listen((connected) {
       if (mounted) {
@@ -148,190 +152,251 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 .animate(onPlay: (controller) => controller.repeat())
                 .rotate(duration: 1.5.seconds, curve: Curves.easeInOut),
             const SizedBox(height: 24),
-            const Text(
-              'Attempting to connect to robot...',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Please ensure that:',
-              style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-            _buildConnectionTip('The robot is powered on'),
-            _buildConnectionTip('You are connected to the correct network'),
-            _buildConnectionTip('The robot code is running'),
+            if (_useSim) ...[
+              const Text(
+                'Attempting to connect to simulator...',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please ensure that:',
+                style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              _buildConnectionTip('The simulator is running'),
+            ],
+            if (!_useSim) ...[
+              const Text(
+                'Attempting to connect to robot...',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please ensure that:',
+                style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              _buildConnectionTip('The robot is powered on'),
+              _buildConnectionTip('You are connected to the robot\'s network'),
+              _buildConnectionTip('The robot code is running'),
+            ],
             const SizedBox(height: 16),
             Text(
               'Current Server Address: ${widget.telemetry.getServerAddress()}',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            _buildSimChooser(),
           ],
         ).animate().fadeIn(duration: 500.ms, curve: Curves.easeInOut),
       );
     }
 
-    return Column(
+    return Stack(
       children: [
-        Expanded(
-          flex: 7,
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              InteractiveViewer(
-                clipBehavior: Clip.none,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Stack(
-                    children: [
-                      widget.fieldImage.getWidget(),
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: TelemetryPainter(
-                            fieldImage: widget.fieldImage,
-                            robotSize: _robotSize,
-                            currentPose: _currentPose,
-                            targetPose: _targetPose,
-                            currentPath: _currentPath,
-                            colorScheme: Theme.of(context).colorScheme,
+        Column(
+          children: [
+            Expanded(
+              flex: 7,
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  InteractiveViewer(
+                    clipBehavior: Clip.none,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Stack(
+                        children: [
+                          widget.fieldImage.getWidget(),
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: TelemetryPainter(
+                                fieldImage: widget.fieldImage,
+                                robotSize: _robotSize,
+                                currentPose: _currentPose,
+                                targetPose: _targetPose,
+                                currentPath: _currentPath,
+                                colorScheme: Theme.of(context).colorScheme,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
-        ).animate().fade(duration: 300.ms, curve: Curves.easeInOut),
-        Expanded(
-          flex: 4,
-          child: Row(
-            children: [
-              _buildGraph(
-                title: 'Robot Velocity',
-                legend: _buildLegend(Colors.green, Colors.deepPurple),
-                data: _buildData(
-                  maxY: 6.0,
-                  horizontalInterval: 1.5,
-                  spots: [
-                    [
-                      for (int i = 0; i < _velData.length; i++)
-                        FlSpot(i * 0.033, _velData[i][1].toDouble()),
-                    ],
-                    [
-                      for (int i = 0; i < _velData.length; i++)
-                        FlSpot(i * 0.033, _velData[i][0].toDouble()),
-                    ],
-                  ],
-                  lineGradients: const [
-                    LinearGradient(
-                      colors: [
-                        Colors.deepPurple,
-                        Colors.deepPurpleAccent,
+            ).animate().fade(duration: 300.ms, curve: Curves.easeInOut),
+            Expanded(
+              flex: 4,
+              child: Row(
+                children: [
+                  _buildGraph(
+                    title: 'Robot Velocity',
+                    legend: _buildLegend(Colors.green, Colors.deepPurple),
+                    data: _buildData(
+                      maxY: 6.0,
+                      horizontalInterval: 1.5,
+                      spots: [
+                        [
+                          for (int i = 0; i < _velData.length; i++)
+                            FlSpot(i * 0.033, _velData[i][1].toDouble()),
+                        ],
+                        [
+                          for (int i = 0; i < _velData.length; i++)
+                            FlSpot(i * 0.033, _velData[i][0].toDouble()),
+                        ],
+                      ],
+                      lineGradients: const [
+                        LinearGradient(
+                          colors: [
+                            Colors.deepPurple,
+                            Colors.deepPurpleAccent,
+                          ],
+                        ),
+                        LinearGradient(
+                          colors: [
+                            Colors.green,
+                            Colors.greenAccent,
+                          ],
+                        ),
                       ],
                     ),
-                    LinearGradient(
-                      colors: [
-                        Colors.green,
-                        Colors.greenAccent,
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              _buildGraph(
-                title: 'Angular Velocity',
-                legend: _buildLegend(Colors.orange, Colors.blue),
-                data: _buildData(
-                  minY: -2 * pi,
-                  maxY: 2 * pi,
-                  horizontalInterval: pi,
-                  spots: [
-                    [
-                      for (int i = 0; i < _velData.length; i++)
-                        FlSpot(i * 0.033, _velData[i][3].toDouble()),
-                    ],
-                    [
-                      for (int i = 0; i < _velData.length; i++)
-                        FlSpot(i * 0.033, _velData[i][2].toDouble()),
-                    ],
-                  ],
-                  lineGradients: const [
-                    LinearGradient(
-                      colors: [
-                        Colors.blue,
-                        Colors.blueAccent,
-                      ],
-                    ),
-                    LinearGradient(
-                      colors: [
-                        Colors.orange,
-                        Colors.orangeAccent,
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              _buildGraph(
-                title: 'Path Following Error',
-                legend: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildLegendItem('XY Error', Colors.red),
-                      const SizedBox(width: 8),
-                      _buildLegendItem('Theta Error', Colors.cyan),
-                    ],
+                  _buildGraph(
+                    title: 'Angular Velocity',
+                    legend: _buildLegend(Colors.orange, Colors.blue),
+                    data: _buildData(
+                      minY: -2 * pi,
+                      maxY: 2 * pi,
+                      horizontalInterval: pi,
+                      spots: [
+                        [
+                          for (int i = 0; i < _velData.length; i++)
+                            FlSpot(i * 0.033, _velData[i][3].toDouble()),
+                        ],
+                        [
+                          for (int i = 0; i < _velData.length; i++)
+                            FlSpot(i * 0.033, _velData[i][2].toDouble()),
+                        ],
+                      ],
+                      lineGradients: const [
+                        LinearGradient(
+                          colors: [
+                            Colors.blue,
+                            Colors.blueAccent,
+                          ],
+                        ),
+                        LinearGradient(
+                          colors: [
+                            Colors.orange,
+                            Colors.orangeAccent,
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                data: _buildData(
-                  maxY: 1.0,
-                  horizontalInterval: 0.25,
-                  spots: [
-                    [
-                      for (int i = 0; i < _xyErrorData.length; i++)
-                        FlSpot(i * 0.033, _xyErrorData.elementAt(i).toDouble()),
-                    ],
-                    [
-                      for (int i = 0; i < _thetaErrorData.length; i++)
-                        FlSpot(
-                            i * 0.033, _thetaErrorData.elementAt(i).toDouble()),
-                    ],
-                  ],
-                  lineGradients: const [
-                    LinearGradient(
-                      colors: [
-                        Colors.red,
-                        Colors.redAccent,
+                  _buildGraph(
+                    title: 'Path Following Error',
+                    legend: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildLegendItem('XY Error', Colors.red),
+                          const SizedBox(width: 8),
+                          _buildLegendItem('Theta Error', Colors.cyan),
+                        ],
+                      ),
+                    ),
+                    data: _buildData(
+                      maxY: 1.0,
+                      horizontalInterval: 0.25,
+                      spots: [
+                        [
+                          for (int i = 0; i < _xyErrorData.length; i++)
+                            FlSpot(i * 0.033,
+                                _xyErrorData.elementAt(i).toDouble()),
+                        ],
+                        [
+                          for (int i = 0; i < _thetaErrorData.length; i++)
+                            FlSpot(i * 0.033,
+                                _thetaErrorData.elementAt(i).toDouble()),
+                        ],
+                      ],
+                      lineGradients: const [
+                        LinearGradient(
+                          colors: [
+                            Colors.red,
+                            Colors.redAccent,
+                          ],
+                        ),
+                        LinearGradient(
+                          colors: [
+                            Colors.cyan,
+                            Colors.cyanAccent,
+                          ],
+                        ),
                       ],
                     ),
-                    LinearGradient(
-                      colors: [
-                        Colors.cyan,
-                        Colors.cyanAccent,
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                ]
+                    .animate(interval: 100.ms)
+                    .fade(duration: 300.ms, curve: Curves.easeInOut)
+                    .slide(begin: const Offset(0, 0.3)),
               ),
-            ]
-                .animate(interval: 100.ms)
-                .fade(duration: 300.ms, curve: Curves.easeInOut)
-                .slide(begin: const Offset(0, 0.3)),
-          ),
+            ),
+          ],
+        ),
+        Align(
+          alignment: Alignment.topLeft,
+          child: _buildSimChooser(),
         ),
       ],
+    );
+  }
+
+  Widget _buildSimChooser() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: SegmentedButton<bool>(
+        segments: const [
+          ButtonSegment(
+            value: true,
+            label: Text('Simulator'),
+          ),
+          ButtonSegment(
+            value: false,
+            label: Text('Robot'),
+          ),
+        ],
+        selected: {_useSim},
+        onSelectionChanged: (val) {
+          setState(() {
+            _useSim = val.first;
+            widget.prefs.setBool(PrefsKeys.telemetryUseSim, _useSim);
+          });
+
+          if (_useSim) {
+            widget.telemetry.setServerAddress('127.0.0.1');
+          } else {
+            widget.telemetry.setServerAddress(
+                widget.prefs.getString(PrefsKeys.ntServerAddress) ??
+                    Defaults.ntServerAddress);
+          }
+        },
+      ),
     );
   }
 

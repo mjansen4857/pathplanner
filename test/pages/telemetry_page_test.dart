@@ -52,7 +52,7 @@ void main() {
     await widgetTester.pump(const Duration(seconds: 1));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.text('Attempting to connect to robot...'), findsOneWidget);
+    expect(find.text('Attempting to connect to simulator...'), findsOneWidget);
     expect(find.text('Current Server Address: localhost:5811'), findsOneWidget);
     expect(find.byType(LineChart), findsNothing);
   });
@@ -171,7 +171,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    expect(find.text('Attempting to connect to robot...'), findsOneWidget);
+    expect(find.text('Attempting to connect to simulator...'), findsOneWidget);
 
     // Connect
     connectionStatusController.add(true);
@@ -187,6 +187,44 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.text('Attempting to connect to simulator...'), findsOneWidget);
+  });
+
+  testWidgets('sim/robot selection', (widgetTester) async {
+    var telemetry = MockPPLibTelemetry();
+
+    final connectionStatusController = StreamController<bool>();
+    when(telemetry.connectionStatusStream())
+        .thenAnswer((_) => connectionStatusController.stream);
+    when(telemetry.getServerAddress()).thenReturn('127.0.0.1');
+    when(telemetry.velocitiesStream()).thenAnswer((_) => const Stream.empty());
+    when(telemetry.currentPoseStream()).thenAnswer((_) => Stream.value(null));
+    when(telemetry.targetPoseStream()).thenAnswer((_) => Stream.value(null));
+    when(telemetry.currentPathStream()).thenAnswer((_) => Stream.value(null));
+
+    connectionStatusController.add(false);
+    addTearDown(connectionStatusController.close);
+
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 720));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: TelemetryPage(
+          fieldImage: FieldImage.defaultField,
+          telemetry: telemetry,
+          prefs: prefs,
+        ),
+      ),
+    ));
+
+    await widgetTester.pump(const Duration(seconds: 1));
+
+    expect(find.byType(SegmentedButton<bool>), findsOneWidget);
+    expect(find.text('Attempting to connect to simulator...'), findsOneWidget);
+
+    await widgetTester.tap(find.text('Robot'));
+    await widgetTester.pump();
+
     expect(find.text('Attempting to connect to robot...'), findsOneWidget);
   });
 }

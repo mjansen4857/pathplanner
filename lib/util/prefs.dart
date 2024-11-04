@@ -39,6 +39,7 @@ class PrefsKeys {
   static const String showStates = 'showStates';
   static const String showRobotDetails = 'showRobotDetails';
   static const String showGrid = 'showGrid';
+  static const String telemetryUseSim = 'telemetryUseSim';
 }
 
 class Defaults {
@@ -48,7 +49,7 @@ class Defaults {
   static const bool holonomicMode = true;
   static const double projectLeftWeight = 0.5;
   static const double editorTreeWeight = 0.5;
-  static const String ntServerAddress = '127.0.0.1';
+  static const String ntServerAddress = '10.30.15.2';
   static const bool treeOnRight = true;
   static const String pathSortOption = 'recent';
   static const String autoSortOption = 'recent';
@@ -79,4 +80,5 @@ class Defaults {
   static const bool showStates = false;
   static const bool showRobotDetails = false;
   static const bool showGrid = false;
+  static const bool telemetryUseSim = true;
 }

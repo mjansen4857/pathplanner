@@ -198,13 +198,13 @@ class _TelemetryPageState extends State<TelemetryPage> {
       );
     }
 
-    return Stack(
+    return Column(
       children: [
-        Column(
-          children: [
-            Expanded(
-              flex: 7,
-              child: Row(
+        Expanded(
+          flex: 7,
+          child: Stack(
+            children: [
+              Row(
                 mainAxisSize: MainAxisSize.max,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -233,135 +233,134 @@ class _TelemetryPageState extends State<TelemetryPage> {
                   ),
                 ],
               ),
-            ).animate().fade(duration: 300.ms, curve: Curves.easeInOut),
-            Expanded(
-              flex: 4,
-              child: Row(
-                children: [
-                  _buildGraph(
-                    title: 'Robot Velocity',
-                    legend: _buildLegend(Colors.green, Colors.deepPurple),
-                    data: _buildData(
-                      maxY: 6.0,
-                      horizontalInterval: 1.5,
-                      spots: [
-                        [
-                          for (int i = 0; i < _velData.length; i++)
-                            FlSpot(i * 0.033, _velData[i][1].toDouble()),
-                        ],
-                        [
-                          for (int i = 0; i < _velData.length; i++)
-                            FlSpot(i * 0.033, _velData[i][0].toDouble()),
-                        ],
-                      ],
-                      lineGradients: const [
-                        LinearGradient(
-                          colors: [
-                            Colors.deepPurple,
-                            Colors.deepPurpleAccent,
-                          ],
-                        ),
-                        LinearGradient(
-                          colors: [
-                            Colors.green,
-                            Colors.greenAccent,
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildGraph(
-                    title: 'Angular Velocity',
-                    legend: _buildLegend(Colors.orange, Colors.blue),
-                    data: _buildData(
-                      minY: -2 * pi,
-                      maxY: 2 * pi,
-                      horizontalInterval: pi,
-                      spots: [
-                        [
-                          for (int i = 0; i < _velData.length; i++)
-                            FlSpot(i * 0.033, _velData[i][3].toDouble()),
-                        ],
-                        [
-                          for (int i = 0; i < _velData.length; i++)
-                            FlSpot(i * 0.033, _velData[i][2].toDouble()),
-                        ],
-                      ],
-                      lineGradients: const [
-                        LinearGradient(
-                          colors: [
-                            Colors.blue,
-                            Colors.blueAccent,
-                          ],
-                        ),
-                        LinearGradient(
-                          colors: [
-                            Colors.orange,
-                            Colors.orangeAccent,
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  _buildGraph(
-                    title: 'Path Following Error',
-                    legend: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildLegendItem('XY Error', Colors.red),
-                          const SizedBox(width: 8),
-                          _buildLegendItem('Theta Error', Colors.cyan),
-                        ],
-                      ),
-                    ),
-                    data: _buildData(
-                      maxY: 1.0,
-                      horizontalInterval: 0.25,
-                      spots: [
-                        [
-                          for (int i = 0; i < _xyErrorData.length; i++)
-                            FlSpot(i * 0.033,
-                                _xyErrorData.elementAt(i).toDouble()),
-                        ],
-                        [
-                          for (int i = 0; i < _thetaErrorData.length; i++)
-                            FlSpot(i * 0.033,
-                                _thetaErrorData.elementAt(i).toDouble()),
-                        ],
-                      ],
-                      lineGradients: const [
-                        LinearGradient(
-                          colors: [
-                            Colors.red,
-                            Colors.redAccent,
-                          ],
-                        ),
-                        LinearGradient(
-                          colors: [
-                            Colors.cyan,
-                            Colors.cyanAccent,
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ]
-                    .animate(interval: 100.ms)
-                    .fade(duration: 300.ms, curve: Curves.easeInOut)
-                    .slide(begin: const Offset(0, 0.3)),
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: _buildSimChooser(),
               ),
-            ),
-          ],
-        ),
-        Align(
-          alignment: Alignment.topLeft,
-          child: _buildSimChooser(),
+            ],
+          ),
+        ).animate().fade(duration: 300.ms, curve: Curves.easeInOut),
+        Expanded(
+          flex: 4,
+          child: Row(
+            children: [
+              _buildGraph(
+                title: 'Robot Velocity',
+                legend: _buildLegend(Colors.green, Colors.deepPurple),
+                data: _buildData(
+                  maxY: 6.0,
+                  horizontalInterval: 1.5,
+                  spots: [
+                    [
+                      for (int i = 0; i < _velData.length; i++)
+                        FlSpot(i * 0.033, _velData[i][1].toDouble()),
+                    ],
+                    [
+                      for (int i = 0; i < _velData.length; i++)
+                        FlSpot(i * 0.033, _velData[i][0].toDouble()),
+                    ],
+                  ],
+                  lineGradients: const [
+                    LinearGradient(
+                      colors: [
+                        Colors.deepPurple,
+                        Colors.deepPurpleAccent,
+                      ],
+                    ),
+                    LinearGradient(
+                      colors: [
+                        Colors.green,
+                        Colors.greenAccent,
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              _buildGraph(
+                title: 'Angular Velocity',
+                legend: _buildLegend(Colors.orange, Colors.blue),
+                data: _buildData(
+                  minY: -2 * pi,
+                  maxY: 2 * pi,
+                  horizontalInterval: pi,
+                  spots: [
+                    [
+                      for (int i = 0; i < _velData.length; i++)
+                        FlSpot(i * 0.033, _velData[i][3].toDouble()),
+                    ],
+                    [
+                      for (int i = 0; i < _velData.length; i++)
+                        FlSpot(i * 0.033, _velData[i][2].toDouble()),
+                    ],
+                  ],
+                  lineGradients: const [
+                    LinearGradient(
+                      colors: [
+                        Colors.blue,
+                        Colors.blueAccent,
+                      ],
+                    ),
+                    LinearGradient(
+                      colors: [
+                        Colors.orange,
+                        Colors.orangeAccent,
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              _buildGraph(
+                title: 'Path Following Error',
+                legend: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildLegendItem('XY Error', Colors.red),
+                      const SizedBox(width: 8),
+                      _buildLegendItem('Theta Error', Colors.cyan),
+                    ],
+                  ),
+                ),
+                data: _buildData(
+                  maxY: 1.0,
+                  horizontalInterval: 0.25,
+                  spots: [
+                    [
+                      for (int i = 0; i < _xyErrorData.length; i++)
+                        FlSpot(i * 0.033, _xyErrorData.elementAt(i).toDouble()),
+                    ],
+                    [
+                      for (int i = 0; i < _thetaErrorData.length; i++)
+                        FlSpot(
+                            i * 0.033, _thetaErrorData.elementAt(i).toDouble()),
+                    ],
+                  ],
+                  lineGradients: const [
+                    LinearGradient(
+                      colors: [
+                        Colors.red,
+                        Colors.redAccent,
+                      ],
+                    ),
+                    LinearGradient(
+                      colors: [
+                        Colors.cyan,
+                        Colors.cyanAccent,
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ]
+                .animate(interval: 100.ms)
+                .fade(duration: 300.ms, curve: Curves.easeInOut)
+                .slide(begin: const Offset(0, 0.3)),
+          ),
         ),
       ],
     );

@@ -99,9 +99,15 @@ void main() async {
       prefs.setString(PrefsKeys.ntServerAddress, Defaults.ntServerAddress);
     }
 
-    PPLibTelemetry telemetry = PPLibTelemetry(
-        serverBaseAddress: prefs.getString(PrefsKeys.ntServerAddress) ??
+    bool useSim =
+        prefs.getBool(PrefsKeys.telemetryUseSim) ?? Defaults.telemetryUseSim;
+    String telemetryAddress = useSim
+        ? '127.0.0.1'
+        : (prefs.getString(PrefsKeys.ntServerAddress) ??
             Defaults.ntServerAddress);
+
+    PPLibTelemetry telemetry =
+        PPLibTelemetry(serverBaseAddress: telemetryAddress);
 
     runApp(PathPlanner(
       appVersion: packageInfo.version,

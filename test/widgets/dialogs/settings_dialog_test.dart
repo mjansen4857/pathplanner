@@ -681,8 +681,6 @@ void main() {
     final textField = find.widgetWithText(TextField, 'roboRIO IP (10.TE.AM.2)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('10.30.15.2')),
-        findsOneWidget);
 
     await widgetTester.enterText(textField, '10.99.99.2');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);

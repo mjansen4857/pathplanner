@@ -37,6 +37,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Pose2d? _currentPose;
   Pose2d? _targetPose;
   late final Size _robotSize;
+  late bool _useSim;
 
   bool _gotCurrentPose = false;
   bool _gotTargetPose = false;
@@ -50,6 +51,9 @@ class _TelemetryPageState extends State<TelemetryPage> {
     var length =
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
     _robotSize = Size(width, length);
+
+    _useSim = widget.prefs.getBool(PrefsKeys.telemetryUseSim) ??
+        Defaults.telemetryUseSim;
 
     widget.telemetry.connectionStatusStream().listen((connected) {
       if (mounted) {
@@ -148,28 +152,47 @@ class _TelemetryPageState extends State<TelemetryPage> {
                 .animate(onPlay: (controller) => controller.repeat())
                 .rotate(duration: 1.5.seconds, curve: Curves.easeInOut),
             const SizedBox(height: 24),
-            const Text(
-              'Attempting to connect to robot...',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Please ensure that:',
-              style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-            _buildConnectionTip('The robot is powered on'),
-            _buildConnectionTip('You are connected to the correct network'),
-            _buildConnectionTip('The robot code is running'),
+            if (_useSim) ...[
+              const Text(
+                'Attempting to connect to simulator...',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please ensure that:',
+                style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              _buildConnectionTip('The simulator is running'),
+            ],
+            if (!_useSim) ...[
+              const Text(
+                'Attempting to connect to robot...',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Please ensure that:',
+                style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              _buildConnectionTip('The robot is powered on'),
+              _buildConnectionTip('You are connected to the robot\'s network'),
+              _buildConnectionTip('The robot code is running'),
+            ],
             const SizedBox(height: 16),
             Text(
               'Current Server Address: ${widget.telemetry.getServerAddress()}',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            _buildSimChooser(),
           ],
         ).animate().fadeIn(duration: 500.ms, curve: Curves.easeInOut),
       );
@@ -179,32 +202,40 @@ class _TelemetryPageState extends State<TelemetryPage> {
       children: [
         Expanded(
           flex: 7,
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Stack(
             children: [
-              InteractiveViewer(
-                clipBehavior: Clip.none,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Stack(
-                    children: [
-                      widget.fieldImage.getWidget(),
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: TelemetryPainter(
-                            fieldImage: widget.fieldImage,
-                            robotSize: _robotSize,
-                            currentPose: _currentPose,
-                            targetPose: _targetPose,
-                            currentPath: _currentPath,
-                            colorScheme: Theme.of(context).colorScheme,
+              Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  InteractiveViewer(
+                    clipBehavior: Clip.none,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Stack(
+                        children: [
+                          widget.fieldImage.getWidget(),
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: TelemetryPainter(
+                                fieldImage: widget.fieldImage,
+                                robotSize: _robotSize,
+                                currentPose: _currentPose,
+                                targetPose: _targetPose,
+                                currentPath: _currentPath,
+                                colorScheme: Theme.of(context).colorScheme,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: _buildSimChooser(),
               ),
             ],
           ),
@@ -332,6 +363,39 @@ class _TelemetryPageState extends State<TelemetryPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSimChooser() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: SegmentedButton<bool>(
+        segments: const [
+          ButtonSegment(
+            value: true,
+            label: Text('Simulator'),
+          ),
+          ButtonSegment(
+            value: false,
+            label: Text('Robot'),
+          ),
+        ],
+        selected: {_useSim},
+        onSelectionChanged: (val) {
+          setState(() {
+            _useSim = val.first;
+            widget.prefs.setBool(PrefsKeys.telemetryUseSim, _useSim);
+          });
+
+          if (_useSim) {
+            widget.telemetry.setServerAddress('127.0.0.1');
+          } else {
+            widget.telemetry.setServerAddress(
+                widget.prefs.getString(PrefsKeys.ntServerAddress) ??
+                    Defaults.ntServerAddress);
+          }
+        },
+      ),
     );
   }
 

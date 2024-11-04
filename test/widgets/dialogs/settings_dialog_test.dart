@@ -678,19 +678,16 @@ void main() {
       ),
     ));
 
-    final textField =
-        find.widgetWithText(TextField, 'Host IP (localhost = 127.0.0.1)');
+    final textField = find.widgetWithText(TextField, 'roboRIO IP (10.TE.AM.2)');
 
     expect(textField, findsOneWidget);
-    expect(find.descendant(of: textField, matching: find.text('127.0.0.1')),
-        findsOneWidget);
 
-    await widgetTester.enterText(textField, '10.30.15.2');
+    await widgetTester.enterText(textField, '10.99.99.2');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(settingsChanged, true);
-    expect(prefs.getString(PrefsKeys.ntServerAddress), '10.30.15.2');
+    expect(prefs.getString(PrefsKeys.ntServerAddress), '10.99.99.2');
   });
 
   testWidgets('holonomic mode chip', (widgetTester) async {

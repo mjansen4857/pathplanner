@@ -743,7 +743,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           Expanded(
                             child: _buildTextField(
                               context,
-                              'Host IP (localhost = 127.0.0.1)',
+                              'roboRIO IP (10.TE.AM.2)',
                               (value) {
                                 // Check if valid IP
                                 try {

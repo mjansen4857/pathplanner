@@ -8,7 +8,7 @@ on:
 env:
   INSTANCE: Writerside/hi
   ARTIFACT: webHelpHI2-all.zip
-  DOCKER_VERSION: 232.10275
+  DOCKER_VERSION: '242.21870'
   ALGOLIA_ARTIFACT: algolia-indexes-HI.zip
   ALGOLIA_APP_NAME: JPTUGJLEMP
   ALGOLIA_INDEX_NAME: PathPlanner_docs

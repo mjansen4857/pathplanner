@@ -39,7 +39,7 @@ public class EventTrigger extends Trigger {
    * @param name The name of the event
    * @return A boolean supplier to poll the event's condition
    */
-  public static BooleanSupplier pollCondition(String name) {
+  private static BooleanSupplier pollCondition(String name) {
     // Ensure there is a condition in the map for this name
     if (!eventConditions.containsKey(name)) {
       eventConditions.put(name, false);

@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING, override, Callable
+from typing import List, TYPE_CHECKING, Callable
 from commands2 import Command, Subsystem, CommandScheduler, cmd
 from commands2.button import Trigger
 from wpilib.event import EventLoop
@@ -206,16 +206,13 @@ class ScheduleCommandEvent(Event):
         super().__init__(timestamp)
         self._command = command
 
-    @override
     def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
         eventScheduler.scheduleCommand(self._command)
 
-    @override
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         # Do nothing
         pass
 
-    @override
     def copyWithTime(self, timestamp: float) -> Event:
         return ScheduleCommandEvent(timestamp, self._command)
 
@@ -233,16 +230,13 @@ class CancelCommandEvent(Event):
         super().__init__(timestamp)
         self._command = command
 
-    @override
     def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
         eventScheduler.cancelCommand(self._command)
 
-    @override
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         # Do nothing
         pass
 
-    @override
     def copyWithTime(self, timestamp: float) -> Event:
         return CancelCommandEvent(timestamp, self._command)
 
@@ -263,16 +257,13 @@ class TriggerEvent(Event):
         self._name = name
         self._active = active
 
-    @override
     def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
         EventTrigger.setCondition(self._name, self._active)
 
-    @override
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         if not self._active:
             EventTrigger.setCondition(self._name, False)
 
-    @override
     def copyWithTime(self, timestamp: float) -> Event:
         return TriggerEvent(timestamp, self._name, self._active)
 
@@ -293,16 +284,13 @@ class PointTowardsZoneEvent(Event):
         self._name = name
         self._active = active
 
-    @override
     def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
         PointTowardsZoneTrigger.setWithinZone(self._name, self._active)
 
-    @override
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         if not self._active:
             PointTowardsZoneTrigger.setWithinZone(self._name, False)
 
-    @override
     def copyWithTime(self, timestamp: float) -> Event:
         return PointTowardsZoneEvent(timestamp, self._name, self._active)
 
@@ -323,18 +311,15 @@ class OneShotTriggerEvent(Event):
         self._resetCommand = cmd.waitSeconds(0).andThen(
             cmd.runOnce(lambda: EventTrigger.setCondition(self._name, False))).ignoringDisable(True)
 
-    @override
     def handleEvent(self, eventScheduler: 'EventScheduler') -> None:
         EventTrigger.setCondition(self._name, True)
         # We schedule this command with the main command scheduler so that it is guaranteed to be run
         # in its entirety, since the EventScheduler could cancel this command before it finishes
         CommandScheduler.getInstance().schedule(self._resetCommand)
 
-    @override
     def cancelEvent(self, eventScheduler: 'EventScheduler') -> None:
         # Do nothing
         pass
 
-    @override
     def copyWithTime(self, timestamp: float) -> Event:
         return OneShotTriggerEvent(timestamp, self._name)

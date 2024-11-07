@@ -5,9 +5,8 @@
 # PathPlanner
 <a href="https://www.microsoft.com/en-us/p/frc-pathplanner/9nqbkb5dw909?cid=storebadge&ocid=badge&rtc=1&activetab=pivot:overviewtab"><img src="https://mjansen4857.com/badges/windows.svg" height=50></a>
 &nbsp;&nbsp;&nbsp;
-<a href="https://apps.apple.com/us/app/frc-pathplanner/id1593046876"><img src="https://mjansen4857.com/badges/mac.svg" height=51></a>
 
-Download from one of the above app stores to receive auto-updates. Manual installs can be found [here](https://github.com/mjansen4857/pathplanner/releases).
+Download from the Microsoft Store to receive auto-updates for stable releases. Manual installs and pre-releases can be found [here](https://github.com/mjansen4857/pathplanner/releases).
 
 ## About
 ![PathPlanner](https://github.com/mjansen4857/pathplanner/assets/9343077/a395bdb4-71f9-4d88-9ff7-55241b26f4de)

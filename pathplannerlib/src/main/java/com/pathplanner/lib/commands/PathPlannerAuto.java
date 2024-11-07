@@ -6,9 +6,9 @@ import static edu.wpi.first.units.Units.Seconds;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.AutoBuilderException;
 import com.pathplanner.lib.auto.CommandUtil;
-import com.pathplanner.lib.events.EventTrigger;
-import com.pathplanner.lib.events.PointTowardsZoneTrigger;
+import com.pathplanner.lib.events.*;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.trajectory.PathPlannerTrajectory;
 import com.pathplanner.lib.util.FileVersionException;
 import com.pathplanner.lib.util.FlippingUtil;
 import com.pathplanner.lib.util.PPLibTelemetry;
@@ -26,8 +26,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.BooleanSupplier;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -39,13 +38,18 @@ public class PathPlannerAuto extends Command {
   /** The currently running path name. Used to handle activePath triggers */
   public static String currentPathName = "";
 
+  private static PathPlannerTrajectory currentTrajectory = null;
+  private static Map<String, List<Translation2d>> eventStartPositions = new HashMap<>();
+  private static Map<String, List<Translation2d>> eventEndPositions = new HashMap<>();
+  private static Timer trajTimer = new Timer();
+
   private static int instances = 0;
 
   private Command autoCommand;
   private Pose2d startingPose;
 
   private final EventLoop autoLoop;
-  private final Timer timer;
+  private final Timer autoTimer;
   private boolean isRunning = false;
 
   /**
@@ -105,7 +109,7 @@ public class PathPlannerAuto extends Command {
     PPLibTelemetry.registerHotReloadAuto(autoName, this);
 
     this.autoLoop = new EventLoop();
-    this.timer = new Timer();
+    this.autoTimer = new Timer();
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathPlannerAuto, instances);
@@ -124,7 +128,7 @@ public class PathPlannerAuto extends Command {
     addRequirements(autoCommand.getRequirements());
 
     this.autoLoop = new EventLoop();
-    this.timer = new Timer();
+    this.autoTimer = new Timer();
 
     instances++;
     HAL.report(tResourceType.kResourceType_PathPlannerAuto, instances);
@@ -159,13 +163,60 @@ public class PathPlannerAuto extends Command {
   }
 
   /**
+   * Used by path following commands to inform autos of what trajectory is currently being followed
+   *
+   * @param trajectory The current trajectory being followed
+   */
+  public static void setCurrentTrajectory(PathPlannerTrajectory trajectory) {
+    currentTrajectory = trajectory;
+    eventStartPositions.clear();
+    eventEndPositions.clear();
+    trajTimer.restart();
+
+    if (trajectory == null) {
+      return;
+    }
+
+    for (Event e : trajectory.getEvents()) {
+      if (e instanceof OneShotTriggerEvent event) {
+        if (!eventStartPositions.containsKey(event.getEventName())) {
+          eventStartPositions.put(event.getEventName(), new ArrayList<>());
+        }
+        if (!eventEndPositions.containsKey(event.getEventName())) {
+          eventEndPositions.put(event.getEventName(), new ArrayList<>());
+        }
+
+        Translation2d pos =
+            currentTrajectory.sample(event.getTimestampSeconds()).pose.getTranslation();
+        eventStartPositions.get(event.getEventName()).add(pos);
+        eventEndPositions.get(event.getEventName()).add(pos);
+      } else if (e instanceof TriggerEvent event) {
+        Translation2d pos =
+            currentTrajectory.sample(event.getTimestampSeconds()).pose.getTranslation();
+
+        if (event.getValue()) {
+          if (!eventStartPositions.containsKey(event.getEventName())) {
+            eventStartPositions.put(event.getEventName(), new ArrayList<>());
+          }
+          eventStartPositions.get(event.getEventName()).add(pos);
+        } else {
+          if (!eventEndPositions.containsKey(event.getEventName())) {
+            eventEndPositions.put(event.getEventName(), new ArrayList<>());
+          }
+          eventEndPositions.get(event.getEventName()).add(pos);
+        }
+      }
+    }
+  }
+
+  /**
    * Trigger that is high when the given time has elapsed
    *
    * @param time The amount of time this auto should run before the trigger is activated
    * @return timeElapsed trigger
    */
   public Trigger timeElapsed(double time) {
-    return condition(() -> timer.hasElapsed(time));
+    return condition(() -> autoTimer.hasElapsed(time));
   }
 
   /**
@@ -186,7 +237,7 @@ public class PathPlannerAuto extends Command {
    * @return timeRange trigger
    */
   public Trigger timeRange(double startTime, double endTime) {
-    return condition(() -> timer.get() >= startTime && timer.get() <= endTime);
+    return condition(() -> autoTimer.get() >= startTime && autoTimer.get() <= endTime);
   }
 
   /**
@@ -209,6 +260,133 @@ public class PathPlannerAuto extends Command {
    */
   public Trigger event(String eventName) {
     return new EventTrigger(autoLoop, eventName);
+  }
+
+  /**
+   * Create a trigger that will be activated a given time before an event is reached. The trigger
+   * will go low after passing the given event.
+   *
+   * @param eventName The event name
+   * @param timeSeconds The amount of time before the event this trigger should activate, in seconds
+   * @return beforeEvent trigger
+   */
+  public Trigger beforeEvent(String eventName, double timeSeconds) {
+    return condition(
+        () -> {
+          if (currentTrajectory == null) {
+            return false;
+          }
+
+          Event upcoming = null;
+          for (Event e : currentTrajectory.getEvents()) {
+            if (e instanceof OneShotTriggerEvent event) {
+              if (event.getTimestampSeconds() > trajTimer.get()
+                  && eventName.equals(event.getEventName())) {
+                upcoming = e;
+                break;
+              }
+            } else if (e instanceof TriggerEvent event) {
+              if (event.getValue()
+                  && event.getTimestampSeconds() > trajTimer.get()
+                  && eventName.equals(event.getEventName())) {
+                upcoming = e;
+                break;
+              }
+            }
+          }
+
+          if (upcoming == null) {
+            return false;
+          }
+
+          return (upcoming.getTimestampSeconds() - trajTimer.get()) < timeSeconds;
+        });
+  }
+
+  /**
+   * Create a trigger that will be activated a given time before an event is reached. The trigger
+   * will go low after passing the given event.
+   *
+   * @param eventName The event name
+   * @param time The amount of time before the event this trigger should activate
+   * @return beforeEvent trigger
+   */
+  public Trigger beforeEvent(String eventName, Time time) {
+    return beforeEvent(eventName, time.in(Seconds));
+  }
+
+  /**
+   * Create a trigger that will be activated when the robot is within a given distance from the
+   * start of an event
+   *
+   * @param eventName The event name
+   * @param distanceMeters The distance from the event that will activate this trigger, in meters
+   * @return distanceFromEvent trigger
+   */
+  public Trigger distanceFromEvent(String eventName, double distanceMeters) {
+    return condition(
+        () -> {
+          if (!eventStartPositions.containsKey(eventName)) {
+            return false;
+          }
+
+          for (Translation2d pos : eventStartPositions.get(eventName)) {
+            if (AutoBuilder.getCurrentPose().getTranslation().getDistance(pos) <= distanceMeters) {
+              return true;
+            }
+          }
+
+          return false;
+        });
+  }
+
+  /**
+   * Create a trigger that will be activated when the robot is within a given distance from the
+   * start of an event
+   *
+   * @param eventName The event name
+   * @param distance The distance from the event that will activate this trigger
+   * @return distanceFromEvent trigger
+   */
+  public Trigger distanceFromEvent(String eventName, Distance distance) {
+    return distanceFromEvent(eventName, distance.in(Meters));
+  }
+
+  /**
+   * Create a trigger that will be activated when the robot is within a given distance from the end
+   * of an event
+   *
+   * @param eventName The event name
+   * @param distanceMeters The distance from the event that will activate this trigger, in meters
+   * @return distanceFromEventEnd trigger
+   */
+  public Trigger distanceFromEventEnd(String eventName, double distanceMeters) {
+    return condition(
+        () -> {
+          if (!eventEndPositions.containsKey(eventName)) {
+            return false;
+          }
+
+          for (Translation2d pos : eventEndPositions.get(eventName)) {
+            if (AutoBuilder.getCurrentPose().getTranslation().getDistance(pos) <= distanceMeters) {
+              return true;
+            }
+          }
+
+          return false;
+        });
+  }
+
+  /**
+   * Create a trigger that will be activated when the robot is within a given distance from the end
+   * of an event
+   *
+   * @param eventName The event name
+   * @param distance The distance from the event that will activate this trigger
+   * @return distanceFromEventEnd trigger
+   */
+  public Trigger distanceFromEventEnd(String eventName, Distance distance) {
+    return distanceFromEventEnd(eventName, distance.in(Meters));
   }
 
   /**
@@ -379,7 +557,7 @@ public class PathPlannerAuto extends Command {
   @Override
   public void initialize() {
     autoCommand.initialize();
-    timer.restart();
+    autoTimer.restart();
 
     isRunning = true;
     autoLoop.poll();
@@ -400,7 +578,7 @@ public class PathPlannerAuto extends Command {
   @Override
   public void end(boolean interrupted) {
     autoCommand.end(interrupted);
-    timer.stop();
+    autoTimer.stop();
 
     isRunning = false;
     autoLoop.poll();

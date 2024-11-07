@@ -94,8 +94,6 @@ public class FollowPathCommand extends Command {
 
   @Override
   public void initialize() {
-    PathPlannerAuto.currentPathName = originalPath.name;
-
     if (shouldFlipPath.getAsBoolean() && !originalPath.preventFlipping) {
       path = originalPath.flipPath();
     } else {
@@ -132,6 +130,9 @@ public class FollowPathCommand extends Command {
       // No ideal starting state, generate the trajectory
       trajectory = path.generateTrajectory(currentSpeeds, currentPose.getRotation(), robotConfig);
     }
+
+    PathPlannerAuto.setCurrentTrajectory(trajectory);
+    PathPlannerAuto.currentPathName = originalPath.name;
 
     PathPlannerLogging.logActivePath(path);
     PPLibTelemetry.setCurrentPath(path);
@@ -184,6 +185,7 @@ public class FollowPathCommand extends Command {
   public void end(boolean interrupted) {
     timer.stop();
     PathPlannerAuto.currentPathName = "";
+    PathPlannerAuto.setCurrentTrajectory(null);
 
     // Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
     // the command to smoothly transition into some auto-alignment routine

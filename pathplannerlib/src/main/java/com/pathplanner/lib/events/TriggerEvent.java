@@ -34,6 +34,24 @@ public class TriggerEvent extends Event {
   }
 
   /**
+   * Get the event name for this event
+   *
+   * @return The event name
+   */
+  public String getEventName() {
+    return name;
+  }
+
+  /**
+   * Get whether this event will set the trigger high or low
+   *
+   * @return Value of the trigger
+   */
+  public boolean getValue() {
+    return active;
+  }
+
+  /**
    * Handle this event
    *
    * @param eventScheduler Reference to the EventScheduler running this event

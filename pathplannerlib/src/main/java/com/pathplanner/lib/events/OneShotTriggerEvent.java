@@ -37,6 +37,15 @@ public class OneShotTriggerEvent extends Event {
     this(timestamp.in(Seconds), name);
   }
 
+  /**
+   * Get the event name for this event
+   *
+   * @return The event name
+   */
+  public String getEventName() {
+    return name;
+  }
+
   @Override
   public void handleEvent(EventScheduler eventScheduler) {
     EventTrigger.setCondition(name, true);

@@ -43,11 +43,6 @@ class PathPainterUtil {
       Color color,
       Color outlineColor,
       {bool showDetails = false}) {
-    var paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = color
-      ..strokeWidth = 2;
-
     Offset center =
         PathPainterUtil.pointToPixelOffset(pose.translation, scale, fieldImage);
 
@@ -56,29 +51,16 @@ class PathPainterUtil {
     double length =
         PathPainterUtil.metersToPixels(robotSize.height, scale, fieldImage);
 
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(-pose.rotation.radians.toDouble());
-    canvas.translate(-center.dx, -center.dy);
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromCenter(center: center, width: length, height: width),
-            const Radius.circular(5)),
-        paint);
-
-    Offset frontMiddle = center + Offset(length / 2, 0);
-
-    // Draw the dot
-    paint.style = PaintingStyle.fill;
-    canvas.drawCircle(frontMiddle,
-        PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
-    paint.style = PaintingStyle.stroke;
-    paint.strokeWidth = 1;
-    paint.color = outlineColor;
-    canvas.drawCircle(frontMiddle,
-        PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
-
-    canvas.restore();
+    paintRobotOutlinePixels(
+      center,
+      pose.rotation.radians.toDouble(),
+      Size(width, length),
+      PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage),
+      PathPainterUtil.metersToPixels(0.075, scale, fieldImage),
+      canvas,
+      color,
+      outlineColor,
+    );
 
     if (showDetails) {
       String angleText = '${pose.rotation.degrees.toStringAsFixed(1)}°';
@@ -138,6 +120,46 @@ class PathPainterUtil {
 
       canvas.restore();
     }
+  }
+
+  static void paintRobotOutlinePixels(
+      Offset center,
+      double rotationRadians,
+      Size robotSizePixels,
+      double dotRadiusPixels,
+      double bumperRadiusPixels,
+      Canvas canvas,
+      Color color,
+      Color outlineColor) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = color
+      ..strokeWidth = 2;
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(-rotationRadians);
+    canvas.translate(-center.dx, -center.dy);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromCenter(
+                center: center,
+                width: robotSizePixels.height,
+                height: robotSizePixels.width),
+            Radius.circular(bumperRadiusPixels)),
+        paint);
+
+    Offset frontMiddle = center + Offset(robotSizePixels.height / 2, 0);
+
+    // Draw the dot
+    paint.style = PaintingStyle.fill;
+    canvas.drawCircle(frontMiddle, dotRadiusPixels, paint);
+    paint.style = PaintingStyle.stroke;
+    paint.strokeWidth = 1;
+    paint.color = outlineColor;
+    canvas.drawCircle(frontMiddle, dotRadiusPixels, paint);
+
+    canvas.restore();
   }
 
   static void paintMarker(

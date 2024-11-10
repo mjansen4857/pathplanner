@@ -76,6 +76,8 @@ class _AppSettingsState extends State<AppSettings> {
 
   @override
   Widget build(BuildContext context) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -255,6 +257,7 @@ class _AppSettingsState extends State<AppSettings> {
                   FilterChip.elevated(
                     label: const Text('Holonomic Mode'),
                     selected: _holonomicMode,
+                    backgroundColor: colorScheme.surfaceContainerHigh,
                     onSelected: (value) {
                       widget.prefs.setBool(PrefsKeys.holonomicMode, value);
                       setState(() {
@@ -266,6 +269,7 @@ class _AppSettingsState extends State<AppSettings> {
                   FilterChip.elevated(
                     label: const Text('Hot Reload'),
                     selected: _hotReload,
+                    backgroundColor: colorScheme.surfaceContainerHigh,
                     onSelected: (value) {
                       widget.prefs.setBool(PrefsKeys.hotReloadEnabled, value);
                       setState(() {

@@ -86,6 +86,7 @@ class TrajectoryPainter extends CustomPainter {
               trajectory.states.first.pose.rotation),
           fieldImage,
           robotConfig.bumperSize,
+          robotConfig.bumperOffset,
           scale,
           canvas,
           Colors.green[700]!,
@@ -95,6 +96,7 @@ class TrajectoryPainter extends CustomPainter {
               trajectory.states.last.pose.rotation),
           fieldImage,
           robotConfig.bumperSize,
+          robotConfig.bumperOffset,
           scale,
           canvas,
           Colors.red[700]!,
@@ -139,6 +141,7 @@ class TrajectoryPainter extends CustomPainter {
           Pose2d(state.pose.translation, rotation),
           fieldImage,
           robotConfig.bumperSize,
+          robotConfig.bumperOffset,
           scale,
           canvas,
           colorScheme.brightness == Brightness.dark

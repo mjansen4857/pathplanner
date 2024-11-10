@@ -47,6 +47,8 @@ class PrefsKeys {
   static const String blModuleY = 'blModuleY';
   static const String brModuleX = 'brModuleX';
   static const String brModuleY = 'brModuleY';
+  static const String bumperOffsetX = 'bumperOffsetX';
+  static const String bumperOffsetY = 'bumperOffsetY';
 }
 
 class Defaults {
@@ -95,4 +97,6 @@ class Defaults {
   static const double blModuleY = 0.273;
   static const double brModuleX = -0.273;
   static const double brModuleY = -0.273;
+  static const double bumperOffsetX = 0.0;
+  static const double bumperOffsetY = 0.0;
 }

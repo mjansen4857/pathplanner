@@ -27,6 +27,8 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
   late final bool _holonomicMode;
   late num _bumperWidth;
   late num _bumperLength;
+  late num _bumperOffsetX;
+  late num _bumperOffsetY;
   late num _mass;
   late num _moi;
   late num _trackwidth;
@@ -52,6 +54,10 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
         widget.prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
     _bumperLength =
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
+    _bumperOffsetX = widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
+        Defaults.bumperOffsetX;
+    _bumperOffsetY = widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
+        Defaults.bumperOffsetY;
     _mass = widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass;
     _moi = widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI;
     _trackwidth = widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
@@ -210,6 +216,44 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                                 PrefsKeys.robotLength, value.toDouble());
                             setState(() {
                               _bumperLength = value;
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: NumberTextField(
+                        initialValue: _bumperOffsetX,
+                        label: 'Bumper Offset X (M)',
+                        onSubmitted: (value) {
+                          if (value != null) {
+                            widget.prefs.setDouble(
+                                PrefsKeys.bumperOffsetX, value.toDouble());
+                            setState(() {
+                              _bumperOffsetX = value;
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: NumberTextField(
+                        initialValue: _bumperOffsetY,
+                        label: 'Bumper Offset Y (M)',
+                        onSubmitted: (value) {
+                          if (value != null) {
+                            widget.prefs.setDouble(
+                                PrefsKeys.bumperOffsetY, value.toDouble());
+                            setState(() {
+                              _bumperOffsetY = value;
                             });
                           }
                           widget.onSettingsChanged();
@@ -665,6 +709,8 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                       colorScheme: colorScheme,
                       bumperWidth: _bumperWidth,
                       bumperLength: _bumperLength,
+                      bumperOffsetX: _bumperOffsetX,
+                      bumperOffsetY: _bumperOffsetY,
                       modulePositions: _holonomicMode ? _modulePositions : [],
                     ),
                   ),
@@ -874,6 +920,8 @@ class _RobotPainter extends CustomPainter {
   final ColorScheme colorScheme;
   final num bumperWidth;
   final num bumperLength;
+  final num bumperOffsetX;
+  final num bumperOffsetY;
   final List<Translation2d> modulePositions;
 
   const _RobotPainter({
@@ -881,6 +929,8 @@ class _RobotPainter extends CustomPainter {
     required this.bumperWidth,
     required this.bumperLength,
     required this.modulePositions,
+    required this.bumperOffsetX,
+    required this.bumperOffsetY,
   });
 
   @override
@@ -889,21 +939,25 @@ class _RobotPainter extends CustomPainter {
       ..style = PaintingStyle.fill
       ..color = colorScheme.secondary;
 
+    double pixelsPerMeter =
+        min((size.width - 64) / bumperWidth, (size.height - 64) / bumperLength);
+
     Offset center = Offset(size.width / 2.0, size.height / 2.0);
+    Offset bumperOffsetPixels =
+        Offset(bumperOffsetX * pixelsPerMeter, -bumperOffsetY * pixelsPerMeter);
 
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(-pi / 2);
+    canvas.translate(-bumperOffsetPixels.dx, -bumperOffsetPixels.dy);
 
     canvas.drawCircle(Offset.zero, 1.5, paint);
-
-    double pixelsPerMeter =
-        min((size.width - 64) / bumperWidth, (size.height - 64) / bumperLength);
 
     PathPainterUtil.paintRobotOutlinePixels(
       Offset.zero,
       0.0,
       Size(bumperWidth * pixelsPerMeter, bumperLength * pixelsPerMeter),
+      bumperOffsetPixels,
       8,
       4.0,
       0.075 * pixelsPerMeter,

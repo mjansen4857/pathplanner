@@ -54,6 +54,7 @@ class PathPainterUtil {
       Pose2d pose,
       FieldImage fieldImage,
       Size robotSize,
+      Translation2d bumperOffset,
       double scale,
       Canvas canvas,
       Color color,
@@ -71,6 +72,11 @@ class PathPainterUtil {
       center,
       pose.rotation.radians.toDouble(),
       Size(width, length),
+      Offset(
+          PathPainterUtil.metersToPixels(
+              bumperOffset.x.toDouble(), scale, fieldImage),
+          PathPainterUtil.metersToPixels(
+              -bumperOffset.y.toDouble(), scale, fieldImage)),
       PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage),
       2.0,
       PathPainterUtil.metersToPixels(0.075, scale, fieldImage),
@@ -143,6 +149,7 @@ class PathPainterUtil {
       Offset center,
       double rotationRadians,
       Size robotSizePixels,
+      Offset bumperOffsetPixels,
       double dotRadiusPixels,
       double bumperStrokeWidth,
       double bumperRadiusPixels,
@@ -158,6 +165,7 @@ class PathPainterUtil {
     canvas.translate(center.dx, center.dy);
     canvas.rotate(-rotationRadians);
     canvas.translate(-center.dx, -center.dy);
+    canvas.translate(bumperOffsetPixels.dx, bumperOffsetPixels.dy);
     canvas.drawRRect(
         RRect.fromRectAndRadius(
             Rect.fromCenter(

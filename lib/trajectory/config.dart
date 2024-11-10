@@ -9,6 +9,7 @@ class RobotConfig {
   final num massKG;
   final num moi;
   final Size bumperSize;
+  final Translation2d bumperOffset;
   final ModuleConfig moduleConfig;
   final List<Translation2d> moduleLocations;
   final bool holonomic;
@@ -18,6 +19,7 @@ class RobotConfig {
     required this.massKG,
     required this.moi,
     required this.bumperSize,
+    required this.bumperOffset,
     required this.moduleConfig,
     required this.moduleLocations,
     required this.holonomic,
@@ -53,11 +55,15 @@ class RobotConfig {
     Size bumperSize = Size(
         prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth,
         prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength);
+    Translation2d bumperOffset = Translation2d(
+        prefs.getDouble(PrefsKeys.bumperOffsetX) ?? Defaults.bumperOffsetX,
+        prefs.getDouble(PrefsKeys.bumperOffsetY) ?? Defaults.bumperOffsetY);
 
     return RobotConfig(
       massKG: prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
       moi: prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
       bumperSize: bumperSize,
+      bumperOffset: bumperOffset,
       moduleConfig: moduleConfig,
       moduleLocations: moduleLocations,
       holonomic: holonomicMode,

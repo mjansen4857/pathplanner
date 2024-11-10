@@ -570,6 +570,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _setPrefDoubleFromJSON(json, PrefsKeys.blModuleY, Defaults.blModuleY);
     _setPrefDoubleFromJSON(json, PrefsKeys.brModuleX, Defaults.brModuleX);
     _setPrefDoubleFromJSON(json, PrefsKeys.brModuleY, Defaults.brModuleY);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.bumperOffsetX, Defaults.bumperOffsetX);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.bumperOffsetY, Defaults.bumperOffsetY);
   }
 
   void _setPrefDoubleFromJSON(
@@ -650,6 +654,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           widget.prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
       PrefsKeys.brModuleY:
           widget.prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY,
+      PrefsKeys.bumperOffsetX:
+          widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
+              Defaults.bumperOffsetX,
+      PrefsKeys.bumperOffsetY:
+          widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
+              Defaults.bumperOffsetY,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

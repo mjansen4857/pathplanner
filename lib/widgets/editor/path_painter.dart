@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/rotation_target.dart';
+import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
@@ -36,11 +37,8 @@ class PathPainter extends CustomPainter {
   final SharedPreferences prefs;
   final PathPlannerPath? optimizedPath;
 
-  late Size robotSize;
-  late num robotRadius;
-  late bool holonomicMode;
-  late num wheelbase;
-  late num trackwidth;
+  late final RobotConfig robotConfig;
+  late final num robotRadius;
   Animation<num>? previewTime;
 
   static double scale = 1;
@@ -68,21 +66,11 @@ class PathPainter extends CustomPainter {
     required this.prefs,
     this.optimizedPath,
   }) : super(repaint: animation) {
-    double robotWidth =
-        prefs.getDouble(PrefsKeys.robotWidth) ?? Defaults.robotWidth;
-    double robotLength =
-        prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
-    robotSize = Size(robotWidth, robotLength);
-    robotRadius = sqrt((robotSize.width * robotSize.width) +
-            (robotSize.height * robotSize.height)) /
+    robotConfig = RobotConfig.fromPrefs(prefs);
+    robotRadius = sqrt((robotConfig.bumperSize.width *
+                robotConfig.bumperSize.width) +
+            (robotConfig.bumperSize.height * robotConfig.bumperSize.height)) /
         2.0;
-    wheelbase =
-        prefs.getDouble(PrefsKeys.robotWheelbase) ?? Defaults.robotWheelbase;
-    trackwidth =
-        prefs.getDouble(PrefsKeys.robotTrackwidth) ?? Defaults.robotTrackwidth;
-
-    holonomicMode =
-        prefs.getBool(PrefsKeys.holonomicMode) ?? Defaults.holonomicMode;
 
     if (simulatedPath != null && animation != null) {
       previewTime =
@@ -116,7 +104,7 @@ class PathPainter extends CustomPainter {
               ? Colors.orange
               : colorScheme.secondary);
 
-      if (holonomicMode) {
+      if (robotConfig.holonomic) {
         _paintRotations(paths[i], canvas, scale);
       }
 
@@ -192,30 +180,26 @@ class PathPainter extends CustomPainter {
       TrajectoryState state = simulatedPath!.sample(previewTime!.value);
       Rotation2d rotation = state.pose.rotation;
 
-      if (holonomicMode && state.moduleStates.isNotEmpty) {
+      if (robotConfig.holonomic && state.moduleStates.isNotEmpty) {
         // Calculate the module positions based off of the robot position
         // so they don't move relative to the robot when interpolating
         // between trajectory states
         List<Pose2d> modPoses = [
           Pose2d(
               state.pose.translation +
-                  Translation2d(wheelbase / 2, trackwidth / 2)
-                      .rotateBy(rotation),
+                  robotConfig.moduleLocations[0].rotateBy(rotation),
               state.moduleStates[0].fieldAngle),
           Pose2d(
               state.pose.translation +
-                  Translation2d(wheelbase / 2, -trackwidth / 2)
-                      .rotateBy(rotation),
+                  robotConfig.moduleLocations[1].rotateBy(rotation),
               state.moduleStates[1].fieldAngle),
           Pose2d(
               state.pose.translation +
-                  Translation2d(-wheelbase / 2, trackwidth / 2)
-                      .rotateBy(rotation),
+                  robotConfig.moduleLocations[2].rotateBy(rotation),
               state.moduleStates[2].fieldAngle),
           Pose2d(
               state.pose.translation +
-                  Translation2d(-wheelbase / 2, -trackwidth / 2)
-                      .rotateBy(rotation),
+                  robotConfig.moduleLocations[3].rotateBy(rotation),
               state.moduleStates[3].fieldAngle),
         ];
         PathPainterUtil.paintRobotModules(
@@ -225,7 +209,7 @@ class PathPainter extends CustomPainter {
       PathPainterUtil.paintRobotOutline(
           Pose2d(state.pose.translation, rotation),
           fieldImage,
-          robotSize,
+          robotConfig.bumperSize,
           scale,
           canvas,
           colorScheme.primary,
@@ -323,8 +307,14 @@ class PathPainter extends CustomPainter {
         paint);
 
     // Draw robot
-    PathPainterUtil.paintRobotOutline(state.pose, fieldImage, robotSize, scale,
-        canvas, color.withOpacity(0.5), colorScheme.surfaceContainer);
+    PathPainterUtil.paintRobotOutline(
+        state.pose,
+        fieldImage,
+        robotConfig.bumperSize,
+        scale,
+        canvas,
+        color.withOpacity(0.5),
+        colorScheme.surfaceContainer);
   }
 
   void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor,
@@ -595,7 +585,7 @@ class PathPainter extends CustomPainter {
         PathPainterUtil.paintRobotOutline(
             Pose2d(path.pathPoints[i].position, target.rotation),
             fieldImage,
-            robotSize,
+            robotConfig.bumperSize,
             scale,
             canvas,
             rotationColor,
@@ -606,7 +596,7 @@ class PathPainter extends CustomPainter {
     PathPainterUtil.paintRobotOutline(
         Pose2d(path.waypoints.first.anchor, path.idealStartingState.rotation),
         fieldImage,
-        robotSize,
+        robotConfig.bumperSize,
         scale,
         canvas,
         Colors.green.withOpacity(0.5),
@@ -616,7 +606,7 @@ class PathPainter extends CustomPainter {
         Pose2d(path.waypoints[path.waypoints.length - 1].anchor,
             path.goalEndState.rotation),
         fieldImage,
-        robotSize,
+        robotConfig.bumperSize,
         scale,
         canvas,
         Colors.red.withOpacity(0.5),

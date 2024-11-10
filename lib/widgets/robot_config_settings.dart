@@ -29,7 +29,6 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
   late num _bumperLength;
   late num _mass;
   late num _moi;
-  late num _wheelbase;
   late num _trackwidth;
   late num _wheelRadius;
   late num _driveGearing;
@@ -55,8 +54,6 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
     _mass = widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass;
     _moi = widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI;
-    _wheelbase = widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
-        Defaults.robotWheelbase;
     _trackwidth = widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
         Defaults.robotTrackwidth;
     _wheelRadius = widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
@@ -72,10 +69,18 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
         Defaults.driveCurrentLimit;
 
     _modulePositions = [
-      Translation2d(_wheelbase / 2, _trackwidth / 2),
-      Translation2d(_wheelbase / 2, -_trackwidth / 2),
-      Translation2d(-_wheelbase / 2, _trackwidth / 2),
-      Translation2d(-_wheelbase / 2, -_trackwidth / 2),
+      Translation2d(
+          widget.prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
+          widget.prefs.getDouble(PrefsKeys.flModuleY) ?? Defaults.flModuleY),
+      Translation2d(
+          widget.prefs.getDouble(PrefsKeys.frModuleX) ?? Defaults.frModuleX,
+          widget.prefs.getDouble(PrefsKeys.frModuleY) ?? Defaults.frModuleY),
+      Translation2d(
+          widget.prefs.getDouble(PrefsKeys.blModuleX) ?? Defaults.blModuleX,
+          widget.prefs.getDouble(PrefsKeys.blModuleY) ?? Defaults.blModuleY),
+      Translation2d(
+          widget.prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
+          widget.prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY),
     ];
 
     _optimalCurrentLimit = _calculateOptimalCurrentLimit();
@@ -92,327 +97,31 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
       children: [
         Expanded(
           flex: 3,
-          child: ListView(
-            children: [
-              const Text('Robot Config:'),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: NumberTextField(
-                      initialValue: _mass,
-                      label: 'Robot Mass (KG)',
-                      minValue: 0.0,
-                      onSubmitted: (value) {
-                        if (value != null) {
-                          widget.prefs
-                              .setDouble(PrefsKeys.robotMass, value.toDouble());
-                          setState(() {
-                            _mass = value;
-                            _optimalCurrentLimit =
-                                _calculateOptimalCurrentLimit();
-                            _maxAccel = _calculateMaxAccel();
-                            _maxAngAccel = _calculateMaxAngAccel();
-                          });
-                        }
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: NumberTextField(
-                      initialValue: _moi,
-                      label: 'Robot MOI (KG*M²)',
-                      minValue: 0.0,
-                      onSubmitted: (value) {
-                        if (value != null) {
-                          widget.prefs
-                              .setDouble(PrefsKeys.robotMOI, value.toDouble());
-                          setState(() {
-                            _moi = value;
-                            _maxAngAccel = _calculateMaxAngAccel();
-                          });
-                        }
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ),
-                ],
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              scrollbarTheme: ScrollbarThemeData(
+                thumbVisibility: WidgetStateProperty.all<bool>(true),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: NumberTextField(
-                      initialValue: _bumperWidth,
-                      minValue: 0.0,
-                      label: 'Bumper Width (M)',
-                      onSubmitted: (value) {
-                        if (value != null) {
-                          widget.prefs.setDouble(
-                              PrefsKeys.robotWidth, value.toDouble());
-                          setState(() {
-                            _bumperWidth = value;
-                          });
-                        }
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: NumberTextField(
-                      initialValue: _bumperLength,
-                      minValue: 0.0,
-                      label: 'Bumper Length (M)',
-                      onSubmitted: (value) {
-                        if (value != null) {
-                          widget.prefs.setDouble(
-                              PrefsKeys.robotLength, value.toDouble());
-                          setState(() {
-                            _bumperLength = value;
-                          });
-                        }
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Text('Module Config:'),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: NumberTextField(
-                      initialValue: _wheelRadius,
-                      label: 'Wheel Radius (M)',
-                      minValue: 0.0,
-                      onSubmitted: (value) {
-                        if (value != null) {
-                          widget.prefs.setDouble(
-                              PrefsKeys.driveWheelRadius, value.toDouble());
-                          setState(() {
-                            _wheelRadius = value;
-                            _optimalCurrentLimit =
-                                _calculateOptimalCurrentLimit();
-                            _maxAccel = _calculateMaxAccel();
-                            _maxAngAccel = _calculateMaxAngAccel();
-                          });
-                        }
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: NumberTextField(
-                      initialValue: _driveGearing,
-                      label: 'Drive Gearing',
-                      minValue: 1.0,
-                      onSubmitted: (value) {
-                        if (value != null) {
-                          widget.prefs.setDouble(
-                              PrefsKeys.driveGearing, value.toDouble());
-                          setState(() {
-                            _driveGearing = value;
-                            _optimalCurrentLimit =
-                                _calculateOptimalCurrentLimit();
-                            _maxAccel = _calculateMaxAccel();
-                            _maxAngAccel = _calculateMaxAngAccel();
-                          });
-                        }
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: NumberTextField(
-                      initialValue: _maxDriveSpeed,
-                      label: 'True Max Drive Speed (M/S)',
-                      minValue: 0.0,
-                      onSubmitted: (value) {
-                        if (value != null) {
-                          widget.prefs.setDouble(
-                              PrefsKeys.maxDriveSpeed, value.toDouble());
-                          setState(() {
-                            _maxDriveSpeed = value;
-                            _optimalCurrentLimit =
-                                _calculateOptimalCurrentLimit();
-                            _maxAccel = _calculateMaxAccel();
-                            _maxAngAccel = _calculateMaxAngAccel();
-                          });
-                        }
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: NumberTextField(
-                      initialValue: _wheelCOF,
-                      minValue: 0.0,
-                      label: 'Wheel COF',
-                      onSubmitted: (value) {
-                        if (value != null) {
-                          widget.prefs
-                              .setDouble(PrefsKeys.wheelCOF, value.toDouble());
-                          setState(() {
-                            _wheelCOF = value;
-                            _optimalCurrentLimit =
-                                _calculateOptimalCurrentLimit();
-                            _maxAccel = _calculateMaxAccel();
-                            _maxAngAccel = _calculateMaxAngAccel();
-                          });
-                        }
-                        widget.onSettingsChanged();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Stack(
-                          children: [
-                            Column(
-                              children: [
-                                const SizedBox(height: 9),
-                                SizedBox(
-                                  height: 49,
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 4),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                            color: colorScheme.outline),
-                                      ),
-                                      child: ExcludeFocus(
-                                        child: ButtonTheme(
-                                          alignedDropdown: true,
-                                          child: DropdownButton<String>(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            value: _driveMotor,
-                                            isExpanded: true,
-                                            underline: Container(),
-                                            menuMaxHeight: 250,
-                                            icon: const Icon(
-                                                Icons.arrow_drop_down),
-                                            style: TextStyle(
-                                                fontSize: 14,
-                                                color: colorScheme.onSurface),
-                                            onChanged: (String? newValue) {
-                                              if (newValue != null) {
-                                                setState(() {
-                                                  _driveMotor = newValue;
-                                                  _optimalCurrentLimit =
-                                                      _calculateOptimalCurrentLimit();
-                                                  _maxAccel =
-                                                      _calculateMaxAccel();
-                                                  _maxAngAccel =
-                                                      _calculateMaxAngAccel();
-                                                });
-                                                widget.prefs.setString(
-                                                    PrefsKeys.driveMotor,
-                                                    _driveMotor);
-                                                widget.onSettingsChanged();
-                                              }
-                                            },
-                                            items: const [
-                                              DropdownMenuItem<String>(
-                                                value: 'krakenX60',
-                                                child: Text('Kraken X60'),
-                                              ),
-                                              DropdownMenuItem<String>(
-                                                value: 'krakenX60FOC',
-                                                child: Text('Kraken X60 FOC'),
-                                              ),
-                                              DropdownMenuItem<String>(
-                                                value: 'falcon500',
-                                                child: Text('Falcon 500'),
-                                              ),
-                                              DropdownMenuItem<String>(
-                                                value: 'falcon500FOC',
-                                                child: Text('Falcon 500 FOC'),
-                                              ),
-                                              DropdownMenuItem<String>(
-                                                value: 'vortex',
-                                                child: Text('NEO Vortex'),
-                                              ),
-                                              DropdownMenuItem<String>(
-                                                value: 'NEO',
-                                                child: Text('NEO'),
-                                              ),
-                                              DropdownMenuItem<String>(
-                                                value: 'CIM',
-                                                child: Text('CIM'),
-                                              ),
-                                              DropdownMenuItem<String>(
-                                                value: 'miniCIM',
-                                                child: Text('MiniCIM'),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 2, top: 12),
-                              child: Container(
-                                width: 78,
-                                height: 3,
-                                color: colorScheme.surface,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8, top: 3),
-                              child: Text(
-                                'Drive Motor',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 12.0),
+            ),
+            child: ListView(
+              padding: const EdgeInsets.only(right: 16),
+              children: [
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
                       child: NumberTextField(
-                        initialValue: _currentLimit,
-                        label: 'Drive Current Limit (A)',
+                        initialValue: _mass,
+                        label: 'Robot Mass (KG)',
                         minValue: 0.0,
-                        precision: 0,
                         onSubmitted: (value) {
                           if (value != null) {
-                            widget.prefs.setDouble(PrefsKeys.driveCurrentLimit,
-                                value.roundToDouble());
+                            widget.prefs.setDouble(
+                                PrefsKeys.robotMass, value.toDouble());
                             setState(() {
-                              _currentLimit = value.roundToDouble();
+                              _mass = value;
+                              _optimalCurrentLimit =
+                                  _calculateOptimalCurrentLimit();
                               _maxAccel = _calculateMaxAccel();
                               _maxAngAccel = _calculateMaxAngAccel();
                             });
@@ -421,13 +130,526 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                         },
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: NumberTextField(
+                        initialValue: _moi,
+                        label: 'Robot MOI (KG*M²)',
+                        minValue: 0.0,
+                        onSubmitted: (value) {
+                          if (value != null) {
+                            widget.prefs.setDouble(
+                                PrefsKeys.robotMOI, value.toDouble());
+                            setState(() {
+                              _moi = value;
+                              _maxAngAccel = _calculateMaxAngAccel();
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                if (!_holonomicMode) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialValue: _trackwidth,
+                          minValue: 0.01,
+                          label: 'Trackwidth (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.robotTrackwidth, value.toDouble());
+                              setState(() {
+                                _trackwidth = value;
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
+                const SizedBox(height: 12),
+                const Text('Bumpers:'),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: NumberTextField(
+                        initialValue: _bumperWidth,
+                        minValue: 0.0,
+                        label: 'Bumper Width (M)',
+                        onSubmitted: (value) {
+                          if (value != null) {
+                            widget.prefs.setDouble(
+                                PrefsKeys.robotWidth, value.toDouble());
+                            setState(() {
+                              _bumperWidth = value;
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: NumberTextField(
+                        initialValue: _bumperLength,
+                        minValue: 0.0,
+                        label: 'Bumper Length (M)',
+                        onSubmitted: (value) {
+                          if (value != null) {
+                            widget.prefs.setDouble(
+                                PrefsKeys.robotLength, value.toDouble());
+                            setState(() {
+                              _bumperLength = value;
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text('Module Config:'),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: NumberTextField(
+                        initialValue: _wheelRadius,
+                        label: 'Wheel Radius (M)',
+                        minValue: 0.0,
+                        onSubmitted: (value) {
+                          if (value != null) {
+                            widget.prefs.setDouble(
+                                PrefsKeys.driveWheelRadius, value.toDouble());
+                            setState(() {
+                              _wheelRadius = value;
+                              _optimalCurrentLimit =
+                                  _calculateOptimalCurrentLimit();
+                              _maxAccel = _calculateMaxAccel();
+                              _maxAngAccel = _calculateMaxAngAccel();
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: NumberTextField(
+                        initialValue: _driveGearing,
+                        label: 'Drive Gearing',
+                        minValue: 1.0,
+                        onSubmitted: (value) {
+                          if (value != null) {
+                            widget.prefs.setDouble(
+                                PrefsKeys.driveGearing, value.toDouble());
+                            setState(() {
+                              _driveGearing = value;
+                              _optimalCurrentLimit =
+                                  _calculateOptimalCurrentLimit();
+                              _maxAccel = _calculateMaxAccel();
+                              _maxAngAccel = _calculateMaxAngAccel();
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: NumberTextField(
+                        initialValue: _maxDriveSpeed,
+                        label: 'True Max Drive Speed (M/S)',
+                        minValue: 0.0,
+                        onSubmitted: (value) {
+                          if (value != null) {
+                            widget.prefs.setDouble(
+                                PrefsKeys.maxDriveSpeed, value.toDouble());
+                            setState(() {
+                              _maxDriveSpeed = value;
+                              _optimalCurrentLimit =
+                                  _calculateOptimalCurrentLimit();
+                              _maxAccel = _calculateMaxAccel();
+                              _maxAngAccel = _calculateMaxAngAccel();
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: NumberTextField(
+                        initialValue: _wheelCOF,
+                        minValue: 0.0,
+                        label: 'Wheel COF',
+                        onSubmitted: (value) {
+                          if (value != null) {
+                            widget.prefs.setDouble(
+                                PrefsKeys.wheelCOF, value.toDouble());
+                            setState(() {
+                              _wheelCOF = value;
+                              _optimalCurrentLimit =
+                                  _calculateOptimalCurrentLimit();
+                              _maxAccel = _calculateMaxAccel();
+                              _maxAngAccel = _calculateMaxAngAccel();
+                            });
+                          }
+                          widget.onSettingsChanged();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Stack(
+                            children: [
+                              Column(
+                                children: [
+                                  const SizedBox(height: 9),
+                                  SizedBox(
+                                    height: 49,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 4),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: colorScheme.outline),
+                                        ),
+                                        child: ExcludeFocus(
+                                          child: ButtonTheme(
+                                            alignedDropdown: true,
+                                            child: DropdownButton<String>(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              value: _driveMotor,
+                                              isExpanded: true,
+                                              underline: Container(),
+                                              menuMaxHeight: 250,
+                                              icon: const Icon(
+                                                  Icons.arrow_drop_down),
+                                              style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: colorScheme.onSurface),
+                                              onChanged: (String? newValue) {
+                                                if (newValue != null) {
+                                                  setState(() {
+                                                    _driveMotor = newValue;
+                                                    _optimalCurrentLimit =
+                                                        _calculateOptimalCurrentLimit();
+                                                    _maxAccel =
+                                                        _calculateMaxAccel();
+                                                    _maxAngAccel =
+                                                        _calculateMaxAngAccel();
+                                                  });
+                                                  widget.prefs.setString(
+                                                      PrefsKeys.driveMotor,
+                                                      _driveMotor);
+                                                  widget.onSettingsChanged();
+                                                }
+                                              },
+                                              items: const [
+                                                DropdownMenuItem<String>(
+                                                  value: 'krakenX60',
+                                                  child: Text('Kraken X60'),
+                                                ),
+                                                DropdownMenuItem<String>(
+                                                  value: 'krakenX60FOC',
+                                                  child: Text('Kraken X60 FOC'),
+                                                ),
+                                                DropdownMenuItem<String>(
+                                                  value: 'falcon500',
+                                                  child: Text('Falcon 500'),
+                                                ),
+                                                DropdownMenuItem<String>(
+                                                  value: 'falcon500FOC',
+                                                  child: Text('Falcon 500 FOC'),
+                                                ),
+                                                DropdownMenuItem<String>(
+                                                  value: 'vortex',
+                                                  child: Text('NEO Vortex'),
+                                                ),
+                                                DropdownMenuItem<String>(
+                                                  value: 'NEO',
+                                                  child: Text('NEO'),
+                                                ),
+                                                DropdownMenuItem<String>(
+                                                  value: 'CIM',
+                                                  child: Text('CIM'),
+                                                ),
+                                                DropdownMenuItem<String>(
+                                                  value: 'miniCIM',
+                                                  child: Text('MiniCIM'),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 2, top: 12),
+                                child: Container(
+                                  width: 78,
+                                  height: 3,
+                                  color: colorScheme.surface,
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8, top: 3),
+                                child: Text(
+                                  'Drive Motor',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: NumberTextField(
+                          initialValue: _currentLimit,
+                          label: 'Drive Current Limit (A)',
+                          minValue: 0.0,
+                          precision: 0,
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.driveCurrentLimit,
+                                  value.roundToDouble());
+                              setState(() {
+                                _currentLimit = value.roundToDouble();
+                                _maxAccel = _calculateMaxAccel();
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_holonomicMode) ...[
+                  const SizedBox(height: 12),
+                  const Text('Module Offsets:'),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialValue: _modulePositions[0].x,
+                          minValue: 0.0,
+                          label: 'Front Left X (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.flModuleX, value.toDouble());
+                              setState(() {
+                                _modulePositions[0] =
+                                    Translation2d(value, _modulePositions[0].y);
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialValue: _modulePositions[0].y,
+                          minValue: 0.0,
+                          label: 'Front Left Y (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.flModuleY, value.toDouble());
+                              setState(() {
+                                _modulePositions[0] =
+                                    Translation2d(_modulePositions[0].x, value);
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialValue: _modulePositions[1].x,
+                          minValue: 0.0,
+                          label: 'Front Right X (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.frModuleX, value.toDouble());
+                              setState(() {
+                                _modulePositions[1] =
+                                    Translation2d(value, _modulePositions[1].y);
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialValue: _modulePositions[1].y,
+                          maxValue: 0.0,
+                          label: 'Front Right Y (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.frModuleY, value.toDouble());
+                              setState(() {
+                                _modulePositions[1] =
+                                    Translation2d(_modulePositions[1].x, value);
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialValue: _modulePositions[2].x,
+                          maxValue: 0.0,
+                          label: 'Back Left X (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.blModuleX, value.toDouble());
+                              setState(() {
+                                _modulePositions[2] =
+                                    Translation2d(value, _modulePositions[2].y);
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialValue: _modulePositions[2].y,
+                          minValue: 0.0,
+                          label: 'Back Left Y (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.blModuleY, value.toDouble());
+                              setState(() {
+                                _modulePositions[2] =
+                                    Translation2d(_modulePositions[2].x, value);
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: NumberTextField(
+                          initialValue: _modulePositions[3].x,
+                          maxValue: 0.0,
+                          label: 'Back Right X (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.brModuleX, value.toDouble());
+                              setState(() {
+                                _modulePositions[3] =
+                                    Translation2d(value, _modulePositions[3].y);
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: NumberTextField(
+                          initialValue: _modulePositions[3].y,
+                          maxValue: 0.0,
+                          label: 'Back Right Y (M)',
+                          onSubmitted: (value) {
+                            if (value != null) {
+                              widget.prefs.setDouble(
+                                  PrefsKeys.brModuleY, value.toDouble());
+                              setState(() {
+                                _modulePositions[3] =
+                                    Translation2d(_modulePositions[3].x, value);
+                                _maxAngAccel = _calculateMaxAngAccel();
+                              });
+                            }
+                            widget.onSettingsChanged();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 8),
         Expanded(
           flex: 2,
           child: Column(
@@ -443,7 +665,7 @@ class _RobotConfigSettingsState extends State<RobotConfigSettings> {
                       colorScheme: colorScheme,
                       bumperWidth: _bumperWidth,
                       bumperLength: _bumperLength,
-                      modulePositions: _modulePositions,
+                      modulePositions: _holonomicMode ? _modulePositions : [],
                     ),
                   ),
                 ),

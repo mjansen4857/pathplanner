@@ -1,20 +1,18 @@
 # Settings
 
-The settings menu can be accessed via the [Navigation Menu](gui-Navigation-Menu.md)
+The settings menu can be accessed via the [](gui-Navigation-Menu.md)
 
-<img src="settings.png" alt="settings" border-effect="rounded"/>
+## Robot Config
 
-## Robot Config & Module Config
-
-Bumper Width
-: The width of the robot, including bumpers, in meters. Used for visualization.
-
-Bumper Length
-: The length of the robot, including bumpers, in meters. Used for visualization.
+<img src="robot_config_settings.png" alt="robot config" border-effect="rounded"/>
 
 See [](Robot-Config.md) for Robot/Module Configuration options and how to find them.
 
-## Default Constraints
+## App Settings
+
+<img src="app_settings.png" alt="robot config" border-effect="rounded"/>
+
+### Default Constraints
 
 These values will be used as the default global constraints when creating new paths. Updating these values will also
 update the constraints of any paths set to use the defaults.
@@ -35,6 +33,10 @@ Max Angular Velocity
 Max Angular Accel
 : Max rotational acceleration in degrees per second squared.
 
+Nominal Voltage
+: Nominal voltage in Volts. This is what you expect the voltage to be during auto, which may be lower than 12V due to
+other systems running, such as an intake or shooter.
+
 ## Field Image
 
 Select the field image used as the background of the editor. This contains options for official field images and the
@@ -46,16 +48,14 @@ Change the UI theme color.
 
 ## PPLib Telemetry
 
-Host
-: The host address of the robot for use in telemetry and hot reload. If running simulation, this should be `localhost`.
-If connected to a robot, this should be the IP address of the roboRIO: `10.TE.AM.2` where TEAM is replaced by your team
-number, i.e. `10.30.15.2`.
+roboRIO IP
+: The IP address of the roboRIO, this should be `10.TE.AM.2` where TEAM is replaced by your team number, i.e.
+`10.30.15.2`.
 
 ## Additional Options
 
 Holonomic Mode
-: Enable or disable holonomic mode. This is on by default. This must be enabled to access special features for holonomic
-drive trains.
+: Enable or disable holonomic mode.
 
 Hot Reload
 : Enable or disable hot reload for paths and autos. This is off by default. When connected to the robot, hot reload will

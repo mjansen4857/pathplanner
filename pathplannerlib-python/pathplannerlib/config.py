@@ -79,22 +79,22 @@ class RobotConfig:
     _diffKinematics: Union[DifferentialDriveKinematics, None]
     _forceKinematics: NDArray
 
-    def __init__(self, massKG: float, MOI: float, moduleConfig: ModuleConfig, trackwidthMeters: float,
-                 wheelbaseMeters: float = None):
+    def __init__(self, massKG: float, MOI: float, moduleConfig: ModuleConfig, moduleOffsets: List[Translation2d] = None,
+                 trackwidthMeters: float = None):
         """
-        Create a robot config object. Holonomic robots should include the wheelbaseMeters argument.
+        Create a robot config object. Either moduleOffsets(for swerve robots) or trackwidthMeters(for diff drive robots) must be given.
 
         :param massKG: The mass of the robot, including bumpers and battery, in KG
         :param MOI: The moment of inertia of the robot, in KG*M^2
         :param moduleConfig: The drive module config
-        :param trackwidthMeters: The distance between the left and right side of the drivetrain, in meters
-        :param wheelbaseMeters: The distance between the front and back side of the drivetrain, in meters. Should only be specified for holonomic robots
+        :param moduleOffsets: The locations of the module relative to the physical center of the robot. Only robots with 4 modules are supported, and they should be in FL, FR, BL, BR order. Only used for swerve robots.
+        :param trackwidthMeters: The distance between the left and right side of the drivetrain, in meters. Only used for diff drive robots
         """
         self.massKG = massKG
         self.MOI = MOI
         self.moduleConfig = moduleConfig
 
-        if wheelbaseMeters is None:
+        if trackwidthMeters is not None:
             self.moduleLocations = [
                 Translation2d(0.0, trackwidthMeters / 2.0),
                 Translation2d(0.0, -trackwidthMeters / 2.0),
@@ -102,21 +102,19 @@ class RobotConfig:
             self._swerveKinematics = None
             self._diffKinematics = DifferentialDriveKinematics(trackwidthMeters)
             self.isHolonomic = False
-        else:
-            self.moduleLocations = [
-                Translation2d(wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-                Translation2d(wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-                Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-                Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-            ]
+        elif moduleOffsets is not None:
+            self.moduleLocations = moduleOffsets
             self._swerveKinematics = SwerveDrive4Kinematics(
-                Translation2d(wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-                Translation2d(wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-                Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-                Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
+                self.moduleLocations[0],
+                self.moduleLocations[1],
+                self.moduleLocations[2],
+                self.moduleLocations[3],
             )
             self._diffKinematics = None
             self.isHolonomic = True
+        else:
+            raise ValueError(
+                'Either moduleOffsets(for swerve robots) or trackwidthMeters(for diff drive robots) must be given')
 
         self.numModules = len(self.moduleLocations)
         self.modulePivotDistance = [t.norm() for t in self.moduleLocations]
@@ -197,8 +195,6 @@ class RobotConfig:
             isHolonomic = bool(settingsJson['holonomicMode'])
             massKG = float(settingsJson['robotMass'])
             MOI = float(settingsJson['robotMOI'])
-            wheelbase = float(settingsJson['robotWheelbase'])
-            trackwidth = float(settingsJson['robotTrackwidth'])
             wheelRadius = float(settingsJson['driveWheelRadius'])
             gearing = float(settingsJson['driveGearing'])
             maxDriveSpeed = float(settingsJson['maxDriveSpeed'])
@@ -238,6 +234,15 @@ class RobotConfig:
             )
 
             if isHolonomic:
-                return RobotConfig(massKG, MOI, moduleConfig, trackwidth, wheelbase)
+                moduleOffsets = [
+                    Translation2d(float(settingsJson['flModuleX']), float(settingsJson['flModuleY'])),
+                    Translation2d(float(settingsJson['frModuleX']), float(settingsJson['frModuleY'])),
+                    Translation2d(float(settingsJson['blModuleX']), float(settingsJson['blModuleY'])),
+                    Translation2d(float(settingsJson['brModuleX']), float(settingsJson['brModuleY']))
+                ]
+
+                return RobotConfig(massKG, MOI, moduleConfig, moduleOffsets=moduleOffsets)
             else:
-                return RobotConfig(massKG, MOI, moduleConfig, trackwidth)
+                trackwidth = float(settingsJson['robotTrackwidth'])
+
+                return RobotConfig(massKG, MOI, moduleConfig, trackwidthMeters=trackwidth)

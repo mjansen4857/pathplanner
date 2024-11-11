@@ -39,7 +39,7 @@ class SettingsDialog extends StatelessWidget {
         ),
         content: SizedBox(
           width: 800,
-          height: 410,
+          height: 420,
           child: TabBarView(
             physics: const NeverScrollableScrollPhysics(),
             children: [

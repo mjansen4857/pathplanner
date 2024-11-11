@@ -8,21 +8,15 @@ using namespace pathplanner;
 
 RobotConfig::RobotConfig(units::kilogram_t mass,
 		units::kilogram_square_meter_t MOI, ModuleConfig moduleConfig,
-		units::meter_t trackwidth, units::meter_t wheelbase) : mass(mass), MOI(
-		MOI), moduleConfig(moduleConfig), moduleLocations { frc::Translation2d(
-		wheelbase / 2, trackwidth / 2), frc::Translation2d(wheelbase / 2,
-		-trackwidth / 2), frc::Translation2d(-wheelbase / 2, trackwidth / 2),
-		frc::Translation2d(-wheelbase / 2, -trackwidth / 2) }, isHolonomic(
-		true), numModules(4), modulePivotDistance { moduleLocations[0].Norm(),
+		std::vector<frc::Translation2d> moduleOffsets) : mass(mass), MOI(MOI), moduleConfig(
+		moduleConfig), moduleLocations(moduleOffsets), isHolonomic(true), numModules(
+		4), modulePivotDistance { moduleLocations[0].Norm(),
 		moduleLocations[1].Norm(), moduleLocations[2].Norm(),
 		moduleLocations[3].Norm() }, wheelFrictionForce { moduleConfig.wheelCOF
 		* ((mass() / numModules) * 9.8) }, maxTorqueFriction(
-		wheelFrictionForce * moduleConfig.wheelRadius), swerveKinematics(
-		frc::Translation2d(wheelbase / 2, trackwidth / 2),
-		frc::Translation2d(wheelbase / 2, -trackwidth / 2),
-		frc::Translation2d(-wheelbase / 2, trackwidth / 2),
-		frc::Translation2d(-wheelbase / 2, -trackwidth / 2)), diffKinematics(
-		trackwidth) {
+		wheelFrictionForce * moduleConfig.wheelRadius), swerveKinematics {
+		moduleLocations[0], moduleLocations[1], moduleLocations[2],
+		moduleLocations[3] }, diffKinematics(0.7_m) {
 	for (size_t i = 0; i < numModules; i++) {
 		frc::Translation2d modPosReciprocal = frc::Translation2d(
 				units::meter_t { 1.0 / moduleLocations[i].Norm()() },
@@ -71,8 +65,6 @@ RobotConfig RobotConfig::fromGUISettings() {
 	bool isHolonomic = json.at("holonomicMode").get<bool>();
 	units::kilogram_t mass { json.at("robotMass").get<double>() };
 	units::kilogram_square_meter_t MOI { json.at("robotMOI").get<double>() };
-	units::meter_t wheelbase { json.at("robotWheelbase").get<double>() };
-	units::meter_t trackwidth { json.at("robotTrackwidth").get<double>() };
 	units::meter_t wheelRadius { json.at("driveWheelRadius").get<double>() };
 	double gearing = json.at("driveGearing").get<double>();
 	units::meters_per_second_t maxDriveSpeed { json.at("maxDriveSpeed").get<
@@ -90,8 +82,22 @@ RobotConfig RobotConfig::fromGUISettings() {
 			driveCurrentLimit, numMotors);
 
 	if (isHolonomic) {
-		return RobotConfig(mass, MOI, moduleConfig, trackwidth, wheelbase);
+		units::meter_t flModuleX { json.at("flModuleX").get<double>() };
+		units::meter_t flModuleY { json.at("flModuleY").get<double>() };
+		units::meter_t frModuleX { json.at("frModuleX").get<double>() };
+		units::meter_t frModuleY { json.at("frModuleY").get<double>() };
+		units::meter_t blModuleX { json.at("blModuleX").get<double>() };
+		units::meter_t blModuleY { json.at("blModuleY").get<double>() };
+		units::meter_t brModuleX { json.at("brModuleX").get<double>() };
+		units::meter_t brModuleY { json.at("brModuleY").get<double>() };
+
+		return RobotConfig(mass, MOI, moduleConfig,
+				{ frc::Translation2d(flModuleX, flModuleY), frc::Translation2d(
+						frModuleX, frModuleY), frc::Translation2d(blModuleX,
+						blModuleY), frc::Translation2d(brModuleX, brModuleY) });
 	} else {
+		units::meter_t trackwidth { json.at("robotTrackwidth").get<double>() };
+
 		return RobotConfig(mass, MOI, moduleConfig, trackwidth);
 	}
 }

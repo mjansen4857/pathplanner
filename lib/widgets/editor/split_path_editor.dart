@@ -81,6 +81,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   PathPlannerPath? _optimizedPath;
 
   late Size _robotSize;
+  late Translation2d _bumperOffset;
   late AnimationController _previewController;
 
   List<Waypoint> get waypoints => widget.path.waypoints;
@@ -104,6 +105,11 @@ class _SplitPathEditorState extends State<SplitPathEditor>
     var length =
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
     _robotSize = Size(width, length);
+    _bumperOffset = Translation2d(
+        widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
+            Defaults.bumperOffsetX,
+        widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
+            Defaults.bumperOffsetY);
 
     double treeWeight = widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
@@ -227,8 +233,12 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     continue;
                   }
 
-                  num dotX = pos.x + (_robotSize.height / 2 * rotation.cosine);
-                  num dotY = pos.y + (_robotSize.height / 2 * rotation.sine);
+                  num dotX = pos.x +
+                      (((_robotSize.height / 2) + _bumperOffset.x) *
+                          rotation.cosine);
+                  num dotY = pos.y +
+                      (((_robotSize.height / 2) + _bumperOffset.x) *
+                          rotation.sine);
                   if (pow(xPos - dotX, 2) + pow(yPos - dotY, 2) <
                       pow(dotRadius, 2)) {
                     if (i == 0) {

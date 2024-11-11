@@ -1,4 +1,5 @@
 import 'package:file/memory.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
@@ -99,6 +100,8 @@ void main() {
         Translation2d(-0.25, -0.25),
       ],
       holonomic: true,
+      bumperSize: const Size(0.9, 0.9),
+      bumperOffset: const Translation2d(),
     );
 
     // Basic coverage tests, expand in future

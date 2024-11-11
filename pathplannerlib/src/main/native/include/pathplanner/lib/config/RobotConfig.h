@@ -29,8 +29,8 @@ public:
 	units::newton_meter_t maxTorqueFriction;
 
 	RobotConfig(units::kilogram_t mass, units::kilogram_square_meter_t MOI,
-			ModuleConfig moduleConfig, units::meter_t trackwidth,
-			units::meter_t wheelbase);
+			ModuleConfig moduleConfig,
+			std::vector<frc::Translation2d> moduleOffsets);
 
 	RobotConfig(units::kilogram_t mass, units::kilogram_square_meter_t MOI,
 			ModuleConfig moduleConfig, units::meter_t trackwidth);

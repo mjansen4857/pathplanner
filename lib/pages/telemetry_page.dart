@@ -37,6 +37,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
   Pose2d? _currentPose;
   Pose2d? _targetPose;
   late final Size _robotSize;
+  late final Translation2d _bumperOffset;
   late bool _useSim;
 
   bool _gotCurrentPose = false;
@@ -51,6 +52,12 @@ class _TelemetryPageState extends State<TelemetryPage> {
     var length =
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
     _robotSize = Size(width, length);
+
+    _bumperOffset = Translation2d(
+        widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
+            Defaults.bumperOffsetX,
+        widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
+            Defaults.bumperOffsetY);
 
     _useSim = widget.prefs.getBool(PrefsKeys.telemetryUseSim) ??
         Defaults.telemetryUseSim;
@@ -220,6 +227,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                               painter: TelemetryPainter(
                                 fieldImage: widget.fieldImage,
                                 robotSize: _robotSize,
+                                bumperOffset: _bumperOffset,
                                 currentPose: _currentPose,
                                 targetPose: _targetPose,
                                 currentPath: _currentPath,
@@ -564,6 +572,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
 class TelemetryPainter extends CustomPainter {
   final FieldImage fieldImage;
   final Size robotSize;
+  final Translation2d bumperOffset;
   final Pose2d? currentPose;
   final Pose2d? targetPose;
   final List<Pose2d>? currentPath;
@@ -574,6 +583,7 @@ class TelemetryPainter extends CustomPainter {
   const TelemetryPainter({
     required this.fieldImage,
     required this.robotSize,
+    required this.bumperOffset,
     this.currentPose,
     this.targetPose,
     this.currentPath,
@@ -609,6 +619,7 @@ class TelemetryPainter extends CustomPainter {
           targetPose!,
           fieldImage,
           robotSize,
+          bumperOffset,
           scale,
           canvas,
           Colors.grey[600]!.withOpacity(0.75),
@@ -616,8 +627,15 @@ class TelemetryPainter extends CustomPainter {
     }
 
     if (currentPose != null) {
-      PathPainterUtil.paintRobotOutline(currentPose!, fieldImage, robotSize,
-          scale, canvas, colorScheme.primary, colorScheme.surfaceContainer);
+      PathPainterUtil.paintRobotOutline(
+          currentPose!,
+          fieldImage,
+          robotSize,
+          bumperOffset,
+          scale,
+          canvas,
+          colorScheme.primary,
+          colorScheme.surfaceContainer);
     }
   }
 

@@ -53,28 +53,20 @@ public class RobotConfig {
    * @param massKG The mass of the robot, including bumpers and battery, in KG
    * @param MOI The moment of inertia of the robot, in KG*M^2
    * @param moduleConfig The drive module config
-   * @param trackwidthMeters The distance between the left and right side of the drivetrain, in
-   *     meters
-   * @param wheelbaseMeters The distance between the front and back side of the drivetrain, in
-   *     meters
+   * @param moduleOffsets The locations of the module relative to the physical center of the robot.
+   *     Only robots with 4 modules are supported, and they should be in FL, FR, BL, BR order.
    */
   public RobotConfig(
-      double massKG,
-      double MOI,
-      ModuleConfig moduleConfig,
-      double trackwidthMeters,
-      double wheelbaseMeters) {
+      double massKG, double MOI, ModuleConfig moduleConfig, Translation2d... moduleOffsets) {
     this.massKG = massKG;
     this.MOI = MOI;
     this.moduleConfig = moduleConfig;
 
-    this.moduleLocations =
-        new Translation2d[] {
-          new Translation2d(wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-          new Translation2d(wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-          new Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-          new Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-        };
+    if (moduleOffsets.length != 4) {
+      throw new IllegalArgumentException(
+          "PathPlannerLib currently only supports using 4 swerve modules");
+    }
+    this.moduleLocations = moduleOffsets;
     this.swerveKinematics = new SwerveDriveKinematics(this.moduleLocations);
     this.diffKinematics = null;
     this.isHolonomic = true;
@@ -103,21 +95,12 @@ public class RobotConfig {
    * @param mass The mass of the robot, including bumpers and battery
    * @param MOI The moment of inertia of the robot
    * @param moduleConfig The drive module config
-   * @param trackwidthMeters The distance between the left and right side of the drivetrain
-   * @param wheelbaseMeters The distance between the front and back side of the drivetrain
+   * @param moduleOffsets The locations of the module relative to the physical center of the robot.
+   *     Only robots with 4 modules are supported, and they should be in FL, FR, BL, BR order.
    */
   public RobotConfig(
-      Mass mass,
-      MomentOfInertia MOI,
-      ModuleConfig moduleConfig,
-      Distance trackwidthMeters,
-      Distance wheelbaseMeters) {
-    this(
-        mass.in(Kilograms),
-        MOI.in(KilogramSquareMeters),
-        moduleConfig,
-        trackwidthMeters.in(Meters),
-        wheelbaseMeters.in(Meters));
+      Mass mass, MomentOfInertia MOI, ModuleConfig moduleConfig, Translation2d... moduleOffsets) {
+    this(mass.in(Kilograms), MOI.in(KilogramSquareMeters), moduleConfig, moduleOffsets);
   }
 
   /**
@@ -269,16 +252,14 @@ public class RobotConfig {
     JSONObject json = (JSONObject) new JSONParser().parse(fileContent);
 
     boolean isHolonomic = (boolean) json.get("holonomicMode");
-    double massKG = (double) json.get("robotMass");
-    double MOI = (double) json.get("robotMOI");
-    double wheelbase = (double) json.get("robotWheelbase");
-    double trackwidth = (double) json.get("robotTrackwidth");
-    double wheelRadius = (double) json.get("driveWheelRadius");
-    double gearing = (double) json.get("driveGearing");
-    double maxDriveSpeed = (double) json.get("maxDriveSpeed");
-    double wheelCOF = (double) json.get("wheelCOF");
+    double massKG = ((Number) json.get("robotMass")).doubleValue();
+    double MOI = ((Number) json.get("robotMOI")).doubleValue();
+    double wheelRadius = ((Number) json.get("driveWheelRadius")).doubleValue();
+    double gearing = ((Number) json.get("driveGearing")).doubleValue();
+    double maxDriveSpeed = ((Number) json.get("maxDriveSpeed")).doubleValue();
+    double wheelCOF = ((Number) json.get("wheelCOF")).doubleValue();
     String driveMotor = (String) json.get("driveMotorType");
-    double driveCurrentLimit = (double) json.get("driveCurrentLimit");
+    double driveCurrentLimit = ((Number) json.get("driveCurrentLimit")).doubleValue();
 
     int numMotors = isHolonomic ? 1 : 2;
     DCMotor gearbox =
@@ -300,8 +281,26 @@ public class RobotConfig {
             wheelRadius, maxDriveSpeed, wheelCOF, gearbox, driveCurrentLimit, numMotors);
 
     if (isHolonomic) {
-      return new RobotConfig(massKG, MOI, moduleConfig, trackwidth, wheelbase);
+      Translation2d[] moduleOffsets =
+          new Translation2d[] {
+            new Translation2d(
+                ((Number) json.get("flModuleX")).doubleValue(),
+                ((Number) json.get("flModuleY")).doubleValue()),
+            new Translation2d(
+                ((Number) json.get("frModuleX")).doubleValue(),
+                ((Number) json.get("frModuleY")).doubleValue()),
+            new Translation2d(
+                ((Number) json.get("blModuleX")).doubleValue(),
+                ((Number) json.get("blModuleY")).doubleValue()),
+            new Translation2d(
+                ((Number) json.get("brModuleX")).doubleValue(),
+                ((Number) json.get("brModuleY")).doubleValue())
+          };
+
+      return new RobotConfig(massKG, MOI, moduleConfig, moduleOffsets);
     } else {
+      double trackwidth = ((Number) json.get("robotTrackwidth")).doubleValue();
+
       return new RobotConfig(massKG, MOI, moduleConfig, trackwidth);
     }
   }

@@ -7,28 +7,44 @@ import 'package:pathplanner/widgets/field_image.dart';
 class PathPainterUtil {
   static void paintRobotModules(List<Pose2d> modulePoses, FieldImage fieldImage,
       double scale, Canvas canvas, Color color) {
+    paintRobotModulesPixels([
+      for (Pose2d m in modulePoses)
+        PathPainterUtil.pointToPixelOffset(m.translation, scale, fieldImage),
+    ], [
+      for (Pose2d m in modulePoses) m.rotation.radians.toDouble(),
+    ],
+        PathPainterUtil.uiPointSizeToPixels(25, scale, fieldImage),
+        PathPainterUtil.uiPointSizeToPixels(12, scale, fieldImage),
+        1.0,
+        canvas,
+        color);
+  }
+
+  static void paintRobotModulesPixels(
+      List<Offset> modulePositionsPixels,
+      List<double> moduleRotationsRadians,
+      double lengthPixels,
+      double witdthPixels,
+      double borderRadiusPixels,
+      Canvas canvas,
+      Color color) {
+    assert(modulePositionsPixels.length == moduleRotationsRadians.length);
     var paint = Paint()
       ..style = PaintingStyle.fill
-      ..color = color
-      ..strokeWidth = 2;
+      ..color = color;
 
-    for (Pose2d m in modulePoses) {
-      Offset pos =
-          PathPainterUtil.pointToPixelOffset(m.translation, scale, fieldImage);
+    for (int i = 0; i < modulePositionsPixels.length; i++) {
+      Offset pos = modulePositionsPixels[i];
 
       canvas.save();
       canvas.translate(pos.dx, pos.dy);
-      canvas.rotate(-m.rotation.radians.toDouble());
+      canvas.rotate(-moduleRotationsRadians[i]);
       canvas.translate(-pos.dx, -pos.dy);
       canvas.drawRRect(
           RRect.fromRectAndRadius(
               Rect.fromCenter(
-                  center: pos,
-                  width: PathPainterUtil.uiPointSizeToPixels(
-                      25, scale, fieldImage),
-                  height: PathPainterUtil.uiPointSizeToPixels(
-                      12, scale, fieldImage)),
-              const Radius.circular(1.0)),
+                  center: pos, width: lengthPixels, height: witdthPixels),
+              Radius.circular(borderRadiusPixels)),
           paint);
       canvas.restore();
     }
@@ -38,16 +54,12 @@ class PathPainterUtil {
       Pose2d pose,
       FieldImage fieldImage,
       Size robotSize,
+      Translation2d bumperOffset,
       double scale,
       Canvas canvas,
       Color color,
       Color outlineColor,
       {bool showDetails = false}) {
-    var paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = color
-      ..strokeWidth = 2;
-
     Offset center =
         PathPainterUtil.pointToPixelOffset(pose.translation, scale, fieldImage);
 
@@ -56,29 +68,22 @@ class PathPainterUtil {
     double length =
         PathPainterUtil.metersToPixels(robotSize.height, scale, fieldImage);
 
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.rotate(-pose.rotation.radians.toDouble());
-    canvas.translate(-center.dx, -center.dy);
-    canvas.drawRRect(
-        RRect.fromRectAndRadius(
-            Rect.fromCenter(center: center, width: length, height: width),
-            const Radius.circular(5)),
-        paint);
-
-    Offset frontMiddle = center + Offset(length / 2, 0);
-
-    // Draw the dot
-    paint.style = PaintingStyle.fill;
-    canvas.drawCircle(frontMiddle,
-        PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
-    paint.style = PaintingStyle.stroke;
-    paint.strokeWidth = 1;
-    paint.color = outlineColor;
-    canvas.drawCircle(frontMiddle,
-        PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage), paint);
-
-    canvas.restore();
+    paintRobotOutlinePixels(
+      center,
+      pose.rotation.radians.toDouble(),
+      Size(width, length),
+      Offset(
+          PathPainterUtil.metersToPixels(
+              bumperOffset.x.toDouble(), scale, fieldImage),
+          PathPainterUtil.metersToPixels(
+              -bumperOffset.y.toDouble(), scale, fieldImage)),
+      PathPainterUtil.uiPointSizeToPixels(15, scale, fieldImage),
+      2.0,
+      PathPainterUtil.metersToPixels(0.075, scale, fieldImage),
+      canvas,
+      color,
+      outlineColor,
+    );
 
     if (showDetails) {
       String angleText = '${pose.rotation.degrees.toStringAsFixed(1)}°';
@@ -138,6 +143,49 @@ class PathPainterUtil {
 
       canvas.restore();
     }
+  }
+
+  static void paintRobotOutlinePixels(
+      Offset center,
+      double rotationRadians,
+      Size robotSizePixels,
+      Offset bumperOffsetPixels,
+      double dotRadiusPixels,
+      double bumperStrokeWidth,
+      double bumperRadiusPixels,
+      Canvas canvas,
+      Color color,
+      Color outlineColor) {
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = color
+      ..strokeWidth = bumperStrokeWidth;
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(-rotationRadians);
+    canvas.translate(-center.dx, -center.dy);
+    canvas.translate(bumperOffsetPixels.dx, bumperOffsetPixels.dy);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromCenter(
+                center: center,
+                width: robotSizePixels.height,
+                height: robotSizePixels.width),
+            Radius.circular(bumperRadiusPixels)),
+        paint);
+
+    Offset frontMiddle = center + Offset(robotSizePixels.height / 2, 0);
+
+    // Draw the dot
+    paint.style = PaintingStyle.fill;
+    canvas.drawCircle(frontMiddle, dotRadiusPixels, paint);
+    paint.style = PaintingStyle.stroke;
+    paint.strokeWidth = 1;
+    paint.color = outlineColor;
+    canvas.drawCircle(frontMiddle, dotRadiusPixels, paint);
+
+    canvas.restore();
   }
 
   static void paintMarker(

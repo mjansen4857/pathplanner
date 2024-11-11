@@ -5,6 +5,8 @@ are accurately limited for the performance of your robot. All of these values ha
 robot, determining its maximum velocity, acceleration, etc. Therefore, you should take care to ensure that these options
 are configured as accurately as possible.
 
+<img src="robot_config_settings.png" alt="robot config" border-effect="rounded"/>
+
 ## Robot Config Options
 
 Robot Mass
@@ -41,11 +43,26 @@ $$
 
 However, this will likely lead to an inaccurate estimate as it assumes a uniform distribution of mass.
 
-Wheelbase
-: The distance between the front and back of the drivebase, in meters. Only relevant in holonomic mode.
-
 Trackwidth
-: The distance between the left and right sides of the drivebase, in meters.
+: The distance between the left and right sides of the drivebase, in meters. Only available for non-holonomic robots.
+
+## Bumper Config Options
+
+The following options are only for visualization purposes in the PathPlanner GUI and are not used in PathPlannerLib.
+
+Bumper Width
+: The width of the robot's bumpers, in meters.
+
+Bumper Length
+: The length of the robot's bumpers, in meters.
+
+Bumper Offset X
+: How far the center of the bumpers are offset from the center of the robot along its X axis, in meters. Positive values
+indicate the center of the bumpers is forward of the robot's center.
+
+Bumper Offset Y
+: How far the center of the bumpers are offset from the center of the robot along its Y axis, in meters. Positive values
+indicate the center of the bumpers is left of the robot's center.
 
 ## Module Config Options
 
@@ -63,7 +80,8 @@ True Max Drive Speed
 > **Note**
 >
 > It is very important that the True Max Drive Speed is measured for your actual robot. This value is not simply a "max
-> velocity" limit on the robot. It encodes information about how much motor torque can actually be used to accelerate the
+> velocity" limit on the robot. It encodes information about how much motor torque can actually be used to accelerate
+> the
 > robot.
 >
 > This can be easily measured by driving the robot in a straight line as fast as possible on a charged battery, and
@@ -85,3 +103,8 @@ Drive Motor
 
 Drive Current Limit
 : The supply current limit applied to the drive motor controllers, in Amps.
+
+## Module Offsets
+
+The locations of each swerve module relative to the center of the robot, in meters. These should be the same offsets
+used to create your kinematics in code. Only available for swerve drive robots.

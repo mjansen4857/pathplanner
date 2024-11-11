@@ -512,7 +512,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _loadProjectSettingsFromFile(Directory projectDir) async {
     File settingsFile = fs.file(join(_pathplannerDir.path, _settingsDir));
 
-    var json = {};
+    var json = <String, dynamic>{};
 
     if (await settingsFile.exists()) {
       try {
@@ -524,10 +524,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     }
 
-    widget.prefs.setDouble(PrefsKeys.robotWidth,
-        json[PrefsKeys.robotWidth]?.toDouble() ?? Defaults.robotWidth);
-    widget.prefs.setDouble(PrefsKeys.robotLength,
-        json[PrefsKeys.robotLength]?.toDouble() ?? Defaults.robotLength);
+    _setPrefDoubleFromJSON(json, PrefsKeys.robotWidth, Defaults.robotWidth);
+    _setPrefDoubleFromJSON(json, PrefsKeys.robotLength, Defaults.robotLength);
     widget.prefs.setBool(PrefsKeys.holonomicMode,
         json[PrefsKeys.holonomicMode] ?? Defaults.holonomicMode);
     widget.prefs.setStringList(
@@ -542,46 +540,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ?.map((e) => e as String)
                 .toList() ??
             Defaults.autoFolders);
-    widget.prefs.setDouble(PrefsKeys.defaultMaxVel,
-        json[PrefsKeys.defaultMaxVel]?.toDouble() ?? Defaults.defaultMaxVel);
-    widget.prefs.setDouble(
-        PrefsKeys.defaultMaxAccel,
-        json[PrefsKeys.defaultMaxAccel]?.toDouble() ??
-            Defaults.defaultMaxAccel);
-    widget.prefs.setDouble(
-        PrefsKeys.defaultMaxAngVel,
-        json[PrefsKeys.defaultMaxAngVel]?.toDouble() ??
-            Defaults.defaultMaxAngVel);
-    widget.prefs.setDouble(
-        PrefsKeys.defaultMaxAngAccel,
-        json[PrefsKeys.defaultMaxAngAccel]?.toDouble() ??
-            Defaults.defaultMaxAngAccel);
-    widget.prefs.setDouble(PrefsKeys.robotMass,
-        json[PrefsKeys.robotMass]?.toDouble() ?? Defaults.robotMass);
-    widget.prefs.setDouble(PrefsKeys.robotMOI,
-        json[PrefsKeys.robotMOI]?.toDouble() ?? Defaults.robotMOI);
-    widget.prefs.setDouble(PrefsKeys.robotWheelbase,
-        json[PrefsKeys.robotWheelbase]?.toDouble() ?? Defaults.robotWheelbase);
-    widget.prefs.setDouble(
-        PrefsKeys.robotTrackwidth,
-        json[PrefsKeys.robotTrackwidth]?.toDouble() ??
-            Defaults.robotTrackwidth);
-    widget.prefs.setDouble(
-        PrefsKeys.driveWheelRadius,
-        json[PrefsKeys.driveWheelRadius]?.toDouble() ??
-            Defaults.driveWheelRadius);
-    widget.prefs.setDouble(PrefsKeys.driveGearing,
-        json[PrefsKeys.driveGearing]?.toDouble() ?? Defaults.driveGearing);
-    widget.prefs.setDouble(PrefsKeys.maxDriveSpeed,
-        json[PrefsKeys.maxDriveSpeed]?.toDouble() ?? Defaults.maxDriveSpeed);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultMaxVel, Defaults.defaultMaxVel);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultMaxAccel, Defaults.defaultMaxAccel);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultMaxAngVel, Defaults.defaultMaxAngVel);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultMaxAngAccel, Defaults.defaultMaxAngAccel);
+    _setPrefDoubleFromJSON(json, PrefsKeys.robotMass, Defaults.robotMass);
+    _setPrefDoubleFromJSON(json, PrefsKeys.robotMOI, Defaults.robotMOI);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.robotTrackwidth, Defaults.robotTrackwidth);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.driveWheelRadius, Defaults.driveWheelRadius);
+    _setPrefDoubleFromJSON(json, PrefsKeys.driveGearing, Defaults.driveGearing);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.maxDriveSpeed, Defaults.maxDriveSpeed);
     widget.prefs.setString(PrefsKeys.driveMotor,
         json[PrefsKeys.driveMotor] ?? Defaults.driveMotor);
-    widget.prefs.setDouble(
-        PrefsKeys.driveCurrentLimit,
-        json[PrefsKeys.driveCurrentLimit]?.toDouble() ??
-            Defaults.driveCurrentLimit);
-    widget.prefs.setDouble(PrefsKeys.wheelCOF,
-        json[PrefsKeys.wheelCOF]?.toDouble() ?? Defaults.wheelCOF);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.driveCurrentLimit, Defaults.driveCurrentLimit);
+    _setPrefDoubleFromJSON(json, PrefsKeys.wheelCOF, Defaults.wheelCOF);
+    _setPrefDoubleFromJSON(json, PrefsKeys.flModuleX, Defaults.flModuleX);
+    _setPrefDoubleFromJSON(json, PrefsKeys.flModuleY, Defaults.flModuleY);
+    _setPrefDoubleFromJSON(json, PrefsKeys.frModuleX, Defaults.frModuleX);
+    _setPrefDoubleFromJSON(json, PrefsKeys.frModuleY, Defaults.frModuleY);
+    _setPrefDoubleFromJSON(json, PrefsKeys.blModuleX, Defaults.blModuleX);
+    _setPrefDoubleFromJSON(json, PrefsKeys.blModuleY, Defaults.blModuleY);
+    _setPrefDoubleFromJSON(json, PrefsKeys.brModuleX, Defaults.brModuleX);
+    _setPrefDoubleFromJSON(json, PrefsKeys.brModuleY, Defaults.brModuleY);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.bumperOffsetX, Defaults.bumperOffsetX);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.bumperOffsetY, Defaults.bumperOffsetY);
+  }
+
+  void _setPrefDoubleFromJSON(
+      Map<String, dynamic> json, String prefsKey, double defaultValue) {
+    widget.prefs
+        .setDouble(prefsKey, json[prefsKey]?.toDouble() ?? defaultValue);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
@@ -622,9 +620,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
       PrefsKeys.robotMOI:
           widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
-      PrefsKeys.robotWheelbase:
-          widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
-              Defaults.robotWheelbase,
       PrefsKeys.robotTrackwidth:
           widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
               Defaults.robotTrackwidth,
@@ -643,6 +638,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Defaults.driveCurrentLimit,
       PrefsKeys.wheelCOF:
           widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
+      PrefsKeys.flModuleX:
+          widget.prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
+      PrefsKeys.flModuleY:
+          widget.prefs.getDouble(PrefsKeys.flModuleY) ?? Defaults.flModuleY,
+      PrefsKeys.frModuleX:
+          widget.prefs.getDouble(PrefsKeys.frModuleX) ?? Defaults.frModuleX,
+      PrefsKeys.frModuleY:
+          widget.prefs.getDouble(PrefsKeys.frModuleY) ?? Defaults.frModuleY,
+      PrefsKeys.blModuleX:
+          widget.prefs.getDouble(PrefsKeys.blModuleX) ?? Defaults.blModuleX,
+      PrefsKeys.blModuleY:
+          widget.prefs.getDouble(PrefsKeys.blModuleY) ?? Defaults.blModuleY,
+      PrefsKeys.brModuleX:
+          widget.prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
+      PrefsKeys.brModuleY:
+          widget.prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY,
+      PrefsKeys.bumperOffsetX:
+          widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
+              Defaults.bumperOffsetX,
+      PrefsKeys.bumperOffsetY:
+          widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
+              Defaults.bumperOffsetY,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

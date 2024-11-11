@@ -28,7 +28,6 @@ class PrefsKeys {
   static const String seen2024Warning = 'seen2024Warning';
   static const String robotMass = 'robotMass';
   static const String robotMOI = 'robotMOI';
-  static const String robotWheelbase = 'robotWheelbase';
   static const String robotTrackwidth = 'robotTrackwidth';
   static const String driveWheelRadius = 'driveWheelRadius';
   static const String driveGearing = 'driveGearing';
@@ -40,6 +39,16 @@ class PrefsKeys {
   static const String showRobotDetails = 'showRobotDetails';
   static const String showGrid = 'showGrid';
   static const String telemetryUseSim = 'telemetryUseSim';
+  static const String flModuleX = 'flModuleX';
+  static const String flModuleY = 'flModuleY';
+  static const String frModuleX = 'frModuleX';
+  static const String frModuleY = 'frModuleY';
+  static const String blModuleX = 'blModuleX';
+  static const String blModuleY = 'blModuleY';
+  static const String brModuleX = 'brModuleX';
+  static const String brModuleY = 'brModuleY';
+  static const String bumperOffsetX = 'bumperOffsetX';
+  static const String bumperOffsetY = 'bumperOffsetY';
 }
 
 class Defaults {
@@ -69,7 +78,6 @@ class Defaults {
   static const double defaultNominalVoltage = 12.0;
   static const double robotMass = 74.088;
   static const double robotMOI = 6.883;
-  static const double robotWheelbase = 0.546;
   static const double robotTrackwidth = 0.546;
   static const double driveWheelRadius = 0.048;
   static const double driveGearing = 5.143;
@@ -81,4 +89,14 @@ class Defaults {
   static const bool showRobotDetails = false;
   static const bool showGrid = false;
   static const bool telemetryUseSim = true;
+  static const double flModuleX = 0.273;
+  static const double flModuleY = 0.273;
+  static const double frModuleX = 0.273;
+  static const double frModuleY = -0.273;
+  static const double blModuleX = -0.273;
+  static const double blModuleY = 0.273;
+  static const double brModuleX = -0.273;
+  static const double brModuleY = -0.273;
+  static const double bumperOffsetX = 0.0;
+  static const double bumperOffsetY = 0.0;
 }

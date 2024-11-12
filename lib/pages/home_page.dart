@@ -574,6 +574,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json, PrefsKeys.bumperOffsetX, Defaults.bumperOffsetX);
     _setPrefDoubleFromJSON(
         json, PrefsKeys.bumperOffsetY, Defaults.bumperOffsetY);
+    widget.prefs.setString(PrefsKeys.robotFeatures,
+        json[PrefsKeys.robotFeatures] ?? Defaults.robotFeatures);
   }
 
   void _setPrefDoubleFromJSON(
@@ -660,6 +662,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.bumperOffsetY:
           widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
               Defaults.bumperOffsetY,
+      PrefsKeys.robotFeatures:
+          widget.prefs.getStringList(PrefsKeys.robotFeatures) ??
+              Defaults.robotFeatures,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

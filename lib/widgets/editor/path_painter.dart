@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 
@@ -5,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/rotation_target.dart';
+import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
@@ -40,6 +42,7 @@ class PathPainter extends CustomPainter {
   late final RobotConfig robotConfig;
   late final num robotRadius;
   Animation<num>? previewTime;
+  final List<Feature> robotFeatures = [];
 
   static double scale = 1;
 
@@ -71,6 +74,15 @@ class PathPainter extends CustomPainter {
                 robotConfig.bumperSize.width) +
             (robotConfig.bumperSize.height * robotConfig.bumperSize.height)) /
         2.0;
+
+    for (String featureJson in prefs.getStringList(PrefsKeys.robotFeatures) ??
+        Defaults.robotFeatures) {
+      try {
+        robotFeatures.add(Feature.fromJson(jsonDecode(featureJson))!);
+      } catch (_) {
+        // Ignore and skip loading this feature
+      }
+    }
 
     if (simulatedPath != null && animation != null) {
       previewTime =
@@ -207,16 +219,18 @@ class PathPainter extends CustomPainter {
       }
 
       PathPainterUtil.paintRobotOutline(
-          Pose2d(state.pose.translation, rotation),
-          fieldImage,
-          robotConfig.bumperSize,
-          robotConfig.bumperOffset,
-          scale,
-          canvas,
-          colorScheme.primary,
-          showDetails: prefs.getBool(PrefsKeys.showRobotDetails) ??
-              Defaults.showRobotDetails,
-          colorScheme.surfaceContainer);
+        Pose2d(state.pose.translation, rotation),
+        fieldImage,
+        robotConfig.bumperSize,
+        robotConfig.bumperOffset,
+        scale,
+        canvas,
+        colorScheme.primary,
+        colorScheme.surfaceContainer,
+        robotFeatures,
+        showDetails: prefs.getBool(PrefsKeys.showRobotDetails) ??
+            Defaults.showRobotDetails,
+      );
     }
   }
 
@@ -316,7 +330,8 @@ class PathPainter extends CustomPainter {
         scale,
         canvas,
         color.withOpacity(0.5),
-        colorScheme.surfaceContainer);
+        colorScheme.surfaceContainer,
+        robotFeatures);
   }
 
   void _paintPathPoints(PathPlannerPath path, Canvas canvas, Color baseColor,
@@ -592,7 +607,8 @@ class PathPainter extends CustomPainter {
             scale,
             canvas,
             rotationColor,
-            colorScheme.surfaceContainer);
+            colorScheme.surfaceContainer,
+            robotFeatures);
       }
     }
 
@@ -604,7 +620,8 @@ class PathPainter extends CustomPainter {
         scale,
         canvas,
         Colors.green.withOpacity(0.5),
-        colorScheme.surfaceContainer);
+        colorScheme.surfaceContainer,
+        robotFeatures);
 
     PathPainterUtil.paintRobotOutline(
         Pose2d(path.waypoints[path.waypoints.length - 1].anchor,
@@ -615,7 +632,8 @@ class PathPainter extends CustomPainter {
         scale,
         canvas,
         Colors.red.withOpacity(0.5),
-        colorScheme.surfaceContainer);
+        colorScheme.surfaceContainer,
+        robotFeatures);
   }
 
   void _paintBreakWarning(Translation2d prevPathEnd, Translation2d pathStart,

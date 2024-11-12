@@ -1,10 +1,12 @@
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/util/prefs.dart';
@@ -39,6 +41,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
   late final Size _robotSize;
   late final Translation2d _bumperOffset;
   late bool _useSim;
+  final List<Feature> _robotFeatures = [];
 
   bool _gotCurrentPose = false;
   bool _gotTargetPose = false;
@@ -61,6 +64,16 @@ class _TelemetryPageState extends State<TelemetryPage> {
 
     _useSim = widget.prefs.getBool(PrefsKeys.telemetryUseSim) ??
         Defaults.telemetryUseSim;
+
+    for (String featureJson
+        in widget.prefs.getStringList(PrefsKeys.robotFeatures) ??
+            Defaults.robotFeatures) {
+      try {
+        _robotFeatures.add(Feature.fromJson(jsonDecode(featureJson))!);
+      } catch (_) {
+        // Ignore and skip loading this feature
+      }
+    }
 
     widget.telemetry.connectionStatusStream().listen((connected) {
       if (mounted) {
@@ -232,6 +245,7 @@ class _TelemetryPageState extends State<TelemetryPage> {
                                 targetPose: _targetPose,
                                 currentPath: _currentPath,
                                 colorScheme: Theme.of(context).colorScheme,
+                                robotFeatures: _robotFeatures,
                               ),
                             ),
                           ),
@@ -577,6 +591,7 @@ class TelemetryPainter extends CustomPainter {
   final Pose2d? targetPose;
   final List<Pose2d>? currentPath;
   final ColorScheme colorScheme;
+  final List<Feature> robotFeatures;
 
   static double scale = 1;
 
@@ -588,6 +603,7 @@ class TelemetryPainter extends CustomPainter {
     this.targetPose,
     this.currentPath,
     required this.colorScheme,
+    required this.robotFeatures,
   });
 
   @override
@@ -623,7 +639,8 @@ class TelemetryPainter extends CustomPainter {
           scale,
           canvas,
           Colors.grey[600]!.withOpacity(0.75),
-          colorScheme.surfaceContainer);
+          colorScheme.surfaceContainer,
+          robotFeatures);
     }
 
     if (currentPose != null) {
@@ -635,7 +652,8 @@ class TelemetryPainter extends CustomPainter {
           scale,
           canvas,
           colorScheme.primary,
-          colorScheme.surfaceContainer);
+          colorScheme.surfaceContainer,
+          robotFeatures);
     }
   }
 

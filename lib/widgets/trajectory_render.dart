@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/trajectory/config.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,6 +57,7 @@ class TrajectoryPainter extends CustomPainter {
   final PathPlannerTrajectory trajectory;
   final SharedPreferences prefs;
   final num? sampleTime;
+  final List<Feature> robotFeatures = [];
 
   late final RobotConfig robotConfig;
 
@@ -66,6 +71,15 @@ class TrajectoryPainter extends CustomPainter {
     required this.sampleTime,
   }) {
     robotConfig = RobotConfig.fromPrefs(prefs);
+
+    for (String featureJson in prefs.getStringList(PrefsKeys.robotFeatures) ??
+        Defaults.robotFeatures) {
+      try {
+        robotFeatures.add(Feature.fromJson(jsonDecode(featureJson))!);
+      } catch (_) {
+        // Ignore and skip loading this feature
+      }
+    }
   }
 
   @override
@@ -90,7 +104,8 @@ class TrajectoryPainter extends CustomPainter {
           scale,
           canvas,
           Colors.green[700]!,
-          colorScheme.surfaceContainer);
+          colorScheme.surfaceContainer,
+          robotFeatures);
       PathPainterUtil.paintRobotOutline(
           Pose2d(trajectory.states.last.pose.translation,
               trajectory.states.last.pose.rotation),
@@ -100,7 +115,8 @@ class TrajectoryPainter extends CustomPainter {
           scale,
           canvas,
           Colors.red[700]!,
-          colorScheme.surfaceContainer);
+          colorScheme.surfaceContainer,
+          robotFeatures);
     } else {
       TrajectoryState state = trajectory.sample(sampleTime!);
       Rotation2d rotation = state.pose.rotation;
@@ -147,7 +163,8 @@ class TrajectoryPainter extends CustomPainter {
           colorScheme.brightness == Brightness.dark
               ? colorScheme.primary
               : colorScheme.secondary,
-          colorScheme.surfaceContainer);
+          colorScheme.surfaceContainer,
+          robotFeatures);
     }
   }
 

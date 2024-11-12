@@ -548,6 +548,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json, PrefsKeys.defaultMaxAngVel, Defaults.defaultMaxAngVel);
     _setPrefDoubleFromJSON(
         json, PrefsKeys.defaultMaxAngAccel, Defaults.defaultMaxAngAccel);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultNominalVoltage, Defaults.defaultNominalVoltage);
     _setPrefDoubleFromJSON(json, PrefsKeys.robotMass, Defaults.robotMass);
     _setPrefDoubleFromJSON(json, PrefsKeys.robotMOI, Defaults.robotMOI);
     _setPrefDoubleFromJSON(
@@ -618,6 +620,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.defaultMaxAngAccel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAccel,
+      PrefsKeys.defaultNominalVoltage:
+          widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
+              Defaults.defaultNominalVoltage,
       PrefsKeys.robotMass:
           widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
       PrefsKeys.robotMOI:

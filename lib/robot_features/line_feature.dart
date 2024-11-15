@@ -44,4 +44,15 @@ class LineFeature extends Feature {
 
     canvas.drawLine(startPixels, endPixels, paint);
   }
+
+  @override
+  int get hashCode => Object.hash(type, start, end, strokeWidth);
+
+  @override
+  bool operator ==(Object other) {
+    return other is LineFeature &&
+        other.start == start &&
+        other.end == end &&
+        other.strokeWidth == strokeWidth;
+  }
 }

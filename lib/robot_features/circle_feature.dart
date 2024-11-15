@@ -48,4 +48,16 @@ class CircleFeature extends Feature {
 
     canvas.drawCircle(centerPixels, radiusPixels, paint);
   }
+
+  @override
+  int get hashCode => Object.hash(type, center, radius, strokeWidth, filled);
+
+  @override
+  bool operator ==(Object other) {
+    return other is CircleFeature &&
+        other.center == center &&
+        other.radius == radius &&
+        other.strokeWidth == strokeWidth &&
+        other.filled == filled;
+  }
 }

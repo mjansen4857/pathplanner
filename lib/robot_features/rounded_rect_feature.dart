@@ -64,4 +64,18 @@ class RoundedRectFeature extends Feature {
             Radius.circular(borderRadiusPixels)),
         paint);
   }
+
+  @override
+  int get hashCode =>
+      Object.hash(type, center, size, borderRadius, strokeWidth, filled);
+
+  @override
+  bool operator ==(Object other) {
+    return other is RoundedRectFeature &&
+        other.center == center &&
+        other.size == size &&
+        other.borderRadius == borderRadius &&
+        other.strokeWidth == strokeWidth &&
+        other.filled == filled;
+  }
 }

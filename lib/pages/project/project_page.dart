@@ -221,6 +221,10 @@ class _ProjectPageState extends State<ProjectPage> {
           autos[i].choreoAuto ? allChoreoPathNames : allPathNames);
     }
 
+    if (!mounted) {
+      return;
+    }
+
     setState(() {
       _paths = paths;
       _autos = autos;

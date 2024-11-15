@@ -576,8 +576,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json, PrefsKeys.bumperOffsetX, Defaults.bumperOffsetX);
     _setPrefDoubleFromJSON(
         json, PrefsKeys.bumperOffsetY, Defaults.bumperOffsetY);
-    widget.prefs.setString(PrefsKeys.robotFeatures,
-        json[PrefsKeys.robotFeatures] ?? Defaults.robotFeatures);
+    widget.prefs.setStringList(
+        PrefsKeys.robotFeatures,
+        (json[PrefsKeys.robotFeatures] as List?)
+                ?.map((e) => e as String)
+                .toList() ??
+            Defaults.robotFeatures);
   }
 
   void _setPrefDoubleFromJSON(

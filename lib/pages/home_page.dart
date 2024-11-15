@@ -548,6 +548,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json, PrefsKeys.defaultMaxAngVel, Defaults.defaultMaxAngVel);
     _setPrefDoubleFromJSON(
         json, PrefsKeys.defaultMaxAngAccel, Defaults.defaultMaxAngAccel);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultNominalVoltage, Defaults.defaultNominalVoltage);
     _setPrefDoubleFromJSON(json, PrefsKeys.robotMass, Defaults.robotMass);
     _setPrefDoubleFromJSON(json, PrefsKeys.robotMOI, Defaults.robotMOI);
     _setPrefDoubleFromJSON(
@@ -574,6 +576,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json, PrefsKeys.bumperOffsetX, Defaults.bumperOffsetX);
     _setPrefDoubleFromJSON(
         json, PrefsKeys.bumperOffsetY, Defaults.bumperOffsetY);
+    widget.prefs.setString(PrefsKeys.robotFeatures,
+        json[PrefsKeys.robotFeatures] ?? Defaults.robotFeatures);
   }
 
   void _setPrefDoubleFromJSON(
@@ -616,6 +620,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.defaultMaxAngAccel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAccel,
+      PrefsKeys.defaultNominalVoltage:
+          widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
+              Defaults.defaultNominalVoltage,
       PrefsKeys.robotMass:
           widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
       PrefsKeys.robotMOI:
@@ -660,6 +667,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.bumperOffsetY:
           widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
               Defaults.bumperOffsetY,
+      PrefsKeys.robotFeatures:
+          widget.prefs.getStringList(PrefsKeys.robotFeatures) ??
+              Defaults.robotFeatures,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {

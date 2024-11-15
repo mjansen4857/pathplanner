@@ -81,8 +81,7 @@ True Max Drive Speed
 >
 > It is very important that the True Max Drive Speed is measured for your actual robot. This value is not simply a "max
 > velocity" limit on the robot. It encodes information about how much motor torque can actually be used to accelerate
-> the
-> robot.
+> the robot.
 >
 > This can be easily measured by driving the robot in a straight line as fast as possible on a charged battery, and
 > measuring the robot's maximum velocity.
@@ -108,3 +107,8 @@ Drive Current Limit
 
 The locations of each swerve module relative to the center of the robot, in meters. These should be the same offsets
 used to create your kinematics in code. Only available for swerve drive robots.
+
+## Robot Features
+
+Robot features are shapes that can be added to the robot in the GUI. These can be used to represent intakes, shooting
+trajectories, etc. Current features include: rectangle, circle, and lines.

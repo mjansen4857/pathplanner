@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:pathplanner/robot_features/feature.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 
@@ -59,6 +60,7 @@ class PathPainterUtil {
       Canvas canvas,
       Color color,
       Color outlineColor,
+      List<Feature> features,
       {bool showDetails = false}) {
     Offset center =
         PathPainterUtil.pointToPixelOffset(pose.translation, scale, fieldImage);
@@ -67,6 +69,18 @@ class PathPainterUtil {
         PathPainterUtil.metersToPixels(robotSize.width, scale, fieldImage);
     double length =
         PathPainterUtil.metersToPixels(robotSize.height, scale, fieldImage);
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(-pose.rotation.radians.toDouble());
+
+    double pixelsPerMeter =
+        PathPainterUtil.metersToPixels(1.0, scale, fieldImage);
+    for (Feature f in features) {
+      f.draw(canvas, pixelsPerMeter, color);
+    }
+
+    canvas.restore();
 
     paintRobotOutlinePixels(
       center,
@@ -164,18 +178,17 @@ class PathPainterUtil {
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.rotate(-rotationRadians);
-    canvas.translate(-center.dx, -center.dy);
     canvas.translate(bumperOffsetPixels.dx, bumperOffsetPixels.dy);
     canvas.drawRRect(
         RRect.fromRectAndRadius(
             Rect.fromCenter(
-                center: center,
+                center: Offset.zero,
                 width: robotSizePixels.height,
                 height: robotSizePixels.width),
             Radius.circular(bumperRadiusPixels)),
         paint);
 
-    Offset frontMiddle = center + Offset(robotSizePixels.height / 2, 0);
+    Offset frontMiddle = Offset(robotSizePixels.height / 2, 0);
 
     // Draw the dot
     paint.style = PaintingStyle.fill;

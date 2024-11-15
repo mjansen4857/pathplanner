@@ -1,6 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pathplanner/robot_features/circle_feature.dart';
+import 'package:pathplanner/robot_features/line_feature.dart';
+import 'package:pathplanner/robot_features/rounded_rect_feature.dart';
 import 'package:pathplanner/util/prefs.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:pathplanner/widgets/robot_config_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -614,6 +620,618 @@ void main() {
 
       expect(settingsChanged, true);
       expect(prefs.getDouble(PrefsKeys.brModuleY), -0.1);
+    });
+  });
+
+  group('robot features', () {
+    testWidgets('add/delete rounded rect feature', (widgetTester) async {
+      await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+      await widgetTester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: RobotConfigSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            prefs: prefs,
+          ),
+        ),
+      ));
+
+      final addButton = find.byTooltip('Add Feature');
+      expect(addButton, findsOneWidget);
+
+      await widgetTester.tap(addButton);
+      await widgetTester.pumpAndSettle();
+
+      final rrectOption = find.text('Rectangle');
+      expect(rrectOption, findsOneWidget);
+
+      await widgetTester.tap(rrectOption);
+      await widgetTester.pumpAndSettle();
+
+      final featureCard = find.widgetWithText(TreeCardNode, 'Rectangle');
+      expect(featureCard, findsOneWidget);
+
+      final deleteButton = find.byTooltip('Delete Feature');
+      expect(deleteButton, findsOneWidget);
+
+      await widgetTester.tap(deleteButton);
+      await widgetTester.pumpAndSettle();
+
+      expect(featureCard, findsNothing);
+    });
+
+    testWidgets('add/delete circle feature', (widgetTester) async {
+      await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+      await widgetTester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: RobotConfigSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            prefs: prefs,
+          ),
+        ),
+      ));
+
+      final addButton = find.byTooltip('Add Feature');
+      expect(addButton, findsOneWidget);
+
+      await widgetTester.tap(addButton);
+      await widgetTester.pumpAndSettle();
+
+      final circOption = find.text('Circle');
+      expect(circOption, findsOneWidget);
+
+      await widgetTester.tap(circOption);
+      await widgetTester.pumpAndSettle();
+
+      final featureCard = find.widgetWithText(TreeCardNode, 'Circle');
+      expect(featureCard, findsOneWidget);
+
+      final deleteButton = find.byTooltip('Delete Feature');
+      expect(deleteButton, findsOneWidget);
+
+      await widgetTester.tap(deleteButton);
+      await widgetTester.pumpAndSettle();
+
+      expect(featureCard, findsNothing);
+    });
+
+    testWidgets('add/delete line feature', (widgetTester) async {
+      await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+      await widgetTester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: RobotConfigSettings(
+            onSettingsChanged: () => settingsChanged = true,
+            prefs: prefs,
+          ),
+        ),
+      ));
+
+      final addButton = find.byTooltip('Add Feature');
+      expect(addButton, findsOneWidget);
+
+      await widgetTester.tap(addButton);
+      await widgetTester.pumpAndSettle();
+
+      final lineOption = find.text('Line');
+      expect(lineOption, findsOneWidget);
+
+      await widgetTester.tap(lineOption);
+      await widgetTester.pumpAndSettle();
+
+      final featureCard = find.widgetWithText(TreeCardNode, 'Line');
+      expect(featureCard, findsOneWidget);
+
+      final deleteButton = find.byTooltip('Delete Feature');
+      expect(deleteButton, findsOneWidget);
+
+      await widgetTester.tap(deleteButton);
+      await widgetTester.pumpAndSettle();
+
+      expect(featureCard, findsNothing);
+    });
+
+    group('rounded rect feature', () {
+      setUp(() {
+        prefs.setStringList(PrefsKeys.robotFeatures, [
+          jsonEncode(RoundedRectFeature(name: 'test').toJson()),
+        ]);
+      });
+
+      testWidgets('center x text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'Center X (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('center y text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'Center Y (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('width text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'Width (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('length text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'Length (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('border radius text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField =
+            find.widgetWithText(NumberTextField, 'Border Radius (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('stroke width text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField =
+            find.widgetWithText(NumberTextField, 'Stroke Width (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('filled chip', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(FilterChip, 'Filled');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.tap(textField);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+    });
+
+    group('circle feature', () {
+      setUp(() {
+        prefs.setStringList(PrefsKeys.robotFeatures, [
+          jsonEncode(CircleFeature(name: 'test').toJson()),
+        ]);
+      });
+
+      testWidgets('center x text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'Center X (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('center y text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'Center Y (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('radius text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'Radius (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('stroke width text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField =
+            find.widgetWithText(NumberTextField, 'Stroke Width (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('filled chip', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(FilterChip, 'Filled');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.tap(textField);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+    });
+
+    group('line feature', () {
+      setUp(() {
+        prefs.setStringList(PrefsKeys.robotFeatures, [
+          jsonEncode(LineFeature(name: 'test').toJson()),
+        ]);
+      });
+
+      testWidgets('start x text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'Start X (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('start y text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'Start Y (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('end x text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'End X (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('end y text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField = find.widgetWithText(NumberTextField, 'End Y (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
+
+      testWidgets('stroke width text field', (widgetTester) async {
+        await widgetTester.binding.setSurfaceSize(const Size(1280, 1200));
+
+        await widgetTester.pumpWidget(MaterialApp(
+          home: Scaffold(
+            body: RobotConfigSettings(
+              onSettingsChanged: () => settingsChanged = true,
+              prefs: prefs,
+            ),
+          ),
+        ));
+
+        final treeCard = find.widgetWithText(TreeCardNode, 'test');
+        expect(treeCard, findsOneWidget);
+
+        await widgetTester.tap(treeCard);
+        await widgetTester.pumpAndSettle();
+
+        final textField =
+            find.widgetWithText(NumberTextField, 'Stroke Width (M)');
+        expect(textField, findsOneWidget);
+
+        await widgetTester.enterText(textField, '0.5');
+        await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+        await widgetTester.pump();
+
+        expect(settingsChanged, isTrue);
+      });
     });
   });
 }

@@ -426,10 +426,14 @@ class _TelemetryPageState extends State<TelemetryPage> {
     required LineChartData data,
     Widget? legend,
   }) {
+    ColorScheme colorScheme = Theme.of(context).colorScheme;
+
     return Expanded(
       child: Card(
         clipBehavior: Clip.antiAlias,
         margin: const EdgeInsets.fromLTRB(4.0, 0.0, 4.0, 4.0),
+        color: colorScheme.surface,
+        surfaceTintColor: colorScheme.surfaceTint,
         child: Stack(
           children: [
             Center(

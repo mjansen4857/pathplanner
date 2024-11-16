@@ -497,10 +497,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ProjectPage.settingsUpdated = true;
     _saveProjectSettingsToFile(_projectDir!);
 
-    String serverAddress = widget.prefs.getString(PrefsKeys.ntServerAddress) ??
-        Defaults.ntServerAddress;
-    if (serverAddress != widget.telemetry.getServerAddress()) {
-      widget.telemetry.setServerAddress(serverAddress);
+    bool useSim = widget.prefs.getBool(PrefsKeys.telemetryUseSim) ??
+        Defaults.telemetryUseSim;
+    if (!useSim) {
+      String serverAddress =
+          widget.prefs.getString(PrefsKeys.ntServerAddress) ??
+              Defaults.ntServerAddress;
+
+      if (serverAddress != widget.telemetry.getServerAddress()) {
+        widget.telemetry.setServerAddress(serverAddress);
+      }
     }
 
     setState(() {
@@ -576,8 +582,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         json, PrefsKeys.bumperOffsetX, Defaults.bumperOffsetX);
     _setPrefDoubleFromJSON(
         json, PrefsKeys.bumperOffsetY, Defaults.bumperOffsetY);
-    widget.prefs.setString(PrefsKeys.robotFeatures,
-        json[PrefsKeys.robotFeatures] ?? Defaults.robotFeatures);
+    widget.prefs.setStringList(
+        PrefsKeys.robotFeatures,
+        (json[PrefsKeys.robotFeatures] as List?)
+                ?.map((e) => e as String)
+                .toList() ??
+            Defaults.robotFeatures);
   }
 
   void _setPrefDoubleFromJSON(

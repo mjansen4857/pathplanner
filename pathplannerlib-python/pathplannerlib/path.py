@@ -817,18 +817,14 @@ class PathPlannerPath:
             # Flip the ideal trajectory
             flippedTraj = self._idealTrajectory.flip()
 
-        newRotTargets = [RotationTarget(t.waypointRelativePosition, FlippingUtil.flipFieldRotation(t.target)) for t in
-                         self._rotationTargets]
-        newPointZones = [z.flip() for z in self._pointTowardsZones]
-
-        newPoints = [p.flip() for p in self._allPoints]
-
-        path = PathPlannerPath.fromPathPoints(newPoints, self._globalConstraints,
-                                              GoalEndState(self._goalEndState.velocity,
-                                                           FlippingUtil.flipFieldRotation(self._goalEndState.rotation)))
+        flippedEndState = GoalEndState(self._goalEndState.velocity,
+                                       FlippingUtil.flipFieldRotation(self._goalEndState.rotation))
+        path = PathPlannerPath([], self._globalConstraints, None, flippedEndState)
+        path._allPoints = [p.flip() for p in self._allPoints]
         path._bezierPoints = [w.flip() for w in self._waypoints]
-        path._rotationTargets = newRotTargets
-        path._pointTowardsZones = newPointZones
+        path._rotationTargets = [RotationTarget(t.waypointRelativePosition, FlippingUtil.flipFieldRotation(t.target))
+                                 for t in self._rotationTargets]
+        path._pointTowardsZones = [z.flip() for z in self._pointTowardsZones]
         path._constraintZones = self._constraintZones
         path._eventMarkers = self._eventMarkers
         if self._idealStartingState is not None:

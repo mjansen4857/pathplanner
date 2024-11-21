@@ -104,10 +104,11 @@ class FollowPathCommand(Command):
                 self._trajectory = self._path.getIdealTrajectory(self._robotConfig)
             else:
                 # We need to regenerate
-                self._path.generateTrajectory(currentSpeeds, currentPose.rotation(), self._robotConfig)
+                self._trajectory = self._path.generateTrajectory(currentSpeeds, currentPose.rotation(),
+                                                                 self._robotConfig)
         else:
             # No ideal starting state, generate the trajectory
-            self._path.generateTrajectory(currentSpeeds, currentPose.rotation(), self._robotConfig)
+            self._trajectory = self._path.generateTrajectory(currentSpeeds, currentPose.rotation(), self._robotConfig)
 
         PathPlannerLogging.logActivePath(self._path)
         PPLibTelemetry.setCurrentPath(self._path)

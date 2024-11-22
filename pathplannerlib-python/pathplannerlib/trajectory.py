@@ -435,7 +435,11 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
 
         # Calculate robot heading
         if i != path.numPoints() - 1:
-            state.heading = (path.getPoint(i + 1).position - state.pose.translation()).angle()
+            headingTranslation = path.getPoint(i + 1).position - state.pose.translation()
+            if headingTranslation.norm() <= 1e-6:
+                state.heading = Rotation2d()
+            else:
+                state.heading = headingTranslation.angle()
         else:
             state.heading = states[i - 1].heading
 
@@ -462,8 +466,11 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
     for i in range(len(states)):
         for m in range(config.numModules):
             if i != len(states) - 1:
-                states[i].moduleStates[m].fieldAngle = (
-                        states[i + 1].moduleStates[m].fieldPos - states[i].moduleStates[m].fieldPos).angle()
+                fieldTranslation = states[i + 1].moduleStates[m].fieldPos - states[i].moduleStates[m].fieldPos
+                if fieldTranslation.norm() <= 1e-6:
+                    states[i].moduleStates[m].fieldAngle = Rotation2d()
+                else:
+                    states[i].moduleStates[m].fieldAngle = fieldTranslation.angle()
                 states[i].moduleStates[m].angle = states[i].moduleStates[m].fieldAngle - states[i].pose.rotation()
             else:
                 states[i].moduleStates[m].fieldAngle = states[i - 1].moduleStates[m].fieldAngle
@@ -497,7 +504,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
             # Calculate the torque this module will apply to the robot
             angleToModule = (state.moduleStates[m].fieldPos - state.pose.translation()).angle()
-            if forceVec == Translation2d():
+            if forceVec.norm() <= 1e-6:
                 theta = Rotation2d() - angleToModule
             else:
                 theta = forceVec.angle() - angleToModule
@@ -599,7 +606,10 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
             # Calculate the torque this module will apply to the robot
             angleToModule = (state.moduleStates[m].fieldPos - state.pose.translation()).angle()
-            theta = forceVec.angle() - angleToModule
+            if forceVec.norm() <= 1e-6:
+                theta = Rotation2d() - angleToModule
+            else:
+                theta = forceVec.angle() - angleToModule
             totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.sin()
 
         # Use the robot accelerations to calculate how each module should accelerate

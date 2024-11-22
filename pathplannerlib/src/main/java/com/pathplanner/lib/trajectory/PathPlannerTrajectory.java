@@ -243,7 +243,12 @@ public class PathPlannerTrajectory {
 
       // Calculate robot heading
       if (i != path.numPoints() - 1) {
-        state.heading = path.getPoint(i + 1).position.minus(state.pose.getTranslation()).getAngle();
+        Translation2d headingTranslation = path.getPoint(i + 1).position.minus(state.pose.getTranslation());
+        if (headingTranslation.getNorm() <= 1e-6) {
+          state.heading = new Rotation2d();
+        } else {
+          state.heading = headingTranslation.getAngle();
+        }
       } else {
         state.heading = states.get(i - 1).heading;
       }
@@ -284,13 +289,13 @@ public class PathPlannerTrajectory {
     for (int i = 0; i < states.size(); i++) {
       for (int m = 0; m < config.numModules; m++) {
         if (i != states.size() - 1) {
-          states.get(i).moduleStates[m].fieldAngle =
-              states
-                  .get(i + 1)
-                  .moduleStates[m]
-                  .fieldPos
-                  .minus(states.get(i).moduleStates[m].fieldPos)
-                  .getAngle();
+          Translation2d fieldTranslation = states.get(i + 1).moduleStates[m].fieldPos
+          .minus(states.get(i).moduleStates[m].fieldPos);
+          if (fieldTranslation.getNorm() <= 1e-6) {
+            states.get(i).moduleStates[m].fieldAngle = new Rotation2d();
+          } else {
+            states.get(i).moduleStates[m].fieldAngle = fieldTranslation.getAngle();
+          }
           states.get(i).moduleStates[m].angle =
               states.get(i).moduleStates[m].fieldAngle.minus(states.get(i).pose.getRotation());
         } else {
@@ -335,7 +340,12 @@ public class PathPlannerTrajectory {
         // Calculate the torque this module will apply to the robot
         Rotation2d angleToModule =
             state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
-        Rotation2d theta = forceVec.getAngle().minus(angleToModule);
+        Rotation2d theta;
+        if (forceVec.getNorm() <= 1e-6) {
+          theta = new Rotation2d().minus(angleToModule);
+        } else {
+          theta = forceVec.getAngle().minus(angleToModule);
+        }
         totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
       }
 
@@ -472,7 +482,12 @@ public class PathPlannerTrajectory {
         // Calculate the torque this module will apply to the robot
         Rotation2d angleToModule =
             state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
-        Rotation2d theta = forceVec.getAngle().minus(angleToModule);
+        Rotation2d theta;
+        if (forceVec.getNorm() <= 1e-6) {
+          theta = new Rotation2d().minus(angleToModule);
+        } else {
+          theta = forceVec.getAngle().minus(angleToModule);
+        }
         totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
       }
 

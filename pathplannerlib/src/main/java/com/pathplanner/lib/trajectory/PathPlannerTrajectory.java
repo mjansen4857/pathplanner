@@ -246,7 +246,7 @@ public class PathPlannerTrajectory {
         Translation2d headingTranslation =
             path.getPoint(i + 1).position.minus(state.pose.getTranslation());
         if (headingTranslation.getNorm() <= 1e-6) {
-          state.heading = new Rotation2d();
+          state.heading = Rotation2d.kZero;
         } else {
           state.heading = headingTranslation.getAngle();
         }
@@ -297,7 +297,7 @@ public class PathPlannerTrajectory {
                   .fieldPos
                   .minus(states.get(i).moduleStates[m].fieldPos);
           if (fieldTranslation.getNorm() <= 1e-6) {
-            states.get(i).moduleStates[m].fieldAngle = new Rotation2d();
+            states.get(i).moduleStates[m].fieldAngle = Rotation2d.kZero;
           } else {
             states.get(i).moduleStates[m].fieldAngle = fieldTranslation.getAngle();
           }
@@ -347,7 +347,7 @@ public class PathPlannerTrajectory {
             state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
         Rotation2d theta;
         if (forceVec.getNorm() <= 1e-6) {
-          theta = new Rotation2d().minus(angleToModule);
+          theta = Rotation2d.kZero.minus(angleToModule);
         } else {
           theta = forceVec.getAngle().minus(angleToModule);
         }
@@ -489,7 +489,7 @@ public class PathPlannerTrajectory {
             state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
         Rotation2d theta;
         if (forceVec.getNorm() <= 1e-6) {
-          theta = new Rotation2d().minus(angleToModule);
+          theta = Rotation2d.kZero.minus(angleToModule);
         } else {
           theta = forceVec.getAngle().minus(angleToModule);
         }

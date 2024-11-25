@@ -262,8 +262,8 @@ void PathPlannerTrajectory::generateStates(
 
 		// Calculate robot heading
 		if (i != path->numPoints() - 1) {
-			frc::Translation2d headingTranslation = path->getPoint(i + 1).position
-					- state.pose.Translation();
+			frc::Translation2d headingTranslation =
+					path->getPoint(i + 1).position - state.pose.Translation();
 			if (headingTranslation.Norm() <= 1e-6) {
 				state.heading = frc::Rotation2d();
 			} else {
@@ -310,12 +310,14 @@ void PathPlannerTrajectory::generateStates(
 				states[i].moduleStates[m].fieldAngle =
 						(states[i + 1].moduleStates[m].fieldPos
 								- states[i].moduleStates[m].fieldPos).Angle();
-				frc::Translation2d fieldTranslation = states[i + 1].moduleStates[m].fieldPos
+				frc::Translation2d fieldTranslation =
+						states[i + 1].moduleStates[m].fieldPos
 								- states[i].moduleStates[m].fieldPos;
 				if (fieldTranslation.Norm() <= 1e-6) {
 					states[i].moduleStates[m].fieldAngle = frc::Rotation2d();
 				} else {
-					states[i].moduleStates[m].fieldAngle = fieldTranslation.Angle();
+					states[i].moduleStates[m].fieldAngle =
+							fieldTranslation.Angle();
 				}
 				states[i].moduleStates[m].angle =
 						states[i].moduleStates[m].fieldAngle

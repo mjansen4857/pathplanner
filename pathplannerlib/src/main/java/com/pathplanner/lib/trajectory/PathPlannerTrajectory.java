@@ -243,7 +243,8 @@ public class PathPlannerTrajectory {
 
       // Calculate robot heading
       if (i != path.numPoints() - 1) {
-        Translation2d headingTranslation = path.getPoint(i + 1).position.minus(state.pose.getTranslation());
+        Translation2d headingTranslation =
+            path.getPoint(i + 1).position.minus(state.pose.getTranslation());
         if (headingTranslation.getNorm() <= 1e-6) {
           state.heading = new Rotation2d();
         } else {
@@ -289,8 +290,12 @@ public class PathPlannerTrajectory {
     for (int i = 0; i < states.size(); i++) {
       for (int m = 0; m < config.numModules; m++) {
         if (i != states.size() - 1) {
-          Translation2d fieldTranslation = states.get(i + 1).moduleStates[m].fieldPos
-          .minus(states.get(i).moduleStates[m].fieldPos);
+          Translation2d fieldTranslation =
+              states
+                  .get(i + 1)
+                  .moduleStates[m]
+                  .fieldPos
+                  .minus(states.get(i).moduleStates[m].fieldPos);
           if (fieldTranslation.getNorm() <= 1e-6) {
             states.get(i).moduleStates[m].fieldAngle = new Rotation2d();
           } else {

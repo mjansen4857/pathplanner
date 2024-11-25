@@ -650,9 +650,8 @@ public class PathPlannerPath {
       // The ideal starting state is known, generate the ideal trajectory
       Rotation2d heading = getInitialHeading();
       Translation2d fieldSpeeds = new Translation2d(idealStartingState.velocityMPS(), heading);
-      ChassisSpeeds startingSpeeds =
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0, idealStartingState.rotation());
+      ChassisSpeeds startingSpeeds = new ChassisSpeeds(fieldSpeeds.getX(), fieldSpeeds.getY(), 0.0);
+      startingSpeeds.toRobotRelativeSpeeds(idealStartingState.rotation());
       idealTrajectory =
           Optional.of(
               generateTrajectory(startingSpeeds, idealStartingState.rotation(), robotConfig));

@@ -264,7 +264,7 @@ void PathPlannerTrajectory::generateStates(
 		if (i != path->numPoints() - 1) {
 			frc::Translation2d headingTranslation =
 					path->getPoint(i + 1).position - state.pose.Translation();
-			if (headingTranslation.Norm() <= 1e-6) {
+			if (headingTranslation.Norm()() <= 1e-6) {
 				state.heading = frc::Rotation2d();
 			} else {
 				state.heading = headingTranslation.Angle();
@@ -313,7 +313,7 @@ void PathPlannerTrajectory::generateStates(
 				frc::Translation2d fieldTranslation =
 						states[i + 1].moduleStates[m].fieldPos
 								- states[i].moduleStates[m].fieldPos;
-				if (fieldTranslation.Norm() <= 1e-6) {
+				if (fieldTranslation.Norm()() <= 1e-6) {
 					states[i].moduleStates[m].fieldAngle = frc::Rotation2d();
 				} else {
 					states[i].moduleStates[m].fieldAngle =
@@ -372,7 +372,7 @@ void PathPlannerTrajectory::forwardAccelPass(
 			frc::Rotation2d angleToModule = (state.moduleStates[m].fieldPos
 					- state.pose.Translation()).Angle();
 			frc::Rotation2d theta;
-			if (forceVec.Norm() <= 1e-6) {
+			if (forceVec.Norm()() <= 1e-6) {
 				theta = frc::Rotation2d() - angleToModule;
 			} else {
 				theta = forceVec.Angle() - angleToModule;
@@ -530,7 +530,7 @@ void PathPlannerTrajectory::reverseAccelPass(
 			frc::Rotation2d angleToModule = (state.moduleStates[m].fieldPos
 					- state.pose.Translation()).Angle();
 			frc::Rotation2d theta;
-			if (forceVec.Norm() <= 1e-6) {
+			if (forceVec.Norm()() <= 1e-6) {
 				theta = frc::Rotation2d() - angleToModule;
 			} else {
 				theta = forceVec.Angle() - angleToModule;

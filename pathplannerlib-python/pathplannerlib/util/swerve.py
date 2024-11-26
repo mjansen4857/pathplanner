@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from wpimath.geometry import Translation2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModuleState
+from wpimath.units import rotationsToRadians
 from wpilib import RobotController
 from pathplannerlib.config import RobotConfig
 from pathplannerlib.util import DriveFeedforwards
@@ -35,6 +36,17 @@ class SwerveSetpointGenerator:
         """
         self._config = config
         self._max_steer_velocity_rads_per_sec = max_steer_velocity_rads_per_sec
+
+    @classmethod
+    def from_rots_per_sec(cls, config: RobotConfig, max_steer_velocity: float) -> "SwerveSetpointGenerator":
+        """
+        Create a new swerve setpoint generator
+
+        :param config: The robot configuration
+        :param maxSteerVelocity: The maximum rotation velocity of a swerve module, in rotations
+        :return: A SwerveSetpointGenerator object
+        """
+        return cls(config, rotationsToRadians(max_steer_velocity))
 
     def generateSetpoint(self, prev_setpoint: SwerveSetpoint, desired_state_robot_relative: ChassisSpeeds, dt: float) -> SwerveSetpoint:
         """

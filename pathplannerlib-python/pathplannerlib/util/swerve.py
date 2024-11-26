@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from wpimath.geometry import Translation2d, Rotation2d
 from wpimath.kinematics import ChassisSpeeds, SwerveDrive4Kinematics, SwerveModuleState
@@ -25,7 +25,7 @@ class SwerveSetpointGenerator:
     _MAX_STEER_ITERATIONS = 8
     _MAX_DRIVE_ITERATIONS = 10
 
-    def __init__(self, config: RobotConfig, max_steer_velocity_rads_per_sec: float) -> None: # TODO: ADD OVERLOAD FOR ROTATIONAL VELOCITY (Java line 51)
+    def __init__(self, config: RobotConfig, max_steer_velocity_rads_per_sec: float) -> None:
         """
         Create a new swerve setpoint generator
 
@@ -230,8 +230,8 @@ class SwerveSetpointGenerator:
             chassis_force_vec = chassis_force_vec + module_force_vec
 
             # Calculate the torque this module will apply to the chassis
-            angle_to_module = self._config.moduleLocations[m].angle
-            theta: Rotation2d = module_force_vec.angle - angle_to_module
+            angle_to_module = self._config.moduleLocations[m].angle()
+            theta: Rotation2d = module_force_vec.angle() - angle_to_module
             chassis_torque += force_at_carpet * self._config.modulePivotDistance[m] * theta.sin()
 
         chassis_accel_vec = chassis_force_vec / self._config.massKG
@@ -294,7 +294,7 @@ class SwerveSetpointGenerator:
         force_Y_FF = []
         for m in range(self._config.numModules):
             wheel_force_dist = wheel_forces[m].norm()
-            applied_force = wheel_force_dist * (wheel_forces[m].angle - ret_states[m].angle).cos() \
+            applied_force = wheel_force_dist * (wheel_forces[m].angle() - ret_states[m].angle).cos() \
                 if wheel_force_dist > 1e-6 else 0.0
             wheel_torque = applied_force * self._config.moduleConfig.wheelRadiusMeters
             torque_current = self._config.moduleConfig.driveMotor.current(wheel_torque)
@@ -315,10 +315,9 @@ class SwerveSetpointGenerator:
                 applied_force *= -1.0
                 torque_current *= -1.0
             
-            accel_FF[m] = \
-                (ret_states[m].speed - prev_setpoint.module_states[m].speed) / dt
-            linear_force_FF[m] = applied_force
-            torque_current_FF[m] = torque_current
+            accel_FF.append((ret_states[m].speed - prev_setpoint.module_states[m].speed) / dt)
+            linear_force_FF.append(applied_force)
+            torque_current_FF.append(torque_current)
             force_X_FF = wheel_forces[m].X()
             force_Y_FF = wheel_forces[m].Y()
 
@@ -393,7 +392,7 @@ class SwerveSetpointGenerator:
         
         x_guess = (x_1 - x_0) * s_guess + x_0
         y_guess = (y_1 - y_0) * s_guess + y_0
-        f_guess = func.f(x_guess, y_guess)
+        f_guess = func(x_guess, y_guess)
         if cls._signum(f_0) == cls._signum(f_guess):
             # 0 and guess on same side of root, so use upper bracket.
             return s_guess \
@@ -402,7 +401,7 @@ class SwerveSetpointGenerator:
         else:
             # Use lower bracket.
             return s_guess \
-                * cls._findRoot(func, x_0, y_0, x_guess, y_guess, f_guess, iterations_left - 1)
+                * cls._findRoot(func, x_0, y_0, f_0, x_guess, y_guess, f_guess, iterations_left - 1)
 
     @classmethod
     def _findSteeringMaxS(
@@ -444,21 +443,39 @@ class SwerveSetpointGenerator:
         return cls._findRoot(func, x_0, y_0, f_0 - offset, x_1, y_1, f_1 - offset, cls._MAX_DRIVE_ITERATIONS)
         
         
-    @classmethod
     @overload
-    def _epsilonEquals(cls, s1: ChassisSpeeds, s2: ChassisSpeeds) -> bool:
-        return cls._epsilonEquals(s1.vx, s2.vx) \
-            and cls._epsilonEquals(s1.vy, s2.vy) \
-            and cls._epsilonEquals(s1.omega, s2.omega)
-    
-    @classmethod
-    @overload
-    def _epsilonEquals(cls, a: float, b: float) -> bool:
-        return cls._epsilonEquals(a, b, cls._k_epsilon)
-    
-    @staticmethod
     def _epsilonEquals(a: float, b: float, epsilon: float) -> bool:
-        return (a - epsilon <= b) and (a + epsilon >= b)
+        ...
+
+    @overload
+    def _epsilonEquals(a: float, b: float) -> bool:
+        ...
+
+    @overload
+    def _epsilonEquals(s1: ChassisSpeeds, s2: ChassisSpeeds) -> bool:
+        ...
+
+    @overload
+    def _epsilonEquals(s1: ChassisSpeeds, s2: ChassisSpeeds, epsilon: float) -> bool:
+        ...
+    
+    @classmethod
+    def _epsilonEquals(
+        cls,
+        a: float | ChassisSpeeds,
+        b: float | ChassisSpeeds,
+        epsilon: float = _k_epsilon
+    ) -> bool:
+        if isinstance(a, float) and isinstance(b, float):
+            return (a - epsilon <= b) and (a + epsilon >= b)
+        elif isinstance(a, ChassisSpeeds) and isinstance(b, ChassisSpeeds):
+            return (
+                cls._epsilonEquals(a.vx, b.vx, epsilon)
+                and cls._epsilonEquals(a.vy, b.vy, epsilon)
+                and cls._epsilonEquals(a.omega, b.omega, epsilon)
+            )
+        else:
+            raise TypeError("Invalid argument types for _epsilonEquals, must be (float, float) or (ChassisSpeeds, ChassisSpeeds).")
 
     @staticmethod
     def _signum(x: float) -> float:
@@ -467,4 +484,4 @@ class SwerveSetpointGenerator:
         elif x < 0.0:
             return -1.0
         else:
-            0.0
+            return 0.0

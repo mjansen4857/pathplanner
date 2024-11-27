@@ -5,7 +5,6 @@ import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.Optional;
 import java.util.function.DoubleSupplier;
@@ -17,7 +16,6 @@ public class PPHolonomicDriveController implements PathFollowingController {
   private final PIDController yController;
   private final PIDController rotationController;
 
-  private Translation2d translationError = new Translation2d();
   private boolean isEnabled = true;
 
   private static Supplier<Optional<Rotation2d>> rotationTargetOverride = null;
@@ -98,10 +96,10 @@ public class PPHolonomicDriveController implements PathFollowingController {
     double xFF = targetState.fieldSpeeds.vxMetersPerSecond;
     double yFF = targetState.fieldSpeeds.vyMetersPerSecond;
 
-    this.translationError = currentPose.getTranslation().minus(targetState.pose.getTranslation());
-
     if (!this.isEnabled) {
-      return ChassisSpeeds.fromFieldRelativeSpeeds(xFF, yFF, 0, currentPose.getRotation());
+      ChassisSpeeds ret = new ChassisSpeeds(xFF, yFF, 0);
+      ret.toRobotRelativeSpeeds(currentPose.getRotation());
+      return ret;
     }
 
     double xFeedback = this.xController.calculate(currentPose.getX(), targetState.pose.getX());
@@ -127,8 +125,10 @@ public class PPHolonomicDriveController implements PathFollowingController {
       rotationFeedback = rotFeedbackOverride.getAsDouble();
     }
 
-    return ChassisSpeeds.fromFieldRelativeSpeeds(
-        xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback, currentPose.getRotation());
+    ChassisSpeeds ret =
+        new ChassisSpeeds(xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback);
+    ret.toRobotRelativeSpeeds(currentPose.getRotation());
+    return ret;
   }
 
   /**

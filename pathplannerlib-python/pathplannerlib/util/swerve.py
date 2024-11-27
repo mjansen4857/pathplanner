@@ -106,7 +106,7 @@ class SwerveSetpointGenerator:
                 desired_heading[m] = desired_heading[m].rotateBy(Rotation2d.fromDegrees(180))
             if all_modules_should_flip:
                 required_rotation_rad = \
-                    math.fabs(-prev_heading[m].rotateBy(desired_heading[m]).radians())
+                    math.fabs((-prev_heading[m]).rotateBy(desired_heading[m]).radians())
                 if required_rotation_rad < math.pi / 2.0:
                     all_modules_should_flip = False
         if all_modules_should_flip \

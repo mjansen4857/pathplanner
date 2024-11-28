@@ -79,6 +79,7 @@ public class SwerveSubsystem extends Subsystem {
 
 ```Python
 from pathplannerlib.config import RobotConfig
+from pathplannerlib.util import DriveFeedforwards
 from pathplannerlib.util.swerve import SwerveSetpoint, SwerveSetpointGenerator
 from wpimath.kinematics import ChassisSpeeds
 from wpimath.units import rotationsToRadians

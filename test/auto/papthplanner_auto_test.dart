@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/named_command.dart';
-import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
@@ -23,9 +22,9 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
@@ -33,9 +32,9 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
@@ -44,7 +43,7 @@ void main() {
         autoDir: '/autos',
         fs: fs,
         sequence: SequentialCommandGroup(commands: []),
-        startingPose: null,
+        resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
@@ -62,16 +61,16 @@ void main() {
         name: 'test',
         autoDir: '/autos',
         fs: fs,
-        startingPose: Pose2d(),
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        resetOdom: true,
         folder: null,
         choreoAuto: false,
       );
 
       Map<String, dynamic> json = auto.toJson();
       PathPlannerAuto fromJson =
-          PathPlannerAuto.fromJsonV1(json, auto.name, '/autos', fs);
+          PathPlannerAuto.fromJson(json, auto.name, '/autos', fs);
 
       expect(fromJson, auto);
     });
@@ -85,8 +84,8 @@ void main() {
         fs: fs,
         sequence:
             SequentialCommandGroup(commands: [WaitCommand(waitTime: 1.0)]),
+        resetOdom: true,
         folder: null,
-        startingPose: null,
         choreoAuto: false,
       );
       PathPlannerAuto cloned = auto.duplicate(auto.name);
@@ -107,7 +106,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
@@ -119,6 +117,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -134,7 +133,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
@@ -146,6 +144,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -156,7 +155,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
@@ -168,6 +166,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -182,7 +181,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
@@ -194,6 +192,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -215,7 +214,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           SequentialCommandGroup(
@@ -225,6 +223,7 @@ void main() {
           ),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 
@@ -242,7 +241,6 @@ void main() {
       autoDir: '/autos',
       fs: fs,
       folder: null,
-      startingPose: null,
       sequence: SequentialCommandGroup(
         commands: [
           PathCommand(pathName: 'path1'),
@@ -254,6 +252,7 @@ void main() {
           PathCommand(pathName: 'path3'),
         ],
       ),
+      resetOdom: true,
       choreoAuto: false,
     );
 

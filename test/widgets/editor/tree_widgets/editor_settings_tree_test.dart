@@ -15,7 +15,7 @@ void main() {
     prefs = await SharedPreferences.getInstance();
   });
 
-  testWidgets('snap to guidelines check', (widgetTester) async {
+  testWidgets('Editor Settings Tree checks', (widgetTester) async {
     await widgetTester.pumpWidget(const MaterialApp(
       home: Scaffold(
         body: EditorSettingsTree(
@@ -25,52 +25,44 @@ void main() {
     ));
     await widgetTester.pump();
 
-    final snapRow = find.widgetWithText(Row, 'Snap To Guidelines');
+    // List of all settings to test
+    final settings = [
+      ('Snap To Guidelines', PrefsKeys.snapToGuidelines),
+      ('Hide Other Paths on Hover', PrefsKeys.hidePathsOnHover),
+      ('Show Trajectory States', PrefsKeys.showStates),
+      ('Show Robot Details', PrefsKeys.showRobotDetails),
+      ('Show Grid', PrefsKeys.showGrid),
+    ];
 
-    expect(snapRow, findsOneWidget);
+    for (final setting in settings) {
+      final label = setting.$1;
+      final prefKey = setting.$2;
 
-    final snapCheck =
-        find.descendant(of: snapRow, matching: find.byType(Checkbox));
+      final row = find
+          .ancestor(
+            of: find.text(label),
+            matching: find.byType(Row),
+          )
+          .first;
 
-    expect(snapCheck, findsOneWidget);
+      expect(row, findsOneWidget);
 
-    await widgetTester.tap(snapCheck);
-    await widgetTester.pumpAndSettle();
+      final check = find.descendant(
+        of: row,
+        matching: find.byType(Checkbox),
+      );
 
-    expect(prefs.getBool(PrefsKeys.snapToGuidelines), true);
+      expect(check, findsOneWidget);
 
-    await widgetTester.tap(snapCheck);
-    await widgetTester.pumpAndSettle();
+      await widgetTester.tap(check);
+      await widgetTester.pumpAndSettle();
 
-    expect(prefs.getBool(PrefsKeys.snapToGuidelines), false);
-  });
+      expect(prefs.getBool(prefKey), true);
 
-  testWidgets('hide paths check', (widgetTester) async {
-    await widgetTester.pumpWidget(const MaterialApp(
-      home: Scaffold(
-        body: EditorSettingsTree(
-          initiallyExpanded: true,
-        ),
-      ),
-    ));
-    await widgetTester.pump();
+      await widgetTester.tap(check);
+      await widgetTester.pumpAndSettle();
 
-    final row = find.widgetWithText(Row, 'Hide Other Paths on Hover');
-
-    expect(row, findsOneWidget);
-
-    final check = find.descendant(of: row, matching: find.byType(Checkbox));
-
-    expect(check, findsOneWidget);
-
-    await widgetTester.tap(check);
-    await widgetTester.pumpAndSettle();
-
-    expect(prefs.getBool(PrefsKeys.hidePathsOnHover), true);
-
-    await widgetTester.tap(check);
-    await widgetTester.pumpAndSettle();
-
-    expect(prefs.getBool(PrefsKeys.hidePathsOnHover), false);
+      expect(prefs.getBool(prefKey), false);
+    }
   });
 }

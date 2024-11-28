@@ -24,16 +24,32 @@ class PrefsKeys {
   static const String defaultMaxAccel = 'defaultMaxAccel';
   static const String defaultMaxAngVel = 'defaultMaxAngVel';
   static const String defaultMaxAngAccel = 'defaultMaxAngAccel';
+  static const String defaultNominalVoltage = 'defaultNominalVoltage';
   static const String seen2024Warning = 'seen2024Warning';
   static const String robotMass = 'robotMass';
   static const String robotMOI = 'robotMOI';
-  static const String robotWheelbase = 'robotWheelbase';
   static const String robotTrackwidth = 'robotTrackwidth';
   static const String driveWheelRadius = 'driveWheelRadius';
   static const String driveGearing = 'driveGearing';
-  static const String maxDriveRPM = 'maxDriveRPM';
-  static const String torqueCurve = 'driveMotor';
+  static const String maxDriveSpeed = 'maxDriveSpeed';
+  static const String driveMotor = 'driveMotorType';
+  static const String driveCurrentLimit = 'driveCurrentLimit';
   static const String wheelCOF = 'wheelCOF';
+  static const String showStates = 'showStates';
+  static const String showRobotDetails = 'showRobotDetails';
+  static const String showGrid = 'showGrid';
+  static const String telemetryUseSim = 'telemetryUseSim';
+  static const String flModuleX = 'flModuleX';
+  static const String flModuleY = 'flModuleY';
+  static const String frModuleX = 'frModuleX';
+  static const String frModuleY = 'frModuleY';
+  static const String blModuleX = 'blModuleX';
+  static const String blModuleY = 'blModuleY';
+  static const String brModuleX = 'brModuleX';
+  static const String brModuleY = 'brModuleY';
+  static const String bumperOffsetX = 'bumperOffsetX';
+  static const String bumperOffsetY = 'bumperOffsetY';
+  static const String robotFeatures = 'robotFeatures';
 }
 
 class Defaults {
@@ -43,7 +59,7 @@ class Defaults {
   static const bool holonomicMode = true;
   static const double projectLeftWeight = 0.5;
   static const double editorTreeWeight = 0.5;
-  static const String ntServerAddress = '127.0.0.1';
+  static const String ntServerAddress = '10.30.15.2';
   static const bool treeOnRight = true;
   static const String pathSortOption = 'recent';
   static const String autoSortOption = 'recent';
@@ -60,13 +76,29 @@ class Defaults {
   static const double defaultMaxAccel = 3.0;
   static const double defaultMaxAngVel = 540.0;
   static const double defaultMaxAngAccel = 720.0;
+  static const double defaultNominalVoltage = 12.0;
   static const double robotMass = 74.088;
   static const double robotMOI = 6.883;
-  static const double robotWheelbase = 0.546;
   static const double robotTrackwidth = 0.546;
   static const double driveWheelRadius = 0.048;
   static const double driveGearing = 5.143;
-  static const double maxDriveRPM = 5650.0;
-  static const String torqueCurve = 'KRAKEN_60A';
+  static const double maxDriveSpeed = 5.45;
+  static const String driveMotor = 'krakenX60';
+  static const double driveCurrentLimit = 60.0;
   static const double wheelCOF = 1.2;
+  static const bool showStates = false;
+  static const bool showRobotDetails = false;
+  static const bool showGrid = false;
+  static const bool telemetryUseSim = true;
+  static const double flModuleX = 0.273;
+  static const double flModuleY = 0.273;
+  static const double frModuleX = 0.273;
+  static const double frModuleY = -0.273;
+  static const double blModuleX = -0.273;
+  static const double blModuleY = 0.273;
+  static const double brModuleX = -0.273;
+  static const double brModuleY = -0.273;
+  static const double bumperOffsetX = 0.0;
+  static const double bumperOffsetY = 0.0;
+  static const List<String> robotFeatures = [];
 }

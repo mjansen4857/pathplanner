@@ -12,11 +12,14 @@ class ItemCount extends StatelessWidget {
   Widget build(BuildContext context) {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return Text(
-      '$count',
-      style: TextStyle(
-        fontSize: 18,
-        color: colorScheme.primary,
+    return Tooltip(
+      message: 'Number of items',
+      child: Text(
+        '$count',
+        style: TextStyle(
+          fontSize: 18,
+          color: colorScheme.primary,
+        ),
       ),
     );
   }

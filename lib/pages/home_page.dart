@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:macos_secure_bookmarks/macos_secure_bookmarks.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/pages/nav_grid_page.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/pages/telemetry_page.dart';
@@ -17,7 +16,6 @@ import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/services/update_checker.dart';
 import 'package:pathplanner/util/prefs.dart';
-import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/dialogs/settings_dialog.dart';
@@ -258,169 +256,176 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       children: [
         NavigationDrawer(
           selectedIndex: _selectedPage,
-          onDestinationSelected: (idx) {
-            setState(() {
-              _selectedPage = idx;
-              _pageController.animateToPage(_selectedPage,
-                  duration: const Duration(milliseconds: 150),
-                  curve: Curves.easeInOut);
-            });
-          },
+          onDestinationSelected: _handleDestinationSelected,
           backgroundColor: colorScheme.surface,
           surfaceTintColor: colorScheme.surfaceTint,
           children: [
-            DrawerHeader(
-              child: Stack(
-                children: [
-                  Align(
-                    alignment: FractionalOffset.bottomLeft,
-                    child: Text(
-                      'v${widget.appVersion}',
-                      style: TextStyle(color: colorScheme.onSurface),
-                    ),
-                  ),
-                  Align(
-                    alignment: FractionalOffset.bottomRight,
-                    child: StreamBuilder(
-                        stream: widget.telemetry.connectionStatusStream(),
-                        builder: (context, snapshot) {
-                          return ConditionalWidget(
-                            condition: snapshot.data ?? false,
-                            trueChild: const Tooltip(
-                              message: 'Connected to Robot',
-                              child: Icon(
-                                Icons.lan,
-                                size: 20,
-                                color: Colors.green,
-                              ),
-                            ),
-                            falseChild: const Tooltip(
-                              message: 'Not Connected to Robot',
-                              child: Icon(
-                                Icons.lan_outlined,
-                                size: 20,
-                                color: Colors.red,
-                              ),
-                            ),
-                          );
-                        }),
-                  ),
-                  Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: Container(),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            basename(_projectDir!.path),
-                            style: const TextStyle(
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            foregroundColor: colorScheme.onPrimaryContainer,
-                            backgroundColor: colorScheme.primaryContainer,
-                          ),
-                          onPressed: () {
-                            _openProjectDialog(context);
-                          },
-                          child: const Text('Switch Project'),
-                        ),
-                        Expanded(
-                          flex: 4,
-                          child: Container(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+            _buildDrawerHeader(colorScheme),
+            ..._buildNavigationDestinations(),
+          ],
+        ),
+        _buildBottomButtons(colorScheme),
+      ],
+    );
+  }
+
+  Widget _buildDrawerHeader(ColorScheme colorScheme) {
+    return DrawerHeader(
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Text(
+                basename(_projectDir!.path),
+                style: const TextStyle(fontSize: 20),
               ),
             ),
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.folder_outlined),
-              label: Text('Project Browser'),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'v${widget.appVersion}',
+                style: TextStyle(color: colorScheme.onSurface),
+              ),
+              IconButton(
+                icon: const Icon(Icons.open_in_new_rounded, size: 20),
+                tooltip: 'Open Project',
+                onPressed: () => _openProjectDialog(this.context),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildNavigationDestinations() {
+    return [
+      const NavigationDrawerDestination(
+        icon: Icon(Icons.folder_rounded),
+        label: Text('Project Browser'),
+      ),
+      const SizedBox(height: 5),
+      NavigationDrawerDestination(
+        icon: Icon(
+          _getConnectedIcon(widget.telemetry.isConnected),
+          color: _getConnectedIconColor(widget.telemetry.isConnected),
+        ),
+        label: const Text('Telemetry'),
+      ),
+      const SizedBox(height: 5),
+      const NavigationDrawerDestination(
+        icon: Icon(Icons.grid_on_rounded),
+        label: Text('Navigation Grid'),
+      ),
+    ];
+  }
+
+  Widget _buildBottomButtons(ColorScheme colorScheme) {
+    return Align(
+      alignment: Alignment.bottomLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 12.0, left: 8.0),
+        child: Row(
+          children: [
+            _buildButton(
+              onPressed: () => launchUrl(Uri.parse('https://pathplanner.dev')),
+              icon: const Icon(Icons.description),
+              label: 'Docs',
+              backgroundColor: colorScheme.primaryContainer,
+              foregroundColor: colorScheme.onPrimaryContainer,
             ),
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.bar_chart),
-              label: Text('Telemetry'),
-            ),
-            const NavigationDrawerDestination(
-              icon: Icon(Icons.grid_on),
-              label: Text('Navigation Grid'),
+            const SizedBox(width: 6),
+            _buildButton(
+              onPressed: () {
+                Navigator.pop(this.context);
+                _showSettingsDialog();
+              },
+              icon: const Icon(Icons.settings),
+              label: 'Settings',
+              backgroundColor: colorScheme.surfaceContainer,
+              foregroundColor: colorScheme.onSurface,
+              surfaceTintColor: colorScheme.surfaceTint,
             ),
           ],
         ),
-        Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 12.0, left: 8.0),
-            child: Row(
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    launchUrl(Uri.parse('https://pathplanner.dev'));
-                  },
-                  icon: const Icon(Icons.description),
-                  label: const Text('Docs'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primaryContainer,
-                    foregroundColor: colorScheme.onPrimaryContainer,
-                    elevation: 4.0,
-                    fixedSize: const Size(141, 56),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return SettingsDialog(
-                          prefs: widget.prefs,
-                          onTeamColorChanged: widget.onTeamColorChanged,
-                          fieldImages: _fieldImages,
-                          selectedField: _fieldImage ?? FieldImage.defaultField,
-                          onFieldSelected: (FieldImage image) {
-                            setState(() {
-                              _fieldImage = image;
-                              if (!_fieldImages.contains(image)) {
-                                _fieldImages.add(image);
-                              }
-                              widget.prefs
-                                  .setString(PrefsKeys.fieldImage, image.name);
-                            });
-                          },
-                          onSettingsChanged: _onProjectSettingsChanged,
-                        );
-                      },
-                    );
-                  },
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Settings'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.surfaceContainer,
-                    foregroundColor: colorScheme.onSurface,
-                    surfaceTintColor: colorScheme.surfaceTint,
-                    elevation: 4.0,
-                    fixedSize: const Size(141, 56),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+      ),
     );
+  }
+
+  Widget _buildButton({
+    required VoidCallback onPressed,
+    required Widget icon,
+    required String label,
+    required Color backgroundColor,
+    required Color foregroundColor,
+    Color? surfaceTintColor,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: icon,
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      style: ElevatedButton.styleFrom(
+        fixedSize: const Size(141, 50),
+        backgroundColor: backgroundColor,
+        foregroundColor: foregroundColor,
+        surfaceTintColor: surfaceTintColor,
+        elevation: 4.0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+
+  void _handleDestinationSelected(int index) {
+    setState(() {
+      _selectedPage = index;
+      _pageController.animateToPage(
+        _selectedPage,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeInOut,
+      );
+    });
+    Navigator.pop(this.context);
+  }
+
+  IconData _getConnectedIcon(bool isConnected) {
+    return isConnected ? Icons.lan : Icons.lan_outlined;
+  }
+
+  Color _getConnectedIconColor(bool isConnected) {
+    return isConnected ? Colors.green : Colors.red;
+  }
+
+  void _showSettingsDialog() {
+    showDialog(
+      context: this.context,
+      barrierDismissible: true, // Allow dismissing by tapping outside
+      builder: (BuildContext context) {
+        return Theme(
+          data: Theme.of(context), // Use the current theme
+          child: SettingsDialog(
+            prefs: widget.prefs,
+            onTeamColorChanged: widget.onTeamColorChanged,
+            fieldImages: _fieldImages,
+            selectedField: _fieldImage ?? FieldImage.defaultField,
+            onFieldSelected: (FieldImage image) {
+              setState(() {
+                _fieldImage = image;
+                if (!_fieldImages.contains(image)) {
+                  _fieldImages.add(image);
+                }
+                widget.prefs.setString(PrefsKeys.fieldImage, image.name);
+              });
+            },
+            onSettingsChanged: _onProjectSettingsChanged,
+          ),
+        );
+      },
+    ).then((_) {
+      // Ensure the app rebuilds correctly after dialog is closed
+      setState(() {});
+    });
   }
 
   Widget _buildBody(BuildContext context) {
@@ -492,10 +497,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     ProjectPage.settingsUpdated = true;
     _saveProjectSettingsToFile(_projectDir!);
 
-    String serverAddress = widget.prefs.getString(PrefsKeys.ntServerAddress) ??
-        Defaults.ntServerAddress;
-    if (serverAddress != widget.telemetry.getServerAddress()) {
-      widget.telemetry.setServerAddress(serverAddress);
+    bool useSim = widget.prefs.getBool(PrefsKeys.telemetryUseSim) ??
+        Defaults.telemetryUseSim;
+    if (!useSim) {
+      String serverAddress =
+          widget.prefs.getString(PrefsKeys.ntServerAddress) ??
+              Defaults.ntServerAddress;
+
+      if (serverAddress != widget.telemetry.getServerAddress()) {
+        widget.telemetry.setServerAddress(serverAddress);
+      }
     }
 
     setState(() {
@@ -507,7 +518,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _loadProjectSettingsFromFile(Directory projectDir) async {
     File settingsFile = fs.file(join(_pathplannerDir.path, _settingsDir));
 
-    var json = {};
+    var json = <String, dynamic>{};
 
     if (await settingsFile.exists()) {
       try {
@@ -519,10 +530,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     }
 
-    widget.prefs.setDouble(PrefsKeys.robotWidth,
-        json[PrefsKeys.robotWidth]?.toDouble() ?? Defaults.robotWidth);
-    widget.prefs.setDouble(PrefsKeys.robotLength,
-        json[PrefsKeys.robotLength]?.toDouble() ?? Defaults.robotLength);
+    _setPrefDoubleFromJSON(json, PrefsKeys.robotWidth, Defaults.robotWidth);
+    _setPrefDoubleFromJSON(json, PrefsKeys.robotLength, Defaults.robotLength);
     widget.prefs.setBool(PrefsKeys.holonomicMode,
         json[PrefsKeys.holonomicMode] ?? Defaults.holonomicMode);
     widget.prefs.setStringList(
@@ -537,42 +546,54 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ?.map((e) => e as String)
                 .toList() ??
             Defaults.autoFolders);
-    widget.prefs.setDouble(PrefsKeys.defaultMaxVel,
-        json[PrefsKeys.defaultMaxVel]?.toDouble() ?? Defaults.defaultMaxVel);
-    widget.prefs.setDouble(
-        PrefsKeys.defaultMaxAccel,
-        json[PrefsKeys.defaultMaxAccel]?.toDouble() ??
-            Defaults.defaultMaxAccel);
-    widget.prefs.setDouble(
-        PrefsKeys.defaultMaxAngVel,
-        json[PrefsKeys.defaultMaxAngVel]?.toDouble() ??
-            Defaults.defaultMaxAngVel);
-    widget.prefs.setDouble(
-        PrefsKeys.defaultMaxAngAccel,
-        json[PrefsKeys.defaultMaxAngAccel]?.toDouble() ??
-            Defaults.defaultMaxAngAccel);
-    widget.prefs.setDouble(PrefsKeys.robotMass,
-        json[PrefsKeys.robotMass]?.toDouble() ?? Defaults.robotMass);
-    widget.prefs.setDouble(PrefsKeys.robotMOI,
-        json[PrefsKeys.robotMOI]?.toDouble() ?? Defaults.robotMOI);
-    widget.prefs.setDouble(PrefsKeys.robotWheelbase,
-        json[PrefsKeys.robotWheelbase]?.toDouble() ?? Defaults.robotWheelbase);
-    widget.prefs.setDouble(
-        PrefsKeys.robotTrackwidth,
-        json[PrefsKeys.robotTrackwidth]?.toDouble() ??
-            Defaults.robotTrackwidth);
-    widget.prefs.setDouble(
-        PrefsKeys.driveWheelRadius,
-        json[PrefsKeys.driveWheelRadius]?.toDouble() ??
-            Defaults.driveWheelRadius);
-    widget.prefs.setDouble(PrefsKeys.driveGearing,
-        json[PrefsKeys.driveGearing]?.toDouble() ?? Defaults.driveGearing);
-    widget.prefs.setDouble(PrefsKeys.maxDriveRPM,
-        json[PrefsKeys.maxDriveRPM]?.toDouble() ?? Defaults.maxDriveRPM);
-    widget.prefs.setString(PrefsKeys.torqueCurve,
-        json[PrefsKeys.torqueCurve] ?? Defaults.torqueCurve);
-    widget.prefs.setDouble(PrefsKeys.wheelCOF,
-        json[PrefsKeys.wheelCOF]?.toDouble() ?? Defaults.wheelCOF);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultMaxVel, Defaults.defaultMaxVel);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultMaxAccel, Defaults.defaultMaxAccel);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultMaxAngVel, Defaults.defaultMaxAngVel);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultMaxAngAccel, Defaults.defaultMaxAngAccel);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.defaultNominalVoltage, Defaults.defaultNominalVoltage);
+    _setPrefDoubleFromJSON(json, PrefsKeys.robotMass, Defaults.robotMass);
+    _setPrefDoubleFromJSON(json, PrefsKeys.robotMOI, Defaults.robotMOI);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.robotTrackwidth, Defaults.robotTrackwidth);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.driveWheelRadius, Defaults.driveWheelRadius);
+    _setPrefDoubleFromJSON(json, PrefsKeys.driveGearing, Defaults.driveGearing);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.maxDriveSpeed, Defaults.maxDriveSpeed);
+    widget.prefs.setString(PrefsKeys.driveMotor,
+        json[PrefsKeys.driveMotor] ?? Defaults.driveMotor);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.driveCurrentLimit, Defaults.driveCurrentLimit);
+    _setPrefDoubleFromJSON(json, PrefsKeys.wheelCOF, Defaults.wheelCOF);
+    _setPrefDoubleFromJSON(json, PrefsKeys.flModuleX, Defaults.flModuleX);
+    _setPrefDoubleFromJSON(json, PrefsKeys.flModuleY, Defaults.flModuleY);
+    _setPrefDoubleFromJSON(json, PrefsKeys.frModuleX, Defaults.frModuleX);
+    _setPrefDoubleFromJSON(json, PrefsKeys.frModuleY, Defaults.frModuleY);
+    _setPrefDoubleFromJSON(json, PrefsKeys.blModuleX, Defaults.blModuleX);
+    _setPrefDoubleFromJSON(json, PrefsKeys.blModuleY, Defaults.blModuleY);
+    _setPrefDoubleFromJSON(json, PrefsKeys.brModuleX, Defaults.brModuleX);
+    _setPrefDoubleFromJSON(json, PrefsKeys.brModuleY, Defaults.brModuleY);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.bumperOffsetX, Defaults.bumperOffsetX);
+    _setPrefDoubleFromJSON(
+        json, PrefsKeys.bumperOffsetY, Defaults.bumperOffsetY);
+    widget.prefs.setStringList(
+        PrefsKeys.robotFeatures,
+        (json[PrefsKeys.robotFeatures] as List?)
+                ?.map((e) => e as String)
+                .toList() ??
+            Defaults.robotFeatures);
+  }
+
+  void _setPrefDoubleFromJSON(
+      Map<String, dynamic> json, String prefsKey, double defaultValue) {
+    widget.prefs
+        .setDouble(prefsKey, json[prefsKey]?.toDouble() ?? defaultValue);
   }
 
   void _saveProjectSettingsToFile(Directory projectDir) {
@@ -609,13 +630,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       PrefsKeys.defaultMaxAngAccel:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAccel,
+      PrefsKeys.defaultNominalVoltage:
+          widget.prefs.getDouble(PrefsKeys.defaultNominalVoltage) ??
+              Defaults.defaultNominalVoltage,
       PrefsKeys.robotMass:
           widget.prefs.getDouble(PrefsKeys.robotMass) ?? Defaults.robotMass,
       PrefsKeys.robotMOI:
           widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
-      PrefsKeys.robotWheelbase:
-          widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
-              Defaults.robotWheelbase,
       PrefsKeys.robotTrackwidth:
           widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
               Defaults.robotTrackwidth,
@@ -624,12 +645,41 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Defaults.driveWheelRadius,
       PrefsKeys.driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
           Defaults.driveGearing,
-      PrefsKeys.maxDriveRPM:
-          widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ?? Defaults.maxDriveRPM,
-      PrefsKeys.torqueCurve:
-          widget.prefs.getString(PrefsKeys.torqueCurve) ?? Defaults.torqueCurve,
+      PrefsKeys.maxDriveSpeed:
+          widget.prefs.getDouble(PrefsKeys.maxDriveSpeed) ??
+              Defaults.maxDriveSpeed,
+      PrefsKeys.driveMotor:
+          widget.prefs.getString(PrefsKeys.driveMotor) ?? Defaults.driveMotor,
+      PrefsKeys.driveCurrentLimit:
+          widget.prefs.getDouble(PrefsKeys.driveCurrentLimit) ??
+              Defaults.driveCurrentLimit,
       PrefsKeys.wheelCOF:
           widget.prefs.getDouble(PrefsKeys.wheelCOF) ?? Defaults.wheelCOF,
+      PrefsKeys.flModuleX:
+          widget.prefs.getDouble(PrefsKeys.flModuleX) ?? Defaults.flModuleX,
+      PrefsKeys.flModuleY:
+          widget.prefs.getDouble(PrefsKeys.flModuleY) ?? Defaults.flModuleY,
+      PrefsKeys.frModuleX:
+          widget.prefs.getDouble(PrefsKeys.frModuleX) ?? Defaults.frModuleX,
+      PrefsKeys.frModuleY:
+          widget.prefs.getDouble(PrefsKeys.frModuleY) ?? Defaults.frModuleY,
+      PrefsKeys.blModuleX:
+          widget.prefs.getDouble(PrefsKeys.blModuleX) ?? Defaults.blModuleX,
+      PrefsKeys.blModuleY:
+          widget.prefs.getDouble(PrefsKeys.blModuleY) ?? Defaults.blModuleY,
+      PrefsKeys.brModuleX:
+          widget.prefs.getDouble(PrefsKeys.brModuleX) ?? Defaults.brModuleX,
+      PrefsKeys.brModuleY:
+          widget.prefs.getDouble(PrefsKeys.brModuleY) ?? Defaults.brModuleY,
+      PrefsKeys.bumperOffsetX:
+          widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
+              Defaults.bumperOffsetX,
+      PrefsKeys.bumperOffsetY:
+          widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
+              Defaults.bumperOffsetY,
+      PrefsKeys.robotFeatures:
+          widget.prefs.getStringList(PrefsKeys.robotFeatures) ??
+              Defaults.robotFeatures,
     };
 
     settingsFile.writeAsString(encoder.convert(settings)).then((_) {
@@ -676,7 +726,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Assure that a navgrid file is present
     File navgridFile = fs.file(join(_pathplannerDir.path, 'navgrid.json'));
     navgridFile.exists().then((value) async {
-      if (!value) {
+      if (!value && mounted) {
         // Load default grid
         String fileContent = await DefaultAssetBundle.of(this.context)
             .loadString('resources/default_navgrid.json');
@@ -686,9 +736,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       }
     });
 
-    // Clear named commands
+    // Clear event names
     if (projectDir != _projectDir?.path) {
-      Command.named.clear();
+      ProjectPage.events.clear();
     }
 
     setState(() {

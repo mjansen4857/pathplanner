@@ -6,6 +6,7 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 #include <pathplanner/lib/auto/AutoBuilder.h>
 #include <pathplanner/lib/util/PathPlannerLogging.h>
+#include <pathplanner/lib/controllers/PPHolonomicDriveController.h>
 #include <frc/DriverStation.h>
 
 using namespace pathplanner;
@@ -14,13 +15,19 @@ SwerveSubsystem::SwerveSubsystem() : flModule(), frModule(), blModule(), brModul
     kinematics, gyro.getRotation2d(), 
     {flModule.getPosition(), frModule.getPosition(), blModule.getPosition(), brModule.getPosition()},
     frc::Pose2d()), field() {
+    robotConfig = RobotConfig::fromGUISettings();
+
     // Configure AutoBuilder
-    AutoBuilder::configureHolonomic(
+    AutoBuilder::configure(
         [this]() {return this->getPose();},
-        [this](frc::Pose2d pose) {this->resetPose(pose);},
+        [this](const frc::Pose2d& pose) {this->resetPose(pose);},
         [this]() {return this->getSpeeds();},
-        [this](frc::ChassisSpeeds robotRelativeSpeeds) {this->driveRobotRelative(robotRelativeSpeeds);},
-        SwerveConstants::pathFollowerConfig,
+        [this](const frc::ChassisSpeeds& robotRelativeSpeeds) {this->driveRobotRelative(robotRelativeSpeeds);},
+        std::make_shared<PPHolonomicDriveController>(
+            SwerveConstants::translationConstants,
+            SwerveConstants::rotationConstants
+        ),
+        robotConfig.value(),
         []() {
             // Boolean supplier that controls when the path will be mirrored for the red alliance
             // This will flip the path being followed to the red side of the field.
@@ -36,7 +43,7 @@ SwerveSubsystem::SwerveSubsystem() : flModule(), frModule(), blModule(), brModul
     );
 
     // Set up custom logging to add the current path to a field 2d widget
-    PathPlannerLogging::setLogActivePathCallback([this](auto poses) {
+    PathPlannerLogging::setLogActivePathCallback([this](const auto& poses) {
         this->field.GetObject("path")->SetPoses(poses);
     });
 
@@ -54,7 +61,7 @@ void SwerveSubsystem::Periodic() {
 }
 
 void SwerveSubsystem::setStates(wpi::array<frc::SwerveModuleState, 4> states){
-    frc::SwerveDriveKinematics<4>::DesaturateWheelSpeeds(&states, SwerveConstants::maxModuleSpeed);
+    frc::SwerveDriveKinematics<4>::DesaturateWheelSpeeds(&states, robotConfig.value().moduleConfig.maxDriveVelocityMPS);
 
     flModule.setTargetState(states[0]);
     frModule.setTargetState(states[1]);

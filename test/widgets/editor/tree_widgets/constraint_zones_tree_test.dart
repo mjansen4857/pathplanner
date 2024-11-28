@@ -204,18 +204,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.constraintZones[0].constraints.maxVelocity;
+    num oldVal = path.constraintZones[0].constraints.maxVelocityMPS;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].constraints.maxVelocity, 0.1);
+    expect(path.constraintZones[0].constraints.maxVelocityMPS, 0.1);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones[0].constraints.maxVelocity, oldVal);
+    expect(path.constraintZones[0].constraints.maxVelocityMPS, oldVal);
   });
 
   testWidgets('Max accel text field', (widgetTester) async {
@@ -237,18 +237,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.constraintZones[0].constraints.maxAcceleration;
+    num oldVal = path.constraintZones[0].constraints.maxAccelerationMPSSq;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].constraints.maxAcceleration, 0.1);
+    expect(path.constraintZones[0].constraints.maxAccelerationMPSSq, 0.1);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones[0].constraints.maxAcceleration, oldVal);
+    expect(path.constraintZones[0].constraints.maxAccelerationMPSSq, oldVal);
   });
 
   testWidgets('Max ang vel text field', (widgetTester) async {
@@ -270,18 +270,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.constraintZones[0].constraints.maxAngularVelocity;
+    num oldVal = path.constraintZones[0].constraints.maxAngularVelocityDeg;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].constraints.maxAngularVelocity, 0.1);
+    expect(path.constraintZones[0].constraints.maxAngularVelocityDeg, 0.1);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones[0].constraints.maxAngularVelocity, oldVal);
+    expect(path.constraintZones[0].constraints.maxAngularVelocityDeg, oldVal);
   });
 
   testWidgets('Max ang accel text field', (widgetTester) async {
@@ -303,18 +303,52 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.constraintZones[0].constraints.maxAngularAcceleration;
+    num oldVal = path.constraintZones[0].constraints.maxAngularAccelerationDeg;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.constraintZones[0].constraints.maxAngularAcceleration, 0.1);
+    expect(path.constraintZones[0].constraints.maxAngularAccelerationDeg, 0.1);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.constraintZones[0].constraints.maxAngularAcceleration, oldVal);
+    expect(
+        path.constraintZones[0].constraints.maxAngularAccelerationDeg, oldVal);
+  });
+
+  testWidgets('nominal voltage text field', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ConstraintZonesTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          onZoneHovered: (value) => hoveredZone = value,
+          onZoneSelected: (value) => selectedZone = value,
+          undoStack: undoStack,
+          initiallySelectedZone: 0,
+        ),
+      ),
+    ));
+
+    var textField =
+        find.widgetWithText(NumberTextField, 'Nominal Voltage (Volts)');
+
+    expect(textField, findsOneWidget);
+
+    num oldVal = path.constraintZones[0].constraints.nominalVoltage;
+
+    await widgetTester.enterText(textField, '10.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(pathChanged, true);
+    expect(path.constraintZones[0].constraints.nominalVoltage, 10.0);
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.constraintZones[0].constraints.nominalVoltage, oldVal);
   });
 
   testWidgets('min pos slider', (widgetTester) async {
@@ -511,7 +545,8 @@ void main() {
       ),
     ));
 
-    var newZoneButton = find.text('Add New Zone');
+    // Find the add new zone button by its tooltip
+    var newZoneButton = find.byTooltip('Add New Constraint Zone');
 
     expect(newZoneButton, findsOneWidget);
 
@@ -523,5 +558,85 @@ void main() {
     undoStack.undo();
     await widgetTester.pump();
     expect(path.constraintZones.length, 2);
+  });
+
+  testWidgets('start pos text field', (widgetTester) async {
+    path.constraintZones = [
+      ConstraintsZone(
+        constraints: PathConstraints(),
+        minWaypointRelativePos: 0.25,
+        maxWaypointRelativePos: 0.75,
+      ),
+    ];
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ConstraintZonesTree(
+          path: path,
+          initiallySelectedZone: 0,
+          onPathChanged: () => pathChanged = true,
+          onZoneHovered: (value) => hoveredZone = value,
+          onZoneSelected: (value) => selectedZone = value,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'Start Pos');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '0.4');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    expect(pathChanged, true);
+    expect(
+        path.constraintZones.first.minWaypointRelativePos, closeTo(0.4, 0.001));
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.constraintZones.first.minWaypointRelativePos,
+        closeTo(0.25, 0.001));
+  });
+
+  testWidgets('end pos text field', (widgetTester) async {
+    path.constraintZones = [
+      ConstraintsZone(
+        constraints: PathConstraints(),
+        minWaypointRelativePos: 0.25,
+        maxWaypointRelativePos: 0.75,
+      ),
+    ];
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: ConstraintZonesTree(
+          path: path,
+          initiallySelectedZone: 0,
+          onPathChanged: () => pathChanged = true,
+          onZoneHovered: (value) => hoveredZone = value,
+          onZoneSelected: (value) => selectedZone = value,
+          undoStack: undoStack,
+        ),
+      ),
+    ));
+
+    var textField = find.widgetWithText(NumberTextField, 'End Pos');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '0.6');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    expect(pathChanged, true);
+    expect(
+        path.constraintZones.first.maxWaypointRelativePos, closeTo(0.6, 0.001));
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.constraintZones.first.maxWaypointRelativePos,
+        closeTo(0.75, 0.001));
   });
 }

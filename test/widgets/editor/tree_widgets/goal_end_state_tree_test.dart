@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -19,10 +20,7 @@ void main() {
       fs: MemoryFileSystem(),
     );
     path.goalEndStateExpanded = true;
-    path.goalEndState = GoalEndState(
-      velocity: 1.0,
-      rotation: 1.0,
-    );
+    path.goalEndState = GoalEndState(1.0, const Rotation2d(1.0));
     pathChanged = false;
   });
 
@@ -42,15 +40,19 @@ void main() {
     // Tree initially collapsed, expect to find nothing
     expect(find.byType(NumberTextField), findsNothing);
 
+    // Find and tap the GoalEndStateTree widget
     await widgetTester.tap(find.byType(GoalEndStateTree));
     await widgetTester.pumpAndSettle();
 
     expect(path.goalEndStateExpanded, true);
+    expect(find.byType(NumberTextField), findsWidgets);
 
-    await widgetTester.tap(find.text(
-        'Goal End State')); // Use text so it doesn't tap middle of expanded card
+    // Tap the title to collapse
+    await widgetTester.tap(find.text('Goal End State'));
     await widgetTester.pumpAndSettle();
+
     expect(path.goalEndStateExpanded, false);
+    expect(find.byType(NumberTextField), findsNothing);
   });
 
   testWidgets('vel text field', (widgetTester) async {
@@ -74,11 +76,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.goalEndState.velocity, 2.0);
+    expect(path.goalEndState.velocityMPS, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.goalEndState.velocity, 1.0);
+    expect(path.goalEndState.velocityMPS, 1.0);
   });
 
   testWidgets('rotation text field', (widgetTester) async {
@@ -102,10 +104,10 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.goalEndState.rotation, -160.0);
+    expect(path.goalEndState.rotation.degrees, -160.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.goalEndState.rotation, 1.0);
+    expect(path.goalEndState.rotation.radians, 1.0);
   });
 }

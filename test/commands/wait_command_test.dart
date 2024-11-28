@@ -19,7 +19,7 @@ void main() {
     WaitCommand wait = WaitCommand(waitTime: 1.5);
 
     Map<String, dynamic> json = wait.toJson();
-    Command fromJson = Command.fromJson(json);
+    Command fromJson = Command.fromJson(json)!;
 
     expect(fromJson, wait);
   });

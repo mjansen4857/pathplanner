@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/wpimath/math_util.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/item_count.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -55,7 +56,39 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
   Widget build(BuildContext context) {
     return TreeCardNode(
       title: const Text('Constraint Zones'),
-      trailing: ItemCount(count: widget.path.constraintZones.length),
+      leading: const Icon(Icons.speed_rounded),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.add, size: 20),
+            onPressed: () {
+              widget.undoStack.add(Change(
+                PathPlannerPath.cloneConstraintZones(constraintZones),
+                () {
+                  final constraints = widget.path.globalConstraints.clone();
+                  constraints.unlimited = false;
+                  constraintZones.add(ConstraintsZone.defaultZone(
+                    constraints: constraints,
+                  ));
+                  widget.onPathChangedNoSim?.call();
+                },
+                (oldValue) {
+                  _selectedZone = null;
+                  widget.onZoneHovered?.call(null);
+                  widget.onZoneSelected?.call(null);
+                  widget.path.constraintZones =
+                      PathPlannerPath.cloneConstraintZones(oldValue);
+                  widget.onPathChangedNoSim?.call();
+                },
+              ));
+            },
+            tooltip: 'Add New Constraint Zone',
+          ),
+          const SizedBox(width: 8),
+          ItemCount(count: widget.path.constraintZones.length),
+        ],
+      ),
       initiallyExpanded: widget.path.constraintZonesExpanded,
       onExpansionChanged: (value) {
         if (value != null) {
@@ -73,35 +106,6 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
         ),
         const SizedBox(height: 6),
         for (int i = 0; i < constraintZones.length; i++) _buildZoneCard(i),
-        const SizedBox(height: 12),
-        Center(
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.add),
-            style: ElevatedButton.styleFrom(
-              elevation: 4.0,
-            ),
-            label: const Text('Add New Zone'),
-            onPressed: () {
-              widget.undoStack.add(Change(
-                PathPlannerPath.cloneConstraintZones(constraintZones),
-                () {
-                  constraintZones.add(ConstraintsZone.defaultZone(
-                    constraints: widget.path.globalConstraints.clone(),
-                  ));
-                  widget.onPathChangedNoSim?.call();
-                },
-                (oldValue) {
-                  _selectedZone = null;
-                  widget.onZoneHovered?.call(null);
-                  widget.onZoneSelected?.call(null);
-                  widget.path.constraintZones =
-                      PathPlannerPath.cloneConstraintZones(oldValue);
-                  widget.onPathChangedNoSim?.call();
-                },
-              ));
-            },
-          ),
-        ),
       ],
     );
   }
@@ -232,18 +236,17 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText: constraintZones[zoneIdx]
-                      .constraints
-                      .maxVelocity
-                      .toStringAsFixed(2),
+                  initialValue:
+                      constraintZones[zoneIdx].constraints.maxVelocityMPS,
                   label: 'Max Velocity (M/S)',
+                  minValue: 0.1,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
+                    if (value != null) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
-                              .maxVelocity = value);
+                              .maxVelocityMPS = value);
                     }
                   },
                 ),
@@ -251,18 +254,17 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText: constraintZones[zoneIdx]
-                      .constraints
-                      .maxAcceleration
-                      .toStringAsFixed(2),
+                  initialValue:
+                      constraintZones[zoneIdx].constraints.maxAccelerationMPSSq,
                   label: 'Max Acceleration (M/S²)',
+                  minValue: 0.1,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
+                    if (value != null) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
-                              .maxAcceleration = value);
+                              .maxAccelerationMPSSq = value);
                     }
                   },
                 ),
@@ -277,19 +279,19 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText: constraintZones[zoneIdx]
+                  initialValue: constraintZones[zoneIdx]
                       .constraints
-                      .maxAngularVelocity
-                      .toStringAsFixed(2),
+                      .maxAngularVelocityDeg,
                   label: 'Max Angular Velocity (Deg/S)',
                   arrowKeyIncrement: 1.0,
+                  minValue: 0.1,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
+                    if (value != null) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
-                              .maxAngularVelocity = value);
+                              .maxAngularVelocityDeg = value);
                     }
                   },
                 ),
@@ -297,19 +299,19 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
               const SizedBox(width: 8),
               Expanded(
                 child: NumberTextField(
-                  initialText: constraintZones[zoneIdx]
+                  initialValue: constraintZones[zoneIdx]
                       .constraints
-                      .maxAngularAcceleration
-                      .toStringAsFixed(2),
+                      .maxAngularAccelerationDeg,
                   label: 'Max Angular Acceleration (Deg/S²)',
                   arrowKeyIncrement: 1.0,
+                  minValue: 0.1,
                   onSubmitted: (value) {
-                    if (value != null && value > 0) {
+                    if (value != null) {
                       _addConstraintsChange(
                           zoneIdx,
                           () => constraintZones[zoneIdx]
                               .constraints
-                              .maxAngularAcceleration = value);
+                              .maxAngularAccelerationDeg = value);
                     }
                   },
                 ),
@@ -318,69 +320,170 @@ class _ConstraintZonesTreeState extends State<ConstraintZonesTree> {
           ),
         ),
         const SizedBox(height: 12),
-        Slider(
-          value: constraintZones[zoneIdx].minWaypointRelativePos.toDouble(),
-          secondaryTrackValue:
-              constraintZones[zoneIdx].maxWaypointRelativePos.toDouble(),
-          min: 0.0,
-          max: waypoints.length - 1.0,
-          divisions: (waypoints.length - 1) * 20,
-          label: constraintZones[zoneIdx]
-              .minWaypointRelativePos
-              .toStringAsFixed(2),
-          onChangeStart: (value) {
-            _sliderChangeStart = value;
-          },
-          onChangeEnd: (value) {
-            widget.undoStack.add(Change(
-              _sliderChangeStart,
-              () {
-                constraintZones[zoneIdx].minWaypointRelativePos = value;
-                widget.onPathChanged?.call();
-              },
-              (oldValue) {
-                constraintZones[zoneIdx].minWaypointRelativePos = oldValue;
-                widget.onPathChanged?.call();
-              },
-            ));
-          },
-          onChanged: (value) {
-            if (value <= constraintZones[zoneIdx].maxWaypointRelativePos) {
-              constraintZones[zoneIdx].minWaypointRelativePos = value;
-              widget.onPathChangedNoSim?.call();
-            }
-          },
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: NumberTextField(
+                  initialValue:
+                      constraintZones[zoneIdx].constraints.nominalVoltage,
+                  label: 'Nominal Voltage (Volts)',
+                  minValue: 6.0,
+                  maxValue: 13.0,
+                  arrowKeyIncrement: 0.1,
+                  onSubmitted: (value) {
+                    if (value != null) {
+                      _addConstraintsChange(
+                          zoneIdx,
+                          () => constraintZones[zoneIdx]
+                              .constraints
+                              .nominalVoltage = value);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
-        Slider(
-          value: constraintZones[zoneIdx].maxWaypointRelativePos.toDouble(),
-          min: 0.0,
-          max: waypoints.length - 1.0,
-          divisions: (waypoints.length - 1) * 20,
-          label: constraintZones[zoneIdx]
-              .maxWaypointRelativePos
-              .toStringAsFixed(2),
-          onChangeStart: (value) {
-            _sliderChangeStart = value;
-          },
-          onChangeEnd: (value) {
-            widget.undoStack.add(Change(
-              _sliderChangeStart,
-              () {
-                constraintZones[zoneIdx].maxWaypointRelativePos = value;
-                widget.onPathChanged?.call();
-              },
-              (oldValue) {
-                constraintZones[zoneIdx].maxWaypointRelativePos = oldValue;
-                widget.onPathChanged?.call();
-              },
-            ));
-          },
-          onChanged: (value) {
-            if (value >= constraintZones[zoneIdx].minWaypointRelativePos) {
-              constraintZones[zoneIdx].maxWaypointRelativePos = value;
-              widget.onPathChangedNoSim?.call();
-            }
-          },
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                value:
+                    constraintZones[zoneIdx].minWaypointRelativePos.toDouble(),
+                secondaryTrackValue:
+                    constraintZones[zoneIdx].maxWaypointRelativePos.toDouble(),
+                min: 0.0,
+                max: waypoints.length - 1.0,
+                label: constraintZones[zoneIdx]
+                    .minWaypointRelativePos
+                    .toStringAsFixed(2),
+                onChangeStart: (value) {
+                  _sliderChangeStart = value;
+                },
+                onChangeEnd: (value) {
+                  widget.undoStack.add(Change(
+                    _sliderChangeStart,
+                    () {
+                      constraintZones[zoneIdx].minWaypointRelativePos = value;
+                      widget.onPathChanged?.call();
+                    },
+                    (oldValue) {
+                      constraintZones[zoneIdx].minWaypointRelativePos =
+                          oldValue;
+                      widget.onPathChanged?.call();
+                    },
+                  ));
+                },
+                onChanged: (value) {
+                  if (value <=
+                      constraintZones[zoneIdx].maxWaypointRelativePos) {
+                    constraintZones[zoneIdx].minWaypointRelativePos = value;
+                    widget.onPathChangedNoSim?.call();
+                  }
+                },
+              ),
+            ),
+            SizedBox(
+              width: 75,
+              child: NumberTextField(
+                initialValue: constraintZones[zoneIdx].minWaypointRelativePos,
+                precision: 2,
+                label: 'Start Pos',
+                onSubmitted: (value) {
+                  if (value != null) {
+                    final maxVal =
+                        constraintZones[zoneIdx].maxWaypointRelativePos;
+                    final val = MathUtil.clamp(value, 0.0, maxVal);
+                    widget.undoStack.add(Change(
+                      constraintZones[zoneIdx].minWaypointRelativePos,
+                      () {
+                        constraintZones[zoneIdx].minWaypointRelativePos = val;
+                        widget.onPathChanged?.call();
+                      },
+                      (oldValue) {
+                        constraintZones[zoneIdx].minWaypointRelativePos =
+                            oldValue;
+                        widget.onPathChanged?.call();
+                      },
+                    ));
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Slider(
+                value:
+                    constraintZones[zoneIdx].maxWaypointRelativePos.toDouble(),
+                min: 0.0,
+                max: waypoints.length - 1.0,
+                label: constraintZones[zoneIdx]
+                    .maxWaypointRelativePos
+                    .toStringAsFixed(2),
+                onChangeStart: (value) {
+                  _sliderChangeStart = value;
+                },
+                onChangeEnd: (value) {
+                  widget.undoStack.add(Change(
+                    _sliderChangeStart,
+                    () {
+                      constraintZones[zoneIdx].maxWaypointRelativePos = value;
+                      widget.onPathChanged?.call();
+                    },
+                    (oldValue) {
+                      constraintZones[zoneIdx].maxWaypointRelativePos =
+                          oldValue;
+                      widget.onPathChanged?.call();
+                    },
+                  ));
+                },
+                onChanged: (value) {
+                  if (value >=
+                      constraintZones[zoneIdx].minWaypointRelativePos) {
+                    constraintZones[zoneIdx].maxWaypointRelativePos = value;
+                    widget.onPathChangedNoSim?.call();
+                  }
+                },
+              ),
+            ),
+            SizedBox(
+              width: 75,
+              child: NumberTextField(
+                initialValue: constraintZones[zoneIdx].maxWaypointRelativePos,
+                precision: 2,
+                label: 'End Pos',
+                onSubmitted: (value) {
+                  if (value != null) {
+                    final minVal =
+                        constraintZones[zoneIdx].minWaypointRelativePos;
+                    final val =
+                        MathUtil.clamp(value, minVal, waypoints.length - 1);
+                    widget.undoStack.add(Change(
+                      constraintZones[zoneIdx].maxWaypointRelativePos,
+                      () {
+                        constraintZones[zoneIdx].maxWaypointRelativePos = val;
+                        widget.onPathChanged?.call();
+                      },
+                      (oldValue) {
+                        constraintZones[zoneIdx].maxWaypointRelativePos =
+                            oldValue;
+                        widget.onPathChanged?.call();
+                      },
+                    ));
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
         ),
       ],
     );

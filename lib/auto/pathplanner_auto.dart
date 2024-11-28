@@ -1,19 +1,20 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/named_command.dart';
-import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/path_command.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/services/log.dart';
+
+const String fileVersion = '2025.0';
 
 class PathPlannerAuto {
   String name;
-  Pose2d? startingPose;
   SequentialCommandGroup sequence;
+  bool resetOdom;
   bool choreoAuto;
 
   String? folder;
@@ -27,56 +28,54 @@ class PathPlannerAuto {
   PathPlannerAuto({
     required this.name,
     required this.sequence,
+    required this.resetOdom,
     required this.autoDir,
     required this.fs,
     required this.folder,
-    required this.startingPose,
     required this.choreoAuto,
   }) {
-    _addNamedCommandsToSet(sequence.commands);
+    _addNamedCommandsToEvents(sequence.commands);
   }
 
   PathPlannerAuto.defaultAuto({
     this.name = 'New Auto',
+    this.resetOdom = true,
     required this.autoDir,
     required this.fs,
     this.folder,
     this.choreoAuto = false,
-  })  : sequence = SequentialCommandGroup(commands: []),
-        startingPose = Pose2d(position: const Point(2, 2));
+  }) : sequence = SequentialCommandGroup(commands: []);
 
   PathPlannerAuto duplicate(String newName) {
     return PathPlannerAuto(
       name: newName,
       sequence: sequence.clone() as SequentialCommandGroup,
+      resetOdom: resetOdom,
       autoDir: autoDir,
       fs: fs,
-      startingPose: startingPose,
       folder: folder,
       choreoAuto: choreoAuto,
     );
   }
 
-  PathPlannerAuto.fromJsonV1(
+  PathPlannerAuto.fromJson(
       Map<String, dynamic> json, String name, String autosDir, FileSystem fs)
       : this(
           autoDir: autosDir,
           fs: fs,
           name: name,
-          startingPose: json['startingPose'] == null
-              ? null
-              : Pose2d.fromJson(json['startingPose']),
           sequence:
               Command.fromJson(json['command'] ?? {}) as SequentialCommandGroup,
+          resetOdom: json['resetOdom'] ?? true,
           folder: json['folder'],
           choreoAuto: json['choreoAuto'] ?? false,
         );
 
   Map<String, dynamic> toJson() {
     return {
-      'version': 1.0,
-      'startingPose': startingPose?.toJson(),
+      'version': fileVersion,
       'command': sequence.toJson(),
+      'resetOdom': resetOdom,
       'folder': folder,
       'choreoAuto': choreoAuto,
     };
@@ -95,15 +94,15 @@ class PathPlannerAuto {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String autoName = basenameWithoutExtension(e.path);
 
-          if (json['version'] == 1.0) {
-            PathPlannerAuto auto =
-                PathPlannerAuto.fromJsonV1(json, autoName, autosDir, fs);
-            auto.lastModified = (await file.lastModified()).toUtc();
+          PathPlannerAuto auto =
+              PathPlannerAuto.fromJson(json, autoName, autosDir, fs);
+          auto.lastModified = (await file.lastModified()).toUtc();
 
-            autos.add(auto);
-          } else {
-            Log.error('Unknown auto version');
+          if (json['version'] != fileVersion) {
+            auto.saveFile();
           }
+
+          autos.add(auto);
         } catch (ex, stack) {
           Log.error('Failed to load auto', ex, stack);
         }
@@ -158,17 +157,17 @@ class PathPlannerAuto {
     }
   }
 
-  void _addNamedCommandsToSet(List<Command> commands) {
+  void _addNamedCommandsToEvents(List<Command> commands) {
     for (Command cmd in commands) {
       if (cmd is NamedCommand) {
         if (cmd.name != null) {
-          Command.named.add(cmd.name!);
+          ProjectPage.events.add(cmd.name!);
           continue;
         }
       }
 
       if (cmd is CommandGroup) {
-        _addNamedCommandsToSet(cmd.commands);
+        _addNamedCommandsToEvents(cmd.commands);
       }
     }
   }
@@ -244,9 +243,9 @@ class PathPlannerAuto {
       other is PathPlannerAuto &&
       other.runtimeType == runtimeType &&
       other.name == name &&
-      other.startingPose == startingPose &&
-      other.sequence == sequence;
+      other.sequence == sequence &&
+      other.resetOdom == resetOdom;
 
   @override
-  int get hashCode => Object.hash(name, startingPose, sequence);
+  int get hashCode => Object.hash(name, sequence, resetOdom);
 }

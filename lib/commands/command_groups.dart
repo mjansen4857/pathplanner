@@ -7,10 +7,14 @@ abstract class CommandGroup extends Command {
   CommandGroup({required super.type, required this.commands});
 
   CommandGroup.fromDataJson(Map<String, dynamic> json, {required super.type})
-      : commands = [
-          for (Map<String, dynamic> cmdJson in (json['commands'] ?? []))
-            Command.fromJson(cmdJson),
-        ];
+      : commands = [] {
+    for (Map<String, dynamic> cmdJson in (json['commands'] ?? [])) {
+      final cmd = Command.fromJson(cmdJson);
+      if (cmd != null) {
+        commands.add(cmd);
+      }
+    }
+  }
 
   @override
   Map<String, dynamic> dataToJson() {

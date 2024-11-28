@@ -1,13 +1,14 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:nt4/nt4.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 
 class PPLibTelemetry {
   late NT4Client _client;
   late NT4Subscription _velSub;
-  late NT4Subscription _inaccuracySub;
   late NT4Subscription _currentPoseSub;
   late NT4Subscription _activePathSub;
   late NT4Subscription _targetPoseSub;
@@ -25,11 +26,9 @@ class PPLibTelemetry {
     );
 
     _velSub = _client.subscribePeriodic('/PathPlanner/vel', 0.033);
-    _inaccuracySub =
-        _client.subscribePeriodic('/PathPlanner/inaccuracy', 0.033);
     _currentPoseSub =
         _client.subscribePeriodic('/PathPlanner/currentPose', 0.033);
-    _activePathSub = _client.subscribePeriodic('/PathPlanner/activePath', 0.1);
+    _activePathSub = _client.subscribeAllSamples('/PathPlanner/activePath');
     _targetPoseSub =
         _client.subscribePeriodic('/PathPlanner/targetPose', 0.033);
 
@@ -74,32 +73,26 @@ class PPLibTelemetry {
         (vels as List?)?.map((e) => e as num).toList() ?? [0, 0, 0, 0]);
   }
 
-  Stream<num> inaccuracyStream() {
-    return _inaccuracySub
-        .stream()
-        .map((inaccuracy) => (inaccuracy as num?) ?? 0);
+  Stream<Pose2d?> currentPoseStream() {
+    return _currentPoseSub.stream().map((pose) => (pose is List<int>)
+        ? Pose2d.fromBytes(Uint8List.fromList(pose))
+        : null);
   }
 
-  Stream<List<num>?> currentPoseStream() {
-    return _currentPoseSub
-        .stream()
-        .map((pose) => (pose as List?)?.map((e) => e as num).toList());
-  }
-
-  Stream<List<num>?> currentPathStream() {
-    return _activePathSub
-        .stream()
-        .map((path) => (path as List?)?.map((e) => e as num).toList());
+  Stream<List<Pose2d>?> currentPathStream() {
+    return _activePathSub.stream().map((poses) => (poses is List<int>)
+        ? Pose2d.listFromBytes(Uint8List.fromList(poses))
+        : null);
   }
 
   Stream<bool> connectionStatusStream() {
     return _client.connectionStatusStream().asBroadcastStream();
   }
 
-  Stream<List<num>?> targetPoseStream() {
-    return _targetPoseSub
-        .stream()
-        .map((pose) => (pose as List?)?.map((e) => e as num).toList());
+  Stream<Pose2d?> targetPoseStream() {
+    return _targetPoseSub.stream().map((pose) => (pose is List<int>)
+        ? Pose2d.fromBytes(Uint8List.fromList(pose))
+        : null);
   }
 
   bool get isConnected => _isConnected;

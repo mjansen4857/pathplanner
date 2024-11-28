@@ -2,6 +2,8 @@ package com.pathplanner.lib.pathfinding;
 
 import com.pathplanner.lib.path.*;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Filesystem;
 import java.io.BufferedReader;
@@ -22,7 +24,6 @@ import org.json.simple.parser.JSONParser;
  */
 public class LocalADStar implements Pathfinder {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;
-  private static final double SMOOTHING_CONTROL_PCT = 0.33;
   private static final double EPS = 2.5;
 
   private double fieldLength = 16.54;
@@ -58,7 +59,7 @@ public class LocalADStar implements Pathfinder {
   private final ReadWriteLock pathLock = new ReentrantReadWriteLock();
   private final ReadWriteLock requestLock = new ReentrantReadWriteLock();
 
-  private List<PathPoint> currentPathPoints = new ArrayList<>();
+  private List<Waypoint> currentWaypoints = new ArrayList<>();
   private List<GridPosition> currentPathFull = new ArrayList<>();
 
   /** Create a new pathfinder that runs AD* locally in a background thread */
@@ -66,9 +67,9 @@ public class LocalADStar implements Pathfinder {
     planningThread = new Thread(this::runThread);
 
     requestStart = new GridPosition(0, 0);
-    requestRealStartPos = new Translation2d(0, 0);
+    requestRealStartPos = Translation2d.kZero;
     requestGoal = new GridPosition(0, 0);
-    requestRealGoalPos = new Translation2d(0, 0);
+    requestRealGoalPos = Translation2d.kZero;
 
     staticObstacles.clear();
     dynamicObstacles.clear();
@@ -143,20 +144,20 @@ public class LocalADStar implements Pathfinder {
    */
   @Override
   public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
-    List<PathPoint> pathPoints;
+    List<Waypoint> waypoints;
 
     pathLock.readLock().lock();
-    pathPoints = new ArrayList<>(currentPathPoints);
+    waypoints = new ArrayList<>(currentWaypoints);
     pathLock.readLock().unlock();
 
     newPathAvailable = false;
 
-    if (currentPathPoints.isEmpty()) {
+    if (waypoints.size() < 2) {
       // Not enough points. Something got borked somewhere
       return null;
     }
 
-    return PathPlannerPath.fromPathPoints(pathPoints, constraints, goalEndState);
+    return new PathPlannerPath(waypoints, constraints, null, goalEndState);
   }
 
   /**
@@ -316,12 +317,12 @@ public class LocalADStar implements Pathfinder {
       computeOrImprovePath(sStart, sGoal, obstacles);
 
       List<GridPosition> pathPositions = extractPath(sStart, sGoal, obstacles);
-      List<PathPoint> pathPoints =
-          createPathPoints(pathPositions, realStartPos, realGoalPos, obstacles);
+      List<Waypoint> waypoints =
+          createWaypoints(pathPositions, realStartPos, realGoalPos, obstacles);
 
       pathLock.writeLock().lock();
       currentPathFull = pathPositions;
-      currentPathPoints = pathPoints;
+      currentWaypoints = waypoints;
       pathLock.writeLock().unlock();
 
       newPathAvailable = true;
@@ -335,12 +336,12 @@ public class LocalADStar implements Pathfinder {
         computeOrImprovePath(sStart, sGoal, obstacles);
 
         List<GridPosition> pathPositions = extractPath(sStart, sGoal, obstacles);
-        List<PathPoint> pathPoints =
-            createPathPoints(pathPositions, realStartPos, realGoalPos, obstacles);
+        List<Waypoint> waypoints =
+            createWaypoints(pathPositions, realStartPos, realGoalPos, obstacles);
 
         pathLock.writeLock().lock();
         currentPathFull = pathPositions;
-        currentPathPoints = pathPoints;
+        currentWaypoints = waypoints;
         pathLock.writeLock().unlock();
 
         newPathAvailable = true;
@@ -383,7 +384,7 @@ public class LocalADStar implements Pathfinder {
     return path;
   }
 
-  private List<PathPoint> createPathPoints(
+  private List<Waypoint> createWaypoints(
       List<GridPosition> path,
       Translation2d realStartPos,
       Translation2d realGoalPos,
@@ -406,71 +407,39 @@ public class LocalADStar implements Pathfinder {
       fieldPosPath.add(gridPosToTranslation2d(pos));
     }
 
+    if (fieldPosPath.size() < 2) {
+      return new ArrayList<>();
+    }
+
     // Replace start and end positions with their real positions
     fieldPosPath.set(0, realStartPos);
     fieldPosPath.set(fieldPosPath.size() - 1, realGoalPos);
 
-    List<Translation2d> bezierPoints = new ArrayList<>();
-    bezierPoints.add(fieldPosPath.get(0));
-    bezierPoints.add(
-        fieldPosPath
-            .get(1)
-            .minus(fieldPosPath.get(0))
-            .times(SMOOTHING_CONTROL_PCT)
-            .plus(fieldPosPath.get(0)));
+    List<Pose2d> pathPoses = new ArrayList<>();
+    pathPoses.add(
+        new Pose2d(fieldPosPath.get(0), fieldPosPath.get(1).minus(fieldPosPath.get(0)).getAngle()));
     for (int i = 1; i < fieldPosPath.size() - 1; i++) {
       Translation2d last = fieldPosPath.get(i - 1);
       Translation2d current = fieldPosPath.get(i);
       Translation2d next = fieldPosPath.get(i + 1);
 
       Translation2d anchor1 = current.minus(last).times(SMOOTHING_ANCHOR_PCT).plus(last);
+      Rotation2d heading1 = current.minus(last).getAngle();
       Translation2d anchor2 = current.minus(next).times(SMOOTHING_ANCHOR_PCT).plus(next);
+      Rotation2d heading2 = next.minus(anchor2).getAngle();
 
-      double controlDist = anchor1.getDistance(anchor2) * SMOOTHING_CONTROL_PCT;
-
-      Translation2d prevControl1 = last.minus(anchor1).times(SMOOTHING_CONTROL_PCT).plus(anchor1);
-      Translation2d nextControl1 =
-          new Translation2d(controlDist, anchor1.minus(prevControl1).getAngle()).plus(anchor1);
-
-      Translation2d prevControl2 =
-          new Translation2d(controlDist, anchor2.minus(next).getAngle()).plus(anchor2);
-      Translation2d nextControl2 = next.minus(anchor2).times(SMOOTHING_CONTROL_PCT).plus(anchor2);
-
-      bezierPoints.add(prevControl1);
-      bezierPoints.add(anchor1);
-      bezierPoints.add(nextControl1);
-
-      bezierPoints.add(prevControl2);
-      bezierPoints.add(anchor2);
-      bezierPoints.add(nextControl2);
+      pathPoses.add(new Pose2d(anchor1, heading1));
+      pathPoses.add(new Pose2d(anchor2, heading2));
     }
-    bezierPoints.add(
-        fieldPosPath
-            .get(fieldPosPath.size() - 2)
-            .minus(fieldPosPath.get(fieldPosPath.size() - 1))
-            .times(SMOOTHING_CONTROL_PCT)
-            .plus(fieldPosPath.get(fieldPosPath.size() - 1)));
-    bezierPoints.add(fieldPosPath.get(fieldPosPath.size() - 1));
+    pathPoses.add(
+        new Pose2d(
+            fieldPosPath.get(fieldPosPath.size() - 1),
+            fieldPosPath
+                .get(fieldPosPath.size() - 1)
+                .minus(fieldPosPath.get(fieldPosPath.size() - 2))
+                .getAngle()));
 
-    int numSegments = (bezierPoints.size() - 1) / 3;
-    List<PathPoint> pathPoints = new ArrayList<>();
-
-    for (int i = 0; i < numSegments; i++) {
-      int iOffset = i * 3;
-
-      Translation2d p1 = bezierPoints.get(iOffset);
-      Translation2d p2 = bezierPoints.get(iOffset + 1);
-      Translation2d p3 = bezierPoints.get(iOffset + 2);
-      Translation2d p4 = bezierPoints.get(iOffset + 3);
-
-      PathSegment segment = new PathSegment(p1, p2, p3, p4);
-      segment.generatePathPoints(
-          pathPoints, i, Collections.emptyList(), Collections.emptyList(), null);
-    }
-    pathPoints.add(new PathPoint(bezierPoints.get(bezierPoints.size() - 1)));
-    pathPoints.get(pathPoints.size() - 1).waypointRelativePos = numSegments;
-
-    return pathPoints;
+    return PathPlannerPath.waypointsFromPoses(pathPoses);
   }
 
   private GridPosition findClosestNonObstacle(GridPosition pos, Set<GridPosition> obstacles) {
@@ -724,39 +693,13 @@ public class LocalADStar implements Pathfinder {
         (pos.x * nodeSize) + (nodeSize / 2.0), (pos.y * nodeSize) + (nodeSize / 2.0));
   }
 
-  /** Represents a node in the pathfinding grid */
-  public static class GridPosition implements Comparable<GridPosition> {
-    /** X index in the grid */
-    public final int x;
-    /** Y index in the grid */
-    public final int y;
-
-    /**
-     * Create a node within the pathfinding grid
-     *
-     * @param x X index in the grid
-     * @param y Y index in the grid
-     */
-    public GridPosition(int x, int y) {
-      this.x = x;
-      this.y = y;
-    }
-
-    @Override
-    public int hashCode() {
-      return x * 1000 + y;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj instanceof GridPosition) {
-        var other = (GridPosition) obj;
-        return x == other.x && y == other.y;
-      } else {
-        return false;
-      }
-    }
-
+  /**
+   * Represents a node in the pathfinding grid
+   *
+   * @param x X index in the grid
+   * @param y Y index in the grid
+   */
+  public record GridPosition(int x, int y) implements Comparable<GridPosition> {
     @Override
     public int compareTo(GridPosition o) {
       if (x == o.x) {
@@ -764,11 +707,6 @@ public class LocalADStar implements Pathfinder {
       } else {
         return Integer.compare(x, o.x);
       }
-    }
-
-    @Override
-    public String toString() {
-      return "(" + x + ", " + y + ")";
     }
   }
 }

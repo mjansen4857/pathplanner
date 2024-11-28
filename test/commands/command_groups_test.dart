@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
-import 'package:pathplanner/commands/none_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
 
 void main() {
@@ -11,7 +10,7 @@ void main() {
       SequentialCommandGroup cmd1 = SequentialCommandGroup(commands: []);
       SequentialCommandGroup cmd2 = SequentialCommandGroup(commands: []);
       SequentialCommandGroup cmd3 =
-          SequentialCommandGroup(commands: [const NoneCommand()]);
+          SequentialCommandGroup(commands: [WaitCommand()]);
 
       expect(cmd2, cmd1);
       expect(cmd3, isNot(cmd1));
@@ -21,17 +20,17 @@ void main() {
 
     test('toJson/fromJson interoperability', () {
       SequentialCommandGroup cmd =
-          SequentialCommandGroup(commands: [const NoneCommand()]);
+          SequentialCommandGroup(commands: [WaitCommand()]);
 
       Map<String, dynamic> json = cmd.toJson();
-      Command fromJson = Command.fromJson(json);
+      Command fromJson = Command.fromJson(json)!;
 
       expect(fromJson, cmd);
     });
 
     test('proper cloning', () {
       SequentialCommandGroup cmd =
-          SequentialCommandGroup(commands: [const NoneCommand()]);
+          SequentialCommandGroup(commands: [WaitCommand()]);
       Command cloned = cmd.clone();
 
       expect(cloned, cmd);
@@ -46,7 +45,7 @@ void main() {
       ParallelCommandGroup cmd1 = ParallelCommandGroup(commands: []);
       ParallelCommandGroup cmd2 = ParallelCommandGroup(commands: []);
       ParallelCommandGroup cmd3 =
-          ParallelCommandGroup(commands: [const NoneCommand()]);
+          ParallelCommandGroup(commands: [WaitCommand()]);
 
       expect(cmd2, cmd1);
       expect(cmd3, isNot(cmd1));
@@ -56,17 +55,17 @@ void main() {
 
     test('toJson/fromJson interoperability', () {
       ParallelCommandGroup cmd =
-          ParallelCommandGroup(commands: [const NoneCommand()]);
+          ParallelCommandGroup(commands: [WaitCommand()]);
 
       Map<String, dynamic> json = cmd.toJson();
-      Command fromJson = Command.fromJson(json);
+      Command fromJson = Command.fromJson(json)!;
 
       expect(fromJson, cmd);
     });
 
     test('proper cloning', () {
       ParallelCommandGroup cmd =
-          ParallelCommandGroup(commands: [const NoneCommand()]);
+          ParallelCommandGroup(commands: [WaitCommand()]);
       Command cloned = cmd.clone();
 
       expect(cloned, cmd);
@@ -80,7 +79,7 @@ void main() {
     test('equals/hashCode', () {
       RaceCommandGroup cmd1 = RaceCommandGroup(commands: []);
       RaceCommandGroup cmd2 = RaceCommandGroup(commands: []);
-      RaceCommandGroup cmd3 = RaceCommandGroup(commands: [const NoneCommand()]);
+      RaceCommandGroup cmd3 = RaceCommandGroup(commands: [WaitCommand()]);
 
       expect(cmd2, cmd1);
       expect(cmd3, isNot(cmd1));
@@ -89,16 +88,16 @@ void main() {
     });
 
     test('toJson/fromJson interoperability', () {
-      RaceCommandGroup cmd = RaceCommandGroup(commands: [const NoneCommand()]);
+      RaceCommandGroup cmd = RaceCommandGroup(commands: [WaitCommand()]);
 
       Map<String, dynamic> json = cmd.toJson();
-      Command fromJson = Command.fromJson(json);
+      Command fromJson = Command.fromJson(json)!;
 
       expect(fromJson, cmd);
     });
 
     test('proper cloning', () {
-      RaceCommandGroup cmd = RaceCommandGroup(commands: [const NoneCommand()]);
+      RaceCommandGroup cmd = RaceCommandGroup(commands: [WaitCommand()]);
       Command cloned = cmd.clone();
 
       expect(cloned, cmd);
@@ -113,7 +112,7 @@ void main() {
       DeadlineCommandGroup cmd1 = DeadlineCommandGroup(commands: []);
       DeadlineCommandGroup cmd2 = DeadlineCommandGroup(commands: []);
       DeadlineCommandGroup cmd3 =
-          DeadlineCommandGroup(commands: [const NoneCommand()]);
+          DeadlineCommandGroup(commands: [WaitCommand()]);
 
       expect(cmd2, cmd1);
       expect(cmd3, isNot(cmd1));
@@ -123,17 +122,17 @@ void main() {
 
     test('toJson/fromJson interoperability', () {
       DeadlineCommandGroup cmd =
-          DeadlineCommandGroup(commands: [const NoneCommand()]);
+          DeadlineCommandGroup(commands: [WaitCommand()]);
 
       Map<String, dynamic> json = cmd.toJson();
-      Command fromJson = Command.fromJson(json);
+      Command fromJson = Command.fromJson(json)!;
 
       expect(fromJson, cmd);
     });
 
     test('proper cloning', () {
       DeadlineCommandGroup cmd =
-          DeadlineCommandGroup(commands: [const NoneCommand()]);
+          DeadlineCommandGroup(commands: [WaitCommand()]);
       Command cloned = cmd.clone();
 
       expect(cloned, cmd);

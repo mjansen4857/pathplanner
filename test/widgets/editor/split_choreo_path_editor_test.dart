@@ -5,6 +5,7 @@ import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/split_choreo_path_editor.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/choreo_path_tree.dart';
@@ -21,10 +22,10 @@ void main() {
     path = ChoreoPath(
       name: 'test',
       trajectory: PathPlannerTrajectory.fromStates([
-        TrajectoryState.pregen(
-            0.0, Pose2d(const Translation2d(), Rotation2d())),
-        TrajectoryState.pregen(
-            1.0, Pose2d(const Translation2d(), Rotation2d())),
+        TrajectoryState.pregen(0.0, const ChassisSpeeds(),
+            const Pose2d(Translation2d(), Rotation2d())),
+        TrajectoryState.pregen(1.0, const ChassisSpeeds(),
+            const Pose2d(Translation2d(), Rotation2d())),
       ]),
       fs: MemoryFileSystem(),
       choreoDir: '/choreo',
@@ -36,6 +37,8 @@ void main() {
       PrefsKeys.treeOnRight: true,
       PrefsKeys.robotWidth: 1.0,
       PrefsKeys.robotLength: 1.0,
+      PrefsKeys.showRobotDetails: true,
+      PrefsKeys.showGrid: true,
     });
     prefs = await SharedPreferences.getInstance();
   });

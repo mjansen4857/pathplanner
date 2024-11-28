@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/rotation_target.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -23,14 +24,8 @@ void main() {
       fs: MemoryFileSystem(),
     );
     path.rotationTargets = [
-      RotationTarget(
-        waypointRelativePos: 0.2,
-        rotationDegrees: 0.0,
-      ),
-      RotationTarget(
-        waypointRelativePos: 0.7,
-        rotationDegrees: 0.0,
-      ),
+      RotationTarget(0.2, const Rotation2d()),
+      RotationTarget(0.7, const Rotation2d()),
     ];
     path.rotationTargetsExpanded = true;
     pathChanged = false;
@@ -101,8 +96,7 @@ void main() {
       ),
     ));
 
-    expect(find.text('Rotation Target at 0.20'), findsOneWidget);
-    expect(find.text('Rotation Target at 0.70'), findsOneWidget);
+    expect(find.text('Rotation Target 1'), findsOneWidget);
   });
 
   testWidgets('Target card hover', (widgetTester) async {
@@ -192,11 +186,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.rotationTargets[0].rotationDegrees, -160.0);
+    expect(path.rotationTargets[0].rotation.degrees, -160.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.rotationTargets[0].rotationDegrees, 0.0);
+    expect(path.rotationTargets[0].rotation.degrees, 0.0);
   });
 
   testWidgets('pos slider', (widgetTester) async {
@@ -273,11 +267,21 @@ void main() {
       ),
     ));
 
-    var newTargetButton = find.text('Add New Rotation Target');
+    final addIcon = find.byIcon(Icons.add);
+    expect(addIcon, findsOneWidget);
 
-    expect(newTargetButton, findsOneWidget);
+    // Find the parent IconButton of the Icon
+    final addButton = find.ancestor(
+      of: addIcon,
+      matching: find.byType(IconButton),
+    );
+    expect(addButton, findsOneWidget);
 
-    await widgetTester.tap(newTargetButton);
+    // Check the tooltip of the IconButton
+    expect((widgetTester.widget(addButton) as IconButton).tooltip,
+        'Add New Rotation Target');
+
+    await widgetTester.tap(addButton);
     await widgetTester.pump();
 
     expect(pathChanged, true);
@@ -285,6 +289,50 @@ void main() {
 
     undoStack.undo();
     await widgetTester.pump();
+
     expect(path.rotationTargets.length, 2);
+  });
+
+  testWidgets('position text field input', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: RotationTargetsTree(
+          path: path,
+          onPathChangedNoSim: () => pathChanged = true,
+          onTargetHovered: (value) => hoveredTarget = value,
+          onTargetSelected: (value) => selectedTarget = value,
+          undoStack: undoStack,
+          initiallySelectedTarget: 0,
+        ),
+      ),
+    ));
+
+    var numberTextField =
+        find.byType(NumberTextField).last; // Get the position text field
+    expect(numberTextField, findsOneWidget);
+
+    // Verify initial value
+    expect(path.rotationTargets[0].waypointRelativePos, 0.2);
+
+    // Simulate entering text
+    await widgetTester.enterText(numberTextField, '0.5');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    // Verify that the path changed and the new value is correct
+    expect(pathChanged, true);
+    expect(path.rotationTargets[0].waypointRelativePos, 0.5);
+
+    // Reset pathChanged flag
+    pathChanged = false;
+
+    // Simulate entering another value
+    await widgetTester.enterText(numberTextField, '0.7');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pumpAndSettle();
+
+    // Verify that the path changed again and the new value is correct
+    expect(pathChanged, true);
+    expect(path.rotationTargets[0].waypointRelativePos, 0.7);
   });
 }

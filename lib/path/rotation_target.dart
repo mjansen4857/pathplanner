@@ -1,28 +1,26 @@
+import 'package:pathplanner/util/wpimath/geometry.dart';
+
 class RotationTarget {
   num waypointRelativePos;
-  num rotationDegrees;
+  Rotation2d rotation;
+  final bool displayInEditor;
 
-  RotationTarget({
-    this.waypointRelativePos = 0.5,
-    this.rotationDegrees = 0,
-  });
+  RotationTarget(this.waypointRelativePos, this.rotation,
+      [this.displayInEditor = true]);
 
   RotationTarget.fromJson(Map<String, dynamic> json)
-      : waypointRelativePos = json['waypointRelativePos'] ?? 0.5,
-        rotationDegrees = json['rotationDegrees'] ?? 0;
+      : this(json['waypointRelativePos'] ?? 0.5,
+            Rotation2d.fromDegrees(json['rotationDegrees'] ?? 0));
 
   Map<String, dynamic> toJson() {
     return {
       'waypointRelativePos': waypointRelativePos,
-      'rotationDegrees': rotationDegrees,
+      'rotationDegrees': rotation.degrees,
     };
   }
 
   RotationTarget clone() {
-    return RotationTarget(
-      waypointRelativePos: waypointRelativePos,
-      rotationDegrees: rotationDegrees,
-    );
+    return RotationTarget(waypointRelativePos, rotation, displayInEditor);
   }
 
   @override
@@ -30,8 +28,13 @@ class RotationTarget {
       other is RotationTarget &&
       other.runtimeType == runtimeType &&
       other.waypointRelativePos == waypointRelativePos &&
-      other.rotationDegrees == rotationDegrees;
+      other.rotation == rotation;
 
   @override
-  int get hashCode => Object.hash(waypointRelativePos, rotationDegrees);
+  int get hashCode => Object.hash(waypointRelativePos, rotation);
+
+  @override
+  String toString() {
+    return 'RotationTarget($waypointRelativePos, $rotation)';
+  }
 }

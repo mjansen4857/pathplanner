@@ -1,7 +1,7 @@
 import 'package:dropdown_button2/dropdown_button2.dart';
 import 'package:flutter/material.dart';
-import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/named_command.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/duplicate_command_button.dart';
 import 'package:undo/undo.dart';
 
@@ -49,7 +49,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                 child: DropdownButton2<String>(
                   hint: const Text('Command Name'),
                   value: widget.command.name,
-                  items: Command.named.isEmpty
+                  items: ProjectPage.events.isEmpty
                       ? [
                           // Workaround to prevent menu from disabling itself with empty items list
                           DropdownMenuItem(
@@ -64,19 +64,20 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                             ),
                           ),
                         ]
-                      : List.generate(
-                          Command.named.length,
-                          (index) => DropdownMenuItem(
-                            value: Command.named.elementAt(index),
-                            child: Text(
-                              Command.named.elementAt(index),
-                              style: TextStyle(
-                                fontWeight: FontWeight.normal,
-                                color: colorScheme.onSurface,
+                      : [
+                          for (String event in ProjectPage.events)
+                            if (event.isNotEmpty)
+                              DropdownMenuItem(
+                                value: event,
+                                child: Text(
+                                  event,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        ),
+                        ],
                   buttonStyleData: ButtonStyleData(
                     padding: const EdgeInsets.only(right: 12),
                     decoration: BoxDecoration(
@@ -125,7 +126,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                               widget.command.name,
                               () {
                                 widget.command.name = value;
-                                Command.named.add(value);
+                                ProjectPage.events.add(value);
                                 widget.onUpdated?.call();
                               },
                               (oldValue) {
@@ -171,20 +172,23 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Visibility(
               visible: widget.command.name == null,
-              child: const Tooltip(
+              child: Tooltip(
                 message: 'Missing command name',
                 child: Icon(
                   Icons.warning_amber_rounded,
-                  color: Colors.yellow,
-                  size: 32,
+                  color: Colors.orange[300]!,
+                  size: 24,
                 ),
               ),
             ),
-            DuplicateCommandButton(
-              onPressed: widget.onDuplicateCommand,
+            Visibility(
+              visible: widget.onDuplicateCommand != null,
+              child: DuplicateCommandButton(
+                onPressed: widget.onDuplicateCommand,
+              ),
             ),
             Tooltip(
               message: 'Remove Command',
@@ -194,7 +198,7 @@ class _NamedCommandWidgetState extends State<NamedCommandWidget> {
                 visualDensity: const VisualDensity(
                     horizontal: VisualDensity.minimumDensity,
                     vertical: VisualDensity.minimumDensity),
-                icon: Icon(Icons.close, color: colorScheme.error),
+                icon: Icon(Icons.delete, color: colorScheme.error),
               ),
             ),
           ],

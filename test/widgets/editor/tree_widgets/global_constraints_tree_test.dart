@@ -21,15 +21,19 @@ void main() {
     path.useDefaultConstraints = false;
     path.globalConstraintsExpanded = true;
     path.globalConstraints = PathConstraints(
-      maxVelocity: 1.0,
-      maxAcceleration: 1.0,
-      maxAngularVelocity: 1.0,
-      maxAngularAcceleration: 1.0,
+      maxVelocityMPS: 1.0,
+      maxAccelerationMPSSq: 1.0,
+      maxAngularVelocityDeg: 1.0,
+      maxAngularAccelerationDeg: 1.0,
+      nominalVoltage: 12.0,
+      unlimited: false,
     );
     pathChanged = false;
   });
 
   testWidgets('tapping expands/collapses tree', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     path.globalConstraintsExpanded = false;
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -57,6 +61,8 @@ void main() {
   });
 
   testWidgets('max vel text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -78,14 +84,16 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxVelocity, 2.0);
+    expect(path.globalConstraints.maxVelocityMPS, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.globalConstraints.maxVelocity, 1.0);
+    expect(path.globalConstraints.maxVelocityMPS, 1.0);
   });
 
   testWidgets('max accel text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -107,14 +115,16 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxAcceleration, 2.0);
+    expect(path.globalConstraints.maxAccelerationMPSSq, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.globalConstraints.maxAcceleration, 1.0);
+    expect(path.globalConstraints.maxAccelerationMPSSq, 1.0);
   });
 
   testWidgets('max ang vel text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -136,14 +146,16 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxAngularVelocity, 2.0);
+    expect(path.globalConstraints.maxAngularVelocityDeg, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.globalConstraints.maxAngularVelocity, 1.0);
+    expect(path.globalConstraints.maxAngularVelocityDeg, 1.0);
   });
 
   testWidgets('max ang accel text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -165,14 +177,47 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.globalConstraints.maxAngularAcceleration, 2.0);
+    expect(path.globalConstraints.maxAngularAccelerationDeg, 2.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.globalConstraints.maxAngularAcceleration, 1.0);
+    expect(path.globalConstraints.maxAngularAccelerationDeg, 1.0);
+  });
+
+  testWidgets('nominal voltage text field', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GlobalConstraintsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+          defaultConstraints: PathConstraints(),
+        ),
+      ),
+    ));
+
+    final textField =
+        find.widgetWithText(NumberTextField, 'Nominal Voltage (Volts)');
+
+    expect(textField, findsOneWidget);
+
+    await widgetTester.enterText(textField, '10.0');
+    await widgetTester.testTextInput.receiveAction(TextInputAction.done);
+    await widgetTester.pump();
+
+    expect(pathChanged, true);
+    expect(path.globalConstraints.nominalVoltage, 10.0);
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.nominalVoltage, 12.0);
   });
 
   testWidgets('use defaults checkbox', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: GlobalConstraintsTree(
@@ -186,9 +231,9 @@ void main() {
 
     final check = find.byType(Checkbox);
 
-    expect(check, findsOneWidget);
+    expect(check, findsNWidgets(2));
 
-    await widgetTester.tap(check);
+    await widgetTester.tap(check.first);
     await widgetTester.pump();
 
     expect(pathChanged, true);
@@ -199,10 +244,39 @@ void main() {
     expect(
         path.globalConstraints,
         PathConstraints(
-          maxVelocity: 1.0,
-          maxAcceleration: 1.0,
-          maxAngularVelocity: 1.0,
-          maxAngularAcceleration: 1.0,
+          maxVelocityMPS: 1.0,
+          maxAccelerationMPSSq: 1.0,
+          maxAngularVelocityDeg: 1.0,
+          maxAngularAccelerationDeg: 1.0,
         ));
+  });
+
+  testWidgets('unlimited checkbox', (widgetTester) async {
+    await widgetTester.binding.setSurfaceSize(const Size(1280, 800));
+
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: GlobalConstraintsTree(
+          path: path,
+          onPathChanged: () => pathChanged = true,
+          undoStack: undoStack,
+          defaultConstraints: PathConstraints(),
+        ),
+      ),
+    ));
+
+    final check = find.byType(Checkbox);
+
+    expect(check, findsNWidgets(2));
+
+    await widgetTester.tap(check.last);
+    await widgetTester.pump();
+
+    expect(pathChanged, true);
+    expect(path.globalConstraints.unlimited, isTrue);
+
+    undoStack.undo();
+    await widgetTester.pump();
+    expect(path.globalConstraints.unlimited, isFalse);
   });
 }

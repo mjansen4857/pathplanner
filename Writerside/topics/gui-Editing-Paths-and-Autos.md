@@ -73,13 +73,39 @@ Max Acceleration
 : The maximum acceleration of the robot in meters/sec^2.
 
 Max Angular Velocity
-: The maximum angular velocity of the robot in degrees/sec. This is only available when holonomic mode is on.
+: The maximum angular velocity of the robot in degrees/sec.
 
 Max Angular Acceleration
-: The maximum angular acceleration of the robot in degrees/sec^2. This is only available when holonomic mode is on.
+: The maximum angular acceleration of the robot in degrees/sec^2.
+
+Nominal Voltage
+: The nominal battery voltage during the path in volts. This is effectively a max velocity and max angular velocity
+constraint that can be used to properly limit those speeds when you expect the battery voltage to sag during auto due to
+other systems running such as a shooter or intake. This constraint is still used for unlimited constraints.
 
 Use Default Constraints
 : Ties these constraints to the default constraints in the settings menu.
+
+Unlimited
+: Use unlimited constraints for this path. If unlimited, the robot will move as fast as the torque output will allow.
+
+### Ideal Starting State
+
+The ideal starting state defines the state the robot should be at when starting the path. This will be used to
+pre-generate the trajectory which will be followed if the robot matches this state when it starts to follow this path.
+This can be edited via the goal end state tree, or the rotation (holonomic mode only) can be edited via click and drag
+in the path preview.
+
+#### Ideal Starting State Tree
+
+<img src="ideal_starting_state_tree.png" alt="ideal starting state tree" border-effect="rounded"/>
+
+Velocity
+: The velocity that the robot should start the path with, in meters/sec. Non-zero velocities means that the robot will
+not be stationary at the start point.
+
+Rotation
+: The goal rotation for the robot at the start of the path, in degrees. Only available when holonomic mode is on.
 
 ### Goal End State
 
@@ -97,10 +123,6 @@ stop at the end point.
 Rotation
 : The goal rotation for the robot at the end of the path, in degrees. Only available when holonomic mode is on.
 
-Rotate as Fast as Possible
-: Should the robot attempt to reach the rotation specified as fast as it possibly can? If this is not selected, the
-rotation will be completed over the whole distance to the rotation target.
-
 ### Rotation Targets
 
 Rotation targets define points along the path where the robot should target a given rotation. When path following, the
@@ -114,10 +136,6 @@ can be edited in the rotation targets tree. This is only available when holonomi
 Rotation
 : The rotation that should be targeted, in degrees.
 
-Reach as Fast as Possible
-: Should the robot attempt to reach the rotation specified as fast as it possibly can? If this is not selected, the
-rotation will be completed over the whole distance to the rotation target.
-
 Position Slider
 : Controls the rotation target's waypoint relative position along the path.
 
@@ -128,14 +146,25 @@ marker has a command group associated with it that can be used to build more com
 commands, wait commands, and nested command groups. Please note that when the robot reaches the end of a path, all
 commands triggered via event markers are commanded to end. If you'd like a command to activate when the robot reaches
 the end of a path, you may want to either experiment with Autos, or place that command at the start of the next path.
-Event markers can be edited via the event markers tree.
+
+Event markers also have the option to be used as triggers, which allow for binding commands to the start/end of an event
+zone, combine multiple triggers together, using other conditions, etc.
 
 #### Event Markers Tree
 
 <img src="event_markers_tree.png" alt="event markers tree" border-effect="rounded"/>
 
-Position Slider
-: Controls the event marker's waypoint relative position along the path.
+Zoned Event Checkbox
+: Indicates whether this event marker should be zoned. Zoned events will have a start and end position that controls
+when their associated command gets scheduled/canceled, and when their associated trigger goes true/false. If an event is
+not zoned, its command will not be canceled unless it is still running at the end of a path, while its trigger will go
+true for one loop.
+
+Start Position Slider
+: Controls the event marker's starting waypoint relative position along the path.
+
+End Position Slider
+: Controls the event marker's ending waypoint relative position along the path. Only available for zoned events.
 
 Command Tree
 : Defines the command that will be run when reaching the event marker.
@@ -159,7 +188,7 @@ used. Constraint zones can be edited via the constraint zones tree.
 <img src="constraint_zones_tree.png" alt="constraint zones tree" border-effect="rounded"/>
 
 Constraints
-: Identical configuration as global constraints.
+: Identical configuration as global constraints. Minus the ability to use defaults or unlimited constraints.
 
 Start Position Slider
 : Controls the waypoint relative position of the start of the zone.
@@ -167,11 +196,54 @@ Start Position Slider
 End Position Slider
 : Controls the waypoint relative position of the end of the zone.
 
-### Preview Starting State
+### Point Towards Zones
 
-Since PathPlanner paths do not have a set starting state (velocity or rotation), the preview starting state can be used
-to set these values to whatever your best estimate of the starting state is. This will not directly affect the path
-itself, only the preview animation.
+"Point Towards" Zones are used to create a zone along a path where the robot should aim at a position on the field.
+
+#### Point Towards Zones Tree
+
+<img src="point_towards_zones_tree.png" alt="point towards zones tree" border-effect="rounded"/>
+
+Field Position X
+: The X coordinate of the target field position, in meters.
+
+Field Position Y
+: The Y coordinate of the target field position, in meters.
+
+Rotation Offset
+: An additional rotation to add to the angle to target when in the zone, in degrees. Can be used to have the robot point
+away from the target position, for example.
+
+Start Position Slider
+: Controls the waypoint relative position of the start of the zone.
+
+End Position Slider
+: Controls the waypoint relative position of the end of the zone.
+
+### Path Optimization
+
+<img src="path-optimizer.gif" alt="path optimization" border-effect="rounded"/>
+
+The path editor includes a path optimizer tool that uses a genetic algorithm to adjust the shape of the path, minimizing
+the total runtime of the path. The optimizer is not guaranteed to find the true "optimal" path shape, but it can be run
+multiple times if better results are desired.
+
+#### Path Optimizer Tree
+
+<img src="path_optimizer_tree.png" alt="path optimizer tree" border-effect="rounded"/>
+
+Optimized Runtime
+: The total runtime of the current best result of the path optimizer
+
+Optimize Button
+: Run the optimizer for the current path. The progress of the optimizer will be displayed in the progress bar below the
+buttons
+
+Discard Button
+: Discard the result of the optimizer
+
+Accept Button
+: Accept the result of the optimizer and update the current path to match
 
 ### Reversed
 
@@ -191,39 +263,6 @@ this functions as a modular system allowing you to reuse the same path across mu
 If you do not wish to use any auto builder functionality, these auto files can be used in PathPlannerLib to get a path
 group, or list of paths, which will contain all the paths in the auto. This is similar to previous versions' path
 group system.
-
-> **Note**
->
-> The paths chained together in an auto routine do not need to have their start/end positions aligned. PathPlannerLib
-> path following commands will automatically handle transitioning between paths by default if their start/end positions
-> do
-> not align. However, it is your responsibility to ensure that any unaligned start/end positions or sharp angles where
-> paths join will not cause any issues. Discontinuities shouldn't typically be a problem for holonomic drive trains
-> unless
-> you are transitioning between paths with a high velocity. You should avoid discontinuities with a differential
-> drivetrain, unless paths are transitioning between a normal and a reversed path at 180 degrees.
->
-{style="note"}
-
-### Starting Pose
-
-Each auto has an optional starting pose associated with it, which will be used to reset the robot's odometry at the
-start of the auto routine when using an auto command created with the auto builder. If a starting pose is excluded,
-PathPlannerLib will not reset the odometry. The starting pose can be edited via the starting pose tree, or by click and
-drag in the auto preview.
-
-#### Starting Pose Tree
-
-<img src="starting_pose_tree.png" alt="starting pose tree" border-effect="rounded"/>
-
-X Position
-: The X position of the starting pose on the field, in meters.
-
-Y Position
-: The Y position of the starting pose on the field, in meters.
-
-Rotation
-: The rotation component of the starting pose on the field, in degrees.
 
 ### Command Group
 
@@ -256,3 +295,14 @@ editor.
 
 Hide Other Paths on Hover
 : When enabled, other paths will be hidden when a path command is hovered in the auto editor.
+
+Show Trajectory States
+: When enabled, individual trajectory states will be drawn on top of the path to visualize the spacing between states,
+as well as the robot velocity at each state. The robot velocity is indicated by the color of the state, which will
+transition between red and green, which represent 0 m/s and the maximum speed along the path.
+
+Show Robot Details
+: Display the position and rotation of the path following preview robot in the editor.
+
+Show Grid
+: Display a 0.5 X 0.5 meter grid in the editor

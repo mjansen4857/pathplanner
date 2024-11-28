@@ -4,33 +4,37 @@ import math
 from dataclasses import dataclass, field
 from wpimath.geometry import Translation2d, Rotation2d, Pose2d
 from wpimath.kinematics import ChassisSpeeds, SwerveModuleState
-from .geometry_util import floatLerp, rotationLerp, poseLerp, calculateRadius
+from .util import floatLerp, rotationLerp, poseLerp, calculateRadius, FlippingUtil, DriveFeedforwards
 from .config import RobotConfig
-from typing import List, Tuple, Union, TYPE_CHECKING
-from commands2 import Command
+from .events import *
+from typing import List, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .path import PathPlannerPath, PathConstraints, RESOLUTION
+    from .path import PathPlannerPath, PathConstraints
 
 
 @dataclass
 class SwerveModuleTrajectoryState(SwerveModuleState):
-    fieldAngle: Rotation2d = Rotation2d()
-    fieldPos: Translation2d = Translation2d()
+    fieldAngle: Rotation2d = field(default_factory=Rotation2d)
+    fieldPos: Translation2d = field(default_factory=Translation2d)
 
     deltaPos: float = 0.0
+
+    def __init__(self):
+        super().__init__()
 
 
 @dataclass
 class PathPlannerTrajectoryState:
     timeSeconds: float = 0.0
-    fieldSpeeds: ChassisSpeeds = ChassisSpeeds()
-    pose: Pose2d = Pose2d()
+    fieldSpeeds: ChassisSpeeds = field(default_factory=ChassisSpeeds)
+    pose: Pose2d = field(default_factory=Pose2d)
     linearVelocity: float = 0.0
+    feedforwards: DriveFeedforwards = None
 
-    heading: Rotation2d = Rotation2d()
+    heading: Rotation2d = field(default_factory=Rotation2d)
     deltaPos: float = 0.0
-    deltaRot: Rotation2d = Rotation2d()
+    deltaRot: Rotation2d = field(default_factory=Rotation2d)
     moduleStates: List[SwerveModuleTrajectoryState] = field(default_factory=list)
     constraints: PathConstraints = None
     waypointRelativePos: float = 0.0
@@ -58,6 +62,7 @@ class PathPlannerTrajectoryState:
         )
         lerpedState.pose = poseLerp(self.pose, end_val.pose, t)
         lerpedState.linearVelocity = floatLerp(self.linearVelocity, end_val.linearVelocity, t)
+        lerpedState.feedforwards = self.feedforwards.interpolate(end_val.feedforwards, t)
 
         return lerpedState
 
@@ -74,18 +79,57 @@ class PathPlannerTrajectoryState:
         reversedState.fieldSpeeds = ChassisSpeeds(reversedSpeeds.x, reversedSpeeds.y, self.fieldSpeeds.omega)
         reversedState.pose = Pose2d(self.pose.translation(), self.pose.rotation() + Rotation2d.fromDegrees(180))
         reversedState.linearVelocity = -self.linearVelocity
+        reversedState.feedforwards = self.feedforwards.reverse()
 
         return reversedState
+
+    def flip(self) -> PathPlannerTrajectoryState:
+        """
+        Flip this trajectory state for the other side of the field, maintaining a blue alliance origin
+
+        :return: This trajectory state flipped to the other side of the field
+        """
+        flipped = PathPlannerTrajectoryState()
+
+        flipped.timeSeconds = self.timeSeconds
+        flipped.linearVelocity = self.linearVelocity
+        flipped.pose = FlippingUtil.flipFieldPose(self.pose)
+        flipped.fieldSpeeds = FlippingUtil.flipFieldSpeeds(self.fieldSpeeds)
+        flipped.feedforwards = self.feedforwards.flip()
+
+        return flipped
+
+    def copyWithTime(self, time: float) -> PathPlannerTrajectoryState:
+        """
+        Copy this state and change the timestamp
+
+        :param time: The new time to use
+        :return: Copied state with the given time
+        """
+        copy = PathPlannerTrajectoryState()
+        copy.timeSeconds = time
+        copy.fieldSpeeds = self.fieldSpeeds
+        copy.pose = self.pose
+        copy.linearVelocity = self.linearVelocity
+        copy.feedforwards = self.feedforwards
+        copy.heading = self.heading
+        copy.deltaPos = self.deltaPos
+        copy.deltaRot = self.deltaRot
+        copy.moduleStates = self.moduleStates
+        copy.constraints = self.constraints
+        copy.waypointRelativePos = self.waypointRelativePos
+
+        return copy
 
 
 class PathPlannerTrajectory:
     _states: List[PathPlannerTrajectoryState]
-    _eventCommands: List[Tuple[float, Command]]
+    _events: List[Event]
 
     def __init__(self, path: Union[PathPlannerPath, None], starting_speeds: Union[ChassisSpeeds, None],
                  starting_rotation: Union[Rotation2d, None], config: Union[RobotConfig, None],
                  states: List[PathPlannerTrajectoryState] = None,
-                 event_commands: List[Tuple[float, Command]] = None):
+                 events: List[Event] = None):
         """
         Generate a PathPlannerTrajectory. If "states" is provided, the other arguments can be None
 
@@ -94,23 +138,23 @@ class PathPlannerTrajectory:
         :param starting_rotation: Starting rotation of the robot when starting the trajectory
         :param config: The RobotConfig describing the robot
         :param states: Pre-generated trajectory states
-        :param event_commands: Event commands
+        :param events: Events for this trajectory
         """
 
         if states is not None:
             self._states = states
-            if event_commands is not None:
-                self._eventCommands = event_commands
+            if events is not None:
+                self._events = events
             else:
-                self._eventCommands = []
+                self._events = []
         else:
             if path.isChoreoPath():
-                traj = path.getTrajectory(starting_speeds, starting_rotation, config)
+                traj = path.generateTrajectory(starting_speeds, starting_rotation, config)
                 self._states = traj._states
-                self._eventCommands = traj._eventCommands
+                self._events = traj._events
             else:
                 self._states = []
-                self._eventCommands = []
+                self._events = []
 
                 # Create all states
                 _generateStates(self._states, path, starting_rotation, config)
@@ -118,7 +162,7 @@ class PathPlannerTrajectory:
                 # Set the initial module velocities
                 fieldStartingSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(starting_speeds,
                                                                             self._states[0].pose.rotation())
-                initialStates = _toSwerveModuleStates(config, starting_speeds)
+                initialStates = config.toSwerveModuleStates(starting_speeds)
                 for m in range(config.numModules):
                     self._states[0].moduleStates[m].speed = initialStates[m].speed
                 self._states[0].timeSeconds = 0.0
@@ -131,43 +175,100 @@ class PathPlannerTrajectory:
                 # Set the final module velocities
                 endSpeedTrans = Translation2d(path.getGoalEndState().velocity, self._states[-1].heading)
                 endFieldSpeeds = ChassisSpeeds(endSpeedTrans.x, endSpeedTrans.y, 0.0)
-                endStates = _toSwerveModuleStates(config, ChassisSpeeds.fromFieldRelativeSpeeds(endFieldSpeeds,
-                                                                                                self._states[
-                                                                                                    -1].pose.rotation()))
+                endStates = config.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(endFieldSpeeds,
+                                                                                              self._states[
+                                                                                                  -1].pose.rotation()))
                 for m in range(config.numModules):
                     self._states[-1].moduleStates[m].speed = endStates[m].speed
                 self._states[-1].fieldSpeeds = endFieldSpeeds
                 self._states[-1].linearVelocity = path.getGoalEndState().velocity
 
-                unaddedMarkers = [m for m in path.getEventMarkers()]
-                unaddedMarkers.sort(key=lambda x: x.waypointRelativePos)
+                unaddedEvents: list[Event] = []
+                for marker in path.getEventMarkers():
+                    if marker.command is not None:
+                        unaddedEvents.append(ScheduleCommandEvent(marker.waypointRelativePos, marker.command))
+
+                    if marker.endWaypointRelativePos >= 0.0:
+                        # This marker is zoned
+                        if marker.command is not None:
+                            unaddedEvents.append(CancelCommandEvent(marker.endWaypointRelativePos, marker.command))
+                        unaddedEvents.append(TriggerEvent(marker.waypointRelativePos, marker.triggerName, True))
+                        unaddedEvents.append(TriggerEvent(marker.endWaypointRelativePos, marker.triggerName, False))
+                    else:
+                        unaddedEvents.append(OneShotTriggerEvent(marker.waypointRelativePos, marker.triggerName))
+                for zone in path.getPointTowardsZones():
+                    unaddedEvents.append(PointTowardsZoneEvent(zone.minWaypointRelativePos, zone.name, True))
+                    unaddedEvents.append(PointTowardsZoneEvent(zone.maxWaypointRelativePos, zone.name, False))
+                unaddedEvents.sort(key=lambda e: e.getTimestamp())
 
                 # Reverse pass
                 _reverseAccelPass(self._states, config)
 
-                # Loop back over and calculate time
+                # Loop back over and calculate time and module torque
                 for i in range(1, len(self._states)):
-                    v0 = self._states[i - 1].linearVelocity
-                    v = self._states[i].linearVelocity
-                    dt = (2 * self._states[i].deltaPos) / (v + v0)
-                    self._states[i].timeSeconds = self._states[i - 1].timeSeconds + dt
+                    prevState = self._states[i - 1]
+                    state = self._states[i]
 
-                    if len(unaddedMarkers) > 0:
-                        prevPos = self._states[i - 1].waypointRelativePos
-                        pos = self._states[i].waypointRelativePos
+                    v0 = prevState.linearVelocity
+                    v = state.linearVelocity
+                    dt = (2 * state.deltaPos) / (v + v0)
+                    state.timeSeconds = prevState.timeSeconds + dt
 
-                        m = unaddedMarkers[0]
-                        if abs(m.waypointRelativePos - prevPos) <= abs(m.waypointRelativePos - pos):
-                            self._eventCommands.append((self._states[i - 1].timeSeconds, m.command))
-                            unaddedMarkers.pop(0)
+                    prevRobotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(prevState.fieldSpeeds,
+                                                                            prevState.pose.rotation())
+                    robotSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(state.fieldSpeeds, state.pose.rotation())
+                    chassisAccelX = (robotSpeeds.vx - prevRobotSpeeds.vx) / dt
+                    chassisAccelY = (robotSpeeds.vy - prevRobotSpeeds.vy) / dt
+                    chassisForceX = chassisAccelX * config.massKG
+                    chassisForceY = chassisAccelY * config.massKG
 
-    def getEventCommands(self) -> List[Tuple[float, Command]]:
+                    angularAccel = (robotSpeeds.omega - prevRobotSpeeds.omega) / dt
+                    angTorque = angularAccel * config.MOI
+                    chassisForces = ChassisSpeeds(chassisForceX, chassisForceY, angTorque)
+
+                    wheelForces = config.chassisForcesToWheelForceVectors(chassisForces)
+                    accelFF = []
+                    linearForceFF = []
+                    torqueCurrentFF = []
+                    forceXFF = []
+                    forceYFF = []
+                    for m in range(config.numModules):
+                        wheelForceDist = wheelForces[m].norm()
+                        appliedForce = 0.0 if wheelForceDist <= 1e-6 else wheelForceDist * (
+                            wheelForces[m].angle() - state.moduleStates[m].angle).cos()
+                        wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters
+                        torqueCurrent = wheelTorque / config.moduleConfig.driveMotor.Kt
+
+                        accelFF.append((state.moduleStates[m].speed - prevState.moduleStates[m].speed) / dt)
+                        linearForceFF.append(appliedForce)
+                        torqueCurrentFF.append(torqueCurrent)
+                        forceXFF.append(wheelForces[m].x)
+                        forceYFF.append(wheelForces[m].y)
+                    prevState.feedforwards = DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF, forceYFF)
+
+                    # Un-added events have their timestamp set to a waypoint relative position
+                    # When adding the event to this trajectory, set its timestamp properly
+                    while len(unaddedEvents) > 0 and abs(
+                            unaddedEvents[0].getTimestamp() - prevState.waypointRelativePos) <= abs(
+                        unaddedEvents[0].getTimestamp() - state.waypointRelativePos):
+                        self._events.append(unaddedEvents.pop(0))
+                        self._events[-1].setTimestamp(prevState.timeSeconds)
+
+                while len(unaddedEvents) != 0:
+                    # There are events that need to be added to the last state
+                    self._events.append(unaddedEvents.pop(0))
+                    self._events[-1].setTimestamp(self._states[-1].timeSeconds)
+
+                # Create feedforwards for the end state
+                self._states[-1].feedforwards = DriveFeedforwards.zeros(config.numModules)
+
+    def getEvents(self) -> List[Event]:
         """
-        Get all of the pairs of timestamps + commands to run at those timestamps
+        Get all the events to run while following this trajectory
 
-        :return: Pairs of timestamps and event commands
+        :return: Events in this trajectory
         """
-        return self._eventCommands
+        return self._events
 
     def getStates(self) -> List[PathPlannerTrajectoryState]:
         """
@@ -249,6 +350,15 @@ class PathPlannerTrajectory:
         return prevSample.interpolate(sample,
                                       (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds))
 
+    def flip(self) -> PathPlannerTrajectory:
+        """
+        Flip this trajectory for the other side of the field, maintaining a blue alliance origin
+
+        :return: This trajectory with all states flipped to the other side of the field
+        """
+        return PathPlannerTrajectory(None, None, None, None, [s.flip() for s in self.getStates()],
+                                     self.getEvents())
+
 
 def _getNextRotationTargetIdx(path: PathPlannerPath, starting_index: int) -> int:
     idx = path.numPoints() - 1
@@ -320,11 +430,16 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
         robotPose = Pose2d(p.position, holonomicRot)
         state = PathPlannerTrajectoryState()
         state.pose = robotPose
-        state.constraints = path.getConstraintsForPoint(i)
+        state.constraints = p.constraints
+        state.waypointRelativePos = p.waypointRelativePos
 
         # Calculate robot heading
         if i != path.numPoints() - 1:
-            state.heading = (path.getPoint(i + 1).position - state.pose.translation()).angle()
+            headingTranslation = path.getPoint(i + 1).position - state.pose.translation()
+            if headingTranslation.norm() <= 1e-6:
+                state.heading = Rotation2d()
+            else:
+                state.heading = headingTranslation.angle()
         else:
             state.heading = states[i - 1].heading
 
@@ -351,8 +466,11 @@ def _generateStates(states: List[PathPlannerTrajectoryState], path: PathPlannerP
     for i in range(len(states)):
         for m in range(config.numModules):
             if i != len(states) - 1:
-                states[i].moduleStates[m].fieldAngle = (
-                        states[i + 1].moduleStates[m].fieldPos - states[i].moduleStates[m].fieldPos).angle()
+                fieldTranslation = states[i + 1].moduleStates[m].fieldPos - states[i].moduleStates[m].fieldPos
+                if fieldTranslation.norm() <= 1e-6:
+                    states[i].moduleStates[m].fieldAngle = Rotation2d()
+                else:
+                    states[i].moduleStates[m].fieldAngle = fieldTranslation.angle()
                 states[i].moduleStates[m].angle = states[i].moduleStates[m].fieldAngle - states[i].pose.rotation()
             else:
                 states[i].moduleStates[m].fieldAngle = states[i - 1].moduleStates[m].fieldAngle
@@ -372,13 +490,13 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             lastVel = prevState.moduleStates[m].speed
             # This pass will only be handling acceleration of the robot, meaning that the "torque"
             # acting on the module due to friction and other losses will be fighting the motor
-            availableTorque = config.moduleConfig.driveMotorTorqueCurve.get(
-                lastVel / config.moduleConfig.rpmToMps) - config.moduleConfig.torqueLoss
-            wheelTorque = availableTorque * config.moduleConfig.driveGearing
-            forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters
-            if not config.isHolonomic:
-                # Two motors per module if differential
-                forceAtCarpet *= 2
+            lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters
+            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, state.constraints.nominalVoltage),
+                              config.moduleConfig.driveCurrentLimit)
+            availableTorque = config.moduleConfig.driveMotor.torque(currentDraw) - config.moduleConfig.torqueLoss
+            availableTorque = min(availableTorque, config.maxTorqueFriction)
+            forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters
+
             forceVec = Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle)
 
             # Add the module force vector to the robot force vector
@@ -386,14 +504,17 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
             # Calculate the torque this module will apply to the robot
             angleToModule = (state.moduleStates[m].fieldPos - state.pose.translation()).angle()
-            theta = forceVec.angle() - angleToModule
+            if forceVec.norm() <= 1e-6:
+                theta = Rotation2d() - angleToModule
+            else:
+                theta = forceVec.angle() - angleToModule
             totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.sin()
 
         # Use the robot accelerations to calculate how each module should accelerate
         # Even though kinematics is usually used for velocities, it can still
         # convert chassis accelerations to module accelerations
         maxAngAccel = state.constraints.maxAngularAccelerationRpsSq
-        angularAccel = max(min(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
+        angularAccel = min(max(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
 
         accelVec = linearForceVec / config.massKG
         maxAccel = state.constraints.maxAccelerationMpsSq
@@ -403,7 +524,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
         chassisAccel = ChassisSpeeds.fromFieldRelativeSpeeds(accelVec.x, accelVec.y, angularAccel,
                                                              state.pose.rotation())
-        accelStates = _toSwerveModuleStates(config, chassisAccel)
+        accelStates = config.toSwerveModuleStates(chassisAccel)
         for m in range(config.numModules):
             moduleAcceleration = accelStates[m].speed
 
@@ -417,32 +538,36 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # Find the max velocity that would keep the centripetal force under the friction force
             # Fc = M * v^2 / R
             if math.isfinite(curveRadius):
-                maxSafeVel = math.sqrt((config.wheelFrictionForce * abs(curveRadius)) / config.massKG)
+                maxSafeVel = math.sqrt(
+                    (config.wheelFrictionForce * abs(curveRadius)) / (config.massKG / config.numModules))
                 state.moduleStates[m].speed = min(state.moduleStates[m].speed, maxSafeVel)
 
         # Go over the modules again to make sure they take the same amount of time to reach the next state
         maxDT = 0.0
+        realMaxDT = 0.0
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - prevState.moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 45:
-                continue
-
             modVel = state.moduleStates[m].speed
             dt = nextState.moduleStates[m].deltaPos / modVel
 
             if math.isfinite(dt):
-                maxDT = max(maxDT, dt)
+                realMaxDT = max(realMaxDT, dt)
+                if abs(prevRotDelta.degrees()) < 60:
+                    maxDT = max(maxDT, dt)
+
+        if maxDT == 0.0:
+            maxDT = realMaxDT
 
         # Recalculate all module velocities with the allowed DT
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - prevState.moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 45:
+            if abs(prevRotDelta.degrees()) >= 60:
                 continue
 
             state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
 
         # Use the calculated module velocities to calculate the robot speeds
-        desiredSpeeds = _toChassisSpeeds(config, state.moduleStates)
+        desiredSpeeds = config.toChassisSpeeds(state.moduleStates)
 
         maxChassisVel = state.constraints.maxVelocityMps
         maxChassisAngVel = state.constraints.maxAngularVelocityRps
@@ -450,7 +575,7 @@ def _forwardAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         _desaturateWheelSpeeds(state.moduleStates, desiredSpeeds, config.moduleConfig.maxDriveVelocityMPS,
                                maxChassisVel, maxChassisAngVel)
 
-        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(_toChassisSpeeds(config, state.moduleStates),
+        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(config.toChassisSpeeds(state.moduleStates),
                                                                   state.pose.rotation())
         state.linearVelocity = math.hypot(state.fieldSpeeds.vx, state.fieldSpeeds.vy)
 
@@ -467,13 +592,13 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             lastVel = nextState.moduleStates[m].speed
             # This pass will only be handling deceleration of the robot, meaning that the "torque"
             # acting on the module due to friction and other losses will not be fighting the motor
-            availableTorque = config.moduleConfig.driveMotorTorqueCurve.get(
-                lastVel / config.moduleConfig.rpmToMps)
-            wheelTorque = availableTorque * config.moduleConfig.driveGearing
-            forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters
-            if not config.isHolonomic:
-                # Two motors per module if differential
-                forceAtCarpet *= 2
+            lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters
+            currentDraw = min(config.moduleConfig.driveMotor.current(lastVelRadPerSec, state.constraints.nominalVoltage),
+                              config.moduleConfig.driveCurrentLimit)
+            availableTorque = config.moduleConfig.driveMotor.torque(currentDraw)
+            availableTorque = min(availableTorque, config.maxTorqueFriction)
+            forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters
+
             forceVec = Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle + Rotation2d.fromDegrees(180))
 
             # Add the module force vector to the robot force vector
@@ -481,14 +606,17 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
             # Calculate the torque this module will apply to the robot
             angleToModule = (state.moduleStates[m].fieldPos - state.pose.translation()).angle()
-            theta = forceVec.angle() - angleToModule
+            if forceVec.norm() <= 1e-6:
+                theta = Rotation2d() - angleToModule
+            else:
+                theta = forceVec.angle() - angleToModule
             totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.sin()
 
         # Use the robot accelerations to calculate how each module should accelerate
         # Even though kinematics is usually used for velocities, it can still
         # convert chassis accelerations to module accelerations
         maxAngAccel = state.constraints.maxAngularAccelerationRpsSq
-        angularAccel = max(min(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
+        angularAccel = min(max(totalTorque / config.MOI, -maxAngAccel), maxAngAccel)
 
         accelVec = linearForceVec / config.massKG
         maxAccel = state.constraints.maxAccelerationMpsSq
@@ -498,7 +626,7 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
 
         chassisAccel = ChassisSpeeds.fromFieldRelativeSpeeds(accelVec.x, accelVec.y, angularAccel,
                                                              state.pose.rotation())
-        accelStates = _toSwerveModuleStates(config, chassisAccel)
+        accelStates = config.toSwerveModuleStates(chassisAccel)
         for m in range(config.numModules):
             moduleAcceleration = accelStates[m].speed
 
@@ -506,31 +634,35 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
             # vf^2 = v0^2 + 2ad
             maxVel = math.sqrt(abs(math.pow(nextState.moduleStates[m].speed, 2) + (
                     2 * moduleAcceleration * nextState.moduleStates[m].deltaPos)))
-            state.moduleStates[m].speed = min(maxVel, nextState.moduleStates[m].speed)
+            state.moduleStates[m].speed = min(maxVel, state.moduleStates[m].speed)
 
         # Go over the modules again to make sure they take the same amount of time to reach the next state
         maxDT = 0.0
+        realMaxDT = 0.0
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - states[i - 1].moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 45:
-                continue
-
             modVel = state.moduleStates[m].speed
             dt = nextState.moduleStates[m].deltaPos / modVel
 
             if math.isfinite(dt):
-                maxDT = max(maxDT, dt)
+                realMaxDT = max(realMaxDT, dt)
+
+                if abs(prevRotDelta.degrees()) < 60:
+                    maxDT = max(maxDT, dt)
+
+        if maxDT == 0.0:
+            maxDT = realMaxDT
 
         # Recalculate all module velocities with the allowed DT
         for m in range(config.numModules):
             prevRotDelta = state.moduleStates[m].angle - states[i - 1].moduleStates[m].angle
-            if abs(prevRotDelta.degrees()) >= 45:
+            if abs(prevRotDelta.degrees()) >= 60:
                 continue
 
             state.moduleStates[m].speed = nextState.moduleStates[m].deltaPos / maxDT
 
         # Use the calculated module velocities to calculate the robot speeds
-        desiredSpeeds = _toChassisSpeeds(config, state.moduleStates)
+        desiredSpeeds = config.toChassisSpeeds(state.moduleStates)
 
         maxChassisVel = state.constraints.maxVelocityMps
         maxChassisAngVel = state.constraints.maxAngularVelocityRps
@@ -541,20 +673,6 @@ def _reverseAccelPass(states: List[PathPlannerTrajectoryState], config: RobotCon
         _desaturateWheelSpeeds(state.moduleStates, desiredSpeeds, config.moduleConfig.maxDriveVelocityMPS,
                                maxChassisVel, maxChassisAngVel)
 
-        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(_toChassisSpeeds(config, state.moduleStates),
+        state.fieldSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(config.toChassisSpeeds(state.moduleStates),
                                                                   state.pose.rotation())
         state.linearVelocity = math.hypot(state.fieldSpeeds.vx, state.fieldSpeeds.vy)
-
-
-def _toSwerveModuleStates(config: RobotConfig, chassisSpeeds: ChassisSpeeds) -> List[SwerveModuleState]:
-    if config.isHolonomic:
-        return config.swerveKinematics.toSwerveModuleStates(chassisSpeeds)
-    else:
-        return config.diffKinematics.toSwerveModuleStates(chassisSpeeds)
-
-
-def _toChassisSpeeds(config: RobotConfig, states: List[SwerveModuleState]) -> ChassisSpeeds:
-    if config.isHolonomic:
-        return config.swerveKinematics.toChassisSpeeds(states)
-    else:
-        return config.diffKinematics.toChassisSpeeds(states)

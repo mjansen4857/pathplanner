@@ -12,6 +12,10 @@ PathConstraints PathConstraints::fromJson(const wpi::json &json) {
 			json.at("maxAngularVelocity").get<double>());
 	auto maxAngAccel = units::degrees_per_second_squared_t(
 			json.at("maxAngularAcceleration").get<double>());
+	auto nominalVoltage = units::volt_t(
+			json.at("nominalVoltage").get<double>());
+	bool unlimited = json.at("unlimited").get<bool>();
 
-	return PathConstraints(maxVel, maxAccel, maxAngVel, maxAngAccel);
+	return PathConstraints(maxVel, maxAccel, maxAngVel, maxAngAccel,
+			nominalVoltage, unlimited);
 }

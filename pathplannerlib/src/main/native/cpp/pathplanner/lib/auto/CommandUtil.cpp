@@ -53,8 +53,14 @@ frc2::CommandPtr CommandUtil::commandFromJson(const wpi::json &json,
 }
 
 frc2::CommandPtr CommandUtil::waitCommandFromJson(const wpi::json &json) {
-	auto waitTime = units::second_t(json.at("waitTime").get<double>());
-	return frc2::cmd::Wait(waitTime);
+	auto waitJson = json.at("waitTime");
+	if (waitJson.is_number()) {
+		return frc2::cmd::Wait(units::second_t { waitJson.get<double>() });
+	} else {
+		// Field is not a number, probably a choreo expression
+		return frc2::cmd::Wait(units::second_t {
+				waitJson.at("val").get<double>() });
+	}
 }
 
 frc2::CommandPtr CommandUtil::namedCommandFromJson(const wpi::json &json) {

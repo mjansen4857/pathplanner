@@ -1,5 +1,4 @@
 #include "pathplanner/lib/pathfinding/LocalADStar.h"
-#include "pathplanner/lib/path/PathSegment.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include <cmath>
 #include <frc/Filesystem.h>
@@ -15,7 +14,7 @@ LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 		0.2), nodesX(static_cast<int>(std::ceil(fieldLength / nodeSize))), nodesY(
 		static_cast<int>(std::ceil(fieldWidth / nodeSize))), g(), rhs(), open(), incons(), closed(), staticObstacles(), dynamicObstacles(), requestObstacles(), requestStart(), requestRealStartPos(), requestGoal(), requestRealGoalPos(), eps(
 		EPS), planningThread(), pathMutex(), requestMutex(), requestMinor(true), requestMajor(
-		true), requestReset(true), newPathAvailable(false), currentPathPoints() {
+		true), requestReset(true), newPathAvailable(false), currentWaypoints() {
 	requestStart = GridPosition(0, 0);
 	requestRealStartPos = frc::Translation2d(0_m, 0_m);
 	requestGoal = GridPosition(0, 0);
@@ -27,13 +26,12 @@ LocalADStar::LocalADStar() : fieldLength(16.54), fieldWidth(8.02), nodeSize(
 	const std::string filePath = frc::filesystem::GetDeployDirectory()
 			+ "/pathplanner/navgrid.json";
 
-	std::error_code error_code;
-	std::unique_ptr < wpi::MemoryBuffer > fileBuffer =
-			wpi::MemoryBuffer::GetFile(filePath, error_code);
+	auto fileBuffer = wpi::MemoryBuffer::GetFile(filePath);
 
-	if (!error_code) {
+	if (fileBuffer) {
 		try {
-			wpi::json json = wpi::json::parse(fileBuffer->GetCharBuffer());
+			wpi::json json = wpi::json::parse(
+					fileBuffer.value()->GetCharBuffer());
 
 			nodeSize = json.at("nodeSizeMeters").get<double>();
 			wpi::json::const_reference grid = json.at("grid");
@@ -138,13 +136,13 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 		computeOrImprovePath(sStart, sGoal, obstacles);
 		std::vector < GridPosition > pathPositions = extractPath(sStart, sGoal,
 				obstacles);
-		std::vector < PathPoint > pathPoints = createPathPoints(pathPositions,
+		std::vector < Waypoint > waypoints = createWaypoints(pathPositions,
 				realStartPos, realGoalPos, obstacles);
 
 		{
 			std::scoped_lock lock { pathMutex };
 			currentPathFull = pathPositions;
-			currentPathPoints = pathPoints;
+			currentWaypoints = waypoints;
 		}
 
 		newPathAvailable = true;
@@ -160,13 +158,13 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 			computeOrImprovePath(sStart, sGoal, obstacles);
 			std::vector < GridPosition > pathPositions = extractPath(sStart,
 					sGoal, obstacles);
-			std::vector < PathPoint > pathPoints = createPathPoints(
-					pathPositions, realStartPos, realGoalPos, obstacles);
+			std::vector < Waypoint > waypoints = createWaypoints(pathPositions,
+					realStartPos, realGoalPos, obstacles);
 
 			{
 				std::scoped_lock lock { pathMutex };
 				currentPathFull = pathPositions;
-				currentPathPoints = pathPoints;
+				currentWaypoints = waypoints;
 			}
 
 			newPathAvailable = true;
@@ -176,22 +174,23 @@ void LocalADStar::doWork(const bool needsReset, const bool doMinor,
 
 std::shared_ptr<PathPlannerPath> LocalADStar::getCurrentPath(
 		PathConstraints constraints, GoalEndState goalEndState) {
-	std::vector < PathPoint > pathPoints;
+	std::vector < Waypoint > waypoints;
 
 	{
 		std::scoped_lock lock { pathMutex };
-		pathPoints = currentPathPoints;
+		waypoints.insert(waypoints.end(), currentWaypoints.begin(),
+				currentWaypoints.end());
 	}
 
 	newPathAvailable = false;
 
-	if (pathPoints.empty()) {
+	if (waypoints.size() < 2) {
 		// Not enough points to make a path
 		return nullptr;
 	}
 
-	return PathPlannerPath::fromPathPoints(pathPoints, constraints,
-			goalEndState);
+	return std::make_shared < PathPlannerPath
+			> (waypoints, constraints, std::nullopt, goalEndState);
 }
 
 void LocalADStar::setStartPosition(const frc::Translation2d &start) {
@@ -345,13 +344,13 @@ std::vector<GridPosition> LocalADStar::extractPath(const GridPosition &sStart,
 	return path;
 }
 
-std::vector<PathPoint> LocalADStar::createPathPoints(
+std::vector<Waypoint> LocalADStar::createWaypoints(
 		const std::vector<GridPosition> &path,
 		const frc::Translation2d &realStartPos,
 		const frc::Translation2d &realGoalPos,
 		const std::unordered_set<GridPosition> &obstacles) {
 	if (path.empty()) {
-		return std::vector<PathPoint>();
+		return std::vector<Waypoint>();
 	}
 
 	std::vector < GridPosition > simplifiedPath;
@@ -369,15 +368,17 @@ std::vector<PathPoint> LocalADStar::createPathPoints(
 		fieldPosPath.push_back(gridPosToTranslation2d(pos));
 	}
 
+	if (fieldPosPath.size() < 2) {
+		return std::vector<Waypoint>();
+	}
+
 	// Replace start and end positions with their real positions
 	fieldPosPath[0] = realStartPos;
 	fieldPosPath[fieldPosPath.size() - 1] = realGoalPos;
 
-	std::vector < frc::Translation2d > bezierPoints;
-	bezierPoints.push_back(fieldPosPath[0]);
-	bezierPoints.push_back(
-			((fieldPosPath[1] - fieldPosPath[0]) * SMOOTHING_CONTROL_PCT)
-					+ fieldPosPath[0]);
+	std::vector < frc::Pose2d > pathPoses;
+	pathPoses.emplace_back(fieldPosPath[0],
+			(fieldPosPath[1] - fieldPosPath[0]).Angle());
 	for (size_t i = 1; i < fieldPosPath.size() - 1; i++) {
 		frc::Translation2d last = fieldPosPath[i - 1];
 		frc::Translation2d current = fieldPosPath[i];
@@ -385,56 +386,19 @@ std::vector<PathPoint> LocalADStar::createPathPoints(
 
 		frc::Translation2d anchor1 = ((current - last) * SMOOTHING_ANCHOR_PCT)
 				+ last;
+		frc::Rotation2d heading1 = (current - last).Angle();
 		frc::Translation2d anchor2 = ((current - next) * SMOOTHING_ANCHOR_PCT)
 				+ next;
+		frc::Rotation2d heading2 = (next - anchor2).Angle();
 
-		units::meter_t controlDist = anchor1.Distance(anchor2)
-				* SMOOTHING_CONTROL_PCT;
-
-		frc::Translation2d prevControl1 = ((last - anchor1)
-				* SMOOTHING_CONTROL_PCT) + anchor1;
-		frc::Translation2d nextControl1 = frc::Translation2d(controlDist,
-				(anchor1 - prevControl1).Angle()) + anchor1;
-
-		frc::Translation2d prevControl2 = frc::Translation2d(controlDist,
-				(anchor2 - next).Angle()) + anchor2;
-		frc::Translation2d nextControl2 = ((next - anchor2)
-				* SMOOTHING_CONTROL_PCT) + anchor2;
-
-		bezierPoints.push_back(prevControl1);
-		bezierPoints.push_back(anchor1);
-		bezierPoints.push_back(nextControl1);
-
-		bezierPoints.push_back(prevControl2);
-		bezierPoints.push_back(anchor2);
-		bezierPoints.push_back(nextControl2);
+		pathPoses.emplace_back(anchor1, heading1);
+		pathPoses.emplace_back(anchor2, heading2);
 	}
-	bezierPoints.push_back(
-			((fieldPosPath[fieldPosPath.size() - 2]
-					- fieldPosPath[fieldPosPath.size() - 1])
-					* SMOOTHING_CONTROL_PCT)
-					+ fieldPosPath[fieldPosPath.size() - 1]);
-	bezierPoints.push_back(fieldPosPath[fieldPosPath.size() - 1]);
+	pathPoses.emplace_back(fieldPosPath[fieldPosPath.size() - 1],
+			(fieldPosPath[fieldPosPath.size() - 1]
+					- fieldPosPath[fieldPosPath.size() - 2]).Angle());
 
-	size_t numSegments = (bezierPoints.size() - 1) / 3;
-	std::vector < PathPoint > pathPoints;
-
-	for (size_t i = 0; i < numSegments; i++) {
-		size_t iOffset = i * 3;
-
-		frc::Translation2d p1 = bezierPoints[iOffset];
-		frc::Translation2d p2 = bezierPoints[iOffset + 1];
-		frc::Translation2d p3 = bezierPoints[iOffset + 2];
-		frc::Translation2d p4 = bezierPoints[iOffset + 3];
-
-		PathSegment segment(p1, p2, p3, p4);
-		segment.generatePathPoints(pathPoints, i, { }, { }, std::nullopt);
-	}
-	pathPoints.emplace_back(bezierPoints[bezierPoints.size() - 1], std::nullopt,
-			std::nullopt);
-	pathPoints[pathPoints.size() - 1].waypointRelativePos = numSegments;
-
-	return pathPoints;
+	return PathPlannerPath::waypointsFromPoses(pathPoses);
 }
 
 bool LocalADStar::walkable(const GridPosition &s1, const GridPosition &s2,

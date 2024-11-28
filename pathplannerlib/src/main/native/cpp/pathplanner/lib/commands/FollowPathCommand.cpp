@@ -1,39 +1,45 @@
 #include "pathplanner/lib/commands/FollowPathCommand.h"
 #include "pathplanner/lib/path/PathPlannerPath.h"
 #include "pathplanner/lib/trajectory/PathPlannerTrajectory.h"
+#include "pathplanner/lib/commands/PathPlannerAuto.h"
 
 using namespace pathplanner;
 
 FollowPathCommand::FollowPathCommand(std::shared_ptr<PathPlannerPath> path,
 		std::function<frc::Pose2d()> poseSupplier,
 		std::function<frc::ChassisSpeeds()> speedsSupplier,
-		std::function<void(frc::ChassisSpeeds)> output,
+		std::function<void(const frc::ChassisSpeeds&, const DriveFeedforwards&)> output,
 		std::shared_ptr<PathFollowingController> controller,
-		RobotConfig robotConfig, ReplanningConfig replanningConfig,
-		std::function<bool()> shouldFlipPath, frc2::Requirements requirements) : m_originalPath(
-		path), m_poseSupplier(poseSupplier), m_speedsSupplier(speedsSupplier), m_output(
-		output), m_controller(controller), m_robotConfig(robotConfig), m_replanningConfig(
-		replanningConfig), m_shouldFlipPath(shouldFlipPath) {
+		RobotConfig robotConfig, std::function<bool()> shouldFlipPath,
+		frc2::Requirements requirements) : m_originalPath(path), m_poseSupplier(
+		poseSupplier), m_speedsSupplier(speedsSupplier), m_output(output), m_controller(
+		controller), m_robotConfig(robotConfig), m_shouldFlipPath(
+		shouldFlipPath), m_eventScheduler() {
 	AddRequirements(requirements);
 
-	auto &&driveRequirements = GetRequirements();
+	auto driveRequirements = GetRequirements();
+	auto eventReqs = EventScheduler::getSchedulerRequirements(m_originalPath);
 
-	for (EventMarker &marker : m_originalPath->getEventMarkers()) {
-		auto reqs = marker.getCommand()->GetRequirements();
-
-		for (auto &&requirement : reqs) {
-			if (driveRequirements.find(requirement)
-					!= driveRequirements.end()) {
-				throw FRC_MakeError(frc::err::CommandIllegalUse,
-						"Events that are triggered during path following cannot require the drive subsystem");
-			}
+	for (auto requirement : eventReqs) {
+		if (driveRequirements.find(requirement) != driveRequirements.end()) {
+			throw FRC_MakeError(frc::err::CommandIllegalUse,
+					"Events that are triggered during path following cannot require the drive subsystem");
 		}
+	}
 
-		AddRequirements(reqs);
+	AddRequirements(eventReqs);
+
+	m_path = m_originalPath;
+	// Ensure the ideal trajectory is generated
+	auto idealTraj = m_path->getIdealTrajectory(m_robotConfig);
+	if (idealTraj.has_value()) {
+		m_trajectory = idealTraj.value();
 	}
 }
 
 void FollowPathCommand::Initialize() {
+	PathPlannerAuto::currentPathName = m_originalPath->name;
+
 	if (m_shouldFlipPath() && !m_originalPath->preventFlipping) {
 		m_path = m_originalPath->flipPath();
 	} else {
@@ -45,36 +51,38 @@ void FollowPathCommand::Initialize() {
 
 	m_controller->reset(currentPose, currentSpeeds);
 
-	frc::ChassisSpeeds fieldSpeeds =
-			frc::ChassisSpeeds::FromRobotRelativeSpeeds(currentSpeeds,
-					currentPose.Rotation());
-	frc::Rotation2d currentHeading = frc::Rotation2d(fieldSpeeds.vx(),
-			fieldSpeeds.vy());
-	frc::Rotation2d targetHeading = (m_path->getPoint(1).position
-			- m_path->getPoint(0).position).Angle();
-	frc::Rotation2d headingError = currentHeading - targetHeading;
-	bool onHeading = units::math::hypot(currentSpeeds.vx, currentSpeeds.vy)
-			< 0.25_mps || units::math::abs(headingError.Degrees()) < 30_deg;
+	auto linearVel = units::math::hypot(currentSpeeds.vx, currentSpeeds.vy);
 
-	if (!m_path->isChoreoPath() && m_replanningConfig.enableInitialReplanning
-			&& (currentPose.Translation().Distance(m_path->getPoint(0).position)
-					> 0.25_m || !onHeading)) {
-		replanPath(currentPose, currentSpeeds);
+	if (m_path->getIdealStartingState().has_value()) {
+		// Check if we match the ideal starting state
+		bool idealVelocity = units::math::abs(
+				linearVel
+						- m_path->getIdealStartingState().value().getVelocity())
+				<= 0.25_mps;
+		bool idealRotation =
+				!m_robotConfig.isHolonomic
+						|| units::math::abs(
+								(currentPose.Rotation()
+										- m_path->getIdealStartingState().value().getRotation()).Degrees())
+								<= 30_deg;
+		if (idealVelocity && idealRotation) {
+			// We can use the ideal trajectory
+			m_trajectory = m_path->getIdealTrajectory(m_robotConfig).value();
+		} else {
+			// We need to regenerate
+			m_trajectory = m_path->generateTrajectory(currentSpeeds,
+					currentPose.Rotation(), m_robotConfig);
+		}
 	} else {
-		m_generatedTrajectory = m_path->getTrajectory(currentSpeeds,
+		// No ideal starting state, generate the trajectory
+		m_trajectory = m_path->generateTrajectory(currentSpeeds,
 				currentPose.Rotation(), m_robotConfig);
-		PathPlannerLogging::logActivePath (m_path);
-		PPLibTelemetry::setCurrentPath(m_path);
 	}
 
-	// Initialize marker stuff
-	m_currentEventCommands.clear();
-	m_untriggeredEvents.clear();
+	PathPlannerLogging::logActivePath(m_path.get());
+	PPLibTelemetry::setCurrentPath (m_path);
 
-	const auto &eventCommands = m_generatedTrajectory.getEventCommands();
-
-	m_untriggeredEvents.insert(m_untriggeredEvents.end(), eventCommands.begin(),
-			eventCommands.end());
+	m_eventScheduler.initialize(m_trajectory);
 
 	m_timer.Reset();
 	m_timer.Start();
@@ -82,30 +90,13 @@ void FollowPathCommand::Initialize() {
 
 void FollowPathCommand::Execute() {
 	units::second_t currentTime = m_timer.Get();
-	PathPlannerTrajectoryState targetState = m_generatedTrajectory.sample(
-			currentTime);
-	if (m_controller->isHolonomic()) {
+	PathPlannerTrajectoryState targetState = m_trajectory.sample(currentTime);
+	if (!m_controller->isHolonomic() && m_path->isReversed()) {
 		targetState = targetState.reverse();
 	}
 
 	frc::Pose2d currentPose = m_poseSupplier();
 	frc::ChassisSpeeds currentSpeeds = m_speedsSupplier();
-
-	if (!m_path->isChoreoPath() && m_replanningConfig.enableDynamicReplanning) {
-		units::meter_t previousError = units::math::abs(
-				m_controller->getPositionalError());
-		units::meter_t currentError = currentPose.Translation().Distance(
-				targetState.pose.Translation());
-
-		if (currentError
-				>= m_replanningConfig.dynamicReplanningTotalErrorThreshold
-				|| currentError - previousError
-						>= m_replanningConfig.dynamicReplanningErrorSpikeThreshold) {
-			replanPath(currentPose, currentSpeeds);
-			m_timer.Reset();
-			targetState = m_generatedTrajectory.sample(0_s);
-		}
-	}
 
 	units::meters_per_second_t currentVel = units::math::hypot(currentSpeeds.vx,
 			currentSpeeds.vy);
@@ -122,66 +113,28 @@ void FollowPathCommand::Execute() {
 
 	PPLibTelemetry::setVelocities(currentVel, targetState.linearVelocity,
 			currentSpeeds.omega, targetSpeeds.omega);
-	PPLibTelemetry::setPathInaccuracy(m_controller->getPositionalError());
 
-	m_output(targetSpeeds);
+	m_output(targetSpeeds, targetState.feedforwards);
 
-	if (!m_untriggeredEvents.empty()
-			&& m_timer.HasElapsed(m_untriggeredEvents[0].first)) {
-		// Time to trigger this event command
-		auto event = m_untriggeredEvents[0];
-
-		for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
-			if (!runningCommand.second) {
-				continue;
-			}
-
-			if (!frc2::RequirementsDisjoint(runningCommand.first.get(),
-					event.second.get())) {
-				runningCommand.first->End(true);
-				runningCommand.second = false;
-			}
-		}
-
-		event.second->Initialize();
-		m_currentEventCommands.emplace_back(event.second, true);
-
-		m_untriggeredEvents.pop_front();
-	}
-
-	// Run event marker commands
-	for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
-		if (!runningCommand.second) {
-			continue;
-		}
-
-		runningCommand.first->Execute();
-		if (runningCommand.first->IsFinished()) {
-			runningCommand.first->End(false);
-			runningCommand.second = false;
-		}
-	}
+	m_eventScheduler.execute(currentTime);
 }
 
 bool FollowPathCommand::IsFinished() {
-	return m_timer.HasElapsed(m_generatedTrajectory.getTotalTime());
+	return m_timer.HasElapsed(m_trajectory.getTotalTime());
 }
 
 void FollowPathCommand::End(bool interrupted) {
 	m_timer.Stop();
+	PathPlannerAuto::currentPathName = "";
 
 	// Only output 0 speeds when ending a path that is supposed to stop, this allows interrupting
 	// the command to smoothly transition into some auto-alignment routine
 	if (!interrupted && m_path->getGoalEndState().getVelocity() < 0.1_mps) {
-		m_output(frc::ChassisSpeeds());
+		m_output(frc::ChassisSpeeds(),
+				DriveFeedforwards::zeros(m_robotConfig.numModules));
 	}
 
 	PathPlannerLogging::logActivePath(nullptr);
 
-	// End markers
-	for (std::pair<std::shared_ptr<frc2::Command>, bool> &runningCommand : m_currentEventCommands) {
-		if (runningCommand.second) {
-			runningCommand.first->End(true);
-		}
-	}
+	m_eventScheduler.end();
 }

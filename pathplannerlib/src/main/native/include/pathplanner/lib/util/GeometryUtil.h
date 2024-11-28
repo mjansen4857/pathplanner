@@ -16,27 +16,18 @@
 #include <type_traits>
 
 #define PI 3.14159265358979323846
-#define FIELD_LENGTH 16.54_m
 
 namespace pathplanner {
 namespace GeometryUtil {
-constexpr frc::Translation2d flipFieldPosition(const frc::Translation2d &pos) {
-	return frc::Translation2d(FIELD_LENGTH - pos.X(), pos.Y());
-}
-
-constexpr frc::Rotation2d flipFieldRotation(const frc::Rotation2d &rotation) {
-	return frc::Rotation2d(180_deg) - rotation;
-}
-
-constexpr frc::Pose2d flipFieldPose(const frc::Pose2d &pose) {
-	return frc::Pose2d(flipFieldPosition(pose.Translation()),
-			flipFieldRotation(pose.Rotation()));
-}
-
 template<class UnitType, class = std::enable_if_t<
 		units::traits::is_unit_t<UnitType>::value>>
 constexpr UnitType unitLerp(UnitType const startVal, UnitType const endVal,
 		double const t) {
+	return startVal + (endVal - startVal) * t;
+}
+
+constexpr double doubleLerp(const double startVal, const double endVal,
+		const double t) {
 	return startVal + (endVal - startVal) * t;
 }
 

@@ -1,26 +1,31 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:file/file.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
 import 'package:pathplanner/commands/named_command.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/goal_end_state.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/path_point.dart';
 import 'package:pathplanner/path/ideal_starting_state.dart';
+import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/util/geometry_util.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/util/wpimath/math_util.dart';
 
 const double targetIncrement = 0.05;
 const double targetSpacing = 0.2;
+const String fileVersion = '2025.0';
 
 class PathPlannerPath {
   String name;
@@ -29,6 +34,7 @@ class PathPlannerPath {
   PathConstraints globalConstraints;
   GoalEndState goalEndState;
   List<ConstraintsZone> constraintZones;
+  List<PointTowardsZone> pointTowardsZones;
   List<RotationTarget> rotationTargets;
   List<EventMarker> eventMarkers;
   bool reversed;
@@ -46,38 +52,10 @@ class PathPlannerPath {
   bool rotationTargetsExpanded = false;
   bool eventMarkersExpanded = false;
   bool constraintZonesExpanded = false;
+  bool pointTowardsZonesExpanded = false;
   bool previewStartingStateExpanded = false;
+  bool pathOptimizationExpanded = false;
   DateTime lastModified = DateTime.now().toUtc();
-
-  PathPlannerPath.defaultPath({
-    required this.pathDir,
-    required this.fs,
-    this.name = 'New Path',
-    this.folder,
-    PathConstraints? constraints,
-  })  : waypoints = [],
-        pathPoints = [],
-        globalConstraints = constraints ?? PathConstraints(),
-        goalEndState = GoalEndState(),
-        constraintZones = [],
-        rotationTargets = [],
-        eventMarkers = [],
-        reversed = false,
-        idealStartingState = IdealStartingState(),
-        useDefaultConstraints = true {
-    waypoints.addAll([
-      Waypoint(
-        anchor: const Point(2.0, 7.0),
-        nextControl: const Point(3.0, 7.0),
-      ),
-      Waypoint(
-        prevControl: const Point(3.0, 6.0),
-        anchor: const Point(4.0, 6.0),
-      ),
-    ]);
-
-    generatePathPoints();
-  }
 
   PathPlannerPath({
     required this.name,
@@ -85,6 +63,7 @@ class PathPlannerPath {
     required this.globalConstraints,
     required this.goalEndState,
     required this.constraintZones,
+    required this.pointTowardsZones,
     required this.rotationTargets,
     required this.eventMarkers,
     required this.pathDir,
@@ -97,53 +76,86 @@ class PathPlannerPath {
     generatePathPoints();
   }
 
-  PathPlannerPath.fromJsonV1(
+  PathPlannerPath.defaultPath({
+    required this.pathDir,
+    required this.fs,
+    this.name = 'New Path',
+    this.folder,
+    PathConstraints? constraints,
+  })  : waypoints = [],
+        pathPoints = [],
+        globalConstraints = constraints ?? PathConstraints(),
+        goalEndState = GoalEndState(0, const Rotation2d()),
+        constraintZones = [],
+        pointTowardsZones = [],
+        rotationTargets = [],
+        eventMarkers = [],
+        reversed = false,
+        idealStartingState = IdealStartingState(0, const Rotation2d()),
+        useDefaultConstraints = true {
+    waypoints.addAll([
+      Waypoint(
+        anchor: const Translation2d(2.0, 7.0),
+        nextControl: const Translation2d(3.0, 7.0),
+      ),
+      Waypoint(
+        prevControl: const Translation2d(3.0, 6.0),
+        anchor: const Translation2d(4.0, 6.0),
+      ),
+    ]);
+
+    generatePathPoints();
+  }
+
+  PathPlannerPath.fromJson(
       Map<String, dynamic> json, String name, String pathsDir, FileSystem fs)
       : this(
           pathDir: pathsDir,
           fs: fs,
           name: name,
           waypoints: [
-            for (var waypointJson in json['waypoints'])
+            for (final waypointJson in json['waypoints'])
               Waypoint.fromJson(waypointJson),
           ],
           globalConstraints:
               PathConstraints.fromJson(json['globalConstraints'] ?? {}),
           goalEndState: GoalEndState.fromJson(json['goalEndState'] ?? {}),
           constraintZones: [
-            for (var zoneJson in json['constraintZones'] ?? [])
+            for (final zoneJson in json['constraintZones'] ?? [])
               ConstraintsZone.fromJson(zoneJson),
           ],
+          pointTowardsZones: [
+            for (final zoneJson in json['pointTowardsZones'] ?? [])
+              PointTowardsZone.fromJson(zoneJson),
+          ],
           rotationTargets: [
-            for (var targetJson in json['rotationTargets'] ?? [])
+            for (final targetJson in json['rotationTargets'] ?? [])
               RotationTarget.fromJson(targetJson),
           ],
           eventMarkers: [
-            for (var markerJson in json['eventMarkers'] ?? [])
+            for (final markerJson in json['eventMarkers'] ?? [])
               EventMarker.fromJson(markerJson),
           ],
           reversed: json['reversed'] ?? false,
           folder: json['folder'],
-          idealStartingState: json['idealStartingState'] == null
-              ? IdealStartingState()
-              : IdealStartingState.fromJson(json['idealStartingState']),
+          idealStartingState:
+              IdealStartingState.fromJson(json['idealStartingState'] ?? {}),
           useDefaultConstraints: json['useDefaultConstraints'] ?? false,
         );
 
   void generateAndSavePath() {
-    Stopwatch s = Stopwatch()..start();
-
     generatePathPoints();
+    saveFile();
+  }
 
+  void saveFile() {
     try {
       File pathFile = fs.file(join(pathDir, '$name.path'));
       const JsonEncoder encoder = JsonEncoder.withIndent('  ');
       pathFile.writeAsString(encoder.convert(this));
       lastModified = DateTime.now().toUtc();
-      Log.debug(
-          'Saved and generated "$name.path" in ${s.elapsedMilliseconds}ms');
     } catch (ex, stack) {
-      Log.error('Failed to save path', ex, stack);
+      Log.error('Failed to save path: $name', ex, stack);
     }
   }
 
@@ -160,15 +172,15 @@ class PathPlannerPath {
           Map<String, dynamic> json = jsonDecode(jsonStr);
           String pathName = basenameWithoutExtension(e.path);
 
-          if (json['version'] == 1.0) {
-            PathPlannerPath path =
-                PathPlannerPath.fromJsonV1(json, pathName, pathsDir, fs);
-            path.lastModified = (await file.lastModified()).toUtc();
+          PathPlannerPath path =
+              PathPlannerPath.fromJson(json, pathName, pathsDir, fs);
+          path.lastModified = (await file.lastModified()).toUtc();
 
-            paths.add(path);
-          } else {
-            Log.error('Unknown path version');
+          if (json['version'] != fileVersion) {
+            path.saveFile();
           }
+
+          paths.add(path);
         } catch (ex, stack) {
           Log.error('Failed to load path', ex, stack);
         }
@@ -196,19 +208,28 @@ class PathPlannerPath {
   }
 
   Map<String, dynamic> toJson() {
+    // Make sure rotation targets and event markers are sorted
+    final sortedTargets = List.of(rotationTargets).sorted(
+        (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+    final sortedMarkers = List.of(eventMarkers).sorted(
+        (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+
     return {
-      'version': 1.0,
+      'version': fileVersion,
       'waypoints': [
-        for (Waypoint w in waypoints) w.toJson(),
+        for (final w in waypoints) w.toJson(),
       ],
       'rotationTargets': [
-        for (RotationTarget t in rotationTargets) t.toJson(),
+        for (final t in sortedTargets) t.toJson(),
       ],
       'constraintZones': [
-        for (ConstraintsZone z in constraintZones) z.toJson(),
+        for (final z in constraintZones) z.toJson(),
+      ],
+      'pointTowardsZones': [
+        for (final z in pointTowardsZones) z.toJson(),
       ],
       'eventMarkers': [
-        for (EventMarker m in eventMarkers) m.toJson(),
+        for (final m in sortedMarkers) m.toJson(),
       ],
       'globalConstraints': globalConstraints.toJson(),
       'goalEndState': goalEndState.toJson(),
@@ -219,7 +240,7 @@ class PathPlannerPath {
     };
   }
 
-  void addWaypoint(Point anchorPos) {
+  void addWaypoint(Translation2d anchorPos) {
     waypoints[waypoints.length - 1].addNextControl();
     waypoints.add(
       Waypoint(
@@ -237,8 +258,8 @@ class PathPlannerPath {
 
     Waypoint before = waypoints[waypointIdx];
     Waypoint after = waypoints[waypointIdx + 1];
-    Point anchorPos = GeometryUtil.cubicLerp(before.anchor, before.nextControl!,
-        after.prevControl!, after.anchor, 0.5);
+    Translation2d anchorPos = GeometryUtil.cubicLerp(before.anchor,
+        before.nextControl!, after.prevControl!, after.anchor, 0.5);
 
     Waypoint toAdd = Waypoint(
       anchor: anchorPos,
@@ -259,6 +280,13 @@ class PathPlannerPath {
     }
 
     for (ConstraintsZone z in constraintZones) {
+      z.minWaypointRelativePos = _adjustInsertedWaypointRelativePos(
+          z.minWaypointRelativePos, waypointIdx + 1);
+      z.maxWaypointRelativePos = _adjustInsertedWaypointRelativePos(
+          z.maxWaypointRelativePos, waypointIdx + 1);
+    }
+
+    for (PointTowardsZone z in pointTowardsZones) {
       z.minWaypointRelativePos = _adjustInsertedWaypointRelativePos(
           z.minWaypointRelativePos, waypointIdx + 1);
       z.maxWaypointRelativePos = _adjustInsertedWaypointRelativePos(
@@ -290,24 +318,28 @@ class PathPlannerPath {
     return pos;
   }
 
-  void _addNamedCommandsToSet(Command command) {
+  void _addNamedCommandsToEvents(Command command) {
     if (command is NamedCommand) {
       if (command.name != null) {
-        Command.named.add(command.name!);
+        ProjectPage.events.add(command.name!);
         return;
       }
     }
 
     if (command is CommandGroup) {
       for (Command cmd in command.commands) {
-        _addNamedCommandsToSet(cmd);
+        _addNamedCommandsToEvents(cmd);
       }
     }
   }
 
   bool hasEmptyNamedCommand() {
     for (EventMarker m in eventMarkers) {
-      bool hasEmpty = _hasEmptyNamedCommand(m.command.commands);
+      if (m.command == null) {
+        continue;
+      }
+
+      bool hasEmpty = _hasEmptyNamedCommand(m.command!);
       if (hasEmpty) {
         return true;
       }
@@ -315,57 +347,83 @@ class PathPlannerPath {
     return false;
   }
 
-  bool _hasEmptyNamedCommand(List<Command> commands) {
-    for (Command cmd in commands) {
-      if (cmd is NamedCommand && cmd.name == null) {
-        return true;
-      } else if (cmd is CommandGroup) {
-        bool hasEmpty = _hasEmptyNamedCommand(cmd.commands);
-        if (hasEmpty) {
+  bool _hasEmptyNamedCommand(Command command) {
+    if (command is NamedCommand && command.name == null) {
+      return true;
+    } else if (command is CommandGroup) {
+      for (final cmd in command.commands) {
+        if (_hasEmptyNamedCommand(cmd)) {
           return true;
         }
       }
     }
+
     return false;
   }
 
   PathConstraints _constraintsForPos(num waypointPos) {
-    for (ConstraintsZone z in constraintZones) {
+    for (final z in constraintZones) {
       if (waypointPos >= z.minWaypointRelativePos &&
           waypointPos <= z.maxWaypointRelativePos) {
         return z.constraints;
       }
     }
+
+    // Check if the constraints should be unlimited
+    if (globalConstraints.unlimited) {
+      return PathConstraints(
+        maxVelocityMPS: double.infinity,
+        maxAccelerationMPSSq: double.infinity,
+        maxAngularVelocityDeg: double.infinity,
+        maxAngularAccelerationDeg: double.infinity,
+        nominalVoltage: globalConstraints.nominalVoltage,
+        unlimited: true,
+      );
+    }
+
     return globalConstraints;
   }
 
+  PointTowardsZone? _pointZoneForPos(num waypointPos) {
+    for (final z in pointTowardsZones) {
+      if (waypointPos >= z.minWaypointRelativePos &&
+          waypointPos <= z.maxWaypointRelativePos) {
+        return z;
+      }
+    }
+    return null;
+  }
+
   void generatePathPoints() {
-    // Add all command names in this path to the available names
+    // Add all event names in this path to the available names
     for (EventMarker m in eventMarkers) {
-      _addNamedCommandsToSet(m.command);
+      if (m.name.isNotEmpty) {
+        ProjectPage.events.add(m.name);
+      }
+      if (m.command != null) {
+        _addNamedCommandsToEvents(m.command!);
+      }
     }
 
     pathPoints.clear();
 
-    List<RotationTarget> unaddedTargets = List.from(rotationTargets);
-    unaddedTargets
-        .sort((a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
+    final unaddedTargets = rotationTargets.sorted(
+        (a, b) => a.waypointRelativePos.compareTo(b.waypointRelativePos));
 
     // first point
     pathPoints.add(PathPoint(
       position: samplePath(0.0),
       rotationTarget: null,
       constraints: _constraintsForPos(0.0),
-      distanceAlongPath: 0.0,
+      waypointPos: 0.0,
     ));
-    pathPoints.last.waypointPos = 0.0;
 
     double pos = targetIncrement;
     while (pos < waypoints.length - 1) {
       var position = samplePath(pos);
 
-      num distance = pathPoints.last.position.distanceTo(position);
-      if (distance == 0.0) {
+      num distance = pathPoints.last.position.getDistance(position);
+      if (distance <= 0.01) {
         pos = min(pos + targetIncrement, waypoints.length - 1);
         continue;
       }
@@ -380,7 +438,7 @@ class PathPlannerPath {
 
         position = samplePath(pos);
 
-        if (pathPoints.last.position.distanceTo(position) - targetSpacing >
+        if (pathPoints.last.position.getDistance(position) - targetSpacing >
             targetSpacing * 0.25) {
           // Points are still too far apart. Probably because of weird control
           // point placement. Just cut the correct increment in half and hope for the best
@@ -389,13 +447,12 @@ class PathPlannerPath {
         }
       } else if (delta < -targetSpacing * 0.25) {
         // Points are too close, increment waypoint relative pos by correct amount
-
         double correctIncrement = (targetSpacing * targetIncrement) / distance;
         pos = pos - targetIncrement + correctIncrement;
 
         position = samplePath(pos);
 
-        if (pathPoints.last.position.distanceTo(position) - targetSpacing <
+        if (pathPoints.last.position.getDistance(position) - targetSpacing <
             -targetSpacing * 0.25) {
           // Points are still too close. Probably because of weird control
           // point placement. Just cut the correct increment in half and hope for the best
@@ -404,23 +461,38 @@ class PathPlannerPath {
         }
       }
 
-      // Add a rotation target to the previous point if it is closer to it than
-      // the current point
-      if (unaddedTargets.isNotEmpty) {
-        if ((unaddedTargets[0].waypointRelativePos - prevPos).abs() <=
-            (unaddedTargets[0].waypointRelativePos - pos).abs()) {
-          pathPoints.last.rotationTarget = unaddedTargets.removeAt(0);
+      // Add rotation targets
+      RotationTarget? target;
+      PathPoint prevPoint = pathPoints.last;
+
+      while (unaddedTargets.isNotEmpty &&
+          unaddedTargets[0].waypointRelativePos >= prevPos &&
+          unaddedTargets[0].waypointRelativePos <= pos) {
+        if ((unaddedTargets[0].waypointRelativePos - prevPos).abs() < 0.001) {
+          // Close enough to prev pos
+          prevPoint.rotationTarget = unaddedTargets.removeAt(0);
+        } else if ((unaddedTargets[0].waypointRelativePos - pos).abs() <
+            0.001) {
+          // Close enough to next pos
+          target = unaddedTargets.removeAt(0);
+        } else {
+          // We should insert a point at the exact position
+          RotationTarget t = unaddedTargets.removeAt(0);
+          pathPoints.add(PathPoint(
+            position: samplePath(t.waypointRelativePos),
+            rotationTarget: t,
+            constraints: _constraintsForPos(t.waypointRelativePos),
+            waypointPos: t.waypointRelativePos,
+          ));
         }
       }
 
       pathPoints.add(PathPoint(
         position: position,
-        rotationTarget: null,
+        rotationTarget: target,
         constraints: _constraintsForPos(pos),
-        distanceAlongPath: pathPoints.last.distanceAlongPath +
-            pathPoints.last.position.distanceTo(position),
+        waypointPos: pos,
       ));
-      pathPoints.last.waypointPos = pos;
       pos = min(pos + targetIncrement, waypoints.length - 1);
     }
 
@@ -431,8 +503,8 @@ class PathPlannerPath {
     while (invalid) {
       var position = samplePath(pos);
 
-      num distance = pathPoints.last.position.distanceTo(position);
-      if (distance == 0.0) {
+      num distance = pathPoints.last.position.getDistance(position);
+      if (distance <= 0.01) {
         invalid = false;
         break;
       }
@@ -448,7 +520,7 @@ class PathPlannerPath {
 
         position = samplePath(pos);
 
-        if (pathPoints.last.position.distanceTo(position) - targetSpacing >
+        if (pathPoints.last.position.getDistance(position) - targetSpacing >
             targetSpacing * 0.25) {
           // Points are still too far apart. Probably because of weird control
           // point placement. Just cut the correct increment in half and hope for the best
@@ -473,33 +545,124 @@ class PathPlannerPath {
         position: position,
         rotationTarget: null,
         constraints: _constraintsForPos(pos),
-        distanceAlongPath: pathPoints.last.distanceAlongPath +
-            pathPoints.last.position.distanceTo(position),
+        waypointPos: pos,
       ));
-      pathPoints.last.waypointPos = pos;
       pos = waypoints.length - 1;
     }
 
-    pathPoints.last.rotationTarget = RotationTarget(
-        rotationDegrees: goalEndState.rotation,
-        waypointRelativePos: waypoints.length - 1);
+    // Force end rotation target to end state rotation
+    pathPoints.last.rotationTarget =
+        RotationTarget(waypoints.length - 1, goalEndState.rotation);
+
+    for (int i = 1; i < pathPoints.length - 1; i++) {
+      num curveRadius = GeometryUtil.calculateRadius(pathPoints[i - 1].position,
+          pathPoints[i].position, pathPoints[i + 1].position);
+
+      if (!curveRadius.isFinite) {
+        continue;
+      }
+
+      if (curveRadius.abs() < 0.25) {
+        // Curve radius is too tight for default spacing, insert 4 more points
+        num before1WaypointPos = MathUtil.interpolate(
+            pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.33);
+        num before2WaypointPos = MathUtil.interpolate(
+            pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.67);
+        num after1WaypointPos = MathUtil.interpolate(
+            pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.33);
+        num after2WaypointPos = MathUtil.interpolate(
+            pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.67);
+
+        PathPoint before1 = PathPoint(
+          position: samplePath(before1WaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: before1WaypointPos,
+        );
+        PathPoint before2 = PathPoint(
+          position: samplePath(before2WaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: before2WaypointPos,
+        );
+        PathPoint after1 = PathPoint(
+          position: samplePath(after1WaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: after1WaypointPos,
+        );
+        PathPoint after2 = PathPoint(
+          position: samplePath(after2WaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: after2WaypointPos,
+        );
+
+        pathPoints.insert(i, before2);
+        pathPoints.insert(i, before1);
+        pathPoints.insert(i + 3, after2);
+        pathPoints.insert(i + 3, after1);
+        i += 4;
+      } else if (curveRadius.abs() < 0.5) {
+        // Curve radius is too tight for default spacing, insert 2 more points
+        num beforeWaypointPos = MathUtil.interpolate(
+            pathPoints[i - 1].waypointPos, pathPoints[i].waypointPos, 0.5);
+        num afterWaypointPos = MathUtil.interpolate(
+            pathPoints[i].waypointPos, pathPoints[i + 1].waypointPos, 0.5);
+
+        PathPoint before = PathPoint(
+          position: samplePath(beforeWaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: beforeWaypointPos,
+        );
+        PathPoint after = PathPoint(
+          position: samplePath(afterWaypointPos),
+          rotationTarget: null,
+          constraints: pathPoints[i].constraints,
+          waypointPos: afterWaypointPos,
+        );
+
+        pathPoints.insert(i, before);
+        pathPoints.insert(i + 2, after);
+        i += 2;
+      }
+    }
 
     for (int i = 0; i < pathPoints.length; i++) {
       num curveRadius = _getCurveRadiusAtPoint(i).abs();
 
       if (curveRadius.isFinite) {
         pathPoints[i].maxV = min(
-            sqrt(pathPoints[i].constraints.maxAcceleration * curveRadius.abs()),
-            pathPoints[i].constraints.maxVelocity);
+            sqrt(pathPoints[i].constraints.maxAccelerationMPSSq *
+                curveRadius.abs()),
+            pathPoints[i].constraints.maxVelocityMPS);
       } else {
-        pathPoints[i].maxV = pathPoints[i].constraints.maxVelocity;
+        pathPoints[i].maxV = pathPoints[i].constraints.maxVelocityMPS;
+      }
+
+      if (i > 0) {
+        pathPoints[i].distanceAlongPath = pathPoints[i - 1].distanceAlongPath +
+            pathPoints[i].position.getDistance(pathPoints[i - 1].position);
+      }
+
+      if (i != 0 && i != pathPoints.length - 1) {
+        // Set the rotation target for point towards zones
+        final zone = _pointZoneForPos(pathPoints[i].waypointPos);
+        if (zone != null) {
+          final angleToTarget =
+              (zone.fieldPosition - pathPoints[i].position).angle;
+          final rotation = angleToTarget + zone.rotationOffset;
+          pathPoints[i].rotationTarget =
+              RotationTarget(pathPoints[i].waypointPos, rotation, false);
+        }
       }
     }
 
-    pathPoints.last.maxV = goalEndState.velocity;
+    pathPoints.last.maxV = goalEndState.velocityMPS;
   }
 
-  Point<num> samplePath(num waypointRelativePos) {
+  Translation2d samplePath(num waypointRelativePos) {
     num pos = MathUtil.clamp(waypointRelativePos, 0, waypoints.length - 1);
 
     int i = pos.floor();
@@ -523,30 +686,15 @@ class PathPlannerPath {
     }
 
     if (index == 0) {
-      return _calculateRadius(pathPoints[index].position,
+      return GeometryUtil.calculateRadius(pathPoints[index].position,
           pathPoints[index + 1].position, pathPoints[index + 2].position);
     } else if (index == pathPoints.length - 1) {
-      return _calculateRadius(pathPoints[index - 2].position,
+      return GeometryUtil.calculateRadius(pathPoints[index - 2].position,
           pathPoints[index - 1].position, pathPoints[index].position);
     } else {
-      return _calculateRadius(pathPoints[index - 1].position,
+      return GeometryUtil.calculateRadius(pathPoints[index - 1].position,
           pathPoints[index].position, pathPoints[index + 1].position);
     }
-  }
-
-  num _calculateRadius(Point a, Point b, Point c) {
-    Point vba = a - b;
-    Point vbc = c - b;
-    num crossZ = (vba.x * vbc.y) - (vba.y * vbc.x);
-    num sign = (crossZ < 0) ? 1 : -1;
-
-    num ab = a.distanceTo(b);
-    num bc = b.distanceTo(c);
-    num ac = a.distanceTo(c);
-
-    num p = (ab + bc + ac) / 2;
-    num area = sqrt((p * (p - ab) * (p - bc) * (p - ac)).abs());
-    return sign * (ab * bc * ac) / (4 * area);
   }
 
   PathPlannerPath duplicate(String newName) {
@@ -556,6 +704,7 @@ class PathPlannerPath {
       globalConstraints: globalConstraints.clone(),
       goalEndState: goalEndState.clone(),
       constraintZones: cloneConstraintZones(constraintZones),
+      pointTowardsZones: clonePointTowardsZones(pointTowardsZones),
       rotationTargets: cloneRotationTargets(rotationTargets),
       eventMarkers: cloneEventMarkers(eventMarkers),
       pathDir: pathDir,
@@ -567,35 +716,40 @@ class PathPlannerPath {
     );
   }
 
-  List<Point> getPathPositions() {
-    return [
-      for (PathPoint p in pathPoints) p.position,
-    ];
-  }
+  List<Translation2d> get pathPositions => [
+        for (final p in pathPoints) p.position,
+      ];
 
   static List<Waypoint> cloneWaypoints(List<Waypoint> waypoints) {
     return [
-      for (Waypoint waypoint in waypoints) waypoint.clone(),
+      for (final waypoint in waypoints) waypoint.clone(),
     ];
   }
 
   static List<ConstraintsZone> cloneConstraintZones(
       List<ConstraintsZone> zones) {
     return [
-      for (ConstraintsZone zone in zones) zone.clone(),
+      for (final zone in zones) zone.clone(),
+    ];
+  }
+
+  static List<PointTowardsZone> clonePointTowardsZones(
+      List<PointTowardsZone> zones) {
+    return [
+      for (final zone in zones) zone.clone(),
     ];
   }
 
   static List<RotationTarget> cloneRotationTargets(
       List<RotationTarget> targets) {
     return [
-      for (RotationTarget target in targets) target.clone(),
+      for (final target in targets) target.clone(),
     ];
   }
 
   static List<EventMarker> cloneEventMarkers(List<EventMarker> markers) {
     return [
-      for (EventMarker marker in markers) marker.clone(),
+      for (final marker in markers) marker.clone(),
     ];
   }
 
@@ -609,6 +763,7 @@ class PathPlannerPath {
       other.reversed == reversed &&
       listEquals(other.waypoints, waypoints) &&
       listEquals(other.constraintZones, constraintZones) &&
+      listEquals(other.pointTowardsZones, pointTowardsZones) &&
       listEquals(other.eventMarkers, eventMarkers) &&
       listEquals(other.rotationTargets, rotationTargets);
 

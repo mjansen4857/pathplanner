@@ -1,12 +1,11 @@
-import 'dart:math';
-
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 
 class MiniPathsPreview extends StatelessWidget {
-  final List<List<Point>> paths;
+  final List<List<Translation2d>> paths;
   final FieldImage fieldImage;
 
   const MiniPathsPreview({
@@ -33,7 +32,7 @@ class MiniPathsPreview extends StatelessWidget {
 
 @visibleForTesting
 class PathPreviewPainter extends StatelessWidget {
-  final List<List<Point>> paths;
+  final List<List<Translation2d>> paths;
   final FieldImage fieldImage;
 
   const PathPreviewPainter({
@@ -48,27 +47,30 @@ class PathPreviewPainter extends StatelessWidget {
       painter: _Painter(
         paths: paths,
         fieldImage: fieldImage,
+        colorScheme: Theme.of(context).colorScheme,
       ),
     );
   }
 }
 
 class _Painter extends CustomPainter {
-  final List<List<Point>> paths;
+  final List<List<Translation2d>> paths;
   final FieldImage fieldImage;
+  final ColorScheme colorScheme;
 
   const _Painter({
     required this.paths,
     required this.fieldImage,
+    required this.colorScheme,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     double scale = size.width / fieldImage.defaultSize.width;
 
-    for (List<Point> path in paths) {
+    for (List<Translation2d> path in paths) {
       if (path.isNotEmpty) {
-        _paintPathPoints(canvas, scale, Colors.grey[300]!, path);
+        _paintPathPoints(canvas, scale, colorScheme.secondary, path);
         _paintWaypoint(canvas, scale, path.first, Colors.green);
         _paintWaypoint(canvas, scale, path.last, Colors.red);
       }
@@ -81,8 +83,8 @@ class _Painter extends CustomPainter {
         !(const DeepCollectionEquality()).equals(oldDelegate.paths, paths);
   }
 
-  void _paintPathPoints(
-      Canvas canvas, double scale, Color baseColor, List<Point> pathPoints) {
+  void _paintPathPoints(Canvas canvas, double scale, Color baseColor,
+      List<Translation2d> pathPoints) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = baseColor
@@ -105,7 +107,7 @@ class _Painter extends CustomPainter {
   }
 
   void _paintWaypoint(
-      Canvas canvas, double scale, Point position, Color color) {
+      Canvas canvas, double scale, Translation2d position, Color color) {
     var paint = Paint()
       ..style = PaintingStyle.stroke
       ..color = color

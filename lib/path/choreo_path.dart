@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/kinematics.dart';
 
 class ChoreoPath {
   final String name;
@@ -29,20 +29,22 @@ class ChoreoPath {
           name: name,
           trajectory: PathPlannerTrajectory.fromStates(
             [
-              for (Map<String, dynamic> s in json['samples'])
+              for (Map<String, dynamic> s in json['trajectory']['samples'])
                 TrajectoryState.pregen(
-                  s['timestamp'],
-                  Pose2d(Translation2d(x: s['x'], y: s['y']),
+                  s['t'],
+                  ChassisSpeeds(
+                    vx: s['vx'],
+                    vy: s['vy'],
+                    omega: s['omega'],
+                  ),
+                  Pose2d(Translation2d(s['x'], s['y']),
                       Rotation2d.fromRadians(s['heading'])),
                 ),
             ],
           ),
           fs: fs,
           choreoDir: choreoDir,
-          eventMarkerTimes: [
-            for (Map<String, dynamic> m in json['eventMarkers'] ?? [])
-              m['timestamp'],
-          ],
+          eventMarkerTimes: [],
         );
 
   static Future<List<ChoreoPath>> loadAllPathsInDir(
@@ -56,17 +58,62 @@ class ChoreoPath {
       for (FileSystemEntity e in files) {
         if (e.path.endsWith('.traj')) {
           final file = fs.file(e.path);
+          String pathName = basenameWithoutExtension(e.path);
           String jsonStr = await file.readAsString();
 
           try {
             Map<String, dynamic> json = jsonDecode(jsonStr);
-            String pathName = basenameWithoutExtension(e.path);
 
+            // Add the full path
             ChoreoPath path =
                 ChoreoPath.fromTrajJson(json, pathName, choreoDir, fs);
+
+            if (path.trajectory.states.isEmpty) {
+              Log.error(
+                  'Failed to load choreo path: $pathName. Path has no trajectory states');
+              continue;
+            }
+
             paths.add(path);
+
+            // Add each split
+            final splits = (json['trajectory']['splits'] as List<dynamic>)
+                .map((e) => (e as num).toInt())
+                .toList();
+
+            if (splits.isEmpty || splits.first != 0) {
+              splits.insert(0, 0);
+            }
+
+            for (int i = 0; i < splits.length; i++) {
+              String name = '$pathName.$i';
+
+              int startIdx = splits[i];
+              int endIdx;
+              if (i == splits.length - 1) {
+                endIdx = path.trajectory.states.length;
+              } else {
+                endIdx = splits[i + 1];
+              }
+
+              num startTime = path.trajectory.states[startIdx].timeSeconds;
+              final splitStates = [
+                for (TrajectoryState s
+                    in path.trajectory.states.sublist(startIdx, endIdx))
+                  s.copyWithTime(s.timeSeconds - startTime)
+              ];
+              final splitTraj = PathPlannerTrajectory.fromStates(splitStates);
+              final splitPath = ChoreoPath(
+                name: name,
+                trajectory: splitTraj,
+                fs: fs,
+                choreoDir: choreoDir,
+                eventMarkerTimes: [],
+              );
+              paths.add(splitPath);
+            }
           } catch (ex, stack) {
-            Log.error('Failed to load choreo path', ex, stack);
+            Log.error('Failed to load choreo path: $pathName', ex, stack);
           }
         }
       }
@@ -75,10 +122,7 @@ class ChoreoPath {
     return paths;
   }
 
-  List<Point> getPathPositions() {
-    return [
-      for (TrajectoryState s in trajectory.states)
-        Point(s.pose.translation.x, s.pose.translation.y),
-    ];
-  }
+  List<Translation2d> get pathPositions => [
+        for (TrajectoryState s in trajectory.states) s.pose.translation,
+      ];
 }

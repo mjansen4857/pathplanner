@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/ideal_starting_state.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/ideal_starting_state_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -18,7 +19,8 @@ void main() {
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
-    path.idealStartingState = IdealStartingState(velocity: 1.0, rotation: 45);
+    path.idealStartingState =
+        IdealStartingState(1.0, Rotation2d.fromDegrees(45));
     path.previewStartingStateExpanded = true;
     pathChanged = false;
   });
@@ -71,11 +73,11 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.idealStartingState.velocity, 3.0);
+    expect(path.idealStartingState.velocityMPS, 3.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.idealStartingState.velocity, 1.0);
+    expect(path.idealStartingState.velocityMPS, 1.0);
   });
 
   testWidgets('rotation text field', (widgetTester) async {
@@ -99,10 +101,10 @@ void main() {
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.idealStartingState.rotation, -90.0);
+    expect(path.idealStartingState.rotation.degrees, -90.0);
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.idealStartingState.rotation, 45.0);
+    expect(path.idealStartingState.rotation.degrees, 45.0);
   });
 }

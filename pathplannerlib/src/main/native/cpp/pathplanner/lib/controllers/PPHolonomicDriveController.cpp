@@ -3,14 +3,16 @@
 using namespace pathplanner;
 
 std::function<std::optional<frc::Rotation2d>()> PPHolonomicDriveController::rotationTargetOverride;
+std::function<units::meters_per_second_t()> PPHolonomicDriveController::xFeedbackOverride;
+std::function<units::meters_per_second_t()> PPHolonomicDriveController::yFeedbackOverride;
+std::function<units::radians_per_second_t()> PPHolonomicDriveController::rotationFeedbackOverride;
 
 PPHolonomicDriveController::PPHolonomicDriveController(
 		PIDConstants translationConstants, PIDConstants rotationConstants,
-		units::meters_per_second_t maxModuleSpeed,
-		units::meter_t driveBaseRadius, units::second_t period) : m_xController(
+		units::second_t period) : m_xController(translationConstants.kP,
+		translationConstants.kI, translationConstants.kD, period), m_yController(
 		translationConstants.kP, translationConstants.kI,
-		translationConstants.kD, period), m_yController(translationConstants.kP,
-		translationConstants.kI, translationConstants.kD, period), m_rotationController(
+		translationConstants.kD, period), m_rotationController(
 		rotationConstants.kP, rotationConstants.kI, rotationConstants.kD,
 		period) {
 	m_xController.SetIntegratorRange(-translationConstants.iZone,
@@ -49,8 +51,18 @@ frc::ChassisSpeeds PPHolonomicDriveController::calculateRobotRelativeSpeeds(
 
 	units::radians_per_second_t rotationFeedback {
 			m_rotationController.Calculate(currentPose.Rotation().Radians()(),
-					referenceState.pose.Rotation().Radians()()) };
+					targetRotation.Radians()()) };
 	units::radians_per_second_t rotationFF = referenceState.fieldSpeeds.omega;
+
+	if (xFeedbackOverride) {
+		xFeedback = xFeedbackOverride();
+	}
+	if (yFeedbackOverride) {
+		yFeedback = yFeedbackOverride();
+	}
+	if (rotationFeedbackOverride) {
+		rotationFeedback = rotationFeedbackOverride();
+	}
 
 	return frc::ChassisSpeeds::FromFieldRelativeSpeeds(xFF + xFeedback,
 			yFF + yFeedback, rotationFF + rotationFeedback,

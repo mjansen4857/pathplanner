@@ -1,38 +1,38 @@
 package com.pathplanner.lib.trajectory;
 
+import static edu.wpi.first.units.Units.Seconds;
+
 import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.events.*;
 import com.pathplanner.lib.path.EventMarker;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.PathPoint;
+import com.pathplanner.lib.path.PointTowardsZone;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import com.pathplanner.lib.util.GeometryUtil;
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj2.command.Command;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import edu.wpi.first.units.measure.Time;
+import java.util.*;
 
 /** Trajectory generated for a PathPlanner path */
 public class PathPlannerTrajectory {
   private final List<PathPlannerTrajectoryState> states;
-  private final List<Pair<Double, Command>> eventCommands;
+  private final List<Event> events;
 
   /**
    * Create a trajectory with pre-generated states and list of events
    *
    * @param states Pre-generated states
-   * @param eventCommands Event commands
+   * @param events Events for this trajectory
    */
-  public PathPlannerTrajectory(
-      List<PathPlannerTrajectoryState> states, List<Pair<Double, Command>> eventCommands) {
+  public PathPlannerTrajectory(List<PathPlannerTrajectoryState> states, List<Event> events) {
     this.states = states;
-    this.eventCommands = eventCommands;
+    this.events = events;
   }
 
   /**
@@ -58,20 +58,20 @@ public class PathPlannerTrajectory {
       Rotation2d startingRotation,
       RobotConfig config) {
     if (path.isChoreoPath()) {
-      var traj = path.getTrajectory(startingSpeeds, startingRotation, config);
+      var traj = path.getIdealTrajectory(config).orElseThrow();
       this.states = traj.states;
-      this.eventCommands = traj.eventCommands;
+      this.events = traj.events;
     } else {
       this.states = new ArrayList<>(path.numPoints());
-      this.eventCommands = new ArrayList<>(path.getEventMarkers().size());
+      this.events = new ArrayList<>(path.getEventMarkers().size());
 
       // Create all states
       generateStates(states, path, startingRotation, config);
 
       // Set the initial module velocities
       ChassisSpeeds fieldStartingSpeeds =
-          ChassisSpeeds.fromRobotRelativeSpeeds(startingSpeeds, states.get(0).pose.getRotation());
-      var initialStates = config.kinematics.toSwerveModuleStates(fieldStartingSpeeds);
+          fromRobotRelativeSpeeds(startingSpeeds, states.get(0).pose.getRotation());
+      var initialStates = config.toSwerveModuleStates(fieldStartingSpeeds);
       for (int m = 0; m < config.numModules; m++) {
         states.get(0).moduleStates[m].speedMetersPerSecond = initialStates[m].speedMetersPerSecond;
       }
@@ -86,50 +86,120 @@ public class PathPlannerTrajectory {
       // Set the final module velocities
       Translation2d endSpeedTrans =
           new Translation2d(
-              path.getGoalEndState().getVelocity(), states.get(states.size() - 1).heading);
+              path.getGoalEndState().velocityMPS(), states.get(states.size() - 1).heading);
       ChassisSpeeds endFieldSpeeds =
           new ChassisSpeeds(endSpeedTrans.getX(), endSpeedTrans.getY(), 0.0);
       var endStates =
-          config.kinematics.toSwerveModuleStates(
-              ChassisSpeeds.fromFieldRelativeSpeeds(
+          config.toSwerveModuleStates(
+              fromFieldRelativeSpeeds(
                   endFieldSpeeds, states.get(states.size() - 1).pose.getRotation()));
       for (int m = 0; m < config.numModules; m++) {
         states.get(states.size() - 1).moduleStates[m].speedMetersPerSecond =
             endStates[m].speedMetersPerSecond;
       }
       states.get(states.size() - 1).fieldSpeeds = endFieldSpeeds;
-      states.get(states.size() - 1).linearVelocity = path.getGoalEndState().getVelocity();
+      states.get(states.size() - 1).linearVelocity = path.getGoalEndState().velocityMPS();
 
       // Reverse pass
       reverseAccelPass(states, config);
 
-      List<EventMarker> unaddedMarkers =
-          new ArrayList<>(
-              path.getEventMarkers().stream()
-                  .sorted(Comparator.comparingDouble(EventMarker::getWaypointRelativePos))
-                  .toList());
-
-      // Loop back over and calculate time
-      for (int i = 1; i < states.size(); i++) {
-        double v0 = states.get(i - 1).linearVelocity;
-        double v = states.get(i).linearVelocity;
-        double dt = (2 * states.get(i).deltaPos) / (v + v0);
-        states.get(i).timeSeconds = states.get(i - 1).timeSeconds + dt;
-
-        if (!unaddedMarkers.isEmpty()) {
-          double prevPos = states.get(i - 1).waypointRelativePos;
-          double pos = states.get(i).waypointRelativePos;
-
-          EventMarker next = unaddedMarkers.get(0);
-          if (Math.abs(next.getWaypointRelativePos() - prevPos)
-              <= Math.abs(next.getWaypointRelativePos() - pos)) {
-            eventCommands.add(Pair.of(states.get(i - 1).timeSeconds, next.getCommand()));
-            unaddedMarkers.remove(0);
+      Queue<Event> unaddedEvents =
+          new PriorityQueue<>(Comparator.comparingDouble(Event::getTimestampSeconds));
+      for (EventMarker marker : path.getEventMarkers()) {
+        if (marker.command() != null) {
+          unaddedEvents.add(new ScheduleCommandEvent(marker.position(), marker.command()));
+        }
+        if (marker.endPosition() >= 0.0) {
+          // This marker is zoned
+          if (marker.command() != null) {
+            unaddedEvents.add(new CancelCommandEvent(marker.endPosition(), marker.command()));
           }
+          unaddedEvents.add(new TriggerEvent(marker.position(), marker.triggerName(), true));
+          unaddedEvents.add(new TriggerEvent(marker.endPosition(), marker.triggerName(), false));
+        } else {
+          unaddedEvents.add(new OneShotTriggerEvent(marker.position(), marker.triggerName()));
+        }
+      }
+      for (PointTowardsZone zone : path.getPointTowardsZones()) {
+        unaddedEvents.add(new PointTowardsZoneEvent(zone.minPosition(), zone.name(), true));
+        unaddedEvents.add(new PointTowardsZoneEvent(zone.maxPosition(), zone.name(), false));
+      }
+
+      // Loop back over and calculate time and module torque
+      for (int i = 1; i < states.size(); i++) {
+        PathPlannerTrajectoryState prevState = states.get(i - 1);
+        PathPlannerTrajectoryState state = states.get(i);
+
+        double v0 = prevState.linearVelocity;
+        double v = state.linearVelocity;
+        double dt = (2 * state.deltaPos) / (v + v0);
+        state.timeSeconds = prevState.timeSeconds + dt;
+
+        ChassisSpeeds prevRobotSpeeds =
+            fromFieldRelativeSpeeds(prevState.fieldSpeeds, prevState.pose.getRotation());
+        ChassisSpeeds robotSpeeds =
+            fromFieldRelativeSpeeds(state.fieldSpeeds, state.pose.getRotation());
+        double chassisAccelX =
+            (robotSpeeds.vxMetersPerSecond - prevRobotSpeeds.vxMetersPerSecond) / dt;
+        double chassisAccelY =
+            (robotSpeeds.vyMetersPerSecond - prevRobotSpeeds.vyMetersPerSecond) / dt;
+        double chassisForceX = chassisAccelX * config.massKG;
+        double chassisForceY = chassisAccelY * config.massKG;
+
+        double angularAccel =
+            (robotSpeeds.omegaRadiansPerSecond - prevRobotSpeeds.omegaRadiansPerSecond) / dt;
+        double angTorque = angularAccel * config.MOI;
+        ChassisSpeeds chassisForces = new ChassisSpeeds(chassisForceX, chassisForceY, angTorque);
+
+        Translation2d[] wheelForces = config.chassisForcesToWheelForceVectors(chassisForces);
+        double[] accelFF = new double[config.numModules];
+        double[] linearForceFF = new double[config.numModules];
+        double[] torqueCurrentFF = new double[config.numModules];
+        double[] forceXFF = new double[config.numModules];
+        double[] forceYFF = new double[config.numModules];
+        for (int m = 0; m < config.numModules; m++) {
+          double wheelForceDist = wheelForces[m].getNorm();
+          double appliedForce =
+              wheelForceDist > 1e-6
+                  ? wheelForceDist
+                      * wheelForces[m].getAngle().minus(state.moduleStates[m].angle).getCos()
+                  : 0.0;
+          double wheelTorque = appliedForce * config.moduleConfig.wheelRadiusMeters;
+          double torqueCurrent = config.moduleConfig.driveMotor.getCurrent(wheelTorque);
+
+          accelFF[m] =
+              (state.moduleStates[m].speedMetersPerSecond
+                      - prevState.moduleStates[m].speedMetersPerSecond)
+                  / dt;
+          linearForceFF[m] = appliedForce;
+          torqueCurrentFF[m] = torqueCurrent;
+          forceXFF[m] = wheelForces[m].getX();
+          forceYFF[m] = wheelForces[m].getY();
+        }
+        prevState.feedforwards =
+            new DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF, forceYFF);
+
+        // Un-added events have their timestamp set to a waypoint relative position
+        // When adding the event to this trajectory, set its timestamp properly
+        while (!unaddedEvents.isEmpty()
+            && Math.abs(
+                    unaddedEvents.element().getTimestampSeconds() - prevState.waypointRelativePos)
+                <= Math.abs(
+                    unaddedEvents.element().getTimestampSeconds() - state.waypointRelativePos)) {
+          events.add(unaddedEvents.poll());
+          events.get(events.size() - 1).setTimestamp(prevState.timeSeconds);
         }
       }
 
-      eventCommands.sort(Comparator.comparing(Pair::getFirst));
+      while (!unaddedEvents.isEmpty()) {
+        // There are events that need to be added to the last state
+        Event next = unaddedEvents.poll();
+        next.setTimestamp(states.get(states.size() - 1).timeSeconds);
+        events.add(next);
+      }
+
+      // Create feedforwards for the end state
+      states.get(states.size() - 1).feedforwards = DriveFeedforwards.zeros(config.numModules);
     }
   }
 
@@ -142,7 +212,7 @@ public class PathPlannerTrajectory {
     Rotation2d prevRotationTargetRot = startingRotation;
     int nextRotationTargetIdx = getNextRotationTargetIdx(path, 0);
     Rotation2d nextRotationTargetRot =
-        path.getPoint(nextRotationTargetIdx).rotationTarget.getTarget();
+        path.getPoint(nextRotationTargetIdx).rotationTarget.rotation();
 
     for (int i = 0; i < path.numPoints(); i++) {
       PathPoint p = path.getPoint(i);
@@ -151,7 +221,7 @@ public class PathPlannerTrajectory {
         prevRotationTargetIdx = nextRotationTargetIdx;
         prevRotationTargetRot = nextRotationTargetRot;
         nextRotationTargetIdx = getNextRotationTargetIdx(path, i);
-        nextRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.getTarget();
+        nextRotationTargetRot = path.getPoint(nextRotationTargetIdx).rotationTarget.rotation();
       }
 
       // Holonomic rotation is interpolated. We use the distance along the path
@@ -167,11 +237,18 @@ public class PathPlannerTrajectory {
       Pose2d robotPose = new Pose2d(p.position, holonomicRot);
       var state = new PathPlannerTrajectoryState();
       state.pose = robotPose;
-      state.constraints = path.getConstraintsForPoint(i);
+      state.constraints = p.constraints;
+      state.waypointRelativePos = p.waypointRelativePos;
 
       // Calculate robot heading
       if (i != path.numPoints() - 1) {
-        state.heading = path.getPoint(i + 1).position.minus(state.pose.getTranslation()).getAngle();
+        Translation2d headingTranslation =
+            path.getPoint(i + 1).position.minus(state.pose.getTranslation());
+        if (headingTranslation.getNorm() <= 1e-6) {
+          state.heading = Rotation2d.kZero;
+        } else {
+          state.heading = headingTranslation.getAngle();
+        }
       } else {
         state.heading = states.get(i - 1).heading;
       }
@@ -212,13 +289,17 @@ public class PathPlannerTrajectory {
     for (int i = 0; i < states.size(); i++) {
       for (int m = 0; m < config.numModules; m++) {
         if (i != states.size() - 1) {
-          states.get(i).moduleStates[m].fieldAngle =
+          Translation2d fieldTranslation =
               states
                   .get(i + 1)
                   .moduleStates[m]
                   .fieldPos
-                  .minus(states.get(i).moduleStates[m].fieldPos)
-                  .getAngle();
+                  .minus(states.get(i).moduleStates[m].fieldPos);
+          if (fieldTranslation.getNorm() <= 1e-6) {
+            states.get(i).moduleStates[m].fieldAngle = Rotation2d.kZero;
+          } else {
+            states.get(i).moduleStates[m].fieldAngle = fieldTranslation.getAngle();
+          }
           states.get(i).moduleStates[m].angle =
               states.get(i).moduleStates[m].fieldAngle.minus(states.get(i).pose.getRotation());
         } else {
@@ -238,21 +319,23 @@ public class PathPlannerTrajectory {
       var nextState = states.get(i + 1);
 
       // Calculate the linear force vector and torque acting on the whole robot
-      Translation2d linearForceVec = new Translation2d();
+      Translation2d linearForceVec = Translation2d.kZero;
       double totalTorque = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         double lastVel = prevState.moduleStates[m].speedMetersPerSecond;
         // This pass will only be handling acceleration of the robot, meaning that the "torque"
         // acting on the module due to friction and other losses will be fighting the motor
+        double lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters;
+        double currentDraw =
+            Math.min(
+                config.moduleConfig.driveMotor.getCurrent(
+                    lastVelRadPerSec, state.constraints.nominalVoltageVolts()),
+                config.moduleConfig.driveCurrentLimit);
         double availableTorque =
-            config.moduleConfig.driveMotorTorqueCurve.get(lastVel / config.moduleConfig.rpmToMps)
-                - config.moduleConfig.torqueLoss;
-        double wheelTorque = availableTorque * config.moduleConfig.driveGearing;
-        double forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters;
-        if (!config.isHolonomic) {
-          // Two motors per module if differential
-          forceAtCarpet *= 2;
-        }
+            config.moduleConfig.driveMotor.getTorque(currentDraw) - config.moduleConfig.torqueLoss;
+        availableTorque = Math.min(availableTorque, config.maxTorqueFriction);
+        double forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters;
+
         Translation2d forceVec = new Translation2d(forceAtCarpet, state.moduleStates[m].fieldAngle);
 
         // Add the module force vector to the robot force vector
@@ -261,27 +344,32 @@ public class PathPlannerTrajectory {
         // Calculate the torque this module will apply to the robot
         Rotation2d angleToModule =
             state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
-        Rotation2d theta = forceVec.getAngle().minus(angleToModule);
+        Rotation2d theta;
+        if (forceVec.getNorm() <= 1e-6) {
+          theta = Rotation2d.kZero.minus(angleToModule);
+        } else {
+          theta = forceVec.getAngle().minus(angleToModule);
+        }
         totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
       }
 
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      double maxAngAccel = state.constraints.getMaxAngularAccelerationRpsSq();
+      double maxAngAccel = state.constraints.maxAngularAccelerationRadPerSecSq();
       double angularAccel = MathUtil.clamp(totalTorque / config.MOI, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec.div(config.massKG);
-      double maxAccel = state.constraints.getMaxAccelerationMpsSq();
+      double maxAccel = state.constraints.maxAccelerationMPSSq();
       double accel = accelVec.getNorm();
       if (accel > maxAccel) {
         accelVec = accelVec.times(maxAccel / accel);
       }
 
       ChassisSpeeds chassisAccel =
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              accelVec.getX(), accelVec.getY(), angularAccel, state.pose.getRotation());
-      var accelStates = config.kinematics.toSwerveModuleStates(chassisAccel);
+          new ChassisSpeeds(accelVec.getX(), accelVec.getY(), angularAccel);
+      chassisAccel.toRobotRelativeSpeeds(state.pose.getRotation());
+      var accelStates = config.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < config.numModules; m++) {
         double moduleAcceleration = accelStates[m].speedMetersPerSecond;
 
@@ -302,7 +390,9 @@ public class PathPlannerTrajectory {
         // Fc = M * v^2 / R
         if (Double.isFinite(curveRadius)) {
           double maxSafeVel =
-              Math.sqrt((config.wheelFrictionForce * Math.abs(curveRadius)) / config.massKG);
+              Math.sqrt(
+                  (config.wheelFrictionForce * Math.abs(curveRadius))
+                      / (config.massKG / config.numModules));
           state.moduleStates[m].speedMetersPerSecond =
               Math.min(state.moduleStates[m].speedMetersPerSecond, maxSafeVel);
         }
@@ -311,26 +401,31 @@ public class PathPlannerTrajectory {
       // Go over the modules again to make sure they take the same amount of time to reach the next
       // state
       double maxDT = 0.0;
+      double realMaxDT = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         Rotation2d prevRotDelta =
             state.moduleStates[m].angle.minus(prevState.moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
-          continue;
-        }
-
         double modVel = state.moduleStates[m].speedMetersPerSecond;
         double dt = nextState.moduleStates[m].deltaPos / modVel;
 
         if (Double.isFinite(dt)) {
-          maxDT = Math.max(dt, maxDT);
+          realMaxDT = Math.max(dt, realMaxDT);
+
+          if (Math.abs(prevRotDelta.getDegrees()) < 60) {
+            maxDT = Math.max(dt, maxDT);
+          }
         }
+      }
+
+      if (maxDT == 0.0) {
+        maxDT = realMaxDT;
       }
 
       // Recalculate all module velocities with the allowed DT
       for (int m = 0; m < config.numModules; m++) {
         Rotation2d prevRotDelta =
             state.moduleStates[m].angle.minus(prevState.moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
+        if (Math.abs(prevRotDelta.getDegrees()) >= 60) {
           continue;
         }
 
@@ -338,10 +433,10 @@ public class PathPlannerTrajectory {
       }
 
       // Use the calculated module velocities to calculate the robot speeds
-      ChassisSpeeds desiredSpeeds = config.kinematics.toChassisSpeeds(state.moduleStates);
+      ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(state.moduleStates);
 
-      double maxChassisVel = state.constraints.getMaxVelocityMps();
-      double maxChassisAngVel = state.constraints.getMaxAngularVelocityRps();
+      double maxChassisVel = state.constraints.maxVelocityMPS();
+      double maxChassisAngVel = state.constraints.maxAngularVelocityRadPerSec();
 
       desaturateWheelSpeeds(
           state.moduleStates,
@@ -350,9 +445,8 @@ public class PathPlannerTrajectory {
           maxChassisVel,
           maxChassisAngVel);
 
-      state.fieldSpeeds =
-          ChassisSpeeds.fromRobotRelativeSpeeds(
-              config.kinematics.toChassisSpeeds(state.moduleStates), state.pose.getRotation());
+      state.fieldSpeeds = config.toChassisSpeeds(state.moduleStates);
+      state.fieldSpeeds.toFieldRelativeSpeeds(state.pose.getRotation());
       state.linearVelocity =
           Math.hypot(state.fieldSpeeds.vxMetersPerSecond, state.fieldSpeeds.vyMetersPerSecond);
     }
@@ -365,20 +459,22 @@ public class PathPlannerTrajectory {
       var nextState = states.get(i + 1);
 
       // Calculate the linear force vector and torque acting on the whole robot
-      Translation2d linearForceVec = new Translation2d();
+      Translation2d linearForceVec = Translation2d.kZero;
       double totalTorque = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         double lastVel = nextState.moduleStates[m].speedMetersPerSecond;
         // This pass will only be handling deceleration of the robot, meaning that the "torque"
         // acting on the module due to friction and other losses will not be fighting the motor
-        double availableTorque =
-            config.moduleConfig.driveMotorTorqueCurve.get(lastVel / config.moduleConfig.rpmToMps);
-        double wheelTorque = availableTorque * config.moduleConfig.driveGearing;
-        double forceAtCarpet = wheelTorque / config.moduleConfig.wheelRadiusMeters;
-        if (!config.isHolonomic) {
-          // Two motors per module if differential
-          forceAtCarpet *= 2;
-        }
+        double lastVelRadPerSec = lastVel / config.moduleConfig.wheelRadiusMeters;
+        double currentDraw =
+            Math.min(
+                config.moduleConfig.driveMotor.getCurrent(
+                    lastVelRadPerSec, state.constraints.nominalVoltageVolts()),
+                config.moduleConfig.driveCurrentLimit);
+        double availableTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
+        availableTorque = Math.min(availableTorque, config.maxTorqueFriction);
+        double forceAtCarpet = availableTorque / config.moduleConfig.wheelRadiusMeters;
+
         Translation2d forceVec =
             new Translation2d(
                 forceAtCarpet, state.moduleStates[m].fieldAngle.plus(Rotation2d.k180deg));
@@ -389,28 +485,32 @@ public class PathPlannerTrajectory {
         // Calculate the torque this module will apply to the robot
         Rotation2d angleToModule =
             state.moduleStates[m].fieldPos.minus(state.pose.getTranslation()).getAngle();
-        Rotation2d theta = forceVec.getAngle().minus(angleToModule);
+        Rotation2d theta;
+        if (forceVec.getNorm() <= 1e-6) {
+          theta = Rotation2d.kZero.minus(angleToModule);
+        } else {
+          theta = forceVec.getAngle().minus(angleToModule);
+        }
         totalTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
       }
 
       // Use the robot accelerations to calculate how each module should accelerate
       // Even though kinematics is usually used for velocities, it can still
       // convert chassis accelerations to module accelerations
-      double maxAngAccel = state.constraints.getMaxAngularAccelerationRpsSq();
+      double maxAngAccel = state.constraints.maxAngularAccelerationRadPerSecSq();
       double angularAccel = MathUtil.clamp(totalTorque / config.MOI, -maxAngAccel, maxAngAccel);
 
       Translation2d accelVec = linearForceVec.div(config.massKG);
-      double maxAccel = state.constraints.getMaxAccelerationMpsSq();
+      double maxAccel = state.constraints.maxAccelerationMPSSq();
       double accel = accelVec.getNorm();
       if (accel > maxAccel) {
         accelVec = accelVec.times(maxAccel / accel);
       }
 
       ChassisSpeeds chassisAccel =
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              new ChassisSpeeds(accelVec.getX(), accelVec.getY(), angularAccel),
-              state.pose.getRotation());
-      var accelStates = config.kinematics.toSwerveModuleStates(chassisAccel);
+          new ChassisSpeeds(accelVec.getX(), accelVec.getY(), angularAccel);
+      chassisAccel.toRobotRelativeSpeeds(state.pose.getRotation());
+      var accelStates = config.toSwerveModuleStates(chassisAccel);
       for (int m = 0; m < config.numModules; m++) {
         double moduleAcceleration = accelStates[m].speedMetersPerSecond;
 
@@ -428,26 +528,31 @@ public class PathPlannerTrajectory {
       // Go over the modules again to make sure they take the same amount of time to reach the next
       // state
       double maxDT = 0.0;
+      double realMaxDT = 0.0;
       for (int m = 0; m < config.numModules; m++) {
         Rotation2d prevRotDelta =
             state.moduleStates[m].angle.minus(states.get(i - 1).moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
-          continue;
-        }
-
         double modVel = state.moduleStates[m].speedMetersPerSecond;
         double dt = nextState.moduleStates[m].deltaPos / modVel;
 
         if (Double.isFinite(dt)) {
-          maxDT = Math.max(dt, maxDT);
+          realMaxDT = Math.max(dt, realMaxDT);
+
+          if (Math.abs(prevRotDelta.getDegrees()) < 60) {
+            maxDT = Math.max(dt, maxDT);
+          }
         }
+      }
+
+      if (maxDT == 0.0) {
+        maxDT = realMaxDT;
       }
 
       // Recalculate all module velocities with the allowed DT
       for (int m = 0; m < config.numModules; m++) {
         Rotation2d prevRotDelta =
             state.moduleStates[m].angle.minus(states.get(i - 1).moduleStates[m].angle);
-        if (Math.abs(prevRotDelta.getDegrees()) >= 45) {
+        if (Math.abs(prevRotDelta.getDegrees()) >= 60) {
           continue;
         }
 
@@ -455,10 +560,10 @@ public class PathPlannerTrajectory {
       }
 
       // Use the calculated module velocities to calculate the robot speeds
-      ChassisSpeeds desiredSpeeds = config.kinematics.toChassisSpeeds(state.moduleStates);
+      ChassisSpeeds desiredSpeeds = config.toChassisSpeeds(state.moduleStates);
 
-      double maxChassisVel = state.constraints.getMaxVelocityMps();
-      double maxChassisAngVel = state.constraints.getMaxAngularVelocityRps();
+      double maxChassisVel = state.constraints.maxVelocityMPS();
+      double maxChassisAngVel = state.constraints.maxAngularVelocityRadPerSec();
 
       maxChassisVel = Math.min(maxChassisVel, state.linearVelocity);
       maxChassisAngVel =
@@ -471,25 +576,24 @@ public class PathPlannerTrajectory {
           maxChassisVel,
           maxChassisAngVel);
 
-      state.fieldSpeeds =
-          ChassisSpeeds.fromRobotRelativeSpeeds(
-              config.kinematics.toChassisSpeeds(state.moduleStates), state.pose.getRotation());
+      state.fieldSpeeds = config.toChassisSpeeds(state.moduleStates);
+      state.fieldSpeeds.toFieldRelativeSpeeds(state.pose.getRotation());
       state.linearVelocity =
           Math.hypot(state.fieldSpeeds.vxMetersPerSecond, state.fieldSpeeds.vyMetersPerSecond);
     }
   }
 
   /**
-   * Get all of the pairs of timestamps + commands to run at those timestamps
+   * Get all the events to run while following this trajectory
    *
-   * @return Pairs of timestamps and event commands
+   * @return Events in this trajectory
    */
-  public List<Pair<Double, Command>> getEventCommands() {
-    return eventCommands;
+  public List<Event> getEvents() {
+    return events;
   }
 
   /**
-   * Get all of the pre-generated states in the trajectory
+   * Get all the pre-generated states in the trajectory
    *
    * @return List of all states
    */
@@ -535,6 +639,15 @@ public class PathPlannerTrajectory {
   }
 
   /**
+   * Get the total run time of the trajectory
+   *
+   * @return Total run time
+   */
+  public Time getTotalTime() {
+    return Seconds.of(getTotalTimeSeconds());
+  }
+
+  /**
    * Get the initial robot pose at the start of the trajectory
    *
    * @return Pose of the robot at the initial state
@@ -574,6 +687,29 @@ public class PathPlannerTrajectory {
 
     return prevSample.interpolate(
         sample, (time - prevSample.timeSeconds) / (sample.timeSeconds - prevSample.timeSeconds));
+  }
+
+  /**
+   * Get the target state at the given point in time along the trajectory
+   *
+   * @param time The time to sample the trajectory at
+   * @return The target state
+   */
+  public PathPlannerTrajectoryState sample(Time time) {
+    return sample(time.in(Seconds));
+  }
+
+  /**
+   * Flip this trajectory for the other side of the field, maintaining a blue alliance origin
+   *
+   * @return This trajectory with all states flipped to the other side of the field
+   */
+  public PathPlannerTrajectory flip() {
+    List<PathPlannerTrajectoryState> mirroredStates = new ArrayList<>(states.size());
+    for (var state : states) {
+      mirroredStates.add(state.flip());
+    }
+    return new PathPlannerTrajectory(mirroredStates, getEvents());
   }
 
   private static void desaturateWheelSpeeds(
@@ -630,5 +766,25 @@ public class PathPlannerTrajectory {
   private static Rotation2d cosineInterpolate(Rotation2d start, Rotation2d end, double t) {
     double t2 = (1.0 - Math.cos(t * Math.PI)) / 2.0;
     return start.interpolate(end, t2);
+  }
+
+  // TODO: Remove if ChassisSpeeds factory methods get un-deprecated
+  private static ChassisSpeeds fromRobotRelativeSpeeds(
+      ChassisSpeeds speeds, Rotation2d robotRotation) {
+    ChassisSpeeds ret =
+        new ChassisSpeeds(
+            speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
+    ret.toFieldRelativeSpeeds(robotRotation);
+    return ret;
+  }
+
+  // TODO: Remove if ChassisSpeeds factory methods get un-deprecated
+  private static ChassisSpeeds fromFieldRelativeSpeeds(
+      ChassisSpeeds speeds, Rotation2d robotRotation) {
+    ChassisSpeeds ret =
+        new ChassisSpeeds(
+            speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond);
+    ret.toRobotRelativeSpeeds(robotRotation);
+    return ret;
   }
 }

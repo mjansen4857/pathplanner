@@ -47,11 +47,11 @@ void main() {
 
   group('SwerveDriveKinematics', () {
     test('constructor', () {
-      var modules = [
-        const Translation2d(x: 0.4, y: 0.4),
-        const Translation2d(x: 0.4, y: -0.4),
-        const Translation2d(x: -0.4, y: 0.4),
-        const Translation2d(x: -0.4, y: -0.4),
+      const modules = [
+        Translation2d(0.4, 0.4),
+        Translation2d(0.4, -0.4),
+        Translation2d(-0.4, 0.4),
+        Translation2d(-0.4, -0.4),
       ];
       var kinematics = SwerveDriveKinematics(modules);
       expect(kinematics.toSwerveModuleStates(const ChassisSpeeds()).length,
@@ -59,32 +59,32 @@ void main() {
     });
 
     test('toSwerveModuleStates', () {
-      var modules = [
-        const Translation2d(x: 0.4, y: 0.4),
-        const Translation2d(x: 0.4, y: -0.4),
-        const Translation2d(x: -0.4, y: 0.4),
-        const Translation2d(x: -0.4, y: -0.4),
+      const modules = [
+        Translation2d(0.4, 0.4),
+        Translation2d(0.4, -0.4),
+        Translation2d(-0.4, 0.4),
+        Translation2d(-0.4, -0.4),
       ];
       var kinematics = SwerveDriveKinematics(modules);
       var chassisSpeeds = const ChassisSpeeds(vx: 1.0, vy: 2.0, omega: 3.0);
       var moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds);
       expect(moduleStates.length, equals(4));
       expect(moduleStates[0].speedMetersPerSecond, closeTo(3.21, 0.01));
-      expect(moduleStates[0].angle.getDegrees(), closeTo(93.58, 0.01));
+      expect(moduleStates[0].angle.degrees, closeTo(93.58, 0.01));
       expect(moduleStates[1].speedMetersPerSecond, closeTo(3.88, 0.01));
-      expect(moduleStates[1].angle.getDegrees(), closeTo(55.49, 0.01));
+      expect(moduleStates[1].angle.degrees, closeTo(55.49, 0.01));
       expect(moduleStates[2].speedMetersPerSecond, closeTo(0.82, 0.01));
-      expect(moduleStates[2].angle.getDegrees(), closeTo(104.04, 0.01));
+      expect(moduleStates[2].angle.degrees, closeTo(104.04, 0.01));
       expect(moduleStates[3].speedMetersPerSecond, closeTo(2.34, 0.01));
-      expect(moduleStates[3].angle.getDegrees(), closeTo(19.98, 0.01));
+      expect(moduleStates[3].angle.degrees, closeTo(19.98, 0.01));
     });
 
     test('toChassisSpeeds', () {
-      var modules = [
-        const Translation2d(x: 0.4, y: 0.4),
-        const Translation2d(x: 0.4, y: -0.4),
-        const Translation2d(x: -0.4, y: 0.4),
-        const Translation2d(x: -0.4, y: -0.4),
+      const modules = [
+        Translation2d(0.4, 0.4),
+        Translation2d(0.4, -0.4),
+        Translation2d(-0.4, 0.4),
+        Translation2d(-0.4, -0.4),
       ];
       var kinematics = SwerveDriveKinematics(modules);
       var moduleStates = [

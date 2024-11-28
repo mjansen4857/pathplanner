@@ -20,6 +20,7 @@
 #include "pathplanner/lib/path/PathConstraints.h"
 #include "pathplanner/lib/util/GeometryUtil.h"
 #include "pathplanner/lib/config/RobotConfig.h"
+#include "pathplanner/lib/events/Event.h"
 
 namespace pathplanner {
 
@@ -34,12 +35,11 @@ public:
 	 * Create a trajectory with pre-generated states and list of events
 	 *
 	 * @param states Pre-generated states
-	 * @param eventCommands Event commands
+	 * @param events Events for this trajectory
 	 */
 	PathPlannerTrajectory(std::vector<PathPlannerTrajectoryState> states,
-			std::vector<
-					std::pair<units::second_t, std::shared_ptr<frc2::Command>>> eventCommands) : m_states(
-			states), m_eventCommands(eventCommands) {
+			std::vector<std::shared_ptr<Event>> events) : m_states(states), m_events(
+			events) {
 	}
 
 	/**
@@ -64,13 +64,12 @@ public:
 			const frc::Rotation2d &startingRotation, const RobotConfig &config);
 
 	/**
-	 * Get all of the pairs of timestamps + commands to run at those timestamps
+	 * Get all the events to run while following this trajectory
 	 *
-	 * @return Pairs of timestamps and event commands
+	 * @return Events in this trajectory
 	 */
-	inline std::vector<
-			std::pair<units::second_t, std::shared_ptr<frc2::Command>>> getEventCommands() {
-		return m_eventCommands;
+	inline std::vector<std::shared_ptr<Event>> getEvents() {
+		return m_events;
 	}
 
 	/**
@@ -135,9 +134,22 @@ public:
 	 * @return The target state
 	 */
 	PathPlannerTrajectoryState sample(const units::second_t time);
+
+	/**
+	 * Flip this trajectory for the other side of the field, maintaining a blue alliance origin
+	 *
+	 * @return This trajectory with all states flipped to the other side of the field
+	 */
+	inline PathPlannerTrajectory flip() {
+		std::vector < PathPlannerTrajectoryState > mirroredStates;
+		for (auto state : m_states) {
+			mirroredStates.emplace_back(state.flip());
+		}
+		return PathPlannerTrajectory(mirroredStates, getEvents());
+	}
 private:
 	std::vector<PathPlannerTrajectoryState> m_states;
-	std::vector<std::pair<units::second_t, std::shared_ptr<frc2::Command>>> m_eventCommands;
+	std::vector<std::shared_ptr<Event>> m_events;
 
 	static void generateStates(std::vector<PathPlannerTrajectoryState> &states,
 			std::shared_ptr<PathPlannerPath> path,
@@ -165,41 +177,6 @@ private:
 			const frc::Rotation2d end, const double t) {
 		double t2 = (1.0 - std::cos(t * M_PI)) / 2.0;
 		return GeometryUtil::rotationLerp(start, end, t2);
-	}
-
-	static inline std::vector<frc::SwerveModuleState> toSwerveModuleStates(
-			RobotConfig config, frc::ChassisSpeeds chassisSpeeds) {
-		if (config.isHolonomic) {
-			auto states = config.swerveKinematics.ToSwerveModuleStates(
-					chassisSpeeds);
-			return std::vector < frc::SwerveModuleState
-					> (states.begin(), states.end());
-		} else {
-			auto states = config.diffKinematics.ToSwerveModuleStates(
-					chassisSpeeds);
-			return std::vector < frc::SwerveModuleState
-					> (states.begin(), states.end());
-		}
-	}
-
-	static inline frc::ChassisSpeeds toChassisSpeeds(RobotConfig config,
-			std::vector<SwerveModuleTrajectoryState> states) {
-		if (config.isHolonomic) {
-			wpi::array < frc::SwerveModuleState, 4
-					> wpiStates { frc::SwerveModuleState { states[0].speed,
-							states[0].angle }, frc::SwerveModuleState {
-							states[1].speed, states[1].angle },
-							frc::SwerveModuleState { states[2].speed,
-									states[2].angle }, frc::SwerveModuleState {
-									states[3].speed, states[3].angle } };
-			return config.swerveKinematics.ToChassisSpeeds(wpiStates);
-		} else {
-			wpi::array < frc::SwerveModuleState, 2
-					> wpiStates { frc::SwerveModuleState { states[0].speed,
-							states[0].angle }, frc::SwerveModuleState {
-							states[1].speed, states[1].angle } };
-			return config.diffKinematics.ToChassisSpeeds(wpiStates);
-		}
 	}
 };
 }

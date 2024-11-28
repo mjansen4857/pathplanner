@@ -2,18 +2,15 @@ from __future__ import annotations
 
 from typing import List, Tuple, Dict, Set, Union
 from dataclasses import dataclass
-from wpimath.geometry import Translation2d
+from wpimath.geometry import Translation2d, Pose2d
 import time
 
-from .path import PathConstraints, GoalEndState, PathPlannerPath, PathPoint, PathSegment
-from .geometry_util import cubicLerp, decimal_range
+from .path import PathConstraints, GoalEndState, PathPlannerPath, Waypoint
 import math
 from threading import Thread, RLock
 import os
 from wpilib import getDeployDirectory
 import json
-from ntcore import StringPublisher, DoubleArrayPublisher, DoubleArraySubscriber, NetworkTableInstance, PubSubOptions, \
-    EventFlags
 
 
 class Pathfinder:
@@ -61,110 +58,6 @@ class Pathfinder:
         :param current_robot_pos: The current position of the robot. This is needed to change the start position of the path to properly avoid obstacles
         """
         raise NotImplementedError
-
-
-class RemoteADStar(Pathfinder):
-    _navGridJsonPub: StringPublisher
-    _startPosPub: DoubleArrayPublisher
-    _goalPosPub: DoubleArrayPublisher
-    _dynamicObstaclePub: DoubleArrayPublisher
-
-    _pathPointsSub: DoubleArraySubscriber
-
-    _currentPath: List[PathPoint] = []
-    _newPathAvailable: bool = False
-
-    def __init__(self):
-        nt = NetworkTableInstance.getDefault()
-
-        self._navGridJsonPub = nt.getStringTopic('/PPLibCoprocessor/RemoteADStar/navGrid').publish()
-        self._startPosPub = nt.getDoubleArrayTopic('/PPLibCoprocessor/RemoteADStar/startPos').publish()
-        self._goalPosPub = nt.getDoubleArrayTopic('/PPLibCoprocessor/RemoteADStar/goalPos').publish()
-        self._dynamicObstaclePub = nt.getDoubleArrayTopic('/PPLibCoprocessor/RemoteADStar/dynamicObstacles').publish()
-
-        self._pathPointsSub = nt.getDoubleArrayTopic('/PPLibCoprocessor/RemoteADStar/pathPoints').subscribe([],
-                                                                                                            PubSubOptions(
-                                                                                                                sendAll=True,
-                                                                                                                keepDuplicates=True))
-
-        nt.addListener(self._pathPointsSub, EventFlags.kValueAll, self._handlePathListenerEvent)
-
-        filePath = os.path.join(getDeployDirectory(), 'pathplanner', 'navgrid.json')
-
-        with open(filePath, 'r') as f:
-            file_content = f.read()
-            self._navGridJsonPub.set(file_content)
-
-    def _handlePathListenerEvent(self, event):
-        pathPointsArr = self._pathPointsSub.get()
-
-        pathPoints = []
-        for i in range(0, len(pathPointsArr) - 1, 2):
-            pathPoints.append(PathPoint(Translation2d(pathPointsArr[i], pathPointsArr[i + 1])))
-
-        self._currentPath = pathPoints
-        self._newPathAvailable = True
-
-    def isNewPathAvailable(self) -> bool:
-        """
-        Get if a new path has been calculated since the last time a path was retrieved
-
-        :return: True if a new path is available
-        """
-        return self._newPathAvailable
-
-    def getCurrentPath(self, constraints: PathConstraints, goal_end_state: GoalEndState) -> Union[
-        PathPlannerPath, None]:
-        """
-        Get the most recently calculated path
-
-        :param constraints: The path constraints to use when creating the path
-        :param goal_end_state: The goal end state to use when creating the path
-        :return: The PathPlannerPath created from the points calculated by the pathfinder
-        """
-        pathPoints = [p for p in self._currentPath]
-
-        self._newPathAvailable = False
-
-        if len(pathPoints) < 2:
-            return None
-
-        return PathPlannerPath.fromPathPoints(pathPoints, constraints, goal_end_state)
-
-    def setStartPosition(self, start_position: Translation2d) -> None:
-        """
-        Set the start position to pathfind from
-
-        :param start_position: Start position on the field. If this is within an obstacle it will be moved to the nearest non-obstacle node.
-        """
-        self._startPosPub.set([start_position.X(), start_position.Y()])
-
-    def setGoalPosition(self, goal_position: Translation2d) -> None:
-        """
-        Set the goal position to pathfind to
-
-        :param goal_position: Goal position on the field. f this is within an obstacle it will be moved to the nearest non-obstacle node.
-        """
-        self._goalPosPub.set([goal_position.X(), goal_position.Y()])
-
-    def setDynamicObstacles(self, obs: List[Tuple[Translation2d, Translation2d]],
-                            current_robot_pos: Translation2d) -> None:
-        """
-        Set the dynamic obstacles that should be avoided while pathfinding.
-
-        :param obs: A List of Translation2d pairs representing obstacles. Each Translation2d represents opposite corners of a bounding box.
-        :param current_robot_pos: The current position of the robot. This is needed to change the start position of the path to properly avoid obstacles
-        """
-        # First two doubles represent current robot pos
-        obsArr = [current_robot_pos.X(), current_robot_pos.Y()]
-
-        for box in obs:
-            obsArr.append(box[0].X())
-            obsArr.append(box[0].Y())
-            obsArr.append(box[1].X())
-            obsArr.append(box[1].Y())
-
-        self._dynamicObstaclePub.set(obsArr)
 
 
 @dataclass(frozen=True)
@@ -224,7 +117,7 @@ class LocalADStar(Pathfinder):
     _pathLock: RLock = RLock()
     _requestLock: RLock = RLock()
 
-    _currentPathPoints: List[PathPoint] = []
+    _currentWaypoints: List[Waypoint] = []
     _currentPathFull: List[GridPosition] = []
 
     def __init__(self):
@@ -294,15 +187,15 @@ class LocalADStar(Pathfinder):
         :return: The PathPlannerPath created from the points calculated by the pathfinder
         """
         self._pathLock.acquire()
-        pathPoints = [p for p in self._currentPathPoints]
+        waypoints = [w for w in self._currentWaypoints]
         self._pathLock.release()
 
         self._newPathAvailable = False
 
-        if len(pathPoints) == 0:
+        if len(waypoints) < 2:
             return None
 
-        return PathPlannerPath.fromPathPoints(pathPoints, constraints, goal_end_state)
+        return PathPlannerPath(waypoints, constraints, None, goal_end_state)
 
     def setStartPosition(self, start_position: Translation2d) -> None:
         """
@@ -425,11 +318,11 @@ class LocalADStar(Pathfinder):
             self._computeOrImprovePath(s_start, s_goal, obstacles)
 
             pathPositions = self._extractPath(s_start, s_goal, obstacles)
-            pathPoints = self._createPathPoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
+            waypoints = self._createWaypoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
 
             self._pathLock.acquire()
             self._currentPathFull = pathPositions
-            self._currentPathPoints = pathPoints
+            self._currentWaypoints = waypoints
             self._pathLock.release()
 
             self._newPathAvailable = False
@@ -444,11 +337,11 @@ class LocalADStar(Pathfinder):
                 self._computeOrImprovePath(s_start, s_goal, obstacles)
 
                 pathPositions = self._extractPath(s_start, s_goal, obstacles)
-                pathPoints = self._createPathPoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
+                waypoints = self._createWaypoints(pathPositions, real_start_pos, real_goal_pos, obstacles)
 
                 self._pathLock.acquire()
                 self._currentPathFull = pathPositions
-                self._currentPathPoints = pathPoints
+                self._currentWaypoints = waypoints
                 self._pathLock.release()
 
                 self._newPathAvailable = True
@@ -480,8 +373,8 @@ class LocalADStar(Pathfinder):
 
         return path
 
-    def _createPathPoints(self, path: List[GridPosition], real_start_pos: Translation2d,
-                          real_goal_pos: Translation2d, obstacles: Set[GridPosition]) -> List[PathPoint]:
+    def _createWaypoints(self, path: List[GridPosition], real_start_pos: Translation2d,
+                         real_goal_pos: Translation2d, obstacles: Set[GridPosition]) -> List[Waypoint]:
         if len(path) == 0:
             return []
 
@@ -497,53 +390,29 @@ class LocalADStar(Pathfinder):
         fieldPosPath[0] = real_start_pos
         fieldPosPath[-1] = real_goal_pos
 
-        bezierPoints = [fieldPosPath[0],
-                        ((fieldPosPath[1] - fieldPosPath[0]) * LocalADStar._SMOOTHING_CONTROL_PCT) + fieldPosPath[0]]
+        if len(fieldPosPath) < 2:
+            return []
+
+        pathPoses = [Pose2d(fieldPosPath[0], (fieldPosPath[1] - fieldPosPath[0]).angle())]
         for i in range(1, len(fieldPosPath) - 1):
             last = fieldPosPath[i - 1]
             current = fieldPosPath[i]
             next = fieldPosPath[i + 1]
 
             anchor1 = ((current - last) * LocalADStar._SMOOTHING_ANCHOR_PCT) + last
+            heading1 = (current - last).angle()
             anchor2 = ((current - next) * LocalADStar._SMOOTHING_ANCHOR_PCT) + next
+            heading2 = (next - anchor2).angle()
 
-            controlDist = anchor1.distance(anchor2) * LocalADStar._SMOOTHING_CONTROL_PCT
+            pathPoses.append(Pose2d(anchor1, heading1))
+            pathPoses.append(Pose2d(anchor2, heading2))
 
-            prevControl1 = ((last - anchor1) * LocalADStar._SMOOTHING_CONTROL_PCT) + anchor1
-            nextControl1 = Translation2d(controlDist, (anchor1 - prevControl1).angle()) + anchor1
+        pathPoses.append(Pose2d(
+            fieldPosPath[-1],
+            (fieldPosPath[-1] - fieldPosPath[-2]).angle()
+        ))
 
-            prevControl2 = Translation2d(controlDist, (anchor2 - next).angle()) + anchor2
-            nextControl2 = ((next - anchor2) * LocalADStar._SMOOTHING_CONTROL_PCT) + anchor2
-
-            bezierPoints.append(prevControl1)
-            bezierPoints.append(anchor1)
-            bezierPoints.append(nextControl1)
-
-            bezierPoints.append(prevControl2)
-            bezierPoints.append(anchor2)
-            bezierPoints.append(nextControl2)
-
-        bezierPoints.append(
-            ((fieldPosPath[-2] - fieldPosPath[-1]) * LocalADStar._SMOOTHING_CONTROL_PCT) + fieldPosPath[-1])
-        bezierPoints.append(fieldPosPath[-1])
-
-        numSegments = int((len(bezierPoints) - 1) / 3)
-        pathPoints = []
-
-        for i in range(numSegments):
-            iOffset = i * 3
-
-            p1 = bezierPoints[iOffset]
-            p2 = bezierPoints[iOffset + 1]
-            p3 = bezierPoints[iOffset + 2]
-            p4 = bezierPoints[iOffset + 3]
-
-            segment = PathSegment(p1, p2, p3, p4)
-            segment.generatePathPoints(pathPoints, i, [], [], None)
-        pathPoints.append(PathPoint(bezierPoints[-1]))
-        pathPoints[-1].waypointRelativePos = numSegments
-
-        return pathPoints
+        return PathPlannerPath.waypointsFromPoses(pathPoses)
 
     def _findClosestNonObstacle(self, pos: GridPosition, obstacles: Set[GridPosition]) -> Union[GridPosition, None]:
         if pos not in obstacles:

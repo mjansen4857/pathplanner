@@ -1,16 +1,16 @@
 package com.pathplanner.lib.commands;
 
-import com.pathplanner.lib.config.ReplanningConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PathFollowingController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
+import com.pathplanner.lib.util.DriveFeedforwards;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /** Command group that will pathfind to the start of a path, then follow that path */
@@ -22,10 +22,13 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
    * @param pathfindingConstraints the path constraints for pathfinding
    * @param poseSupplier a supplier for the robot's current pose
    * @param currentRobotRelativeSpeeds a supplier for the robot's current robot relative speeds
-   * @param robotRelativeOutput a consumer for the output speeds (robot relative)
+   * @param output Output function that accepts robot-relative ChassisSpeeds and feedforwards for
+   *     each drive motor. If using swerve, these feedforwards will be in FL, FR, BL, BR order. If
+   *     using a differential drive, they will be in L, R order.
+   *     <p>NOTE: These feedforwards are assuming unoptimized module states. When you optimize your
+   *     module states, you will need to reverse the feedforwards for modules that have been flipped
    * @param controller Path following controller that will be used to follow the path
    * @param robotConfig The robot configuration
-   * @param replanningConfig Path replanning configuration
    * @param shouldFlipPath Should the target path be flipped to the other side of the field? This
    *     will maintain a global blue alliance origin.
    * @param requirements the subsystems required by this command (drive subsystem)
@@ -35,10 +38,9 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
       PathConstraints pathfindingConstraints,
       Supplier<Pose2d> poseSupplier,
       Supplier<ChassisSpeeds> currentRobotRelativeSpeeds,
-      Consumer<ChassisSpeeds> robotRelativeOutput,
+      BiConsumer<ChassisSpeeds, DriveFeedforwards> output,
       PathFollowingController controller,
       RobotConfig robotConfig,
-      ReplanningConfig replanningConfig,
       BooleanSupplier shouldFlipPath,
       Subsystem... requirements) {
     addCommands(
@@ -47,20 +49,18 @@ public class PathfindThenFollowPath extends SequentialCommandGroup {
             pathfindingConstraints,
             poseSupplier,
             currentRobotRelativeSpeeds,
-            robotRelativeOutput,
+            output,
             controller,
             robotConfig,
-            replanningConfig,
             shouldFlipPath,
             requirements),
         new FollowPathCommand(
             goalPath,
             poseSupplier,
             currentRobotRelativeSpeeds,
-            robotRelativeOutput,
+            output,
             controller,
             robotConfig,
-            replanningConfig,
             shouldFlipPath,
             requirements));
   }

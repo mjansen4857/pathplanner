@@ -1,11 +1,10 @@
-import 'dart:math';
-
 import 'package:file/memory.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/path/waypoint.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -88,7 +87,7 @@ void main() {
   });
 
   testWidgets('waypoint card titles', (widgetTester) async {
-    path.addWaypoint(const Point(7.0, 4.0));
+    path.addWaypoint(const Translation2d(7.0, 4.0));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -294,22 +293,22 @@ void main() {
       ),
     ));
 
-    var textField = find.widgetWithText(NumberTextField, 'Heading (Deg)');
+    final textField = find.widgetWithText(NumberTextField, 'Heading (Deg)');
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.waypoints[1].getHeadingDegrees();
+    final oldVal = path.waypoints[1].heading;
 
     await widgetTester.enterText(textField, '0.1');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].getHeadingDegrees(), closeTo(0.1, epsilon));
+    expect(path.waypoints[1].heading.degrees, closeTo(0.1, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[1].getHeadingDegrees(), closeTo(oldVal, epsilon));
+    expect(path.waypoints[1].heading.degrees, closeTo(oldVal.degrees, epsilon));
   });
 
   testWidgets('Prev length text field', (widgetTester) async {
@@ -333,18 +332,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.waypoints[1].getPrevControlLength();
+    num oldVal = path.waypoints[1].prevControlLength!;
 
-    await widgetTester.enterText(textField, '0.1');
+    await widgetTester.enterText(textField, '0.75');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].getPrevControlLength(), closeTo(0.1, epsilon));
+    expect(path.waypoints[1].prevControlLength, closeTo(0.75, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[1].getPrevControlLength(), closeTo(oldVal, epsilon));
+    expect(path.waypoints[1].prevControlLength, closeTo(oldVal, epsilon));
   });
 
   testWidgets('Next length text field', (widgetTester) async {
@@ -368,18 +367,18 @@ void main() {
 
     expect(textField, findsOneWidget);
 
-    num oldVal = path.waypoints[0].getNextControlLength();
+    num oldVal = path.waypoints[0].nextControlLength!;
 
-    await widgetTester.enterText(textField, '0.1');
+    await widgetTester.enterText(textField, '0.75');
     await widgetTester.testTextInput.receiveAction(TextInputAction.done);
     await widgetTester.pump();
 
     expect(pathChanged, true);
-    expect(path.waypoints[0].getNextControlLength(), closeTo(0.1, epsilon));
+    expect(path.waypoints[0].nextControlLength, closeTo(0.75, epsilon));
 
     undoStack.undo();
     await widgetTester.pump();
-    expect(path.waypoints[0].getNextControlLength(), closeTo(oldVal, epsilon));
+    expect(path.waypoints[0].nextControlLength, closeTo(oldVal, epsilon));
   });
 
   testWidgets('Insert waypoint button', (widgetTester) async {
@@ -398,7 +397,11 @@ void main() {
       ),
     ));
 
-    var insertButton = find.text('New Waypoint After');
+    // Expand the waypoint card first
+    await widgetTester.tap(find.byType(TreeCardNode).first);
+    await widgetTester.pumpAndSettle();
+
+    var insertButton = find.byIcon(Icons.add);
 
     expect(insertButton, findsOneWidget);
 
@@ -431,7 +434,11 @@ void main() {
       ),
     ));
 
-    var button = find.text('Add Rotation Target');
+    // Expand the waypoint card first
+    await widgetTester.tap(find.byType(TreeCardNode).at(1));
+    await widgetTester.pumpAndSettle();
+
+    var button = find.byIcon(Icons.rotate_right_rounded);
 
     expect(button, findsOneWidget);
 
@@ -448,8 +455,8 @@ void main() {
   });
 
   testWidgets('linked waypoint', (widgetTester) async {
-    Waypoint.linked['existing link'] = const Point(0, 0);
-    Waypoint.linked['new link'] = const Point(0, 0);
+    Waypoint.linked['existing link'] = const Translation2d(0, 0);
+    Waypoint.linked['new link'] = const Translation2d(0, 0);
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -466,11 +473,12 @@ void main() {
       ),
     ));
 
-    var button = find.text('Link Waypoint');
+    // Find the link icon button
+    var linkButton = find.byIcon(Icons.add_link_rounded);
 
-    expect(button, findsOneWidget);
+    expect(linkButton, findsOneWidget);
 
-    await widgetTester.tap(button);
+    await widgetTester.tap(linkButton);
     await widgetTester.pumpAndSettle();
 
     final cancelButton = find.text('Cancel');
@@ -481,7 +489,7 @@ void main() {
 
     expect(find.byType(AlertDialog), findsNothing);
 
-    await widgetTester.tap(button);
+    await widgetTester.tap(linkButton);
     await widgetTester.pumpAndSettle();
 
     final dropdown =
@@ -508,13 +516,13 @@ void main() {
     expect(pathChanged, true);
     expect(path.waypoints[1].linkedName, 'new link');
 
-    final unlinkButton = find.text('Unlink');
+    final unlinkButton = find.byIcon(Icons.link_off);
     await widgetTester.tap(unlinkButton);
     await widgetTester.pumpAndSettle();
 
     expect(path.waypoints[1].linkedName, null);
 
-    await widgetTester.tap(button);
+    await widgetTester.tap(linkButton);
     await widgetTester.pumpAndSettle();
 
     await widgetTester.tap(dropdown);
@@ -546,8 +554,8 @@ void main() {
     expect(path.waypoints[1].linkedName, null);
   });
 
-  testWidgets('Lock waypoint button', (widgetTester) async {
-    await widgetTester.pumpWidget(MaterialApp(
+  testWidgets('Lock waypoint button', (WidgetTester tester) async {
+    await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: WaypointsTree(
           path: path,
@@ -561,24 +569,25 @@ void main() {
       ),
     ));
 
-    var lockButtons = find.byTooltip('Lock');
+    final Finder lockButton = find.byType(IconButton).first;
 
-    expect(lockButtons, findsNWidgets(2));
+    await tester.ensureVisible(lockButton);
+    await tester.pumpAndSettle();
 
-    await widgetTester.tap(lockButtons.at(1));
-    await widgetTester.pump();
+    await tester.tap(lockButton);
+    await tester.pumpAndSettle();
 
     expect(pathChanged, true);
-    expect(path.waypoints[1].isLocked, true);
+    expect(path.waypoints[0].isLocked, true);
 
-    await widgetTester.tap(lockButtons.at(1));
-    await widgetTester.pump();
+    await tester.tap(lockButton);
+    await tester.pumpAndSettle();
 
-    expect(path.waypoints[1].isLocked, false);
+    expect(path.waypoints[0].isLocked, false);
   });
 
   testWidgets('Delete waypoint button', (widgetTester) async {
-    path.addWaypoint(const Point(7.0, 4.0));
+    path.addWaypoint(const Translation2d(7.0, 4.0));
 
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(

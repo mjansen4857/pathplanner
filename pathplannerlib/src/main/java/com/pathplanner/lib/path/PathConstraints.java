@@ -1,33 +1,160 @@
 package com.pathplanner.lib.path;
 
+import static edu.wpi.first.units.Units.*;
+
 import edu.wpi.first.math.util.Units;
-import java.util.Objects;
+import edu.wpi.first.units.measure.*;
 import org.json.simple.JSONObject;
 
-/** Kinematic path following constraints */
-public class PathConstraints {
-  private final double maxVelocityMps;
-  private final double maxAccelerationMpsSq;
-  private final double maxAngularVelocityRps;
-  private final double maxAngularAccelerationRpsSq;
-
+/**
+ * Kinematic path following constraints
+ *
+ * @param maxVelocityMPS Max linear velocity (M/S)
+ * @param maxAccelerationMPSSq Max linear acceleration (M/S^2)
+ * @param maxAngularVelocityRadPerSec Max angular velocity (Rad/S)
+ * @param maxAngularAccelerationRadPerSecSq Max angular acceleration (Rad/S^2)
+ * @param nominalVoltageVolts The nominal battery voltage (Volts)
+ * @param unlimited Should the constraints be unlimited
+ */
+public record PathConstraints(
+    double maxVelocityMPS,
+    double maxAccelerationMPSSq,
+    double maxAngularVelocityRadPerSec,
+    double maxAngularAccelerationRadPerSecSq,
+    double nominalVoltageVolts,
+    boolean unlimited) {
   /**
-   * Create a new path constraints object
+   * Kinematic path following constraints
    *
-   * @param maxVelocityMps Max linear velocity (M/S)
-   * @param maxAccelerationMpsSq Max linear acceleration (M/S^2)
-   * @param maxAngularVelocityRps Max angular velocity (Rad/S)
-   * @param maxAngularAccelerationRpsSq Max angular acceleration (Rad/S^2)
+   * @param maxVelocity Max linear velocity
+   * @param maxAcceleration Max linear acceleration
+   * @param maxAngularVelocity Max angular velocity
+   * @param maxAngularAcceleration Max angular acceleration
+   * @param nominalVoltage The nominal battery voltage
+   * @param unlimited Should the constraints be unlimited
    */
   public PathConstraints(
-      double maxVelocityMps,
-      double maxAccelerationMpsSq,
-      double maxAngularVelocityRps,
-      double maxAngularAccelerationRpsSq) {
-    this.maxVelocityMps = maxVelocityMps;
-    this.maxAccelerationMpsSq = maxAccelerationMpsSq;
-    this.maxAngularVelocityRps = maxAngularVelocityRps;
-    this.maxAngularAccelerationRpsSq = maxAngularAccelerationRpsSq;
+      LinearVelocity maxVelocity,
+      LinearAcceleration maxAcceleration,
+      AngularVelocity maxAngularVelocity,
+      AngularAcceleration maxAngularAcceleration,
+      Voltage nominalVoltage,
+      boolean unlimited) {
+    this(
+        maxVelocity.in(MetersPerSecond),
+        maxAcceleration.in(MetersPerSecondPerSecond),
+        maxAngularVelocity.in(RadiansPerSecond),
+        maxAngularAcceleration.in(RadiansPerSecondPerSecond),
+        nominalVoltage.in(Volts),
+        unlimited);
+  }
+
+  /**
+   * Kinematic path following constraints
+   *
+   * @param maxVelocityMPS Max linear velocity (M/S)
+   * @param maxAccelerationMPSSq Max linear acceleration (M/S^2)
+   * @param maxAngularVelocityRadPerSec Max angular velocity (Rad/S)
+   * @param maxAngularAccelerationRadPerSecSq Max angular acceleration (Rad/S^2)
+   * @param nominalVoltageVolts The nominal battery voltage (Volts)
+   */
+  public PathConstraints(
+      double maxVelocityMPS,
+      double maxAccelerationMPSSq,
+      double maxAngularVelocityRadPerSec,
+      double maxAngularAccelerationRadPerSecSq,
+      double nominalVoltageVolts) {
+    this(
+        maxVelocityMPS,
+        maxAccelerationMPSSq,
+        maxAngularVelocityRadPerSec,
+        maxAngularAccelerationRadPerSecSq,
+        nominalVoltageVolts,
+        false);
+  }
+
+  /**
+   * Kinematic path following constraints
+   *
+   * @param maxVelocity Max linear velocity
+   * @param maxAcceleration Max linear acceleration
+   * @param maxAngularVelocity Max angular velocity
+   * @param maxAngularAcceleration Max angular acceleration
+   * @param nominalVoltage The nominal battery voltage
+   */
+  public PathConstraints(
+      LinearVelocity maxVelocity,
+      LinearAcceleration maxAcceleration,
+      AngularVelocity maxAngularVelocity,
+      AngularAcceleration maxAngularAcceleration,
+      Voltage nominalVoltage) {
+    this(
+        maxVelocity,
+        maxAcceleration,
+        maxAngularVelocity,
+        maxAngularAcceleration,
+        nominalVoltage,
+        false);
+  }
+
+  /**
+   * Kinematic path following constraints
+   *
+   * @param maxVelocityMPS Max linear velocity (M/S)
+   * @param maxAccelerationMPSSq Max linear acceleration (M/S^2)
+   * @param maxAngularVelocityRadPerSec Max angular velocity (Rad/S)
+   * @param maxAngularAccelerationRadPerSecSq Max angular acceleration (Rad/S^2)
+   */
+  public PathConstraints(
+      double maxVelocityMPS,
+      double maxAccelerationMPSSq,
+      double maxAngularVelocityRadPerSec,
+      double maxAngularAccelerationRadPerSecSq) {
+    this(
+        maxVelocityMPS,
+        maxAccelerationMPSSq,
+        maxAngularVelocityRadPerSec,
+        maxAngularAccelerationRadPerSecSq,
+        12.0,
+        false);
+  }
+
+  /**
+   * Kinematic path following constraints
+   *
+   * @param maxVelocity Max linear velocity
+   * @param maxAcceleration Max linear acceleration
+   * @param maxAngularVelocity Max angular velocity
+   * @param maxAngularAcceleration Max angular acceleration
+   */
+  public PathConstraints(
+      LinearVelocity maxVelocity,
+      LinearAcceleration maxAcceleration,
+      AngularVelocity maxAngularVelocity,
+      AngularAcceleration maxAngularAcceleration) {
+    this(
+        maxVelocity,
+        maxAcceleration,
+        maxAngularVelocity,
+        maxAngularAcceleration,
+        Volts.of(12.0),
+        false);
+  }
+
+  /**
+   * Get unlimited PathConstraints
+   *
+   * @param nominalVoltage The nominal battery voltage (Volts)
+   * @return Unlimited constraints
+   */
+  public static PathConstraints unlimitedConstraints(double nominalVoltage) {
+    return new PathConstraints(
+        Double.POSITIVE_INFINITY,
+        Double.POSITIVE_INFINITY,
+        Double.POSITIVE_INFINITY,
+        Double.POSITIVE_INFINITY,
+        nominalVoltage,
+        true);
   }
 
   /**
@@ -44,78 +171,51 @@ public class PathConstraints {
         ((Number) constraintsJson.get("maxAngularVelocity")).doubleValue(); // Degrees
     double maxAngularAccel =
         ((Number) constraintsJson.get("maxAngularAcceleration")).doubleValue(); // Degrees
+    double nominalVoltage = ((Number) constraintsJson.get("nominalVoltage")).doubleValue();
+    boolean unlimited = ((boolean) constraintsJson.get("unlimited"));
 
     return new PathConstraints(
         maxVel,
         maxAccel,
         Units.degreesToRadians(maxAngularVel),
-        Units.degreesToRadians(maxAngularAccel));
+        Units.degreesToRadians(maxAngularAccel),
+        nominalVoltage,
+        unlimited);
   }
 
   /**
    * Get the max linear velocity
    *
-   * @return Max linear velocity (M/S)
+   * @return Max linear velocity
    */
-  public double getMaxVelocityMps() {
-    return maxVelocityMps;
+  public LinearVelocity maxVelocity() {
+    return MetersPerSecond.of(maxVelocityMPS);
   }
 
   /**
    * Get the max linear acceleration
    *
-   * @return Max linear acceleration (M/S^2)
+   * @return Max linear acceleration
    */
-  public double getMaxAccelerationMpsSq() {
-    return maxAccelerationMpsSq;
+  public LinearAcceleration maxAcceleration() {
+    return MetersPerSecondPerSecond.of(maxAccelerationMPSSq);
   }
 
   /**
    * Get the max angular velocity
    *
-   * @return Max angular velocity (Rad/S)
+   * @return Max angular velocity
    */
-  public double getMaxAngularVelocityRps() {
-    return maxAngularVelocityRps;
+  public AngularVelocity maxAngularVelocity() {
+    return RadiansPerSecond.of(maxAngularVelocityRadPerSec);
   }
 
   /**
    * Get the max angular acceleration
    *
-   * @return Max angular acceleration (Rad/S^2)
+   * @return Max angular acceleration
    */
-  public double getMaxAngularAccelerationRpsSq() {
-    return maxAngularAccelerationRpsSq;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    PathConstraints that = (PathConstraints) o;
-    return Math.abs(that.maxVelocityMps - maxVelocityMps) < 1E-3
-        && Math.abs(that.maxAccelerationMpsSq - maxAccelerationMpsSq) < 1E-3
-        && Math.abs(that.maxAngularVelocityRps - maxAngularVelocityRps) < 1E-3
-        && Math.abs(that.maxAngularAccelerationRpsSq - maxAngularAccelerationRpsSq) < 1E-3;
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        maxVelocityMps, maxAccelerationMpsSq, maxAngularVelocityRps, maxAngularAccelerationRpsSq);
-  }
-
-  @Override
-  public String toString() {
-    return "PathConstraints{"
-        + "maxVelocityMps="
-        + maxVelocityMps
-        + ", maxAccelerationMpsSq="
-        + maxAccelerationMpsSq
-        + ", maxAngularVelocityRps="
-        + maxAngularVelocityRps
-        + ", maxAngularAccelerationRpsSq="
-        + maxAngularAccelerationRpsSq
-        + '}';
+  public AngularAcceleration maxAngularAcceleration() {
+    return RadiansPerSecondPerSecond.of(maxAngularAccelerationRadPerSecSq);
   }
 }

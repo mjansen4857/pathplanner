@@ -12,18 +12,15 @@ bool PPLibTelemetry::m_compMode = false;
 nt::DoubleArrayPublisher PPLibTelemetry::m_velPub =
 		nt::NetworkTableInstance::GetDefault().GetDoubleArrayTopic(
 				"/PathPlanner/vel").Publish();
-nt::DoublePublisher PPLibTelemetry::m_inaccuracyPub =
-		nt::NetworkTableInstance::GetDefault().GetDoubleTopic(
-				"/PathPlanner/inaccuracy").Publish();
-nt::DoubleArrayPublisher PPLibTelemetry::m_posePub =
-		nt::NetworkTableInstance::GetDefault().GetDoubleArrayTopic(
-				"/PathPlanner/currentPose").Publish();
-nt::DoubleArrayPublisher PPLibTelemetry::m_pathPub =
-		nt::NetworkTableInstance::GetDefault().GetDoubleArrayTopic(
-				"/PathPlanner/activePath").Publish();
-nt::DoubleArrayPublisher PPLibTelemetry::m_targetPosePub =
-		nt::NetworkTableInstance::GetDefault().GetDoubleArrayTopic(
-				"/PathPlanner/targetPose").Publish();
+nt::StructPublisher<frc::Pose2d> PPLibTelemetry::m_posePub =
+		nt::NetworkTableInstance::GetDefault().GetStructTopic < frc::Pose2d
+				> ("/PathPlanner/currentPose").Publish();
+nt::StructArrayPublisher<frc::Pose2d> PPLibTelemetry::m_pathPub =
+		nt::NetworkTableInstance::GetDefault().GetStructArrayTopic < frc::Pose2d
+				> ("/PathPlanner/activePath").Publish();
+nt::StructPublisher<frc::Pose2d> PPLibTelemetry::m_targetPosePub =
+		nt::NetworkTableInstance::GetDefault().GetStructTopic < frc::Pose2d
+				> ("/PathPlanner/targetPose").Publish();
 
 std::unordered_map<std::string, std::vector<std::shared_ptr<PathPlannerPath>>> PPLibTelemetry::m_hotReloadPaths =
 		std::unordered_map<std::string,
@@ -31,20 +28,6 @@ std::unordered_map<std::string, std::vector<std::shared_ptr<PathPlannerPath>>> P
 
 std::optional<NT_Listener> PPLibTelemetry::m_hotReloadPathListener =
 		std::nullopt;
-
-void PPLibTelemetry::setCurrentPath(std::shared_ptr<PathPlannerPath> path) {
-	std::vector<double> arr;
-
-	for (const PathPoint &p : path->getAllPathPoints()) {
-		frc::Translation2d pos = p.position;
-		arr.push_back(pos.X()());
-		arr.push_back(pos.Y()());
-		// Just add 0 as a heading since it's not needed for displaying a path
-		arr.push_back(0.0);
-	}
-
-	m_pathPub.Set(std::span { arr.data(), arr.size() });
-}
 
 void PPLibTelemetry::ensureHotReloadListenersInitialized() {
 	if (!m_hotReloadPathListener) {

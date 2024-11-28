@@ -2,9 +2,7 @@ package com.pathplanner.lib.util;
 
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.path.PathPoint;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.networktables.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -22,14 +20,18 @@ public class PPLibTelemetry {
 
   private static final DoubleArrayPublisher velPub =
       NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/vel").publish();
-  private static final DoublePublisher inaccuracyPub =
-      NetworkTableInstance.getDefault().getDoubleTopic("/PathPlanner/inaccuracy").publish();
-  private static final DoubleArrayPublisher posePub =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/currentPose").publish();
-  private static final DoubleArrayPublisher pathPub =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/activePath").publish();
-  private static final DoubleArrayPublisher targetPosePub =
-      NetworkTableInstance.getDefault().getDoubleArrayTopic("/PathPlanner/targetPose").publish();
+  private static final StructPublisher<Pose2d> posePub =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("/PathPlanner/currentPose", Pose2d.struct)
+          .publish();
+  private static final StructArrayPublisher<Pose2d> pathPub =
+      NetworkTableInstance.getDefault()
+          .getStructArrayTopic("/PathPlanner/activePath", Pose2d.struct)
+          .publish();
+  private static final StructPublisher<Pose2d> targetPosePub =
+      NetworkTableInstance.getDefault()
+          .getStructTopic("/PathPlanner/targetPose", Pose2d.struct)
+          .publish();
 
   private static final Map<String, List<PathPlannerPath>> hotReloadPaths = new HashMap<>();
   private static final Map<String, List<PathPlannerAuto>> hotReloadAutos = new HashMap<>();
@@ -51,16 +53,9 @@ public class PPLibTelemetry {
    */
   public static void setVelocities(
       double actualVel, double commandedVel, double actualAngVel, double commandedAngVel) {
-    velPub.set(new double[] {actualVel, commandedVel, actualAngVel, commandedAngVel});
-  }
-
-  /**
-   * Set the path following inaccuracy
-   *
-   * @param inaccuracy Inaccuracy in meters
-   */
-  public static void setPathInaccuracy(double inaccuracy) {
-    inaccuracyPub.set(inaccuracy);
+    if (!compMode) {
+      velPub.set(new double[] {actualVel, commandedVel, actualAngVel, commandedAngVel});
+    }
   }
 
   /**
@@ -69,7 +64,9 @@ public class PPLibTelemetry {
    * @param pose Current robot pose
    */
   public static void setCurrentPose(Pose2d pose) {
-    posePub.set(new double[] {pose.getX(), pose.getY(), pose.getRotation().getRadians()});
+    if (!compMode) {
+      posePub.set(pose);
+    }
   }
 
   /**
@@ -78,19 +75,10 @@ public class PPLibTelemetry {
    * @param path The current path
    */
   public static void setCurrentPath(PathPlannerPath path) {
-    double[] arr = new double[path.numPoints() * 3];
-
-    int ndx = 0;
-    for (PathPoint p : path.getAllPathPoints()) {
-      Translation2d pos = p.position;
-      arr[ndx] = pos.getX();
-      arr[ndx + 1] = pos.getY();
-      // Just add 0 as a heading since it's not needed for displaying a path
-      arr[ndx + 2] = 0.0;
-      ndx += 3;
+    if (!compMode) {
+      // Use poses for simplicity
+      pathPub.set(path.getPathPoses().toArray(new Pose2d[0]));
     }
-
-    pathPub.set(arr);
   }
 
   /**
@@ -99,8 +87,9 @@ public class PPLibTelemetry {
    * @param targetPose Target robot pose
    */
   public static void setTargetPose(Pose2d targetPose) {
-    targetPosePub.set(
-        new double[] {targetPose.getX(), targetPose.getY(), targetPose.getRotation().getRadians()});
+    if (!compMode) {
+      targetPosePub.set(targetPose);
+    }
   }
 
   /**
@@ -195,7 +184,6 @@ public class PPLibTelemetry {
   }
 
   private static void handleAutoHotReloadEvent(NetworkTableEvent event) {
-    System.out.println("hot reload auto");
     if (!compMode) {
       if (DriverStation.isEnabled()) {
         DriverStation.reportWarning("Ignoring auto hot reload, robot is enabled", false);

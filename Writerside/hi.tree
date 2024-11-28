@@ -7,6 +7,7 @@
                   start-page="Home.md">
 
     <toc-element topic="Home.md"/>
+    <toc-element topic="Robot-Config.md"/>
     <toc-element topic="PathPlanner-GUI.topic">
         <toc-element topic="gui-Getting-Started.md"/>
         <toc-element topic="gui-Editing-Paths-and-Autos.md"/>
@@ -21,13 +22,15 @@
         <toc-element topic="pplib-Getting-Started.md"/>
         <toc-element topic="pplib-Build-an-Auto.md"/>
         <toc-element topic="pplib-Named-Commands.md"/>
+        <toc-element topic="pplib-Triggers.md"/>
         <toc-element topic="pplib-Follow-a-Single-Path.md"/>
         <toc-element topic="pplib-Create-a-Path-On-the-fly.md"/>
         <toc-element topic="pplib-Path-Groups.md"/>
         <toc-element topic="pplib-Custom-Logging.md"/>
+        <toc-element topic="pplib-Swerve-Setpoint-Generator.md"/>
         <toc-element topic="pplib-Pathfinding.md"/>
         <toc-element topic="pplib-Choreo-Interop.md"/>
-        <toc-element topic="pplib-Override-Target-Rotation.md"/>
+        <toc-element topic="pplib-Override-Feedback.md"/>
     </toc-element>
 
     <toc-element toc-title="PPLib Java API" href="https://pathplanner.dev/api/java"/>

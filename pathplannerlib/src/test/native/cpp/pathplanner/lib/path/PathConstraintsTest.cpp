@@ -18,7 +18,9 @@ TEST(PathConstraintsTest, TestFromJson) {
 	json.emplace("maxAcceleration", 2.0);
 	json.emplace("maxAngularVelocity", 90.0);
 	json.emplace("maxAngularAcceleration", 180.0);
+	json.emplace("nominalVoltage", 12.0);
+	json.emplace("unlimited", false);
 
 	PathConstraints fromJson = PathConstraints::fromJson(json);
-	EXPECT_EQ(PathConstraints(1_mps, 2_mps_sq, 90_deg_per_s, 180_deg_per_s_sq), fromJson);
+	EXPECT_EQ(PathConstraints(1_mps, 2_mps_sq, 90_deg_per_s, 180_deg_per_s_sq, 12_V, false), fromJson);
 }

@@ -1,7 +1,7 @@
-import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/mini_path_preview.dart';
@@ -10,7 +10,7 @@ import 'package:pathplanner/widgets/renamable_title.dart';
 class ProjectItemCard extends StatefulWidget {
   final String name;
   final FieldImage fieldImage;
-  final List<List<Point>> paths;
+  final List<List<Translation2d>> paths;
   final VoidCallback onOpened;
   final VoidCallback? onDuplicated;
   final VoidCallback? onDeleted;
@@ -217,7 +217,7 @@ class _ProjectItemCardState extends State<ProjectItemCard> {
                   child: Icon(
                     Icons.warning_amber_rounded,
                     size: widget.compact ? 32 : 48,
-                    color: Colors.yellow,
+                    color: Colors.orange[300]!,
                     shadows: widget.compact
                         ? null
                         : const [

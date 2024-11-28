@@ -5,9 +5,9 @@ import com.pathplanner.lib.trajectory.PathPlannerTrajectoryState;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import java.util.Optional;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 /** Path following controller for holonomic drive trains */
@@ -16,10 +16,12 @@ public class PPHolonomicDriveController implements PathFollowingController {
   private final PIDController yController;
   private final PIDController rotationController;
 
-  private Translation2d translationError = new Translation2d();
   private boolean isEnabled = true;
 
   private static Supplier<Optional<Rotation2d>> rotationTargetOverride = null;
+  private static DoubleSupplier xFeedbackOverride = null;
+  private static DoubleSupplier yFeedbackOverride = null;
+  private static DoubleSupplier rotFeedbackOverride = null;
 
   /**
    * Constructs a HolonomicDriveController
@@ -94,10 +96,10 @@ public class PPHolonomicDriveController implements PathFollowingController {
     double xFF = targetState.fieldSpeeds.vxMetersPerSecond;
     double yFF = targetState.fieldSpeeds.vyMetersPerSecond;
 
-    this.translationError = currentPose.getTranslation().minus(targetState.pose.getTranslation());
-
     if (!this.isEnabled) {
-      return ChassisSpeeds.fromFieldRelativeSpeeds(xFF, yFF, 0, currentPose.getRotation());
+      ChassisSpeeds ret = new ChassisSpeeds(xFF, yFF, 0);
+      ret.toRobotRelativeSpeeds(currentPose.getRotation());
+      return ret;
     }
 
     double xFeedback = this.xController.calculate(currentPose.getX(), targetState.pose.getX());
@@ -113,18 +115,20 @@ public class PPHolonomicDriveController implements PathFollowingController {
             currentPose.getRotation().getRadians(), targetRotation.getRadians());
     double rotationFF = targetState.fieldSpeeds.omegaRadiansPerSecond;
 
-    return ChassisSpeeds.fromFieldRelativeSpeeds(
-        xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback, currentPose.getRotation());
-  }
+    if (xFeedbackOverride != null) {
+      xFeedback = xFeedbackOverride.getAsDouble();
+    }
+    if (yFeedbackOverride != null) {
+      yFeedback = yFeedbackOverride.getAsDouble();
+    }
+    if (rotFeedbackOverride != null) {
+      rotationFeedback = rotFeedbackOverride.getAsDouble();
+    }
 
-  /**
-   * Get the current positional error between the robot's actual and target positions
-   *
-   * @return Positional error, in meters
-   */
-  @Override
-  public double getPositionalError() {
-    return translationError.getNorm();
+    ChassisSpeeds ret =
+        new ChassisSpeeds(xFF + xFeedback, yFF + yFeedback, rotationFF + rotationFeedback);
+    ret.toRobotRelativeSpeeds(currentPose.getRotation());
+    return ret;
   }
 
   /**
@@ -144,9 +148,94 @@ public class PPHolonomicDriveController implements PathFollowingController {
    * <p>This function should return an empty optional to use the rotation targets in the path
    *
    * @param rotationTargetOverride Supplier to override rotation targets
+   * @deprecated Use overrideRotationFeedback instead, with the output of your own PID controller
    */
+  @Deprecated
   public static void setRotationTargetOverride(
       Supplier<Optional<Rotation2d>> rotationTargetOverride) {
     PPHolonomicDriveController.rotationTargetOverride = rotationTargetOverride;
+  }
+
+  /**
+   * Begin overriding the X axis feedback.
+   *
+   * @param xFeedbackOverride Double supplier that returns the desired FIELD-RELATIVE X feedback in
+   *     meters/sec
+   */
+  public static void overrideXFeedback(DoubleSupplier xFeedbackOverride) {
+    PPHolonomicDriveController.xFeedbackOverride = xFeedbackOverride;
+  }
+
+  /**
+   * Stop overriding the X axis feedback, and return to calculating it based on path following
+   * error.
+   */
+  public static void clearXFeedbackOverride() {
+    PPHolonomicDriveController.xFeedbackOverride = null;
+  }
+
+  /**
+   * Begin overriding the Y axis feedback.
+   *
+   * @param yFeedbackOverride Double supplier that returns the desired FIELD-RELATIVE Y feedback in
+   *     meters/sec
+   */
+  public static void overrideYFeedback(DoubleSupplier yFeedbackOverride) {
+    PPHolonomicDriveController.yFeedbackOverride = yFeedbackOverride;
+  }
+
+  /**
+   * Stop overriding the Y axis feedback, and return to calculating it based on path following
+   * error.
+   */
+  public static void clearYFeedbackOverride() {
+    PPHolonomicDriveController.yFeedbackOverride = null;
+  }
+
+  /**
+   * Begin overriding the X and Y axis feedback.
+   *
+   * @param xFeedbackOverride Double supplier that returns the desired FIELD-RELATIVE X feedback in
+   *     meters/sec
+   * @param yFeedbackOverride Double supplier that returns the desired FIELD-RELATIVE Y feedback in
+   *     meters/sec
+   */
+  public static void overrideXYFeedback(
+      DoubleSupplier xFeedbackOverride, DoubleSupplier yFeedbackOverride) {
+    overrideXFeedback(xFeedbackOverride);
+    overrideYFeedback(yFeedbackOverride);
+  }
+
+  /**
+   * Stop overriding the X and Y axis feedback, and return to calculating them based on path
+   * following error.
+   */
+  public static void clearXYFeedbackOverride() {
+    clearXFeedbackOverride();
+    clearYFeedbackOverride();
+  }
+
+  /**
+   * Begin overriding the rotation feedback.
+   *
+   * @param rotationFeedbackOverride Double supplier that returns the desired rotation feedback in
+   *     radians/sec
+   */
+  public static void overrideRotationFeedback(DoubleSupplier rotationFeedbackOverride) {
+    PPHolonomicDriveController.rotFeedbackOverride = rotationFeedbackOverride;
+  }
+
+  /**
+   * Stop overriding the rotation feedback, and return to calculating it based on path following
+   * error.
+   */
+  public static void clearRotationFeedbackOverride() {
+    PPHolonomicDriveController.rotFeedbackOverride = null;
+  }
+
+  /** Clear all feedback overrides and return to purely using path following error for feedback */
+  public static void clearFeedbackOverrides() {
+    clearXYFeedbackOverride();
+    clearRotationFeedbackOverride();
   }
 }

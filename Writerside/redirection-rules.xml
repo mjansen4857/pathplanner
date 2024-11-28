@@ -6,4 +6,9 @@
         <accepts>page.html</accepts>
     </rule>
     -->
+    <rule id="136c9027">
+        <description>Created after removal of "Override PPHolonomicDriveController Feedback" from PathPlanner Docs
+        </description>
+        <accepts>pplib-Override-Target-Rotation.html</accepts>
+    </rule>
 </rules>

@@ -29,24 +29,24 @@ class ChassisSpeeds {
     return 'ChassisSpeeds(vx: ${vx.toStringAsFixed(2)}, vy: ${vy.toStringAsFixed(2)}, omega: ${omega.toStringAsFixed(2)})';
   }
 
-  static ChassisSpeeds fromFieldRelativeSpeeds(
+  factory ChassisSpeeds.fromFieldRelativeSpeeds(
       ChassisSpeeds speeds, Rotation2d robotAngle) {
     Translation2d rotated =
-        Translation2d(x: speeds.vx, y: speeds.vy).rotateBy(-robotAngle);
+        Translation2d(speeds.vx, speeds.vy).rotateBy(-robotAngle);
     return ChassisSpeeds(vx: rotated.x, vy: rotated.y, omega: speeds.omega);
   }
 
-  static ChassisSpeeds fromRobotRelativeSpeeds(
+  factory ChassisSpeeds.fromRobotRelativeSpeeds(
       ChassisSpeeds speeds, Rotation2d robotAngle) {
     Translation2d rotated =
-        Translation2d(x: speeds.vx, y: speeds.vy).rotateBy(robotAngle);
+        Translation2d(speeds.vx, speeds.vy).rotateBy(robotAngle);
     return ChassisSpeeds(vx: rotated.x, vy: rotated.y, omega: speeds.omega);
   }
 }
 
 class SwerveModuleState {
   num speedMetersPerSecond = 0.0;
-  Rotation2d angle = Rotation2d();
+  Rotation2d angle = const Rotation2d();
 }
 
 class SwerveDriveKinematics {
@@ -61,7 +61,7 @@ class SwerveDriveKinematics {
   SwerveDriveKinematics(List<Translation2d> modules) {
     _numModules = modules.length;
     _modules = List.of(modules);
-    _moduleHeadings = List.generate(_numModules, (i) => Rotation2d());
+    _moduleHeadings = List.generate(_numModules, (i) => const Rotation2d());
     _inverseKinematics = Matrix.zero(_numModules * 2, 3);
     _forwardKinematics = Matrix.zero(3, _numModules * 2);
 
@@ -142,11 +142,11 @@ class SwerveDriveKinematics {
     for (int i = 0; i < _numModules; i++) {
       moduleStatesMatrix.setRow([
         moduleStates[i].speedMetersPerSecond.toDouble() *
-            moduleStates[i].angle.getCos()
+            moduleStates[i].angle.cosine
       ], i * 2);
       moduleStatesMatrix.setRow([
         moduleStates[i].speedMetersPerSecond.toDouble() *
-            moduleStates[i].angle.getSin()
+            moduleStates[i].angle.sine
       ], i * 2 + 1);
     }
 

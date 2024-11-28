@@ -6,8 +6,7 @@ These can either be followed as a single path, or used in auto routines created 
 > **Note**
 >
 > Choreo trajectories (.traj files) must be saved in the `deploy/choreo` directory. This will be done automatically
-> starting with the kickoff release of Choreo, if you save your .chor file in project root (i.e. adjacent to
-> `build.gradle` (C++/Java) or `robot.py` (Python).
+> if you save your .chor file in the `deploy/choreo` directory of your robot project.
 >
 {style="note"}
 
@@ -27,9 +26,9 @@ loaded trajectory.
 
 > **Warning**
 >
-> Due to the pre-generated nature of Choreo trajectories, they do not support path replanning. Extra care must be taken
-> when following Choreo trajectories to ensure that the robot closely matches the expected starting state of each
-> trajectory.
+> Due to the pre-generated nature of Choreo trajectories, they do not support regenerating the trajectory to match the
+> actual starting state of the robot (linear velocity / rotation). Extra care should be taken to ensure that the state
+> of the robot closely matches the expected starting state of Choreo trajectories.
 >
 {style="warning"}
 
@@ -37,8 +36,10 @@ loaded trajectory.
 <tab title="Java" group-key="java">
 
 ```Java
-// Load a Choreo trajectory as a PathPlannerPath
+// Load a full Choreo trajectory as a PathPlannerPath
 PathPlannerPath exampleChoreoTraj = PathPlannerPath.fromChoreoTrajectory("Example Choreo Traj");
+// Load a split Choreo trajectory as a PathPlannerPath, using the split point with index 1
+PathPlannerPath exampleChoreoTrajSplit = PathPlannerPath.fromChoreoTrajectory("Example Choreo Traj", 1);
 ```
 
 </tab>
@@ -49,8 +50,10 @@ PathPlannerPath exampleChoreoTraj = PathPlannerPath.fromChoreoTrajectory("Exampl
 
 using namespace pathplanner;
 
-// Load a Choreo trajectory as a PathPlannerPath
-PathPlannerPath exampleChoreoTraj = PathPlannerPath::fromChoreoTrajectory("Example Choreo Traj");
+// Load a full Choreo trajectory as a PathPlannerPath
+auto exampleChoreoTraj = PathPlannerPath::fromChoreoTrajectory("Example Choreo Traj");
+// Load a split Choreo trajectory as a PathPlannerPath, using the split point with index 1
+auto exampleChoreoTrajSplit = PathPlannerPath::fromChoreoTrajectory("Example Choreo Traj", 1);
 ```
 
 </tab>
@@ -59,8 +62,10 @@ PathPlannerPath exampleChoreoTraj = PathPlannerPath::fromChoreoTrajectory("Examp
 ```Python
 from pathplannerlib.path import PathPlannerPath
 
-# Load a Choreo trajectory as a PathPlannerPath
+# Load a full Choreo trajectory as a PathPlannerPath
 exampleChoreoTraj = PathPlannerPath.fromChoreoTrajectory('Example Choreo Traj')
+# Load a split Choreo trajectory as a PathPlannerPath, using the split point with index 1
+exampleChoreoTrajSplit = PathPlannerPath.fromChoreoTrajectory('Example Choreo Traj', 1)
 ```
 
 </tab>

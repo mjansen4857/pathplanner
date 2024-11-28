@@ -1,12 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/ideal_starting_state.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 
 void main() {
   test('toJson/fromJson interoperability', () {
-    IdealStartingState state = IdealStartingState(
-      rotation: 10.0,
-      velocity: 0.5,
-    );
+    IdealStartingState state = IdealStartingState(0.5, const Rotation2d(2.0));
 
     Map<String, dynamic> json = state.toJson();
     IdealStartingState fromJson = IdealStartingState.fromJson(json);
@@ -15,29 +13,20 @@ void main() {
   });
 
   test('Proper cloning', () {
-    IdealStartingState state = IdealStartingState();
+    IdealStartingState state = IdealStartingState(0.5, const Rotation2d(2.0));
     IdealStartingState cloned = state.clone();
 
     expect(cloned, state);
 
-    cloned.velocity = 2.5;
+    cloned.velocityMPS = 2.5;
 
     expect(state, isNot(cloned));
   });
 
   test('equals/hashCode', () {
-    IdealStartingState s1 = IdealStartingState(
-      velocity: 1.0,
-      rotation: 10.0,
-    );
-    IdealStartingState s2 = IdealStartingState(
-      velocity: 1.0,
-      rotation: 10.0,
-    );
-    IdealStartingState s3 = IdealStartingState(
-      velocity: 1.5,
-      rotation: 15.0,
-    );
+    IdealStartingState s1 = IdealStartingState(0.5, const Rotation2d(2.0));
+    IdealStartingState s2 = IdealStartingState(0.5, const Rotation2d(2.0));
+    IdealStartingState s3 = IdealStartingState(1.5, const Rotation2d(2.5));
 
     expect(s2, s1);
     expect(s3, isNot(s1));

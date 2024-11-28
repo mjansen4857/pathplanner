@@ -8,14 +8,16 @@ class WindowButton extends StatefulWidget {
   final VoidCallback onPressed;
   final IconData icon;
   final EdgeInsets padding;
+  final double iconSize;
 
   const WindowButton({
-    this.buttonWidth = 56,
+    this.buttonWidth = 45,
     this.hoverBackgroundColor = const Color(0xFF404040),
     this.pressedBackgroundColor = const Color(0xFF202020),
     required this.onPressed,
     required this.icon,
     this.padding = const EdgeInsets.all(8),
+    this.iconSize = 18,
     super.key,
   });
 
@@ -47,6 +49,7 @@ class _WindowButtonState extends State<WindowButton> {
               child: Icon(
                 widget.icon,
                 color: colorScheme.onSurface,
+                size: widget.iconSize,
               ),
             ),
           ),
@@ -61,7 +64,7 @@ class MinimizeWindowButton extends WindowButton {
   MinimizeWindowButton({super.key})
       : super(
           icon: Icons.minimize,
-          padding: const EdgeInsets.fromLTRB(8, 8, 8, 20),
+          padding: const EdgeInsets.fromLTRB(8, 16, 8, 24),
           onPressed: () {
             windowManager.minimize();
           },
@@ -72,6 +75,7 @@ class MaximizeWindowButton extends WindowButton {
   MaximizeWindowButton({super.key})
       : super(
           icon: Icons.check_box_outline_blank,
+          padding: const EdgeInsets.fromLTRB(8, 20, 8, 20),
           onPressed: () async {
             if (await windowManager.isMaximized()) {
               windowManager.unmaximize();
@@ -86,6 +90,7 @@ class CloseWindowButton extends WindowButton {
   CloseWindowButton({super.key})
       : super(
           icon: Icons.close,
+          padding: const EdgeInsets.fromLTRB(8, 20, 8, 20),
           hoverBackgroundColor: const Color(0xFFD32F2F),
           pressedBackgroundColor: const Color(0xFFD32F2F),
           onPressed: () {

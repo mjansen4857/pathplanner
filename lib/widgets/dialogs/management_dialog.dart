@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:pathplanner/commands/command.dart';
+import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/waypoint.dart';
 
 class ManagementDialog extends StatefulWidget {
-  final Function(String, String) onCommandRenamed;
-  final Function(String) onCommandDeleted;
+  final Function(String, String) onEventRenamed;
+  final Function(String) onEventDeleted;
   final Function(String, String) onLinkedRenamed;
   final Function(String) onLinkedDeleted;
 
   const ManagementDialog({
     super.key,
-    required this.onCommandRenamed,
-    required this.onCommandDeleted,
+    required this.onEventRenamed,
+    required this.onEventDeleted,
     required this.onLinkedRenamed,
     required this.onLinkedDeleted,
   });
@@ -45,7 +45,7 @@ class _ManagementDialogState extends State<ManagementDialog> {
                               SizedBox(width: 8),
                               Padding(
                                 padding: EdgeInsets.only(bottom: 4.0),
-                                child: Text('Manage Named Commands'),
+                                child: Text('Manage Events'),
                               ),
                             ],
                           ),
@@ -70,7 +70,7 @@ class _ManagementDialogState extends State<ManagementDialog> {
                   ),
                   body: TabBarView(
                     children: [
-                      _buildNameCmdTab(),
+                      _buildEventsTab(),
                       _buildLinkedTab(),
                     ],
                   ),
@@ -98,11 +98,11 @@ class _ManagementDialogState extends State<ManagementDialog> {
     );
   }
 
-  Widget _buildNameCmdTab() {
+  Widget _buildEventsTab() {
     ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    if (Command.named.isEmpty) {
-      return const Center(child: Text('No Named Commands in Project'));
+    if (ProjectPage.events.isEmpty) {
+      return const Center(child: Text('No Events in Project'));
     }
 
     return Padding(
@@ -110,59 +110,61 @@ class _ManagementDialogState extends State<ManagementDialog> {
       child: ListView(
         shrinkWrap: true,
         children: [
-          for (String commandName in Command.named)
-            ListTile(
-              title: Text(commandName),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Tooltip(
-                    message: 'Rename named command',
-                    waitDuration: const Duration(milliseconds: 500),
-                    child: IconButton(
-                      onPressed: () => _showRenameCmdDialog(commandName),
-                      icon: const Icon(Icons.edit),
-                    ),
-                  ),
-                  Tooltip(
-                    message: 'Remove named command',
-                    waitDuration: const Duration(milliseconds: 500),
-                    child: IconButton(
-                      onPressed: () {
-                        showDialog(
-                            context: context,
-                            builder: (BuildContext context) => AlertDialog(
-                                  title: const Text('Remove Named Command'),
-                                  content: Text(
-                                      'Are you sure you want to remove the named command "$commandName"? This cannot be undone.'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: Navigator.of(context).pop,
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () {
-                                        setState(() {
-                                          widget.onCommandDeleted(commandName);
-                                          Command.named.remove(commandName);
-                                        });
-
-                                        Navigator.of(context).pop();
-                                      },
-                                      child: const Text('Confirm'),
-                                    ),
-                                  ],
-                                ));
-                      },
-                      icon: Icon(
-                        Icons.close_rounded,
-                        color: colorScheme.error,
+          for (String eventName in ProjectPage.events)
+            if (eventName.isNotEmpty)
+              ListTile(
+                title: Text(eventName),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Tooltip(
+                      message: 'Rename event',
+                      waitDuration: const Duration(milliseconds: 500),
+                      child: IconButton(
+                        onPressed: () => _showRenameEventDialog(eventName),
+                        icon: const Icon(Icons.edit),
                       ),
                     ),
-                  ),
-                ],
+                    Tooltip(
+                      message: 'Remove event',
+                      waitDuration: const Duration(milliseconds: 500),
+                      child: IconButton(
+                        onPressed: () {
+                          showDialog(
+                              context: context,
+                              builder: (BuildContext context) => AlertDialog(
+                                    title: const Text('Remove Event'),
+                                    content: Text(
+                                        'Are you sure you want to remove the event "$eventName"? This cannot be undone.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: Navigator.of(context).pop,
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          setState(() {
+                                            widget.onEventDeleted(eventName);
+                                            ProjectPage.events
+                                                .remove(eventName);
+                                          });
+
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Confirm'),
+                                      ),
+                                    ],
+                                  ));
+                        },
+                        icon: Icon(
+                          Icons.delete_forever_rounded,
+                          color: colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
         ],
       ),
     );
@@ -224,7 +226,7 @@ class _ManagementDialogState extends State<ManagementDialog> {
                                 ));
                       },
                       icon: Icon(
-                        Icons.close_rounded,
+                        Icons.delete_forever_rounded,
                         color: colorScheme.error,
                       ),
                     ),
@@ -237,7 +239,7 @@ class _ManagementDialogState extends State<ManagementDialog> {
     );
   }
 
-  void _showRenameCmdDialog(String originalName) {
+  void _showRenameEventDialog(String originalName) {
     TextEditingController controller =
         TextEditingController(text: originalName);
 
@@ -246,7 +248,7 @@ class _ManagementDialogState extends State<ManagementDialog> {
     showDialog(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: const Text('Rename Command'),
+        title: const Text('Rename Event'),
         content: SizedBox(
           height: 42,
           width: 400,
@@ -255,7 +257,7 @@ class _ManagementDialogState extends State<ManagementDialog> {
             style: TextStyle(fontSize: 14, color: colorScheme.onSurface),
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
-              labelText: 'Command Name',
+              labelText: 'Event Name',
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
             ),
@@ -270,19 +272,19 @@ class _ManagementDialogState extends State<ManagementDialog> {
             onPressed: () {
               if (controller.text == originalName) {
                 Navigator.of(context).pop();
-              } else if (Command.named.contains(controller.text)) {
+              } else if (ProjectPage.events.contains(controller.text)) {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('A command with that name already exists'),
+                    content: Text('An event with that name already exists'),
                   ),
                 );
               } else {
                 Navigator.of(context).pop();
                 setState(() {
-                  widget.onCommandRenamed(originalName, controller.text);
-                  Command.named.remove(originalName);
-                  Command.named.add(controller.text);
+                  widget.onEventRenamed(originalName, controller.text);
+                  ProjectPage.events.remove(originalName);
+                  ProjectPage.events.add(controller.text);
                 });
               }
             },

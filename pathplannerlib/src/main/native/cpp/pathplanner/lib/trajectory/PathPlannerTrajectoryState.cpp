@@ -1,4 +1,5 @@
 #include "pathplanner/lib/trajectory/PathPlannerTrajectoryState.h"
+#include "pathplanner/lib/util/FlippingUtil.h"
 
 using namespace pathplanner;
 
@@ -24,6 +25,7 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::interpolate(
 					t));
 	lerpedState.linearVelocity = GeometryUtil::unitLerp(linearVelocity,
 			endVal.linearVelocity, t);
+	lerpedState.feedforwards = feedforwards.interpolate(endVal.feedforwards, t);
 
 	return lerpedState;
 }
@@ -41,6 +43,37 @@ PathPlannerTrajectoryState PathPlannerTrajectoryState::reverse() const {
 	reversed.pose = frc::Pose2d(pose.Translation(),
 			pose.Rotation() + frc::Rotation2d(180_deg));
 	reversed.linearVelocity = -linearVelocity;
+	reversed.feedforwards = feedforwards.reverse();
 
 	return reversed;
+}
+
+PathPlannerTrajectoryState PathPlannerTrajectoryState::flip() const {
+	PathPlannerTrajectoryState flipped;
+
+	flipped.time = time;
+	flipped.linearVelocity = linearVelocity;
+	flipped.pose = FlippingUtil::flipFieldPose(pose);
+	flipped.fieldSpeeds = FlippingUtil::flipFieldSpeeds(fieldSpeeds);
+	flipped.feedforwards = feedforwards.flip();
+
+	return flipped;
+}
+
+PathPlannerTrajectoryState PathPlannerTrajectoryState::copyWithTime(
+		units::second_t time) const {
+	PathPlannerTrajectoryState copy;
+	copy.time = time;
+	copy.fieldSpeeds = fieldSpeeds;
+	copy.pose = pose;
+	copy.linearVelocity = linearVelocity;
+	copy.feedforwards = feedforwards;
+	copy.heading = heading;
+	copy.deltaPos = deltaPos;
+	copy.deltaRot = deltaRot;
+	copy.moduleStates = moduleStates;
+	copy.constraints = constraints;
+	copy.waypointRelativePos = waypointRelativePos;
+
+	return copy;
 }

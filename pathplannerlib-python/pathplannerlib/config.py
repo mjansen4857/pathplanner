@@ -1,13 +1,14 @@
 from dataclasses import dataclass
-from enum import Enum
 from typing import Union, List
-from .geometry_util import floatLerp
-from wpimath.geometry import Translation2d
-from wpimath.kinematics import SwerveDrive2Kinematics, SwerveDrive4Kinematics
-import math
+from wpimath.geometry import Translation2d, Rotation2d
+from wpimath.kinematics import DifferentialDriveKinematics, SwerveDrive4Kinematics, SwerveModuleState, ChassisSpeeds, \
+    DifferentialDriveWheelSpeeds
+from wpimath.system.plant import DCMotor
 import os
 import json
 from wpilib import getDeployDirectory
+import numpy as np
+from numpy.typing import NDArray
 
 
 @dataclass
@@ -27,279 +28,38 @@ class PIDConstants:
     iZone: float = 0.0
 
 
-@dataclass
-class ReplanningConfig:
-    """
-    Configuration for path replanning
-
-    Args:
-        enableInitialReplanning (bool): Should the path be replanned at the start of path following if the robot is not already at the starting point?
-        enableDynamicReplanning (bool): Should the path be replanned if the error grows too large or if a large error spike happens while following the path?
-        dynamicReplanningTotalErrorThreshold (float): The total error threshold, in meters, that will cause the path to be replanned
-        dynamicReplanningErrorSpikeThreshold (float): The error spike threshold, in meters, that will cause the path to be replanned
-    """
-    enableInitialReplanning: bool = True
-    enableDynamicReplanning: bool = False
-    dynamicReplanningTotalErrorThreshold: float = 1.0
-    dynamicReplanningErrorSpikeThreshold: float = 0.25
-
-
-class MotorType(Enum):
-    krakenX60 = 'KRAKEN'
-    krakenX60_FOC = 'KRAKENFOC'
-    falcon500 = 'FALCON'
-    falcon500_FOC = 'FALCONFOC'
-    neoVortex = 'VORTEX'
-    neo = 'NEO'
-    cim = 'CIM'
-    miniCim = 'MINICIM'
-
-
-class CurrentLimit(Enum):
-    k40A = '40A'
-    k60A = '60A'
-    k80A = '80A'
-
-
-class MotorTorqueCurve:
-    _nmPerAmp: float
-    _map: dict[float, float]
-
-    def __init__(self, motorType: MotorType, currentLimit: CurrentLimit):
-        """
-        Create a new motor torque curve
-
-        :param motorType: The type of motor
-        :param currentLimit: The current limit of the motor
-        """
-        if motorType == MotorType.krakenX60:
-            self._nmPerAmp = 0.0194
-            self._initKrakenX60(currentLimit)
-        elif motorType == MotorType.krakenX60_FOC:
-            self._nmPerAmp = 0.0194
-            self._initKrakenX60FOC(currentLimit)
-        elif motorType == MotorType.falcon500:
-            self._nmPerAmp = 0.0182
-            self._initFalcon500(currentLimit)
-        elif motorType == MotorType.falcon500_FOC:
-            self._nmPerAmp = 0.0182
-            self._initFalcon500FOC(currentLimit)
-        elif motorType == MotorType.neoVortex:
-            self._nmPerAmp = 0.0171
-            self._initNEOVortex(currentLimit)
-        elif motorType == MotorType.neo:
-            self._nmPerAmp = 0.0181
-            self._initNEO(currentLimit)
-        elif motorType == MotorType.cim:
-            self._nmPerAmp = 0.0184
-            self._initCIM(currentLimit)
-        elif motorType == MotorType.miniCim:
-            self._nmPerAmp = 0.0158
-            self._initMiniCIM(currentLimit)
-        else:
-            raise ValueError(f'Unknown motor type: {motorType}')
-
-    def getNmPerAmp(self) -> float:
-        """
-        Get the motor's "kT" value, or the conversion from current draw to torque
-
-        :return: Newton-meters per Amp
-        """
-        return self._nmPerAmp
-
-    @staticmethod
-    def fromSettingsString(torqueCurveName: str) -> 'MotorTorqueCurve':
-        """
-        Create a motor torque curve for the string representing a motor and current limit saved in the
-        GUI settings
-
-        :param torqueCurveName: The name of the torque curve
-        :return: The torque curve corresponding to the given name
-        """
-        parts = torqueCurveName.split('_')
-
-        if len(parts) != 2:
-            raise ValueError(f'Invalid torque curve name: {torqueCurveName}')
-
-        motorType = MotorType(parts[0])
-        currentLimit = CurrentLimit(parts[1])
-
-        return MotorTorqueCurve(motorType, currentLimit)
-
-    def _initKrakenX60(self, currentLimit: CurrentLimit):
-        if currentLimit == CurrentLimit.k40A:
-            self._put(0.0, 0.746)
-            self._put(5363.0, 0.746)
-            self._put(6000.0, 0.0)
-        elif currentLimit == CurrentLimit.k60A:
-            self._put(0.0, 1.133)
-            self._put(5020.0, 1.133)
-            self._put(6000.0, 0.0)
-        elif currentLimit == CurrentLimit.k80A:
-            self._put(0.0, 1.521)
-            self._put(4699.0, 1.521)
-            self._put(6000.0, 0.0)
-
-    def _initKrakenX60FOC(self, currentLimit: CurrentLimit):
-        if currentLimit == CurrentLimit.k40A:
-            self._put(0.0, 0.747)
-            self._put(5333.0, 0.747)
-            self._put(5800.0, 0.0)
-        elif currentLimit == CurrentLimit.k60A:
-            self._put(0.0, 1.135)
-            self._put(5081.0, 1.135)
-            self._put(5800.0, 0.0)
-        elif currentLimit == CurrentLimit.k80A:
-            self._put(0.0, 1.523)
-            self._put(4848.0, 1.523)
-            self._put(5800.0, 0.0)
-
-    def _initFalcon500(self, currentLimit: CurrentLimit):
-        if currentLimit == CurrentLimit.k40A:
-            self._put(0.0, 0.703)
-            self._put(5412.0, 0.703)
-            self._put(6380.0, 0.0)
-        elif currentLimit == CurrentLimit.k60A:
-            self._put(0.0, 1.068)
-            self._put(4920.0, 1.068)
-            self._put(6380.0, 0.0)
-        elif currentLimit == CurrentLimit.k80A:
-            self._put(0.0, 1.433)
-            self._put(4407.0, 1.433)
-            self._put(6380.0, 0.0)
-
-    def _initFalcon500FOC(self, currentLimit: CurrentLimit):
-        if currentLimit == CurrentLimit.k40A:
-            self._put(0.0, 0.74)
-            self._put(5295.0, 0.74)
-            self._put(6080.0, 0.0)
-        elif currentLimit == CurrentLimit.k60A:
-            self._put(0.0, 1.124)
-            self._put(4888.0, 1.124)
-            self._put(6080.0, 0.0)
-        elif currentLimit == CurrentLimit.k80A:
-            self._put(0.0, 1.508)
-            self._put(4501.0, 1.508)
-            self._put(6080.0, 0.0)
-
-    def _initNEOVortex(self, currentLimit: CurrentLimit):
-        if currentLimit == CurrentLimit.k40A:
-            self._put(0.0, 0.621)
-            self._put(5412.0, 0.621)
-            self._put(6784.0, 0.0)
-        elif currentLimit == CurrentLimit.k60A:
-            self._put(0.0, 0.962)
-            self._put(4923.0, 0.962)
-            self._put(6784.0, 0.0)
-        elif currentLimit == CurrentLimit.k80A:
-            self._put(0.0, 1.304)
-            self._put(4279.0, 1.304)
-            self._put(6784.0, 0.0)
-
-    def _initNEO(self, currentLimit: CurrentLimit):
-        if currentLimit == CurrentLimit.k40A:
-            self._put(0.0, 0.701)
-            self._put(4620.0, 0.701)
-            self._put(5880.0, 0.0)
-        elif currentLimit == CurrentLimit.k60A:
-            self._put(0.0, 1.064)
-            self._put(3948.0, 1.064)
-            self._put(5880.0, 0.0)
-        elif currentLimit == CurrentLimit.k80A:
-            self._put(0.0, 1.426)
-            self._put(3297.0, 1.426)
-            self._put(5880.0, 0.0)
-
-    def _initCIM(self, currentLimit: CurrentLimit):
-        if currentLimit == CurrentLimit.k40A:
-            self._put(0.0, 0.686)
-            self._put(3773.0, 0.686)
-            self._put(5330.0, 0.0)
-        elif currentLimit == CurrentLimit.k60A:
-            self._put(0.0, 1.054)
-            self._put(2939.0, 1.054)
-            self._put(5330.0, 0.0)
-        elif currentLimit == CurrentLimit.k80A:
-            self._put(0.0, 1.422)
-            self._put(2104.0, 1.422)
-            self._put(5330.0, 0.0)
-
-    def _initMiniCIM(self, currentLimit: CurrentLimit):
-        if currentLimit == CurrentLimit.k40A:
-            self._put(0.0, 0.586)
-            self._put(3324.0, 0.586)
-            self._put(5840.0, 0.0)
-        elif currentLimit == CurrentLimit.k60A:
-            self._put(0.0, 0.903)
-            self._put(1954.0, 0.903)
-            self._put(5840.0, 0.0)
-        elif currentLimit == CurrentLimit.k80A:
-            self._put(0.0, 1.22)
-            self._put(604.0, 1.22)
-            self._put(5840.0, 0.0)
-
-    def _put(self, key: float, value: float):
-        self._map[key] = value
-
-    def get(self, key: float) -> Union[float, None]:
-        val = self._map[key]
-
-        if val is None:
-            floorKey = None
-            ceilKey = None
-
-            for k in self._map.keys():
-                if k < key and (floorKey is None or k > floorKey):
-                    floorKey = k
-                elif k > key and (ceilKey is None or k < ceilKey):
-                    ceilKey = k
-
-            if floorKey is None or ceilKey is None:
-                return None
-            elif ceilKey is None:
-                return self._map[floorKey]
-            elif floorKey is None:
-                return self._map[ceilKey]
-            else:
-                floorVal = self._map[floorKey]
-                ceilVal = self._map[ceilKey]
-
-                return floatLerp(floorVal, ceilVal, MotorTorqueCurve._inverseInterpolate(floorKey, ceilKey, key))
-        else:
-            return val
-
-    @staticmethod
-    def _inverseInterpolate(startValue: float, endValue: float, q: float) -> float:
-        totalRange = endValue - startValue
-        if totalRange <= 0.0:
-            return 0.0
-        else:
-            queryToStart = q - startValue
-            return 0.0 if queryToStart <= 0.0 else queryToStart / totalRange
-
-
 class ModuleConfig:
     wheelRadiusMeters: float
-    driveGearing: float
-    maxDriveVelocityRPM: float
-    wheelCOF: float
-    driveMotorTorqueCurve: MotorTorqueCurve
-
-    rpmToMps: float
     maxDriveVelocityMPS: float
+    wheelCOF: float
+    driveMotor: DCMotor
+    driveCurrentLimit: float
+
+    maxDriveVelocityRadPerSec: float
     torqueLoss: float
 
-    def __init__(self, wheelRadiusMeters: float, driveGearing: float, maxDriveVelocityRPM: float, wheelCOF: float,
-                 driveMotorTorqueCurve: MotorTorqueCurve):
-        self.wheelRadiusMeters = wheelRadiusMeters
-        self.driveGearing = driveGearing
-        self.maxDriveVelocityRPM = maxDriveVelocityRPM
-        self.wheelCOF = wheelCOF
-        self.driveMotorTorqueCurve = driveMotorTorqueCurve
+    def __init__(self, wheelRadiusMeters: float, maxDriveVelocityMPS: float, wheelCOF: float,
+                 driveMotor: DCMotor, driveCurrentLimit: float, numMotors: int):
+        """
+        Configuration of a robot drive module. This can either be a swerve module,
+        or one side of a differential drive train.
 
-        self.rpmToMps = ((1.0 / 60.0) / self.driveGearing) * (2.0 * math.pi * self.wheelRadiusMeters)
-        self.maxDriveVelocityMPS = self.maxDriveVelocityRPM * self.rpmToMps
-        self.torqueLoss = self.driveMotorTorqueCurve.get(self.maxDriveVelocityRPM)
+        :param wheelRadiusMeters: Radius of the drive wheels, in meters.
+        :param maxDriveVelocityMPS: The max speed that the drive motor can reach while actually driving the robot at full output, in M/S.
+        :param wheelCOF: The coefficient of friction between the drive wheel and the carpet. If you are unsure, just use a placeholder value of 1.0.
+        :param driveMotor: The DCMotor representing the drive motor gearbox, including gear reduction
+        :param driveCurrentLimit: The current limit of the drive motor, in Amps
+        :param numMotors: The number of motors per module. For swerve, this is 1. For differential, this is usually 2.
+        """
+        self.wheelRadiusMeters = wheelRadiusMeters
+        self.maxDriveVelocityMPS = maxDriveVelocityMPS
+        self.wheelCOF = wheelCOF
+        self.driveMotor = driveMotor
+        self.driveCurrentLimit = driveCurrentLimit * numMotors
+
+        self.maxDriveVelocityRadPerSec = self.maxDriveVelocityMPS / self.wheelRadiusMeters
+        maxSpeedCurrentDraw = self.driveMotor.current(self.maxDriveVelocityRadPerSec, 12.0)
+        self.torqueLoss = max(self.driveMotor.torque(min(maxSpeedCurrentDraw, self.driveCurrentLimit)), 0.0)
 
 
 class RobotConfig:
@@ -308,58 +68,117 @@ class RobotConfig:
     moduleConfig: ModuleConfig
 
     moduleLocations: List[Translation2d]
-    diffKinematics: SwerveDrive2Kinematics
-    swerveKinematics: SwerveDrive4Kinematics
     isHolonomic: bool
 
     numModules: int
     modulePivotDistance: List[float]
     wheelFrictionForce: float
+    maxTorqueFriction: float
 
-    def __init__(self, massKG: float, MOI: float, moduleConfig: ModuleConfig, trackwidthMeters: float,
-                 wheelbaseMeters: float = None):
+    _swerveKinematics: Union[SwerveDrive4Kinematics, None]
+    _diffKinematics: Union[DifferentialDriveKinematics, None]
+    _forceKinematics: NDArray
+
+    def __init__(self, massKG: float, MOI: float, moduleConfig: ModuleConfig, moduleOffsets: List[Translation2d] = None,
+                 trackwidthMeters: float = None):
         """
-        Create a robot config object. Holonomic robots should include the wheelbaseMeters argument.
+        Create a robot config object. Either moduleOffsets(for swerve robots) or trackwidthMeters(for diff drive robots) must be given.
 
         :param massKG: The mass of the robot, including bumpers and battery, in KG
         :param MOI: The moment of inertia of the robot, in KG*M^2
         :param moduleConfig: The drive module config
-        :param trackwidthMeters: The distance between the left and right side of the drivetrain, in meters
-        :param wheelbaseMeters: The distance between the front and back side of the drivetrain, in meters. Should only be specified for holonomic robots
+        :param moduleOffsets: The locations of the module relative to the physical center of the robot. Only robots with 4 modules are supported, and they should be in FL, FR, BL, BR order. Only used for swerve robots.
+        :param trackwidthMeters: The distance between the left and right side of the drivetrain, in meters. Only used for diff drive robots
         """
         self.massKG = massKG
         self.MOI = MOI
         self.moduleConfig = moduleConfig
 
-        if wheelbaseMeters is None:
+        if trackwidthMeters is not None:
             self.moduleLocations = [
                 Translation2d(0.0, trackwidthMeters / 2.0),
                 Translation2d(0.0, -trackwidthMeters / 2.0),
             ]
+            self._swerveKinematics = None
+            self._diffKinematics = DifferentialDriveKinematics(trackwidthMeters)
             self.isHolonomic = False
-        else:
-            self.moduleLocations = [
-                Translation2d(wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-                Translation2d(wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-                Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-                Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-            ]
+        elif moduleOffsets is not None:
+            self.moduleLocations = moduleOffsets
+            self._swerveKinematics = SwerveDrive4Kinematics(
+                self.moduleLocations[0],
+                self.moduleLocations[1],
+                self.moduleLocations[2],
+                self.moduleLocations[3],
+            )
+            self._diffKinematics = None
             self.isHolonomic = True
-
-        self.diffKinematics = SwerveDrive2Kinematics(
-            Translation2d(0.0, trackwidthMeters / 2.0),
-            Translation2d(0.0, -trackwidthMeters / 2.0),
-        )
-        self.swerveKinematics = SwerveDrive4Kinematics(
-            Translation2d(wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-            Translation2d(wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-            Translation2d(-wheelbaseMeters / 2.0, trackwidthMeters / 2.0),
-            Translation2d(-wheelbaseMeters / 2.0, -trackwidthMeters / 2.0),
-        )
+        else:
+            raise ValueError(
+                'Either moduleOffsets(for swerve robots) or trackwidthMeters(for diff drive robots) must be given')
 
         self.numModules = len(self.moduleLocations)
         self.modulePivotDistance = [t.norm() for t in self.moduleLocations]
-        self.wheelFrictionForce = self.moduleConfig.wheelCOF * (self.massKG * 9.8)
+        self.wheelFrictionForce = self.moduleConfig.wheelCOF * ((self.massKG / self.numModules) * 9.8)
+        self.maxTorqueFriction = self.wheelFrictionForce * self.moduleConfig.wheelRadiusMeters
+
+        self._forceKinematics = np.zeros((self.numModules * 2, 3))
+        for i in range(self.numModules):
+            modPosReciprocal = Translation2d(1.0 / self.moduleLocations[i].norm(), self.moduleLocations[i].angle())
+            self._forceKinematics[i * 2] = [1.0, 0.0, -modPosReciprocal.Y()]
+            self._forceKinematics[i * 2 + 1] = [0.0, 1.0, modPosReciprocal.X()]
+
+    def toSwerveModuleStates(self, speeds: ChassisSpeeds) -> List[SwerveModuleState]:
+        """
+        Convert robot-relative chassis speeds to a list of swerve module states. This will use
+        differential kinematics for diff drive robots, then convert the wheel speeds to module states.
+
+        :param speeds: Robot-relative chassis speeds
+        :return: List of swerve module states
+        """
+        if self.isHolonomic:
+            return self._swerveKinematics.toSwerveModuleStates(speeds)
+        else:
+            wheelSpeeds = self._diffKinematics.toWheelSpeeds(speeds)
+            return [
+                SwerveModuleState(wheelSpeeds.left, Rotation2d()),
+                SwerveModuleState(wheelSpeeds.right, Rotation2d())
+            ]
+
+    def toChassisSpeeds(self, states: List[SwerveModuleState]) -> ChassisSpeeds:
+        """
+        Convert a list of swerve module states to robot-relative chassis speeds. This will use
+        differential kinematics for diff drive robots.
+
+        :param states: List of swerve module states
+        :return: Robot-relative chassis speeds
+        """
+        if self.isHolonomic:
+            return self._swerveKinematics.toChassisSpeeds(states)
+        else:
+            wheelSpeeds = DifferentialDriveWheelSpeeds(states[0].speed, states[1].speed)
+            return self._diffKinematics.toChassisSpeeds(wheelSpeeds)
+
+    def chassisForcesToWheelForceVectors(self, chassisForces: ChassisSpeeds) -> List[Translation2d]:
+        """
+        Convert chassis forces (passed as ChassisSpeeds) to individual wheel force vectors
+
+        :param chassisForces: The linear X/Y force and torque acting on the whole robot
+        :return: List of individual wheel force vectors
+        """
+        chassisForceVector = np.array([chassisForces.vx, chassisForces.vy, chassisForces.omega]).reshape((3, 1))
+
+        # Divide the chassis force vector by numModules since force is additive. All module forces will
+        # add up to the chassis force
+        moduleForceMatrix = np.matmul(self._forceKinematics, (chassisForceVector / self.numModules))
+
+        forceVectors = []
+        for m in range(self.numModules):
+            x = moduleForceMatrix[m * 2][0]
+            y = moduleForceMatrix[m * 2 + 1][0]
+
+            forceVectors.append(Translation2d(x, y))
+
+        return forceVectors
 
     @staticmethod
     def fromGUISettings() -> 'RobotConfig':
@@ -376,23 +195,54 @@ class RobotConfig:
             isHolonomic = bool(settingsJson['holonomicMode'])
             massKG = float(settingsJson['robotMass'])
             MOI = float(settingsJson['robotMOI'])
-            wheelbase = float(settingsJson['robotWheelbase'])
-            trackwidth = float(settingsJson['robotTrackwidth'])
             wheelRadius = float(settingsJson['driveWheelRadius'])
             gearing = float(settingsJson['driveGearing'])
-            maxDriveRPM = float(settingsJson['maxDriveRPM'])
+            maxDriveSpeed = float(settingsJson['maxDriveSpeed'])
             wheelCOF = float(settingsJson['wheelCOF'])
-            driveMotor = str(settingsJson['driveMotor'])
+            driveMotor = str(settingsJson['driveMotorType'])
+            driveCurrentLimit = float(settingsJson['driveCurrentLimit'])
+
+            numMotors = 1 if isHolonomic else 2
+            gearbox = None
+            if driveMotor == 'krakenX60':
+                gearbox = DCMotor.krakenX60(numMotors)
+            elif driveMotor == 'krakenX60FOC':
+                gearbox = DCMotor.krakenX60FOC(numMotors)
+            elif driveMotor == 'falcon500':
+                gearbox = DCMotor.falcon500(numMotors)
+            elif driveMotor == 'falcon500FOC':
+                gearbox = DCMotor.falcon500FOC(numMotors)
+            elif driveMotor == 'vortex':
+                gearbox = DCMotor.neoVortex(numMotors)
+            elif driveMotor == 'NEO':
+                gearbox = DCMotor.NEO(numMotors)
+            elif driveMotor == 'CIM':
+                gearbox = DCMotor.CIM(numMotors)
+            elif driveMotor == 'miniCIM':
+                gearbox = DCMotor.miniCIM(numMotors)
+            else:
+                raise ValueError(f'Unknown motor type: {driveMotor}')
+            gearbox = gearbox.withReduction(gearing)
 
             moduleConfig = ModuleConfig(
                 wheelRadius,
-                gearing,
-                maxDriveRPM,
+                maxDriveSpeed,
                 wheelCOF,
-                MotorTorqueCurve.fromSettingsString(driveMotor)
+                gearbox,
+                driveCurrentLimit,
+                numMotors
             )
 
             if isHolonomic:
-                return RobotConfig(massKG, MOI, moduleConfig, trackwidth, wheelbase)
+                moduleOffsets = [
+                    Translation2d(float(settingsJson['flModuleX']), float(settingsJson['flModuleY'])),
+                    Translation2d(float(settingsJson['frModuleX']), float(settingsJson['frModuleY'])),
+                    Translation2d(float(settingsJson['blModuleX']), float(settingsJson['blModuleY'])),
+                    Translation2d(float(settingsJson['brModuleX']), float(settingsJson['brModuleY']))
+                ]
+
+                return RobotConfig(massKG, MOI, moduleConfig, moduleOffsets=moduleOffsets)
             else:
-                return RobotConfig(massKG, MOI, moduleConfig, trackwidth)
+                trackwidth = float(settingsJson['robotTrackwidth'])
+
+                return RobotConfig(massKG, MOI, moduleConfig, trackwidthMeters=trackwidth)

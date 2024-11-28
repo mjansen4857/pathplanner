@@ -5,10 +5,10 @@ import 'package:pathplanner/path/path_constraints.dart';
 void main() {
   test('Constructor functions', () {
     PathConstraints constraints = PathConstraints(
-      maxVelocity: 1.0,
-      maxAcceleration: 2.0,
-      maxAngularVelocity: 3.0,
-      maxAngularAcceleration: 4.0,
+      maxVelocityMPS: 1.0,
+      maxAccelerationMPSSq: 2.0,
+      maxAngularVelocityDeg: 3.0,
+      maxAngularAccelerationDeg: 4.0,
     );
 
     ConstraintsZone zone = ConstraintsZone(
@@ -30,10 +30,10 @@ void main() {
       maxWaypointRelativePos: 2.1,
       name: 'test zone',
       constraints: PathConstraints(
-        maxVelocity: 1.0,
-        maxAcceleration: 2.0,
-        maxAngularVelocity: 3.0,
-        maxAngularAcceleration: 4.0,
+        maxVelocityMPS: 1.0,
+        maxAccelerationMPSSq: 2.0,
+        maxAngularVelocityDeg: 3.0,
+        maxAngularAccelerationDeg: 4.0,
       ),
     );
 
@@ -50,7 +50,7 @@ void main() {
     expect(cloned, zone);
 
     cloned.minWaypointRelativePos = 0.7;
-    cloned.constraints.maxVelocity = 8.2;
+    cloned.constraints.maxVelocityMPS = 8.2;
 
     expect(zone, isNot(cloned));
   });

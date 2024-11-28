@@ -7,18 +7,19 @@ import 'package:pathplanner/path/constraints_zone.dart';
 import 'package:pathplanner/path/event_marker.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/path/point_towards_zone.dart';
 import 'package:pathplanner/path/rotation_target.dart';
 import 'package:pathplanner/path/waypoint.dart';
 import 'package:pathplanner/services/log.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
 import 'package:pathplanner/trajectory/config.dart';
-import 'package:pathplanner/trajectory/motor_torque_curve.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
-import 'package:pathplanner/util/wpimath/kinematics.dart';
+import 'package:pathplanner/widgets/dialogs/trajectory_render_dialog.dart';
 import 'package:pathplanner/widgets/editor/path_painter.dart';
 import 'package:pathplanner/widgets/editor/preview_seekbar.dart';
+import 'package:pathplanner/widgets/editor/runtime_display.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
 import 'package:pathplanner/widgets/field_image.dart';
@@ -63,22 +64,29 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   int? _selectedZone;
   int? _hoveredRotTarget;
   int? _selectedRotTarget;
+  int? _hoveredPointZone;
+  int? _selectedPointZone;
   int? _hoveredMarker;
   int? _selectedMarker;
   late bool _treeOnRight;
   Waypoint? _draggedPoint;
   Waypoint? _dragOldValue;
   int? _draggedRotationIdx;
-  Point<num>? _draggedRotationPos;
-  num? _dragRotationOldValue;
+  Translation2d? _draggedRotationPos;
+  Rotation2d? _dragRotationOldValue;
   PathPlannerTrajectory? _simTraj;
   bool _paused = false;
   late bool _holonomicMode;
 
+  PathPlannerPath? _optimizedPath;
+
   late Size _robotSize;
+  late Translation2d _bumperOffset;
   late AnimationController _previewController;
 
   List<Waypoint> get waypoints => widget.path.waypoints;
+
+  RuntimeDisplay? _runtimeDisplay;
 
   @override
   void initState() {
@@ -97,6 +105,11 @@ class _SplitPathEditorState extends State<SplitPathEditor>
     var length =
         widget.prefs.getDouble(PrefsKeys.robotLength) ?? Defaults.robotLength;
     _robotSize = Size(width, length);
+    _bumperOffset = Translation2d(
+        widget.prefs.getDouble(PrefsKeys.bumperOffsetX) ??
+            Defaults.bumperOffsetX,
+        widget.prefs.getDouble(PrefsKeys.bumperOffsetY) ??
+            Defaults.bumperOffsetY);
 
     double treeWeight = widget.prefs.getDouble(PrefsKeys.editorTreeWeight) ??
         Defaults.editorTreeWeight;
@@ -162,7 +175,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   PathPlannerPath.cloneWaypoints(waypoints),
                   () {
                     setState(() {
-                      widget.path.addWaypoint(Point(
+                      widget.path.addWaypoint(Translation2d(
                           _xPixelsToMeters(details.localPosition.dx),
                           _yPixelsToMeters(details.localPosition.dy)));
                       widget.path.generateAndSavePath();
@@ -204,8 +217,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     PathPainterUtil.uiPointSizeToPixels(
                         15, PathPainter.scale, widget.fieldImage));
                 for (int i = 0; i < widget.path.pathPoints.length; i++) {
-                  num rotation;
-                  Point pos;
+                  Rotation2d rotation;
+                  Translation2d pos;
                   if (i == 0) {
                     rotation = widget.path.idealStartingState.rotation;
                     pos = widget.path.pathPoints.first.position;
@@ -213,18 +226,19 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     rotation = widget.path.goalEndState.rotation;
                     pos = widget.path.pathPoints.last.position;
                   } else if (widget.path.pathPoints[i].rotationTarget != null) {
-                    rotation = widget
-                        .path.pathPoints[i].rotationTarget!.rotationDegrees;
+                    rotation =
+                        widget.path.pathPoints[i].rotationTarget!.rotation;
                     pos = widget.path.pathPoints[i].position;
                   } else {
                     continue;
                   }
 
-                  num angleRadians = rotation / 180.0 * pi;
-                  num dotX =
-                      pos.x + (_robotSize.height / 2 * cos(angleRadians));
-                  num dotY =
-                      pos.y + (_robotSize.height / 2 * sin(angleRadians));
+                  num dotX = pos.x +
+                      (((_robotSize.height / 2) + _bumperOffset.x) *
+                          rotation.cosine);
+                  num dotY = pos.y +
+                      (((_robotSize.height / 2) + _bumperOffset.x) *
+                          rotation.sine);
                   if (pow(xPos - dotX, 2) + pow(yPos - dotY, 2) <
                       pow(dotRadius, 2)) {
                     if (i == 0) {
@@ -297,7 +311,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     widget.path.generatePathPoints();
                   });
                 } else if (_draggedRotationIdx != null) {
-                  Point pos;
+                  Translation2d pos;
                   if (_draggedRotationIdx == -2) {
                     pos = widget.path.waypoints.first.anchor;
                   } else if (_draggedRotationIdx == -1) {
@@ -308,17 +322,18 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
                   double x = _xPixelsToMeters(details.localPosition.dx);
                   double y = _yPixelsToMeters(details.localPosition.dy);
-                  num rotation = atan2(y - pos.y, x - pos.x);
-                  num rotationDeg = (rotation * 180 / pi);
 
                   setState(() {
                     if (_draggedRotationIdx == -2) {
-                      widget.path.idealStartingState.rotation = rotationDeg;
+                      widget.path.idealStartingState.rotation =
+                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
                     } else if (_draggedRotationIdx == -1) {
-                      widget.path.goalEndState.rotation = rotationDeg;
+                      widget.path.goalEndState.rotation =
+                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
                     } else {
                       widget.path.rotationTargets[_draggedRotationIdx!]
-                          .rotationDegrees = rotationDeg;
+                              .rotation =
+                          Rotation2d.fromComponents(x - pos.x, y - pos.y);
                     }
                   });
                 }
@@ -358,7 +373,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   _draggedPoint = null;
                 } else if (_draggedRotationIdx != null) {
                   if (_draggedRotationIdx == -2) {
-                    num endRotation = widget.path.idealStartingState.rotation;
+                    final endRotation = widget.path.idealStartingState.rotation;
                     widget.undoStack.add(Change(
                       _dragRotationOldValue,
                       () {
@@ -377,7 +392,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                       },
                     ));
                   } else if (_draggedRotationIdx == -1) {
-                    num endRotation = widget.path.goalEndState.rotation;
+                    final endRotation = widget.path.goalEndState.rotation;
                     widget.undoStack.add(Change(
                       _dragRotationOldValue,
                       () {
@@ -397,22 +412,22 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     ));
                   } else {
                     int rotationIdx = _draggedRotationIdx!;
-                    num endRotation = widget
-                        .path.rotationTargets[rotationIdx].rotationDegrees;
+                    final endRotation =
+                        widget.path.rotationTargets[rotationIdx].rotation;
                     widget.undoStack.add(Change(
                       _dragRotationOldValue,
                       () {
                         setState(() {
-                          widget.path.rotationTargets[rotationIdx]
-                              .rotationDegrees = endRotation;
+                          widget.path.rotationTargets[rotationIdx].rotation =
+                              endRotation;
                           widget.path.generateAndSavePath();
                           _simulatePath();
                         });
                       },
                       (oldValue) {
                         setState(() {
-                          widget.path.rotationTargets[rotationIdx]
-                              .rotationDegrees = oldValue!;
+                          widget.path.rotationTargets[rotationIdx].rotation =
+                              oldValue!;
                           widget.path.generateAndSavePath();
                           _simulatePath();
                         });
@@ -431,6 +446,7 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                     Positioned.fill(
                       child: CustomPaint(
                         painter: PathPainter(
+                          colorScheme: colorScheme,
                           paths: [widget.path],
                           simple: false,
                           fieldImage: widget.fieldImage,
@@ -438,14 +454,16 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                           selectedWaypoint: _selectedWaypoint,
                           hoveredZone: _hoveredZone,
                           selectedZone: _selectedZone,
+                          hoveredPointZone: _hoveredPointZone,
+                          selectedPointZone: _selectedPointZone,
                           hoveredRotTarget: _hoveredRotTarget,
                           selectedRotTarget: _selectedRotTarget,
                           hoveredMarker: _hoveredMarker,
                           selectedMarker: _selectedMarker,
                           simulatedPath: _simTraj,
                           animation: _previewController.view,
-                          previewColor: colorScheme.primary,
                           prefs: widget.prefs,
+                          optimizedPath: _optimizedPath,
                         ),
                       ),
                     ),
@@ -500,15 +518,32 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                   padding: const EdgeInsets.all(8.0),
                   child: PathTree(
                     path: widget.path,
-                    pathRuntime: _simTraj?.states.last.timeSeconds,
+                    pathRuntime: _simTraj?.getTotalTimeSeconds(),
+                    runtimeDisplay: _runtimeDisplay,
                     initiallySelectedWaypoint: _selectedWaypoint,
                     initiallySelectedZone: _selectedZone,
                     initiallySelectedRotTarget: _selectedRotTarget,
+                    initiallySelectedPointZone: _selectedPointZone,
                     initiallySelectedMarker: _selectedMarker,
                     waypointsTreeController: _waypointsTreeController,
                     undoStack: widget.undoStack,
                     holonomicMode: _holonomicMode,
                     defaultConstraints: _getDefaultConstraints(),
+                    prefs: widget.prefs,
+                    fieldSizeMeters: widget.fieldImage.getFieldSizeMeters(),
+                    onRenderPath: () {
+                      if (_simTraj != null) {
+                        showDialog(
+                            context: context,
+                            builder: (context) {
+                              return TrajectoryRenderDialog(
+                                fieldImage: widget.fieldImage,
+                                prefs: widget.prefs,
+                                trajectory: _simTraj!,
+                              );
+                            });
+                      }
+                    },
                     onPathChanged: () {
                       setState(() {
                         widget.path.generateAndSavePath();
@@ -542,6 +577,8 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                               widget.path.eventMarkers),
                           PathPlannerPath.cloneRotationTargets(
                               widget.path.rotationTargets),
+                          PathPlannerPath.clonePointTowardsZones(
+                              widget.path.pointTowardsZones),
                         ],
                         () {
                           setState(() {
@@ -552,15 +589,25 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                             Waypoint w =
                                 widget.path.waypoints.removeAt(waypointIdx);
 
-                            if (w.isEndPoint()) {
+                            if (w.isEndPoint) {
                               waypoints[widget.path.waypoints.length - 1]
                                   .nextControl = null;
-                            } else if (w.isStartPoint()) {
+                            } else if (w.isStartPoint) {
                               waypoints[0].prevControl = null;
                             }
 
                             for (ConstraintsZone zone
                                 in widget.path.constraintZones) {
+                              zone.minWaypointRelativePos =
+                                  _adjustDeletedWaypointRelativePos(
+                                      zone.minWaypointRelativePos, waypointIdx);
+                              zone.maxWaypointRelativePos =
+                                  _adjustDeletedWaypointRelativePos(
+                                      zone.maxWaypointRelativePos, waypointIdx);
+                            }
+
+                            for (PointTowardsZone zone
+                                in widget.path.pointTowardsZones) {
                               zone.minWaypointRelativePos =
                                   _adjustDeletedWaypointRelativePos(
                                       zone.minWaypointRelativePos, waypointIdx);
@@ -604,6 +651,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                             widget.path.rotationTargets =
                                 PathPlannerPath.cloneRotationTargets(
                                     oldValue[3] as List<RotationTarget>);
+                            widget.path.pointTowardsZones =
+                                PathPlannerPath.clonePointTowardsZones(
+                                    oldValue[4] as List<PointTowardsZone>);
                             widget.path.generateAndSavePath();
                             _simulatePath();
                           });
@@ -635,6 +685,16 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         _selectedZone = value;
                       });
                     },
+                    onPointZoneHovered: (value) {
+                      setState(() {
+                        _hoveredPointZone = value;
+                      });
+                    },
+                    onPointZoneSelected: (value) {
+                      setState(() {
+                        _selectedPointZone = value;
+                      });
+                    },
                     onRotTargetHovered: (value) {
                       setState(() {
                         _hoveredRotTarget = value;
@@ -655,6 +715,9 @@ class _SplitPathEditorState extends State<SplitPathEditor>
                         _selectedMarker = value;
                       });
                     },
+                    onOptimizationUpdate: (result) => setState(() {
+                      _optimizedPath = result;
+                    }),
                   ),
                 ),
               ),
@@ -674,65 +737,20 @@ class _SplitPathEditorState extends State<SplitPathEditor>
   // marked as async so it can be called from initState
   void _simulatePath() async {
     if (widget.simulate) {
-      num linearVel = widget.path.idealStartingState.velocity;
-      Rotation2d startingRotation =
-          Rotation2d.fromDegrees(widget.path.idealStartingState.rotation);
-
-      Rotation2d heading = Rotation2d.fromRadians(
-          widget.path.waypoints.first.getHeadingRadians());
-      Translation2d xySpeed = Translation2d.fromAngle(linearVel, heading);
-
-      num halfWheelbase = (widget.prefs.getDouble(PrefsKeys.robotWheelbase) ??
-              Defaults.robotWheelbase) /
-          2;
-      num halfTrackwidth = (widget.prefs.getDouble(PrefsKeys.robotTrackwidth) ??
-              Defaults.robotTrackwidth) /
-          2;
-      List<Translation2d> moduleLocations = _holonomicMode
-          ? [
-              Translation2d(x: halfWheelbase, y: halfTrackwidth),
-              Translation2d(x: halfWheelbase, y: -halfTrackwidth),
-              Translation2d(x: -halfWheelbase, y: halfTrackwidth),
-              Translation2d(x: -halfWheelbase, y: -halfTrackwidth),
-            ]
-          : [
-              Translation2d(x: 0, y: halfTrackwidth),
-              Translation2d(x: 0, y: -halfTrackwidth),
-            ];
-
       setState(() {
         _simTraj = PathPlannerTrajectory(
           path: widget.path,
-          startingSpeeds:
-              ChassisSpeeds(vx: xySpeed.x, vy: xySpeed.y, omega: 0.0),
-          startingRotation: startingRotation,
-          robotConfig: RobotConfig(
-            massKG: widget.prefs.getDouble(PrefsKeys.robotMass) ??
-                Defaults.robotMass,
-            moi:
-                widget.prefs.getDouble(PrefsKeys.robotMOI) ?? Defaults.robotMOI,
-            moduleConfig: ModuleConfig(
-              wheelRadiusMeters:
-                  widget.prefs.getDouble(PrefsKeys.driveWheelRadius) ??
-                      Defaults.driveWheelRadius,
-              driveGearing: widget.prefs.getDouble(PrefsKeys.driveGearing) ??
-                  Defaults.driveGearing,
-              maxDriveVelocityRPM:
-                  widget.prefs.getDouble(PrefsKeys.maxDriveRPM) ??
-                      Defaults.maxDriveRPM,
-              driveMotorTorqueCurve: MotorTorqueCurve.fromString(
-                  widget.prefs.getString(PrefsKeys.torqueCurve) ??
-                      Defaults.torqueCurve),
-              wheelCOF: widget.prefs.getDouble(PrefsKeys.wheelCOF) ??
-                  Defaults.wheelCOF,
-            ),
-            moduleLocations: moduleLocations,
-            holonomic: _holonomicMode,
-          ),
+          robotConfig: RobotConfig.fromPrefs(widget.prefs),
         );
         if (!(_simTraj?.getTotalTimeSeconds().isFinite ?? false)) {
           _simTraj = null;
         }
+
+        // Update the RuntimeDisplay widget
+        _runtimeDisplay = RuntimeDisplay(
+          currentRuntime: _simTraj?.states.last.timeSeconds,
+          previousRuntime: _runtimeDisplay?.currentRuntime,
+        );
       });
 
       if (!_paused) {
@@ -741,17 +759,44 @@ class _SplitPathEditorState extends State<SplitPathEditor>
       }
 
       if (_simTraj != null) {
-        _previewController.duration = Duration(
-            milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
-        _previewController.repeat();
+        if (!_paused) {
+          _previewController.duration = Duration(
+              milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
+          _previewController.repeat();
+        } else if (_previewController.duration != null) {
+          double prevTime = _previewController.value *
+              (_previewController.duration!.inMilliseconds / 1000.0);
+          _previewController.duration = Duration(
+              milliseconds: (_simTraj!.states.last.timeSeconds * 1000).toInt());
+          double newPos = prevTime / _simTraj!.states.last.timeSeconds;
+          _previewController.forward(from: newPos);
+          _previewController.stop();
+        }
       } else {
         // Trajectory failed to generate. Notify the user
         Log.warning(
             'Failed to generate trajectory for path: ${widget.path.name}');
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Failed to generate trajectory. Try adjusting the path shape or the positions of rotation targets.'),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to generate trajectory. Please open an issue on the pathplanner github and include this path file',
+              style: TextStyle(
+                  color: Theme.of(context).colorScheme.onErrorContainer),
+            ),
+            backgroundColor: Theme.of(context).colorScheme.errorContainer,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              textColor: Theme.of(context).colorScheme.onErrorContainer,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
+          ),
+        );
       }
     }
   }
@@ -801,13 +846,14 @@ class _SplitPathEditorState extends State<SplitPathEditor>
 
   PathConstraints _getDefaultConstraints() {
     return PathConstraints(
-      maxVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
+      maxVelocityMPS: widget.prefs.getDouble(PrefsKeys.defaultMaxVel) ??
           Defaults.defaultMaxVel,
-      maxAcceleration: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
+      maxAccelerationMPSSq: widget.prefs.getDouble(PrefsKeys.defaultMaxAccel) ??
           Defaults.defaultMaxAccel,
-      maxAngularVelocity: widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
-          Defaults.defaultMaxAngVel,
-      maxAngularAcceleration:
+      maxAngularVelocityDeg:
+          widget.prefs.getDouble(PrefsKeys.defaultMaxAngVel) ??
+              Defaults.defaultMaxAngVel,
+      maxAngularAccelerationDeg:
           widget.prefs.getDouble(PrefsKeys.defaultMaxAngAccel) ??
               Defaults.defaultMaxAngAccel,
     );

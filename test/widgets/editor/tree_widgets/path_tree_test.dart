@@ -3,29 +3,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pathplanner/path/path_constraints.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/prefs.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/constraint_zones_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/event_markers_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/global_constraints_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/goal_end_state_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/path_optimization_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/path_tree.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/point_towards_zones_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/rotation_targets_tree.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/waypoints_tree.dart';
+import 'package:pathplanner/widgets/editor/runtime_display.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:undo/undo.dart';
 
 void main() {
   late PathPlannerPath path;
   bool sideSwapped = false;
+  late SharedPreferences prefs;
 
-  setUp(() {
+  setUp(() async {
     path = PathPlannerPath.defaultPath(
       pathDir: '/paths',
       fs: MemoryFileSystem(),
     );
     path.reversed = false;
     sideSwapped = false;
+    SharedPreferences.setMockInitialValues({
+      PrefsKeys.holonomicMode: true,
+      PrefsKeys.treeOnRight: true,
+    });
+    prefs = await SharedPreferences.getInstance();
   });
 
-  testWidgets('has simulated driving time', (widgetTester) async {
+  testWidgets('has runtime display', (widgetTester) async {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: PathTree(
@@ -33,11 +44,17 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          runtimeDisplay: const RuntimeDisplay(
+            currentRuntime: 5.0,
+            previousRuntime: null,
+          ),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
 
-    expect(find.textContaining('Simulated Driving Time'), findsOneWidget);
+    expect(find.byType(RuntimeDisplay), findsOneWidget);
   });
 
   testWidgets('swap side button', (widgetTester) async {
@@ -49,6 +66,8 @@ void main() {
           onSideSwapped: () => sideSwapped = true,
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -70,6 +89,8 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -85,6 +106,8 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -100,6 +123,8 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -115,6 +140,8 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -130,6 +157,8 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -145,6 +174,8 @@ void main() {
           undoStack: ChangeStack(),
           holonomicMode: true,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
@@ -152,7 +183,58 @@ void main() {
     expect(find.byType(RotationTargetsTree), findsOneWidget);
   });
 
-  testWidgets('Reversed checkbox', (widgetTester) async {
+  testWidgets('has point zones tree', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: PathTree(
+          path: path,
+          undoStack: ChangeStack(),
+          holonomicMode: true,
+          defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
+        ),
+      ),
+    ));
+
+    expect(find.byType(PointTowardsZonesTree), findsOneWidget);
+  });
+
+  testWidgets('has optimizer tree', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: PathTree(
+          path: path,
+          undoStack: ChangeStack(),
+          holonomicMode: true,
+          defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
+        ),
+      ),
+    ));
+
+    expect(find.byType(PathOptimizationTree), findsOneWidget);
+  });
+
+  testWidgets('has optimizer tree', (widgetTester) async {
+    await widgetTester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: PathTree(
+          path: path,
+          undoStack: ChangeStack(),
+          holonomicMode: true,
+          defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
+        ),
+      ),
+    ));
+
+    expect(find.byType(PathOptimizationTree), findsOneWidget);
+  });
+
+  testWidgets('Reversed button', (widgetTester) async {
     final ChangeStack undoStack = ChangeStack();
 
     await widgetTester.pumpWidget(MaterialApp(
@@ -162,15 +244,17 @@ void main() {
           undoStack: undoStack,
           holonomicMode: false,
           defaultConstraints: PathConstraints(),
+          prefs: prefs,
+          fieldSizeMeters: const Size(16.54, 8.21),
         ),
       ),
     ));
 
-    final check = find.byType(Checkbox);
+    final reversedButton = find.byTooltip('Reverse Path');
 
-    expect(check, findsOneWidget);
+    expect(reversedButton, findsOneWidget);
 
-    await widgetTester.tap(check);
+    await widgetTester.tap(reversedButton);
     await widgetTester.pump();
     expect(path.reversed, true);
 

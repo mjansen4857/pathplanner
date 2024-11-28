@@ -38,12 +38,17 @@
 
         <secondary>
             <title>Advanced features</title>
+            <a href="pplib-Triggers.md"
+               summary="Bind commands to triggers tied to a variety of events">Triggers</a>
+            <a href="pplib-Swerve-Setpoint-Generator.md"
+               summary="Generate swerve setpoints that respect individual module kinematic, torque, and friction limits">Swerve
+                Setpoint Generator</a>
             <a href="pplib-Pathfinding.md"
                summary="Generate and follow paths from anywhere to anywhere on the field, and avoid obstacles along the way">Pathfinding</a>
             <a href="pplib-Choreo-Interop.md" summary="Use PathPlannerLib to follow Choreo trajectories">Choreo
                 Interop</a>
-            <a href="pplib-Override-Target-Rotation.md"
-               summary="Override the target rotation while path following to aim at game pieces or scoring locations">Rotation
+            <a href="pplib-Override-Feedback.md"
+               summary="Override the feedback while path following to aim at game pieces or scoring locations">Feedback
                 Override</a>
         </secondary>
     </section-starting-page>

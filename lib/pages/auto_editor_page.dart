@@ -1,11 +1,8 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:pathplanner/auto/pathplanner_auto.dart';
 import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/services/pplib_telemetry.dart';
-import 'package:pathplanner/util/pose2d.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/custom_appbar.dart';
 import 'package:pathplanner/widgets/editor/split_auto_editor.dart';
@@ -76,30 +73,16 @@ class _AutoEditorPageState extends State<AutoEditorPage> {
       undoStack: widget.undoStack,
       onAutoChanged: () {
         setState(() {
-          if (widget.auto.choreoAuto) {
-            var pathNames = widget.auto.getAllPathNames();
-            if (pathNames.isNotEmpty) {
-              ChoreoPath first = widget.allChoreoPaths
-                  .firstWhere((e) => e.name == pathNames.first);
-              if (first.trajectory.states.isNotEmpty) {
-                Pose2d startPose = Pose2d(
-                  position: Point(
-                      first.trajectory.states.first.pose.translation.x,
-                      first.trajectory.states.first.pose.translation.y),
-                  rotation:
-                      first.trajectory.states.first.pose.rotation.getDegrees(),
-                );
-                widget.auto.startingPose = startPose;
-              }
-            }
-          }
-
           widget.auto.saveFile();
         });
 
         if (widget.hotReload) {
           widget.telemetry?.hotReloadAuto(widget.auto);
         }
+      },
+      onEditPathPressed: (pathName) {
+        widget.undoStack.clearHistory();
+        Navigator.of(context).pop(pathName);
       },
     );
 

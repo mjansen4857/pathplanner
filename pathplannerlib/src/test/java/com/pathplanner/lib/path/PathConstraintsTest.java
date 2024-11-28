@@ -13,10 +13,10 @@ public class PathConstraintsTest {
   public void testGetters() {
     PathConstraints constraints = new PathConstraints(1.0, 2.0, 3.0, 4.0);
 
-    assertEquals(1.0, constraints.getMaxVelocityMps(), DELTA);
-    assertEquals(2.0, constraints.getMaxAccelerationMpsSq(), DELTA);
-    assertEquals(3.0, constraints.getMaxAngularVelocityRps(), DELTA);
-    assertEquals(4.0, constraints.getMaxAngularAccelerationRpsSq(), DELTA);
+    assertEquals(1.0, constraints.maxVelocityMPS(), DELTA);
+    assertEquals(2.0, constraints.maxAccelerationMPSSq(), DELTA);
+    assertEquals(3.0, constraints.maxAngularVelocityRadPerSec(), DELTA);
+    assertEquals(4.0, constraints.maxAngularAccelerationRadPerSecSq(), DELTA);
   }
 
   @Test
@@ -26,11 +26,14 @@ public class PathConstraintsTest {
     json.put("maxAcceleration", 2.0);
     json.put("maxAngularVelocity", 90.0);
     json.put("maxAngularAcceleration", 180.0);
+    json.put("nominalVoltage", 12.0);
+    json.put("unlimited", false);
 
     PathConstraints fromJson = PathConstraints.fromJson(json);
 
     assertEquals(
-        new PathConstraints(1.0, 2.0, Units.degreesToRadians(90), Units.degreesToRadians(180)),
+        new PathConstraints(
+            1.0, 2.0, Units.degreesToRadians(90), Units.degreesToRadians(180), 12.0, false),
         fromJson);
   }
 }

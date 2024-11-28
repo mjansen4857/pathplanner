@@ -6,9 +6,6 @@
 In PathPlannerLib, AutoBuilder is used to create full autonomous routines based on auto files created in the GUI app. In
 order for AutoBuilder to be able to build these auto routines, it must first be configured to control your robot.
 
-There are a few options for configuring AutoBuilder, one for each type of path following command: Holonomic, Ramsete,
-and LTV.
-
 > **Note**
 >
 > Since all of the AutoBuilder configuration is related to the drive subsystem, it is recommended to configure
@@ -24,8 +21,7 @@ The following examples will assume that your drive subsystem has the following m
   calculated using one of
   WPILib's drive kinematics classes
 * `driveRobotRelative` or `drive` - Outputs commands to the robot's drive motors given robot-relative `ChassisSpeeds`.
-  This can be
-  converted to module states or wheel speeds using WPILib's drive kinematics classes.
+  This can be converted to module states or wheel speeds using WPILib's drive kinematics classes.
 
 > **Warning**
 >
@@ -47,20 +43,28 @@ public class DriveSubsystem extends SubsystemBase {
   public DriveSubsystem() {
     // All other subsystem initialization
     // ...
+    
+    // Load the RobotConfig from the GUI settings. You should probably
+    // store this in your Constants file
+    RobotConfig config;
+    try{
+      config = RobotConfig.fromGUISettings();
+    } catch (Exception e) {
+      // Handle exception as needed
+      e.printStackTrace();
+    }
 
     // Configure AutoBuilder last
-    AutoBuilder.configureHolonomic(
+    AutoBuilder.configure(
             this::getPose, // Robot pose supplier
             this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
             this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            this::driveRobotRelative, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-            new HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+            (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+            new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for holonomic drive trains
                     new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-                    new PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
-                    4.5, // Max module speed, in m/s
-                    0.4, // Drive base radius in meters. Distance from robot center to furthest module.
-                    new ReplanningConfig() // Default path replanning config. See the API for the options here
+                    new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
             ),
+            config, // The robot configuration
             () -> {
               // Boolean supplier that controls when the path will be mirrored for the red alliance
               // This will flip the path being followed to the red side of the field.
@@ -83,9 +87,8 @@ public class DriveSubsystem extends SubsystemBase {
 
 ```C++
 #include <pathplanner/lib/auto/AutoBuilder.h>
-#include <pathplanner/lib/util/HolonomicPathFollowerConfig.h>
-#include <pathplanner/lib/util/PIDConstants.h>
-#include <pathplanner/lib/util/ReplanningConfig.h>
+#include <pathplanner/lib/config/RobotConfig.h>
+#include <pathplanner/lib/controllers/PPHolonomicDriveController.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
 #include <frc/DriverStation.h>
@@ -95,20 +98,22 @@ using namespace pathplanner;
 SwerveSubsystem::SwerveSubsystem(){
     // Do all subsystem initialization here
     // ...
+    
+    // Load the RobotConfig from the GUI settings. You should probably
+    // store this in your Constants file
+    RobotConfig config = RobotConfig::fromGUISettings();
 
     // Configure the AutoBuilder last
-    AutoBuilder::configureHolonomic(
+    AutoBuilder::configure(
         [this](){ return getPose(); }, // Robot pose supplier
         [this](frc::Pose2d pose){ resetPose(pose); }, // Method to reset odometry (will be called if your auto has a starting pose)
         [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-        HolonomicPathFollowerConfig( // HolonomicPathFollowerConfig, this should likely live in your Constants class
+        [this](auto speeds, auto feedforwards){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+        std::make_shared<PPHolonomicDriveController>( // PPHolonomicController is the built in path following controller for holonomic drive trains
             PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-            PIDConstants(5.0, 0.0, 0.0), // Rotation PID constants
-            4.5_mps, // Max module speed, in m/s
-            0.4_m, // Drive base radius in meters. Distance from robot center to furthest module.
-            ReplanningConfig() // Default path replanning config. See the API for the options here
+            PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
         ),
+        config, // The robot configuration
         []() {
             // Boolean supplier that controls when the path will be mirrored for the red alliance
             // This will flip the path being followed to the red side of the field.
@@ -130,133 +135,30 @@ SwerveSubsystem::SwerveSubsystem(){
 
 ```Python
 from pathplannerlib.auto import AutoBuilder
-from pathplannerlib.config import HolonomicPathFollowerConfig, ReplanningConfig, PIDConstants
+from pathplannerlib.controller import PPHolonomicDriveController
+from pathplannerlib.config import RobotConfig, PIDConstants
 from wpilib import DriverStation
 
 class SwerveSubsystem(Subsystem):
     def __init__(self):
         # Do all subsystem initialization here
         # ...
+        
+        # Load the RobotConfig from the GUI settings. You should probably
+        # store this in your Constants file
+        config = RobotConfig.fromGUISettings()
 
         # Configure the AutoBuilder last
         AutoBuilder.configureHolonomic(
             self.getPose, # Robot pose supplier
             self.resetPose, # Method to reset odometry (will be called if your auto has a starting pose)
             self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-            self.driveRobotRelative, # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-            HolonomicPathFollowerConfig( # HolonomicPathFollowerConfig, this should likely live in your Constants class
+            lambda speeds, feedforwards: self.driveRobotRelative(speeds), # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also outputs individual module feedforwards
+            PPHolonomicDriveController( # PPHolonomicController is the built in path following controller for holonomic drive trains
                 PIDConstants(5.0, 0.0, 0.0), # Translation PID constants
-                PIDConstants(5.0, 0.0, 0.0), # Rotation PID constants
-                4.5, # Max module speed, in m/s
-                0.4, # Drive base radius in meters. Distance from robot center to furthest module.
-                ReplanningConfig() # Default path replanning config. See the API for the options here
+                PIDConstants(5.0, 0.0, 0.0) # Rotation PID constants
             ),
-            self.shouldFlipPath, # Supplier to control path flipping based on alliance color
-            self # Reference to this subsystem to set requirements
-        )
-    
-    def shouldFlipPath():
-        # Boolean supplier that controls when the path will be mirrored for the red alliance
-        # This will flip the path being followed to the red side of the field.
-        # THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-        return DriverStation.getAlliance() == DriverStation.Alliance.kRed
-```
-
-</tab>
-</tabs>
-
-### Ramsete (Differential)
-
-<tabs group="pplib-language">
-<tab title="Java" group-key="java">
-
-```Java
-public class DriveSubsystem extends SubsystemBase {
-  public DriveSubsystem() {
-    // All other subsystem initialization
-    // ...
-
-    // Configure AutoBuilder last
-    AutoBuilder.configureRamsete(
-            this::getPose, // Robot pose supplier
-            this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
-            this::getCurrentSpeeds, // Current ChassisSpeeds supplier
-            this::drive, // Method that will drive the robot given ChassisSpeeds
-            new ReplanningConfig(), // Default path replanning config. See the API for the options here
-            () -> {
-              // Boolean supplier that controls when the path will be mirrored for the red alliance
-              // This will flip the path being followed to the red side of the field.
-              // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-
-              var alliance = DriverStation.getAlliance();
-              if (alliance.isPresent()) {
-                return alliance.get() == DriverStation.Alliance.Red;
-              }
-              return false;
-            },
-            this // Reference to this subsystem to set requirements
-    );
-  }
-}
-```
-
-</tab>
-<tab title="C++" group-key="cpp">
-
-```C++
-#include <pathplanner/lib/auto/AutoBuilder.h>
-#include <pathplanner/lib/util/ReplanningConfig.h>
-#include <frc/geometry/Pose2d.h>
-#include <frc/kinematics/ChassisSpeeds.h>
-
-using namespace pathplanner;
-
-DriveSubsystem::DriveSubsystem(){
-    // Do all subsystem initialization here
-    // ...
-
-    // Configure the AutoBuilder last
-    AutoBuilder::configureRamsete(
-        [this](){ return getPose(); }, // Robot pose supplier
-        [this](frc::Pose2d pose){ resetPose(pose); }, // Method to reset odometry (will be called if your auto has a starting pose)
-        [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-        ReplanningConfig(), // Default path replanning config. See the API for the options here
-        []() {
-            // Boolean supplier that controls when the path will be mirrored for the red alliance
-            // This will flip the path being followed to the red side of the field.
-            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
-
-            auto alliance = DriverStation::GetAlliance();
-            if (alliance) {
-                return alliance.value() == DriverStation::Alliance::kRed;
-            }
-            return false;
-        },
-        this // Reference to this subsystem to set requirements
-    );
-}
-```
-
-</tab>
-<tab title="Python" group-key="python">
-
-```Python
-from pathplannerlib.auto import AutoBuilder
-from pathplannerlib.config import ReplanningConfig, PIDConstants
-
-class DriveSubsystem(Subsystem):
-    def __init__(self):
-        # Do all subsystem initialization here
-        # ...
-
-        # Configure the AutoBuilder last
-        AutoBuilder.configureRamsete(
-            self.getPose, # Robot pose supplier
-            self.resetPose, # Method to reset odometry (will be called if your auto has a starting pose)
-            self.getCurrentSpeeds, # Current ChassisSpeeds supplier
-            self.drive, # Method that will drive the robot given ChassisSpeeds
-            ReplanningConfig(), # Default path replanning config. See the API for the options here
+            config, # The robot configuration
             self.shouldFlipPath, # Supplier to control path flipping based on alliance color
             self # Reference to this subsystem to set requirements
         )
@@ -281,15 +183,25 @@ public class DriveSubsystem extends SubsystemBase {
   public DriveSubsystem() {
     // All other subsystem initialization
     // ...
+    
+    // Load the RobotConfig from the GUI settings. You should probably
+    // store this in your Constants file
+    RobotConfig config;
+    try{
+      config = RobotConfig.fromGUISettings();
+    } catch (Exception e) {
+      // Handle exception as needed
+      e.printStackTrace();
+    }
 
     // Configure AutoBuilder last
-    AutoBuilder.configureLTV(
+    AutoBuilder.configure(
             this::getPose, // Robot pose supplier
             this::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
-            this::getCurrentSpeeds, // Current ChassisSpeeds supplier
-            this::drive, // Method that will drive the robot given ChassisSpeeds
-            0.02, // Robot control loop period in seconds. Default is 0.02
-            new ReplanningConfig(), // Default path replanning config. See the API for the options here
+            this::getRobotRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+            new PPLTVController(0.02), // PPLTVController is the built in path following controller for differential drive trains
+            config, // The robot configuration
             () -> {
               // Boolean supplier that controls when the path will be mirrored for the red alliance
               // This will flip the path being followed to the red side of the field.
@@ -312,24 +224,30 @@ public class DriveSubsystem extends SubsystemBase {
 
 ```C++
 #include <pathplanner/lib/auto/AutoBuilder.h>
-#include <pathplanner/lib/util/ReplanningConfig.h>
+#include <pathplanner/lib/config/RobotConfig.h>
+#include <pathplanner/lib/controllers/PPLTVController.h>
 #include <frc/geometry/Pose2d.h>
 #include <frc/kinematics/ChassisSpeeds.h>
+#include <frc/DriverStation.h>
 
 using namespace pathplanner;
 
 DriveSubsystem::DriveSubsystem(){
     // Do all subsystem initialization here
     // ...
+    
+    // Load the RobotConfig from the GUI settings. You should probably
+    // store this in your Constants file
+    RobotConfig config = RobotConfig::fromGUISettings();
 
     // Configure the AutoBuilder last
-    AutoBuilder::configureLTV(
+    AutoBuilder::configure(
         [this](){ return getPose(); }, // Robot pose supplier
         [this](frc::Pose2d pose){ resetPose(pose); }, // Method to reset odometry (will be called if your auto has a starting pose)
         [this](){ return getRobotRelativeSpeeds(); }, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-        [this](frc::ChassisSpeeds speeds){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds
-        0.02_s, // Robot control loop period in seconds. Default is 0.02
-        ReplanningConfig(), // Default path replanning config. See the API for the options here
+        [this](auto speeds, auto feedforwards){ driveRobotRelative(speeds); }, // Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also optionally outputs individual module feedforwards
+        PPLTVController(0.02_s), // PPLTVController is the built in path following controller for differential drive trains
+        config, // The robot configuration
         []() {
             // Boolean supplier that controls when the path will be mirrored for the red alliance
             // This will flip the path being followed to the red side of the field.
@@ -351,23 +269,27 @@ DriveSubsystem::DriveSubsystem(){
 
 ```Python
 from pathplannerlib.auto import AutoBuilder
-from pathplannerlib.config import ReplanningConfig, PIDConstants
+from pathplannerlib.controller import PPLTVController
+from pathplannerlib.config import RobotConfig
+from wpilib import DriverStation
 
 class DriveSubsystem(Subsystem):
     def __init__(self):
         # Do all subsystem initialization here
         # ...
+        
+        # Load the RobotConfig from the GUI settings. You should probably
+        # store this in your Constants file
+        config = RobotConfig.fromGUISettings()
 
         # Configure the AutoBuilder last
-        AutoBuilder.configureLTV(
+        AutoBuilder.configureHolonomic(
             self.getPose, # Robot pose supplier
             self.resetPose, # Method to reset odometry (will be called if your auto has a starting pose)
-            self.getCurrentSpeeds, # Current ChassisSpeeds supplier
-            self.drive, # Method that will drive the robot given ChassisSpeeds
-            (0.0625, 0.125, 2.0), # qelems/error tolerances
-            (1.0, 2.0), # relems/control effort
-            0.02, # Robot control loop period in seconds. Default is 0.02
-            ReplanningConfig(), # Default path replanning config. See the API for the options here
+            self.getRobotRelativeSpeeds, # ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
+            lambda speeds, feedforwards: self.driveRobotRelative(speeds), # Method that will drive the robot given ROBOT RELATIVE ChassisSpeeds. Also outputs individual module feedforwards
+            PPLTVController(0.02), # PPLTVController is the built in path following controller for differential drive trains
+            config, # The robot configuration
             self.shouldFlipPath, # Supplier to control path flipping based on alliance color
             self # Reference to this subsystem to set requirements
         )
@@ -405,6 +327,9 @@ public class RobotContainer {
   // ...
 
   public Command getAutonomousCommand() {
+    // This method loads the auto when it is called, however, it is recommended
+    // to first load your paths/autos when code starts, then return the
+    // pre-loaded auto/path
     return new PathPlannerAuto("Example Auto");
   }
 }
@@ -419,6 +344,9 @@ public class RobotContainer {
 using namespace pathplanner;
 
 frc2::CommandPtr RobotContainer::getAutonomousCommand(){
+    // This method loads the auto when it is called, however, it is recommended
+    // to first load your paths/autos when code starts, then return the
+    // pre-loaded auto/path
     return PathPlannerAuto("Example Auto").ToPtr();
 }
 ```
@@ -431,6 +359,9 @@ from pathplannerlib.auto import PathPlannerAuto
 
 class RobotContainer:
     def getAutonomousCommand():
+        # This method loads the auto when it is called, however, it is recommended
+        # to first load your paths/autos when code starts, then return the
+        # pre-loaded auto/path
         return PathPlannerAuto('Example Auto')
 
 ```
@@ -447,8 +378,7 @@ every auto in the project.
 >
 > This method will load all autos in the deploy directory. Since the deploy process does not automatically clear the
 > deploy directory, old auto files that have since been deleted from the project could remain on the RIO, therefore
-> being
-> added to the auto chooser.
+> being added to the auto chooser.
 >
 > To remove old options, the deploy directory will need to be cleared manually via SSH, WinSCP, reimaging the RIO, etc.
 >
@@ -507,11 +437,6 @@ frc2::Command* RobotContainer::getAutonomousCommand() {
   // Returns a frc2::Command* that is freed at program termination
   return autoChooser.GetSelected();
 }
-
-frc2::CommandPtr RobotContainer::getAutonomousCommand() {
-  // Returns a copy that is freed after reference is lost
-  return frc2::CommandPtr(std::make_unique<frc2::Command>(*autoChooser.GetSelected()));
-}
 ```
 
 </tab>
@@ -543,20 +468,22 @@ class RobotContainer:
 
 > **Note**
 >
-> This feature is only available in the Java version of PathPlannerLib
+> This feature is only available in the Java and C++ versions of PathPlannerLib
 >
 {style="note"}
 
-You can use the buildAutoChooserWithOptionsModifier method to process the 
+You can use the buildAutoChooserWithOptionsModifier method to process the
 autos before they are shown on shuffle board
 
 > **Warning**
 >
-> Be careful using runtime values when generating AutoChooser, as RobotContainer is 
+> Be careful using runtime values when generating AutoChooser, as RobotContainer is
 > built at robot code startup. Things like FMS values may not be present at startup
 >
 {style="warning"}
 
+<tabs group="pplib-language">
+<tab title="Java" group-key="java">
 
 ```java
 public class RobotContainer {
@@ -585,5 +512,69 @@ public class RobotContainer {
   }
 }
 ```
+
+</tab>
+
+<tab title="C++" group-key="cpp">
+
+```C++
+#include <pathplanner/lib/auto/AutoBuilder.h>
+#include <frc/smartdashboard/SmartDashboard.h>
+#include <frc2/command/CommandPtr.h>
+#include <frc2/command/Command.h>
+#include <memory>
+
+using namespace pathplanner;
+
+RobotContainer::RobotContainer() {
+  // ...
+
+  // For convenience a programmer could change this when going to competition.
+  bool isCompetition = true;
+
+  // Build an auto chooser. This will use frc2::cmd::None() as the default option.
+  // As an example, this will only show autos that start with "comp" while at
+  // competition as defined by the programmer
+  autoChooser = AutoBuilder::buildAutoChooserFilter(
+    [&isCompetition](const PathPlannerAuto& autoCommand)
+    {
+      return isCompetition ? autoCommand.GetName().starts_with("comp") : true;
+    }
+  );
+
+  // Another option that allows you to specify the default auto by its name
+  /*
+  autoChooser = AutoBuilder::buildAutoChooserFilter(
+    [&isCompetition](const PathPlannerAuto& autoCommand)
+    {
+      return isCompetition ? autoCommand.GetName().starts_with("comp") : true;
+    },
+    "autoDefault", // If filled it will choosen always, regardless of filter
+  ); 
+  */
+
+  // Another option allows you to filter out current directories relative to deploy/pathplanner/auto directory
+  // Allows only autos in directory deploy/pathplanner/autos/comp
+  /*
+  autoChooser = AutoBuilder::buildAutoChooserFilterPathFilterPath(
+    [&isCompetition](const PathPlannerAuto&  autoCommand,
+            std::filesystem::path autoPath)
+    {
+      return isCompetition ? autoPath.compare("comp") > 0 : true;
+    }
+  ); 
+  */
+
+  frc::SmartDashboard::PutData("Auto Chooser", &autoChooser);
+}
+
+frc2::Command* RobotContainer::getAutonomousCommand() {
+  // Returns a frc2::Command* that is freed at program termination
+  return autoChooser.GetSelected();
+}
+```
+
+</tab>
+</tabs>
 
 </snippet>

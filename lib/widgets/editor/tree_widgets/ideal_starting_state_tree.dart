@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/math_util.dart';
+import 'package:pathplanner/widgets/editor/info_card.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/tree_card_node.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
 import 'package:undo/undo.dart';
@@ -21,7 +24,16 @@ class IdealStartingStateTree extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TreeCardNode(
-      title: const Text('Ideal Starting State'),
+      title: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        children: [
+          const Text('Ideal Starting State'),
+          InfoCard(
+              value:
+                  '${path.idealStartingState.rotation.degrees.toStringAsFixed(2)}° starting with ${path.idealStartingState.velocityMPS.toStringAsFixed(2)} M/S'),
+        ],
+      ),
+      leading: const Icon(Icons.start_rounded),
       initiallyExpanded: path.previewStartingStateExpanded,
       onExpansionChanged: (value) {
         if (value != null) {
@@ -36,14 +48,14 @@ class IdealStartingStateTree extends StatelessWidget {
             children: [
               Expanded(
                 child: NumberTextField(
-                  initialText:
-                      path.idealStartingState.velocity.toStringAsFixed(2),
+                  initialValue: path.idealStartingState.velocityMPS,
                   label: 'Velocity (M/S)',
                   arrowKeyIncrement: 0.1,
+                  minValue: 0.0,
                   onSubmitted: (value) {
                     if (value != null) {
                       _addChange(
-                          () => path.idealStartingState.velocity = value);
+                          () => path.idealStartingState.velocityMPS = value);
                     }
                   },
                 ),
@@ -52,17 +64,13 @@ class IdealStartingStateTree extends StatelessWidget {
               if (holonomicMode)
                 Expanded(
                   child: NumberTextField(
-                    initialText:
-                        path.idealStartingState.rotation.toStringAsFixed(2),
+                    initialValue: path.idealStartingState.rotation.degrees,
                     label: 'Rotation (Deg)',
                     onSubmitted: (value) {
                       if (value != null) {
-                        num rot = value % 360;
-                        if (rot > 180) {
-                          rot -= 360;
-                        }
-                        _addChange(
-                            () => path.idealStartingState.rotation = rot);
+                        _addChange(() => path.idealStartingState.rotation =
+                            Rotation2d.fromDegrees(
+                                MathUtil.inputModulus(value, -180, 180)));
                       }
                     },
                   ),

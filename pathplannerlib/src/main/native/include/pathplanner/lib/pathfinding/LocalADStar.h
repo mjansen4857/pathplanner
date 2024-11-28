@@ -2,6 +2,7 @@
 
 #include "pathplanner/lib/pathfinding/Pathfinder.h"
 #include "pathplanner/lib/path/PathPoint.h"
+#include "pathplanner/lib/path/Waypoint.h"
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -68,7 +69,6 @@ public:
 
 private:
 	const double SMOOTHING_ANCHOR_PCT = 0.8;
-	const double SMOOTHING_CONTROL_PCT = 0.33;
 	const double EPS = 2.5;
 
 	double fieldLength;
@@ -104,7 +104,7 @@ private:
 	bool requestReset;
 	bool newPathAvailable;
 
-	std::vector<PathPoint> currentPathPoints;
+	std::vector<Waypoint> currentWaypoints;
 	std::vector<GridPosition> currentPathFull;
 
 	void runThread();
@@ -122,8 +122,7 @@ private:
 			const GridPosition &sGoal,
 			const std::unordered_set<GridPosition> &obstacles);
 
-	std::vector<PathPoint> createPathPoints(
-			const std::vector<GridPosition> &path,
+	std::vector<Waypoint> createWaypoints(const std::vector<GridPosition> &path,
 			const frc::Translation2d &realStartPos,
 			const frc::Translation2d &realGoalPos,
 			const std::unordered_set<GridPosition> &obstacles);

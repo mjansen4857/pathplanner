@@ -10,14 +10,6 @@ TEST(RotationTargetTest, TestGetters) {
 	EXPECT_EQ(frc::Rotation2d(90_deg), target.getTarget());
 }
 
-TEST(RotationTargetTest, TestForSegmentIndex) {
-	RotationTarget target(1.5, frc::Rotation2d(90_deg));
-	RotationTarget forSegment = target.forSegmentIndex(1);
-
-	EXPECT_DOUBLE_EQ(0.5, forSegment.getPosition());
-	EXPECT_EQ(frc::Rotation2d(90_deg), forSegment.getTarget());
-}
-
 TEST(RotationTargetTest, TestFromJson) {
 	wpi::json json;
 	json.emplace("waypointRelativePos", 2.1);

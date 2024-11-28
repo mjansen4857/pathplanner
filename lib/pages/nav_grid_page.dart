@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
 import 'package:function_tree/function_tree.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/pathfinding/nav_grid.dart';
+import 'package:pathplanner/util/wpimath/geometry.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/util/path_painter_util.dart';
 import 'package:pathplanner/widgets/number_text_field.dart';
@@ -168,9 +168,10 @@ class _NavGridPageState extends State<NavGridPage> {
                   children: [
                     Expanded(
                         child: NumberTextField(
-                      initialText: _grid.nodeSizeMeters.toStringAsFixed(2),
+                      initialValue: _grid.nodeSizeMeters,
                       label: 'Node Size (M)',
                       arrowKeyIncrement: 0.05,
+                      minValue: 0.01,
                       controller: nodeSizeController,
                     )),
                   ],
@@ -182,17 +183,17 @@ class _NavGridPageState extends State<NavGridPage> {
                   children: [
                     Expanded(
                         child: NumberTextField(
-                      initialText: _grid.fieldSize.width.toStringAsFixed(2),
+                      initialValue: _grid.fieldSize.width,
                       label: 'Field Length (M)',
-                      arrowKeyIncrement: 0.01,
+                      minValue: 0.01,
                       controller: fieldLengthController,
                     )),
                     const SizedBox(width: 8),
                     Expanded(
                         child: NumberTextField(
-                      initialText: _grid.fieldSize.height.toStringAsFixed(2),
+                      initialValue: _grid.fieldSize.height,
                       label: 'Field Width (M)',
-                      arrowKeyIncrement: 0.01,
+                      minValue: 0.01,
                       controller: fieldWidthController,
                     )),
                   ],
@@ -295,11 +296,12 @@ class _NavigationPainter extends CustomPainter {
     for (int row = 0; row < grid.length; row++) {
       for (int col = 0; col < grid[row].length; col++) {
         Offset tl = PathPainterUtil.pointToPixelOffset(
-            Point(col * nodeSizeMeters, row * nodeSizeMeters),
+            Translation2d(col * nodeSizeMeters, row * nodeSizeMeters),
             scale,
             fieldImage);
         Offset br = PathPainterUtil.pointToPixelOffset(
-            Point((col + 1) * nodeSizeMeters, (row + 1) * nodeSizeMeters),
+            Translation2d(
+                (col + 1) * nodeSizeMeters, (row + 1) * nodeSizeMeters),
             scale,
             fieldImage);
 

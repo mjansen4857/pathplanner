@@ -1,32 +1,35 @@
 import 'package:pathplanner/commands/command.dart';
-import 'package:pathplanner/commands/command_groups.dart';
 
 class EventMarker {
   String name;
   num waypointRelativePos;
-  CommandGroup command;
+  num? endWaypointRelativePos;
+  Command? command;
 
   EventMarker({
-    this.name = 'New Event Marker',
+    this.name = '',
     this.waypointRelativePos = 0,
-    required this.command,
+    this.endWaypointRelativePos,
+    this.command,
   });
-
-  EventMarker.defaultMarker()
-      : this(command: ParallelCommandGroup(commands: []));
 
   EventMarker.fromJson(Map<String, dynamic> json)
       : this(
             name: json['name'],
             waypointRelativePos: json['waypointRelativePos'],
-            command: Command.fromJson(json['command'] ??
-                ParallelCommandGroup(commands: []).toJson()) as CommandGroup);
+            endWaypointRelativePos: json['endWaypointRelativePos'],
+            command: json['command'] != null
+                ? Command.fromJson(json['command'])
+                : null);
+
+  bool get isZoned => endWaypointRelativePos != null;
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
       'waypointRelativePos': waypointRelativePos,
-      'command': command.toJson(),
+      'endWaypointRelativePos': endWaypointRelativePos,
+      'command': command?.toJson(),
     };
   }
 
@@ -34,7 +37,8 @@ class EventMarker {
     return EventMarker(
       name: name,
       waypointRelativePos: waypointRelativePos,
-      command: command.clone() as CommandGroup,
+      endWaypointRelativePos: endWaypointRelativePos,
+      command: command?.clone(),
     );
   }
 
@@ -44,8 +48,10 @@ class EventMarker {
       other.runtimeType == runtimeType &&
       other.name == name &&
       other.waypointRelativePos == waypointRelativePos &&
+      other.endWaypointRelativePos == endWaypointRelativePos &&
       other.command == command;
 
   @override
-  int get hashCode => Object.hash(name, waypointRelativePos, command);
+  int get hashCode =>
+      Object.hash(name, waypointRelativePos, endWaypointRelativePos, command);
 }

@@ -5,6 +5,7 @@ import 'package:pathplanner/path/choreo_path.dart';
 import 'package:pathplanner/path/pathplanner_path.dart';
 import 'package:pathplanner/trajectory/trajectory.dart';
 import 'package:pathplanner/util/wpimath/geometry.dart';
+import 'package:pathplanner/util/wpimath/kinematics.dart';
 import 'package:pathplanner/widgets/field_image.dart';
 import 'package:pathplanner/widgets/mini_path_preview.dart';
 
@@ -14,8 +15,10 @@ void main() {
   ChoreoPath path2 = ChoreoPath(
     name: 'test',
     trajectory: PathPlannerTrajectory.fromStates([
-      TrajectoryState.pregen(0.0, Pose2d(const Translation2d(), Rotation2d())),
-      TrajectoryState.pregen(1.0, Pose2d(const Translation2d(), Rotation2d())),
+      TrajectoryState.pregen(0.0, const ChassisSpeeds(),
+          const Pose2d(Translation2d(), Rotation2d())),
+      TrajectoryState.pregen(1.0, const ChassisSpeeds(),
+          const Pose2d(Translation2d(), Rotation2d())),
     ]),
     fs: fs,
     choreoDir: '/choreo',
@@ -28,7 +31,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: MiniPathsPreview(
-          paths: [path.getPathPositions(), path2.getPathPositions()],
+          paths: [path.pathPositions, path2.pathPositions],
           fieldImage: fieldImage,
         ),
       ),
@@ -44,7 +47,7 @@ void main() {
     await widgetTester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: MiniPathsPreview(
-          paths: [path.getPathPositions(), path2.getPathPositions()],
+          paths: [path.pathPositions, path2.pathPositions],
           fieldImage: fieldImage,
         ),
       ),

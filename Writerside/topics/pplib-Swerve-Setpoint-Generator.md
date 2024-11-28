@@ -17,10 +17,13 @@ This improves on the original version in a few ways:
 
 > **Note**
 >
-> This feature is only available in PathPlannerLib Java. If you would like to see this feature in PPLib C++ or Python,
-> feel free to open a pull request to translate it to your language.
+> This feature is only available in PathPlannerLib Java and Python. If you would like to see this feature in PPLib C++,
+> feel free to open a pull request to translate it.
 >
 {style="note"}
+
+<tabs group="pplib-language">
+<tab title="Java" group-key="java">
 
 ```Java
 public class SwerveSubsystem extends Subsystem {
@@ -70,3 +73,52 @@ public class SwerveSubsystem extends Subsystem {
     }
 }
 ```
+
+</tab>
+<tab title="Python" group-key="python">
+
+```Python
+from pathplannerlib.config import RobotConfig
+from pathplannerlib.util import DriveFeedforwards
+from pathplannerlib.util.swerve import SwerveSetpoint, SwerveSetpointGenerator
+from wpimath.kinematics import ChassisSpeeds
+from wpimath.units import rotationsToRadians
+
+class SwerveSubsystem(Subsystem):
+  def __init__(self):
+    # All other subsystem initialization
+    # ...
+
+    # Load the RobotConfig from the GUI settings. You should probably
+    # store this in your Constants file
+    config = RobotConfig.fromGUISettings()
+
+    self.setpointGenerator = SwerveSetpointGenerator(
+      config, # The robot configuration. This is the same config used for generating trajectories and running path following commands.
+      rotationsToRadians(10.0) # The max rotation velocity of a swerve module in radians per second. This should probably be stored in your Constants file
+    )
+
+    # Initialize the previous setpoint to the robot's current speeds & module states
+    currentSpeeds = self.getCurrentSpeeds() # Method to get current robot-relative chassis speeds
+    currentStates = self.getCurrentModuleStates() # Method to get the current swerve module states
+    self.previousSetpoint = SwerveSetpoint(currentSpeeds, currentStates, DriveFeedforwards.zeros(config.numModules))
+
+  def driveRobotRelative(self, speeds: ChassisSpeeds):
+    """
+    This method will take in desired robot-relative chassis speeds,
+    generate a swerve setpoint, then set the target state for each module
+
+    :param speeds: The desired robot-relative speeds
+    """
+    # Note: it is important to not discretize speeds before or after
+    # using the setpoint generator, as it will discretize them for you
+    self.previousSetpoint = self.setpointGenerator.generateSetpoint(
+      self.previousSetpoint, # The previous setpoint
+      speeds, # The desired target speeds
+      0.02, # The loop time of the robot code, in seconds
+    )
+    self.setModuleStates(self.previousSetpoint.moduleStates) # Method that will drive the robot given target module states
+```
+
+</tab>
+</tabs>

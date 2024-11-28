@@ -435,8 +435,7 @@ void main() {
     await widgetTester.tap(find.text('Duplicate'));
     await widgetTester.pumpAndSettle();
 
-    expect(
-        find.widgetWithText(ProjectItemCard, 'auto1 (1)'), findsOneWidget);
+    expect(find.widgetWithText(ProjectItemCard, 'auto1 (1)'), findsOneWidget);
 
     await widgetTester.tap(menuButton);
     await widgetTester.pumpAndSettle();
@@ -444,8 +443,7 @@ void main() {
     await widgetTester.tap(find.text('Duplicate'));
     await widgetTester.pumpAndSettle();
 
-    expect(find.widgetWithText(ProjectItemCard, 'auto1 (2)'),
-        findsOneWidget);
+    expect(find.widgetWithText(ProjectItemCard, 'auto1 (2)'), findsOneWidget);
   });
 
   testWidgets('delete path', (widgetTester) async {

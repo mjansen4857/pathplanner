@@ -917,14 +917,14 @@ class _ProjectPageState extends State<ProjectPage> {
         }
         String pathName = _paths[i].name;
         RegExp exp = RegExp(r'\(\d+\)');
-        String source = pathName.substring(pathName.length-3);
+        String source = pathName.substring(pathName.length - 3);
         while (pathNames.contains(pathName)) {
-          if(exp.hasMatch(source)){
+          if (exp.hasMatch(source)) {
             RegExpMatch? match = exp.firstMatch(source);
-            int index = int.parse(match![0]!.substring(1,2))+1; 
-            pathName = '${pathName.substring(0,pathName.length-3)}($index)'; 
-          } else{
-          pathName = '$pathName (1)';
+            int index = int.parse(match![0]!.substring(1, 2)) + 1;
+            pathName = '${pathName.substring(0, pathName.length - 3)}($index)';
+          } else {
+            pathName = '$pathName (1)';
           }
         }
 
@@ -1525,14 +1525,14 @@ class _ProjectPageState extends State<ProjectPage> {
         }
         String autoName = _autos[i].name;
         RegExp exp = RegExp(r'\(\d+\)');
-        String source = autoName.substring(autoName.length-3);
+        String source = autoName.substring(autoName.length - 3);
         while (autoNames.contains(autoName)) {
-          if(exp.hasMatch(source)){
+          if (exp.hasMatch(source)) {
             RegExpMatch? match = exp.firstMatch(source);
-            int index = int.parse(match![0]!.substring(1,2))+1; 
-            autoName = '${autoName.substring(0,autoName.length-3)}($index)'; 
-          } else{
-          autoName = '$autoName (1)';
+            int index = int.parse(match![0]!.substring(1, 2)) + 1;
+            autoName = '${autoName.substring(0, autoName.length - 3)}($index)';
+          } else {
+            autoName = '$autoName (1)';
           }
         }
         setState(() {

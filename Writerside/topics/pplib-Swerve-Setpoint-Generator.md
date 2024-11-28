@@ -100,7 +100,7 @@ class SwerveSubsystem(Subsystem):
     # Initialize the previous setpoint to the robot's current speeds & module states
     currentSpeeds = self.getCurrentSpeeds() # Method to get current robot-relative chassis speeds
     currentStates = self.getCurrentModuleStates() # Method to get the current swerve module states
-    self.previousSetpoint = SwerveSetpoint(currentSpeeds, currentStates, config.numModules)
+    self.previousSetpoint = SwerveSetpoint(currentSpeeds, currentStates, DriveFeedforwards.zeros(config.numModules))
 
   def driveRobotRelative(self, speeds: ChassisSpeeds):
     """

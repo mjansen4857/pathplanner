@@ -63,6 +63,10 @@ class AddCommandButton extends StatelessWidget {
         value: 'race',
         child: Text('Parallel Race Group'),
       ),
+      const PopupMenuItem(
+        value: 'conditional',
+        child: Text('Conditional Command Group'),
+      ),
     ];
   }
 }

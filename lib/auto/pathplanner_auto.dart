@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:file/file.dart';
 import 'package:path/path.dart';
+import 'package:pathplanner/commands/conditional_command_group.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
@@ -165,6 +166,12 @@ class PathPlannerAuto {
           continue;
         }
       }
+      if (cmd is ConditionalCommandGroup) {
+        if (cmd.namedConditional.name != null) {
+          ProjectPage.conditions.add(cmd.namedConditional.name!);
+          continue;
+        }
+      }
 
       if (cmd is CommandGroup) {
         _addNamedCommandsToEvents(cmd.commands);
@@ -219,6 +226,14 @@ class PathPlannerAuto {
         names.add(cmd.pathName!);
       } else if (cmd is CommandGroup) {
         names.addAll(_getPathNamesInCommands(cmd.commands));
+      } else if (cmd is ConditionalCommandGroup) {
+        if (cmd.namedConditional.defaultValue) {
+          names.addAll(
+              _getPathNamesInCommands((cmd.onTrue as CommandGroup).commands));
+        } else {
+          names.addAll(
+              _getPathNamesInCommands((cmd.onFalse as CommandGroup).commands));
+        }
       }
     }
     return names;

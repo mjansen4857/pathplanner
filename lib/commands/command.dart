@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/conditional_command_group.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
@@ -35,6 +36,7 @@ abstract class Command {
       'parallel' => ParallelCommandGroup.fromDataJson(data),
       'race' => RaceCommandGroup.fromDataJson(data),
       'deadline' => DeadlineCommandGroup.fromDataJson(data),
+      'conditional' => ConditionalCommandGroup.fromDataJson(data),
       _ => null,
     };
   }
@@ -48,6 +50,7 @@ abstract class Command {
       'parallel' => ParallelCommandGroup(commands: commands ?? []),
       'race' => RaceCommandGroup(commands: commands ?? []),
       'deadline' => DeadlineCommandGroup(commands: commands ?? []),
+      'conditional' => ConditionalCommandGroup(),
       _ => null,
     };
   }

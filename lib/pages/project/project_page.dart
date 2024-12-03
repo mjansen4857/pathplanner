@@ -31,6 +31,7 @@ import 'package:watcher/watcher.dart';
 
 class ProjectPage extends StatefulWidget {
   static Set<String> events = {};
+  static Set<String> conditions = {};
 
   final SharedPreferences prefs;
   final FieldImage fieldImage;

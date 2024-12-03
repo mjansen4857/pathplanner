@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:pathplanner/commands/command.dart';
 import 'package:pathplanner/commands/command_groups.dart';
+import 'package:pathplanner/commands/conditional_command_group.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/pages/project/project_page.dart';
 import 'package:pathplanner/path/constraints_zone.dart';
@@ -322,6 +323,13 @@ class PathPlannerPath {
     if (command is NamedCommand) {
       if (command.name != null) {
         ProjectPage.events.add(command.name!);
+        return;
+      }
+    }
+
+    if (command is ConditionalCommandGroup) {
+      if (command.namedConditional.name != null) {
+        ProjectPage.conditions.add(command.namedConditional.name!);
         return;
       }
     }

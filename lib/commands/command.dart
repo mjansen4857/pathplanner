@@ -4,6 +4,7 @@ import 'package:pathplanner/commands/conditional_command_group.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
+import 'package:pathplanner/commands/wait_until_command.dart';
 
 abstract class Command {
   final String type;
@@ -30,6 +31,7 @@ abstract class Command {
 
     return switch (type) {
       'wait' => WaitCommand.fromDataJson(data),
+      'wait_until' => WaitUntilCommand.fromDataJson(data),
       'named' => NamedCommand.fromDataJson(data),
       'path' => PathCommand.fromDataJson(data),
       'sequential' => SequentialCommandGroup.fromDataJson(data),
@@ -45,6 +47,7 @@ abstract class Command {
     return switch (type) {
       'named' => NamedCommand(),
       'wait' => WaitCommand(),
+      'wait_until' => WaitUntilCommand(),
       'path' => PathCommand(),
       'sequential' => SequentialCommandGroup(commands: commands ?? []),
       'parallel' => ParallelCommandGroup(commands: commands ?? []),

@@ -47,6 +47,11 @@ class AddCommandButton extends StatelessWidget {
           value: 'wait',
           child: Text('Wait Command'),
         ),
+      if (allowWaitCommand)
+        const PopupMenuItem(
+          value: 'wait_until',
+          child: Text('Wait Until Command'),
+        ),
       const PopupMenuItem(
         value: 'sequential',
         child: Text('Sequential Command Group'),

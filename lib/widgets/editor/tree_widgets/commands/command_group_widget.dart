@@ -5,6 +5,7 @@ import 'package:pathplanner/commands/conditional_command_group.dart';
 import 'package:pathplanner/commands/named_command.dart';
 import 'package:pathplanner/commands/path_command.dart';
 import 'package:pathplanner/commands/wait_command.dart';
+import 'package:pathplanner/commands/wait_until_command.dart';
 import 'package:pathplanner/widgets/conditional_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/add_command_button.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/conditional_group_widget.dart';
@@ -12,6 +13,7 @@ import 'package:pathplanner/widgets/editor/tree_widgets/commands/duplicate_comma
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/named_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/path_command_widget.dart';
 import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_command_widget.dart';
+import 'package:pathplanner/widgets/editor/tree_widgets/commands/wait_until_widget.dart';
 import 'package:undo/undo.dart';
 
 class CommandGroupWidget extends StatelessWidget {
@@ -307,6 +309,14 @@ class CommandGroupWidget extends StatelessWidget {
         onUpdated: onUpdated,
         showEditPathButton: showEditPathButton,
         subCommandElevation: subCommandElevation,
+      );
+    } else if (command.commands[cmdIndex] is WaitUntilCommand) {
+      return WaitUntilCommandWidget(
+        command: command.commands[cmdIndex] as WaitUntilCommand,
+        onUpdated: onUpdated,
+        onRemoved: () => _removeCommand(cmdIndex),
+        undoStack: undoStack,
+        onDuplicateCommand: () => _duplicateCommand(cmdIndex),
       );
     }
 

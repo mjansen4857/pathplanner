@@ -179,20 +179,23 @@ class _NamedConditionalWidgetState extends State<NamedConditionalWidget> {
                 ),
               ),
             ),
-            Checkbox(
-                value: widget.conditional.defaultValue,
-                onChanged: (value) {
-                  if (value != null) {
-                    widget.undoStack
-                        .add(Change(widget.conditional.defaultValue, () {
-                      widget.conditional.defaultValue = value;
-                      widget.onUpdated?.call();
-                    }, (oldValue) {
-                      widget.conditional.defaultValue = oldValue;
-                      widget.onUpdated?.call();
-                    }));
-                  }
-                })
+            Tooltip(
+                message: 'Default Value in Simulation for this Conditional',
+                waitDuration: const Duration(seconds: 1),
+                child: Checkbox(
+                    value: widget.conditional.defaultValue,
+                    onChanged: (value) {
+                      if (value != null) {
+                        widget.undoStack
+                            .add(Change(widget.conditional.defaultValue, () {
+                          widget.conditional.defaultValue = value;
+                          widget.onUpdated?.call();
+                        }, (oldValue) {
+                          widget.conditional.defaultValue = oldValue;
+                          widget.onUpdated?.call();
+                        }));
+                      }
+                    }))
           ],
         )
       ],

@@ -41,7 +41,12 @@ class ConditionalCommandGroupWidget extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text('Conditional Group', style: TextStyle(fontSize: 16)),
+            const Tooltip(
+                message:
+                    'First command group is executed if condition is true, second if false',
+                waitDuration: Duration(milliseconds: 500),
+                child:
+                    Text('Conditional Group', style: TextStyle(fontSize: 16))),
             Expanded(child: Container()),
             Visibility(
                 visible: onDuplicateCommand != null,

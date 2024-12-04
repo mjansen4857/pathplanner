@@ -4,7 +4,6 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.wpilibj2.command.*;
 import java.io.IOException;
 import java.util.function.BooleanSupplier;
-
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -12,10 +11,8 @@ import org.json.simple.parser.ParseException;
 /** Utility class for building commands used in autos */
 public class CommandUtil {
   /**
-   * Wraps a command with a functional command that calls the command's
-   * initialize, execute, end,
-   * and isFinished methods. This allows a command in the event map to be reused
-   * multiple times in
+   * Wraps a command with a functional command that calls the command's initialize, execute, end,
+   * and isFinished methods. This allows a command in the event map to be reused multiple times in
    * different command groups
    *
    * @param eventCommand the command to wrap
@@ -33,13 +30,11 @@ public class CommandUtil {
   /**
    * Builds a command from the given JSON object.
    *
-   * @param commandJson     the JSON object to build the command from
+   * @param commandJson the JSON object to build the command from
    * @param loadChoreoPaths Load path commands using choreo trajectories
    * @return a command built from the JSON object
-   * @throws IOException    if attempting to load a path file that does not exist
-   *                        or cannot be read
-   * @throws ParseException If attempting to load a path with JSON that cannot be
-   *                        parsed
+   * @throws IOException if attempting to load a path file that does not exist or cannot be read
+   * @throws ParseException If attempting to load a path with JSON that cannot be parsed
    */
   public static Command commandFromJson(JSONObject commandJson, boolean loadChoreoPaths)
       throws IOException, ParseException {

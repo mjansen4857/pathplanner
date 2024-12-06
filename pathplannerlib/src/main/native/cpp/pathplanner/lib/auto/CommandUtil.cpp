@@ -50,6 +50,8 @@ frc2::CommandPtr CommandUtil::commandFromJson(const wpi::json &json,
 		return CommandUtil::deadlineGroupFromJson(data, loadChoreoPaths);
 	} else if (type == "conditional") {
 		return CommandUtil::conditionalGroupFromJson(data, loadChoreoPaths);
+	} else if (type == "wait_until") {
+		return CommandUtil::waitUntilCommandFromJson(data);
 	}
 
 	return frc2::cmd::None();
@@ -150,4 +152,10 @@ frc2::CommandPtr CommandUtil::conditionalGroupFromJson(const wpi::json &json,
 			CommandUtil::commandFromJson(onTrueJson, loadChoreoPaths),
 			CommandUtil::commandFromJson(onFalseJson, loadChoreoPaths),
 			NamedConditions::getCondition(name));
+}
+
+frc2::CommandPtr CommandUtil::waitUntilCommandFromJson(const wpi::json &json) {
+	std::string name = json.at("namedConditional").get<std::string>();
+
+	return frc2::cmd::WaitUntil(NamedConditions::getCondition(name));
 }

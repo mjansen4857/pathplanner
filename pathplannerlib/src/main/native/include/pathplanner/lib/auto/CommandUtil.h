@@ -49,5 +49,7 @@ private:
 
 	static frc2::CommandPtr conditionalGroupFromJson(const wpi::json &json,
 			bool loadChoreoPaths);
+
+	static frc2::CommandPtr waitUntilCommandFromJson(const wpi::json &jsons);
 };
 }

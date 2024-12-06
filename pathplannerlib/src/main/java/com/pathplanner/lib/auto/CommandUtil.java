@@ -50,6 +50,7 @@ public class CommandUtil {
       case "race" -> raceGroupFromData(data, loadChoreoPaths);
       case "deadline" -> deadlineGroupFromData(data, loadChoreoPaths);
       case "conditional" -> conditionalGroupFromData(data, loadChoreoPaths);
+      case "wait_until" -> waitUntilFromData(data, loadChoreoPaths);
       default -> Commands.none();
     };
   }
@@ -138,6 +139,18 @@ public class CommandUtil {
       onFalseCmd = commandFromJson(onFalse, loadChoreoPaths);
       namedConditionalSupp = NamedConditions.getCondition(namedConditional);
       return new ConditionalCommand(onTrueCmd, onFalseCmd, namedConditionalSupp);
+    }
+
+    return Commands.none();
+  }
+
+  private static Command waitUntilFromData(JSONObject dataJson, boolean loadChoreoPaths)
+      throws IOException, ParseException {
+    String namedConditional = (String) dataJson.get("namedConditional");
+    BooleanSupplier namedConditionalSupp;
+    if (!namedConditional.isEmpty()) {
+      namedConditionalSupp = NamedConditions.getCondition(namedConditional);
+      return new WaitUntilCommand(namedConditionalSupp);
     }
 
     return Commands.none();

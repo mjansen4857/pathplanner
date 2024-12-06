@@ -182,7 +182,7 @@ class _NamedConditionalWidgetState extends State<NamedConditionalWidget> {
             Visibility(
               visible: widget.conditional.name == null,
               child: Tooltip(
-                message: 'Missing command name',
+                message: 'Missing conditional name',
                 child: Icon(
                   Icons.warning_amber_rounded,
                   color: Colors.orange[300]!,

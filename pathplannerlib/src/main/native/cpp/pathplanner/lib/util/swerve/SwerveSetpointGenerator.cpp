@@ -367,7 +367,7 @@ double SwerveSetpointGenerator::findSteeringMaxS(units::meters_per_second_t x_0,
 		return 1.0;
 	}
 	units::radian_t offset = f_0 + std::signbit(diff.value()) * max_deviation;
-	Function2d func = [this, f_0, offset](double x, double y) -> double {
+	Function2d func = [f_0, offset](double x, double y) -> double {
 		return (unwrapAngle(f_0.value(), std::atan2(y, x)) - offset).value();
 	};
 	return findRoot(func, x_0.value(), y_0.value(),
@@ -387,7 +387,7 @@ double SwerveSetpointGenerator::findDriveMaxS(units::meters_per_second_t x_0,
 	}
 	units::meters_per_second_t offset = f_0
 			+ std::signbit(diff.value()) * max_vel_step;
-	Function2d func = [this, offset](double x, double y) -> double {
+	Function2d func = [offset](double x, double y) -> double {
 		return std::hypot(y, x) - offset.value();
 	};
 	return findRoot(func, x_0.value(), y_0.value(),

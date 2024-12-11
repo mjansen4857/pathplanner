@@ -155,6 +155,30 @@ frc::ChassisSpeeds RobotConfig::toChassisSpeeds(
 	}
 }
 
+frc::ChassisSpeeds RobotConfig::toChassisSpeeds(
+		std::vector<frc::SwerveModuleState> states) const {
+	if (isHolonomic) {
+		wpi::array < frc::SwerveModuleState, 4 > wpiStates { states.at(0),
+				states.at(1), states.at(2), states.at(3) };
+		return swerveKinematics.ToChassisSpeeds(wpiStates);
+	} else {
+		frc::DifferentialDriveWheelSpeeds wheelSpeeds { states.at(0).speed,
+				states.at(1).speed };
+		return diffKinematics.ToChassisSpeeds(wheelSpeeds);
+	}
+}
+
+std::vector<frc::SwerveModuleState> RobotConfig::desaturateWheelSpeeds(
+		std::vector<frc::SwerveModuleState> moduleStates,
+		units::meters_per_second_t maxSpeed) const {
+	wpi::array < frc::SwerveModuleState, 4 > wpiStates { moduleStates.at(0),
+			moduleStates.at(1), moduleStates.at(2), moduleStates.at(3) };
+	swerveKinematics.DesaturateWheelSpeeds(&wpiStates, maxSpeed);
+
+	return std::vector < frc::SwerveModuleState
+			> (wpiStates.begin(), wpiStates.end());
+}
+
 std::vector<frc::Translation2d> RobotConfig::chassisForcesToWheelForceVectors(
 		frc::ChassisSpeeds chassisForces) const {
 	Eigen::Vector3d chassisForceVector { chassisForces.vx.value(),

@@ -376,11 +376,10 @@ every auto in the project.
 
 > **Warning**
 >
-> This method will load all autos in the deploy directory. Since the deploy process does not automatically clear the
-> deploy directory, old auto files that have since been deleted from the project could remain on the RIO, therefore
-> being added to the auto chooser.
+> This method will load all autos in the deploy directory. [Make sure you have the line](https://docs.wpilib.org/en/latest/docs/software/advanced-gradlerio/compiler-args.html#deleting-unused-deploy-files)
+> `deleteOldFiles = true` in your build.gradle file or the deploy directory will not be cleared and you will see deleted autos.
 >
-> To remove old options, the deploy directory will need to be cleared manually via SSH, WinSCP, reimaging the RIO, etc.
+> To manually remove old options, use SSH, WinSCP, reimaging the RIO, etc.
 >
 {style="warning"}
 

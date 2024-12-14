@@ -273,9 +273,11 @@ public class SwerveSetpointGenerator {
       chassisForceVec = chassisForceVec.plus(moduleForceVec);
 
       // Calculate the torque this module will apply to the chassis
-      Rotation2d angleToModule = config.moduleLocations[m].getAngle();
-      Rotation2d theta = moduleForceVec.getAngle().minus(angleToModule);
-      chassisTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
+      if (!epsilonEquals(0, moduleForceVec.getNorm())) {
+        Rotation2d angleToModule = config.moduleLocations[m].getAngle();
+        Rotation2d theta = moduleForceVec.getAngle().minus(angleToModule);
+        chassisTorque += forceAtCarpet * config.modulePivotDistance[m] * theta.getSin();
+      }
     }
 
     Translation2d chassisAccelVec = chassisForceVec.div(config.massKG);

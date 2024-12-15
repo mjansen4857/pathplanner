@@ -53,19 +53,20 @@ public class SwerveSetpointGenerator {
   }
 
   /**
-   * Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
+   * Generate a new setpoint with explicit battery voltage. Note: Do not discretize ChassisSpeeds passed into or returned from
    * this method. This method will discretize the speeds for you.
    *
    * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
    *     iteration setpoint instead of the actual measured/estimated kinematic state.
    * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
    *     a path following algorithm.
+   * @param batteryVoltage The battery voltage in volts.
    * @param dt The loop time.
    * @return A Setpoint object that satisfies all the kinematic/friction limits while converging to
    *     desiredState quickly.
    */
   public SwerveSetpoint generateSetpoint(
-      final SwerveSetpoint prevSetpoint, ChassisSpeeds desiredStateRobotRelative, double dt) {
+      final SwerveSetpoint prevSetpoint, ChassisSpeeds desiredStateRobotRelative, double batteryVoltage, double dt) {
     SwerveModuleState[] desiredModuleStates =
         config.toSwerveModuleStates(desiredStateRobotRelative);
     // Make sure desiredState respects velocity limits.
@@ -124,7 +125,7 @@ public class SwerveSetpointGenerator {
         && !epsilonEquals(desiredStateRobotRelative, new ChassisSpeeds())) {
       // It will (likely) be faster to stop the robot, rotate the modules in place to the complement
       // of the desired angle, and accelerate again.
-      return generateSetpoint(prevSetpoint, new ChassisSpeeds(), dt);
+      return generateSetpoint(prevSetpoint, new ChassisSpeeds(), batteryVoltage, dt);
     }
 
     // Compute the deltas between start and goal. We can then interpolate from the start state to
@@ -235,7 +236,7 @@ public class SwerveSetpointGenerator {
       // battery is sagging down to 11v, which will affect the max torque output
       double currentDraw =
           config.moduleConfig.driveMotor.getCurrent(
-              Math.abs(lastVelRadPerSec), RobotController.getInputVoltage());
+              Math.abs(lastVelRadPerSec), batteryVoltage);
       currentDraw = Math.min(currentDraw, config.moduleConfig.driveCurrentLimit);
       double moduleTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
 
@@ -381,6 +382,28 @@ public class SwerveSetpointGenerator {
         retSpeeds,
         retStates,
         new DriveFeedforwards(accelFF, linearForceFF, torqueCurrentFF, forceXFF, forceYFF));
+  }
+
+  /**
+   * Generate a new setpoint. Note: Do not discretize ChassisSpeeds passed into or returned from
+   * this method. This method will discretize the speeds for you.
+   *
+   * @param prevSetpoint The previous setpoint motion. Normally, you'd pass in the previous
+   *     iteration setpoint instead of the actual measured/estimated kinematic state.
+   * @param desiredStateRobotRelative The desired state of motion, such as from the driver sticks or
+   *     a path following algorithm.
+   * @param batteryVoltage The battery voltage in volts.
+   * @param dt The loop time.
+   * @return A Setpoint object that satisfies all the kinematic/friction limits while converging to
+   *     desiredState quickly.
+   */
+  public SwerveSetpoint generateSetpoint(SwerveSetpoint prevSetpoint, ChassisSpeeds desiredStateRobotRelative, double dt) {
+    double batteryVoltage = RobotController.getInputVoltage();
+    if (Double.isNaN(batteryVoltage)) {
+      batteryVoltage = 12.0;
+    }
+    return generateSetpoint(
+        prevSetpoint, desiredStateRobotRelative, batteryVoltage, dt);
   }
 
   /**

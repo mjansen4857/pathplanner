@@ -20,6 +20,11 @@ public:
 
 	/**
 	 * Create a new swerve setpoint generator
+	 */
+	SwerveSetpointGenerator();
+
+	/**
+	 * Create a new swerve setpoint generator
 	 *
 	 * @param config The robot configuration
 	 * @param maxSteerVelocity The maximum rotation velocity of a swerve module, in radians

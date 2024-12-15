@@ -1,5 +1,10 @@
 #include "pathplanner/lib/util/swerve/SwerveSetpointGenerator.h"
 
+SwerveSetpointGenerator::SwerveSetpointGenerator() {
+	this->config = nullptr;
+	this->maxSteerVelocity = 0_rad_per_s;
+}
+
 SwerveSetpointGenerator::SwerveSetpointGenerator(RobotConfig *config,
 		units::radians_per_second_t maxSteerVelocity) {
 	this->config = config;
@@ -213,10 +218,12 @@ SwerveSetpoint SwerveSetpointGenerator::generateSetpoint(
 		chassisForceVec = chassisForceVec + moduleForceVec;
 
 		// Calculate the torque this module will apply to the chassis
-		frc::Rotation2d angleToModule = config->moduleLocations[m].Angle();
-		frc::Rotation2d theta = moduleForceVec.Angle() - angleToModule;
-		chassisTorque += forceAtCarpet * config->modulePivotDistance[m]
-				* theta.Sin();
+		if (!epsilonEquals(0, moduleForceVec.Norm().value())) {
+			frc::Rotation2d angleToModule = config->moduleLocations[m].Angle();
+			frc::Rotation2d theta = moduleForceVec.Angle() - angleToModule;
+			chassisTorque += forceAtCarpet * config->modulePivotDistance[m]
+					* theta.Sin();
+		}
 	}
 
 	frc::Translation2d chassisAccelVec = chassisForceVec / config->mass.value();

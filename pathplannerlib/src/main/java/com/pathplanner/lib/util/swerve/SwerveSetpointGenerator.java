@@ -66,11 +66,14 @@ public class SwerveSetpointGenerator {
    */
   public SwerveSetpoint generateSetpoint(
       final SwerveSetpoint prevSetpoint, ChassisSpeeds desiredStateRobotRelative, double dt) {
+    double voltage = RobotController.getBatteryVoltage();
+    double maxSpeed = config.moduleConfig.maxDriveVelocityMPS * Math.min(1, voltage / 12);
+
     SwerveModuleState[] desiredModuleStates =
         config.toSwerveModuleStates(desiredStateRobotRelative);
     // Make sure desiredState respects velocity limits.
     SwerveDriveKinematics.desaturateWheelSpeeds(
-        desiredModuleStates, config.moduleConfig.maxDriveVelocityMPS);
+        desiredModuleStates, maxSpeed);
     desiredStateRobotRelative = config.toChassisSpeeds(desiredModuleStates);
 
     // Special case: desiredState is a complete stop. In this case, module angle is arbitrary, so
@@ -234,8 +237,7 @@ public class SwerveSetpointGenerator {
       // Use the current battery voltage since we won't be able to supply 12v if the
       // battery is sagging down to 11v, which will affect the max torque output
       double currentDraw =
-          config.moduleConfig.driveMotor.getCurrent(
-              Math.abs(lastVelRadPerSec), RobotController.getInputVoltage());
+          config.moduleConfig.driveMotor.getCurrent(Math.abs(lastVelRadPerSec), voltage);
       currentDraw = Math.min(currentDraw, config.moduleConfig.driveCurrentLimit);
       double moduleTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
 

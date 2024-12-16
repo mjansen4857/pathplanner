@@ -239,6 +239,7 @@ public class SwerveSetpointGenerator {
       double currentDraw =
           config.moduleConfig.driveMotor.getCurrent(Math.abs(lastVelRadPerSec), voltage);
       currentDraw = Math.min(currentDraw, config.moduleConfig.driveCurrentLimit);
+      currentDraw = Math.max(currentDraw, 0);
       double moduleTorque = config.moduleConfig.driveMotor.getTorque(currentDraw);
 
       double prevSpeed = prevSetpoint.moduleStates()[m].speedMetersPerSecond;

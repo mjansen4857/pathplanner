@@ -28,6 +28,8 @@ public:
 	units::newton_t wheelFrictionForce;
 	units::newton_meter_t maxTorqueFriction;
 
+	RobotConfig();
+
 	RobotConfig(units::kilogram_t mass, units::kilogram_square_meter_t MOI,
 			ModuleConfig moduleConfig,
 			std::vector<frc::Translation2d> moduleOffsets);
@@ -56,6 +58,27 @@ public:
 	 */
 	frc::ChassisSpeeds toChassisSpeeds(
 			std::vector<SwerveModuleTrajectoryState> states) const;
+
+	/**
+	 * Convert a vector of swerve module states to robot-relative chassis speeds. This will use
+	 * differential kinematics for diff drive robots.
+	 * 
+	 * @param states Vector of swerve module states
+	 * @return Robot-relative chassis speeds
+	 */
+	frc::ChassisSpeeds toChassisSpeeds(
+			std::vector<frc::SwerveModuleState> states) const;
+
+	/**
+	 * Desaturate wheel speeds to respect velocity limits.
+	 * 
+	 * @param moduleStates The module states to desaturate
+	 * @param maxSpeed The maximum speed that the robot can reach while actually driving the robot at full output
+	 * @return The desaturated module states
+	 */
+	std::vector<frc::SwerveModuleState> desaturateWheelSpeeds(
+			std::vector<frc::SwerveModuleState> moduleStates,
+			units::meters_per_second_t maxSpeed) const;
 
 	std::vector<frc::Translation2d> chassisForcesToWheelForceVectors(
 			frc::ChassisSpeeds chassisForces) const;

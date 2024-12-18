@@ -14,16 +14,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - container: wpilib/roborio-cross-ubuntu:2024-22.04
+          - container: wpilib/roborio-cross-ubuntu:2025-22.04
             artifact-name: PPLib-Athena
             build-options: "-Ponlylinuxathena"
           - container: wpilib/ubuntu-base:22.04
             artifact-name: PPLib-Linux
             build-options: "-Ponlylinuxx86-64"
-          - container: wpilib/raspbian-cross-ubuntu:bullseye-22.04
+          - container: wpilib/raspbian-cross-ubuntu:bookworm-22.04
             artifact-name: PPLib-Arm32
             build-options: "-Ponlylinuxarm32"
-          - container: wpilib/aarch64-cross-ubuntu:bullseye-22.04
+          - container: wpilib/aarch64-cross-ubuntu:bookworm-22.04
             artifact-name: PPLib-Arm64
             build-options: "-Ponlylinuxarm64"
     name: "[PPLib] Build - ${{ matrix.artifact-name }}"
@@ -56,6 +56,8 @@ jobs:
           path: pathplannerlib/build/allOutputs
   
   build-host:
+    env:
+      MACOSX_DEPLOYMENT_TARGET: 13.3
     strategy:
       fail-fast: false
       matrix:

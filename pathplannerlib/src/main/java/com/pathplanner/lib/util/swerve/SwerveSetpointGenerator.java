@@ -319,7 +319,7 @@ public class SwerveSetpointGenerator {
             prevSetpoint.robotRelativeSpeeds().vxMetersPerSecond + min_s * dx,
             prevSetpoint.robotRelativeSpeeds().vyMetersPerSecond + min_s * dy,
             prevSetpoint.robotRelativeSpeeds().omegaRadiansPerSecond + min_s * dtheta);
-    retSpeeds.discretize(dt);
+    retSpeeds = ChassisSpeeds.discretize(retSpeeds, dt);
 
     double prevVelX = prevSetpoint.robotRelativeSpeeds().vxMetersPerSecond;
     double prevVelY = prevSetpoint.robotRelativeSpeeds().vyMetersPerSecond;

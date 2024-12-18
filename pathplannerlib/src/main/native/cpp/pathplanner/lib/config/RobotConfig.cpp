@@ -6,9 +6,9 @@
 
 using namespace pathplanner;
 
-RobotConfig::RobotConfig() : diffKinematics(0.7_m), swerveKinematics(
+RobotConfig::RobotConfig() : swerveKinematics(frc::Translation2d(0_m, 0_m),
 		frc::Translation2d(0_m, 0_m), frc::Translation2d(0_m, 0_m),
-		frc::Translation2d(0_m, 0_m), frc::Translation2d(0_m, 0_m)) {
+		frc::Translation2d(0_m, 0_m)), diffKinematics(0.7_m) {
 }
 
 RobotConfig::RobotConfig(units::kilogram_t mass,
